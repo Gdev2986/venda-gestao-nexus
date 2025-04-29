@@ -10,9 +10,9 @@ import {
   BarChart3,
   MessageSquare,
   HelpCircle,
-  ChevronRight,
   LogOut,
   X,
+  CreditCard
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
@@ -51,6 +51,12 @@ const Sidebar = ({ isOpen, isMobile, onClose, userRole }: SidebarProps) => {
       title: "Vendas",
       icon: ListOrdered,
       href: "/sales",
+      roles: [UserRole.ADMIN, UserRole.CLIENT, UserRole.FINANCIAL, UserRole.PARTNER],
+    },
+    {
+      title: "Máquinas",
+      icon: CreditCard,
+      href: "/machines",
       roles: [UserRole.ADMIN, UserRole.CLIENT, UserRole.FINANCIAL, UserRole.PARTNER],
     },
     {
@@ -116,9 +122,9 @@ const Sidebar = ({ isOpen, isMobile, onClose, userRole }: SidebarProps) => {
       <div className="flex items-center justify-between h-16 px-4 border-b border-sidebar-border">
         <div className="flex items-center space-x-2">
           <div className="w-8 h-8 rounded-md bg-primary flex items-center justify-center text-white font-bold">
-            GV
+            SP
           </div>
-          <span className="text-lg font-semibold">Nexus</span>
+          <span className="text-lg font-semibold">SigmaPay</span>
         </div>
 
         {isMobile && (

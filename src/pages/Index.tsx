@@ -23,9 +23,9 @@ const Index = () => {
         <div className="w-full md:w-1/2 md:pr-8 text-center md:text-left mb-6 md:mb-0">
           <div className="flex items-center justify-center md:justify-start mb-4">
             <div className="w-12 h-12 bg-primary rounded-lg flex items-center justify-center text-white text-xl font-bold mr-3">
-              GV
+              SP
             </div>
-            <h1 className="text-3xl font-bold tracking-tight">Nexus</h1>
+            <h1 className="text-3xl font-bold tracking-tight">SigmaPay</h1>
           </div>
           
           <h2 className="text-4xl font-bold mb-4 text-gray-900">

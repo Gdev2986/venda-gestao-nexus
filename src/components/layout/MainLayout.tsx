@@ -93,7 +93,7 @@ const MainLayout = ({ children }: MainLayoutProps) => {
             >
               <MenuIcon className="h-5 w-5" />
             </Button>
-            <h1 className="font-semibold text-lg hidden md:block">Gestão de Vendas</h1>
+            <h1 className="font-semibold text-lg hidden md:block">SigmaPay</h1>
           </div>
           
           <div className="flex items-center space-x-2">

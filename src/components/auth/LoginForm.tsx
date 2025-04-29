@@ -72,7 +72,7 @@ const LoginForm = () => {
       <CardHeader>
         <CardTitle className="text-2xl font-bold text-center">Login</CardTitle>
         <CardDescription className="text-center">
-          Acesse a plataforma de gestão de vendas
+          Acesse a plataforma SigmaPay de gestão de vendas
         </CardDescription>
       </CardHeader>
       <form onSubmit={handleLogin}>
