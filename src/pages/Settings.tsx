@@ -3,7 +3,7 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import MainLayout from "@/components/layout/MainLayout";
 import PixKeysManager from "@/components/settings/PixKeysManager";
-import { PixKey, UserRole } from "@/types";
+import { PixKey, UserRole, PixKeyType } from "@/types";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -20,27 +20,27 @@ const Settings = () => {
   const [pixKeys, setPixKeys] = useState<PixKey[]>([
     {
       id: "1",
-      userId: "user_1",
-      type: "CPF",
+      user_id: "user_1",
+      type: PixKeyType.CPF,
       key: "123.456.789-00",
       name: "Minha chave principal",
-      isDefault: true,
+      is_default: true,
     },
     {
       id: "2",
-      userId: "user_1",
-      type: "EMAIL",
+      user_id: "user_1",
+      type: PixKeyType.EMAIL,
       key: "email@exemplo.com",
       name: "Email pessoal",
-      isDefault: false,
+      is_default: false,
     },
   ]);
   
-  const handleAddPixKey = (key: Omit<PixKey, "id" | "userId">) => {
+  const handleAddPixKey = (key: Omit<PixKey, "id" | "user_id">) => {
     const newKey = {
       ...key,
       id: `key_${Math.random().toString(36).slice(2, 11)}`, // Generate random id
-      userId: "user_1",
+      user_id: "user_1",
     };
     setPixKeys((prev) => [...prev, newKey]);
   };
@@ -53,7 +53,7 @@ const Settings = () => {
     setPixKeys((prev) =>
       prev.map((key) => ({
         ...key,
-        isDefault: key.id === keyId,
+        is_default: key.id === keyId,
       }))
     );
   };

@@ -8,7 +8,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { CalendarIcon, ShoppingBag, CreditCard, Headphones, Truck } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import { Sale, SaleDb } from "@/types";
+import { Sale, SaleDb, PaymentMethod } from "@/types";
+import { formatCurrency } from "@/lib/utils";
 
 const ClientDashboard = () => {
   const { user } = useAuth();
@@ -17,22 +18,22 @@ const ClientDashboard = () => {
   const [sales, setSales] = useState<Sale[]>([]);
   const [machines, setMachines] = useState<any[]>([]);
   const [currentBalance, setCurrentBalance] = useState(0);
+  const [clientId, setClientId] = useState<string | null>(null);
 
   useEffect(() => {
     if (user) {
-      fetchClientData();
+      fetchClientId();
     }
   }, [user]);
 
-  const fetchClientData = async () => {
-    setIsLoading(true);
+  // Separate function to fetch client ID to avoid deep type instantiation
+  const fetchClientId = async () => {
     try {
-      // Fetch client ID first
       const { data: clientData, error: clientError } = await supabase
         .from('clients')
         .select('id')
         .eq('user_id', user?.id)
-        .single();
+        .maybeSingle();
 
       if (clientError) {
         console.error("Error fetching client data:", clientError);
@@ -40,48 +41,68 @@ const ClientDashboard = () => {
       }
 
       if (clientData) {
-        const clientId = clientData.id;
+        setClientId(clientData.id);
+        fetchClientData(clientData.id);
+      }
+    } catch (error) {
+      console.error("Error fetching client ID:", error);
+    }
+  };
 
-        // Fetch sales data
-        const { data: salesData, error: salesError } = await supabase
-          .from('sales')
-          .select('*')
-          .eq('client_id', clientId)
-          .order('date', { ascending: false })
-          .limit(10);
+  const fetchClientData = async (clientId: string) => {
+    setIsLoading(true);
+    try {
+      // Fetch sales data
+      const { data: salesData, error: salesError } = await supabase
+        .from('sales')
+        .select('*')
+        .eq('client_id', clientId)
+        .order('date', { ascending: false })
+        .limit(10);
 
-        if (salesError) {
-          console.error("Error fetching sales:", salesError);
-        } else if (salesData) {
-          // Convert database sales to application Sales type
-          const formattedSales: Sale[] = salesData.map((sale: SaleDb) => ({
-            id: sale.id,
-            code: sale.code,
-            date: new Date(sale.date),
-            terminal: sale.terminal,
-            grossAmount: sale.gross_amount,
-            netAmount: sale.net_amount,
-            paymentMethod: sale.payment_method,
-            clientId: sale.client_id
-          }));
-          
-          setSales(formattedSales);
-        }
+      if (salesError) {
+        console.error("Error fetching sales:", salesError);
+      } else if (salesData) {
+        // Convert database sales to application Sales type
+        const formattedSales: Sale[] = salesData.map((sale: SaleDb) => ({
+          id: sale.id,
+          code: sale.code,
+          date: new Date(sale.date),
+          terminal: sale.terminal,
+          grossAmount: sale.gross_amount,
+          netAmount: sale.net_amount,
+          paymentMethod: sale.payment_method as PaymentMethod, // Cast to enum type
+          clientId: sale.client_id
+        }));
+        
+        setSales(formattedSales);
+      }
 
-        // Fetch machines data
-        const { data: machinesData, error: machinesError } = await supabase
-          .from('machines')
-          .select('*')
-          .eq('client_id', clientId);
+      // Fetch machines data
+      const { data: machinesData, error: machinesError } = await supabase
+        .from('machines')
+        .select('*')
+        .eq('client_id', clientId);
 
-        if (machinesError) {
-          console.error("Error fetching machines:", machinesError);
-        } else {
-          setMachines(machinesData || []);
-        }
+      if (machinesError) {
+        console.error("Error fetching machines:", machinesError);
+      } else {
+        setMachines(machinesData || []);
+      }
 
-        // Mock balance calculation
-        // In a real application, you would fetch this from a balance table or calculate it
+      // Fetch client balance
+      const { data: balanceData, error: balanceError } = await supabase
+        .from('vw_client_balance')
+        .select('balance')
+        .eq('client_id', clientId)
+        .maybeSingle();
+
+      if (balanceError) {
+        console.error("Error fetching balance:", balanceError);
+      } else if (balanceData) {
+        setCurrentBalance(Number(balanceData.balance) || 0);
+      } else {
+        // Fallback calculation if view doesn't return data
         const totalSales = salesData?.reduce((sum: number, sale: SaleDb) => sum + Number(sale.net_amount), 0) || 0;
         setCurrentBalance(totalSales);
       }

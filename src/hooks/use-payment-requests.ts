@@ -1,14 +1,20 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "./use-toast";
-import { PaymentRequest, PixKey, PixKeyType, PaymentRequestStatus } from "@/types";
+import { PaymentRequest, PixKey as PixKeyType, PixKeyType as PixKeyEnum, PaymentRequestStatus } from "@/types";
+import { useAuth } from "@/contexts/AuthContext";
+
+// Export the PixKey type so it can be used in other components
+export type PixKey = PixKeyType;
 
 export const usePaymentRequests = () => {
   const [paymentRequests, setPaymentRequests] = useState<PaymentRequest[]>([]);
   const [pixKeys, setPixKeys] = useState<PixKey[]>([]);
   const [isLoading, setIsLoading] = useState(false);
+  const [currentBalance, setCurrentBalance] = useState(0);
   const { toast } = useToast();
+  const { user } = useAuth();
 
   // Fetch payment requests
   const fetchPaymentRequests = async (clientId?: string) => {
@@ -70,7 +76,7 @@ export const usePaymentRequests = () => {
       // Convert string type values to enum values
       const typedKeys = data?.map(item => ({
         ...item,
-        type: item.type as PixKeyType
+        type: item.type as PixKeyEnum
       })) || [];
       
       setPixKeys(typedKeys);
@@ -81,13 +87,66 @@ export const usePaymentRequests = () => {
     }
   };
 
-  // Create new payment request
-  const createPaymentRequest = async (data: Omit<PaymentRequest, "id" | "status" | "created_at" | "updated_at" | "approved_at" | "approved_by" | "receipt_url">) => {
+  // Fetch client balance
+  const fetchClientBalance = async (clientId?: string) => {
     try {
+      if (!clientId && !user) return;
+      
+      // Fetch client ID if not provided
+      if (!clientId && user) {
+        const { data: clientData } = await supabase
+          .from('clients')
+          .select('id')
+          .eq('user_id', user.id)
+          .single();
+        
+        if (clientData) {
+          clientId = clientData.id;
+        }
+      }
+
+      if (clientId) {
+        const { data } = await supabase
+          .from('vw_client_balance')
+          .select('balance')
+          .eq('client_id', clientId)
+          .maybeSingle();
+
+        if (data) {
+          setCurrentBalance(Number(data.balance) || 0);
+        }
+      }
+    } catch (error) {
+      console.error("Error fetching client balance:", error);
+    }
+  };
+
+  // Create new payment request
+  const createPaymentRequest = async (amount: number, pixKeyId: string) => {
+    try {
+      // Get client ID for the current user
+      const { data: clientData, error: clientError } = await supabase
+        .from('clients')
+        .select('id')
+        .eq('user_id', user?.id)
+        .single();
+
+      if (clientError || !clientData) {
+        console.error("Error fetching client ID:", clientError);
+        toast({
+          title: "Erro",
+          description: "Não foi possível identificar seu cliente.",
+          variant: "destructive",
+        });
+        return false;
+      }
+
       const { error } = await supabase
         .from('payment_requests')
         .insert([{
-          ...data,
+          amount,
+          pix_key_id: pixKeyId,
+          client_id: clientData.id,
           status: PaymentRequestStatus.PENDING
         }]);
 
@@ -100,7 +159,7 @@ export const usePaymentRequests = () => {
         description: "Sua solicitação de pagamento foi enviada com sucesso.",
       });
 
-      await fetchPaymentRequests();
+      await fetchPaymentRequests(clientData.id);
       return true;
     } catch (error: any) {
       console.error("Error creating payment request:", error);
@@ -118,7 +177,10 @@ export const usePaymentRequests = () => {
     try {
       const { error } = await supabase
         .from('pix_keys')
-        .insert([pixKeyData]);
+        .insert([{
+          ...pixKeyData,
+          user_id: user?.id
+        }]);
 
       if (error) {
         throw error;
@@ -179,14 +241,48 @@ export const usePaymentRequests = () => {
     }
   };
 
+  // Refresh all data
+  const refreshData = async () => {
+    setIsLoading(true);
+    try {
+      // Get client ID for the current user
+      const { data: clientData } = await supabase
+        .from('clients')
+        .select('id')
+        .eq('user_id', user?.id)
+        .maybeSingle();
+
+      if (clientData) {
+        await Promise.all([
+          fetchPaymentRequests(clientData.id),
+          fetchClientBalance(clientData.id)
+        ]);
+      }
+      await fetchPixKeys();
+    } catch (error) {
+      console.error("Error refreshing data:", error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // Initialize data
+  useEffect(() => {
+    if (user) {
+      refreshData();
+    }
+  }, [user]);
+
   return {
     paymentRequests,
     pixKeys,
     isLoading,
+    currentBalance,
     fetchPaymentRequests,
     fetchPixKeys,
     createPaymentRequest,
     addPixKey,
-    processPaymentRequest
+    processPaymentRequest,
+    refreshData
   };
 };
