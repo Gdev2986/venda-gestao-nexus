@@ -52,10 +52,12 @@ const Partners = () => {
 
   return (
     <MainLayout>
-      <div className="space-y-4">
+      <div className="space-y-4 max-w-full">
         <PartnersHeader onCreateClick={handleCreateClick} />
         
-        <PartnersFilterCard onFilter={handleFilter} />
+        <div className="grid gap-4 md:grid-cols-1 lg:grid-cols-1">
+          <PartnersFilterCard onFilter={handleFilter} />
+        </div>
         
         <PartnersTableCard
           partners={partners}

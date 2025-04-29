@@ -7,6 +7,9 @@ import SalesFilters from "@/components/sales/SalesFilters";
 import SalesTable from "@/components/sales/SalesTable";
 import ImportSalesDialog from "@/components/sales/ImportSalesDialog";
 import { generateMockSales, calculateSalesTotals } from "@/utils/sales-utils";
+import { Button } from "@/components/ui/button";
+import { RefreshCw } from "lucide-react";
+import { Card } from "@/components/ui/card";
 
 interface DateRange {
   from: Date;
@@ -22,10 +25,15 @@ const Sales = () => {
   const [filters, setFilters] = useState<SalesFilterParams>({});
   const [date, setDate] = useState<DateRange | undefined>();
   const [showImportDialog, setShowImportDialog] = useState(false);
+  const [isRefreshing, setIsRefreshing] = useState(false);
   const { toast } = useToast();
   
   // Load initial data
   useEffect(() => {
+    fetchSales();
+  }, []);
+  
+  const fetchSales = () => {
     setIsLoading(true);
     
     // Simulate API call
@@ -35,7 +43,20 @@ const Sales = () => {
       setFilteredSales(mockSales);
       setIsLoading(false);
     }, 1000);
-  }, []);
+  };
+  
+  const handleRefresh = () => {
+    setIsRefreshing(true);
+    fetchSales();
+    
+    setTimeout(() => {
+      setIsRefreshing(false);
+      toast({
+        title: "Dados atualizados",
+        description: "Lista de vendas atualizada com sucesso"
+      });
+    }, 1500);
+  };
   
   // Apply filters when they change
   useEffect(() => {
@@ -107,36 +128,52 @@ const Sales = () => {
 
   return (
     <MainLayout>
-      <div className="mb-6">
-        <h1 className="text-2xl font-bold tracking-tight">Vendas</h1>
-        <p className="text-muted-foreground">
-          Gerencie e visualize todas as suas vendas
-        </p>
+      <div className="mb-6 flex flex-col sm:flex-row justify-between items-start sm:items-center">
+        <div>
+          <h1 className="text-2xl font-bold tracking-tight">Vendas</h1>
+          <p className="text-muted-foreground">
+            Gerencie e visualize todas as suas vendas
+          </p>
+        </div>
+        <Button 
+          variant="outline" 
+          size="sm" 
+          className="mt-2 sm:mt-0 flex items-center gap-1"
+          onClick={handleRefresh}
+          disabled={isRefreshing || isLoading}
+        >
+          <RefreshCw className={`h-4 w-4 ${isRefreshing ? 'animate-spin' : ''}`} />
+          {isRefreshing ? "Atualizando..." : "Atualizar dados"}
+        </Button>
       </div>
       
-      <SalesFilters 
-        filters={filters}
-        onFilterChange={handleFilterChange}
-        date={date}
-        onDateChange={setDate}
-        onClearFilters={clearFilters}
-        onExport={handleExport}
-        onShowImportDialog={() => setShowImportDialog(true)}
-      />
-      
-      <SalesTable 
-        sales={paginatedSales}
-        page={page}
-        setPage={setPage}
-        totalPages={totalPages}
-        isLoading={isLoading}
-        totals={totals}
-      />
+      <div className="space-y-4">
+        <Card className="p-4">
+          <SalesFilters 
+            filters={filters}
+            onFilterChange={handleFilterChange}
+            date={date}
+            onDateChange={setDate}
+            onClearFilters={clearFilters}
+            onExport={handleExport}
+            onShowImportDialog={() => setShowImportDialog(true)}
+          />
+        </Card>
+        
+        <SalesTable 
+          sales={paginatedSales}
+          page={page}
+          setPage={setPage}
+          totalPages={totalPages}
+          isLoading={isLoading}
+          totals={totals}
+        />
 
-      <ImportSalesDialog 
-        open={showImportDialog}
-        onOpenChange={setShowImportDialog}
-      />
+        <ImportSalesDialog 
+          open={showImportDialog}
+          onOpenChange={setShowImportDialog}
+        />
+      </div>
     </MainLayout>
   );
 };

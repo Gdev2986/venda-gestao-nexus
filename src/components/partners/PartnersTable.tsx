@@ -20,54 +20,74 @@ export function PartnersTable({
   onDeletePartner,
 }: PartnersTableProps) {
   return (
-    <Table>
-      <TableHeader>
-        <TableRow>
-          <TableHead>Nome</TableHead>
-          <TableHead>Contato</TableHead>
-          <TableHead>Email</TableHead>
-          <TableHead>Telefone</TableHead>
-          <TableHead>Criado em</TableHead>
-          <TableHead className="text-right">Ações</TableHead>
-        </TableRow>
-      </TableHeader>
-      <TableBody>
-        {isLoading ? (
+    <div className="w-full overflow-auto">
+      <Table>
+        <TableHeader>
           <TableRow>
-            <TableCell colSpan={6} className="text-center py-10">
-              Carregando...
-            </TableCell>
+            <TableHead className="min-w-[150px]">Nome</TableHead>
+            <TableHead className="hidden sm:table-cell">Contato</TableHead>
+            <TableHead className="hidden md:table-cell">Email</TableHead>
+            <TableHead className="hidden md:table-cell">Telefone</TableHead>
+            <TableHead className="hidden lg:table-cell">Criado em</TableHead>
+            <TableHead className="text-right">Ações</TableHead>
           </TableRow>
-        ) : partners.length === 0 ? (
-          <TableRow>
-            <TableCell colSpan={6} className="text-center py-10 text-muted-foreground">
-              Nenhum parceiro encontrado.
-            </TableCell>
-          </TableRow>
-        ) : (
-          partners.map((partner) => (
-            <TableRow key={partner.id}>
-              <TableCell className="font-medium">{partner.business_name}</TableCell>
-              <TableCell>{partner.contact_name}</TableCell>
-              <TableCell>{partner.email}</TableCell>
-              <TableCell>{partner.phone}</TableCell>
-              <TableCell>
-                {partner.created_at && format(new Date(partner.created_at), 'dd/MM/yyyy')}
-              </TableCell>
-              <TableCell className="text-right">
-                <div className="flex justify-end gap-2">
-                  <Button variant="ghost" size="icon" onClick={() => onEditPartner(partner)}>
-                    <PenIcon className="h-4 w-4" />
-                  </Button>
-                  <Button variant="ghost" size="icon" onClick={() => onDeletePartner(partner)}>
-                    <TrashIcon className="h-4 w-4" />
-                  </Button>
+        </TableHeader>
+        <TableBody>
+          {isLoading ? (
+            <TableRow>
+              <TableCell colSpan={6} className="text-center py-10">
+                <div className="flex justify-center items-center h-10">
+                  <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary"></div>
                 </div>
               </TableCell>
             </TableRow>
-          ))
-        )}
-      </TableBody>
-    </Table>
+          ) : partners.length === 0 ? (
+            <TableRow>
+              <TableCell colSpan={6} className="text-center py-10 text-muted-foreground">
+                Nenhum parceiro encontrado.
+              </TableCell>
+            </TableRow>
+          ) : (
+            partners.map((partner) => (
+              <TableRow key={partner.id}>
+                <TableCell className="font-medium">
+                  <div>
+                    <span className="block">{partner.business_name}</span>
+                    <span className="block sm:hidden text-xs text-muted-foreground">{partner.contact_name}</span>
+                    <span className="block md:hidden text-xs text-muted-foreground">{partner.email}</span>
+                  </div>
+                </TableCell>
+                <TableCell className="hidden sm:table-cell">{partner.contact_name}</TableCell>
+                <TableCell className="hidden md:table-cell">{partner.email}</TableCell>
+                <TableCell className="hidden md:table-cell">{partner.phone}</TableCell>
+                <TableCell className="hidden lg:table-cell">
+                  {partner.created_at && format(new Date(partner.created_at), 'dd/MM/yyyy')}
+                </TableCell>
+                <TableCell className="text-right">
+                  <div className="flex justify-end gap-2">
+                    <Button 
+                      variant="ghost" 
+                      size="icon" 
+                      onClick={() => onEditPartner(partner)}
+                      aria-label="Editar parceiro"
+                    >
+                      <PenIcon className="h-4 w-4" />
+                    </Button>
+                    <Button 
+                      variant="ghost" 
+                      size="icon" 
+                      onClick={() => onDeletePartner(partner)}
+                      aria-label="Excluir parceiro"
+                    >
+                      <TrashIcon className="h-4 w-4" />
+                    </Button>
+                  </div>
+                </TableCell>
+              </TableRow>
+            ))
+          )}
+        </TableBody>
+      </Table>
+    </div>
   );
 }

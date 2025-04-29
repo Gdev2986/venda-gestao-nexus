@@ -73,6 +73,7 @@ const MainLayout = ({ children }: MainLayoutProps) => {
               variant="ghost" 
               size="icon" 
               onClick={() => setSidebarOpen(!sidebarOpen)}
+              aria-label={sidebarOpen ? "Fechar menu" : "Abrir menu"}
             >
               <Menu className="h-5 w-5" />
             </Button>
@@ -86,7 +87,7 @@ const MainLayout = ({ children }: MainLayoutProps) => {
         </header>
         
         {/* Content */}
-        <main className="flex-1 overflow-auto p-4 md:p-6">
+        <main className="flex-1 overflow-auto p-4 md:p-6 lg:p-8">
           {children}
         </main>
       </div>

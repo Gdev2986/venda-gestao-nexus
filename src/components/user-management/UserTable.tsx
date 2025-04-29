@@ -118,14 +118,14 @@ const UserTable = ({
 
   return (
     <div>
-      <div className="rounded-md border">
+      <div className="rounded-md border overflow-auto">
         <Table>
           <TableHeader>
             <TableRow>
               <TableHead>Nome</TableHead>
-              <TableHead>E-mail</TableHead>
+              <TableHead className="hidden md:table-cell">E-mail</TableHead>
               <TableHead>Função</TableHead>
-              <TableHead>Criado em</TableHead>
+              <TableHead className="hidden lg:table-cell">Criado em</TableHead>
               <TableHead className="text-right">Ações</TableHead>
             </TableRow>
           </TableHeader>
@@ -134,16 +134,19 @@ const UserTable = ({
               users.map((user) => (
                 <TableRow key={user.id}>
                   <TableCell className="font-medium">
-                    {user.name || "N/A"}
+                    <div>
+                      <span>{user.name || "N/A"}</span>
+                      <span className="block md:hidden text-xs text-muted-foreground">{user.email}</span>
+                    </div>
                   </TableCell>
-                  <TableCell>{user.email}</TableCell>
+                  <TableCell className="hidden md:table-cell">{user.email}</TableCell>
                   <TableCell>
                     <Select
                       value={user.role}
                       onValueChange={(value) => handleRoleChangeClick(user, value as UserRole)}
                       disabled={updatingUser === user.id}
                     >
-                      <SelectTrigger className="w-[180px]">
+                      <SelectTrigger className="w-[180px] max-w-full">
                         <SelectValue placeholder="Selecionar função" />
                       </SelectTrigger>
                       <SelectContent>
@@ -154,11 +157,11 @@ const UserTable = ({
                       </SelectContent>
                     </Select>
                   </TableCell>
-                  <TableCell>
+                  <TableCell className="hidden lg:table-cell">
                     {new Date(user.created_at).toLocaleDateString('pt-BR')}
                   </TableCell>
                   <TableCell className="text-right">
-                    <Button variant="outline" size="sm">
+                    <Button variant="outline" size="sm" className="whitespace-nowrap">
                       Detalhes
                     </Button>
                   </TableCell>
@@ -175,11 +178,13 @@ const UserTable = ({
         </Table>
       </div>
       
-      <UserPagination 
-        currentPage={currentPage} 
-        totalPages={totalPages}
-        onPageChange={onPageChange}
-      />
+      <div className="mt-4 flex justify-center">
+        <UserPagination 
+          currentPage={currentPage} 
+          totalPages={totalPages}
+          onPageChange={onPageChange}
+        />
+      </div>
 
       {selectedUser && newRole && (
         <RoleChangeDialog

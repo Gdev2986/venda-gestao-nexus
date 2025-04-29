@@ -9,14 +9,18 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { CameraIcon, Users } from "lucide-react";
+import { CameraIcon, Users, RefreshCw } from "lucide-react";
 import { useUserRole } from "@/hooks/use-user-role";
 import { PATHS } from "@/routes/paths";
+import { useToast } from "@/components/ui/use-toast";
 
 const Settings = () => {
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState("profile");
   const { userRole } = useUserRole();
+  const { toast } = useToast();
+  const [isRefreshing, setIsRefreshing] = useState(false);
+  
   const [pixKeys, setPixKeys] = useState<PixKey[]>([
     {
       id: "1",
@@ -61,14 +65,38 @@ const Settings = () => {
   const goToUserManagement = () => {
     navigate(PATHS.USER_MANAGEMENT);
   };
+  
+  const handleRefreshData = () => {
+    setIsRefreshing(true);
+    
+    setTimeout(() => {
+      setIsRefreshing(false);
+      toast({
+        title: "Dados atualizados",
+        description: "Seus dados foram atualizados com sucesso"
+      });
+    }, 1500);
+  };
 
   return (
     <MainLayout>
-      <div className="mb-6">
-        <h1 className="text-2xl font-bold tracking-tight">Configurações</h1>
-        <p className="text-muted-foreground">
-          Gerencie seu perfil e preferências da conta
-        </p>
+      <div className="mb-6 flex flex-col sm:flex-row justify-between items-start sm:items-center">
+        <div>
+          <h1 className="text-2xl font-bold tracking-tight">Configurações</h1>
+          <p className="text-muted-foreground">
+            Gerencie seu perfil e preferências da conta
+          </p>
+        </div>
+        <Button 
+          variant="outline" 
+          size="sm" 
+          className="mt-2 sm:mt-0 flex items-center gap-1"
+          onClick={handleRefreshData}
+          disabled={isRefreshing}
+        >
+          <RefreshCw className={`h-4 w-4 ${isRefreshing ? 'animate-spin' : ''}`} />
+          {isRefreshing ? "Atualizando..." : "Atualizar dados"}
+        </Button>
       </div>
       
       {userRole === UserRole.ADMIN && (
