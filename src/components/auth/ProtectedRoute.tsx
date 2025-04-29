@@ -11,7 +11,7 @@ const ProtectedRoute = ({ children }: ProtectedRouteProps) => {
   const { user, isLoading } = useAuth();
   const location = useLocation();
 
-  // Simplificando para evitar o loop infinito
+  // Se estiver carregando, mostre um spinner
   if (isLoading) {
     return (
       <div className="flex flex-col items-center justify-center h-screen bg-background">
@@ -21,12 +21,13 @@ const ProtectedRoute = ({ children }: ProtectedRouteProps) => {
     );
   }
 
+  // Se não houver usuário autenticado, redirecione para a página inicial
   if (!user) {
-    // Se não estiver autenticado, redirecione para a página inicial com informação do local atual
-    return <Navigate to="/" state={{ from: location }} replace />;
+    // Armazena a localização atual para redirecionamento após login
+    return <Navigate to="/" state={{ from: location.pathname }} replace />;
   }
 
-  // Se estiver autenticado, renderize os filhos (conteúdo protegido)
+  // Se estiver autenticado, renderize o conteúdo protegido
   return <>{children}</>;
 };
 

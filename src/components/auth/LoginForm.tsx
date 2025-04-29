@@ -52,14 +52,15 @@ const LoginForm = () => {
       setAuthError(null);
       await signIn(data.email, data.password);
     } catch (error: any) {
-      // O erro já é tratado em AuthContext, 
-      // mas podemos personalizar mais mensagens específicas aqui se necessário
-      if (error.message.includes("Database error")) {
-        setAuthError("Erro no banco de dados. Por favor, tente novamente mais tarde.");
-      } else if (error.message.includes("Invalid login credentials")) {
+      console.error("Erro durante login:", error);
+      
+      // Tratamento de erros específicos
+      if (error.message && error.message.includes("Database error")) {
+        setAuthError("Erro de conexão com o servidor. Por favor, tente novamente mais tarde.");
+      } else if (error.message && error.message.includes("Invalid login credentials")) {
         setAuthError("Email ou senha incorretos. Por favor, verifique seus dados.");
       } else {
-        setAuthError(error.message || "Ocorreu um erro durante a autenticação");
+        setAuthError("Ocorreu um erro inesperado. Por favor, tente novamente.");
       }
     }
   };
@@ -78,7 +79,7 @@ const LoginForm = () => {
       if (error) throw error;
       
     } catch (error: any) {
-      console.error(error);
+      console.error("Erro durante login com Google:", error);
       setAuthError(error.message || "Ocorreu um erro durante a autenticação com Google");
     }
   };

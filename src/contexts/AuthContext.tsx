@@ -1,3 +1,4 @@
+
 import { createContext, useContext, useEffect, useState } from "react";
 import { Session, User } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
@@ -23,34 +24,49 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const navigate = useNavigate();
 
   useEffect(() => {
-    // Set up auth state listener FIRST
+    // Set up auth state listener FIRST - ordem crítica para evitar loops
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       (event, newSession) => {
+        // Atualizações síncronas apenas
         setSession(newSession);
         setUser(newSession?.user ?? null);
 
+        // Tratamento de eventos de autenticação
         if (event === "SIGNED_IN") {
-          toast({
-            title: "Autenticado com sucesso",
-            description: "Bem-vindo de volta à SigmaPay!",
-          });
+          // Usando setTimeout para evitar chamadas Supabase dentro do callback
+          setTimeout(() => {
+            toast({
+              title: "Autenticado com sucesso",
+              description: "Bem-vindo de volta à SigmaPay!",
+            });
+          }, 0);
         }
         
         if (event === "SIGNED_OUT") {
-          toast({
-            title: "Desconectado",
-            description: "Você foi desconectado com sucesso.",
-          });
+          setTimeout(() => {
+            toast({
+              title: "Desconectado",
+              description: "Você foi desconectado com sucesso.",
+            });
+          }, 0);
         }
       }
     );
 
-    // THEN check for existing session
-    supabase.auth.getSession().then(({ data: { session: currentSession } }) => {
-      setSession(currentSession);
-      setUser(currentSession?.user ?? null);
-      setIsLoading(false);
-    });
+    // DEPOIS verificar por sessão existente
+    const checkSession = async () => {
+      try {
+        const { data: { session: currentSession } } = await supabase.auth.getSession();
+        setSession(currentSession);
+        setUser(currentSession?.user ?? null);
+      } catch (error) {
+        console.error("Erro ao verificar sessão:", error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    checkSession();
 
     return () => {
       subscription.unsubscribe();
@@ -65,27 +81,30 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         password,
       });
 
-      if (error) throw error;
+      if (error) {
+        // Tratamento de erro melhorado
+        let errorMessage = "Ocorreu um erro durante a autenticação";
+        
+        if (error.message === "Invalid login credentials") {
+          errorMessage = "Credenciais inválidas. Verifique seu email e senha.";
+        } else if (error.message.includes("Database error")) {
+          errorMessage = "Erro de conexão com o servidor. Tente novamente mais tarde.";
+        }
+        
+        toast({
+          title: "Erro ao fazer login",
+          description: errorMessage,
+          variant: "destructive",
+        });
+        throw error;
+      }
       
       if (data.user) {
         navigate("/dashboard");
       }
     } catch (error: any) {
-      let errorMessage = "Ocorreu um erro durante a autenticação";
-      
-      // Mensagens de erro mais específicas
-      if (error.message === "Invalid login credentials") {
-        errorMessage = "Credenciais inválidas. Verifique seu email e senha.";
-      } else if (error.message.includes("Database error")) {
-        errorMessage = "Erro no banco de dados. Tente novamente mais tarde.";
-      }
-      
-      toast({
-        title: "Erro ao fazer login",
-        description: errorMessage,
-        variant: "destructive",
-      });
-      throw error;
+      console.error("Erro durante login:", error);
+      // O toast já é exibido acima
     } finally {
       setIsLoading(false);
     }
@@ -105,7 +124,20 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         },
       });
 
-      if (error) throw error;
+      if (error) {
+        let errorMessage = "Ocorreu um erro durante o registro";
+        
+        if (error.message.includes("already registered")) {
+          errorMessage = "Este email já está registrado. Tente fazer login.";
+        }
+        
+        toast({
+          title: "Erro ao registrar",
+          description: errorMessage,
+          variant: "destructive",
+        });
+        throw error;
+      }
       
       toast({
         title: "Registro realizado com sucesso",
@@ -114,12 +146,8 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
       navigate("/");
     } catch (error: any) {
-      toast({
-        title: "Erro ao registrar",
-        description: error.message || "Ocorreu um erro durante o registro",
-        variant: "destructive",
-      });
-      throw error;
+      console.error("Erro durante registro:", error);
+      // O toast já é exibido acima
     } finally {
       setIsLoading(false);
     }
@@ -127,6 +155,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
   const signOut = async () => {
     try {
+      setIsLoading(true);
       const { error } = await supabase.auth.signOut();
       if (error) throw error;
       navigate("/");
@@ -136,6 +165,8 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         description: error.message || "Ocorreu um erro ao tentar sair",
         variant: "destructive",
       });
+    } finally {
+      setIsLoading(false);
     }
   };
 
