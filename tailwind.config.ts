@@ -31,16 +31,16 @@ export default {
 				primary: {
 					DEFAULT: 'hsl(var(--primary))',
 					foreground: 'hsl(var(--primary-foreground))',
-          50: '#E6FFF7',
-          100: '#CCFFEF',
-          200: '#99FFDF',
-          300: '#66FFCF',
-          400: '#33FFBF',
-          500: '#00E88A', // Base primary (SigmaPay green)
-          600: '#00BA6E',
-          700: '#008C53',
-          800: '#005D37',
-          900: '#002F1C',
+          50: '#F3EAFF',
+          100: '#E6D4FF',
+          200: '#CDA9FF',
+          300: '#B47EFF',
+          400: '#9B53FF',
+          500: '#8228FF',  // Cor principal roxa
+          600: '#6A10E0',
+          700: '#5D0CC6',
+          800: '#4C0AA3',
+          900: '#340671',
 				},
 				secondary: {
 					DEFAULT: 'hsl(var(--secondary))',

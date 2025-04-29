@@ -2,6 +2,7 @@
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import { ThemeProvider } from "./components/theme-provider";
 import { Toaster } from "./components/ui/toaster";
+import { PATHS } from "./routes/paths";
 
 import Index from "./pages/Index";
 import Dashboard from "./pages/Dashboard";
@@ -24,21 +25,21 @@ function App() {
     <ThemeProvider defaultTheme="light" storageKey="vite-ui-theme">
       <Router>
         <Routes>
-          <Route path="/" element={<Index />} />
-          <Route path="/dashboard" element={<Dashboard />} />
-          <Route path="/clients" element={<Clients />} />
-          <Route path="/clients/:id" element={<ClientDetail />} />
-          <Route path="/clients/new" element={<ClientNew />} />
-          <Route path="/machines" element={<Machines />} />
-          <Route path="/sales" element={<Sales />} />
-          <Route path="/payments" element={<Payments />} />
-          <Route path="/partners" element={<Partners />} />
-          <Route path="/register" element={<Register />} />
-          <Route path="/fees" element={<Fees />} />
-          <Route path="/reports" element={<Reports />} />
-          <Route path="/settings" element={<Settings />} />
-          <Route path="/support" element={<Support />} />
-          <Route path="*" element={<NotFound />} />
+          <Route path={PATHS.HOME} element={<Index />} />
+          <Route path={PATHS.DASHBOARD} element={<Dashboard />} />
+          <Route path={PATHS.CLIENTS} element={<Clients />} />
+          <Route path={PATHS.CLIENT_DETAILS()} element={<ClientDetail />} />
+          <Route path={PATHS.CLIENT_NEW} element={<ClientNew />} />
+          <Route path={PATHS.MACHINES} element={<Machines />} />
+          <Route path={PATHS.SALES} element={<Sales />} />
+          <Route path={PATHS.PAYMENTS} element={<Payments />} />
+          <Route path={PATHS.PARTNERS} element={<Partners />} />
+          <Route path={PATHS.REGISTER} element={<Register />} />
+          <Route path={PATHS.FEES} element={<Fees />} />
+          <Route path={PATHS.REPORTS} element={<Reports />} />
+          <Route path={PATHS.SETTINGS} element={<Settings />} />
+          <Route path={PATHS.SUPPORT} element={<Support />} />
+          <Route path={PATHS.NOT_FOUND} element={<NotFound />} />
         </Routes>
       </Router>
       <Toaster />

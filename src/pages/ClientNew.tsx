@@ -4,7 +4,7 @@ import { useNavigate } from "react-router-dom";
 import MainLayout from "@/components/layout/MainLayout";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, UserPlus } from "lucide-react";
 import { useClients } from "@/hooks/use-clients";
 import { ClientForm } from "@/components/clients/ClientForm";
 import { useToast } from "@/hooks/use-toast";
@@ -44,7 +44,7 @@ const ClientNewPage = () => {
 
   return (
     <MainLayout>
-      <div className="space-y-4">
+      <div className="space-y-4 max-w-4xl mx-auto">
         <div className="flex items-center gap-2">
           <Button onClick={handleBack} size="sm" variant="ghost">
             <ArrowLeft className="w-4 h-4 mr-1" />
@@ -53,14 +53,21 @@ const ClientNewPage = () => {
           <h1 className="text-2xl font-bold">Novo Cliente</h1>
         </div>
 
-        <Card>
-          <CardHeader>
-            <CardTitle>Cadastrar novo cliente</CardTitle>
-            <CardDescription>
-              Preencha os dados do novo cliente
-            </CardDescription>
+        <Card className="border-l-4 border-l-primary shadow-md">
+          <CardHeader className="bg-secondary/20">
+            <div className="flex items-center">
+              <div className="p-2 mr-3 bg-primary rounded-full text-white">
+                <UserPlus className="h-6 w-6" />
+              </div>
+              <div>
+                <CardTitle>Cadastrar novo cliente</CardTitle>
+                <CardDescription>
+                  Preencha os dados do novo cliente para adicioná-lo ao sistema
+                </CardDescription>
+              </div>
+            </div>
           </CardHeader>
-          <CardContent>
+          <CardContent className="pt-6">
             <ClientForm
               id="new-client-form"
               onSubmit={handleSubmit}

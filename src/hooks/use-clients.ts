@@ -22,6 +22,23 @@ export type Client = {
 
 export type ClientFormData = Omit<Client, "id" | "created_at" | "updated_at">;
 
+// Interface que corresponde à estrutura real da tabela no Supabase
+interface SupabaseClientRow {
+  id: string;
+  business_name: string;
+  contact_name: string;
+  email: string;
+  phone: string;
+  address: string;
+  city: string;
+  state: string;
+  zip: string;
+  partner_id?: string;
+  document?: string;
+  created_at: string;
+  updated_at: string;
+}
+
 export function useClients() {
   const [clients, setClients] = useState<Client[]>([]);
   const [loading, setLoading] = useState(false);
@@ -55,8 +72,11 @@ export function useClients() {
       if (error) throw error;
       
       if (data && data.length > 0) {
-        // Format data fields
-        const formattedClients = data.map(client => ({
+        // Type assertion para garantir que data é do tipo correto
+        const clientsData = data as SupabaseClientRow[];
+        
+        // Formatar dados
+        const formattedClients = clientsData.map(client => ({
           ...client,
           phone: formatPhone(client.phone || ''),
           document: client.document ? formatCNPJ(client.document) : undefined,
@@ -117,27 +137,36 @@ export function useClients() {
     try {
       // Clean data before sending to API
       const clientData = {
-        ...client,
-        document: client.document ? client.document.replace(/\D/g, '') : undefined,
+        business_name: client.business_name,
+        contact_name: client.contact_name,
+        email: client.email,
         phone: client.phone.replace(/\D/g, ''),
-        zip: client.zip.replace(/\D/g, '')
+        address: client.address,
+        city: client.city,
+        state: client.state,
+        zip: client.zip.replace(/\D/g, ''),
+        document: client.document ? client.document.replace(/\D/g, '') : undefined,
+        partner_id: client.partner_id
       };
 
       // In a production environment, this would use the actual Supabase query
       const { data, error } = await supabase
         .from('clients')
-        .insert(clientData)
+        .insert([clientData])
         .select();
       
       if (error) throw error;
       
       if (data && data.length > 0) {
+        // Type assertion para garantir que data é do tipo correto
+        const clientData = data[0] as SupabaseClientRow;
+        
         // Format the returned data
         const formattedClient = {
-          ...data[0],
-          phone: formatPhone(data[0].phone || ''),
-          document: data[0].document ? formatCNPJ(data[0].document) : undefined,
-          zip: formatCEP(data[0].zip || '')
+          ...clientData,
+          phone: formatPhone(clientData.phone || ''),
+          document: clientData.document ? formatCNPJ(clientData.document) : undefined,
+          zip: formatCEP(clientData.zip || '')
         } as Client;
         
         setClients(prev => [...prev, formattedClient]);
@@ -181,10 +210,16 @@ export function useClients() {
     try {
       // Clean data before sending to API
       const clientData = {
-        ...client,
-        document: client.document ? client.document.replace(/\D/g, '') : undefined,
+        business_name: client.business_name,
+        contact_name: client.contact_name,
+        email: client.email,
         phone: client.phone.replace(/\D/g, ''),
-        zip: client.zip.replace(/\D/g, '')
+        address: client.address,
+        city: client.city,
+        state: client.state,
+        zip: client.zip.replace(/\D/g, ''),
+        document: client.document ? client.document.replace(/\D/g, '') : undefined,
+        partner_id: client.partner_id
       };
       
       // In a production environment, this would use the actual Supabase query
@@ -197,12 +232,15 @@ export function useClients() {
       if (error) throw error;
       
       if (data && data.length > 0) {
+        // Type assertion para garantir que data é do tipo correto
+        const clientData = data[0] as SupabaseClientRow;
+        
         // Format the returned data
         const formattedClient = {
-          ...data[0],
-          phone: formatPhone(data[0].phone || ''),
-          document: data[0].document ? formatCNPJ(data[0].document) : undefined,
-          zip: formatCEP(data[0].zip || '')
+          ...clientData,
+          phone: formatPhone(clientData.phone || ''),
+          document: clientData.document ? formatCNPJ(clientData.document) : undefined,
+          zip: formatCEP(clientData.zip || '')
         } as Client;
         
         setClients(prev => prev.map(c => c.id === id ? formattedClient : c));
