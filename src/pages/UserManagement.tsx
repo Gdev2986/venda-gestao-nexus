@@ -9,11 +9,14 @@ import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { UserRole } from "@/types";
 import { supabase } from "@/integrations/supabase/client";
+import { AlertCircle } from "lucide-react";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 
 const UserManagement = () => {
   const { toast } = useToast();
   const [users, setUsers] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [updatingUser, setUpdatingUser] = useState<string | null>(null);
 
   useEffect(() => {
@@ -23,6 +26,7 @@ const UserManagement = () => {
   const fetchUsers = async () => {
     try {
       setLoading(true);
+      setError(null);
       
       // Fetch profiles from profiles table
       const { data, error } = await supabase
@@ -32,6 +36,7 @@ const UserManagement = () => {
       
       if (error) {
         console.error("Error fetching users:", error);
+        setError(`Falha ao carregar usuários: ${error.message}`);
         toast({
           variant: "destructive",
           title: "Erro ao carregar usuários",
@@ -41,8 +46,9 @@ const UserManagement = () => {
       }
       
       setUsers(data || []);
-    } catch (error) {
+    } catch (error: any) {
       console.error("Exception while fetching users:", error);
+      setError(`Falha ao carregar usuários: ${error?.message || 'Erro desconhecido'}`);
     } finally {
       setLoading(false);
     }
@@ -75,7 +81,7 @@ const UserManagement = () => {
         title: "Perfil atualizado",
         description: "A função do usuário foi alterada com sucesso."
       });
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error updating user role:", error);
       toast({
         variant: "destructive",
@@ -85,6 +91,10 @@ const UserManagement = () => {
     } finally {
       setUpdatingUser(null);
     }
+  };
+
+  const retryFetch = () => {
+    fetchUsers();
   };
 
   return (
@@ -117,6 +127,13 @@ const UserManagement = () => {
                   </div>
                 ))}
               </div>
+            ) : error ? (
+              <Alert variant="destructive" className="mb-4">
+                <AlertCircle className="h-4 w-4" />
+                <AlertTitle>Erro</AlertTitle>
+                <AlertDescription>{error}</AlertDescription>
+                <Button onClick={retryFetch} variant="outline" className="mt-2">Tentar novamente</Button>
+              </Alert>
             ) : (
               <div className="rounded-md border">
                 <Table>
