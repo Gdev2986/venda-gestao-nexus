@@ -1,148 +1,149 @@
 
-import React, { useState } from 'react';
+import { useState } from "react";
+import { Search } from "lucide-react";
+import { z } from "zod";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { DateRange } from "react-day-picker";
+
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
-import { Card, CardContent } from "@/components/ui/card";
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+} from "@/components/ui/form";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import { CalendarIcon, SearchIcon, RefreshCwIcon, PlusIcon } from "lucide-react";
-import { cn } from "@/lib/utils";
 
-export interface FilterValues {
-  search: string;
-  dateRange?: {
-    from: Date;
-    to?: Date;
-  };
-}
+// Define filter schema
+const filterSchema = z.object({
+  search: z.string().optional(),
+  dateRange: z.object({
+    from: z.date().optional(),
+    to: z.date().optional(),
+  }).optional(),
+});
+
+type FilterValues = z.infer<typeof filterSchema>;
 
 interface PartnerFilterProps {
   onFilter: (values: FilterValues) => void;
-  onAddPartner: () => void;
-  onRefresh: () => void;
 }
 
-const PartnerFilter: React.FC<PartnerFilterProps> = ({ 
-  onFilter, 
-  onAddPartner,
-  onRefresh
-}) => {
-  const [search, setSearch] = useState("");
-  const [date, setDate] = useState<{
-    from: Date;
-    to?: Date;
-  }>();
+export default function PartnerFilter({ onFilter }: PartnerFilterProps) {
+  const [dateOpen, setDateOpen] = useState(false);
 
-  const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setSearch(e.target.value);
-    onFilter({
-      search: e.target.value,
-      dateRange: date
-    });
+  const form = useForm<FilterValues>({
+    resolver: zodResolver(filterSchema),
+    defaultValues: {
+      search: "",
+      dateRange: undefined,
+    },
+  });
+
+  const handleSubmit = (values: FilterValues) => {
+    onFilter(values);
   };
 
-  const handleDateSelect = (selectedDate: {
-    from: Date;
-    to?: Date;
-  } | undefined) => {
-    setDate(selectedDate);
-    onFilter({
-      search,
-      dateRange: selectedDate
+  const clearFilters = () => {
+    form.reset({
+      search: "",
+      dateRange: undefined,
     });
-  };
-
-  const handleClearFilters = () => {
-    setSearch("");
-    setDate(undefined);
     onFilter({
       search: "",
-      dateRange: undefined
+      dateRange: undefined,
     });
   };
 
+  const selectedDateRange = form.watch("dateRange");
+
   return (
-    <Card className="mb-6">
-      <CardContent className="pt-6">
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-          <div className="relative">
-            <SearchIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-            <Input
-              placeholder="Buscar por nome da empresa..."
-              value={search}
-              onChange={handleSearchChange}
-              className="pl-9"
-            />
-          </div>
-          
-          <div className="grid gap-2">
-            <Popover>
-              <PopoverTrigger asChild>
-                <Button
-                  variant="outline"
-                  className={cn(
-                    "w-full justify-start text-left font-normal",
-                    !date && "text-muted-foreground"
-                  )}
-                >
-                  <CalendarIcon className="mr-2 h-4 w-4" />
-                  {date?.from ? (
-                    date.to ? (
-                      <>
-                        {format(date.from, "dd/MM/yyyy", { locale: ptBR })} -{" "}
-                        {format(date.to, "dd/MM/yyyy", { locale: ptBR })}
-                      </>
-                    ) : (
-                      format(date.from, "dd/MM/yyyy", { locale: ptBR })
-                    )
-                  ) : (
-                    <span>Data de cadastro</span>
-                  )}
-                </Button>
-              </PopoverTrigger>
-              <PopoverContent className="w-auto p-0" align="start">
-                <Calendar
-                  mode="range"
-                  selected={date}
-                  onSelect={handleDateSelect}
-                  numberOfMonths={2}
-                  locale={ptBR}
-                />
-              </PopoverContent>
-            </Popover>
-          </div>
-          
-          <div className="flex items-center space-x-2">
-            <Button 
-              variant="outline" 
-              className="flex-1"
-              onClick={handleClearFilters}
-            >
-              Limpar filtros
-            </Button>
-            <Button 
-              variant="outline" 
-              size="icon"
-              onClick={onRefresh}
-            >
-              <RefreshCwIcon className="h-4 w-4" />
-            </Button>
-            <Button 
-              variant="default" 
-              className="flex-1"
-              onClick={onAddPartner}
-            >
-              <PlusIcon className="h-4 w-4 mr-2" />
-              Novo
+    <Form {...form}>
+      <form onSubmit={form.handleSubmit(handleSubmit)}>
+        <div className="flex flex-col sm:flex-row gap-3">
+          <FormField
+            control={form.control}
+            name="search"
+            render={({ field }) => (
+              <FormItem className="flex-1">
+                <FormControl>
+                  <div className="relative">
+                    <Input
+                      placeholder="Buscar por nome..."
+                      {...field}
+                      className="pl-10"
+                    />
+                    <Search className="absolute left-3 top-2.5 h-5 w-5 text-muted-foreground" />
+                  </div>
+                </FormControl>
+              </FormItem>
+            )}
+          />
+
+          <FormField
+            control={form.control}
+            name="dateRange"
+            render={({ field }) => (
+              <FormItem className="flex-shrink-0">
+                <Popover open={dateOpen} onOpenChange={setDateOpen}>
+                  <PopoverTrigger asChild>
+                    <FormControl>
+                      <Button
+                        variant="outline"
+                        className="min-w-[240px] justify-start text-left font-normal"
+                      >
+                        {field.value?.from ? (
+                          field.value.to ? (
+                            <>
+                              {format(field.value.from, "dd/MM/yyyy")} -{" "}
+                              {format(field.value.to, "dd/MM/yyyy")}
+                            </>
+                          ) : (
+                            format(field.value.from, "dd/MM/yyyy")
+                          )
+                        ) : (
+                          <span className="text-muted-foreground">Selecionar período</span>
+                        )}
+                      </Button>
+                    </FormControl>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0" align="center">
+                    <Calendar
+                      mode="range"
+                      selected={field.value as DateRange}
+                      onSelect={(range) => {
+                        field.onChange(range);
+                        if (range?.to) {
+                          setDateOpen(false);
+                        }
+                      }}
+                      numberOfMonths={2}
+                      locale={ptBR}
+                      reversedRange={true}
+                    />
+                  </PopoverContent>
+                </Popover>
+              </FormItem>
+            )}
+          />
+
+          <div className="flex gap-2">
+            <Button type="submit">Filtrar</Button>
+            <Button type="button" variant="outline" onClick={clearFilters}>
+              Limpar
             </Button>
           </div>
         </div>
-      </CardContent>
-    </Card>
+      </form>
+    </Form>
   );
-};
-
-export default PartnerFilter;
+}

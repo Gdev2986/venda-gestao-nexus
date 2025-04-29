@@ -1,82 +1,73 @@
 
-import React from 'react';
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow
-} from "@/components/ui/table";
-import { Button } from "@/components/ui/button";
-import { Partner } from "@/types";
-import { formatCurrency } from "@/lib/utils";
 import { format } from "date-fns";
-import { ptBR } from "date-fns/locale";
+import { PenIcon, TrashIcon } from "lucide-react";
+import { type Partner } from "@/hooks/use-partners";
+
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Button } from "@/components/ui/button";
 
 interface PartnersTableProps {
   partners: Partner[];
-  onViewPartner: (partner: Partner) => void;
-  isLoading?: boolean;
+  isLoading: boolean;
+  onEditPartner: (partner: Partner) => void;
+  onDeletePartner: (partner: Partner) => void;
 }
 
-const PartnersTable: React.FC<PartnersTableProps> = ({ 
-  partners, 
-  onViewPartner,
-  isLoading = false
-}) => {
-  if (isLoading) {
-    return (
-      <div className="space-y-4">
-        {Array.from({ length: 5 }).map((_, i) => (
-          <div key={i} className="h-12 bg-muted animate-pulse rounded" />
-        ))}
-      </div>
-    );
-  }
-
+export function PartnersTable({
+  partners,
+  isLoading,
+  onEditPartner,
+  onDeletePartner,
+}: PartnersTableProps) {
   return (
-    <div className="rounded-md border">
-      <Table>
-        <TableHeader>
+    <Table>
+      <TableHeader>
+        <TableRow>
+          <TableHead>Nome</TableHead>
+          <TableHead>Contato</TableHead>
+          <TableHead>Email</TableHead>
+          <TableHead>Telefone</TableHead>
+          <TableHead>Criado em</TableHead>
+          <TableHead className="text-right">Ações</TableHead>
+        </TableRow>
+      </TableHeader>
+      <TableBody>
+        {isLoading ? (
           <TableRow>
-            <TableHead>Empresa</TableHead>
-            <TableHead>Data de Cadastro</TableHead>
-            <TableHead>Comissão</TableHead>
-            <TableHead className="text-right">Ações</TableHead>
+            <TableCell colSpan={6} className="text-center py-10">
+              Carregando...
+            </TableCell>
           </TableRow>
-        </TableHeader>
-        <TableBody>
-          {partners.length > 0 ? (
-            partners.map((partner) => (
-              <TableRow key={partner.id}>
-                <TableCell className="font-medium">{partner.company_name}</TableCell>
-                <TableCell>
-                  {partner.created_at && format(new Date(partner.created_at), "dd/MM/yyyy", { locale: ptBR })}
-                </TableCell>
-                <TableCell>{partner.commission_rate}%</TableCell>
-                <TableCell className="text-right">
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => onViewPartner(partner)}
-                  >
-                    Detalhes
+        ) : partners.length === 0 ? (
+          <TableRow>
+            <TableCell colSpan={6} className="text-center py-10 text-muted-foreground">
+              Nenhum parceiro encontrado.
+            </TableCell>
+          </TableRow>
+        ) : (
+          partners.map((partner) => (
+            <TableRow key={partner.id}>
+              <TableCell className="font-medium">{partner.business_name}</TableCell>
+              <TableCell>{partner.contact_name}</TableCell>
+              <TableCell>{partner.email}</TableCell>
+              <TableCell>{partner.phone}</TableCell>
+              <TableCell>
+                {partner.created_at && format(new Date(partner.created_at), 'dd/MM/yyyy')}
+              </TableCell>
+              <TableCell className="text-right">
+                <div className="flex justify-end gap-2">
+                  <Button variant="ghost" size="icon" onClick={() => onEditPartner(partner)}>
+                    <PenIcon className="h-4 w-4" />
                   </Button>
-                </TableCell>
-              </TableRow>
-            ))
-          ) : (
-            <TableRow>
-              <TableCell colSpan={4} className="h-24 text-center">
-                Nenhum parceiro encontrado.
+                  <Button variant="ghost" size="icon" onClick={() => onDeletePartner(partner)}>
+                    <TrashIcon className="h-4 w-4" />
+                  </Button>
+                </div>
               </TableCell>
             </TableRow>
-          )}
-        </TableBody>
-      </Table>
-    </div>
+          ))
+        )}
+      </TableBody>
+    </Table>
   );
-};
-
-export default PartnersTable;
+}

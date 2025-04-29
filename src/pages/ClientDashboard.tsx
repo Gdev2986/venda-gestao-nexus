@@ -8,7 +8,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { CalendarIcon, ShoppingBag, CreditCard, Headphones, Truck } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import { Sale, SaleDb } from "@/types";
+import { Sale } from "@/types";
 
 const ClientDashboard = () => {
   const { user } = useAuth();
@@ -52,20 +52,8 @@ const ClientDashboard = () => {
 
         if (salesError) {
           console.error("Error fetching sales:", salesError);
-        } else if (salesData) {
-          // Convert database sales to application Sales type
-          const formattedSales: Sale[] = salesData.map((sale: SaleDb) => ({
-            id: sale.id,
-            code: sale.code,
-            date: new Date(sale.date),
-            terminal: sale.terminal,
-            grossAmount: sale.gross_amount,
-            netAmount: sale.net_amount,
-            paymentMethod: sale.payment_method,
-            clientId: sale.client_id
-          }));
-          
-          setSales(formattedSales);
+        } else {
+          setSales(salesData || []);
         }
 
         // Fetch machines data
@@ -82,7 +70,7 @@ const ClientDashboard = () => {
 
         // Mock balance calculation
         // In a real application, you would fetch this from a balance table or calculate it
-        const totalSales = salesData?.reduce((sum: number, sale: SaleDb) => sum + Number(sale.net_amount), 0) || 0;
+        const totalSales = salesData?.reduce((sum: number, sale: any) => sum + Number(sale.net_amount), 0) || 0;
         setCurrentBalance(totalSales);
       }
     } catch (error) {
