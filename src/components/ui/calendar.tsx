@@ -1,7 +1,13 @@
 
 import * as React from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
-import { DayPicker, SelectRangeEventHandler, DateRange } from "react-day-picker";
+import { 
+  DayPicker, 
+  DateRange, 
+  DayPickerRangeProps,
+  DayPickerSingleProps,
+  DayPickerDefaultProps
+} from "react-day-picker";
 
 import { cn } from "@/lib/utils";
 import { buttonVariants } from "@/components/ui/button";
@@ -26,13 +32,13 @@ function Calendar({
   });
 
   // This wrapper handles the reversed range selection behavior when in range mode
-  const handleRangeSelect: SelectRangeEventHandler = React.useCallback(
-    (range, selectedDay) => {
+  const handleRangeSelect = React.useCallback(
+    (range: DateRange | undefined, selectedDay: Date | undefined) => {
       // Skip if not in range mode or no reversedRange option
       if (props.mode !== "range" || !reversedRange) {
         // Just forward the selection to the original handler
-        if (props.onSelect && typeof props.onSelect === 'function') {
-          (props.onSelect as SelectRangeEventHandler)(range, selectedDay);
+        if (props.mode === "range" && 'onSelect' in props && typeof props.onSelect === 'function') {
+          props.onSelect(range, selectedDay);
         }
         return;
       }
@@ -40,8 +46,8 @@ function Calendar({
       // If selection is cleared (range is undefined)
       if (!range && !selectedDay) {
         setRangeSelectionState({ phase: "end" });
-        if (props.onSelect && typeof props.onSelect === 'function') {
-          (props.onSelect as SelectRangeEventHandler)(undefined, undefined);
+        if ('onSelect' in props && typeof props.onSelect === 'function') {
+          props.onSelect(undefined, undefined);
         }
         return;
       }
@@ -72,16 +78,16 @@ function Calendar({
           setRangeSelectionState({ phase: "end" });
           
           // Pass final range to original handler
-          if (props.onSelect && typeof props.onSelect === 'function') {
-            (props.onSelect as SelectRangeEventHandler)(finalRange, selectedDay);
+          if ('onSelect' in props && typeof props.onSelect === 'function') {
+            props.onSelect(finalRange, selectedDay);
           }
           return;
         }
       }
 
       // Default fallback
-      if (props.onSelect && typeof props.onSelect === 'function') {
-        (props.onSelect as SelectRangeEventHandler)(range, selectedDay);
+      if ('onSelect' in props && typeof props.onSelect === 'function') {
+        props.onSelect(range, selectedDay);
       }
     },
     [props, rangeSelectionState, reversedRange]
@@ -90,7 +96,7 @@ function Calendar({
   // Create the day picker props based on our state
   const dayPickerProps = React.useMemo(() => {
     // Base props with styling
-    const commonProps = {
+    const commonProps: Partial<CalendarProps> = {
       showOutsideDays,
       className: cn("p-3 pointer-events-auto", className),
       classNames: {
@@ -140,14 +146,15 @@ function Calendar({
       const rangeProps = {
         ...commonProps,
         onSelect: handleRangeSelect,
-      };
+      } as DayPickerRangeProps;
 
       // For the first phase (selecting end date), don't show any selection
       if (rangeSelectionState.phase === "start" && rangeSelectionState.selectedEnd) {
         // Show only the end date selected during the first phase
         rangeProps.selected = { 
+          from: undefined,
           to: rangeSelectionState.selectedEnd 
-        } as any; // Type cast as any to avoid TypeScript errors
+        };
       }
 
       return rangeProps;
