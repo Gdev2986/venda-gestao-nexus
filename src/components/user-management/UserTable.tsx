@@ -7,6 +7,7 @@ import { UserRole } from "@/types";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/components/ui/use-toast";
 import UserPagination from "./UserPagination";
+import { RoleChangeDialog } from "./RoleChangeDialog";
 
 interface User {
   id: string;
@@ -33,8 +34,19 @@ const UserTable = ({
 }: UserTableProps) => {
   const { toast } = useToast();
   const [updatingUser, setUpdatingUser] = useState<string | null>(null);
+  const [roleDialogOpen, setRoleDialogOpen] = useState(false);
+  const [selectedUser, setSelectedUser] = useState<User | null>(null);
+  const [newRole, setNewRole] = useState<UserRole | null>(null);
 
-  const handleRoleChange = async (userId: string, newRole: UserRole) => {
+  const handleRoleChangeClick = (user: User, selectedRole: UserRole) => {
+    if (user.role === selectedRole) return; // Sem mudança
+    
+    setSelectedUser(user);
+    setNewRole(selectedRole);
+    setRoleDialogOpen(true);
+  };
+
+  const handleRoleChange = async (userId: string, newRole: UserRole, notes: string) => {
     try {
       setUpdatingUser(userId);
       
@@ -76,7 +88,8 @@ const UserTable = ({
             action: 'ROLE_CHANGE',
             before_role: beforeRole,
             after_role: newRole,
-            ip_address: 'web-app'
+            ip_address: 'web-app',
+            notes: notes
           }]);
       } catch (logError) {
         console.warn("Não foi possível registrar o log de acesso:", logError);
@@ -127,7 +140,7 @@ const UserTable = ({
                   <TableCell>
                     <Select
                       value={user.role}
-                      onValueChange={(value) => handleRoleChange(user.id, value as UserRole)}
+                      onValueChange={(value) => handleRoleChangeClick(user, value as UserRole)}
                       disabled={updatingUser === user.id}
                     >
                       <SelectTrigger className="w-[180px]">
@@ -167,6 +180,17 @@ const UserTable = ({
         totalPages={totalPages}
         onPageChange={onPageChange}
       />
+
+      {selectedUser && newRole && (
+        <RoleChangeDialog
+          isOpen={roleDialogOpen}
+          onClose={() => setRoleDialogOpen(false)}
+          onConfirm={(notes) => handleRoleChange(selectedUser.id, newRole, notes)}
+          userName={selectedUser.name || selectedUser.email}
+          currentRole={selectedUser.role}
+          newRole={newRole}
+        />
+      )}
     </div>
   );
 };
