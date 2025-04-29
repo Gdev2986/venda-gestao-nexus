@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import {
@@ -69,7 +68,7 @@ const Sidebar = ({ isOpen, isMobile, onClose, userRole }: SidebarProps) => {
       title: "Clientes",
       icon: Users,
       href: "/clients",
-      roles: [UserRole.ADMIN, UserRole.PARTNER],
+      roles: [UserRole.ADMIN, UserRole.FINANCIAL, UserRole.PARTNER],
     },
     {
       title: "Relatórios",
