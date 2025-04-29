@@ -8,6 +8,7 @@ import { useIsMobile } from "@/hooks/use-mobile";
 import NotificationDropdown from "./NotificationDropdown";
 import ThemeToggle from "../theme/theme-toggle";
 import { AnimatePresence, motion } from "framer-motion";
+import { useUserRole } from "@/hooks/use-user-role";
 
 type MainLayoutProps = {
   children: React.ReactNode;
@@ -22,8 +23,8 @@ const MainLayout = ({ children }: MainLayoutProps) => {
   
   const isMobile = useIsMobile();
   
-  // Default to ADMIN role for now, should be determined from auth
-  const [userRole, setUserRole] = useState<UserRole>(UserRole.ADMIN);
+  // Get user role from custom hook
+  const { userRole } = useUserRole();
 
   useEffect(() => {
     // Close sidebar on mobile by default

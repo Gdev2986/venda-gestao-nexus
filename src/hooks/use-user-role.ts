@@ -3,17 +3,29 @@ import { useState, useEffect } from "react";
 import { UserRole } from "@/types";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
+import { getAuthData, setAuthData } from "@/utils/auth-utils";
 
 export const useUserRole = () => {
-  const [userRole, setUserRole] = useState<UserRole>(UserRole.ADMIN);
+  const [userRole, setUserRole] = useState<UserRole>(UserRole.CLIENT); // Default to CLIENT, safer than admin
   const { user } = useAuth();
   
   useEffect(() => {
     const fetchUserRole = async () => {
-      // Se não houver usuário, não faz sentido buscar o perfil
-      if (!user) return;
+      // If there's no user, don't fetch profile
+      if (!user) {
+        setUserRole(UserRole.CLIENT); // Default to client when not logged in
+        return;
+      }
 
       try {
+        // First check localStorage for cached role
+        const cachedRole = getAuthData("userRole");
+        
+        if (cachedRole && Object.values(UserRole).includes(cachedRole as UserRole)) {
+          setUserRole(cachedRole as UserRole);
+        }
+        
+        // Always verify with database to ensure role is current
         const { data, error } = await supabase
           .from('profiles')
           .select('role')
@@ -21,33 +33,28 @@ export const useUserRole = () => {
           .single();
 
         if (error) {
-          console.error('Erro ao buscar perfil do usuário:', error);
+          console.error('Error fetching user profile:', error);
           return;
         }
 
         if (data && data.role) {
-          setUserRole(data.role as UserRole);
-          // Armazena também no localStorage para persistência entre sessões
-          localStorage.setItem("userRole", data.role);
+          const role = data.role as UserRole;
+          setUserRole(role);
+          // Store in localStorage for persistence
+          setAuthData("userRole", role);
         }
       } catch (error) {
-        console.error('Erro ao buscar perfil:', error);
+        console.error('Error fetching profile:', error);
       }
     };
 
-    // Busca o perfil quando o usuário mudar
+    // Fetch profile when user changes
     fetchUserRole();
-    
-    // Fallback para o localStorage caso a busca falhe
-    const storedRole = localStorage.getItem("userRole");
-    if (storedRole && Object.values(UserRole).includes(storedRole as UserRole)) {
-      setUserRole(storedRole as UserRole);
-    }
   }, [user]);
 
   const updateUserRole = (role: UserRole) => {
     setUserRole(role);
-    localStorage.setItem("userRole", role);
+    setAuthData("userRole", role);
   };
 
   return { userRole, updateUserRole };

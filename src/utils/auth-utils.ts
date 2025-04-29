@@ -4,6 +4,7 @@
  */
 
 import { supabase } from "@/integrations/supabase/client";
+import { UserRole } from "@/types";
 
 /**
  * Checks if there is an active session and returns the user if available
@@ -55,4 +56,34 @@ export const getAuthData = (key: string) => {
     console.error(`Error getting ${key} from localStorage:`, error);
     return null;
   }
+};
+
+/**
+ * Fetch user role directly from database
+ */
+export const fetchUserRole = async (userId: string): Promise<UserRole | null> => {
+  try {
+    const { data, error } = await supabase
+      .from('profiles')
+      .select('role')
+      .eq('id', userId)
+      .single();
+    
+    if (error) {
+      console.error('Error fetching user role:', error);
+      return null;
+    }
+    
+    return data?.role as UserRole || null;
+  } catch (error) {
+    console.error('Exception fetching user role:', error);
+    return null;
+  }
+};
+
+/**
+ * Check if user has specific role
+ */
+export const hasRole = (userRole: UserRole, allowedRoles: UserRole[]): boolean => {
+  return allowedRoles.includes(userRole);
 };
