@@ -74,10 +74,11 @@ export const usePartners = () => {
   // Add new partner
   const addPartner = async (partnerData: Omit<Partner, "id" | "created_at" | "updated_at">) => {
     try {
-      // Removed the "id" property since Supabase will generate it
+      // Since id is required by the database, we let Supabase generate it
       const { data, error } = await supabase
         .from("partners")
         .insert([{
+          id: crypto.randomUUID(), // Generate a UUID client side
           company_name: partnerData.company_name,
           commission_rate: partnerData.commission_rate
         }])

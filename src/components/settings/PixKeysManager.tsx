@@ -34,7 +34,7 @@ import { cn } from "@/lib/utils";
 
 interface PixKeysManagerProps {
   pixKeys: PixKey[];
-  onAddKey?: (key: Omit<PixKey, "id" | "userId">) => void;
+  onAddKey?: (key: Omit<PixKey, "id" | "created_at" | "updated_at">) => void;
   onDeleteKey?: (keyId: string) => void;
   onSetDefaultKey?: (keyId: string) => void;
 }
@@ -89,6 +89,7 @@ const PixKeysManager = ({
         key: keyValue,
         name: keyName,
         is_default: pixKeys.length === 0 ? true : false,
+        user_id: "" // This will be set by the backend
       });
     }
 
@@ -205,7 +206,10 @@ const PixKeysManager = ({
             <div className="grid gap-4 py-4">
               <div className="grid gap-2">
                 <Label htmlFor="keyType">Tipo de chave</Label>
-                <Select value={keyType} onValueChange={(value: any) => setKeyType(value)}>
+                <Select 
+                  value={keyType} 
+                  onValueChange={(value) => setKeyType(value as PixKeyType)}
+                >
                   <SelectTrigger id="keyType" className="w-full">
                     <SelectValue placeholder="Selecione o tipo" />
                   </SelectTrigger>

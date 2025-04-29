@@ -1,251 +1,208 @@
 
 import { useState, useEffect } from "react";
-import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { Machine, MachineStatus } from "@/types";
-import { useToast } from "@/hooks/use-toast";
-
-// Define a more specific type for the machine data from the database to avoid deep type instantiation
-interface MachineDb {
-  id: string;
-  serial_number: string;
-  model: string;
-  status: string; // This will be cast to MachineStatus enum
-  client_id?: string;
-  created_at?: string;
-  updated_at?: string;
-}
+import { useToast } from "./use-toast";
 
 export const useMachines = () => {
-  const { user } = useAuth();
   const [machines, setMachines] = useState<Machine[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [clientId, setClientId] = useState<string | null>(null);
+  const [error, setError] = useState("");
   const { toast } = useToast();
-
-  // Fetch client ID
-  const fetchClientId = async () => {
-    if (!user) return null;
-    
+  
+  const fetchMachines = async () => {
     try {
+      setIsLoading(true);
+      setError("");
+      
       const { data, error } = await supabase
-        .from('clients')
-        .select('id')
-        .eq('user_id', user.id)
-        .single();
+        .from("machines")
+        .select("*")
+        .order("created_at", { ascending: false });
       
       if (error) throw error;
       
       if (data) {
-        setClientId(data.id);
-        return data.id;
+        // Convert string status to enum MachineStatus
+        const typedMachines = data.map(machine => ({
+          ...machine,
+          status: machine.status as MachineStatus
+        }));
+        setMachines(typedMachines);
       }
-      
-      return null;
-    } catch (error) {
-      console.error("Error fetching client ID:", error);
-      return null;
-    }
-  };
-  
-  // Fetch machines
-  const fetchMachines = async (cid: string) => {
-    try {
-      const { data, error } = await supabase
-        .from('machines')
-        .select('*')
-        .eq('client_id', cid);
-      
-      if (error) throw error;
-      
-      // Convert database status to MachineStatus enum
-      const machinesWithCorrectStatus: Machine[] = (data || []).map((machine: MachineDb) => ({
-        ...machine,
-        status: machine.status as MachineStatus
-      }));
-      
-      setMachines(machinesWithCorrectStatus);
-    } catch (error) {
-      console.error("Error fetching machines:", error);
-    }
-  };
-  
-  // Request machine assistance
-  const requestMachineAssistance = async (machineId: string, issue: string) => {
-    if (!clientId) {
+    } catch (err: any) {
+      console.error("Error fetching machines:", err);
+      setError(err.message || "Failed to fetch machines");
       toast({
-        title: "Erro",
-        description: "Dados do cliente não encontrados.",
-        variant: "destructive"
+        variant: "destructive",
+        title: "Error loading machines",
+        description: "There was a problem loading the machines data.",
       });
-      return false;
-    }
-    
-    try {
-      // Create a support conversation
-      const { data, error } = await supabase
-        .from('support_conversations')
-        .insert({
-          client_id: clientId,
-          subject: `Assistência para máquina - ${machineId}`
-        })
-        .select();
-      
-      if (error) throw error;
-      
-      if (data && data[0]) {
-        // Add the first message with the issue
-        const { error: msgError } = await supabase
-          .from('support_messages')
-          .insert({
-            conversation_id: data[0].id,
-            user_id: user!.id,
-            message: `Solicitação de assistência para máquina: ${issue}`
-          });
-        
-        if (msgError) throw msgError;
-        
-        toast({
-          title: "Solicitação enviada",
-          description: "Sua solicitação de assistência foi registrada. Um técnico entrará em contato em breve."
-        });
-        
-        return true;
-      }
-      
-      return false;
-    } catch (error: any) {
-      console.error("Error requesting machine assistance:", error);
-      toast({
-        title: "Erro",
-        description: error.message || "Não foi possível enviar sua solicitação.",
-        variant: "destructive"
-      });
-      return false;
-    }
-  };
-  
-  // Request supplies (receipt paper)
-  const requestSupplies = async (machineId: string, quantity: number) => {
-    if (!clientId) {
-      toast({
-        title: "Erro",
-        description: "Dados do cliente não encontrados.",
-        variant: "destructive"
-      });
-      return false;
-    }
-    
-    try {
-      // Create a support conversation for supplies
-      const { data, error } = await supabase
-        .from('support_conversations')
-        .insert({
-          client_id: clientId,
-          subject: `Solicitação de Bobinas - ${machineId}`
-        })
-        .select();
-      
-      if (error) throw error;
-      
-      if (data && data[0]) {
-        // Add the first message with the supplies request
-        const { error: msgError } = await supabase
-          .from('support_messages')
-          .insert({
-            conversation_id: data[0].id,
-            user_id: user!.id,
-            message: `Solicitação de ${quantity} bobinas para a máquina ${machineId}.`
-          });
-        
-        if (msgError) throw msgError;
-        
-        toast({
-          title: "Solicitação enviada",
-          description: `Sua solicitação de ${quantity} bobinas foi registrada e será processada em breve.`
-        });
-        
-        return true;
-      }
-      
-      return false;
-    } catch (error: any) {
-      console.error("Error requesting supplies:", error);
-      toast({
-        title: "Erro",
-        description: error.message || "Não foi possível enviar sua solicitação.",
-        variant: "destructive"
-      });
-      return false;
-    }
-  };
-  
-  // Fetch all data
-  const fetchData = async () => {
-    setIsLoading(true);
-    try {
-      const cid = await fetchClientId();
-      if (cid) {
-        await fetchMachines(cid);
-      }
     } finally {
       setIsLoading(false);
     }
   };
   
-  // Initial data load
-  useEffect(() => {
-    if (user) {
-      fetchData();
+  const createMachine = async (machineData: Omit<Machine, "id" | "created_at" | "updated_at">) => {
+    try {
+      const { error } = await supabase
+        .from("machines")
+        .insert([machineData]);
       
-      // Set up realtime subscription for machine updates
-      const channel = supabase
-        .channel('machines-changes')
-        .on(
-          'postgres_changes',
-          {
-            event: '*',
-            schema: 'public',
-            table: 'machines',
-            filter: clientId ? `client_id=eq.${clientId}` : undefined
-          },
-          (payload) => {
-            console.log('Machine update:', payload);
-            fetchData();
-            
-            // Show notification for status changes
-            if (payload.eventType === 'UPDATE') {
-              const newData = payload.new as Machine;
-              const oldData = payload.old as Machine;
-              
-              if (newData.status !== oldData.status) {
-                const statusMessages: Record<MachineStatus, string> = {
-                  [MachineStatus.ACTIVE]: "Máquina ativada com sucesso.",
-                  [MachineStatus.INACTIVE]: "Máquina desativada.",
-                  [MachineStatus.MAINTENANCE]: "Máquina em manutenção.",
-                };
-                
-                toast({
-                  title: "Status atualizado",
-                  description: statusMessages[newData.status] || "Status da máquina atualizado."
-                });
-              }
-            }
-          }
-        )
-        .subscribe();
-        
-      return () => {
-        supabase.removeChannel(channel);
-      };
+      if (error) throw error;
+      
+      toast({
+        title: "Machine created",
+        description: "The machine has been successfully added.",
+      });
+      
+      fetchMachines();
+      return true;
+    } catch (err: any) {
+      console.error("Error creating machine:", err);
+      toast({
+        variant: "destructive",
+        title: "Error creating machine",
+        description: err.message || "Failed to create machine.",
+      });
+      return false;
     }
-  }, [user, clientId]);
+  };
+  
+  const updateMachineStatus = async (machineId: string, status: MachineStatus) => {
+    try {
+      const { error } = await supabase
+        .from("machines")
+        .update({ status })
+        .eq("id", machineId);
+      
+      if (error) throw error;
+      
+      setMachines(prev => 
+        prev.map(machine => 
+          machine.id === machineId ? { ...machine, status } : machine
+        )
+      );
+      
+      toast({
+        title: "Status updated",
+        description: `Machine status has been updated to ${status}.`,
+      });
+      
+      return true;
+    } catch (err: any) {
+      console.error("Error updating machine status:", err);
+      toast({
+        variant: "destructive",
+        title: "Error updating status",
+        description: err.message || "Failed to update machine status.",
+      });
+      return false;
+    }
+  };
+  
+  const assignMachineToClient = async (machineId: string, clientId: string) => {
+    try {
+      const { error } = await supabase
+        .from("machines")
+        .update({ client_id: clientId })
+        .eq("id", machineId);
+      
+      if (error) throw error;
+      
+      setMachines(prev => 
+        prev.map(machine => 
+          machine.id === machineId ? { ...machine, client_id: clientId } : machine
+        )
+      );
+      
+      toast({
+        title: "Machine assigned",
+        description: "The machine has been successfully assigned to the client.",
+      });
+      
+      return true;
+    } catch (err: any) {
+      console.error("Error assigning machine:", err);
+      toast({
+        variant: "destructive",
+        title: "Error assigning machine",
+        description: err.message || "Failed to assign machine to client.",
+      });
+      return false;
+    }
+  };
+  
+  const transferMachine = async (machineId: string, fromClientId: string | null, toClientId: string, userId: string) => {
+    try {
+      // Create transfer record
+      const { error: transferError } = await supabase
+        .from("machine_transfers")
+        .insert([{
+          machine_id: machineId,
+          from_client_id: fromClientId,
+          to_client_id: toClientId,
+          created_by: userId
+        }]);
+      
+      if (transferError) throw transferError;
+      
+      // Update machine client_id
+      const { error: updateError } = await supabase
+        .from("machines")
+        .update({ client_id: toClientId })
+        .eq("id", machineId);
+      
+      if (updateError) throw updateError;
+      
+      // Update local state
+      setMachines(prev => 
+        prev.map(machine => 
+          machine.id === machineId ? { ...machine, client_id: toClientId } : machine
+        )
+      );
+      
+      toast({
+        title: "Machine transferred",
+        description: "The machine has been successfully transferred to the new client.",
+      });
+      
+      return true;
+    } catch (err: any) {
+      console.error("Error transferring machine:", err);
+      toast({
+        variant: "destructive",
+        title: "Error transferring machine",
+        description: err.message || "Failed to transfer machine.",
+      });
+      return false;
+    }
+  };
+
+  const getStatusLabel = (status: MachineStatus): string => {
+    const statusLabels: Record<MachineStatus, string> = {
+      [MachineStatus.ACTIVE]: "Active",
+      [MachineStatus.INACTIVE]: "Inactive",
+      [MachineStatus.MAINTENANCE]: "Maintenance",
+      [MachineStatus.BLOCKED]: "Blocked"
+    };
+    
+    return statusLabels[status] || "Unknown";
+  };
+  
+  useEffect(() => {
+    fetchMachines();
+  }, []);
   
   return {
     machines,
     isLoading,
-    requestMachineAssistance,
-    requestSupplies,
-    refreshData: fetchData
+    error,
+    fetchMachines,
+    createMachine,
+    updateMachineStatus,
+    assignMachineToClient,
+    transferMachine,
+    getStatusLabel
   };
 };

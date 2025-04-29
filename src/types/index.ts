@@ -55,6 +55,14 @@ export interface Client {
   created_at?: string;
   updated_at?: string;
   status?: string;
+  // Add the missing fields that are being used in the application
+  contact_name?: string;
+  email?: string;
+  phone?: string;
+  address?: string;
+  city?: string;
+  state?: string;
+  zip?: string;
 }
 
 export interface Partner {
