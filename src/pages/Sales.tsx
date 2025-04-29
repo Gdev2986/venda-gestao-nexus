@@ -1,88 +1,12 @@
+
 import { useState, useEffect } from "react";
 import MainLayout from "@/components/layout/MainLayout";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
-import {
-  Pagination,
-  PaginationContent,
-  PaginationEllipsis,
-  PaginationItem,
-  PaginationLink,
-  PaginationNext,
-  PaginationPrevious,
-} from "@/components/ui/pagination";
-import { PaymentMethod, Sale, SalesFilterParams } from "@/types";
-import { Badge } from "@/components/ui/badge";
-import { format } from "date-fns";
-import { ptBR } from "date-fns/locale";
-import { CalendarIcon, DownloadIcon, SearchIcon, UploadIcon } from "lucide-react";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { Calendar } from "@/components/ui/calendar";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
-import { cn } from "@/lib/utils";
+import { Sale, SalesFilterParams } from "@/types";
 import { useToast } from "@/hooks/use-toast";
-
-// Mock data generator
-const generateMockSales = (count = 50): Sale[] => {
-  const sales: Sale[] = [];
-  const terminals = ["T123456", "T789012", "T345678", "T901234"];
-  const methods = [PaymentMethod.CREDIT, PaymentMethod.DEBIT, PaymentMethod.PIX];
-  
-  for (let i = 0; i < count; i++) {
-    const grossAmount = Math.random() * 1000;
-    const netAmount = grossAmount * 0.97; // 3% fee
-    
-    sales.push({
-      id: `sale_${i}`,
-      code: `VND${Math.floor(Math.random() * 100000).toString().padStart(6, '0')}`,
-      date: new Date(Date.now() - Math.floor(Math.random() * 90) * 24 * 60 * 60 * 1000),
-      terminal: terminals[Math.floor(Math.random() * terminals.length)],
-      grossAmount,
-      netAmount,
-      paymentMethod: methods[Math.floor(Math.random() * methods.length)],
-      clientId: "client_1",
-    });
-  }
-  
-  // Sort by date, newest first
-  return sales.sort((a, b) => b.date.getTime() - a.date.getTime());
-};
-
-const getPaymentMethodLabel = (method: PaymentMethod) => {
-  switch (method) {
-    case PaymentMethod.CREDIT:
-      return <Badge variant="outline">Crédito</Badge>;
-    case PaymentMethod.DEBIT:
-      return <Badge variant="outline" className="border-success text-success">Débito</Badge>;
-    case PaymentMethod.PIX:
-      return <Badge variant="outline" className="border-warning text-warning">Pix</Badge>;
-    default:
-      return null;
-  }
-};
+import SalesFilters from "@/components/sales/SalesFilters";
+import SalesTable from "@/components/sales/SalesTable";
+import ImportSalesDialog from "@/components/sales/ImportSalesDialog";
+import { generateMockSales, calculateSalesTotals } from "@/utils/sales-utils";
 
 interface DateRange {
   from: Date;
@@ -160,14 +84,7 @@ const Sales = () => {
   const paginatedSales = filteredSales.slice(startIndex, startIndex + itemsPerPage);
   
   // Calculate totals
-  const totals = filteredSales.reduce(
-    (acc, sale) => {
-      acc.grossAmount += sale.grossAmount;
-      acc.netAmount += sale.netAmount;
-      return acc;
-    },
-    { grossAmount: 0, netAmount: 0 }
-  );
+  const totals = calculateSalesTotals(filteredSales);
   
   const handleFilterChange = (key: keyof SalesFilterParams, value: any) => {
     setFilters((prev) => ({
@@ -181,17 +98,11 @@ const Sales = () => {
     setDate(undefined);
   };
 
-  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-
-    // In a real application, you would parse the file and handle the upload
+  const handleExport = () => {
     toast({
-      title: "Arquivo selecionado",
-      description: `${file.name} será processado. Esta funcionalidade está em desenvolvimento.`,
+      title: "Exportação iniciada",
+      description: "O arquivo será gerado e disponibilizado para download em breve.",
     });
-    
-    setShowImportDialog(false);
   };
 
   return (
@@ -203,299 +114,29 @@ const Sales = () => {
         </p>
       </div>
       
-      <Card className="mb-6">
-        <CardHeader>
-          <CardTitle>Filtros</CardTitle>
-          <CardDescription>
-            Filtre as vendas por período, forma de pagamento, terminal e mais
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="date">Período</Label>
-              <Popover>
-                <PopoverTrigger asChild>
-                  <Button
-                    variant="outline"
-                    className={cn(
-                      "w-full justify-start text-left font-normal",
-                      !date && "text-muted-foreground"
-                    )}
-                  >
-                    <CalendarIcon className="mr-2 h-4 w-4" />
-                    {date?.from ? (
-                      date.to ? (
-                        <>
-                          {format(date.from, "dd/MM/yyyy", { locale: ptBR })} -{" "}
-                          {format(date.to, "dd/MM/yyyy", { locale: ptBR })}
-                        </>
-                      ) : (
-                        format(date.from, "dd/MM/yyyy", { locale: ptBR })
-                      )
-                    ) : (
-                      <span>Selecione uma data</span>
-                    )}
-                  </Button>
-                </PopoverTrigger>
-                <PopoverContent className="w-auto p-0 pointer-events-auto" align="start">
-                  <Calendar
-                    mode="range"
-                    selected={date}
-                    onSelect={setDate}
-                    numberOfMonths={2}
-                    className="p-3"
-                  />
-                </PopoverContent>
-              </Popover>
-            </div>
-            
-            <div className="space-y-2">
-              <Label htmlFor="paymentMethod">Forma de Pagamento</Label>
-              <Select
-                value={filters.paymentMethod}
-                onValueChange={(value) =>
-                  handleFilterChange("paymentMethod", value as PaymentMethod)
-                }
-              >
-                <SelectTrigger id="paymentMethod">
-                  <SelectValue placeholder="Selecione" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">Todas</SelectItem>
-                  <SelectItem value={PaymentMethod.CREDIT}>Crédito</SelectItem>
-                  <SelectItem value={PaymentMethod.DEBIT}>Débito</SelectItem>
-                  <SelectItem value={PaymentMethod.PIX}>Pix</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            
-            <div className="space-y-2">
-              <Label htmlFor="terminal">Terminal</Label>
-              <Select
-                value={filters.terminal}
-                onValueChange={(value) => handleFilterChange("terminal", value)}
-              >
-                <SelectTrigger id="terminal">
-                  <SelectValue placeholder="Selecione" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">Todos</SelectItem>
-                  <SelectItem value="T123456">T123456</SelectItem>
-                  <SelectItem value="T789012">T789012</SelectItem>
-                  <SelectItem value="T345678">T345678</SelectItem>
-                  <SelectItem value="T901234">T901234</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            
-            <div className="space-y-2">
-              <Label htmlFor="search">Código da Venda</Label>
-              <div className="relative">
-                <SearchIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                <Input
-                  id="search"
-                  placeholder="Buscar por código..."
-                  className="pl-9"
-                  value={filters.search || ""}
-                  onChange={(e) => handleFilterChange("search", e.target.value)}
-                />
-              </div>
-            </div>
-          </div>
-          
-          <div className="flex justify-between mt-4">
-            <Button variant="outline" onClick={clearFilters}>
-              Limpar Filtros
-            </Button>
-            <div className="space-x-2">
-              <Button variant="outline" onClick={() => setShowImportDialog(true)}>
-                <UploadIcon className="h-4 w-4 mr-2" />
-                Importar Vendas
-              </Button>
-              <Button>
-                <DownloadIcon className="h-4 w-4 mr-2" />
-                Exportar
-              </Button>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
+      <SalesFilters 
+        filters={filters}
+        onFilterChange={handleFilterChange}
+        date={date}
+        onDateChange={setDate}
+        onClearFilters={clearFilters}
+        onExport={handleExport}
+        onShowImportDialog={() => setShowImportDialog(true)}
+      />
       
-      <Card>
-        <CardHeader>
-          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-            <CardTitle>Lista de Vendas</CardTitle>
-            <div className="text-sm text-muted-foreground space-x-4">
-              <span>Total Bruto: {new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(totals.grossAmount)}</span>
-              <span>Total Líquido: {new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(totals.netAmount)}</span>
-            </div>
-          </div>
-        </CardHeader>
-        <CardContent>
-          {isLoading ? (
-            <div className="space-y-4">
-              {Array.from({ length: 5 }).map((_, i) => (
-                <div key={i} className="h-12 bg-muted animate-pulse rounded" />
-              ))}
-            </div>
-          ) : (
-            <>
-              <div className="rounded-md border overflow-x-auto">
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Código</TableHead>
-                      <TableHead>Data</TableHead>
-                      <TableHead>Terminal</TableHead>
-                      <TableHead className="text-right">Valor Bruto</TableHead>
-                      <TableHead className="text-right">Valor Líquido</TableHead>
-                      <TableHead>Pagamento</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {paginatedSales.length > 0 ? (
-                      paginatedSales.map((sale) => (
-                        <TableRow key={sale.id}>
-                          <TableCell className="font-medium">{sale.code}</TableCell>
-                          <TableCell>
-                            {format(new Date(sale.date), "dd/MM/yyyy", { locale: ptBR })}
-                          </TableCell>
-                          <TableCell>{sale.terminal}</TableCell>
-                          <TableCell className="text-right">
-                            {new Intl.NumberFormat("pt-BR", {
-                              style: "currency",
-                              currency: "BRL",
-                            }).format(sale.grossAmount)}
-                          </TableCell>
-                          <TableCell className="text-right">
-                            {new Intl.NumberFormat("pt-BR", {
-                              style: "currency",
-                              currency: "BRL",
-                            }).format(sale.netAmount)}
-                          </TableCell>
-                          <TableCell>{getPaymentMethodLabel(sale.paymentMethod)}</TableCell>
-                        </TableRow>
-                      ))
-                    ) : (
-                      <TableRow>
-                        <TableCell colSpan={6} className="text-center py-8 text-muted-foreground">
-                          Nenhuma venda encontrada. 
-                          {Object.keys(filters).length > 0 && " Tente outros filtros."}
-                        </TableCell>
-                      </TableRow>
-                    )}
-                  </TableBody>
-                </Table>
-              </div>
-              
-              {filteredSales.length > 0 && (
-                <div className="mt-4">
-                  <Pagination>
-                    <PaginationContent>
-                      <PaginationItem>
-                        <PaginationPrevious
-                          href="#"
-                          onClick={(e) => {
-                            e.preventDefault();
-                            if (page > 1) setPage(page - 1);
-                          }}
-                        />
-                      </PaginationItem>
-                      
-                      {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
-                        let pageNumber;
-                        
-                        if (totalPages <= 5) {
-                          pageNumber = i + 1;
-                        } else if (page <= 3) {
-                          pageNumber = i + 1;
-                        } else if (page >= totalPages - 2) {
-                          pageNumber = totalPages - 4 + i;
-                        } else {
-                          pageNumber = page - 2 + i;
-                        }
-                        
-                        return (
-                          <PaginationItem key={pageNumber}>
-                            <PaginationLink
-                              href="#"
-                              isActive={pageNumber === page}
-                              onClick={(e) => {
-                                e.preventDefault();
-                                setPage(pageNumber);
-                              }}
-                            >
-                              {pageNumber}
-                            </PaginationLink>
-                          </PaginationItem>
-                        );
-                      })}
-                      
-                      {totalPages > 5 && page < totalPages - 2 && (
-                        <PaginationItem>
-                          <PaginationEllipsis />
-                        </PaginationItem>
-                      )}
-                      
-                      <PaginationItem>
-                        <PaginationNext
-                          href="#"
-                          onClick={(e) => {
-                            e.preventDefault();
-                            if (page < totalPages) setPage(page + 1);
-                          }}
-                        />
-                      </PaginationItem>
-                    </PaginationContent>
-                  </Pagination>
-                </div>
-              )}
-            </>
-          )}
-        </CardContent>
-      </Card>
+      <SalesTable 
+        sales={paginatedSales}
+        page={page}
+        setPage={setPage}
+        totalPages={totalPages}
+        isLoading={isLoading}
+        totals={totals}
+      />
 
-      <Dialog open={showImportDialog} onOpenChange={setShowImportDialog}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Importar Vendas</DialogTitle>
-            <DialogDescription>
-              Faça o upload de um arquivo CSV ou Excel contendo as informações das vendas.
-            </DialogDescription>
-          </DialogHeader>
-          
-          <div className="grid gap-4 py-4">
-            <div className="grid gap-2">
-              <Label htmlFor="file">Arquivo</Label>
-              <Input
-                id="file"
-                type="file"
-                accept=".csv,.xlsx,.xls"
-                onChange={handleFileUpload}
-              />
-            </div>
-            <div className="text-sm text-muted-foreground">
-              O arquivo deve conter as colunas: Data, Terminal, Valor Bruto, Valor Líquido, Forma de Pagamento.
-            </div>
-          </div>
-          
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setShowImportDialog(false)}>
-              Cancelar
-            </Button>
-            <Button type="submit" onClick={() => {
-              toast({
-                title: "Importação iniciada",
-                description: "O processo de importação foi iniciado. Você será notificado quando for concluído.",
-              });
-              setShowImportDialog(false);
-            }}>
-              Importar
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+      <ImportSalesDialog 
+        open={showImportDialog}
+        onOpenChange={setShowImportDialog}
+      />
     </MainLayout>
   );
 };
