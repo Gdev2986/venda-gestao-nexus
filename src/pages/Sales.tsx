@@ -245,7 +245,7 @@ const Sales = () => {
                   <SelectValue placeholder="Selecione" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">Todas</SelectItem>
+                  <SelectItem value="all">Todas</SelectItem>
                   <SelectItem value={PaymentMethod.CREDIT}>Crédito</SelectItem>
                   <SelectItem value={PaymentMethod.DEBIT}>Débito</SelectItem>
                   <SelectItem value={PaymentMethod.PIX}>Pix</SelectItem>
@@ -263,7 +263,7 @@ const Sales = () => {
                   <SelectValue placeholder="Selecione" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">Todos</SelectItem>
+                  <SelectItem value="all">Todos</SelectItem>
                   <SelectItem value="T123456">T123456</SelectItem>
                   <SelectItem value="T789012">T789012</SelectItem>
                   <SelectItem value="T345678">T345678</SelectItem>
@@ -381,20 +381,15 @@ const Sales = () => {
                       </PaginationItem>
                       
                       {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
-                        // Show first page, last page, current page and pages around it
                         let pageNumber;
                         
                         if (totalPages <= 5) {
-                          // If less than 5 pages, show all
                           pageNumber = i + 1;
                         } else if (page <= 3) {
-                          // If near start, show first 5
                           pageNumber = i + 1;
                         } else if (page >= totalPages - 2) {
-                          // If near end, show last 5
                           pageNumber = totalPages - 4 + i;
                         } else {
-                          // Otherwise show around current page
                           pageNumber = page - 2 + i;
                         }
                         
