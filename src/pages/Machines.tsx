@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
@@ -13,7 +12,9 @@ import MachineTransferForm from "@/components/machines/MachineTransferForm";
 import { Badge } from "@/components/ui/badge";
 
 const Machines = () => {
+  
   const [machines, setMachines] = useState([]);
+  const [clients, setClients] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [showCreateForm, setShowCreateForm] = useState(false);
   const [showTransferForm, setShowTransferForm] = useState(false);
@@ -22,6 +23,7 @@ const Machines = () => {
   
   useEffect(() => {
     fetchMachines();
+    fetchClients();
   }, []);
   
   const fetchMachines = async () => {
@@ -57,6 +59,27 @@ const Machines = () => {
     }
   };
   
+  const fetchClients = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('clients')
+        .select('id, business_name');
+        
+      if (error) {
+        throw error;
+      }
+      
+      setClients(data || []);
+    } catch (error) {
+      console.error("Erro ao carregar clientes:", error);
+      toast({
+        variant: "destructive",
+        title: "Erro ao carregar clientes",
+        description: "Não foi possível carregar a lista de clientes.",
+      });
+    }
+  };
+  
   const handleCreateClick = () => {
     setSelectedMachine(null);
     setShowCreateForm(true);
@@ -82,7 +105,112 @@ const Machines = () => {
     fetchMachines();
   };
   
+  const handleMachineFormSubmit = async (data) => {
+    setIsLoading(true);
+    try {
+      if (selectedMachine) {
+        // Update existing machine
+        const { error } = await supabase
+          .from('machines')
+          .update({
+            model: data.model,
+            serial_number: data.serialNumber,
+            status: data.status,
+            client_id: data.clientId || null,
+          })
+          .eq('id', selectedMachine.id);
+
+        if (error) {
+          throw error;
+        }
+        
+        toast({
+          title: "Máquina atualizada",
+          description: "A máquina foi atualizada com sucesso.",
+        });
+      } else {
+        // Create new machine
+        const { error } = await supabase
+          .from('machines')
+          .insert([{
+            model: data.model,
+            serial_number: data.serialNumber,
+            status: data.status,
+            client_id: data.clientId || null,
+          }]);
+
+        if (error) {
+          throw error;
+        }
+        
+        toast({
+          title: "Máquina cadastrada",
+          description: "A máquina foi cadastrada com sucesso.",
+        });
+      }
+      handleFormClose();
+    } catch (error) {
+      console.error("Erro ao salvar máquina:", error);
+      toast({
+        variant: "destructive",
+        title: "Erro ao salvar máquina",
+        description: "Ocorreu um erro ao salvar os dados da máquina.",
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+  
+  const handleTransferFormSubmit = async (data) => {
+    setIsLoading(true);
+    try {
+      // Create transfer record
+      const { error: transferError } = await supabase
+        .from('machine_transfers')
+        .insert([{
+          machine_id: data.machineId,
+          from_client_id: selectedMachine?.client_id,
+          to_client_id: data.toClientId,
+          transfer_date: data.transferDate,
+          created_by: 'system', // Replace with actual user ID when auth is implemented
+        }]);
+      
+      if (transferError) {
+        throw transferError;
+      }
+      
+      // Update machine client
+      const { error: machineError } = await supabase
+        .from('machines')
+        .update({
+          client_id: data.toClientId
+        })
+        .eq('id', data.machineId);
+      
+      if (machineError) {
+        throw machineError;
+      }
+      
+      toast({
+        title: "Transferência realizada",
+        description: "A máquina foi transferida com sucesso.",
+      });
+      
+      handleFormClose();
+    } catch (error) {
+      console.error("Erro ao transferir máquina:", error);
+      toast({
+        variant: "destructive",
+        title: "Erro ao transferir máquina",
+        description: "Ocorreu um erro ao transferir a máquina.",
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+  
   const getStatusBadge = (status) => {
+    
     switch (status) {
       case 'ACTIVE':
         return <Badge className="bg-green-500">Ativa</Badge>;
@@ -109,12 +237,14 @@ const Machines = () => {
         </div>
         
         <Tabs defaultValue="all" className="w-full">
+          
           <TabsList className="grid w-full grid-cols-4">
             <TabsTrigger value="all">Todas</TabsTrigger>
             <TabsTrigger value="active">Ativas</TabsTrigger>
             <TabsTrigger value="maintenance">Em Manutenção</TabsTrigger>
             <TabsTrigger value="blocked">Bloqueadas</TabsTrigger>
           </TabsList>
+          
           
           <TabsContent value="all">
             <Card>
@@ -348,16 +478,35 @@ const Machines = () => {
         {/* Formulário de criação/edição */}
         {showCreateForm && (
           <MachineForm 
-            machine={selectedMachine}
+            isOpen={showCreateForm}
             onClose={handleFormClose}
+            onSubmit={handleMachineFormSubmit}
+            initialData={selectedMachine ? {
+              id: selectedMachine.id,
+              model: selectedMachine.model,
+              serialNumber: selectedMachine.serial_number,
+              status: selectedMachine.status,
+              clientId: selectedMachine.client_id
+            } : undefined}
+            title={selectedMachine ? "Editar Máquina" : "Nova Máquina"}
+            clients={clients}
           />
         )}
         
         {/* Formulário de transferência */}
         {showTransferForm && (
           <MachineTransferForm 
-            machine={selectedMachine}
+            isOpen={showTransferForm}
             onClose={handleFormClose}
+            onSubmit={handleTransferFormSubmit}
+            clients={clients}
+            machines={machines.map(m => ({
+              id: m.id,
+              model: m.model,
+              serialNumber: m.serial_number,
+              clientId: m.client_id
+            }))}
+            currentClientId={selectedMachine?.client_id}
           />
         )}
       </div>

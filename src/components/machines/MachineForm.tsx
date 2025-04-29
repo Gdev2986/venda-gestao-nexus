@@ -44,7 +44,7 @@ const formSchema = z.object({
 
 type MachineFormValues = z.infer<typeof formSchema>;
 
-type MachineFormProps = {
+export interface MachineFormProps {
   isOpen: boolean;
   onClose: () => void;
   onSubmit: (data: MachineFormValues) => void;
@@ -57,7 +57,7 @@ type MachineFormProps = {
   };
   title?: string;
   clients?: { id: string; business_name: string }[];
-};
+}
 
 const MachineForm = ({
   isOpen,

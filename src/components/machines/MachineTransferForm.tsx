@@ -54,14 +54,14 @@ const formSchema = z.object({
 
 type MachineTransferFormValues = z.infer<typeof formSchema>;
 
-type MachineTransferFormProps = {
+export interface MachineTransferFormProps {
   isOpen: boolean;
   onClose: () => void;
   onSubmit: (data: MachineTransferFormValues) => void;
   clients?: { id: string; business_name: string }[];
   machines?: { id: string; model: string; serialNumber: string; clientId?: string }[];
   currentClientId?: string;
-};
+}
 
 const MachineTransferForm = ({
   isOpen,
@@ -206,6 +206,7 @@ const MachineTransferForm = ({
                         onSelect={field.onChange}
                         disabled={(date) => date < new Date("1900-01-01")}
                         initialFocus
+                        className={cn("p-3 pointer-events-auto")}
                       />
                     </PopoverContent>
                   </Popover>
