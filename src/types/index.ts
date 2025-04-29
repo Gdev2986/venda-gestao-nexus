@@ -1,9 +1,10 @@
 
+
 export enum UserRole {
   ADMIN = 'ADMIN',
   PARTNER = 'PARTNER',
   CLIENT = 'CLIENT',
-  FINANCE = 'FINANCE',
+  FINANCE = 'FINANCE',  // Changed from FINANCIAL to FINANCE to match what's used in the codebase
 }
 
 export enum PaymentMethod {
@@ -53,6 +54,7 @@ export interface Client {
   partner_id?: string;
   created_at?: string;
   updated_at?: string;
+  status?: string; // Added status to match usage in clientsApi.ts
 }
 
 export interface Partner {
@@ -117,4 +119,30 @@ export interface PaymentRequest {
   updated_at?: string;
   approved_at?: string;
   approved_by?: string;
+}
+
+// Add PixKey interface to fix error in PixKeysManager
+export interface PixKey {
+  id: string;
+  key: string;
+  type: PixKeyType;
+  name: string;
+  user_id: string;
+  is_default: boolean;
+  created_at?: string;
+  updated_at?: string;
+}
+
+// Add interface for DashboardStats
+export interface DashboardStats {
+  currentBalance: number;
+  yesterdayGrossAmount: number;
+  yesterdayNetAmount: number;
+  totalSales: number;
+  salesByPaymentMethod: {
+    method: PaymentMethod;
+    amount: number;
+    percentage: number;
+  }[];
+  recentSales: Sale[];
 }
