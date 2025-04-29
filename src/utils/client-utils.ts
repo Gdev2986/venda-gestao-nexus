@@ -68,7 +68,76 @@ export function isValidCNPJ(cnpj: string): boolean {
     return false;
   }
   
-  // Validate check digits
-  // This is a simplified implementation - for production, consider a more thorough validation
-  return true;
+  // Validate first check digit
+  let sum = 0;
+  let weight = 5;
+  for (let i = 0; i < 12; i++) {
+    sum += parseInt(cnpj.charAt(i)) * weight;
+    weight = (weight === 2) ? 9 : weight - 1;
+  }
+  let checkDigit1 = 11 - (sum % 11);
+  checkDigit1 = (checkDigit1 >= 10) ? 0 : checkDigit1;
+  
+  // Validate second check digit
+  sum = 0;
+  weight = 6;
+  for (let i = 0; i < 13; i++) {
+    sum += parseInt(cnpj.charAt(i)) * weight;
+    weight = (weight === 2) ? 9 : weight - 1;
+  }
+  let checkDigit2 = 11 - (sum % 11);
+  checkDigit2 = (checkDigit2 >= 10) ? 0 : checkDigit2;
+  
+  // Check if the calculated check digits match the provided ones
+  return parseInt(cnpj.charAt(12)) === checkDigit1 && parseInt(cnpj.charAt(13)) === checkDigit2;
+}
+
+// Format currency: 1000 -> R$ 1.000,00
+export function formatCurrency(value: number): string {
+  return new Intl.NumberFormat('pt-BR', {
+    style: 'currency',
+    currency: 'BRL'
+  }).format(value);
+}
+
+// Parse currency string to number: R$ 1.000,00 -> 1000
+export function parseCurrency(value: string): number {
+  return parseFloat(value.replace(/[^\d,.-]/g, '').replace(',', '.'));
+}
+
+// Format date to Brazilian format: 2023-03-15 -> 15/03/2023
+export function formatDate(date: Date | string): string {
+  if (typeof date === 'string') {
+    date = new Date(date);
+  }
+  return date.toLocaleDateString('pt-BR');
+}
+
+// Format percentage: 0.15 -> 15%
+export function formatPercentage(value: number): string {
+  return `${(value * 100).toFixed(2)}%`;
+}
+
+// Validate CEP
+export function isValidCEP(cep: string): boolean {
+  cep = cep.replace(/\D/g, '');
+  return cep.length === 8;
+}
+
+// Auto format input value based on type
+export function autoFormatValue(value: string, type: 'cnpj' | 'phone' | 'cep' | 'currency'): string {
+  switch (type) {
+    case 'cnpj':
+      return formatCNPJ(value);
+    case 'phone':
+      return formatPhone(value);
+    case 'cep':
+      return formatCEP(value);
+    case 'currency':
+      // Convert string to number, then format
+      const numValue = parseFloat(value.replace(/[^\d,.-]/g, '').replace(',', '.'));
+      return isNaN(numValue) ? 'R$ 0,00' : formatCurrency(numValue);
+    default:
+      return value;
+  }
 }

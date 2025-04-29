@@ -3,6 +3,8 @@ import { FormField, FormItem, FormLabel, FormControl, FormMessage } from "@/comp
 import { Input } from "@/components/ui/input";
 import { UseFormReturn } from "react-hook-form";
 import { z } from "zod";
+import { useEffect } from "react";
+import { formatPhone, isValidEmail } from "@/utils/client-utils";
 
 // Schema for contact information fields
 export const contactSchema = z.object({
@@ -24,6 +26,20 @@ interface ContactFieldsProps {
 }
 
 const ContactFields = ({ form }: ContactFieldsProps) => {
+  // Watch the phone field to apply formatting
+  const phoneValue = form.watch("phone");
+
+  // Apply phone formatting whenever the value changes
+  useEffect(() => {
+    const currentPhone = phoneValue;
+    if (currentPhone && typeof currentPhone === 'string') {
+      const formattedPhone = formatPhone(currentPhone);
+      if (formattedPhone !== currentPhone) {
+        form.setValue("phone", formattedPhone, { shouldValidate: false });
+      }
+    }
+  }, [phoneValue, form]);
+
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
       <FormField
@@ -62,7 +78,14 @@ const ContactFields = ({ form }: ContactFieldsProps) => {
             <FormItem>
               <FormLabel>Telefone</FormLabel>
               <FormControl>
-                <Input placeholder="(00) 00000-0000" {...field} />
+                <Input 
+                  placeholder="(00) 00000-0000" 
+                  {...field} 
+                  onChange={(e) => {
+                    // Capture native input event
+                    field.onChange(e);
+                  }}
+                />
               </FormControl>
               <FormMessage />
             </FormItem>

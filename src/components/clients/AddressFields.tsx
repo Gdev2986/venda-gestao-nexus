@@ -3,6 +3,8 @@ import { FormField, FormItem, FormLabel, FormControl, FormMessage } from "@/comp
 import { Input } from "@/components/ui/input";
 import { UseFormReturn } from "react-hook-form";
 import { z } from "zod";
+import { useEffect } from "react";
+import { formatCEP } from "@/utils/client-utils";
 
 // Schema for the address fields
 export const addressSchema = z.object({
@@ -27,6 +29,20 @@ interface AddressFieldsProps {
 }
 
 const AddressFields = ({ form }: AddressFieldsProps) => {
+  // Watch the zip field to apply formatting
+  const zipValue = form.watch("zip");
+
+  // Apply CEP formatting whenever the value changes
+  useEffect(() => {
+    const currentZip = zipValue;
+    if (currentZip && typeof currentZip === 'string') {
+      const formattedZip = formatCEP(currentZip);
+      if (formattedZip !== currentZip) {
+        form.setValue("zip", formattedZip, { shouldValidate: false });
+      }
+    }
+  }, [zipValue, form]);
+
   return (
     <>
       <FormField
@@ -79,7 +95,14 @@ const AddressFields = ({ form }: AddressFieldsProps) => {
             <FormItem>
               <FormLabel>CEP</FormLabel>
               <FormControl>
-                <Input placeholder="00000-000" {...field} />
+                <Input 
+                  placeholder="00000-000" 
+                  {...field} 
+                  onChange={(e) => {
+                    // Capture native input event
+                    field.onChange(e);
+                  }}
+                />
               </FormControl>
               <FormMessage />
             </FormItem>
