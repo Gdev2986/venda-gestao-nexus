@@ -34,8 +34,8 @@ function Calendar({
       if (props.mode === 'range') {
         const rangeProps = props as DayPickerRangeProps;
         if (rangeProps.onSelect) {
-          // Pass undefined with proper type handling
-          rangeProps.onSelect(undefined);
+          // Call onSelect with undefined and empty mode + dispatch parameters as required
+          rangeProps.onSelect(undefined, undefined!, undefined!, undefined!);
         }
       }
       return;
@@ -73,8 +73,8 @@ function Calendar({
       if (props.mode === 'range') {
         const rangeProps = props as DayPickerRangeProps;
         if (rangeProps.onSelect) {
-          // Pass the range with proper type handling
-          rangeProps.onSelect(newRange);
+          // Call onSelect with the range and empty mode + dispatch parameters as required
+          rangeProps.onSelect(newRange, undefined!, undefined!, undefined!);
         }
       }
       return;
@@ -82,16 +82,22 @@ function Calendar({
   }, [internalRange, props]);
   
   // We pass the internal range only if we're in reversed selection mode and currently selecting
-  const selected = props.mode === 'range' && reversedRange && internalRange.selecting === 'start' && internalRange.to
-    ? { from: undefined, to: internalRange.to }
-    : props.selected;
+  const selected = React.useMemo(() => {
+    if (props.mode === 'range' && reversedRange && internalRange.selecting === 'start' && internalRange.to) {
+      return { from: undefined, to: internalRange.to };
+    }
+    return props.selected;
+  }, [props.mode, props.selected, reversedRange, internalRange]);
 
-  // Extract the proper props based on mode
-  const finalProps = {...props};
-  if (props.mode === 'range' && reversedRange) {
-    // Type cast to ensure TypeScript knows this is a DayPickerRangeProps
-    (finalProps as DayPickerRangeProps).onSelect = rangeSelectHandler;
-  }
+  // Create a properly typed version of props based on mode
+  const finalProps = React.useMemo(() => {
+    const result = {...props};
+    if (props.mode === 'range' && reversedRange) {
+      // Type cast to ensure TypeScript knows this is a DayPickerRangeProps
+      (result as DayPickerRangeProps).onSelect = rangeSelectHandler;
+    }
+    return result;
+  }, [props, rangeSelectHandler, reversedRange]);
 
   return (
     <DayPicker
