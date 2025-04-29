@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
@@ -54,7 +55,14 @@ const MachineForm = ({ isOpen, onClose, onSubmit, initialData, title, clients }:
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     
-    const formData = {
+    // Define formData with an optional id property
+    const formData: {
+      model: string;
+      serialNumber: string;
+      status: string;
+      clientId: string | null;
+      id?: string;
+    } = {
       model,
       serialNumber,
       status,
@@ -119,7 +127,7 @@ const MachineForm = ({ isOpen, onClose, onSubmit, initialData, title, clients }:
                   <SelectValue placeholder="Selecione um cliente" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">Sem cliente</SelectItem>
+                  <SelectItem value="none">Sem cliente</SelectItem>
                   {clients.map((client) => (
                     <SelectItem key={client.id} value={client.id}>
                       {client.business_name}
