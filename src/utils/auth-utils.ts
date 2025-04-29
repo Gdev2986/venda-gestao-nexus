@@ -1,0 +1,58 @@
+
+/**
+ * Utility functions for authentication
+ */
+
+import { supabase } from "@/integrations/supabase/client";
+
+/**
+ * Checks if there is an active session and returns the user if available
+ */
+export const checkSession = async () => {
+  try {
+    const { data, error } = await supabase.auth.getSession();
+    
+    if (error) {
+      console.error("Error checking session:", error);
+      return { user: null, session: null, error };
+    }
+    
+    return {
+      user: data.session?.user || null,
+      session: data.session,
+      error: null
+    };
+  } catch (error) {
+    console.error("Exception checking session:", error);
+    return { user: null, session: null, error };
+  }
+};
+
+/**
+ * Helper to safely set auth related data in localStorage
+ */
+export const setAuthData = (key: string, value: any) => {
+  try {
+    if (typeof window !== "undefined") {
+      localStorage.setItem(key, JSON.stringify(value));
+    }
+  } catch (error) {
+    console.error(`Error setting ${key} in localStorage:`, error);
+  }
+};
+
+/**
+ * Helper to safely get auth related data from localStorage
+ */
+export const getAuthData = (key: string) => {
+  try {
+    if (typeof window !== "undefined") {
+      const item = localStorage.getItem(key);
+      return item ? JSON.parse(item) : null;
+    }
+    return null;
+  } catch (error) {
+    console.error(`Error getting ${key} from localStorage:`, error);
+    return null;
+  }
+};

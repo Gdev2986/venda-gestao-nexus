@@ -1,22 +1,23 @@
 
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import LoginForm from "@/components/auth/LoginForm";
 import { LayoutDashboard, CreditCard, FileText, Monitor } from "lucide-react";
+import { useAuth } from "@/contexts/AuthContext";
 
 const Index = () => {
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
   const navigate = useNavigate();
+  const { user, isLoading } = useAuth();
 
   useEffect(() => {
-    // Check if user is logged in
-    const user = localStorage.getItem("user");
-    if (user) {
-      setIsAuthenticated(true);
+    // If authenticated and finished loading, redirect to dashboard
+    if (user && !isLoading) {
+      console.log("Index: User authenticated, redirecting to dashboard");
       navigate("/dashboard");
     }
-  }, [navigate]);
+  }, [user, isLoading, navigate]);
 
+  // If still loading or the user is not authenticated, show the login page
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-b from-primary-50 to-white p-4">
       <div className="flex flex-col md:flex-row items-center justify-center max-w-5xl w-full">

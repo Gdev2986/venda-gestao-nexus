@@ -23,26 +23,31 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const { toast } = useToast();
   const navigate = useNavigate();
 
+  console.log("AuthProvider rendering, isLoading:", isLoading, "user:", user?.email);
+
   useEffect(() => {
-    // Set up auth state listener FIRST - ordem crítica para evitar loops
+    console.log("Setting up auth listener");
+    // Set up auth state listener FIRST
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       (event, newSession) => {
-        // Atualizações síncronas apenas
+        console.log("Auth state change event:", event);
+        // No async operations here to prevent race conditions
         setSession(newSession);
         setUser(newSession?.user ?? null);
 
-        // Tratamento de eventos de autenticação
+        // Handle auth events with setTimeout to avoid calling Supabase inside the callback
         if (event === "SIGNED_IN") {
-          // Usando setTimeout para evitar chamadas Supabase dentro do callback
+          console.log("Signed in event detected");
           setTimeout(() => {
             toast({
               title: "Autenticado com sucesso",
-              description: "Bem-vindo de volta à SigmaPay!",
+              description: "Bem-vindo à SigmaPay!",
             });
           }, 0);
         }
         
         if (event === "SIGNED_OUT") {
+          console.log("Signed out event detected");
           setTimeout(() => {
             toast({
               title: "Desconectado",
@@ -53,28 +58,38 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       }
     );
 
-    // DEPOIS verificar por sessão existente
-    const checkSession = async () => {
+    // Check for existing session AFTER setting up listeners
+    const initialSessionCheck = async () => {
       try {
-        const { data: { session: currentSession } } = await supabase.auth.getSession();
-        setSession(currentSession);
-        setUser(currentSession?.user ?? null);
+        console.log("Checking initial session");
+        const { data, error } = await supabase.auth.getSession();
+        
+        if (error) {
+          console.error("Error getting session:", error);
+          throw error;
+        }
+        
+        console.log("Initial session check complete:", !!data.session);
+        setSession(data.session);
+        setUser(data.session?.user ?? null);
       } catch (error) {
-        console.error("Erro ao verificar sessão:", error);
+        console.error("Error during initial session check:", error);
       } finally {
         setIsLoading(false);
       }
     };
 
-    checkSession();
+    initialSessionCheck();
 
     return () => {
+      console.log("Cleaning up auth listener");
       subscription.unsubscribe();
     };
-  }, [toast]);
+  }, [toast]); // Only run this effect once on mount
 
   const signIn = async (email: string, password: string) => {
     try {
+      console.log("Sign in attempt for:", email);
       setIsLoading(true);
       const { data, error } = await supabase.auth.signInWithPassword({
         email,
@@ -82,7 +97,8 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       });
 
       if (error) {
-        // Tratamento de erro melhorado
+        // Enhanced error handling
+        console.error("Login error:", error);
         let errorMessage = "Ocorreu um erro durante a autenticação";
         
         if (error.message === "Invalid login credentials") {
@@ -100,11 +116,15 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       }
       
       if (data.user) {
-        navigate("/dashboard");
+        console.log("Sign in successful, navigating to dashboard");
+        // Use setTimeout to avoid race conditions with onAuthStateChange
+        setTimeout(() => {
+          navigate("/dashboard");
+        }, 0);
       }
     } catch (error: any) {
-      console.error("Erro durante login:", error);
-      // O toast já é exibido acima
+      console.error("Error during login:", error);
+      // Toast is shown in the error handler above
     } finally {
       setIsLoading(false);
     }
@@ -112,8 +132,9 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
   const signUp = async (email: string, password: string, userData: { name: string }) => {
     try {
+      console.log("Sign up attempt for:", email);
       setIsLoading(true);
-      const { error } = await supabase.auth.signUp({
+      const { error, data } = await supabase.auth.signUp({
         email,
         password,
         options: {
@@ -123,6 +144,8 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
           emailRedirectTo: `${window.location.origin}/dashboard`,
         },
       });
+
+      console.log("Sign up response:", { error, user: data?.user ? true : false });
 
       if (error) {
         let errorMessage = "Ocorreu um erro durante o registro";
@@ -146,8 +169,8 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
       navigate("/");
     } catch (error: any) {
-      console.error("Erro durante registro:", error);
-      // O toast já é exibido acima
+      console.error("Error during registration:", error);
+      // Toast is shown in the error handler above
     } finally {
       setIsLoading(false);
     }
@@ -155,11 +178,18 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
   const signOut = async () => {
     try {
+      console.log("Sign out attempt");
       setIsLoading(true);
       const { error } = await supabase.auth.signOut();
       if (error) throw error;
+      
+      // Clear local state immediately
+      setUser(null);
+      setSession(null);
+      
       navigate("/");
     } catch (error: any) {
+      console.error("Error during sign out:", error);
       toast({
         title: "Erro ao sair",
         description: error.message || "Ocorreu um erro ao tentar sair",
