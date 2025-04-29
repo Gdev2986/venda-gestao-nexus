@@ -57,16 +57,16 @@
     --popover: 222 47% 11%;
     --popover-foreground: 210 40% 98%;
 
-    --primary: 196 100% 45%;
+    --primary: 220 13% 28%; /* Alterado para cinza escuro */
     --primary-foreground: 210 40% 98%;
 
-    --secondary: 196 30% 25%;
+    --secondary: 217 19% 27%;
     --secondary-foreground: 210 40% 98%;
 
     --muted: 217.2 32.6% 17.5%;
     --muted-foreground: 215 20.2% 65.1%;
 
-    --accent: 196 30% 25%;
+    --accent: 217 19% 27%;
     --accent-foreground: 210 40% 98%;
 
     --destructive: 0 62.8% 30.6%;

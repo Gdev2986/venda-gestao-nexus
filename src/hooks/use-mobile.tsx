@@ -1,25 +1,31 @@
 
-import { useState, useEffect } from "react"
+import { useState, useEffect } from "react";
 
-const MOBILE_BREAKPOINT = 768
+const MOBILE_BREAKPOINT = 768;
 
 export function useIsMobile() {
-  const [isMobile, setIsMobile] = useState<boolean>(false)
+  const [isMobile, setIsMobile] = useState(() => {
+    // Verifica se window está disponível (para evitar problemas com SSR)
+    if (typeof window !== "undefined") {
+      return window.innerWidth < MOBILE_BREAKPOINT;
+    }
+    return false;
+  });
 
   useEffect(() => {
-    const handleResize = () => {
-      setIsMobile(window.innerWidth < MOBILE_BREAKPOINT)
-    }
-
-    // Set initial value
-    handleResize()
-
-    // Add event listener
-    window.addEventListener("resize", handleResize)
+    // Verifica se window está disponível
+    if (typeof window === "undefined") return;
     
-    // Clean up
-    return () => window.removeEventListener("resize", handleResize)
-  }, [])
+    const handleResize = () => {
+      setIsMobile(window.innerWidth < MOBILE_BREAKPOINT);
+    };
 
-  return isMobile
+    // Adiciona evento de resize
+    window.addEventListener("resize", handleResize);
+    
+    // Cleanup
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
+
+  return isMobile;
 }

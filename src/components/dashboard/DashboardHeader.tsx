@@ -36,6 +36,14 @@ const DashboardHeader = ({ onDateRangeChange }: DashboardHeaderProps) => {
 
   const presetRanges = [
     {
+      label: "Ontem",
+      value: "yesterday",
+      range: {
+        from: startOfDay(subDays(new Date(), 1)),
+        to: endOfDay(subDays(new Date(), 1)),
+      },
+    },
+    {
       label: "Últimos 7 dias",
       value: "7days",
       range: {
