@@ -64,143 +64,145 @@ const Settings = () => {
 
   return (
     <MainLayout>
-      <div className="mb-6">
-        <h1 className="text-2xl font-bold tracking-tight">Configurações</h1>
-        <p className="text-muted-foreground">
-          Gerencie seu perfil e preferências da conta
-        </p>
-      </div>
-      
-      {userRole === UserRole.ADMIN && (
+      <div className="w-full max-w-4xl mx-auto">
         <div className="mb-6">
-          <Card>
-            <CardHeader>
-              <CardTitle>Administração do Sistema</CardTitle>
-              <CardDescription>
-                Acesso às ferramentas de administração do sistema
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <Button 
-                onClick={goToUserManagement}
-                className="flex items-center gap-2"
-              >
-                <Users className="h-5 w-5" />
-                Gerenciar Usuários
-              </Button>
-            </CardContent>
-          </Card>
+          <h1 className="text-2xl font-bold tracking-tight">Configurações</h1>
+          <p className="text-muted-foreground">
+            Gerencie seu perfil e preferências da conta
+          </p>
         </div>
-      )}
-      
-      <Tabs defaultValue={activeTab} onValueChange={setActiveTab} className="w-full">
-        <TabsList className="grid w-full grid-cols-3">
-          <TabsTrigger value="profile">Perfil</TabsTrigger>
-          <TabsTrigger value="pix">Chaves Pix</TabsTrigger>
-          <TabsTrigger value="security">Segurança</TabsTrigger>
-        </TabsList>
         
-        <div className="mt-6">
-          <TabsContent value="profile">
+        {userRole === UserRole.ADMIN && (
+          <div className="mb-6">
             <Card>
               <CardHeader>
-                <CardTitle>Informações Pessoais</CardTitle>
+                <CardTitle>Administração do Sistema</CardTitle>
                 <CardDescription>
-                  Atualize suas informações pessoais
+                  Acesso às ferramentas de administração do sistema
                 </CardDescription>
               </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="flex flex-col items-center sm:flex-row sm:items-start gap-6 mb-6">
-                  <div className="relative">
-                    <div className="w-24 h-24 rounded-full bg-secondary flex items-center justify-center overflow-hidden border-2 border-border">
-                      <span className="text-2xl font-bold">JS</span>
-                    </div>
-                    <Button size="icon" className="absolute -bottom-2 -right-2 rounded-full h-8 w-8">
-                      <CameraIcon className="h-4 w-4" />
-                    </Button>
-                  </div>
-                  
-                  <div className="w-full">
-                    <p className="text-sm text-muted-foreground mb-2">
-                      Sua foto será exibida no perfil e em outras áreas do sistema.
-                    </p>
-                    <div className="flex flex-wrap gap-2">
-                      <Button variant="outline" size="sm">Trocar Foto</Button>
-                      <Button variant="outline" size="sm">Remover</Button>
-                    </div>
-                  </div>
-                </div>
-                
-                <div className="grid gap-4 sm:grid-cols-2">
-                  <div className="space-y-2">
-                    <Label htmlFor="name">Nome Completo</Label>
-                    <Input id="name" placeholder="João Silva" defaultValue="João Silva" />
-                  </div>
-                  
-                  <div className="space-y-2">
-                    <Label htmlFor="email">E-mail</Label>
-                    <Input id="email" type="email" placeholder="seuemail@exemplo.com" defaultValue="joao@exemplo.com" />
-                  </div>
-                  
-                  <div className="space-y-2">
-                    <Label htmlFor="phone">Telefone</Label>
-                    <Input id="phone" placeholder="(00) 00000-0000" defaultValue="(11) 98765-4321" />
-                  </div>
-                  
-                  <div className="space-y-2">
-                    <Label htmlFor="document">CPF/CNPJ</Label>
-                    <Input id="document" placeholder="000.000.000-00" defaultValue="123.456.789-00" />
-                  </div>
-                </div>
-                
-                <div className="flex justify-end">
-                  <Button>Salvar Alterações</Button>
-                </div>
+              <CardContent>
+                <Button 
+                  onClick={goToUserManagement}
+                  className="flex items-center gap-2"
+                >
+                  <Users className="h-5 w-5" />
+                  Gerenciar Usuários
+                </Button>
               </CardContent>
             </Card>
-          </TabsContent>
+          </div>
+        )}
+        
+        <Tabs defaultValue={activeTab} onValueChange={setActiveTab} className="w-full">
+          <TabsList className="grid w-full grid-cols-3">
+            <TabsTrigger value="profile">Perfil</TabsTrigger>
+            <TabsTrigger value="pix">Chaves Pix</TabsTrigger>
+            <TabsTrigger value="security">Segurança</TabsTrigger>
+          </TabsList>
           
-          <TabsContent value="pix">
-            <PixKeysManager
-              pixKeys={pixKeys}
-              onAddKey={handleAddPixKey}
-              onDeleteKey={handleDeletePixKey}
-              onSetDefaultKey={handleSetDefaultPixKey}
-            />
-          </TabsContent>
-          
-          <TabsContent value="security">
-            <Card>
-              <CardHeader>
-                <CardTitle>Segurança</CardTitle>
-                <CardDescription>
-                  Atualize suas configurações de segurança
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="space-y-2">
-                  <Label htmlFor="current-password">Senha Atual</Label>
-                  <Input id="current-password" type="password" />
-                </div>
-                
-                <div className="space-y-2">
-                  <Label htmlFor="new-password">Nova Senha</Label>
-                  <Input id="new-password" type="password" />
-                </div>
-                
-                <div className="space-y-2">
-                  <Label htmlFor="confirm-password">Confirmar Nova Senha</Label>
-                  <Input id="confirm-password" type="password" />
-                </div>
-                
-                <div className="flex justify-end">
-                  <Button>Alterar Senha</Button>
-                </div>
-              </CardContent>
-            </Card>
-          </TabsContent>
-        </div>
-      </Tabs>
+          <div className="mt-6">
+            <TabsContent value="profile">
+              <Card>
+                <CardHeader>
+                  <CardTitle>Informações Pessoais</CardTitle>
+                  <CardDescription>
+                    Atualize suas informações pessoais
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="flex flex-col items-center sm:flex-row sm:items-start gap-6 mb-6">
+                    <div className="relative">
+                      <div className="w-24 h-24 rounded-full bg-secondary flex items-center justify-center overflow-hidden border-2 border-border">
+                        <span className="text-2xl font-bold">JS</span>
+                      </div>
+                      <Button size="icon" className="absolute -bottom-2 -right-2 rounded-full h-8 w-8">
+                        <CameraIcon className="h-4 w-4" />
+                      </Button>
+                    </div>
+                    
+                    <div className="w-full">
+                      <p className="text-sm text-muted-foreground mb-2">
+                        Sua foto será exibida no perfil e em outras áreas do sistema.
+                      </p>
+                      <div className="flex flex-wrap gap-2">
+                        <Button variant="outline" size="sm">Trocar Foto</Button>
+                        <Button variant="outline" size="sm">Remover</Button>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <div className="grid gap-4 sm:grid-cols-2">
+                    <div className="space-y-2">
+                      <Label htmlFor="name">Nome Completo</Label>
+                      <Input id="name" placeholder="João Silva" defaultValue="João Silva" />
+                    </div>
+                    
+                    <div className="space-y-2">
+                      <Label htmlFor="email">E-mail</Label>
+                      <Input id="email" type="email" placeholder="seuemail@exemplo.com" defaultValue="joao@exemplo.com" />
+                    </div>
+                    
+                    <div className="space-y-2">
+                      <Label htmlFor="phone">Telefone</Label>
+                      <Input id="phone" placeholder="(00) 00000-0000" defaultValue="(11) 98765-4321" />
+                    </div>
+                    
+                    <div className="space-y-2">
+                      <Label htmlFor="document">CPF/CNPJ</Label>
+                      <Input id="document" placeholder="000.000.000-00" defaultValue="123.456.789-00" />
+                    </div>
+                  </div>
+                  
+                  <div className="flex justify-end">
+                    <Button>Salvar Alterações</Button>
+                  </div>
+                </CardContent>
+              </Card>
+            </TabsContent>
+            
+            <TabsContent value="pix">
+              <PixKeysManager
+                pixKeys={pixKeys}
+                onAddKey={handleAddPixKey}
+                onDeleteKey={handleDeletePixKey}
+                onSetDefaultKey={handleSetDefaultPixKey}
+              />
+            </TabsContent>
+            
+            <TabsContent value="security">
+              <Card>
+                <CardHeader>
+                  <CardTitle>Segurança</CardTitle>
+                  <CardDescription>
+                    Atualize suas configurações de segurança
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="current-password">Senha Atual</Label>
+                    <Input id="current-password" type="password" />
+                  </div>
+                  
+                  <div className="space-y-2">
+                    <Label htmlFor="new-password">Nova Senha</Label>
+                    <Input id="new-password" type="password" />
+                  </div>
+                  
+                  <div className="space-y-2">
+                    <Label htmlFor="confirm-password">Confirmar Nova Senha</Label>
+                    <Input id="confirm-password" type="password" />
+                  </div>
+                  
+                  <div className="flex justify-end">
+                    <Button>Alterar Senha</Button>
+                  </div>
+                </CardContent>
+              </Card>
+            </TabsContent>
+          </div>
+        </Tabs>
+      </div>
     </MainLayout>
   );
 };

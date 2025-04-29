@@ -8,7 +8,7 @@ const ClientActions = () => {
   const { toast } = useToast();
 
   return (
-    <Card className="p-4 border">
+    <Card className="p-4 border h-full">
       <CardTitle className="text-lg mb-4">Ações Rápidas</CardTitle>
       <div className="grid grid-cols-1 gap-4">
         <Button onClick={() => toast({ title: "Solicitação de Pagamento", description: "Função ainda não implementada completamente." })}>

@@ -141,9 +141,15 @@ const ClientDetailPage = () => {
   };
 
   const handleUpdate = async (data: any) => {
-    if (id) {
+    if (id && client) {
       try {
-        const updatedClient = await updateClient(id, data);
+        // Preserve optional fields that aren't required by the form
+        const updatedData = {
+          ...client,
+          ...data
+        };
+        
+        const updatedClient = await updateClient(id, updatedData);
         if (updatedClient) {
           setClient(updatedClient);
         }
@@ -200,7 +206,7 @@ const ClientDetailPage = () => {
 
   return (
     <MainLayout>
-      <div className="space-y-4">
+      <div className="space-y-4 w-full">
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
           <div className="flex items-center gap-2">
             <Button onClick={handleBack} size="sm" variant="ghost">
@@ -210,7 +216,7 @@ const ClientDetailPage = () => {
             <h1 className="text-2xl font-bold">{client.business_name}</h1>
           </div>
 
-          <div className="flex gap-2">
+          <div className="flex gap-2 self-end sm:self-auto">
             <Button
               variant="outline"
               onClick={() => setIsEditing(true)}
@@ -229,8 +235,8 @@ const ClientDetailPage = () => {
           </div>
         </div>
 
-        {/* Client Financial Summary Card */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        {/* Client Financial Summary Cards */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           <Card>
             <CardHeader className="pb-2">
               <CardTitle className="text-sm font-medium">Saldo Atual</CardTitle>
@@ -304,8 +310,8 @@ const ClientDetailPage = () => {
             </CardContent>
           </Card>
         ) : (
-          <Tabs defaultValue="info">
-            <TabsList>
+          <Tabs defaultValue="info" className="w-full">
+            <TabsList className="w-full max-w-md grid grid-cols-4">
               <TabsTrigger value="info">Informações</TabsTrigger>
               <TabsTrigger value="machines">Equipamentos</TabsTrigger>
               <TabsTrigger value="sales">Vendas</TabsTrigger>
@@ -357,9 +363,9 @@ const ClientDetailPage = () => {
                         <div className="flex items-start gap-2">
                           <Phone className="w-4 h-4 text-muted-foreground mt-1" />
                           <div>
-                            <p className="font-medium">{client.contact_name}</p>
+                            <p className="font-medium">{client.contact_name || "Nome não informado"}</p>
                             <p className="text-sm text-muted-foreground">
-                              {formatPhone(client.phone)}
+                              {client.phone ? formatPhone(client.phone) : "Telefone não informado"}
                             </p>
                           </div>
                         </div>
@@ -367,7 +373,7 @@ const ClientDetailPage = () => {
                         <div className="flex items-start gap-2">
                           <Mail className="w-4 h-4 text-muted-foreground mt-1" />
                           <div>
-                            <p className="text-sm">{client.email}</p>
+                            <p className="text-sm">{client.email || "Email não informado"}</p>
                           </div>
                         </div>
                       </div>
@@ -381,9 +387,10 @@ const ClientDetailPage = () => {
                     <div className="flex items-start gap-2">
                       <MapPin className="w-4 h-4 text-muted-foreground mt-1" />
                       <div>
-                        <p>{client.address}</p>
+                        <p>{client.address || "Endereço não informado"}</p>
                         <p className="text-sm text-muted-foreground">
-                          {client.city}, {client.state} - CEP: {formatCEP(client.zip)}
+                          {client.city || "Cidade não informada"}, {client.state || "UF"} 
+                          {client.zip ? ` - CEP: ${formatCEP(client.zip)}` : ""}
                         </p>
                       </div>
                     </div>
@@ -408,34 +415,36 @@ const ClientDetailPage = () => {
                       ))}
                     </div>
                   ) : machines.length > 0 ? (
-                    <div className="space-y-4">
-                      {machines.map((machine) => (
-                        <Card key={machine.id}>
-                          <CardContent className="p-4">
-                            <div className="flex justify-between items-center">
-                              <div>
-                                <h4 className="font-medium">Modelo: {machine.model}</h4>
-                                <p className="text-sm text-muted-foreground">Serial: {machine.serial_number}</p>
+                    <div className="space-y-4 w-full">
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        {machines.map((machine) => (
+                          <Card key={machine.id}>
+                            <CardContent className="p-4">
+                              <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-2">
+                                <div>
+                                  <h4 className="font-medium">Modelo: {machine.model}</h4>
+                                  <p className="text-sm text-muted-foreground">Serial: {machine.serial_number}</p>
+                                </div>
+                                <div className="flex flex-col items-start sm:items-end">
+                                  <span className={`px-2 py-1 rounded-md text-xs font-medium ${
+                                    machine.status === 'ACTIVE' ? 'bg-green-100 text-green-800' :
+                                    machine.status === 'INACTIVE' ? 'bg-gray-100 text-gray-800' :
+                                    machine.status === 'MAINTENANCE' ? 'bg-amber-100 text-amber-800' :
+                                    'bg-red-100 text-red-800'
+                                  }`}>
+                                    {machine.status === 'ACTIVE' ? 'Ativo' : 
+                                     machine.status === 'INACTIVE' ? 'Inativo' : 
+                                     machine.status === 'MAINTENANCE' ? 'Em Manutenção' : 'Bloqueado'}
+                                  </span>
+                                  <span className="text-xs text-muted-foreground mt-1">
+                                    {formatDate(machine.created_at)}
+                                  </span>
+                                </div>
                               </div>
-                              <div className="flex flex-col items-end">
-                                <span className={`px-2 py-1 rounded-md text-xs font-medium ${
-                                  machine.status === 'ACTIVE' ? 'bg-green-100 text-green-800' :
-                                  machine.status === 'INACTIVE' ? 'bg-gray-100 text-gray-800' :
-                                  machine.status === 'MAINTENANCE' ? 'bg-amber-100 text-amber-800' :
-                                  'bg-red-100 text-red-800'
-                                }`}>
-                                  {machine.status === 'ACTIVE' ? 'Ativo' : 
-                                   machine.status === 'INACTIVE' ? 'Inativo' : 
-                                   machine.status === 'MAINTENANCE' ? 'Em Manutenção' : 'Bloqueado'}
-                                </span>
-                                <span className="text-xs text-muted-foreground mt-1">
-                                  {formatDate(machine.created_at)}
-                                </span>
-                              </div>
-                            </div>
-                          </CardContent>
-                        </Card>
-                      ))}
+                            </CardContent>
+                          </Card>
+                        ))}
+                      </div>
                     </div>
                   ) : (
                     <div className="flex flex-col items-center justify-center py-8 text-center">
@@ -470,32 +479,34 @@ const ClientDetailPage = () => {
                     </div>
                   ) : recentSales.length > 0 ? (
                     <div className="space-y-4">
-                      {recentSales.map((sale) => (
-                        <Card key={sale.id}>
-                          <CardContent className="p-4">
-                            <div className="flex justify-between items-center">
-                              <div>
-                                <h4 className="font-medium">Código: {sale.code}</h4>
-                                <p className="text-sm text-muted-foreground">Terminal: {sale.terminal}</p>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        {recentSales.map((sale) => (
+                          <Card key={sale.id}>
+                            <CardContent className="p-4">
+                              <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-2">
+                                <div>
+                                  <h4 className="font-medium">Código: {sale.code}</h4>
+                                  <p className="text-sm text-muted-foreground">Terminal: {sale.terminal}</p>
+                                </div>
+                                <div className="flex flex-col items-start sm:items-end">
+                                  <span className="font-medium">{formatCurrency(sale.gross_amount)}</span>
+                                  <span className="text-xs text-muted-foreground">
+                                    {formatDate(sale.date)}
+                                  </span>
+                                  <span className={`px-2 py-1 rounded-md text-xs font-medium ${
+                                    sale.payment_method === 'CREDIT' ? 'bg-blue-100 text-blue-800' : 
+                                    sale.payment_method === 'DEBIT' ? 'bg-green-100 text-green-800' : 
+                                    'bg-purple-100 text-purple-800'
+                                  }`}>
+                                    {sale.payment_method === 'CREDIT' ? 'Crédito' : 
+                                     sale.payment_method === 'DEBIT' ? 'Débito' : 'Pix'}
+                                  </span>
+                                </div>
                               </div>
-                              <div className="flex flex-col items-end">
-                                <span className="font-medium">{formatCurrency(sale.gross_amount)}</span>
-                                <span className="text-xs text-muted-foreground">
-                                  {formatDate(sale.date)}
-                                </span>
-                                <span className={`px-2 py-1 rounded-md text-xs font-medium ${
-                                  sale.payment_method === 'CREDIT' ? 'bg-blue-100 text-blue-800' : 
-                                  sale.payment_method === 'DEBIT' ? 'bg-green-100 text-green-800' : 
-                                  'bg-purple-100 text-purple-800'
-                                }`}>
-                                  {sale.payment_method === 'CREDIT' ? 'Crédito' : 
-                                   sale.payment_method === 'DEBIT' ? 'Débito' : 'Pix'}
-                                </span>
-                              </div>
-                            </div>
-                          </CardContent>
-                        </Card>
-                      ))}
+                            </CardContent>
+                          </Card>
+                        ))}
+                      </div>
                       <div className="flex justify-center mt-4">
                         <Button variant="outline" onClick={() => navigate('/sales')}>
                           Ver todas as vendas
