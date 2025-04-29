@@ -11,7 +11,7 @@ const USERS_PER_PAGE = 10;
 
 export interface UserFilters {
   search: string;
-  role: string | null;
+  role: UserRole | null;
 }
 
 export const useUserManagement = () => {
@@ -73,6 +73,7 @@ export const useUserManagement = () => {
       }
       
       if (filters.role) {
+        // Usando o tipo UserRole diretamente, não como string
         countQuery = countQuery.eq('role', filters.role);
       }
       
@@ -99,6 +100,7 @@ export const useUserManagement = () => {
       }
       
       if (filters.role) {
+        // Usando o tipo UserRole diretamente, não como string
         query = query.eq('role', filters.role);
       }
       

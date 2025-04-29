@@ -8,7 +8,7 @@ import { UserRole } from "@/types";
 
 export interface UserFilters {
   search: string;
-  role: string | null;
+  role: UserRole | null;
 }
 
 interface UserFiltersProps {
@@ -17,7 +17,7 @@ interface UserFiltersProps {
 
 const UserFilters = ({ onFilterChange }: UserFiltersProps) => {
   const [search, setSearch] = useState("");
-  const [role, setRole] = useState<string | null>(null);
+  const [role, setRole] = useState<UserRole | null>(null);
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
@@ -25,7 +25,8 @@ const UserFilters = ({ onFilterChange }: UserFiltersProps) => {
   };
 
   const handleRoleChange = (value: string) => {
-    const selectedRole = value === "all" ? null : value;
+    // Convert string value to UserRole or null
+    const selectedRole = value === "all" ? null : value as UserRole;
     setRole(selectedRole);
     onFilterChange({ search, role: selectedRole });
   };
