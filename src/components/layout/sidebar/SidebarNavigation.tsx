@@ -10,7 +10,8 @@ import {
   MessageSquare,
   Percent,
   CreditCard,
-  Building2
+  Building2,
+  UserPlus
 } from "lucide-react";
 import SidebarNavItem from "./SidebarNavItem";
 import { SidebarItem } from "./types";
@@ -42,6 +43,11 @@ const SidebarNavigation = ({ userRole }: SidebarNavigationProps) => {
         {
           title: "Máquinas",
           href: "/machines",
+          roles: [UserRole.ADMIN, UserRole.FINANCIAL, UserRole.PARTNER],
+        },
+        {
+          title: "Cadastro",
+          href: "/client-register",
           roles: [UserRole.ADMIN, UserRole.FINANCIAL, UserRole.PARTNER],
         }
       ]
