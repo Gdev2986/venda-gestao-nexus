@@ -10,12 +10,13 @@ import SidebarUserProfile from "./SidebarUserProfile";
 import { SidebarProps } from "./types";
 
 const Sidebar = ({ isOpen, isMobile, onClose, userRole }: SidebarProps) => {
-  if (!isOpen) {
+  // Don't render anything if sidebar is closed and on desktop
+  if (!isOpen && !isMobile) {
     return null;
   }
 
   const sidebarVariants = {
-    hidden: { x: isMobile ? -320 : 0, opacity: isMobile ? 0 : 1 },
+    hidden: { x: -320, opacity: 0 },
     visible: { x: 0, opacity: 1 },
   };
 
@@ -30,6 +31,11 @@ const Sidebar = ({ isOpen, isMobile, onClose, userRole }: SidebarProps) => {
       animate="visible"
       exit="hidden"
       transition={{ duration: 0.2 }}
+      style={{ 
+        position: isMobile ? 'fixed' : 'fixed',
+        height: '100%',
+        overflowY: 'auto'
+      }}
     >
       <div className="flex items-center justify-between h-16 px-4 border-b border-sidebar-border">
         <div className="flex items-center space-x-2">

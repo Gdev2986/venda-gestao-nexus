@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { UserRole } from "@/types";
 import Sidebar from "./Sidebar";
@@ -37,10 +38,14 @@ const MainLayout = ({ children }: MainLayoutProps) => {
         userRole={userRole}
       />
       
-      {/* Main content */}
-      <div className="flex-1 flex flex-col overflow-hidden">
+      {/* Main content - adjust the left margin based on sidebar state */}
+      <div 
+        className={`flex-1 flex flex-col overflow-hidden transition-all duration-200 ease-in-out ${
+          sidebarOpen && !isMobile ? 'ml-64' : 'ml-0'
+        }`}
+      >
         {/* Header */}
-        <header className="h-16 border-b border-border flex items-center justify-between px-4">
+        <header className="h-16 border-b border-border flex items-center justify-between px-4 sticky top-0 bg-background z-10">
           <div className="flex items-center space-x-4">
             <Button 
               variant="ghost" 
