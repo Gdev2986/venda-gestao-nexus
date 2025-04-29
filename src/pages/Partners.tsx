@@ -51,7 +51,7 @@ const Partners = () => {
 
   return (
     <MainLayout>
-      <PartnersHeader />
+      <PartnersHeader onCreateClick={handleOpenForm} />
       
       <PartnersFilterCard 
         onFilter={handleFilter}
@@ -67,10 +67,21 @@ const Partners = () => {
       
       {showPartnerForm && (
         <PartnerForm
-          open={showPartnerForm}
-          onOpenChange={handleCloseForm}
-          initialData={selectedPartner}
-          onSave={handleSavePartner}
+          isOpen={showPartnerForm}
+          onClose={handleCloseForm}
+          onSubmit={handleSavePartner}
+          initialData={selectedPartner ? {
+            id: selectedPartner.id,
+            business_name: selectedPartner.company_name,
+            commission_rate: selectedPartner.commission_rate,
+            contact_name: "",
+            email: "",
+            phone: "",
+            address: "",
+            city: "",
+            state: "",
+            zip: ""
+          } : undefined}
         />
       )}
     </MainLayout>

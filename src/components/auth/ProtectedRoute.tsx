@@ -6,13 +6,13 @@ import { UserRole } from '@/types';
 
 export interface ProtectedRouteProps {
   children: React.ReactNode;
-  roles?: UserRole[];  // Add this prop to fix the type error
+  roles?: UserRole[];
 }
 
 const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children, roles = [] }) => {
-  const { user, loading } = useAuth();
+  const { user, isLoading } = useAuth();
 
-  if (loading) {
+  if (isLoading) {
     // You could render a loading spinner here
     return <div>Loading...</div>;
   }
