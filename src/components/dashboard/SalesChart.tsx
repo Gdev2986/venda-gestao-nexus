@@ -2,6 +2,7 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { PaymentMethod } from "@/types";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell, Legend } from "recharts";
+import { cn } from "@/lib/utils";
 
 interface SalesChartProps {
   data: {
@@ -10,6 +11,7 @@ interface SalesChartProps {
     percentage: number;
   }[];
   isLoading?: boolean;
+  className?: string;
 }
 
 const getPaymentMethodLabel = (method: PaymentMethod) => {
@@ -38,7 +40,7 @@ const getPaymentMethodColor = (method: PaymentMethod) => {
   }
 };
 
-const SalesChart = ({ data, isLoading = false }: SalesChartProps) => {
+const SalesChart = ({ data, isLoading = false, className }: SalesChartProps) => {
   const chartData = data.map((item) => ({
     name: getPaymentMethodLabel(item.method),
     value: item.amount,
@@ -66,7 +68,7 @@ const SalesChart = ({ data, isLoading = false }: SalesChartProps) => {
   };
 
   return (
-    <Card className="col-span-1 lg:col-span-2">
+    <Card className={cn("col-span-1", className)}>
       <CardHeader>
         <CardTitle className="text-lg">Vendas por Forma de Pagamento</CardTitle>
       </CardHeader>
