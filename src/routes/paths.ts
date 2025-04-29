@@ -49,6 +49,9 @@ export const PATHS = {
   
   // Suporte
   SUPPORT: "/support",
+
+  // Ajuda
+  HELP: "/help",
   
   // Não encontrado
   NOT_FOUND: "*"

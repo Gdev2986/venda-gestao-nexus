@@ -20,6 +20,7 @@ import Fees from "./pages/Fees";
 import Reports from "./pages/Reports";
 import Settings from "./pages/Settings";
 import Support from "./pages/Support";
+import Help from "./pages/Help";
 import NotFound from "./pages/NotFound";
 import UserManagement from "./pages/UserManagement";
 
@@ -92,6 +93,11 @@ function App() {
             <Route path={PATHS.SUPPORT} element={
               <ProtectedRoute>
                 <Support />
+              </ProtectedRoute>
+            } />
+            <Route path={PATHS.HELP} element={
+              <ProtectedRoute>
+                <Help />
               </ProtectedRoute>
             } />
             <Route path={PATHS.USER_MANAGEMENT} element={

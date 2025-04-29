@@ -23,6 +23,7 @@ import {
 } from "@/components/ui/form";
 import { Textarea } from "@/components/ui/textarea";
 import { UserRole } from "@/types";
+import { AlertTriangle, Shield } from "lucide-react";
 
 const formSchema = z.object({
   notes: z.string().min(1, {
@@ -81,14 +82,25 @@ export function RoleChangeDialog({
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>
-            {isPrivilegeEscalation 
-              ? "Elevação de Privilégios" 
-              : "Alteração de Função"}
-          </DialogTitle>
+          <div className="flex items-center gap-2">
+            {isPrivilegeEscalation ? (
+              <AlertTriangle className="h-5 w-5 text-destructive" />
+            ) : (
+              <Shield className="h-5 w-5 text-muted-foreground" />
+            )}
+            <DialogTitle>
+              {isPrivilegeEscalation 
+                ? "Elevação de Privilégios" 
+                : "Alteração de Função"}
+            </DialogTitle>
+          </div>
           <DialogDescription>
             Você está alterando a função de <strong>{userName}</strong> de <strong>{currentRole}</strong> para <strong>{newRole}</strong>.
-            {isPrivilegeEscalation && " Esta alteração concederá mais privilégios ao usuário."}
+            {isPrivilegeEscalation && (
+              <div className="mt-2 p-2 bg-destructive/10 border border-destructive/20 rounded text-destructive">
+                <p>Esta alteração concederá mais privilégios ao usuário. Certifique-se de que esta ação é necessária e autorizada.</p>
+              </div>
+            )}
           </DialogDescription>
         </DialogHeader>
         
@@ -108,7 +120,7 @@ export function RoleChangeDialog({
                     />
                   </FormControl>
                   <FormDescription>
-                    Por favor, forneça um motivo para esta alteração de função.
+                    Por favor, forneça um motivo para esta alteração de função. Esta informação será registrada para fins de auditoria.
                   </FormDescription>
                   <FormMessage />
                 </FormItem>
@@ -131,7 +143,9 @@ export function RoleChangeDialog({
               >
                 {isLoading
                   ? "Processando..."
-                  : "Confirmar Alteração"}
+                  : isPrivilegeEscalation 
+                    ? "Confirmar Elevação"
+                    : "Confirmar Alteração"}
               </Button>
             </DialogFooter>
           </form>

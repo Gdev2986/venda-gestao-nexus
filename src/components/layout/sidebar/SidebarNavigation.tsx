@@ -11,7 +11,7 @@ import {
   Percent,
   CreditCard,
   Building2,
-  UserPlus
+  HelpCircle
 } from "lucide-react";
 import SidebarNavItem from "./SidebarNavItem";
 import { SidebarItem } from "./types";
@@ -43,11 +43,6 @@ const SidebarNavigation = ({ userRole }: SidebarNavigationProps) => {
         {
           title: "Lista de Clientes",
           href: "/clients",
-          roles: [UserRole.ADMIN, UserRole.FINANCIAL, UserRole.PARTNER],
-        },
-        {
-          title: "Cadastro",
-          href: "/client-new",
           roles: [UserRole.ADMIN, UserRole.FINANCIAL, UserRole.PARTNER],
         },
         {
@@ -85,6 +80,12 @@ const SidebarNavigation = ({ userRole }: SidebarNavigationProps) => {
       title: "Suporte",
       icon: MessageSquare,
       href: "/support",
+      roles: [UserRole.ADMIN, UserRole.CLIENT, UserRole.FINANCIAL, UserRole.PARTNER],
+    },
+    {
+      title: "Ajuda",
+      icon: HelpCircle,
+      href: "/help",
       roles: [UserRole.ADMIN, UserRole.CLIENT, UserRole.FINANCIAL, UserRole.PARTNER],
     },
     {

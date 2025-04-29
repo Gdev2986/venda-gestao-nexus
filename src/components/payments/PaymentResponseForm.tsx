@@ -23,6 +23,7 @@ import {
 } from "@/components/ui/form";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "@/hooks/use-toast";
+import { AlertTriangle, CheckCircle2 } from "lucide-react";
 
 const formSchema = z.object({
   notes: z.string().min(1, {
@@ -38,6 +39,8 @@ interface PaymentResponseFormProps {
   onSubmit: (data: { notes: string; isApproved: boolean }) => void;
   paymentId: string;
   type: "approve" | "reject";
+  clientBalance?: number;
+  paymentAmount?: number;
 }
 
 export function PaymentResponseForm({
@@ -46,6 +49,8 @@ export function PaymentResponseForm({
   onSubmit,
   paymentId,
   type,
+  clientBalance,
+  paymentAmount,
 }: PaymentResponseFormProps) {
   const [isLoading, setIsLoading] = useState(false);
 
@@ -87,15 +92,37 @@ export function PaymentResponseForm({
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>
-            {type === "approve" ? "Aprovar Pagamento" : "Rejeitar Pagamento"}
-          </DialogTitle>
+          <div className="flex items-center gap-2">
+            {type === "approve" ? (
+              <CheckCircle2 className="h-5 w-5 text-green-500" />
+            ) : (
+              <AlertTriangle className="h-5 w-5 text-destructive" />
+            )}
+            <DialogTitle>
+              {type === "approve" ? "Aprovar Pagamento" : "Rejeitar Pagamento"}
+            </DialogTitle>
+          </div>
           <DialogDescription>
             {type === "approve"
               ? "Adicione uma nota de confirmação para este pagamento."
               : "Informe o motivo da rejeição deste pagamento."}
           </DialogDescription>
         </DialogHeader>
+
+        {clientBalance !== undefined && paymentAmount !== undefined && (
+          <div className="bg-muted p-4 rounded-md mb-4">
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <p className="text-sm font-medium text-muted-foreground">Saldo do Cliente</p>
+                <p className="text-lg font-semibold">R$ {clientBalance.toFixed(2)}</p>
+              </div>
+              <div>
+                <p className="text-sm font-medium text-muted-foreground">Valor do Pagamento</p>
+                <p className="text-lg font-semibold">R$ {paymentAmount.toFixed(2)}</p>
+              </div>
+            </div>
+          </div>
+        )}
         
         <Form {...form}>
           <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-4">
@@ -118,7 +145,7 @@ export function PaymentResponseForm({
                   </FormControl>
                   <FormDescription>
                     {type === "approve"
-                      ? "Adicione qualquer informação relevante sobre a aprovação."
+                      ? "Adicione qualquer informação relevante sobre a aprovação. O cliente receberá esta mensagem."
                       : "Explique detalhadamente o motivo da rejeição para que o cliente possa resolver o problema."}
                   </FormDescription>
                   <FormMessage />
