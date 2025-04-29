@@ -1,7 +1,7 @@
 
 import * as React from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
-import { DayPicker } from "react-day-picker";
+import { DayPicker, DayPickerRangeProps } from "react-day-picker";
 
 import { cn } from "@/lib/utils";
 import { buttonVariants } from "@/components/ui/button";
@@ -27,54 +27,62 @@ function Calendar({
   });
 
   // Override the onSelect handler if we're using range mode with reversed selection
-  const onSelect = props.mode === 'range' && reversedRange ? 
-    (range: { from?: Date, to?: Date } | undefined) => {
-      // If there's no range provided, reset the internal state
-      if (!range) {
-        setInternalRange({ selecting: 'end' });
-        if (props.onSelect) props.onSelect(undefined);
-        return;
+  const rangeSelectHandler = React.useCallback((range: { from?: Date, to?: Date } | undefined) => {
+    // If there's no range provided, reset the internal state
+    if (!range) {
+      setInternalRange({ selecting: 'end' });
+      if (props.onSelect) {
+        (props as DayPickerRangeProps).onSelect(undefined);
       }
+      return;
+    }
 
-      // If we're selecting the end date (first click)
-      if (internalRange.selecting === 'end' && range?.from) {
-        setInternalRange({
-          from: undefined,
-          to: range.from,
-          selecting: 'start'
-        });
-        
-        // Don't update the actual selection yet, we're waiting for the start date
-        return;
+    // If we're selecting the end date (first click)
+    if (internalRange.selecting === 'end' && range?.from) {
+      setInternalRange({
+        from: undefined,
+        to: range.from,
+        selecting: 'start'
+      });
+      
+      // Don't update the actual selection yet, we're waiting for the start date
+      return;
+    }
+    
+    // If we're selecting the start date (second click)
+    if (internalRange.selecting === 'start' && range?.from) {
+      const newRange = {
+        from: range.from,
+        to: internalRange.to
+      };
+      
+      // If user selected a date after the end date, swap them to maintain proper order
+      if (newRange.from && newRange.to && newRange.from > newRange.to) {
+        newRange.from = internalRange.to;
+        newRange.to = range.from;
       }
       
-      // If we're selecting the start date (second click)
-      if (internalRange.selecting === 'start' && range?.from) {
-        const newRange = {
-          from: range.from,
-          to: internalRange.to
-        };
-        
-        // If user selected a date after the end date, swap them to maintain proper order
-        if (newRange.from && newRange.to && newRange.from > newRange.to) {
-          newRange.from = internalRange.to;
-          newRange.to = range.from;
-        }
-        
-        // Reset for next selection
-        setInternalRange({ selecting: 'end' });
-        
-        // Now call the original onSelect with our correctly ordered range
-        if (props.onSelect) props.onSelect(newRange);
-        return;
+      // Reset for next selection
+      setInternalRange({ selecting: 'end' });
+      
+      // Now call the original onSelect with our correctly ordered range
+      if (props.onSelect && props.mode === 'range') {
+        (props as DayPickerRangeProps).onSelect(newRange);
       }
+      return;
     }
-    : props.onSelect;
+  }, [internalRange, props]);
   
   // We pass the internal range only if we're in reversed selection mode and currently selecting
   const selected = props.mode === 'range' && reversedRange && internalRange.selecting === 'start' && internalRange.to
     ? { from: undefined, to: internalRange.to }
     : props.selected;
+
+  // Extract the proper onSelect handler based on mode
+  const finalProps = {...props};
+  if (props.mode === 'range' && reversedRange) {
+    (finalProps as DayPickerRangeProps).onSelect = rangeSelectHandler;
+  }
 
   return (
     <DayPicker
@@ -115,12 +123,11 @@ function Calendar({
         ...classNames,
       }}
       components={{
-        IconLeft: ({ ..._props }) => <ChevronLeft className="h-4 w-4" />,
-        IconRight: ({ ..._props }) => <ChevronRight className="h-4 w-4" />,
+        IconLeft: () => <ChevronLeft className="h-4 w-4" />,
+        IconRight: () => <ChevronRight className="h-4 w-4" />,
       }}
       selected={selected}
-      onSelect={onSelect}
-      {...props}
+      {...finalProps}
     />
   );
 }
