@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { useNavigate } from "react-router-dom";
@@ -233,7 +232,7 @@ const ClientRegistration = () => {
                     <SelectValue placeholder="Filtrar por status" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="">Todos os status</SelectItem>
+                    <SelectItem value="all">Todos os status</SelectItem>
                     <SelectItem value="active">Ativo</SelectItem>
                     <SelectItem value="inactive">Inativo</SelectItem>
                     <SelectItem value="pending">Pendente</SelectItem>
