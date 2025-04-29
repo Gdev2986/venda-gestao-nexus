@@ -31,16 +31,16 @@ export default {
 				primary: {
 					DEFAULT: 'hsl(var(--primary))',
 					foreground: 'hsl(var(--primary-foreground))',
-          50: '#F3EAFF',
-          100: '#E6D4FF',
-          200: '#CDA9FF',
-          300: '#B47EFF',
-          400: '#9B53FF',
-          500: '#8228FF',  // Cor principal roxa
-          600: '#6A10E0',
-          700: '#5D0CC6',
-          800: '#4C0AA3',
-          900: '#340671',
+          50: '#E6F7FF',
+          100: '#CCF0FF',
+          200: '#99E1FF',
+          300: '#66D2FF',
+          400: '#33C3FF',
+          500: '#00B0F0',  // Main blue color
+          600: '#0090C9',
+          700: '#006EA3',
+          800: '#004D7A',
+          900: '#002B52',
 				},
 				secondary: {
 					DEFAULT: 'hsl(var(--secondary))',
