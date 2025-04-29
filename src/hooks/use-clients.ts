@@ -4,7 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Client } from "@/types";
 import { v4 as uuidv4 } from "uuid";
 
-// Define the Client row types based on the database schema
+// Define the SupabaseClientRow type based on the database schema
 export type SupabaseClientRow = {
   id: string;
   business_name: string;

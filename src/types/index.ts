@@ -16,6 +16,24 @@ export type User = {
   phone?: string;
 };
 
+// Client type definition
+export type Client = {
+  id: string;
+  business_name: string;
+  contact_name: string;
+  email: string;
+  phone: string;
+  address: string;
+  city: string;
+  state: string;
+  zip: string;
+  document?: string;
+  partner_id?: string;
+  status: "active" | "inactive";
+  created_at: string;
+  updated_at: string;
+};
+
 // Tipos para autenticação
 export type AuthState = {
   user: User | null;

@@ -8,7 +8,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Separator } from "@/components/ui/separator";
 import { ArrowLeft, Edit, Trash, Building, Phone, Mail, MapPin, Calendar } from "lucide-react";
 import { formatDate, formatCNPJ, formatPhone, formatCEP } from "@/utils/client-utils";
-import { useClients, Client } from "@/hooks/use-clients";
+import { useClients } from "@/hooks/use-clients";
+import { Client } from "@/types";
 import { ClientForm } from "@/components/clients/ClientForm";
 import {
   AlertDialog,
