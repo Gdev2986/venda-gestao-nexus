@@ -5,6 +5,15 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { formatCurrency, formatDate } from "@/lib/utils";
+import { Button } from "@/components/ui/button";
+import { 
+  Select, 
+  SelectContent, 
+  SelectItem, 
+  SelectTrigger, 
+  SelectValue 
+} from "@/components/ui/select";
+import { Filter } from "lucide-react";
 
 // Define mock payment data structure
 const mockPayments = [
@@ -54,8 +63,17 @@ const statusColors = {
 };
 
 const Payments = () => {
-  // Move the useState hook inside the component function
   const [payments, setPayments] = useState(mockPayments);
+  const [statusFilter, setStatusFilter] = useState("all");
+  const [typeFilter, setTypeFilter] = useState("all");
+  
+  const filteredPayments = payments.filter(payment => {
+    const matchesStatus = statusFilter === "all" || payment.status === statusFilter;
+    const matchesType = typeFilter === "all" || 
+      (typeFilter === "pix" && !payment.is_boleto) || 
+      (typeFilter === "boleto" && payment.is_boleto);
+    return matchesStatus && matchesType;
+  });
   
   return (
     <MainLayout>
@@ -63,6 +81,46 @@ const Payments = () => {
         <div className="flex justify-between items-center">
           <h2 className="text-3xl font-bold tracking-tight">Pagamentos</h2>
         </div>
+
+        <Card className="mb-4">
+          <CardHeader>
+            <CardTitle>Filtros</CardTitle>
+            <CardDescription>
+              Filtre os pagamentos por status e tipo
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div>
+                <label className="text-sm font-medium mb-1 block">Status</label>
+                <Select value={statusFilter} onValueChange={setStatusFilter}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Selecione um status" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">Todos</SelectItem>
+                    <SelectItem value="pending">Pendente</SelectItem>
+                    <SelectItem value="approved">Aprovado</SelectItem>
+                    <SelectItem value="rejected">Rejeitado</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div>
+                <label className="text-sm font-medium mb-1 block">Tipo</label>
+                <Select value={typeFilter} onValueChange={setTypeFilter}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Selecione um tipo" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">Todos</SelectItem>
+                    <SelectItem value="pix">PIX</SelectItem>
+                    <SelectItem value="boleto">Boleto</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
 
         <Card>
           <CardHeader>
@@ -83,19 +141,27 @@ const Payments = () => {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {payments.map((payment) => (
-                  <TableRow key={payment.id}>
-                    <TableCell className="font-medium">{payment.client_name}</TableCell>
-                    <TableCell>R$ {payment.amount.toFixed(2)}</TableCell>
-                    <TableCell>{payment.created_at}</TableCell>
-                    <TableCell>
-                      <Badge className={statusColors[payment.status]}>
-                        {payment.status}
-                      </Badge>
+                {filteredPayments.length > 0 ? (
+                  filteredPayments.map((payment) => (
+                    <TableRow key={payment.id}>
+                      <TableCell className="font-medium">{payment.client_name}</TableCell>
+                      <TableCell>R$ {payment.amount.toFixed(2)}</TableCell>
+                      <TableCell>{payment.created_at}</TableCell>
+                      <TableCell>
+                        <Badge className={statusColors[payment.status]}>
+                          {payment.status}
+                        </Badge>
+                      </TableCell>
+                      <TableCell>{payment.is_boleto ? "Boleto" : "PIX"}</TableCell>
+                    </TableRow>
+                  ))
+                ) : (
+                  <TableRow>
+                    <TableCell colSpan={5} className="text-center py-6 text-gray-500">
+                      Nenhum pagamento encontrado com os filtros selecionados
                     </TableCell>
-                    <TableCell>{payment.is_boleto ? "Boleto" : "PIX"}</TableCell>
                   </TableRow>
-                ))}
+                )}
               </TableBody>
             </Table>
           </CardContent>
