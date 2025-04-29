@@ -21,6 +21,7 @@ import Reports from "./pages/Reports";
 import Settings from "./pages/Settings";
 import Support from "./pages/Support";
 import NotFound from "./pages/NotFound";
+import UserManagement from "./pages/UserManagement";
 
 function App() {
   return (
@@ -91,6 +92,11 @@ function App() {
             <Route path={PATHS.SUPPORT} element={
               <ProtectedRoute>
                 <Support />
+              </ProtectedRoute>
+            } />
+            <Route path={PATHS.USER_MANAGEMENT} element={
+              <ProtectedRoute>
+                <UserManagement />
               </ProtectedRoute>
             } />
             

@@ -1,17 +1,22 @@
 
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import MainLayout from "@/components/layout/MainLayout";
 import PixKeysManager from "@/components/settings/PixKeysManager";
-import { PixKey } from "@/types";
+import { PixKey, UserRole } from "@/types";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { CameraIcon } from "lucide-react";
+import { CameraIcon, Users } from "lucide-react";
+import { useUserRole } from "@/hooks/use-user-role";
+import { PATHS } from "@/routes/paths";
 
 const Settings = () => {
+  const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState("profile");
+  const { userRole } = useUserRole();
   const [pixKeys, setPixKeys] = useState<PixKey[]>([
     {
       id: "1",
@@ -53,6 +58,10 @@ const Settings = () => {
     );
   };
 
+  const goToUserManagement = () => {
+    navigate(PATHS.USER_MANAGEMENT);
+  };
+
   return (
     <MainLayout>
       <div className="mb-6">
@@ -61,6 +70,28 @@ const Settings = () => {
           Gerencie seu perfil e preferências da conta
         </p>
       </div>
+      
+      {userRole === UserRole.ADMIN && (
+        <div className="mb-6">
+          <Card>
+            <CardHeader>
+              <CardTitle>Administração do Sistema</CardTitle>
+              <CardDescription>
+                Acesso às ferramentas de administração do sistema
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <Button 
+                onClick={goToUserManagement}
+                className="flex items-center gap-2"
+              >
+                <Users className="h-5 w-5" />
+                Gerenciar Usuários
+              </Button>
+            </CardContent>
+          </Card>
+        </div>
+      )}
       
       <Tabs defaultValue={activeTab} onValueChange={setActiveTab} className="w-full">
         <TabsList className="grid w-full grid-cols-3">

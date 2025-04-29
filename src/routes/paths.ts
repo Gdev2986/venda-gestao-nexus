@@ -45,6 +45,7 @@ export const PATHS = {
   
   // Configurações
   SETTINGS: "/settings",
+  USER_MANAGEMENT: "/settings/users",
   
   // Suporte
   SUPPORT: "/support",

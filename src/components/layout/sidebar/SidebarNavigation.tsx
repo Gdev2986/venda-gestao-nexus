@@ -41,13 +41,18 @@ const SidebarNavigation = ({ userRole }: SidebarNavigationProps) => {
       roles: [UserRole.ADMIN, UserRole.FINANCIAL, UserRole.PARTNER],
       subItems: [
         {
-          title: "Máquinas",
-          href: "/machines",
+          title: "Lista de Clientes",
+          href: "/clients",
           roles: [UserRole.ADMIN, UserRole.FINANCIAL, UserRole.PARTNER],
         },
         {
           title: "Cadastro",
-          href: "/client-register",
+          href: "/client-new",
+          roles: [UserRole.ADMIN, UserRole.FINANCIAL, UserRole.PARTNER],
+        },
+        {
+          title: "Máquinas",
+          href: "/machines",
           roles: [UserRole.ADMIN, UserRole.FINANCIAL, UserRole.PARTNER],
         }
       ]
