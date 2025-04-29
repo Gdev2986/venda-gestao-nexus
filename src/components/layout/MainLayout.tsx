@@ -15,6 +15,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { cn } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 interface MainLayoutProps {
   children: ReactNode;
@@ -22,24 +23,18 @@ interface MainLayoutProps {
 
 const MainLayout = ({ children }: MainLayoutProps) => {
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
-  const [isMobile, setIsMobile] = useState(false);
+  const isMobile = useIsMobile();
   const [user, setUser] = useState<{ name: string; role: UserRole } | null>(null);
   const { toast } = useToast();
   const navigate = useNavigate();
 
-  // Check viewport width on mount and on resize
   useEffect(() => {
-    const checkIsMobile = () => {
-      setIsMobile(window.innerWidth < 768);
-      if (window.innerWidth < 768) {
-        setIsSidebarOpen(false);
-      } else {
-        setIsSidebarOpen(true);
-      }
-    };
-
-    checkIsMobile();
-    window.addEventListener("resize", checkIsMobile);
+    // If on mobile, start with sidebar closed
+    if (isMobile) {
+      setIsSidebarOpen(false);
+    } else {
+      setIsSidebarOpen(true);
+    }
 
     // Get user from localStorage (in a real app, you would use a proper auth context)
     const storedUser = localStorage.getItem("user");
@@ -54,9 +49,7 @@ const MainLayout = ({ children }: MainLayoutProps) => {
       // Redirect to login if no user is found
       navigate("/");
     }
-
-    return () => window.removeEventListener("resize", checkIsMobile);
-  }, [navigate]);
+  }, [navigate, isMobile]);
 
   const toggleSidebar = () => {
     setIsSidebarOpen(!isSidebarOpen);
@@ -77,7 +70,12 @@ const MainLayout = ({ children }: MainLayoutProps) => {
 
   return (
     <div className="min-h-screen flex bg-background">
-      <Sidebar isOpen={isSidebarOpen} isMobile={isMobile} onClose={toggleSidebar} userRole={user.role as UserRole} />
+      <Sidebar 
+        isOpen={isSidebarOpen} 
+        isMobile={isMobile} 
+        onClose={toggleSidebar} 
+        userRole={user.role as UserRole} 
+      />
       
       <div className={cn(
         "flex-1 transition-all duration-300 ease-in-out",
@@ -105,7 +103,7 @@ const MainLayout = ({ children }: MainLayoutProps) => {
             }}>
               <div className="relative">
                 <BellIcon className="h-5 w-5" />
-                <span className="absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-danger text-[10px] text-white">
+                <span className="absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-primary text-[10px] text-white">
                   3
                 </span>
               </div>
@@ -134,7 +132,7 @@ const MainLayout = ({ children }: MainLayoutProps) => {
                   Configurações
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
-                <DropdownMenuItem onClick={handleLogout} className="text-danger">
+                <DropdownMenuItem onClick={handleLogout} className="text-destructive">
                   Sair
                 </DropdownMenuItem>
               </DropdownMenuContent>
@@ -142,7 +140,7 @@ const MainLayout = ({ children }: MainLayoutProps) => {
           </div>
         </header>
         
-        <main className="p-4 md:p-6 max-w-7xl mx-auto">
+        <main className="p-4 md:p-6">
           {children}
         </main>
       </div>
