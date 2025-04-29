@@ -1,4 +1,3 @@
-
 import { createContext, useContext, useEffect, useState } from "react";
 import { Session, User } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
@@ -26,20 +25,15 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   useEffect(() => {
     // Set up auth state listener FIRST
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      (event, session) => {
-        setSession(session);
-        setUser(session?.user ?? null);
+      (event, newSession) => {
+        setSession(newSession);
+        setUser(newSession?.user ?? null);
 
         if (event === "SIGNED_IN") {
           toast({
             title: "Autenticado com sucesso",
             description: "Bem-vindo de volta à SigmaPay!",
           });
-          
-          // Use setTimeout to prevent potential deadlocks
-          setTimeout(() => {
-            // Você pode buscar dados adicionais do usuário aqui se necessário
-          }, 0);
         }
         
         if (event === "SIGNED_OUT") {
@@ -52,9 +46,9 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     );
 
     // THEN check for existing session
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setSession(session);
-      setUser(session?.user ?? null);
+    supabase.auth.getSession().then(({ data: { session: currentSession } }) => {
+      setSession(currentSession);
+      setUser(currentSession?.user ?? null);
       setIsLoading(false);
     });
 
@@ -66,18 +60,29 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const signIn = async (email: string, password: string) => {
     try {
       setIsLoading(true);
-      const { error } = await supabase.auth.signInWithPassword({
+      const { data, error } = await supabase.auth.signInWithPassword({
         email,
         password,
       });
 
       if (error) throw error;
       
-      navigate("/dashboard");
+      if (data.user) {
+        navigate("/dashboard");
+      }
     } catch (error: any) {
+      let errorMessage = "Ocorreu um erro durante a autenticação";
+      
+      // Mensagens de erro mais específicas
+      if (error.message === "Invalid login credentials") {
+        errorMessage = "Credenciais inválidas. Verifique seu email e senha.";
+      } else if (error.message.includes("Database error")) {
+        errorMessage = "Erro no banco de dados. Tente novamente mais tarde.";
+      }
+      
       toast({
         title: "Erro ao fazer login",
-        description: error.message || "Ocorreu um erro durante a autenticação",
+        description: errorMessage,
         variant: "destructive",
       });
       throw error;

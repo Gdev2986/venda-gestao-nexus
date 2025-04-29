@@ -2,7 +2,7 @@
 import { useEffect, useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import LoginForm from "@/components/auth/LoginForm";
-import { CreditCardIcon } from "lucide-react";
+import { LayoutDashboard, CreditCard, FileText, Monitor } from "lucide-react";
 
 const Index = () => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -39,7 +39,7 @@ const Index = () => {
           <div className="grid grid-cols-2 gap-4 mb-8">
             <div className="flex flex-col items-center md:items-start">
               <div className="bg-primary-100 p-2 rounded-full mb-2">
-                <CreditCardIcon className="h-6 w-6 text-primary" />
+                <LayoutDashboard className="h-6 w-6 text-primary" />
               </div>
               <h3 className="text-lg font-semibold">Dashboard Inteligente</h3>
               <p className="text-gray-500 text-sm">Visualize todas as suas vendas e métricas em tempo real.</p>
@@ -47,7 +47,7 @@ const Index = () => {
             
             <div className="flex flex-col items-center md:items-start">
               <div className="bg-primary-100 p-2 rounded-full mb-2">
-                <CreditCardIcon className="h-6 w-6 text-primary" />
+                <CreditCard className="h-6 w-6 text-primary" />
               </div>
               <h3 className="text-lg font-semibold">Gestão de Pagamentos</h3>
               <p className="text-gray-500 text-sm">Receba seus pagamentos via PIX de forma rápida e segura.</p>
@@ -55,7 +55,7 @@ const Index = () => {
             
             <div className="flex flex-col items-center md:items-start">
               <div className="bg-primary-100 p-2 rounded-full mb-2">
-                <CreditCardIcon className="h-6 w-6 text-primary" />
+                <FileText className="h-6 w-6 text-primary" />
               </div>
               <h3 className="text-lg font-semibold">Relatórios Detalhados</h3>
               <p className="text-gray-500 text-sm">Análises completas sobre seu desempenho de vendas.</p>
@@ -63,7 +63,7 @@ const Index = () => {
             
             <div className="flex flex-col items-center md:items-start">
               <div className="bg-primary-100 p-2 rounded-full mb-2">
-                <CreditCardIcon className="h-6 w-6 text-primary" />
+                <Monitor className="h-6 w-6 text-primary" />
               </div>
               <h3 className="text-lg font-semibold">Multiplaforma</h3>
               <p className="text-gray-500 text-sm">Acesse de qualquer dispositivo, em qualquer lugar.</p>

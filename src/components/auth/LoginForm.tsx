@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { z } from "zod";
 import { useForm } from "react-hook-form";
@@ -53,8 +52,15 @@ const LoginForm = () => {
       setAuthError(null);
       await signIn(data.email, data.password);
     } catch (error: any) {
-      // Erro já tratado no contexto de autenticação
-      setAuthError(error.message || "Ocorreu um erro durante a autenticação");
+      // O erro já é tratado em AuthContext, 
+      // mas podemos personalizar mais mensagens específicas aqui se necessário
+      if (error.message.includes("Database error")) {
+        setAuthError("Erro no banco de dados. Por favor, tente novamente mais tarde.");
+      } else if (error.message.includes("Invalid login credentials")) {
+        setAuthError("Email ou senha incorretos. Por favor, verifique seus dados.");
+      } else {
+        setAuthError(error.message || "Ocorreu um erro durante a autenticação");
+      }
     }
   };
 
