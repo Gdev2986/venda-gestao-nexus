@@ -1,104 +1,49 @@
-import { RouterProvider, createBrowserRouter } from "react-router-dom";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { Toaster } from "@/components/ui/toaster";
-import { ThemeProvider } from "@/components/theme-provider";
 
-// Pages
-import Index from "@/pages/Index";
-import Dashboard from "@/pages/Dashboard";
-import Clients from "@/pages/Clients";
-import ClientRegister from "@/pages/ClientRegister";
-import ClientRegistration from "@/pages/ClientRegistration";
-import Machines from "@/pages/Machines";
-import Partners from "@/pages/Partners";
-import Payments from "@/pages/Payments";
-import Reports from "@/pages/Reports";
-import Fees from "@/pages/Fees";
-import Support from "@/pages/Support";
-import Settings from "@/pages/Settings";
-import Sales from "@/pages/Sales";
-import Register from "@/pages/Register";
-import NotFound from "@/pages/NotFound";
+import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
+import { ThemeProvider } from "./components/theme-provider";
+import { Toaster } from "./components/ui/toaster";
 
-// Initialize QueryClient
-const queryClient = new QueryClient();
+import Index from "./pages/Index";
+import Dashboard from "./pages/Dashboard";
+import Clients from "./pages/Clients";
+import ClientDetail from "./pages/ClientDetail";
+import ClientNew from "./pages/ClientNew";
+import Machines from "./pages/Machines";
+import Sales from "./pages/Sales";
+import Payments from "./pages/Payments";
+import Partners from "./pages/Partners";
+import Register from "./pages/Register";
+import Fees from "./pages/Fees";
+import Reports from "./pages/Reports";
+import Settings from "./pages/Settings";
+import Support from "./pages/Support";
+import NotFound from "./pages/NotFound";
 
-const App = () => {
+function App() {
   return (
-    <ThemeProvider>
-      <QueryClientProvider client={queryClient}>
-        <RouterProvider router={router} />
-        <Toaster />
-      </QueryClientProvider>
+    <ThemeProvider defaultTheme="light" storageKey="vite-ui-theme">
+      <Router>
+        <Routes>
+          <Route path="/" element={<Index />} />
+          <Route path="/dashboard" element={<Dashboard />} />
+          <Route path="/clients" element={<Clients />} />
+          <Route path="/clients/:id" element={<ClientDetail />} />
+          <Route path="/clients/new" element={<ClientNew />} />
+          <Route path="/machines" element={<Machines />} />
+          <Route path="/sales" element={<Sales />} />
+          <Route path="/payments" element={<Payments />} />
+          <Route path="/partners" element={<Partners />} />
+          <Route path="/register" element={<Register />} />
+          <Route path="/fees" element={<Fees />} />
+          <Route path="/reports" element={<Reports />} />
+          <Route path="/settings" element={<Settings />} />
+          <Route path="/support" element={<Support />} />
+          <Route path="*" element={<NotFound />} />
+        </Routes>
+      </Router>
+      <Toaster />
     </ThemeProvider>
   );
-};
-
-const router = createBrowserRouter([
-  {
-    path: "/",
-    element: <Index />,
-  },
-  {
-    path: "/dashboard",
-    element: <Dashboard />,
-  },
-  {
-    path: "/clients",
-    element: <Clients />,
-  },
-  {
-    path: "/client-register",
-    element: <ClientRegistration />,
-  },
-  {
-    path: "/clients/new",
-    element: <ClientRegister />,
-  },
-  {
-    path: "/clients/:id",
-    element: <ClientRegister />,
-  },
-  {
-    path: "/machines",
-    element: <Machines />,
-  },
-  {
-    path: "/partners",
-    element: <Partners />,
-  },
-  {
-    path: "/payments",
-    element: <Payments />,
-  },
-  {
-    path: "/reports",
-    element: <Reports />,
-  },
-  {
-    path: "/fees",
-    element: <Fees />,
-  },
-  {
-    path: "/support",
-    element: <Support />,
-  },
-  {
-    path: "/settings",
-    element: <Settings />,
-  },
-  {
-    path: "/sales",
-    element: <Sales />,
-  },
-  {
-    path: "/register",
-    element: <Register />,
-  },
-  {
-    path: "*",
-    element: <NotFound />,
-  },
-]);
+}
 
 export default App;

@@ -39,6 +39,7 @@ export interface ClientFormProps {
   partners?: { id: string; business_name: string }[];
   isOpen: boolean;
   onClose: () => void;
+  submitButtonText?: string;
 }
 
 export function ClientForm({
@@ -59,6 +60,7 @@ export function ClientForm({
     document: ""
   },
   partners = [],
+  submitButtonText = "Salvar"
 }: ClientFormProps) {
   const [isLoading, setIsLoading] = useState(false);
 
@@ -97,6 +99,23 @@ export function ClientForm({
         <BusinessInfoFields form={form} partners={partners} />
         <ContactFields form={form} />
         <AddressFields form={form} />
+        
+        <div className="flex justify-end gap-2 pt-4">
+          <Button 
+            type="button" 
+            variant="outline" 
+            onClick={onClose}
+            disabled={isLoading}
+          >
+            Cancelar
+          </Button>
+          <Button 
+            type="submit" 
+            disabled={isLoading}
+          >
+            {isLoading ? "Salvando..." : submitButtonText}
+          </Button>
+        </div>
       </form>
     </Form>
   );

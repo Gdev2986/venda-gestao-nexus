@@ -81,10 +81,6 @@ const ContactFields = ({ form }: ContactFieldsProps) => {
                 <Input 
                   placeholder="(00) 00000-0000" 
                   {...field} 
-                  onChange={(e) => {
-                    // Capture native input event
-                    field.onChange(e);
-                  }}
                 />
               </FormControl>
               <FormMessage />

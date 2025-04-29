@@ -33,7 +33,7 @@ export function useClients() {
     setLoading(true);
     setError(null);
     try {
-      // In a production environment, this would use the actual Supabase query
+      // Query Supabase for clients data
       const { data, error } = await supabase
         .from('clients')
         .select(`
@@ -61,7 +61,7 @@ export function useClients() {
           phone: formatPhone(client.phone || ''),
           document: client.document ? formatCNPJ(client.document) : undefined,
           zip: formatCEP(client.zip || '')
-        }));
+        })) as Client[];
         
         setClients(formattedClients);
       } else {
@@ -138,7 +138,7 @@ export function useClients() {
           phone: formatPhone(data[0].phone || ''),
           document: data[0].document ? formatCNPJ(data[0].document) : undefined,
           zip: formatCEP(data[0].zip || '')
-        };
+        } as Client;
         
         setClients(prev => [...prev, formattedClient]);
         
@@ -203,7 +203,7 @@ export function useClients() {
           phone: formatPhone(data[0].phone || ''),
           document: data[0].document ? formatCNPJ(data[0].document) : undefined,
           zip: formatCEP(data[0].zip || '')
-        };
+        } as Client;
         
         setClients(prev => prev.map(c => c.id === id ? formattedClient : c));
         
@@ -215,7 +215,7 @@ export function useClients() {
         return formattedClient;
       } else {
         // For development: mock response if Supabase is not yet configured
-        const updatedClient = {
+        const updatedClient: Client = {
           ...client,
           id,
           updated_at: new Date().toISOString() 
@@ -227,6 +227,8 @@ export function useClients() {
           title: "Cliente atualizado",
           description: "Cliente atualizado com sucesso.",
         });
+        
+        return updatedClient;
       }
     } catch (error: any) {
       console.error("Error updating client:", error);

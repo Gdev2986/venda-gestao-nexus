@@ -98,10 +98,6 @@ const AddressFields = ({ form }: AddressFieldsProps) => {
                 <Input 
                   placeholder="00000-000" 
                   {...field} 
-                  onChange={(e) => {
-                    // Capture native input event
-                    field.onChange(e);
-                  }}
                 />
               </FormControl>
               <FormMessage />

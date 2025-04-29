@@ -4,6 +4,8 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { UseFormReturn } from "react-hook-form";
 import { z } from "zod";
+import { useEffect } from "react";
+import { formatCNPJ } from "@/utils/client-utils";
 
 // Schema for business information fields
 export const businessInfoSchema = z.object({
@@ -22,6 +24,20 @@ interface BusinessInfoFieldsProps {
 }
 
 const BusinessInfoFields = ({ form, partners = [] }: BusinessInfoFieldsProps) => {
+  // Watch the document field to apply formatting
+  const documentValue = form.watch("document");
+  
+  // Apply CNPJ formatting whenever the value changes
+  useEffect(() => {
+    const currentDocument = documentValue;
+    if (currentDocument && typeof currentDocument === 'string') {
+      const formattedDocument = formatCNPJ(currentDocument);
+      if (formattedDocument !== currentDocument) {
+        form.setValue("document", formattedDocument, { shouldValidate: false });
+      }
+    }
+  }, [documentValue, form]);
+
   return (
     <>
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -49,7 +65,7 @@ const BusinessInfoFields = ({ form, partners = [] }: BusinessInfoFieldsProps) =>
                 <Input placeholder="00.000.000/0001-00" {...field} />
               </FormControl>
               <FormDescription>
-                CNPJ da empresa sem pontuação
+                CNPJ da empresa
               </FormDescription>
               <FormMessage />
             </FormItem>
