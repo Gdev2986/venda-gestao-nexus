@@ -4,7 +4,8 @@ import { ChevronLeft, ChevronRight } from "lucide-react";
 import { 
   DayPicker, 
   DateRange,
-  SelectRangeEventHandler
+  SelectRangeEventHandler,
+  DayPickerRangeProps
 } from "react-day-picker";
 
 import { cn } from "@/lib/utils";
@@ -72,7 +73,7 @@ function Calendar({
       // Default fallback
       return range;
     },
-    [rangeSelectionState, reversedRange]
+    [rangeSelectionState, reversedRange, props.mode]
   );
 
   // Create the day picker props based on our state
@@ -124,7 +125,8 @@ function Calendar({
 
     // Handle range mode with reversed selection
     if (props.mode === "range" && reversedRange) {
-      const selected = props.selected as DateRange | undefined;
+      // Use type assertion to ensure TypeScript understands the correct props
+      const rangeProps = props as unknown as DayPickerRangeProps;
       
       // For the first phase (selecting end date), modify selection display
       if (rangeSelectionState.phase === "start" && rangeSelectionState.selectedEnd) {
@@ -133,11 +135,11 @@ function Calendar({
           selected: { 
             from: undefined, 
             to: rangeSelectionState.selectedEnd 
-          },
+          } as DateRange,
           onSelect: (range?: DateRange) => {
             const modifiedRange = handleRangeSelect(range);
-            if (props.onSelect && typeof props.onSelect === 'function') {
-              (props.onSelect as SelectRangeEventHandler)(modifiedRange);
+            if (rangeProps.onSelect) {
+              rangeProps.onSelect(modifiedRange);
             }
           }
         };
@@ -147,8 +149,8 @@ function Calendar({
         ...baseProps,
         onSelect: (range?: DateRange) => {
           const modifiedRange = handleRangeSelect(range);
-          if (props.onSelect && typeof props.onSelect === 'function') {
-            (props.onSelect as SelectRangeEventHandler)(modifiedRange);
+          if (rangeProps.onSelect) {
+            rangeProps.onSelect(modifiedRange);
           }
         }
       };

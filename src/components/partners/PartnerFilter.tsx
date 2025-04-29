@@ -119,8 +119,8 @@ export default function PartnerFilter({ onFilter }: PartnerFilterProps) {
                   <PopoverContent className="w-auto p-0" align="center">
                     <Calendar
                       mode="range"
-                      selected={field.value}
-                      onSelect={(range: DateRange | undefined) => {
+                      selected={field.value as DateRange}
+                      onSelect={(range) => {
                         field.onChange(range);
                         if (range?.to) {
                           setDateOpen(false);
