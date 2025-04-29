@@ -107,7 +107,10 @@ const PixKeyForm = ({
           
           <div className="grid items-center gap-2">
             <Label htmlFor="type">Tipo da Chave</Label>
-            <Select value={type} onValueChange={setType}>
+            <Select 
+              value={type} 
+              onValueChange={(value: PixKeyType) => setType(value)}
+            >
               <SelectTrigger id="type">
                 <SelectValue placeholder="Selecione o tipo de chave" />
               </SelectTrigger>

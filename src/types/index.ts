@@ -1,10 +1,9 @@
 
-
 export enum UserRole {
   ADMIN = 'ADMIN',
   PARTNER = 'PARTNER',
   CLIENT = 'CLIENT',
-  FINANCE = 'FINANCE',  // Changed from FINANCIAL to FINANCE to match what's used in the codebase
+  FINANCIAL = 'FINANCIAL',  // Changed from FINANCE to FINANCIAL to match what's used in the codebase
 }
 
 export enum PaymentMethod {

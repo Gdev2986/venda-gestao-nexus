@@ -47,7 +47,13 @@ export const useMachines = () => {
       
       if (error) throw error;
       
-      setMachines(data || []);
+      // Convert database status to MachineStatus enum
+      const machinesWithCorrectStatus: Machine[] = (data || []).map(machine => ({
+        ...machine,
+        status: machine.status as MachineStatus
+      }));
+      
+      setMachines(machinesWithCorrectStatus);
     } catch (error) {
       console.error("Error fetching machines:", error);
     }

@@ -23,7 +23,7 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children, roles = [] })
   }
 
   // If roles are specified, check if user has required role
-  if (roles.length > 0 && !roles.includes(user.role)) {
+  if (roles.length > 0 && !roles.includes(user.role as UserRole)) {
     // User doesn't have required role, redirect based on their role
     if (user.role === UserRole.CLIENT) {
       return <Navigate to="/client/dashboard" replace />;
