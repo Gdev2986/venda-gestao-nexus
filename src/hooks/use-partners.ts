@@ -74,13 +74,13 @@ export const usePartners = () => {
   // Add new partner
   const addPartner = async (partnerData: Omit<Partner, "id" | "created_at" | "updated_at">) => {
     try {
-      // Remove id from partnerData to let Supabase generate one
+      // Removed the "id" property since Supabase will generate it
       const { data, error } = await supabase
         .from("partners")
-        .insert({
+        .insert([{
           company_name: partnerData.company_name,
           commission_rate: partnerData.commission_rate
-        })
+        }])
         .select();
 
       if (error) {

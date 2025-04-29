@@ -5,6 +5,17 @@ import { supabase } from "@/integrations/supabase/client";
 import { Machine, MachineStatus } from "@/types";
 import { useToast } from "@/hooks/use-toast";
 
+// Define a more specific type for the machine data from the database to avoid deep type instantiation
+interface MachineDb {
+  id: string;
+  serial_number: string;
+  model: string;
+  status: string; // This will be cast to MachineStatus enum
+  client_id?: string;
+  created_at?: string;
+  updated_at?: string;
+}
+
 export const useMachines = () => {
   const { user } = useAuth();
   const [machines, setMachines] = useState<Machine[]>([]);
@@ -48,7 +59,7 @@ export const useMachines = () => {
       if (error) throw error;
       
       // Convert database status to MachineStatus enum
-      const machinesWithCorrectStatus: Machine[] = (data || []).map(machine => ({
+      const machinesWithCorrectStatus: Machine[] = (data || []).map((machine: MachineDb) => ({
         ...machine,
         status: machine.status as MachineStatus
       }));

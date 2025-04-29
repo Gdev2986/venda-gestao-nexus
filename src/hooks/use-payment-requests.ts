@@ -2,15 +2,32 @@
 import { useState, useEffect } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
-import { PaymentRequest, PixKeyType } from "@/types";
+import { PaymentRequest, PaymentRequestStatus, PixKey, PixKeyType } from "@/types";
 import { useToast } from "@/hooks/use-toast";
 
-export interface PixKey {
+// For better typing, define database types
+interface PaymentRequestDb {
+  id: string;
+  amount: number;
+  status: string; // Database string enum will be cast to PaymentRequestStatus
+  client_id: string;
+  pix_key_id: string;
+  receipt_url?: string;
+  created_at?: string;
+  updated_at?: string;
+  approved_at?: string;
+  approved_by?: string;
+}
+
+interface PixKeyDb {
   id: string;
   key: string;
   name: string;
-  type: PixKeyType;
+  type: string; // Database string enum will be cast to PixKeyType
   is_default: boolean;
+  user_id: string;
+  created_at?: string;
+  updated_at?: string;
 }
 
 export const usePaymentRequests = () => {
@@ -60,7 +77,13 @@ export const usePaymentRequests = () => {
         throw error;
       }
       
-      setPaymentRequests(data || []);
+      // Convert to PaymentRequest type with proper enum values
+      const typedRequests: PaymentRequest[] = (data || []).map((req: PaymentRequestDb) => ({
+        ...req,
+        status: req.status as PaymentRequestStatus
+      }));
+      
+      setPaymentRequests(typedRequests);
     } catch (error) {
       console.error("Error fetching payment requests:", error);
     }
@@ -80,7 +103,13 @@ export const usePaymentRequests = () => {
         throw error;
       }
       
-      setPixKeys(data || []);
+      // Convert to PixKey type with proper enum values
+      const typedKeys: PixKey[] = (data || []).map((key: PixKeyDb) => ({
+        ...key,
+        type: key.type as PixKeyType
+      }));
+      
+      setPixKeys(typedKeys);
     } catch (error) {
       console.error("Error fetching PIX keys:", error);
     }

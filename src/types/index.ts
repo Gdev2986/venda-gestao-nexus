@@ -3,7 +3,7 @@ export enum UserRole {
   ADMIN = 'ADMIN',
   PARTNER = 'PARTNER',
   CLIENT = 'CLIENT',
-  FINANCIAL = 'FINANCIAL',  // Changed from FINANCE to FINANCIAL to match what's used in the codebase
+  FINANCIAL = 'FINANCIAL', 
 }
 
 export enum PaymentMethod {
@@ -16,6 +16,7 @@ export enum MachineStatus {
   ACTIVE = 'ACTIVE',
   INACTIVE = 'INACTIVE',
   MAINTENANCE = 'MAINTENANCE',
+  BLOCKED = 'BLOCKED',
 }
 
 export enum ProcessingStatus {
@@ -53,7 +54,7 @@ export interface Client {
   partner_id?: string;
   created_at?: string;
   updated_at?: string;
-  status?: string; // Added status to match usage in clientsApi.ts
+  status?: string;
 }
 
 export interface Partner {
@@ -92,17 +93,17 @@ export interface SaleDb {
   terminal: string;
   gross_amount: number;
   net_amount: number;
-  payment_method: PaymentMethod;
+  payment_method: string; // Changed to string to match the database enum
   client_id: string;
   machine_id?: string;
   partner_id?: string;
-  processing_status?: ProcessingStatus;
+  processing_status?: string; // Changed to string to match the database enum
   created_at?: string;
   updated_at?: string;
 }
 
 export interface SalesFilterParams {
-  paymentMethod?: PaymentMethod;
+  paymentMethod?: PaymentMethod | 'all';
   terminal?: string;
   search?: string;
 }
@@ -120,7 +121,6 @@ export interface PaymentRequest {
   approved_by?: string;
 }
 
-// Add PixKey interface to fix error in PixKeysManager
 export interface PixKey {
   id: string;
   key: string;
@@ -132,7 +132,6 @@ export interface PixKey {
   updated_at?: string;
 }
 
-// Add interface for DashboardStats
 export interface DashboardStats {
   currentBalance: number;
   yesterdayGrossAmount: number;

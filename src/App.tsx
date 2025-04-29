@@ -41,7 +41,7 @@ function App() {
             <Route 
               path={PATHS.DASHBOARD} 
               element={
-                <ProtectedRoute roles={[UserRole.ADMIN, UserRole.PARTNER, UserRole.FINANCE]}>
+                <ProtectedRoute roles={[UserRole.ADMIN, UserRole.PARTNER, UserRole.FINANCIAL]}>
                   <Dashboard />
                 </ProtectedRoute>
               } 
@@ -105,7 +105,7 @@ function App() {
             <Route 
               path={PATHS.SALES} 
               element={
-                <ProtectedRoute roles={[UserRole.ADMIN, UserRole.FINANCE, UserRole.CLIENT]}>
+                <ProtectedRoute roles={[UserRole.ADMIN, UserRole.FINANCIAL, UserRole.CLIENT]}>
                   <Sales />
                 </ProtectedRoute>
               } 
@@ -114,7 +114,7 @@ function App() {
             <Route 
               path={PATHS.REPORTS} 
               element={
-                <ProtectedRoute roles={[UserRole.ADMIN, UserRole.FINANCE]}>
+                <ProtectedRoute roles={[UserRole.ADMIN, UserRole.FINANCIAL]}>
                   <Reports />
                 </ProtectedRoute>
               } 
@@ -123,7 +123,7 @@ function App() {
             <Route 
               path={PATHS.PAYMENTS} 
               element={
-                <ProtectedRoute roles={[UserRole.ADMIN, UserRole.FINANCE]}>
+                <ProtectedRoute roles={[UserRole.ADMIN, UserRole.FINANCIAL]}>
                   <Payments />
                 </ProtectedRoute>
               } 
