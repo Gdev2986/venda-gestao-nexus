@@ -1,10 +1,12 @@
+
 import { useState } from "react";
 import MainLayout from "@/components/layout/MainLayout";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
+import { formatCurrency, formatDate } from "@/lib/utils";
 
-// Update the payments data structure to include is_boleto
+// Define mock payment data structure
 const mockPayments = [
   {
     id: "1",
@@ -51,10 +53,10 @@ const statusColors = {
   rejected: "bg-red-500",
 };
 
-// Make sure all payment objects have the is_boleto property
-const [payments, setPayments] = useState(mockPayments);
-
 const Payments = () => {
+  // Move the useState hook inside the component function
+  const [payments, setPayments] = useState(mockPayments);
+  
   return (
     <MainLayout>
       <div className="space-y-4">
