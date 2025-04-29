@@ -34,6 +34,7 @@ function Calendar({
       if (props.mode === 'range') {
         const rangeProps = props as DayPickerRangeProps;
         if (rangeProps.onSelect) {
+          // Pass undefined with proper type handling
           rangeProps.onSelect(undefined);
         }
       }
@@ -72,6 +73,7 @@ function Calendar({
       if (props.mode === 'range') {
         const rangeProps = props as DayPickerRangeProps;
         if (rangeProps.onSelect) {
+          // Pass the range with proper type handling
           rangeProps.onSelect(newRange);
         }
       }
@@ -87,6 +89,7 @@ function Calendar({
   // Extract the proper props based on mode
   const finalProps = {...props};
   if (props.mode === 'range' && reversedRange) {
+    // Type cast to ensure TypeScript knows this is a DayPickerRangeProps
     (finalProps as DayPickerRangeProps).onSelect = rangeSelectHandler;
   }
 
