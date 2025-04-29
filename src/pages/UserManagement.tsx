@@ -9,24 +9,45 @@ import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { UserRole } from "@/types";
 import { supabase } from "@/integrations/supabase/client";
-import { AlertCircle } from "lucide-react";
+import { AlertCircle, ShieldAlert } from "lucide-react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { useNavigate } from "react-router-dom";
+import { useUserRole } from "@/hooks/use-user-role";
+import { PATHS } from "@/routes/paths";
 
 const UserManagement = () => {
   const { toast } = useToast();
+  const navigate = useNavigate();
+  const { userRole } = useUserRole();
   const [users, setUsers] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [updatingUser, setUpdatingUser] = useState<string | null>(null);
+  const [checkingAccess, setCheckingAccess] = useState(true);
 
   useEffect(() => {
-    fetchUsers();
-  }, []);
+    // Verificar se o usuário tem permissão de administrador
+    if (userRole === UserRole.ADMIN) {
+      setCheckingAccess(false);
+      fetchUsers();
+    } else if (userRole !== undefined) {
+      setCheckingAccess(false);
+      // Se não for admin, redirecionar para o dashboard
+      toast({
+        variant: "destructive",
+        title: "Acesso negado",
+        description: "Você não tem permissão para acessar esta página"
+      });
+      navigate(PATHS.DASHBOARD);
+    }
+  }, [userRole, navigate]);
 
   const fetchUsers = async () => {
     try {
       setLoading(true);
       setError(null);
+      
+      console.log("Tentando buscar usuários como admin...");
       
       // Fetch profiles from profiles table
       const { data, error } = await supabase
@@ -45,6 +66,7 @@ const UserManagement = () => {
         return;
       }
       
+      console.log("Usuários carregados com sucesso:", data?.length || 0);
       setUsers(data || []);
     } catch (error: any) {
       console.error("Exception while fetching users:", error);
@@ -58,6 +80,20 @@ const UserManagement = () => {
     try {
       setUpdatingUser(userId);
       
+      // Armazenar o usuário atual para exibir no log de auditoria
+      const currentUser = await supabase.auth.getUser();
+      const currentUserId = currentUser.data?.user?.id;
+      
+      // Obter o papel anterior para registrar no log
+      const { data: userBefore } = await supabase
+        .from('profiles')
+        .select('role')
+        .eq('id', userId)
+        .single();
+      
+      const beforeRole = userBefore?.role;
+      
+      // Atualizar o papel do usuário
       const { error } = await supabase
         .from('profiles')
         .update({ role: newRole })
@@ -70,6 +106,22 @@ const UserManagement = () => {
           description: error.message
         });
         return;
+      }
+
+      // Registrar a alteração no log de acesso (se a tabela existir)
+      try {
+        await supabase
+          .from('access_logs')
+          .insert([{
+            user_id: userId,
+            acted_by: currentUserId,
+            action: 'ROLE_CHANGE',
+            before_role: beforeRole,
+            after_role: newRole,
+            ip_address: 'web-app'
+          }]);
+      } catch (logError) {
+        console.warn("Não foi possível registrar o log de acesso:", logError);
       }
 
       // Update local state
@@ -96,6 +148,19 @@ const UserManagement = () => {
   const retryFetch = () => {
     fetchUsers();
   };
+
+  if (checkingAccess) {
+    return (
+      <MainLayout>
+        <div className="flex items-center justify-center h-[60vh]">
+          <div className="flex flex-col items-center">
+            <Spinner size="lg" />
+            <p className="mt-4">Verificando permissões...</p>
+          </div>
+        </div>
+      </MainLayout>
+    );
+  }
 
   return (
     <MainLayout>
