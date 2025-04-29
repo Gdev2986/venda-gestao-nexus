@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import MainLayout from "@/components/layout/MainLayout";
@@ -33,8 +32,16 @@ const ClientDetailPage = () => {
 
   useEffect(() => {
     if (id) {
-      const foundClient = getClientById(id);
-      setClient(foundClient || null);
+      const loadClient = async () => {
+        try {
+          const foundClient = await getClientById(id);
+          setClient(foundClient);
+        } catch (error) {
+          console.error("Error loading client:", error);
+        }
+      };
+      
+      loadClient();
     }
   }, [id, getClientById]);
 
