@@ -4,14 +4,11 @@ import { Session, User } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useNavigate } from "react-router-dom";
-import { UserRole } from "@/types";
-import { fetchUserRole } from "@/utils/auth-utils";
 
 interface AuthContextType {
   user: User | null;
   session: Session | null;
   isLoading: boolean;
-  userRole: UserRole | null;
   signIn: (email: string, password: string) => Promise<void>;
   signUp: (email: string, password: string, userData: { name: string }) => Promise<void>;
   signOut: () => Promise<void>;
@@ -22,25 +19,11 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [session, setSession] = useState<Session | null>(null);
   const [user, setUser] = useState<User | null>(null);
-  const [userRole, setUserRole] = useState<UserRole | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const { toast } = useToast();
   const navigate = useNavigate();
 
-  console.log("AuthProvider rendering, isLoading:", isLoading, "user:", user?.email, "role:", userRole);
-
-  // Function to fetch user role from profiles table
-  const loadUserRole = async (userId: string) => {
-    try {
-      const role = await fetchUserRole(userId);
-      console.log("Fetched role for user:", userId, "role:", role);
-      if (role) {
-        setUserRole(role);
-      }
-    } catch (error) {
-      console.error("Error fetching user role:", error);
-    }
-  };
+  console.log("AuthProvider rendering, isLoading:", isLoading, "user:", user?.email);
 
   useEffect(() => {
     console.log("Setting up auth listener");
@@ -53,10 +36,9 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         setUser(newSession?.user ?? null);
 
         // Handle auth events with setTimeout to avoid calling Supabase inside the callback
-        if (event === "SIGNED_IN" && newSession?.user) {
+        if (event === "SIGNED_IN") {
           console.log("Signed in event detected");
           setTimeout(() => {
-            loadUserRole(newSession.user.id);
             toast({
               title: "Autenticado com sucesso",
               description: "Bem-vindo à SigmaPay!",
@@ -66,7 +48,6 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         
         if (event === "SIGNED_OUT") {
           console.log("Signed out event detected");
-          setUserRole(null);
           setTimeout(() => {
             toast({
               title: "Desconectado",
@@ -91,11 +72,6 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         console.log("Initial session check complete:", !!data.session);
         setSession(data.session);
         setUser(data.session?.user ?? null);
-        
-        // Load user role if we have a session
-        if (data.session?.user) {
-          await loadUserRole(data.session.user.id);
-        }
       } catch (error) {
         console.error("Error during initial session check:", error);
       } finally {
@@ -140,17 +116,10 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       }
       
       if (data.user) {
-        console.log("Sign in successful, fetching user role");
-        await loadUserRole(data.user.id);
-        
-        console.log("Navigating based on role:", userRole);
+        console.log("Sign in successful, navigating to dashboard");
         // Use setTimeout to avoid race conditions with onAuthStateChange
         setTimeout(() => {
-          if (userRole === UserRole.CLIENT) {
-            navigate("/client/dashboard");
-          } else {
-            navigate("/dashboard");
-          }
+          navigate("/dashboard");
         }, 0);
       }
     } catch (error: any) {
@@ -217,7 +186,6 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       // Clear local state immediately
       setUser(null);
       setSession(null);
-      setUserRole(null);
       
       navigate("/");
     } catch (error: any) {
@@ -238,7 +206,6 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         user,
         session,
         isLoading,
-        userRole,
         signIn,
         signUp,
         signOut,

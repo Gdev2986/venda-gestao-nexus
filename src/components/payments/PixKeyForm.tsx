@@ -48,7 +48,6 @@ const PixKeyForm = ({
         name,
         key,
         type: type as PixKeyType,
-        user_id: "", // This will be set by the backend
         is_default: false
       });
       
@@ -108,10 +107,7 @@ const PixKeyForm = ({
           
           <div className="grid items-center gap-2">
             <Label htmlFor="type">Tipo da Chave</Label>
-            <Select 
-              value={type as string} 
-              onValueChange={(value) => setType(value as PixKeyType)}
-            >
+            <Select value={type} onValueChange={setType}>
               <SelectTrigger id="type">
                 <SelectValue placeholder="Selecione o tipo de chave" />
               </SelectTrigger>

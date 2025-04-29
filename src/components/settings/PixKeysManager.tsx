@@ -27,14 +27,14 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
-import { PixKey, PixKeyType } from "@/types";
+import { PixKey } from "@/types";
 import { ChevronRightIcon, PlusIcon, StarIcon, TrashIcon } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
 
 interface PixKeysManagerProps {
   pixKeys: PixKey[];
-  onAddKey?: (key: Omit<PixKey, "id" | "created_at" | "updated_at">) => void;
+  onAddKey?: (key: Omit<PixKey, "id" | "userId">) => void;
   onDeleteKey?: (keyId: string) => void;
   onSetDefaultKey?: (keyId: string) => void;
 }
@@ -46,7 +46,7 @@ const PixKeysManager = ({
   onSetDefaultKey,
 }: PixKeysManagerProps) => {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
-  const [keyType, setKeyType] = useState<PixKeyType>(PixKeyType.CPF);
+  const [keyType, setKeyType] = useState<"CPF" | "CNPJ" | "EMAIL" | "PHONE" | "RANDOM">("CPF");
   const [keyValue, setKeyValue] = useState("");
   const [keyName, setKeyName] = useState("");
   const { toast } = useToast();
@@ -88,13 +88,12 @@ const PixKeysManager = ({
         type: keyType,
         key: keyValue,
         name: keyName,
-        is_default: pixKeys.length === 0 ? true : false,
-        user_id: "" // This will be set by the backend
+        isDefault: pixKeys.length === 0 ? true : false,
       });
     }
 
     // Reset form and close dialog
-    setKeyType(PixKeyType.CPF);
+    setKeyType("CPF");
     setKeyValue("");
     setKeyName("");
     setIsDialogOpen(false);
@@ -152,7 +151,7 @@ const PixKeysManager = ({
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center">
                     <p className="font-medium truncate">{pixKey.name}</p>
-                    {pixKey.is_default && (
+                    {pixKey.isDefault && (
                       <div className="ml-2 text-xs text-primary flex items-center">
                         <StarIcon className="h-3 w-3 mr-1" />
                         <span>Padrão</span>
@@ -166,7 +165,7 @@ const PixKeysManager = ({
                   </div>
                 </div>
                 <div className="flex items-center ml-4 space-x-2">
-                  {!pixKey.is_default && (
+                  {!pixKey.isDefault && (
                     <Button
                       variant="ghost"
                       size="icon"
@@ -206,19 +205,16 @@ const PixKeysManager = ({
             <div className="grid gap-4 py-4">
               <div className="grid gap-2">
                 <Label htmlFor="keyType">Tipo de chave</Label>
-                <Select 
-                  value={keyType} 
-                  onValueChange={(value) => setKeyType(value as PixKeyType)}
-                >
+                <Select value={keyType} onValueChange={(value: any) => setKeyType(value)}>
                   <SelectTrigger id="keyType" className="w-full">
                     <SelectValue placeholder="Selecione o tipo" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value={PixKeyType.CPF}>CPF</SelectItem>
-                    <SelectItem value={PixKeyType.CNPJ}>CNPJ</SelectItem>
-                    <SelectItem value={PixKeyType.EMAIL}>E-mail</SelectItem>
-                    <SelectItem value={PixKeyType.PHONE}>Telefone</SelectItem>
-                    <SelectItem value={PixKeyType.RANDOM}>Chave aleatória</SelectItem>
+                    <SelectItem value="CPF">CPF</SelectItem>
+                    <SelectItem value="CNPJ">CNPJ</SelectItem>
+                    <SelectItem value="EMAIL">E-mail</SelectItem>
+                    <SelectItem value="PHONE">Telefone</SelectItem>
+                    <SelectItem value="RANDOM">Chave aleatória</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -227,10 +223,10 @@ const PixKeysManager = ({
                 <Input
                   id="keyValue"
                   placeholder={
-                    keyType === PixKeyType.CPF ? "123.456.789-00"
-                    : keyType === PixKeyType.CNPJ ? "12.345.678/0001-90"
-                    : keyType === PixKeyType.EMAIL ? "seuemail@exemplo.com"
-                    : keyType === PixKeyType.PHONE ? "+55 (11) 98765-4321"
+                    keyType === "CPF" ? "123.456.789-00"
+                    : keyType === "CNPJ" ? "12.345.678/0001-90"
+                    : keyType === "EMAIL" ? "seuemail@exemplo.com"
+                    : keyType === "PHONE" ? "+55 (11) 98765-4321"
                     : "Chave aleatória"
                   }
                   value={keyValue}

@@ -22,23 +22,6 @@ interface PaymentMethodSummary {
   percentage: number;
 }
 
-// Define a more specific database type for Sales
-interface SalesDbResponse {
-  id: string;
-  code: string;
-  date: string;
-  terminal: string;
-  gross_amount: number;
-  net_amount: number;
-  payment_method: string;
-  client_id: string;
-  machine_id?: string;
-  partner_id?: string;
-  processing_status?: string;
-  created_at?: string;
-  updated_at?: string;
-}
-
 export const useSales = () => {
   const [sales, setSales] = useState<Sale[]>([]);
   const [filteredSales, setFilteredSales] = useState<Sale[]>([]);
@@ -90,15 +73,15 @@ export const useSales = () => {
       
       if (data) {
         // Convert database sales to application Sale type
-        const formattedSales: Sale[] = data.map((saleDb: SalesDbResponse) => ({
-          id: saleDb.id,
-          code: saleDb.code,
-          date: new Date(saleDb.date),
-          terminal: saleDb.terminal,
-          grossAmount: saleDb.gross_amount,
-          netAmount: saleDb.net_amount,
-          paymentMethod: saleDb.payment_method as PaymentMethod,
-          clientId: saleDb.client_id
+        const formattedSales: Sale[] = data.map((sale: SaleDb) => ({
+          id: sale.id,
+          code: sale.code,
+          date: new Date(sale.date),
+          terminal: sale.terminal,
+          grossAmount: sale.gross_amount,
+          netAmount: sale.net_amount,
+          paymentMethod: sale.payment_method,
+          clientId: sale.client_id
         }));
         
         setSales(formattedSales);

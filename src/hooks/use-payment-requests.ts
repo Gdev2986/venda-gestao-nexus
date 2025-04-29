@@ -1,288 +1,313 @@
 
 import { useState, useEffect } from "react";
-import { supabase } from "@/integrations/supabase/client";
-import { useToast } from "./use-toast";
-import { PaymentRequest, PixKey as PixKeyType, PixKeyType as PixKeyEnum, PaymentRequestStatus } from "@/types";
 import { useAuth } from "@/contexts/AuthContext";
+import { supabase } from "@/integrations/supabase/client";
+import { PaymentRequest, PixKeyType } from "@/types";
+import { useToast } from "@/hooks/use-toast";
 
-// Export the PixKey type so it can be used in other components
-export type PixKey = PixKeyType;
+export interface PixKey {
+  id: string;
+  key: string;
+  name: string;
+  type: PixKeyType;
+  is_default: boolean;
+}
 
 export const usePaymentRequests = () => {
+  const { user } = useAuth();
   const [paymentRequests, setPaymentRequests] = useState<PaymentRequest[]>([]);
   const [pixKeys, setPixKeys] = useState<PixKey[]>([]);
-  const [isLoading, setIsLoading] = useState(false);
   const [currentBalance, setCurrentBalance] = useState(0);
+  const [isLoading, setIsLoading] = useState(true);
+  const [clientId, setClientId] = useState<string | null>(null);
   const { toast } = useToast();
-  const { user } = useAuth();
 
-  // Fetch payment requests
-  const fetchPaymentRequests = async (clientId?: string) => {
-    setIsLoading(true);
+  // Fetch client ID and data
+  const fetchClientData = async () => {
+    if (!user) return;
+    
     try {
-      let query = supabase
-        .from('payment_requests')
-        .select('*');
-
-      if (clientId) {
-        query = query.eq('client_id', clientId);
-      }
-
-      const { data, error } = await query;
-
-      if (error) {
-        console.error("Error fetching payment requests:", error);
-        toast({
-          title: "Erro",
-          description: "Falha ao carregar solicitações de pagamento.",
-          variant: "destructive",
-        });
-        return;
-      }
-
-      // Convert string status values to enum values
-      const typedRequests = data?.map(item => ({
-        ...item,
-        status: item.status as PaymentRequestStatus
-      })) || [];
+      const { data, error } = await supabase
+        .from('clients')
+        .select('id')
+        .eq('user_id', user.id)
+        .single();
       
-      setPaymentRequests(typedRequests);
+      if (error) {
+        throw error;
+      }
+      
+      if (data) {
+        setClientId(data.id);
+        return data.id;
+      }
     } catch (error) {
-      console.error("Error in fetchPaymentRequests:", error);
-    } finally {
-      setIsLoading(false);
+      console.error("Error fetching client ID:", error);
+      return null;
     }
   };
-
+  
+  // Fetch payment requests
+  const fetchPaymentRequests = async (cid: string) => {
+    try {
+      const { data, error } = await supabase
+        .from('payment_requests')
+        .select('*')
+        .eq('client_id', cid)
+        .order('created_at', { ascending: false });
+      
+      if (error) {
+        throw error;
+      }
+      
+      setPaymentRequests(data || []);
+    } catch (error) {
+      console.error("Error fetching payment requests:", error);
+    }
+  };
+  
   // Fetch PIX keys
   const fetchPixKeys = async () => {
-    setIsLoading(true);
+    if (!user) return;
+    
     try {
       const { data, error } = await supabase
         .from('pix_keys')
         .select('*')
-        .order('is_default', { ascending: false });
-
-      if (error) {
-        console.error("Error fetching PIX keys:", error);
-        toast({
-          title: "Erro",
-          description: "Falha ao carregar chaves PIX.",
-          variant: "destructive",
-        });
-        return;
-      }
-
-      // Convert string type values to enum values
-      const typedKeys = data?.map(item => ({
-        ...item,
-        type: item.type as PixKeyEnum
-      })) || [];
+        .eq('user_id', user.id);
       
-      setPixKeys(typedKeys);
-    } catch (error) {
-      console.error("Error in fetchPixKeys:", error);
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  // Fetch client balance
-  const fetchClientBalance = async (clientId?: string) => {
-    try {
-      if (!clientId && !user) return;
-      
-      // Fetch client ID if not provided
-      if (!clientId && user) {
-        const { data: clientData } = await supabase
-          .from('clients')
-          .select('id')
-          .eq('user_id', user.id)
-          .single();
-        
-        if (clientData) {
-          clientId = clientData.id;
-        }
-      }
-
-      if (clientId) {
-        const { data } = await supabase
-          .from('vw_client_balance')
-          .select('balance')
-          .eq('client_id', clientId)
-          .maybeSingle();
-
-        if (data) {
-          setCurrentBalance(Number(data.balance) || 0);
-        }
-      }
-    } catch (error) {
-      console.error("Error fetching client balance:", error);
-    }
-  };
-
-  // Create new payment request
-  const createPaymentRequest = async (amount: number, pixKeyId: string) => {
-    try {
-      // Get client ID for the current user
-      const { data: clientData, error: clientError } = await supabase
-        .from('clients')
-        .select('id')
-        .eq('user_id', user?.id)
-        .single();
-
-      if (clientError || !clientData) {
-        console.error("Error fetching client ID:", clientError);
-        toast({
-          title: "Erro",
-          description: "Não foi possível identificar seu cliente.",
-          variant: "destructive",
-        });
-        return false;
-      }
-
-      const { error } = await supabase
-        .from('payment_requests')
-        .insert([{
-          amount,
-          pix_key_id: pixKeyId,
-          client_id: clientData.id,
-          status: PaymentRequestStatus.PENDING
-        }]);
-
       if (error) {
         throw error;
       }
-
+      
+      setPixKeys(data || []);
+    } catch (error) {
+      console.error("Error fetching PIX keys:", error);
+    }
+  };
+  
+  // Calculate current balance
+  const fetchCurrentBalance = async (cid: string) => {
+    try {
+      const { data, error } = await supabase
+        .from('sales')
+        .select('net_amount')
+        .eq('client_id', cid);
+      
+      if (error) {
+        throw error;
+      }
+      
+      const totalSales = data?.reduce((sum, sale) => sum + Number(sale.net_amount), 0) || 0;
+      
+      // Subtract approved payment requests
+      const { data: requests, error: requestsError } = await supabase
+        .from('payment_requests')
+        .select('amount')
+        .eq('client_id', cid)
+        .in('status', ['APPROVED', 'PAID']);
+      
+      if (requestsError) {
+        throw requestsError;
+      }
+      
+      const totalPaid = requests?.reduce((sum, req) => sum + Number(req.amount), 0) || 0;
+      
+      setCurrentBalance(totalSales - totalPaid);
+    } catch (error) {
+      console.error("Error calculating balance:", error);
+    }
+  };
+  
+  // Create payment request
+  const createPaymentRequest = async (amount: number, pixKeyId: string) => {
+    if (!clientId) {
+      toast({
+        title: "Erro",
+        description: "Dados do cliente não encontrados.",
+        variant: "destructive"
+      });
+      return false;
+    }
+    
+    if (amount <= 0) {
+      toast({
+        title: "Erro",
+        description: "O valor deve ser maior que zero.",
+        variant: "destructive"
+      });
+      return false;
+    }
+    
+    if (amount > currentBalance) {
+      toast({
+        title: "Erro",
+        description: "O valor solicitado é maior que seu saldo disponível.",
+        variant: "destructive"
+      });
+      return false;
+    }
+    
+    try {
+      const { data, error } = await supabase
+        .from('payment_requests')
+        .insert({
+          client_id: clientId,
+          amount: amount,
+          pix_key_id: pixKeyId,
+          status: 'PENDING'
+        })
+        .select();
+      
+      if (error) {
+        throw error;
+      }
+      
+      // Refresh data
+      fetchData();
+      
       toast({
         title: "Solicitação enviada",
         description: "Sua solicitação de pagamento foi enviada com sucesso.",
       });
-
-      await fetchPaymentRequests(clientData.id);
+      
       return true;
     } catch (error: any) {
       console.error("Error creating payment request:", error);
       toast({
         title: "Erro",
-        description: error.message || "Falha ao criar solicitação de pagamento.",
-        variant: "destructive",
+        description: error.message || "Não foi possível enviar sua solicitação.",
+        variant: "destructive"
       });
       return false;
     }
   };
-
-  // Add new PIX key
-  const addPixKey = async (pixKeyData: Omit<PixKey, "id" | "created_at" | "updated_at">) => {
+  
+  // Add PIX key
+  const addPixKey = async (keyData: Omit<PixKey, "id">) => {
+    if (!user) {
+      toast({
+        title: "Erro",
+        description: "Usuário não autenticado.",
+        variant: "destructive"
+      });
+      return false;
+    }
+    
     try {
-      const { error } = await supabase
+      // If this is the first key, set it as default
+      if (pixKeys.length === 0) {
+        keyData.is_default = true;
+      }
+      
+      const { data, error } = await supabase
         .from('pix_keys')
-        .insert([{
-          ...pixKeyData,
-          user_id: user?.id
-        }]);
-
+        .insert({
+          ...keyData,
+          user_id: user.id
+        })
+        .select();
+      
       if (error) {
         throw error;
       }
-
+      
+      fetchPixKeys();
       toast({
         title: "Chave PIX adicionada",
-        description: "Sua chave PIX foi adicionada com sucesso.",
+        description: "Sua chave PIX foi cadastrada com sucesso.",
       });
-
-      await fetchPixKeys();
+      
       return true;
     } catch (error: any) {
       console.error("Error adding PIX key:", error);
       toast({
         title: "Erro",
-        description: error.message || "Falha ao adicionar chave PIX.",
-        variant: "destructive",
+        description: error.message || "Não foi possível adicionar a chave PIX.",
+        variant: "destructive"
       });
       return false;
     }
   };
-
-  // Process payment request (approve/reject)
-  const processPaymentRequest = async (id: string, action: 'approve' | 'reject', userId: string, receiptUrl?: string) => {
-    try {
-      const status = action === 'approve' ? PaymentRequestStatus.APPROVED : PaymentRequestStatus.REJECTED;
-      
-      const { error } = await supabase
-        .from('payment_requests')
-        .update({ 
-          status,
-          approved_by: userId,
-          approved_at: new Date().toISOString(),
-          receipt_url: receiptUrl
-        })
-        .eq('id', id);
-
-      if (error) {
-        throw error;
-      }
-
-      toast({
-        title: action === 'approve' ? "Pagamento aprovado" : "Pagamento rejeitado",
-        description: action === 'approve' ? "O pagamento foi aprovado com sucesso." : "O pagamento foi rejeitado.",
-      });
-
-      await fetchPaymentRequests();
-      return true;
-    } catch (error: any) {
-      console.error("Error processing payment request:", error);
-      toast({
-        title: "Erro",
-        description: error.message || "Falha ao processar a solicitação de pagamento.",
-        variant: "destructive",
-      });
-      return false;
-    }
-  };
-
-  // Refresh all data
-  const refreshData = async () => {
+  
+  // Fetch all data
+  const fetchData = async () => {
     setIsLoading(true);
     try {
-      // Get client ID for the current user
-      const { data: clientData } = await supabase
-        .from('clients')
-        .select('id')
-        .eq('user_id', user?.id)
-        .maybeSingle();
-
-      if (clientData) {
+      const cid = await fetchClientData();
+      if (cid) {
         await Promise.all([
-          fetchPaymentRequests(clientData.id),
-          fetchClientBalance(clientData.id)
+          fetchPaymentRequests(cid),
+          fetchPixKeys(),
+          fetchCurrentBalance(cid)
         ]);
       }
-      await fetchPixKeys();
     } catch (error) {
-      console.error("Error refreshing data:", error);
+      console.error("Error fetching data:", error);
     } finally {
       setIsLoading(false);
     }
   };
-
-  // Initialize data
+  
+  // Initial data fetch
   useEffect(() => {
     if (user) {
-      refreshData();
+      fetchData();
+      
+      // Set up realtime subscription for payment requests
+      const channel = supabase
+        .channel('payment-requests-changes')
+        .on(
+          'postgres_changes',
+          {
+            event: '*',
+            schema: 'public',
+            table: 'payment_requests',
+            filter: clientId ? `client_id=eq.${clientId}` : undefined
+          },
+          (payload) => {
+            console.log('Payment request update:', payload);
+            // Refresh data on changes
+            fetchData();
+            
+            // Show notification for status changes
+            if (payload.eventType === 'UPDATE') {
+              const newData = payload.new as PaymentRequest;
+              if (newData.status === 'APPROVED') {
+                toast({
+                  title: "Pagamento aprovado",
+                  description: `Seu pagamento de R$ ${Number(newData.amount).toFixed(2)} foi aprovado.`,
+                });
+              } else if (newData.status === 'REJECTED') {
+                toast({
+                  title: "Pagamento rejeitado",
+                  description: `Seu pagamento de R$ ${Number(newData.amount).toFixed(2)} foi rejeitado.`,
+                  variant: "destructive"
+                });
+              } else if (newData.status === 'PAID') {
+                toast({
+                  title: "Pagamento realizado",
+                  description: `Seu pagamento de R$ ${Number(newData.amount).toFixed(2)} foi realizado.`,
+                });
+              }
+            }
+          }
+        )
+        .subscribe();
+        
+      return () => {
+        supabase.removeChannel(channel);
+      };
     }
-  }, [user]);
-
+  }, [user, clientId]);
+  
   return {
     paymentRequests,
     pixKeys,
-    isLoading,
     currentBalance,
-    fetchPaymentRequests,
-    fetchPixKeys,
+    isLoading,
     createPaymentRequest,
     addPixKey,
-    processPaymentRequest,
-    refreshData
+    refreshData: fetchData
   };
 };

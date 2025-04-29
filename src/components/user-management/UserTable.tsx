@@ -82,7 +82,7 @@ const UserTable = ({
       try {
         await supabase
           .from('access_logs')
-          .insert({
+          .insert([{
             user_id: userId,
             acted_by: currentUserId,
             action: 'ROLE_CHANGE',
@@ -90,7 +90,7 @@ const UserTable = ({
             after_role: newRole,
             ip_address: 'web-app',
             notes: notes
-          });
+          }]);
       } catch (logError) {
         console.warn("Não foi possível registrar o log de acesso:", logError);
       }

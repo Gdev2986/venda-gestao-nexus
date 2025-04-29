@@ -3,7 +3,7 @@ export enum UserRole {
   ADMIN = 'ADMIN',
   PARTNER = 'PARTNER',
   CLIENT = 'CLIENT',
-  FINANCIAL = 'FINANCIAL', 
+  FINANCE = 'FINANCE',
 }
 
 export enum PaymentMethod {
@@ -16,7 +16,6 @@ export enum MachineStatus {
   ACTIVE = 'ACTIVE',
   INACTIVE = 'INACTIVE',
   MAINTENANCE = 'MAINTENANCE',
-  BLOCKED = 'BLOCKED',
 }
 
 export enum ProcessingStatus {
@@ -54,15 +53,6 @@ export interface Client {
   partner_id?: string;
   created_at?: string;
   updated_at?: string;
-  status?: string;
-  // All fields are optional to match how the application uses them
-  contact_name?: string;
-  email?: string;
-  phone?: string;
-  address?: string;
-  city?: string;
-  state?: string;
-  zip?: string;
 }
 
 export interface Partner {
@@ -101,17 +91,17 @@ export interface SaleDb {
   terminal: string;
   gross_amount: number;
   net_amount: number;
-  payment_method: string; // Changed to string to match the database enum
+  payment_method: PaymentMethod;
   client_id: string;
   machine_id?: string;
   partner_id?: string;
-  processing_status?: string; // Changed to string to match the database enum
+  processing_status?: ProcessingStatus;
   created_at?: string;
   updated_at?: string;
 }
 
 export interface SalesFilterParams {
-  paymentMethod?: PaymentMethod | 'all';
+  paymentMethod?: PaymentMethod;
   terminal?: string;
   search?: string;
 }
@@ -127,28 +117,4 @@ export interface PaymentRequest {
   updated_at?: string;
   approved_at?: string;
   approved_by?: string;
-}
-
-export interface PixKey {
-  id: string;
-  key: string;
-  type: PixKeyType;
-  name: string;
-  user_id: string;
-  is_default: boolean;
-  created_at?: string;
-  updated_at?: string;
-}
-
-export interface DashboardStats {
-  currentBalance: number;
-  yesterdayGrossAmount: number;
-  yesterdayNetAmount: number;
-  totalSales: number;
-  salesByPaymentMethod: {
-    method: PaymentMethod;
-    amount: number;
-    percentage: number;
-  }[];
-  recentSales: Sale[];
 }

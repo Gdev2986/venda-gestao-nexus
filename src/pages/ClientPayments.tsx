@@ -1,5 +1,5 @@
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import MainLayout from "@/components/layout/MainLayout";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -14,7 +14,7 @@ import PaymentRequestForm from "@/components/payments/PaymentRequestForm";
 import PixKeyForm from "@/components/payments/PixKeyForm";
 
 const ClientPayments = () => {
-  const { paymentRequests, pixKeys, isLoading, currentBalance, refreshData } = usePaymentRequests();
+  const { paymentRequests, pixKeys, currentBalance, isLoading, refreshData } = usePaymentRequests();
   const [showPaymentForm, setShowPaymentForm] = useState(false);
   const [showPixKeyForm, setShowPixKeyForm] = useState(false);
   
@@ -40,11 +40,6 @@ const ClientPayments = () => {
       setShowPixKeyForm(true);
     }
   };
-
-  // Refresh data when component mounts
-  useEffect(() => {
-    refreshData();
-  }, []);
 
   return (
     <MainLayout>

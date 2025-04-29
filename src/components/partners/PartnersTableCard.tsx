@@ -1,7 +1,7 @@
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import PartnersTable from "@/components/partners/PartnersTable";
-import { Partner } from "@/types";
+import { PartnersTable } from "@/components/partners/PartnersTable";
+import { type Partner } from "@/hooks/use-partners";
 
 interface PartnersTableCardProps {
   partners: Partner[];
@@ -26,11 +26,10 @@ export function PartnersTableCard({
         <PartnersTable
           partners={partners}
           isLoading={isLoading}
-          onViewPartner={onEditPartner}
+          onEditPartner={onEditPartner}
+          onDeletePartner={onDeletePartner}
         />
       </CardContent>
     </Card>
   );
 }
-
-export default PartnersTableCard;

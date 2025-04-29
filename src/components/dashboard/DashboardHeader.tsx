@@ -1,4 +1,3 @@
-
 import { useState } from "react"
 import { CalendarIcon } from "lucide-react"
 
@@ -14,29 +13,16 @@ import { cn } from "@/lib/utils"
 interface DashboardHeaderProps {
   className?: string
   numberOfMonths?: number
-  onDateRangeChange?: (range: { from: Date, to: Date }) => void
 }
 
 export function DashboardHeader({
   className,
   numberOfMonths = 1,
-  onDateRangeChange,
 }: DashboardHeaderProps) {
   const [date, setDate] = useState<Date | undefined>(new Date())
 
   const onSelect = (date: Date | undefined) => {
     setDate(date)
-    
-    if (date && onDateRangeChange) {
-      // Create a range from the selected date to end of day
-      const from = new Date(date)
-      from.setHours(0, 0, 0, 0)
-      
-      const to = new Date(date)
-      to.setHours(23, 59, 59, 999)
-      
-      onDateRangeChange({ from, to })
-    }
   }
 
   return (
@@ -80,6 +66,3 @@ export function DashboardHeader({
     </div>
   )
 }
-
-// Add the default export
-export default DashboardHeader

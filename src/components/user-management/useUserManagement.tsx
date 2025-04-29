@@ -73,7 +73,7 @@ export const useUserManagement = () => {
       }
       
       if (filters.role) {
-        // Usando a string da enumeração para comparação
+        // Usando o tipo UserRole diretamente, não como string
         countQuery = countQuery.eq('role', filters.role);
       }
       
@@ -100,7 +100,7 @@ export const useUserManagement = () => {
       }
       
       if (filters.role) {
-        // Usando a string da enumeração para comparação
+        // Usando o tipo UserRole diretamente, não como string
         query = query.eq('role', filters.role);
       }
       

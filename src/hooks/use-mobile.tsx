@@ -5,7 +5,7 @@ const MOBILE_BREAKPOINT = 768;
 
 export function useIsMobile() {
   const [isMobile, setIsMobile] = useState(() => {
-    // Check if window is available (to avoid SSR issues)
+    // Verifica se window está disponível (para evitar problemas com SSR)
     if (typeof window !== "undefined") {
       return window.innerWidth < MOBILE_BREAKPOINT;
     }
@@ -13,18 +13,15 @@ export function useIsMobile() {
   });
 
   useEffect(() => {
-    // Check if window is available
+    // Verifica se window está disponível
     if (typeof window === "undefined") return;
     
     const handleResize = () => {
       setIsMobile(window.innerWidth < MOBILE_BREAKPOINT);
     };
 
-    // Add resize event listener
+    // Adiciona evento de resize
     window.addEventListener("resize", handleResize);
-    
-    // Initial check
-    handleResize();
     
     // Cleanup
     return () => window.removeEventListener("resize", handleResize);

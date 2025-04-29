@@ -39,30 +39,30 @@ const MainLayout = ({ children }: MainLayoutProps) => {
   }, [sidebarOpen]);
 
   return (
-    <div className="flex min-h-screen w-full overflow-hidden bg-background">
-      {/* Sidebar with fixed positioning */}
+    <div className="flex h-screen overflow-hidden bg-background">
+      {/* Sidebar - fixed positioning with animation */}
       <AnimatePresence mode="wait">
-        {sidebarOpen && (
-          <motion.div
-            className={`fixed left-0 top-0 z-40 h-full w-64 bg-sidebar-background`}
-            initial={{ x: "-100%" }}
-            animate={{ x: 0 }}
-            exit={{ x: "-100%" }}
-            transition={{ duration: 0.2, ease: "easeInOut" }}
-          >
-            <Sidebar 
-              isOpen={sidebarOpen} 
-              isMobile={isMobile} 
-              onClose={() => setSidebarOpen(false)} 
-              userRole={userRole}
-            />
-          </motion.div>
-        )}
+        <motion.div
+          className={`fixed left-0 top-0 z-40 h-screen ${
+            isMobile ? 'w-64' : 'w-64'
+          } bg-sidebar-background`}
+          initial={{ x: sidebarOpen ? 0 : "-100%" }}
+          animate={{ x: sidebarOpen ? 0 : "-100%" }}
+          exit={{ x: "-100%" }}
+          transition={{ duration: 0.2, ease: "easeInOut" }}
+        >
+          <Sidebar 
+            isOpen={sidebarOpen} 
+            isMobile={isMobile} 
+            onClose={() => setSidebarOpen(false)} 
+            userRole={userRole}
+          />
+        </motion.div>
       </AnimatePresence>
       
       {/* Main content */}
       <div 
-        className={`flex-1 flex flex-col overflow-hidden transition-all duration-300 ease-in-out w-full ${
+        className={`flex-1 flex flex-col overflow-hidden transition-all duration-300 ease-in-out ${
           sidebarOpen && !isMobile ? 'ml-64' : 'ml-0'
         }`}
       >
@@ -87,9 +87,7 @@ const MainLayout = ({ children }: MainLayoutProps) => {
         
         {/* Content */}
         <main className="flex-1 overflow-auto p-4 md:p-6">
-          <div className="w-full max-w-[1400px] mx-auto">
-            {children}
-          </div>
+          {children}
         </main>
       </div>
       

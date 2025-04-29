@@ -5,11 +5,9 @@ import { type FilterValues } from "@/hooks/use-partners";
 
 interface PartnersFilterCardProps {
   onFilter: (values: FilterValues) => void;
-  onAddPartner: () => void;
-  onRefresh: () => void;
 }
 
-export function PartnersFilterCard({ onFilter, onAddPartner, onRefresh }: PartnersFilterCardProps) {
+export function PartnersFilterCard({ onFilter }: PartnersFilterCardProps) {
   return (
     <Card>
       <CardHeader>
@@ -19,10 +17,8 @@ export function PartnersFilterCard({ onFilter, onAddPartner, onRefresh }: Partne
         </CardDescription>
       </CardHeader>
       <CardContent>
-        <PartnerFilter onFilter={onFilter} onAddPartner={onAddPartner} onRefresh={onRefresh} />
+        <PartnerFilter onFilter={onFilter} />
       </CardContent>
     </Card>
   );
 }
-
-export default PartnersFilterCard;
