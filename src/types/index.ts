@@ -1,54 +1,79 @@
 
-// Tipos de usuário
 export enum UserRole {
-  ADMIN = "ADMIN",
-  FINANCIAL = "FINANCIAL",
-  PARTNER = "PARTNER",
-  CLIENT = "CLIENT",
+  ADMIN = 'ADMIN',
+  PARTNER = 'PARTNER',
+  CLIENT = 'CLIENT',
+  FINANCE = 'FINANCE',
 }
 
-export type User = {
+export enum PaymentMethod {
+  CREDIT = 'CREDIT',
+  DEBIT = 'DEBIT',
+  PIX = 'PIX',
+}
+
+export enum MachineStatus {
+  ACTIVE = 'ACTIVE',
+  INACTIVE = 'INACTIVE',
+  MAINTENANCE = 'MAINTENANCE',
+}
+
+export enum ProcessingStatus {
+  RAW = 'RAW',
+  PROCESSED = 'PROCESSED',
+}
+
+export enum PaymentRequestStatus {
+  PENDING = 'PENDING',
+  APPROVED = 'APPROVED',
+  REJECTED = 'REJECTED',
+  PAID = 'PAID',
+}
+
+export enum PixKeyType {
+  CPF = 'CPF',
+  CNPJ = 'CNPJ',
+  EMAIL = 'EMAIL',
+  PHONE = 'PHONE',
+  RANDOM = 'RANDOM',
+}
+
+export interface User {
   id: string;
-  name: string;
   email: string;
+  name?: string;
   role: UserRole;
   avatar?: string;
-  phone?: string;
-};
-
-// Client type definition
-export type Client = {
-  id: string;
-  business_name: string;
-  contact_name: string;
-  email: string;
-  phone: string;
-  address: string;
-  city: string;
-  state: string;
-  zip: string;
-  document?: string;
-  partner_id?: string;
-  status: "active" | "inactive";
-  created_at: string;
-  updated_at: string;
-};
-
-// Tipos para autenticação
-export type AuthState = {
-  user: User | null;
-  isAuthenticated: boolean;
-  isLoading: boolean;
-};
-
-// Tipos para vendas
-export enum PaymentMethod {
-  CREDIT = "CREDIT",
-  DEBIT = "DEBIT",
-  PIX = "PIX",
 }
 
-export type Sale = {
+export interface Client {
+  id: string;
+  business_name: string;
+  document?: string;
+  partner_id?: string;
+  created_at?: string;
+  updated_at?: string;
+}
+
+export interface Partner {
+  id: string;
+  company_name: string;
+  commission_rate: number;
+  created_at?: string;
+  updated_at?: string;
+}
+
+export interface Machine {
+  id: string;
+  serial_number: string;
+  model: string;
+  status: MachineStatus;
+  client_id?: string;
+  created_at?: string;
+  updated_at?: string;
+}
+
+export interface Sale {
   id: string;
   code: string;
   date: Date;
@@ -57,44 +82,39 @@ export type Sale = {
   netAmount: number;
   paymentMethod: PaymentMethod;
   clientId: string;
-};
+}
 
-// Tipos para chaves Pix
-export type PixKey = {
+export interface SaleDb {
   id: string;
-  userId: string;
-  type: "CPF" | "CNPJ" | "EMAIL" | "PHONE" | "RANDOM";
-  key: string;
-  name: string;
-  isDefault: boolean;
-};
+  code: string;
+  date: string;
+  terminal: string;
+  gross_amount: number;
+  net_amount: number;
+  payment_method: PaymentMethod;
+  client_id: string;
+  machine_id?: string;
+  partner_id?: string;
+  processing_status?: ProcessingStatus;
+  created_at?: string;
+  updated_at?: string;
+}
 
-// Estatísticas do dashboard
-export type DashboardStats = {
-  currentBalance: number;
-  yesterdayGrossAmount: number;
-  yesterdayNetAmount: number;
-  totalSales: number;
-  salesByPaymentMethod: {
-    method: PaymentMethod;
-    amount: number;
-    percentage: number;
-  }[];
-  recentSales: Sale[];
-};
-
-// Tipos para paginação
-export type PaginationParams = {
-  page: number;
-  limit: number;
-  total: number;
-};
-
-// Tipos para filtros
-export type SalesFilterParams = {
-  startDate?: Date;
-  endDate?: Date;
+export interface SalesFilterParams {
   paymentMethod?: PaymentMethod;
   terminal?: string;
   search?: string;
-};
+}
+
+export interface PaymentRequest {
+  id: string;
+  amount: number;
+  status: PaymentRequestStatus;
+  client_id: string;
+  pix_key_id: string;
+  receipt_url?: string;
+  created_at?: string;
+  updated_at?: string;
+  approved_at?: string;
+  approved_by?: string;
+}

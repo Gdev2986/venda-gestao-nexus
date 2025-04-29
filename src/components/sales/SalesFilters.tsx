@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -37,6 +38,7 @@ interface SalesFiltersProps {
   onClearFilters: () => void;
   onExport: () => void;
   onShowImportDialog: () => void;
+  onQuickFilter: (filter: 'yesterday' | 'week' | 'month') => void;
 }
 
 const SalesFilters = ({
@@ -47,6 +49,7 @@ const SalesFilters = ({
   onClearFilters,
   onExport,
   onShowImportDialog,
+  onQuickFilter,
 }: SalesFiltersProps) => {
   return (
     <Card className="mb-6">
@@ -91,10 +94,33 @@ const SalesFilters = ({
                   onSelect={onDateChange}
                   numberOfMonths={2}
                   className="p-3"
-                  reversedRange={true}
                 />
               </PopoverContent>
             </Popover>
+            
+            <div className="flex space-x-2 mt-2">
+              <Button 
+                variant="outline" 
+                size="sm" 
+                onClick={() => onQuickFilter('yesterday')}
+              >
+                Ontem
+              </Button>
+              <Button 
+                variant="outline" 
+                size="sm" 
+                onClick={() => onQuickFilter('week')}
+              >
+                Semana
+              </Button>
+              <Button 
+                variant="outline" 
+                size="sm" 
+                onClick={() => onQuickFilter('month')}
+              >
+                Mês
+              </Button>
+            </div>
           </div>
           
           <div className="space-y-2">

@@ -1,89 +1,78 @@
 
 import { useState } from "react";
 import MainLayout from "@/components/layout/MainLayout";
+import { usePartners, FilterValues } from "@/hooks/use-partners";
+import { Partner } from "@/types";
+import PartnersHeader from "@/components/partners/PartnersHeader";
+import PartnersFilterCard from "@/components/partners/PartnersFilterCard";
+import PartnersTable from "@/components/partners/PartnersTable";
 import PartnerForm from "@/components/partners/PartnerForm";
-import { PartnersHeader } from "@/components/partners/PartnersHeader";
-import { PartnersFilterCard } from "@/components/partners/PartnersFilterCard";
-import { PartnersTableCard } from "@/components/partners/PartnersTableCard";
-import { usePartners, type Partner } from "@/hooks/use-partners";
 
 const Partners = () => {
-  const [showCreateForm, setShowCreateForm] = useState(false);
+  const [showPartnerForm, setShowPartnerForm] = useState(false);
   const [selectedPartner, setSelectedPartner] = useState<Partner | null>(null);
-  
-  const {
-    partners,
-    isLoading,
-    handleFilter,
-    deletePartner,
-    savePartner,
-    refreshPartners
-  } = usePartners();
+  const { partners, isLoading, filters, handleFilterChange, addPartner, fetchPartners } = usePartners();
 
-  const handleCreateClick = () => {
+  // Handle form dialog open/close
+  const handleOpenForm = () => {
     setSelectedPartner(null);
-    setShowCreateForm(true);
+    setShowPartnerForm(true);
   };
 
-  const handleEditClick = (partner: Partner) => {
+  const handleCloseForm = () => {
+    setShowPartnerForm(false);
+    setSelectedPartner(null);
+  };
+
+  // Handle view partner details
+  const handleViewPartner = (partner: Partner) => {
     setSelectedPartner(partner);
-    setShowCreateForm(true);
+    setShowPartnerForm(true);
   };
 
-  const handleDeleteClick = async (partner: Partner) => {
-    if (!window.confirm(`Tem certeza que deseja excluir o parceiro ${partner.business_name}?`)) {
-      return;
+  // Handle filter changes
+  const handleFilter = (filterValues: FilterValues) => {
+    handleFilterChange(filterValues);
+  };
+
+  // Handle refresh
+  const handleRefresh = () => {
+    fetchPartners();
+  };
+
+  // Handle partner save (create or update)
+  const handleSavePartner = async (partnerData: Omit<Partner, "id" | "created_at" | "updated_at">) => {
+    const result = await addPartner(partnerData);
+    if (result.success) {
+      handleCloseForm();
     }
-    await deletePartner(partner.id);
-  };
-
-  const handleFormClose = () => {
-    setShowCreateForm(false);
-    setSelectedPartner(null);
-    refreshPartners();
-  };
-
-  const handleFormSubmit = async (data: any) => {
-    const success = await savePartner(data, selectedPartner?.id);
-    if (success) {
-      handleFormClose();
-    }
+    return result.success;
   };
 
   return (
     <MainLayout>
-      <div className="space-y-4">
-        <PartnersHeader onCreateClick={handleCreateClick} />
-        
-        <PartnersFilterCard onFilter={handleFilter} />
-        
-        <PartnersTableCard
-          partners={partners}
-          isLoading={isLoading}
-          onEditPartner={handleEditClick}
-          onDeletePartner={handleDeleteClick}
+      <PartnersHeader />
+      
+      <PartnersFilterCard 
+        onFilter={handleFilter}
+        onAddPartner={handleOpenForm}
+        onRefresh={handleRefresh}
+      />
+      
+      <PartnersTable 
+        partners={partners} 
+        onViewPartner={handleViewPartner}
+        isLoading={isLoading}
+      />
+      
+      {showPartnerForm && (
+        <PartnerForm
+          open={showPartnerForm}
+          onOpenChange={handleCloseForm}
+          initialData={selectedPartner}
+          onSave={handleSavePartner}
         />
-
-        {showCreateForm && (
-          <PartnerForm 
-            isOpen={showCreateForm}
-            onClose={handleFormClose}
-            onSubmit={handleFormSubmit}
-            initialData={selectedPartner || {
-              business_name: "",
-              contact_name: "",
-              email: "",
-              phone: "",
-              commission_rate: 0,
-              address: "",
-              city: "",
-              state: "",
-              zip: ""
-            }}
-            title={selectedPartner ? "Editar Parceiro" : "Novo Parceiro"}
-          />
-        )}
-      </div>
+      )}
     </MainLayout>
   );
 };
