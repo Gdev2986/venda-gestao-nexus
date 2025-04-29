@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
@@ -269,7 +268,7 @@ const Clients = () => {
                     <SelectValue placeholder="Filtrar por parceiro" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="">Todos os parceiros</SelectItem>
+                    <SelectItem value="all">Todos os parceiros</SelectItem>
                     {partners.map(partner => (
                       <SelectItem key={partner.id} value={partner.id}>
                         {partner.business_name}
