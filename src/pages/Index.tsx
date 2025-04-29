@@ -1,6 +1,6 @@
 
 import { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 import LoginForm from "@/components/auth/LoginForm";
 import { CreditCardIcon } from "lucide-react";
 
@@ -73,6 +73,14 @@ const Index = () => {
         
         <div className="w-full md:w-1/2">
           <LoginForm />
+          <div className="mt-4 text-center">
+            <p className="text-gray-600">
+              Não tem uma conta?{" "}
+              <Link to="/register" className="text-primary hover:underline font-medium">
+                Cadastre-se
+              </Link>
+            </p>
+          </div>
         </div>
       </div>
     </div>

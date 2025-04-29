@@ -35,7 +35,6 @@ const formSchema = z.object({
 const LoginForm = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
-  const [mode, setMode] = useState<"login" | "register">("login");
   const [authError, setAuthError] = useState<string | null>(null);
   const { toast } = useToast();
   const navigate = useNavigate();
@@ -57,41 +56,22 @@ const LoginForm = () => {
       setIsLoading(true);
       setAuthError(null);
       
-      if (mode === "login") {
-        const { error } = await supabase.auth.signInWithPassword({
-          email: data.email,
-          password: data.password,
-        });
-        
-        if (error) throw error;
-        
-        toast({
-          title: "Login successful",
-          description: "Welcome back to SigmaPay!",
-        });
-        
-        // For now, we'll store a fake user in localStorage just for demo
-        localStorage.setItem("user", JSON.stringify({ email: data.email }));
-        
-        navigate("/dashboard");
-      } else {
-        const { error } = await supabase.auth.signUp({
-          email: data.email,
-          password: data.password,
-          options: {
-            emailRedirectTo: window.location.origin,
-          },
-        });
-        
-        if (error) throw error;
-        
-        toast({
-          title: "Registration successful",
-          description: "Please check your email to verify your account.",
-        });
-        
-        setMode("login");
-      }
+      const { error } = await supabase.auth.signInWithPassword({
+        email: data.email,
+        password: data.password,
+      });
+      
+      if (error) throw error;
+      
+      toast({
+        title: "Login successful",
+        description: "Welcome back to SigmaPay!",
+      });
+      
+      // For now, we'll store a fake user in localStorage just for demo
+      localStorage.setItem("user", JSON.stringify({ email: data.email }));
+      
+      navigate("/dashboard");
     } catch (error: any) {
       console.error(error);
       setAuthError(error.message || "An error occurred during authentication");
@@ -124,11 +104,9 @@ const LoginForm = () => {
   return (
     <Card className="w-full max-w-md mx-auto shadow-lg">
       <CardHeader>
-        <CardTitle>{mode === "login" ? "Login" : "Create Account"}</CardTitle>
+        <CardTitle>Login</CardTitle>
         <CardDescription>
-          {mode === "login"
-            ? "Enter your email and password to access your account"
-            : "Fill in the details below to create your account"}
+          Enter your email and password to access your account
         </CardDescription>
       </CardHeader>
       <CardContent>
@@ -158,7 +136,7 @@ const LoginForm = () => {
                 id="password"
                 type={showPassword ? "text" : "password"}
                 className="pl-10 pr-10"
-                autoComplete={mode === "login" ? "current-password" : "new-password"}
+                autoComplete="current-password"
                 disabled={isLoading}
                 {...register("password")}
               />
@@ -189,11 +167,7 @@ const LoginForm = () => {
           )}
 
           <Button type="submit" className="w-full" disabled={isLoading}>
-            {isLoading
-              ? "Loading..."
-              : mode === "login"
-              ? "Sign In"
-              : "Create Account"}
+            {isLoading ? "Loading..." : "Sign In"}
           </Button>
           
           <div className="relative">
@@ -228,24 +202,9 @@ const LoginForm = () => {
       </CardContent>
       <CardFooter className="flex flex-col space-y-2">
         <div className="text-center text-sm">
-          {mode === "login" ? "Don't have an account? " : "Already have an account? "}
           <Button
             variant="link"
             className="p-0 h-auto font-normal"
-            onClick={() => {
-              setMode(mode === "login" ? "register" : "login");
-              setAuthError(null);
-            }}
-          >
-            {mode === "login" ? "Sign up" : "Sign in"}
-          </Button>
-        </div>
-        
-        {mode === "login" && (
-          <Button
-            variant="link"
-            className="p-0 h-auto text-sm font-normal mx-auto"
-            disabled={isLoading}
             onClick={async () => {
               const email = document.getElementById("email") as HTMLInputElement;
               if (!email.value || !email.value.includes("@")) {
@@ -277,7 +236,7 @@ const LoginForm = () => {
           >
             Forgot password?
           </Button>
-        )}
+        </div>
       </CardFooter>
     </Card>
   );

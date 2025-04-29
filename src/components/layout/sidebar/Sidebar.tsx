@@ -31,11 +31,6 @@ const Sidebar = ({ isOpen, isMobile, onClose, userRole }: SidebarProps) => {
       animate="visible"
       exit="hidden"
       transition={{ duration: 0.2 }}
-      style={{ 
-        position: isMobile ? 'fixed' : 'fixed',
-        height: '100%',
-        overflowY: 'auto'
-      }}
     >
       <div className="flex items-center justify-between h-16 px-4 border-b border-sidebar-border">
         <div className="flex items-center space-x-2">

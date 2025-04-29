@@ -31,12 +31,16 @@ const MainLayout = ({ children }: MainLayoutProps) => {
   return (
     <div className="flex h-screen overflow-hidden bg-background">
       {/* Sidebar */}
-      <Sidebar 
-        isOpen={sidebarOpen} 
-        isMobile={isMobile} 
-        onClose={() => setSidebarOpen(false)} 
-        userRole={userRole}
-      />
+      <AnimatePresence mode="wait">
+        {(sidebarOpen || !isMobile) && (
+          <Sidebar 
+            isOpen={sidebarOpen} 
+            isMobile={isMobile} 
+            onClose={() => setSidebarOpen(false)} 
+            userRole={userRole}
+          />
+        )}
+      </AnimatePresence>
       
       {/* Main content - adjust the left margin based on sidebar state */}
       <div 
