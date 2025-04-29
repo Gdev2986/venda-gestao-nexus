@@ -24,6 +24,7 @@ import {
   DialogFooter
 } from "@/components/ui/dialog";
 import { Filter, Upload, Check, X } from "lucide-react";
+import { PaymentResponseForm } from "@/components/payments/PaymentResponseForm";
 
 // Define payment data structure
 interface Payment {
@@ -219,6 +220,8 @@ const Payments = () => {
   const [typeFilter, setTypeFilter] = useState("all");
   const [selectedPayment, setSelectedPayment] = useState<Payment | null>(null);
   const [isDetailsOpen, setIsDetailsOpen] = useState(false);
+  const [isResponseFormOpen, setIsResponseFormOpen] = useState(false);
+  const [responseType, setResponseType] = useState<"approve" | "reject">("approve");
   const { toast } = useToast();
   
   const filteredPayments = payments.filter(payment => {
@@ -273,6 +276,21 @@ const Payments = () => {
         description: "Não foi possível enviar o comprovante. Tente novamente.",
       });
     }
+  };
+
+  const handleResponseSubmit = async (data: { notes: string; isApproved: boolean }) => {
+    if (!selectedPayment) return;
+    
+    const newStatus = data.isApproved ? "approved" : "rejected";
+    handleStatusChange(selectedPayment.id, newStatus);
+    
+    setIsResponseFormOpen(false);
+  };
+  
+  const openResponseForm = (payment: Payment, type: "approve" | "reject") => {
+    setSelectedPayment(payment);
+    setResponseType(type);
+    setIsResponseFormOpen(true);
   };
   
   return (
@@ -395,6 +413,16 @@ const Payments = () => {
           onStatusChange={handleStatusChange}
           onReceiptUpload={handleReceiptUpload}
         />
+
+        {selectedPayment && (
+          <PaymentResponseForm 
+            isOpen={isResponseFormOpen}
+            onClose={() => setIsResponseFormOpen(false)}
+            onSubmit={handleResponseSubmit}
+            paymentId={selectedPayment.id}
+            type={responseType}
+          />
+        )}
       </div>
     </MainLayout>
   );
