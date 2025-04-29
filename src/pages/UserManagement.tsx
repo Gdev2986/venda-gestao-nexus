@@ -14,7 +14,11 @@ const UserManagement = () => {
     loading, 
     error, 
     checkingAccess,
-    retryFetch 
+    retryFetch,
+    currentPage,
+    totalPages,
+    handlePageChange,
+    handleFilterChange
   } = useUserManagement();
 
   if (checkingAccess) {
@@ -48,7 +52,14 @@ const UserManagement = () => {
             ) : error ? (
               <ErrorState errorMessage={error} onRetry={retryFetch} />
             ) : (
-              <UserTable users={users} setUsers={setUsers} />
+              <UserTable 
+                users={users} 
+                setUsers={setUsers} 
+                totalPages={totalPages}
+                currentPage={currentPage}
+                onPageChange={handlePageChange}
+                onFilterChange={handleFilterChange}
+              />
             )}
           </CardContent>
         </Card>

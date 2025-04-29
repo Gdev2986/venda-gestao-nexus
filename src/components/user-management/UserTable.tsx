@@ -6,6 +6,8 @@ import { Button } from "@/components/ui/button";
 import { UserRole } from "@/types";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/components/ui/use-toast";
+import UserPagination from "./UserPagination";
+import UserFilters, { UserFilters as UserFiltersType } from "./UserFilters";
 
 interface User {
   id: string;
@@ -18,9 +20,20 @@ interface User {
 interface UserTableProps {
   users: User[];
   setUsers: React.Dispatch<React.SetStateAction<User[]>>;
+  totalPages: number;
+  currentPage: number;
+  onPageChange: (page: number) => void;
+  onFilterChange: (filters: UserFiltersType) => void;
 }
 
-const UserTable = ({ users, setUsers }: UserTableProps) => {
+const UserTable = ({ 
+  users, 
+  setUsers, 
+  totalPages,
+  currentPage,
+  onPageChange,
+  onFilterChange
+}: UserTableProps) => {
   const { toast } = useToast();
   const [updatingUser, setUpdatingUser] = useState<string | null>(null);
 
@@ -94,61 +107,71 @@ const UserTable = ({ users, setUsers }: UserTableProps) => {
   };
 
   return (
-    <div className="rounded-md border">
-      <Table>
-        <TableHeader>
-          <TableRow>
-            <TableHead>Nome</TableHead>
-            <TableHead>E-mail</TableHead>
-            <TableHead>Função</TableHead>
-            <TableHead>Criado em</TableHead>
-            <TableHead className="text-right">Ações</TableHead>
-          </TableRow>
-        </TableHeader>
-        <TableBody>
-          {users.length > 0 ? (
-            users.map((user) => (
-              <TableRow key={user.id}>
-                <TableCell className="font-medium">
-                  {user.name || "N/A"}
-                </TableCell>
-                <TableCell>{user.email}</TableCell>
-                <TableCell>
-                  <Select
-                    value={user.role}
-                    onValueChange={(value) => handleRoleChange(user.id, value as UserRole)}
-                    disabled={updatingUser === user.id}
-                  >
-                    <SelectTrigger className="w-[180px]">
-                      <SelectValue placeholder="Selecionar função" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value={UserRole.ADMIN}>Administrador</SelectItem>
-                      <SelectItem value={UserRole.FINANCIAL}>Financeiro</SelectItem>
-                      <SelectItem value={UserRole.PARTNER}>Parceiro</SelectItem>
-                      <SelectItem value={UserRole.CLIENT}>Cliente</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </TableCell>
-                <TableCell>
-                  {new Date(user.created_at).toLocaleDateString('pt-BR')}
-                </TableCell>
-                <TableCell className="text-right">
-                  <Button variant="outline" size="sm">
-                    Detalhes
-                  </Button>
+    <div>
+      <UserFilters onFilterChange={onFilterChange} />
+      
+      <div className="rounded-md border">
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead>Nome</TableHead>
+              <TableHead>E-mail</TableHead>
+              <TableHead>Função</TableHead>
+              <TableHead>Criado em</TableHead>
+              <TableHead className="text-right">Ações</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {users.length > 0 ? (
+              users.map((user) => (
+                <TableRow key={user.id}>
+                  <TableCell className="font-medium">
+                    {user.name || "N/A"}
+                  </TableCell>
+                  <TableCell>{user.email}</TableCell>
+                  <TableCell>
+                    <Select
+                      value={user.role}
+                      onValueChange={(value) => handleRoleChange(user.id, value as UserRole)}
+                      disabled={updatingUser === user.id}
+                    >
+                      <SelectTrigger className="w-[180px]">
+                        <SelectValue placeholder="Selecionar função" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value={UserRole.ADMIN}>Administrador</SelectItem>
+                        <SelectItem value={UserRole.FINANCIAL}>Financeiro</SelectItem>
+                        <SelectItem value={UserRole.PARTNER}>Parceiro</SelectItem>
+                        <SelectItem value={UserRole.CLIENT}>Cliente</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </TableCell>
+                  <TableCell>
+                    {new Date(user.created_at).toLocaleDateString('pt-BR')}
+                  </TableCell>
+                  <TableCell className="text-right">
+                    <Button variant="outline" size="sm">
+                      Detalhes
+                    </Button>
+                  </TableCell>
+                </TableRow>
+              ))
+            ) : (
+              <TableRow>
+                <TableCell colSpan={5} className="text-center py-4">
+                  Nenhum usuário encontrado
                 </TableCell>
               </TableRow>
-            ))
-          ) : (
-            <TableRow>
-              <TableCell colSpan={5} className="text-center py-4">
-                Nenhum usuário encontrado
-              </TableCell>
-            </TableRow>
-          )}
-        </TableBody>
-      </Table>
+            )}
+          </TableBody>
+        </Table>
+      </div>
+      
+      <UserPagination 
+        currentPage={currentPage} 
+        totalPages={totalPages}
+        onPageChange={onPageChange}
+      />
     </div>
   );
 };
