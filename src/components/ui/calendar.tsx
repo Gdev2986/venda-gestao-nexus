@@ -1,7 +1,6 @@
-
 import * as React from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
-import { DayPicker, DayPickerRangeProps } from "react-day-picker";
+import { DayPicker } from "react-day-picker";
 
 import { cn } from "@/lib/utils";
 import { buttonVariants } from "@/components/ui/button";
@@ -17,93 +16,13 @@ function Calendar({
   reversedRange = true, // Default to reversed range selection
   ...props
 }: CalendarProps) {
-  // Custom range selection behavior
-  const [internalRange, setInternalRange] = React.useState<{
-    from?: Date;
-    to?: Date;
-    selecting?: 'start' | 'end';
-  }>({
-    selecting: reversedRange ? 'end' : 'start'
-  });
-
-  // Override the onSelect handler if we're using range mode with reversed selection
-  const rangeSelectHandler = React.useCallback((range: { from?: Date, to?: Date } | undefined) => {
-    // If there's no range provided, reset the internal state
-    if (!range) {
-      setInternalRange({ selecting: 'end' });
-      if (props.mode === 'range') {
-        const rangeProps = props as DayPickerRangeProps;
-        if (rangeProps.onSelect) {
-          // Call onSelect with undefined and empty mode + dispatch parameters as required
-          rangeProps.onSelect(undefined, undefined!, undefined!, undefined!);
-        }
-      }
-      return;
-    }
-
-    // If we're selecting the end date (first click)
-    if (internalRange.selecting === 'end' && range?.from) {
-      setInternalRange({
-        from: undefined,
-        to: range.from,
-        selecting: 'start'
-      });
-      
-      // Don't update the actual selection yet, we're waiting for the start date
-      return;
-    }
-    
-    // If we're selecting the start date (second click)
-    if (internalRange.selecting === 'start' && range?.from) {
-      const newRange = {
-        from: range.from,
-        to: internalRange.to
-      };
-      
-      // If user selected a date after the end date, swap them to maintain proper order
-      if (newRange.from && newRange.to && newRange.from > newRange.to) {
-        newRange.from = internalRange.to;
-        newRange.to = range.from;
-      }
-      
-      // Reset for next selection
-      setInternalRange({ selecting: 'end' });
-      
-      // Now call the original onSelect with our correctly ordered range
-      if (props.mode === 'range') {
-        const rangeProps = props as DayPickerRangeProps;
-        if (rangeProps.onSelect) {
-          // Call onSelect with the range and empty mode + dispatch parameters as required
-          rangeProps.onSelect(newRange, undefined!, undefined!, undefined!);
-        }
-      }
-      return;
-    }
-  }, [internalRange, props]);
-  
-  // We pass the internal range only if we're in reversed selection mode and currently selecting
-  const selected = React.useMemo(() => {
-    if (props.mode === 'range' && reversedRange && internalRange.selecting === 'start' && internalRange.to) {
-      return { from: undefined, to: internalRange.to };
-    }
-    return props.selected;
-  }, [props.mode, props.selected, reversedRange, internalRange]);
-
-  // Create a properly typed version of props based on mode
-  const finalProps = React.useMemo(() => {
-    const result = {...props};
-    if (props.mode === 'range' && reversedRange) {
-      // Type cast to ensure TypeScript knows this is a DayPickerRangeProps
-      (result as DayPickerRangeProps).onSelect = rangeSelectHandler;
-    }
-    return result;
-  }, [props, rangeSelectHandler, reversedRange]);
-
-  return (
-    <DayPicker
-      showOutsideDays={showOutsideDays}
-      className={cn("p-3 pointer-events-auto", className)}
-      classNames={{
+  // Create a properly typed version of props for the render
+  const dayPickerProps = React.useMemo(() => {
+    // Base props to pass to DayPicker
+    const baseProps = {
+      showOutsideDays,
+      className: cn("p-3 pointer-events-auto", className),
+      classNames: {
         months: "flex flex-col sm:flex-row space-y-4 sm:space-x-4 sm:space-y-0",
         month: "space-y-4",
         caption: "flex justify-center pt-1 relative items-center",
@@ -136,16 +55,92 @@ function Calendar({
           "aria-selected:bg-accent aria-selected:text-accent-foreground",
         day_hidden: "invisible",
         ...classNames,
-      }}
-      components={{
+      },
+      components: {
         IconLeft: () => <ChevronLeft className="h-4 w-4" />,
         IconRight: () => <ChevronRight className="h-4 w-4" />,
-      }}
-      selected={selected}
-      {...finalProps}
-    />
-  );
+      },
+      ...props,
+    };
+    
+    // If we're using range selection mode with reversed selection,
+    // we need to customize the onSelect handler
+    if (props.mode === 'range' && reversedRange) {
+      // Keep track of our internal selection state
+      const [selectionState, setSelectionState] = React.useState<{
+        phase: 'start' | 'end';
+        endDate?: Date;
+      }>({
+        phase: 'end' // Start by selecting end date
+      });
+      
+      // Custom onSelect handler for reversed range selection
+      const originalOnSelect = props.onSelect as any;
+      
+      baseProps.onSelect = (
+        range: { from?: Date; to?: Date } | undefined,
+        selectedDay: Date | undefined,
+        activeModifiers: any,
+        e: any
+      ) => {
+        // If range is undefined (clear selection)
+        if (!range) {
+          setSelectionState({ phase: 'end' });
+          originalOnSelect?.(undefined, selectedDay, activeModifiers, e);
+          return;
+        }
+        
+        // User clicked a date
+        if (selectedDay) {
+          // If we're selecting the end date (first click)
+          if (selectionState.phase === 'end') {
+            setSelectionState({
+              phase: 'start',
+              endDate: selectedDay
+            });
+            // Don't call original onSelect yet - we're waiting for start date
+            return;
+          } 
+          
+          // We're selecting the start date (second click)
+          if (selectionState.phase === 'start' && selectionState.endDate) {
+            // Create the final range with correct chronological order
+            const startDate = selectedDay;
+            const endDate = selectionState.endDate;
+            
+            let finalRange;
+            // Ensure proper chronological order regardless of selection order
+            if (startDate <= endDate) {
+              finalRange = { from: startDate, to: endDate };
+            } else {
+              finalRange = { from: endDate, to: startDate };
+            }
+            
+            // Reset for next selection
+            setSelectionState({ phase: 'end' });
+            
+            // Call the original onSelect with our properly ordered range
+            originalOnSelect?.(finalRange, selectedDay, activeModifiers, e);
+            return;
+          }
+        }
+        
+        // Default fallback if the conditions above weren't met
+        originalOnSelect?.(range, selectedDay, activeModifiers, e);
+      };
+      
+      // Custom selected value based on our internal state
+      if (selectionState.phase === 'start' && selectionState.endDate) {
+        baseProps.selected = { to: selectionState.endDate };
+      }
+    }
+    
+    return baseProps;
+  }, [className, classNames, props, reversedRange, showOutsideDays]);
+
+  return <DayPicker {...dayPickerProps} />;
 }
+
 Calendar.displayName = "Calendar";
 
 export { Calendar };
