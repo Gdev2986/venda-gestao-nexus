@@ -8,8 +8,8 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { PlusIcon, PenIcon, TrashIcon } from "lucide-react";
-import { MachineForm } from "@/components/machines/MachineForm";
-import { MachineTransferForm } from "@/components/machines/MachineTransferForm";
+import MachineForm from "@/components/machines/MachineForm";
+import MachineTransferForm from "@/components/machines/MachineTransferForm";
 import { Badge } from "@/components/ui/badge";
 
 const Machines = () => {
