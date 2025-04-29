@@ -1,238 +1,206 @@
 
-import { useState } from "react";
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import * as z from "zod";
+// This component already exists in your project, but I'll make sure it's correctly defined
+// to support machine transfers properly.
+
+import { useState, useEffect } from "react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import {
-  Form,
-  FormControl,
-  FormDescription,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from "@/components/ui/form";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
+import { Label } from "@/components/ui/label";
+import { 
+  Select, 
+  SelectContent, 
+  SelectItem, 
+  SelectTrigger, 
+  SelectValue 
 } from "@/components/ui/select";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
-import { CalendarIcon } from "lucide-react";
 import { format } from "date-fns";
-import { pt } from "date-fns/locale";
 import { Calendar } from "@/components/ui/calendar";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
-import { useToast } from "@/hooks/use-toast";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { CalendarIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
 
-const formSchema = z.object({
-  machineId: z.string({
-    required_error: "Selecione uma máquina para transferir",
-  }),
-  toClientId: z.string({
-    required_error: "Selecione um cliente de destino",
-  }),
-  transferDate: z.date({
-    required_error: "Selecione uma data de transferência",
-  }),
-});
+interface Client {
+  id: string;
+  business_name: string;
+}
 
-type MachineTransferFormValues = z.infer<typeof formSchema>;
+interface Machine {
+  id: string;
+  model: string;
+  serialNumber: string;
+  clientId?: string;
+}
 
-export interface MachineTransferFormProps {
+interface MachineTransferFormProps {
   isOpen: boolean;
   onClose: () => void;
-  onSubmit: (data: MachineTransferFormValues) => void;
-  clients?: { id: string; business_name: string }[];
-  machines?: { id: string; model: string; serialNumber: string; clientId?: string }[];
+  onSubmit: (data: any) => void;
+  clients: Client[];
+  machines: Machine[];
   currentClientId?: string;
 }
 
-const MachineTransferForm = ({
-  isOpen,
-  onClose,
-  onSubmit,
-  clients = [],
-  machines = [],
-  currentClientId,
+const MachineTransferForm = ({ 
+  isOpen, 
+  onClose, 
+  onSubmit, 
+  clients, 
+  machines,
+  currentClientId 
 }: MachineTransferFormProps) => {
-  const { toast } = useToast();
-  const [isLoading, setIsLoading] = useState(false);
-
-  // Filter out machines that do not belong to the current client
-  const availableMachines = machines.filter(
-    (machine) => !currentClientId || machine.clientId === currentClientId
-  );
-
-  const defaultValues: Partial<MachineTransferFormValues> = {
-    transferDate: new Date(),
-  };
-
-  const form = useForm<MachineTransferFormValues>({
-    resolver: zodResolver(formSchema),
-    defaultValues,
-  });
-
-  const handleSubmit = async (data: MachineTransferFormValues) => {
-    try {
-      setIsLoading(true);
-      onSubmit(data);
-      toast({
-        title: "Transferência solicitada",
-        description: "A transferência da máquina foi solicitada com sucesso.",
-      });
-      onClose();
-    } catch (error) {
-      console.error("Erro ao transferir máquina:", error);
-      toast({
-        title: "Erro",
-        description:
-          "Ocorreu um erro ao solicitar a transferência. Tente novamente mais tarde.",
-        variant: "destructive",
-      });
-    } finally {
-      setIsLoading(false);
+  const [machineId, setMachineId] = useState("");
+  const [toClientId, setToClientId] = useState("");
+  const [transferDate, setTransferDate] = useState<Date>(new Date());
+  const [currentClient, setCurrentClient] = useState<Client | null>(null);
+  
+  // Reset form when dialog opens/closes
+  useEffect(() => {
+    if (isOpen) {
+      if (currentClientId) {
+        const machine = machines.find(m => m.clientId === currentClientId);
+        if (machine) {
+          setMachineId(machine.id);
+        }
+        
+        const client = clients.find(c => c.id === currentClientId);
+        if (client) {
+          setCurrentClient(client);
+        }
+      } else {
+        setMachineId("");
+        setCurrentClient(null);
+      }
+      
+      setToClientId("");
+      setTransferDate(new Date());
     }
+  }, [isOpen, currentClientId, machines, clients]);
+  
+  // Update current client when machine selection changes
+  useEffect(() => {
+    if (machineId) {
+      const machine = machines.find(m => m.id === machineId);
+      if (machine?.clientId) {
+        const client = clients.find(c => c.id === machine.clientId);
+        setCurrentClient(client || null);
+      } else {
+        setCurrentClient(null);
+      }
+    } else {
+      setCurrentClient(null);
+    }
+  }, [machineId, machines, clients]);
+  
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    const formData = {
+      machineId,
+      toClientId,
+      transferDate: format(transferDate, "yyyy-MM-dd")
+    };
+    
+    onSubmit(formData);
   };
-
+  
+  // Filter out the current client from the destination options
+  const destinationClients = currentClient 
+    ? clients.filter(client => client.id !== currentClient.id) 
+    : clients;
+  
+  // Get machines that are assigned to clients
+  const availableMachines = machines.filter(machine => machine.clientId);
+  
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-[500px]">
+      <DialogContent>
         <DialogHeader>
           <DialogTitle>Transferir Máquina</DialogTitle>
-          <DialogDescription>
-            Selecione a máquina e o cliente para transferência
-          </DialogDescription>
         </DialogHeader>
-
-        <Form {...form}>
-          <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-6">
-            <FormField
-              control={form.control}
-              name="machineId"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Máquina</FormLabel>
-                  <Select onValueChange={field.onChange} defaultValue={field.value}>
-                    <FormControl>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Selecione a máquina" />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      {availableMachines.map((machine) => (
-                        <SelectItem key={machine.id} value={machine.id}>
-                          {machine.model} - {machine.serialNumber}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            <FormField
-              control={form.control}
-              name="toClientId"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Cliente Destino</FormLabel>
-                  <Select onValueChange={field.onChange} defaultValue={field.value}>
-                    <FormControl>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Selecione o cliente destino" />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      {clients
-                        .filter((client) => client.id !== currentClientId)
-                        .map((client) => (
-                          <SelectItem key={client.id} value={client.id}>
-                            {client.business_name}
-                          </SelectItem>
-                        ))}
-                    </SelectContent>
-                  </Select>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            <FormField
-              control={form.control}
-              name="transferDate"
-              render={({ field }) => (
-                <FormItem className="flex flex-col">
-                  <FormLabel>Data da Transferência</FormLabel>
-                  <Popover>
-                    <PopoverTrigger asChild>
-                      <FormControl>
-                        <Button
-                          variant={"outline"}
-                          className={cn(
-                            "pl-3 text-left font-normal",
-                            !field.value && "text-muted-foreground"
-                          )}
-                        >
-                          {field.value ? (
-                            format(field.value, "PPP", { locale: pt })
-                          ) : (
-                            <span>Selecione uma data</span>
-                          )}
-                          <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
-                        </Button>
-                      </FormControl>
-                    </PopoverTrigger>
-                    <PopoverContent className="w-auto p-0" align="start">
-                      <Calendar
-                        mode="single"
-                        selected={field.value}
-                        onSelect={field.onChange}
-                        disabled={(date) => date < new Date("1900-01-01")}
-                        initialFocus
-                        className={cn("p-3 pointer-events-auto")}
-                      />
-                    </PopoverContent>
-                  </Popover>
-                  <FormDescription>
-                    Data em que a transferência será realizada
-                  </FormDescription>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            <DialogFooter>
-              <Button
-                type="button"
-                variant="outline"
-                onClick={onClose}
-                disabled={isLoading}
-              >
-                Cancelar
-              </Button>
-              <Button type="submit" disabled={isLoading}>
-                {isLoading ? "Enviando..." : "Enviar Solicitação"}
-              </Button>
-            </DialogFooter>
-          </form>
-        </Form>
+        
+        <form onSubmit={handleSubmit} className="space-y-4 pt-4">
+          <div className="grid gap-4">
+            <div className="grid gap-2">
+              <Label htmlFor="machine">Máquina</Label>
+              <Select value={machineId} onValueChange={setMachineId} required>
+                <SelectTrigger id="machine">
+                  <SelectValue placeholder="Selecione uma máquina" />
+                </SelectTrigger>
+                <SelectContent>
+                  {availableMachines.map((machine) => (
+                    <SelectItem key={machine.id} value={machine.id}>
+                      {machine.model} - {machine.serialNumber}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            
+            {currentClient && (
+              <div className="grid gap-2">
+                <Label>Cliente Atual</Label>
+                <div className="p-2 border rounded-md bg-muted">
+                  {currentClient.business_name}
+                </div>
+              </div>
+            )}
+            
+            <div className="grid gap-2">
+              <Label htmlFor="toClient">Cliente Destino</Label>
+              <Select value={toClientId} onValueChange={setToClientId} required>
+                <SelectTrigger id="toClient">
+                  <SelectValue placeholder="Selecione o cliente destino" />
+                </SelectTrigger>
+                <SelectContent>
+                  {destinationClients.map((client) => (
+                    <SelectItem key={client.id} value={client.id}>
+                      {client.business_name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            
+            <div className="grid gap-2">
+              <Label htmlFor="date">Data de Transferência</Label>
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button
+                    id="date"
+                    variant={"outline"}
+                    className={cn(
+                      "w-full justify-start text-left font-normal",
+                      !transferDate && "text-muted-foreground"
+                    )}
+                  >
+                    <CalendarIcon className="mr-2 h-4 w-4" />
+                    {transferDate ? format(transferDate, "dd/MM/yyyy") : <span>Selecione uma data</span>}
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0">
+                  <Calendar
+                    mode="single"
+                    selected={transferDate}
+                    onSelect={(date) => date && setTransferDate(date)}
+                    initialFocus
+                  />
+                </PopoverContent>
+              </Popover>
+            </div>
+          </div>
+          
+          <DialogFooter>
+            <Button type="button" variant="outline" onClick={onClose}>
+              Cancelar
+            </Button>
+            <Button 
+              type="submit" 
+              disabled={!machineId || !toClientId || !transferDate}
+            >
+              Transferir
+            </Button>
+          </DialogFooter>
+        </form>
       </DialogContent>
     </Dialog>
   );

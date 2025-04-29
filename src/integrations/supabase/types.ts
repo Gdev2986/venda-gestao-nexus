@@ -471,6 +471,76 @@ export type Database = {
           },
         ]
       }
+      support_conversations: {
+        Row: {
+          client_id: string | null
+          created_at: string | null
+          id: string
+          status: string
+          subject: string
+          updated_at: string | null
+        }
+        Insert: {
+          client_id?: string | null
+          created_at?: string | null
+          id?: string
+          status?: string
+          subject: string
+          updated_at?: string | null
+        }
+        Update: {
+          client_id?: string | null
+          created_at?: string | null
+          id?: string
+          status?: string
+          subject?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "support_conversations_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      support_messages: {
+        Row: {
+          conversation_id: string | null
+          created_at: string | null
+          id: string
+          is_read: boolean | null
+          message: string
+          user_id: string
+        }
+        Insert: {
+          conversation_id?: string | null
+          created_at?: string | null
+          id?: string
+          is_read?: boolean | null
+          message: string
+          user_id: string
+        }
+        Update: {
+          conversation_id?: string | null
+          created_at?: string | null
+          id?: string
+          is_read?: boolean | null
+          message?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "support_messages_conversation_id_fkey"
+            columns: ["conversation_id"]
+            isOneToOne: false
+            referencedRelation: "support_conversations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       vw_client_balance: {
@@ -505,6 +575,7 @@ export type Database = {
         | "SYSTEM"
       payment_method: "CREDIT" | "DEBIT" | "PIX"
       payment_request_status: "PENDING" | "APPROVED" | "PAID" | "REJECTED"
+      payment_status: "PENDING" | "APPROVED" | "REJECTED"
       pix_key_type: "CPF" | "CNPJ" | "EMAIL" | "PHONE" | "RANDOM"
       processing_status: "RAW" | "PROCESSED"
       user_role: "ADMIN" | "FINANCIAL" | "PARTNER" | "CLIENT"
@@ -633,6 +704,7 @@ export const Constants = {
       ],
       payment_method: ["CREDIT", "DEBIT", "PIX"],
       payment_request_status: ["PENDING", "APPROVED", "PAID", "REJECTED"],
+      payment_status: ["PENDING", "APPROVED", "REJECTED"],
       pix_key_type: ["CPF", "CNPJ", "EMAIL", "PHONE", "RANDOM"],
       processing_status: ["RAW", "PROCESSED"],
       user_role: ["ADMIN", "FINANCIAL", "PARTNER", "CLIENT"],
