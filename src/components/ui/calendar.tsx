@@ -6,14 +6,76 @@ import { DayPicker } from "react-day-picker";
 import { cn } from "@/lib/utils";
 import { buttonVariants } from "@/components/ui/button";
 
-export type CalendarProps = React.ComponentProps<typeof DayPicker>;
+export type CalendarProps = React.ComponentProps<typeof DayPicker> & {
+  reversedRange?: boolean;
+};
 
 function Calendar({
   className,
   classNames,
   showOutsideDays = true,
+  reversedRange = true, // Default to reversed range selection
   ...props
 }: CalendarProps) {
+  // Custom range selection behavior
+  const [internalRange, setInternalRange] = React.useState<{
+    from?: Date;
+    to?: Date;
+    selecting?: 'start' | 'end';
+  }>({
+    selecting: reversedRange ? 'end' : 'start'
+  });
+
+  // Override the onSelect handler if we're using range mode with reversed selection
+  const onSelect = props.mode === 'range' && reversedRange ? 
+    (range: { from?: Date, to?: Date } | undefined) => {
+      // If there's no range provided, reset the internal state
+      if (!range) {
+        setInternalRange({ selecting: 'end' });
+        if (props.onSelect) props.onSelect(undefined);
+        return;
+      }
+
+      // If we're selecting the end date (first click)
+      if (internalRange.selecting === 'end' && range?.from) {
+        setInternalRange({
+          from: undefined,
+          to: range.from,
+          selecting: 'start'
+        });
+        
+        // Don't update the actual selection yet, we're waiting for the start date
+        return;
+      }
+      
+      // If we're selecting the start date (second click)
+      if (internalRange.selecting === 'start' && range?.from) {
+        const newRange = {
+          from: range.from,
+          to: internalRange.to
+        };
+        
+        // If user selected a date after the end date, swap them to maintain proper order
+        if (newRange.from && newRange.to && newRange.from > newRange.to) {
+          newRange.from = internalRange.to;
+          newRange.to = range.from;
+        }
+        
+        // Reset for next selection
+        setInternalRange({ selecting: 'end' });
+        
+        // Now call the original onSelect with our correctly ordered range
+        if (props.onSelect) props.onSelect(newRange);
+        return;
+      }
+    }
+    : props.onSelect;
+  
+  // We pass the internal range only if we're in reversed selection mode and currently selecting
+  const selected = props.mode === 'range' && reversedRange && internalRange.selecting === 'start' && internalRange.to
+    ? { from: undefined, to: internalRange.to }
+    : props.selected;
+
   return (
     <DayPicker
       showOutsideDays={showOutsideDays}
@@ -56,6 +118,8 @@ function Calendar({
         IconLeft: ({ ..._props }) => <ChevronLeft className="h-4 w-4" />,
         IconRight: ({ ..._props }) => <ChevronRight className="h-4 w-4" />,
       }}
+      selected={selected}
+      onSelect={onSelect}
       {...props}
     />
   );

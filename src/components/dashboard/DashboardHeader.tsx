@@ -126,6 +126,7 @@ const DashboardHeader = ({ onDateRangeChange }: DashboardHeaderProps) => {
               }}
               numberOfMonths={2}
               className="p-3"
+              reversedRange={true}
             />
           </PopoverContent>
         </Popover>

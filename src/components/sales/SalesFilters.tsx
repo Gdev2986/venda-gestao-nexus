@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -92,6 +91,7 @@ const SalesFilters = ({
                   onSelect={onDateChange}
                   numberOfMonths={2}
                   className="p-3"
+                  reversedRange={true}
                 />
               </PopoverContent>
             </Popover>

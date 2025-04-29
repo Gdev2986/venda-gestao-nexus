@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { ChevronDown, ChevronRight } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -27,8 +27,22 @@ const SidebarNavItem = ({ item, userRole }: SidebarNavItemProps) => {
     return false;
   };
 
-  const toggleExpanded = () => {
+  // Set expanded state initially and when route changes
+  useEffect(() => {
+    if (item.subItems && isActiveParent(item)) {
+      setExpanded(true);
+    }
+  }, [item, location.pathname]);
+
+  const toggleExpanded = (e: React.MouseEvent) => {
+    e.stopPropagation(); // Prevent navigation when clicking the toggle
     setExpanded(prev => !prev);
+  };
+
+  const handleSubItemClick = (e: React.MouseEvent, href: string) => {
+    e.stopPropagation(); // Prevent parent from receiving the click
+    navigate(href);
+    // We intentionally don't close the dropdown here
   };
 
   if (item.subItems) {
@@ -67,7 +81,7 @@ const SidebarNavItem = ({ item, userRole }: SidebarNavItemProps) => {
                 subItem.roles.includes(userRole) && (
                   <button
                     key={subItem.title}
-                    onClick={() => navigate(subItem.href)}
+                    onClick={(e) => handleSubItemClick(e, subItem.href)}
                     className={cn(
                       "flex items-center w-full pl-11 pr-3 py-2 text-sm rounded-md transition-colors mt-1",
                       isActiveRoute(subItem.href)
