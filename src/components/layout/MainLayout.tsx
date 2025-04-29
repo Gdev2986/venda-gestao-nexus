@@ -14,7 +14,12 @@ type MainLayoutProps = {
 };
 
 const MainLayout = ({ children }: MainLayoutProps) => {
-  const [sidebarOpen, setSidebarOpen] = useState(true);
+  // Use localStorage to persist sidebar state
+  const [sidebarOpen, setSidebarOpen] = useState(() => {
+    const saved = localStorage.getItem("sidebar-state");
+    return saved !== null ? JSON.parse(saved) : true;
+  });
+  
   const isMobile = useIsMobile();
   
   // Default to ADMIN role for now, should be determined from auth
@@ -24,24 +29,31 @@ const MainLayout = ({ children }: MainLayoutProps) => {
     // Close sidebar on mobile by default
     if (isMobile) {
       setSidebarOpen(false);
-    } else {
-      setSidebarOpen(true);
     }
   }, [isMobile]);
 
+  // Save sidebar state to localStorage when it changes
+  useEffect(() => {
+    localStorage.setItem("sidebar-state", JSON.stringify(sidebarOpen));
+  }, [sidebarOpen]);
+
   return (
     <div className="flex h-screen overflow-hidden bg-background">
-      {/* Sidebar - use position fixed for the sidebar to prevent rerendering animations */}
-      <Sidebar 
-        isOpen={sidebarOpen} 
-        isMobile={isMobile} 
-        onClose={() => setSidebarOpen(false)} 
-        userRole={userRole}
-      />
+      {/* Fixed sidebar */}
+      <div className={`fixed left-0 top-0 z-40 h-screen transition-all duration-300 ease-in-out ${
+        sidebarOpen ? 'translate-x-0' : '-translate-x-full'
+      } ${isMobile ? 'w-64' : 'w-64'}`}>
+        <Sidebar 
+          isOpen={true} 
+          isMobile={false} 
+          onClose={() => {}} 
+          userRole={userRole}
+        />
+      </div>
       
-      {/* Main content - adjust the left margin based on sidebar state */}
+      {/* Main content */}
       <div 
-        className={`flex-1 flex flex-col overflow-hidden transition-all duration-200 ease-in-out ${
+        className={`flex-1 flex flex-col overflow-hidden transition-all duration-300 ease-in-out ${
           sidebarOpen && !isMobile ? 'ml-64' : 'ml-0'
         }`}
       >
@@ -64,25 +76,16 @@ const MainLayout = ({ children }: MainLayoutProps) => {
           </div>
         </header>
         
-        {/* Scrollable content with animation */}
-        <AnimatePresence mode="wait">
-          <motion.main 
-            key={window.location.pathname}
-            className="flex-1 overflow-auto p-4 md:p-6"
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -20 }}
-            transition={{ duration: 0.25 }}
-          >
-            {children}
-          </motion.main>
-        </AnimatePresence>
+        {/* Content */}
+        <main className="flex-1 overflow-auto p-4 md:p-6">
+          {children}
+        </main>
       </div>
       
       {/* Backdrop for mobile */}
       {isMobile && sidebarOpen && (
         <div 
-          className="fixed inset-0 bg-black/50 z-40"
+          className="fixed inset-0 bg-black/50 z-30"
           onClick={() => setSidebarOpen(false)}
         />
       )}

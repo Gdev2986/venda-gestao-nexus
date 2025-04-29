@@ -7,11 +7,13 @@ import MainLayout from "@/components/layout/MainLayout";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
-import { PlusIcon, PenIcon, EyeIcon } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { Plus, PenIcon, EyeIcon, Search } from "lucide-react";
 
 const Clients = () => {
   const [clients, setClients] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [searchTerm, setSearchTerm] = useState("");
   const { toast } = useToast();
   const navigate = useNavigate();
   
@@ -65,6 +67,12 @@ const Clients = () => {
   const handleViewClient = (client) => {
     navigate(`/clients/${client.id}`);
   };
+
+  const filteredClients = clients.filter(client => 
+    client.business_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    client.contact_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    client.email.toLowerCase().includes(searchTerm.toLowerCase())
+  );
   
   return (
     <MainLayout>
@@ -72,7 +80,7 @@ const Clients = () => {
         <div className="flex justify-between items-center">
           <h2 className="text-3xl font-bold tracking-tight">Clientes</h2>
           <Button onClick={handleCreateClick}>
-            <PlusIcon className="mr-2 h-4 w-4" />
+            <Plus className="mr-2 h-4 w-4" />
             Novo Cliente
           </Button>
         </div>
@@ -81,6 +89,16 @@ const Clients = () => {
           <CardHeader>
             <CardTitle>Lista de Clientes</CardTitle>
             <CardDescription>Listagem completa de clientes cadastrados no sistema.</CardDescription>
+            
+            <div className="mt-4 relative">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Input 
+                placeholder="Buscar por nome, contato ou email..." 
+                className="pl-9"
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+              />
+            </div>
           </CardHeader>
           <CardContent>
             {isLoading ? (
@@ -95,29 +113,31 @@ const Clients = () => {
                     <TableHead>Contato</TableHead>
                     <TableHead>Email</TableHead>
                     <TableHead>Telefone</TableHead>
+                    <TableHead>Localização</TableHead>
                     <TableHead className="text-right">Ações</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {clients.length === 0 ? (
+                  {filteredClients.length === 0 ? (
                     <TableRow>
-                      <TableCell colSpan={5} className="text-center py-10 text-muted-foreground">
-                        Nenhum cliente encontrado.
+                      <TableCell colSpan={6} className="text-center py-10 text-muted-foreground">
+                        {searchTerm ? "Nenhum cliente encontrado com esses termos." : "Nenhum cliente cadastrado."}
                       </TableCell>
                     </TableRow>
                   ) : (
-                    clients.map((client) => (
+                    filteredClients.map((client) => (
                       <TableRow key={client.id}>
                         <TableCell className="font-medium">{client.business_name}</TableCell>
                         <TableCell>{client.contact_name}</TableCell>
                         <TableCell>{client.email}</TableCell>
                         <TableCell>{client.phone}</TableCell>
+                        <TableCell>{`${client.city}, ${client.state}`}</TableCell>
                         <TableCell className="text-right">
                           <div className="flex justify-end gap-2">
-                            <Button variant="ghost" size="icon" onClick={() => handleViewClient(client)}>
+                            <Button variant="ghost" size="icon" onClick={() => handleViewClient(client)} title="Visualizar">
                               <EyeIcon className="h-4 w-4" />
                             </Button>
-                            <Button variant="ghost" size="icon" onClick={() => handleEditClick(client)}>
+                            <Button variant="ghost" size="icon" onClick={() => handleEditClick(client)} title="Editar">
                               <PenIcon className="h-4 w-4" />
                             </Button>
                           </div>

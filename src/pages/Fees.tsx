@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
@@ -10,7 +11,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
-import { PlusIcon, SettingsIcon, TrashIcon } from "lucide-react";
+import { PlusIcon, Settings2Icon, Trash2Icon } from "lucide-react";
 
 // Define fee types for different payment methods
 const PAYMENT_TYPES = ["PIX", "DÉBITO", "CRÉDITO"];
@@ -443,27 +444,27 @@ const Fees = () => {
                       >
                         <div className="flex items-center">
                           <div className={`w-3 h-3 rounded-full mr-3 ${getBlockColor(block.color)}`} />
-                          <div>
-                            <p className="font-medium">{block.name}</p>
-                            <p className="text-xs text-muted-foreground truncate max-w-[180px]">
+                          <div className="max-w-[150px]">
+                            <p className="font-medium truncate">{block.name}</p>
+                            <p className="text-xs text-muted-foreground truncate">
                               {block.clients.length > 0 
-                                ? `${block.clients.length} cliente(s): ${getAssociatedClientNames(block.clients)}`
-                                : "Nenhum cliente associado"}
+                                ? `${block.clients.length} cliente(s)`
+                                : "Nenhum cliente"}
                             </p>
                           </div>
                         </div>
-                        <div className="flex space-x-1">
+                        <div className="flex space-x-1 shrink-0 ml-1">
                           <Button variant="ghost" size="sm" onClick={(e) => {
                             e.stopPropagation();
                             handleEditBlock(block);
                           }}>
-                            <SettingsIcon className="h-4 w-4" />
+                            <Settings2Icon className="h-4 w-4" />
                           </Button>
                           <Button variant="ghost" size="sm" onClick={(e) => {
                             e.stopPropagation();
                             handleDeleteBlock(block.id);
                           }}>
-                            <TrashIcon className="h-4 w-4 text-destructive" />
+                            <Trash2Icon className="h-4 w-4 text-destructive" />
                           </Button>
                         </div>
                       </div>
@@ -662,6 +663,9 @@ const Fees = () => {
           <DialogContent>
             <DialogHeader>
               <DialogTitle>{editingBlock ? "Editar Bloco" : "Novo Bloco de Taxas"}</DialogTitle>
+              <DialogDescription>
+                Configure o nome e a cor do bloco de taxas
+              </DialogDescription>
             </DialogHeader>
             
             <div className="space-y-4 pt-4">

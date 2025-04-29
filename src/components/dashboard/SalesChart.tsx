@@ -50,15 +50,15 @@ const SalesChart = ({ data, isLoading = false, className }: SalesChartProps) => 
   const CustomTooltip = ({ active, payload }: any) => {
     if (active && payload && payload.length) {
       return (
-        <div className="bg-white p-4 border rounded-md shadow-md">
+        <div className="bg-white dark:bg-gray-800 p-4 border rounded-md shadow-md">
           <p className="font-medium">{payload[0].payload.name}</p>
-          <p className="text-sm text-gray-500">
+          <p className="text-sm text-gray-500 dark:text-gray-300">
             {new Intl.NumberFormat('pt-BR', { 
               style: 'currency', 
               currency: 'BRL' 
             }).format(payload[0].value)}
           </p>
-          <p className="text-xs text-gray-400">
+          <p className="text-xs text-gray-400 dark:text-gray-400">
             {payload[0].payload.percentage}% do total
           </p>
         </div>
