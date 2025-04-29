@@ -7,7 +7,6 @@ import { UserRole } from "@/types";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/components/ui/use-toast";
 import UserPagination from "./UserPagination";
-import UserFilters, { UserFilters as UserFiltersType } from "./UserFilters";
 
 interface User {
   id: string;
@@ -23,7 +22,6 @@ interface UserTableProps {
   totalPages: number;
   currentPage: number;
   onPageChange: (page: number) => void;
-  onFilterChange: (filters: UserFiltersType) => void;
 }
 
 const UserTable = ({ 
@@ -31,8 +29,7 @@ const UserTable = ({
   setUsers, 
   totalPages,
   currentPage,
-  onPageChange,
-  onFilterChange
+  onPageChange
 }: UserTableProps) => {
   const { toast } = useToast();
   const [updatingUser, setUpdatingUser] = useState<string | null>(null);
@@ -108,8 +105,6 @@ const UserTable = ({
 
   return (
     <div>
-      <UserFilters onFilterChange={onFilterChange} />
-      
       <div className="rounded-md border">
         <Table>
           <TableHeader>

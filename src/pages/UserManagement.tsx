@@ -6,6 +6,7 @@ import UserTable from "@/components/user-management/UserTable";
 import LoadingState from "@/components/user-management/LoadingState";
 import ErrorState from "@/components/user-management/ErrorState";
 import AccessCheckingState from "@/components/user-management/AccessCheckingState";
+import UserFilters from "@/components/user-management/UserFilters";
 
 const UserManagement = () => {
   const { 
@@ -17,8 +18,10 @@ const UserManagement = () => {
     retryFetch,
     currentPage,
     totalPages,
+    totalUsers,
     handlePageChange,
-    handleFilterChange
+    handleFilterChange,
+    filters
   } = useUserManagement();
 
   if (checkingAccess) {
@@ -52,14 +55,21 @@ const UserManagement = () => {
             ) : error ? (
               <ErrorState errorMessage={error} onRetry={retryFetch} />
             ) : (
-              <UserTable 
-                users={users} 
-                setUsers={setUsers} 
-                totalPages={totalPages}
-                currentPage={currentPage}
-                onPageChange={handlePageChange}
-                onFilterChange={handleFilterChange}
-              />
+              <div className="space-y-4">
+                <UserFilters onFilterChange={handleFilterChange} />
+                <UserTable 
+                  users={users} 
+                  setUsers={setUsers} 
+                  totalPages={totalPages}
+                  currentPage={currentPage}
+                  onPageChange={handlePageChange}
+                />
+                {totalUsers > 0 && (
+                  <p className="text-sm text-muted-foreground">
+                    Mostrando {users.length} de {totalUsers} usuários
+                  </p>
+                )}
+              </div>
             )}
           </CardContent>
         </Card>
