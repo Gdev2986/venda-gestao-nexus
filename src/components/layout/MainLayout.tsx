@@ -39,17 +39,25 @@ const MainLayout = ({ children }: MainLayoutProps) => {
 
   return (
     <div className="flex h-screen overflow-hidden bg-background">
-      {/* Fixed sidebar */}
-      <div className={`fixed left-0 top-0 z-40 h-screen transition-all duration-300 ease-in-out ${
-        sidebarOpen ? 'translate-x-0' : '-translate-x-full'
-      } ${isMobile ? 'w-64' : 'w-64'}`}>
-        <Sidebar 
-          isOpen={true} 
-          isMobile={false} 
-          onClose={() => {}} 
-          userRole={userRole}
-        />
-      </div>
+      {/* Sidebar - fixed positioning with animation */}
+      <AnimatePresence mode="wait">
+        <motion.div
+          className={`fixed left-0 top-0 z-40 h-screen ${
+            isMobile ? 'w-64' : 'w-64'
+          } bg-sidebar-background`}
+          initial={{ x: sidebarOpen ? 0 : "-100%" }}
+          animate={{ x: sidebarOpen ? 0 : "-100%" }}
+          exit={{ x: "-100%" }}
+          transition={{ duration: 0.2, ease: "easeInOut" }}
+        >
+          <Sidebar 
+            isOpen={sidebarOpen} 
+            isMobile={isMobile} 
+            onClose={() => setSidebarOpen(false)} 
+            userRole={userRole}
+          />
+        </motion.div>
+      </AnimatePresence>
       
       {/* Main content */}
       <div 
@@ -84,8 +92,11 @@ const MainLayout = ({ children }: MainLayoutProps) => {
       
       {/* Backdrop for mobile */}
       {isMobile && sidebarOpen && (
-        <div 
+        <motion.div 
           className="fixed inset-0 bg-black/50 z-30"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
           onClick={() => setSidebarOpen(false)}
         />
       )}

@@ -14,7 +14,7 @@ const ThemeToggle = () => {
       title={theme === "dark" ? "Mudar para modo claro" : "Mudar para modo escuro"}
     >
       {theme === "dark" ? (
-        <Sun className="h-[1.2rem] w-[1.2rem]" />
+        <Sun className="h-[1.2rem] w-[1.2rem] text-yellow-300" />
       ) : (
         <Moon className="h-[1.2rem] w-[1.2rem]" />
       )}

@@ -21,19 +21,12 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
 
 const formSchema = z.object({
   business_name: z.string().min(2, {
     message: "O nome da empresa deve ter pelo menos 2 caracteres.",
   }),
+  document: z.string().optional(),
   contact_name: z.string().min(2, {
     message: "O nome do contato deve ter pelo menos 2 caracteres.",
   }),
@@ -61,6 +54,7 @@ const formSchema = z.object({
 type ClientFormValues = z.infer<typeof formSchema>;
 
 export interface ClientFormProps {
+  id?: string;
   initialData?: {
     id?: string;
     business_name: string;
@@ -72,14 +66,16 @@ export interface ClientFormProps {
     state: string;
     zip: string;
     partner_id?: string;
+    document?: string;
   };
   onSubmit: (data: ClientFormValues) => void;
   partners?: { id: string; business_name: string }[];
-  isOpen?: boolean;
-  onClose?: () => void;
+  isOpen: boolean;
+  onClose: () => void;
 }
 
 export function ClientForm({
+  id,
   isOpen = true,
   onClose = () => {},
   onSubmit,
@@ -92,7 +88,8 @@ export function ClientForm({
     city: "",
     state: "",
     zip: "",
-    partner_id: ""
+    partner_id: "",
+    document: ""
   },
   partners = [],
 }: ClientFormProps) {
@@ -108,6 +105,7 @@ export function ClientForm({
     state: initialData?.state || "",
     zip: initialData?.zip || "",
     partner_id: initialData?.partner_id || "",
+    document: initialData?.document || "",
   };
 
   const form = useForm<ClientFormValues>({
@@ -118,7 +116,7 @@ export function ClientForm({
   const handleSubmit = async (data: ClientFormValues) => {
     setIsLoading(true);
     try {
-      onSubmit(data);
+      await onSubmit(data);
     } catch (error) {
       console.error("Error submitting form:", error);
     } finally {
@@ -128,34 +126,89 @@ export function ClientForm({
 
   return (
     <Form {...form}>
-      <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-4">
-        <FormField
-          control={form.control}
-          name="business_name"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Nome da Empresa</FormLabel>
-              <FormControl>
-                <Input placeholder="Nome da empresa" {...field} />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
+      <form id={id} onSubmit={form.handleSubmit(handleSubmit)} className="space-y-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <FormField
+            control={form.control}
+            name="business_name"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Nome da Empresa</FormLabel>
+                <FormControl>
+                  <Input placeholder="Nome da empresa" {...field} />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
 
-        <FormField
-          control={form.control}
-          name="contact_name"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Nome do Contato</FormLabel>
-              <FormControl>
-                <Input placeholder="Nome completo do contato" {...field} />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
+          <FormField
+            control={form.control}
+            name="document"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>CNPJ</FormLabel>
+                <FormControl>
+                  <Input placeholder="00.000.000/0001-00" {...field} />
+                </FormControl>
+                <FormDescription>
+                  CNPJ da empresa sem pontuação
+                </FormDescription>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <FormField
+            control={form.control}
+            name="contact_name"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Nome do Contato</FormLabel>
+                <FormControl>
+                  <Input placeholder="Nome completo do contato" {...field} />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
+          {partners.length > 0 && (
+            <FormField
+              control={form.control}
+              name="partner_id"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Parceiro</FormLabel>
+                  <Select
+                    onValueChange={field.onChange}
+                    defaultValue={field.value}
+                  >
+                    <FormControl>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Selecione um parceiro (opcional)" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      <SelectItem value="">Nenhum</SelectItem>
+                      {partners.map((partner) => (
+                        <SelectItem key={partner.id} value={partner.id}>
+                          {partner.business_name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <FormDescription>
+                    Parceiro associado a este cliente (opcional)
+                  </FormDescription>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
           )}
-        />
+        </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <FormField
@@ -243,54 +296,6 @@ export function ClientForm({
               </FormItem>
             )}
           />
-        </div>
-
-        {partners.length > 0 && (
-          <FormField
-            control={form.control}
-            name="partner_id"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Parceiro</FormLabel>
-                <Select
-                  onValueChange={field.onChange}
-                  defaultValue={field.value}
-                >
-                  <FormControl>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Selecione um parceiro (opcional)" />
-                    </SelectTrigger>
-                  </FormControl>
-                  <SelectContent>
-                    <SelectItem value="">Nenhum</SelectItem>
-                    {partners.map((partner) => (
-                      <SelectItem key={partner.id} value={partner.id}>
-                        {partner.business_name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                <FormDescription>
-                  Parceiro associado a este cliente (opcional)
-                </FormDescription>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-        )}
-
-        <div className="flex justify-end space-x-2">
-          <Button
-            type="button"
-            variant="outline"
-            onClick={onClose}
-            disabled={isLoading}
-          >
-            Cancelar
-          </Button>
-          <Button type="submit" disabled={isLoading}>
-            {isLoading ? "Salvando..." : "Salvar"}
-          </Button>
         </div>
       </form>
     </Form>

@@ -9,7 +9,8 @@ import {
   BarChart3,
   MessageSquare,
   Percent,
-  CreditCard
+  CreditCard,
+  Building2
 } from "lucide-react";
 import SidebarNavItem from "./SidebarNavItem";
 import { SidebarItem } from "./types";
@@ -34,7 +35,7 @@ const SidebarNavigation = ({ userRole }: SidebarNavigationProps) => {
     },
     {
       title: "Clientes",
-      icon: Users,
+      icon: Building2,
       href: "/clients",
       roles: [UserRole.ADMIN, UserRole.FINANCIAL, UserRole.PARTNER],
       subItems: [
