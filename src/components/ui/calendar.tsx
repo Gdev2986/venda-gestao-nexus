@@ -31,8 +31,11 @@ function Calendar({
     // If there's no range provided, reset the internal state
     if (!range) {
       setInternalRange({ selecting: 'end' });
-      if (props.onSelect) {
-        (props as DayPickerRangeProps).onSelect(undefined);
+      if (props.mode === 'range') {
+        const rangeProps = props as DayPickerRangeProps;
+        if (rangeProps.onSelect) {
+          rangeProps.onSelect(undefined);
+        }
       }
       return;
     }
@@ -66,8 +69,11 @@ function Calendar({
       setInternalRange({ selecting: 'end' });
       
       // Now call the original onSelect with our correctly ordered range
-      if (props.onSelect && props.mode === 'range') {
-        (props as DayPickerRangeProps).onSelect(newRange);
+      if (props.mode === 'range') {
+        const rangeProps = props as DayPickerRangeProps;
+        if (rangeProps.onSelect) {
+          rangeProps.onSelect(newRange);
+        }
       }
       return;
     }
@@ -78,7 +84,7 @@ function Calendar({
     ? { from: undefined, to: internalRange.to }
     : props.selected;
 
-  // Extract the proper onSelect handler based on mode
+  // Extract the proper props based on mode
   const finalProps = {...props};
   if (props.mode === 'range' && reversedRange) {
     (finalProps as DayPickerRangeProps).onSelect = rangeSelectHandler;
