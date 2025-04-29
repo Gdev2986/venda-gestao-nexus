@@ -11,39 +11,45 @@ import Sales from "./pages/Sales";
 import Settings from "./pages/Settings";
 import Machines from "./pages/Machines";
 import Clients from "./pages/Clients";
+import ClientRegister from "./pages/ClientRegister";
 import Partners from "./pages/Partners";
 import Payments from "./pages/Payments";
 import Support from "./pages/Support";
 import Reports from "./pages/Reports";
 import Fees from "./pages/Fees";
 import NotFound from "./pages/NotFound";
+import { ThemeProvider } from "./components/theme-provider";
 
 const queryClient = new QueryClient();
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
-    <TooltipProvider>
-      <Toaster />
-      <Sonner />
-      <BrowserRouter>
-        <Routes>
-          <Route path="/" element={<Index />} />
-          <Route path="/register" element={<Register />} />
-          <Route path="/dashboard" element={<Dashboard />} />
-          <Route path="/sales" element={<Sales />} />
-          <Route path="/settings" element={<Settings />} />
-          <Route path="/machines" element={<Machines />} />
-          <Route path="/clients" element={<Clients />} />
-          <Route path="/partners" element={<Partners />} />
-          <Route path="/payments" element={<Payments />} />
-          <Route path="/support" element={<Support />} />
-          <Route path="/reports" element={<Reports />} />
-          <Route path="/fees" element={<Fees />} />
-          {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
-          <Route path="*" element={<NotFound />} />
-        </Routes>
-      </BrowserRouter>
-    </TooltipProvider>
+    <ThemeProvider defaultTheme="light" storageKey="sigmapay-theme">
+      <TooltipProvider>
+        <Toaster />
+        <Sonner />
+        <BrowserRouter>
+          <Routes>
+            <Route path="/" element={<Index />} />
+            <Route path="/register" element={<Register />} />
+            <Route path="/dashboard" element={<Dashboard />} />
+            <Route path="/sales" element={<Sales />} />
+            <Route path="/settings" element={<Settings />} />
+            <Route path="/machines" element={<Machines />} />
+            <Route path="/clients" element={<Clients />} />
+            <Route path="/clients/new" element={<ClientRegister />} />
+            <Route path="/clients/:id" element={<ClientRegister />} />
+            <Route path="/partners" element={<Partners />} />
+            <Route path="/payments" element={<Payments />} />
+            <Route path="/support" element={<Support />} />
+            <Route path="/reports" element={<Reports />} />
+            <Route path="/fees" element={<Fees />} />
+            {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
+            <Route path="*" element={<NotFound />} />
+          </Routes>
+        </BrowserRouter>
+      </TooltipProvider>
+    </ThemeProvider>
   </QueryClientProvider>
 );
 

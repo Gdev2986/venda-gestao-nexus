@@ -38,10 +38,12 @@ import { PaymentMethod, Sale, SalesFilterParams } from "@/types";
 import { Badge } from "@/components/ui/badge";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import { CalendarIcon, DownloadIcon, SearchIcon } from "lucide-react";
+import { CalendarIcon, DownloadIcon, SearchIcon, UploadIcon } from "lucide-react";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 import { cn } from "@/lib/utils";
+import { useToast } from "@/hooks/use-toast";
 
 // Mock data generator
 const generateMockSales = (count = 50): Sale[] => {
@@ -95,6 +97,8 @@ const Sales = () => {
   const [itemsPerPage] = useState(10);
   const [filters, setFilters] = useState<SalesFilterParams>({});
   const [date, setDate] = useState<DateRange | undefined>();
+  const [showImportDialog, setShowImportDialog] = useState(false);
+  const { toast } = useToast();
   
   // Load initial data
   useEffect(() => {
@@ -175,6 +179,19 @@ const Sales = () => {
   const clearFilters = () => {
     setFilters({});
     setDate(undefined);
+  };
+
+  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    // In a real application, you would parse the file and handle the upload
+    toast({
+      title: "Arquivo selecionado",
+      description: `${file.name} será processado. Esta funcionalidade está em desenvolvimento.`,
+    });
+    
+    setShowImportDialog(false);
   };
 
   return (
@@ -291,10 +308,16 @@ const Sales = () => {
             <Button variant="outline" onClick={clearFilters}>
               Limpar Filtros
             </Button>
-            <Button>
-              <DownloadIcon className="h-4 w-4 mr-2" />
-              Exportar
-            </Button>
+            <div className="space-x-2">
+              <Button variant="outline" onClick={() => setShowImportDialog(true)}>
+                <UploadIcon className="h-4 w-4 mr-2" />
+                Importar Vendas
+              </Button>
+              <Button>
+                <DownloadIcon className="h-4 w-4 mr-2" />
+                Exportar
+              </Button>
+            </div>
           </div>
         </CardContent>
       </Card>
@@ -432,6 +455,47 @@ const Sales = () => {
           )}
         </CardContent>
       </Card>
+
+      <Dialog open={showImportDialog} onOpenChange={setShowImportDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Importar Vendas</DialogTitle>
+            <DialogDescription>
+              Faça o upload de um arquivo CSV ou Excel contendo as informações das vendas.
+            </DialogDescription>
+          </DialogHeader>
+          
+          <div className="grid gap-4 py-4">
+            <div className="grid gap-2">
+              <Label htmlFor="file">Arquivo</Label>
+              <Input
+                id="file"
+                type="file"
+                accept=".csv,.xlsx,.xls"
+                onChange={handleFileUpload}
+              />
+            </div>
+            <div className="text-sm text-muted-foreground">
+              O arquivo deve conter as colunas: Data, Terminal, Valor Bruto, Valor Líquido, Forma de Pagamento.
+            </div>
+          </div>
+          
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowImportDialog(false)}>
+              Cancelar
+            </Button>
+            <Button type="submit" onClick={() => {
+              toast({
+                title: "Importação iniciada",
+                description: "O processo de importação foi iniciado. Você será notificado quando for concluído.",
+              });
+              setShowImportDialog(false);
+            }}>
+              Importar
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </MainLayout>
   );
 };

@@ -15,22 +15,14 @@ const Sidebar = ({ isOpen, isMobile, onClose, userRole }: SidebarProps) => {
     return null;
   }
 
-  const sidebarVariants = {
-    hidden: { x: -320, opacity: 0 },
-    visible: { x: 0, opacity: 1 },
-  };
-
   return (
-    <motion.div
+    <div 
       className={cn(
-        "fixed inset-y-0 left-0 z-50 flex flex-col w-64 bg-sidebar text-sidebar-foreground",
-        isMobile ? "shadow-xl" : "border-r border-sidebar-border"
+        "fixed inset-y-0 left-0 z-50 flex flex-col w-64 bg-sidebar text-sidebar-foreground transition-transform duration-200",
+        isMobile ? "shadow-xl" : "border-r border-sidebar-border",
+        !isOpen && "transform -translate-x-full", // Hide with translation
+        isOpen && "transform translate-x-0" // Show with translation
       )}
-      variants={sidebarVariants}
-      initial="hidden"
-      animate="visible"
-      exit="hidden"
-      transition={{ duration: 0.2 }}
     >
       <div className="flex items-center justify-between h-16 px-4 border-b border-sidebar-border">
         <div className="flex items-center space-x-2">
@@ -58,7 +50,7 @@ const Sidebar = ({ isOpen, isMobile, onClose, userRole }: SidebarProps) => {
       </div>
 
       <SidebarUserProfile userRole={userRole} />
-    </motion.div>
+    </div>
   );
 };
 

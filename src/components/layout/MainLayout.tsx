@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Menu } from "lucide-react";
 import { useIsMobile } from "@/hooks/use-mobile";
 import NotificationDropdown from "./NotificationDropdown";
+import ThemeToggle from "../theme/theme-toggle";
 import { AnimatePresence, motion } from "framer-motion";
 
 type MainLayoutProps = {
@@ -30,17 +31,13 @@ const MainLayout = ({ children }: MainLayoutProps) => {
 
   return (
     <div className="flex h-screen overflow-hidden bg-background">
-      {/* Sidebar */}
-      <AnimatePresence mode="wait">
-        {(sidebarOpen || !isMobile) && (
-          <Sidebar 
-            isOpen={sidebarOpen} 
-            isMobile={isMobile} 
-            onClose={() => setSidebarOpen(false)} 
-            userRole={userRole}
-          />
-        )}
-      </AnimatePresence>
+      {/* Sidebar - use position fixed for the sidebar to prevent rerendering animations */}
+      <Sidebar 
+        isOpen={sidebarOpen} 
+        isMobile={isMobile} 
+        onClose={() => setSidebarOpen(false)} 
+        userRole={userRole}
+      />
       
       {/* Main content - adjust the left margin based on sidebar state */}
       <div 
@@ -61,7 +58,8 @@ const MainLayout = ({ children }: MainLayoutProps) => {
             <h1 className="text-xl font-semibold">SigmaPay</h1>
           </div>
           
-          <div className="flex items-center space-x-2">
+          <div className="flex items-center space-x-4">
+            <ThemeToggle />
             <NotificationDropdown />
           </div>
         </header>
@@ -83,11 +81,8 @@ const MainLayout = ({ children }: MainLayoutProps) => {
       
       {/* Backdrop for mobile */}
       {isMobile && sidebarOpen && (
-        <motion.div 
+        <div 
           className="fixed inset-0 bg-black/50 z-40"
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          exit={{ opacity: 0 }}
           onClick={() => setSidebarOpen(false)}
         />
       )}

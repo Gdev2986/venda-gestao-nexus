@@ -1,12 +1,15 @@
-
 import { useState, useEffect } from "react";
 import MainLayout from "@/components/layout/MainLayout";
 import DashboardHeader from "@/components/dashboard/DashboardHeader";
 import StatsCards from "@/components/dashboard/StatsCards";
 import SalesChart from "@/components/dashboard/SalesChart";
 import SalesTable from "@/components/dashboard/SalesTable";
-import { DashboardStats, PaymentMethod, Sale } from "@/types";
+import { DashboardStats, PaymentMethod, Sale, UserRole } from "@/types";
 import { useToast } from "@/hooks/use-toast";
+import ClientActions from "@/components/dashboard/ClientActions";
+import { Card, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { useUserRole } from "@/hooks/use-user-role";
 
 // Mock data for development purposes
 const generateMockData = (): DashboardStats => {
@@ -74,6 +77,7 @@ const Dashboard = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [data, setData] = useState<DashboardStats | null>(null);
   const { toast } = useToast();
+  const { userRole } = useUserRole();
 
   const loadData = () => {
     setIsLoading(true);
@@ -119,25 +123,13 @@ const Dashboard = () => {
             <SalesChart
               data={data.salesByPaymentMethod}
               isLoading={isLoading}
+              className="lg:col-span-2"
             />
             
-            <Card className="p-4 border">
-              <CardTitle className="text-lg mb-4">Ações Rápidas</CardTitle>
-              <div className="grid grid-cols-1 gap-4">
-                <Button onClick={() => toast({ title: "Solicitação de Pagamento", description: "Função ainda não implementada completamente." })}>
-                  <WalletIcon className="h-4 w-4 mr-2" />
-                  Solicitar Pagamento
-                </Button>
-                <Button variant="outline" onClick={() => toast({ title: "Nova Máquina", description: "Função ainda não implementada completamente." })}>
-                  <PlusCircleIcon className="h-4 w-4 mr-2" />
-                  Solicitar Nova Máquina
-                </Button>
-                <Button variant="outline" onClick={() => toast({ title: "Suporte", description: "Função ainda não implementada completamente." })}>
-                  <MessageSquareIcon className="h-4 w-4 mr-2" />
-                  Contatar Suporte
-                </Button>
-              </div>
-            </Card>
+            {userRole === UserRole.CLIENT && (
+              <ClientActions />
+            )}
+            
           </div>
           
           <SalesTable
@@ -149,10 +141,5 @@ const Dashboard = () => {
     </MainLayout>
   );
 };
-
-// Importing needed components for the Dashboard
-import { Card, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { MessageSquareIcon, PlusCircleIcon, WalletIcon } from "lucide-react";
 
 export default Dashboard;
