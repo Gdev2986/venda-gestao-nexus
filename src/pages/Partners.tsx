@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
@@ -7,6 +8,8 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Button } from "@/components/ui/button";
 import { PlusIcon, PenIcon, TrashIcon } from "lucide-react";
 import PartnerForm from "@/components/partners/PartnerForm";
+import PartnerFilter from "@/components/partners/PartnerFilter";
+import { format } from "date-fns";
 
 const Partners = () => {
   const [partners, setPartners] = useState([]);
@@ -14,17 +17,40 @@ const Partners = () => {
   const [showCreateForm, setShowCreateForm] = useState(false);
   const [selectedPartner, setSelectedPartner] = useState(null);
   const { toast } = useToast();
+  const [filters, setFilters] = useState({
+    search: "",
+    dateRange: undefined,
+  });
 
   useEffect(() => {
     fetchPartners();
-  }, []);
+  }, [filters]);
 
   const fetchPartners = async () => {
     setIsLoading(true);
     try {
-      const { data, error } = await supabase
+      let query = supabase
         .from('partners')
         .select('*');
+
+      // Apply search filter if provided
+      if (filters.search && filters.search.trim() !== "") {
+        query = query.ilike('business_name', `%${filters.search.trim()}%`);
+      }
+
+      // Apply date range filter if provided
+      if (filters.dateRange?.from) {
+        query = query.gte('created_at', filters.dateRange.from.toISOString());
+      }
+      
+      if (filters.dateRange?.to) {
+        // Add one day to include the end date fully
+        const endDate = new Date(filters.dateRange.to);
+        endDate.setDate(endDate.getDate() + 1);
+        query = query.lt('created_at', endDate.toISOString());
+      }
+
+      const { data, error } = await query;
 
       if (error) {
         throw error;
@@ -106,28 +132,27 @@ const Partners = () => {
           throw error;
         }
 
-        setPartners(partners.map(p => p.id === selectedPartner.id ? { ...p, ...data } : p));
         toast({
           title: "Parceiro atualizado",
           description: "O parceiro foi atualizado com sucesso.",
         });
       } else {
         // Create
-        const { data: newPartner, error } = await supabase
+        const { error } = await supabase
           .from('partners')
-          .insert([data])
-          .select();
+          .insert([data]);
 
         if (error) {
           throw error;
         }
 
-        setPartners([...partners, newPartner[0]]);
         toast({
           title: "Parceiro cadastrado",
           description: "O parceiro foi cadastrado com sucesso.",
         });
       }
+      
+      handleFormClose();
     } catch (error) {
       console.error("Erro ao salvar parceiro:", error);
       toast({
@@ -140,6 +165,10 @@ const Partners = () => {
     }
   };
 
+  const handleFilter = (filterValues) => {
+    setFilters(filterValues);
+  };
+
   return (
     <MainLayout>
       <div className="space-y-4">
@@ -150,6 +179,16 @@ const Partners = () => {
             Novo Parceiro
           </Button>
         </div>
+
+        <Card>
+          <CardHeader>
+            <CardTitle>Filtros</CardTitle>
+            <CardDescription>Utilize os filtros abaixo para encontrar parceiros específicos.</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <PartnerFilter onFilter={handleFilter} />
+          </CardContent>
+        </Card>
 
         <Card>
           <CardHeader>
@@ -169,13 +208,14 @@ const Partners = () => {
                     <TableHead>Contato</TableHead>
                     <TableHead>Email</TableHead>
                     <TableHead>Telefone</TableHead>
+                    <TableHead>Criado em</TableHead>
                     <TableHead className="text-right">Ações</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {partners.length === 0 ? (
                     <TableRow>
-                      <TableCell colSpan={5} className="text-center py-10 text-muted-foreground">
+                      <TableCell colSpan={6} className="text-center py-10 text-muted-foreground">
                         Nenhum parceiro encontrado.
                       </TableCell>
                     </TableRow>
@@ -186,6 +226,9 @@ const Partners = () => {
                         <TableCell>{partner.contact_name}</TableCell>
                         <TableCell>{partner.email}</TableCell>
                         <TableCell>{partner.phone}</TableCell>
+                        <TableCell>
+                          {partner.created_at && format(new Date(partner.created_at), 'dd/MM/yyyy')}
+                        </TableCell>
                         <TableCell className="text-right">
                           <div className="flex justify-end gap-2">
                             <Button variant="ghost" size="icon" onClick={() => handleEditClick(partner)}>
