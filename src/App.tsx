@@ -3,6 +3,8 @@ import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import { ThemeProvider } from "./components/theme-provider";
 import { Toaster } from "./components/ui/toaster";
 import { PATHS } from "./routes/paths";
+import { AuthProvider } from "./contexts/AuthContext";
+import ProtectedRoute from "./components/auth/ProtectedRoute";
 
 import Index from "./pages/Index";
 import Dashboard from "./pages/Dashboard";
@@ -24,25 +26,80 @@ function App() {
   return (
     <ThemeProvider defaultTheme="light" storageKey="vite-ui-theme">
       <Router>
-        <Routes>
-          <Route path={PATHS.HOME} element={<Index />} />
-          <Route path={PATHS.DASHBOARD} element={<Dashboard />} />
-          <Route path={PATHS.CLIENTS} element={<Clients />} />
-          <Route path={PATHS.CLIENT_DETAILS()} element={<ClientDetail />} />
-          <Route path={PATHS.CLIENT_NEW} element={<ClientNew />} />
-          <Route path={PATHS.MACHINES} element={<Machines />} />
-          <Route path={PATHS.SALES} element={<Sales />} />
-          <Route path={PATHS.PAYMENTS} element={<Payments />} />
-          <Route path={PATHS.PARTNERS} element={<Partners />} />
-          <Route path={PATHS.REGISTER} element={<Register />} />
-          <Route path={PATHS.FEES} element={<Fees />} />
-          <Route path={PATHS.REPORTS} element={<Reports />} />
-          <Route path={PATHS.SETTINGS} element={<Settings />} />
-          <Route path={PATHS.SUPPORT} element={<Support />} />
-          <Route path={PATHS.NOT_FOUND} element={<NotFound />} />
-        </Routes>
+        <AuthProvider>
+          <Routes>
+            {/* Rotas públicas */}
+            <Route path={PATHS.HOME} element={<Index />} />
+            <Route path={PATHS.REGISTER} element={<Register />} />
+
+            {/* Rotas protegidas */}
+            <Route path={PATHS.DASHBOARD} element={
+              <ProtectedRoute>
+                <Dashboard />
+              </ProtectedRoute>
+            } />
+            <Route path={PATHS.CLIENTS} element={
+              <ProtectedRoute>
+                <Clients />
+              </ProtectedRoute>
+            } />
+            <Route path={PATHS.CLIENT_DETAILS()} element={
+              <ProtectedRoute>
+                <ClientDetail />
+              </ProtectedRoute>
+            } />
+            <Route path={PATHS.CLIENT_NEW} element={
+              <ProtectedRoute>
+                <ClientNew />
+              </ProtectedRoute>
+            } />
+            <Route path={PATHS.MACHINES} element={
+              <ProtectedRoute>
+                <Machines />
+              </ProtectedRoute>
+            } />
+            <Route path={PATHS.SALES} element={
+              <ProtectedRoute>
+                <Sales />
+              </ProtectedRoute>
+            } />
+            <Route path={PATHS.PAYMENTS} element={
+              <ProtectedRoute>
+                <Payments />
+              </ProtectedRoute>
+            } />
+            <Route path={PATHS.PARTNERS} element={
+              <ProtectedRoute>
+                <Partners />
+              </ProtectedRoute>
+            } />
+            <Route path={PATHS.FEES} element={
+              <ProtectedRoute>
+                <Fees />
+              </ProtectedRoute>
+            } />
+            <Route path={PATHS.REPORTS} element={
+              <ProtectedRoute>
+                <Reports />
+              </ProtectedRoute>
+            } />
+            <Route path={PATHS.SETTINGS} element={
+              <ProtectedRoute>
+                <Settings />
+              </ProtectedRoute>
+            } />
+            <Route path={PATHS.SUPPORT} element={
+              <ProtectedRoute>
+                <Support />
+              </ProtectedRoute>
+            } />
+            
+            {/* Rota para não encontrado */}
+            <Route path={PATHS.NOT_FOUND} element={<NotFound />} />
+          </Routes>
+          <Toaster />
+        </AuthProvider>
       </Router>
-      <Toaster />
     </ThemeProvider>
   );
 }

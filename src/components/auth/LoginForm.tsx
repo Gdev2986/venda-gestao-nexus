@@ -1,6 +1,5 @@
 
 import React, { useState } from "react";
-import { useNavigate } from "react-router-dom";
 import { z } from "zod";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -17,27 +16,25 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { cn } from "@/lib/utils";
-import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/contexts/AuthContext";
+import { Spinner } from "@/components/ui/spinner";
 
 const formSchema = z.object({
   email: z
     .string()
-    .email("Enter a valid email address")
-    .min(1, "Email is required"),
+    .email("Entre com um endereço de email válido")
+    .min(1, "Email é obrigatório"),
   password: z
     .string()
-    .min(6, "Password must be at least 6 characters")
-    .max(72, "Password is too long"),
+    .min(6, "A senha deve ter pelo menos 6 caracteres")
+    .max(72, "A senha é muito longa"),
 });
 
 const LoginForm = () => {
-  const [isLoading, setIsLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [authError, setAuthError] = useState<string | null>(null);
-  const { toast } = useToast();
-  const navigate = useNavigate();
+  const { signIn, isLoading } = useAuth();
 
   const {
     register,
@@ -53,36 +50,16 @@ const LoginForm = () => {
 
   const onSubmit = async (data: z.infer<typeof formSchema>) => {
     try {
-      setIsLoading(true);
       setAuthError(null);
-      
-      const { error } = await supabase.auth.signInWithPassword({
-        email: data.email,
-        password: data.password,
-      });
-      
-      if (error) throw error;
-      
-      toast({
-        title: "Login successful",
-        description: "Welcome back to SigmaPay!",
-      });
-      
-      // For now, we'll store a fake user in localStorage just for demo
-      localStorage.setItem("user", JSON.stringify({ email: data.email }));
-      
-      navigate("/dashboard");
+      await signIn(data.email, data.password);
     } catch (error: any) {
-      console.error(error);
-      setAuthError(error.message || "An error occurred during authentication");
-    } finally {
-      setIsLoading(false);
+      // Erro já tratado no contexto de autenticação
+      setAuthError(error.message || "Ocorreu um erro durante a autenticação");
     }
   };
 
   const handleGoogleLogin = async () => {
     try {
-      setIsLoading(true);
       setAuthError(null);
       
       const { error } = await supabase.auth.signInWithOAuth({
@@ -96,8 +73,7 @@ const LoginForm = () => {
       
     } catch (error: any) {
       console.error(error);
-      setAuthError(error.message || "An error occurred during Google authentication");
-      setIsLoading(false);
+      setAuthError(error.message || "Ocorreu um erro durante a autenticação com Google");
     }
   };
 
@@ -106,7 +82,7 @@ const LoginForm = () => {
       <CardHeader>
         <CardTitle>Login</CardTitle>
         <CardDescription>
-          Enter your email and password to access your account
+          Entre com seu email e senha para acessar sua conta
         </CardDescription>
       </CardHeader>
       <CardContent>
@@ -117,7 +93,7 @@ const LoginForm = () => {
               <Mail className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
               <Input
                 id="email"
-                placeholder="you@example.com"
+                placeholder="voce@exemplo.com"
                 className="pl-10"
                 autoComplete="email"
                 disabled={isLoading}
@@ -129,7 +105,7 @@ const LoginForm = () => {
             )}
           </div>
           <div className="space-y-2">
-            <Label htmlFor="password">Password</Label>
+            <Label htmlFor="password">Senha</Label>
             <div className="relative">
               <Lock className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
               <Input
@@ -152,7 +128,7 @@ const LoginForm = () => {
                 ) : (
                   <Eye className="h-4 w-4" />
                 )}
-                <span className="sr-only">Toggle password visibility</span>
+                <span className="sr-only">Alternar visibilidade da senha</span>
               </Button>
             </div>
             {errors.password && (
@@ -167,7 +143,13 @@ const LoginForm = () => {
           )}
 
           <Button type="submit" className="w-full" disabled={isLoading}>
-            {isLoading ? "Loading..." : "Sign In"}
+            {isLoading ? (
+              <span className="flex items-center">
+                <Spinner size="sm" className="mr-2" /> Entrando...
+              </span>
+            ) : (
+              "Entrar"
+            )}
           </Button>
           
           <div className="relative">
@@ -176,7 +158,7 @@ const LoginForm = () => {
             </div>
             <div className="relative flex justify-center text-xs uppercase">
               <span className="bg-card px-2 text-muted-foreground">
-                Or continue with
+                Ou continuar com
               </span>
             </div>
           </div>
@@ -196,7 +178,7 @@ const LoginForm = () => {
                 <path fill="#EA4335" d="M -14.754 43.989 C -12.984 43.989 -11.404 44.599 -10.154 45.789 L -6.734 42.369 C -8.804 40.429 -11.514 39.239 -14.754 39.239 C -19.444 39.239 -23.494 41.939 -25.464 45.859 L -21.484 48.949 C -20.534 46.099 -17.884 43.989 -14.754 43.989 Z"/>
               </g>
             </svg>
-            Sign in with Google
+            Entrar com Google
           </Button>
         </form>
       </CardContent>
@@ -208,12 +190,12 @@ const LoginForm = () => {
             onClick={async () => {
               const email = document.getElementById("email") as HTMLInputElement;
               if (!email.value || !email.value.includes("@")) {
-                setAuthError("Please enter a valid email to reset your password");
+                setAuthError("Por favor, informe um email válido para redefinir sua senha");
                 return;
               }
               
               try {
-                setIsLoading(true);
+                setAuthError(null);
                 const { error } = await supabase.auth.resetPasswordForEmail(
                   email.value,
                   {
@@ -223,18 +205,13 @@ const LoginForm = () => {
                 
                 if (error) throw error;
                 
-                toast({
-                  title: "Password reset email sent",
-                  description: "Check your email for the reset link",
-                });
+                alert("Email de redefinição de senha enviado! Verifique sua caixa de entrada.");
               } catch (error: any) {
-                setAuthError(error.message || "Error sending password reset email");
-              } finally {
-                setIsLoading(false);
+                setAuthError(error.message || "Erro ao enviar email de redefinição de senha");
               }
             }}
           >
-            Forgot password?
+            Esqueci minha senha
           </Button>
         </div>
       </CardFooter>

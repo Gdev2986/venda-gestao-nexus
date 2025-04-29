@@ -1,20 +1,15 @@
 
-import { useNavigate } from "react-router-dom";
 import { HelpCircle, LogOut } from "lucide-react";
 import { Separator } from "@/components/ui/separator";
 import { useToast } from "@/hooks/use-toast";
+import { useAuth } from "@/contexts/AuthContext";
 
 const SidebarFooter = () => {
-  const navigate = useNavigate();
   const { toast } = useToast();
+  const { signOut } = useAuth();
 
-  const handleLogout = () => {
-    localStorage.removeItem("user");
-    toast({
-      title: "Logout realizado",
-      description: "Você foi desconectado com sucesso.",
-    });
-    navigate("/");
+  const handleLogout = async () => {
+    await signOut();
   };
 
   return (

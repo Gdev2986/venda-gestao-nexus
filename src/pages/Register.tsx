@@ -17,26 +17,26 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/contexts/AuthContext";
+import { Spinner } from "@/components/ui/spinner";
 
 const formSchema = z.object({
-  name: z.string().min(1, "Name is required"),
+  name: z.string().min(1, "Nome é obrigatório"),
   email: z
     .string()
-    .email("Enter a valid email address")
-    .min(1, "Email is required"),
+    .email("Entre com um endereço de email válido")
+    .min(1, "Email é obrigatório"),
   password: z
     .string()
-    .min(6, "Password must be at least 6 characters")
-    .max(72, "Password is too long"),
+    .min(6, "A senha deve ter pelo menos 6 caracteres")
+    .max(72, "A senha é muito longa"),
 });
 
 const Register = () => {
-  const [isLoading, setIsLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [authError, setAuthError] = useState<string | null>(null);
-  const { toast } = useToast();
+  const { signUp, isLoading } = useAuth();
   const navigate = useNavigate();
 
   const {
@@ -54,39 +54,16 @@ const Register = () => {
 
   const onSubmit = async (data: z.infer<typeof formSchema>) => {
     try {
-      setIsLoading(true);
       setAuthError(null);
-      
-      const { error } = await supabase.auth.signUp({
-        email: data.email,
-        password: data.password,
-        options: {
-          data: {
-            name: data.name,
-          },
-          emailRedirectTo: window.location.origin,
-        },
-      });
-      
-      if (error) throw error;
-      
-      toast({
-        title: "Registration successful",
-        description: "Please check your email to verify your account.",
-      });
-      
-      navigate("/");
+      await signUp(data.email, data.password, { name: data.name });
     } catch (error: any) {
-      console.error(error);
-      setAuthError(error.message || "An error occurred during registration");
-    } finally {
-      setIsLoading(false);
+      // Erro já tratado no contexto de autenticação
+      setAuthError(error.message || "Ocorreu um erro durante o registro");
     }
   };
 
   const handleGoogleSignUp = async () => {
     try {
-      setIsLoading(true);
       setAuthError(null);
       
       const { error } = await supabase.auth.signInWithOAuth({
@@ -100,8 +77,7 @@ const Register = () => {
       
     } catch (error: any) {
       console.error(error);
-      setAuthError(error.message || "An error occurred during Google authentication");
-      setIsLoading(false);
+      setAuthError(error.message || "Ocorreu um erro durante a autenticação com Google");
     }
   };
 
@@ -116,20 +92,20 @@ const Register = () => {
               </div>
               <h1 className="text-3xl font-bold tracking-tight">SigmaPay</h1>
             </div>
-            <CardTitle className="text-center">Create Account</CardTitle>
+            <CardTitle className="text-center">Criar Conta</CardTitle>
             <CardDescription className="text-center">
-              Fill in the details below to create your account
+              Preencha os dados abaixo para criar sua conta
             </CardDescription>
           </CardHeader>
           <CardContent>
             <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
               <div className="space-y-2">
-                <Label htmlFor="name">Name</Label>
+                <Label htmlFor="name">Nome</Label>
                 <div className="relative">
                   <User className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
                   <Input
                     id="name"
-                    placeholder="Your name"
+                    placeholder="Seu nome"
                     className="pl-10"
                     autoComplete="name"
                     disabled={isLoading}
@@ -147,7 +123,7 @@ const Register = () => {
                   <Mail className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
                   <Input
                     id="email"
-                    placeholder="you@example.com"
+                    placeholder="voce@exemplo.com"
                     className="pl-10"
                     autoComplete="email"
                     disabled={isLoading}
@@ -160,7 +136,7 @@ const Register = () => {
               </div>
               
               <div className="space-y-2">
-                <Label htmlFor="password">Password</Label>
+                <Label htmlFor="password">Senha</Label>
                 <div className="relative">
                   <Lock className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
                   <Input
@@ -183,7 +159,7 @@ const Register = () => {
                     ) : (
                       <Eye className="h-4 w-4" />
                     )}
-                    <span className="sr-only">Toggle password visibility</span>
+                    <span className="sr-only">Alternar visibilidade da senha</span>
                   </Button>
                 </div>
                 {errors.password && (
@@ -198,7 +174,13 @@ const Register = () => {
               )}
 
               <Button type="submit" className="w-full" disabled={isLoading}>
-                {isLoading ? "Creating account..." : "Create Account"}
+                {isLoading ? (
+                  <span className="flex items-center">
+                    <Spinner size="sm" className="mr-2" /> Criando conta...
+                  </span>
+                ) : (
+                  "Criar Conta"
+                )}
               </Button>
               
               <div className="relative">
@@ -207,7 +189,7 @@ const Register = () => {
                 </div>
                 <div className="relative flex justify-center text-xs uppercase">
                   <span className="bg-card px-2 text-muted-foreground">
-                    Or continue with
+                    Ou continue com
                   </span>
                 </div>
               </div>
@@ -227,15 +209,15 @@ const Register = () => {
                     <path fill="#EA4335" d="M -14.754 43.989 C -12.984 43.989 -11.404 44.599 -10.154 45.789 L -6.734 42.369 C -8.804 40.429 -11.514 39.239 -14.754 39.239 C -19.444 39.239 -23.494 41.939 -25.464 45.859 L -21.484 48.949 C -20.534 46.099 -17.884 43.989 -14.754 43.989 Z"/>
                   </g>
                 </svg>
-                Sign up with Google
+                Registrar com Google
               </Button>
             </form>
           </CardContent>
           <CardFooter className="flex justify-center">
             <p className="text-sm text-muted-foreground">
-              Already have an account?{" "}
+              Já tem uma conta?{" "}
               <Link to="/" className="text-primary hover:underline">
-                Sign in
+                Entrar
               </Link>
             </p>
           </CardFooter>
