@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Menu } from "lucide-react";
 import { useIsMobile } from "@/hooks/use-mobile";
 import NotificationDropdown from "./NotificationDropdown";
+import { AnimatePresence, motion } from "framer-motion";
 
 type MainLayoutProps = {
   children: React.ReactNode;
@@ -57,16 +58,28 @@ const MainLayout = ({ children }: MainLayoutProps) => {
           </div>
         </header>
         
-        {/* Scrollable content */}
-        <main className="flex-1 overflow-auto p-4 md:p-6">
-          {children}
-        </main>
+        {/* Scrollable content with animation */}
+        <AnimatePresence mode="wait">
+          <motion.main 
+            key={window.location.pathname}
+            className="flex-1 overflow-auto p-4 md:p-6"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -20 }}
+            transition={{ duration: 0.25 }}
+          >
+            {children}
+          </motion.main>
+        </AnimatePresence>
       </div>
       
       {/* Backdrop for mobile */}
       {isMobile && sidebarOpen && (
-        <div 
+        <motion.div 
           className="fixed inset-0 bg-black/50 z-40"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
           onClick={() => setSidebarOpen(false)}
         />
       )}

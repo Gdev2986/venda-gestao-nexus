@@ -1,177 +1,228 @@
 
-import React, { useState, useEffect } from 'react';
-import { Bell } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuGroup,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
+import { useState, useEffect } from "react";
+import { Bell } from "lucide-react";
+import { 
+  DropdownMenu, 
+  DropdownMenuContent, 
+  DropdownMenuItem, 
   DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
-import { Badge } from '@/components/ui/badge';
-import { ScrollArea } from '@/components/ui/scroll-area';
-import { supabase } from '@/integrations/supabase/client';
-import { formatDistanceToNow } from 'date-fns';
-import { ptBR } from 'date-fns/locale';
+  DropdownMenuSeparator
+} from "@/components/ui/dropdown-menu";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { motion, AnimatePresence } from "framer-motion";
+import { useToast } from "@/hooks/use-toast";
 
 interface Notification {
   id: string;
   title: string;
   message: string;
+  timestamp: Date;
+  read: boolean;
   type: 'PAYMENT_APPROVED' | 'PAYMENT_REJECTED' | 'MACHINE_TRANSFERRED' | 'SUPPORT_REPLY' | 'GENERAL';
-  is_read: boolean;
-  created_at: string;
-  data?: any;
 }
 
-// Mock notifications for development
-const mockNotifications: Notification[] = [
-  {
-    id: '1',
-    title: 'Pagamento Aprovado',
-    message: 'Seu pagamento de R$ 1.500,00 foi aprovado',
-    type: 'PAYMENT_APPROVED',
-    is_read: false,
-    created_at: new Date(Date.now() - 1000 * 60 * 5).toISOString(),
-    data: { payment_id: '1', amount: 1500 }
-  },
-  {
-    id: '2',
-    title: 'Máquina Transferida',
-    message: 'A máquina #XYZ-123 foi transferida para você',
-    type: 'MACHINE_TRANSFERRED',
-    is_read: true,
-    created_at: new Date(Date.now() - 1000 * 60 * 60 * 2).toISOString(),
-    data: { machine_id: '123', serial: 'XYZ-123' }
-  },
-  {
-    id: '3',
-    title: 'Nova Resposta no Suporte',
-    message: 'Você recebeu uma nova resposta no seu ticket de suporte',
-    type: 'SUPPORT_REPLY',
-    is_read: false,
-    created_at: new Date(Date.now() - 1000 * 60 * 60 * 24).toISOString(),
-    data: { conversation_id: '456' }
-  },
-];
-
-const getNotificationIcon = (type: string) => {
-  switch (type) {
-    case 'PAYMENT_APPROVED':
-      return <div className="w-2 h-2 rounded-full bg-green-500 mr-2"></div>;
-    case 'PAYMENT_REJECTED':
-      return <div className="w-2 h-2 rounded-full bg-red-500 mr-2"></div>;
-    case 'MACHINE_TRANSFERRED':
-      return <div className="w-2 h-2 rounded-full bg-blue-500 mr-2"></div>;
-    case 'SUPPORT_REPLY':
-      return <div className="w-2 h-2 rounded-full bg-purple-500 mr-2"></div>;
-    default:
-      return <div className="w-2 h-2 rounded-full bg-gray-500 mr-2"></div>;
-  }
-};
-
 const NotificationDropdown = () => {
-  const [notifications, setNotifications] = useState<Notification[]>(mockNotifications);
-  const [isOpen, setIsOpen] = useState(false);
-  
-  const unreadCount = notifications.filter(n => !n.is_read).length;
-  
-  const handleNotificationClick = (notification: Notification) => {
-    // Mark notification as read
-    if (!notification.is_read) {
-      setNotifications(notifications.map(n => 
-        n.id === notification.id ? { ...n, is_read: true } : n
-      ));
-    }
+  const [notifications, setNotifications] = useState<Notification[]>([]);
+  const [unreadCount, setUnreadCount] = useState(0);
+  const { toast } = useToast();
+
+  // Mock notifications for demonstration
+  useEffect(() => {
+    const mockNotifications: Notification[] = [
+      {
+        id: "1",
+        title: "Pagamento Aprovado",
+        message: "Seu pagamento de R$ 1.250,00 foi aprovado",
+        timestamp: new Date(Date.now() - 1000 * 60 * 5), // 5 minutes ago
+        read: false,
+        type: "PAYMENT_APPROVED"
+      },
+      {
+        id: "2",
+        title: "Nova Mensagem de Suporte",
+        message: "Você recebeu uma resposta do suporte técnico",
+        timestamp: new Date(Date.now() - 1000 * 60 * 30), // 30 minutes ago
+        read: false,
+        type: "SUPPORT_REPLY"
+      },
+      {
+        id: "3",
+        title: "Máquina Transferida",
+        message: "A máquina T12345 foi transferida para outro cliente",
+        timestamp: new Date(Date.now() - 1000 * 60 * 60 * 2), // 2 hours ago
+        read: true,
+        type: "MACHINE_TRANSFERRED"
+      },
+      {
+        id: "4",
+        title: "Pagamento Rejeitado",
+        message: "Seu pagamento de R$ 550,00 foi rejeitado",
+        timestamp: new Date(Date.now() - 1000 * 60 * 60 * 5), // 5 hours ago
+        read: true,
+        type: "PAYMENT_REJECTED"
+      }
+    ];
     
-    // Handle navigation based on notification type
-    switch (notification.type) {
-      case 'PAYMENT_APPROVED':
-      case 'PAYMENT_REJECTED':
-        // Navigate to payments page
-        // window.location.href = '/payments';
-        break;
-      case 'MACHINE_TRANSFERRED':
-        // Navigate to machines page
-        // window.location.href = '/machines';
-        break;
-      case 'SUPPORT_REPLY':
-        // Navigate to support page
-        // window.location.href = '/support';
-        break;
-      default:
-        break;
-    }
+    setNotifications(mockNotifications);
+    setUnreadCount(mockNotifications.filter(n => !n.read).length);
+    
+    // Simulate a new notification after 10 seconds
+    const timer = setTimeout(() => {
+      const newNotification: Notification = {
+        id: "5",
+        title: "Nova Venda Registrada",
+        message: "Uma nova venda foi registrada no valor de R$ 350,00",
+        timestamp: new Date(),
+        read: false,
+        type: "GENERAL"
+      };
+      
+      setNotifications(prev => [newNotification, ...prev]);
+      setUnreadCount(prev => prev + 1);
+      
+      toast({
+        title: "Nova Notificação",
+        description: "Uma nova venda foi registrada",
+      });
+    }, 10000);
+    
+    return () => clearTimeout(timer);
+  }, [toast]);
+  
+  const markAsRead = (id: string) => {
+    setNotifications(notifications.map(notification => {
+      if (notification.id === id && !notification.read) {
+        setUnreadCount(prev => Math.max(0, prev - 1));
+        return { ...notification, read: true };
+      }
+      return notification;
+    }));
   };
   
   const markAllAsRead = () => {
-    setNotifications(notifications.map(n => ({ ...n, is_read: true })));
+    setNotifications(notifications.map(notification => ({ ...notification, read: true })));
+    setUnreadCount(0);
   };
   
+  const formatTimestamp = (timestamp: Date) => {
+    const now = new Date();
+    const diffMs = now.getTime() - timestamp.getTime();
+    const diffMins = Math.round(diffMs / 60000);
+    
+    if (diffMins < 1) return 'Agora mesmo';
+    if (diffMins < 60) return `${diffMins} min atrás`;
+    
+    const diffHours = Math.floor(diffMins / 60);
+    if (diffHours < 24) return `${diffHours}h atrás`;
+    
+    const diffDays = Math.floor(diffHours / 24);
+    if (diffDays === 1) return 'Ontem';
+    if (diffDays < 7) return `${diffDays} dias atrás`;
+    
+    return timestamp.toLocaleDateString();
+  };
+  
+  const getNotificationIcon = (type: Notification['type']) => {
+    switch (type) {
+      case 'PAYMENT_APPROVED':
+        return 'bg-green-100 text-green-600';
+      case 'PAYMENT_REJECTED':
+        return 'bg-red-100 text-red-600';
+      case 'SUPPORT_REPLY':
+        return 'bg-blue-100 text-blue-600';
+      case 'MACHINE_TRANSFERRED':
+        return 'bg-amber-100 text-amber-600';
+      default:
+        return 'bg-gray-100 text-gray-600';
+    }
+  };
+
   return (
-    <DropdownMenu open={isOpen} onOpenChange={setIsOpen}>
+    <DropdownMenu>
       <DropdownMenuTrigger asChild>
         <Button variant="ghost" size="icon" className="relative">
           <Bell className="h-5 w-5" />
-          {unreadCount > 0 && (
-            <Badge 
-              className="absolute -top-1 -right-1 px-1.5 py-0.5 min-w-[18px] min-h-[18px] flex items-center justify-center text-[10px] bg-red-500"
-              variant="destructive"
-            >
-              {unreadCount}
-            </Badge>
-          )}
+          <AnimatePresence>
+            {unreadCount > 0 && (
+              <motion.div
+                initial={{ scale: 0 }}
+                animate={{ scale: 1 }}
+                exit={{ scale: 0 }}
+                className="absolute -top-1 -right-1"
+              >
+                <Badge variant="destructive" className="h-5 min-w-[20px] flex items-center justify-center p-0 text-xs">
+                  {unreadCount}
+                </Badge>
+              </motion.div>
+            )}
+          </AnimatePresence>
         </Button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent className="w-80" align="end">
-        <DropdownMenuLabel className="flex justify-between items-center">
-          <span>Notificações</span>
+      <DropdownMenuContent align="end" className="w-[350px]">
+        <div className="flex items-center justify-between px-4 py-2">
+          <h3 className="font-medium">Notificações</h3>
           {unreadCount > 0 && (
-            <Button variant="link" size="sm" className="h-auto p-0 text-xs" onClick={markAllAsRead}>
+            <Button variant="ghost" size="sm" onClick={markAllAsRead} className="text-xs h-8">
               Marcar todas como lidas
             </Button>
           )}
-        </DropdownMenuLabel>
+        </div>
         <DropdownMenuSeparator />
-        <ScrollArea className="h-[300px]">
-          <DropdownMenuGroup>
-            {notifications.length > 0 ? (
+        
+        <div className="max-h-[300px] overflow-y-auto py-1">
+          <AnimatePresence initial={false}>
+            {notifications.length === 0 ? (
+              <div className="py-6 text-center text-muted-foreground">
+                Nenhuma notificação
+              </div>
+            ) : (
               notifications.map((notification) => (
-                <React.Fragment key={notification.id}>
+                <motion.div
+                  key={notification.id}
+                  layout
+                  initial={{ opacity: 0, y: -20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, height: 0 }}
+                  transition={{ type: "spring", stiffness: 350, damping: 25 }}
+                >
                   <DropdownMenuItem 
-                    className={`flex flex-col items-start p-3 cursor-pointer ${!notification.is_read ? 'bg-muted/50' : ''}`}
-                    onClick={() => handleNotificationClick(notification)}
+                    className={`p-0 focus:bg-transparent cursor-default ${notification.read ? 'opacity-70' : ''}`}
                   >
-                    <div className="flex items-center w-full">
-                      {getNotificationIcon(notification.type)}
-                      <span className="font-medium">{notification.title}</span>
-                      {!notification.is_read && (
-                        <div className="ml-auto rounded-full w-2 h-2 bg-blue-500" />
+                    <div className="flex gap-3 p-3 w-full" onClick={() => markAsRead(notification.id)}>
+                      <div className={`w-10 h-10 rounded-full flex items-center justify-center shrink-0 ${getNotificationIcon(notification.type)}`}>
+                        {notification.type === 'PAYMENT_APPROVED' && '$'}
+                        {notification.type === 'PAYMENT_REJECTED' && '!'}
+                        {notification.type === 'SUPPORT_REPLY' && '?'}
+                        {notification.type === 'MACHINE_TRANSFERRED' && 'T'}
+                        {notification.type === 'GENERAL' && 'N'}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex justify-between items-start">
+                          <p className="font-medium text-sm">{notification.title}</p>
+                          <span className="text-xs text-muted-foreground whitespace-nowrap ml-2">
+                            {formatTimestamp(notification.timestamp)}
+                          </span>
+                        </div>
+                        <p className="text-xs text-muted-foreground mt-1 line-clamp-2">{notification.message}</p>
+                      </div>
+                      {!notification.read && (
+                        <div className="w-2 h-2 rounded-full bg-blue-500 self-center"></div>
                       )}
                     </div>
-                    <p className="text-muted-foreground text-xs mt-1 pl-4">
-                      {notification.message}
-                    </p>
-                    <p className="text-muted-foreground text-xs mt-1 pl-4">
-                      {formatDistanceToNow(new Date(notification.created_at), {
-                        addSuffix: true,
-                        locale: ptBR
-                      })}
-                    </p>
                   </DropdownMenuItem>
                   <DropdownMenuSeparator />
-                </React.Fragment>
+                </motion.div>
               ))
-            ) : (
-              <div className="p-3 text-center text-muted-foreground">
-                Nenhuma notificação disponível
-              </div>
             )}
-          </DropdownMenuGroup>
-        </ScrollArea>
+          </AnimatePresence>
+        </div>
+        
+        <div className="p-2 text-center">
+          <Button variant="outline" size="sm" className="w-full" onClick={() => toast({ title: "Ver todas", description: "Função em desenvolvimento." })}>
+            Ver todas
+          </Button>
+        </div>
       </DropdownMenuContent>
     </DropdownMenu>
   );
