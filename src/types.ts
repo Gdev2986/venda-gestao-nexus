@@ -4,7 +4,8 @@ export enum UserRole {
   ADMIN = "ADMIN",
   CLIENT = "CLIENT",
   FINANCIAL = "FINANCIAL",
-  PARTNER = "PARTNER"
+  PARTNER = "PARTNER",
+  LOGISTICS = "LOGISTICS"
 }
 
 // Payment status enum
@@ -104,7 +105,7 @@ export interface Payment {
   updated_at?: string;
   client_id: string;
   amount: number;
-  description?: string;
+  description?: string; // Added description field to match database schema
   status: PaymentStatus;
   approved_at?: string | null;
   approved_by?: string;

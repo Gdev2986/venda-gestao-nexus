@@ -4,6 +4,7 @@ import { Session, User } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useNavigate } from "react-router-dom";
+import { v4 as uuidv4 } from "uuid";
 
 interface AuthContextType {
   user: User | null;
@@ -23,6 +24,41 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [isLoading, setIsLoading] = useState(true);
   const { toast } = useToast();
   const navigate = useNavigate();
+  
+  // Generate a unique device ID for this browser
+  const getDeviceId = () => {
+    let deviceId = localStorage.getItem('device_id');
+    if (!deviceId) {
+      deviceId = uuidv4();
+      localStorage.setItem('device_id', deviceId);
+    }
+    return deviceId;
+  };
+
+  // Track the session in our database
+  const trackSession = async (userId: string) => {
+    try {
+      const deviceId = getDeviceId();
+      
+      // Record or update the session in our user_sessions table
+      await supabase
+        .from('user_sessions')
+        .upsert(
+          {
+            user_id: userId,
+            device_id: deviceId,
+            last_active: new Date().toISOString(),
+            metadata: { 
+              user_agent: navigator.userAgent,
+              platform: navigator.platform
+            }
+          },
+          { onConflict: 'user_id, device_id' }
+        );
+    } catch (error) {
+      console.error("Error tracking session:", error);
+    }
+  };
 
   // Set up authentication state listener
   useEffect(() => {
@@ -34,8 +70,9 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         setUser(newSession?.user ?? null);
 
         // Handle auth events with setTimeout to avoid calling Supabase inside the callback
-        if (event === "SIGNED_IN") {
+        if (event === "SIGNED_IN" && newSession?.user) {
           setTimeout(() => {
+            trackSession(newSession.user.id);
             toast({
               title: "Autenticado com sucesso",
               description: "Bem-vindo à plataforma!",
@@ -44,7 +81,10 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         }
         
         if (event === "SIGNED_OUT") {
+          // Clear local storage for clean logout
           setTimeout(() => {
+            localStorage.removeItem('userRole');
+            
             toast({
               title: "Desconectado",
               description: "Você foi desconectado com sucesso.",
@@ -66,6 +106,11 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         
         setSession(data.session);
         setUser(data.session?.user ?? null);
+        
+        // Track session if user is logged in
+        if (data.session?.user) {
+          await trackSession(data.session.user.id);
+        }
       } catch (error) {
         console.error("Error during initial session check:", error);
       } finally {
@@ -166,6 +211,11 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const signOut = async () => {
     try {
       setIsLoading(true);
+      
+      // Clear role from local storage first
+      localStorage.removeItem('userRole');
+      localStorage.removeItem('sb-yjzwusatnkebfpsvvffz-auth-token');
+      
       const { error } = await supabase.auth.signOut();
       if (error) throw error;
       

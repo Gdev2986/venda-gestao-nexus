@@ -18,13 +18,6 @@ export const useUserRole = () => {
       }
 
       try {
-        // First check localStorage for cached role
-        const cachedRole = getAuthData("userRole");
-        
-        if (cachedRole && Object.values(UserRole).includes(cachedRole as UserRole)) {
-          setUserRole(cachedRole as UserRole);
-        }
-        
         // Always verify with database to ensure role is current
         const { data, error } = await supabase
           .from('profiles')
@@ -40,8 +33,8 @@ export const useUserRole = () => {
         if (data && data.role) {
           const role = data.role as UserRole;
           setUserRole(role);
-          // Store in localStorage for persistence
-          setAuthData("userRole", role);
+          // Store in sessionStorage (not localStorage) for better isolation
+          sessionStorage.setItem("userRole", role);
         }
       } catch (error) {
         console.error('Error fetching profile:', error);
@@ -54,7 +47,7 @@ export const useUserRole = () => {
 
   const updateUserRole = (role: UserRole) => {
     setUserRole(role);
-    setAuthData("userRole", role);
+    sessionStorage.setItem("userRole", role);
   };
 
   return { userRole, updateUserRole };

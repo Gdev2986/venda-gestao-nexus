@@ -25,7 +25,20 @@ const SidebarNavItem = ({ item, userRole }: SidebarNavItemProps) => {
       // Check if we're on any payment-related route
       return location.pathname === PATHS.PAYMENTS || 
              location.pathname === PATHS.USER_PAYMENTS ||
+             location.pathname === PATHS.CLIENT_PAYMENTS ||
              location.pathname.startsWith(`${PATHS.PAYMENTS}/`);
+    }
+    
+    // Special case for clients
+    if (href === PATHS.CLIENTS) {
+      return location.pathname === PATHS.CLIENTS ||
+             location.pathname.startsWith(PATHS.CLIENT_DETAIL('').replace('/:id', '/')) ||
+             location.pathname === PATHS.CLIENT_NEW;
+    }
+    
+    // Special case for partners
+    if (href === PATHS.PARTNERS) {
+      return location.pathname === PATHS.PARTNERS;
     }
     
     // Normal path matching
@@ -61,6 +74,11 @@ const SidebarNavItem = ({ item, userRole }: SidebarNavItemProps) => {
     hover: { backgroundColor: "rgba(255, 255, 255, 0.1)" },
     active: { backgroundColor: "rgba(255, 255, 255, 0.2)" }
   };
+
+  // Skip rendering if user doesn't have access to this item
+  if (!item.roles.includes(userRole)) {
+    return null;
+  }
 
   if (item.subItems) {
     return (
@@ -104,8 +122,9 @@ const SidebarNavItem = ({ item, userRole }: SidebarNavItemProps) => {
           transition={{ duration: 0.2 }}
           className="overflow-hidden"
         >
-          {item.subItems.map((subItem) => (
-            subItem.roles.includes(userRole) && (
+          {item.subItems
+            .filter(subItem => subItem.roles.includes(userRole))
+            .map((subItem) => (
               <motion.a
                 key={subItem.title}
                 href={subItem.href}
@@ -123,8 +142,7 @@ const SidebarNavItem = ({ item, userRole }: SidebarNavItemProps) => {
               >
                 <span>{subItem.title}</span>
               </motion.a>
-            )
-          ))}
+            ))}
         </motion.div>
       </div>
     );

@@ -1,10 +1,10 @@
-
 // Tipos de usuário
 export enum UserRole {
   ADMIN = "ADMIN",
   FINANCIAL = "FINANCIAL",
   PARTNER = "PARTNER",
   CLIENT = "CLIENT",
+  LOGISTICS = "LOGISTICS",
 }
 
 export type User = {
@@ -52,7 +52,6 @@ export type Client = {
   updated_at: string;
 };
 
-// Tipos para autenticação
 export type AuthState = {
   user: User | null;
   isAuthenticated: boolean;

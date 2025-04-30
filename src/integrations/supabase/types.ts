@@ -282,6 +282,7 @@ export type Database = {
           approved_by: string | null
           client_id: string
           created_at: string | null
+          description: string | null
           id: string
           pix_key_id: string
           receipt_url: string | null
@@ -294,6 +295,7 @@ export type Database = {
           approved_by?: string | null
           client_id: string
           created_at?: string | null
+          description?: string | null
           id?: string
           pix_key_id: string
           receipt_url?: string | null
@@ -306,6 +308,7 @@ export type Database = {
           approved_by?: string | null
           client_id?: string
           created_at?: string | null
+          description?: string | null
           id?: string
           pix_key_id?: string
           receipt_url?: string | null
@@ -541,6 +544,62 @@ export type Database = {
           },
         ]
       }
+      user_client_access: {
+        Row: {
+          client_id: string
+          created_at: string
+          id: string
+          user_id: string
+        }
+        Insert: {
+          client_id: string
+          created_at?: string
+          id?: string
+          user_id: string
+        }
+        Update: {
+          client_id?: string
+          created_at?: string
+          id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_client_access_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      user_sessions: {
+        Row: {
+          created_at: string
+          device_id: string
+          id: string
+          last_active: string
+          metadata: Json | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          device_id: string
+          id?: string
+          last_active?: string
+          metadata?: Json | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          device_id?: string
+          id?: string
+          last_active?: string
+          metadata?: Json | null
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       vw_client_balance: {
@@ -581,7 +640,7 @@ export type Database = {
       payment_status: "PENDING" | "APPROVED" | "REJECTED"
       pix_key_type: "CPF" | "CNPJ" | "EMAIL" | "PHONE" | "RANDOM"
       processing_status: "RAW" | "PROCESSED"
-      user_role: "ADMIN" | "FINANCIAL" | "PARTNER" | "CLIENT"
+      user_role: "ADMIN" | "FINANCIAL" | "PARTNER" | "LOGISTICS" | "CLIENT"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -710,7 +769,7 @@ export const Constants = {
       payment_status: ["PENDING", "APPROVED", "REJECTED"],
       pix_key_type: ["CPF", "CNPJ", "EMAIL", "PHONE", "RANDOM"],
       processing_status: ["RAW", "PROCESSED"],
-      user_role: ["ADMIN", "FINANCIAL", "PARTNER", "CLIENT"],
+      user_role: ["ADMIN", "FINANCIAL", "PARTNER", "LOGISTICS", "CLIENT"],
     },
   },
 } as const

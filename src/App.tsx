@@ -6,7 +6,6 @@ import { PATHS } from "./routes/paths";
 import Dashboard from "./pages/Dashboard";
 import ClientDashboard from "./pages/ClientDashboard";
 import Payments from "./pages/Payments";
-import ClientPayments from "./pages/ClientPayments";
 import NotFound from "./pages/NotFound";
 import Support from "./pages/Support";
 import Help from "./pages/Help";
@@ -32,6 +31,12 @@ function App() {
     window.scrollTo(0, 0);
   }, [location.pathname]);
 
+  // Log route changes for debugging
+  useEffect(() => {
+    console.log("Route changed:", location.pathname);
+    console.log("Current user role:", userRole);
+  }, [location.pathname, userRole]);
+
   return (
     <Routes>
       {/* Home route (Index page) */}
@@ -47,7 +52,7 @@ function App() {
         } 
       />
       
-      {/* Payment routes */}
+      {/* Payment routes - consolidated */}
       <Route 
         path={PATHS.PAYMENTS} 
         element={
@@ -69,16 +74,6 @@ function App() {
         element={
           <ProtectedRoute>
             <Payments />
-          </ProtectedRoute>
-        } 
-      />
-      
-      {/* Client Payments route */}
-      <Route 
-        path={PATHS.CLIENT_PAYMENTS} 
-        element={
-          <ProtectedRoute>
-            <ClientPayments />
           </ProtectedRoute>
         } 
       />
