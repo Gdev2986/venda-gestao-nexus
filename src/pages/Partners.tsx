@@ -1,151 +1,144 @@
 
-import { useState, useCallback } from 'react';
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { useState, useEffect } from "react";
 import MainLayout from "@/components/layout/MainLayout";
-import PartnersHeader from "@/components/partners/PartnersHeader";
-import PartnersTableCard from "@/components/partners/PartnersTableCard";
-import PartnerForm from "@/components/partners/PartnerForm";
+import { Button } from "@/components/ui/button";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Card } from "@/components/ui/card";
+import { PartnersHeader } from "@/components/partners/PartnersHeader";
+import { PartnersTableCard } from "@/components/partners/PartnersTableCard";
 import { PartnersFilterCard } from "@/components/partners/PartnersFilterCard";
-import { usePartners, type Partner } from "@/hooks/use-partners";
-import { toast } from "@/components/ui/use-toast";
+import PartnerForm from "@/components/partners/PartnerForm";
+import { Partner, FilterValues } from "@/types";
+import { usePartners } from "@/hooks/use-partners";
+import { useToast } from "@/hooks/use-toast";
+import { supabase } from "@/integrations/supabase/client";
 
-// Update the Partners component to match component props
-const Partners = () => {
-  const {
-    partners,
-    filteredPartners,
-    isLoading,
-    error,
-    createPartner,
-    updatePartner,
+export default function Partners() {
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [editingPartner, setEditingPartner] = useState<Partner | null>(null);
+  const { toast } = useToast();
+  
+  const { 
+    partners, 
+    loading, 
+    error, 
+    filterPartners, 
+    createPartner, 
+    updatePartner, 
     deletePartner,
-    filterPartners,
+    refreshPartners
   } = usePartners();
 
-  const [isFormOpen, setIsFormOpen] = useState(false);
-  const [selectedPartner, setSelectedPartner] = useState<Partner | null>(null);
-  const [isSubmitting, setIsSubmitting] = useState(false);
-
-  const handleOpenCreateModal = useCallback(() => {
-    setSelectedPartner(null);
-    setIsFormOpen(true);
-  }, []);
-
-  const handleOpenEditModal = useCallback((partner: Partner) => {
-    setSelectedPartner(partner);
-    setIsFormOpen(true);
-  }, []);
-
-  const handleFormOpenChange = useCallback((open: boolean) => {
-    setIsFormOpen(open);
-    if (!open) {
-      setSelectedPartner(null);
+  useEffect(() => {
+    if (error) {
+      toast({
+        title: "Erro",
+        description: error,
+        variant: "destructive",
+      });
     }
-  }, []);
+  }, [error, toast]);
 
-  const handleSubmit = async (values: Omit<Partner, 'id' | 'created_at' | 'updated_at'>) => {
-    setIsSubmitting(true);
+  const handleCreatePartner = () => {
+    setEditingPartner(null);
+    setIsDialogOpen(true);
+  };
+
+  const handleEditPartner = (partner: Partner) => {
+    setEditingPartner(partner);
+    setIsDialogOpen(true);
+  };
+
+  const handleDeletePartner = async (partnerId: string) => {
     try {
-      let success = false;
-      if (selectedPartner) {
-        success = await updatePartner(selectedPartner.id, values);
-      } else {
-        success = await createPartner(values);
-      }
+      await deletePartner(partnerId);
+      toast({
+        title: "Sucesso",
+        description: "Parceiro excluído com sucesso.",
+      });
+      return true;
+    } catch (error: any) {
+      toast({
+        title: "Erro ao excluir",
+        description: error.message || "Ocorreu um erro ao excluir o parceiro.",
+        variant: "destructive",
+      });
+      return false;
+    }
+  };
 
-      if (success) {
-        setIsFormOpen(false);
-        setSelectedPartner(null);
+  const handleSubmit = async (partnerData: Omit<Partner, "id" | "created_at" | "updated_at">) => {
+    try {
+      setIsSubmitting(true);
+      
+      if (editingPartner) {
+        await updatePartner(editingPartner.id, partnerData);
         toast({
-          title: "Sucesso!",
-          description: `Parceiro ${selectedPartner ? 'atualizado' : 'criado'} com sucesso.`,
+          title: "Sucesso",
+          description: "Parceiro atualizado com sucesso."
         });
       } else {
+        await createPartner(partnerData);
         toast({
-          title: "Erro",
-          description: "Ocorreu um erro ao salvar o parceiro.",
-          variant: "destructive",
+          title: "Sucesso",
+          description: "Parceiro criado com sucesso."
         });
       }
+      
+      setIsDialogOpen(false);
+      return true;
+    } catch (error: any) {
+      toast({
+        title: "Erro",
+        description: error.message || "Ocorreu um erro ao salvar o parceiro.",
+        variant: "destructive",
+      });
+      return false;
     } finally {
       setIsSubmitting(false);
     }
   };
 
-  const handleDelete = async (partner: Partner) => {
-    try {
-      const confirmed = window.confirm(`Tem certeza que deseja excluir o parceiro "${partner.company_name}"?`);
-      if (confirmed) {
-        const success = await deletePartner(partner.id);
-        if (success) {
-          toast({
-            title: "Sucesso!",
-            description: "Parceiro excluído com sucesso.",
-          });
-        } else {
-          toast({
-            title: "Erro",
-            description: "Ocorreu um erro ao excluir o parceiro.",
-            variant: "destructive",
-          });
-        }
-      }
-    } catch (error) {
-      toast({
-        title: "Erro",
-        description: "Ocorreu um erro ao excluir o parceiro.",
-        variant: "destructive",
-      });
-    }
-  };
-
-  const handleFilter = (searchTerm: string, commissionRange: [number, number]) => {
-    filterPartners(searchTerm, commissionRange);
+  const handleFilter = (values: FilterValues) => {
+    filterPartners(values.searchTerm, values.commissionRange);
   };
 
   return (
     <MainLayout>
-      <div className="space-y-6">
-        <PartnersHeader onCreateClick={handleOpenCreateModal} />
+      <div className="space-y-4">
+        <PartnersHeader onCreatePartner={handleCreatePartner} />
         
-        <PartnersFilterCard 
-          onFilter={handleFilter} 
-          loading={isLoading}
-        />
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <PartnersFilterCard onFilter={handleFilter} loading={loading} />
+          
+          <div className="md:col-span-2">
+            <PartnersTableCard 
+              partners={partners} 
+              isLoading={loading} 
+              error={error || ""} 
+              onEdit={handleEditPartner} 
+              onDelete={handleDeletePartner} 
+            />
+          </div>
+        </div>
         
-        <PartnersTableCard
-          partners={filteredPartners}
-          isLoading={isLoading}
-          error={error || ""}
-          onEditPartner={handleOpenEditModal}
-          onDeletePartner={handleDelete}
-        />
-
-        {/* Form dialog */}
-        <Dialog open={isFormOpen} onOpenChange={handleFormOpenChange}>
-          <DialogContent className="sm:max-w-lg">
+        <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+          <DialogContent className="sm:max-w-md">
             <DialogHeader>
-              <DialogTitle>{selectedPartner ? "Editar Parceiro" : "Novo Parceiro"}</DialogTitle>
-              <DialogDescription>
-                {selectedPartner 
-                  ? "Edite as informações do parceiro abaixo."
-                  : "Preencha as informações para cadastrar um novo parceiro."}
-              </DialogDescription>
+              <DialogTitle>
+                {editingPartner ? "Editar Parceiro" : "Novo Parceiro"}
+              </DialogTitle>
             </DialogHeader>
             
-            <PartnerForm
-              isOpen={isFormOpen}
-              onClose={() => setIsFormOpen(false)}
-              onSubmit={handleSubmit} 
+            <PartnerForm 
+              partner={editingPartner}
+              onSubmit={handleSubmit}
               isSubmitting={isSubmitting}
-              initialData={selectedPartner || undefined}
-              title={selectedPartner ? "Editar Parceiro" : "Novo Parceiro"}
             />
           </DialogContent>
         </Dialog>
       </div>
     </MainLayout>
   );
-};
-
-export default Partners;
+}

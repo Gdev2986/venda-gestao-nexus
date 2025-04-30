@@ -1,84 +1,141 @@
 
 import { useState } from "react";
+import { z } from "zod";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
 import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
-import { formatCurrency, formatDate } from "@/lib/formatters";
-import { PaymentStatus } from "@/types";
-import { Badge } from "@/components/ui/badge";
-import { Clock, CheckCircle2, AlertCircle, FileCheck } from "lucide-react";
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { Calendar } from "@/components/ui/calendar";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { CalendarIcon } from "lucide-react";
+import { cn } from "@/lib/utils";
+import { formatDate } from "@/lib/formatters";
 
-type Payment = {
-  id: string;
-  amount: number;
-  description: string;
-  status: PaymentStatus;
-  created_at: string;
-  due_date: string;
-  receipt_url?: string;
-  approved_at?: string;
-};
+const formSchema = z.object({
+  amount: z.coerce.number().positive("Valor deve ser positivo"),
+  description: z.string().optional(),
+  due_date: z.date().optional(),
+});
+
+type FormValues = z.infer<typeof formSchema>;
 
 interface PaymentFormProps {
-  payment: Payment;
+  onSubmit: (data: FormValues) => void;
+  isSubmitting?: boolean;
 }
 
-const PaymentForm = ({ payment }: PaymentFormProps) => {
-  const getStatusBadge = (status: PaymentStatus) => {
-    switch (status) {
-      case PaymentStatus.PENDING:
-        return <Badge variant="outline" className="flex gap-1 items-center"><Clock className="h-3 w-3" /> Pendente</Badge>;
-      case PaymentStatus.APPROVED:
-        return <Badge variant="default" className="flex gap-1 items-center"><CheckCircle2 className="h-3 w-3" /> Aprovado</Badge>;
-      case PaymentStatus.REJECTED:
-        return <Badge variant="destructive" className="flex gap-1 items-center"><AlertCircle className="h-3 w-3" /> Rejeitado</Badge>;
-      case PaymentStatus.PAID:
-        return <Badge variant="secondary" className="flex gap-1 items-center"><FileCheck className="h-3 w-3" /> Pago</Badge>;
-      default:
-        return <Badge variant="outline">Desconhecido</Badge>;
-    }
+export default function PaymentForm({ onSubmit, isSubmitting = false }: PaymentFormProps) {
+  const [date, setDate] = useState<Date | undefined>(undefined);
+  
+  const form = useForm<FormValues>({
+    resolver: zodResolver(formSchema),
+    defaultValues: {
+      amount: 0,
+      description: "",
+      due_date: undefined,
+    },
+  });
+
+  const handleSubmit = (values: FormValues) => {
+    onSubmit(values);
   };
 
   return (
-    <div className="space-y-6">
-      <div className="grid grid-cols-2 gap-4">
-        <div>
-          <p className="text-sm font-medium text-muted-foreground">Descrição</p>
-          <p>{payment.description}</p>
-        </div>
-        <div>
-          <p className="text-sm font-medium text-muted-foreground">Valor</p>
-          <p className="font-bold">{formatCurrency(payment.amount)}</p>
-        </div>
-        <div>
-          <p className="text-sm font-medium text-muted-foreground">Data de Criação</p>
-          <p>{formatDate(payment.created_at)}</p>
-        </div>
-        <div>
-          <p className="text-sm font-medium text-muted-foreground">Data de Vencimento</p>
-          <p>{formatDate(payment.due_date)}</p>
-        </div>
-        <div>
-          <p className="text-sm font-medium text-muted-foreground">Status</p>
-          <div className="mt-1">{getStatusBadge(payment.status)}</div>
-        </div>
-      </div>
+    <Form {...form}>
+      <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-4">
+        <FormField
+          control={form.control}
+          name="amount"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Valor (R$)</FormLabel>
+              <FormControl>
+                <Input
+                  type="number"
+                  step="0.01"
+                  placeholder="0,00"
+                  {...field}
+                  onChange={(e) => {
+                    const value = parseFloat(e.target.value);
+                    field.onChange(!isNaN(value) ? value : 0);
+                  }}
+                />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
 
-      {payment.receipt_url && (
-        <div>
-          <p className="text-sm font-medium text-muted-foreground mb-2">Comprovante</p>
-          <a 
-            href={payment.receipt_url} 
-            target="_blank" 
-            rel="noopener noreferrer"
-            className="flex items-center text-primary hover:underline"
-          >
-            <FileCheck className="mr-2 h-4 w-4" />
-            Ver comprovante
-          </a>
-        </div>
-      )}
-    </div>
+        <FormField
+          control={form.control}
+          name="description"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Descrição</FormLabel>
+              <FormControl>
+                <Textarea
+                  placeholder="Descrição do pagamento"
+                  {...field}
+                />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+
+        <FormField
+          control={form.control}
+          name="due_date"
+          render={({ field }) => (
+            <FormItem className="flex flex-col">
+              <FormLabel>Data de vencimento</FormLabel>
+              <Popover>
+                <PopoverTrigger asChild>
+                  <FormControl>
+                    <Button
+                      variant={"outline"}
+                      className={cn(
+                        "w-full pl-3 text-left font-normal",
+                        !field.value && "text-muted-foreground"
+                      )}
+                    >
+                      {field.value ? (
+                        formatDate(field.value)
+                      ) : (
+                        <span>Selecione uma data</span>
+                      )}
+                      <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                    </Button>
+                  </FormControl>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0" align="start">
+                  <Calendar
+                    mode="single"
+                    selected={field.value}
+                    onSelect={field.onChange}
+                    disabled={(date) => date < new Date("1900-01-01")}
+                    initialFocus
+                  />
+                </PopoverContent>
+              </Popover>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+
+        <Button type="submit" disabled={isSubmitting} className="w-full">
+          {isSubmitting ? "Enviando..." : "Solicitar Pagamento"}
+        </Button>
+      </form>
+    </Form>
   );
-};
-
-export default PaymentForm;
+}
