@@ -66,11 +66,22 @@ export interface Client {
   partner_id?: string;
   created_at?: string;
   updated_at?: string;
+  company_name?: string; // For backward compatibility
+  contact_name?: string;
+  email?: string;
+  phone?: string;
+  address?: string;
+  city?: string;
+  state?: string;
+  zip?: string;
+  status?: string;
 }
 
 export interface FilterValues {
   search?: string;
   status?: string;
+  searchTerm?: string;
+  commissionRange?: [number, number];
   dateRange?: {
     from: Date;
     to?: Date;
@@ -120,4 +131,11 @@ export interface Partner {
   email?: string; // Added for consistency with filtering
   phone?: string; // Added for consistency with filtering
   address?: string; // Added for completeness
+}
+
+export interface DashboardStats {
+  totalClients: number;
+  totalTransactions: number;
+  totalRevenue: number;
+  averageValue: number;
 }

@@ -4,7 +4,7 @@ import { useToast } from "@/components/ui/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import MainLayout from "@/components/layout/MainLayout";
-import { Payment, PaymentStatus } from "@/types";
+import { Payment, PaymentStatus, PaymentType } from "@/types";
 import { formatCurrency } from "@/lib/formatters";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -69,6 +69,8 @@ const ClientPayments = () => {
         receipt_url: item.receipt_url,
         approved_at: item.approved_at,
         client_id: item.client_id,
+        payment_type: item.payment_type || PaymentType.PIX, // Add missing required field
+        rejection_reason: item.rejection_reason || null, // Add missing required field
       }));
       
       setPayments(transformedPayments);

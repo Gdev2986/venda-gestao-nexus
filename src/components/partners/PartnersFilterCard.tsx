@@ -1,7 +1,7 @@
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import PartnerFilter from "@/components/partners/PartnerFilter";
-import { FilterValues } from "@/hooks/use-partners";
+import { FilterValues } from "@/types";
 
 interface PartnersFilterCardProps {
   onFilter: (values: FilterValues) => void;

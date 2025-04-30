@@ -99,13 +99,13 @@ const SalesTable = ({ sales, page, setPage, totalPages, isLoading, totals }: Sal
                           {new Intl.NumberFormat("pt-BR", {
                             style: "currency",
                             currency: "BRL",
-                          }).format(sale.grossAmount)}
+                          }).format(sale.gross_amount)}
                         </TableCell>
                         <TableCell className="text-right">
                           {new Intl.NumberFormat("pt-BR", {
                             style: "currency",
                             currency: "BRL",
-                          }).format(sale.netAmount)}
+                          }).format(sale.net_amount)}
                         </TableCell>
                         <TableCell>{getPaymentMethodLabel(sale.paymentMethod)}</TableCell>
                       </TableRow>

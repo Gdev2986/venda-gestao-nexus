@@ -44,13 +44,12 @@ export const fetchClientById = async (id: string): Promise<Client | null> => {
 };
 
 // Create a new client
-export const createClient = async (clientData: Omit<Client, "id" | "created_at" | "updated_at" | "status">): Promise<Client> => {
+export const createClient = async (clientData: Omit<Client, "id" | "created_at" | "updated_at">): Promise<Client> => {
   try {
     // Create a new client object with an ID
     const newClient: Client = {
       ...clientData,
       id: uuidv4(),
-      status: "ACTIVE", // Use capital letters for the enum
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString(),
     };
@@ -74,7 +73,6 @@ export const createClient = async (clientData: Omit<Client, "id" | "created_at" 
     const mockClient: Client = {
       ...clientData,
       id: uuidv4(),
-      status: "ACTIVE", // Use capital letters for the enum
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString(),
     };
