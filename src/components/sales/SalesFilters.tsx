@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -90,8 +91,7 @@ const SalesFilters = ({
                   selected={date}
                   onSelect={onDateChange}
                   numberOfMonths={2}
-                  className="p-3"
-                  reversedRange={true}
+                  className="p-3 pointer-events-auto"
                 />
               </PopoverContent>
             </Popover>
@@ -169,6 +169,6 @@ const SalesFilters = ({
       </CardContent>
     </Card>
   );
-};
+}
 
 export default SalesFilters;

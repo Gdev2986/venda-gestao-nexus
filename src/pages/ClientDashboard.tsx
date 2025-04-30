@@ -8,7 +8,44 @@ import { supabase } from "@/integrations/supabase/client";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { CalendarIcon, ShoppingBag, CreditCard, Headphones, Truck } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import { Sale } from "@/types";
+import { Sale, PaymentMethod } from "@/types";
+
+// Interface to match the database structure
+interface DbSale {
+  id: string;
+  code: string;
+  date: string;
+  terminal: string;
+  gross_amount: number;
+  net_amount: number;
+  payment_method: "CREDIT" | "DEBIT" | "PIX";
+  client_id: string;
+  partner_id: string;
+  machine_id: string;
+  created_at: string;
+  updated_at: string;
+  processing_status: "RAW" | "PROCESSED";
+}
+
+// Function to map database sale to app Sale type
+const mapDbSaleToAppSale = (dbSale: DbSale): Sale => {
+  const paymentMethodMap: Record<string, PaymentMethod> = {
+    "CREDIT": PaymentMethod.CREDIT,
+    "DEBIT": PaymentMethod.DEBIT,
+    "PIX": PaymentMethod.PIX
+  };
+
+  return {
+    id: dbSale.id,
+    code: dbSale.code,
+    date: new Date(dbSale.date),
+    terminal: dbSale.terminal,
+    grossAmount: dbSale.gross_amount,
+    netAmount: dbSale.net_amount,
+    paymentMethod: paymentMethodMap[dbSale.payment_method],
+    clientId: dbSale.client_id
+  };
+};
 
 const ClientDashboard = () => {
   const { user } = useAuth();
@@ -53,7 +90,9 @@ const ClientDashboard = () => {
         if (salesError) {
           console.error("Error fetching sales:", salesError);
         } else {
-          setSales(salesData || []);
+          // Map database sales to app Sale type
+          const mappedSales = salesData ? salesData.map(mapDbSaleToAppSale) : [];
+          setSales(mappedSales);
         }
 
         // Fetch machines data
@@ -70,7 +109,7 @@ const ClientDashboard = () => {
 
         // Mock balance calculation
         // In a real application, you would fetch this from a balance table or calculate it
-        const totalSales = salesData?.reduce((sum: number, sale: any) => sum + Number(sale.net_amount), 0) || 0;
+        const totalSales = salesData?.reduce((sum: number, sale: DbSale) => sum + Number(sale.net_amount), 0) || 0;
         setCurrentBalance(totalSales);
       }
     } catch (error) {

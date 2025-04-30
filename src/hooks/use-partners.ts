@@ -2,22 +2,14 @@
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { Partner as PartnerType } from "@/types";
 
 export type PartnerStatus = "active" | "inactive";
 
-export interface Partner {
+export interface Partner extends Omit<PartnerType, "id" | "created_at" | "updated_at"> {
   id: string;
-  company_name: string;
-  commission_rate: number;
   created_at: string;
   updated_at: string;
-  // Additional fields
-  contact_name?: string;
-  email?: string;
-  phone?: string;
-  status?: PartnerStatus;
-  total_clients?: number;
-  address?: string;
 }
 
 export interface FilterValues {
@@ -71,7 +63,7 @@ export const usePartners = () => {
       // Map the returned data to match our Partner interface
       const mappedPartners = data.map(partner => ({
         id: partner.id,
-        company_name: partner.company_name,
+        business_name: partner.company_name, // Map company_name to business_name
         commission_rate: partner.commission_rate,
         created_at: partner.created_at,
         updated_at: partner.updated_at,
@@ -80,7 +72,10 @@ export const usePartners = () => {
         phone: "(123) 456-7890", // Mock data
         status: "active" as PartnerStatus, // Mock data
         total_clients: 5, // Mock data
-        address: "123 Business St, City" // Mock data
+        address: "123 Business St, City", // Mock data
+        city: "New York", // Mock data
+        state: "NY", // Mock data
+        zip: "10001", // Mock data
       }));
 
       setPartners(mappedPartners);
@@ -106,11 +101,11 @@ export const usePartners = () => {
       setIsLoading(true);
 
       // Extract only the fields that exist in the database table
-      const { company_name, commission_rate } = partnerData;
+      const { business_name, commission_rate } = partnerData;
 
       const { data, error } = await supabase
         .from("partners")
-        .insert([{ company_name, commission_rate }])
+        .insert([{ company_name: business_name, commission_rate }])
         .select();
 
       if (error) {
@@ -121,7 +116,7 @@ export const usePartners = () => {
         // Map the returned data to match our Partner interface
         const newPartner: Partner = {
           id: data[0].id,
-          company_name: data[0].company_name,
+          business_name: data[0].company_name, // Map company_name to business_name
           commission_rate: data[0].commission_rate,
           created_at: data[0].created_at,
           updated_at: data[0].updated_at,
@@ -130,7 +125,11 @@ export const usePartners = () => {
           email: partnerData.email || "partner@example.com",
           phone: partnerData.phone || "(000) 000-0000",
           status: partnerData.status || "active",
-          address: partnerData.address || "No address provided"
+          address: partnerData.address || "No address provided",
+          city: partnerData.city || "City",
+          state: partnerData.state || "State",
+          zip: partnerData.zip || "00000",
+          total_clients: 0
         };
 
         setPartners([newPartner, ...partners]);
@@ -156,12 +155,107 @@ export const usePartners = () => {
     setFilters({ ...filters, ...newFilters });
   };
 
+  // Add missing methods required by Partners.tsx
+  const handleFilter = handleFilterChange;
+
+  const deletePartner = async (partnerId: string) => {
+    try {
+      setIsLoading(true);
+      
+      const { error } = await supabase
+        .from("partners")
+        .delete()
+        .eq("id", partnerId);
+      
+      if (error) throw error;
+      
+      // Remove partner from local state
+      setPartners(partners.filter(partner => partner.id !== partnerId));
+      
+      toast({
+        title: "Partner Deleted",
+        description: "Partner has been successfully deleted."
+      });
+      
+      return true;
+    } catch (err: any) {
+      console.error("Error deleting partner:", err);
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: err.message || "Failed to delete partner."
+      });
+      return false;
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const savePartner = async (partnerData: Omit<Partner, "created_at" | "updated_at">, partnerId?: string) => {
+    try {
+      setIsLoading(true);
+      
+      // Extract only the fields that exist in the database table
+      const { business_name, commission_rate } = partnerData;
+      
+      let result;
+      
+      if (partnerId) {
+        // Update existing partner
+        result = await supabase
+          .from("partners")
+          .update({ company_name: business_name, commission_rate })
+          .eq("id", partnerId)
+          .select();
+      } else {
+        // Insert new partner
+        result = await supabase
+          .from("partners")
+          .insert([{ company_name: business_name, commission_rate }])
+          .select();
+      }
+      
+      const { data, error } = result;
+      
+      if (error) throw error;
+      
+      if (data && data[0]) {
+        toast({
+          title: partnerId ? "Partner Updated" : "Partner Added",
+          description: `Partner has been successfully ${partnerId ? "updated" : "added"}.`
+        });
+        
+        // Refresh partners list
+        fetchPartners();
+        return true;
+      }
+      
+      return false;
+    } catch (err: any) {
+      console.error("Error saving partner:", err);
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: err.message || "Failed to save partner."
+      });
+      return false;
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const refreshPartners = fetchPartners;
+
   return {
     partners,
     isLoading,
     error,
     filters,
     handleFilterChange,
+    handleFilter,
+    deletePartner,
+    savePartner,
+    refreshPartners,
     addPartner,
     fetchPartners,
   };

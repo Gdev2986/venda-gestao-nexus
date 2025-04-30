@@ -128,7 +128,7 @@
 
   /* Responsive tables */
   .responsive-table {
-    @apply overflow-x-auto;
+    @apply overflow-x-auto rounded-md border w-full;
   }
 
   /* Card grids */
@@ -139,6 +139,26 @@
   /* Form layouts */
   .form-grid {
     @apply grid gap-4 sm:grid-cols-2;
+  }
+
+  /* Responsive spacing */
+  .responsive-padding {
+    @apply px-4 md:px-6 lg:px-8 py-4 md:py-6;
+  }
+
+  /* Responsive typography */
+  .responsive-heading {
+    @apply text-xl md:text-2xl lg:text-3xl font-bold;
+  }
+
+  /* Responsive stack */
+  .responsive-stack {
+    @apply flex flex-col sm:flex-row gap-4;
+  }
+
+  /* Responsive alignment */
+  .responsive-center {
+    @apply flex flex-col sm:flex-row items-center justify-center;
   }
 }
 
@@ -190,3 +210,36 @@ img {
     display: none !important;
   }
 }
+
+/* Spinner animation */
+.spinner {
+  @apply h-8 w-8 rounded-full border-4 border-muted border-t-primary animate-spin;
+}
+
+/* Mobile-first adjustments */
+@media (max-width: 640px) {
+  .card-header-stack {
+    @apply flex-col items-start space-y-2;
+  }
+  
+  .btn-stack {
+    @apply flex-col w-full space-y-2;
+  }
+  
+  .btn-stack > button {
+    @apply w-full;
+  }
+}
+
+/* Responsive grid fixes */
+.auto-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 1rem;
+}
+
+/* Dark mode improvements */
+.dark .card-hover:hover {
+  @apply bg-gray-800/50;
+}
+

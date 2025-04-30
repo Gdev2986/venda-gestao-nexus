@@ -116,7 +116,7 @@ export default function PartnerFilter({ onFilter }: PartnerFilterProps) {
                       </Button>
                     </FormControl>
                   </PopoverTrigger>
-                  <PopoverContent className="w-auto p-0" align="center">
+                  <PopoverContent className="w-auto p-0 pointer-events-auto" align="center">
                     <Calendar
                       mode="range"
                       selected={field.value as DateRange}
@@ -128,7 +128,7 @@ export default function PartnerFilter({ onFilter }: PartnerFilterProps) {
                       }}
                       numberOfMonths={2}
                       locale={ptBR}
-                      reversedRange={true}
+                      className="p-3 pointer-events-auto"
                     />
                   </PopoverContent>
                 </Popover>

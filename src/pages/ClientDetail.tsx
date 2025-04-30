@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import MainLayout from "@/components/layout/MainLayout";
@@ -295,7 +294,10 @@ const ClientDetailPage = () => {
             <CardContent>
               <ClientForm
                 id="edit-client-form"
-                initialData={client}
+                initialData={{
+                  ...client,
+                  contact_name: client.contact_name || "", // Ensure contact_name is not undefined
+                }}
                 onSubmit={handleUpdate}
                 isOpen={isEditing}
                 onClose={() => setIsEditing(false)}
