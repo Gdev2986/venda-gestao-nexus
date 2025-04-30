@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
@@ -15,7 +14,9 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } f
 import PaymentForm from "@/components/payments/PaymentForm";
 import PaymentReceiptUploader from "@/components/payments/PaymentReceiptUploader";
 
-type ClientPayment = Payment;
+interface ClientPayment extends Payment {
+  description?: string; // Ensure description is optional
+}
 
 const ClientPayments = () => {
   const { toast } = useToast();

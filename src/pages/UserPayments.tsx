@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import MainLayout from "@/components/layout/MainLayout";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -23,7 +22,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { WalletIcon, SendIcon } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
 
-// Payment request type
+// Payment request type that matches the database schema
 interface PaymentRequest {
   id: string;
   amount: number;
@@ -32,6 +31,10 @@ interface PaymentRequest {
   description?: string;
   receipt_url?: string;
   client_id: string;
+  approved_at?: string;
+  approved_by?: string;
+  updated_at?: string;
+  pix_key_id?: string;
 }
 
 const UserPayments = () => {
@@ -72,7 +75,22 @@ const UserPayments = () => {
             
           if (requestsError) throw requestsError;
           
-          setPaymentRequests(requestsData || []);
+          // Ensure the data matches our PaymentRequest type
+          const typedData: PaymentRequest[] = (requestsData || []).map(item => ({
+            id: item.id,
+            amount: item.amount,
+            status: item.status as PaymentStatus,
+            created_at: item.created_at,
+            description: item.description,
+            receipt_url: item.receipt_url,
+            client_id: item.client_id,
+            approved_at: item.approved_at,
+            approved_by: item.approved_by,
+            updated_at: item.updated_at,
+            pix_key_id: item.pix_key_id
+          }));
+          
+          setPaymentRequests(typedData);
           
           // Calculate client balance (mock for now, in a real app this would be fetched from the server)
           // For example purposes, we'll set a mock balance
@@ -181,7 +199,7 @@ const UserPayments = () => {
     
     try {
       // Create payment request in database
-      const { data: newRequest, error } = await supabase
+      const { data: newRequestData, error } = await supabase
         .from("payment_requests")
         .insert({
           amount: parsedAmount,
@@ -194,6 +212,21 @@ const UserPayments = () => {
         .single();
       
       if (error) throw error;
+      
+      // Create a properly typed PaymentRequest from the response
+      const newRequest: PaymentRequest = {
+        id: newRequestData.id,
+        amount: newRequestData.amount,
+        status: newRequestData.status as PaymentStatus,
+        created_at: newRequestData.created_at,
+        description: newRequestData.description,
+        receipt_url: newRequestData.receipt_url,
+        client_id: newRequestData.client_id,
+        approved_at: newRequestData.approved_at,
+        approved_by: newRequestData.approved_by,
+        updated_at: newRequestData.updated_at,
+        pix_key_id: newRequestData.pix_key_id
+      };
       
       // Add the new payment request to the list
       setPaymentRequests([newRequest, ...paymentRequests]);
