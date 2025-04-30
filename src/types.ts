@@ -1,4 +1,9 @@
 
+/**
+ * System type definitions
+ * Centralizes all type definitions for easier maintenance
+ */
+
 // User roles enum
 export enum UserRole {
   ADMIN = "ADMIN",
@@ -114,7 +119,7 @@ export interface Payment {
   receipt_url?: string;
   pix_key_id?: string;
   due_date?: string;
-  rejection_reason?: string; // Added missing field
+  rejection_reason?: string; // Added as optional since existing code might not provide it
   client_name?: string; // For convenience in UI
 }
 

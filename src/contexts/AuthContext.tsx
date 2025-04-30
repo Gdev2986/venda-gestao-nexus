@@ -5,15 +5,14 @@ import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useNavigate } from "react-router-dom";
 import { PATHS } from "@/routes/paths";
-
-interface AuthContextType {
-  user: User | null;
-  session: Session | null;
-  isLoading: boolean;
-  signIn: (email: string, password: string) => Promise<void>;
-  signUp: (email: string, password: string, userData: { name: string }) => Promise<void>;
-  signOut: () => Promise<void>;
-}
+import { 
+  getCurrentSession, 
+  signInWithEmail, 
+  signUpWithEmail, 
+  signOutUser, 
+  clearAuthData 
+} from "@/services/auth-service";
+import { AuthContextType } from "./auth-types";
 
 // Create a context for authentication
 export const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -31,18 +30,6 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   useEffect(() => {
     console.log("Setting up auth listener");
     
-    // Generate a unique device ID for session management
-    const getDeviceId = () => {
-      let deviceId = sessionStorage.getItem('deviceId');
-      if (!deviceId) {
-        deviceId = `device_${Math.random().toString(36).substring(2, 15)}`;
-        sessionStorage.setItem('deviceId', deviceId);
-      }
-      return deviceId;
-    };
-    
-    const deviceId = getDeviceId();
-    
     // Set up auth state listener FIRST to prevent missing events
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, newSession) => {
@@ -56,38 +43,22 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         if (event === "SIGNED_IN") {
           console.log("Signed in event detected");
           
-          // Track the session in our custom table
+          // Track the session in our custom table - using setTimeout to avoid Supabase callback issues
           if (newSession?.user) {
-            try {
-              // Use setTimeout to avoid calling Supabase inside the callback
-              setTimeout(async () => {
-                await supabase.from('user_sessions').upsert({
-                  user_id: newSession.user.id,
-                  device_id: deviceId,
-                  last_active: new Date().toISOString(),
-                  metadata: {
-                    user_agent: navigator.userAgent,
-                  }
-                }, { onConflict: 'user_id, device_id' });
-              }, 0);
-              
+            setTimeout(() => {
               toast({
                 title: "Successfully authenticated",
                 description: "Welcome to SigmaPay!",
               });
-            } catch (error) {
-              console.error("Error tracking session:", error);
-            }
+            }, 0);
           }
         }
         
         if (event === "SIGNED_OUT") {
           console.log("Signed out event detected");
           
-          // Clear auth data from sessionStorage and localStorage
-          sessionStorage.removeItem('userRole');
-          sessionStorage.removeItem('redirectPath');
-          localStorage.removeItem('userRole');
+          // Clear auth data
+          clearAuthData();
           
           // Use setTimeout to avoid calling toast inside the callback
           setTimeout(() => {
@@ -102,34 +73,24 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
     // Check for existing session AFTER setting up listeners
     const initialSessionCheck = async () => {
+      setIsLoading(true);
       try {
         console.log("Checking initial session");
-        const { data, error } = await supabase.auth.getSession();
+        const { session: currentSession, user: currentUser, error } = await getCurrentSession();
         
         if (error) {
           console.error("Error getting session:", error);
           throw error;
         }
         
-        console.log("Initial session check complete:", !!data.session);
+        console.log("Initial session check complete:", !!currentSession);
         
-        // Update the last_active timestamp for the session
-        if (data.session?.user) {
-          try {
-            await supabase.from('user_sessions').upsert({
-              user_id: data.session.user.id,
-              device_id: deviceId,
-              last_active: new Date().toISOString()
-            }, { onConflict: 'user_id, device_id' });
-          } catch (error) {
-            console.error("Error updating session activity:", error);
-          }
-        }
-        
-        setSession(data.session);
-        setUser(data.session?.user ?? null);
+        setSession(currentSession);
+        setUser(currentUser);
       } catch (error) {
         console.error("Error during initial session check:", error);
+        setSession(null);
+        setUser(null);
       } finally {
         setIsLoading(false);
       }
@@ -147,31 +108,19 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     try {
       console.log("Sign in attempt for:", email);
       setIsLoading(true);
-      const { data, error } = await supabase.auth.signInWithPassword({
-        email,
-        password,
-      });
+      
+      const { user: signedInUser, error } = await signInWithEmail(email, password);
 
       if (error) {
-        // Enhanced error handling
-        console.error("Login error:", error);
-        let errorMessage = "An error occurred during authentication";
-        
-        if (error.message === "Invalid login credentials") {
-          errorMessage = "Invalid credentials. Please check your email and password.";
-        } else if (error.message.includes("Database error")) {
-          errorMessage = "Server connection error. Please try again later.";
-        }
-        
         toast({
           title: "Login error",
-          description: errorMessage,
+          description: error.message,
           variant: "destructive",
         });
         throw error;
       }
       
-      if (data.user) {
+      if (signedInUser) {
         console.log("Sign in successful, navigating to dashboard");
         // Use setTimeout to avoid race conditions with onAuthStateChange
         setTimeout(() => {
@@ -196,29 +145,13 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     try {
       console.log("Sign up attempt for:", email);
       setIsLoading(true);
-      const { error, data } = await supabase.auth.signUp({
-        email,
-        password,
-        options: {
-          data: {
-            name: userData.name,
-          },
-          emailRedirectTo: `${window.location.origin}/dashboard`,
-        },
-      });
-
-      console.log("Sign up response:", { error, user: data?.user ? true : false });
+      
+      const { user: newUser, error } = await signUpWithEmail(email, password, userData);
 
       if (error) {
-        let errorMessage = "An error occurred during registration";
-        
-        if (error.message.includes("already registered")) {
-          errorMessage = "This email is already registered. Try logging in.";
-        }
-        
         toast({
           title: "Registration error",
-          description: errorMessage,
+          description: error.message,
           variant: "destructive",
         });
         throw error;
@@ -247,12 +180,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       setUser(null);
       setSession(null);
       
-      // Clear auth-related storage items
-      sessionStorage.removeItem('userRole');
-      localStorage.removeItem('userRole');
-      
-      // Call Supabase to sign out
-      const { error } = await supabase.auth.signOut();
+      const { error } = await signOutUser();
       if (error) throw error;
       
       navigate(PATHS.HOME);
