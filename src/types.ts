@@ -3,6 +3,8 @@ export enum UserRole {
   CLIENT = "CLIENT",
   ADMIN = "ADMIN",
   PARTNER = "PARTNER",
+  FINANCIAL = "FINANCIAL",
+  LOGISTICS = "LOGISTICS"
 }
 
 export enum PaymentStatus {
@@ -16,6 +18,12 @@ export enum PaymentType {
   PIX = "PIX",
   TED = "TED",
   BOLETO = "BOLETO",
+}
+
+export enum PaymentMethod {
+  CREDIT = "CREDIT",
+  DEBIT = "DEBIT",
+  PIX = "PIX",
 }
 
 export type PixKey = {
@@ -32,6 +40,42 @@ export type PixKey = {
   updated_at: string;
   bank_name: string;
 };
+
+export interface Sale {
+  id: string;
+  code: string;
+  terminal: string;
+  date: string;
+  gross_amount: number;
+  net_amount: number;
+  paymentMethod: PaymentMethod;
+  client_id?: string;
+  client_name?: string;
+}
+
+export interface SalesFilterParams {
+  search?: string;
+  paymentMethod?: PaymentMethod;
+  terminal?: string;
+}
+
+export interface Client {
+  id: string;
+  business_name: string;
+  document?: string;
+  partner_id?: string;
+  created_at?: string;
+  updated_at?: string;
+}
+
+export interface FilterValues {
+  search?: string;
+  status?: string;
+  dateRange?: {
+    from: Date;
+    to?: Date;
+  };
+}
 
 export interface Payment {
   id: string;
@@ -59,4 +103,21 @@ export interface Payment {
     type: string;
     owner_name: string;
   };
+  due_date?: string;
+}
+
+// Types for partners
+export interface Partner {
+  id: string;
+  company_name: string;
+  created_at: string;
+  updated_at: string;
+  commission_rate: number;
+  contact_name?: string;
+  contact_email?: string;
+  contact_phone?: string;
+  business_name?: string; // For backward compatibility
+  email?: string; // Added for consistency with filtering
+  phone?: string; // Added for consistency with filtering
+  address?: string; // Added for completeness
 }
