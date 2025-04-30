@@ -18,17 +18,43 @@ import {
   CheckCircle2
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
+import { 
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue 
+} from "@/components/ui/select";
+import { 
+  Popover,
+  PopoverContent,
+  PopoverTrigger, 
+} from "@/components/ui/popover";
+import { Button } from "@/components/ui/button";
+import { format, subDays, startOfDay, endOfDay, startOfWeek, endOfWeek, startOfMonth, endOfMonth } from "date-fns";
+import { ptBR } from "date-fns/locale";
+import { cn } from "@/lib/utils";
+
+type DateRange = {
+  from: Date;
+  to: Date;
+};
 
 const ClientDashboard = () => {
   const { toast } = useToast();
   const [loading, setLoading] = useState(true);
   const [transactions, setTransactions] = useState<any[]>([]);
+  const [filteredTransactions, setFilteredTransactions] = useState<any[]>([]);
   const [machines, setMachines] = useState<any[]>([]);
   const [stats, setStats] = useState({
     totalSales: 0,
     pendingPayments: 0,
     completedPayments: 0,
     averageTicket: 0,
+  });
+  const [dateRange, setDateRange] = useState<DateRange>({
+    from: subDays(new Date(), 30),
+    to: new Date(),
   });
 
   // Use a mock implementation since 'transactions' table doesn't exist yet
@@ -39,11 +65,16 @@ const ClientDashboard = () => {
         
         // Mock transactions data
         const mockTransactions = [
-          { id: "1", date: new Date().toISOString(), amount: 1500, status: "completed" },
-          { id: "2", date: new Date().toISOString(), amount: 2000, status: "completed" },
-          { id: "3", date: new Date().toISOString(), amount: 1200, status: "pending" },
-          { id: "4", date: new Date().toISOString(), amount: 800, status: "pending" },
-          { id: "5", date: new Date().toISOString(), amount: 3000, status: "completed" },
+          { id: "1", date: new Date(2025, 3, 28).toISOString(), amount: 1500, status: "completed" },
+          { id: "2", date: new Date(2025, 3, 29).toISOString(), amount: 2000, status: "completed" },
+          { id: "3", date: new Date(2025, 4, 1).toISOString(), amount: 1200, status: "pending" },
+          { id: "4", date: new Date(2025, 4, 2).toISOString(), amount: 800, status: "pending" },
+          { id: "5", date: new Date(2025, 4, 5).toISOString(), amount: 3000, status: "completed" },
+          { id: "6", date: new Date(2025, 4, 10).toISOString(), amount: 1700, status: "completed" },
+          { id: "7", date: new Date(2025, 4, 12).toISOString(), amount: 950, status: "completed" },
+          { id: "8", date: new Date(2025, 4, 15).toISOString(), amount: 2200, status: "completed" },
+          { id: "9", date: new Date(2025, 4, 18).toISOString(), amount: 1300, status: "pending" },
+          { id: "10", date: new Date(2025, 4, 20).toISOString(), amount: 1800, status: "completed" },
         ];
         
         // Mock machines data
@@ -53,25 +84,12 @@ const ClientDashboard = () => {
           { id: "3", model: "POS X100", serial_number: "SN11223344", status: "MAINTENANCE", created_at: new Date().toISOString() },
         ];
         
-        // Calculate stats
-        const totalSales = mockTransactions.reduce((sum, tx) => sum + tx.amount, 0);
-        const pendingPayments = mockTransactions
-          .filter(tx => tx.status === 'pending')
-          .reduce((sum, tx) => sum + tx.amount, 0);
-        const completedPayments = mockTransactions
-          .filter(tx => tx.status === 'completed')
-          .reduce((sum, tx) => sum + tx.amount, 0);
-        const averageTicket = totalSales / (mockTransactions.length || 1);
-        
         setTransactions(mockTransactions);
         setMachines(mockMachines);
-        setStats({
-          totalSales,
-          pendingPayments,
-          completedPayments,
-          averageTicket,
-        });
 
+        // Apply initial date filter
+        filterTransactionsByDate(mockTransactions, dateRange);
+        
         // Simulate loading
         setTimeout(() => {
           setLoading(false);
@@ -88,6 +106,76 @@ const ClientDashboard = () => {
     
     fetchDashboardData();
   }, [toast]);
+
+  const filterTransactionsByDate = (transactions: any[], range: DateRange) => {
+    const filtered = transactions.filter(tx => {
+      const txDate = new Date(tx.date);
+      const fromDate = startOfDay(range.from);
+      const toDate = endOfDay(range.to);
+      return txDate >= fromDate && txDate <= toDate;
+    });
+    
+    // Calculate stats based on filtered transactions
+    const totalSales = filtered.reduce((sum, tx) => sum + tx.amount, 0);
+    const pendingPayments = filtered
+      .filter(tx => tx.status === 'pending')
+      .reduce((sum, tx) => sum + tx.amount, 0);
+    const completedPayments = filtered
+      .filter(tx => tx.status === 'completed')
+      .reduce((sum, tx) => sum + tx.amount, 0);
+    const averageTicket = totalSales / (filtered.length || 1);
+    
+    setFilteredTransactions(filtered);
+    setStats({
+      totalSales,
+      pendingPayments,
+      completedPayments,
+      averageTicket,
+    });
+  };
+
+  // Handle date range selection
+  const handleDateRangeChange = (newRange: DateRange) => {
+    setDateRange(newRange);
+    filterTransactionsByDate(transactions, newRange);
+  };
+
+  // Handle preset date range selection
+  const handlePresetChange = (value: string) => {
+    let newRange: DateRange;
+    
+    switch (value) {
+      case "yesterday":
+        const yesterday = subDays(new Date(), 1);
+        newRange = {
+          from: startOfDay(yesterday),
+          to: endOfDay(yesterday),
+        };
+        break;
+      case "thisWeek":
+        newRange = {
+          from: startOfWeek(new Date(), { locale: ptBR }),
+          to: endOfWeek(new Date(), { locale: ptBR }),
+        };
+        break;
+      case "thisMonth":
+        newRange = {
+          from: startOfMonth(new Date()),
+          to: endOfMonth(new Date()),
+        };
+        break;
+      case "last30Days":
+      default:
+        newRange = {
+          from: subDays(new Date(), 30),
+          to: new Date(),
+        };
+        break;
+    }
+    
+    setDateRange(newRange);
+    filterTransactionsByDate(transactions, newRange);
+  };
 
   const salesData = [
     { name: "Jan", total: 1200 },
@@ -125,8 +213,67 @@ const ClientDashboard = () => {
 
   return (
     <MainLayout>
-      <div className="flex flex-col gap-5">
-        <h1 className="text-3xl font-bold tracking-tight">Dashboard</h1>
+      <div className="flex flex-col gap-5 w-full">
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center">
+          <h1 className="text-3xl font-bold tracking-tight">Dashboard</h1>
+          
+          <div className="flex flex-col sm:flex-row gap-2 mt-2 sm:mt-0 w-full sm:w-auto">
+            <Popover>
+              <PopoverTrigger asChild>
+                <Button
+                  variant="outline"
+                  className={cn(
+                    "justify-start text-left font-normal w-full sm:w-auto",
+                    !dateRange && "text-muted-foreground"
+                  )}
+                >
+                  <Calendar className="mr-2 h-4 w-4" />
+                  {dateRange ? (
+                    <>
+                      {format(dateRange.from, "dd/MM/yyyy", { locale: ptBR })} -{" "}
+                      {format(dateRange.to, "dd/MM/yyyy", { locale: ptBR })}
+                    </>
+                  ) : (
+                    <span>Selecione um período</span>
+                  )}
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-auto p-0" align="end">
+                <Calendar
+                  initialFocus
+                  mode="range"
+                  selected={{
+                    from: dateRange.from,
+                    to: dateRange.to,
+                  }}
+                  onSelect={(range) => {
+                    if (range?.from && range?.to) {
+                      handleDateRangeChange({
+                        from: range.from,
+                        to: range.to,
+                      });
+                    }
+                  }}
+                  numberOfMonths={1}
+                  locale={ptBR}
+                  className="p-3 pointer-events-auto"
+                />
+              </PopoverContent>
+            </Popover>
+
+            <Select onValueChange={handlePresetChange}>
+              <SelectTrigger className="w-full sm:w-[180px]">
+                <SelectValue placeholder="Filtrar período" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="yesterday">Ontem</SelectItem>
+                <SelectItem value="thisWeek">Esta semana</SelectItem>
+                <SelectItem value="thisMonth">Este mês</SelectItem>
+                <SelectItem value="last30Days">Últimos 30 dias</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+        </div>
         
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
           <Card>
@@ -201,7 +348,7 @@ const ClientDashboard = () => {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           <div className="lg:col-span-2">
             <Tabs defaultValue="overview" className="space-y-4">
-              <TabsList>
+              <TabsList className="w-full sm:w-auto grid grid-cols-3">
                 <TabsTrigger value="overview">Visão Geral</TabsTrigger>
                 <TabsTrigger value="transactions">Transações</TabsTrigger>
                 <TabsTrigger value="machines">Equipamentos</TabsTrigger>
@@ -232,7 +379,7 @@ const ClientDashboard = () => {
               <TabsContent value="transactions" className="space-y-4">
                 <Card>
                   <CardHeader>
-                    <CardTitle>Últimas Transações</CardTitle>
+                    <CardTitle>Transações no Período</CardTitle>
                   </CardHeader>
                   <CardContent>
                     {loading ? (
@@ -242,7 +389,7 @@ const ClientDashboard = () => {
                         ))}
                       </div>
                     ) : (
-                      <DataTable columns={columns} data={transactions} />
+                      <DataTable columns={columns} data={filteredTransactions} />
                     )}
                   </CardContent>
                 </Card>
@@ -299,7 +446,22 @@ const ClientDashboard = () => {
           </div>
           
           <div className="space-y-6">
-            <ClientActions />
+            <Card>
+              <CardHeader>
+                <CardTitle>Ações Rápidas</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <Button className="w-full" size="lg">
+                  Solicitar Pagamento
+                </Button>
+                <Button variant="outline" className="w-full" size="lg">
+                  Solicitar Nova Máquina
+                </Button>
+                <Button variant="outline" className="w-full" size="lg">
+                  Contatar Suporte
+                </Button>
+              </CardContent>
+            </Card>
             
             <Card>
               <CardHeader>
