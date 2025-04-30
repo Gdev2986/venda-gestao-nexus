@@ -15,7 +15,7 @@ import PaymentForm from "@/components/payments/PaymentForm";
 import PaymentReceiptUploader from "@/components/payments/PaymentReceiptUploader";
 
 interface ClientPayment extends Payment {
-  description?: string; // Ensure description is optional
+  description?: string | null; // Make description optional and nullable
 }
 
 const ClientPayments = () => {
@@ -46,7 +46,7 @@ const ClientPayments = () => {
       const transformedPayments: ClientPayment[] = (data || []).map(item => ({
         id: item.id,
         amount: item.amount,
-        description: item.description || `Payment #${item.id.slice(0, 8)}`,
+        description: item.description || null,
         status: item.status as PaymentStatus,
         created_at: item.created_at,
         updated_at: item.updated_at || item.created_at,
@@ -68,27 +68,6 @@ const ClientPayments = () => {
       setIsLoading(false);
     }
   };
-
-  useEffect(() => {
-    fetchPayments();
-    
-    // Set up subscription for real-time updates
-    if (user?.id) {
-      const channel = supabase
-        .channel(`payment-requests-${user.id}`)
-        .on('postgres_changes', 
-          { event: '*', schema: 'public', table: 'payment_requests', filter: `client_id=eq.${user.id}` }, 
-          () => {
-            fetchPayments();
-          }
-        )
-        .subscribe();
-        
-      return () => {
-        supabase.removeChannel(channel);
-      };
-    }
-  }, [user?.id]);
 
   const handlePaymentClick = (payment: ClientPayment) => {
     setSelectedPayment(payment);
@@ -169,6 +148,27 @@ const ClientPayments = () => {
   const approvedPayments = payments.filter(p => p.status === PaymentStatus.APPROVED);
   const completedPayments = payments.filter(p => [PaymentStatus.PAID, PaymentStatus.REJECTED].includes(p.status));
 
+  useEffect(() => {
+    fetchPayments();
+    
+    // Set up subscription for real-time updates
+    if (user?.id) {
+      const channel = supabase
+        .channel(`payment-requests-${user.id}`)
+        .on('postgres_changes', 
+          { event: '*', schema: 'public', table: 'payment_requests', filter: `client_id=eq.${user.id}` }, 
+          () => {
+            fetchPayments();
+          }
+        )
+        .subscribe();
+        
+      return () => {
+        supabase.removeChannel(channel);
+      };
+    }
+  }, [user?.id]);
+
   return (
     <MainLayout>
       <div className="space-y-6">
@@ -209,7 +209,7 @@ const ClientPayments = () => {
                         {pendingPayments.map((payment) => (
                           <div key={payment.id} className="flex flex-col md:flex-row justify-between items-start md:items-center p-4 border rounded-lg">
                             <div className="space-y-1 mb-2 md:mb-0">
-                              <div className="font-medium">{payment.description}</div>
+                              <div className="font-medium">{payment.description || `Pagamento #${payment.id.slice(0, 8)}`}</div>
                               <div className="text-sm text-muted-foreground">
                                 Criado em: {new Date(payment.created_at).toLocaleDateString()}
                               </div>
@@ -245,7 +245,7 @@ const ClientPayments = () => {
                         {approvedPayments.map((payment) => (
                           <div key={payment.id} className="flex flex-col md:flex-row justify-between items-start md:items-center p-4 border rounded-lg">
                             <div className="space-y-1">
-                              <div className="font-medium">{payment.description}</div>
+                              <div className="font-medium">{payment.description || `Pagamento #${payment.id.slice(0, 8)}`}</div>
                               <div className="text-sm text-muted-foreground">
                                 Enviado em: {payment.approved_at ? new Date(payment.approved_at).toLocaleDateString() : 'N/A'}
                               </div>
@@ -277,7 +277,7 @@ const ClientPayments = () => {
                         {completedPayments.map((payment) => (
                           <div key={payment.id} className="flex flex-col md:flex-row justify-between items-start md:items-center p-4 border rounded-lg">
                             <div className="space-y-1">
-                              <div className="font-medium">{payment.description}</div>
+                              <div className="font-medium">{payment.description || `Pagamento #${payment.id.slice(0, 8)}`}</div>
                               <div className="text-sm text-muted-foreground">
                                 Data: {new Date(payment.created_at).toLocaleDateString()}
                               </div>

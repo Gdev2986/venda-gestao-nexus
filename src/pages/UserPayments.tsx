@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import MainLayout from "@/components/layout/MainLayout";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -28,13 +29,13 @@ interface PaymentRequest {
   amount: number;
   status: PaymentStatus;
   created_at: string;
-  description?: string;
-  receipt_url?: string;
+  description?: string | null;
+  receipt_url?: string | null;
   client_id: string;
-  approved_at?: string;
-  approved_by?: string;
-  updated_at?: string;
-  pix_key_id?: string;
+  approved_at?: string | null;
+  approved_by?: string | null;
+  updated_at?: string | null;
+  pix_key_id?: string | null;
 }
 
 const UserPayments = () => {
@@ -81,13 +82,13 @@ const UserPayments = () => {
             amount: item.amount,
             status: item.status as PaymentStatus,
             created_at: item.created_at,
-            description: item.description,
-            receipt_url: item.receipt_url,
+            description: item.description || null,
+            receipt_url: item.receipt_url || null,
             client_id: item.client_id,
-            approved_at: item.approved_at,
-            approved_by: item.approved_by,
-            updated_at: item.updated_at,
-            pix_key_id: item.pix_key_id
+            approved_at: item.approved_at || null,
+            approved_by: item.approved_by || null,
+            updated_at: item.updated_at || null,
+            pix_key_id: item.pix_key_id || null
           }));
           
           setPaymentRequests(typedData);
@@ -219,13 +220,13 @@ const UserPayments = () => {
         amount: newRequestData.amount,
         status: newRequestData.status as PaymentStatus,
         created_at: newRequestData.created_at,
-        description: newRequestData.description,
-        receipt_url: newRequestData.receipt_url,
+        description: newRequestData.description || null,
+        receipt_url: newRequestData.receipt_url || null,
         client_id: newRequestData.client_id,
-        approved_at: newRequestData.approved_at,
-        approved_by: newRequestData.approved_by,
-        updated_at: newRequestData.updated_at,
-        pix_key_id: newRequestData.pix_key_id
+        approved_at: newRequestData.approved_at || null,
+        approved_by: newRequestData.approved_by || null,
+        updated_at: newRequestData.updated_at || null,
+        pix_key_id: newRequestData.pix_key_id || null
       };
       
       // Add the new payment request to the list

@@ -6,6 +6,7 @@ import { cn } from "@/lib/utils";
 import { motion } from "framer-motion";
 import { SidebarItem, SidebarSubItem } from "./types";
 import { UserRole } from "@/types";
+import { PATHS } from "@/routes/paths";
 
 interface SidebarNavItemProps {
   item: SidebarItem;
@@ -17,7 +18,17 @@ const SidebarNavItem = ({ item, userRole }: SidebarNavItemProps) => {
   const location = useLocation();
   const [expanded, setExpanded] = useState(false);
 
+  // Enhanced path matching
   const isActiveRoute = (href: string) => {
+    // Special case for payments
+    if (href === PATHS.PAYMENTS) {
+      // Check if we're on any payment-related route
+      return location.pathname === PATHS.PAYMENTS || 
+             location.pathname === PATHS.USER_PAYMENTS ||
+             location.pathname.startsWith(`${PATHS.PAYMENTS}/`);
+    }
+    
+    // Normal path matching
     return location.pathname === href || location.pathname.startsWith(`${href}/`);
   };
 
