@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardTitle } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
 import { Link } from "react-router-dom";
+import { PATHS } from "@/routes/paths";
 
 const ClientActions = () => {
   const { toast } = useToast();
@@ -22,9 +23,11 @@ const ClientActions = () => {
           <PlusCircleIcon className="h-4 w-4 mr-2" />
           Solicitar Nova Máquina
         </Button>
-        <Button variant="outline" onClick={() => toast({ title: "Suporte", description: "Função ainda não implementada completamente." })}>
-          <MessageSquareIcon className="h-4 w-4 mr-2" />
-          Contatar Suporte
+        <Button variant="outline" asChild>
+          <Link to={PATHS.SUPPORT}>
+            <MessageSquareIcon className="h-4 w-4 mr-2" />
+            Contatar Suporte
+          </Link>
         </Button>
       </div>
     </Card>

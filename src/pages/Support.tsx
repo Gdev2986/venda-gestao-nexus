@@ -1,15 +1,7 @@
-import { useState, useEffect } from "react";
+
+import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
-import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { 
-  Table, 
-  TableBody, 
-  TableCell, 
-  TableHead, 
-  TableHeader, 
-  TableRow 
-} from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -30,657 +22,323 @@ import {
   SelectTrigger, 
   SelectValue 
 } from "@/components/ui/select";
-import { MessageSquare, PlusIcon, Send } from "lucide-react";
-import { formatDistanceToNow } from "date-fns";
-import { ptBR } from "date-fns/locale";
+import { CheckCircle2, ClipboardList, Loader2, Printer, Send } from "lucide-react";
 
 // Define types
-interface Client {
+interface SupportRequest {
   id: string;
-  business_name: string;
-}
-
-interface SupportConversation {
-  id: string;
-  client_id: string;
-  client_name?: string;
   subject: string;
-  status: "OPEN" | "CLOSED" | "PENDING";
-  created_at: string;
-  updated_at: string;
-  last_message?: string;
-  unread_count?: number;
-}
-
-interface SupportMessage {
-  id: string;
-  conversation_id: string;
-  user_id: string;
-  user_name?: string;
   message: string;
-  is_read: boolean;
+  type: "MACHINE" | "SUPPLIES" | "PAYMENT" | "OTHER";
+  status: "OPEN" | "IN_PROGRESS" | "RESOLVED";
   created_at: string;
-  is_admin?: boolean;
+  response?: string;
 }
 
-// Mock data
-const mockClients: Client[] = [
-  { id: "1", business_name: "Empresa ABC" },
-  { id: "2", business_name: "Empresa XYZ" },
-  { id: "3", business_name: "Empresa QWE" }
-];
-
-const mockConversations: SupportConversation[] = [
-  {
-    id: "1",
-    client_id: "1",
-    client_name: "Empresa ABC",
-    subject: "Problema com pagamento",
-    status: "OPEN",
-    created_at: "2023-06-01T10:30:00Z",
-    updated_at: "2023-06-01T15:45:00Z",
-    last_message: "Estamos aguardando o processamento do pagamento.",
-    unread_count: 2
-  },
-  {
-    id: "2",
-    client_id: "2",
-    client_name: "Empresa XYZ",
-    subject: "Máquina com defeito",
-    status: "PENDING",
-    created_at: "2023-05-28T08:20:00Z",
-    updated_at: "2023-05-30T09:15:00Z",
-    last_message: "Estamos enviando um técnico para verificar o problema.",
-    unread_count: 0
-  },
-  {
-    id: "3",
-    client_id: "1",
-    client_name: "Empresa ABC",
-    subject: "Solicitação de nova máquina",
-    status: "CLOSED",
-    created_at: "2023-05-15T14:10:00Z",
-    updated_at: "2023-05-20T16:30:00Z",
-    last_message: "A sua solicitação foi atendida, nova máquina entregue.",
-    unread_count: 0
-  }
-];
-
-const mockMessages: { [key: string]: SupportMessage[] } = {
-  "1": [
+const Support = () => {
+  const [requests, setRequests] = useState<SupportRequest[]>([
     {
-      id: "m1",
-      conversation_id: "1",
-      user_id: "client1",
-      user_name: "Cliente ABC",
-      message: "Estou com um problema no processamento do pagamento, não consigo finalizar a transação.",
-      is_read: true,
-      created_at: "2023-06-01T10:30:00Z",
-      is_admin: false
+      id: "1",
+      subject: "Máquina com erro na impressão",
+      message: "Minha máquina está imprimindo com falhas nas bordas dos recibos.",
+      type: "MACHINE",
+      status: "IN_PROGRESS",
+      created_at: "2023-06-15T10:30:00Z",
+      response: "Estamos enviando um técnico para verificar o problema. Previsão de atendimento: 16/06/2023."
     },
     {
-      id: "m2",
-      conversation_id: "1",
-      user_id: "admin1",
-      user_name: "Suporte",
-      message: "Vamos verificar o que está acontecendo com o processamento do seu pagamento. Poderia nos informar qual foi a forma de pagamento utilizada?",
-      is_read: true,
-      created_at: "2023-06-01T11:15:00Z",
-      is_admin: true
-    },
-    {
-      id: "m3",
-      conversation_id: "1",
-      user_id: "client1",
-      user_name: "Cliente ABC",
-      message: "Tentei pagar com PIX, mas o sistema não gerou o código QR.",
-      is_read: true,
-      created_at: "2023-06-01T11:30:00Z",
-      is_admin: false
-    },
-    {
-      id: "m4",
-      conversation_id: "1",
-      user_id: "admin1",
-      user_name: "Suporte",
-      message: "Estamos aguardando o processamento do pagamento.",
-      is_read: false,
-      created_at: "2023-06-01T15:45:00Z",
-      is_admin: true
+      id: "2",
+      subject: "Solicitação de bobinas",
+      message: "Preciso de 10 bobinas para a máquina modelo TX-500.",
+      type: "SUPPLIES",
+      status: "OPEN",
+      created_at: "2023-06-18T14:20:00Z"
     }
-  ],
-  "2": [
-    {
-      id: "m5",
-      conversation_id: "2",
-      user_id: "client2",
-      user_name: "Cliente XYZ",
-      message: "Minha máquina está apresentando erro ao ligar, tela em branco.",
-      is_read: true,
-      created_at: "2023-05-28T08:20:00Z",
-      is_admin: false
-    },
-    {
-      id: "m6",
-      conversation_id: "2",
-      user_id: "admin1",
-      user_name: "Suporte",
-      message: "Vamos verificar este problema. Você já tentou reiniciar a máquina?",
-      is_read: true,
-      created_at: "2023-05-28T09:05:00Z",
-      is_admin: true
-    },
-    {
-      id: "m7",
-      conversation_id: "2",
-      user_id: "client2",
-      user_name: "Cliente XYZ",
-      message: "Sim, já tentei reiniciar várias vezes, mas continua igual.",
-      is_read: true,
-      created_at: "2023-05-28T09:30:00Z",
-      is_admin: false
-    },
-    {
-      id: "m8",
-      conversation_id: "2",
-      user_id: "admin1",
-      user_name: "Suporte",
-      message: "Estamos enviando um técnico para verificar o problema.",
-      is_read: true,
-      created_at: "2023-05-30T09:15:00Z",
-      is_admin: true
-    }
-  ]
-};
-
-const statusColors = {
-  OPEN: "bg-green-500",
-  PENDING: "bg-amber-500",
-  CLOSED: "bg-gray-500"
-};
-
-const statusLabels = {
-  OPEN: "Aberto",
-  PENDING: "Pendente",
-  CLOSED: "Fechado"
-};
-
-// Create Conversation Dialog
-interface CreateConversationDialogProps {
-  isOpen: boolean;
-  onClose: () => void;
-  onSubmit: (data: { client_id: string; subject: string; message: string }) => void;
-  clients: Client[];
-}
-
-const CreateConversationDialog = ({ isOpen, onClose, onSubmit, clients }: CreateConversationDialogProps) => {
-  const [clientId, setClientId] = useState("");
+  ]);
+  
+  const [isLoading, setIsLoading] = useState(false);
+  const [showNewRequestDialog, setShowNewRequestDialog] = useState(false);
+  const [showDetailsDialog, setShowDetailsDialog] = useState(false);
+  const [selectedRequest, setSelectedRequest] = useState<SupportRequest | null>(null);
+  
+  // Form states
   const [subject, setSubject] = useState("");
   const [message, setMessage] = useState("");
+  const [requestType, setRequestType] = useState<"MACHINE" | "SUPPLIES" | "PAYMENT" | "OTHER">("MACHINE");
   
-  useEffect(() => {
-    if (isOpen) {
-      setClientId("");
+  const { toast } = useToast();
+  
+  const handleCreateRequest = () => {
+    setIsLoading(true);
+    
+    // Simulate API call
+    setTimeout(() => {
+      const newRequest: SupportRequest = {
+        id: `req-${Date.now()}`,
+        subject,
+        message,
+        type: requestType,
+        status: "OPEN",
+        created_at: new Date().toISOString()
+      };
+      
+      setRequests([newRequest, ...requests]);
+      setShowNewRequestDialog(false);
       setSubject("");
       setMessage("");
-    }
-  }, [isOpen]);
+      setRequestType("MACHINE");
+      setIsLoading(false);
+      
+      toast({
+        title: "Solicitação enviada",
+        description: "Sua solicitação de suporte foi enviada com sucesso.",
+      });
+    }, 1000);
+  };
   
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    onSubmit({
-      client_id: clientId,
-      subject,
-      message
+  const handleViewDetails = (request: SupportRequest) => {
+    setSelectedRequest(request);
+    setShowDetailsDialog(true);
+  };
+  
+  const getRequestTypeLabel = (type: string) => {
+    switch(type) {
+      case "MACHINE": return "Máquina";
+      case "SUPPLIES": return "Suprimentos";
+      case "PAYMENT": return "Pagamento";
+      case "OTHER": return "Outros";
+      default: return type;
+    }
+  };
+  
+  const getRequestTypeIcon = (type: string) => {
+    switch(type) {
+      case "MACHINE": return <Printer className="h-4 w-4" />;
+      case "SUPPLIES": return <ClipboardList className="h-4 w-4" />;
+      case "PAYMENT": return <CheckCircle2 className="h-4 w-4" />;
+      default: return <ClipboardList className="h-4 w-4" />;
+    }
+  };
+  
+  const getStatusBadge = (status: string) => {
+    switch(status) {
+      case "OPEN":
+        return <Badge className="bg-green-500">Aberto</Badge>;
+      case "IN_PROGRESS":
+        return <Badge className="bg-amber-500">Em Andamento</Badge>;
+      case "RESOLVED":
+        return <Badge className="bg-gray-500">Resolvido</Badge>;
+      default:
+        return <Badge>{status}</Badge>;
+    }
+  };
+  
+  const formatDate = (dateString: string) => {
+    const date = new Date(dateString);
+    return date.toLocaleDateString('pt-BR', {
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit'
     });
   };
   
   return (
-    <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-md">
-        <DialogHeader>
-          <DialogTitle>Nova Conversa de Suporte</DialogTitle>
-          <DialogDescription>
-            Crie uma nova conversa de suporte para um cliente
-          </DialogDescription>
-        </DialogHeader>
-        
-        <form onSubmit={handleSubmit} className="space-y-4 pt-4">
-          <div className="grid gap-4">
-            <div className="grid gap-2">
-              <Label htmlFor="client">Cliente</Label>
-              <Select 
-                value={clientId} 
-                onValueChange={setClientId} 
-                required
-              >
-                <SelectTrigger id="client">
-                  <SelectValue placeholder="Selecione um cliente" />
-                </SelectTrigger>
-                <SelectContent>
-                  {clients.map((client) => (
-                    <SelectItem key={client.id} value={client.id}>
-                      {client.business_name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+    <div className="space-y-6">
+      <div className="flex justify-between items-center">
+        <h1 className="text-2xl font-bold tracking-tight">Suporte</h1>
+        <Button onClick={() => setShowNewRequestDialog(true)}>
+          Nova Solicitação
+        </Button>
+      </div>
+      
+      <Card>
+        <CardHeader>
+          <CardTitle>Minhas Solicitações</CardTitle>
+          <CardDescription>
+            Verifique o status de suas solicitações de suporte
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          {requests.length > 0 ? (
+            <div className="space-y-4">
+              {requests.map((request) => (
+                <Card key={request.id} className="overflow-hidden">
+                  <div className="p-4 sm:p-6">
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                      <div className="space-y-1">
+                        <div className="flex items-center gap-2">
+                          {getRequestTypeIcon(request.type)}
+                          <h3 className="font-medium">{request.subject}</h3>
+                        </div>
+                        <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                          <span>Tipo: {getRequestTypeLabel(request.type)}</span>
+                          <span>•</span>
+                          <span>Criado em: {formatDate(request.created_at)}</span>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-4">
+                        {getStatusBadge(request.status)}
+                        <Button 
+                          variant="outline" 
+                          size="sm"
+                          onClick={() => handleViewDetails(request)}
+                        >
+                          Detalhes
+                        </Button>
+                      </div>
+                    </div>
+                  </div>
+                </Card>
+              ))}
             </div>
-            
-            <div className="grid gap-2">
-              <Label htmlFor="subject">Assunto</Label>
-              <Input
-                id="subject"
-                value={subject}
-                onChange={(e) => setSubject(e.target.value)}
-                required
-              />
+          ) : (
+            <div className="text-center py-8">
+              <p className="text-muted-foreground">Nenhuma solicitação encontrada.</p>
             </div>
-            
-            <div className="grid gap-2">
-              <Label htmlFor="message">Mensagem Inicial</Label>
-              <Textarea
-                id="message"
-                value={message}
-                onChange={(e) => setMessage(e.target.value)}
-                rows={4}
-                required
-              />
+          )}
+        </CardContent>
+      </Card>
+      
+      {/* New Request Dialog */}
+      <Dialog open={showNewRequestDialog} onOpenChange={setShowNewRequestDialog}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Nova Solicitação de Suporte</DialogTitle>
+            <DialogDescription>
+              Preencha os campos abaixo para criar uma nova solicitação de suporte
+            </DialogDescription>
+          </DialogHeader>
+          
+          <div className="space-y-4 pt-4">
+            <div className="grid grid-cols-4 gap-4">
+              <div className="col-span-4">
+                <Label htmlFor="request-type">Tipo de Solicitação</Label>
+                <Select 
+                  value={requestType} 
+                  onValueChange={(value: "MACHINE" | "SUPPLIES" | "PAYMENT" | "OTHER") => setRequestType(value)}
+                >
+                  <SelectTrigger id="request-type">
+                    <SelectValue placeholder="Selecione o tipo" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="MACHINE">Máquina</SelectItem>
+                    <SelectItem value="SUPPLIES">Suprimentos</SelectItem>
+                    <SelectItem value="PAYMENT">Pagamento</SelectItem>
+                    <SelectItem value="OTHER">Outros</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              
+              <div className="col-span-4">
+                <Label htmlFor="subject">Assunto</Label>
+                <Input
+                  id="subject"
+                  placeholder="Descreva brevemente o problema"
+                  value={subject}
+                  onChange={(e) => setSubject(e.target.value)}
+                />
+              </div>
+              
+              <div className="col-span-4">
+                <Label htmlFor="message">Mensagem</Label>
+                <Textarea
+                  id="message"
+                  placeholder="Detalhe sua solicitação"
+                  rows={5}
+                  value={message}
+                  onChange={(e) => setMessage(e.target.value)}
+                />
+              </div>
             </div>
           </div>
           
           <DialogFooter>
-            <Button type="button" variant="outline" onClick={onClose}>
+            <Button 
+              variant="outline" 
+              onClick={() => setShowNewRequestDialog(false)}
+            >
               Cancelar
             </Button>
             <Button 
-              type="submit" 
-              disabled={!clientId || !subject || !message}
+              onClick={handleCreateRequest} 
+              disabled={!subject || !message || isLoading}
             >
-              Criar
+              {isLoading ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Enviando...
+                </>
+              ) : (
+                <>
+                  <Send className="mr-2 h-4 w-4" />
+                  Enviar
+                </>
+              )}
             </Button>
           </DialogFooter>
-        </form>
-      </DialogContent>
-    </Dialog>
-  );
-};
-
-// ChatDialog Component
-interface ChatDialogProps {
-  conversation: SupportConversation | null;
-  isOpen: boolean;
-  onClose: () => void;
-  onSendMessage: (conversationId: string, message: string) => void;
-  onStatusChange: (conversationId: string, status: "OPEN" | "PENDING" | "CLOSED") => void;
-  messages: SupportMessage[];
-}
-
-const ChatDialog = ({ 
-  conversation, 
-  isOpen, 
-  onClose, 
-  onSendMessage,
-  onStatusChange,
-  messages 
-}: ChatDialogProps) => {
-  const [message, setMessage] = useState("");
-  
-  if (!conversation) return null;
-  
-  const handleSendMessage = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (message.trim()) {
-      onSendMessage(conversation.id, message);
-      setMessage("");
-    }
-  };
-  
-  return (
-    <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-2xl max-h-[90vh] flex flex-col">
-        <DialogHeader className="flex flex-row items-center justify-between">
-          <div>
-            <DialogTitle>{conversation.subject}</DialogTitle>
-            <DialogDescription>
-              {conversation.client_name}
-            </DialogDescription>
-          </div>
-          <div className="flex items-center gap-2">
-            <Select 
-              defaultValue={conversation.status} 
-              onValueChange={(value: "OPEN" | "PENDING" | "CLOSED") => onStatusChange(conversation.id, value)}
-            >
-              <SelectTrigger className="w-[130px]">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="OPEN">Aberto</SelectItem>
-                <SelectItem value="PENDING">Pendente</SelectItem>
-                <SelectItem value="CLOSED">Fechado</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-        </DialogHeader>
-        
-        <div className="flex-1 overflow-y-auto py-4 px-2 space-y-4 min-h-[400px] max-h-[500px]">
-          {messages.map((msg) => (
-            <div 
-              key={msg.id} 
-              className={`flex ${msg.is_admin ? 'justify-end' : 'justify-start'}`}
-            >
-              <div 
-                className={`max-w-[70%] p-3 rounded-lg ${msg.is_admin 
-                  ? 'bg-primary text-primary-foreground' 
-                  : 'bg-muted'
-                }`}
-              >
-                <div className="flex items-center gap-2 mb-1">
-                  <span className="font-medium text-xs">{msg.user_name}</span>
-                  <span className="text-xs opacity-70">
-                    {formatDistanceToNow(new Date(msg.created_at), {
-                      addSuffix: true,
-                      locale: ptBR
-                    })}
+        </DialogContent>
+      </Dialog>
+      
+      {/* Request Details Dialog */}
+      <Dialog open={showDetailsDialog} onOpenChange={setShowDetailsDialog}>
+        <DialogContent className="sm:max-w-lg">
+          {selectedRequest && (
+            <>
+              <DialogHeader>
+                <DialogTitle className="flex items-center gap-2">
+                  {getRequestTypeIcon(selectedRequest.type)}
+                  {selectedRequest.subject}
+                </DialogTitle>
+                <div className="flex items-center gap-2 mt-1">
+                  <span className="text-sm font-medium">
+                    Status: {getStatusBadge(selectedRequest.status)}
+                  </span>
+                  <span className="text-sm text-muted-foreground">
+                    Criado em: {formatDate(selectedRequest.created_at)}
                   </span>
                 </div>
-                <p className="text-sm whitespace-pre-wrap">{msg.message}</p>
-              </div>
-            </div>
-          ))}
-          
-          {messages.length === 0 && (
-            <div className="flex justify-center items-center h-full">
-              <p className="text-muted-foreground">Nenhuma mensagem nesta conversa</p>
-            </div>
-          )}
-        </div>
-        
-        <form onSubmit={handleSendMessage} className="flex items-center gap-2 pt-2">
-          <Textarea 
-            value={message} 
-            onChange={(e) => setMessage(e.target.value)}
-            placeholder="Digite sua mensagem..." 
-            className="flex-1 min-h-[60px]"
-          />
-          <Button type="submit" size="icon" disabled={!message.trim()}>
-            <Send className="h-4 w-4" />
-            <span className="sr-only">Enviar</span>
-          </Button>
-        </form>
-      </DialogContent>
-    </Dialog>
-  );
-};
-
-const Support = () => {
-  const [conversations, setConversations] = useState<SupportConversation[]>(mockConversations);
-  const [selectedConversation, setSelectedConversation] = useState<SupportConversation | null>(null);
-  const [messages, setMessages] = useState<SupportMessage[]>([]);
-  const [isLoading, setIsLoading] = useState(false);
-  const [statusFilter, setStatusFilter] = useState("all");
-  const [searchQuery, setSearchQuery] = useState("");
-  const [showCreateDialog, setShowCreateDialog] = useState(false);
-  const [showChatDialog, setShowChatDialog] = useState(false);
-  const { toast } = useToast();
-  
-  // Filter conversations based on status and search query
-  const filteredConversations = conversations.filter(conv => {
-    const matchesStatus = statusFilter === "all" || conv.status === statusFilter;
-    const matchesSearch = searchQuery === "" || 
-      conv.subject.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      (conv.client_name && conv.client_name.toLowerCase().includes(searchQuery.toLowerCase()));
-    return matchesStatus && matchesSearch;
-  });
-  
-  // Load messages when a conversation is selected
-  useEffect(() => {
-    if (selectedConversation) {
-      // In a real app, this would fetch messages from the database
-      const conversationMessages = mockMessages[selectedConversation.id] || [];
-      setMessages(conversationMessages);
-    }
-  }, [selectedConversation]);
-  
-  const handleConversationClick = (conversation: SupportConversation) => {
-    setSelectedConversation(conversation);
-    setShowChatDialog(true);
-  };
-  
-  const handleCreateConversation = (data: { client_id: string; subject: string; message: string }) => {
-    // In a real app, this would create a conversation in the database
-    const clientInfo = mockClients.find(c => c.id === data.client_id);
-    
-    const newConversation: SupportConversation = {
-      id: `new-${Date.now()}`,
-      client_id: data.client_id,
-      client_name: clientInfo?.business_name,
-      subject: data.subject,
-      status: "OPEN",
-      created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString(),
-      unread_count: 0
-    };
-    
-    const newMessage: SupportMessage = {
-      id: `msg-${Date.now()}`,
-      conversation_id: newConversation.id,
-      user_id: "admin1",
-      user_name: "Suporte",
-      message: data.message,
-      is_read: true,
-      created_at: new Date().toISOString(),
-      is_admin: true
-    };
-    
-    // Update state with new conversation and message
-    setConversations([newConversation, ...conversations]);
-    mockMessages[newConversation.id] = [newMessage];
-    
-    // Close the dialog and show success message
-    setShowCreateDialog(false);
-    toast({
-      title: "Conversa criada",
-      description: "A conversa de suporte foi criada com sucesso."
-    });
-  };
-  
-  const handleSendMessage = (conversationId: string, messageText: string) => {
-    // In a real app, this would send a message to the database
-    const newMessage: SupportMessage = {
-      id: `msg-${Date.now()}`,
-      conversation_id: conversationId,
-      user_id: "admin1",
-      user_name: "Suporte",
-      message: messageText,
-      is_read: true,
-      created_at: new Date().toISOString(),
-      is_admin: true
-    };
-    
-    // Update conversation last message
-    const updatedConversations = conversations.map(conv => 
-      conv.id === conversationId 
-        ? { ...conv, last_message: messageText, updated_at: new Date().toISOString() }
-        : conv
-    );
-    
-    // Add message to the conversation
-    if (!mockMessages[conversationId]) {
-      mockMessages[conversationId] = [];
-    }
-    mockMessages[conversationId] = [...mockMessages[conversationId], newMessage];
-    
-    // Update state
-    setConversations(updatedConversations);
-    setMessages([...messages, newMessage]);
-    
-    toast({
-      title: "Mensagem enviada",
-      description: "Sua mensagem foi enviada com sucesso."
-    });
-  };
-  
-  const handleStatusChange = (conversationId: string, newStatus: "OPEN" | "PENDING" | "CLOSED") => {
-    // In a real app, this would update the conversation status in the database
-    const updatedConversations = conversations.map(conv => 
-      conv.id === conversationId 
-        ? { ...conv, status: newStatus, updated_at: new Date().toISOString() }
-        : conv
-    );
-    
-    setConversations(updatedConversations);
-    
-    if (selectedConversation && selectedConversation.id === conversationId) {
-      setSelectedConversation({ ...selectedConversation, status: newStatus });
-    }
-    
-    toast({
-      title: "Status atualizado",
-      description: `O status da conversa foi alterado para ${statusLabels[newStatus]}.`
-    });
-  };
-  
-  return (
-    <div className="space-y-4">
-      <div className="flex justify-between items-center">
-        <h2 className="text-3xl font-bold tracking-tight">Suporte</h2>
-        <Button onClick={() => setShowCreateDialog(true)}>
-          <PlusIcon className="mr-2 h-4 w-4" />
-          Nova Conversa
-        </Button>
-      </div>
-      
-      <div className="grid grid-cols-1 md:grid-cols-12 gap-4">
-        <Card className="md:col-span-3">
-          <CardHeader>
-            <CardTitle>Filtros</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="grid gap-2">
-              <Label htmlFor="status">Status</Label>
-              <Select value={statusFilter} onValueChange={setStatusFilter}>
-                <SelectTrigger id="status">
-                  <SelectValue placeholder="Selecione um status" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">Todos</SelectItem>
-                  <SelectItem value="OPEN">Aberto</SelectItem>
-                  <SelectItem value="PENDING">Pendente</SelectItem>
-                  <SelectItem value="CLOSED">Fechado</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            
-            <div className="grid gap-2">
-              <Label htmlFor="search">Pesquisar</Label>
-              <Input
-                id="search"
-                placeholder="Pesquisar por assunto ou cliente"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-              />
-            </div>
-          </CardContent>
-        </Card>
-        
-        <Card className="md:col-span-9">
-          <CardHeader>
-            <CardTitle>Conversas de Suporte</CardTitle>
-            <CardDescription>
-              Gerencie todas as conversas de suporte
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Cliente</TableHead>
-                  <TableHead>Assunto</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead>Última Atualização</TableHead>
-                  <TableHead>Ações</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {isLoading ? (
-                  <TableRow>
-                    <TableCell colSpan={5} className="text-center py-6">
-                      Carregando...
-                    </TableCell>
-                  </TableRow>
-                ) : filteredConversations.length > 0 ? (
-                  filteredConversations.map((conversation) => (
-                    <TableRow key={conversation.id}>
-                      <TableCell>{conversation.client_name}</TableCell>
-                      <TableCell className="font-medium">
-                        <div className="flex items-center gap-2">
-                          {conversation.subject}
-                          {(conversation.unread_count || 0) > 0 && (
-                            <Badge variant="destructive" className="rounded-full h-5 min-w-5 flex items-center justify-center">
-                              {conversation.unread_count}
-                            </Badge>
-                          )}
-                        </div>
-                        {conversation.last_message && (
-                          <div className="text-xs text-muted-foreground truncate max-w-xs mt-1">
-                            {conversation.last_message}
-                          </div>
-                        )}
-                      </TableCell>
-                      <TableCell>
-                        <Badge className={statusColors[conversation.status]}>
-                          {statusLabels[conversation.status]}
-                        </Badge>
-                      </TableCell>
-                      <TableCell>
-                        {formatDistanceToNow(new Date(conversation.updated_at), {
-                          addSuffix: true,
-                          locale: ptBR
-                        })}
-                      </TableCell>
-                      <TableCell>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => handleConversationClick(conversation)}
-                        >
-                          <MessageSquare className="h-4 w-4 mr-2" />
-                          Ver
-                        </Button>
-                      </TableCell>
-                    </TableRow>
-                  ))
-                ) : (
-                  <TableRow>
-                    <TableCell colSpan={5} className="text-center py-6 text-muted-foreground">
-                      Nenhuma conversa encontrada
-                    </TableCell>
-                  </TableRow>
+              </DialogHeader>
+              
+              <div className="space-y-4 py-4">
+                <div>
+                  <h4 className="text-sm font-medium mb-2">Detalhes da Solicitação</h4>
+                  <div className="bg-muted p-3 rounded-md">
+                    <p className="whitespace-pre-wrap text-sm">{selectedRequest.message}</p>
+                  </div>
+                </div>
+                
+                {selectedRequest.response && (
+                  <div>
+                    <h4 className="text-sm font-medium mb-2">Resposta da Equipe</h4>
+                    <div className="bg-primary/10 p-3 rounded-md">
+                      <p className="whitespace-pre-wrap text-sm">{selectedRequest.response}</p>
+                    </div>
+                  </div>
                 )}
-              </TableBody>
-            </Table>
-          </CardContent>
-        </Card>
-      </div>
-      
-      {/* Create conversation dialog */}
-      <CreateConversationDialog 
-        isOpen={showCreateDialog}
-        onClose={() => setShowCreateDialog(false)}
-        onSubmit={handleCreateConversation}
-        clients={mockClients}
-      />
-      
-      {/* Chat dialog */}
-      <ChatDialog 
-        conversation={selectedConversation}
-        isOpen={showChatDialog}
-        onClose={() => setShowChatDialog(false)}
-        onSendMessage={handleSendMessage}
-        onStatusChange={handleStatusChange}
-        messages={messages}
-      />
+                
+                {selectedRequest.status === "OPEN" && (
+                  <div className="bg-yellow-50 p-3 rounded-md">
+                    <p className="text-sm text-yellow-800">
+                      Sua solicitação será analisada em breve por nossa equipe de suporte.
+                    </p>
+                  </div>
+                )}
+              </div>
+              
+              <DialogFooter>
+                <Button 
+                  variant="outline" 
+                  onClick={() => setShowDetailsDialog(false)}
+                >
+                  Fechar
+                </Button>
+              </DialogFooter>
+            </>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
