@@ -23,6 +23,7 @@ import {
   SelectValue 
 } from "@/components/ui/select";
 import { CheckCircle2, ClipboardList, Loader2, Printer, Send } from "lucide-react";
+import { useLocation } from "react-router-dom";
 
 // Define types
 interface SupportRequest {
@@ -36,6 +37,9 @@ interface SupportRequest {
 }
 
 const Support = () => {
+  const location = useLocation();
+  const isNewMachineRequest = location.state?.requestType === "MACHINE";
+  
   const [requests, setRequests] = useState<SupportRequest[]>([
     {
       id: "1",
@@ -62,11 +66,20 @@ const Support = () => {
   const [selectedRequest, setSelectedRequest] = useState<SupportRequest | null>(null);
   
   // Form states
-  const [subject, setSubject] = useState("");
+  const [subject, setSubject] = useState(isNewMachineRequest ? "Solicitação de nova máquina" : "");
   const [message, setMessage] = useState("");
-  const [requestType, setRequestType] = useState<"MACHINE" | "SUPPLIES" | "PAYMENT" | "OTHER">("MACHINE");
+  const [requestType, setRequestType] = useState<"MACHINE" | "SUPPLIES" | "PAYMENT" | "OTHER">(
+    isNewMachineRequest ? "MACHINE" : "MACHINE"
+  );
   
   const { toast } = useToast();
+  
+  // Show the dialog automatically if coming from the "Request New Machine" button
+  useState(() => {
+    if (isNewMachineRequest) {
+      setShowNewRequestDialog(true);
+    }
+  });
   
   const handleCreateRequest = () => {
     setIsLoading(true);

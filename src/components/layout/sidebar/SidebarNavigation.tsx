@@ -1,4 +1,3 @@
-
 import { UserRole } from "@/types";
 import {
   LayoutDashboard,
@@ -66,18 +65,14 @@ const SidebarNavigation = ({ userRole }: SidebarNavigationProps) => {
       href: "/logistics",
       roles: [UserRole.ADMIN, UserRole.LOGISTICS],
     },
+    // For CLIENT role, direct link to USER_PAYMENTS
+    // For other roles, keep the dropdown structure
     {
       title: "Pagamentos",
       icon: Wallet,
-      href: PATHS.PAYMENTS,
+      href: userRole === UserRole.CLIENT ? PATHS.USER_PAYMENTS : PATHS.PAYMENTS,
       roles: [UserRole.ADMIN, UserRole.CLIENT, UserRole.FINANCIAL],
-      subItems: userRole === UserRole.CLIENT ? [
-        {
-          title: "Meus Pagamentos",
-          href: PATHS.USER_PAYMENTS,
-          roles: [UserRole.CLIENT],
-        }
-      ] : [
+      subItems: userRole === UserRole.CLIENT ? [] : [
         {
           title: "Todos os Pagamentos",
           href: PATHS.PAYMENTS,
@@ -108,6 +103,7 @@ const SidebarNavigation = ({ userRole }: SidebarNavigationProps) => {
       href: PATHS.SUPPORT,
       roles: [UserRole.ADMIN, UserRole.CLIENT, UserRole.FINANCIAL, UserRole.PARTNER, UserRole.LOGISTICS],
     },
+    // Remove duplicate Ajuda item for clients
     {
       title: "Ajuda",
       icon: HelpCircle,
