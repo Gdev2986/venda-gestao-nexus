@@ -43,7 +43,7 @@ export function usePartners() {
     setIsLoading(true);
     try {
       // Generate an ID for the partner if not in Supabase environment
-      const newPartner = {
+      const newPartner: Partial<Partner> = {
         ...partnerData,
         id: uuidv4(),
       };
@@ -57,7 +57,8 @@ export function usePartners() {
         throw new Error(insertError.message);
       }
 
-      const createdPartner = data?.[0] as Partner || newPartner;
+      const createdPartner = data?.[0] as Partner;
+      
       setPartners((prev) => [...prev, createdPartner]);
       setFilteredPartners((prev) => [...prev, createdPartner]);
       return true;

@@ -19,20 +19,28 @@ export const generateMockSales = (count = 50): Sale[] => {
       grossAmount,
       netAmount,
       paymentMethod: methods[Math.floor(Math.random() * methods.length)],
-      clientId: "client_1",
+      client_id: "client_1",
+      created_at: new Date().toISOString(),
+      amount: grossAmount,
+      payment_method: methods[Math.floor(Math.random() * methods.length)],
+      status: "completed"
     });
   }
   
   // Sort by date, newest first
-  return sales.sort((a, b) => b.date.getTime() - a.date.getTime());
+  return sales.sort((a, b) => {
+    const dateA = a.date instanceof Date ? a.date.getTime() : new Date(a.date).getTime();
+    const dateB = b.date instanceof Date ? b.date.getTime() : new Date(b.date).getTime();
+    return dateB - dateA;
+  });
 };
 
 // Calculate totals for a collection of sales
 export const calculateSalesTotals = (sales: Sale[]) => {
   return sales.reduce(
     (acc, sale) => {
-      acc.grossAmount += sale.grossAmount;
-      acc.netAmount += sale.netAmount;
+      acc.grossAmount += sale.grossAmount || 0;
+      acc.netAmount += sale.netAmount || 0;
       return acc;
     },
     { grossAmount: 0, netAmount: 0 }

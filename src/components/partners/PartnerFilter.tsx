@@ -22,17 +22,17 @@ import {
 } from "@/components/ui/popover";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
+import { FilterValues } from "@/hooks/use-partners";
 
 // Define filter schema
 const filterSchema = z.object({
-  search: z.string().optional(),
+  searchTerm: z.string().optional(),
   dateRange: z.object({
     from: z.date().optional(),
     to: z.date().optional(),
   }).optional(),
+  commissionRange: z.tuple([z.number(), z.number()]).optional(),
 });
-
-export type FilterValues = z.infer<typeof filterSchema>;
 
 interface PartnerFilterProps {
   onFilter: (values: FilterValues) => void;
@@ -41,26 +41,31 @@ interface PartnerFilterProps {
 export default function PartnerFilter({ onFilter }: PartnerFilterProps) {
   const [dateOpen, setDateOpen] = useState(false);
 
-  const form = useForm<FilterValues>({
+  const form = useForm<z.infer<typeof filterSchema>>({
     resolver: zodResolver(filterSchema),
     defaultValues: {
-      search: "",
+      searchTerm: "",
       dateRange: undefined,
+      commissionRange: [0, 100],
     },
   });
 
-  const handleSubmit = (values: FilterValues) => {
-    onFilter(values);
+  const handleSubmit = (values: z.infer<typeof filterSchema>) => {
+    onFilter({
+      searchTerm: values.searchTerm || "",
+      commissionRange: values.commissionRange || [0, 100],
+    });
   };
 
   const clearFilters = () => {
     form.reset({
-      search: "",
+      searchTerm: "",
       dateRange: undefined,
+      commissionRange: [0, 100],
     });
     onFilter({
-      search: "",
-      dateRange: undefined,
+      searchTerm: "",
+      commissionRange: [0, 100],
     });
   };
 
@@ -72,7 +77,7 @@ export default function PartnerFilter({ onFilter }: PartnerFilterProps) {
         <div className="flex flex-col sm:flex-row gap-3">
           <FormField
             control={form.control}
-            name="search"
+            name="searchTerm"
             render={({ field }) => (
               <FormItem className="flex-1">
                 <FormControl>

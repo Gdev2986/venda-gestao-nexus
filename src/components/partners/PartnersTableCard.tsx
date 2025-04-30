@@ -3,7 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { AlertTriangle } from "lucide-react";
 import { PartnersTable } from "@/components/partners/PartnersTable";
-import { Partner } from "@/hooks/use-partners";
+import { Partner } from "@/types";
 
 export interface PartnersTableCardProps {
   partners: Partner[];

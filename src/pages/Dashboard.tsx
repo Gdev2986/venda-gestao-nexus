@@ -62,7 +62,11 @@ const generateMockData = (): DashboardStats => {
       grossAmount,
       netAmount,
       paymentMethod: method,
-      clientId: "client_1",
+      payment_method: method,
+      client_id: "client_1",
+      created_at: new Date().toISOString(),
+      amount: grossAmount,
+      status: "completed"
     });
   }
 
@@ -73,6 +77,9 @@ const generateMockData = (): DashboardStats => {
     totalSales,
     salesByPaymentMethod: salesByMethod,
     recentSales,
+    totalClients: 50,
+    totalRevenue: 25000,
+    pendingPayments: 5
   };
 };
 

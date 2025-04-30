@@ -32,9 +32,25 @@ import { ChevronRightIcon, PlusIcon, StarIcon, TrashIcon } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
 
+// Define a simpler PixKey interface for the component
+type SimplifiedPixKey = {
+  id: string;
+  key_type: string;
+  type?: string;
+  key: string;
+  name?: string;
+  owner_name: string;
+  isDefault?: boolean;
+  is_active: boolean;
+  user_id: string;
+  created_at: string;
+  updated_at: string;
+  bank_name: string;
+};
+
 interface PixKeysManagerProps {
-  pixKeys: PixKey[];
-  onAddKey?: (key: Omit<PixKey, "id" | "userId">) => void;
+  pixKeys: SimplifiedPixKey[];
+  onAddKey?: (key: Partial<SimplifiedPixKey>) => void;
   onDeleteKey?: (keyId: string) => void;
   onSetDefaultKey?: (keyId: string) => void;
 }
@@ -85,10 +101,15 @@ const PixKeysManager = ({
     // Add the key
     if (onAddKey) {
       onAddKey({
+        key_type: keyType,
         type: keyType,
         key: keyValue,
+        owner_name: keyName,
         name: keyName,
-        isDefault: pixKeys.length === 0 ? true : false,
+        is_active: true,
+        isDefault: pixKeys.length === 0,
+        bank_name: "Banco",
+        user_id: "user_id"
       });
     }
 
@@ -150,8 +171,8 @@ const PixKeysManager = ({
               >
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center">
-                    <p className="font-medium truncate">{pixKey.name}</p>
-                    {pixKey.isDefault && (
+                    <p className="font-medium truncate">{pixKey.owner_name || pixKey.name}</p>
+                    {(pixKey.isDefault || false) && (
                       <div className="ml-2 text-xs text-primary flex items-center">
                         <StarIcon className="h-3 w-3 mr-1" />
                         <span>Padrão</span>
@@ -160,12 +181,12 @@ const PixKeysManager = ({
                   </div>
                   <div className="flex items-center text-sm text-muted-foreground">
                     <span className="truncate">
-                      {pixKey.type}: {pixKey.key}
+                      {pixKey.type || pixKey.key_type}: {pixKey.key}
                     </span>
                   </div>
                 </div>
                 <div className="flex items-center ml-4 space-x-2">
-                  {!pixKey.isDefault && (
+                  {!(pixKey.isDefault || false) && (
                     <Button
                       variant="ghost"
                       size="icon"

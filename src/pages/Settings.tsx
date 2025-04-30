@@ -3,7 +3,7 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import MainLayout from "@/components/layout/MainLayout";
 import PixKeysManager from "@/components/settings/PixKeysManager";
-import { PixKey, UserRole } from "@/types";
+import { UserRole } from "@/types";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -12,7 +12,7 @@ import { Label } from "@/components/ui/label";
 import { CameraIcon, Users, RefreshCw } from "lucide-react";
 import { useUserRole } from "@/hooks/use-user-role";
 import { PATHS } from "@/routes/paths";
-import { useToast } from "@/components/ui/use-toast";
+import { useToast } from "@/hooks/use-toast";
 
 const Settings = () => {
   const navigate = useNavigate();
@@ -21,30 +21,44 @@ const Settings = () => {
   const { toast } = useToast();
   const [isRefreshing, setIsRefreshing] = useState(false);
   
-  const [pixKeys, setPixKeys] = useState<PixKey[]>([
+  const [pixKeys, setPixKeys] = useState([
     {
       id: "1",
-      userId: "user_1",
+      user_id: "user_1",
+      key_type: "CPF",
       type: "CPF",
       key: "123.456.789-00",
+      owner_name: "Minha chave principal",
       name: "Minha chave principal",
       isDefault: true,
+      is_active: true,
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+      bank_name: "Banco"
     },
     {
       id: "2",
-      userId: "user_1",
+      user_id: "user_1",
+      key_type: "EMAIL",
       type: "EMAIL",
       key: "email@exemplo.com",
+      owner_name: "Email pessoal",
       name: "Email pessoal",
       isDefault: false,
+      is_active: true,
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+      bank_name: "Banco"
     },
   ]);
   
-  const handleAddPixKey = (key: Omit<PixKey, "id" | "userId">) => {
+  const handleAddPixKey = (key: Partial<any>) => {
     const newKey = {
       ...key,
       id: `key_${Math.random().toString(36).slice(2, 11)}`, // Generate random id
-      userId: "user_1",
+      user_id: "user_1",
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString()
     };
     setPixKeys((prev) => [...prev, newKey]);
   };

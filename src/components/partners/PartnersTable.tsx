@@ -1,7 +1,7 @@
 
 import { format } from "date-fns";
 import { PenIcon, TrashIcon } from "lucide-react";
-import { type Partner } from "@/hooks/use-partners";
+import { Partner } from "@/types";
 
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";

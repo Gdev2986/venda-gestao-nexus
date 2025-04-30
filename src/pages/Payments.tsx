@@ -1,6 +1,5 @@
-
 import { useState, useEffect } from "react";
-import { toast } from "@/components/ui/use-toast";
+import { useToast } from "@/hooks/use-toast";
 import {
   Table,
   TableBody,
@@ -82,7 +81,7 @@ const Payments = () => {
     },
   });
 
-  // Fetch payments from Supabase
+  // Filter payments based on status
   const fetchPayments = async () => {
     try {
       let query = supabase
@@ -94,7 +93,7 @@ const Payments = () => {
         .order('created_at', { ascending: false });
 
       if (filterStatus !== "ALL") {
-        query = query.eq('status', filterStatus);
+        query = query.eq('status', filterStatus as PaymentStatus);
       }
 
       const { data, error } = await query;
@@ -107,12 +106,12 @@ const Payments = () => {
       const mappedPayments: Payment[] = data.map((payment: any) => ({
         id: payment.id,
         created_at: payment.created_at,
+        updated_at: payment.created_at,
         amount: payment.amount,
         status: payment.status as PaymentStatus,
         client_id: payment.client_id,
         approved_at: payment.approved_at,
         receipt_url: payment.receipt_url,
-        rejection_reason: null, // Assuming this field doesn't exist in payment_requests
         client_name: payment.clients?.name || null,
       }));
 

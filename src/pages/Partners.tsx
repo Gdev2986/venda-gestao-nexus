@@ -107,7 +107,7 @@ export default function Partners() {
   return (
     <MainLayout>
       <div className="space-y-4">
-        <PartnersHeader onCreatePartner={handleCreatePartner} />
+        <PartnersHeader onCreateClick={handleCreatePartner} />
         
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <PartnersFilterCard onFilter={handleFilter} loading={loading} />
@@ -132,9 +132,12 @@ export default function Partners() {
             </DialogHeader>
             
             <PartnerForm 
-              partner={editingPartner}
+              initialData={editingPartner || undefined}
               onSubmit={handleSubmit}
               isSubmitting={isSubmitting}
+              isOpen={isDialogOpen}
+              onClose={() => setIsDialogOpen(false)}
+              title={editingPartner ? "Editar Parceiro" : "Novo Parceiro"}
             />
           </DialogContent>
         </Dialog>

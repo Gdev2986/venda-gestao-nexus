@@ -37,16 +37,30 @@ export interface Client {
   company_name?: string; // Keep for backward compatibility
   email: string;
   phone: string;
-  contact_name?: string;
+  contact_name: string;
   document?: string;
-  address?: string;
-  city?: string;
-  state?: string;
+  address: string;
+  city: string;
+  state: string;
   postal_code?: string;
-  zip?: string; // Allow both postal_code and zip
+  zip: string; // Allow both postal_code and zip
   notes?: string;
   status: "ACTIVE" | "INACTIVE";
   partner_id?: string;
+}
+
+// Partner interface
+export interface Partner {
+  id: string;
+  created_at: string;
+  updated_at: string;
+  company_name: string;
+  business_name?: string; // For backward compatibility
+  contact_name?: string;
+  email?: string;
+  phone?: string;
+  address?: string;
+  commission_rate?: number;
 }
 
 // Sale interface
@@ -61,7 +75,7 @@ export interface Sale {
   client_name?: string; // Denormalized for convenience
   // Add additional fields needed by components
   code?: string;
-  date?: Date | string;
+  date: Date | string;
   terminal?: string;
   grossAmount?: number;
   netAmount?: number;
@@ -83,20 +97,6 @@ export interface PixKey {
   isDefault?: boolean; // For backward compatibility
   userId?: string; // For backward compatibility
   user_id?: string;
-}
-
-// Partner interface
-export interface Partner {
-  id: string;
-  created_at: string;
-  updated_at: string;
-  company_name: string;
-  business_name?: string; // For backward compatibility
-  contact_name?: string;
-  email?: string;
-  phone?: string;
-  address?: string;
-  commission_rate?: number;
 }
 
 // Payment interface
@@ -125,6 +125,7 @@ export interface DashboardStats {
   currentBalance?: number;
   yesterdayGrossAmount?: number;
   yesterdayNetAmount?: number;
+  recentSales?: Sale[];
   salesByPaymentMethod?: {
     method: PaymentMethod;
     amount: number;

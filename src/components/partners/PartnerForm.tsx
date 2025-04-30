@@ -14,6 +14,7 @@ import {
   FormDescription,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
+import { Partner } from "@/types";
 
 // Define form schema
 const formSchema = z.object({
