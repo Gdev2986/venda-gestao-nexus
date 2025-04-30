@@ -1,5 +1,5 @@
 
-import { memo } from "react";
+import { memo, useCallback } from "react";
 import { motion } from "framer-motion";
 import { X } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -12,29 +12,32 @@ import { SidebarProps } from "./types";
 
 // Memoize the Sidebar component to prevent unnecessary re-renders
 const Sidebar = memo(({ isOpen, isMobile, onClose, userRole }: SidebarProps) => {
+  // Optimize button animation by memoizing the click handler
+  const handleCloseClick = useCallback(() => {
+    onClose();
+  }, [onClose]);
+
   return (
     <>
-      {/* Mobile backdrop */}
+      {/* Mobile backdrop with animation */}
       {isMobile && isOpen && (
         <motion.div 
           className="fixed inset-0 bg-black/50 z-30"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
-          onClick={onClose}
+          onClick={handleCloseClick}
         />
       )}
       
-      {/* Sidebar with animation */}
-      <motion.div
+      {/* Sidebar with fixed position and animation only for position */}
+      <div
         className={cn(
-          "fixed inset-y-0 left-0 z-50 flex flex-col w-64 text-sidebar-foreground",
-          isMobile ? "shadow-xl" : "border-r border-sidebar-border"
+          "fixed inset-y-0 left-0 z-50 flex flex-col w-64 text-sidebar-foreground transition-transform duration-200 ease-in-out",
+          isMobile ? "shadow-xl" : "border-r border-sidebar-border",
+          isOpen ? "translate-x-0" : "-translate-x-full"
         )}
         style={{ backgroundColor: 'hsl(196, 70%, 20%)' }}
-        initial={{ x: "-100%" }}
-        animate={{ x: isOpen ? 0 : "-100%" }}
-        transition={{ duration: 0.2, ease: "easeInOut" }}
       >
         <div className="flex items-center justify-between h-16 px-4 border-b border-sidebar-border">
           <div className="flex items-center space-x-2">
@@ -48,7 +51,7 @@ const Sidebar = memo(({ isOpen, isMobile, onClose, userRole }: SidebarProps) => 
             <Button
               variant="ghost"
               size="icon"
-              onClick={onClose}
+              onClick={handleCloseClick}
               className="text-sidebar-foreground hover:text-white hover:bg-sidebar-accent"
             >
               <X className="h-5 w-5" />
@@ -62,7 +65,7 @@ const Sidebar = memo(({ isOpen, isMobile, onClose, userRole }: SidebarProps) => 
         </div>
 
         <SidebarUserProfile userRole={userRole} />
-      </motion.div>
+      </div>
     </>
   );
 });

@@ -1,247 +1,184 @@
 
-import { useState, useCallback } from 'react';
+import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
-import { useToast } from '@/hooks/use-toast';
+import { v4 as uuidv4 } from 'uuid';
 
-// Define the Partner interface based on the actual database structure
-export interface Partner {
+export type Partner = {
   id: string;
   company_name: string;
   commission_rate: number;
+  contact_name?: string; 
+  email?: string;
+  phone?: string;
   created_at?: string;
   updated_at?: string;
-  // Additional fields that PartnersTable.tsx expects
-  business_name: string;
-  contact_name: string;
-  email: string;
-  phone: string;
-  address: string;
-  city: string;
-  state: string;
-  zip: string;
-  document?: string;
-  status?: "active" | "inactive";
-}
+};
 
-export interface FilterValues {
-  search?: string;
-  dateRange?: {
-    from?: Date;
-    to?: Date;
-  };
-}
+type PartnersState = {
+  partners: Partner[];
+  isLoading: boolean;
+  error: string | null;
+  filteredPartners: Partner[];
+};
 
-export const usePartners = () => {
-  const [partners, setPartners] = useState<Partner[]>([]);
-  const [loading, setLoading] = useState<boolean>(false);
-  const [error, setError] = useState<string>('');
-  const { toast } = useToast();
+type FilterPartners = (searchTerm: string, commissionRange: [number, number]) => void;
 
-  const fetchPartners = useCallback(async () => {
+export function usePartners() {
+  const [state, setState] = useState<PartnersState>({
+    partners: [],
+    isLoading: true,
+    error: null,
+    filteredPartners: [],
+  });
+
+  const fetchPartners = async () => {
+    setState(prev => ({ ...prev, isLoading: true }));
+
     try {
-      setLoading(true);
-      setError('');
-
-      const { data, error: fetchError } = await supabase
+      const { data, error } = await supabase
         .from('partners')
-        .select('*');
+        .select('*')
+        .order('created_at', { ascending: false });
 
-      if (fetchError) {
-        throw new Error(fetchError.message);
+      if (error) {
+        throw new Error(error.message);
       }
 
-      // Transform the data to match the Partner interface
-      const transformedData = data.map(partner => ({
-        ...partner,
-        business_name: partner.company_name, // Map company_name to business_name
-        contact_name: '', // Add default values for fields not in the database
-        email: '',
-        phone: '',
-        address: '',
-        city: '',
-        state: '',
-        zip: '',
-        status: 'active' as const
-      }));
-
-      setPartners(transformedData as Partner[]);
-    } catch (err: any) {
-      setError(err.message);
-      toast({
-        variant: 'destructive',
-        title: 'Erro ao buscar parceiros',
-        description: err.message,
+      setState({
+        partners: data || [],
+        filteredPartners: data || [],
+        isLoading: false,
+        error: null,
       });
-    } finally {
-      setLoading(false);
+    } catch (error) {
+      setState(prev => ({
+        ...prev,
+        isLoading: false,
+        error: error instanceof Error ? error.message : 'Failed to fetch partners',
+      }));
     }
-  }, [toast]);
+  };
 
-  const createPartner = async (partner: Omit<Partner, 'id' | 'created_at' | 'updated_at'>) => {
+  const createPartner = async (partnerData: Omit<Partner, 'id' | 'created_at' | 'updated_at'>) => {
+    setState(prev => ({ ...prev, isLoading: true }));
+
     try {
-      setLoading(true);
-      setError('');
-
-      // Transform the partner data to match the database schema
-      const partnerData = {
-        company_name: partner.business_name,
-        commission_rate: partner.commission_rate
+      // Add id for the insert operation
+      const newPartner = {
+        id: uuidv4(),
+        ...partnerData,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString()
       };
 
-      const { data, error: createError } = await supabase
+      const { error } = await supabase
         .from('partners')
-        .insert([partnerData])
-        .select();
+        .insert([newPartner]);
 
-      if (createError) {
-        throw new Error(createError.message);
+      if (error) {
+        throw new Error(error.message);
       }
 
-      if (data && data.length > 0) {
-        // Transform the returned data to match the Partner interface
-        const newPartner = {
-          ...data[0],
-          business_name: data[0].company_name,
-          contact_name: partner.contact_name,
-          email: partner.email,
-          phone: partner.phone,
-          address: partner.address,
-          city: partner.city,
-          state: partner.state,
-          zip: partner.zip,
-          status: 'active' as const
-        };
-
-        setPartners(prev => [...prev, newPartner as Partner]);
-        toast({
-          title: 'Parceiro criado',
-          description: 'O parceiro foi criado com sucesso.',
-        });
-        return true;
-      }
+      // Refetch partners to get updated data
+      await fetchPartners();
+      return true;
+    } catch (error) {
+      setState(prev => ({
+        ...prev,
+        isLoading: false,
+        error: error instanceof Error ? error.message : 'Failed to create partner',
+      }));
       return false;
-    } catch (err: any) {
-      setError(err.message);
-      toast({
-        variant: 'destructive',
-        title: 'Erro ao criar parceiro',
-        description: err.message,
-      });
-      return false;
-    } finally {
-      setLoading(false);
     }
   };
 
-  const updatePartner = async (id: string, partner: Partial<Omit<Partner, 'id' | 'created_at' | 'updated_at'>>) => {
+  const updatePartner = async (partnerId: string, partnerData: Partial<Partner>) => {
+    setState(prev => ({ ...prev, isLoading: true }));
+
     try {
-      setLoading(true);
-      setError('');
-
-      // Transform the partner data to match the database schema
-      const partnerData: { company_name?: string; commission_rate?: number } = {};
-      
-      if (partner.business_name) {
-        partnerData.company_name = partner.business_name;
-      }
-      
-      if (partner.commission_rate !== undefined) {
-        partnerData.commission_rate = partner.commission_rate;
-      }
-
-      const { data, error: updateError } = await supabase
+      const { error } = await supabase
         .from('partners')
-        .update(partnerData)
-        .eq('id', id)
-        .select();
+        .update({
+          ...partnerData,
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', partnerId);
 
-      if (updateError) {
-        throw new Error(updateError.message);
+      if (error) {
+        throw new Error(error.message);
       }
 
-      if (data && data.length > 0) {
-        // Update the local partners state
-        setPartners(prev =>
-          prev.map(p => (p.id === id ? {
-            ...p,
-            ...partner,
-            company_name: partner.business_name || p.company_name,
-            business_name: partner.business_name || p.business_name
-          } as Partner : p))
-        );
-        
-        toast({
-          title: 'Parceiro atualizado',
-          description: 'O parceiro foi atualizado com sucesso.',
-        });
-        return true;
-      }
+      // Refetch partners to get updated data
+      await fetchPartners();
+      return true;
+    } catch (error) {
+      setState(prev => ({
+        ...prev,
+        isLoading: false,
+        error: error instanceof Error ? error.message : 'Failed to update partner',
+      }));
       return false;
-    } catch (err: any) {
-      setError(err.message);
-      toast({
-        variant: 'destructive',
-        title: 'Erro ao atualizar parceiro',
-        description: err.message,
-      });
-      return false;
-    } finally {
-      setLoading(false);
     }
   };
 
-  const deletePartner = async (id: string) => {
-    try {
-      setLoading(true);
-      setError('');
+  const deletePartner = async (partnerId: string) => {
+    setState(prev => ({ ...prev, isLoading: true }));
 
-      const { error: deleteError } = await supabase
+    try {
+      const { error } = await supabase
         .from('partners')
         .delete()
-        .eq('id', id);
+        .eq('id', partnerId);
 
-      if (deleteError) {
-        throw new Error(deleteError.message);
+      if (error) {
+        throw new Error(error.message);
       }
 
-      setPartners(prev => prev.filter(partner => partner.id !== id));
-      toast({
-        title: 'Parceiro excluído',
-        description: 'O parceiro foi excluído com sucesso.',
-      });
+      await fetchPartners();
       return true;
-    } catch (err: any) {
-      setError(err.message);
-      toast({
-        variant: 'destructive',
-        title: 'Erro ao excluir parceiro',
-        description: err.message,
-      });
+    } catch (error) {
+      setState(prev => ({
+        ...prev,
+        isLoading: false,
+        error: error instanceof Error ? error.message : 'Failed to delete partner',
+      }));
       return false;
-    } finally {
-      setLoading(false);
     }
   };
 
-  const filterPartners = (filters: FilterValues) => {
-    // This is a client-side filter implementation
-    if (!filters.search) return partners;
-    
-    const searchLower = filters.search.toLowerCase();
-    return partners.filter((partner) => 
-      partner.business_name.toLowerCase().includes(searchLower) || 
-      partner.company_name.toLowerCase().includes(searchLower)
-    );
+  const filterPartners: FilterPartners = (searchTerm, commissionRange) => {
+    const filtered = state.partners.filter(partner => {
+      const matchesSearch = (
+        (partner.company_name?.toLowerCase().includes(searchTerm.toLowerCase())) ||
+        (partner.contact_name?.toLowerCase().includes(searchTerm.toLowerCase())) ||
+        (partner.email?.toLowerCase().includes(searchTerm.toLowerCase()))
+      );
+      
+      const commissionInRange = (
+        partner.commission_rate >= commissionRange[0] && 
+        partner.commission_rate <= commissionRange[1]
+      );
+      
+      return matchesSearch && commissionInRange;
+    });
+
+    setState(prev => ({ ...prev, filteredPartners: filtered }));
   };
 
+  // Load partners on mount
+  useEffect(() => {
+    fetchPartners();
+  }, []);
+
   return {
-    partners,
-    loading,
-    error,
+    partners: state.partners,
+    filteredPartners: state.filteredPartners,
+    isLoading: state.isLoading,
+    error: state.error,
     fetchPartners,
     createPartner,
     updatePartner,
     deletePartner,
     filterPartners,
   };
-};
+}

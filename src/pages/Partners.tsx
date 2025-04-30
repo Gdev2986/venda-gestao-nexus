@@ -1,126 +1,141 @@
-
-import { useState, useEffect } from "react";
+import { useState, useCallback } from 'react';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import MainLayout from "@/components/layout/MainLayout";
-import { usePartners, Partner, FilterValues } from "@/hooks/use-partners";
-import { useToast } from "@/hooks/use-toast";
-import { PartnersTableCard } from "@/components/partners/PartnersTableCard"; 
-import { PartnersHeader } from "@/components/partners/PartnersHeader";
-import { PartnersFilterCard } from "@/components/partners/PartnersFilterCard"; 
+import PartnersHeader from "@/components/partners/PartnersHeader";
+import PartnersTableCard from "@/components/partners/PartnersTableCard";
 import PartnerForm from "@/components/partners/PartnerForm";
-import { Dialog, DialogContent } from "@/components/ui/dialog";
+import PartnersFilterCard from "@/components/partners/PartnersFilterCard";
+import { usePartners, type Partner } from "@/hooks/use-partners";
+import { toast } from "@/components/ui/use-toast";
 
+// Update the Partners component to match component props
 const Partners = () => {
   const {
     partners,
-    loading,
+    filteredPartners,
+    isLoading,
     error,
-    fetchPartners,
     createPartner,
     updatePartner,
     deletePartner,
     filterPartners,
   } = usePartners();
-  
-  const [isDialogOpen, setIsDialogOpen] = useState(false);
-  const [editingPartner, setEditingPartner] = useState<Partner | null>(null);
-  const [filteredPartners, setFilteredPartners] = useState<Partner[]>([]);
-  const { toast } = useToast();
 
-  useEffect(() => {
-    fetchPartners();
-  }, [fetchPartners]);
+  const [isFormOpen, setIsFormOpen] = useState(false);
+  const [selectedPartner, setSelectedPartner] = useState<Partner | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  useEffect(() => {
-    setFilteredPartners(partners);
-  }, [partners]);
+  const handleOpenCreateModal = useCallback(() => {
+    setSelectedPartner(null);
+    setIsFormOpen(true);
+  }, []);
 
-  const handleCreate = () => {
-    setEditingPartner(null);
-    setIsDialogOpen(true);
-  };
+  const handleOpenEditModal = useCallback((partner: Partner) => {
+    setSelectedPartner(partner);
+    setIsFormOpen(true);
+  }, []);
 
-  const handleEdit = (partner: Partner) => {
-    setEditingPartner(partner);
-    setIsDialogOpen(true);
-  };
-
-  const handleDelete = async (partnerId: string) => {
-    const confirmed = window.confirm("Tem certeza que deseja excluir este parceiro?");
-    if (confirmed) {
-      return await deletePartner(partnerId);
+  const handleFormOpenChange = useCallback((open: boolean) => {
+    setIsFormOpen(open);
+    if (!open) {
+      setSelectedPartner(null);
     }
-    return false;
-  };
+  }, []);
 
-  const handleDeletePartner = (partner: Partner) => {
-    handleDelete(partner.id);
-  };
+  const handleSubmit = async (values: Omit<Partner, 'id' | 'created_at' | 'updated_at'>) => {
+    setIsSubmitting(true);
+    try {
+      let success = false;
+      if (selectedPartner) {
+        success = await updatePartner(selectedPartner.id, values);
+      } else {
+        success = await createPartner(values);
+      }
 
-  const handleSubmit = async (partnerData: Omit<Partner, "id" | "created_at" | "updated_at">) => {
-    let success = false;
-    if (editingPartner) {
-      success = await updatePartner(editingPartner.id, partnerData);
-    } else {
-      success = await createPartner(partnerData);
+      if (success) {
+        setIsFormOpen(false);
+        setSelectedPartner(null);
+        toast({
+          title: "Sucesso!",
+          description: `Parceiro ${selectedPartner ? 'atualizado' : 'criado'} com sucesso.`,
+        });
+      } else {
+        toast({
+          title: "Erro",
+          description: "Ocorreu um erro ao salvar o parceiro.",
+          variant: "destructive",
+        });
+      }
+    } finally {
+      setIsSubmitting(false);
     }
+  };
 
-    if (success) {
-      setIsDialogOpen(false);
+  const handleDelete = async (partner: Partner) => {
+    try {
+      const confirmed = window.confirm(`Tem certeza que deseja excluir o parceiro "${partner.company_name}"?`);
+      if (confirmed) {
+        const success = await deletePartner(partner.id);
+        if (success) {
+          toast({
+            title: "Sucesso!",
+            description: "Parceiro excluído com sucesso.",
+          });
+        } else {
+          toast({
+            title: "Erro",
+            description: "Ocorreu um erro ao excluir o parceiro.",
+            variant: "destructive",
+          });
+        }
+      }
+    } catch (error) {
+      toast({
+        title: "Erro",
+        description: "Ocorreu um erro ao excluir o parceiro.",
+        variant: "destructive",
+      });
     }
-    return success;
   };
 
-  const applyFilter = (filters: FilterValues) => {
-    setFilteredPartners(filterPartners(filters));
-  };
-
-  // Create an initialData object for the PartnerForm
-  const getInitialData = () => {
-    if (!editingPartner) return undefined;
-    
-    return {
-      id: editingPartner.id,
-      business_name: editingPartner.business_name,
-      contact_name: editingPartner.contact_name,
-      email: editingPartner.email,
-      phone: editingPartner.phone,
-      commission_rate: editingPartner.commission_rate,
-      address: editingPartner.address,
-      city: editingPartner.city,
-      state: editingPartner.state,
-      zip: editingPartner.zip,
-    };
+  const handleFilter = (searchTerm: string, commissionRange: [number, number]) => {
+    filterPartners(searchTerm, commissionRange);
   };
 
   return (
     <MainLayout>
-      <div className="flex flex-col gap-6">
-        <PartnersHeader onCreateClick={handleCreate} />
+      <div className="space-y-6">
+        <PartnersHeader onCreateClick={handleOpenCreateModal} />
         
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-          <div className="md:col-span-1">
-            <PartnersFilterCard onFilter={applyFilter} />
-          </div>
-          
-          <div className="md:col-span-3">
-            <PartnersTableCard 
-              partners={filteredPartners} 
-              isLoading={loading} 
-              error={error} 
-              onEditPartner={handleEdit} 
-              onDeletePartner={handleDeletePartner}
-            />
-          </div>
-        </div>
+        <PartnersFilterCard 
+          onFilter={handleFilter} 
+          loading={isLoading}
+        />
         
-        <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-          <DialogContent className="sm:max-w-[550px]">
-            <PartnerForm 
-              isOpen={isDialogOpen}
-              onClose={() => setIsDialogOpen(false)}
-              onSubmit={handleSubmit}
-              initialData={getInitialData()}
-              title={editingPartner ? "Editar Parceiro" : "Novo Parceiro"}
+        <PartnersTableCard
+          partners={filteredPartners}
+          isLoading={isLoading}
+          error={error || ""}
+          onEditPartner={handleOpenEditModal}
+          onDeletePartner={handleDelete}
+        />
+
+        {/* Form dialog */}
+        <Dialog open={isFormOpen} onOpenChange={handleFormOpenChange}>
+          <DialogContent className="sm:max-w-lg">
+            <DialogHeader>
+              <DialogTitle>{selectedPartner ? "Editar Parceiro" : "Novo Parceiro"}</DialogTitle>
+              <DialogDescription>
+                {selectedPartner 
+                  ? "Edite as informações do parceiro abaixo."
+                  : "Preencha as informações para cadastrar um novo parceiro."}
+              </DialogDescription>
+            </DialogHeader>
+            
+            <PartnerForm
+              initialPartner={selectedPartner}
+              onSubmit={handleSubmit} 
+              isSubmitting={isSubmitting}
             />
           </DialogContent>
         </Dialog>

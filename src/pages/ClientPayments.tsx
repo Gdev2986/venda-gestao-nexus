@@ -1,290 +1,365 @@
+import { useState, useEffect } from "react";
+import { useToast } from "@/components/ui/use-toast";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/hooks/use-auth";
+import MainLayout from "@/components/layout/MainLayout";
+import { PaymentStatus } from "@/types";
+import { formatCurrency } from "@/lib/formatters";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Badge } from "@/components/ui/badge";
+import { Loader2, FileCheck, AlertCircle, Clock, CheckCircle2 } from "lucide-react";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import PaymentForm from "@/components/payments/PaymentForm";
+import PaymentReceiptUploader from "@/components/payments/PaymentReceiptUploader";
 
-import { useState, useEffect, useMemo } from 'react';
-import { useParams } from 'react-router-dom';
-import MainLayout from '@/components/layout/MainLayout';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { useToast } from '@/hooks/use-toast';
-import { supabase } from '@/integrations/supabase/client';
-import { Tabs, TabsList, TabsContent, TabsTrigger } from '@/components/ui/tabs';
-import { PaymentResponseForm } from '@/components/payments/PaymentResponseForm';
-
-type PaymentRequest = {
+type Payment = {
   id: string;
   amount: number;
-  status: "PENDING" | "APPROVED" | "REJECTED" | "PAID";
+  description: string;
+  status: PaymentStatus;
   created_at: string;
+  due_date: string;
+  receipt_url?: string;
+  approved_at?: string;
   client_id: string;
-  receipt_url: string | null;
-  approved_at: string | null;
-};
-
-type Client = {
-  id: string;
-  business_name: string;
+  client_name?: string;
 };
 
 const ClientPayments = () => {
-  const { clientId } = useParams<{ clientId: string }>();
   const { toast } = useToast();
+  const { user } = useAuth();
+  const [payments, setPayments] = useState<Payment[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [selectedPayment, setSelectedPayment] = useState<Payment | null>(null);
+  const [paymentFormOpen, setPaymentFormOpen] = useState(false);
+  const [receiptDialogOpen, setReceiptDialogOpen] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const [client, setClient] = useState<Client | null>(null);
-  const [paymentRequests, setPaymentRequests] = useState<PaymentRequest[]>([]);
-  const [loading, setLoading] = useState<boolean>(true);
+  const fetchPayments = async () => {
+    if (!user?.id) return;
 
-  useEffect(() => {
-    const fetchClientData = async () => {
-      if (!clientId) return;
-
-      try {
-        setLoading(true);
-        
-        // Fetch client details
-        const { data: clientData, error: clientError } = await supabase
-          .from('clients')
-          .select('id, business_name')
-          .eq('id', clientId)
-          .single();
-
-        if (clientError) throw new Error(clientError.message);
-        
-        setClient(clientData);
-
-        // Fetch payment requests
-        const { data: paymentsData, error: paymentsError } = await supabase
-          .from('payment_requests')
-          .select('*')
-          .eq('client_id', clientId)
-          .order('created_at', { ascending: false });
-
-        if (paymentsError) throw new Error(paymentsError.message);
-        
-        setPaymentRequests(paymentsData as PaymentRequest[]);
-
-      } catch (error: any) {
-        toast({
-          variant: 'destructive',
-          title: 'Erro ao carregar dados',
-          description: error.message,
-        });
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchClientData();
-  }, [clientId, toast]);
-
-  const pendingRequests = useMemo(() => 
-    paymentRequests.filter(req => req.status === 'PENDING'),
-    [paymentRequests]
-  );
-
-  const approvedRequests = useMemo(() => 
-    paymentRequests.filter(req => req.status === 'APPROVED'),
-    [paymentRequests]
-  );
-
-  const rejectedRequests = useMemo(() => 
-    paymentRequests.filter(req => req.status === 'REJECTED'),
-    [paymentRequests]
-  );
-
-  const handlePaymentResponse = async (paymentId: string, approved: boolean, receiptUrl?: string) => {
+    setIsLoading(true);
     try {
-      const updateData: {
-        status: "APPROVED" | "REJECTED"; 
-        approved_at?: string; 
-        receipt_url?: string | null;
-      } = approved
-        ? { 
-            status: "APPROVED", 
-            approved_at: new Date().toISOString(), 
-            receipt_url: receiptUrl || null 
-          }
-        : { status: "REJECTED" };
+      // Get client ID from user profile
+      const { data: profileData, error: profileError } = await supabase
+        .from("profiles")
+        .select("client_id")
+        .eq("id", user.id)
+        .single();
 
-      const { error } = await supabase
-        .from('payment_requests')
-        .update(updateData)
-        .eq('id', paymentId);
+      if (profileError) throw profileError;
+      if (!profileData?.client_id) {
+        setPayments([]);
+        return;
+      }
 
-      if (error) throw new Error(error.message);
+      // Get payments for this client
+      const { data, error } = await supabase
+        .from("payments")
+        .select("*")
+        .eq("client_id", profileData.client_id)
+        .order("created_at", { ascending: false });
 
-      // Update local state
-      setPaymentRequests(prev => prev.map(req => {
-        if (req.id === paymentId) {
-          return { ...req, ...updateData };
-        }
-        return req;
-      }));
-
+      if (error) throw error;
+      setPayments(data || []);
+    } catch (error) {
+      console.error("Error fetching payments:", error);
       toast({
-        title: `Pagamento ${approved ? 'aprovado' : 'rejeitado'}`,
-        description: `O pagamento foi ${approved ? 'aprovado' : 'rejeitado'} com sucesso.`,
-        variant: 'default',
+        title: "Erro ao carregar pagamentos",
+        description: "Não foi possível carregar seus pagamentos. Tente novamente mais tarde.",
+        variant: "destructive",
       });
-
-      return true;
-    } catch (error: any) {
-      toast({
-        variant: 'destructive',
-        title: 'Erro ao processar pagamento',
-        description: error.message,
-      });
-      return false;
+    } finally {
+      setIsLoading(false);
     }
   };
 
-  if (!clientId) {
-    return (
-      <MainLayout>
-        <div className="flex justify-center items-center h-[80vh]">
-          <div className="text-center">
-            <h2 className="text-2xl font-bold">Cliente não encontrado</h2>
-            <p className="text-muted-foreground">ID do cliente não foi fornecido</p>
-          </div>
-        </div>
-      </MainLayout>
-    );
-  }
+  useEffect(() => {
+    fetchPayments();
+  }, [user?.id]);
+
+  const handlePaymentClick = (payment: Payment) => {
+    setSelectedPayment(payment);
+    setPaymentFormOpen(true);
+  };
+
+  const handleUploadReceipt = (payment: Payment) => {
+    setSelectedPayment(payment);
+    setReceiptDialogOpen(true);
+  };
+
+  const respondToPayment = async (paymentId: string, approved: boolean, receiptUrl?: string): Promise<boolean> => {
+    try {
+      setIsSubmitting(true);
+      
+      const update: {
+        status: "PENDING" | "APPROVED" | "REJECTED" | "PAID";
+        approved_at?: string;
+        receipt_url?: string;
+      } = {
+        status: approved ? "APPROVED" : "REJECTED"
+      };
+      
+      if (approved) {
+        update.approved_at = new Date().toISOString();
+        if (receiptUrl) {
+          update.receipt_url = receiptUrl;
+        }
+      }
+      
+      const { error } = await supabase
+        .from("payments")
+        .update(update)
+        .eq("id", paymentId);
+
+      if (error) throw error;
+
+      toast({
+        title: approved ? "Comprovante enviado!" : "Pagamento rejeitado",
+        description: approved 
+          ? "Seu comprovante foi enviado e está aguardando aprovação."
+          : "O pagamento foi rejeitado.",
+        variant: approved ? "default" : "destructive",
+      });
+
+      setReceiptDialogOpen(false);
+      await fetchPayments();
+      return true;
+    } catch (error) {
+      console.error("Error responding to payment:", error);
+      toast({
+        title: "Erro",
+        description: "Não foi possível processar sua solicitação. Tente novamente.",
+        variant: "destructive",
+      });
+      return false;
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const getStatusBadge = (status: PaymentStatus) => {
+    switch (status) {
+      case "PENDING":
+        return <Badge variant="outline" className="flex gap-1 items-center"><Clock className="h-3 w-3" /> Pendente</Badge>;
+      case "APPROVED":
+        return <Badge variant="success" className="flex gap-1 items-center"><CheckCircle2 className="h-3 w-3" /> Aprovado</Badge>;
+      case "REJECTED":
+        return <Badge variant="destructive" className="flex gap-1 items-center"><AlertCircle className="h-3 w-3" /> Rejeitado</Badge>;
+      case "PAID":
+        return <Badge variant="default" className="flex gap-1 items-center"><FileCheck className="h-3 w-3" /> Pago</Badge>;
+      default:
+        return <Badge variant="outline">Desconhecido</Badge>;
+    }
+  };
+
+  const pendingPayments = payments.filter(p => p.status === "PENDING");
+  const approvedPayments = payments.filter(p => p.status === "APPROVED");
+  const completedPayments = payments.filter(p => ["PAID", "REJECTED"].includes(p.status));
 
   return (
     <MainLayout>
-      <div className="flex flex-col gap-6">
-        <div className="flex flex-col gap-2">
-          <h1 className="text-3xl font-bold tracking-tight">
-            Pagamentos {client && `- ${client.business_name}`}
-          </h1>
-          <p className="text-muted-foreground">
-            Visualize e gerencie pagamentos deste cliente
-          </p>
+      <div className="space-y-6">
+        <div className="flex justify-between items-center">
+          <h2 className="text-3xl font-bold tracking-tight">Meus Pagamentos</h2>
         </div>
 
         <Tabs defaultValue="pending" className="w-full">
-          <TabsList>
+          <TabsList className="grid w-full grid-cols-3">
             <TabsTrigger value="pending">
-              Pendentes ({pendingRequests.length})
+              Pendentes <Badge variant="outline" className="ml-2">{pendingPayments.length}</Badge>
             </TabsTrigger>
             <TabsTrigger value="approved">
-              Aprovados ({approvedRequests.length})
+              Aprovados <Badge variant="outline" className="ml-2">{approvedPayments.length}</Badge>
             </TabsTrigger>
-            <TabsTrigger value="rejected">
-              Rejeitados ({rejectedRequests.length})
+            <TabsTrigger value="completed">
+              Concluídos <Badge variant="outline" className="ml-2">{completedPayments.length}</Badge>
             </TabsTrigger>
           </TabsList>
 
-          <TabsContent value="pending" className="mt-4 space-y-4">
-            {pendingRequests.length === 0 ? (
-              <Card>
-                <CardContent className="pt-6">
-                  <p className="text-center text-muted-foreground">
-                    Nenhum pagamento pendente.
-                  </p>
-                </CardContent>
-              </Card>
-            ) : (
-              pendingRequests.map((payment) => (
-                <PaymentResponseForm
-                  key={payment.id}
-                  payment={payment}
-                  onSubmit={handlePaymentResponse}
-                />
-              ))
-            )}
-          </TabsContent>
-
-          <TabsContent value="approved" className="mt-4">
-            {/* Approved payments content */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {approvedRequests.length === 0 ? (
-                <Card className="md:col-span-2">
-                  <CardContent className="pt-6">
-                    <p className="text-center text-muted-foreground">
-                      Nenhum pagamento aprovado.
-                    </p>
+          {isLoading ? (
+            <div className="flex justify-center items-center h-64">
+              <Loader2 className="h-8 w-8 animate-spin text-primary" />
+            </div>
+          ) : (
+            <>
+              <TabsContent value="pending">
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Pagamentos Pendentes</CardTitle>
+                    <CardDescription>Pagamentos que precisam da sua ação.</CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    {pendingPayments.length === 0 ? (
+                      <p className="text-center py-8 text-muted-foreground">Não há pagamentos pendentes.</p>
+                    ) : (
+                      <div className="space-y-4">
+                        {pendingPayments.map((payment) => (
+                          <div key={payment.id} className="flex flex-col md:flex-row justify-between items-start md:items-center p-4 border rounded-lg">
+                            <div className="space-y-1 mb-2 md:mb-0">
+                              <div className="font-medium">{payment.description}</div>
+                              <div className="text-sm text-muted-foreground">
+                                Vencimento: {new Date(payment.due_date).toLocaleDateString()}
+                              </div>
+                              <div className="text-lg font-bold">{formatCurrency(payment.amount)}</div>
+                            </div>
+                            <div className="flex flex-col md:flex-row gap-2 w-full md:w-auto">
+                              <Button onClick={() => handlePaymentClick(payment)}>
+                                Ver detalhes
+                              </Button>
+                              <Button variant="default" onClick={() => handleUploadReceipt(payment)}>
+                                Enviar comprovante
+                              </Button>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
                   </CardContent>
                 </Card>
-              ) : (
-                approvedRequests.map((payment) => (
-                  <Card key={payment.id}>
-                    <CardHeader>
-                      <CardTitle className="text-lg">
-                        {new Intl.NumberFormat('pt-BR', {
-                          style: 'currency',
-                          currency: 'BRL'
-                        }).format(payment.amount)}
-                      </CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                      <div className="space-y-2">
-                        <p className="text-sm">
-                          <span className="font-medium">Data:</span>{' '}
-                          {new Date(payment.created_at).toLocaleDateString('pt-BR')}
-                        </p>
-                        <p className="text-sm">
-                          <span className="font-medium">Aprovado em:</span>{' '}
-                          {payment.approved_at
-                            ? new Date(payment.approved_at).toLocaleDateString('pt-BR')
-                            : '-'}
-                        </p>
-                        {payment.receipt_url && (
-                          <p className="text-sm">
-                            <span className="font-medium">Comprovante:</span>{' '}
-                            <a
-                              href={payment.receipt_url}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="text-primary hover:underline"
-                            >
-                              Ver comprovante
-                            </a>
-                          </p>
-                        )}
-                      </div>
-                    </CardContent>
-                  </Card>
-                ))
-              )}
-            </div>
-          </TabsContent>
+              </TabsContent>
 
-          <TabsContent value="rejected" className="mt-4">
-            {/* Rejected payments content */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {rejectedRequests.length === 0 ? (
-                <Card className="md:col-span-2">
-                  <CardContent className="pt-6">
-                    <p className="text-center text-muted-foreground">
-                      Nenhum pagamento rejeitado.
-                    </p>
+              <TabsContent value="approved">
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Pagamentos Aprovados</CardTitle>
+                    <CardDescription>Pagamentos com comprovante enviado, aguardando confirmação.</CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    {approvedPayments.length === 0 ? (
+                      <p className="text-center py-8 text-muted-foreground">Não há pagamentos aprovados.</p>
+                    ) : (
+                      <div className="space-y-4">
+                        {approvedPayments.map((payment) => (
+                          <div key={payment.id} className="flex flex-col md:flex-row justify-between items-start md:items-center p-4 border rounded-lg">
+                            <div className="space-y-1">
+                              <div className="font-medium">{payment.description}</div>
+                              <div className="text-sm text-muted-foreground">
+                                Enviado em: {payment.approved_at ? new Date(payment.approved_at).toLocaleDateString() : 'N/A'}
+                              </div>
+                              <div className="text-lg font-bold">{formatCurrency(payment.amount)}</div>
+                              <div>{getStatusBadge(payment.status)}</div>
+                            </div>
+                            <Button variant="outline" onClick={() => handlePaymentClick(payment)}>
+                              Ver detalhes
+                            </Button>
+                          </div>
+                        ))}
+                      </div>
+                    )}
                   </CardContent>
                 </Card>
-              ) : (
-                rejectedRequests.map((payment) => (
-                  <Card key={payment.id}>
-                    <CardHeader>
-                      <CardTitle className="text-lg">
-                        {new Intl.NumberFormat('pt-BR', {
-                          style: 'currency',
-                          currency: 'BRL'
-                        }).format(payment.amount)}
-                      </CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                      <div className="space-y-2">
-                        <p className="text-sm">
-                          <span className="font-medium">Data:</span>{' '}
-                          {new Date(payment.created_at).toLocaleDateString('pt-BR')}
-                        </p>
+              </TabsContent>
+
+              <TabsContent value="completed">
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Pagamentos Concluídos</CardTitle>
+                    <CardDescription>Histórico de pagamentos pagos ou rejeitados.</CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    {completedPayments.length === 0 ? (
+                      <p className="text-center py-8 text-muted-foreground">Não há pagamentos concluídos.</p>
+                    ) : (
+                      <div className="space-y-4">
+                        {completedPayments.map((payment) => (
+                          <div key={payment.id} className="flex flex-col md:flex-row justify-between items-start md:items-center p-4 border rounded-lg">
+                            <div className="space-y-1">
+                              <div className="font-medium">{payment.description}</div>
+                              <div className="text-sm text-muted-foreground">
+                                Data: {new Date(payment.created_at).toLocaleDateString()}
+                              </div>
+                              <div className="text-lg font-bold">{formatCurrency(payment.amount)}</div>
+                              <div>{getStatusBadge(payment.status)}</div>
+                            </div>
+                            <Button variant="outline" onClick={() => handlePaymentClick(payment)}>
+                              Ver detalhes
+                            </Button>
+                          </div>
+                        ))}
                       </div>
-                    </CardContent>
-                  </Card>
-                ))
-              )}
-            </div>
-          </TabsContent>
+                    )}
+                  </CardContent>
+                </Card>
+              </TabsContent>
+            </>
+          )}
         </Tabs>
       </div>
+
+      {/* Payment details dialog */}
+      <Dialog open={paymentFormOpen} onOpenChange={setPaymentFormOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Detalhes do Pagamento</DialogTitle>
+            <DialogDescription>
+              Informações completas sobre este pagamento.
+            </DialogDescription>
+          </DialogHeader>
+          {selectedPayment && (
+            <div className="space-y-4">
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <p className="text-sm font-medium text-muted-foreground">Descrição</p>
+                  <p>{selectedPayment.description}</p>
+                </div>
+                <div>
+                  <p className="text-sm font-medium text-muted-foreground">Valor</p>
+                  <p className="font-bold">{formatCurrency(selectedPayment.amount)}</p>
+                </div>
+                <div>
+                  <p className="text-sm font-medium text-muted-foreground">Data de Criação</p>
+                  <p>{new Date(selectedPayment.created_at).toLocaleDateString()}</p>
+                </div>
+                <div>
+                  <p className="text-sm font-medium text-muted-foreground">Data de Vencimento</p>
+                  <p>{new Date(selectedPayment.due_date).toLocaleDateString()}</p>
+                </div>
+                <div>
+                  <p className="text-sm font-medium text-muted-foreground">Status</p>
+                  <div className="mt-1">{getStatusBadge(selectedPayment.status)}</div>
+                </div>
+              </div>
+
+              {selectedPayment.receipt_url && (
+                <div>
+                  <p className="text-sm font-medium text-muted-foreground mb-2">Comprovante</p>
+                  <a 
+                    href={selectedPayment.receipt_url} 
+                    target="_blank" 
+                    rel="noopener noreferrer"
+                    className="flex items-center text-primary hover:underline"
+                  >
+                    <FileCheck className="mr-2 h-4 w-4" />
+                    Ver comprovante
+                  </a>
+                </div>
+              )}
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Receipt upload dialog */}
+      <Dialog open={receiptDialogOpen} onOpenChange={setReceiptDialogOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Enviar Comprovante</DialogTitle>
+            <DialogDescription>
+              Faça o upload do comprovante de pagamento.
+            </DialogDescription>
+          </DialogHeader>
+          {selectedPayment && (
+            <PaymentReceiptUploader
+              payment={selectedPayment}
+              onSubmit={respondToPayment}
+              isSubmitting={isSubmitting}
+            />
+          )}
+        </DialogContent>
+      </Dialog>
     </MainLayout>
   );
 };

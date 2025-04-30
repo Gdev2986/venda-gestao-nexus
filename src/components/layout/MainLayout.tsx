@@ -2,13 +2,12 @@
 import { useState, useEffect } from "react";
 import { useLocation } from "react-router-dom";
 import { UserRole } from "@/types";
-import Sidebar from "./Sidebar";
+import Sidebar from "./sidebar/Sidebar";
 import { Button } from "@/components/ui/button";
 import { Menu } from "lucide-react";
 import { useIsMobile } from "@/hooks/use-mobile";
 import NotificationDropdown from "./NotificationDropdown";
 import ThemeToggle from "../theme/theme-toggle";
-import { AnimatePresence, motion } from "framer-motion";
 import { useUserRole } from "@/hooks/use-user-role";
 
 type MainLayoutProps = {
@@ -28,12 +27,12 @@ const MainLayout = ({ children }: MainLayoutProps) => {
   // Get user role from custom hook
   const { userRole } = useUserRole();
 
-  // Close sidebar on mobile by default and on route change
+  // Close sidebar on mobile by default
   useEffect(() => {
     if (isMobile) {
       setSidebarOpen(false);
     }
-  }, [isMobile, location.pathname]); // Add location.pathname to dependencies to close sidebar on route change for mobile
+  }, [isMobile]); // Remove location dependency to prevent closing on navigation
 
   // Save sidebar state to localStorage when it changes
   useEffect(() => {
@@ -78,19 +77,12 @@ const MainLayout = ({ children }: MainLayoutProps) => {
           </div>
         </header>
         
-        {/* Main scrollable content with route-based animation */}
-        <motion.main
-          key={location.pathname}
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          exit={{ opacity: 0 }}
-          transition={{ duration: 0.2 }}
-          className="flex-1 overflow-auto p-4 md:p-6 lg:p-8"
-        >
+        {/* Main scrollable content */}
+        <main className="flex-1 overflow-auto p-4 md:p-6 lg:p-8">
           <div className="mx-auto max-w-7xl">
             {children}
           </div>
-        </motion.main>
+        </main>
       </div>
     </div>
   );

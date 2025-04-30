@@ -1,428 +1,383 @@
-
 import { useState, useEffect } from "react";
-import { useToast } from "@/hooks/use-toast";
+import { toast } from "react-hot-toast";
+import {
+  Table,
+  TableBody,
+  TableCaption,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useForm } from "react-hook-form";
+import * as z from "zod";
+import { useToast } from "@/components/ui/use-toast";
+import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import MainLayout from "@/components/layout/MainLayout";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { format } from 'date-fns';
+import { ptBR } from 'date-fns/locale';
+import { Copy, CheckCircle, AlertCircle } from 'lucide-react';
 import { Badge } from "@/components/ui/badge";
-import { formatCurrency, formatDate } from "@/lib/utils";
-import { Button } from "@/components/ui/button";
-import { 
-  Select, 
-  SelectContent, 
-  SelectItem, 
-  SelectTrigger, 
-  SelectValue 
-} from "@/components/ui/select";
-import { 
-  Dialog, 
-  DialogContent, 
-  DialogDescription, 
-  DialogHeader, 
-  DialogTitle,
-  DialogFooter
-} from "@/components/ui/dialog";
-import { Filter, Upload, Check, X } from "lucide-react";
-import { PaymentResponseForm } from "@/components/payments/PaymentResponseForm";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Textarea } from "@/components/ui/textarea";
 
-// Define payment data structure
-interface Payment {
+// Define the schema for the payment form
+const paymentFormSchema = z.object({
+  receiptUrl: z.string().url("URL inválida").optional(),
+});
+
+// Define the type for the payment form values
+type PaymentFormValues = z.infer<typeof paymentFormSchema>;
+
+// Define the type for a payment
+type Payment = {
   id: string;
-  client_id: string;
-  client_name: string;
-  amount: number;
-  status: "pending" | "approved" | "rejected";
   created_at: string;
-  approved_at?: string;
-  pix_key_id: string;
-  pix_key: string;
-  pix_key_type: string;
-  is_boleto: boolean;
-  receipt_url?: string;
-}
-
-// Define mock payment data
-const mockPayments: Payment[] = [
-  {
-    id: "1",
-    client_id: "1",
-    client_name: "Empresa ABC",
-    amount: 1500,
-    status: "pending",
-    created_at: "2023-05-15",
-    pix_key_id: "123",
-    pix_key: "email@empresa.com",
-    pix_key_type: "email",
-    is_boleto: false
-  },
-  {
-    id: "2",
-    client_id: "2",
-    client_name: "Empresa XYZ",
-    amount: 3200,
-    status: "approved",
-    created_at: "2023-05-10",
-    approved_at: "2023-05-11",
-    pix_key_id: "456",
-    pix_key: "11999999999",
-    pix_key_type: "phone",
-    is_boleto: false
-  },
-  {
-    id: "3",
-    client_id: "1",
-    client_name: "Empresa ABC",
-    amount: 2000,
-    status: "pending",
-    created_at: "2023-05-18",
-    pix_key_id: "123",
-    pix_key: "email@empresa.com",
-    pix_key_type: "email",
-    is_boleto: true
-  }
-];
-
-const statusColors = {
-  pending: "bg-amber-500",
-  approved: "bg-green-500",
-  rejected: "bg-red-500",
-};
-
-const statusLabels = {
-  pending: "Pendente",
-  approved: "Aprovado",
-  rejected: "Rejeitado",
-};
-
-interface PaymentDetailsProps {
-  payment: Payment | null;
-  isOpen: boolean;
-  onClose: () => void;
-  onStatusChange: (paymentId: string, newStatus: "pending" | "approved" | "rejected") => void;
-  onReceiptUpload: (paymentId: string, file: File) => Promise<void>;
-}
-
-const PaymentDetails = ({ payment, isOpen, onClose, onStatusChange, onReceiptUpload }: PaymentDetailsProps) => {
-  const [selectedStatus, setSelectedStatus] = useState<"pending" | "approved" | "rejected">(payment?.status || "pending");
-  const [isUploading, setIsUploading] = useState(false);
-  
-  useEffect(() => {
-    if (payment) {
-      setSelectedStatus(payment.status);
-    }
-  }, [payment]);
-
-  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (!payment || !e.target.files || e.target.files.length === 0) return;
-    
-    const file = e.target.files[0];
-    setIsUploading(true);
-    try {
-      await onReceiptUpload(payment.id, file);
-    } finally {
-      setIsUploading(false);
-    }
-  };
-
-  const handleStatusSave = () => {
-    if (!payment) return;
-    onStatusChange(payment.id, selectedStatus);
-    onClose();
-  };
-
-  if (!payment) return null;
-
-  return (
-    <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-md">
-        <DialogHeader>
-          <DialogTitle>Detalhes do Pagamento</DialogTitle>
-          <DialogDescription>
-            Visualizar e gerenciar detalhes do pagamento
-          </DialogDescription>
-        </DialogHeader>
-        
-        <div className="space-y-4 py-4">
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <p className="text-sm font-medium text-muted-foreground">Cliente</p>
-              <p>{payment.client_name}</p>
-            </div>
-            <div>
-              <p className="text-sm font-medium text-muted-foreground">Valor</p>
-              <p className="font-semibold">R$ {payment.amount.toFixed(2)}</p>
-            </div>
-            <div>
-              <p className="text-sm font-medium text-muted-foreground">Data</p>
-              <p>{payment.created_at}</p>
-            </div>
-            <div>
-              <p className="text-sm font-medium text-muted-foreground">Método</p>
-              <p>{payment.is_boleto ? "Boleto" : "PIX"}</p>
-            </div>
-          </div>
-          
-          <div>
-            <label className="text-sm font-medium mb-1 block">Status</label>
-            <Select value={selectedStatus} onValueChange={(value: "pending" | "approved" | "rejected") => setSelectedStatus(value)}>
-              <SelectTrigger>
-                <SelectValue placeholder="Selecione um status" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="pending">{statusLabels.pending}</SelectItem>
-                <SelectItem value="approved">{statusLabels.approved}</SelectItem>
-                <SelectItem value="rejected">{statusLabels.rejected}</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-          
-          <div>
-            <label className="text-sm font-medium mb-1 block">Comprovante</label>
-            {payment.receipt_url ? (
-              <div className="flex items-center gap-2">
-                <Button variant="outline" size="sm" onClick={() => window.open(payment.receipt_url, "_blank")}>
-                  Visualizar comprovante
-                </Button>
-              </div>
-            ) : (
-              <div className="border border-dashed rounded-md p-4 text-center">
-                <label htmlFor="receipt-upload" className="cursor-pointer">
-                  <Upload className="mx-auto h-8 w-8 text-muted-foreground" />
-                  <p className="mt-2 text-sm text-muted-foreground">Clique para fazer upload do comprovante</p>
-                  <input
-                    id="receipt-upload"
-                    type="file"
-                    className="hidden"
-                    accept="image/*,.pdf"
-                    onChange={handleFileChange}
-                    disabled={isUploading}
-                  />
-                </label>
-                {isUploading && <p className="mt-2 text-sm">Enviando...</p>}
-              </div>
-            )}
-          </div>
-        </div>
-        
-        <DialogFooter>
-          <Button variant="outline" onClick={onClose}>Cancelar</Button>
-          <Button onClick={handleStatusSave}>Salvar</Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
-  );
+  amount: number;
+  status: "PENDING" | "APPROVED" | "REJECTED" | "PAID";
+  client_id: string;
+  approved_at: string | null;
+  receipt_url: string | null;
+  rejection_reason: string | null;
+  client_name: string | null;
 };
 
 const Payments = () => {
-  const [payments, setPayments] = useState<Payment[]>(mockPayments);
-  const [statusFilter, setStatusFilter] = useState("all");
-  const [typeFilter, setTypeFilter] = useState("all");
+  const [payments, setPayments] = useState<Payment[]>([]);
+  const [isPaymentFormOpen, setPaymentFormOpen] = useState(false);
   const [selectedPayment, setSelectedPayment] = useState<Payment | null>(null);
-  const [isDetailsOpen, setIsDetailsOpen] = useState(false);
-  const [isResponseFormOpen, setIsResponseFormOpen] = useState(false);
-  const [responseType, setResponseType] = useState<"approve" | "reject">("approve");
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [filterStatus, setFilterStatus] = useState<"PENDING" | "APPROVED" | "REJECTED" | "PAID" | "ALL">("ALL");
+  const { user } = useAuth();
   const { toast } = useToast();
-  
-  const filteredPayments = payments.filter(payment => {
-    const matchesStatus = statusFilter === "all" || payment.status === statusFilter;
-    const matchesType = typeFilter === "all" || 
-      (typeFilter === "pix" && !payment.is_boleto) || 
-      (typeFilter === "boleto" && payment.is_boleto);
-    return matchesStatus && matchesType;
+
+  // Initialize the form using useForm hook
+  const paymentForm = useForm<PaymentFormValues>({
+    resolver: zodResolver(paymentFormSchema),
+    defaultValues: {
+      receiptUrl: "",
+    },
   });
 
-  const handlePaymentClick = (payment: Payment) => {
-    setSelectedPayment(payment);
-    setIsDetailsOpen(true);
-  };
-  
-  const handleStatusChange = (paymentId: string, newStatus: "pending" | "approved" | "rejected") => {
-    // In a real application, this would make an API call to update the status
-    const updatedPayments = payments.map(payment => 
-      payment.id === paymentId 
-        ? { ...payment, status: newStatus, approved_at: newStatus === "approved" ? new Date().toISOString() : payment.approved_at }
-        : payment
-    );
-    
-    setPayments(updatedPayments);
-    
-    toast({
-      title: "Status alterado",
-      description: `O status do pagamento foi alterado para ${statusLabels[newStatus]}.`,
-    });
-  };
-  
-  const handleReceiptUpload = async (paymentId: string, file: File) => {
-    // In a real application, this would upload the file to storage
+  // Fetch payments from Supabase
+  const fetchPayments = async () => {
     try {
-      // Simulate a successful upload by updating the payment
-      const updatedPayments = payments.map(payment => 
-        payment.id === paymentId 
-          ? { ...payment, receipt_url: URL.createObjectURL(file) }
-          : payment
-      );
-      
-      setPayments(updatedPayments);
-      
-      toast({
-        title: "Comprovante enviado",
-        description: "O comprovante foi enviado com sucesso.",
-      });
+      let query = supabase
+        .from("payments")
+        .select(`
+          id, created_at, amount, status, client_id, approved_at, receipt_url, rejection_reason,
+          clients (name)
+        `)
+        .order('created_at', { ascending: false });
+
+      if (filterStatus !== "ALL") {
+        query = query.eq('status', filterStatus);
+      }
+
+      const { data, error } = await query;
+
+      if (error) {
+        throw new Error(error.message);
+      }
+
+      // Map the data to the Payment type
+      const mappedPayments: Payment[] = data.map((payment: any) => ({
+        id: payment.id,
+        created_at: payment.created_at,
+        amount: payment.amount,
+        status: payment.status,
+        client_id: payment.client_id,
+        approved_at: payment.approved_at,
+        receipt_url: payment.receipt_url,
+        rejection_reason: payment.rejection_reason,
+        client_name: payment.clients?.name || null,
+      }));
+
+      setPayments(mappedPayments);
     } catch (error) {
+      console.error("Error fetching payments:", error);
       toast({
+        title: "Erro",
+        description: "Não foi possível carregar os pagamentos.",
         variant: "destructive",
-        title: "Erro ao enviar comprovante",
-        description: "Não foi possível enviar o comprovante. Tente novamente.",
       });
     }
   };
 
-  const handleResponseSubmit = async (data: { notes: string; isApproved: boolean }) => {
-    if (!selectedPayment) return;
-    
-    const newStatus = data.isApproved ? "approved" : "rejected";
-    handleStatusChange(selectedPayment.id, newStatus);
-    
-    setIsResponseFormOpen(false);
-  };
-  
-  const openResponseForm = (payment: Payment, type: "approve" | "reject") => {
+  // Handle opening the payment form
+  const handleOpenPaymentForm = (payment: Payment) => {
     setSelectedPayment(payment);
-    setResponseType(type);
-    setIsResponseFormOpen(true);
+    setPaymentFormOpen(true);
   };
-  
+
+  // Handle closing the payment form
+  const handleClosePaymentForm = () => {
+    setSelectedPayment(null);
+    setPaymentFormOpen(false);
+    paymentForm.reset();
+  };
+
+  // Handle form submission
+  const onSubmit = async (data: PaymentFormValues) => {
+    if (!selectedPayment) return;
+    await handleRespond(selectedPayment.id, true, data.receiptUrl);
+  };
+
+  // Fix the type error in handleRespond function
+  const handleRespond = async (paymentId: string, approved: boolean, receiptUrl?: string): Promise<boolean> => {
+    try {
+      setIsSubmitting(true);
+      
+      // Previous implementation logic - ensure it matches the expected signature
+      const status = approved ? "APPROVED" : "REJECTED";
+      const update: Record<string, any> = { status };
+      
+      if (approved && receiptUrl) {
+        update.receipt_url = receiptUrl;
+        update.approved_at = new Date().toISOString();
+      }
+      
+      const { error } = await supabase
+        .from("payments")
+        .update(update)
+        .eq("id", paymentId);
+      
+      if (error) throw new Error(error.message);
+      
+      setPaymentFormOpen(false);
+      await fetchPayments();
+      
+      toast({
+        title: approved ? "Pagamento aprovado!" : "Pagamento rejeitado",
+        description: `O pagamento foi ${approved ? "aprovado" : "rejeitado"} com sucesso.`,
+        variant: approved ? "default" : "destructive",
+      });
+      
+      return true;
+    } catch (error) {
+      console.error("Erro ao responder pagamento:", error);
+      toast({
+        title: "Erro",
+        description: `Não foi possível ${approved ? "aprovar" : "rejeitar"} o pagamento.`,
+        variant: "destructive",
+      });
+      return false;
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  // Filter payments based on search term
+  const filteredPayments = payments.filter((payment) => {
+    const searchTermLower = searchTerm.toLowerCase();
+    return (
+      payment.id.toLowerCase().includes(searchTermLower) ||
+      (payment.client_name?.toLowerCase().includes(searchTermLower) || false) ||
+      payment.amount.toString().includes(searchTermLower) ||
+      payment.status.toLowerCase().includes(searchTermLower)
+    );
+  });
+
+  // Format date
+  const formatDate = (dateString: string | null): string => {
+    if (!dateString) return 'N/A';
+    try {
+      const date = new Date(dateString);
+      return format(date, 'dd/MM/yyyy HH:mm', { locale: ptBR });
+    } catch (error) {
+      console.error("Error formatting date:", error);
+      return 'Invalid Date';
+    }
+  };
+
+  // Copy to clipboard function
+  const copyToClipboard = (text: string, message: string) => {
+    navigator.clipboard.writeText(text);
+    toast({
+      title: "Copiado!",
+      description: message,
+    });
+  };
+
+  // Fetch payments on component mount
+  useEffect(() => {
+    fetchPayments();
+  }, [filterStatus]);
+
   return (
     <MainLayout>
-      <div className="space-y-4">
-        <div className="flex justify-between items-center">
-          <h2 className="text-3xl font-bold tracking-tight">Pagamentos</h2>
+      <div className="container mx-auto py-10">
+        <h1 className="text-3xl font-semibold mb-6">Pagamentos</h1>
+
+        {/* Search and Filter Section */}
+        <div className="flex flex-col md:flex-row space-y-4 md:space-y-0 md:space-x-4 mb-6">
+          <Input
+            type="text"
+            placeholder="Buscar pagamento..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="flex-1"
+          />
+          <Select value={filterStatus} onValueChange={setFilterStatus}>
+            <SelectTrigger className="w-[180px]">
+              <SelectValue placeholder="Filtrar Status" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="ALL">Todos</SelectItem>
+              <SelectItem value="PENDING">Pendente</SelectItem>
+              <SelectItem value="APPROVED">Aprovado</SelectItem>
+              <SelectItem value="REJECTED">Rejeitado</SelectItem>
+              <SelectItem value="PAID">Pago</SelectItem>
+            </SelectContent>
+          </Select>
         </div>
 
-        <Card className="mb-4">
-          <CardHeader>
-            <CardTitle>Filtros</CardTitle>
-            <CardDescription>
-              Filtre os pagamentos por status e tipo
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div>
-                <label className="text-sm font-medium mb-1 block">Status</label>
-                <Select value={statusFilter} onValueChange={setStatusFilter}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Selecione um status" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">Todos</SelectItem>
-                    <SelectItem value="pending">Pendente</SelectItem>
-                    <SelectItem value="approved">Aprovado</SelectItem>
-                    <SelectItem value="rejected">Rejeitado</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              <div>
-                <label className="text-sm font-medium mb-1 block">Tipo</label>
-                <Select value={typeFilter} onValueChange={setTypeFilter}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Selecione um tipo" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">Todos</SelectItem>
-                    <SelectItem value="pix">PIX</SelectItem>
-                    <SelectItem value="boleto">Boleto</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+        {/* Payments Table */}
+        <Table>
+          <TableCaption>Lista de todos os pagamentos.</TableCaption>
+          <TableHeader>
+            <TableRow>
+              <TableHead>ID</TableHead>
+              <TableHead>Data de Criação</TableHead>
+              <TableHead>Cliente</TableHead>
+              <TableHead>Valor</TableHead>
+              <TableHead>Status</TableHead>
+              <TableHead>Ações</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {filteredPayments.map((payment) => (
+              <TableRow key={payment.id}>
+                <TableCell className="font-medium">
+                  <div className="flex items-center space-x-2">
+                    {payment.id}
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => copyToClipboard(payment.id, "ID do pagamento copiado!")}
+                    >
+                      <Copy className="h-4 w-4" />
+                    </Button>
+                  </div>
+                </TableCell>
+                <TableCell>{formatDate(payment.created_at)}</TableCell>
+                <TableCell>{payment.client_name}</TableCell>
+                <TableCell>R$ {payment.amount.toFixed(2)}</TableCell>
+                <TableCell>
+                  <Badge
+                    variant={
+                      payment.status === "PENDING"
+                        ? "secondary"
+                        : payment.status === "APPROVED"
+                          ? "default"
+                          : "destructive"
+                    }
+                  >
+                    {payment.status}
+                  </Badge>
+                </TableCell>
+                <TableCell>
+                  <Button onClick={() => handleOpenPaymentForm(payment)} disabled={payment.status !== "PENDING"}>
+                    Responder
+                  </Button>
+                </TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
 
-        <Card>
-          <CardHeader>
-            <CardTitle>Lista de Pagamentos</CardTitle>
-            <CardDescription>
-              Todos os pagamentos realizados no sistema.
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Cliente</TableHead>
-                  <TableHead>Valor</TableHead>
-                  <TableHead>Data de Criação</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead>Tipo</TableHead>
-                  <TableHead>Comprovante</TableHead>
-                  <TableHead className="text-right">Ações</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {filteredPayments.length > 0 ? (
-                  filteredPayments.map((payment) => (
-                    <TableRow key={payment.id} className="cursor-pointer" onClick={() => handlePaymentClick(payment)}>
-                      <TableCell className="font-medium">{payment.client_name}</TableCell>
-                      <TableCell>R$ {payment.amount.toFixed(2)}</TableCell>
-                      <TableCell>{payment.created_at}</TableCell>
-                      <TableCell>
-                        <Badge className={statusColors[payment.status]}>
-                          {statusLabels[payment.status]}
-                        </Badge>
-                      </TableCell>
-                      <TableCell>{payment.is_boleto ? "Boleto" : "PIX"}</TableCell>
-                      <TableCell>
-                        {payment.receipt_url ? (
-                          <Badge variant="outline" className="bg-green-100">
-                            <Check size={14} className="mr-1" /> Enviado
-                          </Badge>
-                        ) : (
-                          <Badge variant="outline">
-                            <X size={14} className="mr-1" /> Pendente
-                          </Badge>
-                        )}
-                      </TableCell>
-                      <TableCell className="text-right">
-                        <Button variant="ghost" size="sm" onClick={(e) => {
-                          e.stopPropagation();
-                          handlePaymentClick(payment);
-                        }}>
-                          Detalhes
-                        </Button>
-                      </TableCell>
-                    </TableRow>
-                  ))
-                ) : (
-                  <TableRow>
-                    <TableCell colSpan={7} className="text-center py-6 text-gray-500">
-                      Nenhum pagamento encontrado com os filtros selecionados
-                    </TableCell>
-                  </TableRow>
-                )}
-              </TableBody>
-            </Table>
-          </CardContent>
-        </Card>
-        
-        <PaymentDetails 
-          payment={selectedPayment}
-          isOpen={isDetailsOpen}
-          onClose={() => setIsDetailsOpen(false)}
-          onStatusChange={handleStatusChange}
-          onReceiptUpload={handleReceiptUpload}
-        />
+        {/* Payment Form Dialog */}
+        <Dialog open={isPaymentFormOpen} onOpenChange={handleClosePaymentForm}>
+          <DialogContent className="sm:max-w-md">
+            <DialogHeader>
+              <DialogTitle>Responder Pagamento</DialogTitle>
+              <DialogDescription>
+                Detalhes do pagamento e ações para aprovar ou rejeitar.
+              </DialogDescription>
+            </DialogHeader>
+            {selectedPayment && (
+              <div className="grid gap-4 py-4">
+                <div className="grid grid-cols-4 items-center gap-4">
+                  <Label htmlFor="id" className="text-right">
+                    ID
+                  </Label>
+                  <Input type="text" id="id" value={selectedPayment.id} readOnly className="col-span-3" />
+                </div>
+                <div className="grid grid-cols-4 items-center gap-4">
+                  <Label htmlFor="amount" className="text-right">
+                    Valor
+                  </Label>
+                  <Input type="text" id="amount" value={selectedPayment.amount.toFixed(2)} readOnly className="col-span-3" />
+                </div>
+                <div className="grid grid-cols-4 items-center gap-4">
+                  <Label htmlFor="created_at" className="text-right">
+                    Data de Criação
+                  </Label>
+                  <Input type="text" id="created_at" value={formatDate(selectedPayment.created_at)} readOnly className="col-span-3" />
+                </div>
 
-        {selectedPayment && (
-          <PaymentResponseForm 
-            isOpen={isResponseFormOpen}
-            onClose={() => setIsResponseFormOpen(false)}
-            onSubmit={handleResponseSubmit}
-            paymentId={selectedPayment.id}
-            type={responseType}
-          />
-        )}
+                <Form {...paymentForm}>
+                  <form onSubmit={paymentForm.handleSubmit(onSubmit)} className="space-y-4">
+                    <FormField
+                      control={paymentForm.control}
+                      name="receiptUrl"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>URL do Comprovante (Opcional)</FormLabel>
+                          <FormControl>
+                            <Input type="url" placeholder="Insira a URL do comprovante" {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <div className="flex justify-end space-x-2">
+                      <Button type="button" variant="secondary" onClick={handleClosePaymentForm}>
+                        Cancelar
+                      </Button>
+                      <Button
+                        type="submit"
+                        disabled={isSubmitting}
+                      >
+                        Aprovar Pagamento
+                      </Button>
+                      <Button
+                        type="button"
+                        variant="destructive"
+                        onClick={() => handleRespond(selectedPayment.id, false)}
+                        disabled={isSubmitting}
+                      >
+                        Rejeitar Pagamento
+                      </Button>
+                    </div>
+                  </form>
+                </Form>
+              </div>
+            )}
+          </DialogContent>
+        </Dialog>
       </div>
     </MainLayout>
   );

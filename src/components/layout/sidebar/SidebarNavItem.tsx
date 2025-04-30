@@ -3,7 +3,7 @@ import { useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { ChevronDown, ChevronRight } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion } from "framer-motion";
 import { SidebarItem, SidebarSubItem } from "./types";
 import { UserRole } from "@/types";
 
@@ -44,12 +44,23 @@ const SidebarNavItem = ({ item, userRole }: SidebarNavItemProps) => {
     navigate(href); // Use React Router navigation
   };
 
+  // Button animation variants
+  const buttonAnimationVariants = {
+    initial: { backgroundColor: "transparent" },
+    hover: { backgroundColor: "rgba(255, 255, 255, 0.1)" },
+    active: { backgroundColor: "rgba(255, 255, 255, 0.2)" }
+  };
+
   if (item.subItems) {
     return (
       <div className="mb-1">
-        <a
+        <motion.a
           href={item.href}
           onClick={toggleExpanded}
+          initial="initial"
+          whileHover="hover"
+          whileTap="active"
+          variants={buttonAnimationVariants}
           className={cn(
             "flex items-center justify-between w-full px-3 py-2 text-sm rounded-md transition-colors",
             isActiveParent(item)
@@ -61,50 +72,61 @@ const SidebarNavItem = ({ item, userRole }: SidebarNavItemProps) => {
             <item.icon className="h-5 w-5 mr-3 flex-shrink-0" />
             <span>{item.title}</span>
           </div>
-          {expanded ? (
-            <ChevronDown className="h-4 w-4" />
-          ) : (
-            <ChevronRight className="h-4 w-4" />
-          )}
-        </a>
+          <motion.div
+            animate={{ rotate: expanded ? 180 : 0 }}
+            transition={{ duration: 0.2 }}
+          >
+            {expanded ? (
+              <ChevronDown className="h-4 w-4" />
+            ) : (
+              <ChevronRight className="h-4 w-4" />
+            )}
+          </motion.div>
+        </motion.a>
         
-        <AnimatePresence>
-          {expanded && (
-            <motion.div
-              initial={{ height: 0, opacity: 0 }}
-              animate={{ height: "auto", opacity: 1 }}
-              exit={{ height: 0, opacity: 0 }}
-              transition={{ duration: 0.2 }}
-              className="overflow-hidden"
-            >
-              {item.subItems.map((subItem) => (
-                subItem.roles.includes(userRole) && (
-                  <a
-                    key={subItem.title}
-                    href={subItem.href}
-                    onClick={(e) => handleItemClick(e, subItem.href)}
-                    className={cn(
-                      "flex items-center w-full pl-11 pr-3 py-2 text-sm rounded-md transition-colors mt-1",
-                      isActiveRoute(subItem.href)
-                        ? "bg-sidebar-accent text-white font-medium"
-                        : "text-sidebar-foreground hover:bg-sidebar-accent/70 hover:text-white"
-                    )}
-                  >
-                    <span>{subItem.title}</span>
-                  </a>
-                )
-              ))}
-            </motion.div>
-          )}
-        </AnimatePresence>
+        <motion.div
+          initial={{ height: 0, opacity: 0 }}
+          animate={{ 
+            height: expanded ? "auto" : 0, 
+            opacity: expanded ? 1 : 0 
+          }}
+          transition={{ duration: 0.2 }}
+          className="overflow-hidden"
+        >
+          {item.subItems.map((subItem) => (
+            subItem.roles.includes(userRole) && (
+              <motion.a
+                key={subItem.title}
+                href={subItem.href}
+                onClick={(e) => handleItemClick(e, subItem.href)}
+                initial="initial"
+                whileHover="hover"
+                whileTap="active"
+                variants={buttonAnimationVariants}
+                className={cn(
+                  "flex items-center w-full pl-11 pr-3 py-2 text-sm rounded-md transition-colors mt-1",
+                  isActiveRoute(subItem.href)
+                    ? "bg-sidebar-accent text-white font-medium"
+                    : "text-sidebar-foreground hover:bg-sidebar-accent/70 hover:text-white"
+                )}
+              >
+                <span>{subItem.title}</span>
+              </motion.a>
+            )
+          ))}
+        </motion.div>
       </div>
     );
   }
 
   return (
-    <a
+    <motion.a
       href={item.href}
       onClick={(e) => handleItemClick(e, item.href)}
+      initial="initial"
+      whileHover="hover"
+      whileTap="active"
+      variants={buttonAnimationVariants}
       className={cn(
         "flex items-center w-full px-3 py-2 text-sm rounded-md transition-colors",
         isActiveRoute(item.href)
@@ -114,7 +136,7 @@ const SidebarNavItem = ({ item, userRole }: SidebarNavItemProps) => {
     >
       <item.icon className="h-5 w-5 mr-3 flex-shrink-0" />
       <span>{item.title}</span>
-    </a>
+    </motion.a>
   );
 };
 
