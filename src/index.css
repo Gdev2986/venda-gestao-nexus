@@ -48,8 +48,8 @@
   }
 
   .dark {
-  --background: 0 0% 10%;              /* Fundo principal bem escuro */
-  --foreground: 0 0% 90%;              /* Texto claro */
+  --background: 0 0% 10%;
+  --foreground: 0 0% 90%;
 
   --card: 0 0% 12%;
   --card-foreground: 0 0% 90%;
@@ -57,16 +57,16 @@
   --popover: 0 0% 12%;
   --popover-foreground: 0 0% 90%;
 
-  --primary: 210 100% 45%;             /* Azul leve para botões ou destaques */
+  --primary: 196 100% 45%;               /* herdado da sidebar-primary */
   --primary-foreground: 0 0% 98%;
 
-  --secondary: 0 0% 20%;               /* Cinza médio para fundo secundário */
+  --secondary: 0 0% 20%;
   --secondary-foreground: 0 0% 90%;
 
   --muted: 0 0% 15%;
   --muted-foreground: 0 0% 70%;
 
-  --accent: 210 40% 30%;               /* Azul escuro suave */
+  --accent: 196 50% 30%;                 /* herdado da sidebar-accent */
   --accent-foreground: 0 0% 98%;
 
   --destructive: 0 70% 30%;
@@ -74,17 +74,19 @@
 
   --border: 0 0% 25%;
   --input: 0 0% 25%;
-  --ring: 210 100% 45%;                /* Detalhe azul ao redor de foco */
+  --ring: 196 100% 70%;                  /* herdado da sidebar-ring */
 
-  --sidebar-background: 0 0% 12%;
-  --sidebar-foreground: 0 0% 90%;
-  --sidebar-primary: 210 100% 45%;
-  --sidebar-primary-foreground: 0 0% 98%;
-  --sidebar-accent: 210 40% 30%;
-  --sidebar-accent-foreground: 0 0% 98%;
-  --sidebar-border: 0 0% 25%;
-  --sidebar-ring: 210 100% 70%;
- }
+  /* Sidebar permanece inalterada */
+  --sidebar-background: 196 70% 20%;
+  --sidebar-foreground: 210 40% 98%;
+  --sidebar-primary: 196 100% 45%;
+  --sidebar-primary-foreground: 210 40% 98%;
+  --sidebar-accent: 196 50% 30%;
+  --sidebar-accent-foreground: 210 40% 98%;
+  --sidebar-border: 196 60% 25%;
+  --sidebar-ring: 196 100% 70%;
+}
+
 
 }
 
