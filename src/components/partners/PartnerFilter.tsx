@@ -1,103 +1,154 @@
 
-import { useState, useEffect } from 'react';
-import { Card, CardContent } from '@/components/ui/card';
-import { Input } from '@/components/ui/input';
-import { Button } from '@/components/ui/button';
-import { Slider } from '@/components/ui/slider';
-import { Label } from '@/components/ui/label';
-import { Search, RefreshCw } from 'lucide-react';
-import { FilterValues } from '@/types';
+import { useState } from "react";
+import { Search } from "lucide-react";
+import { z } from "zod";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { DateRange } from "react-day-picker";
+
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Calendar } from "@/components/ui/calendar";
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+} from "@/components/ui/form";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import { format } from "date-fns";
+import { ptBR } from "date-fns/locale";
+import { FilterValues } from "@/hooks/use-partners";
+
+// Define filter schema
+const filterSchema = z.object({
+  searchTerm: z.string().optional(),
+  dateRange: z.object({
+    from: z.date().optional(),
+    to: z.date().optional(),
+  }).optional(),
+  commissionRange: z.tuple([z.number(), z.number()]).optional(),
+});
 
 interface PartnerFilterProps {
   onFilter: (values: FilterValues) => void;
-  loading?: boolean;
 }
 
-export default function PartnerFilter({ onFilter, loading = false }: PartnerFilterProps) {
-  const [searchTerm, setSearchTerm] = useState('');
-  const [commissionRange, setCommissionRange] = useState<[number, number]>([0, 100]);
-  const [initialCommissionRange] = useState<[number, number]>([0, 100]);
+export default function PartnerFilter({ onFilter }: PartnerFilterProps) {
+  const [dateOpen, setDateOpen] = useState(false);
 
-  useEffect(() => {
-    // Apply initial filters on mount
-    handleFilter();
-  }, []);
+  const form = useForm<z.infer<typeof filterSchema>>({
+    resolver: zodResolver(filterSchema),
+    defaultValues: {
+      searchTerm: "",
+      dateRange: undefined,
+      commissionRange: [0, 100],
+    },
+  });
 
-  const handleFilter = () => {
+  const handleSubmit = (values: z.infer<typeof filterSchema>) => {
     onFilter({
-      searchTerm,
-      commissionRange,
+      searchTerm: values.searchTerm || "",
+      commissionRange: values.commissionRange || [0, 100],
     });
   };
 
-  const handleReset = () => {
-    setSearchTerm('');
-    setCommissionRange(initialCommissionRange);
+  const clearFilters = () => {
+    form.reset({
+      searchTerm: "",
+      dateRange: undefined,
+      commissionRange: [0, 100],
+    });
     onFilter({
-      searchTerm: '',
-      commissionRange: initialCommissionRange,
+      searchTerm: "",
+      commissionRange: [0, 100],
     });
   };
 
-  const handleCommissionChange = (value: number[]) => {
-    // Ensure we only take exactly two values for the range
-    const [min, max] = value;
-    setCommissionRange([min, max]);
-  };
+  const selectedDateRange = form.watch("dateRange");
 
   return (
-    <Card>
-      <CardContent className="pt-6">
-        <div className="space-y-6">
-          <div className="space-y-2">
-            <Label htmlFor="search">Pesquisar</Label>
-            <div className="relative">
-              <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-gray-500" />
-              <Input
-                id="search"
-                placeholder="Nome da empresa ou contato..."
-                className="pl-8"
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-              />
-            </div>
-          </div>
+    <Form {...form}>
+      <form onSubmit={form.handleSubmit(handleSubmit)} className="w-full">
+        <div className="flex flex-col sm:flex-row gap-3">
+          <FormField
+            control={form.control}
+            name="searchTerm"
+            render={({ field }) => (
+              <FormItem className="flex-1">
+                <FormControl>
+                  <div className="relative">
+                    <Input
+                      placeholder="Buscar por nome..."
+                      {...field}
+                      className="pl-10"
+                    />
+                    <Search className="absolute left-3 top-2.5 h-5 w-5 text-muted-foreground" />
+                  </div>
+                </FormControl>
+              </FormItem>
+            )}
+          />
 
-          <div className="space-y-2">
-            <Label>Comissão (%)</Label>
-            <div className="px-2">
-              <Slider
-                defaultValue={commissionRange}
-                min={0}
-                max={100}
-                step={1}
-                value={[commissionRange[0], commissionRange[1]]}
-                onValueChange={handleCommissionChange}
-                className="my-4"
-              />
-              <div className="flex justify-between text-sm text-gray-500">
-                <span>{commissionRange[0]}%</span>
-                <span>{commissionRange[1]}%</span>
-              </div>
-            </div>
-          </div>
+          <FormField
+            control={form.control}
+            name="dateRange"
+            render={({ field }) => (
+              <FormItem className="flex-shrink-0 w-full sm:w-auto">
+                <Popover open={dateOpen} onOpenChange={setDateOpen}>
+                  <PopoverTrigger asChild>
+                    <FormControl>
+                      <Button
+                        variant="outline"
+                        className="w-full sm:w-[240px] justify-start text-left font-normal"
+                      >
+                        {field.value?.from ? (
+                          field.value.to ? (
+                            <>
+                              {format(field.value.from, "dd/MM/yyyy")} -{" "}
+                              {format(field.value.to, "dd/MM/yyyy")}
+                            </>
+                          ) : (
+                            format(field.value.from, "dd/MM/yyyy")
+                          )
+                        ) : (
+                          <span className="text-muted-foreground">Selecionar período</span>
+                        )}
+                      </Button>
+                    </FormControl>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0" align="center">
+                    <Calendar
+                      mode="range"
+                      selected={field.value as DateRange}
+                      onSelect={(range) => {
+                        field.onChange(range);
+                        if (range?.to) {
+                          setDateOpen(false);
+                        }
+                      }}
+                      numberOfMonths={1}
+                      locale={ptBR}
+                      className="p-3"
+                    />
+                  </PopoverContent>
+                </Popover>
+              </FormItem>
+            )}
+          />
 
-          <div className="flex flex-col space-y-2">
-            <Button onClick={handleFilter} disabled={loading}>
-              Filtrar
-            </Button>
-            <Button
-              variant="outline"
-              onClick={handleReset}
-              disabled={loading}
-              className="flex items-center"
-            >
-              <RefreshCw className="mr-2 h-4 w-4" />
-              Redefinir
+          <div className="flex gap-2 w-full sm:w-auto">
+            <Button type="submit" className="flex-1 sm:flex-none">Filtrar</Button>
+            <Button type="button" variant="outline" onClick={clearFilters} className="flex-1 sm:flex-none">
+              Limpar
             </Button>
           </div>
         </div>
-      </CardContent>
-    </Card>
+      </form>
+    </Form>
   );
 }

@@ -1,10 +1,11 @@
+
 import { useState, useEffect } from "react";
-import { useToast } from "@/hooks/use-toast";
+import { useToast } from "@/components/ui/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import MainLayout from "@/components/layout/MainLayout";
 import { Payment, PaymentStatus } from "@/types";
-import { formatCurrency } from "@/lib/utils";
+import { formatCurrency } from "@/lib/formatters";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -14,9 +15,7 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } f
 import PaymentForm from "@/components/payments/PaymentForm";
 import PaymentReceiptUploader from "@/components/payments/PaymentReceiptUploader";
 
-interface ClientPayment extends Payment {
-  description?: string | null; // Make description optional and nullable
-}
+type ClientPayment = Payment;
 
 const ClientPayments = () => {
   const { toast } = useToast();
@@ -33,11 +32,27 @@ const ClientPayments = () => {
 
     setIsLoading(true);
     try {
+      // Get client ID from user profile using user.id directly
+      const { data: profileData, error: profileError } = await supabase
+        .from("profiles")
+        .select("id")
+        .eq("id", user.id)
+        .single();
+
+      if (profileError) throw profileError;
+      
+      // Since we don't have client_id in profiles, we'll just use the user's ID
+      const userId = profileData?.id;
+      if (!userId) {
+        setPayments([]);
+        return;
+      }
+
       // Get payment_requests for this client
       const { data, error } = await supabase
         .from("payment_requests")
         .select("*")
-        .eq("client_id", user.id)
+        .eq("client_id", userId) // Assuming client_id is the user's profile id
         .order("created_at", { ascending: false });
 
       if (error) throw error;
@@ -46,11 +61,11 @@ const ClientPayments = () => {
       const transformedPayments: ClientPayment[] = (data || []).map(item => ({
         id: item.id,
         amount: item.amount,
-        description: item.description || null,
+        description: `Payment #${item.id.slice(0, 8)}`,
         status: item.status as PaymentStatus,
         created_at: item.created_at,
         updated_at: item.updated_at || item.created_at,
-        due_date: item.created_at, // Using created_at as due_date for display
+        due_date: item.created_at, // Using created_at as due_date since it's required
         receipt_url: item.receipt_url,
         approved_at: item.approved_at,
         client_id: item.client_id,
@@ -68,6 +83,10 @@ const ClientPayments = () => {
       setIsLoading(false);
     }
   };
+
+  useEffect(() => {
+    fetchPayments();
+  }, [user?.id]);
 
   const handlePaymentClick = (payment: ClientPayment) => {
     setSelectedPayment(payment);
@@ -148,27 +167,6 @@ const ClientPayments = () => {
   const approvedPayments = payments.filter(p => p.status === PaymentStatus.APPROVED);
   const completedPayments = payments.filter(p => [PaymentStatus.PAID, PaymentStatus.REJECTED].includes(p.status));
 
-  useEffect(() => {
-    fetchPayments();
-    
-    // Set up subscription for real-time updates
-    if (user?.id) {
-      const channel = supabase
-        .channel(`payment-requests-${user.id}`)
-        .on('postgres_changes', 
-          { event: '*', schema: 'public', table: 'payment_requests', filter: `client_id=eq.${user.id}` }, 
-          () => {
-            fetchPayments();
-          }
-        )
-        .subscribe();
-        
-      return () => {
-        supabase.removeChannel(channel);
-      };
-    }
-  }, [user?.id]);
-
   return (
     <MainLayout>
       <div className="space-y-6">
@@ -209,9 +207,9 @@ const ClientPayments = () => {
                         {pendingPayments.map((payment) => (
                           <div key={payment.id} className="flex flex-col md:flex-row justify-between items-start md:items-center p-4 border rounded-lg">
                             <div className="space-y-1 mb-2 md:mb-0">
-                              <div className="font-medium">{payment.description || `Pagamento #${payment.id.slice(0, 8)}`}</div>
+                              <div className="font-medium">{payment.description}</div>
                               <div className="text-sm text-muted-foreground">
-                                Criado em: {new Date(payment.created_at).toLocaleDateString()}
+                                Vencimento: {new Date(payment.due_date).toLocaleDateString()}
                               </div>
                               <div className="text-lg font-bold">{formatCurrency(payment.amount)}</div>
                             </div>
@@ -245,7 +243,7 @@ const ClientPayments = () => {
                         {approvedPayments.map((payment) => (
                           <div key={payment.id} className="flex flex-col md:flex-row justify-between items-start md:items-center p-4 border rounded-lg">
                             <div className="space-y-1">
-                              <div className="font-medium">{payment.description || `Pagamento #${payment.id.slice(0, 8)}`}</div>
+                              <div className="font-medium">{payment.description}</div>
                               <div className="text-sm text-muted-foreground">
                                 Enviado em: {payment.approved_at ? new Date(payment.approved_at).toLocaleDateString() : 'N/A'}
                               </div>
@@ -277,7 +275,7 @@ const ClientPayments = () => {
                         {completedPayments.map((payment) => (
                           <div key={payment.id} className="flex flex-col md:flex-row justify-between items-start md:items-center p-4 border rounded-lg">
                             <div className="space-y-1">
-                              <div className="font-medium">{payment.description || `Pagamento #${payment.id.slice(0, 8)}`}</div>
+                              <div className="font-medium">{payment.description}</div>
                               <div className="text-sm text-muted-foreground">
                                 Data: {new Date(payment.created_at).toLocaleDateString()}
                               </div>

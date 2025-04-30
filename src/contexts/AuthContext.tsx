@@ -4,7 +4,6 @@ import { Session, User } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useNavigate } from "react-router-dom";
-import { v4 as uuidv4 } from "uuid";
 
 interface AuthContextType {
   user: User | null;
@@ -24,67 +23,33 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [isLoading, setIsLoading] = useState(true);
   const { toast } = useToast();
   const navigate = useNavigate();
-  
-  // Generate a unique device ID for this browser
-  const getDeviceId = () => {
-    let deviceId = localStorage.getItem('device_id');
-    if (!deviceId) {
-      deviceId = uuidv4();
-      localStorage.setItem('device_id', deviceId);
-    }
-    return deviceId;
-  };
 
-  // Track the session in our database
-  const trackSession = async (userId: string) => {
-    try {
-      const deviceId = getDeviceId();
-      
-      // Record or update the session in our user_sessions table
-      await supabase
-        .from('user_sessions')
-        .upsert(
-          {
-            user_id: userId,
-            device_id: deviceId,
-            last_active: new Date().toISOString(),
-            metadata: { 
-              user_agent: navigator.userAgent,
-              platform: navigator.platform
-            }
-          },
-          { onConflict: 'user_id, device_id' }
-        );
-    } catch (error) {
-      console.error("Error tracking session:", error);
-    }
-  };
+  console.log("AuthProvider rendering, isLoading:", isLoading, "user:", user?.email);
 
-  // Set up authentication state listener
   useEffect(() => {
-    // Set up auth state listener FIRST (important for order)
+    console.log("Setting up auth listener");
+    // Set up auth state listener FIRST
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       (event, newSession) => {
-        // Synchronous updates to prevent deadlocks
+        console.log("Auth state change event:", event);
+        // No async operations here to prevent race conditions
         setSession(newSession);
         setUser(newSession?.user ?? null);
 
         // Handle auth events with setTimeout to avoid calling Supabase inside the callback
-        if (event === "SIGNED_IN" && newSession?.user) {
+        if (event === "SIGNED_IN") {
+          console.log("Signed in event detected");
           setTimeout(() => {
-            trackSession(newSession.user.id);
             toast({
               title: "Autenticado com sucesso",
-              description: "Bem-vindo à plataforma!",
+              description: "Bem-vindo à SigmaPay!",
             });
           }, 0);
         }
         
         if (event === "SIGNED_OUT") {
-          // Clear local storage for clean logout
+          console.log("Signed out event detected");
           setTimeout(() => {
-            localStorage.removeItem('userRole');
-            
             toast({
               title: "Desconectado",
               description: "Você foi desconectado com sucesso.",
@@ -97,6 +62,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     // Check for existing session AFTER setting up listeners
     const initialSessionCheck = async () => {
       try {
+        console.log("Checking initial session");
         const { data, error } = await supabase.auth.getSession();
         
         if (error) {
@@ -104,13 +70,9 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
           throw error;
         }
         
+        console.log("Initial session check complete:", !!data.session);
         setSession(data.session);
         setUser(data.session?.user ?? null);
-        
-        // Track session if user is logged in
-        if (data.session?.user) {
-          await trackSession(data.session.user.id);
-        }
       } catch (error) {
         console.error("Error during initial session check:", error);
       } finally {
@@ -121,12 +83,14 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     initialSessionCheck();
 
     return () => {
+      console.log("Cleaning up auth listener");
       subscription.unsubscribe();
     };
   }, [toast]); // Only run this effect once on mount
 
   const signIn = async (email: string, password: string) => {
     try {
+      console.log("Sign in attempt for:", email);
       setIsLoading(true);
       const { data, error } = await supabase.auth.signInWithPassword({
         email,
@@ -134,7 +98,8 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       });
 
       if (error) {
-        // Enhanced error handling with user-friendly messages
+        // Enhanced error handling
+        console.error("Login error:", error);
         let errorMessage = "Ocorreu um erro durante a autenticação";
         
         if (error.message === "Invalid login credentials") {
@@ -152,6 +117,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       }
       
       if (data.user) {
+        console.log("Sign in successful, navigating to dashboard");
         // Use setTimeout to avoid race conditions with onAuthStateChange
         setTimeout(() => {
           navigate("/dashboard");
@@ -167,6 +133,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
   const signUp = async (email: string, password: string, userData: { name: string }) => {
     try {
+      console.log("Sign up attempt for:", email);
       setIsLoading(true);
       const { error, data } = await supabase.auth.signUp({
         email,
@@ -178,6 +145,8 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
           emailRedirectTo: `${window.location.origin}/dashboard`,
         },
       });
+
+      console.log("Sign up response:", { error, user: data?.user ? true : false });
 
       if (error) {
         let errorMessage = "Ocorreu um erro durante o registro";
@@ -210,12 +179,8 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
   const signOut = async () => {
     try {
+      console.log("Sign out attempt");
       setIsLoading(true);
-      
-      // Clear role from local storage first
-      localStorage.removeItem('userRole');
-      localStorage.removeItem('sb-yjzwusatnkebfpsvvffz-auth-token');
-      
       const { error } = await supabase.auth.signOut();
       if (error) throw error;
       

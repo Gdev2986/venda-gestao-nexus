@@ -2,25 +2,56 @@ import { useEffect } from "react";
 import { Routes, Route, useLocation } from "react-router-dom";
 import { PATHS } from "./routes/paths";
 
-// Import components that definitely exist based on previous files
+// Auth
+import Login from "./pages/auth/Login";
+import Register from "./pages/auth/Register";
+import ForgotPassword from "./pages/auth/ForgotPassword";
+import ResetPassword from "./pages/auth/ResetPassword";
+
+// Dashboard
 import Dashboard from "./pages/Dashboard";
 import ClientDashboard from "./pages/ClientDashboard";
-import Payments from "./pages/Payments";
+
+// Clients
+import Clients from "./pages/clients/Clients";
+import ClientDetails from "./pages/clients/ClientDetails";
+import NewClient from "./pages/clients/NewClient";
+
+// Machines
+import Machines from "./pages/machines/Machines";
+import MachineDetails from "./pages/machines/MachineDetails";
+import NewMachine from "./pages/machines/NewMachine";
+
+// Sales
+import Sales from "./pages/sales/Sales";
+import SaleDetails from "./pages/sales/SaleDetails";
+import NewSale from "./pages/sales/NewSale";
+
+// Payments
+import Payments from "./pages/payments/Payments";
+import UserPayments from "./pages/UserPayments";
+
+// Partners
+import Partners from "./pages/partners/Partners";
+import PartnerDetails from "./pages/partners/PartnerDetails";
+import NewPartner from "./pages/partners/NewPartner";
+
+// Settings
+import Settings from "./pages/settings/Settings";
+import UserManagement from "./pages/settings/UserManagement";
+
+// Other
 import NotFound from "./pages/NotFound";
 import Support from "./pages/Support";
 import Help from "./pages/Help";
 import Fees from "./pages/Fees";
 import Reports from "./pages/Reports";
-import Partners from "./pages/Partners";
-import Settings from "./pages/Settings";
 
-// Import Index page for homepage
-import Index from "./pages/Index";
-
-// Import user role hook
+// Layout and Auth
+import AuthLayout from "./components/layout/AuthLayout";
+import RequireAuth from "./components/auth/RequireAuth";
 import { useUserRole } from "./hooks/use-user-role";
 import { UserRole } from "./types";
-import ProtectedRoute from "./components/auth/ProtectedRoute";
 
 function App() {
   const location = useLocation();
@@ -31,110 +62,67 @@ function App() {
     window.scrollTo(0, 0);
   }, [location.pathname]);
 
-  // Log route changes for debugging
-  useEffect(() => {
-    console.log("Route changed:", location.pathname);
-    console.log("Current user role:", userRole);
-  }, [location.pathname, userRole]);
-
   return (
     <Routes>
-      {/* Home route (Index page) */}
-      <Route path={PATHS.HOME} element={<Index />} />
+      {/* Auth Routes */}
+      <Route element={<AuthLayout />}>
+        <Route path="/login" element={<Login />} />
+        <Route path={PATHS.REGISTER} element={<Register />} />
+        <Route path="/forgot-password" element={<ForgotPassword />} />
+        <Route path="/reset-password" element={<ResetPassword />} />
+      </Route>
 
-      {/* Dashboard routes */}
-      <Route 
-        path={PATHS.DASHBOARD} 
-        element={
-          <ProtectedRoute>
-            {userRole === UserRole.CLIENT ? <ClientDashboard /> : <Dashboard />}
-          </ProtectedRoute>
-        } 
-      />
-      
-      {/* Payment routes - consolidated */}
-      <Route 
-        path={PATHS.PAYMENTS} 
-        element={
-          <ProtectedRoute>
-            <Payments />
-          </ProtectedRoute>
-        } 
-      />
-      <Route 
-        path={PATHS.PAYMENT_DETAILS()} 
-        element={
-          <ProtectedRoute>
-            <Payments />
-          </ProtectedRoute>
-        } 
-      />
-      <Route 
-        path={PATHS.PAYMENT_NEW} 
-        element={
-          <ProtectedRoute>
-            <Payments />
-          </ProtectedRoute>
-        } 
-      />
-      
-      {/* Partners route */}
-      <Route 
-        path={PATHS.PARTNERS} 
-        element={
-          <ProtectedRoute>
-            <Partners />
-          </ProtectedRoute>
-        } 
-      />
+      {/* Protected Routes */}
+      <Route element={<RequireAuth />}>
+        <Route
+          path={PATHS.DASHBOARD}
+          element={
+            userRole === UserRole.CLIENT ? <ClientDashboard /> : <Dashboard />
+          }
+        />
 
-      {/* Settings route */}
-      <Route 
-        path={PATHS.SETTINGS} 
-        element={
-          <ProtectedRoute>
-            <Settings />
-          </ProtectedRoute>
-        } 
-      />
-      
-      {/* Other routes that we know exist */}
-      <Route 
-        path={PATHS.FEES} 
-        element={
-          <ProtectedRoute>
-            <Fees />
-          </ProtectedRoute>
-        } 
-      />
-      <Route 
-        path={PATHS.REPORTS} 
-        element={
-          <ProtectedRoute>
-            <Reports />
-          </ProtectedRoute>
-        } 
-      />
-      <Route 
-        path={PATHS.SUPPORT} 
-        element={
-          <ProtectedRoute>
-            <Support />
-          </ProtectedRoute>
-        } 
-      />
-      <Route 
-        path={PATHS.HELP} 
-        element={
-          <ProtectedRoute>
-            <Help />
-          </ProtectedRoute>
-        } 
-      />
+        {/* Client Routes */}
+        <Route path={PATHS.CLIENTS} element={<Clients />} />
+        <Route path={PATHS.CLIENT_DETAILS()} element={<ClientDetails />} />
+        <Route path={PATHS.CLIENT_NEW} element={<NewClient />} />
 
-      {/* 404 - Not Found */}
+        {/* Machine Routes */}
+        <Route path={PATHS.MACHINES} element={<Machines />} />
+        <Route path={PATHS.MACHINE_DETAILS()} element={<MachineDetails />} />
+        <Route path={PATHS.MACHINE_NEW} element={<NewMachine />} />
+
+        {/* Sales Routes */}
+        <Route path={PATHS.SALES} element={<Sales />} />
+        <Route path={PATHS.SALES_DETAILS()} element={<SaleDetails />} />
+        <Route path={PATHS.SALES_NEW} element={<NewSale />} />
+
+        {/* Payment Routes */}
+        <Route path={PATHS.PAYMENTS} element={<Payments />} />
+        <Route path={PATHS.PAYMENT_DETAILS()} element={<Payments />} />
+        <Route path={PATHS.PAYMENT_NEW} element={<Payments />} />
+        <Route path="/user-payments" element={<UserPayments />} />
+
+        {/* Partner Routes */}
+        <Route path={PATHS.PARTNERS} element={<Partners />} />
+        <Route path={PATHS.PARTNER_DETAILS()} element={<PartnerDetails />} />
+        <Route path={PATHS.PARTNER_NEW} element={<NewPartner />} />
+
+        {/* Settings Routes */}
+        <Route path={PATHS.SETTINGS} element={<Settings />} />
+        <Route path={PATHS.USER_MANAGEMENT} element={<UserManagement />} />
+
+        {/* Other Routes */}
+        <Route path={PATHS.FEES} element={<Fees />} />
+        <Route path={PATHS.REPORTS} element={<Reports />} />
+        <Route path={PATHS.SUPPORT} element={<Support />} />
+        <Route path={PATHS.HELP} element={<Help />} />
+      </Route>
+
+      {/* Redirect from root to dashboard */}
+      <Route path={PATHS.HOME} element={<Login />} />
+
+      {/* 404 */}
       <Route path={PATHS.NOT_FOUND} element={<NotFound />} />
-      <Route path="*" element={<NotFound />} />
     </Routes>
   );
 }

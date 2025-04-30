@@ -28,22 +28,38 @@ import {
 } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
 import { PixKey } from "@/types";
-import { PlusIcon, StarIcon, TrashIcon } from "lucide-react";
+import { ChevronRightIcon, PlusIcon, StarIcon, TrashIcon } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { cn } from "@/lib/utils";
 
-// Define props interface matching the expected props in Settings.tsx
-export interface PixKeysManagerProps {
-  pixKeys: PixKey[];
-  isLoading: boolean;
-  onAdd: (newKey: Partial<PixKey>) => Promise<boolean>;
-  onDelete: (id: string) => Promise<boolean>;
+// Define a simpler PixKey interface for the component
+type SimplifiedPixKey = {
+  id: string;
+  key_type: string;
+  type?: string;
+  key: string;
+  name?: string;
+  owner_name: string;
+  isDefault?: boolean;
+  is_active: boolean;
+  user_id: string;
+  created_at: string;
+  updated_at: string;
+  bank_name: string;
+};
+
+interface PixKeysManagerProps {
+  pixKeys: SimplifiedPixKey[];
+  onAddKey?: (key: Partial<SimplifiedPixKey>) => void;
+  onDeleteKey?: (keyId: string) => void;
+  onSetDefaultKey?: (keyId: string) => void;
 }
 
 const PixKeysManager = ({
   pixKeys = [],
-  isLoading = false,
-  onAdd,
-  onDelete,
+  onAddKey,
+  onDeleteKey,
+  onSetDefaultKey,
 }: PixKeysManagerProps) => {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [keyType, setKeyType] = useState<"CPF" | "CNPJ" | "EMAIL" | "PHONE" | "RANDOM">("CPF");
@@ -83,13 +99,17 @@ const PixKeysManager = ({
     }
 
     // Add the key
-    if (onAdd) {
-      onAdd({
+    if (onAddKey) {
+      onAddKey({
+        key_type: keyType,
         type: keyType,
         key: keyValue,
+        owner_name: keyName,
         name: keyName,
-        is_default: pixKeys.length === 0,
-        user_id: "user_id" // This will be replaced by the actual user ID in the parent component
+        is_active: true,
+        isDefault: pixKeys.length === 0,
+        bank_name: "Banco",
+        user_id: "user_id"
       });
     }
 
@@ -98,6 +118,33 @@ const PixKeysManager = ({
     setKeyValue("");
     setKeyName("");
     setIsDialogOpen(false);
+
+    toast({
+      title: "Chave Pix adicionada",
+      description: "Sua chave Pix foi adicionada com sucesso.",
+    });
+  };
+
+  const handleDelete = (id: string) => {
+    if (onDeleteKey) {
+      onDeleteKey(id);
+    }
+
+    toast({
+      title: "Chave Pix removida",
+      description: "Sua chave Pix foi removida com sucesso.",
+    });
+  };
+
+  const handleSetDefault = (id: string) => {
+    if (onSetDefaultKey) {
+      onSetDefaultKey(id);
+    }
+
+    toast({
+      title: "Chave padrão definida",
+      description: "Sua chave Pix padrão foi atualizada com sucesso.",
+    });
   };
 
   return (
@@ -109,66 +156,57 @@ const PixKeysManager = ({
         </CardDescription>
       </CardHeader>
       <CardContent>
-        {isLoading ? (
-          <div className="flex justify-center py-6">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
-          </div>
-        ) : (
-          <div className="space-y-4">
-            {pixKeys.length === 0 ? (
-              <div className="text-center py-6">
-                <p className="text-muted-foreground">
-                  Você não tem chaves Pix cadastradas.
-                </p>
-              </div>
-            ) : (
-              pixKeys.map((pixKey) => (
-                <div
-                  key={pixKey.id}
-                  className="flex items-center justify-between p-3 border rounded-md"
-                >
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center">
-                      <p className="font-medium truncate">{pixKey.name}</p>
-                      {pixKey.is_default && (
-                        <div className="ml-2 text-xs text-primary flex items-center">
-                          <StarIcon className="h-3 w-3 mr-1" />
-                          <span>Padrão</span>
-                        </div>
-                      )}
-                    </div>
-                    <div className="flex items-center text-sm text-muted-foreground">
-                      <span className="truncate">
-                        {pixKey.type}: {pixKey.key}
-                      </span>
-                    </div>
-                  </div>
-                  <div className="flex items-center ml-4 space-x-2">
-                    {!pixKey.is_default && (
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        onClick={() => toast({
-                          title: "Definir como padrão",
-                          description: "Esta funcionalidade será implementada em breve."
-                        })}
-                      >
-                        <StarIcon className="h-4 w-4" />
-                      </Button>
+        <div className="space-y-4">
+          {pixKeys.length === 0 ? (
+            <div className="text-center py-6">
+              <p className="text-muted-foreground">
+                Você não tem chaves Pix cadastradas.
+              </p>
+            </div>
+          ) : (
+            pixKeys.map((pixKey) => (
+              <div
+                key={pixKey.id}
+                className="flex items-center justify-between p-3 border rounded-md"
+              >
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center">
+                    <p className="font-medium truncate">{pixKey.owner_name || pixKey.name}</p>
+                    {(pixKey.isDefault || false) && (
+                      <div className="ml-2 text-xs text-primary flex items-center">
+                        <StarIcon className="h-3 w-3 mr-1" />
+                        <span>Padrão</span>
+                      </div>
                     )}
+                  </div>
+                  <div className="flex items-center text-sm text-muted-foreground">
+                    <span className="truncate">
+                      {pixKey.type || pixKey.key_type}: {pixKey.key}
+                    </span>
+                  </div>
+                </div>
+                <div className="flex items-center ml-4 space-x-2">
+                  {!(pixKey.isDefault || false) && (
                     <Button
                       variant="ghost"
                       size="icon"
-                      onClick={() => onDelete(pixKey.id)}
+                      onClick={() => handleSetDefault(pixKey.id)}
                     >
-                      <TrashIcon className="h-4 w-4 text-destructive" />
+                      <StarIcon className="h-4 w-4" />
                     </Button>
-                  </div>
+                  )}
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={() => handleDelete(pixKey.id)}
+                  >
+                    <TrashIcon className="h-4 w-4 text-destructive" />
+                  </Button>
                 </div>
-              ))
-            )}
-          </div>
-        )}
+              </div>
+            ))
+          )}
+        </div>
       </CardContent>
       <CardFooter className="flex justify-center sm:justify-end">
         <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
