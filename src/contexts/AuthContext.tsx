@@ -28,27 +28,64 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
   useEffect(() => {
     console.log("Setting up auth listener");
+    
+    // Generate a unique device ID for session management
+    const getDeviceId = () => {
+      let deviceId = localStorage.getItem('deviceId');
+      if (!deviceId) {
+        deviceId = `device_${Math.random().toString(36).substring(2, 15)}`;
+        localStorage.setItem('deviceId', deviceId);
+      }
+      return deviceId;
+    };
+    
+    const deviceId = getDeviceId();
+    
     // Set up auth state listener FIRST
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      (event, newSession) => {
+      async (event, newSession) => {
         console.log("Auth state change event:", event);
-        // No async operations here to prevent race conditions
+        
+        // Set session and user state synchronously to avoid flickering
         setSession(newSession);
         setUser(newSession?.user ?? null);
 
-        // Handle auth events with setTimeout to avoid calling Supabase inside the callback
+        // Handle auth events
         if (event === "SIGNED_IN") {
           console.log("Signed in event detected");
-          setTimeout(() => {
-            toast({
-              title: "Autenticado com sucesso",
-              description: "Bem-vindo à SigmaPay!",
-            });
-          }, 0);
+          
+          // Track the session in our custom table
+          if (newSession?.user) {
+            try {
+              // Use setTimeout to avoid calling Supabase inside the callback
+              setTimeout(async () => {
+                await supabase.from('user_sessions').upsert({
+                  user_id: newSession.user.id,
+                  device_id: deviceId,
+                  last_active: new Date().toISOString(),
+                  metadata: {
+                    user_agent: navigator.userAgent,
+                  }
+                }, { onConflict: 'user_id, device_id' });
+              }, 0);
+              
+              toast({
+                title: "Autenticado com sucesso",
+                description: "Bem-vindo à SigmaPay!",
+              });
+            } catch (error) {
+              console.error("Error tracking session:", error);
+            }
+          }
         }
         
         if (event === "SIGNED_OUT") {
           console.log("Signed out event detected");
+          
+          // Clear auth data from localStorage
+          localStorage.removeItem('userRole');
+          
+          // Use setTimeout to avoid calling Supabase inside the callback
           setTimeout(() => {
             toast({
               title: "Desconectado",
@@ -71,6 +108,20 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         }
         
         console.log("Initial session check complete:", !!data.session);
+        
+        // Update the last_active timestamp for the session
+        if (data.session?.user) {
+          try {
+            await supabase.from('user_sessions').upsert({
+              user_id: data.session.user.id,
+              device_id: deviceId,
+              last_active: new Date().toISOString()
+            }, { onConflict: 'user_id, device_id' });
+          } catch (error) {
+            console.error("Error updating session activity:", error);
+          }
+        }
+        
         setSession(data.session);
         setUser(data.session?.user ?? null);
       } catch (error) {
@@ -181,12 +232,17 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     try {
       console.log("Sign out attempt");
       setIsLoading(true);
-      const { error } = await supabase.auth.signOut();
-      if (error) throw error;
       
-      // Clear local state immediately
+      // Clear local state immediately for better UX
       setUser(null);
       setSession(null);
+      
+      // Clear auth-related localStorage items
+      localStorage.removeItem('userRole');
+      
+      // Call Supabase to sign out
+      const { error } = await supabase.auth.signOut();
+      if (error) throw error;
       
       navigate("/");
     } catch (error: any) {

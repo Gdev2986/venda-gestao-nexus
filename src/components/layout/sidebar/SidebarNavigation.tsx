@@ -11,10 +11,12 @@ import {
   Percent,
   CreditCard,
   Building2,
-  HelpCircle
+  HelpCircle,
+  Truck
 } from "lucide-react";
 import SidebarNavItem from "./SidebarNavItem";
 import { SidebarItem } from "./types";
+import { PATHS } from "@/routes/paths";
 
 interface SidebarNavigationProps {
   userRole: UserRole;
@@ -25,74 +27,98 @@ const SidebarNavigation = ({ userRole }: SidebarNavigationProps) => {
     {
       title: "Dashboard",
       icon: LayoutDashboard,
-      href: "/dashboard",
-      roles: [UserRole.ADMIN, UserRole.CLIENT, UserRole.FINANCIAL, UserRole.PARTNER],
+      href: PATHS.DASHBOARD,
+      roles: [UserRole.ADMIN, UserRole.CLIENT, UserRole.FINANCIAL, UserRole.PARTNER, UserRole.LOGISTICS],
     },
     {
       title: "Vendas",
       icon: ListOrdered,
-      href: "/sales",
-      roles: [UserRole.ADMIN, UserRole.FINANCIAL, UserRole.PARTNER],
+      href: PATHS.SALES,
+      roles: [UserRole.ADMIN, UserRole.FINANCIAL, UserRole.PARTNER, UserRole.LOGISTICS],
     },
     {
       title: "Clientes",
       icon: Building2,
-      href: "/clients",
-      roles: [UserRole.ADMIN, UserRole.FINANCIAL, UserRole.PARTNER],
+      href: PATHS.CLIENTS,
+      roles: [UserRole.ADMIN, UserRole.FINANCIAL, UserRole.PARTNER, UserRole.LOGISTICS],
       subItems: [
         {
           title: "Lista de Clientes",
-          href: "/clients",
-          roles: [UserRole.ADMIN, UserRole.FINANCIAL, UserRole.PARTNER],
+          href: PATHS.CLIENTS,
+          roles: [UserRole.ADMIN, UserRole.FINANCIAL, UserRole.PARTNER, UserRole.LOGISTICS],
         },
         {
           title: "Máquinas",
-          href: "/machines",
-          roles: [UserRole.ADMIN, UserRole.FINANCIAL, UserRole.PARTNER],
+          href: PATHS.MACHINES,
+          roles: [UserRole.ADMIN, UserRole.FINANCIAL, UserRole.PARTNER, UserRole.LOGISTICS],
         }
       ]
     },
     {
       title: "Parceiros",
       icon: Users,
-      href: "/partners",
+      href: PATHS.PARTNERS,
       roles: [UserRole.ADMIN, UserRole.FINANCIAL],
+    },
+    {
+      title: "Logística",
+      icon: Truck,
+      href: "/logistics",
+      roles: [UserRole.ADMIN, UserRole.LOGISTICS],
     },
     {
       title: "Pagamentos",
       icon: Wallet,
-      href: "/payments",
+      href: PATHS.PAYMENTS,
       roles: [UserRole.ADMIN, UserRole.CLIENT, UserRole.FINANCIAL],
+      subItems: userRole === UserRole.CLIENT ? [
+        {
+          title: "Meus Pagamentos",
+          href: PATHS.USER_PAYMENTS,
+          roles: [UserRole.CLIENT],
+        }
+      ] : [
+        {
+          title: "Todos os Pagamentos",
+          href: PATHS.PAYMENTS,
+          roles: [UserRole.ADMIN, UserRole.FINANCIAL],
+        },
+        {
+          title: "Solicitações",
+          href: PATHS.USER_PAYMENTS,
+          roles: [UserRole.ADMIN, UserRole.FINANCIAL],
+        }
+      ]
     },
     {
       title: "Relatórios",
       icon: BarChart3,
-      href: "/reports",
+      href: PATHS.REPORTS,
       roles: [UserRole.ADMIN, UserRole.FINANCIAL, UserRole.PARTNER],
     },
     {
       title: "Taxas",
       icon: Percent,
-      href: "/fees",
+      href: PATHS.FEES,
       roles: [UserRole.ADMIN, UserRole.FINANCIAL],
     },
     {
       title: "Suporte",
       icon: MessageSquare,
-      href: "/support",
-      roles: [UserRole.ADMIN, UserRole.CLIENT, UserRole.FINANCIAL, UserRole.PARTNER],
+      href: PATHS.SUPPORT,
+      roles: [UserRole.ADMIN, UserRole.CLIENT, UserRole.FINANCIAL, UserRole.PARTNER, UserRole.LOGISTICS],
     },
     {
       title: "Ajuda",
       icon: HelpCircle,
-      href: "/help",
-      roles: [UserRole.ADMIN, UserRole.CLIENT, UserRole.FINANCIAL, UserRole.PARTNER],
+      href: PATHS.HELP,
+      roles: [UserRole.ADMIN, UserRole.CLIENT, UserRole.FINANCIAL, UserRole.PARTNER, UserRole.LOGISTICS],
     },
     {
       title: "Configurações",
       icon: Settings,
-      href: "/settings",
-      roles: [UserRole.ADMIN, UserRole.CLIENT, UserRole.FINANCIAL, UserRole.PARTNER],
+      href: PATHS.SETTINGS,
+      roles: [UserRole.ADMIN, UserRole.CLIENT, UserRole.FINANCIAL, UserRole.PARTNER, UserRole.LOGISTICS],
     },
   ];
 

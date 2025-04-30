@@ -4,7 +4,8 @@ export enum UserRole {
   ADMIN = "ADMIN",
   CLIENT = "CLIENT",
   FINANCIAL = "FINANCIAL",
-  PARTNER = "PARTNER"
+  PARTNER = "PARTNER",
+  LOGISTICS = "LOGISTICS"
 }
 
 // Payment status enum

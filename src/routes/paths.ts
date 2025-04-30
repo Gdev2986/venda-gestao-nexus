@@ -28,7 +28,8 @@ export const PATHS = {
   PAYMENTS: "/payments",
   PAYMENT_DETAILS: (id: string = ":id") => `/payments/${id}`,
   PAYMENT_NEW: "/payments/new",
-  USER_PAYMENTS: "/user-payments", // New path for user payments
+  USER_PAYMENTS: "/user-payments", // Rota para pagamentos do cliente
+  CLIENT_PAYMENTS: "/client-payments", // Nova rota para compatibilidade com o sidebar
   
   // Parceiros
   PARTNERS: "/partners",
