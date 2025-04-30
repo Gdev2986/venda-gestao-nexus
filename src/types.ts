@@ -95,14 +95,13 @@ export interface PixKey {
   updated_at: string;
   key: string;
   key_type: string;
-  type?: string; // For backward compatibility
+  type: string; // For backward compatibility
   bank_name: string;
   is_active: boolean;
   owner_name: string;
-  name?: string; // For backward compatibility
-  isDefault?: boolean; // For backward compatibility
-  userId?: string; // For backward compatibility
-  user_id?: string;
+  name: string; // For backward compatibility
+  isDefault: boolean; // For backward compatibility
+  user_id: string;
 }
 
 // Payment interface

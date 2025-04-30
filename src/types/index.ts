@@ -30,12 +30,16 @@ export interface Payment {
 export interface Partner {
   id: string;
   company_name: string;
-  created_at?: string;
-  updated_at?: string;
-  commission_rate?: number;
+  created_at: string;
+  updated_at: string;
+  commission_rate: number;
   contact_name?: string;
   contact_email?: string;
   contact_phone?: string;
+  business_name?: string; // For backward compatibility
+  email?: string; // Added for consistency with filtering
+  phone?: string; // Added for consistency with filtering
+  address?: string; // Added for completeness
 }
 
 // Add other types here as needed

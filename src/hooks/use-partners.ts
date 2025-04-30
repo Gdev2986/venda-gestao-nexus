@@ -43,10 +43,12 @@ export function usePartners() {
     setIsLoading(true);
     try {
       // Generate an ID for the partner if not in Supabase environment
-      const newPartner: Partial<Partner> = {
+      const newPartner: Partner = {
         ...partnerData,
         id: uuidv4(),
-      };
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString()
+      } as Partner;
 
       const { data, error: insertError } = await supabase
         .from("partners")
