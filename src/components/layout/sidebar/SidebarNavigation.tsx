@@ -32,7 +32,7 @@ const SidebarNavigation = ({ userRole }: SidebarNavigationProps) => {
       title: "Vendas",
       icon: ListOrdered,
       href: "/sales",
-      roles: [UserRole.ADMIN, UserRole.CLIENT, UserRole.FINANCIAL, UserRole.PARTNER],
+      roles: [UserRole.ADMIN, UserRole.FINANCIAL, UserRole.PARTNER],
     },
     {
       title: "Clientes",
