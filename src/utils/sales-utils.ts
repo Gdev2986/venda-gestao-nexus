@@ -10,11 +10,12 @@ export const generateMockSales = (count = 50): Sale[] => {
   for (let i = 0; i < count; i++) {
     const grossAmount = Math.random() * 1000;
     const netAmount = grossAmount * 0.97; // 3% fee
+    const date = new Date(Date.now() - Math.floor(Math.random() * 90) * 24 * 60 * 60 * 1000);
     
     sales.push({
       id: `sale_${i}`,
       code: `VND${Math.floor(Math.random() * 100000).toString().padStart(6, '0')}`,
-      date: new Date(Date.now() - Math.floor(Math.random() * 90) * 24 * 60 * 60 * 1000),
+      date,
       terminal: terminals[Math.floor(Math.random() * terminals.length)],
       grossAmount,
       netAmount,
