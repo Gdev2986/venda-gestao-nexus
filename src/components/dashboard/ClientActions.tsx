@@ -17,7 +17,7 @@ const ClientActions = () => {
           </Link>
         </Button>
         <Button variant="outline" asChild>
-          <Link to={PATHS.SUPPORT}>
+          <Link to={`${PATHS.SUPPORT}`} state={{ requestType: "MACHINE" }}>
             <PlusCircleIcon className="h-4 w-4 mr-2" />
             Solicitar Nova Máquina
           </Link>

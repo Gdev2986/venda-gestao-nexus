@@ -65,13 +65,13 @@ const SidebarNavigation = ({ userRole }: SidebarNavigationProps) => {
       href: "/logistics",
       roles: [UserRole.ADMIN, UserRole.LOGISTICS],
     },
-    // For CLIENT role, direct link to USER_PAYMENTS
-    // For other roles, keep the dropdown structure
+    // Simple button for CLIENT role
     {
-      title: "Pagamentos",
+      title: userRole === UserRole.CLIENT ? "Meus Pagamentos" : "Pagamentos",
       icon: Wallet,
       href: userRole === UserRole.CLIENT ? PATHS.USER_PAYMENTS : PATHS.PAYMENTS,
       roles: [UserRole.ADMIN, UserRole.CLIENT, UserRole.FINANCIAL],
+      // Keep dropdown only for non-client roles
       subItems: userRole === UserRole.CLIENT ? [] : [
         {
           title: "Todos os Pagamentos",
@@ -103,7 +103,6 @@ const SidebarNavigation = ({ userRole }: SidebarNavigationProps) => {
       href: PATHS.SUPPORT,
       roles: [UserRole.ADMIN, UserRole.CLIENT, UserRole.FINANCIAL, UserRole.PARTNER, UserRole.LOGISTICS],
     },
-    // Remove duplicate Ajuda item for clients
     {
       title: "Ajuda",
       icon: HelpCircle,
