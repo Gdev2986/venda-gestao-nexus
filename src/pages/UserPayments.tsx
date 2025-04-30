@@ -8,7 +8,6 @@ import { formatCurrency } from "@/lib/utils";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Separator } from "@/components/ui/separator";
-import { DataTable } from "@/components/ui/data-table";
 import {
   Dialog,
   DialogContent,
@@ -21,9 +20,10 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useUserRole } from "@/hooks/use-user-role";
 import { UserRole, PaymentStatus } from "@/types";
 import { supabase } from "@/integrations/supabase/client";
-import { WalletIcon, SendIcon, HistoryIcon, CircleDollarSignIcon } from "lucide-react";
+import { WalletIcon, SendIcon } from "lucide-react";
+import { useAuth } from "@/hooks/use-auth";
 
-// Mock type for payment requests
+// Payment request type
 interface PaymentRequest {
   id: string;
   amount: number;
@@ -31,71 +31,100 @@ interface PaymentRequest {
   created_at: string;
   description?: string;
   receipt_url?: string;
+  client_id: string;
 }
 
 const UserPayments = () => {
   const { toast } = useToast();
+  const { user } = useAuth();
   const [isLoading, setIsLoading] = useState(true);
-  const [clientBalance, setClientBalance] = useState(15000); // Mock balance
+  const [clientBalance, setClientBalance] = useState(0);
   const [paymentRequests, setPaymentRequests] = useState<PaymentRequest[]>([]);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [amount, setAmount] = useState("");
   const [description, setDescription] = useState("");
   const [activeTab, setActiveTab] = useState("all");
   const { userRole } = useUserRole();
+  const [pixKeyId, setPixKeyId] = useState<string | null>(null);
   
-  // Fetch payment requests (mocked for now)
+  // Fetch payment requests and client balance
   useEffect(() => {
-    const loadPaymentRequests = () => {
+    if (!user?.id) return;
+    
+    const loadData = async () => {
       setIsLoading(true);
       
-      // Mock payment requests
-      const mockPaymentRequests: PaymentRequest[] = [
-        {
-          id: "1",
-          amount: 1500.0,
-          status: PaymentStatus.PAID,
-          created_at: new Date(new Date().setDate(new Date().getDate() - 5)).toISOString(),
-          description: "Pagamento mensal",
-          receipt_url: "https://example.com/receipt1"
-        },
-        {
-          id: "2",
-          amount: 2500.0,
-          status: PaymentStatus.APPROVED,
-          created_at: new Date(new Date().setDate(new Date().getDate() - 10)).toISOString(),
-          description: "Retirada parcial"
-        },
-        {
-          id: "3",
-          amount: 800.0,
-          status: PaymentStatus.PENDING,
-          created_at: new Date(new Date().setDate(new Date().getDate() - 2)).toISOString(),
-          description: "Pagamento emergencial"
-        },
-        {
-          id: "4",
-          amount: 300.0,
-          status: PaymentStatus.REJECTED,
-          created_at: new Date(new Date().setDate(new Date().getDate() - 15)).toISOString(),
-          description: "Estorno"
+      try {
+        // Get client ID from profile
+        const { data: profileData } = await supabase
+          .from("profiles")
+          .select("id")
+          .eq("id", user.id)
+          .single();
+          
+        if (profileData) {
+          // Fetch payment requests
+          const { data: requestsData, error: requestsError } = await supabase
+            .from("payment_requests")
+            .select("*")
+            .eq("client_id", profileData.id)
+            .order("created_at", { ascending: false });
+            
+          if (requestsError) throw requestsError;
+          
+          setPaymentRequests(requestsData || []);
+          
+          // Calculate client balance (mock for now, in a real app this would be fetched from the server)
+          // For example purposes, we'll set a mock balance
+          setClientBalance(15000);
+          
+          // Get default pix key for payment requests
+          const { data: pixKeys } = await supabase
+            .from("pix_keys")
+            .select("id")
+            .eq("user_id", user.id)
+            .eq("is_default", true)
+            .single();
+            
+          if (pixKeys) {
+            setPixKeyId(pixKeys.id);
+          } else {
+            // If no default key, get any key
+            const { data: anyKey } = await supabase
+              .from("pix_keys")
+              .select("id")
+              .eq("user_id", user.id)
+              .limit(1)
+              .single();
+              
+            if (anyKey) {
+              setPixKeyId(anyKey.id);
+            }
+          }
         }
-      ];
-      
-      setPaymentRequests(mockPaymentRequests);
-      setIsLoading(false);
+      } catch (error) {
+        console.error("Error loading data:", error);
+        toast({
+          variant: "destructive",
+          title: "Erro ao carregar dados",
+          description: "Não foi possível carregar seus pagamentos ou saldo.",
+        });
+      } finally {
+        setIsLoading(false);
+      }
     };
     
-    loadPaymentRequests();
+    loadData();
     
-    // Set up real-time subscription for new payment requests
+    // Set up real-time subscription for payment requests updates
     const channel = supabase
       .channel('payment_requests_changes')
       .on('postgres_changes', 
-        { event: '*', schema: 'public', table: 'payment_requests' }, 
+        { event: '*', schema: 'public', table: 'payment_requests', filter: `client_id=eq.${user.id}` }, 
         (payload) => {
           console.log('Change received!', payload);
-          // In a real app, we would fetch updated data or update our state directly
+          // Refresh payment requests
+          loadData();
           toast({
             title: 'Atualização de pagamento',
             description: 'Status do pagamento foi atualizado',
@@ -107,7 +136,7 @@ const UserPayments = () => {
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [toast]);
+  }, [toast, user?.id]);
   
   // Filter payment requests based on active tab
   const filteredPaymentRequests = paymentRequests.filter(request => {
@@ -120,12 +149,21 @@ const UserPayments = () => {
   });
   
   // Handler for requesting a payment
-  const handleRequestPayment = () => {
+  const handleRequestPayment = async () => {
     if (!amount || parseFloat(amount) <= 0) {
       toast({
         variant: "destructive",
         title: "Valor inválido",
         description: "Informe um valor válido para solicitação",
+      });
+      return;
+    }
+    
+    if (!pixKeyId) {
+      toast({
+        variant: "destructive",
+        title: "Chave PIX não encontrada",
+        description: "Você precisa cadastrar uma chave PIX antes de solicitar pagamentos",
       });
       return;
     }
@@ -141,112 +179,78 @@ const UserPayments = () => {
       return;
     }
     
-    // In a real app, we would call an API to create a payment request
-    const newPaymentRequest: PaymentRequest = {
-      id: `temp_${Date.now()}`,
-      amount: parsedAmount,
-      status: PaymentStatus.PENDING,
-      created_at: new Date().toISOString(),
-      description: description || "Solicitação de pagamento"
-    };
-    
-    // Add the new payment request to the list
-    setPaymentRequests([newPaymentRequest, ...paymentRequests]);
-    
-    // Show success toast
-    toast({
-      title: "Solicitação enviada",
-      description: "Sua solicitação de pagamento foi enviada com sucesso",
-    });
-    
-    // Close the dialog and reset form
-    setIsDialogOpen(false);
-    setAmount("");
-    setDescription("");
-    
-    // In a real world scenario, this would trigger a notification to the financial team
-    if (userRole === UserRole.CLIENT) {
-      console.log('Sending notification to financial team about new payment request');
+    try {
+      // Create payment request in database
+      const { data: newRequest, error } = await supabase
+        .from("payment_requests")
+        .insert({
+          amount: parsedAmount,
+          description: description || "Solicitação de pagamento",
+          client_id: user?.id,
+          status: PaymentStatus.PENDING,
+          pix_key_id: pixKeyId
+        })
+        .select()
+        .single();
+      
+      if (error) throw error;
+      
+      // Add the new payment request to the list
+      setPaymentRequests([newRequest, ...paymentRequests]);
+      
+      // Show success toast
+      toast({
+        title: "Solicitação enviada",
+        description: "Sua solicitação de pagamento foi enviada com sucesso",
+      });
+      
+      // Close the dialog and reset form
+      setIsDialogOpen(false);
+      setAmount("");
+      setDescription("");
+    } catch (error) {
+      console.error("Error creating payment request:", error);
+      toast({
+        variant: "destructive",
+        title: "Erro",
+        description: "Não foi possível criar a solicitação de pagamento. Tente novamente.",
+      });
     }
   };
   
-  // Payment requests data table columns
-  const columns = [
-    {
-      id: "created_at",
-      header: "Data",
-      accessorKey: "created_at",
-      cell: (info: any) => new Date(info.row.original.created_at).toLocaleDateString('pt-BR')
-    },
-    {
-      id: "description",
-      header: "Descrição",
-      accessorKey: "description"
-    },
-    {
-      id: "amount",
-      header: "Valor",
-      accessorKey: "amount",
-      cell: (info: any) => formatCurrency(info.row.original.amount)
-    },
-    {
-      id: "status",
-      header: "Status",
-      accessorKey: "status",
-      cell: (info: any) => {
-        const status = info.row.original.status;
-        let badgeClass = "";
-        let statusText = "";
-        
-        switch (status) {
-          case PaymentStatus.PENDING:
-            badgeClass = "bg-yellow-100 text-yellow-800";
-            statusText = "Pendente";
-            break;
-          case PaymentStatus.APPROVED:
-            badgeClass = "bg-blue-100 text-blue-800";
-            statusText = "Aprovado";
-            break;
-          case PaymentStatus.PAID:
-            badgeClass = "bg-green-100 text-green-800";
-            statusText = "Pago";
-            break;
-          case PaymentStatus.REJECTED:
-            badgeClass = "bg-red-100 text-red-800";
-            statusText = "Rejeitado";
-            break;
-          default:
-            badgeClass = "bg-gray-100 text-gray-800";
-            statusText = "Desconhecido";
-        }
-        
-        return (
-          <span className={`px-2 py-1 rounded-full text-xs font-medium ${badgeClass}`}>
-            {statusText}
-          </span>
-        );
-      }
-    },
-    {
-      id: "actions",
-      header: "",
-      cell: (info: any) => {
-        const { receipt_url, status } = info.row.original;
-        
-        if (receipt_url && (status === PaymentStatus.PAID || status === PaymentStatus.APPROVED)) {
-          return (
-            <Button size="sm" variant="ghost" asChild>
-              <a href={receipt_url} target="_blank" rel="noopener noreferrer">
-                Recibo
-              </a>
-            </Button>
-          );
-        }
-        
-        return null;
-      }
+  // Function to display status badge
+  const getStatusBadge = (status: PaymentStatus) => {
+    let badgeClass = "";
+    let statusText = "";
+    
+    switch (status) {
+      case PaymentStatus.PENDING:
+        badgeClass = "bg-yellow-100 text-yellow-800";
+        statusText = "Pendente";
+        break;
+      case PaymentStatus.APPROVED:
+        badgeClass = "bg-blue-100 text-blue-800";
+        statusText = "Aprovado";
+        break;
+      case PaymentStatus.PAID:
+        badgeClass = "bg-green-100 text-green-800";
+        statusText = "Pago";
+        break;
+      case PaymentStatus.REJECTED:
+        badgeClass = "bg-red-100 text-red-800";
+        statusText = "Rejeitado";
+        break;
+      default:
+        badgeClass = "bg-gray-100 text-gray-800";
+        statusText = "Desconhecido";
     }
-  ];
+    
+    return (
+      <span className={`px-2 py-1 rounded-full text-xs font-medium ${badgeClass}`}>
+        {statusText}
+      </span>
+    );
+  };
   
   return (
     <MainLayout>
@@ -313,10 +317,32 @@ const UserPayments = () => {
                   <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
                 </div>
               ) : filteredPaymentRequests.length > 0 ? (
-                <DataTable
-                  columns={columns}
-                  data={filteredPaymentRequests}
-                />
+                <div className="space-y-4">
+                  {filteredPaymentRequests.map((request) => (
+                    <div key={request.id} className="p-4 border rounded-lg">
+                      <div className="flex flex-col md:flex-row justify-between">
+                        <div>
+                          <p className="font-medium">{request.description || `Pagamento #${request.id.substring(0, 8)}`}</p>
+                          <p className="text-sm text-muted-foreground">
+                            Criado em {new Date(request.created_at).toLocaleDateString('pt-BR')}
+                          </p>
+                          <p className="font-bold mt-1">{formatCurrency(request.amount)}</p>
+                          <div className="mt-2">{getStatusBadge(request.status)}</div>
+                        </div>
+                        
+                        <div className="mt-2 md:mt-0">
+                          {request.receipt_url && (
+                            <Button variant="outline" size="sm" asChild>
+                              <a href={request.receipt_url} target="_blank" rel="noopener noreferrer">
+                                Ver Comprovante
+                              </a>
+                            </Button>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
               ) : (
                 <div className="text-center py-8">
                   <p className="text-muted-foreground">Nenhuma solicitação de pagamento encontrada</p>

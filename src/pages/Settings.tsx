@@ -34,7 +34,7 @@ const Settings = () => {
         throw error;
       }
 
-      // Map the data to match our PixKey type if necessary
+      // Map the data to match our PixKey type
       const mappedKeys: PixKey[] = data.map(key => ({
         id: key.id,
         created_at: key.created_at,
@@ -42,8 +42,10 @@ const Settings = () => {
         key: key.key,
         type: key.type,
         is_default: key.is_default || false,
+        isDefault: key.is_default || false, // For backward compatibility
         name: key.name,
-        user_id: key.user_id
+        user_id: key.user_id,
+        userId: key.user_id // For backward compatibility
       }));
 
       setPixKeys(mappedKeys);

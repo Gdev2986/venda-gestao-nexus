@@ -32,7 +32,7 @@ export interface Client {
   id: string;
   created_at: string;
   updated_at: string;
-  business_name: string; // Match this with what's used in components
+  business_name: string;
   name?: string; // Keep for backward compatibility
   company_name?: string; // Keep for backward compatibility
   email: string;
@@ -49,7 +49,7 @@ export interface Client {
   partner_id?: string;
 }
 
-// Partner interface - fixing the required fields
+// Partner interface
 export interface Partner {
   id: string;
   created_at?: string;
@@ -60,7 +60,7 @@ export interface Partner {
   email?: string;
   phone?: string;
   address?: string;
-  commission_rate: number; // Make this required with a default value
+  commission_rate: number;
 }
 
 // Sale interface
@@ -72,8 +72,7 @@ export interface Sale {
   status: string;
   payment_method: PaymentMethod;
   description?: string;
-  client_name?: string; // Denormalized for convenience
-  // Add additional fields needed by components
+  client_name?: string;
   code?: string;
   date: Date | string;
   terminal?: string;
@@ -82,11 +81,11 @@ export interface Sale {
   paymentMethod?: PaymentMethod; // For backward compatibility
 }
 
-// PixKey interface - updated to match Supabase schema
+// PixKey interface - updated to match the component and database schema
 export interface PixKey {
   id: string;
   created_at: string;
-  updated_at: string;
+  updated_at?: string;
   key: string;
   type: "CPF" | "CNPJ" | "EMAIL" | "PHONE" | "RANDOM";
   key_type?: string; // For backward compatibility
@@ -94,8 +93,8 @@ export interface PixKey {
   isDefault?: boolean; // For backward compatibility
   name: string;
   owner_name?: string; // For backward compatibility
-  userId?: string; // For backward compatibility
   user_id: string;
+  userId?: string; // For backward compatibility
 }
 
 // Payment interface
@@ -110,7 +109,7 @@ export interface Payment {
   approved_at?: string | null;
   approved_by?: string;
   receipt_url?: string | null;
-  rejection_reason?: string | null; // Make this optional
+  rejection_reason?: string | null;
   pix_key_id?: string;
   due_date?: string;
 }
@@ -121,7 +120,6 @@ export interface DashboardStats {
   totalSales: number;
   totalRevenue: number;
   pendingPayments: number;
-  // Add these fields for compatibility with components
   currentBalance?: number;
   yesterdayGrossAmount?: number;
   yesterdayNetAmount?: number;
@@ -141,7 +139,6 @@ export interface SalesFilterParams {
   paymentMethod?: PaymentMethod;
   minAmount?: number;
   maxAmount?: number;
-  // Add these fields for compatibility
   terminal?: string;
   search?: string;
 }

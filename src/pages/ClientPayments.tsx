@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
@@ -31,27 +32,11 @@ const ClientPayments = () => {
 
     setIsLoading(true);
     try {
-      // Get client ID from user profile using user.id directly
-      const { data: profileData, error: profileError } = await supabase
-        .from("profiles")
-        .select("id")
-        .eq("id", user.id)
-        .single();
-
-      if (profileError) throw profileError;
-      
-      // Since we don't have client_id in profiles, we'll just use the user's ID
-      const userId = profileData?.id;
-      if (!userId) {
-        setPayments([]);
-        return;
-      }
-
       // Get payment_requests for this client
       const { data, error } = await supabase
         .from("payment_requests")
         .select("*")
-        .eq("client_id", userId) // Assuming client_id is the user's profile id
+        .eq("client_id", user.id)
         .order("created_at", { ascending: false });
 
       if (error) throw error;
@@ -60,11 +45,11 @@ const ClientPayments = () => {
       const transformedPayments: ClientPayment[] = (data || []).map(item => ({
         id: item.id,
         amount: item.amount,
-        description: `Payment #${item.id.slice(0, 8)}`,
+        description: item.description || `Payment #${item.id.slice(0, 8)}`,
         status: item.status as PaymentStatus,
         created_at: item.created_at,
         updated_at: item.updated_at || item.created_at,
-        due_date: item.created_at, // Using created_at as due_date since it's required
+        due_date: item.created_at, // Using created_at as due_date for display
         receipt_url: item.receipt_url,
         approved_at: item.approved_at,
         client_id: item.client_id,
@@ -85,6 +70,23 @@ const ClientPayments = () => {
 
   useEffect(() => {
     fetchPayments();
+    
+    // Set up subscription for real-time updates
+    if (user?.id) {
+      const channel = supabase
+        .channel(`payment-requests-${user.id}`)
+        .on('postgres_changes', 
+          { event: '*', schema: 'public', table: 'payment_requests', filter: `client_id=eq.${user.id}` }, 
+          () => {
+            fetchPayments();
+          }
+        )
+        .subscribe();
+        
+      return () => {
+        supabase.removeChannel(channel);
+      };
+    }
   }, [user?.id]);
 
   const handlePaymentClick = (payment: ClientPayment) => {
@@ -208,7 +210,7 @@ const ClientPayments = () => {
                             <div className="space-y-1 mb-2 md:mb-0">
                               <div className="font-medium">{payment.description}</div>
                               <div className="text-sm text-muted-foreground">
-                                Vencimento: {new Date(payment.due_date).toLocaleDateString()}
+                                Criado em: {new Date(payment.created_at).toLocaleDateString()}
                               </div>
                               <div className="text-lg font-bold">{formatCurrency(payment.amount)}</div>
                             </div>

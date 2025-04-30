@@ -85,7 +85,7 @@ function App() {
       
       {/* Client Payments route */}
       <Route 
-        path="/client-payments" 
+        path={PATHS.CLIENT_PAYMENTS} 
         element={
           <ProtectedRoute>
             <ClientPayments />

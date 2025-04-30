@@ -24,31 +24,26 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const { toast } = useToast();
   const navigate = useNavigate();
 
-  console.log("AuthProvider rendering, isLoading:", isLoading, "user:", user?.email);
-
+  // Set up authentication state listener
   useEffect(() => {
-    console.log("Setting up auth listener");
-    // Set up auth state listener FIRST
+    // Set up auth state listener FIRST (important for order)
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       (event, newSession) => {
-        console.log("Auth state change event:", event);
-        // No async operations here to prevent race conditions
+        // Synchronous updates to prevent deadlocks
         setSession(newSession);
         setUser(newSession?.user ?? null);
 
         // Handle auth events with setTimeout to avoid calling Supabase inside the callback
         if (event === "SIGNED_IN") {
-          console.log("Signed in event detected");
           setTimeout(() => {
             toast({
               title: "Autenticado com sucesso",
-              description: "Bem-vindo à SigmaPay!",
+              description: "Bem-vindo à plataforma!",
             });
           }, 0);
         }
         
         if (event === "SIGNED_OUT") {
-          console.log("Signed out event detected");
           setTimeout(() => {
             toast({
               title: "Desconectado",
@@ -62,7 +57,6 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     // Check for existing session AFTER setting up listeners
     const initialSessionCheck = async () => {
       try {
-        console.log("Checking initial session");
         const { data, error } = await supabase.auth.getSession();
         
         if (error) {
@@ -70,7 +64,6 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
           throw error;
         }
         
-        console.log("Initial session check complete:", !!data.session);
         setSession(data.session);
         setUser(data.session?.user ?? null);
       } catch (error) {
@@ -83,14 +76,12 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     initialSessionCheck();
 
     return () => {
-      console.log("Cleaning up auth listener");
       subscription.unsubscribe();
     };
   }, [toast]); // Only run this effect once on mount
 
   const signIn = async (email: string, password: string) => {
     try {
-      console.log("Sign in attempt for:", email);
       setIsLoading(true);
       const { data, error } = await supabase.auth.signInWithPassword({
         email,
@@ -98,8 +89,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       });
 
       if (error) {
-        // Enhanced error handling
-        console.error("Login error:", error);
+        // Enhanced error handling with user-friendly messages
         let errorMessage = "Ocorreu um erro durante a autenticação";
         
         if (error.message === "Invalid login credentials") {
@@ -117,7 +107,6 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       }
       
       if (data.user) {
-        console.log("Sign in successful, navigating to dashboard");
         // Use setTimeout to avoid race conditions with onAuthStateChange
         setTimeout(() => {
           navigate("/dashboard");
@@ -133,7 +122,6 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
   const signUp = async (email: string, password: string, userData: { name: string }) => {
     try {
-      console.log("Sign up attempt for:", email);
       setIsLoading(true);
       const { error, data } = await supabase.auth.signUp({
         email,
@@ -145,8 +133,6 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
           emailRedirectTo: `${window.location.origin}/dashboard`,
         },
       });
-
-      console.log("Sign up response:", { error, user: data?.user ? true : false });
 
       if (error) {
         let errorMessage = "Ocorreu um erro durante o registro";
@@ -179,7 +165,6 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
   const signOut = async () => {
     try {
-      console.log("Sign out attempt");
       setIsLoading(true);
       const { error } = await supabase.auth.signOut();
       if (error) throw error;

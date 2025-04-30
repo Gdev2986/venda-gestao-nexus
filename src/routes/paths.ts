@@ -1,10 +1,11 @@
+
 export const PATHS = {
   HOME: '/',
   DASHBOARD: '/dashboard',
   PAYMENTS: '/payments',
   PAYMENT_DETAILS: (id = ':id') => `/payments/${id}`,
   PAYMENT_NEW: '/payments/new',
-  USER_PAYMENTS: '/payments/user',
+  USER_PAYMENTS: '/user-payments',
   CLIENT_PAYMENTS: '/client-payments',
   CLIENTS: '/clients',
   CLIENT_DETAIL: (id = ':id') => `/clients/${id}`,
