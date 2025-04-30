@@ -88,15 +88,16 @@ export interface PixKey {
   created_at: string;
   updated_at: string;
   key: string;
-  key_type: string;
-  type?: string; // For backward compatibility
-  bank_name: string;
-  is_active: boolean;
-  owner_name: string;
-  name?: string; // For backward compatibility
+  type: "CPF" | "CNPJ" | "EMAIL" | "PHONE" | "RANDOM";
+  key_type?: string; // For backward compatibility
+  bank_name?: string;
+  is_active?: boolean;
+  is_default: boolean;
   isDefault?: boolean; // For backward compatibility
+  name: string;
+  owner_name?: string; // For backward compatibility
   userId?: string; // For backward compatibility
-  user_id?: string;
+  user_id: string;
 }
 
 // Payment interface - making rejection_reason optional

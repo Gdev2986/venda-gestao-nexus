@@ -5,7 +5,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { PlusCircle } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import { PixKeysManager } from "@/components/settings/PixKeysManager";
+import PixKeysManager from "@/components/settings/PixKeysManager";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 
@@ -13,16 +13,13 @@ import { useAuth } from "@/hooks/use-auth";
 interface PixKey {
   id: string;
   user_id: string;
-  key_type: string;
-  type: string;
+  type: "CPF" | "CNPJ" | "EMAIL" | "PHONE" | "RANDOM";
   key: string;
-  owner_name: string;
   name: string;
-  isDefault: boolean;
-  is_active: boolean;
+  is_default: boolean;
   created_at: string;
   updated_at: string;
-  bank_name: string;
+  bank_name?: string;
 }
 
 export default function Settings() {
@@ -46,16 +43,13 @@ export default function Settings() {
       if (error) throw error;
 
       // Transform the data to match our PixKey interface
-      const transformedData = data.map(item => ({
+      const transformedData: PixKey[] = data.map(item => ({
         id: item.id,
         user_id: item.user_id,
-        key_type: item.key_type || item.type,
-        type: item.type || item.key_type,
+        type: item.type,
         key: item.key,
-        owner_name: item.owner_name || item.name,
-        name: item.name || item.owner_name,
-        isDefault: item.is_default || item.isDefault || false,
-        is_active: item.is_active || true,
+        name: item.name,
+        is_default: item.is_default || false,
         created_at: item.created_at,
         updated_at: item.updated_at,
         bank_name: item.bank_name || "",
@@ -81,10 +75,10 @@ export default function Settings() {
         .from('pix_keys')
         .insert([{
           user_id: user.id,
-          key_type: newKey.key_type || newKey.type,
+          type: newKey.type,
           key: newKey.key,
-          name: newKey.name || newKey.owner_name,
-          is_default: newKey.isDefault || false,
+          name: newKey.name,
+          is_default: newKey.is_default || false,
           bank_name: newKey.bank_name || "",
         }])
         .select();
@@ -95,13 +89,10 @@ export default function Settings() {
       const transformedKey: PixKey = {
         id: data[0].id,
         user_id: data[0].user_id,
-        key_type: data[0].key_type || data[0].type,
-        type: data[0].type || data[0].key_type,
+        type: data[0].type,
         key: data[0].key,
-        owner_name: data[0].owner_name || data[0].name,
-        name: data[0].name || data[0].owner_name,
-        isDefault: data[0].is_default || data[0].isDefault || false,
-        is_active: data[0].is_active || true,
+        name: data[0].name,
+        is_default: data[0].is_default || false,
         created_at: data[0].created_at,
         updated_at: data[0].updated_at,
         bank_name: data[0].bank_name || "",
