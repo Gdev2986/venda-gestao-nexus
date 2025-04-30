@@ -17,6 +17,7 @@ import { DataTable } from "@/components/ui/data-table";
 import { columns } from "@/components/transactions/columns";
 import { CreditCard, Building } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
+import TablePagination from "@/components/ui/table-pagination";
 
 interface MachineData {
   id: string;
@@ -32,6 +33,12 @@ interface MainOverviewTabsProps {
   filteredTransactions: any[];
   machines: MachineData[];
   loading: boolean;
+  transactionsPage: number;
+  totalTransactionsPages: number;
+  onTransactionsPageChange: (page: number) => void;
+  machinesPage: number;
+  totalMachinesPages: number;
+  onMachinesPageChange: (page: number) => void;
 }
 
 export function MainOverviewTabs({
@@ -39,7 +46,13 @@ export function MainOverviewTabs({
   paymentMethodsData,
   filteredTransactions,
   machines,
-  loading
+  loading,
+  transactionsPage,
+  totalTransactionsPages,
+  onTransactionsPageChange,
+  machinesPage,
+  totalMachinesPages,
+  onMachinesPageChange
 }: MainOverviewTabsProps) {
   const getStatusBadge = (status: string) => {
     switch (status) {
@@ -105,7 +118,21 @@ export function MainOverviewTabs({
                 ))}
               </div>
             ) : (
-              <DataTable columns={columns} data={filteredTransactions} />
+              <>
+                <DataTable 
+                  columns={columns} 
+                  data={filteredTransactions}
+                />
+                {totalTransactionsPages > 1 && (
+                  <div className="mt-4 flex justify-center">
+                    <TablePagination 
+                      currentPage={transactionsPage}
+                      totalPages={totalTransactionsPages}
+                      onPageChange={onTransactionsPageChange}
+                    />
+                  </div>
+                )}
+              </>
             )}
           </CardContent>
         </Card>
@@ -124,28 +151,40 @@ export function MainOverviewTabs({
                 ))}
               </div>
             ) : machines.length > 0 ? (
-              <div className="space-y-4">
-                {machines.map((machine) => (
-                  <Card key={machine.id} className="border shadow-sm">
-                    <CardContent className="p-4">
-                      <div className="flex justify-between items-center">
-                        <div className="flex gap-4 items-center">
-                          <div className="p-2 rounded-full bg-primary/10">
-                            <CreditCard className="h-5 w-5 text-primary" />
+              <>
+                <div className="space-y-4">
+                  {machines.map((machine) => (
+                    <Card key={machine.id} className="border shadow-sm">
+                      <CardContent className="p-4">
+                        <div className="flex justify-between items-center">
+                          <div className="flex gap-4 items-center">
+                            <div className="p-2 rounded-full bg-primary/10">
+                              <CreditCard className="h-5 w-5 text-primary" />
+                            </div>
+                            <div>
+                              <h4 className="font-medium">{machine.model}</h4>
+                              <p className="text-sm text-muted-foreground">Serial: {machine.serial_number}</p>
+                            </div>
                           </div>
                           <div>
-                            <h4 className="font-medium">{machine.model}</h4>
-                            <p className="text-sm text-muted-foreground">Serial: {machine.serial_number}</p>
+                            {getStatusBadge(machine.status)}
                           </div>
                         </div>
-                        <div>
-                          {getStatusBadge(machine.status)}
-                        </div>
-                      </div>
-                    </CardContent>
-                  </Card>
-                ))}
-              </div>
+                      </CardContent>
+                    </Card>
+                  ))}
+                </div>
+                
+                {totalMachinesPages > 1 && (
+                  <div className="mt-4 flex justify-center">
+                    <TablePagination 
+                      currentPage={machinesPage}
+                      totalPages={totalMachinesPages}
+                      onPageChange={onMachinesPageChange}
+                    />
+                  </div>
+                )}
+              </>
             ) : (
               <div className="text-center py-6">
                 <Building className="mx-auto h-12 w-12 text-muted-foreground mb-3" />

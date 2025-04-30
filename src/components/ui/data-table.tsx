@@ -8,6 +8,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import TablePagination from "./table-pagination";
 
 interface Column {
   id: string;
@@ -19,9 +20,12 @@ interface Column {
 interface DataTableProps {
   columns: Column[];
   data: any[];
+  currentPage?: number;
+  totalPages?: number;
+  onPageChange?: (page: number) => void;
 }
 
-export function DataTable({ columns, data }: DataTableProps) {
+export function DataTable({ columns, data, currentPage, totalPages, onPageChange }: DataTableProps) {
   return (
     <div className="rounded-md border">
       <Table>
@@ -56,6 +60,16 @@ export function DataTable({ columns, data }: DataTableProps) {
           )}
         </TableBody>
       </Table>
+      
+      {totalPages && totalPages > 1 && currentPage && onPageChange && (
+        <div className="px-4 py-2 flex justify-center">
+          <TablePagination 
+            currentPage={currentPage} 
+            totalPages={totalPages} 
+            onPageChange={onPageChange}
+          />
+        </div>
+      )}
     </div>
   );
 }

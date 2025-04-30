@@ -16,7 +16,9 @@ const ClientDashboard = () => {
   const [loading, setLoading] = useState(true);
   const [transactions, setTransactions] = useState<any[]>([]);
   const [filteredTransactions, setFilteredTransactions] = useState<any[]>([]);
+  const [paginatedTransactions, setPaginatedTransactions] = useState<any[]>([]);
   const [machines, setMachines] = useState<any[]>([]);
+  const [paginatedMachines, setPaginatedMachines] = useState<any[]>([]);
   const [stats, setStats] = useState({
     totalSales: 0,
     pendingPayments: 0,
@@ -29,6 +31,14 @@ const ClientDashboard = () => {
   });
   const [salesData, setSalesData] = useState<any[]>([]);
   const [paymentMethodsData, setPaymentMethodsData] = useState<any[]>([]);
+  
+  // Pagination states
+  const [transactionsPage, setTransactionsPage] = useState(1);
+  const [machinesPage, setMachinesPage] = useState(1);
+  const transactionsPerPage = 5;
+  const machinesPerPage = 3;
+  const [totalTransactionsPages, setTotalTransactionsPages] = useState(1);
+  const [totalMachinesPages, setTotalMachinesPages] = useState(1);
 
   // Fetch mock data and apply filters based on date range
   useEffect(() => {
@@ -44,6 +54,10 @@ const ClientDashboard = () => {
           { id: "1", model: "POS X200", serial_number: "SN12345678", status: "ACTIVE", created_at: new Date().toISOString() },
           { id: "2", model: "POS X300", serial_number: "SN87654321", status: "ACTIVE", created_at: new Date().toISOString() },
           { id: "3", model: "POS X100", serial_number: "SN11223344", status: "MAINTENANCE", created_at: new Date().toISOString() },
+          { id: "4", model: "POS X400", serial_number: "SN22334455", status: "ACTIVE", created_at: new Date().toISOString() },
+          { id: "5", model: "POS X200", serial_number: "SN33445566", status: "INACTIVE", created_at: new Date().toISOString() },
+          { id: "6", model: "POS X500", serial_number: "SN44556677", status: "ACTIVE", created_at: new Date().toISOString() },
+          { id: "7", model: "POS X300", serial_number: "SN55667788", status: "MAINTENANCE", created_at: new Date().toISOString() },
         ];
         
         // Generate chart data based on selected date range
@@ -55,8 +69,16 @@ const ClientDashboard = () => {
         setSalesData(dailySalesData);
         setPaymentMethodsData(methodsData);
 
-        // Filter transactions by date (this is already done in the mock data generation now)
+        // Filter transactions by date
         filterTransactionsByDate(mockTransactions, dateRange);
+        
+        // Calculate machines pagination
+        setTotalMachinesPages(Math.ceil(mockMachines.length / machinesPerPage));
+        updateMachinesPagination(mockMachines, machinesPage, machinesPerPage);
+        
+        // Reset to first page when data changes
+        setTransactionsPage(1);
+        setMachinesPage(1);
         
         // Simulate loading delay
         setTimeout(() => {
@@ -74,6 +96,13 @@ const ClientDashboard = () => {
     
     fetchDashboardData();
   }, [dateRange, toast]);
+
+  // Effect for paginating transactions when filtered transactions or page changes
+  useEffect(() => {
+    const startIndex = (transactionsPage - 1) * transactionsPerPage;
+    const endIndex = startIndex + transactionsPerPage;
+    setPaginatedTransactions(filteredTransactions.slice(startIndex, endIndex));
+  }, [filteredTransactions, transactionsPage, transactionsPerPage]);
 
   const filterTransactionsByDate = (transactions: any[], range: DateRange) => {
     const filtered = transactions.filter(tx => {
@@ -96,6 +125,8 @@ const ClientDashboard = () => {
     const averageTicket = totalSales / (filtered.length || 1);
     
     setFilteredTransactions(filtered);
+    setTotalTransactionsPages(Math.ceil(filtered.length / transactionsPerPage));
+    
     setStats({
       totalSales,
       pendingPayments,
@@ -104,10 +135,26 @@ const ClientDashboard = () => {
     });
   };
 
+  const updateMachinesPagination = (machines: any[], page: number, perPage: number) => {
+    const startIndex = (page - 1) * perPage;
+    const endIndex = startIndex + perPage;
+    setPaginatedMachines(machines.slice(startIndex, endIndex));
+  };
+
   // Handle date range selection
   const handleDateRangeChange = (newRange: DateRange) => {
     setDateRange(newRange);
     // The useEffect will trigger data reload with new date range
+  };
+
+  // Handle page changes
+  const handleTransactionsPageChange = (page: number) => {
+    setTransactionsPage(page);
+  };
+
+  const handleMachinesPageChange = (page: number) => {
+    setMachinesPage(page);
+    updateMachinesPagination(machines, page, machinesPerPage);
   };
 
   return (
@@ -128,9 +175,15 @@ const ClientDashboard = () => {
             <MainOverviewTabs
               salesData={salesData}
               paymentMethodsData={paymentMethodsData}
-              filteredTransactions={filteredTransactions}
-              machines={machines}
+              filteredTransactions={paginatedTransactions}
+              machines={paginatedMachines}
               loading={loading}
+              transactionsPage={transactionsPage}
+              totalTransactionsPages={totalTransactionsPages}
+              onTransactionsPageChange={handleTransactionsPageChange}
+              machinesPage={machinesPage}
+              totalMachinesPages={totalMachinesPages}
+              onMachinesPageChange={handleMachinesPageChange}
             />
           </div>
           
