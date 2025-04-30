@@ -9,6 +9,12 @@ export const PATHS = {
   HOME: "/",
   DASHBOARD: "/dashboard",
   
+  // Auth routes
+  LOGIN: "/login",
+  REGISTER: "/register",
+  FORGOT_PASSWORD: "/forgot-password",
+  RESET_PASSWORD: "/reset-password",
+  
   // Clients
   CLIENTS: "/clients",
   CLIENT_DETAILS: (id: string = ":id") => `/clients/${id}`,
@@ -35,9 +41,6 @@ export const PATHS = {
   PARTNERS: "/partners",
   PARTNER_DETAILS: (id: string = ":id") => `/partners/${id}`,
   PARTNER_NEW: "/partners/new",
-  
-  // Registration
-  REGISTER: "/register",
   
   // Fees
   FEES: "/fees",

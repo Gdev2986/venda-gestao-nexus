@@ -38,7 +38,7 @@ const RequireAuth = () => {
     console.log("Redirecting to login from", location.pathname);
     // Store the current location using sessionStorage for better security
     sessionStorage.setItem("redirectPath", location.pathname);
-    return <Navigate to={PATHS.HOME} state={{ from: location.pathname }} replace />;
+    return <Navigate to={PATHS.LOGIN} state={{ from: location.pathname }} replace />;
   }
 
   // If authenticated, render the protected content

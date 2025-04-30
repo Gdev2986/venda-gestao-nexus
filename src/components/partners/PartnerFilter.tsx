@@ -1,154 +1,93 @@
 
 import { useState } from "react";
-import { Search } from "lucide-react";
-import { z } from "zod";
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { DateRange } from "react-day-picker";
-
-import { Button } from "@/components/ui/button";
+import { 
+  Card, 
+  CardContent, 
+  CardHeader, 
+  CardTitle 
+} from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { Calendar } from "@/components/ui/calendar";
-import {
-  Form,
-  FormControl,
-  FormField,
-  FormItem,
-} from "@/components/ui/form";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
-import { format } from "date-fns";
-import { ptBR } from "date-fns/locale";
-import { FilterValues } from "@/hooks/use-partners";
+import { Label } from "@/components/ui/label";
+import { Button } from "@/components/ui/button";
+import { Slider } from "@/components/ui/slider";
 
-// Define filter schema
-const filterSchema = z.object({
-  searchTerm: z.string().optional(),
-  dateRange: z.object({
-    from: z.date().optional(),
-    to: z.date().optional(),
-  }).optional(),
-  commissionRange: z.tuple([z.number(), z.number()]).optional(),
-});
+interface PartnerFilter {
+  companyName: string;
+  commissionRange: [number, number];
+}
 
 interface PartnerFilterProps {
-  onFilter: (values: FilterValues) => void;
+  onFilter: (filter: PartnerFilter) => void;
 }
 
-export default function PartnerFilter({ onFilter }: PartnerFilterProps) {
-  const [dateOpen, setDateOpen] = useState(false);
-
-  const form = useForm<z.infer<typeof filterSchema>>({
-    resolver: zodResolver(filterSchema),
-    defaultValues: {
-      searchTerm: "",
-      dateRange: undefined,
-      commissionRange: [0, 100],
-    },
-  });
-
-  const handleSubmit = (values: z.infer<typeof filterSchema>) => {
+const PartnerFilter = ({ onFilter }: PartnerFilterProps) => {
+  const [companyName, setCompanyName] = useState<string>("");
+  const [commissionRange, setCommissionRange] = useState<[number, number]>([0, 100]);
+  
+  const handleCommissionChange = (value: number[]) => {
+    // Ensure we have exactly two values and they are numbers
+    if (Array.isArray(value) && value.length >= 2) {
+      setCommissionRange([value[0], value[1]]);
+    }
+  };
+  
+  const handleFilter = () => {
     onFilter({
-      searchTerm: values.searchTerm || "",
-      commissionRange: values.commissionRange || [0, 100],
+      companyName,
+      commissionRange
     });
   };
-
-  const clearFilters = () => {
-    form.reset({
-      searchTerm: "",
-      dateRange: undefined,
-      commissionRange: [0, 100],
-    });
+  
+  const handleReset = () => {
+    setCompanyName("");
+    setCommissionRange([0, 100]);
     onFilter({
-      searchTerm: "",
-      commissionRange: [0, 100],
+      companyName: "",
+      commissionRange: [0, 100]
     });
   };
-
-  const selectedDateRange = form.watch("dateRange");
-
+  
   return (
-    <Form {...form}>
-      <form onSubmit={form.handleSubmit(handleSubmit)} className="w-full">
-        <div className="flex flex-col sm:flex-row gap-3">
-          <FormField
-            control={form.control}
-            name="searchTerm"
-            render={({ field }) => (
-              <FormItem className="flex-1">
-                <FormControl>
-                  <div className="relative">
-                    <Input
-                      placeholder="Buscar por nome..."
-                      {...field}
-                      className="pl-10"
-                    />
-                    <Search className="absolute left-3 top-2.5 h-5 w-5 text-muted-foreground" />
-                  </div>
-                </FormControl>
-              </FormItem>
-            )}
+    <Card>
+      <CardHeader>
+        <CardTitle>Filter Partners</CardTitle>
+      </CardHeader>
+      <CardContent className="space-y-6">
+        <div className="space-y-2">
+          <Label htmlFor="company-name">Company Name</Label>
+          <Input
+            id="company-name"
+            placeholder="Search by company name"
+            value={companyName}
+            onChange={(e) => setCompanyName(e.target.value)}
           />
-
-          <FormField
-            control={form.control}
-            name="dateRange"
-            render={({ field }) => (
-              <FormItem className="flex-shrink-0 w-full sm:w-auto">
-                <Popover open={dateOpen} onOpenChange={setDateOpen}>
-                  <PopoverTrigger asChild>
-                    <FormControl>
-                      <Button
-                        variant="outline"
-                        className="w-full sm:w-[240px] justify-start text-left font-normal"
-                      >
-                        {field.value?.from ? (
-                          field.value.to ? (
-                            <>
-                              {format(field.value.from, "dd/MM/yyyy")} -{" "}
-                              {format(field.value.to, "dd/MM/yyyy")}
-                            </>
-                          ) : (
-                            format(field.value.from, "dd/MM/yyyy")
-                          )
-                        ) : (
-                          <span className="text-muted-foreground">Selecionar período</span>
-                        )}
-                      </Button>
-                    </FormControl>
-                  </PopoverTrigger>
-                  <PopoverContent className="w-auto p-0" align="center">
-                    <Calendar
-                      mode="range"
-                      selected={field.value as DateRange}
-                      onSelect={(range) => {
-                        field.onChange(range);
-                        if (range?.to) {
-                          setDateOpen(false);
-                        }
-                      }}
-                      numberOfMonths={1}
-                      locale={ptBR}
-                      className="p-3"
-                    />
-                  </PopoverContent>
-                </Popover>
-              </FormItem>
-            )}
-          />
-
-          <div className="flex gap-2 w-full sm:w-auto">
-            <Button type="submit" className="flex-1 sm:flex-none">Filtrar</Button>
-            <Button type="button" variant="outline" onClick={clearFilters} className="flex-1 sm:flex-none">
-              Limpar
-            </Button>
+        </div>
+        
+        <div className="space-y-2">
+          <Label>Commission Range (%)</Label>
+          <div className="pt-4 px-2">
+            <Slider 
+              min={0} 
+              max={100} 
+              step={1} 
+              value={[commissionRange[0], commissionRange[1]]} 
+              onValueChange={handleCommissionChange}
+              className="mb-6" 
+            />
+            <div className="flex justify-between text-sm text-muted-foreground">
+              <span>{commissionRange[0]}%</span>
+              <span>{commissionRange[1]}%</span>
+            </div>
           </div>
         </div>
-      </form>
-    </Form>
+        
+        <div className="flex flex-col gap-2">
+          <Button onClick={handleFilter} variant="default">Apply Filters</Button>
+          <Button onClick={handleReset} variant="outline">Reset</Button>
+        </div>
+      </CardContent>
+    </Card>
   );
-}
+};
+
+export default PartnerFilter;

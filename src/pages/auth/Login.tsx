@@ -5,18 +5,33 @@ import LoginForm from "@/components/auth/LoginForm";
 import { LayoutDashboard, CreditCard, FileText, Monitor } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { PATHS } from "@/routes/paths";
+import { Spinner } from "@/components/ui/spinner";
 
 const Login = () => {
   const navigate = useNavigate();
   const { user, isLoading } = useAuth();
+  const [redirecting, setRedirecting] = useState(false);
 
   useEffect(() => {
     // If authenticated and finished loading, redirect to dashboard
     if (user && !isLoading) {
       console.log("Login: User authenticated, redirecting to dashboard");
+      setRedirecting(true);
       navigate(PATHS.DASHBOARD);
     }
   }, [user, isLoading, navigate]);
+
+  // If redirecting or loading, show a spinner
+  if (isLoading || redirecting) {
+    return (
+      <div className="flex flex-col items-center justify-center h-screen bg-background">
+        <Spinner size="lg" />
+        <p className="mt-4 text-muted-foreground">
+          {redirecting ? "Redirecting to dashboard..." : "Loading..."}
+        </p>
+      </div>
+    );
+  }
 
   // If still loading or the user is not authenticated, show the login page
   return (
