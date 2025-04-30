@@ -1,189 +1,62 @@
 
-/**
- * System type definitions
- * Centralizes all type definitions for easier maintenance
- */
-
-// User roles enum
 export enum UserRole {
-  ADMIN = "ADMIN",
   CLIENT = "CLIENT",
-  FINANCIAL = "FINANCIAL",
+  ADMIN = "ADMIN",
   PARTNER = "PARTNER",
-  LOGISTICS = "LOGISTICS"
 }
 
-// Payment status enum
 export enum PaymentStatus {
   PENDING = "PENDING",
   APPROVED = "APPROVED",
+  PAID = "PAID",
   REJECTED = "REJECTED",
-  PAID = "PAID"
 }
 
-// Payment method enum
-export enum PaymentMethod {
-  CREDIT_CARD = "CREDIT_CARD",
-  DEBIT_CARD = "DEBIT_CARD",
-  PIX = "PIX",
-  BANK_TRANSFER = "BANK_TRANSFER",
-  CASH = "CASH",
-  // Add these for backward compatibility
-  CREDIT = "CREDIT",
-  DEBIT = "DEBIT",
-  // New payment types
-  TED = "TED",
-  BOLETO = "BOLETO"
-}
-
-// Payment type enum for new payment request functionality
 export enum PaymentType {
   PIX = "PIX",
   TED = "TED",
-  BOLETO = "BOLETO"
+  BOLETO = "BOLETO",
 }
 
-// Client interface
-export interface Client {
+export type PixKey = {
   id: string;
-  created_at: string;
-  updated_at: string;
-  business_name: string; // Match this with what's used in components
-  name?: string; // Keep for backward compatibility
-  company_name?: string; // Keep for backward compatibility
-  email: string;
-  phone: string;
-  contact_name: string;
-  document?: string;
-  address: string;
-  city: string;
-  state: string;
-  postal_code?: string;
-  zip: string; // Allow both postal_code and zip
-  notes?: string;
-  status: "ACTIVE" | "INACTIVE";
-  partner_id?: string;
-}
-
-// Partner interface
-export interface Partner {
-  id: string;
-  created_at: string;
-  updated_at: string;
-  company_name: string;
-  business_name?: string; // For backward compatibility
-  contact_name?: string;
-  email?: string;
-  phone?: string;
-  address?: string;
-  commission_rate: number; // Changed from optional to required
-}
-
-// Sale interface
-export interface Sale {
-  id: string;
-  client_id: string;
-  created_at: string;
-  amount: number;
-  status: string;
-  payment_method: PaymentMethod;
-  description?: string;
-  client_name?: string; // Denormalized for convenience
-  // Add additional fields needed by components
-  code?: string;
-  date: Date | string;
-  terminal?: string;
-  grossAmount?: number;
-  netAmount?: number;
-  paymentMethod?: PaymentMethod; // For backward compatibility
-}
-
-// PixKey interface
-export interface PixKey {
-  id: string;
-  created_at: string;
-  updated_at: string;
-  key: string;
-  key_type: string;
-  type: string; // For backward compatibility
-  bank_name: string;
-  is_active: boolean;
-  owner_name: string;
-  name: string; // For backward compatibility
-  isDefault: boolean; // For backward compatibility
   user_id: string;
-}
+  key_type: string;
+  type: string;
+  key: string;
+  owner_name: string;
+  name: string;
+  isDefault: boolean;
+  is_active: boolean;
+  created_at: string;
+  updated_at: string;
+  bank_name: string;
+};
 
-// Payment interface
 export interface Payment {
   id: string;
+  amount: number;
+  status: PaymentStatus;
   created_at: string;
   updated_at: string;
   client_id: string;
-  amount: number;
   description?: string;
-  status: PaymentStatus;
   approved_at?: string;
-  approved_by?: string;
   receipt_url?: string;
-  pix_key_id?: string;
-  due_date?: string;
-  rejection_reason?: string;
-  client_name?: string; // For convenience in UI
-  payment_type?: PaymentType;
+  client_name?: string;
+  payment_type: PaymentType;
   bank_info?: {
-    bank_name?: string;
-    account_number?: string;
-    branch_number?: string;
-    account_holder?: string;
+    bank_name: string;
+    branch_number: string;
+    account_number: string;
+    account_holder: string;
   };
   document_url?: string;
-}
-
-// Dashboard stats interface
-export interface DashboardStats {
-  totalClients: number;
-  totalSales: number;
-  totalRevenue: number;
-  pendingPayments: number;
-  // Add these fields for compatibility with components
-  currentBalance?: number;
-  yesterdayGrossAmount?: number;
-  yesterdayNetAmount?: number;
-  recentSales?: Sale[];
-  salesByPaymentMethod?: {
-    method: PaymentMethod;
-    amount: number;
-    percentage: number;
-  }[];
-}
-
-// Sales filter params
-export interface SalesFilterParams {
-  startDate?: Date;
-  endDate?: Date;
-  clientId?: string;
-  paymentMethod?: PaymentMethod;
-  minAmount?: number;
-  maxAmount?: number;
-  // Add these fields for compatibility
-  terminal?: string;
-  search?: string;
-}
-
-// Partners filter values
-export interface FilterValues {
-  searchTerm: string;
-  commissionRange: [number, number];
-}
-
-// Alias PartnerFilter to FilterValues for backward compatibility
-export type PartnerFilter = FilterValues;
-
-// Bank account information for TED payments
-export interface BankAccountInfo {
-  bank_name: string;
-  branch_number: string;
-  account_number: string;
-  account_holder: string;
+  rejection_reason: string | null;
+  pix_key?: {
+    id: string;
+    key: string;
+    type: string;
+    owner_name: string;
+  };
 }

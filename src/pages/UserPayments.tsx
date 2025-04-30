@@ -1,9 +1,7 @@
 
-import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { SendIcon } from "lucide-react";
 import { useUserRole } from "@/hooks/use-user-role";
-import { UserRole } from "@/types";
 import { usePaymentRequests } from "@/hooks/usePaymentRequests";
 import { BalanceCards } from "@/components/payments/BalanceCards";
 import { PaymentHistoryCard } from "@/components/payments/PaymentHistoryCard";
@@ -16,7 +14,9 @@ const UserPayments = () => {
     paymentRequests,
     isDialogOpen,
     setIsDialogOpen,
-    handleRequestPayment
+    handleRequestPayment,
+    pixKeys,
+    isLoadingPixKeys
   } = usePaymentRequests();
   
   const { userRole } = useUserRole();
@@ -43,6 +43,8 @@ const UserPayments = () => {
         isOpen={isDialogOpen}
         onOpenChange={setIsDialogOpen}
         clientBalance={clientBalance}
+        pixKeys={pixKeys}
+        isLoadingPixKeys={isLoadingPixKeys}
         onRequestPayment={handleRequestPayment}
       />
     </div>
