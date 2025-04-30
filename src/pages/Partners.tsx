@@ -1,91 +1,126 @@
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import MainLayout from "@/components/layout/MainLayout";
-import PartnerForm from "@/components/partners/PartnerForm";
-import { PartnersHeader } from "@/components/partners/PartnersHeader";
-import { PartnersFilterCard } from "@/components/partners/PartnersFilterCard";
-import { PartnersTableCard } from "@/components/partners/PartnersTableCard";
-import { usePartners, type Partner } from "@/hooks/use-partners";
+import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
+import { Partner, usePartners } from "@/hooks/use-partners";
+import PartnersTableCard from "@/components/partners/PartnersTableCard";
+import PartnersHeader from "@/components/partners/PartnersHeader";
+import PartnersFilterCard from "@/components/partners/PartnersFilterCard";
+import { PartnerForm } from "@/components/partners/PartnerForm";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
+import { useToast } from "@/hooks/use-toast";
 
 const Partners = () => {
-  const [showCreateForm, setShowCreateForm] = useState(false);
-  const [selectedPartner, setSelectedPartner] = useState<Partner | null>(null);
-  
-  const {
-    partners,
-    isLoading,
-    handleFilter,
-    deletePartner,
-    savePartner,
-    refreshPartners
-  } = usePartners();
+  const { partners, filteredPartners, isLoading, fetchPartners, handleFilter, deletePartner, savePartner } = usePartners();
+  const [isFormOpen, setIsFormOpen] = useState(false);
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [currentPartner, setCurrentPartner] = useState<Partner | null>(null);
+  const { toast } = useToast();
 
-  const handleCreateClick = () => {
-    setSelectedPartner(null);
-    setShowCreateForm(true);
+  useEffect(() => {
+    fetchPartners();
+  }, []);
+
+  const handleEditPartner = (partner: Partner) => {
+    setCurrentPartner(partner);
+    setIsFormOpen(true);
   };
 
-  const handleEditClick = (partner: Partner) => {
-    setSelectedPartner(partner);
-    setShowCreateForm(true);
+  const handleDeletePartner = (partner: Partner) => {
+    setCurrentPartner(partner);
+    setIsDeleteDialogOpen(true);
   };
 
-  const handleDeleteClick = async (partner: Partner) => {
-    if (!window.confirm(`Tem certeza que deseja excluir o parceiro ${partner.business_name}?`)) {
-      return;
+  const handleCreatePartner = () => {
+    setCurrentPartner(null);
+    setIsFormOpen(true);
+  };
+
+  const handleFormSubmit = async (partner: Partner) => {
+    const result = await savePartner(partner);
+    if (result) {
+      setIsFormOpen(false);
+      toast({
+        title: "Sucesso",
+        description: `Parceiro ${currentPartner ? "atualizado" : "criado"} com sucesso.`,
+      });
     }
-    await deletePartner(partner.id);
   };
 
-  const handleFormClose = () => {
-    setShowCreateForm(false);
-    setSelectedPartner(null);
-    refreshPartners();
-  };
-
-  const handleFormSubmit = async (data: any) => {
-    const success = await savePartner(data, selectedPartner?.id);
-    if (success) {
-      handleFormClose();
+  const handleDeleteConfirm = async () => {
+    if (currentPartner) {
+      const success = await deletePartner(currentPartner.id);
+      if (success) {
+        setIsDeleteDialogOpen(false);
+        toast({
+          title: "Sucesso",
+          description: "Parceiro excluído com sucesso.",
+        });
+      }
     }
+  };
+
+  const handleFilter = (filters: Partial<Partner>) => {
+    handleFilter(filters);
   };
 
   return (
     <MainLayout>
-      <div className="space-y-4 max-w-full">
-        <PartnersHeader onCreateClick={handleCreateClick} />
-        
-        <div className="grid gap-4 md:grid-cols-1 lg:grid-cols-1">
+      <PartnersHeader onCreatePartner={handleCreatePartner} />
+      
+      <div className="grid grid-cols-1 lg:grid-cols-4 gap-4 mb-4">
+        <div className="lg:col-span-1">
           <PartnersFilterCard onFilter={handleFilter} />
         </div>
         
-        <PartnersTableCard
-          partners={partners}
-          isLoading={isLoading}
-          onEditPartner={handleEditClick}
-          onDeletePartner={handleDeleteClick}
-        />
-
-        {showCreateForm && (
-          <PartnerForm 
-            isOpen={showCreateForm}
-            onClose={handleFormClose}
-            onSubmit={handleFormSubmit}
-            initialData={selectedPartner || {
-              business_name: "",
-              contact_name: "",
-              email: "",
-              phone: "",
-              commission_rate: 0,
-              address: "",
-              city: "",
-              state: "",
-              zip: ""
-            }}
-            title={selectedPartner ? "Editar Parceiro" : "Novo Parceiro"}
+        <div className="lg:col-span-3">
+          <PartnersTableCard 
+            partners={filteredPartners}
+            isLoading={isLoading} 
+            onEditPartner={handleEditPartner} 
+            onDeletePartner={handleDeletePartner}
           />
-        )}
+        </div>
       </div>
+
+      {/* Partner Form Dialog */}
+      <Dialog open={isFormOpen} onOpenChange={setIsFormOpen}>
+        <DialogContent className="sm:max-w-[600px]">
+          <DialogHeader>
+            <DialogTitle>
+              {currentPartner ? "Editar Parceiro" : "Novo Parceiro"}
+            </DialogTitle>
+          </DialogHeader>
+          <PartnerForm 
+            partner={currentPartner} 
+            onSubmit={handleFormSubmit} 
+            onCancel={() => setIsFormOpen(false)} 
+          />
+        </DialogContent>
+      </Dialog>
+
+      {/* Delete Confirmation Dialog */}
+      <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Confirmar exclusão</AlertDialogTitle>
+            <AlertDialogDescription>
+              Tem certeza que deseja excluir o parceiro "{currentPartner?.business_name}"? 
+              Esta ação não pode ser desfeita.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction 
+              onClick={handleDeleteConfirm}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              Excluir
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </MainLayout>
   );
 };

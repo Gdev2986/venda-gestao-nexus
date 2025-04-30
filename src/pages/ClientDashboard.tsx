@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import MainLayout from "@/components/layout/MainLayout";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
@@ -10,7 +9,7 @@ import { CalendarIcon, ShoppingBag, CreditCard, Headphones, Truck, RefreshCw } f
 import { useToast } from "@/hooks/use-toast";
 import { Sale, PaymentMethod } from "@/types";
 
-// Simplified interface for database sales
+// Interface para os dados de venda do banco de dados
 interface DbSale {
   id: string;
   code: string;
@@ -27,9 +26,17 @@ interface DbSale {
   processing_status: string;
 }
 
-// Function to map database sale to app Sale type
+// Interface para máquina
+interface Machine {
+  id: string;
+  model: string;
+  serial_number: string;
+  status: string;
+}
+
+// Função para mapear dados do banco para o tipo Sale da aplicação
 const mapDbSaleToAppSale = (dbSale: DbSale): Sale => {
-  // Map payment method string to enum
+  // Mapear método de pagamento string para enum
   let paymentMethod: PaymentMethod;
   switch (dbSale.payment_method) {
     case "CREDIT":
@@ -62,37 +69,51 @@ const ClientDashboard = () => {
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(true);
   const [sales, setSales] = useState<Sale[]>([]);
-  const [machines, setMachines] = useState<any[]>([]);
+  const [machines, setMachines] = useState<Machine[]>([]);
   const [currentBalance, setCurrentBalance] = useState(0);
   const [refreshing, setRefreshing] = useState(false);
+  const [clientId, setClientId] = useState<string | null>(null);
 
   useEffect(() => {
     if (user) {
-      fetchClientData();
+      fetchClientId();
     }
   }, [user]);
 
-  const fetchClientData = async () => {
-    setIsLoading(true);
+  useEffect(() => {
+    if (clientId) {
+      fetchData();
+    }
+  }, [clientId]);
+
+  const fetchClientId = async () => {
     try {
-      // Fetch client ID first
-      const { data: clientData, error: clientError } = await supabase
+      const { data, error } = await supabase
         .from('clients')
         .select('id')
         .eq('user_id', user?.id)
         .single();
 
-      if (clientError) {
-        console.error("Error fetching client data:", clientError);
+      if (error) {
+        console.error("Error fetching client data:", error);
         return;
       }
 
-      if (clientData) {
-        await Promise.all([
-          fetchSalesData(clientData.id),
-          fetchMachinesData(clientData.id)
-        ]);
+      if (data) {
+        setClientId(data.id);
       }
+    } catch (error) {
+      console.error("Error fetching client ID:", error);
+    }
+  };
+
+  const fetchData = async () => {
+    setIsLoading(true);
+    try {
+      await Promise.all([
+        fetchSalesData(),
+        fetchMachinesData()
+      ]);
     } catch (error) {
       console.error("Error fetching client dashboard data:", error);
     } finally {
@@ -100,7 +121,9 @@ const ClientDashboard = () => {
     }
   };
 
-  const fetchSalesData = async (clientId: string) => {
+  const fetchSalesData = async () => {
+    if (!clientId) return;
+    
     // Fetch sales data
     const { data: salesData, error: salesError } = await supabase
       .from('sales')
@@ -122,7 +145,9 @@ const ClientDashboard = () => {
     }
   };
 
-  const fetchMachinesData = async (clientId: string) => {
+  const fetchMachinesData = async () => {
+    if (!clientId) return;
+    
     // Fetch machines data
     const { data: machinesData, error: machinesError } = await supabase
       .from('machines')
@@ -138,7 +163,7 @@ const ClientDashboard = () => {
 
   const handleRefresh = async () => {
     setRefreshing(true);
-    await fetchClientData();
+    await fetchData();
     setRefreshing(false);
     toast({
       title: "Dados atualizados",

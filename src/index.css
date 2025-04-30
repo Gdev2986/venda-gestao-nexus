@@ -57,32 +57,32 @@
     --popover: 222 47% 11%;
     --popover-foreground: 210 40% 98%;
 
-    --primary: 210 10% 30%;  /* Alterado para cinza neutro escuro */
+    --primary: 196 100% 45%;  /* Mudado para azul para manter consistência */
     --primary-foreground: 210 40% 98%;
 
-    --secondary: 210 8% 20%;  /* Alterado para cinza neutro escuro */
+    --secondary: 196 30% 20%; /* Ajustado para tom semelhante ao sidebar */
     --secondary-foreground: 210 40% 98%;
 
-    --muted: 210 6% 15%;  /* Alterado para cinza neutro escuro */
-    --muted-foreground: 210 5% 64.9%;
+    --muted: 223 47% 15%;
+    --muted-foreground: 210 40% 80%;
 
-    --accent: 210 8% 20%;  /* Alterado para cinza neutro escuro */
+    --accent: 196 30% 20%; /* Ajustado para tom semelhante ao sidebar */
     --accent-foreground: 210 40% 98%;
 
     --destructive: 0 62.8% 30.6%;
     --destructive-foreground: 0 0% 98%;
 
-    --border: 210 6% 15%;  /* Alterado para cinza neutro escuro */
-    --input: 210 6% 15%;  /* Alterado para cinza neutro escuro */
-    --ring: 210 4.9% 83.9%;
+    --border: 217 19% 27%;
+    --input: 217 19% 27%;
+    --ring: 196 100% 45%;
     
-    --sidebar-background: 196 30% 15%;  /* Mantido consistente em ambos os modos */
+    --sidebar-background: 196 70% 20%; /* Tom verde-azulado escuro da imagem */
     --sidebar-foreground: 210 40% 98%;
     --sidebar-primary: 196 100% 45%;
     --sidebar-primary-foreground: 210 40% 98%;
-    --sidebar-accent: 210 8% 20%;  /* Alterado para corresponder aos tons neutros */
+    --sidebar-accent: 196 50% 30%;
     --sidebar-accent-foreground: 210 40% 98%;
-    --sidebar-border: 210 8% 20%;  /* Alterado para corresponder aos tons neutros */
+    --sidebar-border: 196 60% 25%;
     --sidebar-ring: 196 100% 70%;
   }
 }

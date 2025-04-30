@@ -18,18 +18,19 @@ const Sidebar = ({ isOpen, isMobile, onClose, userRole }: SidebarProps) => {
   return (
     <div 
       className={cn(
-        "fixed inset-y-0 left-0 z-50 flex flex-col w-64 bg-sidebar text-sidebar-foreground transition-transform duration-200",
+        "fixed inset-y-0 left-0 z-50 flex flex-col w-64 text-sidebar-foreground transition-transform duration-200",
         isMobile ? "shadow-xl" : "border-r border-sidebar-border",
         !isOpen && "transform -translate-x-full", // Hide with translation
         isOpen && "transform translate-x-0" // Show with translation
       )}
+      style={{ backgroundColor: 'hsl(196, 70%, 20%)' }} // Aplicando a cor exata da imagem de referência
     >
       <div className="flex items-center justify-between h-16 px-4 border-b border-sidebar-border">
         <div className="flex items-center space-x-2">
           <div className="w-8 h-8 rounded-md bg-primary flex items-center justify-center text-white font-bold">
             SP
           </div>
-          <span className="text-lg font-semibold">SigmaPay</span>
+          <span className="text-lg font-semibold text-white">SigmaPay</span>
         </div>
 
         {isMobile && (
