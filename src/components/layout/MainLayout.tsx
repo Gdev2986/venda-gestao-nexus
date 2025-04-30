@@ -1,5 +1,6 @@
 
 import { useState, useEffect } from "react";
+import { useLocation } from "react-router-dom";
 import { UserRole } from "@/types";
 import Sidebar from "./Sidebar";
 import { Button } from "@/components/ui/button";
@@ -22,16 +23,17 @@ const MainLayout = ({ children }: MainLayoutProps) => {
   });
   
   const isMobile = useIsMobile();
+  const location = useLocation();
   
   // Get user role from custom hook
   const { userRole } = useUserRole();
 
+  // Close sidebar on mobile by default and on route change
   useEffect(() => {
-    // Close sidebar on mobile by default
     if (isMobile) {
       setSidebarOpen(false);
     }
-  }, [isMobile]);
+  }, [isMobile, location.pathname]); // Add location.pathname to dependencies to close sidebar on route change for mobile
 
   // Save sidebar state to localStorage when it changes
   useEffect(() => {
@@ -42,39 +44,13 @@ const MainLayout = ({ children }: MainLayoutProps) => {
 
   return (
     <div className="flex h-screen overflow-hidden bg-background">
-      {/* Sidebar with overlay for mobile */}
-      <AnimatePresence mode="wait">
-        {sidebarOpen && (
-          <>
-            {/* Mobile backdrop */}
-            {isMobile && (
-              <motion.div 
-                className="fixed inset-0 bg-black/50 z-30"
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                exit={{ opacity: 0 }}
-                onClick={() => setSidebarOpen(false)}
-              />
-            )}
-            
-            {/* Sidebar component */}
-            <motion.div
-              className="fixed left-0 top-0 z-40 h-screen w-64 bg-sidebar"
-              initial={{ x: "-100%" }}
-              animate={{ x: 0 }}
-              exit={{ x: "-100%" }}
-              transition={{ duration: 0.2, ease: "easeInOut" }}
-            >
-              <Sidebar 
-                isOpen={true} 
-                isMobile={isMobile} 
-                onClose={() => setSidebarOpen(false)} 
-                userRole={userRole}
-              />
-            </motion.div>
-          </>
-        )}
-      </AnimatePresence>
+      {/* Sidebar component - mounted always but conditionally shown */}
+      <Sidebar 
+        isOpen={sidebarOpen} 
+        isMobile={isMobile} 
+        onClose={() => setSidebarOpen(false)} 
+        userRole={userRole}
+      />
       
       {/* Main content */}
       <div 
@@ -102,12 +78,19 @@ const MainLayout = ({ children }: MainLayoutProps) => {
           </div>
         </header>
         
-        {/* Main scrollable content */}
-        <main className="flex-1 overflow-auto p-4 md:p-6 lg:p-8">
+        {/* Main scrollable content with route-based animation */}
+        <motion.main
+          key={location.pathname}
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          transition={{ duration: 0.2 }}
+          className="flex-1 overflow-auto p-4 md:p-6 lg:p-8"
+        >
           <div className="mx-auto max-w-7xl">
             {children}
           </div>
-        </main>
+        </motion.main>
       </div>
     </div>
   );

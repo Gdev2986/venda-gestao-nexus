@@ -18,7 +18,7 @@ const SidebarNavItem = ({ item, userRole }: SidebarNavItemProps) => {
   const [expanded, setExpanded] = useState(false);
 
   const isActiveRoute = (href: string) => {
-    return location.pathname === href;
+    return location.pathname === href || location.pathname.startsWith(`${href}/`);
   };
 
   const isActiveParent = (item: SidebarItem) => {
@@ -35,20 +35,20 @@ const SidebarNavItem = ({ item, userRole }: SidebarNavItemProps) => {
   }, [item, location.pathname]);
 
   const toggleExpanded = (e: React.MouseEvent) => {
-    e.stopPropagation(); // Prevent navigation when clicking the toggle
+    e.preventDefault(); // Prevent navigation
     setExpanded(prev => !prev);
   };
 
-  const handleSubItemClick = (e: React.MouseEvent, href: string) => {
-    e.stopPropagation(); // Prevent parent from receiving the click
-    navigate(href);
-    // We intentionally don't close the dropdown here
+  const handleItemClick = (e: React.MouseEvent, href: string) => {
+    e.preventDefault(); // Prevent default browser navigation
+    navigate(href); // Use React Router navigation
   };
 
   if (item.subItems) {
     return (
       <div className="mb-1">
-        <button
+        <a
+          href={item.href}
           onClick={toggleExpanded}
           className={cn(
             "flex items-center justify-between w-full px-3 py-2 text-sm rounded-md transition-colors",
@@ -66,7 +66,7 @@ const SidebarNavItem = ({ item, userRole }: SidebarNavItemProps) => {
           ) : (
             <ChevronRight className="h-4 w-4" />
           )}
-        </button>
+        </a>
         
         <AnimatePresence>
           {expanded && (
@@ -79,9 +79,10 @@ const SidebarNavItem = ({ item, userRole }: SidebarNavItemProps) => {
             >
               {item.subItems.map((subItem) => (
                 subItem.roles.includes(userRole) && (
-                  <button
+                  <a
                     key={subItem.title}
-                    onClick={(e) => handleSubItemClick(e, subItem.href)}
+                    href={subItem.href}
+                    onClick={(e) => handleItemClick(e, subItem.href)}
                     className={cn(
                       "flex items-center w-full pl-11 pr-3 py-2 text-sm rounded-md transition-colors mt-1",
                       isActiveRoute(subItem.href)
@@ -90,7 +91,7 @@ const SidebarNavItem = ({ item, userRole }: SidebarNavItemProps) => {
                     )}
                   >
                     <span>{subItem.title}</span>
-                  </button>
+                  </a>
                 )
               ))}
             </motion.div>
@@ -101,8 +102,9 @@ const SidebarNavItem = ({ item, userRole }: SidebarNavItemProps) => {
   }
 
   return (
-    <button
-      onClick={() => navigate(item.href)}
+    <a
+      href={item.href}
+      onClick={(e) => handleItemClick(e, item.href)}
       className={cn(
         "flex items-center w-full px-3 py-2 text-sm rounded-md transition-colors",
         isActiveRoute(item.href)
@@ -112,7 +114,7 @@ const SidebarNavItem = ({ item, userRole }: SidebarNavItemProps) => {
     >
       <item.icon className="h-5 w-5 mr-3 flex-shrink-0" />
       <span>{item.title}</span>
-    </button>
+    </a>
   );
 };
 

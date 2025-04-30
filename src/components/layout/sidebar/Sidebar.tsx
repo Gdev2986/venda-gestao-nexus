@@ -1,4 +1,5 @@
 
+import { memo } from "react";
 import { motion } from "framer-motion";
 import { X } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -9,50 +10,63 @@ import SidebarFooter from "./SidebarFooter";
 import SidebarUserProfile from "./SidebarUserProfile";
 import { SidebarProps } from "./types";
 
-const Sidebar = ({ isOpen, isMobile, onClose, userRole }: SidebarProps) => {
-  // Don't render anything if sidebar is closed and on desktop
-  if (!isOpen && !isMobile) {
-    return null;
-  }
-
+// Memoize the Sidebar component to prevent unnecessary re-renders
+const Sidebar = memo(({ isOpen, isMobile, onClose, userRole }: SidebarProps) => {
   return (
-    <div 
-      className={cn(
-        "fixed inset-y-0 left-0 z-50 flex flex-col w-64 text-sidebar-foreground transition-transform duration-200",
-        isMobile ? "shadow-xl" : "border-r border-sidebar-border",
-        !isOpen && "transform -translate-x-full", // Hide with translation
-        isOpen && "transform translate-x-0" // Show with translation
+    <>
+      {/* Mobile backdrop */}
+      {isMobile && isOpen && (
+        <motion.div 
+          className="fixed inset-0 bg-black/50 z-30"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          onClick={onClose}
+        />
       )}
-      style={{ backgroundColor: 'hsl(196, 70%, 20%)' }} // Aplicando a cor exata da imagem de referência
-    >
-      <div className="flex items-center justify-between h-16 px-4 border-b border-sidebar-border">
-        <div className="flex items-center space-x-2">
-          <div className="w-8 h-8 rounded-md bg-primary flex items-center justify-center text-white font-bold">
-            SP
+      
+      {/* Sidebar with animation */}
+      <motion.div
+        className={cn(
+          "fixed inset-y-0 left-0 z-50 flex flex-col w-64 text-sidebar-foreground",
+          isMobile ? "shadow-xl" : "border-r border-sidebar-border"
+        )}
+        style={{ backgroundColor: 'hsl(196, 70%, 20%)' }}
+        initial={{ x: "-100%" }}
+        animate={{ x: isOpen ? 0 : "-100%" }}
+        transition={{ duration: 0.2, ease: "easeInOut" }}
+      >
+        <div className="flex items-center justify-between h-16 px-4 border-b border-sidebar-border">
+          <div className="flex items-center space-x-2">
+            <div className="w-8 h-8 rounded-md bg-primary flex items-center justify-center text-white font-bold">
+              SP
+            </div>
+            <span className="text-lg font-semibold text-white">SigmaPay</span>
           </div>
-          <span className="text-lg font-semibold text-white">SigmaPay</span>
+
+          {isMobile && (
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={onClose}
+              className="text-sidebar-foreground hover:text-white hover:bg-sidebar-accent"
+            >
+              <X className="h-5 w-5" />
+            </Button>
+          )}
         </div>
 
-        {isMobile && (
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={onClose}
-            className="text-sidebar-foreground hover:text-white hover:bg-sidebar-accent"
-          >
-            <X className="h-5 w-5" />
-          </Button>
-        )}
-      </div>
+        <div className="flex-1 overflow-y-auto py-4 px-3">
+          <SidebarNavigation userRole={userRole} />
+          <SidebarFooter />
+        </div>
 
-      <div className="flex-1 overflow-y-auto py-4 px-3">
-        <SidebarNavigation userRole={userRole} />
-        <SidebarFooter />
-      </div>
-
-      <SidebarUserProfile userRole={userRole} />
-    </div>
+        <SidebarUserProfile userRole={userRole} />
+      </motion.div>
+    </>
   );
-};
+});
+
+Sidebar.displayName = "Sidebar";
 
 export default Sidebar;
