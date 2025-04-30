@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import MainLayout from "@/components/layout/MainLayout";
 import { useToast } from "@/hooks/use-toast";
@@ -23,7 +22,7 @@ const ClientDashboard = () => {
     totalSales: 0,
     pendingPayments: 0,
     completedPayments: 0,
-    averageTicket: 0,
+    clientBalance: 15000, // Changed from averageTicket to clientBalance with mock value
   });
   const [dateRange, setDateRange] = useState<DateRange>({
     from: subDays(new Date(), 30),
@@ -122,17 +121,17 @@ const ClientDashboard = () => {
     const completedPayments = filtered
       .filter(tx => tx.status === 'completed')
       .reduce((sum, tx) => sum + tx.amount, 0);
-    const averageTicket = totalSales / (filtered.length || 1);
     
     setFilteredTransactions(filtered);
     setTotalTransactionsPages(Math.ceil(filtered.length / transactionsPerPage));
     
-    setStats({
+    // Keep the clientBalance value, but update other stats
+    setStats(prevStats => ({
       totalSales,
       pendingPayments,
       completedPayments,
-      averageTicket,
-    });
+      clientBalance: prevStats.clientBalance, // Keep the existing clientBalance
+    }));
   };
 
   const updateMachinesPagination = (machines: any[], page: number, perPage: number) => {

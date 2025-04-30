@@ -7,13 +7,14 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
+import { WalletIcon } from "lucide-react";
 
 interface StatsCardsProps {
   stats: {
     totalSales: number;
     pendingPayments: number;
     completedPayments: number;
-    averageTicket: number;
+    clientBalance: number; // Changed from averageTicket to clientBalance
   };
   loading: boolean;
 }
@@ -75,15 +76,16 @@ export function StatsCards({ stats, loading }: StatsCardsProps) {
       <Card>
         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
           <CardTitle className="text-sm font-medium">
-            Ticket Médio
+            Saldo Disponível
           </CardTitle>
+          <WalletIcon className="h-4 w-4 text-muted-foreground" />
         </CardHeader>
         <CardContent>
           {loading ? (
             <Skeleton className="h-7 w-36" />
           ) : (
             <div className="text-2xl font-bold">
-              {formatCurrency(stats.averageTicket)}
+              {formatCurrency(stats.clientBalance)}
             </div>
           )}
         </CardContent>

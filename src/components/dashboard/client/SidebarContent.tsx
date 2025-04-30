@@ -8,6 +8,8 @@ import {
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import ClientActions from "@/components/dashboard/ClientActions";
+import { PATHS } from "@/routes/paths";
+import { Link } from "react-router-dom";
 
 interface SidebarContentProps {
   loading: boolean;
@@ -35,7 +37,9 @@ export function SidebarContent({ loading }: SidebarContentProps) {
               <p className="text-xs text-muted-foreground mt-1">05/04/2025</p>
             </div>
           </div>
-          <Button variant="ghost" className="w-full mt-3 text-primary">Ver todas notificações</Button>
+          <Button variant="ghost" className="w-full mt-3 text-primary" asChild>
+            <Link to={PATHS.PAYMENTS}>Ver todos pagamentos</Link>
+          </Button>
         </CardContent>
       </Card>
     </div>
