@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { useToast } from "@/components/ui/use-toast";
 import { supabase } from "@/integrations/supabase/client";
@@ -42,28 +43,45 @@ const ClientPayments = () => {
 
     setIsLoading(true);
     try {
-      // Get client ID from user profile
+      // Get client ID from user profile using user.id directly
       const { data: profileData, error: profileError } = await supabase
         .from("profiles")
-        .select("client_id")
+        .select("id")
         .eq("id", user.id)
         .single();
 
       if (profileError) throw profileError;
-      if (!profileData?.client_id) {
+      
+      // Since we don't have client_id in profiles, we'll just use the user's ID
+      const userId = profileData?.id;
+      if (!userId) {
         setPayments([]);
         return;
       }
 
-      // Get payments for this client
+      // Get payment_requests for this client
       const { data, error } = await supabase
-        .from("payments")
+        .from("payment_requests")
         .select("*")
-        .eq("client_id", profileData.client_id)
+        .eq("client_id", userId) // Assuming client_id is the user's profile id
         .order("created_at", { ascending: false });
 
       if (error) throw error;
-      setPayments(data || []);
+
+      // Transform the data to match our Payment type
+      const transformedPayments: Payment[] = (data || []).map(item => ({
+        id: item.id,
+        amount: item.amount,
+        description: `Payment #${item.id.slice(0, 8)}`,
+        status: item.status as PaymentStatus,
+        created_at: item.created_at,
+        due_date: item.created_at, // Using created_at as due_date since it's required
+        receipt_url: item.receipt_url,
+        approved_at: item.approved_at,
+        client_id: item.client_id,
+      }));
+      
+      setPayments(transformedPayments);
     } catch (error) {
       console.error("Error fetching payments:", error);
       toast({
@@ -95,11 +113,11 @@ const ClientPayments = () => {
       setIsSubmitting(true);
       
       const update: {
-        status: "PENDING" | "APPROVED" | "REJECTED" | "PAID";
+        status: PaymentStatus;
         approved_at?: string;
         receipt_url?: string;
       } = {
-        status: approved ? "APPROVED" : "REJECTED"
+        status: approved ? PaymentStatus.APPROVED : PaymentStatus.REJECTED
       };
       
       if (approved) {
@@ -110,7 +128,7 @@ const ClientPayments = () => {
       }
       
       const { error } = await supabase
-        .from("payments")
+        .from("payment_requests")
         .update(update)
         .eq("id", paymentId);
 
@@ -142,22 +160,22 @@ const ClientPayments = () => {
 
   const getStatusBadge = (status: PaymentStatus) => {
     switch (status) {
-      case "PENDING":
+      case PaymentStatus.PENDING:
         return <Badge variant="outline" className="flex gap-1 items-center"><Clock className="h-3 w-3" /> Pendente</Badge>;
-      case "APPROVED":
-        return <Badge variant="success" className="flex gap-1 items-center"><CheckCircle2 className="h-3 w-3" /> Aprovado</Badge>;
-      case "REJECTED":
+      case PaymentStatus.APPROVED:
+        return <Badge variant="default" className="flex gap-1 items-center"><CheckCircle2 className="h-3 w-3" /> Aprovado</Badge>;
+      case PaymentStatus.REJECTED:
         return <Badge variant="destructive" className="flex gap-1 items-center"><AlertCircle className="h-3 w-3" /> Rejeitado</Badge>;
-      case "PAID":
-        return <Badge variant="default" className="flex gap-1 items-center"><FileCheck className="h-3 w-3" /> Pago</Badge>;
+      case PaymentStatus.PAID:
+        return <Badge variant="secondary" className="flex gap-1 items-center"><FileCheck className="h-3 w-3" /> Pago</Badge>;
       default:
         return <Badge variant="outline">Desconhecido</Badge>;
     }
   };
 
-  const pendingPayments = payments.filter(p => p.status === "PENDING");
-  const approvedPayments = payments.filter(p => p.status === "APPROVED");
-  const completedPayments = payments.filter(p => ["PAID", "REJECTED"].includes(p.status));
+  const pendingPayments = payments.filter(p => p.status === PaymentStatus.PENDING);
+  const approvedPayments = payments.filter(p => p.status === PaymentStatus.APPROVED);
+  const completedPayments = payments.filter(p => [PaymentStatus.PAID, PaymentStatus.REJECTED].includes(p.status));
 
   return (
     <MainLayout>
@@ -299,45 +317,7 @@ const ClientPayments = () => {
             </DialogDescription>
           </DialogHeader>
           {selectedPayment && (
-            <div className="space-y-4">
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <p className="text-sm font-medium text-muted-foreground">Descrição</p>
-                  <p>{selectedPayment.description}</p>
-                </div>
-                <div>
-                  <p className="text-sm font-medium text-muted-foreground">Valor</p>
-                  <p className="font-bold">{formatCurrency(selectedPayment.amount)}</p>
-                </div>
-                <div>
-                  <p className="text-sm font-medium text-muted-foreground">Data de Criação</p>
-                  <p>{new Date(selectedPayment.created_at).toLocaleDateString()}</p>
-                </div>
-                <div>
-                  <p className="text-sm font-medium text-muted-foreground">Data de Vencimento</p>
-                  <p>{new Date(selectedPayment.due_date).toLocaleDateString()}</p>
-                </div>
-                <div>
-                  <p className="text-sm font-medium text-muted-foreground">Status</p>
-                  <div className="mt-1">{getStatusBadge(selectedPayment.status)}</div>
-                </div>
-              </div>
-
-              {selectedPayment.receipt_url && (
-                <div>
-                  <p className="text-sm font-medium text-muted-foreground mb-2">Comprovante</p>
-                  <a 
-                    href={selectedPayment.receipt_url} 
-                    target="_blank" 
-                    rel="noopener noreferrer"
-                    className="flex items-center text-primary hover:underline"
-                  >
-                    <FileCheck className="mr-2 h-4 w-4" />
-                    Ver comprovante
-                  </a>
-                </div>
-              )}
-            </div>
+            <PaymentForm payment={selectedPayment} />
           )}
         </DialogContent>
       </Dialog>

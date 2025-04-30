@@ -5,9 +5,10 @@ import { FilterValues } from "@/hooks/use-partners";
 
 interface PartnersFilterCardProps {
   onFilter: (values: FilterValues) => void;
+  loading?: boolean;
 }
 
-export function PartnersFilterCard({ onFilter }: PartnersFilterCardProps) {
+export function PartnersFilterCard({ onFilter, loading }: PartnersFilterCardProps) {
   return (
     <Card>
       <CardHeader>

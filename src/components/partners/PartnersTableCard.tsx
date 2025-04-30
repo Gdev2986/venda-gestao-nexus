@@ -1,60 +1,50 @@
 
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { AlertTriangle } from "lucide-react";
 import { PartnersTable } from "@/components/partners/PartnersTable";
-import { type Partner } from "@/hooks/use-partners";
+import { Partner } from "@/hooks/use-partners";
 
-interface PartnersTableCardProps {
+export interface PartnersTableCardProps {
   partners: Partner[];
   isLoading: boolean;
-  loading?: boolean; // Add this to support existing code
-  error?: string;
-  onEdit?: (partner: Partner) => void;
-  onDelete?: (partnerId: string) => Promise<boolean>;
+  error: string;
   onEditPartner: (partner: Partner) => void;
-  onDeletePartner: (partner: Partner) => void;
+  onDeletePartner: (partner: Partner) => Promise<boolean> | void;
 }
 
-export function PartnersTableCard({
-  partners,
-  isLoading,
-  loading, // Support for existing code
-  error,
-  onEdit,
-  onDelete,
-  onEditPartner,
-  onDeletePartner,
-}: PartnersTableCardProps) {
-  // Use loading prop if isLoading is not provided
-  const isLoadingState = isLoading || loading || false;
-  
-  // Use the appropriate handlers based on what's provided
-  const handleEdit = onEdit || onEditPartner;
-  const handleDelete = async (partner: Partner) => {
-    if (onDelete) {
-      return await onDelete(partner.id);
-    } else if (onDeletePartner) {
-      onDeletePartner(partner);
-      return true;
-    }
-    return false;
-  };
-
+const PartnersTableCard = ({ 
+  partners, 
+  isLoading, 
+  error, 
+  onEditPartner, 
+  onDeletePartner 
+}: PartnersTableCardProps) => {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Lista de Parceiros</CardTitle>
-        <CardDescription>Listagem completa de parceiros cadastrados no sistema.</CardDescription>
+        <CardTitle>Parceiros</CardTitle>
       </CardHeader>
       <CardContent>
-        <PartnersTable
-          partners={partners}
-          isLoading={isLoadingState}
-          onEditPartner={handleEdit}
-          onDeletePartner={handleDelete}
-        />
+        {error ? (
+          <Alert variant="destructive">
+            <AlertTriangle className="h-4 w-4" />
+            <AlertTitle>Erro</AlertTitle>
+            <AlertDescription>
+              {error}
+            </AlertDescription>
+          </Alert>
+        ) : (
+          <PartnersTable 
+            partners={partners} 
+            isLoading={isLoading} 
+            onEditPartner={onEditPartner}
+            onDeletePartner={onDeletePartner}
+          />
+        )}
       </CardContent>
     </Card>
   );
-}
+};
 
 export default PartnersTableCard;

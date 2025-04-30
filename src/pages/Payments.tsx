@@ -1,5 +1,6 @@
+
 import { useState, useEffect } from "react";
-import { toast } from "react-hot-toast";
+import { toast } from "@/components/ui/use-toast";
 import {
   Table,
   TableBody,
@@ -31,8 +32,7 @@ import {
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import * as z from "zod";
-import { useToast } from "@/components/ui/use-toast";
-import { useAuth } from "@/contexts/AuthContext";
+import { useAuth } from "@/hooks/use-auth";
 import { supabase } from "@/integrations/supabase/client";
 import MainLayout from "@/components/layout/MainLayout";
 import { format } from 'date-fns';
@@ -41,6 +41,7 @@ import { Copy, CheckCircle, AlertCircle } from 'lucide-react';
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
+import { PaymentStatus } from "@/types";
 
 // Define the schema for the payment form
 const paymentFormSchema = z.object({
@@ -55,7 +56,7 @@ type Payment = {
   id: string;
   created_at: string;
   amount: number;
-  status: "PENDING" | "APPROVED" | "REJECTED" | "PAID";
+  status: PaymentStatus;
   client_id: string;
   approved_at: string | null;
   receipt_url: string | null;
@@ -69,9 +70,9 @@ const Payments = () => {
   const [selectedPayment, setSelectedPayment] = useState<Payment | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
-  const [filterStatus, setFilterStatus] = useState<"PENDING" | "APPROVED" | "REJECTED" | "PAID" | "ALL">("ALL");
+  const [filterStatus, setFilterStatus] = useState<string>("ALL");
   const { user } = useAuth();
-  const { toast } = useToast();
+  const { toast: showToast } = useToast();
 
   // Initialize the form using useForm hook
   const paymentForm = useForm<PaymentFormValues>({
@@ -85,9 +86,9 @@ const Payments = () => {
   const fetchPayments = async () => {
     try {
       let query = supabase
-        .from("payments")
+        .from("payment_requests")
         .select(`
-          id, created_at, amount, status, client_id, approved_at, receipt_url, rejection_reason,
+          id, created_at, amount, status, client_id, approved_at, receipt_url, 
           clients (name)
         `)
         .order('created_at', { ascending: false });
@@ -107,18 +108,18 @@ const Payments = () => {
         id: payment.id,
         created_at: payment.created_at,
         amount: payment.amount,
-        status: payment.status,
+        status: payment.status as PaymentStatus,
         client_id: payment.client_id,
         approved_at: payment.approved_at,
         receipt_url: payment.receipt_url,
-        rejection_reason: payment.rejection_reason,
+        rejection_reason: null, // Assuming this field doesn't exist in payment_requests
         client_name: payment.clients?.name || null,
       }));
 
       setPayments(mappedPayments);
     } catch (error) {
       console.error("Error fetching payments:", error);
-      toast({
+      showToast({
         title: "Erro",
         description: "Não foi possível carregar os pagamentos.",
         variant: "destructive",
@@ -151,7 +152,7 @@ const Payments = () => {
       setIsSubmitting(true);
       
       // Previous implementation logic - ensure it matches the expected signature
-      const status = approved ? "APPROVED" : "REJECTED";
+      const status = approved ? PaymentStatus.APPROVED : PaymentStatus.REJECTED;
       const update: Record<string, any> = { status };
       
       if (approved && receiptUrl) {
@@ -160,7 +161,7 @@ const Payments = () => {
       }
       
       const { error } = await supabase
-        .from("payments")
+        .from("payment_requests")
         .update(update)
         .eq("id", paymentId);
       
@@ -169,7 +170,7 @@ const Payments = () => {
       setPaymentFormOpen(false);
       await fetchPayments();
       
-      toast({
+      showToast({
         title: approved ? "Pagamento aprovado!" : "Pagamento rejeitado",
         description: `O pagamento foi ${approved ? "aprovado" : "rejeitado"} com sucesso.`,
         variant: approved ? "default" : "destructive",
@@ -178,7 +179,7 @@ const Payments = () => {
       return true;
     } catch (error) {
       console.error("Erro ao responder pagamento:", error);
-      toast({
+      showToast({
         title: "Erro",
         description: `Não foi possível ${approved ? "aprovar" : "rejeitar"} o pagamento.`,
         variant: "destructive",
@@ -215,7 +216,7 @@ const Payments = () => {
   // Copy to clipboard function
   const copyToClipboard = (text: string, message: string) => {
     navigator.clipboard.writeText(text);
-    toast({
+    showToast({
       title: "Copiado!",
       description: message,
     });
@@ -225,6 +226,10 @@ const Payments = () => {
   useEffect(() => {
     fetchPayments();
   }, [filterStatus]);
+
+  const handleFilterStatusChange = (value: string) => {
+    setFilterStatus(value);
+  };
 
   return (
     <MainLayout>
@@ -240,16 +245,16 @@ const Payments = () => {
             onChange={(e) => setSearchTerm(e.target.value)}
             className="flex-1"
           />
-          <Select value={filterStatus} onValueChange={setFilterStatus}>
+          <Select value={filterStatus} onValueChange={handleFilterStatusChange}>
             <SelectTrigger className="w-[180px]">
               <SelectValue placeholder="Filtrar Status" />
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="ALL">Todos</SelectItem>
-              <SelectItem value="PENDING">Pendente</SelectItem>
-              <SelectItem value="APPROVED">Aprovado</SelectItem>
-              <SelectItem value="REJECTED">Rejeitado</SelectItem>
-              <SelectItem value="PAID">Pago</SelectItem>
+              <SelectItem value={PaymentStatus.PENDING}>Pendente</SelectItem>
+              <SelectItem value={PaymentStatus.APPROVED}>Aprovado</SelectItem>
+              <SelectItem value={PaymentStatus.REJECTED}>Rejeitado</SelectItem>
+              <SelectItem value={PaymentStatus.PAID}>Pago</SelectItem>
             </SelectContent>
           </Select>
         </div>
@@ -288,9 +293,9 @@ const Payments = () => {
                 <TableCell>
                   <Badge
                     variant={
-                      payment.status === "PENDING"
+                      payment.status === PaymentStatus.PENDING
                         ? "secondary"
-                        : payment.status === "APPROVED"
+                        : payment.status === PaymentStatus.APPROVED
                           ? "default"
                           : "destructive"
                     }
@@ -299,7 +304,7 @@ const Payments = () => {
                   </Badge>
                 </TableCell>
                 <TableCell>
-                  <Button onClick={() => handleOpenPaymentForm(payment)} disabled={payment.status !== "PENDING"}>
+                  <Button onClick={() => handleOpenPaymentForm(payment)} disabled={payment.status !== PaymentStatus.PENDING}>
                     Responder
                   </Button>
                 </TableCell>

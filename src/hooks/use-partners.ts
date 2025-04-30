@@ -1,180 +1,171 @@
 
-import { useState, useEffect } from 'react';
-import { supabase } from '@/integrations/supabase/client';
-import { v4 as uuidv4 } from 'uuid';
+import { useState, useCallback } from "react";
+import { supabase } from "@/integrations/supabase/client";
 
 export type Partner = {
   id: string;
   company_name: string;
-  commission_rate: number;
-  contact_name?: string; 
+  contact_name?: string;
+  business_name?: string;
   email?: string;
   phone?: string;
+  commission_rate: number;
   created_at?: string;
   updated_at?: string;
 };
 
-type PartnersState = {
-  partners: Partner[];
-  isLoading: boolean;
-  error: string | null;
-  filteredPartners: Partner[];
+export type FilterValues = {
+  search: string;
+  dateRange?: {
+    from: Date;
+    to: Date;
+  };
 };
 
-type FilterPartners = (searchTerm: string, commissionRange: [number, number]) => void;
-
 export function usePartners() {
-  const [state, setState] = useState<PartnersState>({
-    partners: [],
-    isLoading: true,
-    error: null,
-    filteredPartners: [],
-  });
+  const [partners, setPartners] = useState<Partner[]>([]);
+  const [filteredPartners, setFilteredPartners] = useState<Partner[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-  const fetchPartners = async () => {
-    setState(prev => ({ ...prev, isLoading: true }));
-
-    try {
-      const { data, error } = await supabase
-        .from('partners')
-        .select('*')
-        .order('created_at', { ascending: false });
-
-      if (error) {
-        throw new Error(error.message);
-      }
-
-      setState({
-        partners: data || [],
-        filteredPartners: data || [],
-        isLoading: false,
-        error: null,
-      });
-    } catch (error) {
-      setState(prev => ({
-        ...prev,
-        isLoading: false,
-        error: error instanceof Error ? error.message : 'Failed to fetch partners',
-      }));
-    }
-  };
-
-  const createPartner = async (partnerData: Omit<Partner, 'id' | 'created_at' | 'updated_at'>) => {
-    setState(prev => ({ ...prev, isLoading: true }));
+  const fetchPartners = useCallback(async () => {
+    setIsLoading(true);
+    setError(null);
 
     try {
-      // Add id for the insert operation
-      const newPartner = {
-        id: uuidv4(),
-        ...partnerData,
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString()
-      };
+      const { data, error: fetchError } = await supabase
+        .from("partners")
+        .select("*");
 
-      const { error } = await supabase
-        .from('partners')
-        .insert([newPartner]);
-
-      if (error) {
-        throw new Error(error.message);
+      if (fetchError) {
+        throw new Error(fetchError.message);
       }
 
-      // Refetch partners to get updated data
-      await fetchPartners();
-      return true;
-    } catch (error) {
-      setState(prev => ({
-        ...prev,
-        isLoading: false,
-        error: error instanceof Error ? error.message : 'Failed to create partner',
-      }));
-      return false;
+      const fetchedPartners = (data as Partner[]) || [];
+      setPartners(fetchedPartners);
+      setFilteredPartners(fetchedPartners);
+    } catch (err: any) {
+      console.error("Error fetching partners:", err);
+      setError(err.message);
+    } finally {
+      setIsLoading(false);
     }
-  };
-
-  const updatePartner = async (partnerId: string, partnerData: Partial<Partner>) => {
-    setState(prev => ({ ...prev, isLoading: true }));
-
-    try {
-      const { error } = await supabase
-        .from('partners')
-        .update({
-          ...partnerData,
-          updated_at: new Date().toISOString()
-        })
-        .eq('id', partnerId);
-
-      if (error) {
-        throw new Error(error.message);
-      }
-
-      // Refetch partners to get updated data
-      await fetchPartners();
-      return true;
-    } catch (error) {
-      setState(prev => ({
-        ...prev,
-        isLoading: false,
-        error: error instanceof Error ? error.message : 'Failed to update partner',
-      }));
-      return false;
-    }
-  };
-
-  const deletePartner = async (partnerId: string) => {
-    setState(prev => ({ ...prev, isLoading: true }));
-
-    try {
-      const { error } = await supabase
-        .from('partners')
-        .delete()
-        .eq('id', partnerId);
-
-      if (error) {
-        throw new Error(error.message);
-      }
-
-      await fetchPartners();
-      return true;
-    } catch (error) {
-      setState(prev => ({
-        ...prev,
-        isLoading: false,
-        error: error instanceof Error ? error.message : 'Failed to delete partner',
-      }));
-      return false;
-    }
-  };
-
-  const filterPartners: FilterPartners = (searchTerm, commissionRange) => {
-    const filtered = state.partners.filter(partner => {
-      const matchesSearch = (
-        (partner.company_name?.toLowerCase().includes(searchTerm.toLowerCase())) ||
-        (partner.contact_name?.toLowerCase().includes(searchTerm.toLowerCase())) ||
-        (partner.email?.toLowerCase().includes(searchTerm.toLowerCase()))
-      );
-      
-      const commissionInRange = (
-        partner.commission_rate >= commissionRange[0] && 
-        partner.commission_rate <= commissionRange[1]
-      );
-      
-      return matchesSearch && commissionInRange;
-    });
-
-    setState(prev => ({ ...prev, filteredPartners: filtered }));
-  };
-
-  // Load partners on mount
-  useEffect(() => {
-    fetchPartners();
   }, []);
 
+  const createPartner = useCallback(async (partnerData: Omit<Partner, "id" | "created_at" | "updated_at">) => {
+    setIsLoading(true);
+    try {
+      const { data, error: insertError } = await supabase
+        .from("partners")
+        .insert([partnerData])
+        .select()
+        .single();
+
+      if (insertError) {
+        throw new Error(insertError.message);
+      }
+
+      setPartners((prev) => [...prev, data as Partner]);
+      setFilteredPartners((prev) => [...prev, data as Partner]);
+      return true;
+    } catch (err: any) {
+      console.error("Error creating partner:", err);
+      setError(err.message);
+      return false;
+    } finally {
+      setIsLoading(false);
+    }
+  }, []);
+
+  const updatePartner = useCallback(async (id: string, partnerData: Omit<Partner, "id" | "created_at" | "updated_at">) => {
+    setIsLoading(true);
+    try {
+      const { data, error: updateError } = await supabase
+        .from("partners")
+        .update(partnerData)
+        .eq("id", id)
+        .select()
+        .single();
+
+      if (updateError) {
+        throw new Error(updateError.message);
+      }
+
+      const updatedPartner = data as Partner;
+      setPartners((prev) =>
+        prev.map((p) => (p.id === id ? updatedPartner : p))
+      );
+      setFilteredPartners((prev) =>
+        prev.map((p) => (p.id === id ? updatedPartner : p))
+      );
+      return true;
+    } catch (err: any) {
+      console.error("Error updating partner:", err);
+      setError(err.message);
+      return false;
+    } finally {
+      setIsLoading(false);
+    }
+  }, []);
+
+  const deletePartner = useCallback(async (id: string) => {
+    setIsLoading(true);
+    try {
+      const { error: deleteError } = await supabase
+        .from("partners")
+        .delete()
+        .eq("id", id);
+
+      if (deleteError) {
+        throw new Error(deleteError.message);
+      }
+
+      setPartners((prev) => prev.filter((p) => p.id !== id));
+      setFilteredPartners((prev) => prev.filter((p) => p.id !== id));
+      return true;
+    } catch (err: any) {
+      console.error("Error deleting partner:", err);
+      setError(err.message);
+      return false;
+    } finally {
+      setIsLoading(false);
+    }
+  }, []);
+
+  const filterPartners = useCallback((searchTerm: string, commissionRange?: [number, number]) => {
+    if (!searchTerm && !commissionRange) {
+      setFilteredPartners(partners);
+      return;
+    }
+
+    let filtered = [...partners];
+
+    if (searchTerm) {
+      const search = searchTerm.toLowerCase();
+      filtered = filtered.filter(
+        (partner) =>
+          partner.company_name.toLowerCase().includes(search) ||
+          (partner.business_name && partner.business_name.toLowerCase().includes(search)) ||
+          (partner.contact_name && partner.contact_name.toLowerCase().includes(search)) ||
+          (partner.email && partner.email.toLowerCase().includes(search))
+      );
+    }
+
+    if (commissionRange) {
+      const [min, max] = commissionRange;
+      filtered = filtered.filter(
+        (partner) => partner.commission_rate >= min && partner.commission_rate <= max
+      );
+    }
+
+    setFilteredPartners(filtered);
+  }, [partners]);
+
   return {
-    partners: state.partners,
-    filteredPartners: state.filteredPartners,
-    isLoading: state.isLoading,
-    error: state.error,
+    partners,
+    filteredPartners,
+    isLoading,
+    error,
     fetchPartners,
     createPartner,
     updatePartner,

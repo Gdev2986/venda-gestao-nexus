@@ -1,10 +1,11 @@
+
 import { useState, useCallback } from 'react';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import MainLayout from "@/components/layout/MainLayout";
 import PartnersHeader from "@/components/partners/PartnersHeader";
 import PartnersTableCard from "@/components/partners/PartnersTableCard";
 import PartnerForm from "@/components/partners/PartnerForm";
-import PartnersFilterCard from "@/components/partners/PartnersFilterCard";
+import { PartnersFilterCard } from "@/components/partners/PartnersFilterCard";
 import { usePartners, type Partner } from "@/hooks/use-partners";
 import { toast } from "@/components/ui/use-toast";
 
@@ -133,9 +134,12 @@ const Partners = () => {
             </DialogHeader>
             
             <PartnerForm
-              initialPartner={selectedPartner}
+              isOpen={isFormOpen}
+              onClose={() => setIsFormOpen(false)}
               onSubmit={handleSubmit} 
               isSubmitting={isSubmitting}
+              initialData={selectedPartner || undefined}
+              title={selectedPartner ? "Editar Parceiro" : "Novo Parceiro"}
             />
           </DialogContent>
         </Dialog>
