@@ -1,199 +1,203 @@
 
-import { useEffect, useState } from "react";
-import MainLayout from "@/components/layout/MainLayout";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Button } from "@/components/ui/button";
-import { PlusCircle } from "lucide-react";
+import { useState, useEffect } from "react";
 import { useToast } from "@/hooks/use-toast";
-import PixKeysManager from "@/components/settings/PixKeysManager";
 import { supabase } from "@/integrations/supabase/client";
+import MainLayout from "@/components/layout/MainLayout";
 import { useAuth } from "@/hooks/use-auth";
+import { PixKey } from "@/types";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import PixKeysManager from "@/components/settings/PixKeysManager";
 
-// Define the PixKey type to match what's coming from the database
-interface PixKey {
-  id: string;
-  user_id: string;
-  type: "CPF" | "CNPJ" | "EMAIL" | "PHONE" | "RANDOM";
-  key: string;
-  name: string;
-  is_default: boolean;
-  created_at: string;
-  updated_at: string;
-  bank_name?: string;
-}
-
-export default function Settings() {
-  const [activeTab, setActiveTab] = useState("geral");
-  const [pixKeys, setPixKeys] = useState<PixKey[]>([]);
-  const [isLoading, setIsLoading] = useState(false);
+const Settings = () => {
   const { toast } = useToast();
   const { user } = useAuth();
+  const [pixKeys, setPixKeys] = useState<PixKey[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    if (user?.id) {
+      fetchPixKeys();
+    }
+  }, [user?.id]);
 
   const fetchPixKeys = async () => {
-    if (!user) return;
-    
-    setIsLoading(true);
     try {
+      setIsLoading(true);
       const { data, error } = await supabase
-        .from('pix_keys')
-        .select('*')
-        .eq('user_id', user.id)
-        .order('created_at', { ascending: false });
+        .from("pix_keys")
+        .select("*")
+        .eq("user_id", user?.id)
+        .order("created_at", { ascending: false });
 
-      if (error) throw error;
+      if (error) {
+        throw error;
+      }
 
-      // Transform the data to match our PixKey interface
-      const transformedData: PixKey[] = data.map(item => ({
-        id: item.id,
-        user_id: item.user_id,
-        type: item.type,
-        key: item.key,
-        name: item.name,
-        is_default: item.is_default || false,
-        created_at: item.created_at,
-        updated_at: item.updated_at,
-        bank_name: item.bank_name || "",
+      // Map the data to match our PixKey type if necessary
+      const mappedKeys: PixKey[] = data.map(key => ({
+        id: key.id,
+        created_at: key.created_at,
+        updated_at: key.updated_at || key.created_at,
+        key: key.key,
+        type: key.type,
+        is_default: key.is_default || false,
+        name: key.name,
+        user_id: key.user_id
       }));
 
-      setPixKeys(transformedData);
-    } catch (err: any) {
+      setPixKeys(mappedKeys);
+    } catch (error) {
+      console.error("Error fetching PIX keys:", error);
       toast({
-        title: "Erro ao carregar chaves Pix",
-        description: err.message,
-        variant: "destructive"
+        variant: "destructive",
+        title: "Erro",
+        description: "Não foi possível carregar suas chaves PIX.",
       });
     } finally {
       setIsLoading(false);
     }
   };
 
-  const handleAddPixKey = async (newKey: Partial<PixKey>) => {
-    if (!user) return false;
-    
+  const handleAddPixKey = async (newKey: Partial<PixKey>): Promise<boolean> => {
     try {
-      const { data, error } = await supabase
-        .from('pix_keys')
-        .insert([{
-          user_id: user.id,
-          type: newKey.type,
-          key: newKey.key,
-          name: newKey.name,
-          is_default: newKey.is_default || false,
-          bank_name: newKey.bank_name || "",
-        }])
-        .select();
+      if (!user?.id) {
+        toast({
+          variant: "destructive",
+          title: "Erro",
+          description: "Você precisa estar logado para adicionar uma chave PIX.",
+        });
+        return false;
+      }
+
+      // Ensure default key handling
+      if (newKey.is_default) {
+        // If this key is default, make all other keys not default
+        await supabase
+          .from("pix_keys")
+          .update({ is_default: false })
+          .eq("user_id", user.id);
+      } else if (pixKeys.length === 0) {
+        // If this is the first key, make it default
+        newKey.is_default = true;
+      }
+
+      const { error } = await supabase.from("pix_keys").insert({
+        key: newKey.key,
+        type: newKey.type,
+        name: newKey.name,
+        is_default: newKey.is_default,
+        user_id: user.id,
+      });
 
       if (error) throw error;
 
-      // Transform the newly created key to match our interface
-      const transformedKey: PixKey = {
-        id: data[0].id,
-        user_id: data[0].user_id,
-        type: data[0].type,
-        key: data[0].key,
-        name: data[0].name,
-        is_default: data[0].is_default || false,
-        created_at: data[0].created_at,
-        updated_at: data[0].updated_at,
-        bank_name: data[0].bank_name || "",
-      };
-
-      setPixKeys(prev => [transformedKey, ...prev]);
       toast({
-        title: "Chave Pix adicionada",
-        description: "Sua nova chave Pix foi adicionada com sucesso."
+        title: "Sucesso!",
+        description: "Chave PIX adicionada com sucesso.",
       });
+
+      await fetchPixKeys();
       return true;
-    } catch (err: any) {
+    } catch (error) {
+      console.error("Error adding PIX key:", error);
       toast({
-        title: "Erro ao adicionar chave Pix",
-        description: err.message,
-        variant: "destructive"
+        variant: "destructive",
+        title: "Erro",
+        description: "Não foi possível adicionar a chave PIX. Tente novamente.",
       });
       return false;
     }
   };
 
-  const handleDeletePixKey = async (id: string) => {
+  const handleDeletePixKey = async (id: string): Promise<boolean> => {
     try {
+      const keyToDelete = pixKeys.find(key => key.id === id);
+      if (!keyToDelete) return false;
+
       const { error } = await supabase
-        .from('pix_keys')
+        .from("pix_keys")
         .delete()
-        .eq('id', id);
+        .eq("id", id);
 
       if (error) throw error;
 
-      setPixKeys(prev => prev.filter(key => key.id !== id));
+      // If this was a default key and there are other keys, make the first one default
+      if (keyToDelete.is_default && pixKeys.length > 1) {
+        const nextKey = pixKeys.find(key => key.id !== id);
+        if (nextKey) {
+          await supabase
+            .from("pix_keys")
+            .update({ is_default: true })
+            .eq("id", nextKey.id);
+        }
+      }
+
       toast({
-        title: "Chave Pix removida",
-        description: "A chave Pix foi removida com sucesso."
+        title: "Sucesso!",
+        description: "Chave PIX removida com sucesso.",
       });
+
+      await fetchPixKeys();
       return true;
-    } catch (err: any) {
+    } catch (error) {
+      console.error("Error deleting PIX key:", error);
       toast({
-        title: "Erro ao remover chave Pix",
-        description: err.message,
-        variant: "destructive"
+        variant: "destructive",
+        title: "Erro",
+        description: "Não foi possível remover a chave PIX. Tente novamente.",
       });
       return false;
     }
   };
-
-  useEffect(() => {
-    fetchPixKeys();
-  }, [user]);
 
   return (
     <MainLayout>
-      <div className="container mx-auto py-10">
-        <h1 className="text-3xl font-semibold mb-6">Configurações</h1>
-        
-        <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
-          <TabsList>
-            <TabsTrigger value="geral">Geral</TabsTrigger>
-            <TabsTrigger value="pix">Chaves Pix</TabsTrigger>
-            <TabsTrigger value="notificacoes">Notificações</TabsTrigger>
-            <TabsTrigger value="seguranca">Segurança</TabsTrigger>
+      <div className="container mx-auto py-6">
+        <h1 className="text-3xl font-bold mb-6">Configurações</h1>
+
+        <Tabs defaultValue="pix_keys">
+          <TabsList className="mb-4">
+            <TabsTrigger value="pix_keys">Chaves PIX</TabsTrigger>
+            <TabsTrigger value="profile">Perfil</TabsTrigger>
           </TabsList>
-          
-          <TabsContent value="geral" className="space-y-4">
-            <div className="grid gap-4">
-              <h2 className="text-xl font-medium">Configurações Gerais</h2>
-              <p className="text-gray-500">Configurações básicas da conta e preferências.</p>
-            </div>
+
+          <TabsContent value="pix_keys">
+            <Card>
+              <CardHeader>
+                <CardTitle>Gerenciar Chaves PIX</CardTitle>
+                <CardDescription>
+                  Configure suas chaves PIX para receber pagamentos
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <PixKeysManager 
+                  isLoading={isLoading}
+                  onAdd={handleAddPixKey}
+                  onDelete={handleDeletePixKey}
+                  pixKeys={pixKeys}
+                />
+              </CardContent>
+            </Card>
           </TabsContent>
-          
-          <TabsContent value="pix" className="space-y-4">
-            <div className="flex justify-between items-center mb-4">
-              <div>
-                <h2 className="text-xl font-medium">Suas Chaves Pix</h2>
-                <p className="text-gray-500">Gerencie suas chaves Pix para recebimento de pagamentos.</p>
-              </div>
-              <Button>
-                <PlusCircle className="h-4 w-4 mr-2" />
-                Nova Chave
-              </Button>
-            </div>
-            
-            <PixKeysManager 
-              keys={pixKeys}
-              isLoading={isLoading}
-              onAdd={handleAddPixKey}
-              onDelete={handleDeletePixKey}
-            />
-          </TabsContent>
-          
-          <TabsContent value="notificacoes" className="space-y-4">
-            <h2 className="text-xl font-medium">Notificações</h2>
-            <p className="text-gray-500">Configure como deseja ser notificado.</p>
-          </TabsContent>
-          
-          <TabsContent value="seguranca" className="space-y-4">
-            <h2 className="text-xl font-medium">Segurança</h2>
-            <p className="text-gray-500">Defina opções de segurança para sua conta.</p>
+
+          <TabsContent value="profile">
+            <Card>
+              <CardHeader>
+                <CardTitle>Perfil</CardTitle>
+                <CardDescription>
+                  Gerencie seus dados pessoais
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <p>Configurações de perfil serão implementadas em breve.</p>
+              </CardContent>
+            </Card>
           </TabsContent>
         </Tabs>
       </div>
     </MainLayout>
   );
-}
+};
+
+export default Settings;

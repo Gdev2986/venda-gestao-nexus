@@ -82,7 +82,7 @@ export interface Sale {
   paymentMethod?: PaymentMethod; // For backward compatibility
 }
 
-// PixKey interface
+// PixKey interface - updated to match Supabase schema
 export interface PixKey {
   id: string;
   created_at: string;
@@ -90,8 +90,6 @@ export interface PixKey {
   key: string;
   type: "CPF" | "CNPJ" | "EMAIL" | "PHONE" | "RANDOM";
   key_type?: string; // For backward compatibility
-  bank_name?: string;
-  is_active?: boolean;
   is_default: boolean;
   isDefault?: boolean; // For backward compatibility
   name: string;
@@ -100,7 +98,7 @@ export interface PixKey {
   user_id: string;
 }
 
-// Payment interface - making rejection_reason optional
+// Payment interface
 export interface Payment {
   id: string;
   created_at: string;

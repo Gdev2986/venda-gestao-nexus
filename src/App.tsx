@@ -1,3 +1,4 @@
+
 import { useEffect } from "react";
 import { Routes, Route, useLocation } from "react-router-dom";
 import { PATHS } from "./routes/paths";
@@ -7,6 +8,7 @@ import Dashboard from "./pages/Dashboard";
 import ClientDashboard from "./pages/ClientDashboard";
 import Payments from "./pages/Payments";
 import UserPayments from "./pages/UserPayments";
+import ClientPayments from "./pages/ClientPayments";
 import NotFound from "./pages/NotFound";
 import Support from "./pages/Support";
 import Help from "./pages/Help";
@@ -77,6 +79,16 @@ function App() {
         element={
           <ProtectedRoute>
             <UserPayments />
+          </ProtectedRoute>
+        } 
+      />
+      
+      {/* Client Payments route */}
+      <Route 
+        path="/client-payments" 
+        element={
+          <ProtectedRoute>
+            <ClientPayments />
           </ProtectedRoute>
         } 
       />
