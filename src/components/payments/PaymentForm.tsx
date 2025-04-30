@@ -1,141 +1,123 @@
 
-import { useState } from "react";
-import { z } from "zod";
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
 import { Button } from "@/components/ui/button";
 import {
-  Form,
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from "@/components/ui/form";
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
-import { Calendar } from "@/components/ui/calendar";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { CalendarIcon } from "lucide-react";
-import { cn } from "@/lib/utils";
+  Card,
+  CardContent,
+} from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Payment, PaymentStatus } from "@/types";
 import { formatDate } from "@/lib/formatters";
 
-const formSchema = z.object({
-  amount: z.coerce.number().positive("Valor deve ser positivo"),
-  description: z.string().optional(),
-  due_date: z.date().optional(),
-});
-
-type FormValues = z.infer<typeof formSchema>;
-
-interface PaymentFormProps {
-  onSubmit: (data: FormValues) => void;
-  isSubmitting?: boolean;
+export interface PaymentFormProps {
+  payment: Payment;
 }
 
-export default function PaymentForm({ onSubmit, isSubmitting = false }: PaymentFormProps) {
-  const [date, setDate] = useState<Date | undefined>(undefined);
-  
-  const form = useForm<FormValues>({
-    resolver: zodResolver(formSchema),
-    defaultValues: {
-      amount: 0,
-      description: "",
-      due_date: undefined,
-    },
-  });
+export default function PaymentForm({ payment }: PaymentFormProps) {
+  // Format currency helper
+  const formatCurrency = (value: number) => {
+    return new Intl.NumberFormat('pt-BR', { 
+      style: 'currency', 
+      currency: 'BRL' 
+    }).format(value);
+  };
 
-  const handleSubmit = (values: FormValues) => {
-    onSubmit(values);
+  // Helper function to render status badge
+  const getStatusBadge = (status: PaymentStatus) => {
+    switch (status) {
+      case PaymentStatus.PENDING:
+        return <Badge variant="outline">Pendente</Badge>;
+      case PaymentStatus.APPROVED:
+        return <Badge variant="default">Aprovado</Badge>;
+      case PaymentStatus.REJECTED:
+        return <Badge variant="destructive">Rejeitado</Badge>;
+      case PaymentStatus.PAID:
+        return <Badge variant="secondary">Pago</Badge>;
+      default:
+        return <Badge variant="outline">Desconhecido</Badge>;
+    }
   };
 
   return (
-    <Form {...form}>
-      <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-4">
-        <FormField
-          control={form.control}
-          name="amount"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Valor (R$)</FormLabel>
-              <FormControl>
-                <Input
-                  type="number"
-                  step="0.01"
-                  placeholder="0,00"
-                  {...field}
-                  onChange={(e) => {
-                    const value = parseFloat(e.target.value);
-                    field.onChange(!isNaN(value) ? value : 0);
-                  }}
-                />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
+    <div className="space-y-6">
+      <Card>
+        <CardContent className="pt-6">
+          <dl className="space-y-3 text-sm">
+            <div className="grid grid-cols-3 gap-1">
+              <dt className="font-semibold">ID:</dt>
+              <dd className="col-span-2 text-gray-700">{payment.id.substring(0, 8)}...</dd>
+            </div>
 
-        <FormField
-          control={form.control}
-          name="description"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Descrição</FormLabel>
-              <FormControl>
-                <Textarea
-                  placeholder="Descrição do pagamento"
-                  {...field}
-                />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
+            <div className="grid grid-cols-3 gap-1">
+              <dt className="font-semibold">Valor:</dt>
+              <dd className="col-span-2 font-bold text-lg">
+                {formatCurrency(payment.amount)}
+              </dd>
+            </div>
+            
+            <div className="grid grid-cols-3 gap-1">
+              <dt className="font-semibold">Descrição:</dt>
+              <dd className="col-span-2">
+                {payment.description || "Sem descrição"}
+              </dd>
+            </div>
 
-        <FormField
-          control={form.control}
-          name="due_date"
-          render={({ field }) => (
-            <FormItem className="flex flex-col">
-              <FormLabel>Data de vencimento</FormLabel>
-              <Popover>
-                <PopoverTrigger asChild>
-                  <FormControl>
-                    <Button
-                      variant={"outline"}
-                      className={cn(
-                        "w-full pl-3 text-left font-normal",
-                        !field.value && "text-muted-foreground"
-                      )}
-                    >
-                      {field.value ? (
-                        formatDate(field.value)
-                      ) : (
-                        <span>Selecione uma data</span>
-                      )}
-                      <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
-                    </Button>
-                  </FormControl>
-                </PopoverTrigger>
-                <PopoverContent className="w-auto p-0" align="start">
-                  <Calendar
-                    mode="single"
-                    selected={field.value}
-                    onSelect={field.onChange}
-                    disabled={(date) => date < new Date("1900-01-01")}
-                    initialFocus
-                  />
-                </PopoverContent>
-              </Popover>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
+            <div className="grid grid-cols-3 gap-1">
+              <dt className="font-semibold">Data de criação:</dt>
+              <dd className="col-span-2">
+                {formatDate(new Date(payment.created_at))}
+              </dd>
+            </div>
 
-        <Button type="submit" disabled={isSubmitting} className="w-full">
-          {isSubmitting ? "Enviando..." : "Solicitar Pagamento"}
-        </Button>
-      </form>
-    </Form>
+            <div className="grid grid-cols-3 gap-1">
+              <dt className="font-semibold">Data de vencimento:</dt>
+              <dd className="col-span-2">
+                {payment.due_date ? formatDate(new Date(payment.due_date)) : "Não definida"}
+              </dd>
+            </div>
+
+            <div className="grid grid-cols-3 gap-1">
+              <dt className="font-semibold">Status:</dt>
+              <dd className="col-span-2">
+                {getStatusBadge(payment.status)}
+              </dd>
+            </div>
+
+            {payment.approved_at && (
+              <div className="grid grid-cols-3 gap-1">
+                <dt className="font-semibold">Aprovado em:</dt>
+                <dd className="col-span-2">
+                  {formatDate(new Date(payment.approved_at))}
+                </dd>
+              </div>
+            )}
+          </dl>
+        </CardContent>
+      </Card>
+      
+      {payment.receipt_url && (
+        <div className="space-y-2">
+          <h3 className="text-sm font-medium">Comprovante de pagamento</h3>
+          <div className="border rounded-md overflow-hidden">
+            <a 
+              href={payment.receipt_url} 
+              target="_blank" 
+              rel="noopener noreferrer" 
+              className="w-full"
+            >
+              <img 
+                src={payment.receipt_url} 
+                alt="Comprovante de pagamento" 
+                className="w-full h-auto object-cover"
+              />
+            </a>
+          </div>
+          <Button asChild variant="outline" size="sm" className="w-full">
+            <a href={payment.receipt_url} target="_blank" rel="noopener noreferrer">
+              Ver comprovante em tela cheia
+            </a>
+          </Button>
+        </div>
+      )}
+    </div>
   );
 }

@@ -50,7 +50,7 @@ export const createClient = async (clientData: Omit<Client, "id" | "created_at" 
     const newClient: Client = {
       ...clientData,
       id: uuidv4(),
-      status: "active",
+      status: "ACTIVE", // Use capital letters for the enum
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString(),
     };
@@ -60,7 +60,7 @@ export const createClient = async (clientData: Omit<Client, "id" | "created_at" 
       .from("clients")
       .insert([{
         id: newClient.id,
-        business_name: newClient.business_name,
+        business_name: newClient.business_name || newClient.company_name,
         document: newClient.document,
         // Add other fields as needed based on your Supabase schema
       } as SupabaseClientRow]);
@@ -74,7 +74,7 @@ export const createClient = async (clientData: Omit<Client, "id" | "created_at" 
     const mockClient: Client = {
       ...clientData,
       id: uuidv4(),
-      status: "active",
+      status: "ACTIVE", // Use capital letters for the enum
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString(),
     };
@@ -89,7 +89,7 @@ export const updateClient = async (id: string, clientData: Partial<Client>): Pro
     const { error } = await supabase
       .from("clients")
       .update({
-        business_name: clientData.business_name,
+        business_name: clientData.business_name || clientData.company_name,
         document: clientData.document,
         // Add other fields as needed based on your Supabase schema
         updated_at: new Date().toISOString(),

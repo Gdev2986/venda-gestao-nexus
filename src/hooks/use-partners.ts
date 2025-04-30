@@ -1,25 +1,12 @@
 
 import { useState, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
-
-export type Partner = {
-  id: string;
-  company_name: string;
-  contact_name?: string;
-  business_name?: string;
-  email?: string;
-  phone?: string;
-  commission_rate: number;
-  created_at?: string;
-  updated_at?: string;
-};
+import { v4 as uuidv4 } from "uuid";
+import { Partner } from "@/types";
 
 export type FilterValues = {
-  search: string;
-  dateRange?: {
-    from: Date;
-    to: Date;
-  };
+  searchTerm: string;
+  commissionRange?: [number, number];
 };
 
 export function usePartners() {
@@ -55,18 +42,24 @@ export function usePartners() {
   const createPartner = useCallback(async (partnerData: Omit<Partner, "id" | "created_at" | "updated_at">) => {
     setIsLoading(true);
     try {
+      // Generate an ID for the partner if not in Supabase environment
+      const newPartner = {
+        ...partnerData,
+        id: uuidv4(),
+      };
+
       const { data, error: insertError } = await supabase
         .from("partners")
-        .insert([partnerData])
-        .select()
-        .single();
+        .insert([newPartner])
+        .select();
 
       if (insertError) {
         throw new Error(insertError.message);
       }
 
-      setPartners((prev) => [...prev, data as Partner]);
-      setFilteredPartners((prev) => [...prev, data as Partner]);
+      const createdPartner = data?.[0] as Partner || newPartner;
+      setPartners((prev) => [...prev, createdPartner]);
+      setFilteredPartners((prev) => [...prev, createdPartner]);
       return true;
     } catch (err: any) {
       console.error("Error creating partner:", err);
@@ -144,7 +137,7 @@ export function usePartners() {
       const search = searchTerm.toLowerCase();
       filtered = filtered.filter(
         (partner) =>
-          partner.company_name.toLowerCase().includes(search) ||
+          (partner.company_name && partner.company_name.toLowerCase().includes(search)) ||
           (partner.business_name && partner.business_name.toLowerCase().includes(search)) ||
           (partner.contact_name && partner.contact_name.toLowerCase().includes(search)) ||
           (partner.email && partner.email.toLowerCase().includes(search))
@@ -154,7 +147,9 @@ export function usePartners() {
     if (commissionRange) {
       const [min, max] = commissionRange;
       filtered = filtered.filter(
-        (partner) => partner.commission_rate >= min && partner.commission_rate <= max
+        (partner) => partner.commission_rate != null && 
+                    partner.commission_rate >= min && 
+                    partner.commission_rate <= max
       );
     }
 
@@ -162,14 +157,13 @@ export function usePartners() {
   }, [partners]);
 
   return {
-    partners,
-    filteredPartners,
-    isLoading,
+    partners: filteredPartners,
+    loading: isLoading,
     error,
-    fetchPartners,
+    filterPartners,
     createPartner,
     updatePartner,
     deletePartner,
-    filterPartners,
+    refreshPartners: fetchPartners
   };
 }

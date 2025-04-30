@@ -8,7 +8,7 @@ import { PartnersHeader } from "@/components/partners/PartnersHeader";
 import { PartnersTableCard } from "@/components/partners/PartnersTableCard";
 import { PartnersFilterCard } from "@/components/partners/PartnersFilterCard";
 import PartnerForm from "@/components/partners/PartnerForm";
-import { Partner, FilterValues } from "@/types";
+import type { Partner } from "@/types";
 import { usePartners } from "@/hooks/use-partners";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
@@ -100,7 +100,7 @@ export default function Partners() {
     }
   };
 
-  const handleFilter = (values: FilterValues) => {
+  const handleFilter = (values: { searchTerm: string, commissionRange: [number, number] }) => {
     filterPartners(values.searchTerm, values.commissionRange);
   };
 

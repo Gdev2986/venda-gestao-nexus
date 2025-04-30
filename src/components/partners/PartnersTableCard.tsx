@@ -9,17 +9,17 @@ export interface PartnersTableCardProps {
   partners: Partner[];
   isLoading: boolean;
   error: string;
-  onEditPartner: (partner: Partner) => void;
-  onDeletePartner: (partner: Partner) => Promise<boolean> | void;
+  onEdit: (partner: Partner) => void;
+  onDelete: (partnerId: string) => Promise<boolean>;
 }
 
-const PartnersTableCard = ({ 
+export function PartnersTableCard({ 
   partners, 
   isLoading, 
   error, 
-  onEditPartner, 
-  onDeletePartner 
-}: PartnersTableCardProps) => {
+  onEdit: onEditPartner, 
+  onDelete: onDeletePartner 
+}: PartnersTableCardProps) {
   return (
     <Card>
       <CardHeader>
@@ -39,12 +39,12 @@ const PartnersTableCard = ({
             partners={partners} 
             isLoading={isLoading} 
             onEditPartner={onEditPartner}
-            onDeletePartner={onDeletePartner}
+            onDeletePartner={(partner) => onDeletePartner(partner.id)}
           />
         )}
       </CardContent>
     </Card>
   );
-};
+}
 
 export default PartnersTableCard;

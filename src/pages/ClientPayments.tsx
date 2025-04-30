@@ -4,7 +4,7 @@ import { useToast } from "@/components/ui/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import MainLayout from "@/components/layout/MainLayout";
-import { PaymentStatus } from "@/types";
+import { Payment, PaymentStatus } from "@/types";
 import { formatCurrency } from "@/lib/formatters";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -15,25 +15,14 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } f
 import PaymentForm from "@/components/payments/PaymentForm";
 import PaymentReceiptUploader from "@/components/payments/PaymentReceiptUploader";
 
-type Payment = {
-  id: string;
-  amount: number;
-  description: string;
-  status: PaymentStatus;
-  created_at: string;
-  due_date: string;
-  receipt_url?: string;
-  approved_at?: string;
-  client_id: string;
-  client_name?: string;
-};
+type ClientPayment = Payment;
 
 const ClientPayments = () => {
   const { toast } = useToast();
   const { user } = useAuth();
-  const [payments, setPayments] = useState<Payment[]>([]);
+  const [payments, setPayments] = useState<ClientPayment[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [selectedPayment, setSelectedPayment] = useState<Payment | null>(null);
+  const [selectedPayment, setSelectedPayment] = useState<ClientPayment | null>(null);
   const [paymentFormOpen, setPaymentFormOpen] = useState(false);
   const [receiptDialogOpen, setReceiptDialogOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -69,12 +58,13 @@ const ClientPayments = () => {
       if (error) throw error;
 
       // Transform the data to match our Payment type
-      const transformedPayments: Payment[] = (data || []).map(item => ({
+      const transformedPayments: ClientPayment[] = (data || []).map(item => ({
         id: item.id,
         amount: item.amount,
         description: `Payment #${item.id.slice(0, 8)}`,
         status: item.status as PaymentStatus,
         created_at: item.created_at,
+        updated_at: item.updated_at || item.created_at,
         due_date: item.created_at, // Using created_at as due_date since it's required
         receipt_url: item.receipt_url,
         approved_at: item.approved_at,
@@ -98,12 +88,12 @@ const ClientPayments = () => {
     fetchPayments();
   }, [user?.id]);
 
-  const handlePaymentClick = (payment: Payment) => {
+  const handlePaymentClick = (payment: ClientPayment) => {
     setSelectedPayment(payment);
     setPaymentFormOpen(true);
   };
 
-  const handleUploadReceipt = (payment: Payment) => {
+  const handleUploadReceipt = (payment: ClientPayment) => {
     setSelectedPayment(payment);
     setReceiptDialogOpen(true);
   };
