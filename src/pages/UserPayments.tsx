@@ -21,7 +21,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { FileUploader } from "@/components/payments/FileUploader";
 import { useUserRole } from "@/hooks/use-user-role";
-import { PaymentStatus, PaymentType } from "@/types";
+import { Payment, PaymentStatus, PaymentType, UserRole } from "@/types";
 import { supabase } from "@/integrations/supabase/client";
 import { WalletIcon, SendIcon, HistoryIcon, CircleDollarSignIcon, BanknoteIcon, FileIcon } from "lucide-react";
 
@@ -259,13 +259,23 @@ const UserPayments = () => {
       id: "created_at",
       header: "Data",
       accessorKey: "created_at",
-      cell: (info: any) => new Date(info.row.original.created_at).toLocaleDateString('pt-BR')
+      cell: (info: any) => {
+        // Add null check before accessing row.original
+        if (!info || !info.row || !info.row.original) {
+          return "N/A";
+        }
+        return new Date(info.row.original.created_at).toLocaleDateString('pt-BR');
+      }
     },
     {
       id: "payment_type",
       header: "Tipo",
       accessorKey: "payment_type",
       cell: (info: any) => {
+        // Add null check before accessing row.original
+        if (!info || !info.row || !info.row.original) {
+          return "N/A";
+        }
         const type = info.row.original.payment_type;
         if (type === PaymentType.PIX) return "PIX";
         if (type === PaymentType.TED) return "TED";
@@ -282,13 +292,24 @@ const UserPayments = () => {
       id: "amount",
       header: "Valor",
       accessorKey: "amount",
-      cell: (info: any) => formatCurrency(info.row.original.amount)
+      cell: (info: any) => {
+        // Add null check before accessing row.original
+        if (!info || !info.row || !info.row.original) {
+          return "N/A";
+        }
+        return formatCurrency(info.row.original.amount);
+      }
     },
     {
       id: "status",
       header: "Status",
       accessorKey: "status",
       cell: (info: any) => {
+        // Add null check before accessing row.original
+        if (!info || !info.row || !info.row.original) {
+          return "N/A";
+        }
+        
         const status = info.row.original.status;
         let badgeClass = "";
         let statusText = "";
@@ -326,6 +347,11 @@ const UserPayments = () => {
       id: "actions",
       header: "",
       cell: (info: any) => {
+        // Add null check before accessing row.original
+        if (!info || !info.row || !info.row.original) {
+          return null;
+        }
+        
         const { receipt_url, status, document_url, payment_type, bank_info } = info.row.original;
         
         const renderButtons = () => {

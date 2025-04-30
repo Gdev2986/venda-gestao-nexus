@@ -1,6 +1,5 @@
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { PixKey } from "@/types";
 
 const Settings = () => {
   return (

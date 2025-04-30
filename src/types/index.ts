@@ -10,7 +10,14 @@ export enum UserRole {
 export enum PaymentStatus {
   PENDING = "PENDING",
   APPROVED = "APPROVED",
-  REJECTED = "REJECTED"
+  REJECTED = "REJECTED",
+  PAID = "PAID"
+}
+
+export enum PaymentType {
+  PIX = "PIX",
+  TED = "TED",
+  BOLETO = "BOLETO"
 }
 
 export interface Payment {
@@ -24,7 +31,7 @@ export interface Payment {
   receipt_url?: string;
   client_name?: string;
   rejection_reason?: string;
-  payment_type?: "PIX" | "TED" | "BOLETO";
+  payment_type?: PaymentType;
   bank_info?: {
     bank_name?: string;
     account_number?: string;
