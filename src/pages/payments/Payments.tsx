@@ -1,6 +1,6 @@
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { PaymentStatus } from "@/types";
+import { Payment, PaymentStatus } from "@/types";
 
 const Payments = () => {
   return (

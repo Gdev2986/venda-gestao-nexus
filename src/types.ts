@@ -30,7 +30,17 @@ export enum PaymentMethod {
   CASH = "CASH",
   // Add these for backward compatibility
   CREDIT = "CREDIT",
-  DEBIT = "DEBIT"
+  DEBIT = "DEBIT",
+  // New payment types
+  TED = "TED",
+  BOLETO = "BOLETO"
+}
+
+// Payment type enum for new payment request functionality
+export enum PaymentType {
+  PIX = "PIX",
+  TED = "TED",
+  BOLETO = "BOLETO"
 }
 
 // Client interface
@@ -118,8 +128,16 @@ export interface Payment {
   receipt_url?: string;
   pix_key_id?: string;
   due_date?: string;
-  rejection_reason?: string; // Added as optional since existing code might not provide it
+  rejection_reason?: string;
   client_name?: string; // For convenience in UI
+  payment_type?: PaymentType;
+  bank_info?: {
+    bank_name?: string;
+    account_number?: string;
+    branch_number?: string;
+    account_holder?: string;
+  };
+  document_url?: string;
 }
 
 // Dashboard stats interface
@@ -157,4 +175,15 @@ export interface SalesFilterParams {
 export interface FilterValues {
   searchTerm: string;
   commissionRange: [number, number];
+}
+
+// Alias PartnerFilter to FilterValues for backward compatibility
+export type PartnerFilter = FilterValues;
+
+// Bank account information for TED payments
+export interface BankAccountInfo {
+  bank_name: string;
+  branch_number: string;
+  account_number: string;
+  account_holder: string;
 }

@@ -23,7 +23,15 @@ export interface Payment {
   approved_at?: string; 
   receipt_url?: string;
   client_name?: string;
-  rejection_reason?: string; // Made this optional
+  rejection_reason?: string;
+  payment_type?: "PIX" | "TED" | "BOLETO";
+  bank_info?: {
+    bank_name?: string;
+    account_number?: string;
+    branch_number?: string;
+    account_holder?: string;
+  };
+  document_url?: string;
 }
 
 // Types for partners

@@ -10,7 +10,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Slider } from "@/components/ui/slider";
-import { FilterValues } from "@/hooks/use-partners";
+import { FilterValues } from "@/types";
 
 interface PartnerFilterProps {
   onFilter: (filter: FilterValues) => void;
