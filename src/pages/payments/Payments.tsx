@@ -2,7 +2,7 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { DataTable } from "@/components/ui/data-table";
-import { Payment, PaymentStatus } from "@/types";
+import { Payment, PaymentStatus, PaymentType } from "@/types";
 import { useEffect, useState } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { formatCurrency } from "@/lib/utils";
@@ -27,7 +27,8 @@ const Payments = () => {
           status: PaymentStatus.PENDING,
           client_id: "client-123",
           client_name: "Empresa ABC Ltda",
-          rejection_reason: ""
+          payment_type: PaymentType.PIX,
+          rejection_reason: null
         },
         {
           id: "2",
@@ -38,7 +39,8 @@ const Payments = () => {
           client_id: "client-456",
           approved_at: new Date(Date.now() - 86400000 * 9).toISOString(),
           client_name: "Comércio XYZ S/A",
-          rejection_reason: ""
+          payment_type: PaymentType.TED,
+          rejection_reason: null
         },
         {
           id: "3",
@@ -48,6 +50,7 @@ const Payments = () => {
           status: PaymentStatus.REJECTED,
           client_id: "client-789",
           client_name: "Indústria DEF ME",
+          payment_type: PaymentType.BOLETO,
           rejection_reason: "Documentação incompleta"
         }
       ];

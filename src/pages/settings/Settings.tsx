@@ -1,7 +1,8 @@
+
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import PixKeysManager from "@/components/settings/PixKeysManager";
-import { UserRole } from "@/types";
+import { UserRole, PixKey } from "@/types";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -11,21 +12,6 @@ import { CameraIcon, Users, RefreshCw } from "lucide-react";
 import { useUserRole } from "@/hooks/use-user-role";
 import { PATHS } from "@/routes/paths";
 import { useToast } from "@/hooks/use-toast";
-
-interface PixKey {
-  id: string;
-  user_id: string;
-  key_type: string;
-  type: string;
-  key: string;
-  owner_name: string;
-  name: string;
-  isDefault: boolean;
-  is_active: boolean;
-  created_at: string;
-  updated_at: string;
-  bank_name: string;
-}
 
 const Settings = () => {
   const navigate = useNavigate();
@@ -67,7 +53,6 @@ const Settings = () => {
   
   const handleAddPixKey = (key: Partial<PixKey>) => {
     const newKey: PixKey = {
-      ...(key as PixKey),
       id: `key_${Math.random().toString(36).slice(2, 11)}`, // Generate random id
       user_id: "user_1",
       key_type: key.key_type || "",

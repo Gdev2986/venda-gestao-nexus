@@ -1,6 +1,4 @@
-
 import { useState } from "react";
-import MainLayout from "@/components/layout/MainLayout";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   Accordion,
@@ -130,137 +128,135 @@ const HelpPage = () => {
   const activeCategoryFaqs = faqCategories.find(cat => cat.id === activeCategory)?.faqs || [];
 
   return (
-    <MainLayout>
-      <div className="space-y-6">
-        <div>
-          <h1 className="text-2xl font-bold tracking-tight">Central de Ajuda</h1>
-          <p className="text-muted-foreground">
-            Encontre respostas para dúvidas comuns e aprenda a utilizar a plataforma
-          </p>
-        </div>
-        
-        <Card className="mb-6">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Search className="w-5 h-5" />
-              Buscar Ajuda
-            </CardTitle>
-            <CardDescription>
-              Digite uma palavra-chave ou pergunta para encontrar ajuda
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="relative">
-              <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-              <Input 
-                placeholder="Ex: Como solicitar um pagamento?" 
-                className="pl-10"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-              />
-            </div>
-            
-            {searchQuery && (
-              <div className="mt-4">
-                <h3 className="text-sm font-medium mb-2">Resultados da pesquisa:</h3>
-                {filteredFaqs.length > 0 ? (
-                  <Accordion type="single" collapsible className="w-full">
-                    {filteredFaqs.map((faq, idx) => (
-                      <AccordionItem key={idx} value={`search-${idx}`}>
-                        <AccordionTrigger className="text-left">
-                          <div>
-                            <div>{faq.question}</div>
-                            <div className="text-xs text-muted-foreground mt-1">
-                              Categoria: {faqCategories.find(cat => cat.id === faq.category)?.label}
-                            </div>
+    <div className="space-y-6">
+      <div>
+        <h1 className="text-2xl font-bold tracking-tight">Central de Ajuda</h1>
+        <p className="text-muted-foreground">
+          Encontre respostas para dúvidas comuns e aprenda a utilizar a plataforma
+        </p>
+      </div>
+      
+      <Card className="mb-6">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Search className="w-5 h-5" />
+            Buscar Ajuda
+          </CardTitle>
+          <CardDescription>
+            Digite uma palavra-chave ou pergunta para encontrar ajuda
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="relative">
+            <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+            <Input 
+              placeholder="Ex: Como solicitar um pagamento?" 
+              className="pl-10"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+            />
+          </div>
+          
+          {searchQuery && (
+            <div className="mt-4">
+              <h3 className="text-sm font-medium mb-2">Resultados da pesquisa:</h3>
+              {filteredFaqs.length > 0 ? (
+                <Accordion type="single" collapsible className="w-full">
+                  {filteredFaqs.map((faq, idx) => (
+                    <AccordionItem key={idx} value={`search-${idx}`}>
+                      <AccordionTrigger className="text-left">
+                        <div>
+                          <div>{faq.question}</div>
+                          <div className="text-xs text-muted-foreground mt-1">
+                            Categoria: {faqCategories.find(cat => cat.id === faq.category)?.label}
                           </div>
-                        </AccordionTrigger>
-                        <AccordionContent>
-                          <div className="pt-2 pb-4">{faq.answer}</div>
-                        </AccordionContent>
-                      </AccordionItem>
-                    ))}
-                  </Accordion>
-                ) : (
-                  <div className="flex flex-col items-center justify-center p-8 text-center">
-                    <HelpCircle className="h-10 w-10 text-muted-foreground mb-3" />
-                    <h3 className="font-medium">Nenhum resultado encontrado</h3>
-                    <p className="text-sm text-muted-foreground mt-1">
-                      Tente buscar com outras palavras-chave ou entre em contato com o suporte
-                    </p>
-                  </div>
-                )}
-              </div>
-            )}
-          </CardContent>
-        </Card>
-        
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <FileText className="w-5 h-5" />
-              Perguntas Frequentes
-            </CardTitle>
-            <CardDescription>
-              Respostas para as dúvidas mais comuns sobre a plataforma
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <Tabs defaultValue="account" value={activeCategory} onValueChange={setActiveCategory}>
-              <TabsList className="w-full gap-1 flex-wrap">
-                {faqCategories.map((category) => (
-                  <TabsTrigger key={category.id} value={category.id} className="gap-1">
-                    <category.icon className="h-4 w-4 mr-1" />
-                    {category.label}
-                  </TabsTrigger>
-                ))}
-              </TabsList>
-              
-              {faqCategories.map((category) => (
-                <TabsContent key={category.id} value={category.id} className="pt-4">
-                  <Accordion type="single" collapsible className="w-full">
-                    {activeCategoryFaqs.map((faq, idx) => (
-                      <AccordionItem key={idx} value={`faq-${idx}`}>
-                        <AccordionTrigger className="text-left">
-                          {faq.question}
-                        </AccordionTrigger>
-                        <AccordionContent>
-                          <div className="pt-2 pb-4">{faq.answer}</div>
-                        </AccordionContent>
-                      </AccordionItem>
-                    ))}
-                  </Accordion>
-                </TabsContent>
-              ))}
-            </Tabs>
-          </CardContent>
-        </Card>
-        
-        <div className="bg-muted p-6 rounded-lg mt-6">
-          <div className="flex flex-col items-center text-center">
-            <HelpCircle className="h-12 w-12 text-primary mb-4" />
-            <h2 className="text-xl font-semibold mb-2">Ainda com dúvidas?</h2>
-            <p className="text-muted-foreground mb-4">
-              Se você não encontrou o que procurava, entre em contato com nossa equipe de suporte.
-            </p>
-            <div className="flex flex-col sm:flex-row gap-3 mt-2">
-              <a 
-                href="mailto:suporte@sigmapay.com.br" 
-                className="inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:opacity-50 disabled:pointer-events-none ring-offset-background bg-primary text-primary-foreground hover:bg-primary/90 h-10 py-2 px-4"
-              >
-                Enviar Email
-              </a>
-              <a 
-                href="/support" 
-                className="inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:opacity-50 disabled:pointer-events-none ring-offset-background border border-input hover:bg-accent hover:text-accent-foreground h-10 py-2 px-4"
-              >
-                Abrir Chamado
-              </a>
+                        </div>
+                      </AccordionTrigger>
+                      <AccordionContent>
+                        <div className="pt-2 pb-4">{faq.answer}</div>
+                      </AccordionContent>
+                    </AccordionItem>
+                  ))}
+                </Accordion>
+              ) : (
+                <div className="flex flex-col items-center justify-center p-8 text-center">
+                  <HelpCircle className="h-10 w-10 text-muted-foreground mb-3" />
+                  <h3 className="font-medium">Nenhum resultado encontrado</h3>
+                  <p className="text-sm text-muted-foreground mt-1">
+                    Tente buscar com outras palavras-chave ou entre em contato com o suporte
+                  </p>
+                </div>
+              )}
             </div>
+          )}
+        </CardContent>
+      </Card>
+      
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <FileText className="w-5 h-5" />
+            Perguntas Frequentes
+          </CardTitle>
+          <CardDescription>
+            Respostas para as dúvidas mais comuns sobre a plataforma
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <Tabs defaultValue="account" value={activeCategory} onValueChange={setActiveCategory}>
+            <TabsList className="w-full gap-1 flex-wrap">
+              {faqCategories.map((category) => (
+                <TabsTrigger key={category.id} value={category.id} className="gap-1">
+                  <category.icon className="h-4 w-4 mr-1" />
+                  {category.label}
+                </TabsTrigger>
+              ))}
+            </TabsList>
+            
+            {faqCategories.map((category) => (
+              <TabsContent key={category.id} value={category.id} className="pt-4">
+                <Accordion type="single" collapsible className="w-full">
+                  {activeCategoryFaqs.map((faq, idx) => (
+                    <AccordionItem key={idx} value={`faq-${idx}`}>
+                      <AccordionTrigger className="text-left">
+                        {faq.question}
+                      </AccordionTrigger>
+                      <AccordionContent>
+                        <div className="pt-2 pb-4">{faq.answer}</div>
+                      </AccordionContent>
+                    </AccordionItem>
+                  ))}
+                </Accordion>
+              </TabsContent>
+            ))}
+          </Tabs>
+        </CardContent>
+      </Card>
+      
+      <div className="bg-muted p-6 rounded-lg mt-6">
+        <div className="flex flex-col items-center text-center">
+          <HelpCircle className="h-12 w-12 text-primary mb-4" />
+          <h2 className="text-xl font-semibold mb-2">Ainda com dúvidas?</h2>
+          <p className="text-muted-foreground mb-4">
+            Se você não encontrou o que procurava, entre em contato com nossa equipe de suporte.
+          </p>
+          <div className="flex flex-col sm:flex-row gap-3 mt-2">
+            <a 
+              href="mailto:suporte@sigmapay.com.br" 
+              className="inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:opacity-50 disabled:pointer-events-none ring-offset-background bg-primary text-primary-foreground hover:bg-primary/90 h-10 py-2 px-4"
+            >
+              Enviar Email
+            </a>
+            <a 
+              href="/support" 
+              className="inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:opacity-50 disabled:pointer-events-none ring-offset-background border border-input hover:bg-accent hover:text-accent-foreground h-10 py-2 px-4"
+            >
+              Abrir Chamado
+            </a>
           </div>
         </div>
       </div>
-    </MainLayout>
+    </div>
   );
 };
 
