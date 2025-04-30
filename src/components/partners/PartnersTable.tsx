@@ -37,7 +37,7 @@ export function PartnersTable({
             <TableRow>
               <TableCell colSpan={6} className="text-center py-10">
                 <div className="flex justify-center items-center h-10">
-                  <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary"></div>
+                  <div className="spinner"></div>
                 </div>
               </TableCell>
             </TableRow>

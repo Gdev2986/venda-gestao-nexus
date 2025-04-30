@@ -71,7 +71,6 @@ export const usePartners = () => {
         email: "contact@example.com", // Mock data
         phone: "(123) 456-7890", // Mock data
         status: "active" as PartnerStatus, // Mock data
-        total_clients: 5, // Mock data
         address: "123 Business St, City", // Mock data
         city: "New York", // Mock data
         state: "NY", // Mock data
@@ -105,14 +104,17 @@ export const usePartners = () => {
 
       const { data, error } = await supabase
         .from("partners")
-        .insert([{ company_name: business_name, commission_rate }])
+        .insert({
+          company_name: business_name,
+          commission_rate
+        })
         .select();
 
       if (error) {
         throw error;
       }
 
-      if (data) {
+      if (data && data[0]) {
         // Map the returned data to match our Partner interface
         const newPartner: Partner = {
           id: data[0].id,
@@ -129,7 +131,6 @@ export const usePartners = () => {
           city: partnerData.city || "City",
           state: partnerData.state || "State",
           zip: partnerData.zip || "00000",
-          total_clients: 0
         };
 
         setPartners([newPartner, ...partners]);
@@ -191,27 +192,27 @@ export const usePartners = () => {
     }
   };
 
-  const savePartner = async (partnerData: Omit<Partner, "created_at" | "updated_at">, partnerId?: string) => {
+  const savePartner = async (partnerData: Omit<Partner, "created_at" | "updated_at">) => {
     try {
       setIsLoading(true);
       
       // Extract only the fields that exist in the database table
-      const { business_name, commission_rate } = partnerData;
+      const { business_name, commission_rate, id } = partnerData;
       
       let result;
       
-      if (partnerId) {
+      if (id) {
         // Update existing partner
         result = await supabase
           .from("partners")
           .update({ company_name: business_name, commission_rate })
-          .eq("id", partnerId)
+          .eq("id", id)
           .select();
       } else {
         // Insert new partner
         result = await supabase
           .from("partners")
-          .insert([{ company_name: business_name, commission_rate }])
+          .insert({ company_name: business_name, commission_rate })
           .select();
       }
       
@@ -221,8 +222,8 @@ export const usePartners = () => {
       
       if (data && data[0]) {
         toast({
-          title: partnerId ? "Partner Updated" : "Partner Added",
-          description: `Partner has been successfully ${partnerId ? "updated" : "added"}.`
+          title: id ? "Partner Updated" : "Partner Added",
+          description: `Partner has been successfully ${id ? "updated" : "added"}.`
         });
         
         // Refresh partners list

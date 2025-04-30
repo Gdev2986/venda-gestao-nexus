@@ -35,39 +35,55 @@ const MainLayout = ({ children }: MainLayoutProps) => {
 
   // Save sidebar state to localStorage when it changes
   useEffect(() => {
-    localStorage.setItem("sidebar-state", JSON.stringify(sidebarOpen));
-  }, [sidebarOpen]);
+    if (!isMobile) { // Only save state for desktop
+      localStorage.setItem("sidebar-state", JSON.stringify(sidebarOpen));
+    }
+  }, [sidebarOpen, isMobile]);
 
   return (
     <div className="flex h-screen overflow-hidden bg-background">
-      {/* Sidebar - fixed positioning with animation */}
+      {/* Sidebar with overlay for mobile */}
       <AnimatePresence mode="wait">
-        <motion.div
-          className={`fixed left-0 top-0 z-40 h-screen ${
-            isMobile ? 'w-64' : 'w-64'
-          } bg-sidebar-background`}
-          initial={{ x: sidebarOpen ? 0 : "-100%" }}
-          animate={{ x: sidebarOpen ? 0 : "-100%" }}
-          exit={{ x: "-100%" }}
-          transition={{ duration: 0.2, ease: "easeInOut" }}
-        >
-          <Sidebar 
-            isOpen={sidebarOpen} 
-            isMobile={isMobile} 
-            onClose={() => setSidebarOpen(false)} 
-            userRole={userRole}
-          />
-        </motion.div>
+        {sidebarOpen && (
+          <>
+            {/* Mobile backdrop */}
+            {isMobile && (
+              <motion.div 
+                className="fixed inset-0 bg-black/50 z-30"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                onClick={() => setSidebarOpen(false)}
+              />
+            )}
+            
+            {/* Sidebar component */}
+            <motion.div
+              className="fixed left-0 top-0 z-40 h-screen w-64 bg-sidebar-background"
+              initial={{ x: "-100%" }}
+              animate={{ x: 0 }}
+              exit={{ x: "-100%" }}
+              transition={{ duration: 0.2, ease: "easeInOut" }}
+            >
+              <Sidebar 
+                isOpen={true} 
+                isMobile={isMobile} 
+                onClose={() => setSidebarOpen(false)} 
+                userRole={userRole}
+              />
+            </motion.div>
+          </>
+        )}
       </AnimatePresence>
       
       {/* Main content */}
       <div 
-        className={`flex-1 flex flex-col overflow-hidden transition-all duration-300 ease-in-out ${
+        className={`flex-1 flex flex-col transition-all duration-300 ease-in-out ${
           sidebarOpen && !isMobile ? 'ml-64' : 'ml-0'
         }`}
       >
         {/* Header */}
-        <header className="h-16 border-b border-border flex items-center justify-between px-4 sticky top-0 bg-background z-10">
+        <header className="h-16 border-b border-border flex items-center justify-between px-4 bg-background sticky top-0 z-10">
           <div className="flex items-center space-x-4">
             <Button 
               variant="ghost" 
@@ -86,22 +102,13 @@ const MainLayout = ({ children }: MainLayoutProps) => {
           </div>
         </header>
         
-        {/* Content */}
+        {/* Main scrollable content */}
         <main className="flex-1 overflow-auto p-4 md:p-6 lg:p-8">
-          {children}
+          <div className="mx-auto max-w-7xl">
+            {children}
+          </div>
         </main>
       </div>
-      
-      {/* Backdrop for mobile */}
-      {isMobile && sidebarOpen && (
-        <motion.div 
-          className="fixed inset-0 bg-black/50 z-30"
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          exit={{ opacity: 0 }}
-          onClick={() => setSidebarOpen(false)}
-        />
-      )}
     </div>
   );
 };

@@ -6,11 +6,11 @@ import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { CalendarIcon, ShoppingBag, CreditCard, Headphones, Truck } from "lucide-react";
+import { CalendarIcon, ShoppingBag, CreditCard, Headphones, Truck, RefreshCw } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { Sale, PaymentMethod } from "@/types";
 
-// Interface to match the database structure
+// Simplified interface for database sales
 interface DbSale {
   id: string;
   code: string;
@@ -18,23 +18,33 @@ interface DbSale {
   terminal: string;
   gross_amount: number;
   net_amount: number;
-  payment_method: "CREDIT" | "DEBIT" | "PIX";
+  payment_method: string;
   client_id: string;
-  partner_id: string;
-  machine_id: string;
+  partner_id?: string;
+  machine_id?: string;
   created_at: string;
   updated_at: string;
-  processing_status: "RAW" | "PROCESSED";
+  processing_status: string;
 }
 
 // Function to map database sale to app Sale type
 const mapDbSaleToAppSale = (dbSale: DbSale): Sale => {
-  const paymentMethodMap: Record<string, PaymentMethod> = {
-    "CREDIT": PaymentMethod.CREDIT,
-    "DEBIT": PaymentMethod.DEBIT,
-    "PIX": PaymentMethod.PIX
-  };
-
+  // Map payment method string to enum
+  let paymentMethod: PaymentMethod;
+  switch (dbSale.payment_method) {
+    case "CREDIT":
+      paymentMethod = PaymentMethod.CREDIT;
+      break;
+    case "DEBIT":
+      paymentMethod = PaymentMethod.DEBIT;
+      break;
+    case "PIX":
+      paymentMethod = PaymentMethod.PIX;
+      break;
+    default:
+      paymentMethod = PaymentMethod.CREDIT;
+  }
+  
   return {
     id: dbSale.id,
     code: dbSale.code,
@@ -42,7 +52,7 @@ const mapDbSaleToAppSale = (dbSale: DbSale): Sale => {
     terminal: dbSale.terminal,
     grossAmount: dbSale.gross_amount,
     netAmount: dbSale.net_amount,
-    paymentMethod: paymentMethodMap[dbSale.payment_method],
+    paymentMethod: paymentMethod,
     clientId: dbSale.client_id
   };
 };
@@ -54,6 +64,7 @@ const ClientDashboard = () => {
   const [sales, setSales] = useState<Sale[]>([]);
   const [machines, setMachines] = useState<any[]>([]);
   const [currentBalance, setCurrentBalance] = useState(0);
+  const [refreshing, setRefreshing] = useState(false);
 
   useEffect(() => {
     if (user) {
@@ -77,46 +88,62 @@ const ClientDashboard = () => {
       }
 
       if (clientData) {
-        const clientId = clientData.id;
-
-        // Fetch sales data
-        const { data: salesData, error: salesError } = await supabase
-          .from('sales')
-          .select('*')
-          .eq('client_id', clientId)
-          .order('date', { ascending: false })
-          .limit(10);
-
-        if (salesError) {
-          console.error("Error fetching sales:", salesError);
-        } else {
-          // Map database sales to app Sale type
-          const mappedSales = salesData ? salesData.map(mapDbSaleToAppSale) : [];
-          setSales(mappedSales);
-        }
-
-        // Fetch machines data
-        const { data: machinesData, error: machinesError } = await supabase
-          .from('machines')
-          .select('*')
-          .eq('client_id', clientId);
-
-        if (machinesError) {
-          console.error("Error fetching machines:", machinesError);
-        } else {
-          setMachines(machinesData || []);
-        }
-
-        // Mock balance calculation
-        // In a real application, you would fetch this from a balance table or calculate it
-        const totalSales = salesData?.reduce((sum: number, sale: DbSale) => sum + Number(sale.net_amount), 0) || 0;
-        setCurrentBalance(totalSales);
+        await Promise.all([
+          fetchSalesData(clientData.id),
+          fetchMachinesData(clientData.id)
+        ]);
       }
     } catch (error) {
       console.error("Error fetching client dashboard data:", error);
     } finally {
       setIsLoading(false);
     }
+  };
+
+  const fetchSalesData = async (clientId: string) => {
+    // Fetch sales data
+    const { data: salesData, error: salesError } = await supabase
+      .from('sales')
+      .select('*')
+      .eq('client_id', clientId)
+      .order('date', { ascending: false })
+      .limit(10);
+
+    if (salesError) {
+      console.error("Error fetching sales:", salesError);
+    } else {
+      // Map database sales to app Sale type
+      const mappedSales = salesData ? salesData.map(mapDbSaleToAppSale) : [];
+      setSales(mappedSales);
+      
+      // Calculate balance
+      const totalSales = salesData?.reduce((sum, sale) => sum + Number(sale.net_amount), 0) || 0;
+      setCurrentBalance(totalSales);
+    }
+  };
+
+  const fetchMachinesData = async (clientId: string) => {
+    // Fetch machines data
+    const { data: machinesData, error: machinesError } = await supabase
+      .from('machines')
+      .select('*')
+      .eq('client_id', clientId);
+
+    if (machinesError) {
+      console.error("Error fetching machines:", machinesError);
+    } else {
+      setMachines(machinesData || []);
+    }
+  };
+
+  const handleRefresh = async () => {
+    setRefreshing(true);
+    await fetchClientData();
+    setRefreshing(false);
+    toast({
+      title: "Dados atualizados",
+      description: "Seus dados foram atualizados com sucesso."
+    });
   };
 
   const handleSupportRequest = () => {
@@ -136,14 +163,26 @@ const ClientDashboard = () => {
   return (
     <MainLayout>
       <div className="space-y-6">
-        <div>
-          <h1 className="text-2xl font-bold tracking-tight">Meu Dashboard</h1>
-          <p className="text-muted-foreground">
-            Bem-vindo ao seu painel de controle
-          </p>
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between">
+          <div>
+            <h1 className="text-2xl font-bold tracking-tight">Meu Dashboard</h1>
+            <p className="text-muted-foreground">
+              Bem-vindo ao seu painel de controle
+            </p>
+          </div>
+          <Button 
+            variant="outline" 
+            size="sm" 
+            className="mt-2 sm:mt-0"
+            onClick={handleRefresh}
+            disabled={refreshing}
+          >
+            <RefreshCw className={`mr-2 h-4 w-4 ${refreshing ? "animate-spin" : ""}`} />
+            {refreshing ? "Atualizando..." : "Atualizar dados"}
+          </Button>
         </div>
         
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-6">
           <Card>
             <CardHeader className="pb-2">
               <CardTitle className="text-sm font-medium">Saldo Disponível</CardTitle>
@@ -208,9 +247,9 @@ const ClientDashboard = () => {
         </div>
 
         <Tabs defaultValue="sales">
-          <TabsList>
-            <TabsTrigger value="sales">Minhas Vendas</TabsTrigger>
-            <TabsTrigger value="machines">Minhas Máquinas</TabsTrigger>
+          <TabsList className="w-full sm:w-auto">
+            <TabsTrigger value="sales" className="flex-1 sm:flex-none">Minhas Vendas</TabsTrigger>
+            <TabsTrigger value="machines" className="flex-1 sm:flex-none">Minhas Máquinas</TabsTrigger>
           </TabsList>
           
           <TabsContent value="sales" className="space-y-4 mt-4">
@@ -227,13 +266,13 @@ const ClientDashboard = () => {
                     <div className="spinner"></div>
                   </div>
                 ) : sales.length > 0 ? (
-                  <div className="rounded-md border">
+                  <div className="overflow-x-auto responsive-table">
                     <table className="w-full text-sm">
                       <thead>
                         <tr className="border-b bg-muted/50">
                           <th className="py-2 px-4 text-left">Data</th>
                           <th className="py-2 px-4 text-left">Código</th>
-                          <th className="py-2 px-4 text-left">Terminal</th>
+                          <th className="py-2 px-4 text-left hidden sm:table-cell">Terminal</th>
                           <th className="py-2 px-4 text-right">Valor Bruto</th>
                           <th className="py-2 px-4 text-right">Valor Líquido</th>
                         </tr>
@@ -245,7 +284,7 @@ const ClientDashboard = () => {
                               {new Date(sale.date).toLocaleDateString()}
                             </td>
                             <td className="py-2 px-4">{sale.code}</td>
-                            <td className="py-2 px-4">{sale.terminal}</td>
+                            <td className="py-2 px-4 hidden sm:table-cell">{sale.terminal}</td>
                             <td className="py-2 px-4 text-right">
                               R$ {Number(sale.grossAmount).toFixed(2)}
                             </td>
@@ -280,12 +319,12 @@ const ClientDashboard = () => {
                     <div className="spinner"></div>
                   </div>
                 ) : machines.length > 0 ? (
-                  <div className="rounded-md border">
+                  <div className="overflow-x-auto responsive-table">
                     <table className="w-full text-sm">
                       <thead>
                         <tr className="border-b bg-muted/50">
                           <th className="py-2 px-4 text-left">Modelo</th>
-                          <th className="py-2 px-4 text-left">Número de Série</th>
+                          <th className="py-2 px-4 text-left hidden sm:table-cell">Número de Série</th>
                           <th className="py-2 px-4 text-left">Status</th>
                           <th className="py-2 px-4 text-right">Ações</th>
                         </tr>
@@ -294,9 +333,9 @@ const ClientDashboard = () => {
                         {machines.map((machine) => (
                           <tr key={machine.id} className="border-b">
                             <td className="py-2 px-4">{machine.model}</td>
-                            <td className="py-2 px-4">{machine.serial_number}</td>
+                            <td className="py-2 px-4 hidden sm:table-cell">{machine.serial_number}</td>
                             <td className="py-2 px-4">
-                              <span className={`px-2 py-1 rounded text-xs ${machine.status === 'ACTIVE' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
+                              <span className={`inline-flex px-2 py-1 rounded text-xs ${machine.status === 'ACTIVE' ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400' : 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400'}`}>
                                 {machine.status === 'ACTIVE' ? 'Ativa' : 'Inativa'}
                               </span>
                             </td>

@@ -68,7 +68,7 @@ export default function PartnerFilter({ onFilter }: PartnerFilterProps) {
 
   return (
     <Form {...form}>
-      <form onSubmit={form.handleSubmit(handleSubmit)}>
+      <form onSubmit={form.handleSubmit(handleSubmit)} className="w-full">
         <div className="flex flex-col sm:flex-row gap-3">
           <FormField
             control={form.control}
@@ -93,13 +93,13 @@ export default function PartnerFilter({ onFilter }: PartnerFilterProps) {
             control={form.control}
             name="dateRange"
             render={({ field }) => (
-              <FormItem className="flex-shrink-0">
+              <FormItem className="flex-shrink-0 w-full sm:w-auto">
                 <Popover open={dateOpen} onOpenChange={setDateOpen}>
                   <PopoverTrigger asChild>
                     <FormControl>
                       <Button
                         variant="outline"
-                        className="min-w-[240px] justify-start text-left font-normal"
+                        className="w-full sm:w-[240px] justify-start text-left font-normal"
                       >
                         {field.value?.from ? (
                           field.value.to ? (
@@ -116,7 +116,7 @@ export default function PartnerFilter({ onFilter }: PartnerFilterProps) {
                       </Button>
                     </FormControl>
                   </PopoverTrigger>
-                  <PopoverContent className="w-auto p-0 pointer-events-auto" align="center">
+                  <PopoverContent className="w-auto p-0" align="center">
                     <Calendar
                       mode="range"
                       selected={field.value as DateRange}
@@ -126,9 +126,9 @@ export default function PartnerFilter({ onFilter }: PartnerFilterProps) {
                           setDateOpen(false);
                         }
                       }}
-                      numberOfMonths={2}
+                      numberOfMonths={1}
                       locale={ptBR}
-                      className="p-3 pointer-events-auto"
+                      className="p-3"
                     />
                   </PopoverContent>
                 </Popover>
@@ -136,9 +136,9 @@ export default function PartnerFilter({ onFilter }: PartnerFilterProps) {
             )}
           />
 
-          <div className="flex gap-2">
-            <Button type="submit">Filtrar</Button>
-            <Button type="button" variant="outline" onClick={clearFilters}>
+          <div className="flex gap-2 w-full sm:w-auto">
+            <Button type="submit" className="flex-1 sm:flex-none">Filtrar</Button>
+            <Button type="button" variant="outline" onClick={clearFilters} className="flex-1 sm:flex-none">
               Limpar
             </Button>
           </div>

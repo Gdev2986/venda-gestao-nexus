@@ -1,7 +1,7 @@
 
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { CalendarIcon, ChevronDownIcon } from "lucide-react";
+import { CalendarIcon } from "lucide-react";
 import { 
   Select,
   SelectContent,
@@ -110,7 +110,7 @@ const DashboardHeader = ({ onDateRangeChange }: DashboardHeaderProps) => {
               )}
             </Button>
           </PopoverTrigger>
-          <PopoverContent className="w-auto p-0 pointer-events-auto" align="end">
+          <PopoverContent className="w-auto p-0" align="end">
             <Calendar
               mode="range"
               selected={date}
@@ -124,8 +124,8 @@ const DashboardHeader = ({ onDateRangeChange }: DashboardHeaderProps) => {
                   onDateRangeChange(newRange);
                 }
               }}
-              numberOfMonths={2}
-              className="p-3 pointer-events-auto"
+              numberOfMonths={1}
+              className="p-3"
             />
           </PopoverContent>
         </Popover>
