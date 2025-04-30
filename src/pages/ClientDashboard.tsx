@@ -3,9 +3,9 @@ import { useState, useEffect } from "react";
 import MainLayout from "@/components/layout/MainLayout";
 import { useToast } from "@/hooks/use-toast";
 import { subDays } from "date-fns";
-import { generateMockSales } from "@/utils/sales-utils";
+import { generateMockSales, generateMonthlySalesData, generatePaymentMethodsData } from "@/utils/sales-utils";
 
-// Import the newly created components
+// Import the components
 import DateRangeFilter, { DateRange } from "@/components/dashboard/client/DateRangeFilter";
 import StatsCards from "@/components/dashboard/client/StatsCards";
 import MainOverviewTabs from "@/components/dashboard/client/MainOverviewTabs";
@@ -27,26 +27,17 @@ const ClientDashboard = () => {
     from: subDays(new Date(), 30),
     to: new Date(),
   });
+  const [salesData, setSalesData] = useState<any[]>([]);
+  const [paymentMethodsData, setPaymentMethodsData] = useState<any[]>([]);
 
-  // Use a mock implementation since 'transactions' table doesn't exist yet
+  // Fetch mock data and apply filters based on date range
   useEffect(() => {
     const fetchDashboardData = async () => {
       try {
         setLoading(true);
         
-        // Mock transactions data
-        const mockTransactions = [
-          { id: "1", date: new Date(2025, 3, 28).toISOString(), amount: 1500, status: "completed" },
-          { id: "2", date: new Date(2025, 3, 29).toISOString(), amount: 2000, status: "completed" },
-          { id: "3", date: new Date(2025, 4, 1).toISOString(), amount: 1200, status: "pending" },
-          { id: "4", date: new Date(2025, 4, 2).toISOString(), amount: 800, status: "pending" },
-          { id: "5", date: new Date(2025, 4, 5).toISOString(), amount: 3000, status: "completed" },
-          { id: "6", date: new Date(2025, 4, 10).toISOString(), amount: 1700, status: "completed" },
-          { id: "7", date: new Date(2025, 4, 12).toISOString(), amount: 950, status: "completed" },
-          { id: "8", date: new Date(2025, 4, 15).toISOString(), amount: 2200, status: "completed" },
-          { id: "9", date: new Date(2025, 4, 18).toISOString(), amount: 1300, status: "pending" },
-          { id: "10", date: new Date(2025, 4, 20).toISOString(), amount: 1800, status: "completed" },
-        ];
+        // Generate mock data based on selected date range
+        const mockTransactions = generateMockSales(50, dateRange);
         
         // Mock machines data
         const mockMachines = [
@@ -55,13 +46,19 @@ const ClientDashboard = () => {
           { id: "3", model: "POS X100", serial_number: "SN11223344", status: "MAINTENANCE", created_at: new Date().toISOString() },
         ];
         
+        // Generate chart data based on selected date range
+        const monthlySalesData = generateMonthlySalesData(dateRange);
+        const methodsData = generatePaymentMethodsData(dateRange);
+        
         setTransactions(mockTransactions);
         setMachines(mockMachines);
+        setSalesData(monthlySalesData);
+        setPaymentMethodsData(methodsData);
 
-        // Apply initial date filter
+        // Filter transactions by date (this is already done in the mock data generation now)
         filterTransactionsByDate(mockTransactions, dateRange);
         
-        // Simulate loading
+        // Simulate loading delay
         setTimeout(() => {
           setLoading(false);
         }, 500);
@@ -76,7 +73,7 @@ const ClientDashboard = () => {
     };
     
     fetchDashboardData();
-  }, [toast]);
+  }, [dateRange, toast]);
 
   const filterTransactionsByDate = (transactions: any[], range: DateRange) => {
     const filtered = transactions.filter(tx => {
@@ -110,29 +107,8 @@ const ClientDashboard = () => {
   // Handle date range selection
   const handleDateRangeChange = (newRange: DateRange) => {
     setDateRange(newRange);
-    filterTransactionsByDate(transactions, newRange);
+    // The useEffect will trigger data reload with new date range
   };
-
-  const salesData = [
-    { name: "Jan", total: 1200 },
-    { name: "Fev", total: 1900 },
-    { name: "Mar", total: 1800 },
-    { name: "Abr", total: 2100 },
-    { name: "Mai", total: 2400 },
-    { name: "Jun", total: 2200 },
-    { name: "Jul", total: 2600 },
-    { name: "Ago", total: 2900 },
-    { name: "Set", total: 3100 },
-    { name: "Out", total: 3300 },
-    { name: "Nov", total: 3400 },
-    { name: "Dez", total: 3600 },
-  ];
-
-  const paymentMethodsData = [
-    { name: "Crédito", value: 60 },
-    { name: "Débito", value: 25 },
-    { name: "Pix", value: 15 },
-  ];
 
   return (
     <MainLayout>

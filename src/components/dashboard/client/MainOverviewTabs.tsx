@@ -69,7 +69,11 @@ export function MainOverviewTabs({
               <CardTitle>Vendas Mensais</CardTitle>
             </CardHeader>
             <CardContent className="pl-2">
-              <LineChart data={salesData} />
+              {loading ? (
+                <Skeleton className="h-[300px] w-full" />
+              ) : (
+                <LineChart data={salesData} />
+              )}
             </CardContent>
           </Card>
           
@@ -78,7 +82,11 @@ export function MainOverviewTabs({
               <CardTitle>Métodos de Pagamento</CardTitle>
             </CardHeader>
             <CardContent>
-              <BarChart data={paymentMethodsData} />
+              {loading ? (
+                <Skeleton className="h-[300px] w-full" />
+              ) : (
+                <BarChart data={paymentMethodsData} />
+              )}
             </CardContent>
           </Card>
         </div>

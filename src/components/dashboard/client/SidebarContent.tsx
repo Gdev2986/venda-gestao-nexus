@@ -9,7 +9,7 @@ import {
 } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { formatCurrency } from "@/lib/utils";
-import { Calendar, CheckCircle2 } from "lucide-react";
+import { CheckCircle2 } from "lucide-react";
 import ClientActions from "@/components/dashboard/ClientActions";
 
 interface SidebarContentProps {
@@ -61,29 +61,42 @@ export function SidebarContent({ loading }: SidebarContentProps) {
       
       <Card>
         <CardHeader>
-          <CardTitle>Calendário</CardTitle>
+          <CardTitle>Histórico Recente</CardTitle>
         </CardHeader>
         <CardContent>
           <div className="space-y-3">
-            <div className="flex gap-3 items-start">
-              <div className="flex-shrink-0 w-12 h-12 bg-primary/10 rounded-md flex items-center justify-center">
-                <Calendar className="h-5 w-5 text-primary" />
-              </div>
-              <div>
-                <p className="font-medium">Manutenção preventiva</p>
-                <p className="text-sm text-muted-foreground">15/05/2025 • 14:00</p>
-              </div>
+            <div className="flex flex-col space-y-1 p-2 border rounded-lg hover:bg-gray-50">
+              <p className="font-medium">Manutenção preventiva</p>
+              <p className="text-sm text-muted-foreground">15/05/2025 • 14:00</p>
+              <Badge className="w-fit mt-1 bg-blue-100 text-blue-800 border-blue-200" variant="outline">Agendado</Badge>
             </div>
-            <div className="flex gap-3 items-start">
-              <div className="flex-shrink-0 w-12 h-12 bg-primary/10 rounded-md flex items-center justify-center">
-                <Calendar className="h-5 w-5 text-primary" />
-              </div>
-              <div>
-                <p className="font-medium">Vencimento de fatura</p>
-                <p className="text-sm text-muted-foreground">20/05/2025 • Final do dia</p>
-              </div>
+            <div className="flex flex-col space-y-1 p-2 border rounded-lg hover:bg-gray-50">
+              <p className="font-medium">Vencimento de fatura</p>
+              <p className="text-sm text-muted-foreground">20/05/2025 • Final do dia</p>
+              <Badge className="w-fit mt-1 bg-amber-100 text-amber-800 border-amber-200" variant="outline">Pendente</Badge>
             </div>
           </div>
+        </CardContent>
+      </Card>
+      
+      <Card>
+        <CardHeader>
+          <CardTitle>Notificações</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-3">
+            <div className="p-2 border rounded-lg hover:bg-gray-50">
+              <p className="font-medium">Nova funcionalidade disponível</p>
+              <p className="text-sm text-muted-foreground mt-1">Pagamentos por aproximação agora disponíveis!</p>
+              <p className="text-xs text-muted-foreground mt-1">12/04/2025</p>
+            </div>
+            <div className="p-2 border rounded-lg hover:bg-gray-50">
+              <p className="font-medium">Alerta de segurança</p>
+              <p className="text-sm text-muted-foreground mt-1">Atualize sua senha regularmente para maior segurança.</p>
+              <p className="text-xs text-muted-foreground mt-1">05/04/2025</p>
+            </div>
+          </div>
+          <Button variant="ghost" className="w-full mt-3 text-primary">Ver todas notificações</Button>
         </CardContent>
       </Card>
     </div>
