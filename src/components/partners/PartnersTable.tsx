@@ -10,7 +10,7 @@ interface PartnersTableProps {
   partners: Partner[];
   isLoading: boolean;
   onEditPartner: (partner: Partner) => void;
-  onDeletePartner: (partner: Partner) => void;
+  onDeletePartner: (partner: Partner) => Promise<boolean> | void;
 }
 
 export function PartnersTable({
@@ -52,7 +52,7 @@ export function PartnersTable({
               <TableRow key={partner.id}>
                 <TableCell className="font-medium">
                   <div>
-                    <span className="block">{partner.business_name}</span>
+                    <span className="block">{partner.business_name || partner.company_name}</span>
                     <span className="block sm:hidden text-xs text-muted-foreground">{partner.contact_name}</span>
                     <span className="block md:hidden text-xs text-muted-foreground">{partner.email}</span>
                   </div>

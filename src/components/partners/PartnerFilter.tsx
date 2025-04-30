@@ -32,7 +32,7 @@ const filterSchema = z.object({
   }).optional(),
 });
 
-type FilterValues = z.infer<typeof filterSchema>;
+export type FilterValues = z.infer<typeof filterSchema>;
 
 interface PartnerFilterProps {
   onFilter: (values: FilterValues) => void;

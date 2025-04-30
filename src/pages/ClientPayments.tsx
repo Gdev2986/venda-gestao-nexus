@@ -11,7 +11,7 @@ import { PaymentResponseForm } from '@/components/payments/PaymentResponseForm';
 type PaymentRequest = {
   id: string;
   amount: number;
-  status: string;
+  status: "PENDING" | "APPROVED" | "REJECTED" | "PAID";
   created_at: string;
   client_id: string;
   receipt_url: string | null;
@@ -91,9 +91,17 @@ const ClientPayments = () => {
 
   const handlePaymentResponse = async (paymentId: string, approved: boolean, receiptUrl?: string) => {
     try {
-      const updateData = approved
-        ? { status: 'APPROVED', approved_at: new Date().toISOString(), receipt_url: receiptUrl }
-        : { status: 'REJECTED' };
+      const updateData: {
+        status: "APPROVED" | "REJECTED"; 
+        approved_at?: string; 
+        receipt_url?: string | null;
+      } = approved
+        ? { 
+            status: "APPROVED", 
+            approved_at: new Date().toISOString(), 
+            receipt_url: receiptUrl || null 
+          }
+        : { status: "REJECTED" };
 
       const { error } = await supabase
         .from('payment_requests')

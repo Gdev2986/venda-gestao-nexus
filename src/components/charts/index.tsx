@@ -1,6 +1,7 @@
 
-import { BarChart as RechartsBarChart, Bar, LineChart as RechartsLineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from "recharts";
-import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart";
+import { BarChart as RechartsBarChart, Bar, LineChart as RechartsLineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, ResponsiveContainer, Legend } from "recharts";
+import { ChartContainer } from "@/components/ui/chart";
+import React from "react";
 
 export const LineChart = ({ data }: { data: any[] }) => {
   return (
@@ -27,22 +28,12 @@ export const LineChart = ({ data }: { data: any[] }) => {
               compactDisplay: "short",
             }).format(value)}
           />
-          <Tooltip
-            content={(props) => (
-              <ChartTooltipContent
-                {...props}
-                formatter={(value, name) => (
-                  <span className="font-medium">
-                    {new Intl.NumberFormat("pt-BR", {
-                      style: "currency",
-                      currency: "BRL",
-                    }).format(value as number)}
-                  </span>
-                )}
-                nameKey="name"
-                labelKey="name"
-                labelFormatter={(label) => <span className="font-medium">{label}</span>}
-              />
+          <RechartsTooltip 
+            formatter={(value: any) => (
+              new Intl.NumberFormat("pt-BR", {
+                style: "currency",
+                currency: "BRL",
+              }).format(value)
             )}
           />
           <Line
@@ -79,20 +70,13 @@ export const BarChart = ({ data }: { data: any[] }) => {
               compactDisplay: "short",
             }).format(value)}
           />
-          <Tooltip
-            content={(props) => (
-              <ChartTooltipContent
-                {...props}
-                formatter={(value, name) => (
-                  <span className="font-medium">
-                    {new Intl.NumberFormat("pt-BR", {
-                      style: "percent",
-                      minimumFractionDigits: 0,
-                      maximumFractionDigits: 0,
-                    }).format((value as number) / 100)}
-                  </span>
-                )}
-              />
+          <RechartsTooltip
+            formatter={(value: any) => (
+              new Intl.NumberFormat("pt-BR", {
+                style: "percent",
+                minimumFractionDigits: 0,
+                maximumFractionDigits: 0,
+              }).format(value / 100)
             )}
           />
           <Legend />

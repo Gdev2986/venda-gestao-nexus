@@ -6,6 +6,10 @@ import { type Partner } from "@/hooks/use-partners";
 interface PartnersTableCardProps {
   partners: Partner[];
   isLoading: boolean;
+  loading?: boolean; // Add this to support existing code
+  error?: string;
+  onEdit?: (partner: Partner) => void;
+  onDelete?: (partnerId: string) => Promise<boolean>;
   onEditPartner: (partner: Partner) => void;
   onDeletePartner: (partner: Partner) => void;
 }
@@ -13,9 +17,28 @@ interface PartnersTableCardProps {
 export function PartnersTableCard({
   partners,
   isLoading,
+  loading, // Support for existing code
+  error,
+  onEdit,
+  onDelete,
   onEditPartner,
   onDeletePartner,
 }: PartnersTableCardProps) {
+  // Use loading prop if isLoading is not provided
+  const isLoadingState = isLoading || loading || false;
+  
+  // Use the appropriate handlers based on what's provided
+  const handleEdit = onEdit || onEditPartner;
+  const handleDelete = async (partner: Partner) => {
+    if (onDelete) {
+      return await onDelete(partner.id);
+    } else if (onDeletePartner) {
+      onDeletePartner(partner);
+      return true;
+    }
+    return false;
+  };
+
   return (
     <Card>
       <CardHeader>
@@ -25,14 +48,13 @@ export function PartnersTableCard({
       <CardContent>
         <PartnersTable
           partners={partners}
-          isLoading={isLoading}
-          onEditPartner={onEditPartner}
-          onDeletePartner={onDeletePartner}
+          isLoading={isLoadingState}
+          onEditPartner={handleEdit}
+          onDeletePartner={handleDelete}
         />
       </CardContent>
     </Card>
   );
 }
 
-// Add default export
 export default PartnersTableCard;

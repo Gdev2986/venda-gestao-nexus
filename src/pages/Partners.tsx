@@ -52,6 +52,10 @@ const Partners = () => {
     return false;
   };
 
+  const handleDeletePartner = (partner: Partner) => {
+    handleDelete(partner.id);
+  };
+
   const handleSubmit = async (partnerData: Omit<Partner, "id" | "created_at" | "updated_at">) => {
     let success = false;
     if (editingPartner) {
@@ -70,10 +74,28 @@ const Partners = () => {
     setFilteredPartners(filterPartners(filters));
   };
 
+  // Create an initialData object for the PartnerForm
+  const getInitialData = () => {
+    if (!editingPartner) return undefined;
+    
+    return {
+      id: editingPartner.id,
+      business_name: editingPartner.business_name,
+      contact_name: editingPartner.contact_name,
+      email: editingPartner.email,
+      phone: editingPartner.phone,
+      commission_rate: editingPartner.commission_rate,
+      address: editingPartner.address,
+      city: editingPartner.city,
+      state: editingPartner.state,
+      zip: editingPartner.zip,
+    };
+  };
+
   return (
     <MainLayout>
       <div className="flex flex-col gap-6">
-        <PartnersHeader onCreatePartner={handleCreate} />
+        <PartnersHeader onCreateClick={handleCreate} />
         
         <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
           <div className="md:col-span-1">
@@ -83,10 +105,10 @@ const Partners = () => {
           <div className="md:col-span-3">
             <PartnersTableCard 
               partners={filteredPartners} 
-              loading={loading} 
+              isLoading={loading} 
               error={error} 
-              onEdit={handleEdit} 
-              onDelete={handleDelete}
+              onEditPartner={handleEdit} 
+              onDeletePartner={handleDeletePartner}
             />
           </div>
         </div>
@@ -94,9 +116,11 @@ const Partners = () => {
         <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
           <DialogContent className="sm:max-w-[550px]">
             <PartnerForm 
-              partner={editingPartner} 
-              onSubmit={handleSubmit} 
-              isSubmitting={loading}
+              isOpen={isDialogOpen}
+              onClose={() => setIsDialogOpen(false)}
+              onSubmit={handleSubmit}
+              initialData={getInitialData()}
+              title={editingPartner ? "Editar Parceiro" : "Novo Parceiro"}
             />
           </DialogContent>
         </Dialog>

@@ -10,6 +10,17 @@ export interface Partner {
   commission_rate: number;
   created_at?: string;
   updated_at?: string;
+  // Additional fields that PartnersTable.tsx expects
+  business_name: string;
+  contact_name: string;
+  email: string;
+  phone: string;
+  address: string;
+  city: string;
+  state: string;
+  zip: string;
+  document?: string;
+  status?: "active" | "inactive";
 }
 
 export interface FilterValues {
@@ -39,7 +50,21 @@ export const usePartners = () => {
         throw new Error(fetchError.message);
       }
 
-      setPartners(data as Partner[]);
+      // Transform the data to match the Partner interface
+      const transformedData = data.map(partner => ({
+        ...partner,
+        business_name: partner.company_name, // Map company_name to business_name
+        contact_name: '', // Add default values for fields not in the database
+        email: '',
+        phone: '',
+        address: '',
+        city: '',
+        state: '',
+        zip: '',
+        status: 'active' as const
+      }));
+
+      setPartners(transformedData as Partner[]);
     } catch (err: any) {
       setError(err.message);
       toast({
@@ -57,9 +82,15 @@ export const usePartners = () => {
       setLoading(true);
       setError('');
 
+      // Transform the partner data to match the database schema
+      const partnerData = {
+        company_name: partner.business_name,
+        commission_rate: partner.commission_rate
+      };
+
       const { data, error: createError } = await supabase
         .from('partners')
-        .insert([partner])
+        .insert([partnerData])
         .select();
 
       if (createError) {
@@ -67,7 +98,21 @@ export const usePartners = () => {
       }
 
       if (data && data.length > 0) {
-        setPartners(prev => [...prev, data[0] as Partner]);
+        // Transform the returned data to match the Partner interface
+        const newPartner = {
+          ...data[0],
+          business_name: data[0].company_name,
+          contact_name: partner.contact_name,
+          email: partner.email,
+          phone: partner.phone,
+          address: partner.address,
+          city: partner.city,
+          state: partner.state,
+          zip: partner.zip,
+          status: 'active' as const
+        };
+
+        setPartners(prev => [...prev, newPartner as Partner]);
         toast({
           title: 'Parceiro criado',
           description: 'O parceiro foi criado com sucesso.',
@@ -93,9 +138,20 @@ export const usePartners = () => {
       setLoading(true);
       setError('');
 
+      // Transform the partner data to match the database schema
+      const partnerData: { company_name?: string; commission_rate?: number } = {};
+      
+      if (partner.business_name) {
+        partnerData.company_name = partner.business_name;
+      }
+      
+      if (partner.commission_rate !== undefined) {
+        partnerData.commission_rate = partner.commission_rate;
+      }
+
       const { data, error: updateError } = await supabase
         .from('partners')
-        .update(partner)
+        .update(partnerData)
         .eq('id', id)
         .select();
 
@@ -104,9 +160,16 @@ export const usePartners = () => {
       }
 
       if (data && data.length > 0) {
+        // Update the local partners state
         setPartners(prev =>
-          prev.map(p => (p.id === id ? { ...p, ...data[0] } as Partner : p))
+          prev.map(p => (p.id === id ? {
+            ...p,
+            ...partner,
+            company_name: partner.business_name || p.company_name,
+            business_name: partner.business_name || p.business_name
+          } as Partner : p))
         );
+        
         toast({
           title: 'Parceiro atualizado',
           description: 'O parceiro foi atualizado com sucesso.',
@@ -162,11 +225,11 @@ export const usePartners = () => {
 
   const filterPartners = (filters: FilterValues) => {
     // This is a client-side filter implementation
-    // For production, you'd want to implement server-side filtering
     if (!filters.search) return partners;
     
     const searchLower = filters.search.toLowerCase();
     return partners.filter((partner) => 
+      partner.business_name.toLowerCase().includes(searchLower) || 
       partner.company_name.toLowerCase().includes(searchLower)
     );
   };
