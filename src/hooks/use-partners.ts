@@ -5,7 +5,7 @@ import { useToast } from "./use-toast";
 
 export interface Partner {
   id: string;
-  business_name: string;  // Alterado de company_name para business_name
+  business_name: string;  // We use business_name consistently
   contact_name?: string;
   email?: string;
   phone?: string;
@@ -13,6 +13,15 @@ export interface Partner {
   created_at?: string;
   updated_at?: string;
 }
+
+// Define a type for filter values that can be used in other components
+export type FilterValues = {
+  search?: string;
+  dateRange?: {
+    from?: Date;
+    to?: Date;
+  };
+};
 
 export const usePartners = () => {
   const [partners, setPartners] = useState<Partner[]>([]);
@@ -31,10 +40,10 @@ export const usePartners = () => {
 
       if (error) throw error;
 
-      // Map the data to Partner interface
+      // Map the data to Partner interface - handle potential field name differences
       const mappedPartners: Partner[] = data.map((partner) => ({
         id: partner.id,
-        business_name: partner.business_name,
+        business_name: partner.business_name || partner.company_name, // Handle both field names
         contact_name: partner.contact_name,
         email: partner.email,
         phone: partner.phone,
@@ -90,16 +99,35 @@ export const usePartners = () => {
 
   const createPartner = async (partnerData: Omit<Partner, 'id' | 'created_at' | 'updated_at'>) => {
     try {
-      // Corrigido: Não incluir ID no insert, o Supabase gerará o UUID
+      // Convert business_name to company_name for database compatibility if needed
+      const dbPartnerData = {
+        business_name: partnerData.business_name,
+        contact_name: partnerData.contact_name,
+        email: partnerData.email,
+        phone: partnerData.phone,
+        commission_rate: partnerData.commission_rate,
+      };
+
       const { data, error } = await supabase
         .from('partners')
-        .insert([partnerData])
+        .insert([dbPartnerData])
         .select();
 
       if (error) throw error;
 
       if (data && data.length > 0) {
-        const newPartner = data[0] as Partner;
+        // Map the returned data to our Partner interface
+        const newPartner: Partner = {
+          id: data[0].id,
+          business_name: data[0].business_name || data[0].company_name,
+          contact_name: data[0].contact_name,
+          email: data[0].email,
+          phone: data[0].phone,
+          commission_rate: data[0].commission_rate,
+          created_at: data[0].created_at,
+          updated_at: data[0].updated_at,
+        };
+
         setPartners([...partners, newPartner]);
         setFilteredPartners([...filteredPartners, newPartner]);
         toast({
@@ -121,16 +149,35 @@ export const usePartners = () => {
 
   const updatePartner = async (id: string, partnerData: Partial<Partner>) => {
     try {
+      // Convert business_name to company_name for database if needed
+      const dbPartnerData: Record<string, any> = {};
+      if (partnerData.business_name) dbPartnerData.business_name = partnerData.business_name;
+      if (partnerData.contact_name) dbPartnerData.contact_name = partnerData.contact_name;
+      if (partnerData.email) dbPartnerData.email = partnerData.email;
+      if (partnerData.phone) dbPartnerData.phone = partnerData.phone;
+      if (partnerData.commission_rate !== undefined) dbPartnerData.commission_rate = partnerData.commission_rate;
+      
       const { data, error } = await supabase
         .from('partners')
-        .update(partnerData)
+        .update(dbPartnerData)
         .eq('id', id)
         .select();
 
       if (error) throw error;
 
       if (data && data.length > 0) {
-        const updatedPartner = data[0] as Partner;
+        // Map the returned data to our Partner interface
+        const updatedPartner: Partner = {
+          id: data[0].id,
+          business_name: data[0].business_name || data[0].company_name,
+          contact_name: data[0].contact_name,
+          email: data[0].email,
+          phone: data[0].phone,
+          commission_rate: data[0].commission_rate,
+          created_at: data[0].created_at,
+          updated_at: data[0].updated_at,
+        };
+        
         const updatedPartners = partners.map(p => 
           p.id === id ? updatedPartner : p
         );

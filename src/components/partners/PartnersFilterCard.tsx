@@ -7,6 +7,7 @@ interface PartnersFilterCardProps {
   onFilter: (values: FilterValues) => void;
 }
 
+// Export as named export to match import statements in other files
 export function PartnersFilterCard({ onFilter }: PartnersFilterCardProps) {
   return (
     <Card>
@@ -22,3 +23,6 @@ export function PartnersFilterCard({ onFilter }: PartnersFilterCardProps) {
     </Card>
   );
 }
+
+// Also add default export for backward compatibility
+export default PartnersFilterCard;

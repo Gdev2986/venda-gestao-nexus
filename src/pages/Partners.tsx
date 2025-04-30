@@ -2,11 +2,11 @@
 import { useEffect, useState } from "react";
 import MainLayout from "@/components/layout/MainLayout";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
-import { Partner, usePartners } from "@/hooks/use-partners";
-import PartnersTableCard from "@/components/partners/PartnersTableCard";
-import PartnersHeader from "@/components/partners/PartnersHeader";
-import PartnersFilterCard from "@/components/partners/PartnersFilterCard";
-import { PartnerForm } from "@/components/partners/PartnerForm";
+import { Partner, usePartners, FilterValues } from "@/hooks/use-partners";
+import { PartnersTableCard } from "@/components/partners/PartnersTableCard";
+import { PartnersHeader } from "@/components/partners/PartnersHeader";
+import { PartnersFilterCard } from "@/components/partners/PartnersFilterCard";
+import PartnerForm from "@/components/partners/PartnerForm";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { useToast } from "@/hooks/use-toast";
@@ -61,17 +61,27 @@ const Partners = () => {
     }
   };
 
-  const handleFilter = (filters: Partial<Partner>) => {
-    handleFilter(filters);
+  // Pass filters directly to the handleFilter function from usePartners
+  const onFilterApplied = (filters: FilterValues) => {
+    // Convert from FilterValues to Partial<Partner>
+    const partnerFilters: Partial<Partner> = {};
+    
+    if (filters.search) {
+      partnerFilters.business_name = filters.search;
+    }
+    
+    // Apply date range filter if needed in future
+    
+    handleFilter(partnerFilters);
   };
 
   return (
     <MainLayout>
-      <PartnersHeader onCreatePartner={handleCreatePartner} />
+      <PartnersHeader onCreateClick={handleCreatePartner} />
       
       <div className="grid grid-cols-1 lg:grid-cols-4 gap-4 mb-4">
         <div className="lg:col-span-1">
-          <PartnersFilterCard onFilter={handleFilter} />
+          <PartnersFilterCard onFilter={onFilterApplied} />
         </div>
         
         <div className="lg:col-span-3">

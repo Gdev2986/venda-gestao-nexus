@@ -33,3 +33,6 @@ export function PartnersTableCard({
     </Card>
   );
 }
+
+// Add default export
+export default PartnersTableCard;

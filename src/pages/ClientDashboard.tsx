@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import MainLayout from "@/components/layout/MainLayout";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
@@ -9,7 +10,7 @@ import { CalendarIcon, ShoppingBag, CreditCard, Headphones, Truck, RefreshCw } f
 import { useToast } from "@/hooks/use-toast";
 import { Sale, PaymentMethod } from "@/types";
 
-// Interface para os dados de venda do banco de dados
+// Define simpler types to avoid excessive instantiation depth
 interface DbSale {
   id: string;
   code: string;
@@ -26,7 +27,6 @@ interface DbSale {
   processing_status: string;
 }
 
-// Interface para máquina
 interface Machine {
   id: string;
   model: string;
@@ -34,10 +34,11 @@ interface Machine {
   status: string;
 }
 
-// Função para mapear dados do banco para o tipo Sale da aplicação
+// Map database sale to app sale type
 const mapDbSaleToAppSale = (dbSale: DbSale): Sale => {
-  // Mapear método de pagamento string para enum
+  // Map payment method string to enum
   let paymentMethod: PaymentMethod;
+  
   switch (dbSale.payment_method) {
     case "CREDIT":
       paymentMethod = PaymentMethod.CREDIT;

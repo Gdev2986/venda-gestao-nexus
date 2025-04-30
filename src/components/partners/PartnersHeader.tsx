@@ -17,3 +17,6 @@ export function PartnersHeader({ onCreateClick }: PartnersHeaderProps) {
     </div>
   );
 }
+
+// Add default export
+export default PartnersHeader;
