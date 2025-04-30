@@ -28,7 +28,7 @@ export const PATHS = {
   PAYMENTS: "/payments",
   PAYMENT_DETAILS: (id: string = ":id") => `/payments/${id}`,
   PAYMENT_NEW: "/payments/new",
-  USER_PAYMENTS: "/user-payments", // New path for user payments
+  USER_PAYMENTS: "/user-payments", // User payments path
   
   // Parceiros
   PARTNERS: "/partners",
