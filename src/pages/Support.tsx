@@ -1,8 +1,6 @@
-
 import { useState, useEffect } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
-import MainLayout from "@/components/layout/MainLayout";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { 
   Table, 
@@ -544,148 +542,146 @@ const Support = () => {
   };
   
   return (
-    <MainLayout>
-      <div className="space-y-4">
-        <div className="flex justify-between items-center">
-          <h2 className="text-3xl font-bold tracking-tight">Suporte</h2>
-          <Button onClick={() => setShowCreateDialog(true)}>
-            <PlusIcon className="mr-2 h-4 w-4" />
-            Nova Conversa
-          </Button>
-        </div>
-        
-        <div className="grid grid-cols-1 md:grid-cols-12 gap-4">
-          <Card className="md:col-span-3">
-            <CardHeader>
-              <CardTitle>Filtros</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="grid gap-2">
-                <Label htmlFor="status">Status</Label>
-                <Select value={statusFilter} onValueChange={setStatusFilter}>
-                  <SelectTrigger id="status">
-                    <SelectValue placeholder="Selecione um status" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">Todos</SelectItem>
-                    <SelectItem value="OPEN">Aberto</SelectItem>
-                    <SelectItem value="PENDING">Pendente</SelectItem>
-                    <SelectItem value="CLOSED">Fechado</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              
-              <div className="grid gap-2">
-                <Label htmlFor="search">Pesquisar</Label>
-                <Input
-                  id="search"
-                  placeholder="Pesquisar por assunto ou cliente"
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                />
-              </div>
-            </CardContent>
-          </Card>
-          
-          <Card className="md:col-span-9">
-            <CardHeader>
-              <CardTitle>Conversas de Suporte</CardTitle>
-              <CardDescription>
-                Gerencie todas as conversas de suporte
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Cliente</TableHead>
-                    <TableHead>Assunto</TableHead>
-                    <TableHead>Status</TableHead>
-                    <TableHead>Última Atualização</TableHead>
-                    <TableHead>Ações</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {isLoading ? (
-                    <TableRow>
-                      <TableCell colSpan={5} className="text-center py-6">
-                        Carregando...
-                      </TableCell>
-                    </TableRow>
-                  ) : filteredConversations.length > 0 ? (
-                    filteredConversations.map((conversation) => (
-                      <TableRow key={conversation.id}>
-                        <TableCell>{conversation.client_name}</TableCell>
-                        <TableCell className="font-medium">
-                          <div className="flex items-center gap-2">
-                            {conversation.subject}
-                            {(conversation.unread_count || 0) > 0 && (
-                              <Badge variant="destructive" className="rounded-full h-5 min-w-5 flex items-center justify-center">
-                                {conversation.unread_count}
-                              </Badge>
-                            )}
-                          </div>
-                          {conversation.last_message && (
-                            <div className="text-xs text-muted-foreground truncate max-w-xs mt-1">
-                              {conversation.last_message}
-                            </div>
-                          )}
-                        </TableCell>
-                        <TableCell>
-                          <Badge className={statusColors[conversation.status]}>
-                            {statusLabels[conversation.status]}
-                          </Badge>
-                        </TableCell>
-                        <TableCell>
-                          {formatDistanceToNow(new Date(conversation.updated_at), {
-                            addSuffix: true,
-                            locale: ptBR
-                          })}
-                        </TableCell>
-                        <TableCell>
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => handleConversationClick(conversation)}
-                          >
-                            <MessageSquare className="h-4 w-4 mr-2" />
-                            Ver
-                          </Button>
-                        </TableCell>
-                      </TableRow>
-                    ))
-                  ) : (
-                    <TableRow>
-                      <TableCell colSpan={5} className="text-center py-6 text-muted-foreground">
-                        Nenhuma conversa encontrada
-                      </TableCell>
-                    </TableRow>
-                  )}
-                </TableBody>
-              </Table>
-            </CardContent>
-          </Card>
-        </div>
-        
-        {/* Create conversation dialog */}
-        <CreateConversationDialog 
-          isOpen={showCreateDialog}
-          onClose={() => setShowCreateDialog(false)}
-          onSubmit={handleCreateConversation}
-          clients={mockClients}
-        />
-        
-        {/* Chat dialog */}
-        <ChatDialog 
-          conversation={selectedConversation}
-          isOpen={showChatDialog}
-          onClose={() => setShowChatDialog(false)}
-          onSendMessage={handleSendMessage}
-          onStatusChange={handleStatusChange}
-          messages={messages}
-        />
+    <div className="space-y-4">
+      <div className="flex justify-between items-center">
+        <h2 className="text-3xl font-bold tracking-tight">Suporte</h2>
+        <Button onClick={() => setShowCreateDialog(true)}>
+          <PlusIcon className="mr-2 h-4 w-4" />
+          Nova Conversa
+        </Button>
       </div>
-    </MainLayout>
+      
+      <div className="grid grid-cols-1 md:grid-cols-12 gap-4">
+        <Card className="md:col-span-3">
+          <CardHeader>
+            <CardTitle>Filtros</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="grid gap-2">
+              <Label htmlFor="status">Status</Label>
+              <Select value={statusFilter} onValueChange={setStatusFilter}>
+                <SelectTrigger id="status">
+                  <SelectValue placeholder="Selecione um status" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Todos</SelectItem>
+                  <SelectItem value="OPEN">Aberto</SelectItem>
+                  <SelectItem value="PENDING">Pendente</SelectItem>
+                  <SelectItem value="CLOSED">Fechado</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            
+            <div className="grid gap-2">
+              <Label htmlFor="search">Pesquisar</Label>
+              <Input
+                id="search"
+                placeholder="Pesquisar por assunto ou cliente"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+              />
+            </div>
+          </CardContent>
+        </Card>
+        
+        <Card className="md:col-span-9">
+          <CardHeader>
+            <CardTitle>Conversas de Suporte</CardTitle>
+            <CardDescription>
+              Gerencie todas as conversas de suporte
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Cliente</TableHead>
+                  <TableHead>Assunto</TableHead>
+                  <TableHead>Status</TableHead>
+                  <TableHead>Última Atualização</TableHead>
+                  <TableHead>Ações</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {isLoading ? (
+                  <TableRow>
+                    <TableCell colSpan={5} className="text-center py-6">
+                      Carregando...
+                    </TableCell>
+                  </TableRow>
+                ) : filteredConversations.length > 0 ? (
+                  filteredConversations.map((conversation) => (
+                    <TableRow key={conversation.id}>
+                      <TableCell>{conversation.client_name}</TableCell>
+                      <TableCell className="font-medium">
+                        <div className="flex items-center gap-2">
+                          {conversation.subject}
+                          {(conversation.unread_count || 0) > 0 && (
+                            <Badge variant="destructive" className="rounded-full h-5 min-w-5 flex items-center justify-center">
+                              {conversation.unread_count}
+                            </Badge>
+                          )}
+                        </div>
+                        {conversation.last_message && (
+                          <div className="text-xs text-muted-foreground truncate max-w-xs mt-1">
+                            {conversation.last_message}
+                          </div>
+                        )}
+                      </TableCell>
+                      <TableCell>
+                        <Badge className={statusColors[conversation.status]}>
+                          {statusLabels[conversation.status]}
+                        </Badge>
+                      </TableCell>
+                      <TableCell>
+                        {formatDistanceToNow(new Date(conversation.updated_at), {
+                          addSuffix: true,
+                          locale: ptBR
+                        })}
+                      </TableCell>
+                      <TableCell>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => handleConversationClick(conversation)}
+                        >
+                          <MessageSquare className="h-4 w-4 mr-2" />
+                          Ver
+                        </Button>
+                      </TableCell>
+                    </TableRow>
+                  ))
+                ) : (
+                  <TableRow>
+                    <TableCell colSpan={5} className="text-center py-6 text-muted-foreground">
+                      Nenhuma conversa encontrada
+                    </TableCell>
+                  </TableRow>
+                )}
+              </TableBody>
+            </Table>
+          </CardContent>
+        </Card>
+      </div>
+      
+      {/* Create conversation dialog */}
+      <CreateConversationDialog 
+        isOpen={showCreateDialog}
+        onClose={() => setShowCreateDialog(false)}
+        onSubmit={handleCreateConversation}
+        clients={mockClients}
+      />
+      
+      {/* Chat dialog */}
+      <ChatDialog 
+        conversation={selectedConversation}
+        isOpen={showChatDialog}
+        onClose={() => setShowChatDialog(false)}
+        onSendMessage={handleSendMessage}
+        onStatusChange={handleStatusChange}
+        messages={messages}
+      />
+    </div>
   );
 };
 
