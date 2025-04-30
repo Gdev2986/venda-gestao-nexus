@@ -5,13 +5,14 @@ import { PATHS } from "./routes/paths";
 // Import components that definitely exist based on previous files
 import Dashboard from "./pages/Dashboard";
 import ClientDashboard from "./pages/ClientDashboard";
-import Payments from "./pages/payments/Payments";
+import Payments from "./pages/Payments"; // Fixed path - removed "payments/"
 import UserPayments from "./pages/UserPayments";
 import NotFound from "./pages/NotFound";
 import Support from "./pages/Support";
 import Help from "./pages/Help";
 import Fees from "./pages/Fees";
 import Reports from "./pages/Reports";
+import Partners from "./pages/Partners";
 
 // Import Index page for homepage
 import Index from "./pages/Index";
@@ -45,6 +46,9 @@ function App() {
       <Route path={PATHS.PAYMENT_DETAILS()} element={<Payments />} />
       <Route path={PATHS.PAYMENT_NEW} element={<Payments />} />
       <Route path={PATHS.USER_PAYMENTS} element={<UserPayments />} />
+      
+      {/* Partners route */}
+      <Route path={PATHS.PARTNERS} element={<Partners />} />
       
       {/* Other routes that we know exist */}
       <Route path={PATHS.FEES} element={<Fees />} />

@@ -46,7 +46,7 @@ export default function PartnerFilter({ onFilter }: PartnerFilterProps) {
     defaultValues: {
       searchTerm: "",
       dateRange: undefined,
-      commissionRange: [0, 100],
+      commissionRange: [0, 100] as [number, number], // Fixed type here
     },
   });
 
@@ -61,7 +61,7 @@ export default function PartnerFilter({ onFilter }: PartnerFilterProps) {
     form.reset({
       searchTerm: "",
       dateRange: undefined,
-      commissionRange: [0, 100],
+      commissionRange: [0, 100] as [number, number], // Fixed type here
     });
     onFilter({
       searchTerm: "",

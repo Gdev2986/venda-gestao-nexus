@@ -68,18 +68,25 @@ export default function Partners() {
     }
   };
 
+  // Fix the type here to match what the Partner type actually requires
   const handleSubmit = async (partnerData: Omit<Partner, "id" | "created_at" | "updated_at">) => {
     try {
       setIsSubmitting(true);
       
+      // Ensure commission_rate is a number with a default of 0
+      const dataWithCommission = {
+        ...partnerData,
+        commission_rate: partnerData.commission_rate ?? 0,
+      };
+      
       if (editingPartner) {
-        await updatePartner(editingPartner.id, partnerData);
+        await updatePartner(editingPartner.id, dataWithCommission);
         toast({
           title: "Sucesso",
           description: "Parceiro atualizado com sucesso."
         });
       } else {
-        await createPartner(partnerData);
+        await createPartner(dataWithCommission);
         toast({
           title: "Sucesso",
           description: "Parceiro criado com sucesso."

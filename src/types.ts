@@ -49,18 +49,18 @@ export interface Client {
   partner_id?: string;
 }
 
-// Partner interface
+// Partner interface - fixing the required fields
 export interface Partner {
   id: string;
-  created_at: string;
-  updated_at: string;
+  created_at?: string;
+  updated_at?: string;
   company_name: string;
   business_name?: string; // For backward compatibility
   contact_name?: string;
   email?: string;
   phone?: string;
   address?: string;
-  commission_rate?: number;
+  commission_rate: number; // Make this required with a default value
 }
 
 // Sale interface
@@ -99,18 +99,19 @@ export interface PixKey {
   user_id?: string;
 }
 
-// Payment interface
+// Payment interface - making rejection_reason optional
 export interface Payment {
   id: string;
   created_at: string;
-  updated_at: string;
+  updated_at?: string;
   client_id: string;
   amount: number;
   description?: string;
   status: PaymentStatus;
-  approved_at?: string;
+  approved_at?: string | null;
   approved_by?: string;
-  receipt_url?: string;
+  receipt_url?: string | null;
+  rejection_reason?: string | null; // Make this optional
   pix_key_id?: string;
   due_date?: string;
 }

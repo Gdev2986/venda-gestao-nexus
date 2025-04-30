@@ -43,14 +43,15 @@ export function usePartners() {
     setIsLoading(true);
     try {
       // Generate an ID for the partner if not in Supabase environment
-      const newPartner: Partial<Partner> = {
+      const newPartner = {
         ...partnerData,
         id: uuidv4(),
       };
 
+      // Fix: Insert as single object instead of an array
       const { data, error: insertError } = await supabase
         .from("partners")
-        .insert([newPartner])
+        .insert(newPartner)
         .select();
 
       if (insertError) {

@@ -50,16 +50,17 @@ const paymentFormSchema = z.object({
 // Define the type for the payment form values
 type PaymentFormValues = z.infer<typeof paymentFormSchema>;
 
-// Define the type for a payment
+// Define the type for a payment - making rejection_reason optional
 type Payment = {
   id: string;
   created_at: string;
+  updated_at?: string;
   amount: number;
   status: PaymentStatus;
   client_id: string;
   approved_at: string | null;
   receipt_url: string | null;
-  rejection_reason: string | null;
+  rejection_reason?: string | null; // Make this optional to match the existing data
   client_name: string | null;
 };
 
@@ -112,6 +113,7 @@ const Payments = () => {
         client_id: payment.client_id,
         approved_at: payment.approved_at,
         receipt_url: payment.receipt_url,
+        // Don't include rejection_reason if it's not in the data
         client_name: payment.clients?.name || null,
       }));
 
