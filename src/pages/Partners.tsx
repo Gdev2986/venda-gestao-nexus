@@ -1,131 +1,104 @@
 
-import { useState } from "react";
-import { Dialog } from "@/components/ui/dialog";
+import { useState, useEffect } from "react";
 import MainLayout from "@/components/layout/MainLayout";
-import usePartners, { Partner, FilterValues } from "@/hooks/use-partners";
+import { usePartners, Partner, FilterValues } from "@/hooks/use-partners";
 import { useToast } from "@/hooks/use-toast";
-import { PartnersTableCard } from "@/components/partners/PartnersTableCard";
+import { PartnersTableCard } from "@/components/partners/PartnersTableCard"; 
 import { PartnersHeader } from "@/components/partners/PartnersHeader";
-import { PartnersFilterCard } from "@/components/partners/PartnersFilterCard";
+import { PartnersFilterCard } from "@/components/partners/PartnersFilterCard"; 
 import PartnerForm from "@/components/partners/PartnerForm";
+import { Dialog, DialogContent } from "@/components/ui/dialog";
 
 const Partners = () => {
-  const { toast } = useToast();
   const {
+    partners,
     loading,
     error,
-    filteredPartners,
     fetchPartners,
     createPartner,
     updatePartner,
     deletePartner,
-    applyFilter,
+    filterPartners,
   } = usePartners();
+  
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [editingPartner, setEditingPartner] = useState<Partner | null>(null);
+  const [filteredPartners, setFilteredPartners] = useState<Partner[]>([]);
+  const { toast } = useToast();
 
-  const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
-  const [isUpdateDialogOpen, setIsUpdateDialogOpen] = useState(false);
-  const [currentPartner, setCurrentPartner] = useState<Partner | null>(null);
+  useEffect(() => {
+    fetchPartners();
+  }, [fetchPartners]);
 
-  // Fetch partners on mount
-  useState(() => {
-    fetchPartners().catch(error => {
-      toast({
-        variant: "destructive",
-        title: "Erro ao carregar parceiros",
-        description: error.message || "Não foi possível carregar a lista de parceiros",
-      });
-    });
-  });
+  useEffect(() => {
+    setFilteredPartners(partners);
+  }, [partners]);
 
-  // Handle create partner
-  const handleCreatePartner = async (partner: Omit<Partner, "id" | "created_at" | "updated_at">) => {
-    try {
-      await createPartner(partner);
-      setIsCreateDialogOpen(false);
-      toast({
-        title: "Parceiro criado",
-        description: "O parceiro foi criado com sucesso",
-      });
-    } catch (error: any) {
-      toast({
-        variant: "destructive",
-        title: "Erro ao criar parceiro",
-        description: error.message || "Não foi possível criar o parceiro",
-      });
-    }
+  const handleCreate = () => {
+    setEditingPartner(null);
+    setIsDialogOpen(true);
   };
 
-  // Handle update partner
-  const handleUpdatePartner = async (partner: Partner) => {
-    try {
-      const { id, ...partnerData } = partner;
-      await updatePartner(id, partnerData);
-      setIsUpdateDialogOpen(false);
-      setCurrentPartner(null);
-      toast({
-        title: "Parceiro atualizado",
-        description: "O parceiro foi atualizado com sucesso",
-      });
-    } catch (error: any) {
-      toast({
-        variant: "destructive",
-        title: "Erro ao atualizar parceiro",
-        description: error.message || "Não foi possível atualizar o parceiro",
-      });
-    }
+  const handleEdit = (partner: Partner) => {
+    setEditingPartner(partner);
+    setIsDialogOpen(true);
   };
 
-  // Handle filter partners
-  const handleFilterPartners = (filters: FilterValues) => {
-    applyFilter(filters);
+  const handleDelete = async (partnerId: string) => {
+    const confirmed = window.confirm("Tem certeza que deseja excluir este parceiro?");
+    if (confirmed) {
+      return await deletePartner(partnerId);
+    }
+    return false;
+  };
+
+  const handleSubmit = async (partnerData: Omit<Partner, "id" | "created_at" | "updated_at">) => {
+    let success = false;
+    if (editingPartner) {
+      success = await updatePartner(editingPartner.id, partnerData);
+    } else {
+      success = await createPartner(partnerData);
+    }
+
+    if (success) {
+      setIsDialogOpen(false);
+    }
+    return success;
+  };
+
+  const applyFilter = (filters: FilterValues) => {
+    setFilteredPartners(filterPartners(filters));
   };
 
   return (
     <MainLayout>
-      <div className="space-y-6">
-        <PartnersHeader onCreateClick={() => setIsCreateDialogOpen(true)} />
-
-        <div className="grid grid-cols-1 gap-6 lg:grid-cols-4">
-          <div className="lg:col-span-1">
-            <PartnersFilterCard onFilter={handleFilterPartners} />
+      <div className="flex flex-col gap-6">
+        <PartnersHeader onCreatePartner={handleCreate} />
+        
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+          <div className="md:col-span-1">
+            <PartnersFilterCard onFilter={applyFilter} />
           </div>
-
-          <div className="lg:col-span-3">
-            <PartnersTableCard
-              partners={filteredPartners}
-              loading={loading}
-              error={error}
-              onEdit={(partner) => {
-                setCurrentPartner(partner);
-                setIsUpdateDialogOpen(true);
-              }}
-              onDelete={deletePartner}
+          
+          <div className="md:col-span-3">
+            <PartnersTableCard 
+              partners={filteredPartners} 
+              loading={loading} 
+              error={error} 
+              onEdit={handleEdit} 
+              onDelete={handleDelete}
             />
           </div>
         </div>
-
-        {/* Create Dialog */}
-        <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
-          <PartnerForm 
-            isCreate={true}
-            onSubmit={handleCreatePartner}
-            onCancel={() => setIsCreateDialogOpen(false)}
-          />
-        </Dialog>
-
-        {/* Update Dialog */}
-        <Dialog open={isUpdateDialogOpen} onOpenChange={setIsUpdateDialogOpen}>
-          {currentPartner && (
-            <PartnerForm
-              isCreate={false}
-              initialData={currentPartner}
-              onSubmit={handleUpdatePartner}
-              onCancel={() => {
-                setIsUpdateDialogOpen(false);
-                setCurrentPartner(null);
-              }}
+        
+        <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+          <DialogContent className="sm:max-w-[550px]">
+            <PartnerForm 
+              partner={editingPartner} 
+              onSubmit={handleSubmit} 
+              isSubmitting={loading}
             />
-          )}
+          </DialogContent>
         </Dialog>
       </div>
     </MainLayout>

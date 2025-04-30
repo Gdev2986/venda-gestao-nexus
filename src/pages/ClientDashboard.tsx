@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -6,7 +7,6 @@ import { LineChart, BarChart } from "@/components/charts";
 import { DataTable } from "@/components/ui/data-table";
 import { columns } from "@/components/transactions/columns";
 import { useToast } from "@/hooks/use-toast";
-import { supabase } from "@/integrations/supabase/client";
 import { Skeleton } from "@/components/ui/skeleton";
 import { formatCurrency } from "@/lib/utils";
 import { UserRole } from "@/types";
@@ -22,55 +22,49 @@ const ClientDashboard = () => {
     averageTicket: 0,
   });
 
-  // Fix the recursive type instantiation issue with a simpler approach
-  const processTransactionData = (data: any[]) => {
-    return data.map(item => ({
-      id: item.id,
-      date: item.date,
-      amount: item.amount,
-      status: item.status,
-      // Other fields as needed
-    }));
-  };
-
+  // Use a mock implementation since 'transactions' table doesn't exist yet
   useEffect(() => {
     const fetchDashboardData = async () => {
       try {
         setLoading(true);
         
-        // Fetch transactions
-        const { data: transactionsData, error: transactionsError } = await supabase
-          .from('transactions')
-          .select('*')
-          .order('created_at', { ascending: false })
-          .limit(10);
-        
-        if (transactionsError) throw new Error(transactionsError.message);
+        // Mock transactions data
+        const mockTransactions = [
+          { id: "1", date: new Date().toISOString(), amount: 1500, status: "completed" },
+          { id: "2", date: new Date().toISOString(), amount: 2000, status: "completed" },
+          { id: "3", date: new Date().toISOString(), amount: 1200, status: "pending" },
+          { id: "4", date: new Date().toISOString(), amount: 800, status: "pending" },
+          { id: "5", date: new Date().toISOString(), amount: 3000, status: "completed" },
+        ];
         
         // Calculate stats
-        const totalSales = transactionsData.reduce((sum, tx) => sum + tx.amount, 0);
-        const pendingPayments = transactionsData
+        const totalSales = mockTransactions.reduce((sum, tx) => sum + tx.amount, 0);
+        const pendingPayments = mockTransactions
           .filter(tx => tx.status === 'pending')
           .reduce((sum, tx) => sum + tx.amount, 0);
-        const completedPayments = transactionsData
+        const completedPayments = mockTransactions
           .filter(tx => tx.status === 'completed')
           .reduce((sum, tx) => sum + tx.amount, 0);
-        const averageTicket = totalSales / (transactionsData.length || 1);
+        const averageTicket = totalSales / (mockTransactions.length || 1);
         
-        setTransactions(processTransactionData(transactionsData));
+        setTransactions(mockTransactions);
         setStats({
           totalSales,
           pendingPayments,
           completedPayments,
           averageTicket,
         });
+
+        // Simulate loading
+        setTimeout(() => {
+          setLoading(false);
+        }, 500);
       } catch (error: any) {
         toast({
           variant: "destructive",
           title: "Erro ao carregar dados",
           description: error.message,
         });
-      } finally {
         setLoading(false);
       }
     };

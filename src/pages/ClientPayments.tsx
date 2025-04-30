@@ -1,398 +1,279 @@
 
-import { useState, useEffect } from "react";
-import MainLayout from "@/components/layout/MainLayout";
-import { useAuth } from "@/contexts/AuthContext";
-import { supabase } from "@/integrations/supabase/client";
-import { useToast } from "@/hooks/use-toast";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Input } from "@/components/ui/input";
-import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
-import { z } from "zod";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { useForm } from "react-hook-form";
-import { CreditCard, CheckCircle, Clock, XCircle } from "lucide-react";
+import { useState, useEffect, useMemo } from 'react';
+import { useParams } from 'react-router-dom';
+import MainLayout from '@/components/layout/MainLayout';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { useToast } from '@/hooks/use-toast';
+import { supabase } from '@/integrations/supabase/client';
+import { Tabs, TabsList, TabsContent, TabsTrigger } from '@/components/ui/tabs';
+import { PaymentResponseForm } from '@/components/payments/PaymentResponseForm';
 
-const paymentSchema = z.object({
-  amount: z.string()
-    .refine((val) => !isNaN(Number(val)), { message: "O valor precisa ser um número" })
-    .refine((val) => Number(val) > 0, { message: "O valor precisa ser maior que zero" }),
-  pixKey: z.string().uuid({ message: "Chave PIX inválida" }),
-});
+type PaymentRequest = {
+  id: string;
+  amount: number;
+  status: string;
+  created_at: string;
+  client_id: string;
+  receipt_url: string | null;
+  approved_at: string | null;
+};
+
+type Client = {
+  id: string;
+  business_name: string;
+};
 
 const ClientPayments = () => {
-  const { user } = useAuth();
+  const { clientId } = useParams<{ clientId: string }>();
   const { toast } = useToast();
-  const [isLoading, setIsLoading] = useState(true);
-  const [balance, setBalance] = useState(0);
-  const [pixKeys, setPixKeys] = useState<any[]>([]);
-  const [payments, setPayments] = useState<any[]>([]);
-  const [clientId, setClientId] = useState<string | null>(null);
 
-  const form = useForm<z.infer<typeof paymentSchema>>({
-    resolver: zodResolver(paymentSchema),
-    defaultValues: {
-      amount: "",
-      pixKey: "",
-    },
-  });
+  const [client, setClient] = useState<Client | null>(null);
+  const [paymentRequests, setPaymentRequests] = useState<PaymentRequest[]>([]);
+  const [loading, setLoading] = useState<boolean>(true);
 
   useEffect(() => {
-    if (user) {
-      fetchData();
-    }
-  }, [user]);
+    const fetchClientData = async () => {
+      if (!clientId) return;
 
-  const fetchData = async () => {
-    setIsLoading(true);
-    try {
-      // Get client ID
-      const { data: clientData, error: clientError } = await supabase
-        .from('clients')
-        .select('id')
-        .eq('user_id', user?.id)
-        .single();
+      try {
+        setLoading(true);
+        
+        // Fetch client details
+        const { data: clientData, error: clientError } = await supabase
+          .from('clients')
+          .select('id, business_name')
+          .eq('id', clientId)
+          .single();
 
-      if (clientError) {
-        console.error("Error fetching client data:", clientError);
-        return;
-      }
-
-      if (clientData) {
-        setClientId(clientData.id);
-
-        // Fetch balance (mock calculation)
-        const { data: salesData, error: salesError } = await supabase
-          .from('sales')
-          .select('net_amount')
-          .eq('client_id', clientData.id);
-
-        if (salesError) {
-          console.error("Error fetching sales:", salesError);
-        } else {
-          const totalSales = salesData?.reduce((sum: number, sale: any) => sum + Number(sale.net_amount), 0) || 0;
-          setBalance(totalSales);
-        }
-
-        // Fetch PIX keys
-        const { data: pixKeysData, error: pixKeysError } = await supabase
-          .from('pix_keys')
-          .select('*')
-          .eq('user_id', user?.id);
-
-        if (pixKeysError) {
-          console.error("Error fetching PIX keys:", pixKeysError);
-        } else {
-          setPixKeys(pixKeysData || []);
-          // Set default PIX key if available
-          const defaultKey = pixKeysData?.find(key => key.is_default);
-          if (defaultKey) {
-            form.setValue('pixKey', defaultKey.id);
-          } else if (pixKeysData && pixKeysData.length > 0) {
-            form.setValue('pixKey', pixKeysData[0].id);
-          }
-        }
+        if (clientError) throw new Error(clientError.message);
+        
+        setClient(clientData);
 
         // Fetch payment requests
-        const { data: paymentData, error: paymentError } = await supabase
+        const { data: paymentsData, error: paymentsError } = await supabase
           .from('payment_requests')
           .select('*')
-          .eq('client_id', clientData.id)
+          .eq('client_id', clientId)
           .order('created_at', { ascending: false });
 
-        if (paymentError) {
-          console.error("Error fetching payment requests:", paymentError);
-        } else {
-          setPayments(paymentData || []);
-        }
+        if (paymentsError) throw new Error(paymentsError.message);
+        
+        setPaymentRequests(paymentsData as PaymentRequest[]);
+
+      } catch (error: any) {
+        toast({
+          variant: 'destructive',
+          title: 'Erro ao carregar dados',
+          description: error.message,
+        });
+      } finally {
+        setLoading(false);
       }
-    } catch (error) {
-      console.error("Error fetching payment data:", error);
-    } finally {
-      setIsLoading(false);
-    }
-  };
+    };
 
-  const onSubmit = async (values: z.infer<typeof paymentSchema>) => {
-    if (!clientId) {
-      toast({
-        variant: "destructive",
-        title: "Erro",
-        description: "ID do cliente não encontrado"
-      });
-      return;
-    }
+    fetchClientData();
+  }, [clientId, toast]);
 
+  const pendingRequests = useMemo(() => 
+    paymentRequests.filter(req => req.status === 'PENDING'),
+    [paymentRequests]
+  );
+
+  const approvedRequests = useMemo(() => 
+    paymentRequests.filter(req => req.status === 'APPROVED'),
+    [paymentRequests]
+  );
+
+  const rejectedRequests = useMemo(() => 
+    paymentRequests.filter(req => req.status === 'REJECTED'),
+    [paymentRequests]
+  );
+
+  const handlePaymentResponse = async (paymentId: string, approved: boolean, receiptUrl?: string) => {
     try {
-      const amount = Number(values.amount);
-      
-      // Check if amount is valid
-      if (isNaN(amount) || amount <= 0) {
-        toast({
-          variant: "destructive",
-          title: "Erro",
-          description: "O valor solicitado deve ser maior que zero"
-        });
-        return;
-      }
-
-      // Check if amount is available
-      if (amount > balance) {
-        toast({
-          variant: "destructive",
-          title: "Erro",
-          description: "Saldo insuficiente para esta solicitação"
-        });
-        return;
-      }
+      const updateData = approved
+        ? { status: 'APPROVED', approved_at: new Date().toISOString(), receipt_url: receiptUrl }
+        : { status: 'REJECTED' };
 
       const { error } = await supabase
         .from('payment_requests')
-        .insert([
-          {
-            client_id: clientId,
-            amount: amount,
-            pix_key_id: values.pixKey,
-            status: 'PENDING'
-          }
-        ]);
+        .update(updateData)
+        .eq('id', paymentId);
 
-      if (error) {
-        throw error;
-      }
+      if (error) throw new Error(error.message);
+
+      // Update local state
+      setPaymentRequests(prev => prev.map(req => {
+        if (req.id === paymentId) {
+          return { ...req, ...updateData };
+        }
+        return req;
+      }));
 
       toast({
-        title: "Solicitação enviada",
-        description: "Sua solicitação de pagamento foi enviada com sucesso."
+        title: `Pagamento ${approved ? 'aprovado' : 'rejeitado'}`,
+        description: `O pagamento foi ${approved ? 'aprovado' : 'rejeitado'} com sucesso.`,
+        variant: 'default',
       });
 
-      // Reset form and refresh data
-      form.reset();
-      fetchData();
-
+      return true;
     } catch (error: any) {
       toast({
-        variant: "destructive",
-        title: "Erro na solicitação",
-        description: error.message || "Não foi possível enviar sua solicitação"
+        variant: 'destructive',
+        title: 'Erro ao processar pagamento',
+        description: error.message,
       });
+      return false;
     }
   };
 
-  const formatStatus = (status: string) => {
-    switch (status) {
-      case 'PENDING':
-        return (
-          <div className="flex items-center text-yellow-600">
-            <Clock className="h-4 w-4 mr-1" />
-            <span>Pendente</span>
+  if (!clientId) {
+    return (
+      <MainLayout>
+        <div className="flex justify-center items-center h-[80vh]">
+          <div className="text-center">
+            <h2 className="text-2xl font-bold">Cliente não encontrado</h2>
+            <p className="text-muted-foreground">ID do cliente não foi fornecido</p>
           </div>
-        );
-      case 'APPROVED':
-        return (
-          <div className="flex items-center text-green-600">
-            <CheckCircle className="h-4 w-4 mr-1" />
-            <span>Aprovado</span>
-          </div>
-        );
-      case 'REJECTED':
-        return (
-          <div className="flex items-center text-red-600">
-            <XCircle className="h-4 w-4 mr-1" />
-            <span>Rejeitado</span>
-          </div>
-        );
-      default:
-        return status;
-    }
-  };
+        </div>
+      </MainLayout>
+    );
+  }
 
   return (
     <MainLayout>
-      <div className="space-y-6">
-        <div>
-          <h1 className="text-2xl font-bold tracking-tight">Pagamentos</h1>
+      <div className="flex flex-col gap-6">
+        <div className="flex flex-col gap-2">
+          <h1 className="text-3xl font-bold tracking-tight">
+            Pagamentos {client && `- ${client.business_name}`}
+          </h1>
           <p className="text-muted-foreground">
-            Gerencie seus pagamentos e solicite saques
+            Visualize e gerencie pagamentos deste cliente
           </p>
         </div>
-        
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <Card>
-            <CardHeader>
-              <CardTitle>Saldo Disponível</CardTitle>
-              <CardDescription>
-                Valor total disponível para saque
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="text-3xl font-bold mb-4">
-                R$ {balance.toFixed(2)}
-              </div>
-              <div className="text-sm text-muted-foreground">
-                Você pode solicitar o saque deste valor para sua conta cadastrada
-              </div>
-            </CardContent>
-          </Card>
-          
-          <Card>
-            <CardHeader>
-              <CardTitle>Solicitar Pagamento</CardTitle>
-              <CardDescription>
-                Preencha os dados para solicitar seu pagamento
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <Form {...form}>
-                <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-                  <FormField
-                    control={form.control}
-                    name="amount"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Valor</FormLabel>
-                        <FormControl>
-                          <div className="relative">
-                            <span className="absolute left-3 top-2.5">R$</span>
-                            <Input
-                              placeholder="0,00"
-                              className="pl-9"
-                              {...field}
-                            />
-                          </div>
-                        </FormControl>
-                        <FormDescription>
-                          Informe o valor que deseja receber
-                        </FormDescription>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  
-                  {pixKeys.length > 0 ? (
-                    <FormField
-                      control={form.control}
-                      name="pixKey"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Chave PIX</FormLabel>
-                          <FormControl>
-                            <select
-                              className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-                              {...field}
-                            >
-                              {pixKeys.map((key) => (
-                                <option key={key.id} value={key.id}>
-                                  {key.name} ({key.key})
-                                </option>
-                              ))}
-                            </select>
-                          </FormControl>
-                          <FormDescription>
-                            Selecione a chave PIX para receber o pagamento
-                          </FormDescription>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                  ) : (
-                    <div className="rounded-md bg-yellow-50 p-4">
-                      <div className="flex">
-                        <div className="ml-3">
-                          <h3 className="text-sm font-medium text-yellow-800">
-                            Nenhuma chave PIX encontrada
-                          </h3>
-                          <div className="mt-2 text-sm text-yellow-700">
-                            <p>
-                              Você precisa cadastrar uma chave PIX antes de solicitar pagamentos.
-                            </p>
-                          </div>
-                          <div className="mt-4">
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              onClick={() => window.location.href = "/settings"}
-                            >
-                              Cadastrar Chave PIX
-                            </Button>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  )}
-                  
-                  <Button 
-                    type="submit" 
-                    className="w-full" 
-                    disabled={isLoading || pixKeys.length === 0}
-                  >
-                    <CreditCard className="mr-2 h-4 w-4" />
-                    Solicitar Pagamento
-                  </Button>
-                </form>
-              </Form>
-            </CardContent>
-          </Card>
-        </div>
-        
-        <Tabs defaultValue="history" className="w-full">
+
+        <Tabs defaultValue="pending" className="w-full">
           <TabsList>
-            <TabsTrigger value="history">Histórico de Pagamentos</TabsTrigger>
+            <TabsTrigger value="pending">
+              Pendentes ({pendingRequests.length})
+            </TabsTrigger>
+            <TabsTrigger value="approved">
+              Aprovados ({approvedRequests.length})
+            </TabsTrigger>
+            <TabsTrigger value="rejected">
+              Rejeitados ({rejectedRequests.length})
+            </TabsTrigger>
           </TabsList>
-          <TabsContent value="history">
-            <Card>
-              <CardHeader>
-                <CardTitle>Solicitações de Pagamento</CardTitle>
-                <CardDescription>
-                  Histórico de todas as suas solicitações
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                {isLoading ? (
-                  <div className="flex justify-center py-8">
-                    <div className="spinner"></div>
-                  </div>
-                ) : payments.length > 0 ? (
-                  <div className="rounded-md border">
-                    <table className="w-full text-sm">
-                      <thead>
-                        <tr className="border-b bg-muted/50">
-                          <th className="py-2 px-4 text-left">Data</th>
-                          <th className="py-2 px-4 text-right">Valor</th>
-                          <th className="py-2 px-4 text-left">Status</th>
-                          <th className="py-2 px-4 text-left">Data Aprovação</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {payments.map((payment) => (
-                          <tr key={payment.id} className="border-b">
-                            <td className="py-2 px-4">
-                              {new Date(payment.created_at).toLocaleDateString()}
-                            </td>
-                            <td className="py-2 px-4 text-right">
-                              R$ {Number(payment.amount).toFixed(2)}
-                            </td>
-                            <td className="py-2 px-4">
-                              {formatStatus(payment.status)}
-                            </td>
-                            <td className="py-2 px-4">
-                              {payment.approved_at 
-                                ? new Date(payment.approved_at).toLocaleDateString() 
-                                : '-'}
-                            </td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
-                ) : (
-                  <div className="text-center py-8 text-muted-foreground">
-                    <p>Nenhuma solicitação de pagamento encontrada.</p>
-                  </div>
-                )}
-              </CardContent>
-            </Card>
+
+          <TabsContent value="pending" className="mt-4 space-y-4">
+            {pendingRequests.length === 0 ? (
+              <Card>
+                <CardContent className="pt-6">
+                  <p className="text-center text-muted-foreground">
+                    Nenhum pagamento pendente.
+                  </p>
+                </CardContent>
+              </Card>
+            ) : (
+              pendingRequests.map((payment) => (
+                <PaymentResponseForm
+                  key={payment.id}
+                  payment={payment}
+                  onSubmit={handlePaymentResponse}
+                />
+              ))
+            )}
+          </TabsContent>
+
+          <TabsContent value="approved" className="mt-4">
+            {/* Approved payments content */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {approvedRequests.length === 0 ? (
+                <Card className="md:col-span-2">
+                  <CardContent className="pt-6">
+                    <p className="text-center text-muted-foreground">
+                      Nenhum pagamento aprovado.
+                    </p>
+                  </CardContent>
+                </Card>
+              ) : (
+                approvedRequests.map((payment) => (
+                  <Card key={payment.id}>
+                    <CardHeader>
+                      <CardTitle className="text-lg">
+                        {new Intl.NumberFormat('pt-BR', {
+                          style: 'currency',
+                          currency: 'BRL'
+                        }).format(payment.amount)}
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="space-y-2">
+                        <p className="text-sm">
+                          <span className="font-medium">Data:</span>{' '}
+                          {new Date(payment.created_at).toLocaleDateString('pt-BR')}
+                        </p>
+                        <p className="text-sm">
+                          <span className="font-medium">Aprovado em:</span>{' '}
+                          {payment.approved_at
+                            ? new Date(payment.approved_at).toLocaleDateString('pt-BR')
+                            : '-'}
+                        </p>
+                        {payment.receipt_url && (
+                          <p className="text-sm">
+                            <span className="font-medium">Comprovante:</span>{' '}
+                            <a
+                              href={payment.receipt_url}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="text-primary hover:underline"
+                            >
+                              Ver comprovante
+                            </a>
+                          </p>
+                        )}
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))
+              )}
+            </div>
+          </TabsContent>
+
+          <TabsContent value="rejected" className="mt-4">
+            {/* Rejected payments content */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {rejectedRequests.length === 0 ? (
+                <Card className="md:col-span-2">
+                  <CardContent className="pt-6">
+                    <p className="text-center text-muted-foreground">
+                      Nenhum pagamento rejeitado.
+                    </p>
+                  </CardContent>
+                </Card>
+              ) : (
+                rejectedRequests.map((payment) => (
+                  <Card key={payment.id}>
+                    <CardHeader>
+                      <CardTitle className="text-lg">
+                        {new Intl.NumberFormat('pt-BR', {
+                          style: 'currency',
+                          currency: 'BRL'
+                        }).format(payment.amount)}
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="space-y-2">
+                        <p className="text-sm">
+                          <span className="font-medium">Data:</span>{' '}
+                          {new Date(payment.created_at).toLocaleDateString('pt-BR')}
+                        </p>
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))
+              )}
+            </div>
           </TabsContent>
         </Tabs>
       </div>
