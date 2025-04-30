@@ -1,5 +1,4 @@
 import { useState, useEffect } from "react";
-import MainLayout from "@/components/layout/MainLayout";
 import { useToast } from "@/hooks/use-toast";
 import { subDays } from "date-fns";
 import { generateMockSales, generateDailySalesData, generatePaymentMethodsData } from "@/utils/sales-utils";
@@ -157,41 +156,39 @@ const ClientDashboard = () => {
   };
 
   return (
-    <MainLayout>
-      <div className="flex flex-col gap-5 w-full">
-        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center">
-          <h1 className="text-3xl font-bold tracking-tight">Dashboard</h1>
-          <DateRangeFilter 
-            dateRange={dateRange}
-            onDateRangeChange={handleDateRangeChange}
+    <div className="flex flex-col gap-5 w-full">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center">
+        <h1 className="text-3xl font-bold tracking-tight">Dashboard</h1>
+        <DateRangeFilter 
+          dateRange={dateRange}
+          onDateRangeChange={handleDateRangeChange}
+        />
+      </div>
+      
+      <StatsCards stats={stats} loading={loading} />
+      
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div className="lg:col-span-2">
+          <MainOverviewTabs
+            salesData={salesData}
+            paymentMethodsData={paymentMethodsData}
+            filteredTransactions={paginatedTransactions}
+            machines={paginatedMachines}
+            loading={loading}
+            transactionsPage={transactionsPage}
+            totalTransactionsPages={totalTransactionsPages}
+            onTransactionsPageChange={handleTransactionsPageChange}
+            machinesPage={machinesPage}
+            totalMachinesPages={totalMachinesPages}
+            onMachinesPageChange={handleMachinesPageChange}
           />
         </div>
         
-        <StatsCards stats={stats} loading={loading} />
-        
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          <div className="lg:col-span-2">
-            <MainOverviewTabs
-              salesData={salesData}
-              paymentMethodsData={paymentMethodsData}
-              filteredTransactions={paginatedTransactions}
-              machines={paginatedMachines}
-              loading={loading}
-              transactionsPage={transactionsPage}
-              totalTransactionsPages={totalTransactionsPages}
-              onTransactionsPageChange={handleTransactionsPageChange}
-              machinesPage={machinesPage}
-              totalMachinesPages={totalMachinesPages}
-              onMachinesPageChange={handleMachinesPageChange}
-            />
-          </div>
-          
-          <div>
-            <SidebarContent loading={loading} />
-          </div>
+        <div>
+          <SidebarContent loading={loading} />
         </div>
       </div>
-    </MainLayout>
+    </div>
   );
 };
 

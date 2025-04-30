@@ -18,7 +18,6 @@ import {
   DialogDescription,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
 } from "@/components/ui/dialog";
 import {
   Form,
@@ -33,13 +32,11 @@ import { useForm } from "react-hook-form";
 import * as z from "zod";
 import { useAuth } from "@/hooks/use-auth";
 import { supabase } from "@/integrations/supabase/client";
-import MainLayout from "@/components/layout/MainLayout";
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-import { Copy, CheckCircle, AlertCircle } from 'lucide-react';
+import { Copy } from 'lucide-react';
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Textarea } from "@/components/ui/textarea";
 import { PaymentStatus } from "@/types";
 
 // Define the schema for the payment form
@@ -54,13 +51,14 @@ type PaymentFormValues = z.infer<typeof paymentFormSchema>;
 type Payment = {
   id: string;
   created_at: string;
+  updated_at: string;
   amount: number;
   status: PaymentStatus;
   client_id: string;
-  approved_at: string | null;
-  receipt_url: string | null;
+  approved_at?: string | null;
+  receipt_url?: string | null;
   rejection_reason: string | null;
-  client_name: string | null;
+  client_name?: string | null;
 };
 
 const Payments = () => {
@@ -231,159 +229,157 @@ const Payments = () => {
   };
 
   return (
-    <MainLayout>
-      <div className="container mx-auto py-10">
-        <h1 className="text-3xl font-semibold mb-6">Pagamentos</h1>
+    <div className="container mx-auto py-10">
+      <h1 className="text-3xl font-semibold mb-6">Pagamentos</h1>
 
-        {/* Search and Filter Section */}
-        <div className="flex flex-col md:flex-row space-y-4 md:space-y-0 md:space-x-4 mb-6">
-          <Input
-            type="text"
-            placeholder="Buscar pagamento..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            className="flex-1"
-          />
-          <Select value={filterStatus} onValueChange={handleFilterStatusChange}>
-            <SelectTrigger className="w-[180px]">
-              <SelectValue placeholder="Filtrar Status" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="ALL">Todos</SelectItem>
-              <SelectItem value={PaymentStatus.PENDING}>Pendente</SelectItem>
-              <SelectItem value={PaymentStatus.APPROVED}>Aprovado</SelectItem>
-              <SelectItem value={PaymentStatus.REJECTED}>Rejeitado</SelectItem>
-              <SelectItem value={PaymentStatus.PAID}>Pago</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
+      {/* Search and Filter Section */}
+      <div className="flex flex-col md:flex-row space-y-4 md:space-y-0 md:space-x-4 mb-6">
+        <Input
+          type="text"
+          placeholder="Buscar pagamento..."
+          value={searchTerm}
+          onChange={(e) => setSearchTerm(e.target.value)}
+          className="flex-1"
+        />
+        <Select value={filterStatus} onValueChange={handleFilterStatusChange}>
+          <SelectTrigger className="w-[180px]">
+            <SelectValue placeholder="Filtrar Status" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="ALL">Todos</SelectItem>
+            <SelectItem value={PaymentStatus.PENDING}>Pendente</SelectItem>
+            <SelectItem value={PaymentStatus.APPROVED}>Aprovado</SelectItem>
+            <SelectItem value={PaymentStatus.REJECTED}>Rejeitado</SelectItem>
+            <SelectItem value={PaymentStatus.PAID}>Pago</SelectItem>
+          </SelectContent>
+        </Select>
+      </div>
 
-        {/* Payments Table */}
-        <Table>
-          <TableCaption>Lista de todos os pagamentos.</TableCaption>
-          <TableHeader>
-            <TableRow>
-              <TableHead>ID</TableHead>
-              <TableHead>Data de Criação</TableHead>
-              <TableHead>Cliente</TableHead>
-              <TableHead>Valor</TableHead>
-              <TableHead>Status</TableHead>
-              <TableHead>Ações</TableHead>
+      {/* Payments Table */}
+      <Table>
+        <TableCaption>Lista de todos os pagamentos.</TableCaption>
+        <TableHeader>
+          <TableRow>
+            <TableHead>ID</TableHead>
+            <TableHead>Data de Criação</TableHead>
+            <TableHead>Cliente</TableHead>
+            <TableHead>Valor</TableHead>
+            <TableHead>Status</TableHead>
+            <TableHead>Ações</TableHead>
+          </TableRow>
+        </TableHeader>
+        <TableBody>
+          {filteredPayments.map((payment) => (
+            <TableRow key={payment.id}>
+              <TableCell className="font-medium">
+                <div className="flex items-center space-x-2">
+                  {payment.id}
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={() => copyToClipboard(payment.id, "ID do pagamento copiado!")}
+                  >
+                    <Copy className="h-4 w-4" />
+                  </Button>
+                </div>
+              </TableCell>
+              <TableCell>{formatDate(payment.created_at)}</TableCell>
+              <TableCell>{payment.client_name}</TableCell>
+              <TableCell>R$ {payment.amount.toFixed(2)}</TableCell>
+              <TableCell>
+                <Badge
+                  variant={
+                    payment.status === PaymentStatus.PENDING
+                      ? "secondary"
+                      : payment.status === PaymentStatus.APPROVED
+                        ? "default"
+                        : "destructive"
+                  }
+                >
+                  {payment.status}
+                </Badge>
+              </TableCell>
+              <TableCell>
+                <Button onClick={() => handleOpenPaymentForm(payment)} disabled={payment.status !== PaymentStatus.PENDING}>
+                  Responder
+                </Button>
+              </TableCell>
             </TableRow>
-          </TableHeader>
-          <TableBody>
-            {filteredPayments.map((payment) => (
-              <TableRow key={payment.id}>
-                <TableCell className="font-medium">
-                  <div className="flex items-center space-x-2">
-                    {payment.id}
+          ))}
+        </TableBody>
+      </Table>
+
+      {/* Payment Form Dialog */}
+      <Dialog open={isPaymentFormOpen} onOpenChange={handleClosePaymentForm}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Responder Pagamento</DialogTitle>
+            <DialogDescription>
+              Detalhes do pagamento e ações para aprovar ou rejeitar.
+            </DialogDescription>
+          </DialogHeader>
+          {selectedPayment && (
+            <div className="grid gap-4 py-4">
+              <div className="grid grid-cols-4 items-center gap-4">
+                <Label htmlFor="id" className="text-right">
+                  ID
+                </Label>
+                <Input type="text" id="id" value={selectedPayment.id} readOnly className="col-span-3" />
+              </div>
+              <div className="grid grid-cols-4 items-center gap-4">
+                <Label htmlFor="amount" className="text-right">
+                  Valor
+                </Label>
+                <Input type="text" id="amount" value={selectedPayment.amount.toFixed(2)} readOnly className="col-span-3" />
+              </div>
+              <div className="grid grid-cols-4 items-center gap-4">
+                <Label htmlFor="created_at" className="text-right">
+                  Data de Criação
+                </Label>
+                <Input type="text" id="created_at" value={formatDate(selectedPayment.created_at)} readOnly className="col-span-3" />
+              </div>
+
+              <Form {...paymentForm}>
+                <form onSubmit={paymentForm.handleSubmit(onSubmit)} className="space-y-4">
+                  <FormField
+                    control={paymentForm.control}
+                    name="receiptUrl"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>URL do Comprovante (Opcional)</FormLabel>
+                        <FormControl>
+                          <Input type="url" placeholder="Insira a URL do comprovante" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <div className="flex justify-end space-x-2">
+                    <Button type="button" variant="secondary" onClick={handleClosePaymentForm}>
+                      Cancelar
+                    </Button>
                     <Button
-                      variant="ghost"
-                      size="icon"
-                      onClick={() => copyToClipboard(payment.id, "ID do pagamento copiado!")}
+                      type="submit"
+                      disabled={isSubmitting}
                     >
-                      <Copy className="h-4 w-4" />
+                      Aprovar Pagamento
+                    </Button>
+                    <Button
+                      type="button"
+                      variant="destructive"
+                      onClick={() => handleRespond(selectedPayment.id, false)}
+                      disabled={isSubmitting}
+                    >
+                      Rejeitar Pagamento
                     </Button>
                   </div>
-                </TableCell>
-                <TableCell>{formatDate(payment.created_at)}</TableCell>
-                <TableCell>{payment.client_name}</TableCell>
-                <TableCell>R$ {payment.amount.toFixed(2)}</TableCell>
-                <TableCell>
-                  <Badge
-                    variant={
-                      payment.status === PaymentStatus.PENDING
-                        ? "secondary"
-                        : payment.status === PaymentStatus.APPROVED
-                          ? "default"
-                          : "destructive"
-                    }
-                  >
-                    {payment.status}
-                  </Badge>
-                </TableCell>
-                <TableCell>
-                  <Button onClick={() => handleOpenPaymentForm(payment)} disabled={payment.status !== PaymentStatus.PENDING}>
-                    Responder
-                  </Button>
-                </TableCell>
-              </TableRow>
-            ))}
-          </TableBody>
-        </Table>
-
-        {/* Payment Form Dialog */}
-        <Dialog open={isPaymentFormOpen} onOpenChange={handleClosePaymentForm}>
-          <DialogContent className="sm:max-w-md">
-            <DialogHeader>
-              <DialogTitle>Responder Pagamento</DialogTitle>
-              <DialogDescription>
-                Detalhes do pagamento e ações para aprovar ou rejeitar.
-              </DialogDescription>
-            </DialogHeader>
-            {selectedPayment && (
-              <div className="grid gap-4 py-4">
-                <div className="grid grid-cols-4 items-center gap-4">
-                  <Label htmlFor="id" className="text-right">
-                    ID
-                  </Label>
-                  <Input type="text" id="id" value={selectedPayment.id} readOnly className="col-span-3" />
-                </div>
-                <div className="grid grid-cols-4 items-center gap-4">
-                  <Label htmlFor="amount" className="text-right">
-                    Valor
-                  </Label>
-                  <Input type="text" id="amount" value={selectedPayment.amount.toFixed(2)} readOnly className="col-span-3" />
-                </div>
-                <div className="grid grid-cols-4 items-center gap-4">
-                  <Label htmlFor="created_at" className="text-right">
-                    Data de Criação
-                  </Label>
-                  <Input type="text" id="created_at" value={formatDate(selectedPayment.created_at)} readOnly className="col-span-3" />
-                </div>
-
-                <Form {...paymentForm}>
-                  <form onSubmit={paymentForm.handleSubmit(onSubmit)} className="space-y-4">
-                    <FormField
-                      control={paymentForm.control}
-                      name="receiptUrl"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>URL do Comprovante (Opcional)</FormLabel>
-                          <FormControl>
-                            <Input type="url" placeholder="Insira a URL do comprovante" {...field} />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                    <div className="flex justify-end space-x-2">
-                      <Button type="button" variant="secondary" onClick={handleClosePaymentForm}>
-                        Cancelar
-                      </Button>
-                      <Button
-                        type="submit"
-                        disabled={isSubmitting}
-                      >
-                        Aprovar Pagamento
-                      </Button>
-                      <Button
-                        type="button"
-                        variant="destructive"
-                        onClick={() => handleRespond(selectedPayment.id, false)}
-                        disabled={isSubmitting}
-                      >
-                        Rejeitar Pagamento
-                      </Button>
-                    </div>
-                  </form>
-                </Form>
-              </div>
-            )}
-          </DialogContent>
-        </Dialog>
-      </div>
-    </MainLayout>
+                </form>
+              </Form>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
+    </div>
   );
 };
 

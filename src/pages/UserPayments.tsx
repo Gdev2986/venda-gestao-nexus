@@ -1,6 +1,5 @@
 
 import { useState } from "react";
-import MainLayout from "@/components/layout/MainLayout";
 import { Button } from "@/components/ui/button";
 import { SendIcon } from "lucide-react";
 import { useUserRole } from "@/hooks/use-user-role";

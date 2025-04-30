@@ -1,6 +1,4 @@
-
 import { useState, useEffect } from "react";
-import MainLayout from "@/components/layout/MainLayout";
 import DashboardHeader from "@/components/dashboard/DashboardHeader";
 import StatsCards from "@/components/dashboard/StatsCards";
 import SalesChart from "@/components/dashboard/SalesChart";
@@ -339,7 +337,7 @@ const Dashboard = () => {
   };
 
   return (
-    <MainLayout>
+    <div className="flex-1">
       <DashboardHeader onDateRangeChange={handleDateRangeChange} />
       
       {data && (
@@ -402,7 +400,7 @@ const Dashboard = () => {
           />
         </>
       )}
-    </MainLayout>
+    </div>
   );
 };
 
