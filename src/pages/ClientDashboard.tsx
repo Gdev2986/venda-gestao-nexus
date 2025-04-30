@@ -3,7 +3,7 @@ import { useState, useEffect } from "react";
 import MainLayout from "@/components/layout/MainLayout";
 import { useToast } from "@/hooks/use-toast";
 import { subDays } from "date-fns";
-import { generateMockSales, generateMonthlySalesData, generatePaymentMethodsData } from "@/utils/sales-utils";
+import { generateMockSales, generateDailySalesData, generatePaymentMethodsData } from "@/utils/sales-utils";
 
 // Import the components
 import DateRangeFilter, { DateRange } from "@/components/dashboard/client/DateRangeFilter";
@@ -47,12 +47,12 @@ const ClientDashboard = () => {
         ];
         
         // Generate chart data based on selected date range
-        const monthlySalesData = generateMonthlySalesData(dateRange);
+        const dailySalesData = generateDailySalesData(dateRange);
         const methodsData = generatePaymentMethodsData(dateRange);
         
         setTransactions(mockTransactions);
         setMachines(mockMachines);
-        setSalesData(monthlySalesData);
+        setSalesData(dailySalesData);
         setPaymentMethodsData(methodsData);
 
         // Filter transactions by date (this is already done in the mock data generation now)

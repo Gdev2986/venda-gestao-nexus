@@ -63,10 +63,10 @@ export function MainOverviewTabs({
       </TabsList>
       
       <TabsContent value="overview" className="space-y-4">
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-7">
-          <Card className="col-span-4">
+        <div className="grid gap-4">
+          <Card>
             <CardHeader>
-              <CardTitle>Vendas Mensais</CardTitle>
+              <CardTitle>Vendas Diárias</CardTitle>
             </CardHeader>
             <CardContent className="pl-2">
               {loading ? (
@@ -77,7 +77,7 @@ export function MainOverviewTabs({
             </CardContent>
           </Card>
           
-          <Card className="col-span-3">
+          <Card>
             <CardHeader>
               <CardTitle>Métodos de Pagamento</CardTitle>
             </CardHeader>
