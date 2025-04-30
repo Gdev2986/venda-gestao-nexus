@@ -7,7 +7,7 @@ import { supabase } from "@/integrations/supabase/client";
 // Helper for storing and retrieving auth data securely
 const getAuthData = (key: string) => {
   try {
-    const item = sessionStorage.getItem(key) || localStorage.getItem(key);
+    const item = sessionStorage.getItem(key);
     return item ? JSON.parse(item) : null;
   } catch (error) {
     console.error(`Error getting ${key} from storage:`, error);
@@ -17,7 +17,7 @@ const getAuthData = (key: string) => {
 
 const setAuthData = (key: string, value: any) => {
   try {
-    // Prefer sessionStorage for auth data for better security
+    // Use sessionStorage for auth data for better security
     sessionStorage.setItem(key, JSON.stringify(value));
   } catch (error) {
     console.error(`Error setting ${key} in storage:`, error);

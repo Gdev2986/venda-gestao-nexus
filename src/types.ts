@@ -61,7 +61,7 @@ export interface Partner {
   email?: string;
   phone?: string;
   address?: string;
-  commission_rate?: number;
+  commission_rate: number; // Changed from optional to required
 }
 
 // Sale interface
@@ -114,6 +114,8 @@ export interface Payment {
   receipt_url?: string;
   pix_key_id?: string;
   due_date?: string;
+  rejection_reason?: string; // Added missing field
+  client_name?: string; // For convenience in UI
 }
 
 // Dashboard stats interface

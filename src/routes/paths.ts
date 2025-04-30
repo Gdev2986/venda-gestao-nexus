@@ -1,60 +1,60 @@
 
 /**
- * Definição de caminhos do sistema
- * Centraliza todas as rotas para facilitar a manutenção
+ * System path definitions
+ * Centralizes all routes for easier maintenance
  */
 
 export const PATHS = {
-  // Páginas principais
+  // Main pages
   HOME: "/",
   DASHBOARD: "/dashboard",
   
-  // Clientes
+  // Clients
   CLIENTS: "/clients",
   CLIENT_DETAILS: (id: string = ":id") => `/clients/${id}`,
   CLIENT_NEW: "/clients/new",
   
-  // Máquinas
+  // Machines
   MACHINES: "/machines",
   MACHINE_DETAILS: (id: string = ":id") => `/machines/${id}`,
   MACHINE_NEW: "/machines/new",
   
-  // Vendas
+  // Sales
   SALES: "/sales",
   SALES_DETAILS: (id: string = ":id") => `/sales/${id}`,
   SALES_NEW: "/sales/new",
   
-  // Pagamentos
+  // Payments
   PAYMENTS: "/payments",
   PAYMENT_DETAILS: (id: string = ":id") => `/payments/${id}`,
   PAYMENT_NEW: "/payments/new",
-  USER_PAYMENTS: "/user-payments", // Rota para pagamentos do cliente
-  CLIENT_PAYMENTS: "/client-payments", // Nova rota para compatibilidade com o sidebar
+  USER_PAYMENTS: "/user-payments", // Route for client payments
+  CLIENT_PAYMENTS: "/client-payments", // New route for sidebar compatibility
   
-  // Parceiros
+  // Partners
   PARTNERS: "/partners",
   PARTNER_DETAILS: (id: string = ":id") => `/partners/${id}`,
   PARTNER_NEW: "/partners/new",
   
-  // Registros
+  // Registration
   REGISTER: "/register",
   
-  // Taxas
+  // Fees
   FEES: "/fees",
   
-  // Relatórios
+  // Reports
   REPORTS: "/reports",
   
-  // Configurações
+  // Settings
   SETTINGS: "/settings",
   USER_MANAGEMENT: "/settings/users",
   
-  // Suporte
+  // Support
   SUPPORT: "/support",
 
-  // Ajuda
+  // Help
   HELP: "/help",
   
-  // Não encontrado
+  // Not found
   NOT_FOUND: "*"
 };
