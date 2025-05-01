@@ -49,6 +49,45 @@ const SalesFilters = ({
   onExport,
   onShowImportDialog,
 }: SalesFiltersProps) => {
+  const [selectedDates, setSelectedDates] = useState<DateRange | undefined>(date);
+
+  // Handle date selection with two clicks
+  const handleDateSelect = (selectedDate: Date | undefined) => {
+    if (!selectedDate) return;
+
+    if (!selectedDates?.from || selectedDates.to) {
+      // Reset range and set new 'from' date
+      const newDates = {
+        from: selectedDate,
+        to: undefined,
+      };
+      setSelectedDates(newDates);
+      
+      // Don't trigger onDateChange yet, wait for the second click
+    } else {
+      // Second click - complete the range
+      const from = selectedDate < selectedDates.from ? selectedDate : selectedDates.from;
+      const to = selectedDate < selectedDates.from ? selectedDates.from : selectedDate;
+      
+      const newRange = { from, to };
+      setSelectedDates(newRange);
+      onDateChange(newRange);
+    }
+  };
+
+  // Format date for display
+  const formatDateString = () => {
+    if (!selectedDates?.from) {
+      return "Selecione uma data";
+    }
+    
+    if (!selectedDates.to) {
+      return `${format(selectedDates.from, "dd/MM/yyyy", { locale: ptBR })} - Selecione fim`;
+    }
+    
+    return `${format(selectedDates.from, "dd/MM/yyyy", { locale: ptBR })} - ${format(selectedDates.to, "dd/MM/yyyy", { locale: ptBR })}`;
+  };
+
   return (
     <Card className="mb-6">
       <CardHeader>
@@ -67,31 +106,28 @@ const SalesFilters = ({
                   variant="outline"
                   className={cn(
                     "w-full justify-start text-left font-normal",
-                    !date && "text-muted-foreground"
+                    !selectedDates && "text-muted-foreground"
                   )}
                 >
                   <CalendarIcon className="mr-2 h-4 w-4" />
-                  {date?.from ? (
-                    date.to ? (
-                      <>
-                        {format(date.from, "dd/MM/yyyy", { locale: ptBR })} -{" "}
-                        {format(date.to, "dd/MM/yyyy", { locale: ptBR })}
-                      </>
-                    ) : (
-                      format(date.from, "dd/MM/yyyy", { locale: ptBR })
-                    )
-                  ) : (
-                    <span>Selecione uma data</span>
-                  )}
+                  {formatDateString()}
                 </Button>
               </PopoverTrigger>
               <PopoverContent className="w-auto p-0 pointer-events-auto" align="start">
                 <Calendar
-                  mode="range"
-                  selected={date}
-                  onSelect={onDateChange}
+                  mode="single"
+                  selected={selectedDates?.to || selectedDates?.from}
+                  onSelect={handleDateSelect}
                   numberOfMonths={2}
                   className="p-3 pointer-events-auto"
+                  modifiers={{
+                    selected: selectedDates?.to 
+                      ? [selectedDates.from, selectedDates.to] 
+                      : selectedDates?.from ? [selectedDates.from] : [],
+                    range: selectedDates?.to 
+                      ? { from: selectedDates.from, to: selectedDates.to } 
+                      : undefined,
+                  }}
                 />
               </PopoverContent>
             </Popover>

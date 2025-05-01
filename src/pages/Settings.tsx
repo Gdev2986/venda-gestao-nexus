@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { useAuth } from "@/hooks/use-auth";
 import { supabase } from "@/integrations/supabase/client";
@@ -6,13 +7,14 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { toast } from "@/components/ui/use-toast";
+import { useToast } from "@/hooks/use-toast";
 import { createDefaultPixKeyProperties } from "@/utils/settings-utils";
 
 const Settings = () => {
   const { user } = useAuth();
   const [pixKeys, setPixKeys] = useState<PixKey[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const { toast } = useToast();
 
   useEffect(() => {
     const fetchPixKeys = async () => {
@@ -32,7 +34,23 @@ const Settings = () => {
               variant: "destructive",
             });
           } else {
-            setPixKeys(data || []);
+            // Transform the data from the database to match our PixKey type
+            const transformedKeys: PixKey[] = (data || []).map(item => ({
+              id: item.id,
+              user_id: item.user_id,
+              key_type: item.type || "",
+              type: item.type || "CPF",
+              key: item.key || "",
+              owner_name: item.name || "",
+              name: item.name || "",
+              isDefault: item.is_default || false,
+              is_active: true,
+              created_at: item.created_at,
+              updated_at: item.updated_at,
+              bank_name: "Banco", // Default value since it's not in the database
+            }));
+            
+            setPixKeys(transformedKeys);
           }
         }
       } catch (error) {
@@ -48,17 +66,17 @@ const Settings = () => {
     };
 
     fetchPixKeys();
-  }, [user]);
+  }, [user, toast]);
 
   const handleAddPixKey = async () => {
     if (!user) return;
 
     const newId = Date.now().toString();
-
-    setPixKeys(prev => [
-      ...prev,
-      createDefaultPixKeyProperties(newId, user?.id || "")
-    ]);
+    
+    // Use the utility function to create a new PixKey object
+    const newPixKey = createDefaultPixKeyProperties(newId, user.id);
+    
+    setPixKeys(prev => [...prev, newPixKey]);
   };
 
   return (

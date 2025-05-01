@@ -30,6 +30,40 @@ interface DateRangeFilterProps {
 }
 
 export function DateRangeFilter({ dateRange, onDateRangeChange }: DateRangeFilterProps) {
+  const [dates, setDates] = useState<{
+    from: Date;
+    to?: Date;
+  }>({
+    from: dateRange.from,
+    to: dateRange.to
+  });
+
+  // Handle calendar date selection
+  const handleDateSelect = (selectedDate: Date | undefined) => {
+    if (!selectedDate) return;
+
+    if (!dates.from || dates.to) {
+      // Reset range and set new 'from' date
+      setDates({
+        from: selectedDate,
+        to: undefined,
+      });
+    } else {
+      // If 'from' is already selected and 'to' is not, set 'to' date
+      // Ensure 'to' is not before 'from'
+      const to = selectedDate < dates.from ? dates.from : selectedDate;
+      const from = selectedDate < dates.from ? selectedDate : dates.from;
+      
+      const newRange = {
+        from: startOfDay(from),
+        to: endOfDay(to)
+      };
+      
+      setDates({ from: newRange.from, to: newRange.to });
+      onDateRangeChange(newRange);
+    }
+  };
+
   // Handle preset date range selection
   const handlePresetChange = (value: string) => {
     let newRange: DateRange;
@@ -64,7 +98,21 @@ export function DateRangeFilter({ dateRange, onDateRangeChange }: DateRangeFilte
         break;
     }
     
+    setDates({ from: newRange.from, to: newRange.to });
     onDateRangeChange(newRange);
+  };
+
+  // Format date for display
+  const formatDateString = () => {
+    if (!dates.from) {
+      return "Selecione um período";
+    }
+    
+    if (!dates.to) {
+      return `${format(dates.from, "dd/MM/yyyy", { locale: ptBR })} - Selecione fim`;
+    }
+    
+    return `${format(dates.from, "dd/MM/yyyy", { locale: ptBR })} - ${format(dates.to, "dd/MM/yyyy", { locale: ptBR })}`;
   };
 
   return (
@@ -79,35 +127,27 @@ export function DateRangeFilter({ dateRange, onDateRangeChange }: DateRangeFilte
             )}
           >
             <Calendar className="mr-2 h-4 w-4" />
-            {dateRange ? (
-              <>
-                {format(dateRange.from, "dd/MM/yyyy", { locale: ptBR })} -{" "}
-                {format(dateRange.to, "dd/MM/yyyy", { locale: ptBR })}
-              </>
-            ) : (
-              <span>Selecione um período</span>
-            )}
+            {formatDateString()}
           </Button>
         </PopoverTrigger>
         <PopoverContent className="w-auto p-0" align="end">
           <CalendarComponent
             initialFocus
-            mode="range"
-            selected={{
-              from: dateRange.from,
-              to: dateRange.to,
-            }}
-            onSelect={(range: any) => {
-              if (range?.from && range?.to) {
-                onDateRangeChange({
-                  from: range.from,
-                  to: range.to,
-                });
-              }
-            }}
+            mode="single"
+            selected={dates.to || dates.from}
+            onSelect={handleDateSelect}
             numberOfMonths={1}
             locale={ptBR}
             className="p-3 pointer-events-auto"
+            disabled={(date) => false}
+            modifiers={{
+              selected: dates.to 
+                ? [dates.from, dates.to] 
+                : [dates.from],
+              range: dates.to 
+                ? { from: dates.from, to: dates.to } 
+                : undefined,
+            }}
           />
         </PopoverContent>
       </Popover>

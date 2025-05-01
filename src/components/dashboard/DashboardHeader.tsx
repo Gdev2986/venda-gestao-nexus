@@ -29,7 +29,10 @@ interface DashboardHeaderProps {
 }
 
 const DashboardHeader = ({ onDateRangeChange }: DashboardHeaderProps) => {
-  const [date, setDate] = useState<DateRange>({
+  const [dates, setDates] = useState<{
+    from: Date;
+    to?: Date;
+  }>({
     from: subDays(new Date(), 7),
     to: new Date(),
   });
@@ -69,12 +72,54 @@ const DashboardHeader = ({ onDateRangeChange }: DashboardHeaderProps) => {
     },
   ];
 
+  // Handle calendar date selection with two clicks
+  const handleDateSelect = (selectedDate: Date | undefined) => {
+    if (!selectedDate) return;
+
+    if (!dates.from || dates.to) {
+      // Reset range and set new 'from' date
+      setDates({
+        from: selectedDate,
+        to: undefined,
+      });
+    } else {
+      // If 'from' is already selected and 'to' is not, set 'to' date
+      // Ensure 'to' is not before 'from'
+      const to = selectedDate < dates.from ? dates.from : selectedDate;
+      const from = selectedDate < dates.from ? selectedDate : dates.from;
+      
+      const newRange = {
+        from: startOfDay(from),
+        to: endOfDay(to)
+      };
+      
+      setDates({ from: newRange.from, to: newRange.to });
+      onDateRangeChange(newRange);
+    }
+  };
+
   const handlePresetChange = (value: string) => {
     const preset = presetRanges.find((range) => range.value === value);
     if (preset) {
-      setDate(preset.range);
+      setDates({ 
+        from: preset.range.from, 
+        to: preset.range.to 
+      });
       onDateRangeChange(preset.range);
     }
+  };
+
+  // Format date for display
+  const formatDateString = () => {
+    if (!dates.from) {
+      return "Selecione uma data";
+    }
+    
+    if (!dates.to) {
+      return `${format(dates.from, "dd/MM/yyyy", { locale: ptBR })} - Selecione fim`;
+    }
+    
+    return `${format(dates.from, "dd/MM/yyyy", { locale: ptBR })} - ${format(dates.to, "dd/MM/yyyy", { locale: ptBR })}`;
   };
 
   return (
@@ -91,41 +136,28 @@ const DashboardHeader = ({ onDateRangeChange }: DashboardHeaderProps) => {
             <Button
               variant="outline"
               className={cn(
-                "w-full sm:w-auto justify-start text-left font-normal",
-                !date && "text-muted-foreground"
+                "w-full sm:w-auto justify-start text-left font-normal"
               )}
             >
               <CalendarIcon className="mr-2 h-4 w-4" />
-              {date?.from ? (
-                date.to ? (
-                  <>
-                    {format(date.from, "dd/MM/yyyy", { locale: ptBR })} -{" "}
-                    {format(date.to, "dd/MM/yyyy", { locale: ptBR })}
-                  </>
-                ) : (
-                  format(date.from, "dd/MM/yyyy", { locale: ptBR })
-                )
-              ) : (
-                <span>Selecione uma data</span>
-              )}
+              {formatDateString()}
             </Button>
           </PopoverTrigger>
           <PopoverContent className="w-auto p-0" align="end">
             <Calendar
-              mode="range"
-              selected={date}
-              onSelect={(range) => {
-                if (range?.from && range?.to) {
-                  const newRange = {
-                    from: startOfDay(range.from),
-                    to: endOfDay(range.to)
-                  };
-                  setDate(newRange);
-                  onDateRangeChange(newRange);
-                }
-              }}
+              mode="single"
+              selected={dates.to || dates.from}
+              onSelect={handleDateSelect}
               numberOfMonths={1}
-              className="p-3"
+              className="p-3 pointer-events-auto"
+              modifiers={{
+                selected: dates.to 
+                  ? [dates.from, dates.to] 
+                  : [dates.from],
+                range: dates.to 
+                  ? { from: dates.from, to: dates.to } 
+                  : undefined,
+              }}
             />
           </PopoverContent>
         </Popover>
