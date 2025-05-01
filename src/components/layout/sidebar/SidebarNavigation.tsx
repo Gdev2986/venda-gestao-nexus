@@ -67,8 +67,9 @@ const SidebarNavigation = ({ userRole }: SidebarNavigationProps) => {
     },
     // Changed to a simple button for CLIENT role and a dropdown for other roles
     {
-      title: userRole === UserRole.CLIENT ? "Meus Pagamentos" : "Pagamentos",
-      href: PATHS.PAYMENTS,
+      title: userRole === UserRole.CLIENT ? "Meus Pagamentos",
+      icon: Wallet,
+      href: "/user-payments",
       roles: [UserRole.CLIENT]
     },
     {
