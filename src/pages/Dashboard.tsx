@@ -46,38 +46,34 @@ const generateMockData = (): DashboardStats => {
   // Generate recent sales
   const recentSales: Sale[] = [];
   for (let i = 0; i < 10; i++) {
-    const grossAmount = Math.random() * 500;
-    const netAmount = grossAmount * 0.97; // 3% fee
+    const gross_amount = Math.random() * 500;
+    const net_amount = gross_amount * 0.97; // 3% fee
     const methods = [PaymentMethod.CREDIT, PaymentMethod.DEBIT, PaymentMethod.PIX];
     const method = methods[Math.floor(Math.random() * methods.length)];
     const terminals = ["T123456", "T789012", "T345678", "T901234"];
-    
+    const saleDate = new Date(Date.now() - Math.floor(Math.random() * 30) * 24 * 60 * 60 * 1000);
+      
     recentSales.push({
       id: `sale_${i}`,
       code: `VND${Math.floor(Math.random() * 100000).toString().padStart(6, '0')}`,
-      date: new Date(Date.now() - Math.floor(Math.random() * 30) * 24 * 60 * 60 * 1000),
+      date: saleDate.toISOString(),
       terminal: terminals[Math.floor(Math.random() * terminals.length)],
-      grossAmount,
-      netAmount,
+      gross_amount,
+      net_amount,
       paymentMethod: method,
-      payment_method: method,
-      client_id: "client_1",
-      created_at: new Date().toISOString(),
-      amount: grossAmount,
-      status: "completed"
     });
   }
 
   return {
+    totalClients: 50,
+    totalRevenue: 25000,
+    pendingPayments: 5,
     currentBalance,
     yesterdayGrossAmount: yesterdayGross,
     yesterdayNetAmount: yesterdayNet,
     totalSales,
     salesByPaymentMethod: salesByMethod,
     recentSales,
-    totalClients: 50,
-    totalRevenue: 25000,
-    pendingPayments: 5
   };
 };
 

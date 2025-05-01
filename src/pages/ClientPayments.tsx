@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useToast } from "@/components/ui/use-toast";
 import { supabase } from "@/integrations/supabase/client";
@@ -69,8 +68,8 @@ const ClientPayments = () => {
         receipt_url: item.receipt_url,
         approved_at: item.approved_at,
         client_id: item.client_id,
-        payment_type: item.payment_type || PaymentType.PIX, // Add missing required field
-        rejection_reason: item.rejection_reason || null, // Add missing required field
+        payment_type: item.payment_type || PaymentType.PIX, // Default to PIX if missing
+        rejection_reason: item.rejection_reason || null, // Set to null if missing
       }));
       
       setPayments(transformedPayments);

@@ -135,7 +135,31 @@ export interface Partner {
 
 export interface DashboardStats {
   totalClients: number;
-  totalTransactions: number;
   totalRevenue: number;
-  averageValue: number;
+  totalTransactions?: number;
+  averageValue?: number;
+  totalSales?: number;
+  pendingPayments?: number;
+  
+  // Fields used in Dashboard.tsx
+  currentBalance?: number;
+  yesterdayGrossAmount?: number;
+  yesterdayNetAmount?: number;
+  salesByPaymentMethod?: any[];
+  recentSales?: Sale[];
+}
+
+// Interface for client form data
+export interface ClientFormData {
+  id?: string;
+  business_name: string;
+  document?: string;
+  partner_id?: string;
+  contact_name: string;
+  email: string;
+  phone: string;
+  address: string;
+  city: string;
+  state: string;
+  zip: string;
 }

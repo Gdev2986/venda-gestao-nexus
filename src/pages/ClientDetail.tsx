@@ -295,8 +295,18 @@ const ClientDetailPage = () => {
               <ClientForm
                 id="edit-client-form"
                 initialData={{
-                  ...client,
-                  contact_name: client.contact_name || "", // Ensure contact_name is not undefined
+                  business_name: client.business_name,
+                  id: client.id,
+                  document: client.document,
+                  partner_id: client.partner_id,
+                  // Provide defaults for required fields in the form
+                  contact_name: client.contact_name || "",
+                  email: client.email || "",
+                  phone: client.phone || "",
+                  address: client.address || "",
+                  city: client.city || "",
+                  state: client.state || "",
+                  zip: client.zip || "",
                 }}
                 onSubmit={handleUpdate}
                 isOpen={isEditing}
@@ -359,9 +369,9 @@ const ClientDetailPage = () => {
                         <div className="flex items-start gap-2">
                           <Phone className="w-4 h-4 text-muted-foreground mt-1" />
                           <div>
-                            <p className="font-medium">{client.contact_name}</p>
+                            <p className="font-medium">{client.contact_name || "N/A"}</p>
                             <p className="text-sm text-muted-foreground">
-                              {formatPhone(client.phone)}
+                              {client.phone ? formatPhone(client.phone) : "Telefone não cadastrado"}
                             </p>
                           </div>
                         </div>
@@ -369,7 +379,7 @@ const ClientDetailPage = () => {
                         <div className="flex items-start gap-2">
                           <Mail className="w-4 h-4 text-muted-foreground mt-1" />
                           <div>
-                            <p className="text-sm">{client.email}</p>
+                            <p className="text-sm">{client.email || "Email não cadastrado"}</p>
                           </div>
                         </div>
                       </div>
@@ -383,9 +393,9 @@ const ClientDetailPage = () => {
                     <div className="flex items-start gap-2">
                       <MapPin className="w-4 h-4 text-muted-foreground mt-1" />
                       <div>
-                        <p>{client.address}</p>
+                        <p>{client.address || "Endereço não cadastrado"}</p>
                         <p className="text-sm text-muted-foreground">
-                          {client.city}, {client.state} - CEP: {formatCEP(client.zip)}
+                          {client.city || "Cidade"}, {client.state || "Estado"} - CEP: {client.zip ? formatCEP(client.zip) : "Não informado"}
                         </p>
                       </div>
                     </div>
