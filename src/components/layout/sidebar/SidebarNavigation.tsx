@@ -65,14 +65,14 @@ const SidebarNavigation = ({ userRole }: SidebarNavigationProps) => {
       href: "/logistics",
       roles: [UserRole.ADMIN, UserRole.LOGISTICS],
     },
-    // Simple button for CLIENT role
+    // Changed to a simple button for CLIENT role and a dropdown for other roles
     {
       title: userRole === UserRole.CLIENT ? "Meus Pagamentos" : "Pagamentos",
       icon: Wallet,
       href: userRole === UserRole.CLIENT ? PATHS.USER_PAYMENTS : PATHS.PAYMENTS,
       roles: [UserRole.ADMIN, UserRole.CLIENT, UserRole.FINANCIAL],
-      // Keep dropdown only for non-client roles
-      subItems: userRole === UserRole.CLIENT ? [] : [
+      // Only keep dropdown for non-client roles
+      subItems: userRole !== UserRole.CLIENT ? [
         {
           title: "Todos os Pagamentos",
           href: PATHS.PAYMENTS,
@@ -83,7 +83,7 @@ const SidebarNavigation = ({ userRole }: SidebarNavigationProps) => {
           href: PATHS.USER_PAYMENTS,
           roles: [UserRole.ADMIN, UserRole.FINANCIAL],
         }
-      ]
+      ] : []
     },
     {
       title: "Relatórios",
