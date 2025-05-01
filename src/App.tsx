@@ -1,3 +1,4 @@
+
 import { Routes, Route, useLocation, Navigate } from "react-router-dom";
 import { PATHS } from "./routes/paths";
 import { useEffect } from "react";
@@ -27,6 +28,11 @@ import ClientDashboard from "./pages/ClientDashboard";
 // Admin Pages
 import AdminDashboard from "./pages/admin/Dashboard";
 import PaymentRequests from "./pages/admin/PaymentRequests";
+import SalesAdmin from "./pages/admin/SalesAdmin";
+import ClientsAdmin from "./pages/admin/ClientsAdmin";
+import PartnersAdmin from "./pages/admin/PartnersAdmin";
+import LogisticsAdmin from "./pages/admin/LogisticsAdmin";
+import SupportAdmin from "./pages/admin/SupportAdmin";
 
 // Clients
 import Clients from "./pages/clients/Clients";
@@ -285,7 +291,11 @@ function App() {
           <Route path="dashboard" element={<AdminDashboard />} />
           <Route path="payment-requests" element={<PaymentRequests />} />
           <Route path="payments" element={<Navigate to="/admin/payment-requests" replace />} />
-          <Route path="clients" element={<Navigate to="/clients" replace />} />
+          <Route path="clients" element={<ClientsAdmin />} />
+          <Route path="partners" element={<PartnersAdmin />} />
+          <Route path="sales" element={<SalesAdmin />} />
+          <Route path="logistics" element={<LogisticsAdmin />} />
+          <Route path="support" element={<SupportAdmin />} />
           <Route path="financial-reports" element={<div className="p-4">Relatórios financeiros em desenvolvimento</div>} />
           <Route path="settings" element={<div className="p-4">Configurações administrativas em desenvolvimento</div>} />
         </Route>

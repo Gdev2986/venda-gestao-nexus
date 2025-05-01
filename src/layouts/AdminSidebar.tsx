@@ -9,11 +9,16 @@ import {
   Settings, 
   BarChart,
   FileText,
-  X
+  X,
+  Building2,
+  Truck,
+  MessageSquare,
+  ShoppingBag
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { UserRole } from "@/types";
+import { PATHS } from "@/routes/paths";
 
 interface AdminSidebarProps {
   isOpen: boolean;
@@ -27,37 +32,55 @@ const AdminSidebar = memo(({ isOpen, isMobile, onClose, userRole }: AdminSidebar
     {
       label: "Dashboard",
       icon: <Home className="w-5 h-5 mr-3" />,
-      href: "/admin/dashboard",
+      href: PATHS.ADMIN.DASHBOARD,
       roles: [UserRole.ADMIN, UserRole.FINANCIAL]
     },
     {
       label: "Solicitações de Pagamento",
       icon: <CreditCard className="w-5 h-5 mr-3" />,
-      href: "/admin/payment-requests",
+      href: PATHS.ADMIN.PAYMENT_REQUESTS,
       roles: [UserRole.ADMIN, UserRole.FINANCIAL]
     },
     {
-      label: "Pagamentos",
-      icon: <FileText className="w-5 h-5 mr-3" />,
-      href: "/admin/payments",
+      label: "Vendas",
+      icon: <ShoppingBag className="w-5 h-5 mr-3" />,
+      href: PATHS.ADMIN.SALES,
       roles: [UserRole.ADMIN, UserRole.FINANCIAL]
     },
     {
       label: "Clientes",
+      icon: <Building2 className="w-5 h-5 mr-3" />,
+      href: PATHS.ADMIN.CLIENTS,
+      roles: [UserRole.ADMIN, UserRole.FINANCIAL]
+    },
+    {
+      label: "Parceiros",
       icon: <Users className="w-5 h-5 mr-3" />,
-      href: "/admin/clients",
+      href: PATHS.ADMIN.PARTNERS,
+      roles: [UserRole.ADMIN, UserRole.FINANCIAL]
+    },
+    {
+      label: "Logística e Máquinas",
+      icon: <Truck className="w-5 h-5 mr-3" />,
+      href: PATHS.ADMIN.LOGISTICS,
+      roles: [UserRole.ADMIN, UserRole.FINANCIAL, UserRole.LOGISTICS]
+    },
+    {
+      label: "Central de Suporte",
+      icon: <MessageSquare className="w-5 h-5 mr-3" />,
+      href: PATHS.ADMIN.SUPPORT,
       roles: [UserRole.ADMIN, UserRole.FINANCIAL]
     },
     {
       label: "Relatórios Financeiros",
       icon: <BarChart className="w-5 h-5 mr-3" />,
-      href: "/admin/financial-reports",
+      href: PATHS.ADMIN.FINANCIAL_REPORTS,
       roles: [UserRole.ADMIN, UserRole.FINANCIAL]
     },
     {
       label: "Configurações",
       icon: <Settings className="w-5 h-5 mr-3" />,
-      href: "/admin/settings",
+      href: PATHS.ADMIN.SETTINGS,
       roles: [UserRole.ADMIN]
     }
   ];
