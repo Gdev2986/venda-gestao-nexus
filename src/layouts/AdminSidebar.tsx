@@ -1,6 +1,6 @@
 
 import { memo } from "react";
-import { NavLink } from "react-router-dom";
+import { NavLink, useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import { 
   Home, 
@@ -8,7 +8,6 @@ import {
   Users, 
   Settings, 
   BarChart,
-  FileText,
   X,
   Building2,
   Truck,
@@ -28,6 +27,8 @@ interface AdminSidebarProps {
 }
 
 const AdminSidebar = memo(({ isOpen, isMobile, onClose, userRole }: AdminSidebarProps) => {
+  const navigate = useNavigate();
+
   const navItems = [
     {
       label: "Dashboard",
@@ -152,7 +153,15 @@ const AdminSidebar = memo(({ isOpen, isMobile, onClose, userRole }: AdminSidebar
         </nav>
 
         <div className="p-4 border-t border-slate-800">
-          <div className="text-xs text-gray-400">
+          <Button 
+            variant="outline"
+            size="sm"
+            className="w-full text-white border-slate-700 hover:bg-slate-800"
+            onClick={() => navigate(PATHS.DASHBOARD)}
+          >
+            Voltar ao Dashboard
+          </Button>
+          <div className="text-xs text-gray-400 mt-2">
             <p>SigmaPay Admin v1.0</p>
           </div>
         </div>

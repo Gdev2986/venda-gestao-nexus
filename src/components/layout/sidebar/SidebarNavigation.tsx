@@ -1,3 +1,4 @@
+
 import { UserRole } from "@/types";
 import {
   LayoutDashboard,
@@ -11,7 +12,8 @@ import {
   CreditCard,
   Building2,
   HelpCircle,
-  Truck
+  Truck,
+  ShieldCheck
 } from "lucide-react";
 import SidebarNavItem from "./SidebarNavItem";
 import { SidebarItem } from "./types";
@@ -28,6 +30,13 @@ const SidebarNavigation = ({ userRole }: SidebarNavigationProps) => {
       icon: LayoutDashboard,
       href: PATHS.DASHBOARD,
       roles: [UserRole.ADMIN, UserRole.CLIENT, UserRole.FINANCIAL, UserRole.PARTNER, UserRole.LOGISTICS],
+    },
+    // Admin panel link for admin and financial users
+    {
+      title: "Painel Admin",
+      icon: ShieldCheck,
+      href: PATHS.ADMIN.DASHBOARD,
+      roles: [UserRole.ADMIN, UserRole.FINANCIAL],
     },
     {
       title: "Vendas",

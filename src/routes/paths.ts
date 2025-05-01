@@ -70,6 +70,8 @@ export const PATHS = {
     SUPPORT: "/admin/support",
     FINANCIAL_REPORTS: "/admin/financial-reports",
     SETTINGS: "/admin/settings",
+    // Adding a new route for financial reports
+    REPORTS: "/admin/reports"
   },
   
   // Not found

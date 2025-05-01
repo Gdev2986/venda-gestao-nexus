@@ -1,4 +1,3 @@
-
 import { Routes, Route, useLocation, Navigate } from "react-router-dom";
 import { PATHS } from "./routes/paths";
 import { useEffect } from "react";
@@ -267,19 +266,11 @@ function App() {
           {/* Other Routes */}
           <Route 
             path={PATHS.FEES} 
-            element={
-              canAccessRoute([UserRole.ADMIN, UserRole.FINANCIAL])
-                ? <Fees /> 
-                : <Navigate to={PATHS.DASHBOARD} replace />
-            } 
+            element={<Fees />} 
           />
           <Route 
             path={PATHS.REPORTS} 
-            element={
-              canAccessRoute([UserRole.ADMIN, UserRole.FINANCIAL, UserRole.PARTNER])
-                ? <Reports /> 
-                : <Navigate to={PATHS.DASHBOARD} replace />
-            } 
+            element={<Reports />} 
           />
           <Route path={PATHS.SUPPORT} element={<Support />} />
           <Route path={PATHS.HELP} element={<Help />} />
@@ -296,8 +287,8 @@ function App() {
           <Route path="sales" element={<SalesAdmin />} />
           <Route path="logistics" element={<LogisticsAdmin />} />
           <Route path="support" element={<SupportAdmin />} />
-          <Route path="financial-reports" element={<div className="p-4">Relatórios financeiros em desenvolvimento</div>} />
-          <Route path="settings" element={<div className="p-4">Configurações administrativas em desenvolvimento</div>} />
+          <Route path="financial-reports" element={<Reports />} />
+          <Route path="settings" element={<Settings />} />
         </Route>
       </Route>
 

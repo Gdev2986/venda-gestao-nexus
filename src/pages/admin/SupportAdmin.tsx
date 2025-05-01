@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { Card } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -135,7 +134,7 @@ const SupportAdmin = () => {
             variant={
               status === "OPEN" ? "default" : 
               status === "RESPONDED" ? "secondary" : 
-              status === "RESOLVED" ? "success" : 
+              status === "RESOLVED" ? "outline" : 
               "outline"
             }
           >
