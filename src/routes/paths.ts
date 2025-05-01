@@ -35,7 +35,7 @@ export const PATHS = {
   PAYMENT_DETAILS: (id: string = ":id") => `/payments/${id}`,
   PAYMENT_NEW: "/payments/new",
   USER_PAYMENTS: "/user-payments", // Route for client payments
-  CLIENT_PAYMENTS: "/client-payments", // New route for sidebar compatibility
+  CLIENT_PAYMENTS: "/client-payments", // For sidebar compatibility
   
   // Partners
   PARTNERS: "/partners",
@@ -57,6 +57,16 @@ export const PATHS = {
 
   // Help
   HELP: "/help",
+  
+  // Admin routes
+  ADMIN: {
+    DASHBOARD: "/admin/dashboard",
+    PAYMENT_REQUESTS: "/admin/payment-requests",
+    PAYMENTS: "/admin/payments",
+    CLIENTS: "/admin/clients",
+    FINANCIAL_REPORTS: "/admin/financial-reports",
+    SETTINGS: "/admin/settings",
+  },
   
   // Not found
   NOT_FOUND: "*"

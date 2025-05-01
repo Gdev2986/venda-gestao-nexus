@@ -9,6 +9,7 @@ import { UserRole } from "./types";
 import AuthLayout from "./layouts/AuthLayout";
 import MainLayout from "./layouts/MainLayout";
 import RootLayout from "./layouts/RootLayout";
+import AdminLayout from "./layouts/AdminLayout";
 
 // Auth
 import Login from "./pages/auth/Login";
@@ -22,6 +23,10 @@ import RequireAuth from "./components/auth/RequireAuth";
 // Dashboard
 import Dashboard from "./pages/Dashboard";
 import ClientDashboard from "./pages/ClientDashboard";
+
+// Admin Pages
+import AdminDashboard from "./pages/admin/Dashboard";
+import PaymentRequests from "./pages/admin/PaymentRequests";
 
 // Clients
 import Clients from "./pages/clients/Clients";
@@ -95,6 +100,7 @@ function App() {
 
       {/* Protected Routes */}
       <Route element={<RequireAuth />}>
+        {/* Main Client Layout */}
         <Route element={<MainLayout />}>
           <Route
             path={PATHS.DASHBOARD}
@@ -102,7 +108,7 @@ function App() {
               userRole === UserRole.CLIENT ? <ClientDashboard /> : <Dashboard />
             }
           />
-
+          
           {/* Client Routes */}
           <Route 
             path={PATHS.CLIENTS} 
@@ -181,7 +187,7 @@ function App() {
             } 
           />
 
-          {/* Payment Routes */}
+          {/* Client Payment Routes */}
           <Route 
             path={PATHS.PAYMENTS} 
             element={
@@ -271,6 +277,17 @@ function App() {
           />
           <Route path={PATHS.SUPPORT} element={<Support />} />
           <Route path={PATHS.HELP} element={<Help />} />
+        </Route>
+        
+        {/* Admin Layout */}
+        <Route path="/admin" element={<AdminLayout />}>
+          <Route index element={<Navigate to="/admin/dashboard" replace />} />
+          <Route path="dashboard" element={<AdminDashboard />} />
+          <Route path="payment-requests" element={<PaymentRequests />} />
+          <Route path="payments" element={<Navigate to="/admin/payment-requests" replace />} />
+          <Route path="clients" element={<Navigate to="/clients" replace />} />
+          <Route path="financial-reports" element={<div className="p-4">Relatórios financeiros em desenvolvimento</div>} />
+          <Route path="settings" element={<div className="p-4">Configurações administrativas em desenvolvimento</div>} />
         </Route>
       </Route>
 
