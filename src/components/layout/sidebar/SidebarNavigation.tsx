@@ -81,7 +81,7 @@ const SidebarNavigation = ({ userRole }: SidebarNavigationProps) => {
         {
           title: "Solicitações",
           href: PATHS.USER_PAYMENTS,
-          roles: [UserRole.ADMIN, UserRole.FINANCIAL],
+          roles: [UserRole.ADMIN, UserRole.FINANCIAL, UserRole.CLIENT],
         }
       ] : []
     },
