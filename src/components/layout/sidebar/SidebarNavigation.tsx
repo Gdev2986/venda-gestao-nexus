@@ -68,22 +68,8 @@ const SidebarNavigation = ({ userRole }: SidebarNavigationProps) => {
     // Changed to a simple button for CLIENT role and a dropdown for other roles
     {
       title: userRole === UserRole.CLIENT ? "Meus Pagamentos" : "Pagamentos",
-      icon: Wallet,
-      href: userRole === UserRole.CLIENT ? PATHS.USER_PAYMENTS : PATHS.PAYMENTS,
-      roles: [UserRole.ADMIN, UserRole.CLIENT, UserRole.FINANCIAL],
-      // Only keep dropdown for non-client roles
-      subItems: userRole == UserRole.CLIENT ? [
-        {
-          title: "Todos os Pagamentos",
-          href: PATHS.PAYMENTS,
-          roles: [UserRole.ADMIN, UserRole.FINANCIAL],
-        },
-        {
-          title: "Solicitações",
-          href: PATHS.USER_PAYMENTS,
-          roles: [UserRole.ADMIN, UserRole.FINANCIAL, UserRole.CLIENT],
-        }
-      ] : []
+      href: PATHS.PAYMENTS,
+      roles: [UserRole.CLIENT]
     },
     {
       title: "Relatórios",
