@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { useAuth } from "@/hooks/use-auth";
 import { supabase } from "@/integrations/supabase/client";
@@ -36,16 +37,16 @@ const Settings = () => {
             const transformedKeys: PixKey[] = (data || []).map(item => ({
               id: item.id,
               user_id: item.user_id,
-              key_type: item.key_type || "",
+              key_type: item.type || "",
               type: item.type || "CPF",
               key: item.key || "",
-              owner_name: item.owner_name || "",
+              owner_name: item.name || "",
               name: item.name || "",
               isDefault: item.is_default || false,
               is_active: true,
               created_at: item.created_at,
               updated_at: item.updated_at,
-              bank_name: item.bank_name || "",
+              bank_name: "Banco", // Default value since it's not in the database
             }));
             
             setPixKeys(transformedKeys);

@@ -29,12 +29,13 @@ export enum PaymentMethod {
 export type PixKey = {
   id: string;
   user_id: string;
-  key_type: string;
-  type: string;
+  key_type: string;      // Used in our application
+  type: string;          // The actual type in the database
   key: string;
-  owner_name: string;
-  name: string;
-  isDefault: boolean;
+  owner_name: string;    // Used in our application
+  name: string;          // The actual name in the database
+  isDefault: boolean;    // Used in our application
+  is_default?: boolean;  // The actual field in the database
   is_active: boolean;
   created_at: string;
   updated_at: string;

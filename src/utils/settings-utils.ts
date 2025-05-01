@@ -12,6 +12,7 @@ export const createDefaultPixKeyProperties = (id: string, user_id: string): PixK
     owner_name: "",
     name: "",
     isDefault: false,
+    is_default: false,
     is_active: true,
     created_at: new Date().toISOString(),
     updated_at: new Date().toISOString(),
