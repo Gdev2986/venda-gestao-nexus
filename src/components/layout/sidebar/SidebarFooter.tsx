@@ -54,20 +54,6 @@ const SidebarFooter = () => {
         </div>
       )}
 
-      <div className="space-y-1">
-        <button
-          onClick={() => {
-            toast({
-              title: "Ajuda",
-              description: "Função ainda não implementada.",
-            });
-          }}
-          className="flex items-center w-full px-3 py-2 text-sm rounded-md text-sidebar-foreground hover:bg-sidebar-accent/70 hover:text-white transition-colors"
-        >
-          <HelpCircle className="h-5 w-5 mr-3 flex-shrink-0" />
-          <span>Ajuda</span>
-        </button>
-
         <button
           onClick={handleLogout}
           className="flex items-center w-full px-3 py-2 text-sm rounded-md text-sidebar-foreground hover:bg-sidebar-accent/70 hover:text-white transition-colors"
