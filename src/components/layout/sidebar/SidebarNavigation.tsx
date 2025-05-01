@@ -72,7 +72,7 @@ const SidebarNavigation = ({ userRole }: SidebarNavigationProps) => {
       href: userRole === UserRole.CLIENT ? PATHS.USER_PAYMENTS : PATHS.PAYMENTS,
       roles: [UserRole.ADMIN, UserRole.CLIENT, UserRole.FINANCIAL],
       // Only keep dropdown for non-client roles
-      subItems: userRole !== UserRole.CLIENT ? [
+      subItems: userRole == UserRole.CLIENT ? [
         {
           title: "Todos os Pagamentos",
           href: PATHS.PAYMENTS,
