@@ -1,4 +1,3 @@
-
 import { Routes, Route, Navigate, useLocation } from "react-router-dom";
 import { PATHS } from "./routes/paths";
 import { useEffect } from "react";

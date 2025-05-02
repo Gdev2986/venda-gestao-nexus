@@ -136,19 +136,21 @@ const AdminSidebar = memo(({ isOpen, isMobile, onClose, userRole }: AdminSidebar
         />
       )}
       
-      {/* Admin Sidebar with fixed position and animation */}
+      {/* Sidebar with fixed position and animation */}
       <div
         className={cn(
-          "fixed inset-y-0 left-0 z-40 w-64 bg-slate-900 text-white transition-transform duration-200 ease-in-out",
+          "fixed inset-y-0 left-0 z-40 w-64 text-sidebar-foreground transition-transform duration-200 ease-in-out",
+          isMobile ? "shadow-xl" : "border-r border-sidebar-border",
           isOpen ? "translate-x-0" : "-translate-x-full"
         )}
+        style={{ backgroundColor: 'hsl(196, 70%, 20%)' }}
       >
-        <div className="flex items-center justify-between h-16 px-4 border-b border-slate-800">
+        <div className="flex items-center justify-between h-16 px-4 border-b border-sidebar-border">
           <div className="flex items-center space-x-2">
             <div className="w-8 h-8 rounded-md bg-primary flex items-center justify-center text-white font-bold">
               SP
             </div>
-            <span className="text-lg font-semibold">Admin Panel</span>
+            <span className="text-lg font-semibold text-white">SigmaPay</span>
           </div>
 
           {isMobile && (
@@ -156,7 +158,7 @@ const AdminSidebar = memo(({ isOpen, isMobile, onClose, userRole }: AdminSidebar
               variant="ghost"
               size="icon"
               onClick={onClose}
-              className="text-white hover:bg-slate-800"
+              className="text-sidebar-foreground hover:text-white hover:bg-sidebar-accent"
             >
               <X className="h-5 w-5" />
             </Button>
@@ -172,8 +174,8 @@ const AdminSidebar = memo(({ isOpen, isMobile, onClose, userRole }: AdminSidebar
                   className={({ isActive }) => cn(
                     "flex items-center px-4 py-2 rounded-md transition-colors",
                     isActive 
-                      ? "bg-slate-800 text-white" 
-                      : "text-gray-300 hover:bg-slate-800 hover:text-white"
+                      ? "bg-sidebar-accent text-white" 
+                      : "text-gray-300 hover:bg-sidebar-accent/70 hover:text-white"
                   )}
                   onClick={isMobile ? onClose : undefined}
                 >
@@ -185,8 +187,8 @@ const AdminSidebar = memo(({ isOpen, isMobile, onClose, userRole }: AdminSidebar
           </ul>
         </nav>
 
-        <div className="p-4 border-t border-slate-800">
-          <div className="text-xs text-gray-400">
+        <div className="p-4 border-t border-sidebar-border">
+          <div className="text-xs text-white">
             <p>SigmaPay Admin v1.0</p>
           </div>
         </div>

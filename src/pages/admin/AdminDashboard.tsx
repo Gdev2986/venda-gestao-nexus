@@ -136,12 +136,6 @@ const AdminDashboard = () => {
             <div className="h-[300px]">
               <BarChart 
                 data={salesData}
-                category="total"
-                index="name"
-                colors={["#2563eb"]}
-                valueFormatter={(value: number) => 
-                  `R$ ${new Intl.NumberFormat("pt-BR").format(value)}`
-                }
               />
             </div>
           </CardContent>
@@ -204,10 +198,6 @@ const AdminDashboard = () => {
                   { month: "Abr", clients: 53 },
                   { month: "Mai", clients: 58 },
                 ]}
-                category="clients"
-                index="month"
-                colors={["#10b981"]}
-                valueFormatter={(value: number) => `${value} clientes`}
               />
             </div>
           </CardContent>
