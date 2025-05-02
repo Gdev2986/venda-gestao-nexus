@@ -1,6 +1,6 @@
 
 import { useState, useEffect } from "react";
-import { Outlet, Navigate } from "react-router-dom";
+import { Outlet, Navigate, useLocation } from "react-router-dom";
 import { useUserRole } from "@/hooks/use-user-role";
 import { UserRole } from "@/types";
 import UserSidebar from "./UserSidebar";
@@ -10,12 +10,27 @@ import { Button } from "@/components/ui/button";
 import NotificationDropdown from "@/components/layout/NotificationDropdown";
 import ThemeToggle from "@/components/theme/theme-toggle";
 import { Toaster } from "@/components/ui/toaster";
+import { LoadingOverlay } from "@/components/ui/loading-overlay";
 
 const UserLayout = () => {
   const { userRole, isRoleLoading } = useUserRole();
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
   const [isMobileScreen, setIsMobileScreen] = useState(false);
   const { toast } = useToast();
+  const location = useLocation();
+  const [isLoading, setIsLoading] = useState(true);
+
+  // Show loading animation on initial render and route changes
+  useEffect(() => {
+    setIsLoading(true);
+    
+    // Simulate minimum loading time of 0.5 seconds
+    const timer = setTimeout(() => {
+      setIsLoading(false);
+    }, 500);
+    
+    return () => clearTimeout(timer);
+  }, [location.pathname]);
 
   // Check screen size for responsive design
   useEffect(() => {
@@ -69,6 +84,9 @@ const UserLayout = () => {
         isMobile={isMobileScreen}
         onClose={() => setIsSidebarOpen(false)} 
       />
+      
+      {/* Loading Overlay */}
+      <LoadingOverlay show={isLoading} />
       
       <div className={`flex-1 flex flex-col transition-all duration-300 ease-in-out ${
         isSidebarOpen && !isMobileScreen ? 'ml-64' : 'ml-0'

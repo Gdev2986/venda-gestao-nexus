@@ -4,7 +4,7 @@ import { useNavigate } from "react-router-dom";
 import { useUserRole } from "@/hooks/use-user-role";
 import { UserRole } from "@/types";
 import { PATHS } from "@/routes/paths";
-import { Spinner } from "@/components/ui/spinner";
+import { LoadingAnimation } from "@/components/ui/loading-animation";
 
 const Dashboard = () => {
   const { userRole, isRoleLoading } = useUserRole();
@@ -40,8 +40,8 @@ const Dashboard = () => {
     return (
       <div className="flex h-screen items-center justify-center">
         <div className="text-center">
-          <Spinner size="lg" />
-          <p className="mt-4 text-lg">Redirecionando para seu painel...</p>
+          <LoadingAnimation size="lg" color="bg-blue-900" />
+          <p className="mt-6 text-lg">Redirecionando para seu painel...</p>
         </div>
       </div>
     );

@@ -1,6 +1,6 @@
 
 import { useState, useEffect } from "react";
-import { Outlet, Navigate, useNavigate } from "react-router-dom";
+import { Outlet, Navigate, useNavigate, useLocation } from "react-router-dom";
 import { useUserRole } from "@/hooks/use-user-role";
 import { UserRole } from "@/types";
 import AdminSidebar from "./AdminSidebar";
@@ -10,6 +10,7 @@ import { Button } from "@/components/ui/button";
 import NotificationDropdown from "@/components/layout/NotificationDropdown";
 import ThemeToggle from "@/components/theme/theme-toggle";
 import { Toaster } from "@/components/ui/toaster";
+import { LoadingOverlay } from "@/components/ui/loading-overlay";
 
 const AdminLayout = () => {
   const { userRole, isRoleLoading } = useUserRole();
@@ -17,7 +18,21 @@ const AdminLayout = () => {
   const [isMobileScreen, setIsMobileScreen] = useState(false);
   const { toast } = useToast();
   const navigate = useNavigate();
+  const location = useLocation();
+  const [isLoading, setIsLoading] = useState(true);
 
+  // Show loading animation on initial render and route changes
+  useEffect(() => {
+    setIsLoading(true);
+    
+    // Simulate minimum loading time of 0.5 seconds
+    const timer = setTimeout(() => {
+      setIsLoading(false);
+    }, 500);
+    
+    return () => clearTimeout(timer);
+  }, [location.pathname]);
+  
   // Check screen size for responsive design
   useEffect(() => {
     const checkScreenSize = () => {
@@ -38,7 +53,7 @@ const AdminLayout = () => {
   if (isRoleLoading) {
     return (
       <div className="flex h-screen items-center justify-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary"></div>
+        <LoadingAnimation size="lg" color="bg-blue-950" />
       </div>
     );
   }
@@ -70,6 +85,9 @@ const AdminLayout = () => {
         onClose={() => setIsSidebarOpen(false)} 
         userRole={userRole}
       />
+      
+      {/* Loading Overlay */}
+      <LoadingOverlay show={isLoading} />
       
       <div className={`flex-1 flex flex-col transition-all duration-300 ease-in-out ${
         isSidebarOpen && !isMobileScreen ? 'ml-64' : 'ml-0'

@@ -1,8 +1,8 @@
 
 import { Navigate, useLocation } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
-import { Spinner } from "@/components/ui/spinner";
 import { useEffect, useState } from "react";
+import { LoadingAnimation } from "@/components/ui/loading-animation";
 
 interface ProtectedRouteProps {
   children: React.ReactNode;
@@ -30,8 +30,8 @@ const ProtectedRoute = ({ children }: ProtectedRouteProps) => {
   if (isLoading) {
     return (
       <div className="flex flex-col items-center justify-center h-screen bg-background">
-        <Spinner size="lg" />
-        <p className="mt-4 text-muted-foreground">Carregando aplicação...</p>
+        <LoadingAnimation size="lg" color="bg-blue-900" />
+        <p className="mt-6 text-muted-foreground">Carregando aplicação...</p>
       </div>
     );
   }
