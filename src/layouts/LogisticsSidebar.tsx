@@ -10,10 +10,13 @@ import {
   BarChart3,
   Truck,
   FileText,
+  LogOut
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { PATHS } from "@/routes/paths";
+import { useAuth } from "@/contexts/AuthContext";
+import { Separator } from "@/components/ui/separator";
 
 interface LogisticsSidebarProps {
   isOpen: boolean;
@@ -22,6 +25,8 @@ interface LogisticsSidebarProps {
 }
 
 const LogisticsSidebar = memo(({ isOpen, isMobile, onClose }: LogisticsSidebarProps) => {
+  const { signOut, user } = useAuth();
+  
   const navItems = [
     {
       label: "Dashboard",
@@ -75,6 +80,7 @@ const LogisticsSidebar = memo(({ isOpen, isMobile, onClose }: LogisticsSidebarPr
           isOpen ? "translate-x-0" : "-translate-x-full"
         )}
       >
+        {/* Header - Logo */}
         <div className="flex items-center justify-between h-16 px-4 border-b border-orange-800">
           <div className="flex items-center space-x-2">
             <div className="w-8 h-8 rounded-md bg-primary flex items-center justify-center text-white font-bold">
@@ -95,6 +101,7 @@ const LogisticsSidebar = memo(({ isOpen, isMobile, onClose }: LogisticsSidebarPr
           )}
         </div>
 
+        {/* Navigation section */}
         <nav className="flex-1 overflow-y-auto py-4 px-3">
           <ul className="space-y-2">
             {navItems.map((item) => (
@@ -117,9 +124,31 @@ const LogisticsSidebar = memo(({ isOpen, isMobile, onClose }: LogisticsSidebarPr
           </ul>
         </nav>
 
+        {/* Logout section */}
         <div className="p-4 border-t border-orange-800">
-          <div className="text-xs text-gray-400">
+          <Separator className="my-2 bg-orange-800" />
+          <button
+            onClick={signOut}
+            className="flex items-center w-full px-3 py-2 text-sm rounded-md text-gray-300 hover:bg-orange-800 hover:text-white transition-colors"
+          >
+            <LogOut className="h-5 w-5 mr-3 flex-shrink-0" />
+            <span>Sair</span>
+          </button>
+          <div className="text-xs text-gray-400 mt-4">
             <p>SigmaPay Logística v1.0</p>
+          </div>
+        </div>
+
+        {/* User profile section */}
+        <div className="p-4 border-t border-orange-800">
+          <div className="flex items-center">
+            <div className="w-10 h-10 rounded-full bg-primary flex items-center justify-center text-white font-bold">
+              {user?.email?.charAt(0)?.toUpperCase() || 'L'}
+            </div>
+            <div className="ml-3">
+              <p className="text-sm font-medium text-white">Logística</p>
+              <p className="text-xs text-gray-300 truncate">{user?.email}</p>
+            </div>
           </div>
         </div>
       </div>
