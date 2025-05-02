@@ -7,13 +7,22 @@ import {
   CreditCard, 
   Users, 
   Settings, 
-  BarChart,
+  BarChart3,
   FileText,
-  X
+  X,
+  Building2,
+  ListOrdered,
+  Percent,
+  Truck,
+  MessageSquare,
+  Bell,
+  User,
+  DollarSign
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { UserRole } from "@/types";
+import { PATHS } from "@/routes/paths";
 
 interface AdminSidebarProps {
   isOpen: boolean;
@@ -27,37 +36,85 @@ const AdminSidebar = memo(({ isOpen, isMobile, onClose, userRole }: AdminSidebar
     {
       label: "Dashboard",
       icon: <Home className="w-5 h-5 mr-3" />,
-      href: "/admin/dashboard",
+      href: PATHS.ADMIN.DASHBOARD,
+      roles: [UserRole.ADMIN, UserRole.FINANCIAL]
+    },
+    {
+      label: "Usuários",
+      icon: <User className="w-5 h-5 mr-3" />,
+      href: PATHS.ADMIN.USERS,
+      roles: [UserRole.ADMIN]
+    },
+    {
+      label: "Vendas",
+      icon: <ListOrdered className="w-5 h-5 mr-3" />,
+      href: PATHS.ADMIN.SALES,
+      roles: [UserRole.ADMIN, UserRole.FINANCIAL]
+    },
+    {
+      label: "Clientes",
+      icon: <Building2 className="w-5 h-5 mr-3" />,
+      href: PATHS.ADMIN.CLIENTS,
+      roles: [UserRole.ADMIN, UserRole.FINANCIAL]
+    },
+    {
+      label: "Parceiros",
+      icon: <Users className="w-5 h-5 mr-3" />,
+      href: PATHS.ADMIN.PARTNERS,
+      roles: [UserRole.ADMIN, UserRole.FINANCIAL]
+    },
+    {
+      label: "Taxas",
+      icon: <Percent className="w-5 h-5 mr-3" />,
+      href: PATHS.ADMIN.FEES,
       roles: [UserRole.ADMIN, UserRole.FINANCIAL]
     },
     {
       label: "Solicitações de Pagamento",
       icon: <CreditCard className="w-5 h-5 mr-3" />,
-      href: "/admin/payment-requests",
+      href: PATHS.ADMIN.PAYMENT_REQUESTS,
       roles: [UserRole.ADMIN, UserRole.FINANCIAL]
     },
     {
       label: "Pagamentos",
-      icon: <FileText className="w-5 h-5 mr-3" />,
-      href: "/admin/payments",
+      icon: <DollarSign className="w-5 h-5 mr-3" />,
+      href: PATHS.ADMIN.PAYMENTS,
       roles: [UserRole.ADMIN, UserRole.FINANCIAL]
     },
     {
-      label: "Clientes",
-      icon: <Users className="w-5 h-5 mr-3" />,
-      href: "/admin/clients",
+      label: "Comissões",
+      icon: <CreditCard className="w-5 h-5 mr-3" />,
+      href: PATHS.ADMIN.COMMISSIONS,
       roles: [UserRole.ADMIN, UserRole.FINANCIAL]
     },
     {
-      label: "Relatórios Financeiros",
-      icon: <BarChart className="w-5 h-5 mr-3" />,
-      href: "/admin/financial-reports",
+      label: "Logística",
+      icon: <Truck className="w-5 h-5 mr-3" />,
+      href: PATHS.ADMIN.LOGISTICS,
+      roles: [UserRole.ADMIN, UserRole.LOGISTICS]
+    },
+    {
+      label: "Relatórios",
+      icon: <BarChart3 className="w-5 h-5 mr-3" />,
+      href: PATHS.ADMIN.REPORTS,
       roles: [UserRole.ADMIN, UserRole.FINANCIAL]
+    },
+    {
+      label: "Notificações",
+      icon: <Bell className="w-5 h-5 mr-3" />,
+      href: PATHS.ADMIN.NOTIFICATIONS,
+      roles: [UserRole.ADMIN]
+    },
+    {
+      label: "Suporte",
+      icon: <MessageSquare className="w-5 h-5 mr-3" />,
+      href: PATHS.ADMIN.SUPPORT,
+      roles: [UserRole.ADMIN, UserRole.FINANCIAL, UserRole.LOGISTICS]
     },
     {
       label: "Configurações",
       icon: <Settings className="w-5 h-5 mr-3" />,
-      href: "/admin/settings",
+      href: PATHS.ADMIN.SETTINGS,
       roles: [UserRole.ADMIN]
     }
   ];

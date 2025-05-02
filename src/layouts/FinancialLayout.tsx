@@ -1,20 +1,21 @@
 
 import { useState, useEffect } from "react";
-import { Outlet, Navigate, useNavigate } from "react-router-dom";
+import { Outlet, Navigate } from "react-router-dom";
 import { useUserRole } from "@/hooks/use-user-role";
 import { UserRole } from "@/types";
-import AdminSidebar from "./AdminSidebar";
+import FinancialSidebar from "./FinancialSidebar";
 import { useToast } from "@/hooks/use-toast";
-import { Menu, ArrowLeft } from "lucide-react";
+import { Menu } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import NotificationDropdown from "@/components/layout/NotificationDropdown";
+import ThemeToggle from "@/components/theme/theme-toggle";
 import { Toaster } from "@/components/ui/toaster";
 
-const AdminLayout = () => {
+const FinancialLayout = () => {
   const { userRole, isRoleLoading } = useUserRole();
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
   const [isMobileScreen, setIsMobileScreen] = useState(false);
   const { toast } = useToast();
-  const navigate = useNavigate();
 
   // Check screen size for responsive design
   useEffect(() => {
@@ -41,9 +42,8 @@ const AdminLayout = () => {
     );
   }
 
-  // Access control - only ADMIN and FINANCIAL roles can access the admin area
-  const allowedRoles = [UserRole.ADMIN, UserRole.FINANCIAL, UserRole.LOGISTICS];
-  if (!allowedRoles.includes(userRole)) {
+  // Access control - only FINANCIAL role can access the financial area
+  if (userRole !== UserRole.FINANCIAL) {
     toast({
       title: "Acesso negado",
       description: "Você não tem permissão para acessar esta área.",
@@ -51,69 +51,55 @@ const AdminLayout = () => {
     });
     
     // Redirect based on role
-    if (userRole === UserRole.CLIENT) {
+    if (userRole === UserRole.ADMIN) {
+      return <Navigate to="/admin/dashboard" replace />;
+    } else if (userRole === UserRole.CLIENT) {
       return <Navigate to="/user/dashboard" replace />;
     } else if (userRole === UserRole.PARTNER) {
       return <Navigate to="/partners/dashboard" replace />;
+    } else if (userRole === UserRole.LOGISTICS) {
+      return <Navigate to="/logistics/dashboard" replace />;
     } else {
       return <Navigate to="/login" replace />;
     }
   }
 
-  const handleBackToDashboard = () => {
-    // Redirect to the appropriate dashboard based on role
-    switch (userRole) {
-      case UserRole.ADMIN:
-      case UserRole.FINANCIAL:
-      case UserRole.LOGISTICS:
-        navigate('/admin/dashboard');
-        break;
-      case UserRole.CLIENT:
-        navigate('/user/dashboard');
-        break;
-      case UserRole.PARTNER:
-        navigate('/partners/dashboard');
-        break;
-      default:
-        navigate('/login');
-    }
-  };
-
   return (
     <div className="flex h-screen w-full bg-background">
-      <AdminSidebar 
+      <FinancialSidebar 
         isOpen={isSidebarOpen} 
         isMobile={isMobileScreen}
         onClose={() => setIsSidebarOpen(false)} 
-        userRole={userRole}
       />
       
-      <div className="flex flex-col flex-1 overflow-hidden">
-        {/* Header with toggle button */}
-        <header className="flex items-center justify-between h-16 px-6 border-b bg-background">
+      <div className={`flex-1 flex flex-col transition-all duration-300 ease-in-out ${
+        isSidebarOpen && !isMobileScreen ? 'ml-64' : 'ml-0'
+      }`}>
+        {/* Header */}
+        <header className="h-16 border-b border-border flex items-center justify-between px-4 bg-background sticky top-0 z-10">
           <div className="flex items-center space-x-4">
-            <Button
-              variant="ghost"
-              size="icon"
+            <Button 
+              variant="ghost" 
+              size="icon" 
               onClick={() => setIsSidebarOpen(!isSidebarOpen)}
-              className="p-2 rounded-md text-muted-foreground hover:bg-accent hover:text-accent-foreground"
+              aria-label={isSidebarOpen ? "Fechar menu" : "Abrir menu"}
             >
-              <Menu className="h-6 w-6" />
+              <Menu className="h-5 w-5" />
             </Button>
-            <h1 className="text-xl font-semibold">Painel Administrativo</h1>
+            <h1 className="text-xl font-semibold">Área Financeira</h1>
           </div>
           
-          <div className="flex items-center space-x-2">
-            <Button variant="outline" size="sm" onClick={handleBackToDashboard}>
-              <ArrowLeft className="mr-2 h-4 w-4" />
-              Voltar para Dashboard
-            </Button>
+          <div className="flex items-center space-x-4">
+            <ThemeToggle />
+            <NotificationDropdown />
           </div>
         </header>
         
-        {/* Main content */}
-        <main className="flex-1 overflow-auto p-6">
-          <Outlet />
+        {/* Main scrollable content */}
+        <main className="flex-1 overflow-auto p-4 md:p-6 lg:p-8">
+          <div className="mx-auto max-w-7xl">
+            <Outlet />
+          </div>
         </main>
       </div>
       
@@ -123,4 +109,4 @@ const AdminLayout = () => {
   );
 };
 
-export default AdminLayout;
+export default FinancialLayout;
