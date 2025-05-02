@@ -1,6 +1,6 @@
 
 import { memo } from "react";
-import { NavLink, useNavigate } from "react-router-dom";
+import { NavLink } from "react-router-dom";
 import { motion } from "framer-motion";
 import { 
   Home, 
@@ -8,16 +8,12 @@ import {
   Users, 
   Settings, 
   BarChart,
-  X,
-  Building2,
-  Truck,
-  MessageSquare,
-  ShoppingBag
+  FileText,
+  X
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { UserRole } from "@/types";
-import { PATHS } from "@/routes/paths";
 
 interface AdminSidebarProps {
   isOpen: boolean;
@@ -27,61 +23,41 @@ interface AdminSidebarProps {
 }
 
 const AdminSidebar = memo(({ isOpen, isMobile, onClose, userRole }: AdminSidebarProps) => {
-  const navigate = useNavigate();
-
   const navItems = [
     {
       label: "Dashboard",
       icon: <Home className="w-5 h-5 mr-3" />,
-      href: PATHS.ADMIN.DASHBOARD,
+      href: "/admin/dashboard",
       roles: [UserRole.ADMIN, UserRole.FINANCIAL]
     },
     {
       label: "Solicitações de Pagamento",
       icon: <CreditCard className="w-5 h-5 mr-3" />,
-      href: PATHS.ADMIN.PAYMENT_REQUESTS,
+      href: "/admin/payment-requests",
       roles: [UserRole.ADMIN, UserRole.FINANCIAL]
     },
     {
-      label: "Vendas",
-      icon: <ShoppingBag className="w-5 h-5 mr-3" />,
-      href: PATHS.ADMIN.SALES,
+      label: "Pagamentos",
+      icon: <FileText className="w-5 h-5 mr-3" />,
+      href: "/admin/payments",
       roles: [UserRole.ADMIN, UserRole.FINANCIAL]
     },
     {
       label: "Clientes",
-      icon: <Building2 className="w-5 h-5 mr-3" />,
-      href: PATHS.ADMIN.CLIENTS,
-      roles: [UserRole.ADMIN, UserRole.FINANCIAL]
-    },
-    {
-      label: "Parceiros",
       icon: <Users className="w-5 h-5 mr-3" />,
-      href: PATHS.ADMIN.PARTNERS,
-      roles: [UserRole.ADMIN, UserRole.FINANCIAL]
-    },
-    {
-      label: "Logística e Máquinas",
-      icon: <Truck className="w-5 h-5 mr-3" />,
-      href: PATHS.ADMIN.LOGISTICS,
-      roles: [UserRole.ADMIN, UserRole.FINANCIAL, UserRole.LOGISTICS]
-    },
-    {
-      label: "Central de Suporte",
-      icon: <MessageSquare className="w-5 h-5 mr-3" />,
-      href: PATHS.ADMIN.SUPPORT,
+      href: "/admin/clients",
       roles: [UserRole.ADMIN, UserRole.FINANCIAL]
     },
     {
       label: "Relatórios Financeiros",
       icon: <BarChart className="w-5 h-5 mr-3" />,
-      href: PATHS.ADMIN.FINANCIAL_REPORTS,
+      href: "/admin/financial-reports",
       roles: [UserRole.ADMIN, UserRole.FINANCIAL]
     },
     {
       label: "Configurações",
       icon: <Settings className="w-5 h-5 mr-3" />,
-      href: PATHS.ADMIN.SETTINGS,
+      href: "/admin/settings",
       roles: [UserRole.ADMIN]
     }
   ];
@@ -153,15 +129,7 @@ const AdminSidebar = memo(({ isOpen, isMobile, onClose, userRole }: AdminSidebar
         </nav>
 
         <div className="p-4 border-t border-slate-800">
-          <Button 
-            variant="outline"
-            size="sm"
-            className="w-full text-white border-slate-700 hover:bg-slate-800"
-            onClick={() => navigate(PATHS.DASHBOARD)}
-          >
-            Voltar ao Dashboard
-          </Button>
-          <div className="text-xs text-gray-400 mt-2">
+          <div className="text-xs text-gray-400">
             <p>SigmaPay Admin v1.0</p>
           </div>
         </div>

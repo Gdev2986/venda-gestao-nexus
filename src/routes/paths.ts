@@ -64,14 +64,8 @@ export const PATHS = {
     PAYMENT_REQUESTS: "/admin/payment-requests",
     PAYMENTS: "/admin/payments",
     CLIENTS: "/admin/clients",
-    PARTNERS: "/admin/partners",
-    SALES: "/admin/sales",
-    LOGISTICS: "/admin/logistics",
-    SUPPORT: "/admin/support",
     FINANCIAL_REPORTS: "/admin/financial-reports",
     SETTINGS: "/admin/settings",
-    // Adding a new route for financial reports
-    REPORTS: "/admin/reports"
   },
   
   // Not found
