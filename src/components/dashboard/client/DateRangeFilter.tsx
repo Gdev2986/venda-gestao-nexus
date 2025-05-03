@@ -1,6 +1,6 @@
 
 import { useState } from "react";
-import { format, subDays, startOfDay, endOfDay, startOfWeek, endOfWeek, startOfMonth, endOfMonth } from "date-fns";
+import { format, subDays, startOfDay, endOfDay, startOfWeek, endOfWeek, startOfMonth, endOfMonth, isBefore, isToday } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { Calendar } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -37,6 +37,13 @@ export function DateRangeFilter({ dateRange, onDateRangeChange }: DateRangeFilte
     from: dateRange.from,
     to: dateRange.to
   });
+
+  // Function to disable current day and future dates
+  const disabledDays = (date: Date) => {
+    // Allow only dates before yesterday (today - 1)
+    const yesterday = subDays(new Date(), 1);
+    return !isBefore(date, yesterday);
+  };
 
   // Handle calendar date selection
   const handleDateSelect = (selectedDate: Date | undefined) => {
@@ -80,20 +87,20 @@ export function DateRangeFilter({ dateRange, onDateRangeChange }: DateRangeFilte
       case "thisWeek":
         newRange = {
           from: startOfWeek(new Date(), { locale: ptBR }),
-          to: endOfWeek(new Date(), { locale: ptBR }),
+          to: endOfDay(subDays(new Date(), 1)),
         };
         break;
       case "thisMonth":
         newRange = {
           from: startOfMonth(new Date()),
-          to: endOfMonth(new Date()),
+          to: endOfDay(subDays(new Date(), 1)),
         };
         break;
       case "last30Days":
       default:
         newRange = {
           from: subDays(new Date(), 30),
-          to: new Date(),
+          to: subDays(new Date(), 1),
         };
         break;
     }
@@ -139,7 +146,7 @@ export function DateRangeFilter({ dateRange, onDateRangeChange }: DateRangeFilte
             numberOfMonths={1}
             locale={ptBR}
             className="p-3 pointer-events-auto"
-            disabled={(date) => false}
+            disabled={disabledDays}
             modifiers={{
               selected: dates.to 
                 ? [dates.from, dates.to] 

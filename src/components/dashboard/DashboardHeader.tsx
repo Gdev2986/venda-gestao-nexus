@@ -15,7 +15,7 @@ import {
   PopoverTrigger, 
 } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
-import { format, subDays, startOfDay, endOfDay } from "date-fns";
+import { format, subDays, startOfDay, endOfDay, isBefore } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { cn } from "@/lib/utils";
 
@@ -34,7 +34,7 @@ const DashboardHeader = ({ onDateRangeChange }: DashboardHeaderProps) => {
     to?: Date;
   }>({
     from: subDays(new Date(), 7),
-    to: new Date(),
+    to: subDays(new Date(), 1),
   });
 
   const presetRanges = [
@@ -51,7 +51,7 @@ const DashboardHeader = ({ onDateRangeChange }: DashboardHeaderProps) => {
       value: "7days",
       range: {
         from: subDays(new Date(), 7),
-        to: new Date(),
+        to: subDays(new Date(), 1),
       },
     },
     {
@@ -59,7 +59,7 @@ const DashboardHeader = ({ onDateRangeChange }: DashboardHeaderProps) => {
       value: "30days",
       range: {
         from: subDays(new Date(), 30),
-        to: new Date(),
+        to: subDays(new Date(), 1),
       },
     },
     {
@@ -67,10 +67,17 @@ const DashboardHeader = ({ onDateRangeChange }: DashboardHeaderProps) => {
       value: "thisMonth",
       range: {
         from: new Date(new Date().getFullYear(), new Date().getMonth(), 1),
-        to: new Date(),
+        to: subDays(new Date(), 1),
       },
     },
   ];
+
+  // Function to disable current day and future dates
+  const disabledDays = (date: Date) => {
+    // Allow only dates before yesterday (today - 1)
+    const yesterday = subDays(new Date(), 1);
+    return !isBefore(date, yesterday);
+  };
 
   // Handle calendar date selection with two clicks
   const handleDateSelect = (selectedDate: Date | undefined) => {
@@ -150,6 +157,7 @@ const DashboardHeader = ({ onDateRangeChange }: DashboardHeaderProps) => {
               onSelect={handleDateSelect}
               numberOfMonths={1}
               className="p-3 pointer-events-auto"
+              disabled={disabledDays}
               modifiers={{
                 selected: dates.to 
                   ? [dates.from, dates.to] 

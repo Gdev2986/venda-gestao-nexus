@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -19,7 +18,7 @@ import {
 } from "@/components/ui/card";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
-import { format } from "date-fns";
+import { format, isBefore, subDays } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { CalendarIcon, DownloadIcon, SearchIcon, UploadIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -50,6 +49,13 @@ const SalesFilters = ({
   onShowImportDialog,
 }: SalesFiltersProps) => {
   const [selectedDates, setSelectedDates] = useState<DateRange | undefined>(date);
+
+  // Function to disable current day and future dates
+  const disabledDays = (date: Date) => {
+    // Allow only dates before yesterday (today - 1)
+    const yesterday = subDays(new Date(), 1);
+    return !isBefore(date, yesterday);
+  };
 
   // Handle date selection with two clicks
   const handleDateSelect = (selectedDate: Date | undefined) => {
@@ -120,6 +126,7 @@ const SalesFilters = ({
                   onSelect={handleDateSelect}
                   numberOfMonths={2}
                   className="p-3 pointer-events-auto"
+                  disabled={disabledDays}
                   modifiers={{
                     selected: selectedDates?.to 
                       ? [selectedDates.from, selectedDates.to] 
