@@ -5,8 +5,14 @@ import { Spinner } from "@/components/ui/spinner";
 import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import { PATHS } from "@/routes/paths";
+import { UserRole } from "@/types";
 
-const RequireAuth = () => {
+interface RequireAuthProps {
+  allowedRoles?: UserRole[];
+  redirectTo?: string;
+}
+
+const RequireAuth = ({ allowedRoles = [], redirectTo = PATHS.LOGIN }: RequireAuthProps) => {
   const { user, isLoading } = useAuth();
   const location = useLocation();
   const [shouldRedirect, setShouldRedirect] = useState(false);
@@ -17,11 +23,13 @@ const RequireAuth = () => {
     console.log("RequireAuth effect - isLoading:", isLoading, "user:", !!user);
     
     // Only determine redirect after loading is complete
-    if (!isLoading && !user) {
-      console.log("Setting shouldRedirect to true");
-      setShouldRedirect(true);
+    if (!isLoading) {
+      if (!user) {
+        console.log("Setting shouldRedirect to true - no user");
+        setShouldRedirect(true);
+      }
     }
-  }, [isLoading, user]);
+  }, [isLoading, user, allowedRoles]);
 
   // Add a slight delay for loading animation
   useEffect(() => {
@@ -54,7 +62,7 @@ const RequireAuth = () => {
   }
 
   // If not authenticated and not loading, redirect to login
-  if (shouldRedirect) {
+  if (shouldRedirect || !user) {
     console.log("Redirecting to login from", location.pathname);
     // Store the current location using sessionStorage for better security
     sessionStorage.setItem("redirectPath", location.pathname);

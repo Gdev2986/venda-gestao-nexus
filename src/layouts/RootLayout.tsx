@@ -5,9 +5,12 @@ import { Spinner } from "@/components/ui/spinner";
 import { PATHS } from "@/routes/paths";
 import { motion } from "framer-motion";
 import { useState, useEffect } from "react";
+import { useUserRole } from "@/hooks/use-user-role";
+import { UserRole } from "@/types";
 
 const RootLayout = () => {
   const { user, isLoading } = useAuth();
+  const { userRole } = useUserRole();
   const location = useLocation();
   const [showLoading, setShowLoading] = useState(true);
   
@@ -37,9 +40,27 @@ const RootLayout = () => {
     );
   }
   
-  // If authenticated, redirect to dashboard
+  // Helper function to get the appropriate dashboard based on role
+  const getRoleBasedDashboard = () => {
+    switch (userRole) {
+      case UserRole.ADMIN:
+        return PATHS.ADMIN.DASHBOARD;
+      case UserRole.CLIENT:
+        return PATHS.USER.DASHBOARD;
+      case UserRole.PARTNER:
+        return PATHS.PARTNER.DASHBOARD;
+      case UserRole.FINANCIAL:
+        return PATHS.FINANCIAL.DASHBOARD;
+      case UserRole.LOGISTICS:
+        return PATHS.LOGISTICS.DASHBOARD;
+      default:
+        return PATHS.USER.DASHBOARD;
+    }
+  };
+  
+  // If authenticated, redirect to role-specific dashboard
   if (user) {
-    return <Navigate to={PATHS.DASHBOARD} replace />;
+    return <Navigate to={getRoleBasedDashboard()} replace />;
   }
   
   // If not authenticated, redirect to login
