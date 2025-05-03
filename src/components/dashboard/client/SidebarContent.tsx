@@ -38,7 +38,7 @@ export function SidebarContent({ loading }: SidebarContentProps) {
             </div>
           </div>
           <Button variant="ghost" className="w-full mt-3 text-primary" asChild>
-            <Link to={PATHS.PAYMENTS}>Ver todos pagamentos</Link>
+            <Link to={PATHS.USER.PAYMENTS}>Ver todos pagamentos</Link>
           </Button>
         </CardContent>
       </Card>

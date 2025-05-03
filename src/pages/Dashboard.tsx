@@ -1,54 +1,70 @@
 
-import { useEffect, useState } from "react";
-import { motion } from "framer-motion";
+import { PageHeader } from "@/components/page/PageHeader";
+import { PageWrapper } from "@/components/page/PageWrapper";
 import DashboardHeader from "@/components/dashboard/DashboardHeader";
 import StatsCards from "@/components/dashboard/StatsCards";
 import SalesChart from "@/components/dashboard/SalesChart";
 import SalesTable from "@/components/dashboard/SalesTable";
-import { Spinner } from "@/components/ui/spinner";
+import { useState } from "react";
+
+// Mock data for dashboard
+const mockData = {
+  currentBalance: 124500,
+  yesterdayGross: 15200,
+  yesterdayNet: 12350,
+  totalSales: 243,
+  salesChartData: [
+    { date: '2022-01-01', value: 1400 },
+    { date: '2022-01-02', value: 1200 },
+    { date: '2022-01-03', value: 1300 },
+    { date: '2022-01-04', value: 1500 },
+    { date: '2022-01-05', value: 1800 },
+    { date: '2022-01-06', value: 2000 },
+    { date: '2022-01-07', value: 1900 },
+  ],
+  recentSales: [
+    { id: '1', client: 'Empresa A', value: 1500, status: 'COMPLETED', date: '2022-01-07' },
+    { id: '2', client: 'Empresa B', value: 1200, status: 'PROCESSING', date: '2022-01-06' },
+    { id: '3', client: 'Empresa C', value: 950, status: 'COMPLETED', date: '2022-01-05' },
+    { id: '4', client: 'Empresa D', value: 1750, status: 'COMPLETED', date: '2022-01-04' },
+    { id: '5', client: 'Empresa E', value: 2200, status: 'PROCESSING', date: '2022-01-03' },
+  ]
+};
 
 const Dashboard = () => {
-  const [isLoading, setIsLoading] = useState(true);
-  
-  // Add a slight delay for initial loading animation
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      setIsLoading(false);
-    }, 500); // 0.5 second loading time
-    
-    return () => clearTimeout(timer);
-  }, []);
-  
-  if (isLoading) {
-    return (
-      <div className="flex items-center justify-center h-[calc(100vh-64px)] w-full">
-        <motion.div
-          initial={{ opacity: 0, scale: 0.8 }}
-          animate={{ opacity: 1, scale: 1 }}
-          transition={{ duration: 0.5 }}
-          className="flex flex-col items-center"
-        >
-          <Spinner size="lg" />
-          <p className="mt-4 text-muted-foreground">Carregando dashboard...</p>
-        </motion.div>
-      </div>
-    );
-  }
-  
+  const [dateRange, setDateRange] = useState<{ from: Date; to: Date } | undefined>(undefined);
+
+  const handleDateRangeChange = (range: { from: Date; to: Date } | undefined) => {
+    setDateRange(range);
+    // In a real app, you would fetch new data based on date range here
+    console.log("Date range changed:", range);
+  };
+
   return (
-    <motion.div 
-      className="space-y-8"
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      transition={{ duration: 0.3 }}
-    >
-      <DashboardHeader />
-      <StatsCards />
-      <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
-        <SalesChart />
-        <SalesTable />
-      </div>
-    </motion.div>
+    <div className="space-y-6">
+      <PageHeader 
+        title="Dashboard" 
+        description="Visão geral de vendas, métricas e atividades"
+      />
+      
+      <DashboardHeader 
+        onDateRangeChange={handleDateRangeChange}
+      />
+      
+      <StatsCards 
+        currentBalance={mockData.currentBalance}
+        yesterdayGross={mockData.yesterdayGross}
+        yesterdayNet={mockData.yesterdayNet}
+        totalSales={mockData.totalSales}
+      />
+      
+      <PageWrapper>
+        <div className="space-y-6">
+          <SalesChart data={mockData.salesChartData} />
+          <SalesTable sales={mockData.recentSales} />
+        </div>
+      </PageWrapper>
+    </div>
   );
 };
 

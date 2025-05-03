@@ -1,172 +1,183 @@
 
 import { PageHeader } from "@/components/page/PageHeader";
 import { PageWrapper } from "@/components/page/PageWrapper";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { 
-  Table, 
-  TableBody, 
-  TableCell, 
-  TableHead, 
-  TableHeader, 
-  TableRow 
-} from "@/components/ui/table";
-import { PATHS } from "@/routes/paths";
+import { ArrowRight, ArrowUp, TrendingUp, Users, Wallet, CreditCard } from "lucide-react";
 import { Link } from "react-router-dom";
+import { PATHS } from "@/routes/paths";
+import {
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  ResponsiveContainer,
+} from "recharts";
+
+// Mock data for the chart
+const salesData = [
+  { month: "Jan", sales: 45, commission: 9 },
+  { month: "Fev", sales: 52, commission: 10.4 },
+  { month: "Mar", sales: 48, commission: 9.6 },
+  { month: "Abr", sales: 61, commission: 12.2 },
+  { month: "Mai", sales: 40, commission: 8 },
+  { month: "Jun", sales: 50, commission: 10 },
+];
 
 const PartnerDashboard = () => {
   return (
     <div className="space-y-6">
       <PageHeader 
-        title="Painel do Parceiro" 
-        description="Bem-vindo de volta! Aqui está o resumo da sua conta."
+        title="Dashboard de Parceiro" 
+        description="Acompanhe suas vendas, comissões e clientes"
       />
       
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+      {/* KPIs */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         <Card>
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">Comissões Disponíveis</CardTitle>
+            <CardDescription>Vendas Realizadas (Mês)</CardDescription>
+            <CardTitle className="text-3xl font-bold">24</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">R$ 4.578,90</div>
-            <Button variant="link" className="p-0 h-auto mt-2" asChild>
-              <Link to={PATHS.PARTNER.COMMISSIONS}>Solicitar pagamento</Link>
+            <div className="flex items-center justify-between text-sm">
+              <div className="flex items-center text-green-600">
+                <ArrowUp className="h-4 w-4 mr-1" />
+                <span>8% desde o mês anterior</span>
+              </div>
+              <span className="text-gray-500">Total: R$ 48.960,00</span>
+            </div>
+          </CardContent>
+        </Card>
+        
+        <Card>
+          <CardHeader className="pb-2">
+            <CardDescription>Comissão Atual</CardDescription>
+            <CardTitle className="text-3xl font-bold">R$ 9.792,00</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="flex items-center justify-between text-sm">
+              <div className="flex items-center text-green-600">
+                <TrendingUp className="h-4 w-4 mr-1" />
+                <span>Taxa: 20%</span>
+              </div>
+              <span className="text-gray-500">Disponível para saque</span>
+            </div>
+          </CardContent>
+        </Card>
+        
+        <Card>
+          <CardHeader className="pb-2">
+            <CardDescription>Clientes Ativos</CardDescription>
+            <CardTitle className="text-3xl font-bold">18</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="flex items-center justify-between text-sm">
+              <div className="flex items-center text-green-600">
+                <ArrowUp className="h-4 w-4 mr-1" />
+                <span>2 novos este mês</span>
+              </div>
+              <span className="text-gray-500">5 com vendas recentes</span>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+      
+      {/* Sales & Commission Chart */}
+      <PageWrapper>
+        <CardHeader>
+          <CardTitle>Vendas e Comissões</CardTitle>
+          <CardDescription>
+            Visão geral dos últimos 6 meses
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="h-80">
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart
+                data={salesData}
+                margin={{
+                  top: 20,
+                  right: 30,
+                  left: 20,
+                  bottom: 5,
+                }}
+              >
+                <CartesianGrid strokeDasharray="3 3" />
+                <XAxis dataKey="month" />
+                <YAxis />
+                <Tooltip 
+                  formatter={(value) => [`R$ ${value}k`, undefined]} 
+                  labelFormatter={(label) => `Mês: ${label}`}
+                />
+                <Bar dataKey="sales" name="Vendas (R$ mil)" fill="#4f46e5" />
+                <Bar dataKey="commission" name="Comissão (R$ mil)" fill="#10b981" />
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
+        </CardContent>
+      </PageWrapper>
+      
+      {/* Quick actions */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center text-lg">
+              <Users className="h-5 w-5 mr-2" /> 
+              Meus Clientes
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <p className="text-sm text-muted-foreground">
+              Gerencie seus clientes e acompanhe o status das vendas realizadas.
+            </p>
+            <Button className="w-full" asChild>
+              <Link to={PATHS.PARTNER.CLIENTS}>
+                Ver Clientes <ArrowRight className="ml-2 h-4 w-4" />
+              </Link>
             </Button>
           </CardContent>
         </Card>
         
         <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">Clientes Indicados</CardTitle>
+          <CardHeader>
+            <CardTitle className="flex items-center text-lg">
+              <Wallet className="h-5 w-5 mr-2" /> 
+              Minhas Comissões
+            </CardTitle>
           </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">24</div>
-            <p className="text-sm text-muted-foreground mt-2">+3 este mês</p>
+          <CardContent className="space-y-4">
+            <p className="text-sm text-muted-foreground">
+              Acompanhe suas comissões e solicite saques quando disponível.
+            </p>
+            <Button className="w-full" asChild>
+              <Link to={PATHS.PARTNER.COMMISSIONS}>
+                Gerenciar Comissões <ArrowRight className="ml-2 h-4 w-4" />
+              </Link>
+            </Button>
           </CardContent>
         </Card>
         
         <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">Vendas Realizadas</CardTitle>
+          <CardHeader>
+            <CardTitle className="flex items-center text-lg">
+              <CreditCard className="h-5 w-5 mr-2" /> 
+              Novas Vendas
+            </CardTitle>
           </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">37</div>
-            <p className="text-sm text-muted-foreground mt-2">R$ 158.420,00 em volume</p>
+          <CardContent className="space-y-4">
+            <p className="text-sm text-muted-foreground">
+              Cadastre novas vendas e acompanhe o processo de aprovação.
+            </p>
+            <Button className="w-full" asChild>
+              <Link to={PATHS.PARTNER.SALES}>
+                Registrar Venda <ArrowRight className="ml-2 h-4 w-4" />
+              </Link>
+            </Button>
           </CardContent>
         </Card>
-      </div>
-      
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <div className="md:col-span-2">
-          <Card>
-            <CardHeader className="border-b pb-3">
-              <CardTitle>Últimas Vendas</CardTitle>
-            </CardHeader>
-            <CardContent className="p-0">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Cliente</TableHead>
-                    <TableHead>Data</TableHead>
-                    <TableHead>Valor</TableHead>
-                    <TableHead>Comissão</TableHead>
-                    <TableHead>Status</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {[
-                    { client: "Cliente ABC", date: "22/04/2025", value: "R$ 3.500,00", commission: "R$ 350,00", status: "Aprovada" },
-                    { client: "Cliente XYZ", date: "20/04/2025", value: "R$ 2.800,00", commission: "R$ 280,00", status: "Aprovada" },
-                    { client: "Cliente 123", date: "18/04/2025", value: "R$ 5.100,00", commission: "R$ 510,00", status: "Pendente" },
-                    { client: "Cliente DEF", date: "15/04/2025", value: "R$ 4.200,00", commission: "R$ 420,00", status: "Aprovada" },
-                  ].map((sale, i) => (
-                    <TableRow key={i}>
-                      <TableCell>{sale.client}</TableCell>
-                      <TableCell>{sale.date}</TableCell>
-                      <TableCell>{sale.value}</TableCell>
-                      <TableCell>{sale.commission}</TableCell>
-                      <TableCell>
-                        <span className={`inline-flex items-center rounded-full px-2 py-1 text-xs font-medium ${
-                          sale.status === "Aprovada" ? "bg-green-50 text-green-700" : "bg-yellow-50 text-yellow-700"
-                        }`}>
-                          {sale.status}
-                        </span>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-              <div className="p-4 text-center border-t">
-                <Button variant="link" asChild>
-                  <Link to={PATHS.PARTNER.SALES}>Ver todas as vendas</Link>
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-        
-        <div className="md:col-span-1">
-          <Card>
-            <CardHeader>
-              <CardTitle>Ações Rápidas</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-2">
-                <Button variant="outline" className="w-full justify-start" asChild>
-                  <Link to={PATHS.PARTNER.CLIENTS}>Adicionar Cliente</Link>
-                </Button>
-                <Button variant="outline" className="w-full justify-start" asChild>
-                  <Link to={PATHS.PARTNER.COMMISSIONS}>Solicitar Pagamento</Link>
-                </Button>
-                <Button variant="outline" className="w-full justify-start" asChild>
-                  <Link to={PATHS.PARTNER.REPORTS}>Ver Relatório</Link>
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
-          
-          <Card className="mt-6">
-            <CardHeader>
-              <CardTitle>Desempenho Mensal</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                <div>
-                  <p className="text-sm text-muted-foreground">Clientes novos</p>
-                  <div className="flex justify-between items-center mt-1">
-                    <span className="text-xl font-medium">3</span>
-                    <span className="text-sm text-green-600">+50%</span>
-                  </div>
-                  <div className="w-full bg-muted h-2 rounded-full mt-1">
-                    <div className="bg-primary h-2 rounded-full w-3/5"></div>
-                  </div>
-                </div>
-                
-                <div>
-                  <p className="text-sm text-muted-foreground">Vendas</p>
-                  <div className="flex justify-between items-center mt-1">
-                    <span className="text-xl font-medium">7</span>
-                    <span className="text-sm text-green-600">+16%</span>
-                  </div>
-                  <div className="w-full bg-muted h-2 rounded-full mt-1">
-                    <div className="bg-primary h-2 rounded-full w-4/5"></div>
-                  </div>
-                </div>
-                
-                <div>
-                  <p className="text-sm text-muted-foreground">Comissões</p>
-                  <div className="flex justify-between items-center mt-1">
-                    <span className="text-xl font-medium">R$ 1.560,00</span>
-                    <span className="text-sm text-green-600">+23%</span>
-                  </div>
-                  <div className="w-full bg-muted h-2 rounded-full mt-1">
-                    <div className="bg-primary h-2 rounded-full w-2/3"></div>
-                  </div>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
       </div>
     </div>
   );

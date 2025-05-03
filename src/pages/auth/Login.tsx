@@ -17,7 +17,7 @@ const Login = () => {
     if (user && !isLoading) {
       console.log("Login: User authenticated, redirecting to dashboard");
       setRedirecting(true);
-      navigate(PATHS.DASHBOARD);
+      navigate(PATHS.DASHBOARD); // This will be handled by the RootLayout component
     }
   }, [user, isLoading, navigate]);
 

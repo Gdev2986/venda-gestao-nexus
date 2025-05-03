@@ -69,6 +69,9 @@ const USER = {
   // Settings
   SETTINGS: "/user/settings",
   
+  // Machines
+  MACHINES: "/user/machines",
+  
   // Help
   HELP: "/user/help",
 };
@@ -93,6 +96,9 @@ const PARTNER = {
   
   // Support
   SUPPORT: "/partner/support",
+  
+  // Commissions
+  COMMISSIONS: "/partner/commissions",
   
   // Help
   HELP: "/partner/help",
@@ -129,6 +135,9 @@ const FINANCIAL = {
   
   // Settings
   SETTINGS: "/financial/settings",
+  
+  // Requests
+  REQUESTS: "/financial/requests",
   
   // Support
   SUPPORT: "/financial/support",
@@ -179,6 +188,7 @@ const AUTH = {
 const ROOT = {
   HOME: "/",
   NOT_FOUND: "*",
+  DASHBOARD: "/dashboard", // Redirect to role-based dashboard
 };
 
 // Export combined paths
@@ -191,4 +201,3 @@ export const PATHS = {
   FINANCIAL,
   LOGISTICS
 };
-

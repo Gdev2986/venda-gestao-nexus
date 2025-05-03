@@ -10,7 +10,7 @@ import { UserRole } from "@/types";
 
 const RootLayout = () => {
   const { user, isLoading } = useAuth();
-  const { userRole } = useUserRole();
+  const { userRole, isRoleLoading } = useUserRole();
   const location = useLocation();
   const [showLoading, setShowLoading] = useState(true);
   
@@ -24,7 +24,7 @@ const RootLayout = () => {
   }, []);
   
   // If still loading or showing loading animation, show a spinner
-  if (isLoading || showLoading) {
+  if (isLoading || isRoleLoading || showLoading) {
     return (
       <div className="flex flex-col items-center justify-center h-screen bg-background">
         <motion.div
