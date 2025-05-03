@@ -1,8 +1,6 @@
-
 import { useState, useEffect } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
-import MainLayout from "@/components/layout/MainLayout";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
@@ -400,170 +398,168 @@ const Fees = () => {
   };
 
   return (
-    <MainLayout>
-      <div className="space-y-4">
-        <div className="flex justify-between items-center">
-          <h2 className="text-3xl font-bold tracking-tight">Taxas</h2>
-          <Button onClick={() => {
-            setEditingBlock(null);
-            setNewBlock({ name: "", color: "blue" });
-            setShowBlockDialog(true);
-          }}>
-            <PlusIcon className="mr-2 h-4 w-4" />
-            Novo Bloco de Taxas
-          </Button>
-        </div>
+    <div className="space-y-4">
+      <div className="flex justify-between items-center">
+        <h2 className="text-3xl font-bold tracking-tight">Taxas</h2>
+        <Button onClick={() => {
+          setEditingBlock(null);
+          setNewBlock({ name: "", color: "blue" });
+          setShowBlockDialog(true);
+        }}>
+          <PlusIcon className="mr-2 h-4 w-4" />
+          Novo Bloco de Taxas
+        </Button>
+      </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-4 gap-4">
-          <Card className="lg:col-span-1">
-            <CardHeader>
-              <CardTitle>Blocos de Taxas</CardTitle>
-              <CardDescription>
-                Selecione um bloco para gerenciar suas taxas
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              {isLoading ? (
-                <div className="flex justify-center items-center h-40">
-                  <p>Carregando blocos...</p>
-                </div>
-              ) : (
-                <div className="space-y-2">
-                  {feeBlocks.length === 0 ? (
-                    <p className="text-muted-foreground text-center py-4">
-                      Nenhum bloco de taxas cadastrado.
-                    </p>
-                  ) : (
-                    feeBlocks.map((block) => (
-                      <div 
-                        key={block.id}
-                        className={`flex items-center justify-between p-3 rounded-md cursor-pointer border ${
-                          selectedBlock === block.id ? 'border-primary' : 'border-border'
-                        } hover:border-primary transition-colors`}
-                        onClick={() => setSelectedBlock(block.id)}
-                      >
-                        <div className="flex items-center">
-                          <div className={`w-3 h-3 rounded-full mr-3 ${getBlockColor(block.color)}`} />
-                          <div className="max-w-[150px]">
-                            <p className="font-medium truncate">{block.name}</p>
-                            <p className="text-xs text-muted-foreground truncate">
-                              {block.clients.length > 0 
-                                ? `${block.clients.length} cliente(s)`
-                                : "Nenhum cliente"}
-                            </p>
-                          </div>
-                        </div>
-                        <div className="flex space-x-1 shrink-0 ml-1">
-                          <Button variant="ghost" size="sm" onClick={(e) => {
-                            e.stopPropagation();
-                            handleEditBlock(block);
-                          }}>
-                            <Settings2Icon className="h-4 w-4" />
-                          </Button>
-                          <Button variant="ghost" size="sm" onClick={(e) => {
-                            e.stopPropagation();
-                            handleDeleteBlock(block.id);
-                          }}>
-                            <Trash2Icon className="h-4 w-4 text-destructive" />
-                          </Button>
+      <div className="grid grid-cols-1 lg:grid-cols-4 gap-4">
+        <Card className="lg:col-span-1">
+          <CardHeader>
+            <CardTitle>Blocos de Taxas</CardTitle>
+            <CardDescription>
+              Selecione um bloco para gerenciar suas taxas
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            {isLoading ? (
+              <div className="flex justify-center items-center h-40">
+                <p>Carregando blocos...</p>
+              </div>
+            ) : (
+              <div className="space-y-2">
+                {feeBlocks.length === 0 ? (
+                  <p className="text-muted-foreground text-center py-4">
+                    Nenhum bloco de taxas cadastrado.
+                  </p>
+                ) : (
+                  feeBlocks.map((block) => (
+                    <div 
+                      key={block.id}
+                      className={`flex items-center justify-between p-3 rounded-md cursor-pointer border ${
+                        selectedBlock === block.id ? 'border-primary' : 'border-border'
+                      } hover:border-primary transition-colors`}
+                      onClick={() => setSelectedBlock(block.id)}
+                    >
+                      <div className="flex items-center">
+                        <div className={`w-3 h-3 rounded-full mr-3 ${getBlockColor(block.color)}`} />
+                        <div className="max-w-[150px]">
+                          <p className="font-medium truncate">{block.name}</p>
+                          <p className="text-xs text-muted-foreground truncate">
+                            {block.clients.length > 0 
+                              ? `${block.clients.length} cliente(s)`
+                              : "Nenhum cliente"}
+                          </p>
                         </div>
                       </div>
-                    ))
-                  )}
-                </div>
-              )}
-            </CardContent>
-          </Card>
-
-          <Card className="lg:col-span-3">
-            <CardHeader className="flex flex-row items-center justify-between">
-              <div>
-                <CardTitle>Gerenciar Taxas</CardTitle>
-                {selectedBlock && (
-                  <CardDescription>
-                    Bloco: {feeBlocks.find(b => b.id === selectedBlock)?.name}
-                  </CardDescription>
+                      <div className="flex space-x-1 shrink-0 ml-1">
+                        <Button variant="ghost" size="sm" onClick={(e) => {
+                          e.stopPropagation();
+                          handleEditBlock(block);
+                        }}>
+                          <Settings2Icon className="h-4 w-4" />
+                        </Button>
+                        <Button variant="ghost" size="sm" onClick={(e) => {
+                          e.stopPropagation();
+                          handleDeleteBlock(block.id);
+                        }}>
+                          <Trash2Icon className="h-4 w-4 text-destructive" />
+                        </Button>
+                      </div>
+                    </div>
+                  ))
                 )}
               </div>
-              {selectedBlock && (
-                <div className="flex space-x-2">
-                  <Button variant="outline" onClick={openAssignClientsDialog}>
-                    Associar Clientes
-                  </Button>
-                  <Button onClick={() => {
-                    resetNewFee();
-                    setEditingFee(null);
-                    setNewFee(prev => ({ ...prev, paymentMethod: activeTab }));
-                    setShowAddFeeDialog(true);
-                  }}>
-                    Adicionar Taxa
-                  </Button>
-                </div>
-              )}
-            </CardHeader>
-            <CardContent>
-              {!selectedBlock ? (
-                <div className="text-center py-8 text-muted-foreground">
-                  Selecione um bloco de taxas para gerenciar suas taxas
-                </div>
-              ) : (
-                <Tabs defaultValue="PIX" value={activeTab} onValueChange={setActiveTab}>
-                  <TabsList className="grid grid-cols-3 mb-4">
-                    {PAYMENT_TYPES.map(type => (
-                      <TabsTrigger key={type} value={type}>{type}</TabsTrigger>
-                    ))}
-                  </TabsList>
+            )}
+          </CardContent>
+        </Card>
 
+        <Card className="lg:col-span-3">
+          <CardHeader className="flex flex-row items-center justify-between">
+            <div>
+              <CardTitle>Gerenciar Taxas</CardTitle>
+              {selectedBlock && (
+                <CardDescription>
+                  Bloco: {feeBlocks.find(b => b.id === selectedBlock)?.name}
+                </CardDescription>
+              )}
+            </div>
+            {selectedBlock && (
+              <div className="flex space-x-2">
+                <Button variant="outline" onClick={openAssignClientsDialog}>
+                  Associar Clientes
+                </Button>
+                <Button onClick={() => {
+                  resetNewFee();
+                  setEditingFee(null);
+                  setNewFee(prev => ({ ...prev, paymentMethod: activeTab }));
+                  setShowAddFeeDialog(true);
+                }}>
+                  Adicionar Taxa
+                </Button>
+              </div>
+            )}
+          </CardHeader>
+          <CardContent>
+            {!selectedBlock ? (
+              <div className="text-center py-8 text-muted-foreground">
+                Selecione um bloco de taxas para gerenciar suas taxas
+              </div>
+            ) : (
+              <Tabs defaultValue="PIX" value={activeTab} onValueChange={setActiveTab}>
+                <TabsList className="grid grid-cols-3 mb-4">
                   {PAYMENT_TYPES.map(type => (
-                    <TabsContent key={type} value={type} className="mt-0">
-                      <Table>
-                        <TableHeader>
+                    <TabsTrigger key={type} value={type}>{type}</TabsTrigger>
+                  ))}
+                </TabsList>
+
+                {PAYMENT_TYPES.map(type => (
+                  <TabsContent key={type} value={type} className="mt-0">
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          {type === "CRÉDITO" && <TableHead>Parcelas</TableHead>}
+                          <TableHead>Taxa Base (%)</TableHead>
+                          <TableHead>Taxa Parceiro (%)</TableHead>
+                          <TableHead>Taxa Final (%)</TableHead>
+                          <TableHead className="text-right">Ações</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {getSelectedBlockFees().length === 0 ? (
                           <TableRow>
-                            {type === "CRÉDITO" && <TableHead>Parcelas</TableHead>}
-                            <TableHead>Taxa Base (%)</TableHead>
-                            <TableHead>Taxa Parceiro (%)</TableHead>
-                            <TableHead>Taxa Final (%)</TableHead>
-                            <TableHead className="text-right">Ações</TableHead>
+                            <TableCell colSpan={type === "CRÉDITO" ? 5 : 4} className="text-center py-10">
+                              Nenhuma taxa cadastrada para {type.toLowerCase()}.
+                            </TableCell>
                           </TableRow>
-                        </TableHeader>
-                        <TableBody>
-                          {getSelectedBlockFees().length === 0 ? (
-                            <TableRow>
-                              <TableCell colSpan={type === "CRÉDITO" ? 5 : 4} className="text-center py-10">
-                                Nenhuma taxa cadastrada para {type.toLowerCase()}.
+                        ) : (
+                          getSelectedBlockFees().map((fee) => (
+                            <TableRow key={fee.id}>
+                              {type === "CRÉDITO" && <TableCell>{fee.installments}x</TableCell>}
+                              <TableCell>{fee.baseRate.toFixed(2)}%</TableCell>
+                              <TableCell>{fee.partnerRate.toFixed(2)}%</TableCell>
+                              <TableCell>{fee.finalRate.toFixed(2)}%</TableCell>
+                              <TableCell className="text-right">
+                                <div className="flex justify-end gap-2">
+                                  <Button 
+                                    variant="outline" 
+                                    size="sm"
+                                    onClick={() => handleEditFee(fee)}
+                                  >
+                                    Editar
+                                  </Button>
+                                  <Button 
+                                    variant="outline" 
+                                    size="sm"
+                                    className="text-destructive hover:text-destructive"
+                                    onClick={() => handleRemoveFee(fee.id)}
+                                  >
+                                    Remover
+                                  </Button>
+                                </div>
                               </TableCell>
                             </TableRow>
-                          ) : (
-                            getSelectedBlockFees().map((fee) => (
-                              <TableRow key={fee.id}>
-                                {type === "CRÉDITO" && <TableCell>{fee.installments}x</TableCell>}
-                                <TableCell>{fee.baseRate.toFixed(2)}%</TableCell>
-                                <TableCell>{fee.partnerRate.toFixed(2)}%</TableCell>
-                                <TableCell>{fee.finalRate.toFixed(2)}%</TableCell>
-                                <TableCell className="text-right">
-                                  <div className="flex justify-end gap-2">
-                                    <Button 
-                                      variant="outline" 
-                                      size="sm"
-                                      onClick={() => handleEditFee(fee)}
-                                    >
-                                      Editar
-                                    </Button>
-                                    <Button 
-                                      variant="outline" 
-                                      size="sm"
-                                      className="text-destructive hover:text-destructive"
-                                      onClick={() => handleRemoveFee(fee.id)}
-                                    >
-                                      Remover
-                                    </Button>
-                                  </div>
-                                </TableCell>
-                              </TableRow>
-                            ))
-                          )}
-                        </TableBody>
-                      </Table>
+                          ))
+                        )}
+                      </TableBody>
                     </TabsContent>
                   ))}
                 </Tabs>
@@ -758,7 +754,7 @@ const Fees = () => {
           </DialogContent>
         </Dialog>
       </div>
-    </MainLayout>
+    </div>
   );
 };
 
