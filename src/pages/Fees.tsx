@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
@@ -560,200 +561,200 @@ const Fees = () => {
                           ))
                         )}
                       </TableBody>
-                    </TabsContent>
-                  ))}
-                </Tabs>
-              )}
-            </CardContent>
-          </Card>
-        </div>
+                    </Table>
+                  </TabsContent>
+                ))}
+              </Tabs>
+            )}
+          </CardContent>
+        </Card>
+      </div>
 
-        {/* Add/Edit Fee Dialog */}
-        <Dialog open={showAddFeeDialog} onOpenChange={setShowAddFeeDialog}>
-          <DialogContent>
-            <DialogHeader>
-              <DialogTitle>{editingFee ? "Editar Taxa" : "Adicionar Nova Taxa"}</DialogTitle>
-            </DialogHeader>
-            
-            <div className="space-y-4 pt-4">
-              <div className="grid gap-4">
-                <div className="grid grid-cols-2 gap-4">
+      {/* Add/Edit Fee Dialog */}
+      <Dialog open={showAddFeeDialog} onOpenChange={setShowAddFeeDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>{editingFee ? "Editar Taxa" : "Adicionar Nova Taxa"}</DialogTitle>
+          </DialogHeader>
+          
+          <div className="space-y-4 pt-4">
+            <div className="grid gap-4">
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <Label htmlFor="paymentMethod">Método de Pagamento</Label>
+                  <select 
+                    id="paymentMethod"
+                    className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+                    value={newFee.paymentMethod}
+                    onChange={(e) => setNewFee({...newFee, paymentMethod: e.target.value})}
+                  >
+                    {PAYMENT_TYPES.map(type => (
+                      <option key={type} value={type}>{type}</option>
+                    ))}
+                  </select>
+                </div>
+                
+                {newFee.paymentMethod === "CRÉDITO" && (
                   <div>
-                    <Label htmlFor="paymentMethod">Método de Pagamento</Label>
+                    <Label htmlFor="installments">Parcelas</Label>
                     <select 
-                      id="paymentMethod"
+                      id="installments"
                       className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
-                      value={newFee.paymentMethod}
-                      onChange={(e) => setNewFee({...newFee, paymentMethod: e.target.value})}
+                      value={newFee.installments}
+                      onChange={(e) => setNewFee({...newFee, installments: parseInt(e.target.value)})}
                     >
-                      {PAYMENT_TYPES.map(type => (
-                        <option key={type} value={type}>{type}</option>
+                      {INSTALLMENT_OPTIONS.map(num => (
+                        <option key={num} value={num}>{num}x</option>
                       ))}
                     </select>
                   </div>
-                  
-                  {newFee.paymentMethod === "CRÉDITO" && (
-                    <div>
-                      <Label htmlFor="installments">Parcelas</Label>
-                      <select 
-                        id="installments"
-                        className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
-                        value={newFee.installments}
-                        onChange={(e) => setNewFee({...newFee, installments: parseInt(e.target.value)})}
-                      >
-                        {INSTALLMENT_OPTIONS.map(num => (
-                          <option key={num} value={num}>{num}x</option>
-                        ))}
-                      </select>
-                    </div>
-                  )}
-                </div>
-                
-                <div>
-                  <Label htmlFor="baseRate">Taxa Base (%)</Label>
-                  <Input 
-                    id="baseRate"
-                    type="number"
-                    step="0.01"
-                    value={newFee.baseRate}
-                    onChange={(e) => setNewFee({...newFee, baseRate: parseFloat(e.target.value)})}
-                  />
-                </div>
-                
-                <div>
-                  <Label htmlFor="partnerRate">Taxa Parceiro (%)</Label>
-                  <Input 
-                    id="partnerRate"
-                    type="number"
-                    step="0.01"
-                    value={newFee.partnerRate}
-                    onChange={(e) => setNewFee({...newFee, partnerRate: parseFloat(e.target.value)})}
-                  />
-                </div>
-                
-                <div>
-                  <Label htmlFor="finalRate">Taxa Final (%)</Label>
-                  <Input 
-                    id="finalRate"
-                    type="number"
-                    step="0.01"
-                    value={newFee.finalRate}
-                    onChange={(e) => setNewFee({...newFee, finalRate: parseFloat(e.target.value)})}
-                  />
-                </div>
+                )}
+              </div>
+              
+              <div>
+                <Label htmlFor="baseRate">Taxa Base (%)</Label>
+                <Input 
+                  id="baseRate"
+                  type="number"
+                  step="0.01"
+                  value={newFee.baseRate}
+                  onChange={(e) => setNewFee({...newFee, baseRate: parseFloat(e.target.value)})}
+                />
+              </div>
+              
+              <div>
+                <Label htmlFor="partnerRate">Taxa Parceiro (%)</Label>
+                <Input 
+                  id="partnerRate"
+                  type="number"
+                  step="0.01"
+                  value={newFee.partnerRate}
+                  onChange={(e) => setNewFee({...newFee, partnerRate: parseFloat(e.target.value)})}
+                />
+              </div>
+              
+              <div>
+                <Label htmlFor="finalRate">Taxa Final (%)</Label>
+                <Input 
+                  id="finalRate"
+                  type="number"
+                  step="0.01"
+                  value={newFee.finalRate}
+                  onChange={(e) => setNewFee({...newFee, finalRate: parseFloat(e.target.value)})}
+                />
               </div>
             </div>
-            
-            <DialogFooter>
-              <Button variant="outline" onClick={() => {
-                setShowAddFeeDialog(false);
-                setEditingFee(null);
-              }}>Cancelar</Button>
-              <Button onClick={handleAddFee}>{editingFee ? "Salvar" : "Adicionar"}</Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
+          </div>
+          
+          <DialogFooter>
+            <Button variant="outline" onClick={() => {
+              setShowAddFeeDialog(false);
+              setEditingFee(null);
+            }}>Cancelar</Button>
+            <Button onClick={handleAddFee}>{editingFee ? "Salvar" : "Adicionar"}</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
-        {/* Add/Edit Block Dialog */}
-        <Dialog open={showBlockDialog} onOpenChange={setShowBlockDialog}>
-          <DialogContent>
-            <DialogHeader>
-              <DialogTitle>{editingBlock ? "Editar Bloco" : "Novo Bloco de Taxas"}</DialogTitle>
-              <DialogDescription>
-                Configure o nome e a cor do bloco de taxas
-              </DialogDescription>
-            </DialogHeader>
-            
-            <div className="space-y-4 pt-4">
-              <div className="grid gap-4">
-                <div>
-                  <Label htmlFor="blockName">Nome do Bloco</Label>
-                  <Input 
-                    id="blockName"
-                    value={newBlock.name}
-                    onChange={(e) => setNewBlock({...newBlock, name: e.target.value})}
-                    placeholder="Ex: Premium, Padrão, Especial"
-                  />
-                </div>
-                
-                <div>
-                  <Label>Cor</Label>
-                  <div className="grid grid-cols-5 gap-2 mt-2">
-                    {FEE_BLOCK_COLORS.map(color => (
-                      <div 
-                        key={color.value}
-                        className={`flex items-center justify-center p-2 border rounded-md cursor-pointer ${
-                          newBlock.color === color.value ? 'border-primary ring-2 ring-primary ring-opacity-50' : 'border-border'
-                        } ${getBlockColor(color.value)}`}
-                        onClick={() => setNewBlock({...newBlock, color: color.value})}
-                      >
-                        {color.name}
-                      </div>
-                    ))}
-                  </div>
-                </div>
+      {/* Add/Edit Block Dialog */}
+      <Dialog open={showBlockDialog} onOpenChange={setShowBlockDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>{editingBlock ? "Editar Bloco" : "Novo Bloco de Taxas"}</DialogTitle>
+            <DialogDescription>
+              Configure o nome e a cor do bloco de taxas
+            </DialogDescription>
+          </DialogHeader>
+          
+          <div className="space-y-4 pt-4">
+            <div className="grid gap-4">
+              <div>
+                <Label htmlFor="blockName">Nome do Bloco</Label>
+                <Input 
+                  id="blockName"
+                  value={newBlock.name}
+                  onChange={(e) => setNewBlock({...newBlock, name: e.target.value})}
+                  placeholder="Ex: Premium, Padrão, Especial"
+                />
               </div>
-            </div>
-            
-            <DialogFooter>
-              <Button variant="outline" onClick={() => {
-                setShowBlockDialog(false);
-                setEditingBlock(null);
-              }}>Cancelar</Button>
-              <Button onClick={handleAddBlock}>{editingBlock ? "Salvar" : "Criar Bloco"}</Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
-
-        {/* Assign Clients Dialog */}
-        <Dialog open={showAssignClientsDialog} onOpenChange={setShowAssignClientsDialog}>
-          <DialogContent className="sm:max-w-md">
-            <DialogHeader>
-              <DialogTitle>Associar Clientes</DialogTitle>
-              <DialogDescription>
-                Selecione os clientes que utilizarão este bloco de taxas
-              </DialogDescription>
-            </DialogHeader>
-            
-            <div className="py-4 max-h-[300px] overflow-y-auto">
-              {clients.length === 0 ? (
-                <p className="text-center text-muted-foreground py-4">
-                  Nenhum cliente encontrado.
-                </p>
-              ) : (
-                <div className="space-y-2">
-                  {clients.map(client => (
+              
+              <div>
+                <Label>Cor</Label>
+                <div className="grid grid-cols-5 gap-2 mt-2">
+                  {FEE_BLOCK_COLORS.map(color => (
                     <div 
-                      key={client.id} 
-                      className={`flex items-center p-2 rounded-md ${
-                        selectedClients.includes(client.id) ? 'bg-primary/10' : ''
-                      } hover:bg-secondary/50 cursor-pointer`}
-                      onClick={() => toggleClient(client.id)}
+                      key={color.value}
+                      className={`flex items-center justify-center p-2 border rounded-md cursor-pointer ${
+                        newBlock.color === color.value ? 'border-primary ring-2 ring-primary ring-opacity-50' : 'border-border'
+                      } ${getBlockColor(color.value)}`}
+                      onClick={() => setNewBlock({...newBlock, color: color.value})}
                     >
-                      <input 
-                        type="checkbox" 
-                        checked={selectedClients.includes(client.id)}
-                        onChange={() => toggleClient(client.id)}
-                        className="mr-3"
-                      />
-                      <span>{client.business_name}</span>
+                      {color.name}
                     </div>
                   ))}
                 </div>
-              )}
+              </div>
             </div>
-            
-            <DialogFooter>
-              <Button variant="outline" onClick={() => setShowAssignClientsDialog(false)}>
-                Cancelar
-              </Button>
-              <Button onClick={handleAssignClients}>
-                Salvar
-              </Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
-      </div>
+          </div>
+          
+          <DialogFooter>
+            <Button variant="outline" onClick={() => {
+              setShowBlockDialog(false);
+              setEditingBlock(null);
+            }}>Cancelar</Button>
+            <Button onClick={handleAddBlock}>{editingBlock ? "Salvar" : "Criar Bloco"}</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Assign Clients Dialog */}
+      <Dialog open={showAssignClientsDialog} onOpenChange={setShowAssignClientsDialog}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Associar Clientes</DialogTitle>
+            <DialogDescription>
+              Selecione os clientes que utilizarão este bloco de taxas
+            </DialogDescription>
+          </DialogHeader>
+          
+          <div className="py-4 max-h-[300px] overflow-y-auto">
+            {clients.length === 0 ? (
+              <p className="text-center text-muted-foreground py-4">
+                Nenhum cliente encontrado.
+              </p>
+            ) : (
+              <div className="space-y-2">
+                {clients.map(client => (
+                  <div 
+                    key={client.id} 
+                    className={`flex items-center p-2 rounded-md ${
+                      selectedClients.includes(client.id) ? 'bg-primary/10' : ''
+                    } hover:bg-secondary/50 cursor-pointer`}
+                    onClick={() => toggleClient(client.id)}
+                  >
+                    <input 
+                      type="checkbox" 
+                      checked={selectedClients.includes(client.id)}
+                      onChange={() => toggleClient(client.id)}
+                      className="mr-3"
+                    />
+                    <span>{client.business_name}</span>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+          
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowAssignClientsDialog(false)}>
+              Cancelar
+            </Button>
+            <Button onClick={handleAssignClients}>
+              Salvar
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
