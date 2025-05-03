@@ -55,6 +55,8 @@ const SidebarFooter = () => {
       )}
 
       <div className="space-y-1">
+
+
         <button
           onClick={handleLogout}
           className="flex items-center w-full px-3 py-2 text-sm rounded-md text-sidebar-foreground hover:bg-sidebar-accent/70 hover:text-white transition-colors"

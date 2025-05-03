@@ -1,576 +1,764 @@
 
-import { useState } from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { TabsContent, Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
-import { Label } from "@/components/ui/label";
+import { useState, useEffect } from "react";
 import { useToast } from "@/hooks/use-toast";
-import { Plus, Pencil, Trash2 } from "lucide-react";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
+import { supabase } from "@/integrations/supabase/client";
+import MainLayout from "@/components/layout/MainLayout";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Button } from "@/components/ui/button";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
+import { Badge } from "@/components/ui/badge";
+import { PlusIcon, Settings2Icon, Trash2Icon } from "lucide-react";
 
-// Types for fees
+// Define fee types for different payment methods
+const PAYMENT_TYPES = ["PIX", "DÉBITO", "CRÉDITO"];
+const INSTALLMENT_OPTIONS = Array.from({ length: 21 }, (_, i) => i + 1); // 1 to 21
+
+interface FeeBlock {
+  id: string;
+  name: string;
+  color: string;
+  fees: Fee[];
+  clients: string[];
+}
+
 interface Fee {
   id: string;
-  name: string;
-  pix: number;
-  debit: number;
-  credit: number;
-  clientCount: number;
+  paymentMethod: string;
+  installments: number;
+  baseRate: number;
+  partnerRate: number;
+  finalRate: number;
 }
 
-// Mock data for blocks
-const initialBlocks: Fee[] = [
-  { 
-    id: "1", 
-    name: "Padrão", 
-    pix: 0.99, 
-    debit: 1.5, 
-    credit: 1.99,
-    clientCount: 2
-  },
-  { 
-    id: "2", 
-    name: "Premium", 
-    pix: 0.89, 
-    debit: 1.4, 
-    credit: 1.89,
-    clientCount: 1
-  },
-  { 
-    id: "3", 
-    name: "Especial", 
-    pix: 0.79, 
-    debit: 1.3, 
-    credit: 1.79,
-    clientCount: 1
-  }
-];
-
-// Mock data for clients
 interface Client {
   id: string;
-  name: string;
-  email: string;
-  blockId: string;
+  business_name: string;
 }
 
-const mockClients: Client[] = [
-  { id: "c1", name: "Empresa ABC Ltda", email: "contato@empresaabc.com", blockId: "1" },
-  { id: "c2", name: "João Silva ME", email: "joao@jsilva.com", blockId: "1" },
-  { id: "c3", name: "Maria Souza Consultoria", email: "maria@souzaconsultoria.com", blockId: "2" },
-  { id: "c4", name: "Carlos Oliveira Tech", email: "carlos@oliveira.tech", blockId: "3" },
+const FEE_BLOCK_COLORS = [
+  { name: "Padrão", value: "blue" },
+  { name: "Verde", value: "green" },
+  { name: "Vermelho", value: "red" },
+  { name: "Amarelo", value: "yellow" },
+  { name: "Roxo", value: "purple" },
 ];
 
 const Fees = () => {
-  const { toast } = useToast();
-  const [blocks, setBlocks] = useState<Fee[]>(initialBlocks);
-  const [selectedBlock, setSelectedBlock] = useState<Fee | null>(null);
-  const [selectedTab, setSelectedTab] = useState("pix");
-  const [showNewBlockDialog, setShowNewBlockDialog] = useState(false);
-  const [showEditFeeDialog, setShowEditFeeDialog] = useState(false);
-  const [showAssociateClientsDialog, setShowAssociateClientsDialog] = useState(false);
+  const [feeBlocks, setFeeBlocks] = useState<FeeBlock[]>([]);
+  const [clients, setClients] = useState<Client[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [activeTab, setActiveTab] = useState("PIX");
+  const [selectedBlock, setSelectedBlock] = useState<string | null>(null);
+  const [showAddFeeDialog, setShowAddFeeDialog] = useState(false);
+  const [showBlockDialog, setShowBlockDialog] = useState(false);
+  const [showAssignClientsDialog, setShowAssignClientsDialog] = useState(false);
+  const [editingFee, setEditingFee] = useState<Fee | null>(null);
+  const [editingBlock, setEditingBlock] = useState<FeeBlock | null>(null);
   
+  const [newFee, setNewFee] = useState({
+    paymentMethod: "PIX",
+    installments: 1,
+    baseRate: 0,
+    partnerRate: 0,
+    finalRate: 0,
+  });
+
   const [newBlock, setNewBlock] = useState({
     name: "",
-    pix: 0.99,
-    debit: 1.50,
-    credit: 1.99
+    color: "blue",
   });
+
+  const [selectedClients, setSelectedClients] = useState<string[]>([]);
   
-  const [editFee, setEditFee] = useState({
-    pix: 0,
-    debit: 0,
-    credit: 0
-  });
-  
-  // Handle block creation
-  const handleCreateBlock = () => {
+  const { toast } = useToast();
+
+  useEffect(() => {
+    fetchFeeBlocks();
+    fetchClients();
+  }, []);
+
+  const fetchClients = async () => {
+    try {
+      // Mock clients data
+      setClients([
+        { id: "1", business_name: "Empresa A" },
+        { id: "2", business_name: "Empresa B" },
+        { id: "3", business_name: "Empresa C" },
+        { id: "4", business_name: "Empresa D" },
+      ]);
+    } catch (error) {
+      console.error("Erro ao carregar clientes:", error);
+    }
+  };
+
+  const fetchFeeBlocks = async () => {
+    setIsLoading(true);
+    
+    try {
+      // This is mock data since we don't have the actual table yet
+      const mockFeeBlocks: FeeBlock[] = [
+        {
+          id: "1",
+          name: "Padrão",
+          color: "blue",
+          clients: ["1", "4"],
+          fees: [
+            { id: "1", paymentMethod: "PIX", installments: 1, baseRate: 0.99, partnerRate: 1.5, finalRate: 1.99 },
+            { id: "2", paymentMethod: "DÉBITO", installments: 1, baseRate: 1.5, partnerRate: 2.0, finalRate: 2.5 },
+            { id: "3", paymentMethod: "CRÉDITO", installments: 1, baseRate: 2.0, partnerRate: 2.8, finalRate: 3.5 },
+            { id: "4", paymentMethod: "CRÉDITO", installments: 2, baseRate: 3.0, partnerRate: 4.0, finalRate: 5.0 },
+          ]
+        },
+        {
+          id: "2",
+          name: "Premium",
+          color: "green",
+          clients: ["2"],
+          fees: [
+            { id: "5", paymentMethod: "PIX", installments: 1, baseRate: 0.8, partnerRate: 1.2, finalRate: 1.5 },
+            { id: "6", paymentMethod: "DÉBITO", installments: 1, baseRate: 1.2, partnerRate: 1.7, finalRate: 2.0 },
+            { id: "7", paymentMethod: "CRÉDITO", installments: 1, baseRate: 1.8, partnerRate: 2.5, finalRate: 3.0 },
+            { id: "8", paymentMethod: "CRÉDITO", installments: 2, baseRate: 2.5, partnerRate: 3.5, finalRate: 4.0 },
+          ]
+        },
+        {
+          id: "3",
+          name: "Especial",
+          color: "purple",
+          clients: ["3"],
+          fees: [
+            { id: "9", paymentMethod: "PIX", installments: 1, baseRate: 0.9, partnerRate: 1.3, finalRate: 1.8 },
+            { id: "10", paymentMethod: "DÉBITO", installments: 1, baseRate: 1.3, partnerRate: 1.8, finalRate: 2.2 },
+          ]
+        }
+      ];
+      
+      setFeeBlocks(mockFeeBlocks);
+      if (mockFeeBlocks.length > 0) {
+        setSelectedBlock(mockFeeBlocks[0].id);
+      }
+    } catch (error) {
+      console.error("Erro ao carregar taxas:", error);
+      toast({
+        variant: "destructive",
+        title: "Erro ao carregar taxas",
+        description: "Não foi possível carregar as taxas de pagamento.",
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleAddFee = () => {
+    if (!selectedBlock) {
+      toast({
+        variant: "destructive",
+        title: "Erro ao adicionar taxa",
+        description: "Selecione um bloco de taxas primeiro.",
+      });
+      return;
+    }
+
+    const blockToUpdate = feeBlocks.find(block => block.id === selectedBlock);
+    if (!blockToUpdate) return;
+
+    if (editingFee) {
+      // Update existing fee
+      const updatedBlocks = feeBlocks.map(block => {
+        if (block.id === selectedBlock) {
+          return {
+            ...block,
+            fees: block.fees.map(f => f.id === editingFee.id ? { ...newFee, id: editingFee.id } : f)
+          };
+        }
+        return block;
+      });
+      
+      setFeeBlocks(updatedBlocks);
+      toast({
+        title: "Taxa atualizada",
+        description: "A taxa foi atualizada com sucesso.",
+      });
+    } else {
+      // Add new fee
+      const newId = Math.random().toString();
+      
+      const updatedBlocks = feeBlocks.map(block => {
+        if (block.id === selectedBlock) {
+          return {
+            ...block,
+            fees: [...block.fees, { ...newFee, id: newId }]
+          };
+        }
+        return block;
+      });
+      
+      setFeeBlocks(updatedBlocks);
+      toast({
+        title: "Taxa adicionada",
+        description: "A nova taxa foi adicionada com sucesso.",
+      });
+    }
+    
+    setShowAddFeeDialog(false);
+    setEditingFee(null);
+    resetNewFee();
+  };
+
+  const handleAddBlock = () => {
     if (!newBlock.name.trim()) {
       toast({
-        title: "Erro",
-        description: "O nome do bloco é obrigatório.",
-        variant: "destructive"
+        variant: "destructive",
+        title: "Nome inválido",
+        description: "O bloco de taxas precisa ter um nome.",
       });
       return;
     }
+
+    if (editingBlock) {
+      // Update existing block
+      const updatedBlocks = feeBlocks.map(block => 
+        block.id === editingBlock.id ? { 
+          ...block, 
+          name: newBlock.name, 
+          color: newBlock.color 
+        } : block
+      );
+      
+      setFeeBlocks(updatedBlocks);
+      toast({
+        title: "Bloco atualizado",
+        description: "O bloco de taxas foi atualizado com sucesso.",
+      });
+    } else {
+      // Add new block
+      const newId = Math.random().toString();
+      
+      setFeeBlocks([
+        ...feeBlocks,
+        {
+          id: newId,
+          name: newBlock.name,
+          color: newBlock.color,
+          fees: [],
+          clients: []
+        }
+      ]);
+      
+      setSelectedBlock(newId);
+      
+      toast({
+        title: "Bloco adicionado",
+        description: "O novo bloco de taxas foi adicionado com sucesso.",
+      });
+    }
     
-    const newBlockWithId = {
-      id: `block-${Date.now()}`,
-      name: newBlock.name,
-      pix: newBlock.pix,
-      debit: newBlock.debit,
-      credit: newBlock.credit,
-      clientCount: 0
-    };
-    
-    setBlocks([...blocks, newBlockWithId]);
-    setShowNewBlockDialog(false);
-    
-    toast({
-      title: "Bloco criado",
-      description: `Bloco "${newBlock.name}" criado com sucesso.`
-    });
-    
-    // Reset form
-    setNewBlock({
-      name: "",
-      pix: 0.99,
-      debit: 1.50,
-      credit: 1.99
-    });
+    setShowBlockDialog(false);
+    setEditingBlock(null);
+    setNewBlock({ name: "", color: "blue" });
   };
-  
-  // Handle fee update
-  const handleUpdateFee = () => {
+
+  const handleAssignClients = () => {
     if (!selectedBlock) return;
     
-    setBlocks(blocks.map(block => 
-      block.id === selectedBlock.id 
-        ? { 
-            ...block, 
-            pix: editFee.pix,
-            debit: editFee.debit,
-            credit: editFee.credit
-          } 
-        : block
-    ));
+    const updatedBlocks = feeBlocks.map(block => {
+      if (block.id === selectedBlock) {
+        return { ...block, clients: selectedClients };
+      }
+      return block;
+    });
     
-    setShowEditFeeDialog(false);
+    setFeeBlocks(updatedBlocks);
+    setShowAssignClientsDialog(false);
     
     toast({
-      title: "Taxas atualizadas",
-      description: `As taxas do bloco "${selectedBlock.name}" foram atualizadas com sucesso.`
+      title: "Clientes associados",
+      description: "Os clientes foram associados ao bloco com sucesso.",
     });
   };
-  
-  // Handle block deletion
-  const handleDeleteBlock = (block: Fee) => {
-    if (block.clientCount > 0) {
+
+  const handleDeleteBlock = (blockId: string) => {
+    if (window.confirm("Tem certeza que deseja excluir este bloco de taxas?")) {
+      const updatedBlocks = feeBlocks.filter(block => block.id !== blockId);
+      setFeeBlocks(updatedBlocks);
+      
+      if (updatedBlocks.length > 0) {
+        setSelectedBlock(updatedBlocks[0].id);
+      } else {
+        setSelectedBlock(null);
+      }
+      
       toast({
-        title: "Não é possível excluir",
-        description: `O bloco "${block.name}" tem ${block.clientCount} cliente(s) associado(s). Remova as associações primeiro.`,
-        variant: "destructive"
+        title: "Bloco removido",
+        description: "O bloco de taxas foi removido com sucesso.",
       });
-      return;
+    }
+  };
+
+  const handleEditFee = (fee: Fee) => {
+    setEditingFee(fee);
+    setNewFee({
+      paymentMethod: fee.paymentMethod,
+      installments: fee.installments,
+      baseRate: fee.baseRate,
+      partnerRate: fee.partnerRate,
+      finalRate: fee.finalRate,
+    });
+    setShowAddFeeDialog(true);
+  };
+
+  const handleEditBlock = (block: FeeBlock) => {
+    setEditingBlock(block);
+    setNewBlock({
+      name: block.name,
+      color: block.color,
+    });
+    setShowBlockDialog(true);
+  };
+
+  const handleRemoveFee = (feeId: string) => {
+    if (selectedBlock && window.confirm("Tem certeza que deseja excluir esta taxa?")) {
+      const updatedBlocks = feeBlocks.map(block => {
+        if (block.id === selectedBlock) {
+          return {
+            ...block,
+            fees: block.fees.filter(fee => fee.id !== feeId)
+          };
+        }
+        return block;
+      });
+      
+      setFeeBlocks(updatedBlocks);
+      toast({
+        title: "Taxa removida",
+        description: "A taxa foi removida com sucesso.",
+      });
+    }
+  };
+
+  const openAssignClientsDialog = () => {
+    if (!selectedBlock) return;
+    
+    const currentBlock = feeBlocks.find(block => block.id === selectedBlock);
+    if (currentBlock) {
+      setSelectedClients([...currentBlock.clients]);
+    } else {
+      setSelectedClients([]);
     }
     
-    setBlocks(blocks.filter(b => b.id !== block.id));
+    setShowAssignClientsDialog(true);
+  };
+
+  const toggleClient = (clientId: string) => {
+    if (selectedClients.includes(clientId)) {
+      setSelectedClients(selectedClients.filter(id => id !== clientId));
+    } else {
+      setSelectedClients([...selectedClients, clientId]);
+    }
+  };
+
+  const resetNewFee = () => {
+    setNewFee({
+      paymentMethod: activeTab,
+      installments: activeTab === "CRÉDITO" ? 1 : 1,
+      baseRate: 0,
+      partnerRate: 0,
+      finalRate: 0,
+    });
+  };
+
+  const getSelectedBlockFees = () => {
+    if (!selectedBlock) return [];
     
-    toast({
-      title: "Bloco excluído",
-      description: `Bloco "${block.name}" excluído com sucesso.`
-    });
+    const block = feeBlocks.find(b => b.id === selectedBlock);
+    if (!block) return [];
+    
+    return block.fees.filter(fee => fee.paymentMethod === activeTab);
   };
-  
-  // Set edit fee values when dialog opens
-  const openEditFeeDialog = (block: Fee) => {
-    setSelectedBlock(block);
-    setEditFee({
-      pix: block.pix,
-      debit: block.debit,
-      credit: block.credit
-    });
-    setShowEditFeeDialog(true);
+
+  const getBlockColor = (color: string) => {
+    const colors = {
+      blue: "bg-blue-100 text-blue-800 border-blue-300",
+      green: "bg-green-100 text-green-800 border-green-300",
+      red: "bg-red-100 text-red-800 border-red-300",
+      yellow: "bg-yellow-100 text-yellow-800 border-yellow-300",
+      purple: "bg-purple-100 text-purple-800 border-purple-300",
+    };
+    
+    return colors[color] || colors.blue;
   };
-  
-  // Handle block selection
-  const handleBlockSelect = (block: Fee) => {
-    setSelectedBlock(block);
+
+  const getAssociatedClientNames = (clientIds: string[]) => {
+    return clients
+      .filter(client => clientIds.includes(client.id))
+      .map(client => client.business_name)
+      .join(", ");
   };
-  
-  const getBlockClients = (blockId: string) => {
-    return mockClients.filter(client => client.blockId === blockId);
-  };
-  
+
   return (
-    <div className="space-y-6">
-      <div className="flex justify-between items-center">
-        <h2 className="text-3xl font-bold tracking-tight">Taxas</h2>
-        <Button onClick={() => setShowNewBlockDialog(true)}>
-          <Plus className="mr-2 h-4 w-4" /> Novo Bloco de Taxas
-        </Button>
-      </div>
-      
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <Card className="md:col-span-1">
-          <CardHeader>
-            <CardTitle>Blocos de Taxas</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className="text-sm text-muted-foreground mb-4">
-              Selecione um bloco para gerenciar suas taxas
-            </p>
-            <div className="space-y-2">
-              {blocks.map((block) => (
-                <div 
-                  key={block.id} 
-                  className={`p-4 rounded-md border cursor-pointer flex justify-between items-center ${
-                    selectedBlock?.id === block.id ? 'bg-muted border-primary' : 'hover:bg-muted'
-                  }`}
-                  onClick={() => handleBlockSelect(block)}
-                >
-                  <div>
-                    <h3 className="font-medium">{block.name}</h3>
-                    <p className="text-sm text-muted-foreground">
-                      {block.clientCount} cliente(s)
-                    </p>
-                  </div>
-                  <Button 
-                    variant="ghost" 
-                    size="icon"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      handleDeleteBlock(block);
-                    }}
-                  >
-                    <Trash2 className="h-4 w-4" />
-                  </Button>
-                </div>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
-        
-        {selectedBlock ? (
-          <Card className="md:col-span-2">
-            <CardHeader className="flex flex-row items-center justify-between">
-              <CardTitle>Gerenciar Taxas</CardTitle>
-              <div className="flex space-x-2">
-                <Button 
-                  variant="outline" 
-                  onClick={() => setShowAssociateClientsDialog(true)}
-                >
-                  Associar Clientes
-                </Button>
-                <Button onClick={() => openEditFeeDialog(selectedBlock)}>
-                  Adicionar Taxa
-                </Button>
-              </div>
+    <MainLayout>
+      <div className="space-y-4">
+        <div className="flex justify-between items-center">
+          <h2 className="text-3xl font-bold tracking-tight">Taxas</h2>
+          <Button onClick={() => {
+            setEditingBlock(null);
+            setNewBlock({ name: "", color: "blue" });
+            setShowBlockDialog(true);
+          }}>
+            <PlusIcon className="mr-2 h-4 w-4" />
+            Novo Bloco de Taxas
+          </Button>
+        </div>
+
+        <div className="grid grid-cols-1 lg:grid-cols-4 gap-4">
+          <Card className="lg:col-span-1">
+            <CardHeader>
+              <CardTitle>Blocos de Taxas</CardTitle>
+              <CardDescription>
+                Selecione um bloco para gerenciar suas taxas
+              </CardDescription>
             </CardHeader>
             <CardContent>
-              <p className="text-sm text-muted-foreground mb-4">
-                Bloco: {selectedBlock.name}
-              </p>
-              
-              <Tabs defaultValue="pix" value={selectedTab} onValueChange={setSelectedTab}>
-                <TabsList className="grid w-full grid-cols-3">
-                  <TabsTrigger value="pix">PIX</TabsTrigger>
-                  <TabsTrigger value="debit">DÉBITO</TabsTrigger>
-                  <TabsTrigger value="credit">CRÉDITO</TabsTrigger>
-                </TabsList>
-                
-                <TabsContent value="pix" className="mt-6">
-                  <div className="grid grid-cols-3 gap-4">
-                    <div>
-                      <h3 className="text-sm font-medium mb-2">Taxa Base (%)</h3>
-                      <p className="text-xl">{selectedBlock.pix.toFixed(2)}%</p>
-                    </div>
-                    <div>
-                      <h3 className="text-sm font-medium mb-2">Taxa Parceiro (%)</h3>
-                      <p className="text-xl">{(selectedBlock.pix * 1.5).toFixed(2)}%</p>
-                    </div>
-                    <div>
-                      <h3 className="text-sm font-medium mb-2">Taxa Final (%)</h3>
-                      <p className="text-xl">{(selectedBlock.pix * 2).toFixed(2)}%</p>
-                    </div>
-                  </div>
-                  <div className="mt-6 flex justify-end">
-                    <Button 
-                      variant="outline"
-                      size="sm" 
-                      onClick={() => openEditFeeDialog(selectedBlock)}
-                    >
-                      <Pencil className="h-4 w-4 mr-2" />
-                      Editar
-                    </Button>
-                  </div>
-                </TabsContent>
-                
-                <TabsContent value="debit" className="mt-6">
-                  <div className="grid grid-cols-3 gap-4">
-                    <div>
-                      <h3 className="text-sm font-medium mb-2">Taxa Base (%)</h3>
-                      <p className="text-xl">{selectedBlock.debit.toFixed(2)}%</p>
-                    </div>
-                    <div>
-                      <h3 className="text-sm font-medium mb-2">Taxa Parceiro (%)</h3>
-                      <p className="text-xl">{(selectedBlock.debit * 1.5).toFixed(2)}%</p>
-                    </div>
-                    <div>
-                      <h3 className="text-sm font-medium mb-2">Taxa Final (%)</h3>
-                      <p className="text-xl">{(selectedBlock.debit * 2).toFixed(2)}%</p>
-                    </div>
-                  </div>
-                  <div className="mt-6 flex justify-end">
-                    <Button 
-                      variant="outline"
-                      size="sm" 
-                      onClick={() => openEditFeeDialog(selectedBlock)}
-                    >
-                      <Pencil className="h-4 w-4 mr-2" />
-                      Editar
-                    </Button>
-                  </div>
-                </TabsContent>
-                
-                <TabsContent value="credit" className="mt-6">
-                  <div className="grid grid-cols-3 gap-4">
-                    <div>
-                      <h3 className="text-sm font-medium mb-2">Taxa Base (%)</h3>
-                      <p className="text-xl">{selectedBlock.credit.toFixed(2)}%</p>
-                    </div>
-                    <div>
-                      <h3 className="text-sm font-medium mb-2">Taxa Parceiro (%)</h3>
-                      <p className="text-xl">{(selectedBlock.credit * 1.5).toFixed(2)}%</p>
-                    </div>
-                    <div>
-                      <h3 className="text-sm font-medium mb-2">Taxa Final (%)</h3>
-                      <p className="text-xl">{(selectedBlock.credit * 2).toFixed(2)}%</p>
-                    </div>
-                  </div>
-                  <div className="mt-6 flex justify-end">
-                    <Button 
-                      variant="outline"
-                      size="sm" 
-                      onClick={() => openEditFeeDialog(selectedBlock)}
-                    >
-                      <Pencil className="h-4 w-4 mr-2" />
-                      Editar
-                    </Button>
-                  </div>
-                </TabsContent>
-              </Tabs>
-              
-              {getBlockClients(selectedBlock.id).length > 0 && (
-                <div className="mt-8">
-                  <h3 className="text-sm font-medium mb-4">Clientes associados</h3>
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead>Nome</TableHead>
-                        <TableHead>Email</TableHead>
-                        <TableHead></TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {getBlockClients(selectedBlock.id).map((client) => (
-                        <TableRow key={client.id}>
-                          <TableCell>{client.name}</TableCell>
-                          <TableCell>{client.email}</TableCell>
-                          <TableCell className="text-right">
-                            <Button variant="ghost" size="sm">Remover</Button>
-                          </TableCell>
-                        </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
+              {isLoading ? (
+                <div className="flex justify-center items-center h-40">
+                  <p>Carregando blocos...</p>
+                </div>
+              ) : (
+                <div className="space-y-2">
+                  {feeBlocks.length === 0 ? (
+                    <p className="text-muted-foreground text-center py-4">
+                      Nenhum bloco de taxas cadastrado.
+                    </p>
+                  ) : (
+                    feeBlocks.map((block) => (
+                      <div 
+                        key={block.id}
+                        className={`flex items-center justify-between p-3 rounded-md cursor-pointer border ${
+                          selectedBlock === block.id ? 'border-primary' : 'border-border'
+                        } hover:border-primary transition-colors`}
+                        onClick={() => setSelectedBlock(block.id)}
+                      >
+                        <div className="flex items-center">
+                          <div className={`w-3 h-3 rounded-full mr-3 ${getBlockColor(block.color)}`} />
+                          <div className="max-w-[150px]">
+                            <p className="font-medium truncate">{block.name}</p>
+                            <p className="text-xs text-muted-foreground truncate">
+                              {block.clients.length > 0 
+                                ? `${block.clients.length} cliente(s)`
+                                : "Nenhum cliente"}
+                            </p>
+                          </div>
+                        </div>
+                        <div className="flex space-x-1 shrink-0 ml-1">
+                          <Button variant="ghost" size="sm" onClick={(e) => {
+                            e.stopPropagation();
+                            handleEditBlock(block);
+                          }}>
+                            <Settings2Icon className="h-4 w-4" />
+                          </Button>
+                          <Button variant="ghost" size="sm" onClick={(e) => {
+                            e.stopPropagation();
+                            handleDeleteBlock(block.id);
+                          }}>
+                            <Trash2Icon className="h-4 w-4 text-destructive" />
+                          </Button>
+                        </div>
+                      </div>
+                    ))
+                  )}
                 </div>
               )}
             </CardContent>
           </Card>
-        ) : (
-          <Card className="md:col-span-2">
-            <CardContent className="flex items-center justify-center h-full">
-              <div className="text-center py-12">
-                <h3 className="text-lg font-medium mb-2">Selecione um bloco de taxas</h3>
-                <p className="text-muted-foreground">
-                  Escolha um bloco para gerenciar suas taxas ou crie um novo.
-                </p>
+
+          <Card className="lg:col-span-3">
+            <CardHeader className="flex flex-row items-center justify-between">
+              <div>
+                <CardTitle>Gerenciar Taxas</CardTitle>
+                {selectedBlock && (
+                  <CardDescription>
+                    Bloco: {feeBlocks.find(b => b.id === selectedBlock)?.name}
+                  </CardDescription>
+                )}
               </div>
+              {selectedBlock && (
+                <div className="flex space-x-2">
+                  <Button variant="outline" onClick={openAssignClientsDialog}>
+                    Associar Clientes
+                  </Button>
+                  <Button onClick={() => {
+                    resetNewFee();
+                    setEditingFee(null);
+                    setNewFee(prev => ({ ...prev, paymentMethod: activeTab }));
+                    setShowAddFeeDialog(true);
+                  }}>
+                    Adicionar Taxa
+                  </Button>
+                </div>
+              )}
+            </CardHeader>
+            <CardContent>
+              {!selectedBlock ? (
+                <div className="text-center py-8 text-muted-foreground">
+                  Selecione um bloco de taxas para gerenciar suas taxas
+                </div>
+              ) : (
+                <Tabs defaultValue="PIX" value={activeTab} onValueChange={setActiveTab}>
+                  <TabsList className="grid grid-cols-3 mb-4">
+                    {PAYMENT_TYPES.map(type => (
+                      <TabsTrigger key={type} value={type}>{type}</TabsTrigger>
+                    ))}
+                  </TabsList>
+
+                  {PAYMENT_TYPES.map(type => (
+                    <TabsContent key={type} value={type} className="mt-0">
+                      <Table>
+                        <TableHeader>
+                          <TableRow>
+                            {type === "CRÉDITO" && <TableHead>Parcelas</TableHead>}
+                            <TableHead>Taxa Base (%)</TableHead>
+                            <TableHead>Taxa Parceiro (%)</TableHead>
+                            <TableHead>Taxa Final (%)</TableHead>
+                            <TableHead className="text-right">Ações</TableHead>
+                          </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                          {getSelectedBlockFees().length === 0 ? (
+                            <TableRow>
+                              <TableCell colSpan={type === "CRÉDITO" ? 5 : 4} className="text-center py-10">
+                                Nenhuma taxa cadastrada para {type.toLowerCase()}.
+                              </TableCell>
+                            </TableRow>
+                          ) : (
+                            getSelectedBlockFees().map((fee) => (
+                              <TableRow key={fee.id}>
+                                {type === "CRÉDITO" && <TableCell>{fee.installments}x</TableCell>}
+                                <TableCell>{fee.baseRate.toFixed(2)}%</TableCell>
+                                <TableCell>{fee.partnerRate.toFixed(2)}%</TableCell>
+                                <TableCell>{fee.finalRate.toFixed(2)}%</TableCell>
+                                <TableCell className="text-right">
+                                  <div className="flex justify-end gap-2">
+                                    <Button 
+                                      variant="outline" 
+                                      size="sm"
+                                      onClick={() => handleEditFee(fee)}
+                                    >
+                                      Editar
+                                    </Button>
+                                    <Button 
+                                      variant="outline" 
+                                      size="sm"
+                                      className="text-destructive hover:text-destructive"
+                                      onClick={() => handleRemoveFee(fee.id)}
+                                    >
+                                      Remover
+                                    </Button>
+                                  </div>
+                                </TableCell>
+                              </TableRow>
+                            ))
+                          )}
+                        </TableBody>
+                      </Table>
+                    </TabsContent>
+                  ))}
+                </Tabs>
+              )}
             </CardContent>
           </Card>
-        )}
-      </div>
-      
-      {/* New Block Dialog */}
-      <Dialog open={showNewBlockDialog} onOpenChange={setShowNewBlockDialog}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Novo Bloco de Taxas</DialogTitle>
-          </DialogHeader>
-          
-          <div className="grid gap-4 py-4">
-            <div>
-              <Label htmlFor="name">Nome do Bloco</Label>
-              <Input 
-                id="name" 
-                value={newBlock.name} 
-                onChange={(e) => setNewBlock({...newBlock, name: e.target.value})}
-              />
+        </div>
+
+        {/* Add/Edit Fee Dialog */}
+        <Dialog open={showAddFeeDialog} onOpenChange={setShowAddFeeDialog}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>{editingFee ? "Editar Taxa" : "Adicionar Nova Taxa"}</DialogTitle>
+            </DialogHeader>
+            
+            <div className="space-y-4 pt-4">
+              <div className="grid gap-4">
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <Label htmlFor="paymentMethod">Método de Pagamento</Label>
+                    <select 
+                      id="paymentMethod"
+                      className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+                      value={newFee.paymentMethod}
+                      onChange={(e) => setNewFee({...newFee, paymentMethod: e.target.value})}
+                    >
+                      {PAYMENT_TYPES.map(type => (
+                        <option key={type} value={type}>{type}</option>
+                      ))}
+                    </select>
+                  </div>
+                  
+                  {newFee.paymentMethod === "CRÉDITO" && (
+                    <div>
+                      <Label htmlFor="installments">Parcelas</Label>
+                      <select 
+                        id="installments"
+                        className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+                        value={newFee.installments}
+                        onChange={(e) => setNewFee({...newFee, installments: parseInt(e.target.value)})}
+                      >
+                        {INSTALLMENT_OPTIONS.map(num => (
+                          <option key={num} value={num}>{num}x</option>
+                        ))}
+                      </select>
+                    </div>
+                  )}
+                </div>
+                
+                <div>
+                  <Label htmlFor="baseRate">Taxa Base (%)</Label>
+                  <Input 
+                    id="baseRate"
+                    type="number"
+                    step="0.01"
+                    value={newFee.baseRate}
+                    onChange={(e) => setNewFee({...newFee, baseRate: parseFloat(e.target.value)})}
+                  />
+                </div>
+                
+                <div>
+                  <Label htmlFor="partnerRate">Taxa Parceiro (%)</Label>
+                  <Input 
+                    id="partnerRate"
+                    type="number"
+                    step="0.01"
+                    value={newFee.partnerRate}
+                    onChange={(e) => setNewFee({...newFee, partnerRate: parseFloat(e.target.value)})}
+                  />
+                </div>
+                
+                <div>
+                  <Label htmlFor="finalRate">Taxa Final (%)</Label>
+                  <Input 
+                    id="finalRate"
+                    type="number"
+                    step="0.01"
+                    value={newFee.finalRate}
+                    onChange={(e) => setNewFee({...newFee, finalRate: parseFloat(e.target.value)})}
+                  />
+                </div>
+              </div>
             </div>
             
-            <div className="grid grid-cols-3 gap-4">
-              <div>
-                <Label htmlFor="pix">Taxa PIX (%)</Label>
-                <Input 
-                  id="pix" 
-                  type="number" 
-                  step="0.01"
-                  value={newBlock.pix} 
-                  onChange={(e) => setNewBlock({...newBlock, pix: parseFloat(e.target.value)})}
-                />
-              </div>
-              
-              <div>
-                <Label htmlFor="debit">Taxa Débito (%)</Label>
-                <Input 
-                  id="debit" 
-                  type="number" 
-                  step="0.01"
-                  value={newBlock.debit} 
-                  onChange={(e) => setNewBlock({...newBlock, debit: parseFloat(e.target.value)})}
-                />
-              </div>
-              
-              <div>
-                <Label htmlFor="credit">Taxa Crédito (%)</Label>
-                <Input 
-                  id="credit" 
-                  type="number" 
-                  step="0.01"
-                  value={newBlock.credit} 
-                  onChange={(e) => setNewBlock({...newBlock, credit: parseFloat(e.target.value)})}
-                />
-              </div>
-            </div>
-          </div>
-          
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setShowNewBlockDialog(false)}>
-              Cancelar
-            </Button>
-            <Button onClick={handleCreateBlock}>
-              Criar Bloco
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-      
-      {/* Edit Fee Dialog */}
-      <Dialog open={showEditFeeDialog} onOpenChange={setShowEditFeeDialog}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Editar Taxas</DialogTitle>
-          </DialogHeader>
-          
-          <div className="grid gap-4 py-4">
-            <div className="grid grid-cols-3 gap-4">
-              <div>
-                <Label htmlFor="edit-pix">Taxa PIX (%)</Label>
-                <Input 
-                  id="edit-pix" 
-                  type="number" 
-                  step="0.01"
-                  value={editFee.pix} 
-                  onChange={(e) => setEditFee({...editFee, pix: parseFloat(e.target.value)})}
-                />
-              </div>
-              
-              <div>
-                <Label htmlFor="edit-debit">Taxa Débito (%)</Label>
-                <Input 
-                  id="edit-debit" 
-                  type="number" 
-                  step="0.01"
-                  value={editFee.debit} 
-                  onChange={(e) => setEditFee({...editFee, debit: parseFloat(e.target.value)})}
-                />
-              </div>
-              
-              <div>
-                <Label htmlFor="edit-credit">Taxa Crédito (%)</Label>
-                <Input 
-                  id="edit-credit" 
-                  type="number" 
-                  step="0.01"
-                  value={editFee.credit} 
-                  onChange={(e) => setEditFee({...editFee, credit: parseFloat(e.target.value)})}
-                />
-              </div>
-            </div>
-          </div>
-          
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setShowEditFeeDialog(false)}>
-              Cancelar
-            </Button>
-            <Button onClick={handleUpdateFee}>
-              Salvar Alterações
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-      
-      {/* Associate Clients Dialog */}
-      <Dialog open={showAssociateClientsDialog} onOpenChange={setShowAssociateClientsDialog}>
-        <DialogContent className="max-w-2xl">
-          <DialogHeader>
-            <DialogTitle>Associar Clientes ao Bloco</DialogTitle>
-          </DialogHeader>
-          
-          <div className="py-4">
-            <Input 
-              placeholder="Pesquisar clientes..." 
-              className="mb-4"
-            />
+            <DialogFooter>
+              <Button variant="outline" onClick={() => {
+                setShowAddFeeDialog(false);
+                setEditingFee(null);
+              }}>Cancelar</Button>
+              <Button onClick={handleAddFee}>{editingFee ? "Salvar" : "Adicionar"}</Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+
+        {/* Add/Edit Block Dialog */}
+        <Dialog open={showBlockDialog} onOpenChange={setShowBlockDialog}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>{editingBlock ? "Editar Bloco" : "Novo Bloco de Taxas"}</DialogTitle>
+              <DialogDescription>
+                Configure o nome e a cor do bloco de taxas
+              </DialogDescription>
+            </DialogHeader>
             
-            <div className="max-h-96 overflow-y-auto">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead></TableHead>
-                    <TableHead>Nome</TableHead>
-                    <TableHead>Email</TableHead>
-                    <TableHead>Bloco Atual</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {mockClients.map((client) => (
-                    <TableRow key={client.id}>
-                      <TableCell>
-                        <input 
-                          type="checkbox" 
-                          checked={client.blockId === selectedBlock?.id}
-                        />
-                      </TableCell>
-                      <TableCell>{client.name}</TableCell>
-                      <TableCell>{client.email}</TableCell>
-                      <TableCell>
-                        {blocks.find(b => b.id === client.blockId)?.name || "Nenhum"}
-                      </TableCell>
-                    </TableRow>
+            <div className="space-y-4 pt-4">
+              <div className="grid gap-4">
+                <div>
+                  <Label htmlFor="blockName">Nome do Bloco</Label>
+                  <Input 
+                    id="blockName"
+                    value={newBlock.name}
+                    onChange={(e) => setNewBlock({...newBlock, name: e.target.value})}
+                    placeholder="Ex: Premium, Padrão, Especial"
+                  />
+                </div>
+                
+                <div>
+                  <Label>Cor</Label>
+                  <div className="grid grid-cols-5 gap-2 mt-2">
+                    {FEE_BLOCK_COLORS.map(color => (
+                      <div 
+                        key={color.value}
+                        className={`flex items-center justify-center p-2 border rounded-md cursor-pointer ${
+                          newBlock.color === color.value ? 'border-primary ring-2 ring-primary ring-opacity-50' : 'border-border'
+                        } ${getBlockColor(color.value)}`}
+                        onClick={() => setNewBlock({...newBlock, color: color.value})}
+                      >
+                        {color.name}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            </div>
+            
+            <DialogFooter>
+              <Button variant="outline" onClick={() => {
+                setShowBlockDialog(false);
+                setEditingBlock(null);
+              }}>Cancelar</Button>
+              <Button onClick={handleAddBlock}>{editingBlock ? "Salvar" : "Criar Bloco"}</Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+
+        {/* Assign Clients Dialog */}
+        <Dialog open={showAssignClientsDialog} onOpenChange={setShowAssignClientsDialog}>
+          <DialogContent className="sm:max-w-md">
+            <DialogHeader>
+              <DialogTitle>Associar Clientes</DialogTitle>
+              <DialogDescription>
+                Selecione os clientes que utilizarão este bloco de taxas
+              </DialogDescription>
+            </DialogHeader>
+            
+            <div className="py-4 max-h-[300px] overflow-y-auto">
+              {clients.length === 0 ? (
+                <p className="text-center text-muted-foreground py-4">
+                  Nenhum cliente encontrado.
+                </p>
+              ) : (
+                <div className="space-y-2">
+                  {clients.map(client => (
+                    <div 
+                      key={client.id} 
+                      className={`flex items-center p-2 rounded-md ${
+                        selectedClients.includes(client.id) ? 'bg-primary/10' : ''
+                      } hover:bg-secondary/50 cursor-pointer`}
+                      onClick={() => toggleClient(client.id)}
+                    >
+                      <input 
+                        type="checkbox" 
+                        checked={selectedClients.includes(client.id)}
+                        onChange={() => toggleClient(client.id)}
+                        className="mr-3"
+                      />
+                      <span>{client.business_name}</span>
+                    </div>
                   ))}
-                </TableBody>
-              </Table>
+                </div>
+              )}
             </div>
-          </div>
-          
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setShowAssociateClientsDialog(false)}>
-              Cancelar
-            </Button>
-            <Button onClick={() => {
-              setShowAssociateClientsDialog(false);
-              toast({
-                title: "Clientes associados",
-                description: "Associação de clientes atualizada com sucesso."
-              });
-            }}>
-              Salvar Associações
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-    </div>
+            
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setShowAssignClientsDialog(false)}>
+                Cancelar
+              </Button>
+              <Button onClick={handleAssignClients}>
+                Salvar
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+      </div>
+    </MainLayout>
   );
 };
 

@@ -1,4 +1,4 @@
-import { Routes, Route, Navigate, useLocation } from "react-router-dom";
+import { Routes, Route, useLocation, Navigate } from "react-router-dom";
 import { PATHS } from "./routes/paths";
 import { useEffect } from "react";
 import { useToast } from "@/hooks/use-toast";
@@ -7,12 +7,8 @@ import { UserRole } from "./types";
 
 // Layouts
 import AuthLayout from "./layouts/AuthLayout";
+import MainLayout from "./layouts/MainLayout";
 import RootLayout from "./layouts/RootLayout";
-import AdminLayout from "./layouts/AdminLayout";
-import UserLayout from "./layouts/UserLayout";
-import PartnerLayout from "./layouts/PartnerLayout";
-import FinancialLayout from "./layouts/FinancialLayout";
-import LogisticsLayout from "./layouts/LogisticsLayout";
 
 // Auth
 import Login from "./pages/auth/Login";
@@ -23,43 +19,42 @@ import ResetPassword from "./pages/auth/ResetPassword";
 // Auth Protection Component
 import RequireAuth from "./components/auth/RequireAuth";
 
-// User (Cliente) Pages
-import UserDashboard from "./pages/user/UserDashboard";
-
-// Partner Pages
-import PartnerDashboard from "./pages/partner/PartnerDashboard";
-
-// Financial Pages
-import FinancialDashboard from "./pages/financial/FinancialDashboard";
-
-// Logistics Pages
-import LogisticsDashboard from "./pages/logistics/LogisticsDashboard";
-
-// Admin Pages
-import AdminDashboard from "./pages/admin/AdminDashboard";
-import PaymentRequests from "./pages/admin/PaymentRequests";
-
-// Legacy pages that will be used or redirected
+// Dashboard
 import Dashboard from "./pages/Dashboard";
 import ClientDashboard from "./pages/ClientDashboard";
+
+// Clients
 import Clients from "./pages/clients/Clients";
 import ClientDetails from "./pages/clients/ClientDetails";
 import NewClient from "./pages/clients/NewClient";
+
+// Machines
 import Machines from "./pages/machines/Machines";
 import MachineDetails from "./pages/machines/MachineDetails";
 import NewMachine from "./pages/machines/NewMachine";
+
+// Sales
 import Sales from "./pages/sales/Sales";
 import SaleDetails from "./pages/sales/SaleDetails";
 import NewSale from "./pages/sales/NewSale";
+
+// Payments
 import Payments from "./pages/payments/Payments";
 import UserPayments from "./pages/UserPayments";
+
+// Partners
 import Partners from "./pages/partners/Partners";
 import PartnerDetails from "./pages/partners/PartnerDetails";
 import NewPartner from "./pages/partners/NewPartner";
+
+// Settings
 import Settings from "./pages/settings/Settings";
 import UserManagement from "./pages/settings/UserManagement";
+
+// Other
 import NotFound from "./pages/NotFound";
 import Support from "./pages/Support";
+import Help from "./pages/Help";
 import Fees from "./pages/Fees";
 import Reports from "./pages/Reports";
 
@@ -80,22 +75,9 @@ function App() {
     }
   }, [userRole, isRoleLoading]);
 
-  // Redirect function based on user role
-  const redirectToDashboard = () => {
-    switch(userRole) {
-      case UserRole.ADMIN:
-        return <Navigate to={PATHS.ADMIN.DASHBOARD} replace />;
-      case UserRole.FINANCIAL:
-        return <Navigate to={PATHS.FINANCIAL.DASHBOARD} replace />;
-      case UserRole.PARTNER:
-        return <Navigate to={PATHS.PARTNER.DASHBOARD} replace />;
-      case UserRole.CLIENT:
-        return <Navigate to={PATHS.USER.DASHBOARD} replace />;
-      case UserRole.LOGISTICS:
-        return <Navigate to={PATHS.LOGISTICS.DASHBOARD} replace />;
-      default:
-        return <Navigate to={PATHS.LOGIN} replace />;
-    }
+  // Role-based route access function
+  const canAccessRoute = (allowedRoles: UserRole[]) => {
+    return allowedRoles.includes(userRole) || userRole === UserRole.ADMIN;
   };
 
   return (
@@ -113,102 +95,183 @@ function App() {
 
       {/* Protected Routes */}
       <Route element={<RequireAuth />}>
-        {/* Legacy Dashboard - Redirects based on role */}
-        <Route path={PATHS.DASHBOARD} element={redirectToDashboard()} />
-        
-        {/* Admin Layout */}
-        <Route element={<AdminLayout />}>
-          <Route path={PATHS.ADMIN.DASHBOARD} element={<AdminDashboard />} />
-          <Route path={PATHS.ADMIN.CLIENTS} element={<Clients />} />
-          <Route path={PATHS.ADMIN.CLIENT_DETAILS()} element={<ClientDetails />} />
-          <Route path={PATHS.ADMIN.CLIENT_NEW} element={<NewClient />} />
-          <Route path={PATHS.ADMIN.MACHINES} element={<Machines />} />
-          <Route path={PATHS.ADMIN.MACHINE_DETAILS()} element={<MachineDetails />} />
-          <Route path={PATHS.ADMIN.MACHINE_NEW} element={<NewMachine />} />
-          <Route path={PATHS.ADMIN.SALES} element={<Sales />} />
-          <Route path={PATHS.ADMIN.SALES_DETAILS()} element={<SaleDetails />} />
-          <Route path={PATHS.ADMIN.SALES_NEW} element={<NewSale />} />
-          <Route path={PATHS.ADMIN.PAYMENTS} element={<Payments />} />
-          <Route path={PATHS.ADMIN.PAYMENT_REQUESTS} element={<PaymentRequests />} />
-          <Route path={PATHS.ADMIN.PARTNERS} element={<Partners />} />
-          <Route path={PATHS.ADMIN.PARTNER_DETAILS()} element={<PartnerDetails />} />
-          <Route path={PATHS.ADMIN.PARTNER_NEW} element={<NewPartner />} />
-          <Route path={PATHS.ADMIN.FEES} element={<Fees />} />
-          <Route path={PATHS.ADMIN.REPORTS} element={<Reports />} />
-          <Route path={PATHS.ADMIN.SETTINGS} element={<Settings />} />
-          <Route path={PATHS.ADMIN.SUPPORT} element={<Support />} />
-          <Route path={PATHS.ADMIN.USERS} element={<UserManagement />} />
-          <Route path={PATHS.ADMIN.LOGISTICS} element={<div className="p-4">Módulo de Logística - Em construção</div>} />
-          <Route path={PATHS.ADMIN.COMMISSIONS} element={<div className="p-4">Módulo de Comissões - Em construção</div>} />
-          <Route path={PATHS.ADMIN.NOTIFICATIONS} element={<div className="p-4">Central de Notificações - Em construção</div>} />
-          <Route path={PATHS.ADMIN.FINANCIAL_REPORTS} element={<div className="p-4">Relatórios financeiros - Em construção</div>} />
-        </Route>
+        <Route element={<MainLayout />}>
+          <Route
+            path={PATHS.DASHBOARD}
+            element={
+              userRole === UserRole.CLIENT ? <ClientDashboard /> : <Dashboard />
+            }
+          />
 
-        {/* User (Cliente) Layout */}
-        <Route element={<UserLayout />}>
-          <Route path={PATHS.USER.DASHBOARD} element={<UserDashboard />} />
-          <Route path={PATHS.USER.MACHINES} element={<div className="p-4">Minhas Máquinas - Em construção</div>} />
-          <Route path={PATHS.USER.PAYMENTS} element={<UserPayments />} />
-          <Route path={PATHS.USER.REPORTS} element={<div className="p-4">Meus Relatórios - Em construção</div>} />
-          <Route path={PATHS.USER.SUPPORT} element={<div className="p-4">Central de Suporte - Em construção</div>} />
-          <Route path={PATHS.USER.PROFILE} element={<div className="p-4">Meu Perfil - Em construção</div>} />
-          <Route path={PATHS.USER.SETTINGS} element={<div className="p-4">Minhas Configurações - Em construção</div>} />
-        </Route>
+          {/* Client Routes */}
+          <Route 
+            path={PATHS.CLIENTS} 
+            element={
+              canAccessRoute([UserRole.ADMIN, UserRole.FINANCIAL, UserRole.PARTNER, UserRole.LOGISTICS]) 
+                ? <Clients /> 
+                : <Navigate to={PATHS.DASHBOARD} replace />
+            } 
+          />
+          <Route 
+            path={PATHS.CLIENT_DETAILS()} 
+            element={
+              canAccessRoute([UserRole.ADMIN, UserRole.FINANCIAL, UserRole.PARTNER, UserRole.LOGISTICS])
+                ? <ClientDetails /> 
+                : <Navigate to={PATHS.DASHBOARD} replace />
+            } 
+          />
+          <Route 
+            path={PATHS.CLIENT_NEW} 
+            element={
+              canAccessRoute([UserRole.ADMIN, UserRole.FINANCIAL])
+                ? <NewClient /> 
+                : <Navigate to={PATHS.DASHBOARD} replace />
+            } 
+          />
 
-        {/* Partner Layout */}
-        <Route element={<PartnerLayout />}>
-          <Route path={PATHS.PARTNER.DASHBOARD} element={<PartnerDashboard />} />
-          <Route path={PATHS.PARTNER.CLIENTS} element={<div className="p-4">Meus Clientes - Em construção</div>} />
-          <Route path={PATHS.PARTNER.SALES} element={<div className="p-4">Vendas - Em construção</div>} />
-          <Route path={PATHS.PARTNER.COMMISSIONS} element={<div className="p-4">Minhas Comissões - Em construção</div>} />
-          <Route path={PATHS.PARTNER.REPORTS} element={<div className="p-4">Relatórios - Em construção</div>} />
-          <Route path={PATHS.PARTNER.SUPPORT} element={<div className="p-4">Central de Suporte - Em construção</div>} />
-          <Route path={PATHS.PARTNER.SETTINGS} element={<div className="p-4">Configurações - Em construção</div>} />
-        </Route>
+          {/* Machine Routes */}
+          <Route 
+            path={PATHS.MACHINES} 
+            element={
+              canAccessRoute([UserRole.ADMIN, UserRole.FINANCIAL, UserRole.PARTNER, UserRole.LOGISTICS])
+                ? <Machines /> 
+                : <Navigate to={PATHS.DASHBOARD} replace />
+            } 
+          />
+          <Route 
+            path={PATHS.MACHINE_DETAILS()} 
+            element={
+              canAccessRoute([UserRole.ADMIN, UserRole.FINANCIAL, UserRole.PARTNER, UserRole.LOGISTICS])
+                ? <MachineDetails /> 
+                : <Navigate to={PATHS.DASHBOARD} replace />
+            } 
+          />
+          <Route 
+            path={PATHS.MACHINE_NEW} 
+            element={
+              canAccessRoute([UserRole.ADMIN, UserRole.FINANCIAL, UserRole.LOGISTICS])
+                ? <NewMachine /> 
+                : <Navigate to={PATHS.DASHBOARD} replace />
+            } 
+          />
 
-        {/* Financial Layout */}
-        <Route element={<FinancialLayout />}>
-          <Route path={PATHS.FINANCIAL.DASHBOARD} element={<FinancialDashboard />} />
-          <Route path={PATHS.FINANCIAL.PAYMENTS} element={<div className="p-4">Gestão de Pagamentos - Em construção</div>} />
-          <Route path={PATHS.FINANCIAL.REQUESTS} element={<div className="p-4">Solicitações - Em construção</div>} />
-          <Route path={PATHS.FINANCIAL.REPORTS} element={<div className="p-4">Relatórios Financeiros - Em construção</div>} />
-          <Route path={PATHS.FINANCIAL.SUPPORT} element={<div className="p-4">Central de Suporte - Em construção</div>} />
-          <Route path={PATHS.FINANCIAL.SETTINGS} element={<div className="p-4">Configurações Financeiras - Em construção</div>} />
-        </Route>
+          {/* Sales Routes */}
+          <Route 
+            path={PATHS.SALES} 
+            element={
+              canAccessRoute([UserRole.ADMIN, UserRole.FINANCIAL, UserRole.PARTNER, UserRole.LOGISTICS])
+                ? <Sales /> 
+                : <Navigate to={PATHS.DASHBOARD} replace />
+            } 
+          />
+          <Route 
+            path={PATHS.SALES_DETAILS()} 
+            element={
+              canAccessRoute([UserRole.ADMIN, UserRole.FINANCIAL, UserRole.PARTNER, UserRole.LOGISTICS])
+                ? <SaleDetails /> 
+                : <Navigate to={PATHS.DASHBOARD} replace />
+            } 
+          />
+          <Route 
+            path={PATHS.SALES_NEW} 
+            element={
+              canAccessRoute([UserRole.ADMIN, UserRole.FINANCIAL])
+                ? <NewSale /> 
+                : <Navigate to={PATHS.DASHBOARD} replace />
+            } 
+          />
 
-        {/* Logistics Layout */}
-        <Route element={<LogisticsLayout />}>
-          <Route path={PATHS.LOGISTICS.DASHBOARD} element={<LogisticsDashboard />} />
-          <Route path={PATHS.LOGISTICS.MACHINES} element={<div className="p-4">Gestão de Máquinas - Em construção</div>} />
-          <Route path={PATHS.LOGISTICS.REQUESTS} element={<div className="p-4">Solicitações de Logística - Em construção</div>} />
-          <Route path={PATHS.LOGISTICS.REPORTS} element={<div className="p-4">Relatórios de Logística - Em construção</div>} />
-          <Route path={PATHS.LOGISTICS.SUPPORT} element={<div className="p-4">Central de Suporte - Em construção</div>} />
-          <Route path={PATHS.LOGISTICS.SETTINGS} element={<div className="p-4">Configurações de Logística - Em construção</div>} />
-        </Route>
+          {/* Payment Routes */}
+          <Route 
+            path={PATHS.PAYMENTS} 
+            element={
+              canAccessRoute([UserRole.ADMIN, UserRole.FINANCIAL])
+                ? <Payments /> 
+                : <Navigate to={PATHS.USER_PAYMENTS} replace />
+            } 
+          />
+          <Route 
+            path={PATHS.PAYMENT_DETAILS()} 
+            element={
+              canAccessRoute([UserRole.ADMIN, UserRole.FINANCIAL])
+                ? <Payments /> 
+                : <Navigate to={PATHS.USER_PAYMENTS} replace />
+            } 
+          />
+          <Route path={PATHS.PAYMENT_NEW} element={<Payments />} />
+          <Route path={PATHS.USER_PAYMENTS} element={<UserPayments />} />
+          <Route path={PATHS.CLIENT_PAYMENTS} element={<Navigate to={PATHS.USER_PAYMENTS} replace />} />
 
-        {/* Legacy Routes - Redirects to new admin paths */}
-        <Route path={PATHS.CLIENTS} element={<Navigate to={PATHS.ADMIN.CLIENTS} replace />} />
-        <Route path={PATHS.CLIENT_DETAILS()} element={<Navigate to={`/admin/clients/${location.pathname.split('/')[2]}`} replace />} />
-        <Route path={PATHS.CLIENT_NEW} element={<Navigate to={PATHS.ADMIN.CLIENT_NEW} replace />} />
-        <Route path={PATHS.MACHINES} element={<Navigate to={PATHS.ADMIN.MACHINES} replace />} />
-        <Route path={PATHS.MACHINE_DETAILS()} element={<Navigate to={`/admin/machines/${location.pathname.split('/')[2]}`} replace />} />
-        <Route path={PATHS.MACHINE_NEW} element={<Navigate to={PATHS.ADMIN.MACHINE_NEW} replace />} />
-        <Route path={PATHS.SALES} element={<Navigate to={PATHS.ADMIN.SALES} replace />} />
-        <Route path={PATHS.SALES_DETAILS()} element={<Navigate to={`/admin/sales/${location.pathname.split('/')[2]}`} replace />} />
-        <Route path={PATHS.SALES_NEW} element={<Navigate to={PATHS.ADMIN.SALES_NEW} replace />} />
-        <Route path={PATHS.PAYMENTS} element={<Navigate to={PATHS.ADMIN.PAYMENTS} replace />} />
-        <Route path={PATHS.PAYMENT_DETAILS()} element={<Navigate to={`/admin/payments/${location.pathname.split('/')[2]}`} replace />} />
-        <Route path={PATHS.PAYMENT_NEW} element={<Navigate to={PATHS.ADMIN.PAYMENT_NEW} replace />} />
-        <Route path={PATHS.PARTNERS} element={<Navigate to={PATHS.ADMIN.PARTNERS} replace />} />
-        <Route path={PATHS.PARTNER_DETAILS()} element={<Navigate to={`/admin/partners/${location.pathname.split('/')[2]}`} replace />} />
-        <Route path={PATHS.PARTNER_NEW} element={<Navigate to={PATHS.ADMIN.PARTNER_NEW} replace />} />
-        <Route path={PATHS.FEES} element={<Navigate to={PATHS.ADMIN.FEES} replace />} />
-        <Route path={PATHS.REPORTS} element={<Navigate to={PATHS.ADMIN.REPORTS} replace />} />
-        <Route path={PATHS.SETTINGS} element={<Navigate to={PATHS.ADMIN.SETTINGS} replace />} />
-        <Route path={PATHS.USER_MANAGEMENT} element={<Navigate to={PATHS.ADMIN.USERS} replace />} />
-        <Route path={PATHS.SUPPORT} element={<Navigate to={PATHS.ADMIN.SUPPORT} replace />} />
-        <Route path={PATHS.USER_PAYMENTS} element={<Navigate to={PATHS.USER.PAYMENTS} replace />} />
-        <Route path={PATHS.CLIENT_PAYMENTS} element={<Navigate to={PATHS.USER.PAYMENTS} replace />} />
+          {/* Partner Routes */}
+          <Route 
+            path={PATHS.PARTNERS} 
+            element={
+              canAccessRoute([UserRole.ADMIN, UserRole.FINANCIAL])
+                ? <Partners /> 
+                : <Navigate to={PATHS.DASHBOARD} replace />
+            } 
+          />
+          <Route 
+            path={PATHS.PARTNER_DETAILS()} 
+            element={
+              canAccessRoute([UserRole.ADMIN, UserRole.FINANCIAL])
+                ? <PartnerDetails /> 
+                : <Navigate to={PATHS.DASHBOARD} replace />
+            } 
+          />
+          <Route 
+            path={PATHS.PARTNER_NEW} 
+            element={
+              canAccessRoute([UserRole.ADMIN, UserRole.FINANCIAL])
+                ? <NewPartner /> 
+                : <Navigate to={PATHS.DASHBOARD} replace />
+            } 
+          />
+
+          {/* Logistics Routes */}
+          <Route 
+            path="/logistics" 
+            element={
+              canAccessRoute([UserRole.ADMIN, UserRole.LOGISTICS])
+                ? <div className="container mx-auto py-10">
+                    <h1 className="text-3xl font-semibold mb-6">Módulo de Logística</h1>
+                    <p className="text-gray-600">Esta funcionalidade está em desenvolvimento.</p>
+                  </div> 
+                : <Navigate to={PATHS.DASHBOARD} replace />
+            } 
+          />
+
+          {/* Settings Routes */}
+          <Route path={PATHS.SETTINGS} element={<Settings />} />
+          <Route 
+            path={PATHS.USER_MANAGEMENT} 
+            element={
+              canAccessRoute([UserRole.ADMIN])
+                ? <UserManagement /> 
+                : <Navigate to={PATHS.SETTINGS} replace />
+            } 
+          />
+
+          {/* Other Routes */}
+          <Route 
+            path={PATHS.FEES} 
+            element={
+              canAccessRoute([UserRole.ADMIN, UserRole.FINANCIAL])
+                ? <Fees /> 
+                : <Navigate to={PATHS.DASHBOARD} replace />
+            } 
+          />
+          <Route 
+            path={PATHS.REPORTS} 
+            element={
+              canAccessRoute([UserRole.ADMIN, UserRole.FINANCIAL, UserRole.PARTNER])
+                ? <Reports /> 
+                : <Navigate to={PATHS.DASHBOARD} replace />
+            } 
+          />
+          <Route path={PATHS.SUPPORT} element={<Support />} />
+          <Route path={PATHS.HELP} element={<Help />} />
+        </Route>
       </Route>
 
       {/* 404 */}
