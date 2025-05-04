@@ -1,4 +1,5 @@
-import { useState, useEffect } from "react";
+
+import { useState } from "react";
 import {
   Table,
   TableBody,
@@ -19,11 +20,20 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { DotsHorizontalIcon } from "@radix-ui/react-icons";
+import { MoreHorizontal } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
-import { deleteClient } from "@/api/clientsApi";
-import { confirm } from "@/components/ui/confirm";
+import { deleteClientById } from "@/api/clientsApi";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 interface ClientsListProps {
   clients: Client[];
@@ -32,46 +42,53 @@ interface ClientsListProps {
 
 const ClientsList = ({ clients, setClients }: ClientsListProps) => {
   const [search, setSearch] = useState("");
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [clientToDelete, setClientToDelete] = useState<string | null>(null);
   const navigate = useNavigate();
   const { toast } = useToast();
 
+  // Use safe property access with optional chaining
   const filteredClients = clients.filter((client) =>
-    client?.name?.toLowerCase().includes(search.toLowerCase())
+    client?.business_name?.toLowerCase().includes(search.toLowerCase())
   );
 
   const handleEdit = (id: string) => {
     navigate(`/admin/clients/${id}`);
   };
 
-  const handleDelete = async (id: string) => {
-    confirm({
-      title: "Deletar cliente?",
-      description: "Tem certeza de que deseja deletar este cliente? Esta ação não pode ser desfeita.",
-      onConfirm: async () => {
-        try {
-          const success = await deleteClient(id);
-          if (success) {
-            setClients(clients.filter((client) => client.id !== id));
-            toast({
-              title: "Sucesso",
-              description: "Cliente deletado com sucesso.",
-            });
-          } else {
-            toast({
-              title: "Erro",
-              description: "Falha ao deletar o cliente.",
-              variant: "destructive",
-            });
-          }
-        } catch (error) {
-          toast({
-            title: "Erro",
-            description: "Ocorreu um erro ao deletar o cliente.",
-            variant: "destructive",
-          });
-        }
-      },
-    });
+  const handleDelete = (id: string) => {
+    setClientToDelete(id);
+    setIsDeleteDialogOpen(true);
+  };
+
+  const confirmDelete = async () => {
+    if (!clientToDelete) return;
+    
+    try {
+      const success = await deleteClientById(clientToDelete);
+      if (success) {
+        setClients(clients.filter((client) => client.id !== clientToDelete));
+        toast({
+          title: "Sucesso",
+          description: "Cliente deletado com sucesso.",
+        });
+      } else {
+        toast({
+          title: "Erro",
+          description: "Falha ao deletar o cliente.",
+          variant: "destructive",
+        });
+      }
+    } catch (error) {
+      toast({
+        title: "Erro",
+        description: "Ocorreu um erro ao deletar o cliente.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsDeleteDialogOpen(false);
+      setClientToDelete(null);
+    }
   };
 
   const getStatusBadge = (client: Client) => {
@@ -120,7 +137,7 @@ const ClientsList = ({ clients, setClients }: ClientsListProps) => {
           <TableBody>
             {filteredClients.map((client) => (
               <TableRow key={client.id}>
-                <TableCell>{client.name}</TableCell>
+                <TableCell>{client.business_name}</TableCell>
                 <TableCell>{client.email}</TableCell>
                 <TableCell>{client.phone}</TableCell>
                 <TableCell>{getStatusBadge(client)}</TableCell>
@@ -129,7 +146,7 @@ const ClientsList = ({ clients, setClients }: ClientsListProps) => {
                     <DropdownMenuTrigger asChild>
                       <Button variant="ghost" className="h-8 w-8 p-0">
                         <span className="sr-only">Abrir menu</span>
-                        <DotsHorizontalIcon className="h-4 w-4" />
+                        <MoreHorizontal className="h-4 w-4" />
                       </Button>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end">
@@ -149,6 +166,23 @@ const ClientsList = ({ clients, setClients }: ClientsListProps) => {
           </TableBody>
         </Table>
       </div>
+
+      <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Deletar cliente?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Tem certeza de que deseja deletar este cliente? Esta ação não pode ser desfeita.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction onClick={confirmDelete} className="bg-destructive text-destructive-foreground">
+              Deletar
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };
