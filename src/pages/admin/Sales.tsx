@@ -1,77 +1,165 @@
 
+import { useState, useEffect } from "react";
 import { PageHeader } from "@/components/page/PageHeader";
 import { PageWrapper } from "@/components/page/PageWrapper";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { 
-  Table, 
-  TableBody, 
-  TableCell, 
-  TableHead, 
-  TableHeader, 
-  TableRow 
-} from "@/components/ui/table";
+import SalesUploader from "@/components/sales/SalesUploader";
+import SalesAdvancedFilters from "@/components/sales/SalesAdvancedFilters";
+import SalesDataTable from "@/components/sales/SalesDataTable";
 import { PATHS } from "@/routes/paths";
-import { Search } from "lucide-react";
+import { Skeleton } from "@/components/ui/skeleton";
+import { Sale, PaymentMethod } from "@/types";
+import { generateMockSales, DateRange } from "@/utils/sales-utils";
+import { useToast } from "@/hooks/use-toast";
 
 const AdminSales = () => {
+  const [sales, setSales] = useState<Sale[]>([]);
+  const [filteredSales, setFilteredSales] = useState<Sale[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [dateRange, setDateRange] = useState<DateRange>({
+    from: new Date(new Date().setDate(new Date().getDate() - 7)),
+    to: new Date(new Date().setDate(new Date().getDate() - 1)),
+  });
+  const { toast } = useToast();
+  const itemsPerPage = 50;
+
+  // Generate mock sales data
+  useEffect(() => {
+    setIsLoading(true);
+    
+    // Simulate API call with timeout
+    const timer = setTimeout(() => {
+      const mockSales = generateMockSales(150, dateRange);
+      setSales(mockSales);
+      setFilteredSales(mockSales);
+      setIsLoading(false);
+    }, 1500);
+    
+    return () => clearTimeout(timer);
+  }, [dateRange]);
+
+  // Calculate pagination
+  const totalPages = Math.ceil(filteredSales.length / itemsPerPage);
+  const currentSales = filteredSales.slice(
+    (currentPage - 1) * itemsPerPage,
+    currentPage * itemsPerPage
+  );
+
+  // Calculate totals for the current view
+  const totals = currentSales.reduce(
+    (acc, sale) => ({
+      grossAmount: acc.grossAmount + sale.gross_amount,
+      netAmount: acc.netAmount + sale.net_amount
+    }),
+    { grossAmount: 0, netAmount: 0 }
+  );
+
+  // Handle file upload processing
+  const handleFileProcessed = (file: File, recordCount: number) => {
+    toast({
+      title: "Upload simulado com sucesso",
+      description: `Arquivo ${file.name} com ${recordCount} registros processado (simulação).`,
+    });
+    
+    // TODO: Implement backend integration for file uploads
+    // Refresh data after upload
+    setCurrentPage(1);
+  };
+
+  // Handle filter changes
+  const handleFilterChange = (filters: any) => {
+    setIsLoading(true);
+    
+    // Simulate filtering delay
+    setTimeout(() => {
+      let filtered = [...sales];
+      
+      // Apply date range filter
+      if (filters.dateRange) {
+        const fromTime = filters.dateRange.from.getTime();
+        const toTime = filters.dateRange.to.getTime();
+        filtered = filtered.filter(
+          (sale) => {
+            const saleTime = new Date(sale.date).getTime();
+            return saleTime >= fromTime && saleTime <= toTime;
+          }
+        );
+      }
+      
+      // Apply terminal filter
+      if (filters.terminal) {
+        filtered = filtered.filter(sale => sale.terminal === filters.terminal);
+      }
+      
+      // Apply payment method filter
+      if (filters.paymentMethods && filters.paymentMethods.length > 0) {
+        filtered = filtered.filter(sale => 
+          filters.paymentMethods.includes(sale.paymentMethod)
+        );
+      }
+      
+      // Apply installments filter
+      if (filters.installments) {
+        // TODO: Add installments field to Sale type and implement filtering
+      }
+      
+      // Apply amount range filter
+      if (filters.amountRange) {
+        const { min, max } = filters.amountRange;
+        if (min !== undefined) {
+          filtered = filtered.filter(sale => sale.gross_amount >= min);
+        }
+        if (max !== undefined) {
+          filtered = filtered.filter(sale => sale.gross_amount <= max);
+        }
+      }
+      
+      setFilteredSales(filtered);
+      setCurrentPage(1);
+      setIsLoading(false);
+    }, 500);
+  };
+
   return (
     <div className="space-y-6">
       <PageHeader 
         title="Vendas" 
-        description="Gerencie todas as vendas do sistema"
+        description="Gerencie e visualize todas as vendas do sistema"
         actionLabel="Nova Venda"
         actionLink={PATHS.ADMIN.SALES_NEW}
       />
       
-      <div className="flex items-center gap-2 mb-6">
-        <div className="relative flex-1">
-          <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-          <Input
-            placeholder="Buscar vendas..."
-            className="pl-8 bg-background"
+      <div className="grid gap-6 md:grid-cols-3">
+        <div className="md:col-span-1">
+          <SalesUploader onFileProcessed={handleFileProcessed} />
+        </div>
+        <div className="md:col-span-2">
+          <SalesAdvancedFilters 
+            onFilterChange={handleFilterChange} 
+            dateRange={dateRange}
+            onDateRangeChange={setDateRange}
           />
         </div>
-        <Button variant="outline">Filtrar</Button>
       </div>
-
-      <PageWrapper>
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>Código</TableHead>
-              <TableHead>Cliente</TableHead>
-              <TableHead>Valor</TableHead>
-              <TableHead>Data</TableHead>
-              <TableHead>Status</TableHead>
-              <TableHead className="w-[100px]">Ações</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {[1, 2, 3, 4, 5].map((i) => (
-              <TableRow key={i}>
-                <TableCell>#{10000 + i}</TableCell>
-                <TableCell>Cliente Exemplo {i}</TableCell>
-                <TableCell>R$ {(Math.random() * 10000).toFixed(2)}</TableCell>
-                <TableCell>{`${10 + i}/04/2025`}</TableCell>
-                <TableCell>
-                  <span className={`inline-flex items-center rounded-full px-2 py-1 text-xs font-medium 
-                    ${i % 3 === 0 ? "bg-yellow-50 text-yellow-700" : 
-                      i % 2 === 0 ? "bg-green-50 text-green-700" : 
-                      "bg-blue-50 text-blue-700"}`}>
-                    {i % 3 === 0 ? "Pendente" : i % 2 === 0 ? "Concluída" : "Em progresso"}
-                  </span>
-                </TableCell>
-                <TableCell>
-                  <Button variant="ghost" size="sm" asChild>
-                    <a href={PATHS.ADMIN.SALES_DETAILS(String(i))}>Detalhes</a>
-                  </Button>
-                </TableCell>
-              </TableRow>
-            ))}
-          </TableBody>
-        </Table>
-      </PageWrapper>
+      
+      {isLoading ? (
+        <PageWrapper>
+          <div className="space-y-4">
+            <Skeleton className="h-10 w-full" />
+            <Skeleton className="h-96 w-full" />
+            <Skeleton className="h-10 w-full" />
+          </div>
+        </PageWrapper>
+      ) : (
+        <SalesDataTable 
+          sales={currentSales}
+          currentPage={currentPage}
+          totalPages={totalPages}
+          isLoading={isLoading}
+          onPageChange={setCurrentPage}
+          totals={totals}
+        />
+      )}
     </div>
   );
 };

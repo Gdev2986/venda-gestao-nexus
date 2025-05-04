@@ -1,4 +1,3 @@
-
 export enum UserRole {
   CLIENT = "CLIENT",
   ADMIN = "ADMIN",
@@ -52,6 +51,7 @@ export interface Sale {
   paymentMethod: PaymentMethod;
   client_id?: string;
   client_name?: string;
+  installments?: string; // Added installments field
 }
 
 export interface SalesFilterParams {
