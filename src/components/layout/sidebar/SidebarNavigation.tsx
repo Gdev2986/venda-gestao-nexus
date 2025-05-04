@@ -21,6 +21,7 @@ import {
 import { PATHS } from "@/routes/paths";
 import { useState } from "react";
 import { UserRole } from "@/types";
+import { SidebarItem } from "./types";
 
 interface SidebarNavigationProps {
   userRole: UserRole;
@@ -34,166 +35,211 @@ const SidebarNavigation = ({ userRole }: SidebarNavigationProps) => {
     setOpen(prev => prev === key ? null : key);
   };
 
-  // Determine which navigation to show based on user role
-  const renderNavigation = () => {
+  // Create sidebar items based on user role
+  const getAdminItems = (): SidebarItem[] => {
+    return [
+      {
+        title: "Dashboard",
+        icon: Home,
+        href: PATHS.ADMIN.DASHBOARD,
+        roles: [UserRole.ADMIN],
+      },
+      {
+        title: "Clientes",
+        icon: Users,
+        href: PATHS.ADMIN.CLIENTS,
+        roles: [UserRole.ADMIN],
+      },
+      {
+        title: "Parceiros",
+        icon: UserPlus,
+        href: PATHS.ADMIN.PARTNERS,
+        roles: [UserRole.ADMIN],
+      },
+      {
+        title: "Pagamentos",
+        icon: CreditCard,
+        href: PATHS.ADMIN.PAYMENTS,
+        roles: [UserRole.ADMIN],
+      },
+      {
+        title: "Vendas",
+        icon: BarChart3,
+        href: PATHS.ADMIN.SALES,
+        roles: [UserRole.ADMIN],
+      },
+      {
+        title: "Taxas",
+        icon: Package,
+        href: PATHS.ADMIN.FEES,
+        roles: [UserRole.ADMIN],
+      },
+      {
+        title: "Notificações",
+        icon: Bell,
+        href: PATHS.ADMIN.NOTIFICATIONS,
+        roles: [UserRole.ADMIN],
+      },
+      {
+        title: "Logística",
+        icon: Truck,
+        href: PATHS.LOGISTICS.OPERATIONS,
+        roles: [UserRole.ADMIN],
+      },
+      {
+        title: "Relatórios",
+        icon: BarChart3,
+        href: PATHS.ADMIN.REPORTS,
+        roles: [UserRole.ADMIN],
+      },
+      {
+        title: "Configurações",
+        icon: Settings,
+        href: PATHS.ADMIN.SETTINGS,
+        roles: [UserRole.ADMIN],
+      },
+    ];
+  };
+
+  const getClientItems = (): SidebarItem[] => {
+    return [
+      {
+        title: "Dashboard",
+        icon: Home,
+        href: PATHS.USER.DASHBOARD,
+        roles: [UserRole.CLIENT],
+      },
+      {
+        title: "Máquinas",
+        icon: Package,
+        href: PATHS.USER.MACHINES,
+        roles: [UserRole.CLIENT],
+      },
+      {
+        title: "Pagamentos",
+        icon: Wallet,
+        href: PATHS.USER.PAYMENTS,
+        roles: [UserRole.CLIENT],
+      },
+      {
+        title: "Suporte",
+        icon: HelpCircle,
+        href: PATHS.USER.SUPPORT,
+        roles: [UserRole.CLIENT],
+      },
+    ];
+  };
+
+  const getPartnerItems = (): SidebarItem[] => {
+    return [
+      {
+        title: "Dashboard",
+        icon: Home,
+        href: PATHS.PARTNER.DASHBOARD,
+        roles: [UserRole.PARTNER],
+      },
+      {
+        title: "Clientes",
+        icon: Users,
+        href: PATHS.PARTNER.CLIENTS,
+        roles: [UserRole.PARTNER],
+      },
+      {
+        title: "Comissões",
+        icon: Wallet,
+        href: PATHS.PARTNER.COMMISSIONS,
+        roles: [UserRole.PARTNER],
+      },
+      {
+        title: "Configurações",
+        icon: Settings,
+        href: PATHS.PARTNER.SETTINGS,
+        roles: [UserRole.PARTNER],
+      },
+    ];
+  };
+
+  const getFinancialItems = (): SidebarItem[] => {
+    return [
+      {
+        title: "Dashboard",
+        icon: Home,
+        href: PATHS.FINANCIAL.DASHBOARD,
+        roles: [UserRole.FINANCIAL],
+      },
+      {
+        title: "Solicitações",
+        icon: ArrowRightLeft,
+        href: PATHS.FINANCIAL.REQUESTS,
+        roles: [UserRole.FINANCIAL],
+      },
+      {
+        title: "Relatórios",
+        icon: BarChart3,
+        href: PATHS.FINANCIAL.REPORTS,
+        roles: [UserRole.FINANCIAL],
+      },
+    ];
+  };
+
+  const getLogisticsItems = (): SidebarItem[] => {
+    return [
+      {
+        title: "Dashboard",
+        icon: Home,
+        href: PATHS.LOGISTICS.DASHBOARD,
+        roles: [UserRole.LOGISTICS],
+      },
+      {
+        title: "Máquinas",
+        icon: Package,
+        href: PATHS.LOGISTICS.MACHINES,
+        roles: [UserRole.LOGISTICS],
+      },
+      {
+        title: "Operações",
+        icon: Truck,
+        href: PATHS.LOGISTICS.OPERATIONS,
+        roles: [UserRole.LOGISTICS],
+      },
+      {
+        title: "Suporte",
+        icon: HelpCircle,
+        href: PATHS.LOGISTICS.SUPPORT,
+        roles: [UserRole.LOGISTICS],
+      },
+    ];
+  };
+
+  // Get items based on user role
+  const getRoleItems = () => {
     switch (userRole) {
       case UserRole.ADMIN:
-        return (
-          <>
-            <SidebarNavItem icon={Home} href={PATHS.ADMIN.DASHBOARD} active={location.pathname === PATHS.ADMIN.DASHBOARD}>
-              Dashboard
-            </SidebarNavItem>
-            
-            <SidebarNavItem icon={Users} href={PATHS.ADMIN.CLIENTS} active={location.pathname.startsWith('/admin/clients')}>
-              Clientes
-            </SidebarNavItem>
-            
-            <SidebarNavItem icon={UserPlus} href={PATHS.ADMIN.PARTNERS} active={location.pathname.startsWith('/admin/partners')}>
-              Parceiros
-            </SidebarNavItem>
-            
-            <SidebarNavItem 
-              icon={CreditCard} 
-              href={PATHS.ADMIN.PAYMENTS} 
-              active={location.pathname === PATHS.ADMIN.PAYMENTS}
-            >
-              Pagamentos
-            </SidebarNavItem>
-            
-            <SidebarNavItem 
-              icon={BarChart3} 
-              href={PATHS.ADMIN.SALES} 
-              active={location.pathname === PATHS.ADMIN.SALES}
-            >
-              Vendas
-            </SidebarNavItem>
-            
-            <SidebarNavItem
-              icon={Package}
-              href={PATHS.ADMIN.FEES}
-              active={location.pathname === PATHS.ADMIN.FEES}
-            >
-              Taxas
-            </SidebarNavItem>
-            
-            <SidebarNavItem icon={Bell} href={PATHS.ADMIN.NOTIFICATIONS} active={location.pathname === PATHS.ADMIN.NOTIFICATIONS}>
-              Notificações
-            </SidebarNavItem>
-
-            <SidebarNavItem
-              icon={Truck}
-              href={PATHS.LOGISTICS.OPERATIONS}
-              active={location.pathname === PATHS.LOGISTICS.OPERATIONS}
-            >
-              Logística
-            </SidebarNavItem>
-            
-            <SidebarNavItem 
-              icon={BarChart3} 
-              href={PATHS.ADMIN.REPORTS} 
-              active={location.pathname === PATHS.ADMIN.REPORTS}
-            >
-              Relatórios
-            </SidebarNavItem>
-            
-            <SidebarNavItem icon={Settings} href={PATHS.ADMIN.SETTINGS} active={location.pathname === PATHS.ADMIN.SETTINGS}>
-              Configurações
-            </SidebarNavItem>
-          </>
-        );
-
+        return getAdminItems();
       case UserRole.CLIENT:
-        return (
-          <>
-            <SidebarNavItem icon={Home} href={PATHS.USER.DASHBOARD} active={location.pathname === PATHS.USER.DASHBOARD}>
-              Dashboard
-            </SidebarNavItem>
-            
-            <SidebarNavItem icon={Package} href={PATHS.USER.MACHINES} active={location.pathname === PATHS.USER.MACHINES}>
-              Máquinas
-            </SidebarNavItem>
-            
-            <SidebarNavItem icon={Wallet} href={PATHS.USER.PAYMENTS} active={location.pathname === PATHS.USER.PAYMENTS}>
-              Pagamentos
-            </SidebarNavItem>
-            
-            <SidebarNavItem icon={HelpCircle} href={PATHS.USER.SUPPORT} active={location.pathname === PATHS.USER.SUPPORT}>
-              Suporte
-            </SidebarNavItem>
-          </>
-        );
-        
+        return getClientItems();
       case UserRole.PARTNER:
-        return (
-          <>
-            <SidebarNavItem icon={Home} href={PATHS.PARTNER.DASHBOARD} active={location.pathname === PATHS.PARTNER.DASHBOARD}>
-              Dashboard
-            </SidebarNavItem>
-            
-            <SidebarNavItem icon={Users} href={PATHS.PARTNER.CLIENTS} active={location.pathname === PATHS.PARTNER.CLIENTS}>
-              Clientes
-            </SidebarNavItem>
-            
-            <SidebarNavItem icon={Wallet} href={PATHS.PARTNER.COMMISSIONS} active={location.pathname === PATHS.PARTNER.COMMISSIONS}>
-              Comissões
-            </SidebarNavItem>
-            
-            <SidebarNavItem icon={Settings} href={PATHS.PARTNER.SETTINGS} active={location.pathname === PATHS.PARTNER.SETTINGS}>
-              Configurações
-            </SidebarNavItem>
-          </>
-        );
-
+        return getPartnerItems();
       case UserRole.FINANCIAL:
-        return (
-          <>
-            <SidebarNavItem icon={Home} href={PATHS.FINANCIAL.DASHBOARD} active={location.pathname === PATHS.FINANCIAL.DASHBOARD}>
-              Dashboard
-            </SidebarNavItem>
-            
-            <SidebarNavItem icon={ArrowRightLeft} href={PATHS.FINANCIAL.REQUESTS} active={location.pathname === PATHS.FINANCIAL.REQUESTS}>
-              Solicitações
-            </SidebarNavItem>
-            
-            <SidebarNavItem icon={BarChart3} href={PATHS.FINANCIAL.REPORTS} active={location.pathname === PATHS.FINANCIAL.REPORTS}>
-              Relatórios
-            </SidebarNavItem>
-          </>
-        );
-
+        return getFinancialItems();
       case UserRole.LOGISTICS:
-        return (
-          <>
-            <SidebarNavItem icon={Home} href={PATHS.LOGISTICS.DASHBOARD} active={location.pathname === PATHS.LOGISTICS.DASHBOARD}>
-              Dashboard
-            </SidebarNavItem>
-            
-            <SidebarNavItem icon={Package} href={PATHS.LOGISTICS.MACHINES} active={location.pathname === PATHS.LOGISTICS.MACHINES}>
-              Máquinas
-            </SidebarNavItem>
-            
-            <SidebarNavItem icon={Truck} href={PATHS.LOGISTICS.OPERATIONS} active={location.pathname === PATHS.LOGISTICS.OPERATIONS}>
-              Operações
-            </SidebarNavItem>
-            
-            <SidebarNavItem icon={HelpCircle} href={PATHS.LOGISTICS.SUPPORT} active={location.pathname === PATHS.LOGISTICS.SUPPORT}>
-              Suporte
-            </SidebarNavItem>
-          </>
-        );
-      
+        return getLogisticsItems();
       default:
-        return (
-          <SidebarNavItem icon={Settings} href="/settings" active={location.pathname === '/settings'}>
-            Configurações
-          </SidebarNavItem>
-        );
+        return [];
     }
   };
 
+  const navigationItems = getRoleItems();
+
   return (
     <div className="space-y-1 py-2">
-      {renderNavigation()}
+      {navigationItems.map((item) => (
+        <SidebarNavItem 
+          key={item.title} 
+          item={item} 
+          userRole={userRole} 
+        />
+      ))}
     </div>
   );
 };

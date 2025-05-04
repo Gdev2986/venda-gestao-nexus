@@ -1,3 +1,4 @@
+
 import React, { useEffect } from 'react';
 import {
   BrowserRouter as Router,
@@ -8,10 +9,10 @@ import {
 } from 'react-router-dom';
 import { useAuth } from './contexts/AuthContext';
 import Index from './pages/Index';
-import Login from './pages/Login';
-import Register from './pages/Register';
-import ForgotPassword from './pages/ForgotPassword';
-import ResetPassword from './pages/ResetPassword';
+import Login from './pages/auth/Login';
+import Register from './pages/auth/Register';
+import ForgotPassword from './pages/auth/ForgotPassword';
+import ResetPassword from './pages/auth/ResetPassword';
 import Settings from './pages/settings/Settings';
 import UserDashboard from './pages/user/Dashboard';
 import UserMachines from './pages/user/Machines';
@@ -49,6 +50,7 @@ import LogisticsLayout from './layouts/LogisticsLayout';
 import { UserRole } from './types';
 import ClientNew from './pages/admin/ClientNew';
 import ClientDetails from './pages/admin/ClientDetails';
+import UserManagement from './pages/UserManagement';
 
 function App() {
   return (
