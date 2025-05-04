@@ -1,6 +1,9 @@
+
 export const PATHS = {
+  HOME: "/",
   LOGIN: "/login",
   REGISTER: "/register",
+  DASHBOARD: "/dashboard",
   
   USER: {
     DASHBOARD: "/user/dashboard",
@@ -15,13 +18,20 @@ export const PATHS = {
     CLIENT_NEW: "/admin/clients/new",
     CLIENT_DETAILS: (id: string) => `/admin/clients/${id}`,
     MACHINES: "/admin/machines",
+    MACHINE_NEW: "/admin/machines/new",
+    MACHINE_DETAILS: (id: string) => `/admin/machines/${id}`,
     PARTNERS: "/admin/partners",
+    PARTNER_NEW: "/admin/partners/new",
+    PARTNER_DETAILS: (id: string) => `/admin/partners/${id}`,
     SETTINGS: "/admin/settings",
     NOTIFICATIONS: "/admin/notifications",
     PAYMENTS: "/admin/payments",
+    PAYMENT_NEW: "/admin/payments/new",
+    PAYMENT_DETAILS: (id: string) => `/admin/payments/${id}`,
     REPORTS: "/admin/reports",
     FEES: "/admin/fees",
     SALES: "/admin/sales",
+    SALES_NEW: "/admin/sales/new",
     USER_MANAGEMENT: "/admin/settings/users",
   },
   
@@ -36,6 +46,8 @@ export const PATHS = {
     DASHBOARD: "/financial/dashboard",
     REPORTS: "/financial/reports",
     REQUESTS: "/financial/requests",
+    CLIENTS: "/financial/clients",
+    PARTNERS: "/financial/partners",
   },
   
   LOGISTICS: {
@@ -43,5 +55,6 @@ export const PATHS = {
     MACHINES: "/logistics/machines",
     OPERATIONS: "/logistics/operations",
     SUPPORT: "/logistics/support",
+    LOGISTICS_MODULE: "/logistics/module",
   },
 };

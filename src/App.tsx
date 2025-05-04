@@ -23,7 +23,7 @@ import AdminClients from './pages/admin/Clients';
 import AdminMachines from './pages/admin/Machines';
 import AdminPartners from './pages/admin/Partners';
 import AdminNotifications from './pages/admin/Notifications';
-import AdminSettings from './pages/admin/Settings';
+import AdminSettings from './pages/settings/Settings';
 import AdminPayments from './pages/admin/Payments';
 import AdminReports from './pages/admin/Reports';
 import AdminSales from './pages/admin/Sales';
@@ -50,7 +50,7 @@ import LogisticsLayout from './layouts/LogisticsLayout';
 import { UserRole } from './types';
 import ClientNew from './pages/admin/ClientNew';
 import ClientDetails from './pages/admin/ClientDetails';
-import UserManagement from './pages/UserManagement';
+import UserManagement from './pages/settings/UserManagement';
 
 function App() {
   return (

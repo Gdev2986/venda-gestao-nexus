@@ -1,34 +1,30 @@
-
 import { useState } from "react";
-import { 
-  Table, 
-  TableBody, 
-  TableCell, 
-  TableHead, 
-  TableHeader, 
-  TableRow 
-} from "@/components/ui/table";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
-import { formatDistanceToNow } from "date-fns";
-import { ptBR } from "date-fns/locale";
-import RoleChangeDialog from "./RoleChangeDialog";
+import { format } from "date-fns";
+import { TablePagination } from "@/components/ui/table-pagination";
+import { capitalizeFirstLetter } from "@/lib/utils";
+import { Skeleton } from "@/components/ui/skeleton";
+import { Edit, User, MoreHorizontal, Shield } from "lucide-react";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { UserRole } from "@/types";
-import UserPagination from "./UserPagination";
-import { UserData } from "./useUserManagement";
+import type { User as UserType } from "@/types";
+// Fix the import to use named import instead of default import
+import { RoleChangeDialog } from "@/components/user-management/RoleChangeDialog";
 
 interface UserTableProps {
-  users: UserData[];
-  setUsers: React.Dispatch<React.SetStateAction<UserData[]>>;
+  users: UserType[];
+  setUsers: React.Dispatch<React.SetStateAction<UserType[]>>;
   totalPages: number;
   currentPage: number;
   onPageChange: (page: number) => void;
   openRoleDialog: (userId: string) => void;
   roleDialogOpen: boolean;
   closeRoleDialog: () => void;
-  selectedUserId: string;
-  handleRoleChange: (userId: string, newRole: UserRole) => Promise<void>;
+  selectedUserId: string | null;
+  handleRoleChange: (role: UserRole) => Promise<void>;
   changingRole: boolean;
 }
 
@@ -45,128 +41,91 @@ const UserTable = ({
   handleRoleChange,
   changingRole
 }: UserTableProps) => {
-  const getInitials = (name: string) => {
-    return name.split(' ').map(n => n[0]).join('').toUpperCase();
-  };
+  const [open, setOpen] = useState(false);
 
-  const getRoleBadgeColor = (role: UserRole) => {
-    switch (role) {
-      case UserRole.ADMIN:
-        return "bg-red-500 hover:bg-red-600";
-      case UserRole.PARTNER:
-        return "bg-blue-500 hover:bg-blue-600";
-      case UserRole.FINANCIAL:
-        return "bg-green-500 hover:bg-green-600";
-      case UserRole.LOGISTICS:
-        return "bg-purple-500 hover:bg-purple-600";
-      default:
-        return "bg-gray-500 hover:bg-gray-600";
-    }
+  const handleOpenChange = () => {
+    setOpen(!open);
   };
-
-  const getRoleName = (role: UserRole) => {
-    switch (role) {
-      case UserRole.ADMIN:
-        return "Administrador";
-      case UserRole.PARTNER:
-        return "Parceiro";
-      case UserRole.CLIENT:
-        return "Cliente";
-      case UserRole.FINANCIAL:
-        return "Financeiro";
-      case UserRole.LOGISTICS:
-        return "Logística";
-      default:
-        return role;
-    }
-  };
-
-  const getTimeAgo = (dateString: string) => {
-    try {
-      return formatDistanceToNow(new Date(dateString), {
-        addSuffix: true,
-        locale: ptBR
-      });
-    } catch (error) {
-      return "Data inválida";
-    }
-  };
-
-  const selectedUser = users.find(user => user.id === selectedUserId);
 
   return (
     <>
-      <div className="rounded-md border">
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead className="w-[80px]">Usuário</TableHead>
-              <TableHead>Nome</TableHead>
-              <TableHead>Email</TableHead>
-              <TableHead className="hidden md:table-cell">Função</TableHead>
-              <TableHead className="hidden lg:table-cell">Cadastrado</TableHead>
-              <TableHead className="text-right">Ações</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {users.length === 0 ? (
-              <TableRow>
-                <TableCell colSpan={6} className="h-24 text-center">
-                  Nenhum usuário encontrado.
+      <Table>
+        <TableHeader>
+          <TableRow>
+            <TableHead className="w-[50px]">
+              <Shield className="w-4 h-4" />
+            </TableHead>
+            <TableHead>Nome</TableHead>
+            <TableHead>Email</TableHead>
+            <TableHead>Role</TableHead>
+            <TableHead>Criado em</TableHead>
+            <TableHead className="text-right">Ações</TableHead>
+          </TableRow>
+        </TableHeader>
+        <TableBody>
+          {users.length > 0 ? (
+            users.map((user) => (
+              <TableRow key={user.id}>
+                <TableCell>
+                  <Avatar>
+                    <AvatarFallback>{capitalizeFirstLetter(user.name.charAt(0))}</AvatarFallback>
+                  </Avatar>
+                </TableCell>
+                <TableCell className="font-medium">{user.name}</TableCell>
+                <TableCell>{user.email}</TableCell>
+                <TableCell>
+                  <Badge variant="secondary">{user.role}</Badge>
+                </TableCell>
+                <TableCell>
+                  {format(new Date(user.created_at), "MMM dd, yyyy")}
+                </TableCell>
+                <TableCell className="text-right">
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button variant="ghost" className="h-8 w-8 p-0">
+                        <span className="sr-only">Abrir menu</span>
+                        <MoreHorizontal className="h-4 w-4" />
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end">
+                      <DropdownMenuLabel>Ações</DropdownMenuLabel>
+                      <DropdownMenuItem onClick={() => openRoleDialog(user.id)}>
+                        <User className="h-4 w-4 mr-2" />
+                        <span>Alterar Role</span>
+                      </DropdownMenuItem>
+                      <DropdownMenuSeparator />
+                      <DropdownMenuItem>
+                        <Edit className="h-4 w-4 mr-2" />
+                        <span>Editar</span>
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
                 </TableCell>
               </TableRow>
-            ) : (
-              users.map((user) => (
-                <TableRow key={user.id}>
-                  <TableCell>
-                    <Avatar>
-                      <AvatarImage src={user.avatar} />
-                      <AvatarFallback>{getInitials(user.name || user.email)}</AvatarFallback>
-                    </Avatar>
-                  </TableCell>
-                  <TableCell className="font-medium">{user.name || "N/A"}</TableCell>
-                  <TableCell>{user.email}</TableCell>
-                  <TableCell className="hidden md:table-cell">
-                    <Badge className={getRoleBadgeColor(user.role)}>
-                      {getRoleName(user.role)}
-                    </Badge>
-                  </TableCell>
-                  <TableCell className="hidden lg:table-cell text-muted-foreground">
-                    {getTimeAgo(user.created_at)}
-                  </TableCell>
-                  <TableCell className="text-right">
-                    <Button 
-                      variant="outline" 
-                      size="sm"
-                      onClick={() => openRoleDialog(user.id)}
-                    >
-                      Alterar função
-                    </Button>
-                  </TableCell>
-                </TableRow>
-              ))
-            )}
-          </TableBody>
-        </Table>
-      </div>
+            ))
+          ) : (
+            <TableRow>
+              <TableCell colSpan={6} className="h-24 text-center">
+                <p>Nenhum usuário encontrado</p>
+              </TableCell>
+            </TableRow>
+          )}
+        </TableBody>
+      </Table>
 
-      {totalPages > 1 && (
-        <UserPagination 
-          currentPage={currentPage}
-          totalPages={totalPages}
-          onPageChange={onPageChange}
-        />
-      )}
+      <TablePagination
+        page={currentPage}
+        total={totalPages}
+        onPageChange={onPageChange}
+      />
 
-      {selectedUser && (
-        <RoleChangeDialog 
-          open={roleDialogOpen} 
-          onClose={closeRoleDialog}
-          user={selectedUser}
-          onChangeRole={handleRoleChange}
-          isLoading={changingRole}
-        />
-      )}
+      <RoleChangeDialog
+        open={roleDialogOpen}
+        onOpenChange={closeRoleDialog}
+        userId={selectedUserId}
+        handleRoleChange={handleRoleChange}
+        changingRole={changingRole}
+      />
     </>
   );
 };
