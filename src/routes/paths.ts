@@ -40,6 +40,7 @@ export const PATHS = {
     CLIENTS: "/partner/clients",
     COMMISSIONS: "/partner/commissions",
     SETTINGS: "/partner/settings",
+    SALES: "/partner/sales",
   },
   
   FINANCIAL: {
@@ -56,5 +57,6 @@ export const PATHS = {
     OPERATIONS: "/logistics/operations",
     SUPPORT: "/logistics/support",
     LOGISTICS_MODULE: "/logistics/module",
+    MACHINE_NEW: "/logistics/machines/new",
   },
 };

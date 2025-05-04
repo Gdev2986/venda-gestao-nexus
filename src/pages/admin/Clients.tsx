@@ -35,7 +35,7 @@ const Clients = () => {
   // Transform partners to match required format
   const formattedPartners = partners.map(partner => ({
     id: partner.id,
-    business_name: partner.name || partner.business_name || 'Unknown'
+    business_name: partner.business_name || partner.company_name || 'Unknown'
   }));
 
   useEffect(() => {
@@ -116,7 +116,7 @@ const Clients = () => {
         <Card>
           <CardContent className="pt-6">
             <div className="text-center">
-              <p className="text-destructive">Erro ao carregar clientes: {error}</p>
+              <p className="text-destructive">Erro ao carregar clientes: {error.message}</p>
               <Button 
                 variant="outline" 
                 className="mt-4" 

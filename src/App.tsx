@@ -1,11 +1,8 @@
 
-import React, { useEffect } from 'react';
+import React from 'react';
 import {
-  BrowserRouter as Router,
-  Route,
   Routes,
-  useLocation,
-  useNavigate,
+  Route,
 } from 'react-router-dom';
 import { useAuth } from './contexts/AuthContext';
 import Index from './pages/Index';
@@ -23,7 +20,6 @@ import AdminClients from './pages/admin/Clients';
 import AdminMachines from './pages/admin/Machines';
 import AdminPartners from './pages/admin/Partners';
 import AdminNotifications from './pages/admin/Notifications';
-import AdminSettings from './pages/settings/Settings';
 import AdminPayments from './pages/admin/Payments';
 import AdminReports from './pages/admin/Reports';
 import AdminSales from './pages/admin/Sales';
@@ -50,7 +46,7 @@ import LogisticsLayout from './layouts/LogisticsLayout';
 import { UserRole } from './types';
 import ClientNew from './pages/admin/ClientNew';
 import ClientDetails from './pages/admin/ClientDetails';
-import UserManagement from './pages/settings/UserManagement';
+import UserManagement from './pages/UserManagement';
 
 function App() {
   return (
@@ -88,7 +84,7 @@ function App() {
             <Route path="/admin/machines" element={<AdminMachines />} />
             <Route path="/admin/partners" element={<AdminPartners />} />
             <Route path="/admin/notifications" element={<AdminNotifications />} />
-            <Route path="/admin/settings" element={<AdminSettings />} />
+            <Route path="/admin/settings" element={<Settings />} />
             <Route path="/admin/payments" element={<AdminPayments />} />
             <Route path="/admin/reports" element={<AdminReports />} />
             <Route path="/admin/sales" element={<AdminSales />} />

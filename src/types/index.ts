@@ -1,60 +1,98 @@
-
-export enum UserRole {
-  ADMIN = "ADMIN",
-  CLIENT = "CLIENT",
-  FINANCIAL = "FINANCIAL",
-  PARTNER = "PARTNER", 
-  LOGISTICS = "LOGISTICS"
-}
-
-export enum PaymentStatus {
-  PENDING = "PENDING",
-  APPROVED = "APPROVED",
-  REJECTED = "REJECTED",
-  PAID = "PAID"
-}
-
-export enum PaymentType {
-  PIX = "PIX",
-  TED = "TED",
-  BOLETO = "BOLETO"
-}
-
-export interface Payment {
+export interface Client {
   id: string;
-  created_at: string;
-  updated_at: string;
-  amount: number;
-  status: PaymentStatus;
-  client_id: string;
-  approved_at?: string; 
-  receipt_url?: string;
-  client_name?: string;
-  rejection_reason?: string;
-  payment_type?: PaymentType;
-  bank_info?: {
-    bank_name?: string;
-    account_number?: string;
-    branch_number?: string;
-    account_holder?: string;
-  };
-  document_url?: string;
+  name?: string;
+  email?: string;
+  phone?: string;
+  address?: string;
+  city?: string;
+  state?: string;
+  zip?: string;
+  partner_id?: string;
+  machines_count?: number;
+  active?: boolean;
+  created_at?: string;
+  updated_at?: string;
+  business_name?: string;
+  contact_name?: string;
+  document?: string;
 }
 
-// Types for partners
 export interface Partner {
   id: string;
-  company_name: string;
-  created_at: string;
-  updated_at: string;
-  commission_rate: number;
+  company_name?: string;
+  business_name?: string;
   contact_name?: string;
-  contact_email?: string;
-  contact_phone?: string;
-  business_name?: string; // For backward compatibility
-  email?: string; // Added for consistency with filtering
-  phone?: string; // Added for consistency with filtering
-  address?: string; // Added for completeness
+  email?: string;
+  phone?: string;
+  commission_rate?: number;
+  created_at?: string;
+  updated_at?: string;
+  name?: string;
 }
 
-// Add other types here as needed
+export enum UserRole {
+  CLIENT = "client",
+  ADMIN = "admin",
+  PARTNER = "partner",
+  FINANCIAL = "financial",
+  LOGISTICS = "logistics",
+}
+
+export interface PixKey {
+  id: string;
+  user_id: string;
+  key_type: string;
+  type: string;
+  key: string;
+  owner_name: string;
+  name: string;
+  isDefault: boolean;
+  is_active: boolean;
+  created_at: string;
+  updated_at: string;
+  bank_name: string;
+}
+
+export interface DashboardStats {
+  totalClients: number;
+  totalRevenue: number;
+  currentBalance: number;
+  totalTransactions: number;
+  averageValue: number;
+  pendingPayments: number;
+  salesByPaymentMethod: { method: string; amount: number }[];
+  recentSales: { id: string; date: string; description: string; amount: number }[];
+}
+
+export interface UserSettings {
+  name: string;
+  email: string;
+  language: string;
+  timezone: string;
+  theme: "light" | "dark" | "system";
+  notifications: {
+    marketing: boolean;
+    security: boolean;
+  };
+  display: {
+    showBalance: boolean;
+    showNotifications: boolean;
+  };
+}
+
+// Add User type for user management
+export interface User {
+  id: string;
+  name: string;
+  email: string;
+  role: UserRole;
+  created_at: string;
+  updated_at?: string;
+  last_login?: string;
+  active: boolean;
+}
+
+// Add a helper utility function for capitalizeFirstLetter
+export const capitalizeFirstLetter = (string: string): string => {
+  return string.charAt(0).toUpperCase() + string.slice(1);
+};

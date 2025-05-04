@@ -1,17 +1,17 @@
+
 import { useState } from "react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { format } from "date-fns";
-import { TablePagination } from "@/components/ui/table-pagination";
+import TablePagination from "@/components/ui/table-pagination";
 import { capitalizeFirstLetter } from "@/lib/utils";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Edit, User, MoreHorizontal, Shield } from "lucide-react";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { UserRole } from "@/types";
-import type { User as UserType } from "@/types";
-// Fix the import to use named import instead of default import
+import { User as UserType } from "@/types";
 import { RoleChangeDialog } from "@/components/user-management/RoleChangeDialog";
 
 interface UserTableProps {
@@ -120,10 +120,10 @@ const UserTable = ({
       />
 
       <RoleChangeDialog
-        open={roleDialogOpen}
-        onOpenChange={closeRoleDialog}
-        userId={selectedUserId}
-        handleRoleChange={handleRoleChange}
+        isOpen={roleDialogOpen}
+        onClose={closeRoleDialog}
+        userId={selectedUserId || ""}
+        onConfirm={handleRoleChange}
         changingRole={changingRole}
       />
     </>

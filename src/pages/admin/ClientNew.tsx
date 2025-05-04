@@ -1,5 +1,5 @@
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { PATHS } from "@/routes/paths";
 import { useToast } from "@/hooks/use-toast";
@@ -10,7 +10,6 @@ import { ArrowLeft } from "lucide-react";
 import { ClientForm } from "@/components/clients/ClientForm";
 import { useClients } from "@/hooks/use-clients";
 import { usePartners } from "@/hooks/use-partners";
-import { Partner } from "@/types";
 
 const ClientNew = () => {
   const [submitting, setSubmitting] = useState(false);
@@ -22,7 +21,7 @@ const ClientNew = () => {
   // Transform partners to match required format
   const formattedPartners = partners.map(partner => ({
     id: partner.id,
-    business_name: partner.name || partner.business_name || 'Unknown'
+    business_name: partner.business_name || partner.company_name || 'Unknown'
   }));
 
   const handleGoBack = () => {

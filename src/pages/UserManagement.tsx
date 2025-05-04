@@ -7,6 +7,7 @@ import LoadingState from "@/components/user-management/LoadingState";
 import ErrorState from "@/components/user-management/ErrorState";
 import AccessCheckingState from "@/components/user-management/AccessCheckingState";
 import UserFilters from "@/components/user-management/UserFilters";
+import { UserRole } from "@/types";
 
 const UserManagement = () => {
   const { 
@@ -18,7 +19,6 @@ const UserManagement = () => {
     openRoleDialog,
     closeRoleDialog,
     selectedUserId,
-    handleRoleChange,
     changingRole,
     checkingAccess,
     retryFetch,
@@ -27,8 +27,16 @@ const UserManagement = () => {
     totalUsers,
     handlePageChange,
     handleFilterChange,
-    filters
+    filters,
+    updateUserRole
   } = useUserManagement();
+  
+  // Create a handler that will work with the props expected by RoleChangeDialog
+  const handleRoleChange = async (role: UserRole) => {
+    if (selectedUserId) {
+      await updateUserRole(selectedUserId, role);
+    }
+  };
 
   if (checkingAccess) {
     return (

@@ -17,7 +17,7 @@ const ClientDetails = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { toast } = useToast();
-  const { getClient, updateClient, isLoading: clientLoading } = useClients();
+  const { getClient, updateClient, loading: clientLoading } = useClients();
   const { partners } = usePartners();
   const [client, setClient] = useState<any>(null);
   const [submitting, setSubmitting] = useState(false);
@@ -25,7 +25,7 @@ const ClientDetails = () => {
   // Transform partners to match required format
   const formattedPartners = partners.map(partner => ({
     id: partner.id,
-    business_name: partner.name || partner.business_name || 'Unknown'
+    business_name: partner.business_name || partner.company_name || 'Unknown'
   }));
 
   useEffect(() => {
