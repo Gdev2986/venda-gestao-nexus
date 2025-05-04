@@ -1,379 +1,209 @@
+
 import { useState, useEffect } from "react";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { useForm } from "react-hook-form";
-import * as z from "zod";
+import { useAuth } from "@/hooks/use-auth";
+import { supabase } from "@/integrations/supabase/client";
+import { PixKey, UserSettings } from "@/types";
 import { Button } from "@/components/ui/button";
-import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Switch } from "@/components/ui/switch";
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import { Label } from "@/components/ui/label";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
-import MainLayout from "@/components/layout/MainLayout";
-import { UserSettings } from "@/types";
-import { saveSettings, loadSettings } from "@/settings-utils";
-import PixKeysManager from "@/components/settings/PixKeysManager";
-
-// Define the SimplifiedPixKey type to match the actual data structure
-interface SimplifiedPixKey {
-  id: string;
-  user_id: string;
-  key_type: string;
-  key: string;
-  owner_name: string;
-  is_default: boolean;
-  is_active: boolean;
-  created_at: string;
-  updated_at: string;
-  bank_name: string;
-}
-
-const formSchema = z.object({
-  name: z.string().min(2, {
-    message: "Name must be at least 2 characters.",
-  }),
-  email: z.string().email({
-    message: "Please enter a valid email.",
-  }),
-  language: z.string().default("pt-BR"),
-  timezone: z.string().default("America/Sao_Paulo"),
-  theme: z.enum(["light", "dark", "system"]).default("system"),
-  notificationsMarketing: z.boolean().default(true),
-  notificationsSecurity: z.boolean().default(true),
-  displayShowBalance: z.boolean().default(true),
-  displayShowNotifications: z.boolean().default(true),
-});
-
-interface SettingsFormValues {
-  name: string;
-  email: string;
-  language: string;
-  timezone: string;
-  theme: "light" | "dark" | "system";
-  notificationsMarketing: boolean;
-  notificationsSecurity: boolean;
-  displayShowBalance: boolean;
-  displayShowNotifications: boolean;
-}
+import { createDefaultPixKeyProperties } from "@/utils/settings-utils";
+import { loadSettings, saveSettings } from "@/utils/settings-utils";
 
 const Settings = () => {
-  const [loading, setLoading] = useState(true);
-  const [initialSettings, setInitialSettings] = useState<UserSettings | null>(null);
+  const { user } = useAuth();
+  const [pixKeys, setPixKeys] = useState<PixKey[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [userSettings, setUserSettings] = useState<UserSettings>({
+    name: "",
+    email: "",
+    language: "pt-BR",
+    timezone: "America/Sao_Paulo",
+    theme: "light" as const,
+    notifications: {
+      marketing: true,
+      security: true,
+    },
+    display: {
+      showBalance: true,
+      showNotifications: true,
+    }
+  });
   const { toast } = useToast();
 
-  const form = useForm<SettingsFormValues>({
-    resolver: zodResolver(formSchema),
-    defaultValues: {
-      name: "",
-      email: "",
-      language: "pt-BR",
-      timezone: "America/Sao_Paulo",
-      theme: "system",
-      notificationsMarketing: true,
-      notificationsSecurity: true,
-      displayShowBalance: true,
-      displayShowNotifications: true,
-    },
-    mode: "onChange",
-  });
-
   useEffect(() => {
-    const loadUserSetting = async () => {
-      setLoading(true);
-      try {
-        const { settings, error } = await loadSettings();
-        if (error) {
-          toast({
-            variant: "destructive",
-            title: "Erro ao carregar configurações",
-            description: error,
-          });
+    const fetchSettings = async () => {
+      if (user) {
+        try {
+          const result = await loadSettings();
+          if (result.settings) {
+            setUserSettings(result.settings);
+          }
+        } catch (error) {
+          console.error("Error loading settings:", error);
         }
-        if (settings) {
-          setInitialSettings(settings);
-          form.reset({
-            name: settings.name,
-            email: settings.email,
-            language: settings.language,
-            timezone: settings.timezone,
-            theme: settings.theme,
-            notificationsMarketing: settings.notifications.marketing,
-            notificationsSecurity: settings.notifications.security,
-            displayShowBalance: settings.display.showBalance,
-            displayShowNotifications: settings.display.showNotifications,
-          });
-        }
-      } catch (error) {
-        toast({
-          variant: "destructive",
-          title: "Erro ao carregar configurações",
-          description: "Falha ao carregar as configurações do usuário.",
-        });
-      } finally {
-        setLoading(false);
       }
     };
 
-    loadUserSetting();
-  }, [toast, form]);
+    fetchSettings();
+  }, [user]);
 
-  const onSubmit = async (values: SettingsFormValues) => {
-    setLoading(true);
+  useEffect(() => {
+    const fetchPixKeys = async () => {
+      setIsLoading(true);
+      try {
+        if (user) {
+          const { data, error } = await supabase
+            .from('pix_keys')
+            .select('*')
+            .eq('user_id', user.id);
+
+          if (error) {
+            console.error("Error fetching pix keys:", error);
+            toast({
+              title: "Erro ao carregar chaves PIX",
+              description: "Não foi possível carregar suas chaves PIX. Tente novamente mais tarde.",
+              variant: "destructive",
+            });
+          } else {
+            // Transform the data from the database to match our PixKey type
+            const transformedKeys: PixKey[] = (data || []).map(item => ({
+              id: item.id,
+              user_id: item.user_id,
+              key_type: item.type || "",
+              type: item.type || "CPF",
+              key: item.key || "",
+              owner_name: item.name || "",
+              name: item.name || "",
+              isDefault: item.is_default || false,
+              is_default: item.is_default || false,
+              is_active: true,
+              created_at: item.created_at,
+              updated_at: item.updated_at,
+              bank_name: "Banco", // Default value since it's not in the database
+            }));
+            
+            setPixKeys(transformedKeys);
+          }
+        }
+      } catch (error) {
+        console.error("Error fetching pix keys:", error);
+        toast({
+          title: "Erro ao carregar chaves PIX",
+          description: "Ocorreu um erro ao carregar suas chaves PIX. Tente novamente mais tarde.",
+          variant: "destructive",
+        });
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchPixKeys();
+  }, [user, toast]);
+
+  const handleSaveSettings = async () => {
     try {
-      const settings: UserSettings = {
-        name: values.name,
-        email: values.email,
-        language: values.language,
-        timezone: values.timezone,
-        theme: values.theme,
-        notifications: {
-          marketing: values.notificationsMarketing,
-          security: values.notificationsSecurity,
-        },
-        display: {
-          showBalance: values.displayShowBalance,
-          showNotifications: values.displayShowNotifications,
-        },
-      };
-
-      const { success, error } = await saveSettings(settings);
-      if (success) {
+      const result = await saveSettings(userSettings);
+      if (result.success) {
         toast({
           title: "Configurações salvas",
           description: "Suas configurações foram salvas com sucesso.",
         });
       } else {
         toast({
-          variant: "destructive",
           title: "Erro ao salvar configurações",
-          description: error || "Falha ao salvar as configurações.",
+          description: result.error || "Ocorreu um erro ao salvar suas configurações.",
+          variant: "destructive",
         });
       }
-    } catch (error) {
-      console.error("Error saving settings:", error);
+    } catch (error: any) {
       toast({
-        variant: "destructive",
         title: "Erro ao salvar configurações",
-        description: "Ocorreu um erro ao salvar as configurações.",
+        description: error.message || "Ocorreu um erro ao salvar suas configurações.",
+        variant: "destructive",
       });
-    } finally {
-      setLoading(false);
     }
   };
-  
-  return (
-    <MainLayout>
-      <div className="container mx-auto py-10">
-        <Card>
-          <CardHeader>
-            <CardTitle>Configurações da Conta</CardTitle>
-            <CardDescription>
-              Gerencie as informações da sua conta e personalize sua experiência.
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <Form {...form}>
-              <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
-                <FormField
-                  control={form.control}
-                  name="name"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Nome</FormLabel>
-                      <FormControl>
-                        <Input placeholder="Seu nome" {...field} />
-                      </FormControl>
-                      <FormDescription>
-                        Este é o nome que será exibido em sua conta.
-                      </FormDescription>
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={form.control}
-                  name="email"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Email</FormLabel>
-                      <FormControl>
-                        <Input placeholder="seuemail@exemplo.com" {...field} />
-                      </FormControl>
-                      <FormDescription>
-                        Este é o seu endereço de e-mail.
-                      </FormDescription>
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={form.control}
-                  name="language"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Idioma</FormLabel>
-                      <Select onValueChange={field.onChange} defaultValue={field.value}>
-                        <FormControl>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Selecione um idioma" />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          <SelectItem value="pt-BR">Português (Brasil)</SelectItem>
-                          <SelectItem value="en-US">Inglês (Estados Unidos)</SelectItem>
-                          <SelectItem value="es-ES">Espanhol (Espanha)</SelectItem>
-                        </SelectContent>
-                      </Select>
-                      <FormDescription>
-                        Selecione o idioma de sua preferência.
-                      </FormDescription>
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={form.control}
-                  name="timezone"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Fuso Horário</FormLabel>
-                      <Select onValueChange={field.onChange} defaultValue={field.value}>
-                        <FormControl>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Selecione um fuso horário" />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          <SelectItem value="America/Sao_Paulo">
-                            America/Sao_Paulo
-                          </SelectItem>
-                          <SelectItem value="America/Los_Angeles">
-                            America/Los_Angeles
-                          </SelectItem>
-                          {/* Adicione mais fusos horários conforme necessário */}
-                        </SelectContent>
-                      </Select>
-                      <FormDescription>
-                        Selecione seu fuso horário.
-                      </FormDescription>
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={form.control}
-                  name="theme"
-                  render={({ field }) => (
-                    <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
-                      <div className="space-y-0.5">
-                        <FormLabel>Tema</FormLabel>
-                        <FormDescription>
-                          Selecione o tema de sua preferência.
-                        </FormDescription>
-                      </div>
-                      <Select onValueChange={field.onChange} defaultValue={field.value}>
-                        <FormControl>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Selecione um tema" />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          <SelectItem value="light">Claro</SelectItem>
-                          <SelectItem value="dark">Escuro</SelectItem>
-                          <SelectItem value="system">Sistema</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={form.control}
-                  name="notificationsMarketing"
-                  render={({ field }) => (
-                    <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
-                      <div className="space-y-0.5">
-                        <FormLabel>Notificações de Marketing</FormLabel>
-                        <FormDescription>
-                          Receba novidades e ofertas especiais.
-                        </FormDescription>
-                      </div>
-                      <FormControl>
-                        <Switch
-                          checked={field.value}
-                          onCheckedChange={field.onChange}
-                        />
-                      </FormControl>
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={form.control}
-                  name="notificationsSecurity"
-                  render={({ field }) => (
-                    <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
-                      <div className="space-y-0.5">
-                        <FormLabel>Notificações de Segurança</FormLabel>
-                        <FormDescription>
-                          Seja notificado sobre atividades suspeitas e alertas de segurança.
-                        </FormDescription>
-                      </div>
-                      <FormControl>
-                        <Switch
-                          checked={field.value}
-                          onCheckedChange={field.onChange}
-                        />
-                      </FormControl>
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={form.control}
-                  name="displayShowBalance"
-                  render={({ field }) => (
-                    <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
-                      <div className="space-y-0.5">
-                        <FormLabel>Mostrar Saldo</FormLabel>
-                        <FormDescription>
-                          Exibir o saldo na sua dashboard.
-                        </FormDescription>
-                      </div>
-                      <FormControl>
-                        <Switch
-                          checked={field.value}
-                          onCheckedChange={field.onChange}
-                        />
-                      </FormControl>
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={form.control}
-                  name="displayShowNotifications"
-                  render={({ field }) => (
-                    <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
-                      <div className="space-y-0.5">
-                        <FormLabel>Mostrar Notificações</FormLabel>
-                        <FormDescription>
-                          Exibir notificações na sua dashboard.
-                        </FormDescription>
-                      </div>
-                      <FormControl>
-                        <Switch
-                          checked={field.value}
-                          onCheckedChange={field.onChange}
-                        />
-                      </FormControl>
-                    </FormItem>
-                  )}
-                />
-                <CardFooter>
-                  <Button type="submit" disabled={loading}>
-                    {loading ? "Salvando..." : "Salvar Alterações"}
-                  </Button>
-                </CardFooter>
-              </form>
-            </Form>
-          </CardContent>
-        </Card>
-        <PixKeysManager />
+
+  const handleAddPixKey = async () => {
+    if (!user) return;
+
+    const newId = Date.now().toString();
+    
+    // Use the utility function to create a new PixKey object
+    const newPixKey = createDefaultPixKeyProperties(newId, user.id);
+    
+    setPixKeys(prev => [...prev, newPixKey]);
+  };
+
+  // Render PixKeys component directly instead of using a separate component
+  const renderPixKeys = () => {
+    if (isLoading) {
+      return <p>Carregando chaves PIX...</p>;
+    }
+    
+    return (
+      <div className="space-y-4">
+        {pixKeys.map((key) => (
+          <div key={key.id} className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div>
+              <Label htmlFor={`key-${key.id}`}>Chave PIX</Label>
+              <Input
+                type="text"
+                id={`key-${key.id}`}
+                defaultValue={key.key}
+                disabled
+              />
+            </div>
+            <div>
+              <Label htmlFor={`type-${key.id}`}>Tipo</Label>
+              <Input
+                type="text"
+                id={`type-${key.id}`}
+                defaultValue={key.type}
+                disabled
+              />
+            </div>
+            <div>
+              <Label htmlFor={`bank-${key.id}`}>Banco</Label>
+              <Input
+                type="text"
+                id={`bank-${key.id}`}
+                defaultValue={key.bank_name}
+                disabled
+              />
+            </div>
+          </div>
+        ))}
+        <Button onClick={handleAddPixKey}>Adicionar Chave PIX</Button>
       </div>
-    </MainLayout>
+    );
+  };
+
+  return (
+    <div className="container mx-auto py-10">
+      <Card>
+        <CardHeader>
+          <CardTitle>Configurações</CardTitle>
+          <CardDescription>Gerencie suas configurações de conta e chaves PIX.</CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-6">
+          <div>
+            <h3 className="text-xl font-semibold mb-4">Preferências</h3>
+            <div className="space-y-4">
+              {/* Settings fields would go here */}
+              <Button onClick={handleSaveSettings}>Salvar Configurações</Button>
+            </div>
+          </div>
+          
+          <div>
+            <h3 className="text-xl font-semibold mb-4">Chaves PIX</h3>
+            {renderPixKeys()}
+          </div>
+        </CardContent>
+      </Card>
+    </div>
   );
 };
 

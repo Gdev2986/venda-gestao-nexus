@@ -10,7 +10,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Spinner } from "@/components/ui/spinner";
-import { Client, Partner } from "@/types";
+import { Client, ClientStatus } from "@/types";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -59,7 +59,7 @@ const ClientsList = ({
   };
 
   const isClientActive = (client: Client): boolean => {
-    return client.status === "ACTIVE" || client.status === "active" || false;
+    return client.status === ClientStatus.ACTIVE || !!client.active;
   };
 
   return (

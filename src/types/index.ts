@@ -16,7 +16,7 @@ export interface Client {
   business_name?: string;
   contact_name?: string;
   document?: string;
-  status?: string;
+  status?: ClientStatus;
 }
 
 export interface Partner {
@@ -125,4 +125,18 @@ export interface MachineData {
   transactions: number;
   revenue: number;
   created_at: string;
+}
+
+// Define the ClientStatus enum
+export enum ClientStatus {
+  ACTIVE = "ACTIVE",
+  BLOCKED = "BLOCKED",
+  PENDING = "PENDING"
+}
+
+// Define PaymentMethod enum for type checking
+export enum PaymentMethod {
+  CREDIT = "CREDIT",
+  DEBIT = "DEBIT",
+  PIX = "PIX",
 }

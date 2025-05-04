@@ -36,7 +36,7 @@ export const fetchPartnerById = async (id: string): Promise<Partner | null> => {
   }
 };
 
-// Create a new partner
+// Create a new partner - fixed to match expected parameters by Supabase
 export const createPartner = async (partnerData: Partial<Partner>): Promise<Partner | null> => {
   try {
     // Make sure company_name is provided as it's required
@@ -44,7 +44,7 @@ export const createPartner = async (partnerData: Partial<Partner>): Promise<Part
       throw new Error("Company name is required");
     }
     
-    // Remove the array brackets that were causing the type error
+    // Only passing the required fields to match the Supabase schema
     const { data, error } = await supabase
       .from("partners")
       .insert({

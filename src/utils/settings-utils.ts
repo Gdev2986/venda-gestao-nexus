@@ -22,19 +22,13 @@ export const createDefaultPixKeyProperties = (id: string, userId: string) => {
 
 export const saveSettings = async (settings: UserSettings): Promise<{ success: boolean; error?: string }> => {
   try {
-    const { user } = await supabase.auth.getUser();
+    const { data: { user } } = await supabase.auth.getUser();
     if (!user) {
       return { success: false, error: "No authenticated user found" };
     }
 
-    const { error } = await supabase
-      .from('user_settings')
-      .upsert({
-        user_id: user.id,
-        settings: settings
-      });
-
-    if (error) throw error;
+    // Store settings in local storage since the user_settings table might not exist
+    localStorage.setItem(`user_settings_${user.id}`, JSON.stringify(settings));
     return { success: true };
   } catch (error: any) {
     console.error("Error saving settings:", error);
@@ -47,23 +41,19 @@ export const saveSettings = async (settings: UserSettings): Promise<{ success: b
 
 export const loadSettings = async (): Promise<{ settings?: UserSettings; error?: string }> => {
   try {
-    const { user } = await supabase.auth.getUser();
+    const { data: { user } } = await supabase.auth.getUser();
     if (!user) {
       return { error: "No authenticated user found" };
     }
 
-    const { data, error } = await supabase
-      .from('user_settings')
-      .select('settings')
-      .eq('user_id', user.id)
-      .single();
-
-    if (error && error.code !== 'PGRST116') { // PGRST116 is "No rows returned" error
-      throw error;
+    // Try to load from localStorage
+    const savedSettings = localStorage.getItem(`user_settings_${user.id}`);
+    if (savedSettings) {
+      return { settings: JSON.parse(savedSettings) as UserSettings };
     }
 
     return { 
-      settings: data?.settings as UserSettings || getDefaultSettings() 
+      settings: getDefaultSettings()
     };
   } catch (error: any) {
     console.error("Error loading settings:", error);

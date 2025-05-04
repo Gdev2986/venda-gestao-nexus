@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { UserRole } from "@/types";
@@ -16,6 +15,7 @@ export type UserData = {
   app_metadata?: any;
   user_metadata?: any;
   aud?: string;
+  active: boolean; // Add the active property
 };
 
 interface UserFilters {
@@ -115,7 +115,8 @@ export function useUserManagement() {
         updated_at: user.updated_at,
         app_metadata: {},
         user_metadata: {},
-        aud: "authenticated"
+        aud: "authenticated",
+        active: true // Default to true for now
       }));
       
       setUsers(transformedData);

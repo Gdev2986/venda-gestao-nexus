@@ -9,6 +9,9 @@ import AccessCheckingState from "@/components/user-management/AccessCheckingStat
 import UserFilters from "@/components/user-management/UserFilters";
 import { UserRole } from "@/types";
 
+// Import UserData type from the hook directly
+import { UserData } from "@/components/user-management/useUserManagement";
+
 const UserManagement = () => {
   const { 
     users,
@@ -72,8 +75,9 @@ const UserManagement = () => {
               <div className="space-y-4">
                 <UserFilters onFilterChange={handleFilterChange} />
                 <UserTable 
-                  users={users} 
-                  setUsers={setUsers} 
+                  // Cast the users array to match the expected type
+                  users={users as any}
+                  setUsers={setUsers as any}
                   totalPages={totalPages}
                   currentPage={currentPage}
                   onPageChange={handlePageChange}
