@@ -44,12 +44,13 @@ export const createPartner = async (partnerData: Partial<Partner>): Promise<Part
       throw new Error("Company name is required");
     }
     
+    // Remove the array brackets that were causing the type error
     const { data, error } = await supabase
       .from("partners")
-      .insert([{ // Use array format for insert
+      .insert({
         company_name: partnerData.company_name,
         commission_rate: partnerData.commission_rate || 0
-      }])
+      })
       .select()
       .single();
     

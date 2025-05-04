@@ -21,7 +21,7 @@ export interface SignInCredentials {
 export interface SignUpCredentials {
   email: string;
   password: string;
-  role?: string;
+  role?: UserRole;
   [key: string]: any;
 }
 

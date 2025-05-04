@@ -55,11 +55,11 @@ const ClientsList = ({
   }
 
   const getDisplayName = (client: Client): string => {
-    return client.business_name || client.contact_name || client.name || "Cliente sem nome";
+    return client.business_name || client.contact_name || client.email || "Cliente sem nome";
   };
 
   const isClientActive = (client: Client): boolean => {
-    return client.status === "ACTIVE" || client.active === true;
+    return client.status === "ACTIVE" || client.status === "active" || false;
   };
 
   return (

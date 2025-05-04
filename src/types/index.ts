@@ -89,7 +89,7 @@ export interface UserSettings {
   };
 }
 
-// Add User type for user management
+// Updated User type for user management
 export interface User {
   id: string;
   name: string;

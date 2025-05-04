@@ -12,7 +12,7 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { UserRole } from "@/types";
 import { RoleChangeDialog } from "@/components/user-management/RoleChangeDialog";
 
-// Define User type here since it's not properly exported from @/types
+// Define User interface here to match the component's expectations
 interface User {
   id: string;
   name: string;
