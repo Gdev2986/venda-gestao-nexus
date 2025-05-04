@@ -1,161 +1,221 @@
-
-import { createContext, useContext, useState, useEffect } from "react";
-import { User } from "@supabase/supabase-js";
+import { createContext, useContext, useEffect, useState } from "react";
+import { Session, User } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
-import { AuthState, SignInCredentials, UserProfile, SignUpCredentials } from "./auth-types";
-import { UserRole } from "@/types";
+import { useToast } from "@/hooks/use-toast";
+import { useNavigate } from "react-router-dom";
+import { PATHS } from "@/routes/paths";
+import { 
+  getCurrentSession, 
+  signInWithEmail, 
+  signUpWithEmail, 
+  signOutUser, 
+  clearAuthData 
+} from "@/services/auth-service";
+import { AuthContextType } from "./auth-types";
 
-interface AuthContextProps extends AuthState { }
+// Create a context for authentication
+export const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-const AuthContext = createContext<AuthContextProps>({
-  user: null,
-  profile: null,
-  isLoading: false,
-  isAuthenticated: false,
-  signIn: async () => ({ error: null }),
-  signUp: async () => ({ error: null }),
-  signOut: async () => { },
-  updateProfile: async () => ({ error: null }),
-});
-
-export const useAuth = () => useContext(AuthContext);
-
+// Provider component that wraps the app and makes auth object available to any child component that calls useAuth()
 export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
+  const [session, setSession] = useState<Session | null>(null);
   const [user, setUser] = useState<User | null>(null);
-  const [profile, setProfile] = useState<UserProfile | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const { toast } = useToast();
+  const navigate = useNavigate();
+
+  console.log("AuthProvider rendering, isLoading:", isLoading, "user:", user?.email);
 
   useEffect(() => {
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      handleAuthStateChange(session);
-    })
+    console.log("Setting up auth listener");
+    
+    // Set up auth state listener FIRST to prevent missing events
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      async (event, newSession) => {
+        console.log("Auth state change event:", event);
+        
+        // Set session and user state synchronously
+        setSession(newSession);
+        setUser(newSession?.user ?? null);
 
-    supabase.auth.onAuthStateChange((_event, session) => {
-      handleAuthStateChange(session);
-    })
-  }, []);
-
-  const handleAuthStateChange = async (session: any) => {
-    const currentUser = session?.user || null;
-    setUser(currentUser);
-
-    if (currentUser) {
-      try {
-        const { data, error } = await supabase
-          .from("profiles")
-          .select("*")
-          .eq("id", currentUser.id)
-          .single();
-
-        if (error) throw error;
-
-        if (data) {
-          // Ensure we're correctly typing the profile data
-          setProfile({
-            id: data.id,
-            name: data.name,
-            email: data.email,
-            role: data.role as UserRole,
-            avatar_url: data.avatar,
-            phone: data.phone,
-            created_at: data.created_at,
-            updated_at: data.updated_at
-          });
-        }
-      } catch (error) {
-        console.error("Error fetching user profile:", error);
-      }
-    } else {
-      setProfile(null);
-    }
-
-    setIsLoading(false);
-  };
-
-  const signIn = async (credentials: SignInCredentials) => {
-    try {
-      const { error } = await supabase.auth.signInWithPassword(credentials);
-      if (error) throw error;
-      return { error: null };
-    } catch (error: any) {
-      console.error("Error signing in:", error);
-      return { error };
-    }
-  };
-
-  const signUp = async (credentials: SignUpCredentials) => {
-    try {
-      const { error } = await supabase.auth.signUp({
-        email: credentials.email,
-        password: credentials.password,
-        options: {
-          data: {
-            name: credentials.name,
-            role: credentials.role,
+        // Handle auth events
+        if (event === "SIGNED_IN") {
+          console.log("Signed in event detected");
+          
+          // Track the session in our custom table - using setTimeout to avoid Supabase callback issues
+          if (newSession?.user) {
+            setTimeout(() => {
+              toast({
+                title: "Successfully authenticated",
+                description: "Welcome to SigmaPay!",
+              });
+            }, 0);
           }
         }
+        
+        if (event === "SIGNED_OUT") {
+          console.log("Signed out event detected");
+          
+          // Clear auth data
+          clearAuthData();
+          
+          // Use setTimeout to avoid calling toast inside the callback
+          setTimeout(() => {
+            toast({
+              title: "Signed out",
+              description: "You have been successfully signed out.",
+            });
+          }, 0);
+        }
+      }
+    );
+
+    // Check for existing session AFTER setting up listeners
+    const initialSessionCheck = async () => {
+      setIsLoading(true);
+      try {
+        console.log("Checking initial session");
+        const { session: currentSession, user: currentUser, error } = await getCurrentSession();
+        
+        if (error) {
+          console.error("Error getting session:", error);
+          throw error;
+        }
+        
+        console.log("Initial session check complete:", !!currentSession);
+        
+        setSession(currentSession);
+        setUser(currentUser);
+      } catch (error) {
+        console.error("Error during initial session check:", error);
+        setSession(null);
+        setUser(null);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    initialSessionCheck();
+
+    return () => {
+      console.log("Cleaning up auth listener");
+      subscription.unsubscribe();
+    };
+  }, [toast]); // Only run on mount
+
+  const signIn = async (email: string, password: string) => {
+    try {
+      console.log("Sign in attempt for:", email);
+      setIsLoading(true);
+      
+      const { user: signedInUser, error } = await signInWithEmail(email, password);
+
+      if (error) {
+        toast({
+          title: "Login error",
+          description: error.message,
+          variant: "destructive",
+        });
+        throw error;
+      }
+      
+      if (signedInUser) {
+        console.log("Sign in successful, navigating to dashboard");
+        // Use setTimeout to avoid race conditions with onAuthStateChange
+        setTimeout(() => {
+          const redirectPath = sessionStorage.getItem('redirectPath');
+          if (redirectPath) {
+            sessionStorage.removeItem('redirectPath');
+            navigate(redirectPath);
+          } else {
+            navigate(PATHS.DASHBOARD); // Will be handled by RootLayout
+          }
+        }, 0);
+      }
+    } catch (error: any) {
+      console.error("Error during login:", error);
+      // Toast is shown in the error handler above
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const signUp = async (email: string, password: string, userData: { name: string }) => {
+    try {
+      console.log("Sign up attempt for:", email);
+      setIsLoading(true);
+      
+      const { user: newUser, error } = await signUpWithEmail(email, password, userData);
+
+      if (error) {
+        toast({
+          title: "Registration error",
+          description: error.message,
+          variant: "destructive",
+        });
+        throw error;
+      }
+      
+      toast({
+        title: "Registration successful",
+        description: "Please check your email to confirm your account.",
       });
 
-      if (error) throw error;
-
-      return { error: null };
+      navigate(PATHS.HOME);
     } catch (error: any) {
-      console.error("Error signing up:", error);
-      return { error };
+      console.error("Error during registration:", error);
+      // Toast is shown in the error handler above
+    } finally {
+      setIsLoading(false);
     }
   };
 
   const signOut = async () => {
     try {
-      const { error } = await supabase.auth.signOut();
-      if (error) throw error;
-    } catch (error) {
-      console.error("Error signing out:", error);
-    } finally {
+      console.log("Sign out attempt");
+      setIsLoading(true);
+      
+      // Clear local state immediately for better UX
       setUser(null);
-      setProfile(null);
-    }
-  };
-
-  const updateProfile = async (updates: Partial<UserProfile>) => {
-    try {
-      const { error } = await supabase
-        .from("profiles")
-        .update({
-          ...updates,
-          role: updates.role as UserRole, // Cast to UserRole to ensure type safety
-          updated_at: new Date().toISOString(),
-        })
-        .eq("id", user!.id);
-
+      setSession(null);
+      
+      const { error } = await signOutUser();
       if (error) throw error;
-
-      setProfile(prev => prev ? { ...prev, ...updates } : null);
-
-      return { error: null };
+      
+      navigate(PATHS.HOME);
     } catch (error: any) {
-      console.error("Error updating profile:", error);
-      return { error };
+      console.error("Error during sign out:", error);
+      toast({
+        title: "Error signing out",
+        description: error.message || "An error occurred while trying to sign out",
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
     }
-  };
-
-  const value: AuthContextProps = {
-    user,
-    profile,
-    isLoading,
-    isAuthenticated: !!user,
-    signIn,
-    signUp,
-    signOut,
-    updateProfile,
   };
 
   return (
-    <AuthContext.Provider value={value}>
-      {!isLoading && children}
+    <AuthContext.Provider
+      value={{
+        user,
+        session,
+        isLoading,
+        signIn,
+        signUp,
+        signOut,
+      }}
+    >
+      {children}
     </AuthContext.Provider>
   );
 };
 
-// Default export
-export default AuthProvider;
+// Custom hook to use auth context
+export const useAuth = () => {
+  const context = useContext(AuthContext);
+  if (context === undefined) {
+    throw new Error("useAuth must be used within an AuthProvider");
+  }
+  return context;
+};

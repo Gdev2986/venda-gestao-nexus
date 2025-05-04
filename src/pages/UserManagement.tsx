@@ -7,22 +7,13 @@ import LoadingState from "@/components/user-management/LoadingState";
 import ErrorState from "@/components/user-management/ErrorState";
 import AccessCheckingState from "@/components/user-management/AccessCheckingState";
 import UserFilters from "@/components/user-management/UserFilters";
-import { UserRole } from "@/types";
-
-// Import UserData type from the hook directly
-import { UserData } from "@/components/user-management/useUserManagement";
 
 const UserManagement = () => {
   const { 
-    users,
-    setUsers,
+    users, 
+    setUsers, 
     loading, 
-    error,
-    roleDialogOpen,
-    openRoleDialog,
-    closeRoleDialog,
-    selectedUserId,
-    changingRole,
+    error, 
     checkingAccess,
     retryFetch,
     currentPage,
@@ -30,16 +21,8 @@ const UserManagement = () => {
     totalUsers,
     handlePageChange,
     handleFilterChange,
-    filters,
-    updateUserRole
+    filters
   } = useUserManagement();
-  
-  // Create a handler that will work with the props expected by RoleChangeDialog
-  const handleRoleChange = async (role: UserRole) => {
-    if (selectedUserId) {
-      await updateUserRole(selectedUserId, role);
-    }
-  };
 
   if (checkingAccess) {
     return (
@@ -75,18 +58,11 @@ const UserManagement = () => {
               <div className="space-y-4">
                 <UserFilters onFilterChange={handleFilterChange} />
                 <UserTable 
-                  // Cast the users array to match the expected type
-                  users={users as any}
-                  setUsers={setUsers as any}
+                  users={users} 
+                  setUsers={setUsers} 
                   totalPages={totalPages}
                   currentPage={currentPage}
                   onPageChange={handlePageChange}
-                  openRoleDialog={openRoleDialog}
-                  roleDialogOpen={roleDialogOpen}
-                  closeRoleDialog={closeRoleDialog}
-                  selectedUserId={selectedUserId}
-                  handleRoleChange={handleRoleChange}
-                  changingRole={changingRole}
                 />
                 {totalUsers > 0 && (
                   <p className="text-sm text-muted-foreground">

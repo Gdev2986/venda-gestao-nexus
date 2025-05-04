@@ -1,142 +1,60 @@
 
-export interface Client {
-  id: string;
-  name?: string;
-  email?: string;
-  phone?: string;
-  address?: string;
-  city?: string;
-  state?: string;
-  zip?: string;
-  partner_id?: string;
-  machines_count?: number;
-  active?: boolean;
-  created_at?: string;
-  updated_at?: string;
-  business_name?: string;
-  contact_name?: string;
-  document?: string;
-  status?: ClientStatus;
+export enum UserRole {
+  ADMIN = "ADMIN",
+  CLIENT = "CLIENT",
+  FINANCIAL = "FINANCIAL",
+  PARTNER = "PARTNER", 
+  LOGISTICS = "LOGISTICS"
 }
 
+export enum PaymentStatus {
+  PENDING = "PENDING",
+  APPROVED = "APPROVED",
+  REJECTED = "REJECTED",
+  PAID = "PAID"
+}
+
+export enum PaymentType {
+  PIX = "PIX",
+  TED = "TED",
+  BOLETO = "BOLETO"
+}
+
+export interface Payment {
+  id: string;
+  created_at: string;
+  updated_at: string;
+  amount: number;
+  status: PaymentStatus;
+  client_id: string;
+  approved_at?: string; 
+  receipt_url?: string;
+  client_name?: string;
+  rejection_reason?: string;
+  payment_type?: PaymentType;
+  bank_info?: {
+    bank_name?: string;
+    account_number?: string;
+    branch_number?: string;
+    account_holder?: string;
+  };
+  document_url?: string;
+}
+
+// Types for partners
 export interface Partner {
   id: string;
   company_name: string;
-  business_name?: string;
+  created_at: string;
+  updated_at: string;
+  commission_rate: number;
   contact_name?: string;
-  email?: string;
-  phone?: string;
-  commission_rate?: number;
-  created_at?: string;
-  updated_at?: string;
-  name?: string; // For backwards compatibility
+  contact_email?: string;
+  contact_phone?: string;
+  business_name?: string; // For backward compatibility
+  email?: string; // Added for consistency with filtering
+  phone?: string; // Added for consistency with filtering
+  address?: string; // Added for completeness
 }
 
-export enum UserRole {
-  CLIENT = "CLIENT",
-  ADMIN = "ADMIN",
-  PARTNER = "PARTNER",
-  FINANCIAL = "FINANCIAL",
-  LOGISTICS = "LOGISTICS",
-}
-
-export interface PixKey {
-  id: string;
-  user_id: string;
-  key_type: string;
-  type: string;
-  key: string;
-  owner_name: string;
-  name: string;
-  isDefault: boolean;
-  is_default: boolean;
-  is_active: boolean;
-  created_at: string;
-  updated_at: string;
-  bank_name: string;
-}
-
-export interface DashboardStats {
-  totalClients: number;
-  totalRevenue: number;
-  currentBalance: number;
-  totalTransactions: number;
-  averageValue: number;
-  pendingPayments: number;
-  salesByPaymentMethod: { method: string; amount: number }[];
-  recentSales: { id: string; date: string; description: string; amount: number }[];
-  // Add missing properties for Dashboard.tsx
-  totalSales?: number;
-  completedPayments?: number;
-  clientBalance?: number;
-  yesterdayGrossAmount?: number;
-  yesterdayNetAmount?: number;
-}
-
-export interface UserSettings {
-  name: string;
-  email: string;
-  language: string;
-  timezone: string;
-  theme: "light" | "dark" | "system";
-  notifications: {
-    marketing: boolean;
-    security: boolean;
-  };
-  display: {
-    showBalance: boolean;
-    showNotifications: boolean;
-  };
-}
-
-// Updated User type for user management
-export interface User {
-  id: string;
-  name: string;
-  email: string;
-  role: UserRole;
-  created_at: string;
-  updated_at?: string;
-  last_login?: string;
-  active: boolean;
-}
-
-// Add SimplifiedPixKey type for settings page
-export interface SimplifiedPixKey {
-  id: string;
-  user_id: string;
-  key_type: string;
-  key: string;
-  owner_name: string;
-  is_default: boolean;
-  is_active: boolean;
-  created_at: string;
-  updated_at: string;
-  bank_name: string;
-}
-
-// Add MachineData type for dashboard
-export interface MachineData {
-  id: string;
-  name: string;
-  model: string;
-  serial_number: string;
-  status: string;
-  transactions: number;
-  revenue: number;
-  created_at: string;
-}
-
-// Define the ClientStatus enum
-export enum ClientStatus {
-  ACTIVE = "ACTIVE",
-  BLOCKED = "BLOCKED",
-  PENDING = "PENDING"
-}
-
-// Define PaymentMethod enum for type checking
-export enum PaymentMethod {
-  CREDIT = "CREDIT",
-  DEBIT = "DEBIT",
-  PIX = "PIX",
-}
+// Add other types here as needed

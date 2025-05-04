@@ -1,111 +1,76 @@
 
-import { Card, CardContent } from "@/components/ui/card";
-import { useClientManagement } from "@/hooks/use-client-management";
-import ClientsHeader from "@/components/clients/ClientsHeader";
-import ClientsFilter from "@/components/clients/ClientsFilter";
-import ClientsList from "@/components/clients/ClientsList";
-import ClientsPagination from "@/components/clients/ClientsPagination";
-import DeleteClientDialog from "@/components/clients/DeleteClientDialog";
-import { ClientCreate, ClientUpdate } from "@/types/client";
+import { PageHeader } from "@/components/page/PageHeader";
+import { PageWrapper } from "@/components/page/PageWrapper";
+import { PATHS } from "@/routes/paths";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { 
+  Table, 
+  TableBody, 
+  TableCell, 
+  TableHead, 
+  TableHeader, 
+  TableRow 
+} from "@/components/ui/table";
+import { Search } from "lucide-react";
 
-// Main Clients component definition
-const Clients = () => {
-  const {
-    clients,
-    loading,
-    error,
-    searchTerm,
-    currentPage,
-    totalPages,
-    showFilters,
-    formattedPartners,
-    selectedClient,
-    isDeleteDialogOpen,
-    handleSearchChange,
-    resetFilters,
-    handleCreateClient,
-    handleViewClient,
-    handleEditClient,
-    handleDeleteClick,
-    handleDeleteConfirm,
-    closeDeleteDialog,
-    handlePageChange,
-    toggleFilters,
-  } = useClientManagement();
-
-  // Function to create a client - updated to handle the required parameter
-  const onCreateClient = () => {
-    // Navigate to create client page or open modal
-    console.log("Create client");
-  };
-
-  // Updated function for viewing a client
-  const onViewClient = (id: string) => {
-    handleViewClient(id);
-  };
-
-  // Updated function for editing a client
-  const onEditClient = (id: string) => {
-    // Navigate to edit page or open edit modal
-    console.log("Edit client", id);
-  };
-
-  if (error) {
-    return (
-      <div className="space-y-4">
-        <ClientsHeader onCreateClient={onCreateClient} />
-        <Card>
-          <CardContent className="pt-6">
-            <div className="text-center">
-              <p className="text-destructive">Erro ao carregar clientes: {error.message}</p>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-    );
-  }
-
+const AdminClients = () => {
   return (
-    <div className="space-y-4">
-      <ClientsHeader onCreateClient={onCreateClient} />
-
-      <Card>
-        <CardContent className="pt-6">
-          <div className="flex flex-col gap-4">
-            <ClientsFilter 
-              searchTerm={searchTerm}
-              onSearchChange={handleSearchChange}
-              onResetFilters={resetFilters}
-              showFiltersToggle={showFilters}
-              onToggleFilters={toggleFilters}
-            />
-
-            <ClientsList
-              clients={clients}
-              formattedPartners={formattedPartners}
-              loading={loading}
-              onViewClient={onViewClient}
-              onEditClient={onEditClient}
-              onDeleteClient={handleDeleteClick}
-            />
-
-            <ClientsPagination 
-              currentPage={currentPage}
-              totalPages={totalPages}
-              onPageChange={handlePageChange}
-            />
-          </div>
-        </CardContent>
-      </Card>
-
-      <DeleteClientDialog
-        isOpen={isDeleteDialogOpen}
-        onClose={closeDeleteDialog}
-        onConfirm={handleDeleteConfirm}
-        clientName={selectedClient?.business_name || selectedClient?.contact_name || "Selecionado"}
+    <div className="space-y-6">
+      <PageHeader 
+        title="Clientes" 
+        description="Gerencie todos os clientes do sistema"
+        actionLabel="Adicionar Cliente"
+        actionLink={PATHS.ADMIN.CLIENT_NEW}
       />
+
+      <div className="flex items-center gap-2 mb-6">
+        <div className="relative flex-1">
+          <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+          <Input
+            placeholder="Buscar clientes..."
+            className="pl-8 bg-background"
+          />
+        </div>
+        <Button variant="outline">Filtrar</Button>
+      </div>
+      
+      <PageWrapper>
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead>Nome</TableHead>
+              <TableHead>E-mail</TableHead>
+              <TableHead>Telefone</TableHead>
+              <TableHead>Cidade</TableHead>
+              <TableHead>Status</TableHead>
+              <TableHead className="w-[100px]">Ações</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {[1, 2, 3, 4, 5].map((i) => (
+              <TableRow key={i}>
+                <TableCell>Cliente Exemplo {i}</TableCell>
+                <TableCell>cliente{i}@exemplo.com</TableCell>
+                <TableCell>(11) 9{i}999-9999</TableCell>
+                <TableCell>São Paulo</TableCell>
+                <TableCell>
+                  <span className="inline-flex items-center rounded-full px-2 py-1 text-xs font-medium bg-green-50 text-green-700">
+                    Ativo
+                  </span>
+                </TableCell>
+                <TableCell>
+                  <Button variant="ghost" size="sm" asChild>
+                    <a href={PATHS.ADMIN.CLIENT_DETAILS(String(i))}>Detalhes</a>
+                  </Button>
+                </TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+      </PageWrapper>
     </div>
   );
 };
 
-export default Clients;
+export default AdminClients;

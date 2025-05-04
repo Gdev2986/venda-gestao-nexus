@@ -1,62 +1,203 @@
 
-export const PATHS = {
-  HOME: "/",
+/**
+ * System path definitions
+ * Centralizes all routes for easier maintenance and role-based organization
+ */
+
+// Role-based namespaces
+const ADMIN = {
+  // Main pages
+  DASHBOARD: "/admin/dashboard",
+  
+  // Clients
+  CLIENTS: "/admin/clients",
+  CLIENT_DETAILS: (id: string = ":id") => `/admin/clients/${id}`,
+  CLIENT_NEW: "/admin/clients/new",
+  
+  // Machines
+  MACHINES: "/admin/machines",
+  MACHINE_DETAILS: (id: string = ":id") => `/admin/machines/${id}`,
+  MACHINE_NEW: "/admin/machines/new",
+  
+  // Sales
+  SALES: "/admin/sales",
+  SALES_DETAILS: (id: string = ":id") => `/admin/sales/${id}`,
+  SALES_NEW: "/admin/sales/new",
+  
+  // Payments
+  PAYMENTS: "/admin/payments",
+  PAYMENT_DETAILS: (id: string = ":id") => `/admin/payments/${id}`,
+  PAYMENT_NEW: "/admin/payments/new",
+  
+  // Partners
+  PARTNERS: "/admin/partners",
+  PARTNER_DETAILS: (id: string = ":id") => `/admin/partners/${id}`,
+  PARTNER_NEW: "/admin/partners/new",
+  
+  // Fees
+  FEES: "/admin/fees",
+  
+  // Reports
+  REPORTS: "/admin/reports",
+  
+  // Settings
+  SETTINGS: "/admin/settings",
+  USER_MANAGEMENT: "/admin/settings/users",
+  
+  // Support
+  SUPPORT: "/admin/support",
+
+  // Logistics
+  LOGISTICS: "/admin/logistics",
+  
+  // Help
+  HELP: "/admin/help",
+};
+
+const USER = {
+  // Main pages
+  DASHBOARD: "/user/dashboard",
+  
+  // Payments
+  PAYMENTS: "/user/payments",
+  USER_PAYMENTS: "/user/payments",
+  CLIENT_PAYMENTS: "/user/payments",
+  
+  // Support
+  SUPPORT: "/user/support",
+  
+  // Settings
+  SETTINGS: "/user/settings",
+  
+  // Machines
+  MACHINES: "/user/machines",
+  
+  // Help
+  HELP: "/user/help",
+};
+
+const PARTNER = {
+  // Main pages
+  DASHBOARD: "/partner/dashboard",
+  
+  // Clients
+  CLIENTS: "/partner/clients",
+  CLIENT_DETAILS: (id: string = ":id") => `/partner/clients/${id}`,
+  
+  // Sales
+  SALES: "/partner/sales",
+  SALES_DETAILS: (id: string = ":id") => `/partner/sales/${id}`,
+  
+  // Reports
+  REPORTS: "/partner/reports",
+  
+  // Settings
+  SETTINGS: "/partner/settings",
+  
+  // Support
+  SUPPORT: "/partner/support",
+  
+  // Commissions
+  COMMISSIONS: "/partner/commissions",
+  
+  // Help
+  HELP: "/partner/help",
+};
+
+const FINANCIAL = {
+  // Main pages
+  DASHBOARD: "/financial/dashboard",
+  
+  // Clients
+  CLIENTS: "/financial/clients",
+  CLIENT_DETAILS: (id: string = ":id") => `/financial/clients/${id}`,
+  CLIENT_NEW: "/financial/clients/new",
+  
+  // Sales
+  SALES: "/financial/sales",
+  SALES_DETAILS: (id: string = ":id") => `/financial/sales/${id}`,
+  SALES_NEW: "/financial/sales/new",
+  
+  // Payments
+  PAYMENTS: "/financial/payments",
+  PAYMENT_DETAILS: (id: string = ":id") => `/financial/payments/${id}`,
+  
+  // Partners
+  PARTNERS: "/financial/partners",
+  PARTNER_DETAILS: (id: string = ":id") => `/financial/partners/${id}`,
+  PARTNER_NEW: "/financial/partners/new",
+  
+  // Fees
+  FEES: "/financial/fees",
+  
+  // Reports
+  REPORTS: "/financial/reports",
+  
+  // Settings
+  SETTINGS: "/financial/settings",
+  
+  // Requests
+  REQUESTS: "/financial/requests",
+  
+  // Support
+  SUPPORT: "/financial/support",
+  
+  // Help
+  HELP: "/financial/help",
+};
+
+const LOGISTICS = {
+  // Main pages
+  DASHBOARD: "/logistics/dashboard",
+  
+  // Clients
+  CLIENTS: "/logistics/clients",
+  CLIENT_DETAILS: (id: string = ":id") => `/logistics/clients/${id}`,
+  
+  // Machines
+  MACHINES: "/logistics/machines",
+  MACHINE_DETAILS: (id: string = ":id") => `/logistics/machines/${id}`,
+  MACHINE_NEW: "/logistics/machines/new",
+  
+  // Sales
+  SALES: "/logistics/sales",
+  SALES_DETAILS: (id: string = ":id") => `/logistics/sales/${id}`,
+  
+  // Logistics specific
+  LOGISTICS_MODULE: "/logistics/operations",
+  
+  // Settings
+  SETTINGS: "/logistics/settings",
+  
+  // Support
+  SUPPORT: "/logistics/support",
+  
+  // Help
+  HELP: "/logistics/help",
+};
+
+// Auth and common paths that don't require role-based namespacing
+const AUTH = {
   LOGIN: "/login",
   REGISTER: "/register",
-  DASHBOARD: "/dashboard",
-  
-  USER: {
-    DASHBOARD: "/user/dashboard",
-    MACHINES: "/user/machines",
-    PAYMENTS: "/user/payments",
-    SUPPORT: "/user/support",
-  },
-  
-  ADMIN: {
-    DASHBOARD: "/admin/dashboard",
-    CLIENTS: "/admin/clients",
-    CLIENT_NEW: "/admin/clients/new",
-    CLIENT_DETAILS: (id: string) => `/admin/clients/${id}`,
-    MACHINES: "/admin/machines",
-    MACHINE_NEW: "/admin/machines/new",
-    MACHINE_DETAILS: (id: string) => `/admin/machines/${id}`,
-    PARTNERS: "/admin/partners",
-    PARTNER_NEW: "/admin/partners/new",
-    PARTNER_DETAILS: (id: string) => `/admin/partners/${id}`,
-    SETTINGS: "/admin/settings",
-    NOTIFICATIONS: "/admin/notifications",
-    PAYMENTS: "/admin/payments",
-    PAYMENT_NEW: "/admin/payments/new",
-    PAYMENT_DETAILS: (id: string) => `/admin/payments/${id}`,
-    REPORTS: "/admin/reports",
-    FEES: "/admin/fees",
-    SALES: "/admin/sales",
-    SALES_NEW: "/admin/sales/new",
-    USER_MANAGEMENT: "/admin/settings/users",
-  },
-  
-  PARTNER: {
-    DASHBOARD: "/partner/dashboard",
-    CLIENTS: "/partner/clients",
-    COMMISSIONS: "/partner/commissions",
-    SETTINGS: "/partner/settings",
-    SALES: "/partner/sales",
-  },
-  
-  FINANCIAL: {
-    DASHBOARD: "/financial/dashboard",
-    REPORTS: "/financial/reports",
-    REQUESTS: "/financial/requests",
-    CLIENTS: "/financial/clients",
-    PARTNERS: "/financial/partners",
-  },
-  
-  LOGISTICS: {
-    DASHBOARD: "/logistics/dashboard",
-    MACHINES: "/logistics/machines",
-    OPERATIONS: "/logistics/operations",
-    SUPPORT: "/logistics/support",
-    LOGISTICS_MODULE: "/logistics/module",
-    MACHINE_NEW: "/logistics/machines/new",
-  },
+  FORGOT_PASSWORD: "/forgot-password",
+  RESET_PASSWORD: "/reset-password",
+};
+
+// Root paths
+const ROOT = {
+  HOME: "/",
+  NOT_FOUND: "*",
+  DASHBOARD: "/dashboard", // Redirect to role-based dashboard
+};
+
+// Export combined paths
+export const PATHS = {
+  ...ROOT,
+  ...AUTH,
+  ADMIN,
+  USER,
+  PARTNER,
+  FINANCIAL,
+  LOGISTICS
 };

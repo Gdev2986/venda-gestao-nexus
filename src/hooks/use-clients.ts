@@ -1,5 +1,5 @@
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { Client } from "@/types";
 import { ClientCreate, ClientUpdate } from "@/types/client";
 import { 
@@ -11,22 +11,16 @@ import {
 } from "@/api/clientsApi";
 
 export function useClients() {
-  const [clients, setClients] = useState<Client[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<Error | null>(null);
-
-  useEffect(() => {
-    getClients().catch(err => console.error("Error loading clients:", err));
-  }, []);
 
   const getClients = async (): Promise<Client[]> => {
     setLoading(true);
     setError(null);
 
     try {
-      const fetchedClients = await fetchClients();
-      setClients(fetchedClients);
-      return fetchedClients;
+      const clients = await fetchClients();
+      return clients;
     } catch (err) {
       const errorObj = err instanceof Error ? err : new Error(String(err));
       setError(errorObj);
@@ -36,29 +30,12 @@ export function useClients() {
     }
   };
 
-  const getClient = async (id: string): Promise<Client | null> => {
+  const getClientById = async (id: string): Promise<Client | null> => {
     setLoading(true);
     setError(null);
 
     try {
       const client = await fetchClientById(id);
-      return client;
-    } catch (err) {
-      const errorObj = err instanceof Error ? err : new Error(String(err));
-      setError(errorObj);
-      throw errorObj;
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const getClientById = async (id: string): Promise<Client> => {
-    setLoading(true);
-    setError(null);
-
-    try {
-      const client = await fetchClientById(id);
-      if (!client) throw new Error(`Client with id ${id} not found`);
       return client;
     } catch (err) {
       const errorObj = err instanceof Error ? err : new Error(String(err));
@@ -75,7 +52,6 @@ export function useClients() {
 
     try {
       const newClient = await createClient(clientData);
-      setClients(prev => [...prev, newClient]);
       return newClient;
     } catch (err) {
       const errorObj = err instanceof Error ? err : new Error(String(err));
@@ -92,11 +68,6 @@ export function useClients() {
 
     try {
       const updatedClient = await apiUpdateClient(id, clientData);
-      if (updatedClient) {
-        setClients(prev => 
-          prev.map(client => client.id === id ? updatedClient : client)
-        );
-      }
       return updatedClient;
     } catch (err) {
       const errorObj = err instanceof Error ? err : new Error(String(err));
@@ -113,9 +84,6 @@ export function useClients() {
 
     try {
       const success = await deleteClientById(id);
-      if (success) {
-        setClients(prev => prev.filter(client => client.id !== id));
-      }
       return success;
     } catch (err) {
       const errorObj = err instanceof Error ? err : new Error(String(err));
@@ -127,11 +95,9 @@ export function useClients() {
   };
 
   return {
-    clients,
     loading,
     error,
     getClients,
-    getClient,
     getClientById,
     addClient,
     updateClient,

@@ -1,5 +1,5 @@
 
-import { useState, useCallback, useEffect } from "react";
+import { useState, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { v4 as uuidv4 } from "uuid";
 import { Partner } from "@/types";
@@ -38,17 +38,6 @@ export function usePartners() {
       setIsLoading(false);
     }
   }, []);
-  
-  useEffect(() => {
-    fetchPartners().catch(err => console.error("Error loading partners:", err));
-  }, [fetchPartners]);
-
-  const getPartners = useCallback(async () => {
-    if (partners.length === 0) {
-      await fetchPartners();
-    }
-    return partners;
-  }, [partners, fetchPartners]);
 
   const createPartner = useCallback(async (partnerData: Omit<Partner, "id" | "created_at" | "updated_at">) => {
     setIsLoading(true);
@@ -178,7 +167,6 @@ export function usePartners() {
     createPartner,
     updatePartner,
     deletePartner,
-    refreshPartners: fetchPartners,
-    getPartners
+    refreshPartners: fetchPartners
   };
 }
