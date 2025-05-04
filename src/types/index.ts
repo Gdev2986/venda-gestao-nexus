@@ -1,3 +1,4 @@
+
 export interface Client {
   id: string;
   name?: string;
@@ -31,11 +32,11 @@ export interface Partner {
 }
 
 export enum UserRole {
-  CLIENT = "client",
-  ADMIN = "admin",
-  PARTNER = "partner",
-  FINANCIAL = "financial",
-  LOGISTICS = "logistics",
+  CLIENT = "CLIENT",
+  ADMIN = "ADMIN",
+  PARTNER = "PARTNER",
+  FINANCIAL = "FINANCIAL",
+  LOGISTICS = "LOGISTICS",
 }
 
 export interface PixKey {
@@ -91,8 +92,3 @@ export interface User {
   last_login?: string;
   active: boolean;
 }
-
-// Add a helper utility function for capitalizeFirstLetter
-export const capitalizeFirstLetter = (string: string): string => {
-  return string.charAt(0).toUpperCase() + string.slice(1);
-};

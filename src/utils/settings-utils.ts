@@ -1,17 +1,18 @@
 
-import { PixKey, UserSettings } from "@/types";
+import { supabase } from "@/integrations/supabase/client";
+import { UserSettings } from "@/types";
 
-// Helper function to create default PixKey properties for new keys
-export const createDefaultPixKeyProperties = (id: string, user_id: string): PixKey => {
+export const createDefaultPixKeyProperties = (id: string, userId: string) => {
   return {
     id,
-    user_id,
-    key_type: "",
+    user_id: userId,
+    key_type: "CPF",
     type: "CPF",
     key: "",
     owner_name: "",
     name: "",
     isDefault: false,
+    is_default: false,
     is_active: true,
     created_at: new Date().toISOString(),
     updated_at: new Date().toISOString(),
@@ -19,28 +20,72 @@ export const createDefaultPixKeyProperties = (id: string, user_id: string): PixK
   };
 };
 
-// Add these missing functions for loading and saving settings
-export const loadSettings = async (): Promise<UserSettings> => {
-  // In a real app, this would fetch from an API or local storage
-  return {
-    name: "User Name",
-    email: "user@example.com",
-    language: "pt-BR",
-    timezone: "brt",
-    theme: "system",
-    notifications: {
-      marketing: true,
-      security: true
-    },
-    display: {
-      showBalance: true,
-      showNotifications: true
+export const saveSettings = async (settings: UserSettings): Promise<{ success: boolean; error?: string }> => {
+  try {
+    const { user } = await supabase.auth.getUser();
+    if (!user) {
+      return { success: false, error: "No authenticated user found" };
     }
-  };
+
+    const { error } = await supabase
+      .from('user_settings')
+      .upsert({
+        user_id: user.id,
+        settings: settings
+      });
+
+    if (error) throw error;
+    return { success: true };
+  } catch (error: any) {
+    console.error("Error saving settings:", error);
+    return { 
+      success: false, 
+      error: error?.message || "Failed to save settings" 
+    };
+  }
 };
 
-export const saveSettings = async (settings: Partial<UserSettings>): Promise<boolean> => {
-  // In a real app, this would send to an API or save to local storage
-  console.log("Settings saved:", settings);
-  return true;
+export const loadSettings = async (): Promise<{ settings?: UserSettings; error?: string }> => {
+  try {
+    const { user } = await supabase.auth.getUser();
+    if (!user) {
+      return { error: "No authenticated user found" };
+    }
+
+    const { data, error } = await supabase
+      .from('user_settings')
+      .select('settings')
+      .eq('user_id', user.id)
+      .single();
+
+    if (error && error.code !== 'PGRST116') { // PGRST116 is "No rows returned" error
+      throw error;
+    }
+
+    return { 
+      settings: data?.settings as UserSettings || getDefaultSettings() 
+    };
+  } catch (error: any) {
+    console.error("Error loading settings:", error);
+    return { 
+      settings: getDefaultSettings(),
+      error: error?.message || "Failed to load settings" 
+    };
+  }
 };
+
+const getDefaultSettings = (): UserSettings => ({
+  name: "",
+  email: "",
+  language: "pt-BR",
+  timezone: "America/Sao_Paulo",
+  theme: "system",
+  notifications: {
+    marketing: true,
+    security: true,
+  },
+  display: {
+    showBalance: true,
+    showNotifications: true,
+  }
+});
