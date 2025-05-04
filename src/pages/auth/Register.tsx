@@ -1,136 +1,166 @@
-
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import { useState } from "react";
+import { zodResolver } from "@hookform/resolvers/zod";
+import * as z from "zod";
+import { useAuth } from "@/hooks/use-auth";
+import { useToast } from "@/hooks/use-toast";
+import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
-import { PATHS } from "@/routes/paths";
-import { useAuth } from "@/contexts/AuthContext";
-import { useToast } from "@/hooks/use-toast";
-import { Spinner } from "@/components/ui/spinner";
+import { useForm } from "react-hook-form";
+import AuthLayout from "@/components/auth/AuthLayout";
+
+// Define a schema for form validation using Zod
+const formSchema = z.object({
+  name: z.string().min(2, {
+    message: "Nome deve ter pelo menos 2 caracteres.",
+  }),
+  email: z.string().email({
+    message: "Por favor, insira um email válido.",
+  }),
+  password: z.string().min(8, {
+    message: "Senha deve ter pelo menos 8 caracteres.",
+  }),
+});
 
 const Register = () => {
-  const [name, setName] = useState("");
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [isSubmitting, setIsSubmitting] = useState(false);
   const { signUp } = useAuth();
   const { toast } = useToast();
   const navigate = useNavigate();
-  
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setIsSubmitting(true);
-    
+  const [isLoading, setIsLoading] = useState(false);
+
+  const form = useForm<z.infer<typeof formSchema>>({
+    resolver: zodResolver(formSchema),
+    defaultValues: {
+      name: "",
+      email: "",
+      password: "",
+    },
+  });
+
+  const onSubmit = async (values: z.infer<typeof formSchema>) => {
+    setIsLoading(true);
     try {
-      await signUp(email, password, { name });
-      toast({
-        title: "Registration successful",
-        description: "Please check your email to confirm your account.",
+      // Fixed signUp call to match the expected type signature
+      const { error } = await signUp({
+        email: values.email,
+        password: values.password,
+        name: values.name
       });
-      navigate(PATHS.LOGIN);
-    } catch (error: any) {
+
+      if (error) {
+        toast({
+          title: "Falha no registro",
+          description: error.message,
+          variant: "destructive",
+        });
+      } else {
+        toast({
+          title: "Registro realizado com sucesso",
+          description: "Por favor, verifique seu email para ativar sua conta.",
+        });
+        navigate("/login");
+      }
+    } catch (error) {
+      console.error("Erro no registro:", error);
       toast({
-        title: "Registration failed",
-        description: error.message || "An error occurred during registration.",
+        title: "Falha no registro",
+        description: "Houve um problema durante o registro.",
         variant: "destructive",
       });
     } finally {
-      setIsSubmitting(false);
+      setIsLoading(false);
     }
   };
-  
+
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-b from-primary-50 to-white p-4">
-      <Card className="w-full max-w-md">
-        <CardHeader className="space-y-1">
-          <div className="flex items-center justify-center mb-4">
-            <div className="w-10 h-10 bg-primary rounded-lg flex items-center justify-center text-white text-xl font-bold mr-3">
-              SP
-            </div>
-            <h1 className="text-2xl font-bold">SigmaPay</h1>
-          </div>
-          <CardTitle className="text-2xl font-bold text-center">Create an account</CardTitle>
-          <CardDescription className="text-center">
-            Enter your information to create your account
-          </CardDescription>
-        </CardHeader>
-        
-        <form onSubmit={handleSubmit}>
-          <CardContent className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="name">Full Name</Label>
-              <Input 
-                id="name" 
-                placeholder="John Doe"
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                required
-                disabled={isSubmitting}
-              />
-            </div>
-            
-            <div className="space-y-2">
-              <Label htmlFor="email">Email</Label>
-              <Input 
-                id="email" 
-                type="email"
-                placeholder="name@example.com"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                required
-                disabled={isSubmitting}
-              />
-            </div>
-            
-            <div className="space-y-2">
-              <Label htmlFor="password">Password</Label>
-              <Input 
-                id="password" 
-                type="password"
-                placeholder="••••••••"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                required
-                minLength={8}
-                disabled={isSubmitting}
-              />
-              <p className="text-xs text-muted-foreground">
-                Password must be at least 8 characters long
-              </p>
-            </div>
-          </CardContent>
-          
-          <CardFooter className="flex flex-col space-y-4">
-            <Button 
-              type="submit" 
-              className="w-full" 
-              disabled={isSubmitting}
-            >
-              {isSubmitting ? (
-                <>
-                  <Spinner className="mr-2 h-4 w-4" />
-                  Creating account...
-                </>
-              ) : (
-                "Create account"
-              )}
-            </Button>
-            
-            <div className="text-center text-sm">
-              Already have an account?{" "}
-              <Link 
-                to={PATHS.LOGIN}
-                className="text-primary hover:underline font-medium"
+    <AuthLayout>
+      <div className="flex flex-col items-center justify-center h-full">
+        <div className="max-w-md w-full p-6 bg-white rounded-md shadow-md">
+          <h2 className="text-2xl font-semibold text-center text-gray-800 mb-4">
+            Criar uma conta
+          </h2>
+          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+            <div>
+              <label
+                htmlFor="name"
+                className="block text-sm font-medium text-gray-700"
               >
-                Sign in
-              </Link>
+                Nome
+              </label>
+              <Input
+                type="text"
+                id="name"
+                placeholder="Seu nome"
+                {...form.register("name")}
+                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+              />
+              {form.formState.errors.name && (
+                <p className="text-red-500 text-sm mt-1">
+                  {form.formState.errors.name.message}
+                </p>
+              )}
             </div>
-          </CardFooter>
-        </form>
-      </Card>
-    </div>
+            <div>
+              <label
+                htmlFor="email"
+                className="block text-sm font-medium text-gray-700"
+              >
+                Email
+              </label>
+              <Input
+                type="email"
+                id="email"
+                placeholder="seuemail@exemplo.com"
+                {...form.register("email")}
+                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+              />
+              {form.formState.errors.email && (
+                <p className="text-red-500 text-sm mt-1">
+                  {form.formState.errors.email.message}
+                </p>
+              )}
+            </div>
+            <div>
+              <label
+                htmlFor="password"
+                className="block text-sm font-medium text-gray-700"
+              >
+                Senha
+              </label>
+              <Input
+                type="password"
+                id="password"
+                placeholder="********"
+                {...form.register("password")}
+                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+              />
+              {form.formState.errors.password && (
+                <p className="text-red-500 text-sm mt-1">
+                  {form.formState.errors.password.message}
+                </p>
+              )}
+            </div>
+            <div>
+              <Button
+                type="submit"
+                className="w-full justify-center"
+                disabled={isLoading}
+              >
+                {isLoading ? "Criando conta..." : "Criar conta"}
+              </Button>
+            </div>
+          </form>
+          <div className="mt-4 text-center">
+            <p className="text-sm">
+              Já tem uma conta?{" "}
+              <a href="/login" className="text-indigo-600 hover:underline">
+                Faça login
+              </a>
+            </p>
+          </div>
+        </div>
+      </div>
+    </AuthLayout>
   );
 };
 

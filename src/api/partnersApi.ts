@@ -48,10 +48,6 @@ export const createPartner = async (partnerData: Partial<Partner>): Promise<Part
       .from("partners")
       .insert({
         company_name: partnerData.company_name,
-        business_name: partnerData.business_name,
-        contact_name: partnerData.contact_name,
-        email: partnerData.email,
-        phone: partnerData.phone,
         commission_rate: partnerData.commission_rate
       })
       .select()

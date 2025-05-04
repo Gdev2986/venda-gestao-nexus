@@ -7,15 +7,15 @@ import { format } from "date-fns";
 import TablePagination from "@/components/ui/table-pagination";
 import { capitalizeFirstLetter } from "@/lib/utils";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Edit, User, MoreHorizontal, Shield } from "lucide-react";
+import { Edit, User as UserIcon, MoreHorizontal, Shield } from "lucide-react";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { User as UserType, UserRole } from "@/types";
+import { User, UserRole } from "@/types/index";
 import { RoleChangeDialog } from "@/components/user-management/RoleChangeDialog";
 
 interface UserTableProps {
-  users: UserType[];
-  setUsers: React.Dispatch<React.SetStateAction<UserType[]>>;
+  users: User[];
+  setUsers: React.Dispatch<React.SetStateAction<User[]>>;
   totalPages: number;
   currentPage: number;
   onPageChange: (page: number) => void;
@@ -89,7 +89,7 @@ const UserTable = ({
                     <DropdownMenuContent align="end">
                       <DropdownMenuLabel>Ações</DropdownMenuLabel>
                       <DropdownMenuItem onClick={() => openRoleDialog(user.id)}>
-                        <User className="h-4 w-4 mr-2" />
+                        <UserIcon className="h-4 w-4 mr-2" />
                         <span>Alterar Role</span>
                       </DropdownMenuItem>
                       <DropdownMenuSeparator />

@@ -1,398 +1,377 @@
-
 import { useState, useEffect } from "react";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useForm } from "react-hook-form";
+import * as z from "zod";
 import { Button } from "@/components/ui/button";
+import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Switch } from "@/components/ui/switch";
-import { Separator } from "@/components/ui/separator";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Switch } from "@/components/ui/switch";
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { UseFormReturn } from "react-hook-form";
 import MainLayout from "@/components/layout/MainLayout";
 import { UserSettings } from "@/types";
 import { saveSettings, loadSettings } from "@/settings-utils";
 import PixKeysManager from "@/components/settings/PixKeysManager";
+
+// Define the SimplifiedPixKey type to match the actual data structure
+interface SimplifiedPixKey {
+  id: string;
+  user_id: string;
+  key_type: string;
+  key: string;
+  owner_name: string;
+  is_default: boolean;
+  is_active: boolean;
+  created_at: string;
+  updated_at: string;
+  bank_name: string;
+}
+
+const formSchema = z.object({
+  name: z.string().min(2, {
+    message: "Name must be at least 2 characters.",
+  }),
+  email: z.string().email({
+    message: "Please enter a valid email.",
+  }),
+  language: z.string().default("pt-BR"),
+  timezone: z.string().default("America/Sao_Paulo"),
+  theme: z.enum(["light", "dark", "system"]).default("system"),
+  notificationsMarketing: z.boolean().default(true),
+  notificationsSecurity: z.boolean().default(true),
+  displayShowBalance: z.boolean().default(true),
+  displayShowNotifications: z.boolean().default(true),
+});
 
 interface SettingsFormValues {
   name: string;
   email: string;
   language: string;
   timezone: string;
-  marketingEmails: boolean;
-  securityEmails: boolean;
-}
-
-interface ProfileFormProps {
-  form: UseFormReturn<SettingsFormValues>;
-}
-
-interface APIKeySettingsProps {
-  apiKeys: { id: string; name: string; createdAt: string; lastUsed: string | null }[];
-  onCreateKey: (name: string) => void;
-  onDeleteKey: (id: string) => void;
+  theme: "light" | "dark" | "system";
+  notificationsMarketing: boolean;
+  notificationsSecurity: boolean;
+  displayShowBalance: boolean;
+  displayShowNotifications: boolean;
 }
 
 const Settings = () => {
-  const [activeTab, setActiveTab] = useState("account");
-  const [settings, setSettings] = useState<any>({});
   const [loading, setLoading] = useState(true);
-  const [saving, setSaving] = useState(false);
+  const [initialSettings, setInitialSettings] = useState<UserSettings | null>(null);
   const { toast } = useToast();
-  
-  // Mock data for demonstration
-  const [pixKeys, setPixKeys] = useState([
-    {
-      id: "1",
-      key_type: "CPF",
-      key: "123.456.789-00",
-      owner_name: "John Doe",
-      is_default: true,
-      is_active: true,
-      created_at: "2023-01-15T10:30:00Z",
-      bank_name: "Nubank"
+
+  const form = useForm<SettingsFormValues>({
+    resolver: zodResolver(formSchema),
+    defaultValues: {
+      name: "",
+      email: "",
+      language: "pt-BR",
+      timezone: "America/Sao_Paulo",
+      theme: "system",
+      notificationsMarketing: true,
+      notificationsSecurity: true,
+      displayShowBalance: true,
+      displayShowNotifications: true,
     },
-    {
-      id: "2",
-      key_type: "EMAIL",
-      key: "john@example.com",
-      owner_name: "John Doe",
-      is_default: false,
-      is_active: true,
-      created_at: "2023-02-20T15:45:00Z",
-      bank_name: "Itaú"
-    }
-  ]);
-  
+    mode: "onChange",
+  });
+
   useEffect(() => {
-    const loadUserSettings = async () => {
+    const loadUserSetting = async () => {
       setLoading(true);
       try {
-        const userSettings = await loadSettings();
-        setSettings(userSettings);
+        const { settings, error } = await loadSettings();
+        if (error) {
+          toast({
+            variant: "destructive",
+            title: "Erro ao carregar configurações",
+            description: error,
+          });
+        }
+        if (settings) {
+          setInitialSettings(settings);
+          form.reset({
+            name: settings.name,
+            email: settings.email,
+            language: settings.language,
+            timezone: settings.timezone,
+            theme: settings.theme,
+            notificationsMarketing: settings.notifications.marketing,
+            notificationsSecurity: settings.notifications.security,
+            displayShowBalance: settings.display.showBalance,
+            displayShowNotifications: settings.display.showNotifications,
+          });
+        }
       } catch (error) {
-        console.error("Error loading settings:", error);
         toast({
-          title: "Error",
-          description: "Failed to load settings",
           variant: "destructive",
+          title: "Erro ao carregar configurações",
+          description: "Falha ao carregar as configurações do usuário.",
         });
       } finally {
         setLoading(false);
       }
     };
-    
-    loadUserSettings();
-  }, [toast]);
-  
-  const handleSaveSettings = async (updatedSettings: Partial<UserSettings>) => {
-    setSaving(true);
+
+    loadUserSetting();
+  }, [toast, form]);
+
+  const onSubmit = async (values: SettingsFormValues) => {
+    setLoading(true);
     try {
-      await saveSettings(updatedSettings);
-      setSettings(prev => ({ ...prev, ...updatedSettings }));
-      toast({
-        title: "Success",
-        description: "Settings saved successfully",
-      });
+      const settings: UserSettings = {
+        name: values.name,
+        email: values.email,
+        language: values.language,
+        timezone: values.timezone,
+        theme: values.theme,
+        notifications: {
+          marketing: values.notificationsMarketing,
+          security: values.notificationsSecurity,
+        },
+        display: {
+          showBalance: values.displayShowBalance,
+          showNotifications: values.displayShowNotifications,
+        },
+      };
+
+      const { success, error } = await saveSettings(settings);
+      if (success) {
+        toast({
+          title: "Configurações salvas",
+          description: "Suas configurações foram salvas com sucesso.",
+        });
+      } else {
+        toast({
+          variant: "destructive",
+          title: "Erro ao salvar configurações",
+          description: error || "Falha ao salvar as configurações.",
+        });
+      }
     } catch (error) {
       console.error("Error saving settings:", error);
       toast({
-        title: "Error",
-        description: "Failed to save settings",
         variant: "destructive",
+        title: "Erro ao salvar configurações",
+        description: "Ocorreu um erro ao salvar as configurações.",
       });
     } finally {
-      setSaving(false);
+      setLoading(false);
     }
   };
-
-  const handleDeletePixKey = (id: string) => {
-    setPixKeys(keys => keys.filter(key => key.id !== id));
-    toast({
-      title: "Chave Pix removida",
-      description: "A chave Pix foi removida com sucesso.",
-    });
-  };
   
-  const handleSetDefaultPixKey = (id: string) => {
-    setPixKeys(keys => keys.map(key => ({
-      ...key,
-      is_default: key.id === id
-    })));
-    toast({
-      title: "Chave padrão atualizada",
-      description: "A chave Pix padrão foi atualizada com sucesso.",
-    });
-  };
-  
-  const handleAddPixKey = (newKey: any) => {
-    setPixKeys(keys => [...keys, {
-      ...newKey,
-      id: Date.now().toString(),
-      created_at: new Date().toISOString(),
-    }]);
-    toast({
-      title: "Chave Pix adicionada",
-      description: "A chave Pix foi adicionada com sucesso.",
-    });
-  };
-
   return (
     <MainLayout>
-      <div className="space-y-6">
-        <div>
-          <h2 className="text-3xl font-bold tracking-tight">Settings</h2>
-          <p className="text-muted-foreground">
-            Manage your account settings and preferences.
-          </p>
-        </div>
-        <Separator className="my-6" />
-        <div className="flex flex-col space-y-8 lg:flex-row lg:space-x-12 lg:space-y-0">
-          <aside className="-mx-4 lg:w-1/5">
-            <Tabs
-              defaultValue={activeTab}
-              className="w-full"
-              orientation="vertical"
-              onValueChange={setActiveTab}
-            >
-              <TabsList className="w-full justify-start flex-col h-full bg-transparent p-0 flex">
-                {["account", "appearance", "notifications", "display", "pix-keys"].map((tab) => (
-                  <TabsTrigger
-                    key={tab}
-                    value={tab}
-                    className="w-full justify-start px-4 py-2 text-left data-[state=active]:bg-muted"
-                  >
-                    {tab.charAt(0).toUpperCase() + tab.slice(1).replace("-", " ")}
-                  </TabsTrigger>
-                ))}
-              </TabsList>
-            </Tabs>
-          </aside>
-          <div className="flex-1 lg:max-w-3xl">
-            {activeTab === "account" && (
-              <Card>
-                <CardHeader>
-                  <CardTitle>Account</CardTitle>
-                  <CardDescription>
-                    Update your account settings. Set your preferred language and
-                    timezone.
-                  </CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-6">
-                  <div className="space-y-4">
-                    <div className="flex items-center gap-4">
-                      <Avatar className="h-16 w-16">
-                        <AvatarImage
-                          src="https://github.com/shadcn.png"
-                          alt="User avatar"
-                        />
-                        <AvatarFallback>CN</AvatarFallback>
-                      </Avatar>
-                      <div className="flex flex-col gap-1">
-                        <Button variant="outline" size="sm">
-                          Change avatar
-                        </Button>
-                        <p className="text-xs text-muted-foreground">
-                          JPG, GIF or PNG. Max size 4MB.
-                        </p>
-                      </div>
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="name">Name</Label>
-                      <Input
-                        id="name"
-                        placeholder="Your name"
-                        defaultValue={settings?.name || ""}
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="email">Email</Label>
-                      <Input
-                        id="email"
-                        type="email"
-                        placeholder="Your email"
-                        defaultValue={settings?.email || ""}
-                      />
-                    </div>
-                    <Separator />
-                    <div className="space-y-2">
-                      <Label htmlFor="language">Language</Label>
-                      <Select defaultValue={settings?.language || "en"}>
-                        <SelectTrigger id="language">
-                          <SelectValue placeholder="Select Language" />
-                        </SelectTrigger>
+      <div className="container mx-auto py-10">
+        <Card>
+          <CardHeader>
+            <CardTitle>Configurações da Conta</CardTitle>
+            <CardDescription>
+              Gerencie as informações da sua conta e personalize sua experiência.
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <Form {...form}>
+              <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
+                <FormField
+                  control={form.control}
+                  name="name"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Nome</FormLabel>
+                      <FormControl>
+                        <Input placeholder="Seu nome" {...field} />
+                      </FormControl>
+                      <FormDescription>
+                        Este é o nome que será exibido em sua conta.
+                      </FormDescription>
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="email"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Email</FormLabel>
+                      <FormControl>
+                        <Input placeholder="seuemail@exemplo.com" {...field} />
+                      </FormControl>
+                      <FormDescription>
+                        Este é o seu endereço de e-mail.
+                      </FormDescription>
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="language"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Idioma</FormLabel>
+                      <Select onValueChange={field.onChange} defaultValue={field.value}>
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Selecione um idioma" />
+                          </SelectTrigger>
+                        </FormControl>
                         <SelectContent>
-                          <SelectItem value="en">English</SelectItem>
                           <SelectItem value="pt-BR">Português (Brasil)</SelectItem>
-                          <SelectItem value="es">Español</SelectItem>
+                          <SelectItem value="en-US">Inglês (Estados Unidos)</SelectItem>
+                          <SelectItem value="es-ES">Espanhol (Espanha)</SelectItem>
                         </SelectContent>
                       </Select>
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="timezone">Timezone</Label>
-                      <Select defaultValue={settings?.timezone || "utc"}>
-                        <SelectTrigger id="timezone">
-                          <SelectValue placeholder="Select Timezone" />
-                        </SelectTrigger>
+                      <FormDescription>
+                        Selecione o idioma de sua preferência.
+                      </FormDescription>
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="timezone"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Fuso Horário</FormLabel>
+                      <Select onValueChange={field.onChange} defaultValue={field.value}>
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Selecione um fuso horário" />
+                          </SelectTrigger>
+                        </FormControl>
                         <SelectContent>
-                          <SelectItem value="utc">UTC</SelectItem>
-                          <SelectItem value="est">Eastern Time (EST)</SelectItem>
-                          <SelectItem value="cst">Central Time (CST)</SelectItem>
-                          <SelectItem value="mst">Mountain Time (MST)</SelectItem>
-                          <SelectItem value="pst">Pacific Time (PST)</SelectItem>
-                          <SelectItem value="brt">Brasília Time (BRT)</SelectItem>
+                          <SelectItem value="America/Sao_Paulo">
+                            America/Sao_Paulo
+                          </SelectItem>
+                          <SelectItem value="America/Los_Angeles">
+                            America/Los_Angeles
+                          </SelectItem>
+                          {/* Adicione mais fusos horários conforme necessário */}
                         </SelectContent>
                       </Select>
-                    </div>
-                  </div>
-                </CardContent>
+                      <FormDescription>
+                        Selecione seu fuso horário.
+                      </FormDescription>
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="theme"
+                  render={({ field }) => (
+                    <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
+                      <div className="space-y-0.5">
+                        <FormLabel>Tema</FormLabel>
+                        <FormDescription>
+                          Selecione o tema de sua preferência.
+                        </FormDescription>
+                      </div>
+                      <Select onValueChange={field.onChange} defaultValue={field.value}>
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Selecione um tema" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          <SelectItem value="light">Claro</SelectItem>
+                          <SelectItem value="dark">Escuro</SelectItem>
+                          <SelectItem value="system">Sistema</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="notificationsMarketing"
+                  render={({ field }) => (
+                    <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
+                      <div className="space-y-0.5">
+                        <FormLabel>Notificações de Marketing</FormLabel>
+                        <FormDescription>
+                          Receba novidades e ofertas especiais.
+                        </FormDescription>
+                      </div>
+                      <FormControl>
+                        <Switch
+                          checked={field.value}
+                          onCheckedChange={field.onChange}
+                        />
+                      </FormControl>
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="notificationsSecurity"
+                  render={({ field }) => (
+                    <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
+                      <div className="space-y-0.5">
+                        <FormLabel>Notificações de Segurança</FormLabel>
+                        <FormDescription>
+                          Seja notificado sobre atividades suspeitas e alertas de segurança.
+                        </FormDescription>
+                      </div>
+                      <FormControl>
+                        <Switch
+                          checked={field.value}
+                          onCheckedChange={field.onChange}
+                        />
+                      </FormControl>
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="displayShowBalance"
+                  render={({ field }) => (
+                    <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
+                      <div className="space-y-0.5">
+                        <FormLabel>Mostrar Saldo</FormLabel>
+                        <FormDescription>
+                          Exibir o saldo na sua dashboard.
+                        </FormDescription>
+                      </div>
+                      <FormControl>
+                        <Switch
+                          checked={field.value}
+                          onCheckedChange={field.onChange}
+                        />
+                      </FormControl>
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="displayShowNotifications"
+                  render={({ field }) => (
+                    <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
+                      <div className="space-y-0.5">
+                        <FormLabel>Mostrar Notificações</FormLabel>
+                        <FormDescription>
+                          Exibir notificações na sua dashboard.
+                        </FormDescription>
+                      </div>
+                      <FormControl>
+                        <Switch
+                          checked={field.value}
+                          onCheckedChange={field.onChange}
+                        />
+                      </FormControl>
+                    </FormItem>
+                  )}
+                />
                 <CardFooter>
-                  <Button onClick={() => handleSaveSettings({
-                    name: (document.getElementById('name') as HTMLInputElement)?.value,
-                    email: (document.getElementById('email') as HTMLInputElement)?.value,
-                  })}
-                  disabled={saving}>
-                    {saving ? "Saving..." : "Save changes"}
+                  <Button type="submit" disabled={loading}>
+                    {loading ? "Salvando..." : "Salvar Alterações"}
                   </Button>
                 </CardFooter>
-              </Card>
-            )}
-
-            {activeTab === "appearance" && (
-              <Card>
-                <CardHeader>
-                  <CardTitle>Appearance</CardTitle>
-                  <CardDescription>
-                    Customize the appearance of the app. Automatically switch between day
-                    and night themes.
-                  </CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-2">
-                  <div className="space-y-1">
-                    <Label htmlFor="theme">Theme</Label>
-                    <Select defaultValue={settings?.theme || "system"}>
-                      <SelectTrigger id="theme">
-                        <SelectValue placeholder="Select theme" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="light">Light</SelectItem>
-                        <SelectItem value="dark">Dark</SelectItem>
-                        <SelectItem value="system">System</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                </CardContent>
-                <CardFooter>
-                  <Button onClick={() => handleSaveSettings({
-                    theme: (document.getElementById('theme') as HTMLSelectElement)?.value as 'light' | 'dark' | 'system',
-                  })}
-                  disabled={saving}>
-                    {saving ? "Saving..." : "Save changes"}
-                  </Button>
-                </CardFooter>
-              </Card>
-            )}
-
-            {activeTab === "notifications" && (
-              <Card>
-                <CardHeader>
-                  <CardTitle>Notifications</CardTitle>
-                  <CardDescription>
-                    Configure how you receive notifications.
-                  </CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <div className="flex items-center justify-between space-x-2">
-                    <Label htmlFor="marketing_emails">Marketing emails</Label>
-                    <Switch 
-                      id="marketing_emails" 
-                      defaultChecked={settings?.notifications?.marketing || false}
-                      onCheckedChange={(checked) => handleSaveSettings({
-                        notifications: {
-                          ...settings?.notifications,
-                          marketing: checked
-                        }
-                      })}
-                    />
-                  </div>
-                  <div className="flex items-center justify-between space-x-2">
-                    <Label htmlFor="security_emails">Security emails</Label>
-                    <Switch 
-                      id="security_emails" 
-                      defaultChecked={settings?.notifications?.security || true}
-                      onCheckedChange={(checked) => handleSaveSettings({
-                        notifications: {
-                          ...settings?.notifications,
-                          security: checked
-                        }
-                      })}
-                    />
-                  </div>
-                </CardContent>
-              </Card>
-            )}
-
-            {activeTab === "display" && (
-              <Card>
-                <CardHeader>
-                  <CardTitle>Display</CardTitle>
-                  <CardDescription>
-                    Turn items on or off to control what&apos;s displayed in the app.
-                  </CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <div className="flex items-center justify-between space-x-2">
-                    <Label htmlFor="show_balance">Show balance</Label>
-                    <Switch 
-                      id="show_balance" 
-                      defaultChecked={settings?.display?.showBalance || true}
-                      onCheckedChange={(checked) => handleSaveSettings({
-                        display: {
-                          ...settings?.display,
-                          showBalance: checked
-                        }
-                      })}
-                    />
-                  </div>
-                  <div className="flex items-center justify-between space-x-2">
-                    <Label htmlFor="show_notifications">Show notifications</Label>
-                    <Switch 
-                      id="show_notifications" 
-                      defaultChecked={settings?.display?.showNotifications || true}
-                      onCheckedChange={(checked) => handleSaveSettings({
-                        display: {
-                          ...settings?.display,
-                          showNotifications: checked
-                        }
-                      })}
-                    />
-                  </div>
-                </CardContent>
-              </Card>
-            )}
-
-            {activeTab === "pix-keys" && (
-              <Card>
-                <CardHeader>
-                  <CardTitle>Chaves Pix</CardTitle>
-                  <CardDescription>
-                    Gerencie suas chaves Pix cadastradas
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <PixKeysManager 
-                    pixKeys={pixKeys}
-                    onDelete={handleDeletePixKey}
-                    onSetDefault={handleSetDefaultPixKey}
-                    onAdd={handleAddPixKey}
-                  />
-                </CardContent>
-              </Card>
-            )}
-          </div>
-        </div>
+              </form>
+            </Form>
+          </CardContent>
+        </Card>
+        <PixKeysManager />
       </div>
     </MainLayout>
   );

@@ -4,8 +4,8 @@ import { Button } from "@/components/ui/button";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 
 interface TablePaginationProps {
-  currentPage: number;
-  totalPages: number;
+  currentPage?: number;
+  totalPages?: number;
   onPageChange: (page: number) => void;
   siblingCount?: number;
   // Add these for compatibility

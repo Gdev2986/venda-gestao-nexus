@@ -16,6 +16,7 @@ export interface Client {
   business_name?: string;
   contact_name?: string;
   document?: string;
+  status?: string;  // Added for compatibility
 }
 
 export interface Partner {
@@ -48,6 +49,7 @@ export interface PixKey {
   owner_name: string;
   name: string;
   isDefault: boolean;
+  is_default: boolean;
   is_active: boolean;
   created_at: string;
   updated_at: string;
@@ -63,6 +65,12 @@ export interface DashboardStats {
   pendingPayments: number;
   salesByPaymentMethod: { method: string; amount: number }[];
   recentSales: { id: string; date: string; description: string; amount: number }[];
+  // Add missing properties for Dashboard.tsx
+  totalSales?: number;
+  completedPayments?: number;
+  clientBalance?: number;
+  yesterdayGrossAmount?: number;
+  yesterdayNetAmount?: number;
 }
 
 export interface UserSettings {
