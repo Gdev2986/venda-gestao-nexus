@@ -1,4 +1,6 @@
+
 import { useState } from "react";
+import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { Button } from "@/components/ui/button";
@@ -36,7 +38,7 @@ const LoginForm = () => {
     },
   });
 
-  async function onSubmit(values) {
+  async function onSubmit(values: z.infer<typeof formSchema>) {
     setIsSubmitting(true);
     try {
       const { error } = await signIn({ email: values.email, password: values.password });

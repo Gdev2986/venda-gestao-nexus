@@ -44,10 +44,14 @@ export const createPartner = async (partnerData: Partial<Partner>): Promise<Part
       throw new Error("Company name is required");
     }
     
-    // Only passing the required fields to match the Supabase schema
+    // Generate a unique UUID for the partner
+    const id = crypto.randomUUID();
+    
+    // Insert with the required fields
     const { data, error } = await supabase
       .from("partners")
       .insert({
+        id,
         company_name: partnerData.company_name,
         commission_rate: partnerData.commission_rate || 0
       })

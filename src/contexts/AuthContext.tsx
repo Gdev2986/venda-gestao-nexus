@@ -1,3 +1,4 @@
+
 import { createContext, useContext, useState, useEffect } from "react";
 import { User } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
@@ -19,7 +20,7 @@ const AuthContext = createContext<AuthContextProps>({
 
 export const useAuth = () => useContext(AuthContext);
 
-const AuthContextProvider = ({ children }: { children: React.ReactNode }) => {
+export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -156,4 +157,5 @@ const AuthContextProvider = ({ children }: { children: React.ReactNode }) => {
   );
 };
 
-export default AuthContextProvider;
+// Default export
+export default AuthProvider;

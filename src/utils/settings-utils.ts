@@ -22,7 +22,9 @@ export const createDefaultPixKeyProperties = (id: string, userId: string) => {
 
 export const saveSettings = async (settings: UserSettings): Promise<{ success: boolean; error?: string }> => {
   try {
-    const { data: { user } } = await supabase.auth.getUser();
+    const { data } = await supabase.auth.getUser();
+    const user = data?.user;
+    
     if (!user) {
       return { success: false, error: "No authenticated user found" };
     }
@@ -41,7 +43,9 @@ export const saveSettings = async (settings: UserSettings): Promise<{ success: b
 
 export const loadSettings = async (): Promise<{ settings?: UserSettings; error?: string }> => {
   try {
-    const { data: { user } } = await supabase.auth.getUser();
+    const { data } = await supabase.auth.getUser();
+    const user = data?.user;
+    
     if (!user) {
       return { error: "No authenticated user found" };
     }
