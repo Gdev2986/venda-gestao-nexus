@@ -10,10 +10,16 @@ import UserFilters from "@/components/user-management/UserFilters";
 
 const UserManagement = () => {
   const { 
-    users, 
-    setUsers, 
+    users,
+    setUsers,
     loading, 
-    error, 
+    error,
+    roleDialogOpen,
+    openRoleDialog,
+    closeRoleDialog,
+    selectedUserId,
+    handleRoleChange,
+    changingRole,
     checkingAccess,
     retryFetch,
     currentPage,
@@ -63,6 +69,12 @@ const UserManagement = () => {
                   totalPages={totalPages}
                   currentPage={currentPage}
                   onPageChange={handlePageChange}
+                  openRoleDialog={openRoleDialog}
+                  roleDialogOpen={roleDialogOpen}
+                  closeRoleDialog={closeRoleDialog}
+                  selectedUserId={selectedUserId}
+                  handleRoleChange={handleRoleChange}
+                  changingRole={changingRole}
                 />
                 {totalUsers > 0 && (
                   <p className="text-sm text-muted-foreground">

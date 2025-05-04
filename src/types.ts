@@ -1,3 +1,4 @@
+
 export enum UserRole {
   CLIENT = "CLIENT",
   ADMIN = "ADMIN",
@@ -23,6 +24,12 @@ export enum PaymentMethod {
   CREDIT = "CREDIT",
   DEBIT = "DEBIT",
   PIX = "PIX",
+}
+
+export enum ClientStatus {
+  ACTIVE = "ACTIVE",
+  BLOCKED = "BLOCKED",
+  PENDING = "PENDING"
 }
 
 export type PixKey = {
@@ -65,6 +72,7 @@ export interface Client {
   business_name: string;
   document?: string;
   partner_id?: string;
+  partner_name?: string;
   created_at?: string;
   updated_at?: string;
   company_name?: string; // For backward compatibility
@@ -75,7 +83,11 @@ export interface Client {
   city?: string;
   state?: string;
   zip?: string;
-  status?: string;
+  status?: ClientStatus;
+  machines_count?: number;
+  fee_group_id?: string;
+  fee_group_name?: string;
+  balance?: number;
 }
 
 export interface FilterValues {
