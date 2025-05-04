@@ -39,9 +39,21 @@ export const fetchPartnerById = async (id: string): Promise<Partner | null> => {
 // Create a new partner
 export const createPartner = async (partnerData: Partial<Partner>): Promise<Partner | null> => {
   try {
+    // Make sure company_name is provided as it's required
+    if (!partnerData.company_name) {
+      throw new Error("Company name is required");
+    }
+    
     const { data, error } = await supabase
       .from("partners")
-      .insert(partnerData)
+      .insert({
+        company_name: partnerData.company_name,
+        business_name: partnerData.business_name,
+        contact_name: partnerData.contact_name,
+        email: partnerData.email,
+        phone: partnerData.phone,
+        commission_rate: partnerData.commission_rate
+      })
       .select()
       .single();
     

@@ -10,8 +10,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Edit, User, MoreHorizontal, Shield } from "lucide-react";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { UserRole } from "@/types";
-import { User as UserType } from "@/types";
+import { User as UserType, UserRole } from "@/types";
 import { RoleChangeDialog } from "@/components/user-management/RoleChangeDialog";
 
 interface UserTableProps {

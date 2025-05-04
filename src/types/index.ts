@@ -1,6 +1,7 @@
+
 export interface Client {
   id: string;
-  name?: string;
+  name: string;  // Changed from optional to required
   email?: string;
   phone?: string;
   address?: string;
@@ -9,7 +10,7 @@ export interface Client {
   zip?: string;
   partner_id?: string;
   machines_count?: number;
-  active?: boolean;
+  active: boolean;  // Changed from optional to required
   created_at?: string;
   updated_at?: string;
   business_name?: string;
@@ -19,7 +20,7 @@ export interface Client {
 
 export interface Partner {
   id: string;
-  company_name?: string;
+  company_name: string;  // Changed from optional to required for Supabase
   business_name?: string;
   contact_name?: string;
   email?: string;
