@@ -1,3 +1,4 @@
+
 import { type ClassValue, clsx } from "clsx"
 import { twMerge } from "tailwind-merge"
 
@@ -8,6 +9,6 @@ export function cn(...inputs: ClassValue[]) {
 /**
  * Capitalizes the first letter of a string
  */
-export const capitalizeFirstLetter = (string: string): string) => {
+export const capitalizeFirstLetter = (string: string): string => {
   return string.charAt(0).toUpperCase() + string.slice(1);
 };
