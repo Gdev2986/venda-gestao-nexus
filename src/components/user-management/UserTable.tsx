@@ -114,8 +114,8 @@ const UserTable = ({
       </Table>
 
       <TablePagination
-        page={currentPage}
-        total={totalPages}
+        currentPage={currentPage}
+        totalPages={totalPages}
         onPageChange={onPageChange}
       />
 

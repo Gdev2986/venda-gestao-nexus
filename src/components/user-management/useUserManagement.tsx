@@ -150,8 +150,8 @@ export function useUserManagement() {
     setRoleDialogOpen(false);
     setSelectedUserId("");
   };
-
-  const handleRoleChange = async (userId: string, newRole: UserRole) => {
+  
+  const updateUserRole = async (userId: string, newRole: UserRole) => {
     setChangingRole(true);
     
     try {
@@ -189,6 +189,10 @@ export function useUserManagement() {
     }
   };
 
+  const handleRoleChange = async (userId: string, newRole: UserRole) => {
+    await updateUserRole(userId, newRole);
+  };
+
   const handlePageChange = (page: number) => {
     setCurrentPage(page);
   };
@@ -211,7 +215,6 @@ export function useUserManagement() {
     openRoleDialog,
     closeRoleDialog,
     selectedUserId,
-    handleRoleChange,
     changingRole,
     checkingAccess,
     retryFetch,
@@ -220,7 +223,9 @@ export function useUserManagement() {
     totalUsers,
     handlePageChange,
     handleFilterChange,
-    filters
+    filters,
+    updateUserRole,
+    handleRoleChange
   };
 }
 
