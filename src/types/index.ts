@@ -1,4 +1,3 @@
-
 export enum UserRole {
   ADMIN = "ADMIN",
   CLIENT = "CLIENT",
@@ -55,6 +54,12 @@ export interface Partner {
   email?: string; // Added for consistency with filtering
   phone?: string; // Added for consistency with filtering
   address?: string; // Added for completeness
+}
+
+export enum ClientStatus {
+  ACTIVE = "ACTIVE",
+  BLOCKED = "BLOCKED",
+  PENDING = "PENDING"
 }
 
 // Add other types here as needed

@@ -1,20 +1,114 @@
 
+import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { PageHeader } from "@/components/page/PageHeader";
 import { PageWrapper } from "@/components/page/PageWrapper";
 import { PATHS } from "@/routes/paths";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
+import { useClientsAdmin } from "@/hooks/use-clients-admin";
+import { Client } from "@/types";
+import ClientsList from "@/components/clients/ClientsList";
+import { ClientsFilter, ClientFilters } from "@/components/clients/ClientsFilter";
 import { 
-  Table, 
-  TableBody, 
-  TableCell, 
-  TableHead, 
-  TableHeader, 
-  TableRow 
-} from "@/components/ui/table";
-import { Search } from "lucide-react";
+  Pagination, 
+  PaginationContent, 
+  PaginationItem, 
+  PaginationLink, 
+  PaginationNext, 
+  PaginationPrevious 
+} from "@/components/ui/pagination";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
+
+export interface ClientDeleteDialogProps {
+  open: boolean;
+  clientName?: string;
+  onConfirm: () => void;
+  onCancel: () => void;
+}
 
 const AdminClients = () => {
+  const navigate = useNavigate();
+  const { 
+    clients,
+    partners,
+    feePlans,
+    loading,
+    totalPages,
+    currentPage,
+    removeClient,
+    handlePageChange
+  } = useClientsAdmin();
+
+  const [filteredClients, setFilteredClients] = useState<Client[]>([]);
+  const [deleteDialog, setDeleteDialog] = useState<ClientDeleteDialogProps>({
+    open: false,
+    clientName: "",
+    onConfirm: () => {},
+    onCancel: () => {}
+  });
+
+  // Apply any filters
+  useEffect(() => {
+    setFilteredClients(clients);
+  }, [clients]);
+
+  // Handle client filtering
+  const handleFilter = (filters: ClientFilters) => {
+    let filtered = [...clients];
+    
+    // Apply text search
+    if (filters.search) {
+      const search = filters.search.toLowerCase();
+      filtered = filtered.filter(client => 
+        (client.business_name?.toLowerCase().includes(search) || 
+        client.email?.toLowerCase().includes(search) ||
+        client.phone?.toLowerCase().includes(search))
+      );
+    }
+    
+    // Apply partner filter
+    if (filters.partnerId) {
+      filtered = filtered.filter(client => client.partner_id === filters.partnerId);
+    }
+    
+    // Apply fee plan filter
+    if (filters.feePlanId) {
+      filtered = filtered.filter(client => client.fee_plan_id === filters.feePlanId);
+    }
+    
+    // Apply balance range filter
+    if (filters.balanceRange) {
+      const [min, max] = filters.balanceRange;
+      filtered = filtered.filter(
+        client => client.balance != null && client.balance >= min && client.balance <= max
+      );
+    }
+    
+    setFilteredClients(filtered);
+  };
+
+  // Actions
+  const handleViewClient = (id: string) => {
+    navigate(PATHS.ADMIN.CLIENT_DETAILS(id));
+  };
+
+  const handleEditClient = (id: string) => {
+    navigate(PATHS.ADMIN.CLIENT_DETAILS(id)); // Will navigate to the same page for now
+  };
+
+  const handleDeleteClient = (id: string, name?: string) => {
+    setDeleteDialog({
+      open: true,
+      clientName: name || "este cliente",
+      onConfirm: async () => {
+        await removeClient(id);
+        setDeleteDialog(prev => ({ ...prev, open: false }));
+      },
+      onCancel: () => {
+        setDeleteDialog(prev => ({ ...prev, open: false }));
+      }
+    });
+  };
+
   return (
     <div className="space-y-6">
       <PageHeader 
@@ -24,51 +118,73 @@ const AdminClients = () => {
         actionLink={PATHS.ADMIN.CLIENT_NEW}
       />
 
-      <div className="flex items-center gap-2 mb-6">
-        <div className="relative flex-1">
-          <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-          <Input
-            placeholder="Buscar clientes..."
-            className="pl-8 bg-background"
-          />
-        </div>
-        <Button variant="outline">Filtrar</Button>
-      </div>
+      <ClientsFilter 
+        partners={partners}
+        feePlans={feePlans}
+        onFilter={handleFilter}
+      />
       
       <PageWrapper>
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>Nome</TableHead>
-              <TableHead>E-mail</TableHead>
-              <TableHead>Telefone</TableHead>
-              <TableHead>Cidade</TableHead>
-              <TableHead>Status</TableHead>
-              <TableHead className="w-[100px]">Ações</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {[1, 2, 3, 4, 5].map((i) => (
-              <TableRow key={i}>
-                <TableCell>Cliente Exemplo {i}</TableCell>
-                <TableCell>cliente{i}@exemplo.com</TableCell>
-                <TableCell>(11) 9{i}999-9999</TableCell>
-                <TableCell>São Paulo</TableCell>
-                <TableCell>
-                  <span className="inline-flex items-center rounded-full px-2 py-1 text-xs font-medium bg-green-50 text-green-700">
-                    Ativo
-                  </span>
-                </TableCell>
-                <TableCell>
-                  <Button variant="ghost" size="sm" asChild>
-                    <a href={PATHS.ADMIN.CLIENT_DETAILS(String(i))}>Detalhes</a>
-                  </Button>
-                </TableCell>
-              </TableRow>
-            ))}
-          </TableBody>
-        </Table>
+        <div className="space-y-4">
+          <ClientsList
+            clients={filteredClients}
+            loading={loading}
+            onViewClient={handleViewClient}
+            onEditClient={handleEditClient}
+            onDeleteClient={handleDeleteClient}
+          />
+          
+          {totalPages > 1 && (
+            <div className="flex justify-center mt-4">
+              <Pagination>
+                <PaginationContent>
+                  <PaginationItem>
+                    <PaginationPrevious 
+                      onClick={() => handlePageChange(currentPage - 1)}
+                      disabled={currentPage === 1}
+                    />
+                  </PaginationItem>
+                  
+                  {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
+                    <PaginationItem key={page}>
+                      <PaginationLink 
+                        isActive={page === currentPage}
+                        onClick={() => handlePageChange(page)}
+                      >
+                        {page}
+                      </PaginationLink>
+                    </PaginationItem>
+                  ))}
+                  
+                  <PaginationItem>
+                    <PaginationNext 
+                      onClick={() => handlePageChange(currentPage + 1)}
+                      disabled={currentPage === totalPages}
+                    />
+                  </PaginationItem>
+                </PaginationContent>
+              </Pagination>
+            </div>
+          )}
+        </div>
       </PageWrapper>
+
+      <AlertDialog open={deleteDialog.open}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Deletar cliente?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Tem certeza de que deseja deletar o cliente {deleteDialog.clientName}? Esta ação não pode ser desfeita.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={deleteDialog.onCancel}>Cancelar</AlertDialogCancel>
+            <AlertDialogAction onClick={deleteDialog.onConfirm} className="bg-destructive text-destructive-foreground">
+              Deletar
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };
