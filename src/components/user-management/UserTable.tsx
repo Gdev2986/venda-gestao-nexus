@@ -6,12 +6,23 @@ import { Badge } from "@/components/ui/badge";
 import { format } from "date-fns";
 import TablePagination from "@/components/ui/table-pagination";
 import { capitalizeFirstLetter } from "@/lib/utils";
-import { Skeleton } from "@/components/ui/skeleton";
 import { Edit, User as UserIcon, MoreHorizontal, Shield } from "lucide-react";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { User, UserRole } from "@/types/index";
+import { UserRole } from "@/types";
 import { RoleChangeDialog } from "@/components/user-management/RoleChangeDialog";
+
+// Define User type here since it's not properly exported from @/types
+interface User {
+  id: string;
+  name: string;
+  email: string;
+  role: UserRole;
+  created_at: string;
+  updated_at?: string;
+  last_login?: string;
+  active: boolean;
+}
 
 interface UserTableProps {
   users: User[];

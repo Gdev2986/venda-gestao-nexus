@@ -1,7 +1,7 @@
 
 export interface Client {
   id: string;
-  name: string;  // Changed from optional to required
+  name?: string;
   email?: string;
   phone?: string;
   address?: string;
@@ -10,18 +10,18 @@ export interface Client {
   zip?: string;
   partner_id?: string;
   machines_count?: number;
-  active: boolean;  // Changed from optional to required
+  active?: boolean;
   created_at?: string;
   updated_at?: string;
   business_name?: string;
   contact_name?: string;
   document?: string;
-  status?: string;  // Added for compatibility
+  status?: string;
 }
 
 export interface Partner {
   id: string;
-  company_name: string;  // Changed from optional to required for Supabase
+  company_name: string;
   business_name?: string;
   contact_name?: string;
   email?: string;
@@ -29,7 +29,7 @@ export interface Partner {
   commission_rate?: number;
   created_at?: string;
   updated_at?: string;
-  name?: string;
+  name?: string; // For backwards compatibility
 }
 
 export enum UserRole {
@@ -99,4 +99,30 @@ export interface User {
   updated_at?: string;
   last_login?: string;
   active: boolean;
+}
+
+// Add SimplifiedPixKey type for settings page
+export interface SimplifiedPixKey {
+  id: string;
+  user_id: string;
+  key_type: string;
+  key: string;
+  owner_name: string;
+  is_default: boolean;
+  is_active: boolean;
+  created_at: string;
+  updated_at: string;
+  bank_name: string;
+}
+
+// Add MachineData type for dashboard
+export interface MachineData {
+  id: string;
+  name: string;
+  model: string;
+  serial_number: string;
+  status: string;
+  transactions: number;
+  revenue: number;
+  created_at: string;
 }

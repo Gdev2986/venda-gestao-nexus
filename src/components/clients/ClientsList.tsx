@@ -54,6 +54,14 @@ const ClientsList = ({
     );
   }
 
+  const getDisplayName = (client: Client): string => {
+    return client.business_name || client.contact_name || client.name || "Cliente sem nome";
+  };
+
+  const isClientActive = (client: Client): boolean => {
+    return client.status === "ACTIVE" || client.active === true;
+  };
+
   return (
     <div className="overflow-x-auto">
       <Table>
@@ -71,7 +79,7 @@ const ClientsList = ({
         <TableBody>
           {clients.map((client) => (
             <TableRow key={client.id}>
-              <TableCell className="font-medium">{client.business_name || client.contact_name || client.name}</TableCell>
+              <TableCell className="font-medium">{getDisplayName(client)}</TableCell>
               <TableCell>{client.email}</TableCell>
               <TableCell>{client.phone || "-"}</TableCell>
               <TableCell>
@@ -81,8 +89,8 @@ const ClientsList = ({
               </TableCell>
               <TableCell>{client.machines_count || 0}</TableCell>
               <TableCell>
-                <Badge variant={client.status === "ACTIVE" || client.active ? "default" : "destructive"}>
-                  {client.status === "ACTIVE" || client.active ? "Ativo" : "Inativo"}
+                <Badge variant={isClientActive(client) ? "default" : "destructive"}>
+                  {isClientActive(client) ? "Ativo" : "Inativo"}
                 </Badge>
               </TableCell>
               <TableCell className="text-right">
@@ -120,7 +128,7 @@ const ClientsList = ({
                     <DropdownMenuSeparator />
                     <DropdownMenuItem 
                       className="text-destructive"
-                      onClick={() => onDeleteClient(client.id, client.business_name || client.contact_name || client.name)}
+                      onClick={() => onDeleteClient(client.id, getDisplayName(client))}
                     >
                       <Trash className="h-4 w-4 mr-2" />
                       Excluir

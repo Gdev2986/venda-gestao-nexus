@@ -1,3 +1,4 @@
+
 import React, { createContext, useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
@@ -21,7 +22,7 @@ export const AuthContext = createContext<AuthState>(initialState);
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [user, setUser] = useState(initialState.user);
-  const [profile, setProfile] = useState(initialState.profile);
+  const [profile, setProfile] = useState<UserProfile | null>(initialState.profile);
   const [isLoading, setIsLoading] = useState(initialState.isLoading);
   const [isAuthenticated, setIsAuthenticated] = useState(initialState.isAuthenticated);
   const navigate = useNavigate();
@@ -48,8 +49,19 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             toast.error('Erro ao buscar perfil', {
               description: profileError.message,
             });
-          } else {
-            setProfile(profileData);
+          } else if (profileData) {
+            // Convert database role to UserRole enum
+            const userRole = profileData.role as UserRole;
+            setProfile({
+              id: profileData.id,
+              name: profileData.name,
+              email: profileData.email,
+              role: userRole,
+              avatar_url: profileData.avatar,
+              created_at: profileData.created_at,
+              updated_at: profileData.updated_at,
+              phone: profileData.phone
+            });
           }
         } else {
           setUser(null);
@@ -89,8 +101,19 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             toast.error('Erro ao buscar perfil', {
               description: profileError.message,
             });
-          } else {
-            setProfile(profileData);
+          } else if (profileData) {
+            // Convert database role to UserRole enum
+            const userRole = profileData.role as UserRole;
+            setProfile({
+              id: profileData.id,
+              name: profileData.name,
+              email: profileData.email,
+              role: userRole,
+              avatar_url: profileData.avatar,
+              created_at: profileData.created_at,
+              updated_at: profileData.updated_at,
+              phone: profileData.phone
+            });
           }
         }
       } else if (event === 'SIGNED_OUT') {
@@ -114,24 +137,41 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             toast.error('Erro ao buscar perfil', {
               description: profileError.message,
             });
-          } else {
-            setProfile(profileData);
+          } else if (profileData) {
+            // Convert database role to UserRole enum
+            const userRole = profileData.role as UserRole;
+            setProfile({
+              id: profileData.id,
+              name: profileData.name,
+              email: profileData.email,
+              role: userRole,
+              avatar_url: profileData.avatar,
+              created_at: profileData.created_at,
+              updated_at: profileData.updated_at,
+              phone: profileData.phone
+            });
           }
         }
       }
     });
   }, [navigate]);
 
-  const updateProfile = async (updates: UserProfile) => {
+  const updateProfile = async (updates: Partial<UserProfile>) => {
     try {
       setIsLoading(true);
       if (!user) {
         throw new Error('Usuário não autenticado');
       }
 
+      // Convert UserRole enum to string if present
+      const dbUpdates = {
+        ...updates,
+        role: updates.role ? updates.role.toString() : undefined
+      };
+
       const { error } = await supabase
         .from('profiles')
-        .update(updates)
+        .update(dbUpdates)
         .eq('id', user.id);
 
       if (error) {
@@ -142,7 +182,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       }
 
       // Update local profile state
-      setProfile((prevProfile) => ({ ...prevProfile, ...updates }));
+      setProfile((prevProfile) => prevProfile ? { ...prevProfile, ...updates } : null);
       toast.success('Perfil atualizado com sucesso');
       return { error: null };
     } catch (error: any) {
@@ -155,13 +195,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
-  const signUp = async ({ email, password, ...formData }: SignUpCredentials) => {
+  const signUp = async (credentials: SignUpCredentials) => {
     try {
       const { data, error } = await supabase.auth.signUp({
-        email,
-        password,
+        email: credentials.email,
+        password: credentials.password,
         options: {
-          data: formData,
+          data: credentials,
         },
       });
 
@@ -176,9 +216,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       if (data.user) {
         await supabase.from('profiles').insert({
           id: data.user.id,
-          email,
-          role: formData.role || 'client',
-          ...formData,
+          email: credentials.email,
+          name: credentials.name || "",
+          role: credentials.role || UserRole.CLIENT
         });
 
         toast.success('Conta criada com sucesso', {
@@ -195,13 +235,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
-  const signIn = async ({ email, password }: SignInCredentials) => {
+  const signIn = async (credentials: SignInCredentials) => {
     try {
       setIsLoading(true);
-      const { data, error } = await supabase.auth.signInWithPassword({
-        email,
-        password,
-      });
+      const { data, error } = await supabase.auth.signInWithPassword(credentials);
 
       if (error) {
         toast.error('Erro ao fazer login', {

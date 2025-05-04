@@ -46,10 +46,10 @@ export const createPartner = async (partnerData: Partial<Partner>): Promise<Part
     
     const { data, error } = await supabase
       .from("partners")
-      .insert({
+      .insert([{ // Use array format for insert
         company_name: partnerData.company_name,
-        commission_rate: partnerData.commission_rate
-      })
+        commission_rate: partnerData.commission_rate || 0
+      }])
       .select()
       .single();
     

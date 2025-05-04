@@ -1,5 +1,6 @@
 
 import { User } from "@supabase/supabase-js";
+import { UserRole } from "@/types";
 
 export interface AuthState {
   user: User | null;
@@ -7,7 +8,7 @@ export interface AuthState {
   isLoading: boolean;
   isAuthenticated: boolean;
   signUp: (credentials: SignUpCredentials) => Promise<{ error: Error | null }>;
-  signIn: (email: string, password: string) => Promise<{ error: Error | null }>;
+  signIn: (credentials: SignInCredentials) => Promise<{ error: Error | null }>;
   signOut: () => Promise<void>;
   updateProfile: (updates: Partial<UserProfile>) => Promise<{ error: Error | null }>;
 }
@@ -33,12 +34,4 @@ export interface UserProfile {
   created_at?: string;
   updated_at?: string;
   phone?: string;
-}
-
-export enum UserRole {
-  CLIENT = "CLIENT",
-  ADMIN = "ADMIN",
-  PARTNER = "PARTNER",
-  FINANCIAL = "FINANCIAL",
-  LOGISTICS = "LOGISTICS"
 }
