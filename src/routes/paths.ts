@@ -1,4 +1,3 @@
-
 export const PATHS = {
   HOME: "/",
   LOGIN: "/login",
@@ -33,10 +32,6 @@ export const PATHS = {
     USER_DETAILS: (id: string = ":id") => `/admin/users/${id}`,
     USER_EDIT: (id: string = ":id") => `/admin/users/${id}/edit`,
     USER_NEW: "/admin/users/new",
-    MACHINES: "/admin/machines",
-    MACHINE_DETAILS: (id: string = ":id") => `/admin/machines/${id}`,
-    MACHINE_EDIT: (id: string = ":id") => `/admin/machines/${id}/edit`,
-    MACHINE_NEW: "/admin/machines/new",
     PAYMENTS: "/admin/payments",
     PAYMENT_DETAILS: (id: string = ":id") => `/admin/payments/${id}`,
     PAYMENT_NEW: "/admin/payments/new",

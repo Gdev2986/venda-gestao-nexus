@@ -47,18 +47,7 @@ const SidebarNavigation = ({ userRole }: SidebarNavigationProps) => {
       icon: Building2,
       href: PATHS.ADMIN.CLIENTS,
       roles: [UserRole.ADMIN],
-      subItems: [
-        {
-          title: "Lista de Clientes",
-          href: PATHS.ADMIN.CLIENTS,
-          roles: [UserRole.ADMIN],
-        },
-        {
-          title: "Máquinas",
-          href: PATHS.ADMIN.MACHINES,
-          roles: [UserRole.ADMIN],
-        }
-      ]
+      // Removed the subItems array to make this a direct link
     },
     {
       title: "Parceiros",

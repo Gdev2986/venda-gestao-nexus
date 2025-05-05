@@ -1,27 +1,34 @@
 
 import { Badge } from "@/components/ui/badge";
-
-type StatusType = "active" | "inactive" | "pending" | string;
+import { ClientStatus as ClientStatusEnum } from "@/types";
 
 interface ClientStatusProps {
-  status: StatusType;
+  status: string;
 }
 
 export const ClientStatus = ({ status }: ClientStatusProps) => {
-  const variants: Record<StatusType, { variant: string; label: string }> = {
-    "active": { variant: "success", label: "Ativo" },
-    "inactive": { variant: "destructive", label: "Inativo" },
-    "pending": { variant: "warning", label: "Pendente" },
-    "default": { variant: "secondary", label: "Desconhecido" }
-  };
+  let statusProps: { variant?: "default" | "secondary" | "destructive" | "outline"; className?: string } = {};
 
-  const { variant, label } = variants[status] || variants.default;
+  switch (status) {
+    case ClientStatusEnum.ACTIVE:
+      statusProps.className = "bg-green-100 text-green-800 hover:bg-green-100";
+      break;
+    case ClientStatusEnum.INACTIVE:
+      statusProps.variant = "destructive";
+      break;
+    case ClientStatusEnum.PENDING:
+      statusProps.className = "bg-yellow-100 text-yellow-800 hover:bg-yellow-100";
+      break;
+    default:
+      statusProps.variant = "outline";
+  }
 
   return (
-    <Badge variant={variant as any} className="capitalize">
-      {label}
+    <Badge {...statusProps}>
+      {status === ClientStatusEnum.ACTIVE && "Ativo"}
+      {status === ClientStatusEnum.INACTIVE && "Inativo"}
+      {status === ClientStatusEnum.PENDING && "Pendente"}
+      {!Object.values(ClientStatusEnum).includes(status as ClientStatusEnum) && status}
     </Badge>
   );
 };
-
-export default ClientStatus;

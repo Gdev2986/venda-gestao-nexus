@@ -20,6 +20,13 @@ export enum PaymentType {
   BOLETO = "BOLETO"
 }
 
+// Added ClientStatus enum for the ClientStatus component
+export enum ClientStatus {
+  ACTIVE = "active",
+  INACTIVE = "inactive",
+  PENDING = "pending"
+}
+
 export interface Payment {
   id: string;
   created_at: string;
@@ -57,4 +64,24 @@ export interface Partner {
   address?: string; // Added for completeness
 }
 
-// Add other types here as needed
+// Added Client interface to ensure type safety
+export interface Client {
+  id: string;
+  business_name: string;
+  email?: string;
+  phone?: string;
+  status?: string;
+  balance?: number;
+  partner_id?: string;
+  created_at?: string;
+  updated_at?: string;
+  contact_name?: string;
+  address?: string;
+  city?: string;
+  state?: string;
+  zip?: string;
+  document?: string;
+  fee_plan_id?: string;
+}
+
+// Add other types as needed
