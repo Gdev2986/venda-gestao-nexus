@@ -1,208 +1,335 @@
-import { Home, Users, Building, ShoppingCart, Box, File, Settings, Wallet } from "lucide-react";
-import { useLocation, matchPath } from "react-router-dom";
-import { cn } from "@/lib/utils";
-import { NavLink } from "@/components/ui/nav-link";
-import { PATHS } from "@/routes/paths";
-import { UserRole } from "@/types";
 
-interface NavItem {
-  name: string;
-  href: string;
-  icon: React.ReactNode;
+import { UserRole } from "@/types";
+import {
+  LayoutDashboard,
+  ListOrdered,
+  Wallet,
+  Settings,
+  Users,
+  BarChart3,
+  MessageSquare,
+  Percent,
+  CreditCard,
+  Building2,
+  HelpCircle,
+  Truck
+} from "lucide-react";
+import SidebarNavItem from "./SidebarNavItem";
+import { SidebarItem } from "./types";
+import { PATHS } from "@/routes/paths";
+
+interface SidebarNavigationProps {
+  userRole: UserRole;
 }
 
-export default function SidebarNavigation({ userRole }: { userRole: UserRole }) {
-  const location = useLocation();
-
-  const isActive = (path: string) => {
-    return !!matchPath({ path, end: false }, location.pathname);
-  };
-  
-  const adminItems = [
+const SidebarNavigation = ({ userRole }: SidebarNavigationProps) => {
+  // Define role-specific items
+  const adminItems: SidebarItem[] = [
     {
-      name: "Dashboard",
+      title: "Dashboard",
+      icon: LayoutDashboard,
       href: PATHS.ADMIN.DASHBOARD,
-      icon: <Home className="h-5 w-5" />,
+      roles: [UserRole.ADMIN],
     },
     {
-      name: "Clientes",
-      href: PATHS.ADMIN.CLIENTS,
-      icon: <Users className="h-5 w-5" />,
-    },
-    {
-      name: "Parceiros",
-      href: PATHS.ADMIN.PARTNERS,
-      icon: <Building className="h-5 w-5" />,
-    },
-    {
-      name: "Vendas",
+      title: "Vendas",
+      icon: ListOrdered,
       href: PATHS.ADMIN.SALES,
-      icon: <ShoppingCart className="h-5 w-5" />,
+      roles: [UserRole.ADMIN],
     },
     {
-      name: "Máquinas",
-      href: PATHS.ADMIN.MACHINES,
-      icon: <Box className="h-5 w-5" />,
+      title: "Clientes",
+      icon: Building2,
+      href: PATHS.ADMIN.CLIENTS,
+      roles: [UserRole.ADMIN],
+      subItems: [
+        {
+          title: "Lista de Clientes",
+          href: PATHS.ADMIN.CLIENTS,
+          roles: [UserRole.ADMIN],
+        },
+        {
+          title: "Máquinas",
+          href: PATHS.ADMIN.MACHINES,
+          roles: [UserRole.ADMIN],
+        }
+      ]
     },
     {
-      name: "Pagamentos",
-      href: PATHS.ADMIN.PAYMENTS,
-      icon: <Wallet className="h-5 w-5" />,
+      title: "Parceiros",
+      icon: Users,
+      href: PATHS.ADMIN.PARTNERS,
+      roles: [UserRole.ADMIN],
     },
     {
-      name: "Taxas",
-      href: PATHS.ADMIN.FEES,
-      icon: <File className="h-5 w-5" />,
+      title: "Logística",
+      icon: Truck,
+      href: PATHS.ADMIN.LOGISTICS,
+      roles: [UserRole.ADMIN],
     },
     {
-      name: "Relatórios",
+      title: "Relatórios",
+      icon: BarChart3,
       href: PATHS.ADMIN.REPORTS,
-      icon: <File className="h-5 w-5" />,
+      roles: [UserRole.ADMIN],
     },
     {
-      name: "Configurações",
+      title: "Taxas",
+      icon: Percent,
+      href: PATHS.ADMIN.FEES,
+      roles: [UserRole.ADMIN],
+    },
+    {
+      title: "Suporte",
+      icon: MessageSquare,
+      href: PATHS.ADMIN.SUPPORT,
+      roles: [UserRole.ADMIN],
+    },
+    {
+      title: "Ajuda",
+      icon: HelpCircle,
+      href: PATHS.ADMIN.HELP,
+      roles: [UserRole.ADMIN],
+    },
+    {
+      title: "Configurações",
+      icon: Settings,
       href: PATHS.ADMIN.SETTINGS,
-      icon: <Settings className="h-5 w-5" />,
+      roles: [UserRole.ADMIN],
     },
   ];
 
-  const financialItems = [
+  const userItems: SidebarItem[] = [
     {
-      name: "Dashboard",
-      href: PATHS.FINANCIAL.DASHBOARD,
-      icon: <Home className="h-5 w-5" />,
+      title: "Dashboard",
+      icon: LayoutDashboard,
+      href: PATHS.USER.DASHBOARD,
+      roles: [UserRole.CLIENT],
     },
     {
-      name: "Solicitações",
-      href: PATHS.FINANCIAL.REQUESTS,
-      icon: <Users className="h-5 w-5" />,
+      title: "Meus Pagamentos",
+      icon: Wallet,
+      href: PATHS.USER.PAYMENTS,
+      roles: [UserRole.CLIENT]
     },
     {
-      name: "Pagamentos",
-      href: PATHS.ADMIN.PAYMENTS,
-      icon: <Wallet className="h-5 w-5" />,
+      title: "Suporte",
+      icon: MessageSquare,
+      href: PATHS.USER.SUPPORT,
+      roles: [UserRole.CLIENT],
     },
     {
-      name: "Relatórios",
-      href: PATHS.FINANCIAL.REPORTS,
-      icon: <File className="h-5 w-5" />,
+      title: "Ajuda",
+      icon: HelpCircle,
+      href: PATHS.USER.HELP,
+      roles: [UserRole.CLIENT],
+    },
+    {
+      title: "Configurações",
+      icon: Settings,
+      href: PATHS.USER.SETTINGS,
+      roles: [UserRole.CLIENT],
     },
   ];
 
-  const partnerItems: NavItem[] = [
+  const partnerItems: SidebarItem[] = [
     {
-      name: "Dashboard",
+      title: "Dashboard",
+      icon: LayoutDashboard,
       href: PATHS.PARTNER.DASHBOARD,
-      icon: <Home className="h-5 w-5" />,
+      roles: [UserRole.PARTNER],
     },
     {
-      name: "Clientes",
+      title: "Vendas",
+      icon: ListOrdered,
+      href: PATHS.PARTNER.SALES,
+      roles: [UserRole.PARTNER],
+    },
+    {
+      title: "Clientes",
+      icon: Building2,
       href: PATHS.PARTNER.CLIENTS,
-      icon: <Users className="h-5 w-5" />,
+      roles: [UserRole.PARTNER],
     },
     {
-      name: "Comissões",
-      href: PATHS.PARTNER.COMMISSIONS,
-      icon: <ShoppingCart className="h-5 w-5" />,
+      title: "Relatórios",
+      icon: BarChart3,
+      href: PATHS.PARTNER.REPORTS,
+      roles: [UserRole.PARTNER],
     },
     {
-      name: "Configurações",
+      title: "Suporte",
+      icon: MessageSquare,
+      href: PATHS.PARTNER.SUPPORT,
+      roles: [UserRole.PARTNER],
+    },
+    {
+      title: "Ajuda",
+      icon: HelpCircle,
+      href: PATHS.PARTNER.HELP,
+      roles: [UserRole.PARTNER],
+    },
+    {
+      title: "Configurações",
+      icon: Settings,
       href: PATHS.PARTNER.SETTINGS,
-      icon: <Settings className="h-5 w-5" />,
+      roles: [UserRole.PARTNER],
     },
   ];
 
-  const clientItems: NavItem[] = [
+  const financialItems: SidebarItem[] = [
     {
-      name: "Dashboard",
-      href: PATHS.CLIENT.DASHBOARD,
-      icon: <Home className="h-5 w-5" />,
+      title: "Dashboard",
+      icon: LayoutDashboard,
+      href: PATHS.FINANCIAL.DASHBOARD,
+      roles: [UserRole.FINANCIAL],
     },
     {
-      name: "Máquinas",
-      href: PATHS.CLIENT.MACHINES,
-      icon: <Box className="h-5 w-5" />,
+      title: "Vendas",
+      icon: ListOrdered,
+      href: PATHS.FINANCIAL.SALES,
+      roles: [UserRole.FINANCIAL],
     },
     {
-      name: "Pagamentos",
-      href: PATHS.CLIENT.PAYMENTS,
-      icon: <ShoppingCart className="h-5 w-5" />,
+      title: "Clientes",
+      icon: Building2,
+      href: PATHS.FINANCIAL.CLIENTS,
+      roles: [UserRole.FINANCIAL],
+      subItems: [
+        {
+          title: "Lista de Clientes",
+          href: PATHS.FINANCIAL.CLIENTS,
+          roles: [UserRole.FINANCIAL],
+        },
+      ]
     },
     {
-      name: "Suporte",
-      href: PATHS.CLIENT.SUPPORT,
-      icon: <Box className="h-5 w-5" />,
+      title: "Pagamentos",
+      icon: CreditCard,
+      href: PATHS.FINANCIAL.PAYMENTS,
+      roles: [UserRole.FINANCIAL],
     },
     {
-      name: "Configurações",
-      href: PATHS.CLIENT.SETTINGS,
-      icon: <Settings className="h-5 w-5" />,
+      title: "Parceiros",
+      icon: Users,
+      href: PATHS.FINANCIAL.PARTNERS,
+      roles: [UserRole.FINANCIAL],
+    },
+    {
+      title: "Taxas",
+      icon: Percent,
+      href: PATHS.FINANCIAL.FEES,
+      roles: [UserRole.FINANCIAL],
+    },
+    {
+      title: "Relatórios",
+      icon: BarChart3,
+      href: PATHS.FINANCIAL.REPORTS,
+      roles: [UserRole.FINANCIAL],
+    },
+    {
+      title: "Suporte",
+      icon: MessageSquare,
+      href: PATHS.FINANCIAL.SUPPORT,
+      roles: [UserRole.FINANCIAL],
+    },
+    {
+      title: "Ajuda",
+      icon: HelpCircle,
+      href: PATHS.FINANCIAL.HELP,
+      roles: [UserRole.FINANCIAL],
+    },
+    {
+      title: "Configurações",
+      icon: Settings,
+      href: PATHS.FINANCIAL.SETTINGS,
+      roles: [UserRole.FINANCIAL],
     },
   ];
 
-  const logisticsItems: NavItem[] = [
+  const logisticsItems: SidebarItem[] = [
     {
-      name: "Dashboard",
+      title: "Dashboard",
+      icon: LayoutDashboard,
       href: PATHS.LOGISTICS.DASHBOARD,
-      icon: <Home className="h-5 w-5" />,
+      roles: [UserRole.LOGISTICS],
     },
     {
-      name: "Máquinas",
+      title: "Clientes",
+      icon: Building2,
+      href: PATHS.LOGISTICS.CLIENTS,
+      roles: [UserRole.LOGISTICS],
+    },
+    {
+      title: "Máquinas",
+      icon: CreditCard,
       href: PATHS.LOGISTICS.MACHINES,
-      icon: <Box className="h-5 w-5" />,
+      roles: [UserRole.LOGISTICS],
     },
     {
-      name: "Operações",
-      href: PATHS.LOGISTICS.OPERATIONS,
-      icon: <ShoppingCart className="h-5 w-5" />,
+      title: "Vendas",
+      icon: ListOrdered,
+      href: PATHS.LOGISTICS.SALES,
+      roles: [UserRole.LOGISTICS],
     },
     {
-      name: "Suporte",
+      title: "Operações",
+      icon: Truck,
+      href: PATHS.LOGISTICS.LOGISTICS_MODULE,
+      roles: [UserRole.LOGISTICS],
+    },
+    {
+      title: "Suporte",
+      icon: MessageSquare,
       href: PATHS.LOGISTICS.SUPPORT,
-      icon: <Box className="h-5 w-5" />,
+      roles: [UserRole.LOGISTICS],
+    },
+    {
+      title: "Ajuda",
+      icon: HelpCircle,
+      href: PATHS.LOGISTICS.HELP,
+      roles: [UserRole.LOGISTICS],
+    },
+    {
+      title: "Configurações",
+      icon: Settings,
+      href: PATHS.LOGISTICS.SETTINGS,
+      roles: [UserRole.LOGISTICS],
     },
   ];
 
-  let navItems: NavItem[] = [];
-
+  // Get items based on user role
+  let sidebarItems: SidebarItem[] = [];
+  
   switch (userRole) {
     case UserRole.ADMIN:
-      navItems = adminItems;
-      break;
-    case UserRole.FINANCIAL:
-      navItems = financialItems;
-      break;
-    case UserRole.PARTNER:
-      navItems = partnerItems;
+      sidebarItems = adminItems;
       break;
     case UserRole.CLIENT:
-      navItems = clientItems;
+      sidebarItems = userItems;
+      break;
+    case UserRole.PARTNER:
+      sidebarItems = partnerItems;
+      break;
+    case UserRole.FINANCIAL:
+      sidebarItems = financialItems;
       break;
     case UserRole.LOGISTICS:
-      navItems = logisticsItems;
+      sidebarItems = logisticsItems;
       break;
     default:
-      navItems = [];
-      break;
+      sidebarItems = userItems; // Default to user items
   }
 
   return (
-    <div className="space-y-1">
-      {navItems.map((item) => (
-        <NavLink
-          key={item.href}
-          href={item.href}
-          className={cn(
-            "group flex items-center space-x-3 rounded-md px-3 py-2 text-sm font-medium hover:bg-sidebar-accent hover:text-white",
-            isActive(item.href)
-              ? "bg-sidebar-accent text-white"
-              : "text-sidebar-foreground"
-          )}
-        >
-          {item.icon}
-          <span>{item.name}</span>
-        </NavLink>
+    <nav className="space-y-1">
+      {sidebarItems.map((item) => (
+        <div key={item.title}>
+          <SidebarNavItem item={item} userRole={userRole} />
+        </div>
       ))}
-    </div>
+    </nav>
   );
-}
+};
+
+export default SidebarNavigation;

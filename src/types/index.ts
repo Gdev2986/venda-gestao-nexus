@@ -1,65 +1,10 @@
 
-import { UserRole } from "./user";
-
-// Existing or new type definitions related to clients
-export enum ClientStatus {
-  ACTIVE = "ACTIVE",
-  BLOCKED = "BLOCKED",
-  PENDING = "PENDING",
-  INACTIVE = "INACTIVE"
-}
-
-export type Client = {
-  id: string;
-  business_name: string;
-  company_name?: string; // For backward compatibility
-  contact_name?: string;
-  email?: string;
-  phone?: string;
-  address?: string;
-  city?: string;
-  state?: string;
-  zip?: string;
-  document?: string;
-  partner_id?: string;
-  partner_name?: string; // Used in UI
-  fee_plan_id?: string;
-  fee_plan_name?: string; // Used in UI
-  created_at?: string;
-  updated_at?: string;
-  status?: ClientStatus;
-  balance?: number;
-  machines_count?: number; // Used in UI
-  machines?: any[]; // For the client details view
-};
-
-export type Machine = {
-  id: string;
-  serial_number: string;
-  model: string;
-  status: "ACTIVE" | "INACTIVE";
-  client_id?: string;
-  created_at?: string;
-  updated_at?: string;
-};
-
-export type PixKey = {
-  id: string;
-  type: string;
-  key: string;
-  name: string;
-  user_id?: string;
-  is_default?: boolean;
-  created_at?: string;
-  updated_at?: string;
-};
-
-// Payment related types
-export enum PaymentMethod {
-  CREDIT = "CREDIT",
-  DEBIT = "DEBIT",
-  PIX = "PIX",
-  OTHER = "OTHER"
+export enum UserRole {
+  ADMIN = "ADMIN",
+  CLIENT = "CLIENT",
+  FINANCIAL = "FINANCIAL",
+  PARTNER = "PARTNER", 
+  LOGISTICS = "LOGISTICS"
 }
 
 export enum PaymentStatus {
@@ -70,102 +15,46 @@ export enum PaymentStatus {
 }
 
 export enum PaymentType {
-  WITHDRAWAL = "WITHDRAWAL",
-  DEPOSIT = "DEPOSIT",
-  COMMISSION = "COMMISSION",
-  REFUND = "REFUND",
-  FEE = "FEE"
+  PIX = "PIX",
+  TED = "TED",
+  BOLETO = "BOLETO"
 }
 
-export enum AccountType {
-  CLIENT = "CLIENT",
-  PARTNER = "PARTNER"
-}
-
-export type Payment = {
+export interface Payment {
   id: string;
-  requester_id: string;
-  requester_name?: string;
-  account_type: AccountType;
-  amount: number;
-  payment_method: PaymentMethod;
-  payment_type: PaymentType;
-  status: PaymentStatus;
   created_at: string;
-  updated_at?: string;
-  approved_at?: string;
-  approved_by?: string;
-  receipt_url?: string;
-  notes?: string;
-  rejection_reason?: string;
-  pix_key_id?: string;
-};
-
-export type Sale = {
-  id: string;
-  code: string;
-  terminal: string;
-  date: string;
+  updated_at: string;
+  amount: number;
+  status: PaymentStatus;
   client_id: string;
-  machine_id?: string;
-  partner_id?: string;
-  gross_amount: number;
-  net_amount: number;
-  paymentMethod: PaymentMethod;
-  created_at?: string;
-  updated_at?: string;
-  processing_status?: string;
-};
+  approved_at?: string; 
+  receipt_url?: string;
+  client_name?: string;
+  rejection_reason?: string;
+  payment_type?: PaymentType;
+  bank_info?: {
+    bank_name?: string;
+    account_number?: string;
+    branch_number?: string;
+    account_holder?: string;
+  };
+  document_url?: string;
+}
 
-export type ClientFilters = {
-  partnerId?: string;
-  feePlanId?: string;
-  balanceRange?: [number, number];
-};
-
-export type Partner = {
+// Types for partners
+export interface Partner {
   id: string;
   company_name: string;
+  created_at: string;
+  updated_at: string;
   commission_rate: number;
-  created_at?: string;
-  updated_at?: string;
-};
+  contact_name?: string;
+  contact_email?: string;
+  contact_phone?: string;
+  business_name?: string; // For backward compatibility
+  email?: string; // Added for consistency with filtering
+  phone?: string; // Added for consistency with filtering
+  address?: string; // Added for completeness
+}
 
-export type PaymentFilters = {
-  requesterName?: string;
-  accountType?: AccountType;
-  paymentMethod?: PaymentMethod;
-  dateRange?: [Date, Date];
-  status?: PaymentStatus;
-};
-
-export type SalesFilterParams = {
-  clientId?: string;
-  partnerId?: string;
-  dateRange?: [Date, Date];
-  paymentMethod?: PaymentMethod;
-  minAmount?: number;
-  maxAmount?: number;
-};
-
-export type FilterValues = {
-  search?: string;
-  status?: string;
-  date?: [Date, Date];
-};
-
-export type User = {
-  id: string;
-  name: string;
-  email: string;
-  role: UserRole;
-  avatar?: string;
-  phone?: string;
-  created_at?: string;
-  updated_at?: string;
-};
-
-export type UserData = User;
-
-export * from "./user";
-export * from "./client";
+// Add other types here as needed

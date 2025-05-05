@@ -61,16 +61,6 @@ export const createClient = async (clientData: Omit<Client, "id" | "created_at" 
         id: newClient.id,
         business_name: newClient.business_name || newClient.company_name,
         document: newClient.document,
-        partner_id: newClient.partner_id,
-        contact_name: newClient.contact_name,
-        email: newClient.email,
-        phone: newClient.phone,
-        address: newClient.address,
-        city: newClient.city,
-        state: newClient.state,
-        zip: newClient.zip,
-        fee_plan_id: newClient.fee_plan_id,
-        balance: newClient.balance
         // Add other fields as needed based on your Supabase schema
       } as SupabaseClientRow]);
 
@@ -99,17 +89,6 @@ export const updateClient = async (id: string, clientData: Partial<Client>): Pro
       .update({
         business_name: clientData.business_name || clientData.company_name,
         document: clientData.document,
-        partner_id: clientData.partner_id,
-        contact_name: clientData.contact_name,
-        email: clientData.email,
-        phone: clientData.phone,
-        address: clientData.address,
-        city: clientData.city,
-        state: clientData.state,
-        zip: clientData.zip,
-        fee_plan_id: clientData.fee_plan_id,
-        balance: clientData.balance,
-        status: clientData.status,
         // Add other fields as needed based on your Supabase schema
         updated_at: new Date().toISOString(),
       })

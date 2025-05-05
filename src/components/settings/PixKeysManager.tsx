@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -56,9 +57,9 @@ interface PixKeysManagerProps {
 
 const PixKeysManager = ({
   pixKeys = [],
-  onAddKey = () => {},
-  onDeleteKey = () => {},
-  onSetDefaultKey = () => {},
+  onAddKey,
+  onDeleteKey,
+  onSetDefaultKey,
 }: PixKeysManagerProps) => {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [keyType, setKeyType] = useState<"CPF" | "CNPJ" | "EMAIL" | "PHONE" | "RANDOM">("CPF");
