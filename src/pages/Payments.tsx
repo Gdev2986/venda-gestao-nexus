@@ -1,3 +1,4 @@
+
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { DataTable } from "@/components/ui/data-table";
@@ -80,8 +81,9 @@ const Payments = () => {
       header: "Data",
       accessorKey: "created_at",
       cell: (info: any) => {
-        if (!info.row.original) return "N/A";
-        return new Date(info.row.original.created_at).toLocaleDateString('pt-BR');
+        const row = info.row.original;
+        if (!row) return "N/A";
+        return new Date(row.created_at).toLocaleDateString('pt-BR');
       }
     },
     {
@@ -89,8 +91,9 @@ const Payments = () => {
       header: "Valor",
       accessorKey: "amount",
       cell: (info: any) => {
-        if (!info.row.original) return "N/A";
-        return formatCurrency(info.row.original.amount);
+        const row = info.row.original;
+        if (!row) return "N/A";
+        return formatCurrency(row.amount);
       }
     },
     {
@@ -98,9 +101,10 @@ const Payments = () => {
       header: "Status",
       accessorKey: "status",
       cell: (info: any) => {
-        if (!info.row.original) return "N/A";
+        const row = info.row.original;
+        if (!row) return "N/A";
         
-        const status = info.row.original.status;
+        const status = row.status;
         let badgeClass = "";
         let statusText = "";
         
@@ -137,7 +141,8 @@ const Payments = () => {
       id: "actions",
       header: "",
       cell: (info: any) => {
-        if (!info.row.original) return null;
+        const row = info.row.original;
+        if (!row) return null;
         
         return (
           <Button 
@@ -146,7 +151,7 @@ const Payments = () => {
             onClick={() => {
               toast({
                 title: "Detalhes",
-                description: `Visualizando detalhes do pagamento #${info.row.original.id}`,
+                description: `Visualizando detalhes do pagamento #${row.id}`,
               });
             }}
           >

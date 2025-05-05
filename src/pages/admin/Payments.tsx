@@ -227,7 +227,7 @@ const AdminPayments = () => {
           receipt_url: item.receipt_url,
           client_name: item.client?.business_name || "Cliente desconhecido",
           payment_type: paymentType,
-          rejection_reason: null, // Will be populated from the database if available
+          rejection_reason: item.rejection_reason || null, // Make sure rejection_reason exists or default to null
           pix_key: item.pix_key ? {
             id: item.pix_key_id,
             key: item.pix_key.key,
