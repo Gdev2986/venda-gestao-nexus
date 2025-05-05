@@ -1,15 +1,14 @@
-
 import { useState, useEffect } from 'react';
+import { User } from '@supabase/supabase-js';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
-import { UserRole, UserData } from '@/types';
+import { UserRole } from '@/types';
 import { useNavigate } from 'react-router-dom';
 import { PATHS } from '@/routes/paths';
 
-interface UserFiltersState {
-  role?: UserRole;
-  searchTerm?: string;
+interface UserData extends User {
+  role: UserRole;
 }
 
 export const useUserManagement = () => {
@@ -19,12 +18,6 @@ export const useUserManagement = () => {
   const [roleDialogOpen, setRoleDialogOpen] = useState(false);
   const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
   const [changingRole, setChangingRole] = useState(false);
-  const [checkingAccess, setCheckingAccess] = useState(false);
-  const [currentPage, setCurrentPage] = useState(1);
-  const [totalPages, setTotalPages] = useState(1);
-  const [totalUsers, setTotalUsers] = useState(0);
-  const [filters, setFilters] = useState<UserFiltersState>({});
-  
   const { toast } = useToast();
   const { user: currentUser } = useAuth();
   const navigate = useNavigate();
@@ -44,19 +37,7 @@ export const useUserManagement = () => {
           return;
         }
 
-        // Transform the data to match our UserData interface
-        const userData = data.map(user => ({
-          ...user,
-          app_metadata: {},
-          user_metadata: {},
-          aud: ''
-        })) as UserData[];
-        
-        setUsers(userData);
-        
-        // For pagination mock (would be replaced with actual pagination)
-        setTotalUsers(data.length);
-        setTotalPages(Math.ceil(data.length / 10));
+        setUsers(data as UserData[]);
       } catch (err: any) {
         setError(err.message);
       } finally {
@@ -140,23 +121,8 @@ export const useUserManagement = () => {
     }
   };
 
-  const handlePageChange = (page: number) => {
-    setCurrentPage(page);
-    // Implement pagination logic here once backend supports it
-  };
-
-  const handleFilterChange = (newFilters: UserFiltersState) => {
-    setFilters(newFilters);
-    // Implement filtering logic here
-  };
-
-  const retryFetch = () => {
-    // Re-fetch users data
-  };
-
   return {
     users,
-    setUsers,
     loading,
     error,
     roleDialogOpen,
@@ -165,13 +131,5 @@ export const useUserManagement = () => {
     selectedUserId,
     handleRoleChange,
     changingRole,
-    checkingAccess,
-    retryFetch,
-    currentPage,
-    totalPages,
-    totalUsers,
-    handlePageChange,
-    handleFilterChange,
-    filters
   };
 };

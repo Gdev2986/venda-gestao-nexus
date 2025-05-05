@@ -42,98 +42,30 @@ export type Database = {
         }
         Relationships: []
       }
-      client_logs: {
-        Row: {
-          action_type: string
-          changed_by: string
-          client_id: string
-          created_at: string | null
-          id: string
-          new_value: Json | null
-          previous_value: Json | null
-        }
-        Insert: {
-          action_type: string
-          changed_by: string
-          client_id: string
-          created_at?: string | null
-          id?: string
-          new_value?: Json | null
-          previous_value?: Json | null
-        }
-        Update: {
-          action_type?: string
-          changed_by?: string
-          client_id?: string
-          created_at?: string | null
-          id?: string
-          new_value?: Json | null
-          previous_value?: Json | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "client_logs_client_id_fkey"
-            columns: ["client_id"]
-            isOneToOne: false
-            referencedRelation: "clients"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       clients: {
         Row: {
-          address: string | null
-          balance: number | null
           business_name: string
-          city: string | null
-          contact_name: string | null
           created_at: string | null
           document: string | null
-          email: string | null
-          fee_plan_id: string | null
           id: string
           partner_id: string | null
-          phone: string | null
-          state: string | null
-          status: string | null
           updated_at: string | null
-          zip: string | null
         }
         Insert: {
-          address?: string | null
-          balance?: number | null
           business_name: string
-          city?: string | null
-          contact_name?: string | null
           created_at?: string | null
           document?: string | null
-          email?: string | null
-          fee_plan_id?: string | null
           id: string
           partner_id?: string | null
-          phone?: string | null
-          state?: string | null
-          status?: string | null
           updated_at?: string | null
-          zip?: string | null
         }
         Update: {
-          address?: string | null
-          balance?: number | null
           business_name?: string
-          city?: string | null
-          contact_name?: string | null
           created_at?: string | null
           document?: string | null
-          email?: string | null
-          fee_plan_id?: string | null
           id?: string
           partner_id?: string | null
-          phone?: string | null
-          state?: string | null
-          status?: string | null
           updated_at?: string | null
-          zip?: string | null
         }
         Relationships: [
           {
@@ -192,30 +124,6 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
-      }
-      fee_plans: {
-        Row: {
-          created_at: string | null
-          description: string | null
-          id: string
-          name: string
-          updated_at: string | null
-        }
-        Insert: {
-          created_at?: string | null
-          description?: string | null
-          id?: string
-          name: string
-          updated_at?: string | null
-        }
-        Update: {
-          created_at?: string | null
-          description?: string | null
-          id?: string
-          name?: string
-          updated_at?: string | null
-        }
-        Relationships: []
       }
       machine_transfers: {
         Row: {
