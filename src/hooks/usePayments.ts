@@ -1,200 +1,169 @@
-
-import { useState, useEffect } from "react";
-import { supabase } from "@/integrations/supabase/client";
-import { Payment, PaymentStatus, PaymentType } from "@/types";
+import { useCallback, useState } from "react";
 import { useToast } from "@/hooks/use-toast";
+import { supabase } from "@/integrations/supabase/client";
+import { PaymentStatus, PaymentType } from "@/types";
 
-interface UsePaymentsProps {
-  statusFilter?: string;
-  searchTerm?: string;
-  pageSize?: number;
-  initialPage?: number;
+// Define the payment interface
+export interface PaymentData {
+  id: string;
+  amount: number;
+  approved_at: string;
+  approved_by: string;
+  client_id: string;
+  created_at: string;
+  description: string;
+  pix_key_id: string;
+  receipt_url: string;
+  status: PaymentStatus;
+  updated_at: string;
+  rejection_reason?: string; // Add this field
+  pix_key: {
+    id: string;
+    key: string;
+    type: string;
+    name: string;
+  };
+  client: {
+    id: string;
+    business_name: string;
+    email: string;
+  };
 }
 
-export const usePayments = ({
-  statusFilter = "all",
-  searchTerm = "",
-  pageSize = 10,
-  initialPage = 1
-}: UsePaymentsProps = {}) => {
-  const [payments, setPayments] = useState<Payment[]>([]);
-  const [loading, setLoading] = useState(true);
+interface UsePaymentsOptions {
+  fetchOnMount?: boolean;
+  statusFilter?: PaymentStatus | "ALL";
+}
+
+export const usePayments = (options: UsePaymentsOptions = {}) => {
+  const { fetchOnMount = true, statusFilter = "ALL" } = options;
+  const [payments, setPayments] = useState<PaymentData[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<Error | null>(null);
-  const [totalPages, setTotalPages] = useState(1);
-  const [currentPage, setCurrentPage] = useState(initialPage);
   const { toast } = useToast();
 
-  // Fetch payments based on filters
-  const fetchPayments = async () => {
-    setLoading(true);
+  const fetchPayments = useCallback(async () => {
+    setIsLoading(true);
+    setError(null);
+    
     try {
-      // Build the query based on filters
       let query = supabase
-        .from("payment_requests")
+        .from('payment_requests')
         .select(`
           *,
-          pix_key: pix_key_id (key, type, name),
-          client: client_id (business_name)
-        `, { count: 'exact' })
-        .order('created_at', { ascending: false });
+          pix_key:pix_key_id (
+            id,
+            key,
+            type,
+            name
+          ),
+          client:client_id (
+            id,
+            business_name,
+            email
+          )
+        `);
         
-      // Apply status filter if selected
-      if (statusFilter !== "all") {
-        // Convert string to PaymentStatus enum to ensure type safety
-        const statusValue = statusFilter.toUpperCase() as PaymentStatus;
-        query = query.eq("status", statusValue);
+      // Apply status filter if it's not ALL
+      if (statusFilter !== "ALL") {
+        query = query.eq('status', statusFilter);
       }
       
-      // Apply search filter if present
-      if (searchTerm) {
-        query = query.or(`client.business_name.ilike.%${searchTerm}%,id.ilike.%${searchTerm}%`);
-      }
+      const { data, error } = await query;
       
-      // Paginate the results
-      query = query
-        .range((currentPage - 1) * pageSize, currentPage * pageSize - 1);
-      
-      const { data, error, count } = await query;
-
       if (error) throw error;
       
-      // Transform the data to match our Payment type
-      const transformedData = data.map(item => {
-        // Define the payment type based on the data or use PIX as default
-        let paymentType = PaymentType.PIX;
-
-        return {
-          id: item.id,
-          amount: item.amount,
-          status: item.status as PaymentStatus,
-          created_at: item.created_at,
-          updated_at: item.updated_at,
-          client_id: item.client_id,
-          description: item.description,
-          approved_at: item.approved_at,
-          receipt_url: item.receipt_url,
-          client_name: item.client?.business_name || "Cliente desconhecido",
-          payment_type: paymentType,
-          rejection_reason: item.rejection_reason || null,
-          pix_key: item.pix_key ? {
-            id: item.pix_key_id,
-            key: item.pix_key.key,
-            type: item.pix_key.type,
-            owner_name: item.pix_key.name
-          } : undefined
-        } as Payment;
-      });
-
-      setPayments(transformedData);
+      // Map data to our internal format
+      const formattedData = (data || []).map((payment) => ({
+        ...payment,
+        status: payment.status as PaymentStatus,
+        rejection_reason: payment.rejection_reason || "", // Ensure this field exists
+      }));
       
-      if (count) {
-        setTotalPages(Math.ceil(count / pageSize));
-      }
-      
-      setError(null);
+      setPayments(formattedData as PaymentData[]);
     } catch (err) {
-      console.error("Error fetching payments:", err);
-      setError(err instanceof Error ? err : new Error("Failed to fetch payments"));
-      
+      setError(err as Error);
       toast({
+        variant: "destructive",
         title: "Erro ao carregar pagamentos",
-        description: "Não foi possível carregar os pagamentos. Tente novamente.",
-        variant: "destructive"
+        description: "Não foi possível carregar a lista de pagamentos."
       });
     } finally {
-      setLoading(false);
+      setIsLoading(false);
     }
-  };
+  }, [statusFilter, toast]);
 
-  // Handle payment approval
-  const approvePayment = async (paymentId: string, receiptUrl?: string) => {
+  // Fetch on mount if needed
+  useEffect(() => {
+    if (fetchOnMount) {
+      fetchPayments();
+    }
+  }, [fetchPayments, fetchOnMount]);
+
+  const approvePayment = useCallback(async (paymentId: string) => {
+    setIsLoading(true);
+    setError(null);
+
     try {
       const { error } = await supabase
         .from('payment_requests')
-        .update({
-          status: PaymentStatus.APPROVED,
-          approved_at: new Date().toISOString(),
-          receipt_url: receiptUrl
-        })
+        .update({ status: PaymentStatus.APPROVED })
         .eq('id', paymentId);
-        
+
       if (error) throw error;
-      
+
       toast({
         title: "Pagamento aprovado",
-        description: "O pagamento foi aprovado com sucesso.",
+        description: "O pagamento foi aprovado com sucesso."
       });
-      
-      return true;
-    } catch (error) {
-      console.error("Error approving payment:", error);
-      toast({
-        title: "Erro ao aprovar pagamento",
-        description: "Não foi possível aprovar o pagamento. Tente novamente.",
-        variant: "destructive"
-      });
-      return false;
-    }
-  };
 
-  // Handle payment rejection
-  const rejectPayment = async (paymentId: string, rejectionReason: string) => {
+      await fetchPayments(); // Refresh payments
+    } catch (err) {
+      setError(err as Error);
+      toast({
+        variant: "destructive",
+        title: "Erro ao aprovar pagamento",
+        description: "Não foi possível aprovar o pagamento."
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  }, [toast, fetchPayments]);
+
+  const rejectPayment = useCallback(async (paymentId: string, rejectionReason: string) => {
+    setIsLoading(true);
+    setError(null);
+
     try {
       const { error } = await supabase
         .from('payment_requests')
-        .update({
-          status: PaymentStatus.REJECTED,
-          rejection_reason: rejectionReason
-        })
+        .update({ status: PaymentStatus.REJECTED, rejection_reason: rejectionReason })
         .eq('id', paymentId);
-        
+
       if (error) throw error;
-      
+
       toast({
-        title: "Pagamento recusado",
-        description: "O pagamento foi recusado com sucesso.",
+        title: "Pagamento rejeitado",
+        description: "O pagamento foi rejeitado com sucesso."
       });
-      
-      return true;
-    } catch (error) {
-      console.error("Error rejecting payment:", error);
+
+      await fetchPayments(); // Refresh payments
+    } catch (err) {
+      setError(err as Error);
       toast({
-        title: "Erro ao recusar pagamento",
-        description: "Não foi possível recusar o pagamento. Tente novamente.",
-        variant: "destructive"
+        variant: "destructive",
+        title: "Erro ao rejeitar pagamento",
+        description: "Não foi possível rejeitar o pagamento."
       });
-      return false;
+    } finally {
+      setIsLoading(false);
     }
-  };
-
-  // Setup real-time subscription
-  useEffect(() => {
-    fetchPayments();
-
-    // Subscribe to realtime changes
-    const channel = supabase
-      .channel('payment_changes')
-      .on('postgres_changes', { 
-        event: '*', 
-        schema: 'public', 
-        table: 'payment_requests' 
-      }, () => {
-        fetchPayments();
-      })
-      .subscribe();
-
-    return () => {
-      supabase.removeChannel(channel);
-    };
-  }, [statusFilter, searchTerm, currentPage, pageSize]);
+  }, [toast, fetchPayments]);
 
   return {
     payments,
-    loading,
+    isLoading,
     error,
-    currentPage,
-    totalPages,
-    setCurrentPage,
     fetchPayments,
     approvePayment,
     rejectPayment

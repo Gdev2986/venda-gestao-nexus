@@ -140,20 +140,7 @@ function App() {
             element={<NewClient />} 
           />
           
-          <Route 
-            path={PATHS.ADMIN.MACHINES} 
-            element={<Machines />} 
-          />
-          
-          <Route 
-            path={PATHS.ADMIN.MACHINE_DETAILS()} 
-            element={<MachineDetails />} 
-          />
-          
-          <Route 
-            path={PATHS.ADMIN.MACHINE_NEW} 
-            element={<NewMachine />} 
-          />
+          {/* Removed the machine routes from admin */}
           
           <Route 
             path={PATHS.ADMIN.SALES} 
@@ -380,6 +367,11 @@ function App() {
           <Route 
             path={PATHS.LOGISTICS.MACHINES} 
             element={<Machines />} 
+          />
+
+          <Route 
+            path={PATHS.LOGISTICS.MACHINE_NEW} 
+            element={<NewMachine />} 
           />
           
           <Route 
