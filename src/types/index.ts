@@ -1,3 +1,4 @@
+
 import { UserRole } from "./user";
 
 // Existing or new type definitions related to clients
@@ -53,13 +54,52 @@ export type PixKey = {
   updated_at?: string;
 };
 
-// Other types
+// Payment related types
 export enum PaymentMethod {
   CREDIT = "CREDIT",
   DEBIT = "DEBIT",
   PIX = "PIX",
   OTHER = "OTHER"
 }
+
+export enum PaymentStatus {
+  PENDING = "PENDING",
+  APPROVED = "APPROVED",
+  REJECTED = "REJECTED",
+  PAID = "PAID"
+}
+
+export enum PaymentType {
+  WITHDRAWAL = "WITHDRAWAL",
+  DEPOSIT = "DEPOSIT",
+  COMMISSION = "COMMISSION",
+  REFUND = "REFUND",
+  FEE = "FEE"
+}
+
+export enum AccountType {
+  CLIENT = "CLIENT",
+  PARTNER = "PARTNER"
+}
+
+export type Payment = {
+  id: string;
+  requester_id: string;
+  requester_name?: string;
+  account_type: AccountType;
+  amount: number;
+  payment_method: PaymentMethod;
+  payment_type: PaymentType;
+  status: PaymentStatus;
+  created_at: string;
+  updated_at?: string;
+  approved_at?: string;
+  approved_by?: string;
+  receipt_url?: string;
+  notes?: string;
+  rejection_reason?: string;
+  pix_key_id?: string;
+};
 
 export type Sale = {
   id: string;
@@ -82,3 +122,50 @@ export type ClientFilters = {
   feePlanId?: string;
   balanceRange?: [number, number];
 };
+
+export type Partner = {
+  id: string;
+  company_name: string;
+  commission_rate: number;
+  created_at?: string;
+  updated_at?: string;
+};
+
+export type PaymentFilters = {
+  requesterName?: string;
+  accountType?: AccountType;
+  paymentMethod?: PaymentMethod;
+  dateRange?: [Date, Date];
+  status?: PaymentStatus;
+};
+
+export type SalesFilterParams = {
+  clientId?: string;
+  partnerId?: string;
+  dateRange?: [Date, Date];
+  paymentMethod?: PaymentMethod;
+  minAmount?: number;
+  maxAmount?: number;
+};
+
+export type FilterValues = {
+  search?: string;
+  status?: string;
+  date?: [Date, Date];
+};
+
+export type User = {
+  id: string;
+  name: string;
+  email: string;
+  role: UserRole;
+  avatar?: string;
+  phone?: string;
+  created_at?: string;
+  updated_at?: string;
+};
+
+export type UserData = User;
+
+export * from "./user";
+export * from "./client";
