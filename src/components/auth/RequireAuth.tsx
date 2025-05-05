@@ -50,7 +50,7 @@ const RequireAuth = ({ allowedRoles = [], redirectTo = PATHS.LOGIN }: RequireAut
               window.location.href = PATHS.ADMIN.DASHBOARD;
               break;
             case UserRole.CLIENT:
-              window.location.href = PATHS.CLIENT.DASHBOARD;
+              window.location.href = PATHS.USER.DASHBOARD;
               break;
             case UserRole.PARTNER:
               window.location.href = PATHS.PARTNER.DASHBOARD;
@@ -62,7 +62,7 @@ const RequireAuth = ({ allowedRoles = [], redirectTo = PATHS.LOGIN }: RequireAut
               window.location.href = PATHS.LOGISTICS.DASHBOARD;
               break;
             default:
-              window.location.href = PATHS.CLIENT.DASHBOARD;
+              window.location.href = PATHS.USER.DASHBOARD;
           }
         }, 0);
       }
@@ -116,7 +116,7 @@ const RequireAuth = ({ allowedRoles = [], redirectTo = PATHS.LOGIN }: RequireAut
         roleDashboard = PATHS.ADMIN.DASHBOARD;
         break;
       case UserRole.CLIENT:
-        roleDashboard = PATHS.CLIENT.DASHBOARD;
+        roleDashboard = PATHS.USER.DASHBOARD;
         break;
       case UserRole.PARTNER:
         roleDashboard = PATHS.PARTNER.DASHBOARD;
@@ -128,7 +128,7 @@ const RequireAuth = ({ allowedRoles = [], redirectTo = PATHS.LOGIN }: RequireAut
         roleDashboard = PATHS.LOGISTICS.DASHBOARD;
         break;
       default:
-        roleDashboard = PATHS.CLIENT.DASHBOARD;
+        roleDashboard = PATHS.USER.DASHBOARD;
     }
     
     console.log(`Redirecting user with role ${userRole} to ${roleDashboard}`);

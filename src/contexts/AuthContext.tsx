@@ -128,7 +128,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
             sessionStorage.removeItem('redirectPath');
             navigate(redirectPath);
           } else {
-            navigate(PATHS.ROOT); // Fix: Changed from PATHS.DASHBOARD to PATHS.ROOT
+            navigate(PATHS.DASHBOARD); // Will be handled by RootLayout
           }
         }, 0);
       }
@@ -161,7 +161,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         description: "Please check your email to confirm your account.",
       });
 
-      navigate(PATHS.ROOT); // Fix: Changed from PATHS.HOME to PATHS.ROOT
+      navigate(PATHS.HOME);
     } catch (error: any) {
       console.error("Error during registration:", error);
       // Toast is shown in the error handler above
@@ -182,7 +182,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       const { error } = await signOutUser();
       if (error) throw error;
       
-      navigate(PATHS.ROOT); // Fix: Changed from PATHS.HOME to PATHS.ROOT
+      navigate(PATHS.HOME);
     } catch (error: any) {
       console.error("Error during sign out:", error);
       toast({

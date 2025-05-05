@@ -1,82 +1,88 @@
+
 export const PATHS = {
-  ROOT: "/",
+  HOME: "/",
   LOGIN: "/login",
   REGISTER: "/register",
   FORGOT_PASSWORD: "/forgot-password",
   RESET_PASSWORD: "/reset-password",
-  HOME: "/", // Add HOME path
-  DASHBOARD: "/dashboard", // Add DASHBOARD path
+  PROFILE: "/profile",
+  DASHBOARD: "/dashboard", // Add generic dashboard path
+  NOT_FOUND: "*", // Add not found path
   ADMIN: {
     DASHBOARD: "/admin/dashboard",
-    CLIENTS: "/admin/clients",
-    PARTNERS: "/admin/partners",
     SALES: "/admin/sales",
-    PAYMENTS: "/admin/payments",
-    PAYMENT_DETAILS: (id: string) => `/admin/payments/${id}`,
-    PAYMENT_NEW: "/admin/payments/new", // Add PAYMENT_NEW path
+    SALES_NEW: "/admin/sales/new", // Add sales new path
+    SALES_DETAILS: (id: string = ":id") => `/admin/sales/${id}`, // Add sales details path with optional param
+    CLIENTS: "/admin/clients",
+    CLIENT_DETAILS: (id: string = ":id") => `/admin/clients/${id}`,
+    CLIENT_EDIT: (id: string = ":id") => `/admin/clients/${id}/edit`,
+    CLIENT_NEW: "/admin/clients/new",
+    PARTNERS: "/admin/partners",
+    PARTNER_DETAILS: (id: string = ":id") => `/admin/partners/${id}`,
+    PARTNER_EDIT: (id: string = ":id") => `/admin/partners/${id}/edit`,
+    PARTNER_NEW: "/admin/partners/new",
+    LOGISTICS: "/admin/logistics",
+    LOGISTICS_MODULE: "/admin/logistics/module",
     REPORTS: "/admin/reports",
     FEES: "/admin/fees",
-    NOTIFICATIONS: "/admin/notifications",
-    CLIENT_DETAILS: (id: string) => `/admin/clients/${id}`,
-    CLIENT_NEW: "/admin/clients/new",
-    PARTNER_DETAILS: (id: string) => `/admin/partners/${id}`,
-    PARTNER_NEW: "/admin/partners/new",
-    SALE_DETAILS: (id: string) => `/admin/sales/${id}`,
-    SALE_NEW: "/admin/sales/new",
-    LOGISTICS: "/admin/logistics",
-    MACHINE_DETAILS: (id: string) => `/admin/machines/${id}`,
-    MACHINE_NEW: "/admin/machines/new"
+    SUPPORT: "/admin/support",
+    HELP: "/admin/help",
+    SETTINGS: "/admin/settings",
+    USERS: "/admin/users",
+    USER_MANAGEMENT: "/admin/users/management", // Add user management path
+    USER_DETAILS: (id: string = ":id") => `/admin/users/${id}`,
+    USER_EDIT: (id: string = ":id") => `/admin/users/${id}/edit`,
+    USER_NEW: "/admin/users/new",
+    MACHINES: "/admin/machines",
+    MACHINE_DETAILS: (id: string = ":id") => `/admin/machines/${id}`,
+    MACHINE_EDIT: (id: string = ":id") => `/admin/machines/${id}/edit`,
+    MACHINE_NEW: "/admin/machines/new",
+    PAYMENTS: "/admin/payments",
+    PAYMENT_DETAILS: (id: string = ":id") => `/admin/payments/${id}`,
+    PAYMENT_NEW: "/admin/payments/new",
   },
-  LOGISTICS: {
-    DASHBOARD: "/logistics/dashboard",
-    MACHINES: "/logistics/machines",
-    MACHINE_NEW: "/logistics/machines/new",
-    MACHINE_DETAILS: (id: string) => `/logistics/machines/${id}`,
-    SUPPORT: "/logistics/support",
-    SUPPORT_DETAILS: (id: string) => `/logistics/support/${id}`,
-    LOGISTICS_MODULE: "/logistics/operations",
-    CLIENTS: "/logistics/clients"
-  },
-  // Renamed from "CLIENT" to "USER" to fix references
   USER: {
-    DASHBOARD: "/client/dashboard",
-    PAYMENTS: "/client/payments",
-    PAYMENT_NEW: "/client/payments/new",
-    PAYMENT_DETAILS: (id: string) => `/client/payments/${id}`,
-    SUPPORT: "/client/support",
-    SUPPORT_NEW: "/client/support/new",
-    SUPPORT_DETAILS: (id: string) => `/client/support/${id}`,
-    PROFILE: "/client/profile",
-    SALES: "/client/sales",
-    MACHINES: "/client/machines"
-  },
-  // Keep CLIENT as an alias for backward compatibility
-  CLIENT: {
-    DASHBOARD: "/client/dashboard",
-    PAYMENTS: "/client/payments",
-    PAYMENT_NEW: "/client/payments/new",
-    PAYMENT_DETAILS: (id: string) => `/client/payments/${id}`,
-    SUPPORT: "/client/support",
-    SUPPORT_NEW: "/client/support/new",
-    SUPPORT_DETAILS: (id: string) => `/client/support/${id}`,
-    PROFILE: "/client/profile",
-    SALES: "/client/sales",
-    MACHINES: "/client/machines"
-  },
-  FINANCIAL: {
-    DASHBOARD: "/financial/dashboard",
-    PAYMENTS: "/financial/payments",
-    REQUESTS: "/financial/requests", // Add REQUESTS path
-    COMMISSIONS: "/financial/commissions",
-    REPORTS: "/financial/reports",
-    CLIENTS: "/financial/clients",
-    PARTNERS: "/financial/partners" // Add PARTNERS path
+    DASHBOARD: "/user/dashboard",
+    PAYMENTS: "/user/payments",
+    MACHINES: "/user/machines", // Add machines path
+    SUPPORT: "/user/support",
+    HELP: "/user/help",
+    SETTINGS: "/user/settings",
   },
   PARTNER: {
     DASHBOARD: "/partner/dashboard",
-    CLIENTS: "/partner/clients",
     SALES: "/partner/sales",
-    COMMISSIONS: "/partner/commissions",
-    SUPPORT: "/partner/support"
+    CLIENTS: "/partner/clients",
+    CLIENT_DETAILS: (id: string = ":id") => `/partner/clients/${id}`, // Add client details path
+    REPORTS: "/partner/reports",
+    SUPPORT: "/partner/support",
+    HELP: "/partner/help",
+    SETTINGS: "/partner/settings",
+    COMMISSIONS: "/partner/commissions", // Add commissions path
+  },
+  FINANCIAL: {
+    DASHBOARD: "/financial/dashboard",
+    SALES: "/financial/sales",
+    CLIENTS: "/financial/clients",
+    CLIENT_DETAILS: (id: string = ":id") => `/financial/clients/${id}`, // Add client details path
+    PAYMENTS: "/admin/payments", // Share the same route
+    PARTNERS: "/financial/partners",
+    REPORTS: "/financial/reports",
+    FEES: "/financial/fees",
+    SUPPORT: "/financial/support",
+    HELP: "/financial/help",
+    SETTINGS: "/financial/settings",
+    REQUESTS: "/financial/requests", // Add requests path
+  },
+  LOGISTICS: {
+    DASHBOARD: "/logistics/dashboard",
+    CLIENTS: "/logistics/clients",
+    MACHINES: "/logistics/machines",
+    MACHINE_NEW: "/logistics/machines/new", // Add machine new path
+    SALES: "/logistics/sales",
+    LOGISTICS_MODULE: "/logistics/module",
+    SUPPORT: "/logistics/support",
+    HELP: "/logistics/help",
+    SETTINGS: "/logistics/settings",
   }
 };

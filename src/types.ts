@@ -1,3 +1,4 @@
+
 export enum UserRole {
   CLIENT = "CLIENT",
   ADMIN = "ADMIN",
@@ -23,30 +24,6 @@ export enum PaymentMethod {
   CREDIT = "CREDIT",
   DEBIT = "DEBIT",
   PIX = "PIX",
-}
-
-// Add missing enum for Machine Status
-export enum MachineStatus {
-  ACTIVE = "ACTIVE",
-  MAINTENANCE = "MAINTENANCE",
-  INACTIVE = "INACTIVE",
-  PENDING_INSTALLATION = "PENDING_INSTALLATION"
-}
-
-// Add missing enum for Support Request Status
-export enum SupportRequestStatus {
-  OPEN = "OPEN",
-  IN_PROGRESS = "IN_PROGRESS",
-  RESOLVED = "RESOLVED",
-  CLOSED = "CLOSED"
-}
-
-// Add missing enum for Delivery Status
-export enum DeliveryStatus {
-  SCHEDULED = "SCHEDULED",
-  IN_TRANSIT = "IN_TRANSIT",
-  DELIVERED = "DELIVERED",
-  CANCELED = "CANCELED"
 }
 
 export type PixKey = {
@@ -144,58 +121,6 @@ export interface Payment {
   due_date?: string;
 }
 
-// Add missing interfaces for Logistics
-
-// Define Machine interface
-export interface Machine {
-  id: string;
-  model: string;
-  serial_number: string;
-  status: MachineStatus;
-  location?: string;
-  client_id?: string;
-  client_name?: string;
-  last_maintenance?: string;
-  installation_date?: string;
-  deactivated_at?: string;
-  notes?: string;
-}
-
-// Define SupportRequest interface
-export interface SupportRequest {
-  id: string;
-  title: string;
-  description: string;
-  status: SupportRequestStatus;
-  priority: string;
-  created_at: string;
-  updated_at?: string;
-  resolved_at?: string;
-  assigned_to?: string;
-  resolution?: string;
-  client_id: string;
-  client_name: string;
-  machine_id: string;
-  machine_serial: string;
-}
-
-// Define Delivery interface
-export interface Delivery {
-  id: string;
-  machine_id: string;
-  machine_model: string;
-  client_id: string;
-  client_name: string;
-  delivery_address: string;
-  scheduled_date: string;
-  actual_delivery_date?: string;
-  status: DeliveryStatus;
-  transporter?: string;
-  tracking_code?: string;
-  recipient_name?: string;
-  notes?: string;
-}
-
 // Types for partners
 export interface Partner {
   id: string;
@@ -282,13 +207,4 @@ export interface MachineData {
   model: string;
   status: string;
   created_at: string;
-}
-
-// Define ActivityType for Logistics page
-export type ActivityType = "client" | "partner" | "payment" | "system" | "sale" | "logistics" | "machine" | "support";
-
-export enum ClientStatus {
-  ACTIVE = "ACTIVE",
-  INACTIVE = "INACTIVE",
-  PENDING = "PENDING",
 }

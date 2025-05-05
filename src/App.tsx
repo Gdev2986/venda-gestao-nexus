@@ -1,169 +1,421 @@
-
-import {
-  BrowserRouter as Router,
-  Routes,
-  Route,
-  Navigate,
-} from "react-router-dom";
-import { useAuth } from "@/hooks/use-auth";
-import { useUserRole } from "@/hooks/use-user-role";
-import { UserRole } from "@/types";
+import { Routes, Route, useLocation, Navigate } from "react-router-dom";
+import { PATHS } from "./routes/paths";
+import { useEffect } from "react";
+import { useToast } from "@/hooks/use-toast";
+import { useUserRole } from "./hooks/use-user-role";
+import { UserRole } from "./types";
 
 // Layouts
-import RootLayout from "@/layouts/RootLayout";
-import AuthLayout from "@/layouts/AuthLayout";
-import AdminLayout from "@/layouts/AdminLayout";
-import LogisticsLayout from "@/layouts/LogisticsLayout";
-import UserLayout from "@/layouts/UserLayout";
-import MainLayout from "@/layouts/MainLayout";
-import PartnerLayout from "@/layouts/PartnerLayout";
-import FinancialLayout from "@/layouts/FinancialLayout";
+import AuthLayout from "./layouts/AuthLayout";
+import MainLayout from "./layouts/MainLayout";
+import RootLayout from "./layouts/RootLayout";
 
-// Pages
-import LandingPage from "@/pages/Index";
-import LoginPage from "@/pages/auth/Login";
-import RegisterPage from "@/pages/auth/Register";
-import ForgotPasswordPage from "@/pages/auth/ForgotPassword";
-import ResetPasswordPage from "@/pages/auth/ResetPassword";
+// Auth
+import Login from "./pages/auth/Login";
+import Register from "./pages/auth/Register";
+import ForgotPassword from "./pages/auth/ForgotPassword";
+import ResetPassword from "./pages/auth/ResetPassword";
+
+// Auth Protection Component
+import RequireAuth from "./components/auth/RequireAuth";
+
+// Dashboard
+import Dashboard from "./pages/Dashboard";
+import ClientDashboard from "./pages/ClientDashboard";
 
 // Admin pages
-import AdminDashboard from "@/pages/admin/Dashboard";
-import AdminClients from "@/pages/admin/Clients";
-import NewClient from "@/pages/clients/NewClient";
-import ClientDetails from "@/pages/clients/ClientDetails";
-import AdminPartners from "@/pages/admin/Partners";
-import NewPartner from "@/pages/partners/NewPartner";
-import PartnerDetails from "@/pages/partners/PartnerDetails";
-import AdminSales from "@/pages/admin/Sales";
-import NewSale from "@/pages/sales/NewSale";
-import SaleDetails from "@/pages/sales/SaleDetails";
-import AdminPayments from "@/pages/admin/Payments";
-import AdminPaymentDetails from "@/pages/admin/PaymentDetails";
-import AdminReports from "@/pages/admin/Reports";
-import AdminFees from "@/pages/admin/Fees";
-import Notifications from "@/pages/admin/Notifications";
-import AdminLogistics from "@/pages/admin/Logistics";
-import RequireAuth from "@/components/auth/RequireAuth";
+import AdminDashboard from "./pages/admin/Dashboard";
+import AdminClients from "./pages/admin/Clients";
+import AdminSales from "./pages/admin/Sales";
+import AdminPartners from "./pages/admin/Partners";
 
-// Logistics pages
-import LogisticsDashboard from "@/pages/logistics/Dashboard";
-import LogisticsMachines from "@/pages/logistics/Machines";
-import LogisticsOperations from "@/pages/logistics/Operations";
-import Support from "@/pages/logistics/Support";
+// Clients
+import Clients from "./pages/clients/Clients";
+import ClientDetails from "./pages/clients/ClientDetails";
+import NewClient from "./pages/clients/NewClient";
 
-// Client pages
-import ClientDashboard from "@/pages/user/Dashboard";
-import ClientPayments from "@/pages/user/Payments";
-import ClientSupport from "@/pages/user/Support";
-import ClientMachines from "@/pages/user/Machines";
+// Machines
+import Machines from "./pages/machines/Machines";
+import MachineDetails from "./pages/machines/MachineDetails";
+import NewMachine from "./pages/machines/NewMachine";
 
-// Partner pages
-import PartnerDashboard from "@/pages/partner/Dashboard";
-import PartnerClients from "@/pages/partner/Clients";
+// Sales
+import Sales from "./pages/sales/Sales";
+import SaleDetails from "./pages/sales/SaleDetails";
+import NewSale from "./pages/sales/NewSale";
 
-// Financial pages
-import FinancialDashboard from "@/pages/financial/Dashboard";
-import FinancialPayments from "@/pages/financial/Requests";
+// Payments
+import Payments from "./pages/payments/Payments";
+import UserPayments from "./pages/UserPayments";
 
-// Machines pages
-import Machines from "@/pages/machines/Machines";
-import NewMachine from "@/pages/machines/NewMachine";
-import MachineDetails from "@/pages/machines/MachineDetails";
+// Partners
+import Partners from "./pages/partners/Partners";
+import PartnerDetails from "./pages/partners/PartnerDetails";
+import NewPartner from "./pages/partners/NewPartner";
 
-import { PATHS } from "@/routes/paths";
+// Settings
+import Settings from "./pages/settings/Settings";
+import UserManagement from "./pages/settings/UserManagement";
+
+// Other
+import NotFound from "./pages/NotFound";
+import Support from "./pages/Support";
+import Help from "./pages/Help";
+import Fees from "./pages/Fees";
+import Reports from "./pages/Reports";
 
 function App() {
-  const { userRole } = useUserRole();
-  
+  const location = useLocation();
+  const { userRole, isRoleLoading } = useUserRole();
+  const { toast } = useToast();
+
+  // Scroll to top on route change
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, [location.pathname]);
+
+  // Log role changes for debugging
+  useEffect(() => {
+    if (!isRoleLoading) {
+      console.log("Current user role:", userRole);
+    }
+  }, [userRole, isRoleLoading]);
+
+  // Global app-wide dashboard redirect handler
+  const dashboardRedirect = () => {
+    switch (userRole) {
+      case UserRole.ADMIN:
+        return <Navigate to={PATHS.ADMIN.DASHBOARD} replace />;
+      case UserRole.CLIENT:
+        return <Navigate to={PATHS.USER.DASHBOARD} replace />;
+      case UserRole.PARTNER:
+        return <Navigate to={PATHS.PARTNER.DASHBOARD} replace />;
+      case UserRole.FINANCIAL:
+        return <Navigate to={PATHS.FINANCIAL.DASHBOARD} replace />;
+      case UserRole.LOGISTICS:
+        return <Navigate to={PATHS.LOGISTICS.DASHBOARD} replace />;
+      default:
+        return <Navigate to={PATHS.USER.DASHBOARD} replace />;
+    }
+  };
+
   return (
     <Routes>
-      {/* Public routes */}
-      <Route element={<RequireAuth />}>
-        <Route path="/" element={<RootLayout />}>
-          <Route index element={<LandingPage />} />
-        </Route>
+      {/* Root path handling */}
+      <Route path={PATHS.HOME} element={<RootLayout />} />
+      
+      {/* Generic dashboard route */}
+      <Route path={PATHS.DASHBOARD} element={dashboardRedirect()} />
+
+      {/* Auth Routes */}
+      <Route element={<AuthLayout />}>
+        <Route path={PATHS.LOGIN} element={<Login />} />
+        <Route path={PATHS.REGISTER} element={<Register />} />
+        <Route path={PATHS.FORGOT_PASSWORD} element={<ForgotPassword />} />
+        <Route path={PATHS.RESET_PASSWORD} element={<ResetPassword />} />
       </Route>
 
-      {/* Auth routes */}
-      <Route path="/" element={<AuthLayout />}>
-        <Route path="login" element={<LoginPage />} />
-        <Route path="register" element={<RegisterPage />} />
-        <Route path="forgot-password" element={<ForgotPasswordPage />} />
-        <Route path="reset-password" element={<ResetPasswordPage />} />
-      </Route>
+      {/* Protected Routes */}
       
-      {/* Admin routes */}
+      {/* Admin Routes */}
       <Route element={<RequireAuth allowedRoles={[UserRole.ADMIN]} />}>
-        <Route path="admin" element={<AdminLayout />}>
-          <Route path="dashboard" element={<AdminDashboard />} />
-          <Route path="clients" element={<AdminClients />} />
-          <Route path="clients/new" element={<NewClient />} />
-          <Route path="clients/:id" element={<ClientDetails />} />
-          <Route path="partners" element={<AdminPartners />} />
-          <Route path="partners/new" element={<NewPartner />} />
-          <Route path="partners/:id" element={<PartnerDetails />} />
-          <Route path="sales" element={<AdminSales />} />
-          <Route path="sales/new" element={<NewSale />} />
-          <Route path="sales/:id" element={<SaleDetails />} />
-          <Route path="payments" element={<AdminPayments />} />
-          <Route path="payments/:id" element={<AdminPaymentDetails />} />
-          <Route path="reports" element={<AdminReports />} />
-          <Route path="fees" element={<AdminFees />} />
-          <Route path="notifications" element={<Notifications />} />
-          <Route path="logistics" element={<AdminLogistics />} />
-          <Route path="machines/:id" element={<MachineDetails />} />
-          <Route path="machines/new" element={<NewMachine />} />
+        <Route element={<MainLayout />}>
+          <Route
+            path={PATHS.ADMIN.DASHBOARD}
+            element={<AdminDashboard />}
+          />
+          
+          <Route 
+            path={PATHS.ADMIN.CLIENTS} 
+            element={<AdminClients />} 
+          />
+          
+          <Route 
+            path={PATHS.ADMIN.CLIENT_DETAILS()} 
+            element={<ClientDetails />} 
+          />
+          
+          <Route 
+            path={PATHS.ADMIN.CLIENT_NEW} 
+            element={<NewClient />} 
+          />
+          
+          <Route 
+            path={PATHS.ADMIN.MACHINES} 
+            element={<Machines />} 
+          />
+          
+          <Route 
+            path={PATHS.ADMIN.MACHINE_DETAILS()} 
+            element={<MachineDetails />} 
+          />
+          
+          <Route 
+            path={PATHS.ADMIN.MACHINE_NEW} 
+            element={<NewMachine />} 
+          />
+          
+          <Route 
+            path={PATHS.ADMIN.SALES} 
+            element={<AdminSales />} 
+          />
+          
+          <Route 
+            path={PATHS.ADMIN.SALES_DETAILS()} 
+            element={<SaleDetails />} 
+          />
+          
+          <Route 
+            path={PATHS.ADMIN.SALES_NEW} 
+            element={<NewSale />} 
+          />
+          
+          <Route 
+            path={PATHS.ADMIN.PAYMENTS} 
+            element={<Payments />} 
+          />
+          
+          <Route 
+            path={PATHS.ADMIN.PAYMENT_DETAILS()} 
+            element={<Payments />} 
+          />
+          
+          <Route path={PATHS.ADMIN.PAYMENT_NEW} element={<Payments />} />
+          
+          <Route 
+            path={PATHS.ADMIN.PARTNERS} 
+            element={<AdminPartners />} 
+          />
+          
+          <Route 
+            path={PATHS.ADMIN.PARTNER_DETAILS()} 
+            element={<PartnerDetails />} 
+          />
+          
+          <Route 
+            path={PATHS.ADMIN.PARTNER_NEW} 
+            element={<NewPartner />} 
+          />
+          
+          <Route 
+            path={PATHS.ADMIN.LOGISTICS} 
+            element={
+              <div className="container mx-auto py-10">
+                <h1 className="text-3xl font-semibold mb-6">Módulo de Logística</h1>
+                <p className="text-gray-600">Esta funcionalidade está em desenvolvimento.</p>
+              </div> 
+            } 
+          />
+          
+          <Route path={PATHS.ADMIN.SETTINGS} element={<Settings />} />
+          
+          <Route 
+            path={PATHS.ADMIN.USER_MANAGEMENT} 
+            element={<UserManagement />} 
+          />
+          
+          <Route path={PATHS.ADMIN.FEES} element={<Fees />} />
+          
+          <Route path={PATHS.ADMIN.REPORTS} element={<Reports />} />
+          
+          <Route path={PATHS.ADMIN.SUPPORT} element={<Support />} />
+          
+          <Route path={PATHS.ADMIN.HELP} element={<Help />} />
         </Route>
       </Route>
-        
-      {/* Logistics routes */}
-      <Route element={<RequireAuth allowedRoles={[UserRole.LOGISTICS]} />}>
-        <Route path="logistics" element={<LogisticsLayout />}>
-          <Route path="dashboard" element={<LogisticsDashboard />} />
-          <Route path="machines" element={<LogisticsMachines />} />
-          <Route path="machines/new" element={<NewMachine />} />
-          <Route path="machines/:id" element={<MachineDetails />} />
-          <Route path="operations" element={<LogisticsOperations />} />
-          <Route path="support" element={<Support />} />
-          <Route path="support/:id" element={<Support />} />
-        </Route>
-      </Route>
-
-      {/* Client routes */}
+      
+      {/* User Routes */}
       <Route element={<RequireAuth allowedRoles={[UserRole.CLIENT]} />}>
-        <Route path="client" element={<UserLayout />}>
-          <Route path="dashboard" element={<ClientDashboard />} />
-          <Route path="payments" element={<ClientPayments />} />
-          <Route path="payments/new" element={<ClientPayments />} />
-          <Route path="payments/:id" element={<ClientPayments />} />
-          <Route path="support" element={<ClientSupport />} />
-          <Route path="support/new" element={<ClientSupport />} />
-          <Route path="support/:id" element={<ClientSupport />} />
-          <Route path="machines" element={<ClientMachines />} />
+        <Route element={<MainLayout />}>
+          <Route 
+            path={PATHS.USER.DASHBOARD} 
+            element={<ClientDashboard />} 
+          />
+          
+          <Route path={PATHS.USER.PAYMENTS} element={<UserPayments />} />
+          
+          <Route path={PATHS.USER.MACHINES} element={<Machines />} />
+          
+          <Route path={PATHS.USER.SUPPORT} element={<Support />} />
+          
+          <Route path={PATHS.USER.SETTINGS} element={<Settings />} />
+          
+          <Route path={PATHS.USER.HELP} element={<Help />} />
         </Route>
       </Route>
       
-      {/* Partner routes */}
+      {/* Partner Routes */}
       <Route element={<RequireAuth allowedRoles={[UserRole.PARTNER]} />}>
-        <Route path="partner" element={<PartnerLayout />}>
-          <Route path="dashboard" element={<PartnerDashboard />} />
-          <Route path="clients" element={<PartnerClients />} />
+        <Route element={<MainLayout />}>
+          <Route 
+            path={PATHS.PARTNER.DASHBOARD} 
+            element={<Dashboard />} 
+          />
+          
+          <Route 
+            path={PATHS.PARTNER.CLIENTS} 
+            element={<Clients />} 
+          />
+          
+          <Route 
+            path={PATHS.PARTNER.CLIENT_DETAILS()} 
+            element={<ClientDetails />} 
+          />
+          
+          <Route 
+            path={PATHS.PARTNER.SALES} 
+            element={<Sales />} 
+          />
+          
+          <Route 
+            path={PATHS.PARTNER.REPORTS} 
+            element={<Reports />} 
+          />
+          
+          <Route 
+            path={PATHS.PARTNER.SETTINGS} 
+            element={<Settings />} 
+          />
+          
+          <Route 
+            path={PATHS.PARTNER.SUPPORT} 
+            element={<Support />} 
+          />
+          
+          <Route 
+            path={PATHS.PARTNER.COMMISSIONS} 
+            element={
+              <div className="container mx-auto py-10">
+                <h1 className="text-3xl font-semibold mb-6">Comissões</h1>
+                <p className="text-gray-600">Visualização e solicitação de comissões em desenvolvimento.</p>
+              </div>
+            } 
+          />
+          
+          <Route 
+            path={PATHS.PARTNER.HELP} 
+            element={<Help />} 
+          />
         </Route>
       </Route>
       
-      {/* Financial routes */}
+      {/* Financial Routes */}
       <Route element={<RequireAuth allowedRoles={[UserRole.FINANCIAL]} />}>
-        <Route path="financial" element={<FinancialLayout />}>
-          <Route path="dashboard" element={<FinancialDashboard />} />
-          <Route path="payments" element={<FinancialPayments />} />
+        <Route element={<MainLayout />}>
+          <Route 
+            path={PATHS.FINANCIAL.DASHBOARD} 
+            element={<Dashboard />} 
+          />
+          
+          <Route 
+            path={PATHS.FINANCIAL.CLIENTS} 
+            element={<Clients />} 
+          />
+          
+          <Route 
+            path={PATHS.FINANCIAL.CLIENT_DETAILS()} 
+            element={<ClientDetails />} 
+          />
+          
+          <Route 
+            path={PATHS.FINANCIAL.SALES} 
+            element={<Sales />} 
+          />
+          
+          <Route 
+            path={PATHS.FINANCIAL.PAYMENTS} 
+            element={<Payments />} 
+          />
+          
+          <Route 
+            path={PATHS.FINANCIAL.PARTNERS} 
+            element={<Partners />} 
+          />
+          
+          <Route 
+            path={PATHS.FINANCIAL.FEES} 
+            element={<Fees />} 
+          />
+          
+          <Route 
+            path={PATHS.FINANCIAL.REPORTS} 
+            element={<Reports />} 
+          />
+          
+          <Route
+            path={PATHS.FINANCIAL.REQUESTS}
+            element={
+              <div className="container mx-auto py-10">
+                <h1 className="text-3xl font-semibold mb-6">Solicitações de Pagamento</h1>
+                <p className="text-gray-600">Gerenciamento de solicitações de pagamento em desenvolvimento.</p>
+              </div>
+            }
+          />
+          
+          <Route 
+            path={PATHS.FINANCIAL.SUPPORT} 
+            element={<Support />} 
+          />
+          
+          <Route 
+            path={PATHS.FINANCIAL.HELP} 
+            element={<Help />} 
+          />
+        </Route>
+      </Route>
+      
+      {/* Logistics Routes */}
+      <Route element={<RequireAuth allowedRoles={[UserRole.LOGISTICS]} />}>
+        <Route element={<MainLayout />}>
+          <Route 
+            path={PATHS.LOGISTICS.DASHBOARD} 
+            element={<Dashboard />} 
+          />
+          
+          <Route 
+            path={PATHS.LOGISTICS.CLIENTS} 
+            element={<Clients />} 
+          />
+          
+          <Route 
+            path={PATHS.LOGISTICS.MACHINES} 
+            element={<Machines />} 
+          />
+          
+          <Route 
+            path={PATHS.LOGISTICS.SALES} 
+            element={<Sales />} 
+          />
+          
+          <Route 
+            path={PATHS.LOGISTICS.LOGISTICS_MODULE} 
+            element={
+              <div className="container mx-auto py-10">
+                <h1 className="text-3xl font-semibold mb-6">Módulo de Logística</h1>
+                <p className="text-gray-600">Esta funcionalidade está em desenvolvimento.</p>
+              </div> 
+            } 
+          />
+          
+          <Route 
+            path={PATHS.LOGISTICS.SUPPORT} 
+            element={<Support />} 
+          />
+          
+          <Route 
+            path={PATHS.LOGISTICS.HELP} 
+            element={<Help />} 
+          />
+          
+          <Route 
+            path={PATHS.LOGISTICS.SETTINGS} 
+            element={<Settings />} 
+          />
         </Route>
       </Route>
 
-      {/* Machines routes - temporary */}
-      <Route path="machines" element={<MainLayout />}>
-        <Route index element={<Machines />} />
-        <Route path="new" element={<NewMachine />} />
-      </Route>
+      {/* 404 */}
+      <Route path={PATHS.NOT_FOUND} element={<NotFound />} />
     </Routes>
   );
 }

@@ -1,14 +1,13 @@
 
-import { ReactNode } from "react";
-import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
+import { Link } from "react-router-dom";
 
 interface PageHeaderProps {
   title: string;
   description?: string;
   actionLabel?: string;
   actionLink?: string;
-  children?: ReactNode;
+  onActionClick?: () => void;
 }
 
 export function PageHeader({ 
@@ -16,22 +15,25 @@ export function PageHeader({
   description, 
   actionLabel, 
   actionLink,
-  children
+  onActionClick
 }: PageHeaderProps) {
   return (
-    <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+    <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-6">
       <div>
-        <h1 className="text-3xl font-bold">{title}</h1>
+        <h1 className="text-2xl font-semibold tracking-tight">{title}</h1>
         {description && <p className="text-muted-foreground mt-1">{description}</p>}
       </div>
-      <div className="flex items-center gap-4">
-        {children}
-        {actionLabel && actionLink && (
-          <Button asChild>
-            <Link to={actionLink}>{actionLabel}</Link>
-          </Button>
-        )}
-      </div>
+      {actionLabel && (actionLink || onActionClick) && (
+        <Button asChild={!!actionLink} onClick={onActionClick || undefined}>
+          {actionLink ? (
+            <Link to={actionLink}>
+              {actionLabel}
+            </Link>
+          ) : (
+            actionLabel
+          )}
+        </Button>
+      )}
     </div>
   );
 }
