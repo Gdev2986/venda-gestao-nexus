@@ -53,9 +53,16 @@ export function usePayments(options?: {
       }
 
       if (filterOptions.statusFilter && filterOptions.statusFilter !== "all") {
-        // Fix: Convert string to PaymentStatus enum if valid
-        const statusValue = filterOptions.statusFilter.toUpperCase();
-        if (Object.values(PaymentStatus).includes(statusValue as PaymentStatus)) {
+        // Fix: Convert statusFilter string to a valid PaymentStatus enum value
+        const statusMap: Record<string, PaymentStatus> = {
+          "pending": PaymentStatus.PENDING,
+          "approved": PaymentStatus.APPROVED,
+          "rejected": PaymentStatus.REJECTED,
+          "paid": PaymentStatus.PAID
+        };
+        
+        const statusValue = statusMap[filterOptions.statusFilter.toLowerCase()];
+        if (statusValue) {
           query = query.eq("status", statusValue);
         }
       }
@@ -218,7 +225,6 @@ export function usePayments(options?: {
     totalPages,
     setCurrentPage,
     approvePayment,
-    rejectPayment,
-    loading: isLoading // Alias for backward compatibility
+    rejectPayment
   };
 }

@@ -131,7 +131,8 @@ function DataTable({ columns, data }: DataTableProps) {
             <SelectValue placeholder="Filtrar status" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="">Todos</SelectItem>
+            {/* Fix: Empty string value changed to "all" */}
+            <SelectItem value="all">Todos</SelectItem>
             <SelectItem value="PENDING">Pendente</SelectItem>
             <SelectItem value="APPROVED">Aprovado</SelectItem>
             <SelectItem value="REJECTED">Rejeitado</SelectItem>
@@ -146,7 +147,8 @@ function DataTable({ columns, data }: DataTableProps) {
             <SelectValue placeholder="Filtrar tipo" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="">Todos</SelectItem>
+            {/* Fix: Empty string value changed to "all" */}
+            <SelectItem value="all">Todos</SelectItem>
             <SelectItem value="PIX">PIX</SelectItem>
             <SelectItem value="TED">TED</SelectItem>
             <SelectItem value="BOLETO">Boleto</SelectItem>
@@ -520,11 +522,11 @@ const AdminPayments = () => {
         title="Pagamentos" 
         description="Gerencie solicitações e histórico de pagamentos"
         actionLabel="Novo Pagamento"
-        actionLink={PATHS.ADMIN.SALE_NEW} // Fixed: Using SALE_NEW instead of PAYMENT_NEW
+        actionLink={PATHS.ADMIN.SALE_NEW} // Fixed: Using SALE_NEW 
       >
         <Button 
           variant="outline" 
-          onClick={handleRefresh} 
+          onClick={fetchData} 
           disabled={isLoading}
           className="flex items-center gap-2"
         >
