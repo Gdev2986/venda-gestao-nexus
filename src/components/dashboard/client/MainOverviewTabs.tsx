@@ -39,6 +39,10 @@ interface MainOverviewTabsProps {
   machinesPage: number;
   totalMachinesPages: number;
   onMachinesPageChange: (page: number) => void;
+  period?: string;
+  onChangePeriod?: (period: string) => void;
+  onViewAllTransactions?: () => void;
+  onViewAllMachines?: () => void;
 }
 
 export function MainOverviewTabs({
@@ -52,7 +56,11 @@ export function MainOverviewTabs({
   onTransactionsPageChange,
   machinesPage,
   totalMachinesPages,
-  onMachinesPageChange
+  onMachinesPageChange,
+  period,
+  onChangePeriod,
+  onViewAllTransactions,
+  onViewAllMachines
 }: MainOverviewTabsProps) {
   const getStatusBadge = (status: string) => {
     switch (status) {

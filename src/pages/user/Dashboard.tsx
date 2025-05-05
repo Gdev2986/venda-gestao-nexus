@@ -72,11 +72,17 @@ const UserDashboard = () => {
             paymentMethodsData={mockData.paymentMethodsData}
             filteredTransactions={mockData.filteredTransactions}
             machines={mockData.machines}
-            isLoading={false}
+            loading={false} // Changed from isLoading to loading to match interface
             period="week"
             onChangePeriod={() => {}}
             onViewAllTransactions={() => {}}
             onViewAllMachines={() => {}}
+            transactionsPage={1}
+            totalTransactionsPages={1}
+            onTransactionsPageChange={() => {}}
+            machinesPage={1}
+            totalMachinesPages={1}
+            onMachinesPageChange={() => {}}
           />
         </div>
         

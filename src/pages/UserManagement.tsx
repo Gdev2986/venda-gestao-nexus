@@ -11,6 +11,7 @@ import UserFilters from "@/components/user-management/UserFilters";
 const UserManagement = () => {
   const { 
     users, 
+    setUsers,  // Added the missing setUsers prop
     loading, 
     error, 
     checkingAccess,
@@ -58,6 +59,7 @@ const UserManagement = () => {
                 <UserFilters onFilterChange={handleFilterChange} />
                 <UserTable 
                   users={users} 
+                  setUsers={setUsers}  // Added the missing setUsers prop
                   totalPages={totalPages}
                   currentPage={currentPage}
                   onPageChange={handlePageChange}
