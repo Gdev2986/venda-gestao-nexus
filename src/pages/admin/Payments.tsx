@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { PageHeader } from "@/components/page/PageHeader";
 import { PageWrapper } from "@/components/page/PageWrapper";
@@ -212,26 +211,31 @@ const AdminPayments = () => {
       if (error) throw error;
       
       // Transform the data to match our Payment type
-      const transformedData = data.map(item => ({
-        id: item.id,
-        amount: item.amount,
-        status: item.status as PaymentStatus,
-        created_at: item.created_at,
-        updated_at: item.updated_at,
-        client_id: item.client_id,
-        description: item.description,
-        approved_at: item.approved_at,
-        receipt_url: item.receipt_url,
-        client_name: item.client?.business_name || "Cliente desconhecido",
-        payment_type: item.type as PaymentType || PaymentType.PIX,
-        rejection_reason: item.rejection_reason || null,
-        pix_key: item.pix_key ? {
-          id: item.pix_key_id,
-          key: item.pix_key.key,
-          type: item.pix_key.type,
-          owner_name: item.pix_key.name
-        } : undefined
-      }));
+      const transformedData = data.map(item => {
+        // Define the payment type based on the data or use PIX as default
+        let paymentType = PaymentType.PIX;
+
+        return {
+          id: item.id,
+          amount: item.amount,
+          status: item.status as PaymentStatus,
+          created_at: item.created_at,
+          updated_at: item.updated_at,
+          client_id: item.client_id,
+          description: item.description,
+          approved_at: item.approved_at,
+          receipt_url: item.receipt_url,
+          client_name: item.client?.business_name || "Cliente desconhecido",
+          payment_type: paymentType,
+          rejection_reason: null, // Will be populated from the database if available
+          pix_key: item.pix_key ? {
+            id: item.pix_key_id,
+            key: item.pix_key.key,
+            type: item.pix_key.type,
+            owner_name: item.pix_key.name
+          } : undefined
+        } as Payment;
+      });
 
       setPayments(transformedData);
       
@@ -467,7 +471,6 @@ const AdminPayments = () => {
             <FileUploader
               label="Comprovante de pagamento"
               onFileSelect={setReceiptFile}
-              selectedFile={receiptFile}
               accept=".jpg,.jpeg,.png,.pdf"
               currentFile={null}
             />

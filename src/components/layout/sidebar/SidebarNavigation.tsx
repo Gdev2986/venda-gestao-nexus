@@ -38,6 +38,12 @@ const SidebarNavigation = ({ userRole }: SidebarNavigationProps) => {
       roles: [UserRole.ADMIN],
     },
     {
+      title: "Pagamentos",
+      icon: Wallet,
+      href: PATHS.ADMIN.PAYMENTS,
+      roles: [UserRole.ADMIN, UserRole.FINANCIAL],
+    },
+    {
       title: "Clientes",
       icon: Building2,
       href: PATHS.ADMIN.CLIENTS,
