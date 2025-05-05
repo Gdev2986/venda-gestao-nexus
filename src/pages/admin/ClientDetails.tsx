@@ -49,7 +49,12 @@ const ClientDetails = () => {
   if (loading) {
     return (
       <div className="space-y-6">
-        <PageHeader title="Detalhes do Cliente" description="Carregando..." />
+        <PageHeader 
+          title="Detalhes do Cliente" 
+          description="Carregando..." 
+          backHref={PATHS.ADMIN.CLIENTS}
+          backLabel="Voltar para lista"
+        />
         <PageWrapper>
           <div className="flex items-center justify-center h-64">
             <div className="text-center">
@@ -65,7 +70,12 @@ const ClientDetails = () => {
   if (!client) {
     return (
       <div className="space-y-6">
-        <PageHeader title="Cliente não encontrado" description="O cliente solicitado não existe." />
+        <PageHeader 
+          title="Cliente não encontrado" 
+          description="O cliente solicitado não existe."
+          backHref={PATHS.ADMIN.CLIENTS}
+          backLabel="Voltar para lista"
+        />
         <PageWrapper>
           <Card>
             <CardContent className="pt-6">
@@ -97,8 +107,8 @@ const ClientDetails = () => {
       <PageHeader
         title={client.business_name}
         description="Detalhes e gerenciamento do cliente"
-        backLink={PATHS.ADMIN.CLIENTS}
-        backLinkLabel="Voltar para lista"
+        backHref={PATHS.ADMIN.CLIENTS}
+        backLabel="Voltar para lista"
       />
 
       <div className="flex flex-col md:flex-row gap-6 items-start">

@@ -11,15 +11,26 @@ import UserFilters from "@/components/user-management/UserFilters";
 const UserManagement = () => {
   const { 
     users, 
+    setUsers, 
     loading, 
     error, 
-    roleDialogOpen,
-    openRoleDialog,
-    closeRoleDialog,
-    selectedUserId,
-    handleRoleChange,
-    changingRole
+    checkingAccess,
+    retryFetch,
+    currentPage,
+    totalPages,
+    totalUsers,
+    handlePageChange,
+    handleFilterChange,
+    filters
   } = useUserManagement();
+
+  if (checkingAccess) {
+    return (
+      <MainLayout>
+        <AccessCheckingState />
+      </MainLayout>
+    );
+  }
 
   return (
     <MainLayout>
@@ -42,17 +53,20 @@ const UserManagement = () => {
             {loading ? (
               <LoadingState />
             ) : error ? (
-              <ErrorState errorMessage={error} onRetry={() => {}} />
+              <ErrorState errorMessage={error} onRetry={retryFetch} />
             ) : (
               <div className="space-y-4">
-                <UserFilters onFilterChange={() => {}} />
+                <UserFilters onFilterChange={handleFilterChange} />
                 <UserTable 
                   users={users} 
-                  setUsers={() => {}}
+                  setUsers={setUsers} 
+                  totalPages={totalPages}
+                  currentPage={currentPage}
+                  onPageChange={handlePageChange}
                 />
-                {users.length > 0 && (
+                {totalUsers > 0 && (
                   <p className="text-sm text-muted-foreground">
-                    Mostrando {users.length} usuários
+                    Mostrando {users.length} de {totalUsers} usuários
                   </p>
                 )}
               </div>

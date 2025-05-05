@@ -107,7 +107,8 @@ export const createClient = async (clientData: Partial<Client>): Promise<{succes
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString(),
       status: 'ACTIVE',
-      balance: clientData.balance || 0
+      balance: clientData.balance || 0,
+      business_name: clientData.business_name || '' // Make sure business_name is not undefined
     };
 
     const { data, error } = await supabase

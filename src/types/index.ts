@@ -63,7 +63,7 @@ export interface Partner {
   address?: string; // Added for completeness
 }
 
-// Update Client interface to include the missing fields used in components
+// Updated Client interface to include all fields used in components
 export interface Client {
   id: string;
   business_name: string;
@@ -80,12 +80,33 @@ export interface Client {
   state?: string;
   zip?: string;
   status?: string;
-  // Add the fields referenced in the components that were causing errors
   partner_name?: string;
   machines_count?: number;
   fee_plan_name?: string;
   balance?: number;
   fee_plan_id?: string;
+  // Adding support for machines property used in client details
+  machines?: Array<{
+    id: string;
+    serial_number: string;
+    status: string;
+    model: string;
+  }>;
+}
+
+// User data interface for UserManagement component
+export interface UserData {
+  id: string;
+  name: string;
+  email: string;
+  role: UserRole;
+  created_at: string;
+  phone?: string;
+  avatar?: string;
+  updated_at?: string;
+  app_metadata?: any;
+  user_metadata?: any;
+  aud?: string;
 }
 
 // Add other types here as needed
