@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { PageHeader } from "@/components/page/PageHeader";
 import { PageWrapper } from "@/components/page/PageWrapper";
@@ -68,7 +69,13 @@ const AdminPayments = () => {
       id: "id",
       header: "ID",
       accessorKey: "id",
-      cell: (info: any) => <span>#{info.getValue().substring(0, 8)}</span>
+      cell: (info: any) => {
+        // Check if info and getValue exist before using them
+        if (!info || typeof info.getValue !== 'function') return "N/A";
+        const value = info.getValue();
+        if (!value) return "N/A";
+        return <span>#{value.substring(0, 8)}</span>;
+      }
     },
     {
       id: "client_name",
@@ -80,6 +87,8 @@ const AdminPayments = () => {
       header: "Tipo",
       accessorKey: "payment_type",
       cell: (info: any) => {
+        // Check if info and getValue exist before using them
+        if (!info || typeof info.getValue !== 'function') return "N/A";
         const type = info.getValue();
         return <span>{type}</span>;
       }
@@ -88,14 +97,24 @@ const AdminPayments = () => {
       id: "amount",
       header: "Valor",
       accessorKey: "amount",
-      cell: (info: any) => <span>R$ {Number(info.getValue()).toFixed(2)}</span>
+      cell: (info: any) => {
+        // Check if info and getValue exist before using them
+        if (!info || typeof info.getValue !== 'function') return "N/A";
+        const value = info.getValue();
+        if (typeof value !== 'number') return "N/A";
+        return <span>R$ {value.toFixed(2)}</span>;
+      }
     },
     {
       id: "created_at",
       header: "Data",
       accessorKey: "created_at",
       cell: (info: any) => {
-        const date = new Date(info.getValue());
+        // Check if info and getValue exist before using them
+        if (!info || typeof info.getValue !== 'function') return "N/A";
+        const value = info.getValue();
+        if (!value) return "N/A";
+        const date = new Date(value);
         return <span>{date.toLocaleDateString('pt-BR')}</span>;
       }
     },
@@ -104,6 +123,8 @@ const AdminPayments = () => {
       header: "Status",
       accessorKey: "status",
       cell: (info: any) => {
+        // Check if info and getValue exist before using them
+        if (!info || typeof info.getValue !== 'function') return "N/A";
         const status = info.getValue();
         let statusClass = "";
         switch (status) {
@@ -133,6 +154,9 @@ const AdminPayments = () => {
       id: "actions",
       header: "Ações",
       cell: (info: any) => {
+        // Check if info and info.row exist before accessing original
+        if (!info || !info.row || !info.row.original) return null;
+        
         const payment = info.row.original;
         const isPending = payment.status === PaymentStatus.PENDING;
         
@@ -227,7 +251,7 @@ const AdminPayments = () => {
           receipt_url: item.receipt_url,
           client_name: item.client?.business_name || "Cliente desconhecido",
           payment_type: paymentType,
-          rejection_reason: item.rejection_reason || null, // Make sure rejection_reason exists or default to null
+          rejection_reason: item.rejection_reason || null, // Add the missing rejection_reason property
           pix_key: item.pix_key ? {
             id: item.pix_key_id,
             key: item.pix_key.key,

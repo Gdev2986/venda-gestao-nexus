@@ -81,8 +81,10 @@ const Payments = () => {
       header: "Data",
       accessorKey: "created_at",
       cell: (info: any) => {
-        if (!info.row.original) return "N/A";
-        return new Date(info.row.original.created_at).toLocaleDateString('pt-BR');
+        // Check if info and info.row exist before accessing original
+        if (!info || !info.row) return "N/A";
+        const date = new Date(info.row.original.created_at);
+        return date.toLocaleDateString('pt-BR');
       }
     },
     {
@@ -90,7 +92,8 @@ const Payments = () => {
       header: "Valor",
       accessorKey: "amount",
       cell: (info: any) => {
-        if (!info.row.original) return "N/A";
+        // Check if info and info.row exist before accessing original
+        if (!info || !info.row) return "N/A";
         return formatCurrency(info.row.original.amount);
       }
     },
@@ -99,7 +102,8 @@ const Payments = () => {
       header: "Status",
       accessorKey: "status",
       cell: (info: any) => {
-        if (!info.row.original) return "N/A";
+        // Check if info and info.row exist before accessing original
+        if (!info || !info.row) return "N/A";
         
         const status = info.row.original.status;
         let badgeClass = "";
@@ -138,7 +142,8 @@ const Payments = () => {
       id: "actions",
       header: "",
       cell: (info: any) => {
-        if (!info.row.original) return null;
+        // Check if info and info.row exist before accessing original
+        if (!info || !info.row) return null;
         
         return (
           <Button 
