@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
@@ -322,7 +323,7 @@ const AdminClients = () => {
               <SelectValue placeholder="Status" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="">Todos os status</SelectItem>
+              <SelectItem value="all">Todos os status</SelectItem>
               <SelectItem value="active">Ativos</SelectItem>
               <SelectItem value="inactive">Inativos</SelectItem>
               <SelectItem value="pending">Pendentes</SelectItem>
@@ -334,7 +335,7 @@ const AdminClients = () => {
               <SelectValue placeholder="Parceiro" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="">Todos os parceiros</SelectItem>
+              <SelectItem value="all">Todos os parceiros</SelectItem>
               {partners.map(partner => (
                 <SelectItem key={partner.id} value={partner.id}>
                   {partner.company_name}
@@ -348,7 +349,7 @@ const AdminClients = () => {
               <SelectValue placeholder="Plano de taxa" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="">Todos os planos</SelectItem>
+              <SelectItem value="all">Todos os planos</SelectItem>
               {feePlans.map(plan => (
                 <SelectItem key={plan.id} value={plan.id}>
                   {plan.name}

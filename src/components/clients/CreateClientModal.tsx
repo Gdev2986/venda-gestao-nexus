@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { z } from "zod";
 import { useForm } from "react-hook-form";
@@ -288,7 +289,7 @@ export const CreateClientModal = ({
                 <FormItem>
                   <FormLabel>Parceiro Vinculado</FormLabel>
                   <Select
-                    value={field.value || ""}
+                    value={field.value || "none"}
                     onValueChange={field.onChange}
                   >
                     <FormControl>
@@ -317,7 +318,7 @@ export const CreateClientModal = ({
                 <FormItem>
                   <FormLabel>Plano de Taxas</FormLabel>
                   <Select
-                    value={field.value || ""}
+                    value={field.value || "default"}
                     onValueChange={field.onChange}
                   >
                     <FormControl>
