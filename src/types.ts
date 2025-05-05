@@ -1,4 +1,3 @@
-
 export enum UserRole {
   CLIENT = "CLIENT",
   ADMIN = "ADMIN",
@@ -288,3 +287,8 @@ export interface MachineData {
 // Define ActivityType for Logistics page
 export type ActivityType = "client" | "partner" | "payment" | "system" | "sale" | "logistics" | "machine" | "support";
 
+export enum ClientStatus {
+  ACTIVE = "ACTIVE",
+  INACTIVE = "INACTIVE",
+  PENDING = "PENDING",
+}
