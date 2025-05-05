@@ -97,7 +97,7 @@ export const usePayments = (options: UsePaymentsOptions = {}) => {
         return {
           ...payment,
           status: payment.status as PaymentStatus,
-          rejection_reason: payment.rejection_reason,
+          rejection_reason: payment.rejection_reason || null,
           approved_at: payment.approved_at || null,
           approved_by: payment.approved_by || null,
           receipt_url: payment.receipt_url || null

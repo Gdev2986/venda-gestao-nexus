@@ -23,9 +23,10 @@ interface DataTableProps {
   currentPage?: number;
   totalPages?: number;
   onPageChange?: (page: number) => void;
+  isLoading?: boolean;
 }
 
-export function DataTable({ columns, data, currentPage, totalPages, onPageChange }: DataTableProps) {
+export function DataTable({ columns, data, currentPage, totalPages, onPageChange, isLoading }: DataTableProps) {
   return (
     <div className="rounded-md border">
       <Table>
@@ -37,7 +38,13 @@ export function DataTable({ columns, data, currentPage, totalPages, onPageChange
           </TableRow>
         </TableHeader>
         <TableBody>
-          {data.length > 0 ? (
+          {isLoading ? (
+            <TableRow>
+              <TableCell colSpan={columns.length} className="h-24 text-center">
+                Carregando...
+              </TableCell>
+            </TableRow>
+          ) : data.length > 0 ? (
             data.map((row, rowIndex) => (
               <TableRow key={rowIndex}>
                 {columns.map((column) => (
