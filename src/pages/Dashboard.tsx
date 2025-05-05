@@ -6,6 +6,7 @@ import StatsCards from "@/components/dashboard/StatsCards";
 import SalesChart from "@/components/dashboard/SalesChart";
 import SalesTable from "@/components/dashboard/SalesTable";
 import { useState } from "react";
+import { PaymentMethod, Sale, SalesChartData } from "@/types";
 
 // Mock data for dashboard
 const mockData = {
@@ -14,21 +15,17 @@ const mockData = {
   yesterdayNet: 12350,
   totalSales: 243,
   salesChartData: [
-    { date: '2022-01-01', value: 1400 },
-    { date: '2022-01-02', value: 1200 },
-    { date: '2022-01-03', value: 1300 },
-    { date: '2022-01-04', value: 1500 },
-    { date: '2022-01-05', value: 1800 },
-    { date: '2022-01-06', value: 2000 },
-    { date: '2022-01-07', value: 1900 },
-  ],
+    { method: PaymentMethod.CREDIT, amount: 1400, percentage: 20 },
+    { method: PaymentMethod.DEBIT, amount: 1200, percentage: 18 },
+    { method: PaymentMethod.PIX, amount: 4200, percentage: 62 }
+  ] as SalesChartData[],
   recentSales: [
-    { id: '1', client: 'Empresa A', value: 1500, status: 'COMPLETED', date: '2022-01-07' },
-    { id: '2', client: 'Empresa B', value: 1200, status: 'PROCESSING', date: '2022-01-06' },
-    { id: '3', client: 'Empresa C', value: 950, status: 'COMPLETED', date: '2022-01-05' },
-    { id: '4', client: 'Empresa D', value: 1750, status: 'COMPLETED', date: '2022-01-04' },
-    { id: '5', client: 'Empresa E', value: 2200, status: 'PROCESSING', date: '2022-01-03' },
-  ]
+    { id: '1', code: 'VND001', terminal: 'T100', client_name: 'Empresa A', gross_amount: 1500, net_amount: 1400, date: '2022-01-07', paymentMethod: PaymentMethod.CREDIT },
+    { id: '2', code: 'VND002', terminal: 'T102', client_name: 'Empresa B', gross_amount: 1200, net_amount: 1150, date: '2022-01-06', paymentMethod: PaymentMethod.DEBIT },
+    { id: '3', code: 'VND003', terminal: 'T103', client_name: 'Empresa C', gross_amount: 950, net_amount: 900, date: '2022-01-05', paymentMethod: PaymentMethod.PIX },
+    { id: '4', code: 'VND004', terminal: 'T101', client_name: 'Empresa D', gross_amount: 1750, net_amount: 1650, date: '2022-01-04', paymentMethod: PaymentMethod.CREDIT },
+    { id: '5', code: 'VND005', terminal: 'T100', client_name: 'Empresa E', gross_amount: 2200, net_amount: 2050, date: '2022-01-03', paymentMethod: PaymentMethod.PIX }
+  ] as Sale[]
 };
 
 const Dashboard = () => {

@@ -1,4 +1,3 @@
-
 export enum UserRole {
   CLIENT = "CLIENT",
   ADMIN = "ADMIN",
@@ -180,4 +179,21 @@ export interface User {
   updated_at?: string;
 }
 
-export type UserData = User;
+// Update UserData to match the profile data structure from supabase
+export interface UserData {
+  id: string;
+  name: string;
+  email: string;
+  role: UserRole;
+  phone?: string;
+  avatar?: string;
+  created_at?: string;
+  updated_at?: string;
+}
+
+// Dashboard chart data type
+export interface SalesChartData {
+  method: PaymentMethod;
+  amount: number;
+  percentage: number;
+}

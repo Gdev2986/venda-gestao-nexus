@@ -11,6 +11,35 @@ import SidebarContent from "@/components/dashboard/client/SidebarContent";
 import StatsCards from "@/components/dashboard/client/StatsCards";
 import MainOverviewTabs from "@/components/dashboard/client/MainOverviewTabs";
 
+// Mock data for the user dashboard
+const mockData = {
+  stats: {
+    balance: 2500,
+    transactions: 12,
+    machines: 2
+  },
+  salesData: [
+    { date: '2023-04-01', value: 580 },
+    { date: '2023-04-02', value: 450 },
+    { date: '2023-04-03', value: 620 },
+    { date: '2023-04-04', value: 700 },
+  ],
+  paymentMethodsData: [
+    { method: 'credit', count: 8, percentage: 67 },
+    { method: 'debit', count: 3, percentage: 25 },
+    { method: 'pix', count: 1, percentage: 8 },
+  ],
+  filteredTransactions: [
+    { id: 't1', date: '2023-04-04', value: 120, type: 'credit' },
+    { id: 't2', date: '2023-04-03', value: 85, type: 'debit' },
+    { id: 't3', date: '2023-04-02', value: 200, type: 'credit' },
+  ],
+  machines: [
+    { id: 'm1', name: 'Terminal 1', serial: 'SP2204785', model: 'SigmaPay S920', status: 'Ativo' },
+    { id: 'm2', name: 'Terminal 2', serial: 'SP2204786', model: 'SigmaPay Mini', status: 'Ativo' },
+  ]
+};
+
 const UserDashboard = () => {
   return (
     <div className="space-y-6">
@@ -19,11 +48,21 @@ const UserDashboard = () => {
         description="Acompanhe seus pagamentos e máquinas"
       />
       
-      <StatsCards />
+      <StatsCards stats={mockData.stats} loading={false} />
       
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <div className="lg:col-span-2">
-          <MainOverviewTabs />
+          <MainOverviewTabs 
+            salesData={mockData.salesData}
+            paymentMethodsData={mockData.paymentMethodsData}
+            filteredTransactions={mockData.filteredTransactions}
+            machines={mockData.machines}
+            isLoading={false}
+            period="week"
+            onChangePeriod={() => {}}
+            onViewAllTransactions={() => {}}
+            onViewAllMachines={() => {}}
+          />
         </div>
         
         <div className="space-y-6">

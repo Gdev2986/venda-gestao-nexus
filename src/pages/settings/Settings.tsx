@@ -1,271 +1,137 @@
 
-import { useState } from "react";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { PageHeader } from "@/components/page/PageHeader";
-import { PageWrapper } from "@/components/page/PageWrapper";
+import { useState, useEffect } from "react";
+import { useAuth } from "@/contexts/AuthContext";
+import { supabase } from "@/integrations/supabase/client";
+import { PixKey } from "@/types";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Switch } from "@/components/ui/switch";
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { Separator } from "@/components/ui/separator";
-import { BellRing, Lock, User, UserCog, CreditCard } from "lucide-react";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { useToast } from "@/hooks/use-toast";
+import { createDefaultPixKeyProperties } from "@/utils/settings-utils";
 import PixKeysManager from "@/components/settings/PixKeysManager";
-import { useUserRole } from "@/hooks/use-user-role";
-import { UserRole } from "@/types";
-import { Link } from "react-router-dom";
-import { PATHS } from "@/routes/paths";
 
 const Settings = () => {
-  const [activeTab, setActiveTab] = useState("profile");
-  const { userRole } = useUserRole();
-  
+  const { user } = useAuth();
+  const [pixKeys, setPixKeys] = useState<PixKey[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const { toast } = useToast();
+
+  useEffect(() => {
+    const fetchPixKeys = async () => {
+      setIsLoading(true);
+      try {
+        if (user) {
+          const { data, error } = await supabase
+            .from('pix_keys')
+            .select('*')
+            .eq('user_id', user.id);
+
+          if (error) {
+            console.error("Error fetching pix keys:", error);
+            toast({
+              title: "Erro ao carregar chaves PIX",
+              description: "Não foi possível carregar suas chaves PIX. Tente novamente mais tarde.",
+              variant: "destructive",
+            });
+          } else {
+            // Transform the data from the database to match our PixKey type
+            const transformedKeys: PixKey[] = (data || []).map(item => ({
+              id: item.id,
+              user_id: item.user_id,
+              key_type: item.type || "",
+              type: item.type || "CPF",
+              key: item.key || "",
+              owner_name: item.name || "",
+              name: item.name || "",
+              isDefault: item.is_default || false,
+              is_active: true,
+              created_at: item.created_at,
+              updated_at: item.updated_at,
+              bank_name: "Banco", // Default value since it's not in the database
+            }));
+            
+            setPixKeys(transformedKeys);
+          }
+        }
+      } catch (error) {
+        console.error("Error fetching pix keys:", error);
+        toast({
+          title: "Erro ao carregar chaves PIX",
+          description: "Ocorreu um erro ao carregar suas chaves PIX. Tente novamente mais tarde.",
+          variant: "destructive",
+        });
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchPixKeys();
+  }, [user, toast]);
+
+  const handleAddPixKey = async () => {
+    if (!user) return;
+
+    const newId = Date.now().toString();
+    
+    // Use the utility function to create a new PixKey object
+    const newPixKey = createDefaultPixKeyProperties(newId, user.id);
+    
+    setPixKeys(prev => [...prev, newPixKey]);
+  };
+
   return (
-    <div className="space-y-6">
-      <PageHeader 
-        title="Configurações" 
-        description="Gerencie suas preferências e configurações de conta"
-      />
-      
-      <Tabs defaultValue={activeTab} onValueChange={setActiveTab} className="space-y-6">
-        <TabsList className="bg-muted">
-          <TabsTrigger value="profile" className="data-[state=active]:bg-background">
-            <User className="h-4 w-4 mr-2" />
-            Perfil
-          </TabsTrigger>
-          <TabsTrigger value="notifications" className="data-[state=active]:bg-background">
-            <BellRing className="h-4 w-4 mr-2" />
-            Notificações
-          </TabsTrigger>
-          <TabsTrigger value="security" className="data-[state=active]:bg-background">
-            <Lock className="h-4 w-4 mr-2" />
-            Segurança
-          </TabsTrigger>
-          <TabsTrigger value="payment" className="data-[state=active]:bg-background">
-            <CreditCard className="h-4 w-4 mr-2" />
-            Dados de Pagamento
-          </TabsTrigger>
-          {userRole === UserRole.ADMIN && (
-            <TabsTrigger value="admin" className="data-[state=active]:bg-background">
-              <UserCog className="h-4 w-4 mr-2" />
-              Administração
-            </TabsTrigger>
-          )}
-        </TabsList>
-        
-        <TabsContent value="profile">
-          <PageWrapper>
-            <Card>
-              <CardHeader>
-                <CardTitle>Informações Pessoais</CardTitle>
-                <CardDescription>
-                  Atualize suas informações de contato e perfil
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-6">
-                <div className="space-y-4">
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                      <Label htmlFor="name">Nome Completo</Label>
-                      <Input id="name" placeholder="Seu nome" defaultValue="João Silva" />
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="email">Email</Label>
-                      <Input id="email" type="email" placeholder="seu@email.com" defaultValue="joao.silva@example.com" />
-                    </div>
-                  </div>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                      <Label htmlFor="phone">Telefone</Label>
-                      <Input id="phone" placeholder="(00) 00000-0000" defaultValue="(11) 98765-4321" />
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="cpf">CPF</Label>
-                      <Input id="cpf" placeholder="000.000.000-00" defaultValue="123.456.789-00" />
-                    </div>
-                  </div>
-                </div>
-                
-                <Separator />
-                
-                <div className="space-y-4">
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                      <Label htmlFor="company">Empresa</Label>
-                      <Input id="company" placeholder="Nome da empresa" defaultValue="SigmaPay Ltda" />
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="cnpj">CNPJ</Label>
-                      <Input id="cnpj" placeholder="00.000.000/0000-00" defaultValue="12.345.678/0001-90" />
-                    </div>
-                  </div>
-                </div>
-              </CardContent>
-              <CardFooter>
-                <Button>Salvar Alterações</Button>
-              </CardFooter>
-            </Card>
-          </PageWrapper>
-        </TabsContent>
-        
-        <TabsContent value="notifications">
-          <PageWrapper>
-            <Card>
-              <CardHeader>
-                <CardTitle>Preferências de Notificações</CardTitle>
-                <CardDescription>
-                  Configure como e quando você receberá notificações do sistema
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-6">
-                <div className="space-y-4">
-                  <div className="flex items-center justify-between">
+    <div className="container mx-auto py-10">
+      <Card>
+        <CardHeader>
+          <CardTitle>Configurações</CardTitle>
+          <CardDescription>Gerencie suas configurações de conta e chaves PIX.</CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-6">
+          <div>
+            <h3 className="text-xl font-semibold mb-4">Chaves PIX</h3>
+            {isLoading ? (
+              <p>Carregando chaves PIX...</p>
+            ) : (
+              <div className="space-y-4">
+                <PixKeysManager pixKeys={pixKeys} />
+                {pixKeys.map((key) => (
+                  <div key={key.id} className="grid grid-cols-1 md:grid-cols-3 gap-4">
                     <div>
-                      <p className="font-medium">Notificações por Email</p>
-                      <p className="text-sm text-muted-foreground">Receba alertas e atualizações do sistema por email</p>
+                      <Label htmlFor={`key-${key.id}`}>Chave PIX</Label>
+                      <Input
+                        type="text"
+                        id={`key-${key.id}`}
+                        defaultValue={key.key}
+                        disabled
+                      />
                     </div>
-                    <Switch defaultChecked />
-                  </div>
-                  <div className="flex items-center justify-between">
                     <div>
-                      <p className="font-medium">Notificações de Pagamento</p>
-                      <p className="text-sm text-muted-foreground">Seja notificado quando pagamentos forem processados</p>
+                      <Label htmlFor={`type-${key.id}`}>Tipo</Label>
+                      <Input
+                        type="text"
+                        id={`type-${key.id}`}
+                        defaultValue={key.type}
+                        disabled
+                      />
                     </div>
-                    <Switch defaultChecked />
-                  </div>
-                  <div className="flex items-center justify-between">
                     <div>
-                      <p className="font-medium">Notificações de Vendas</p>
-                      <p className="text-sm text-muted-foreground">Receba alertas sobre novas vendas e atualizações</p>
-                    </div>
-                    <Switch defaultChecked />
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="font-medium">Atualizações do Sistema</p>
-                      <p className="text-sm text-muted-foreground">Seja notificado sobre novas funcionalidades</p>
-                    </div>
-                    <Switch defaultChecked />
-                  </div>
-                </div>
-              </CardContent>
-              <CardFooter>
-                <Button>Salvar Preferências</Button>
-              </CardFooter>
-            </Card>
-          </PageWrapper>
-        </TabsContent>
-        
-        <TabsContent value="security">
-          <PageWrapper>
-            <Card>
-              <CardHeader>
-                <CardTitle>Segurança da Conta</CardTitle>
-                <CardDescription>
-                  Gerencie a segurança da sua conta e altere sua senha
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-6">
-                <div className="space-y-4">
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                      <Label htmlFor="current-password">Senha Atual</Label>
-                      <Input id="current-password" type="password" />
+                      <Label htmlFor={`bank-${key.id}`}>Banco</Label>
+                      <Input
+                        type="text"
+                        id={`bank-${key.id}`}
+                        defaultValue={key.bank_name}
+                        disabled
+                      />
                     </div>
                   </div>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                      <Label htmlFor="new-password">Nova Senha</Label>
-                      <Input id="new-password" type="password" />
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="confirm-password">Confirmar Nova Senha</Label>
-                      <Input id="confirm-password" type="password" />
-                    </div>
-                  </div>
-                </div>
-                
-                <Separator />
-                
-                <div className="space-y-4">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="font-medium">Autenticação de Dois Fatores</p>
-                      <p className="text-sm text-muted-foreground">Adicione uma camada extra de segurança com 2FA</p>
-                    </div>
-                    <Switch />
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="font-medium">Notificações de Login</p>
-                      <p className="text-sm text-muted-foreground">Receba alertas quando sua conta for acessada</p>
-                    </div>
-                    <Switch defaultChecked />
-                  </div>
-                </div>
-              </CardContent>
-              <CardFooter>
-                <Button>Atualizar Senha</Button>
-              </CardFooter>
-            </Card>
-          </PageWrapper>
-        </TabsContent>
-        
-        <TabsContent value="payment">
-          <PageWrapper>
-            <Card>
-              <CardHeader>
-                <CardTitle>Dados de Pagamento</CardTitle>
-                <CardDescription>
-                  Gerencie suas chaves PIX e preferências de pagamento
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-6">
-                <PixKeysManager />
-              </CardContent>
-            </Card>
-          </PageWrapper>
-        </TabsContent>
-        
-        {userRole === UserRole.ADMIN && (
-          <TabsContent value="admin">
-            <PageWrapper>
-              <Card>
-                <CardHeader>
-                  <CardTitle>Administração do Sistema</CardTitle>
-                  <CardDescription>
-                    Acesse ferramentas e configurações administrativas
-                  </CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-6">
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div className="p-4 border rounded-md hover:bg-muted/50 transition-colors">
-                      <h3 className="font-medium mb-2">Gerenciamento de Usuários</h3>
-                      <p className="text-sm text-muted-foreground mb-4">
-                        Gerencie usuários, funções e permissões do sistema
-                      </p>
-                      <Button variant="outline" asChild>
-                        <Link to={PATHS.ADMIN.USER_MANAGEMENT}>
-                          Gerenciar Usuários
-                        </Link>
-                      </Button>
-                    </div>
-                    <div className="p-4 border rounded-md hover:bg-muted/50 transition-colors">
-                      <h3 className="font-medium mb-2">Configurações do Sistema</h3>
-                      <p className="text-sm text-muted-foreground mb-4">
-                        Altere parâmetros gerais do sistema e configurações globais
-                      </p>
-                      <Button variant="outline">
-                        Configurações Globais
-                      </Button>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            </PageWrapper>
-          </TabsContent>
-        )}
-      </Tabs>
+                ))}
+                <Button onClick={handleAddPixKey}>Adicionar Chave PIX</Button>
+              </div>
+            )}
+          </div>
+        </CardContent>
+      </Card>
     </div>
   );
 };
