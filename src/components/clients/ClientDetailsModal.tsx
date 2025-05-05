@@ -509,21 +509,21 @@ const ClientDetailsModal = ({ clientId, isOpen, onClose, onClientUpdated }: Clie
                   onClick={() => setResetPasswordDialogOpen(true)}
                   className="justify-start"
                 >
-                  <KeyRound className="mr-2 h-4 w-4" /> Resetar Senha
+                  <KeyRound className="mr-2 h-4 w-4" /> Redefinir senha
                 </Button>
                 
                 <Button
-                  variant={client.status === ClientStatus.ACTIVE ? "destructive" : "default"}
+                  variant={client.status === ClientStatus.ACTIVE ? "destructive" : "outline"}
                   onClick={handleToggleStatus}
-                  className="justify-start mt-2"
+                  className="justify-start"
                 >
                   {client.status === ClientStatus.ACTIVE ? (
                     <>
-                      <Lock className="mr-2 h-4 w-4" /> Bloquear Cliente
+                      <Lock className="mr-2 h-4 w-4" /> Bloquear cliente
                     </>
                   ) : (
                     <>
-                      <Unlock className="mr-2 h-4 w-4" /> Ativar Cliente
+                      <Unlock className="mr-2 h-4 w-4" /> Ativar cliente
                     </>
                   )}
                 </Button>
@@ -533,213 +533,223 @@ const ClientDetailsModal = ({ clientId, isOpen, onClose, onClientUpdated }: Clie
         </DialogContent>
       </Dialog>
 
-      {/* Dialog to change partner */}
-      <Dialog open={isPartnerDialogOpen} onOpenChange={setPartnerDialogOpen}>
-        <DialogContent className="sm:max-w-md">
-          <DialogHeader>
-            <DialogTitle>Alterar Parceiro</DialogTitle>
-          </DialogHeader>
-          <div className="space-y-4 py-4">
-            <div className="space-y-2">
-              <label className="text-sm font-medium">
-                Cliente: {client.business_name}
-              </label>
-              <Select
-                value={selectedPartnerId}
-                onValueChange={setSelectedPartnerId}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Selecione um parceiro" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="">Nenhum parceiro</SelectItem>
-                  {partners.map((partner) => (
-                    <SelectItem key={partner.id} value={partner.id}>
-                      {partner.company_name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
+      {/* Partner linking dialog */}
+      <AlertDialog open={isPartnerDialogOpen} onOpenChange={setPartnerDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Vincular Parceiro</AlertDialogTitle>
+            <AlertDialogDescription>
+              Selecione o parceiro que deseja vincular a este cliente.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          
+          <div className="py-4">
+            <Label htmlFor="partner-select">Parceiro</Label>
+            <Select
+              value={selectedPartnerId}
+              onValueChange={setSelectedPartnerId}
+            >
+              <SelectTrigger id="partner-select">
+                <SelectValue placeholder="Selecione um parceiro" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="none">Nenhum parceiro</SelectItem>
+                {partners.map(partner => (
+                  <SelectItem key={partner.id} value={partner.id}>
+                    {partner.company_name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setPartnerDialogOpen(false)}>
-              Cancelar
-            </Button>
-            <Button onClick={handleLinkPartner}>Salvar</Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+          
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction onClick={handleLinkPartner}>Confirmar</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
-      {/* Dialog to change fee plan */}
-      <Dialog open={isFeePlanDialogOpen} onOpenChange={setFeePlanDialogOpen}>
-        <DialogContent className="sm:max-w-md">
-          <DialogHeader>
-            <DialogTitle>Alterar Plano de Taxas</DialogTitle>
-          </DialogHeader>
-          <div className="space-y-4 py-4">
-            <div className="space-y-2">
-              <label className="text-sm font-medium">
-                Cliente: {client.business_name}
-              </label>
-              <Select
-                value={selectedFeePlanId}
-                onValueChange={setSelectedFeePlanId}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Selecione um plano de taxas" />
-                </SelectTrigger>
-                <SelectContent>
-                  {mockFeePlans.map((plan) => (
-                    <SelectItem key={plan.id} value={plan.id}>
-                      {plan.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
+      {/* Fee plan selection dialog */}
+      <AlertDialog open={isFeePlanDialogOpen} onOpenChange={setFeePlanDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Alterar Bloco de Taxas</AlertDialogTitle>
+            <AlertDialogDescription>
+              Selecione o bloco de taxas para este cliente.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          
+          <div className="py-4">
+            <Label htmlFor="fee-plan-select">Bloco de Taxas</Label>
+            <Select
+              value={selectedFeePlanId}
+              onValueChange={setSelectedFeePlanId}
+            >
+              <SelectTrigger id="fee-plan-select">
+                <SelectValue placeholder="Selecione um bloco de taxas" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="default">Bloco padrão</SelectItem>
+                {mockFeePlans.map(plan => (
+                  <SelectItem key={plan.id} value={plan.id}>
+                    {plan.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setFeePlanDialogOpen(false)}>
-              Cancelar
-            </Button>
-            <Button onClick={handleUpdateFeePlan}>Salvar</Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+          
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction onClick={handleUpdateFeePlan}>Confirmar</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
-      {/* Dialog to reset password */}
-      <Dialog open={isResetPasswordDialogOpen} onOpenChange={setResetPasswordDialogOpen}>
-        <DialogContent className="sm:max-w-md">
-          <DialogHeader>
-            <DialogTitle>Resetar Senha</DialogTitle>
-          </DialogHeader>
-          <div className="space-y-4 py-4">
-            <p>
-              Você está prestes a enviar um e-mail para <strong>{client.email}</strong> com instruções para redefinição de senha.
-            </p>
-            <p>Deseja prosseguir?</p>
-          </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setResetPasswordDialogOpen(false)}>
-              Cancelar
-            </Button>
-            <Button onClick={handleResetPassword}>Enviar E-mail</Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-
-      {/* Dialog to edit client data */}
-      <Dialog open={isEditDataDialogOpen} onOpenChange={setEditDataDialogOpen}>
-        <DialogContent className="sm:max-w-md">
-          <DialogHeader>
-            <DialogTitle>Editar Dados do Cliente</DialogTitle>
-          </DialogHeader>
-          <div className="space-y-4 py-4">
+      {/* Edit client data dialog */}
+      <AlertDialog open={isEditDataDialogOpen} onOpenChange={setEditDataDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Editar Dados do Cliente</AlertDialogTitle>
+            <AlertDialogDescription>
+              Atualize as informações do cliente.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          
+          <div className="grid gap-4 py-4">
             <div className="space-y-2">
-              <label className="text-sm font-medium">Nome/Razão Social</label>
+              <Label htmlFor="business_name">Nome/Razão Social</Label>
               <Input
+                id="business_name"
                 name="business_name"
                 value={editedClient.business_name || ""}
                 onChange={handleInputChange}
               />
             </div>
+            
             <div className="space-y-2">
-              <label className="text-sm font-medium">E-mail</label>
+              <Label htmlFor="email">E-mail</Label>
               <Input
+                id="email"
                 name="email"
                 type="email"
                 value={editedClient.email || ""}
                 onChange={handleInputChange}
               />
             </div>
+            
             <div className="space-y-2">
-              <label className="text-sm font-medium">Telefone</label>
+              <Label htmlFor="phone">Telefone</Label>
               <Input
+                id="phone"
                 name="phone"
                 value={editedClient.phone || ""}
                 onChange={handleInputChange}
               />
             </div>
+            
             <div className="space-y-2">
-              <label className="text-sm font-medium">Documento (CPF/CNPJ)</label>
+              <Label htmlFor="document">Documento (CPF/CNPJ)</Label>
               <Input
+                id="document"
                 name="document"
                 value={editedClient.document || ""}
                 onChange={handleInputChange}
               />
             </div>
+            
             <div className="space-y-2">
-              <label className="text-sm font-medium">Endereço</label>
+              <Label htmlFor="address">Endereço</Label>
               <Input
+                id="address"
                 name="address"
                 value={editedClient.address || ""}
                 onChange={handleInputChange}
               />
             </div>
+            
             <div className="grid grid-cols-2 gap-2">
               <div className="space-y-2">
-                <label className="text-sm font-medium">Cidade</label>
+                <Label htmlFor="city">Cidade</Label>
                 <Input
+                  id="city"
                   name="city"
                   value={editedClient.city || ""}
                   onChange={handleInputChange}
                 />
               </div>
+              
               <div className="space-y-2">
-                <label className="text-sm font-medium">Estado</label>
+                <Label htmlFor="state">Estado</Label>
                 <Input
+                  id="state"
                   name="state"
                   value={editedClient.state || ""}
                   onChange={handleInputChange}
                 />
               </div>
             </div>
+            
             <div className="space-y-2">
-              <label className="text-sm font-medium">CEP</label>
+              <Label htmlFor="zip">CEP</Label>
               <Input
+                id="zip"
                 name="zip"
                 value={editedClient.zip || ""}
                 onChange={handleInputChange}
               />
             </div>
           </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setEditDataDialogOpen(false)}>
-              Cancelar
-            </Button>
-            <Button onClick={handleUpdateClientData}>Salvar Alterações</Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+          
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction onClick={handleUpdateClientData}>Salvar</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
-      {/* Dialog to edit balance */}
+      {/* Edit balance dialog */}
       <AlertDialog open={isEditBalanceDialogOpen} onOpenChange={setEditBalanceDialogOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Editar Saldo do Cliente</AlertDialogTitle>
+            <AlertDialogTitle>Editar Saldo</AlertDialogTitle>
             <AlertDialogDescription>
-              O cliente será notificado sobre esta alteração. Insira abaixo o novo valor do saldo.
+              Atualize o saldo do cliente. O cliente será notificado desta alteração.
             </AlertDialogDescription>
           </AlertDialogHeader>
+          
           <div className="py-4">
-            <div className="space-y-2">
-              <Label htmlFor="balance">Novo Saldo (R$)</Label>
-              <Input
-                id="balance"
-                type="number"
-                step="0.01"
-                value={newBalance}
-                onChange={(e) => setNewBalance(e.target.value)}
-              />
-              <p className="text-sm text-muted-foreground">
-                Use valores negativos para indicar débitos.
-              </p>
-            </div>
+            <Label htmlFor="balance">Novo Saldo (R$)</Label>
+            <Input
+              id="balance"
+              type="number"
+              step="0.01"
+              value={newBalance}
+              onChange={(e) => setNewBalance(e.target.value)}
+            />
           </div>
+          
           <AlertDialogFooter>
             <AlertDialogCancel>Cancelar</AlertDialogCancel>
             <AlertDialogAction onClick={handleUpdateBalance}>Atualizar Saldo</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Reset password dialog */}
+      <AlertDialog open={isResetPasswordDialogOpen} onOpenChange={setResetPasswordDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Redefinir Senha</AlertDialogTitle>
+            <AlertDialogDescription>
+              Isso enviará um e-mail de redefinição de senha para o cliente. Deseja continuar?
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction onClick={handleResetPassword}>Enviar E-mail</AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>

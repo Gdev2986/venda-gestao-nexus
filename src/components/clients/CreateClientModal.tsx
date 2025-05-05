@@ -311,7 +311,7 @@ const CreateClientModal = ({ isOpen, onClose, onCreated }: CreateClientModalProp
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        <SelectItem value="">Nenhum</SelectItem>
+                        <SelectItem value="none">Nenhum</SelectItem>
                         {partners.map(partner => (
                           <SelectItem key={partner.id} value={partner.id}>
                             {partner.company_name}
@@ -340,7 +340,7 @@ const CreateClientModal = ({ isOpen, onClose, onCreated }: CreateClientModalProp
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        <SelectItem value="">Padrão</SelectItem>
+                        <SelectItem value="default">Padrão</SelectItem>
                         {mockFeePlans.map(plan => (
                           <SelectItem key={plan.id} value={plan.id}>
                             {plan.name}

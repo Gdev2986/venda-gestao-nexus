@@ -254,13 +254,12 @@ const AdminClients = () => {
       <PageHeader 
         title="Clientes" 
         description="Gerencie seus clientes e suas informações"
-        action={
-          <Button onClick={handleCreateClient}>
-            <Plus className="mr-2 h-4 w-4" />
-            Novo Cliente
-          </Button>
-        }
-      />
+      >
+        <Button onClick={handleCreateClient}>
+          <Plus className="mr-2 h-4 w-4" />
+          Novo Cliente
+        </Button>
+      </PageHeader>
       <PageWrapper>
         <ClientsList
           clients={paginatedClients}
