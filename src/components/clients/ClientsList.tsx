@@ -111,7 +111,7 @@ const ClientsList = ({ clients, loading, onViewClient, onEditClient, onDeleteCli
                         </Button>
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end">
-                        <DropdownMenuLabel>Ações</DropdownMenuItem>
+                        <DropdownMenuLabel>Ações</DropdownMenuLabel>
                         <DropdownMenuItem onClick={() => onViewClient(client.id)}>
                           <Eye className="mr-2 h-4 w-4" />
                           Ver detalhes
