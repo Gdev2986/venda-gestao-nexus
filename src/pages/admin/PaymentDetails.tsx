@@ -1,11 +1,10 @@
-
 import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { PageHeader } from "@/components/page/PageHeader";
 import { PageWrapper } from "@/components/page/PageWrapper";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
-import { Payment, PaymentStatus } from "@/types";
+import { Payment, PaymentStatus, PaymentType } from "@/types";
 import PaymentDetailView from "@/components/payments/PaymentDetailView";
 import { useToast } from "@/hooks/use-toast";
 import { ArrowLeft } from "lucide-react";
@@ -57,8 +56,8 @@ const AdminPaymentDetails = () => {
             approved_at: data.approved_at,
             receipt_url: data.receipt_url,
             client_name: data.client?.business_name || "Cliente desconhecido",
-            payment_type: "PIX", // Default to PIX
-            rejection_reason: data.rejection_reason,
+            payment_type: PaymentType.PIX, // Default to PIX
+            rejection_reason: data.rejection_reason || null,
             pix_key: data.pix_key ? {
               id: data.pix_key_id,
               key: data.pix_key.key,
