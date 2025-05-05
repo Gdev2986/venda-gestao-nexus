@@ -1,177 +1,271 @@
 
+import { useEffect, useState } from "react";
 import { PageHeader } from "@/components/page/PageHeader";
 import { PageWrapper } from "@/components/page/PageWrapper";
-import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { PATHS } from "@/routes/paths";
-import { Link } from "react-router-dom";
+import { 
+  BarChart, 
+  Bar, 
+  XAxis, 
+  YAxis, 
+  CartesianGrid, 
+  Tooltip, 
+  ResponsiveContainer, 
+  PieChart, 
+  Pie, 
+  Cell 
+} from "recharts";
+import { 
+  Package,
+  Truck,
+  Clock,
+  AlertCircle,
+  CheckCircle2,
+  Wrench
+} from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
+
+// Mock data for the KPIs
+const kpiData = {
+  totalMachines: 158,
+  inStock: 42,
+  operating: 97,
+  maintenance: 15,
+  broken: 4,
+  pendingRequests: 23,
+  avgSLA: 2.5, // in days
+};
+
+// Mock data for the status distribution chart
+const statusData = [
+  { name: 'Operando', value: 97, color: '#10b981' },
+  { name: 'Em Estoque', value: 42, color: '#6366f1' },
+  { name: 'Manutenção', value: 15, color: '#f59e0b' },
+  { name: 'Quebradas', value: 4, color: '#ef4444' },
+];
+
+// Mock data for the requests chart
+const requestsData = [
+  { name: 'Jan', requests: 35 },
+  { name: 'Fev', requests: 42 },
+  { name: 'Mar', requests: 38 },
+  { name: 'Abr', requests: 45 },
+  { name: 'Mai', requests: 37 },
+  { name: 'Jun', requests: 32 },
+  { name: 'Jul', requests: 39 },
+];
 
 const LogisticsDashboard = () => {
+  const { toast } = useToast();
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    // Simulate loading data
+    const timer = setTimeout(() => {
+      setIsLoading(false);
+    }, 1000);
+    
+    return () => clearTimeout(timer);
+  }, []);
+
   return (
     <div className="space-y-6">
       <PageHeader 
-        title="Painel de Logística" 
-        description="Gerencie entregas, instalações e estoque de máquinas"
+        title="Dashboard Logístico" 
+        description="Visão geral das operações logísticas"
       />
       
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+      {/* KPI Cards */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         <Card>
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">Máquinas em Estoque</CardTitle>
+            <CardTitle className="text-sm font-medium text-muted-foreground">
+              Total de Máquinas
+            </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">32</div>
-            <div className="flex items-center mt-2 text-sm text-muted-foreground">
-              <span className="inline-block w-3 h-3 rounded-full bg-green-500 mr-2"></span>
-              <span>12 Terminais Pro</span>
+            <div className="flex items-center justify-between">
+              <div className="text-3xl font-bold">{kpiData.totalMachines}</div>
+              <div className="h-12 w-12 rounded-full bg-primary/10 flex items-center justify-center">
+                <Package className="h-6 w-6 text-primary" />
+              </div>
             </div>
-            <div className="flex items-center mt-1 text-sm text-muted-foreground">
-              <span className="inline-block w-3 h-3 rounded-full bg-blue-500 mr-2"></span>
-              <span>20 Terminais Standard</span>
-            </div>
+            <p className="text-xs text-muted-foreground mt-2">
+              {kpiData.inStock} em estoque, {kpiData.operating} operando
+            </p>
           </CardContent>
         </Card>
         
         <Card>
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">Entregas Pendentes</CardTitle>
+            <CardTitle className="text-sm font-medium text-muted-foreground">
+              Máquinas Operando
+            </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">8</div>
-            <div className="flex items-center mt-2 text-sm text-muted-foreground">
-              <span className="inline-block w-3 h-3 rounded-full bg-yellow-500 mr-2"></span>
-              <span>5 para instalação</span>
+            <div className="flex items-center justify-between">
+              <div className="text-3xl font-bold">{kpiData.operating}</div>
+              <div className="h-12 w-12 rounded-full bg-green-500/10 flex items-center justify-center">
+                <CheckCircle2 className="h-6 w-6 text-green-500" />
+              </div>
             </div>
-            <div className="flex items-center mt-1 text-sm text-muted-foreground">
-              <span className="inline-block w-3 h-3 rounded-full bg-red-500 mr-2"></span>
-              <span>3 para manutenção</span>
-            </div>
+            <p className="text-xs text-muted-foreground mt-2">
+              {Math.round((kpiData.operating / kpiData.totalMachines) * 100)}% do total
+            </p>
           </CardContent>
         </Card>
         
         <Card>
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">Manutenções</CardTitle>
+            <CardTitle className="text-sm font-medium text-muted-foreground">
+              Solicitações Pendentes
+            </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">12</div>
-            <div className="flex items-center mt-2 text-sm text-muted-foreground">
-              <span className="inline-block w-3 h-3 rounded-full bg-orange-500 mr-2"></span>
-              <span>4 urgentes</span>
+            <div className="flex items-center justify-between">
+              <div className="text-3xl font-bold">{kpiData.pendingRequests}</div>
+              <div className="h-12 w-12 rounded-full bg-yellow-500/10 flex items-center justify-center">
+                <AlertCircle className="h-6 w-6 text-yellow-500" />
+              </div>
             </div>
-            <div className="flex items-center mt-1 text-sm text-muted-foreground">
-              <span className="inline-block w-3 h-3 rounded-full bg-purple-500 mr-2"></span>
-              <span>8 agendadas</span>
+            <p className="text-xs text-muted-foreground mt-2">
+              8 manutenções, 15 instalações novas
+            </p>
+          </CardContent>
+        </Card>
+        
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm font-medium text-muted-foreground">
+              SLA Médio (dias)
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="flex items-center justify-between">
+              <div className="text-3xl font-bold">{kpiData.avgSLA}</div>
+              <div className="h-12 w-12 rounded-full bg-blue-500/10 flex items-center justify-center">
+                <Clock className="h-6 w-6 text-blue-500" />
+              </div>
+            </div>
+            <p className="text-xs text-muted-foreground mt-2">
+              -0.5 dias em relação ao mês anterior
+            </p>
+          </CardContent>
+        </Card>
+      </div>
+      
+      {/* Charts */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <Card>
+          <CardHeader>
+            <CardTitle>Status das Máquinas</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="h-80">
+              <ResponsiveContainer width="100%" height="100%">
+                <PieChart>
+                  <Pie
+                    data={statusData}
+                    innerRadius={60}
+                    outerRadius={100}
+                    paddingAngle={2}
+                    dataKey="value"
+                    nameKey="name"
+                    label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
+                    labelLine={false}
+                  >
+                    {statusData.map((entry, index) => (
+                      <Cell key={`cell-${index}`} fill={entry.color} />
+                    ))}
+                  </Pie>
+                  <Tooltip />
+                </PieChart>
+              </ResponsiveContainer>
+              <div className="flex justify-center space-x-8 mt-4">
+                {statusData.map((status, i) => (
+                  <div key={i} className="flex items-center">
+                    <div
+                      className="w-3 h-3 rounded-full mr-2"
+                      style={{ backgroundColor: status.color }}
+                    />
+                    <span className="text-sm text-muted-foreground">{status.name}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+        
+        <Card>
+          <CardHeader>
+            <CardTitle>Solicitações Mensais</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="h-80">
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart data={requestsData}>
+                  <CartesianGrid strokeDasharray="3 3" />
+                  <XAxis dataKey="name" />
+                  <YAxis />
+                  <Tooltip />
+                  <Bar dataKey="requests" fill="#6366f1" />
+                </BarChart>
+              </ResponsiveContainer>
             </div>
           </CardContent>
         </Card>
       </div>
       
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <div className="md:col-span-2">
-          <Card>
-            <CardHeader className="border-b pb-3">
-              <CardTitle>Entregas Agendadas para Hoje</CardTitle>
-            </CardHeader>
-            <CardContent className="p-0">
-              <table className="w-full">
-                <thead className="bg-muted/50">
-                  <tr>
-                    <th className="text-left p-3 text-xs font-medium text-muted-foreground">Cliente</th>
-                    <th className="text-left p-3 text-xs font-medium text-muted-foreground">Endereço</th>
-                    <th className="text-left p-3 text-xs font-medium text-muted-foreground">Tipo</th>
-                    <th className="text-left p-3 text-xs font-medium text-muted-foreground">Horário</th>
-                    <th className="text-left p-3 text-xs font-medium text-muted-foreground">Status</th>
-                    <th className="text-right p-3 text-xs font-medium text-muted-foreground w-[100px]">Ações</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y">
-                  {[
-                    { client: "Cliente ABC", address: "Av. Exemplo, 123", type: "Instalação", time: "09:30", status: "Em rota" },
-                    { client: "Cliente XYZ", address: "Rua Teste, 456", type: "Manutenção", time: "11:00", status: "Pendente" },
-                    { client: "Cliente DEF", address: "Rua Modelo, 789", type: "Instalação", time: "14:30", status: "Pendente" },
-                    { client: "Cliente GHI", address: "Av. Padrão, 321", type: "Entrega", time: "16:00", status: "Pendente" },
-                  ].map((delivery, i) => (
-                    <tr key={i}>
-                      <td className="p-3">{delivery.client}</td>
-                      <td className="p-3">{delivery.address}</td>
-                      <td className="p-3">
-                        <span className={`inline-flex items-center rounded-full px-2 py-1 text-xs font-medium ${
-                          delivery.type === "Instalação" ? "bg-green-50 text-green-700" : 
-                          delivery.type === "Manutenção" ? "bg-orange-50 text-orange-700" : 
-                          "bg-blue-50 text-blue-700"
-                        }`}>
-                          {delivery.type}
-                        </span>
-                      </td>
-                      <td className="p-3">{delivery.time}</td>
-                      <td className="p-3">
-                        <span className={`inline-flex items-center rounded-full px-2 py-1 text-xs font-medium ${
-                          delivery.status === "Em rota" ? "bg-blue-50 text-blue-700" : "bg-yellow-50 text-yellow-700"
-                        }`}>
-                          {delivery.status}
-                        </span>
-                      </td>
-                      <td className="p-3 text-right">
-                        <Button variant="ghost" size="sm">Detalhes</Button>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-              
-              <div className="p-4 text-center border-t">
-                <Button variant="link" asChild>
-                  <Link to={PATHS.LOGISTICS.LOGISTICS_MODULE}>Ver cronograma completo</Link>
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-        
-        <div className="md:col-span-1">
-          <Card>
-            <CardHeader>
-              <CardTitle>Ações Rápidas</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-2">
-                <Button variant="outline" className="w-full justify-start" asChild>
-                  <Link to={PATHS.LOGISTICS.MACHINES}>Cadastrar Nova Máquina</Link>
-                </Button>
-                <Button variant="outline" className="w-full justify-start" asChild>
-                  <Link to={PATHS.LOGISTICS.LOGISTICS_MODULE}>Agendar Entrega</Link>
-                </Button>
-                <Button variant="outline" className="w-full justify-start" asChild>
-                  <Link to={PATHS.LOGISTICS.SUPPORT}>Ver Chamados</Link>
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
-          
-          <Card className="mt-6">
-            <CardHeader>
-              <CardTitle>Alertas</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-3">
-                <div className="p-3 bg-red-50 border border-red-100 rounded-md">
-                  <p className="font-medium text-red-800">Estoque Baixo: Bobinas</p>
-                  <p className="text-sm text-red-600">Restam apenas 15 unidades</p>
+      {/* Recent Activity */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Atividade Recente</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-4">
+            {[
+              { type: 'maintenance', terminal: 'TERM-19284', client: 'Restaurante Sabores', time: '28 minutos atrás' },
+              { type: 'transfer', terminal: 'TERM-28471', from: 'Depósito', to: 'Café Central', time: '2 horas atrás' },
+              { type: 'installation', terminal: 'TERM-98734', client: 'Sorveteria Gelatto', time: '5 horas atrás' },
+              { type: 'repair', terminal: 'TERM-87123', client: 'Farmácia Saúde', time: '1 dia atrás' },
+              { type: 'replace', terminal: 'TERM-12984', client: 'Mercado Geral', time: '2 dias atrás' },
+            ].map((activity, index) => (
+              <div key={index} className="flex items-start space-x-4">
+                <div className={`mt-0.5 rounded-full p-2 ${
+                  activity.type === 'maintenance' ? 'bg-yellow-100 text-yellow-700' :
+                  activity.type === 'transfer' ? 'bg-blue-100 text-blue-700' :
+                  activity.type === 'installation' ? 'bg-green-100 text-green-700' :
+                  activity.type === 'repair' ? 'bg-red-100 text-red-700' :
+                  'bg-purple-100 text-purple-700'
+                }`}>
+                  {activity.type === 'maintenance' && <Wrench className="h-4 w-4" />}
+                  {activity.type === 'transfer' && <Truck className="h-4 w-4" />}
+                  {activity.type === 'installation' && <Package className="h-4 w-4" />}
+                  {activity.type === 'repair' && <Wrench className="h-4 w-4" />}
+                  {activity.type === 'replace' && <Package className="h-4 w-4" />}
                 </div>
-                <div className="p-3 bg-yellow-50 border border-yellow-100 rounded-md">
-                  <p className="font-medium text-yellow-800">3 manutenções atrasadas</p>
-                  <p className="text-sm text-yellow-600">Atenção necessária</p>
-                </div>
-                <div className="p-3 bg-blue-50 border border-blue-100 rounded-md">
-                  <p className="font-medium text-blue-800">Novo pedido: 10 terminais</p>
-                  <p className="text-sm text-blue-600">Chegada prevista: 05/05/2025</p>
+                <div className="flex-1 space-y-1">
+                  <div className="flex items-center justify-between">
+                    <p className="text-sm font-medium">
+                      {activity.type === 'maintenance' && `Manutenção agendada para ${activity.terminal}`}
+                      {activity.type === 'transfer' && `${activity.terminal} transferido de ${activity.from} para ${activity.to}`}
+                      {activity.type === 'installation' && `Nova instalação de ${activity.terminal}`}
+                      {activity.type === 'repair' && `Reparo completado em ${activity.terminal}`}
+                      {activity.type === 'replace' && `Substituição de terminal ${activity.terminal}`}
+                    </p>
+                    <span className="text-xs text-muted-foreground">
+                      {activity.time}
+                    </span>
+                  </div>
+                  <p className="text-sm text-muted-foreground">
+                    {activity.client}
+                  </p>
                 </div>
               </div>
-            </CardContent>
-          </Card>
-        </div>
-      </div>
+            ))}
+          </div>
+        </CardContent>
+      </Card>
     </div>
   );
 };

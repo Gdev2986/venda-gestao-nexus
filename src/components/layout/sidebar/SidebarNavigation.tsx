@@ -1,3 +1,4 @@
+
 import { UserRole } from "@/types";
 import {
   LayoutDashboard,
@@ -11,7 +12,11 @@ import {
   CreditCard,
   Building2,
   HelpCircle,
-  Truck
+  Truck,
+  Calendar,
+  Package,
+  Search,
+  Box
 } from "lucide-react";
 import SidebarNavItem from "./SidebarNavItem";
 import { SidebarItem } from "./types";
@@ -58,7 +63,7 @@ const SidebarNavigation = ({ userRole }: SidebarNavigationProps) => {
     {
       title: "Logística",
       icon: Truck,
-      href: PATHS.ADMIN.LOGISTICS,
+      href: PATHS.LOGISTICS.DASHBOARD,
       roles: [UserRole.ADMIN],
     },
     {
@@ -249,27 +254,45 @@ const SidebarNavigation = ({ userRole }: SidebarNavigationProps) => {
       roles: [UserRole.LOGISTICS],
     },
     {
-      title: "Clientes",
-      icon: Building2,
-      href: PATHS.LOGISTICS.CLIENTS,
-      roles: [UserRole.LOGISTICS],
-    },
-    {
       title: "Máquinas",
       icon: CreditCard,
       href: PATHS.LOGISTICS.MACHINES,
       roles: [UserRole.LOGISTICS],
     },
     {
-      title: "Vendas",
-      icon: ListOrdered,
-      href: PATHS.LOGISTICS.SALES,
+      title: "Operações",
+      icon: Truck,
+      href: PATHS.LOGISTICS.OPERATIONS,
       roles: [UserRole.LOGISTICS],
     },
     {
-      title: "Operações",
-      icon: Truck,
-      href: PATHS.LOGISTICS.LOGISTICS_MODULE,
+      title: "Solicitações",
+      icon: MessageSquare,
+      href: PATHS.LOGISTICS.REQUESTS,
+      roles: [UserRole.LOGISTICS],
+    },
+    {
+      title: "Calendário",
+      icon: Calendar,
+      href: PATHS.LOGISTICS.CALENDAR,
+      roles: [UserRole.LOGISTICS],
+    },
+    {
+      title: "Inventário",
+      icon: Box,
+      href: PATHS.LOGISTICS.INVENTORY,
+      roles: [UserRole.LOGISTICS],
+    },
+    {
+      title: "Clientes",
+      icon: Building2,
+      href: PATHS.LOGISTICS.CLIENTS,
+      roles: [UserRole.LOGISTICS],
+    },
+    {
+      title: "Vendas",
+      icon: ListOrdered,
+      href: PATHS.LOGISTICS.SALES,
       roles: [UserRole.LOGISTICS],
     },
     {

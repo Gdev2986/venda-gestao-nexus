@@ -1,7 +1,7 @@
 
 import { useState, useEffect } from "react";
 import { useToast } from "@/hooks/use-toast";
-import { Payment } from "@/types";
+import { Payment, PaymentStatus, PaymentType } from "@/types";
 import { supabase } from "@/integrations/supabase/client";
 import { getMockPaymentRequests } from "@/utils/mock-payment-data";
 
@@ -37,15 +37,15 @@ export const usePaymentRequestsFetcher = (initialBalance: number = 15000) => {
       
       if (data && data.length > 0) {
         // Map the data to our Payment interface
-        const formattedData = data.map((item) => ({
+        const formattedData: Payment[] = data.map((item) => ({
           id: item.id,
           amount: item.amount,
-          status: item.status,
+          status: item.status as PaymentStatus,
           created_at: item.created_at,
           updated_at: item.updated_at,
           client_id: item.client_id,
           description: item.description || "",
-          payment_type: "PIX",
+          payment_type: PaymentType.PIX,
           receipt_url: item.receipt_url,
           rejection_reason: item.rejection_reason || null,
           approved_at: item.approved_at,

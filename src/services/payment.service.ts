@@ -1,105 +1,39 @@
+import { Payment, PaymentStatus, PaymentType } from "@/types";
 
-import { supabase } from "@/integrations/supabase/client";
-import { PaymentData, PaymentStatus } from "@/types/payment.types";
-
-export const fetchPaymentsData = async (
-  statusFilter: PaymentStatus | "ALL" = "ALL",
-  searchTerm: string = ""
-) => {
-  let query = supabase
-    .from('payment_requests')
-    .select(`
-      *,
-      pix_key:pix_key_id (
-        id,
-        key,
-        type,
-        name
-      ),
-      client:client_id (
-        id,
-        business_name,
-        email
-      )
-    `);
-    
-  // Apply status filter if it's not ALL
-  if (statusFilter !== "ALL") {
-    query = query.eq('status', statusFilter);
+export const formatPaymentStatus = (status: string): PaymentStatus => {
+  switch (status) {
+    case "PENDING":
+      return PaymentStatus.PENDING;
+    case "APPROVED":
+      return PaymentStatus.APPROVED;
+    case "REJECTED":
+      return PaymentStatus.REJECTED;
+    case "PAID":
+      return PaymentStatus.PAID;
+    default:
+      return PaymentStatus.PENDING;
   }
-  
-  // Apply search filter if provided
-  if (searchTerm) {
-    query = query.or(`
-      client.business_name.ilike.%${searchTerm}%,
-      description.ilike.%${searchTerm}%
-    `);
-  }
-  
-  const { data, error } = await query;
-  
-  if (error) throw error;
-  
-  // Map data to our internal format
-  const formattedData = (data || []).map((payment) => {
-    return {
-      ...payment,
-      status: payment.status as PaymentStatus,
-      rejection_reason: payment.rejection_reason || null,
-      approved_at: payment.approved_at || null,
-      approved_by: payment.approved_by || null,
-      receipt_url: payment.receipt_url || null
-    } as PaymentData;
-  });
-  
-  return formattedData;
 };
 
-export const approvePaymentRequest = async (paymentId: string, receiptUrl?: string | null) => {
-  const updateData: any = { 
-    status: 'APPROVED',
-    approved_at: new Date().toISOString(),
+export const formatPaymentRequest = (item: any): Payment => {
+  return {
+    id: item.id,
+    amount: item.amount,
+    status: item.status,
+    created_at: item.created_at,
+    updated_at: item.updated_at,
+    client_id: item.client_id,
+    description: item.description || "",
+    payment_type: PaymentType.PIX,
+    client_name: item.client?.business_name,
+    receipt_url: item.receipt_url,
+    rejection_reason: item.rejection_reason || null,
+    approved_at: item.approved_at,
+    pix_key: item.pix_key ? {
+      id: item.pix_key.id,
+      key: item.pix_key.key,
+      type: item.pix_key.type,
+      owner_name: item.pix_key.name
+    } : undefined
   };
-  
-  if (receiptUrl) {
-    updateData.receipt_url = receiptUrl;
-  }
-  
-  const { error } = await supabase
-    .from('payment_requests')
-    .update(updateData)
-    .eq('id', paymentId);
-
-  if (error) throw error;
-  
-  return true;
-};
-
-export const rejectPaymentRequest = async (paymentId: string, rejectionReason: string) => {
-  const { error } = await supabase
-    .from('payment_requests')
-    .update({ 
-      status: 'REJECTED', 
-      rejection_reason: rejectionReason 
-    })
-    .eq('id', paymentId);
-
-  if (error) throw error;
-  
-  return true;
-};
-
-export const setupPaymentSubscription = (callback: () => void) => {
-  const channel = supabase
-    .channel('payment_changes')
-    .on('postgres_changes', { 
-      event: '*', 
-      schema: 'public', 
-      table: 'payment_requests' 
-    }, () => {
-      callback();
-    })
-    .subscribe();
-
-  return channel;
 };

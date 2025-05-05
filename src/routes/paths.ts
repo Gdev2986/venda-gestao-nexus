@@ -1,3 +1,4 @@
+
 export const PATHS = {
   HOME: "/",
   LOGIN: "/login",
@@ -74,6 +75,11 @@ export const PATHS = {
     CLIENTS: "/logistics/clients",
     MACHINES: "/logistics/machines",
     MACHINE_NEW: "/logistics/machines/new", // Add machine new path
+    MACHINE_DETAILS: (id: string = ":id") => `/logistics/machines/${id}`,
+    OPERATIONS: "/logistics/operations",
+    REQUESTS: "/logistics/requests",
+    CALENDAR: "/logistics/calendar",
+    INVENTORY: "/logistics/inventory",
     SALES: "/logistics/sales",
     LOGISTICS_MODULE: "/logistics/module",
     SUPPORT: "/logistics/support",
