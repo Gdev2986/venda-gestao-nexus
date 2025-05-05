@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { z } from "zod";
 import { useForm } from "react-hook-form";
@@ -327,7 +326,7 @@ export const CreateClientModal = ({
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
-                      <SelectItem value="none">Plano padrão</SelectItem>
+                      <SelectItem value="default">Plano padrão</SelectItem>
                       {feePlans.map((plan) => (
                         <SelectItem key={plan.id} value={plan.id}>
                           {plan.name}

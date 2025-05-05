@@ -213,8 +213,8 @@ export const ClientDetailsModal = ({
                     <dl className="space-y-2 text-sm">
                       <div>
                         <dt className="text-muted-foreground">Saldo Atual:</dt>
-                        <dd className={`font-mono font-medium ${client.balance && client.balance < 0 ? 'text-destructive' : ''}`}>
-                          {client.balance?.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
+                        <dd className={`font-mono font-medium ${client.balance != null && client.balance < 0 ? 'text-destructive' : ''}`}>
+                          {client.balance != null ? client.balance.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' }) : "—"}
                         </dd>
                       </div>
                       <div>
@@ -226,7 +226,7 @@ export const ClientDetailsModal = ({
                           variant="outline" 
                           size="sm"
                           onClick={() => {
-                            setBalanceAmount(client.balance || 0);
+                            setBalanceAmount(client.balance != null ? client.balance : 0);
                             setIsBalanceModalOpen(true);
                           }}
                         >

@@ -9,6 +9,9 @@ export type SupabaseClientRow = {
   partner_id?: string;
   created_at?: string;
   updated_at?: string;
+  status?: string;
+  balance?: number;
+  fee_plan_id?: string;
 };
 
 // Type for client creation without ID and timestamps

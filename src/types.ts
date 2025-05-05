@@ -1,3 +1,4 @@
+
 export enum UserRole {
   CLIENT = "CLIENT",
   ADMIN = "ADMIN",
@@ -76,6 +77,8 @@ export interface Client {
   state?: string;
   zip?: string;
   status?: string;
+  balance?: number;
+  fee_plan_id?: string;
 }
 
 export interface FilterValues {
@@ -164,3 +167,17 @@ export interface ClientFormData {
   state: string;
   zip: string;
 }
+
+// Define User type for user management
+export interface User {
+  id: string;
+  name: string;
+  email: string;
+  role: UserRole;
+  phone?: string;
+  avatar?: string;
+  created_at?: string;
+  updated_at?: string;
+}
+
+export type UserData = User;
