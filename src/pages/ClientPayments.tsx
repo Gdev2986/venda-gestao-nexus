@@ -1,4 +1,3 @@
-
 import { Button } from "@/components/ui/button";
 import { SendIcon } from "lucide-react";
 import { useEffect, useState } from "react";
