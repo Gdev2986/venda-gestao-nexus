@@ -50,7 +50,7 @@ export function DataTable({ columns, data, currentPage, totalPages, onPageChange
                 {columns.map((column) => (
                   <TableCell key={`${rowIndex}-${column.id}`}>
                     {column.cell
-                      ? column.cell(row)
+                      ? column.cell({ row: { original: row } })
                       : column.accessorKey
                       ? row[column.accessorKey]
                       : null}
