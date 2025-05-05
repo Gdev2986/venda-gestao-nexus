@@ -1,3 +1,4 @@
+
 import { Routes, Route, useLocation, Navigate } from "react-router-dom";
 import { PATHS } from "./routes/paths";
 import { useEffect } from "react";
@@ -28,6 +29,7 @@ import AdminDashboard from "./pages/admin/Dashboard";
 import AdminClients from "./pages/admin/Clients";
 import AdminSales from "./pages/admin/Sales";
 import AdminPartners from "./pages/admin/Partners";
+import AdminPayments from "./pages/admin/Payments";
 
 // Clients
 import Clients from "./pages/clients/Clients";
@@ -159,15 +161,15 @@ function App() {
           
           <Route 
             path={PATHS.ADMIN.PAYMENTS} 
-            element={<Payments />} 
+            element={<AdminPayments />} 
           />
           
           <Route 
             path={PATHS.ADMIN.PAYMENT_DETAILS()} 
-            element={<Payments />} 
+            element={<AdminPayments />} 
           />
           
-          <Route path={PATHS.ADMIN.PAYMENT_NEW} element={<Payments />} />
+          <Route path={PATHS.ADMIN.PAYMENT_NEW} element={<AdminPayments />} />
           
           <Route 
             path={PATHS.ADMIN.PARTNERS} 
@@ -311,7 +313,7 @@ function App() {
           
           <Route 
             path={PATHS.FINANCIAL.PAYMENTS} 
-            element={<Payments />} 
+            element={<AdminPayments />} 
           />
           
           <Route 

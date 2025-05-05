@@ -13,7 +13,7 @@ import { ApprovePaymentDialog } from "@/components/payments/ApprovePaymentDialog
 import { RejectPaymentDialog } from "@/components/payments/RejectPaymentDialog";
 import { PaymentDetailsDialog } from "@/components/payments/PaymentDetailsDialog";
 
-const Payments = () => {
+const AdminPayments = () => {
   // State for filters
   const [statusFilter, setStatusFilter] = useState<PaymentStatus | "ALL">("ALL");
   const [searchTerm, setSearchTerm] = useState("");
@@ -153,6 +153,7 @@ const Payments = () => {
           currentPage={currentPage}
           totalPages={totalPages}
           onPageChange={setCurrentPage}
+          isLoading={isLoading}
         />
       </PageWrapper>
       
@@ -181,4 +182,4 @@ const Payments = () => {
   );
 };
 
-export default Payments;
+export default AdminPayments;
