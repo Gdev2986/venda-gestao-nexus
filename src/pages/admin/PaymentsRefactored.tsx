@@ -35,6 +35,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { FileUploader } from "@/components/payments/FileUploader";
 import { useUserRole } from "@/hooks/use-user-role";
 import { usePayments } from "@/hooks/usePayments";
+import { supabase } from "@/integrations/supabase/client";
 
 const PaymentActions = {
   APPROVE: "approve",

@@ -1,217 +1,140 @@
 
+import { useState, useEffect } from "react";
 import { PageHeader } from "@/components/page/PageHeader";
 import { PageWrapper } from "@/components/page/PageWrapper";
-import { PATHS } from "@/routes/paths";
-import { useState, useEffect } from "react";
-import { supabase } from "@/integrations/supabase/client";
-import { useToast } from "@/hooks/use-toast";
+import { Button } from "@/components/ui/button";
 import StatCards from "@/components/dashboard/admin/StatCards";
 import SalesChart from "@/components/dashboard/admin/SalesChart";
 import PaymentMethodsChart from "@/components/dashboard/admin/PaymentMethodsChart";
-import RecentActivities from "@/components/dashboard/admin/RecentActivities";
-import { format, subDays } from "date-fns";
-import { Button } from "@/components/ui/button";
-import { Calendar, Download, RefreshCw } from "lucide-react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { RefreshCw } from "lucide-react";
+
+// Dashboard mock data
+const MOCK_DATA = {
+  stats: {
+    totalSales: 125750.50,
+    netSales: 98230.75,
+    totalClients: 48,
+    totalMachines: 76,
+    pendingPayments: 12,
+    pendingCommissions: 8,
+    currentBalance: 52480.90,
+    salesGrowth: 12.5,
+    isGrowthPositive: true
+  },
+  dailySales: [
+    { name: "Segunda", gross: 12500, net: 9375 },
+    { name: "Terça", gross: 9800, net: 7350 },
+    { name: "Quarta", gross: 15200, net: 11400 },
+    { name: "Quinta", gross: 18500, net: 13875 },
+    { name: "Sexta", gross: 22300, net: 16725 },
+    { name: "Sábado", gross: 19800, net: 14850 },
+    { name: "Domingo", gross: 14500, net: 10875 }
+  ],
+  paymentMethods: [
+    { name: "Crédito", value: 68500, color: "#3b82f6", percent: 0.55 },
+    { name: "Débito", value: 37500, color: "#22c55e", percent: 0.30 },
+    { name: "Pix", value: 19750, color: "#f59e0b", percent: 0.15 }
+  ],
+  recentActivities: [
+    { 
+      id: "1", 
+      title: "Nova solicitação de pagamento", 
+      description: "Cliente ABC solicitou um pagamento de R$ 1.250,00",
+      timestamp: new Date(Date.now() - 3600000).toISOString()
+    },
+    {
+      id: "2",
+      title: "Novo cliente cadastrado",
+      description: "Parceiro XYZ cadastrou um novo cliente: Empresa DEF Ltda",
+      timestamp: new Date(Date.now() - 7200000).toISOString()
+    },
+    {
+      id: "3",
+      title: "Venda processada",
+      description: "Terminal #12345 registrou uma venda de R$ 789,50",
+      timestamp: new Date(Date.now() - 10800000).toISOString()
+    },
+    {
+      id: "4",
+      title: "Pagamento aprovado",
+      description: "Administrador aprovou pagamento de R$ 3.500,00 para cliente GHI",
+      timestamp: new Date(Date.now() - 14400000).toISOString()
+    }
+  ]
+};
 
 const AdminDashboard = () => {
-  const [isLoading, setIsLoading] = useState(true);
-  const { toast } = useToast();
-  const [stats, setStats] = useState({
-    totalSales: 0,
-    netSales: 0,
-    totalClients: 0,
-    totalMachines: 0,
-    pendingPayments: 0,
-    pendingCommissions: 0,
-    currentBalance: 0,
-    salesGrowth: 5.2,
-    isGrowthPositive: true,
-  });
-  const [salesData, setSalesData] = useState<Array<{ name: string; gross: number; net: number }>>([]);
-  const [paymentMethodsData, setPaymentMethodsData] = useState<Array<{ name: string; value: number; color: string; percent: number }>>([]);
-  const [activities, setActivities] = useState<Array<any>>([]);
-
-  useEffect(() => {
-    fetchDashboardData();
-  }, []);
-
-  // Fetch all dashboard data
-  const fetchDashboardData = async () => {
+  const [isLoading, setIsLoading] = useState(false);
+  
+  // Function to simulate data refresh
+  const handleRefresh = () => {
     setIsLoading(true);
-    try {
-      await Promise.all([
-        fetchStats(),
-        fetchSalesData(),
-        fetchPaymentMethodsData(),
-        fetchActivities()
-      ]);
-      
-      toast({
-        title: "Dados atualizados",
-        description: "Os dados do painel foram atualizados com sucesso.",
-      });
-    } catch (error) {
-      console.error("Error fetching dashboard data:", error);
-      toast({
-        title: "Erro ao atualizar dados",
-        description: "Ocorreu um erro ao atualizar os dados do painel.",
-        variant: "destructive"
-      });
-    } finally {
+    // Simulate API call
+    setTimeout(() => {
       setIsLoading(false);
-    }
-  };
-
-  // Fetch summary statistics
-  const fetchStats = async () => {
-    // Mock data for now - this will be replaced with real Supabase queries
-    // TODO: Replace with actual Supabase queries
-    setStats({
-      totalSales: 124500,
-      netSales: 98750,
-      totalClients: 243,
-      totalMachines: 315,
-      pendingPayments: 12,
-      pendingCommissions: 8,
-      currentBalance: 72340.50,
-      salesGrowth: 5.2,
-      isGrowthPositive: true,
-    });
-  };
-
-  // Fetch sales data for the chart
-  const fetchSalesData = async () => {
-    // Generate mock data for the last 7 days
-    // TODO: Replace with actual Supabase queries
-    const data = [];
-    for (let i = 6; i >= 0; i--) {
-      const date = subDays(new Date(), i);
-      const gross = Math.floor(Math.random() * 10000) + 5000;
-      data.push({
-        name: format(date, 'dd/MM'),
-        gross,
-        net: Math.floor(gross * 0.8),
-      });
-    }
-    setSalesData(data);
-  };
-
-  // Fetch payment methods distribution data
-  const fetchPaymentMethodsData = async () => {
-    // TODO: Replace with actual Supabase queries
-    const total = 124500;
-    const creditValue = 74700;
-    const debitValue = 37350;
-    const pixValue = 12450;
-    
-    setPaymentMethodsData([
-      { 
-        name: "Crédito", 
-        value: creditValue, 
-        color: "#3b82f6", 
-        percent: creditValue / total 
-      },
-      { 
-        name: "Débito", 
-        value: debitValue, 
-        color: "#22c55e", 
-        percent: debitValue / total 
-      },
-      { 
-        name: "PIX", 
-        value: pixValue, 
-        color: "#f59e0b", 
-        percent: pixValue / total 
-      }
-    ]);
-  };
-
-  // Fetch recent activities
-  const fetchActivities = async () => {
-    // TODO: Replace with actual Supabase queries
-    setActivities([
-      {
-        id: "1",
-        type: "payment_approved",
-        entityId: "p-001",
-        entityName: "Empresa ABC Ltda",
-        timestamp: new Date(Date.now() - 1000 * 60 * 30).toISOString(), // 30 minutes ago
-        actor: "João Silva"
-      },
-      {
-        id: "2",
-        type: "client_added",
-        entityId: "c-002",
-        entityName: "Restaurante XYZ",
-        timestamp: new Date(Date.now() - 1000 * 60 * 120).toISOString(), // 2 hours ago
-        actor: "Maria Santos"
-      },
-      {
-        id: "3",
-        type: "payment_requested",
-        entityId: "p-003",
-        entityName: "Loja Delta",
-        timestamp: new Date(Date.now() - 1000 * 60 * 240).toISOString(), // 4 hours ago
-      },
-      {
-        id: "4",
-        type: "machine_registered",
-        entityId: "m-004",
-        entityName: "Farmácia Beta",
-        timestamp: new Date(Date.now() - 1000 * 60 * 60 * 6).toISOString(), // 6 hours ago
-        actor: "Carlos Oliveira"
-      },
-      {
-        id: "5",
-        type: "payment_rejected",
-        entityId: "p-005",
-        entityName: "Mercado Gama",
-        timestamp: new Date(Date.now() - 1000 * 60 * 60 * 8).toISOString(), // 8 hours ago
-        actor: "Ana Costa"
-      }
-    ]);
+    }, 1000);
   };
 
   return (
     <div className="space-y-6">
-      <PageHeader 
-        title="Painel Administrativo" 
-        description="Visão geral do sistema, métricas e atividades recentes"
-        actionLabel={
-          <div className="flex items-center gap-2">
-            <Calendar className="h-4 w-4" />
-            <span className="hidden sm:inline">Período:</span>
-            <span>Últimos 30 dias</span>
-          </div>
-        }
-        action={
-          <div className="flex gap-2">
-            <Button variant="outline" size="sm" onClick={fetchDashboardData}>
-              <RefreshCw className="h-4 w-4 mr-1" />
-              Atualizar
-            </Button>
-            <Button variant="outline" size="sm">
-              <Download className="h-4 w-4 mr-1" />
-              Exportar
-            </Button>
-          </div>
-        }
-      />
-      
+      <PageHeader
+        title="Painel Administrativo"
+        description="Visão geral da operação e principais métricas"
+      >
+        <Button 
+          variant="outline" 
+          onClick={handleRefresh} 
+          disabled={isLoading}
+          className="flex items-center gap-2"
+        >
+          <RefreshCw className={`h-4 w-4 ${isLoading ? 'animate-spin' : ''}`} />
+          Atualizar dados
+        </Button>
+      </PageHeader>
+
       <PageWrapper>
         <div className="space-y-6">
           {/* Stats Cards */}
-          <StatCards stats={stats} isLoading={isLoading} />
+          <StatCards stats={MOCK_DATA.stats} isLoading={isLoading} />
           
           {/* Charts Section */}
-          <div className="grid grid-cols-1 lg:grid-cols-4 gap-4">
-            <SalesChart data={salesData} isLoading={isLoading} />
+          <div className="grid grid-cols-1 lg:grid-cols-6 gap-4">
+            <SalesChart data={MOCK_DATA.dailySales} isLoading={isLoading} />
+            <PaymentMethodsChart data={MOCK_DATA.paymentMethods} isLoading={isLoading} />
           </div>
           
-          <div className="grid grid-cols-1 lg:grid-cols-4 gap-4">
-            <PaymentMethodsChart data={paymentMethodsData} isLoading={isLoading} />
-            <RecentActivities activities={activities} isLoading={isLoading} />
-          </div>
+          {/* Recent Activities */}
+          <Card>
+            <CardHeader>
+              <CardTitle>Atividades Recentes</CardTitle>
+            </CardHeader>
+            <CardContent>
+              {isLoading ? (
+                <div className="space-y-4">
+                  {[1, 2, 3, 4].map((i) => (
+                    <div key={i} className="h-16 bg-muted animate-pulse rounded" />
+                  ))}
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  {MOCK_DATA.recentActivities.map(activity => (
+                    <div key={activity.id} className="border-b pb-3 last:border-0">
+                      <h4 className="font-medium">{activity.title}</h4>
+                      <p className="text-sm text-muted-foreground">{activity.description}</p>
+                      <p className="text-xs text-muted-foreground mt-1">
+                        {new Date(activity.timestamp).toLocaleTimeString('pt-BR', {
+                          hour: '2-digit',
+                          minute: '2-digit',
+                          hour12: false
+                        })}
+                      </p>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </CardContent>
+          </Card>
         </div>
       </PageWrapper>
     </div>
