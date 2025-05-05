@@ -45,3 +45,5 @@ export interface UsePaymentsResult {
   totalPages: number;
   setCurrentPage: React.Dispatch<React.SetStateAction<number>>;
 }
+
+export { PaymentStatus } from "./index";

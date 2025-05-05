@@ -1,4 +1,3 @@
-
 import { useCallback, useState, useEffect } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { 
@@ -14,7 +13,7 @@ import {
 } from "@/types/payment.types";
 import { supabase } from "@/integrations/supabase/client";
 
-export { PaymentData } from "@/types/payment.types";
+export type { PaymentData } from "@/types/payment.types";
 
 export const usePayments = (options: UsePaymentsOptions = {}): UsePaymentsResult => {
   const { 
