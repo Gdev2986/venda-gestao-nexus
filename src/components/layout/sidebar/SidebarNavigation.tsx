@@ -42,18 +42,6 @@ const SidebarNavigation = ({ userRole }: SidebarNavigationProps) => {
       icon: Building2,
       href: PATHS.ADMIN.CLIENTS,
       roles: [UserRole.ADMIN],
-      subItems: [
-        {
-          title: "Lista de Clientes",
-          href: PATHS.ADMIN.CLIENTS,
-          roles: [UserRole.ADMIN],
-        },
-        {
-          title: "Máquinas",
-          href: PATHS.ADMIN.MACHINES,
-          roles: [UserRole.ADMIN],
-        }
-      ]
     },
     {
       title: "Parceiros",
@@ -66,6 +54,18 @@ const SidebarNavigation = ({ userRole }: SidebarNavigationProps) => {
       icon: Truck,
       href: PATHS.ADMIN.LOGISTICS,
       roles: [UserRole.ADMIN],
+      subItems: [
+        {
+          title: "Operações",
+          href: PATHS.ADMIN.LOGISTICS,
+          roles: [UserRole.ADMIN],
+        },
+        {
+          title: "Máquinas",
+          href: PATHS.ADMIN.MACHINES,
+          roles: [UserRole.ADMIN],
+        }
+      ]
     },
     {
       title: "Relatórios",
