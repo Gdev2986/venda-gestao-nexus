@@ -1,27 +1,26 @@
 
+import React from "react";
 import { cn } from "@/lib/utils";
 
-interface SpinnerProps {
+interface SpinnerProps extends React.HTMLAttributes<HTMLDivElement> {
   size?: "sm" | "md" | "lg";
-  className?: string;
 }
 
-export function Spinner({ size = "md", className }: SpinnerProps) {
+export const Spinner = ({ size = "md", className, ...props }: SpinnerProps) => {
   const sizeClasses = {
-    sm: "h-4 w-4",
-    md: "h-6 w-6",
-    lg: "h-8 w-8",
+    sm: "h-4 w-4 border-2",
+    md: "h-6 w-6 border-2",
+    lg: "h-8 w-8 border-3",
   };
 
   return (
-    <div className="flex justify-center" aria-label="Carregando">
-      <div
-        className={cn(
-          "animate-spin rounded-full border-4 border-solid border-t-transparent",
-          sizeClasses[size],
-          className
-        )}
-      />
-    </div>
+    <div
+      className={cn(
+        "animate-spin rounded-full border-solid border-primary border-r-transparent",
+        sizeClasses[size],
+        className
+      )}
+      {...props}
+    />
   );
-}
+};

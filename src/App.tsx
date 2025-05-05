@@ -118,300 +118,172 @@ function App() {
       {/* Protected Routes */}
       
       {/* Admin Routes */}
-      <Route element={<RequireAuth allowedRoles={[UserRole.ADMIN]} />}>
-        <Route element={<MainLayout />}>
-          <Route
-            path={PATHS.ADMIN.DASHBOARD}
-            element={<AdminDashboard />}
-          />
-          
-          <Route 
-            path={PATHS.ADMIN.CLIENTS} 
-            element={<AdminClients />} 
-          />
-          
-          <Route 
-            path={PATHS.ADMIN.CLIENT_DETAILS()} 
-            element={<ClientDetails />} 
-          />
-          
-          <Route 
-            path={PATHS.ADMIN.CLIENT_NEW} 
-            element={<NewClient />} 
-          />
-          
-          <Route 
-            path={PATHS.ADMIN.MACHINES} 
-            element={<Machines />} 
-          />
-          
-          <Route 
-            path={PATHS.ADMIN.MACHINE_DETAILS()} 
-            element={<MachineDetails />} 
-          />
-          
-          <Route 
-            path={PATHS.ADMIN.MACHINE_NEW} 
-            element={<NewMachine />} 
-          />
-          
-          <Route 
-            path={PATHS.ADMIN.SALES} 
-            element={<AdminSales />} 
-          />
-          
-          <Route 
-            path={PATHS.ADMIN.SALES_DETAILS()} 
-            element={<SaleDetails />} 
-          />
-          
-          <Route 
-            path={PATHS.ADMIN.SALES_NEW} 
-            element={<NewSale />} 
-          />
-          
-          <Route 
-            path={PATHS.ADMIN.PAYMENTS} 
-            element={<Payments />} 
-          />
-          
-          <Route 
-            path={PATHS.ADMIN.PAYMENT_DETAILS()} 
-            element={<Payments />} 
-          />
-          
-          <Route path={PATHS.ADMIN.PAYMENT_NEW} element={<Payments />} />
-          
-          <Route 
-            path={PATHS.ADMIN.PARTNERS} 
-            element={<AdminPartners />} 
-          />
-          
-          <Route 
-            path={PATHS.ADMIN.PARTNER_DETAILS()} 
-            element={<PartnerDetails />} 
-          />
-          
-          <Route 
-            path={PATHS.ADMIN.PARTNER_NEW} 
-            element={<NewPartner />} 
-          />
-          
-          <Route 
-            path={PATHS.ADMIN.LOGISTICS} 
-            element={
-              <div className="container mx-auto py-10">
-                <h1 className="text-3xl font-semibold mb-6">Módulo de Logística</h1>
-                <p className="text-gray-600">Esta funcionalidade está em desenvolvimento.</p>
-              </div> 
-            } 
-          />
-          
-          <Route path={PATHS.ADMIN.SETTINGS} element={<Settings />} />
-          
-          <Route 
-            path={PATHS.ADMIN.USER_MANAGEMENT} 
-            element={<UserManagement />} 
-          />
-          
-          <Route path={PATHS.ADMIN.FEES} element={<Fees />} />
-          
-          <Route path={PATHS.ADMIN.REPORTS} element={<Reports />} />
-          
-          <Route path={PATHS.ADMIN.SUPPORT} element={<Support />} />
-          
-          <Route path={PATHS.ADMIN.HELP} element={<Help />} />
-        </Route>
+      <Route element={
+        <RequireAuth allowedRoles={[UserRole.ADMIN]}>
+          <MainLayout />
+        </RequireAuth>
+      }>
+        <Route path={PATHS.ADMIN.DASHBOARD} element={<AdminDashboard />} />
+        
+        <Route path={PATHS.ADMIN.CLIENTS} element={<AdminClients />} />
+        
+        <Route path={PATHS.ADMIN.CLIENT_DETAILS()} element={<ClientDetails />} />
+        
+        <Route path={PATHS.ADMIN.CLIENT_NEW} element={<NewClient />} />
+        
+        <Route path={PATHS.ADMIN.MACHINES} element={<Machines />} />
+        
+        <Route path={PATHS.ADMIN.MACHINE_DETAILS()} element={<MachineDetails />} />
+        
+        <Route path={PATHS.ADMIN.MACHINE_NEW} element={<NewMachine />} />
+        
+        <Route path={PATHS.ADMIN.SALES} element={<AdminSales />} />
+        
+        <Route path={PATHS.ADMIN.SALES_DETAILS()} element={<SaleDetails />} />
+        
+        <Route path={PATHS.ADMIN.SALES_NEW} element={<NewSale />} />
+        
+        <Route path={PATHS.ADMIN.PAYMENTS} element={<Payments />} />
+        
+        <Route path={PATHS.ADMIN.PAYMENT_DETAILS()} element={<Payments />} />
+        
+        <Route path={PATHS.ADMIN.PAYMENT_NEW} element={<Payments />} />
+        
+        <Route path={PATHS.ADMIN.PARTNERS} element={<AdminPartners />} />
+        
+        <Route path={PATHS.ADMIN.PARTNER_DETAILS()} element={<PartnerDetails />} />
+        
+        <Route path={PATHS.ADMIN.PARTNER_NEW} element={<NewPartner />} />
+        
+        <Route path={PATHS.ADMIN.LOGISTICS} element={
+          <div className="container mx-auto py-10">
+            <h1 className="text-3xl font-semibold mb-6">Módulo de Logística</h1>
+            <p className="text-gray-600">Esta funcionalidade está em desenvolvimento.</p>
+          </div> 
+        } />
+        
+        <Route path={PATHS.ADMIN.SETTINGS} element={<Settings />} />
+        
+        <Route path={PATHS.ADMIN.USER_MANAGEMENT} element={<UserManagement />} />
+        
+        <Route path={PATHS.ADMIN.FEES} element={<Fees />} />
+        
+        <Route path={PATHS.ADMIN.REPORTS} element={<Reports />} />
+        
+        <Route path={PATHS.ADMIN.SUPPORT} element={<Support />} />
+        
+        <Route path={PATHS.ADMIN.HELP} element={<Help />} />
       </Route>
       
       {/* User Routes */}
-      <Route element={<RequireAuth allowedRoles={[UserRole.CLIENT]} />}>
-        <Route element={<MainLayout />}>
-          <Route 
-            path={PATHS.USER.DASHBOARD} 
-            element={<ClientDashboard />} 
-          />
-          
-          <Route path={PATHS.USER.PAYMENTS} element={<UserPayments />} />
-          
-          <Route path={PATHS.USER.MACHINES} element={<Machines />} />
-          
-          <Route path={PATHS.USER.SUPPORT} element={<Support />} />
-          
-          <Route path={PATHS.USER.SETTINGS} element={<Settings />} />
-          
-          <Route path={PATHS.USER.HELP} element={<Help />} />
-        </Route>
+      <Route element={
+        <RequireAuth allowedRoles={[UserRole.CLIENT]}>
+          <MainLayout />
+        </RequireAuth>
+      }>
+        <Route path={PATHS.USER.DASHBOARD} element={<ClientDashboard />} />
+        
+        <Route path={PATHS.USER.PAYMENTS} element={<UserPayments />} />
+        
+        <Route path={PATHS.USER.MACHINES} element={<Machines />} />
+        
+        <Route path={PATHS.USER.SUPPORT} element={<Support />} />
+        
+        <Route path={PATHS.USER.SETTINGS} element={<Settings />} />
+        
+        <Route path={PATHS.USER.HELP} element={<Help />} />
       </Route>
       
       {/* Partner Routes */}
-      <Route element={<RequireAuth allowedRoles={[UserRole.PARTNER]} />}>
-        <Route element={<MainLayout />}>
-          <Route 
-            path={PATHS.PARTNER.DASHBOARD} 
-            element={<Dashboard />} 
-          />
-          
-          <Route 
-            path={PATHS.PARTNER.CLIENTS} 
-            element={<Clients />} 
-          />
-          
-          <Route 
-            path={PATHS.PARTNER.CLIENT_DETAILS()} 
-            element={<ClientDetails />} 
-          />
-          
-          <Route 
-            path={PATHS.PARTNER.SALES} 
-            element={<Sales />} 
-          />
-          
-          <Route 
-            path={PATHS.PARTNER.REPORTS} 
-            element={<Reports />} 
-          />
-          
-          <Route 
-            path={PATHS.PARTNER.SETTINGS} 
-            element={<Settings />} 
-          />
-          
-          <Route 
-            path={PATHS.PARTNER.SUPPORT} 
-            element={<Support />} 
-          />
-          
-          <Route 
-            path={PATHS.PARTNER.COMMISSIONS} 
-            element={
-              <div className="container mx-auto py-10">
-                <h1 className="text-3xl font-semibold mb-6">Comissões</h1>
-                <p className="text-gray-600">Visualização e solicitação de comissões em desenvolvimento.</p>
-              </div>
-            } 
-          />
-          
-          <Route 
-            path={PATHS.PARTNER.HELP} 
-            element={<Help />} 
-          />
-        </Route>
+      <Route element={
+        <RequireAuth allowedRoles={[UserRole.PARTNER]}>
+          <MainLayout />
+        </RequireAuth>
+      }>
+        <Route path={PATHS.PARTNER.DASHBOARD} element={<Dashboard />} />
+        
+        <Route path={PATHS.PARTNER.CLIENTS} element={<Clients />} />
+        
+        <Route path={PATHS.PARTNER.CLIENT_DETAILS()} element={<ClientDetails />} />
+        
+        <Route path={PATHS.PARTNER.SALES} element={<Sales />} />
+        
+        <Route path={PATHS.PARTNER.REPORTS} element={<Reports />} />
+        
+        <Route path={PATHS.PARTNER.SETTINGS} element={<Settings />} />
+        
+        <Route path={PATHS.PARTNER.SUPPORT} element={<Support />} />
+        
+        <Route path={PATHS.PARTNER.COMMISSIONS} element={
+          <div className="container mx-auto py-10">
+            <h1 className="text-3xl font-semibold mb-6">Comissões</h1>
+            <p className="text-gray-600">Visualização e solicitação de comissões em desenvolvimento.</p>
+          </div>
+        } />
+        
+        <Route path={PATHS.PARTNER.HELP} element={<Help />} />
       </Route>
       
       {/* Financial Routes */}
-      <Route element={<RequireAuth allowedRoles={[UserRole.FINANCIAL]} />}>
-        <Route element={<MainLayout />}>
-          <Route 
-            path={PATHS.FINANCIAL.DASHBOARD} 
-            element={<Dashboard />} 
-          />
-          
-          <Route 
-            path={PATHS.FINANCIAL.CLIENTS} 
-            element={<Clients />} 
-          />
-          
-          <Route 
-            path={PATHS.FINANCIAL.CLIENT_DETAILS()} 
-            element={<ClientDetails />} 
-          />
-          
-          <Route 
-            path={PATHS.FINANCIAL.SALES} 
-            element={<Sales />} 
-          />
-          
-          <Route 
-            path={PATHS.FINANCIAL.PAYMENTS} 
-            element={<Payments />} 
-          />
-          
-          <Route 
-            path={PATHS.FINANCIAL.PARTNERS} 
-            element={<Partners />} 
-          />
-          
-          <Route 
-            path={PATHS.FINANCIAL.FEES} 
-            element={<Fees />} 
-          />
-          
-          <Route 
-            path={PATHS.FINANCIAL.REPORTS} 
-            element={<Reports />} 
-          />
-          
-          <Route
-            path={PATHS.FINANCIAL.REQUESTS}
-            element={
-              <div className="container mx-auto py-10">
-                <h1 className="text-3xl font-semibold mb-6">Solicitações de Pagamento</h1>
-                <p className="text-gray-600">Gerenciamento de solicitações de pagamento em desenvolvimento.</p>
-              </div>
-            }
-          />
-          
-          <Route 
-            path={PATHS.FINANCIAL.SUPPORT} 
-            element={<Support />} 
-          />
-          
-          <Route 
-            path={PATHS.FINANCIAL.HELP} 
-            element={<Help />} 
-          />
-        </Route>
+      <Route element={
+        <RequireAuth allowedRoles={[UserRole.FINANCIAL]}>
+          <MainLayout />
+        </RequireAuth>
+      }>
+        <Route path={PATHS.FINANCIAL.DASHBOARD} element={<Dashboard />} />
+        
+        <Route path={PATHS.FINANCIAL.CLIENTS} element={<Clients />} />
+        
+        <Route path={PATHS.FINANCIAL.CLIENT_DETAILS()} element={<ClientDetails />} />
+        
+        <Route path={PATHS.FINANCIAL.SALES} element={<Sales />} />
+        
+        <Route path={PATHS.FINANCIAL.PAYMENTS} element={<Payments />} />
+        
+        <Route path={PATHS.FINANCIAL.PARTNERS} element={<Partners />} />
+        
+        <Route path={PATHS.FINANCIAL.FEES} element={<Fees />} />
+        
+        <Route path={PATHS.FINANCIAL.REPORTS} element={<Reports />} />
+        
+        <Route path={PATHS.FINANCIAL.REQUESTS} element={
+          <div className="container mx-auto py-10">
+            <h1 className="text-3xl font-semibold mb-6">Solicitações de Pagamento</h1>
+            <p className="text-gray-600">Gerenciamento de solicitações de pagamento em desenvolvimento.</p>
+          </div>
+        } />
+        
+        <Route path={PATHS.FINANCIAL.SUPPORT} element={<Support />} />
+        
+        <Route path={PATHS.FINANCIAL.HELP} element={<Help />} />
       </Route>
       
       {/* Logistics Routes */}
-      <Route element={<RequireAuth allowedRoles={[UserRole.LOGISTICS]} />}>
-        <Route element={<MainLayout />}>
-          <Route 
-            path={PATHS.LOGISTICS.DASHBOARD} 
-            element={<Dashboard />} 
-          />
-          
-          <Route 
-            path={PATHS.LOGISTICS.CLIENTS} 
-            element={<Clients />} 
-          />
-          
-          <Route 
-            path={PATHS.LOGISTICS.MACHINES} 
-            element={<Machines />} 
-          />
-          
-          <Route 
-            path={PATHS.LOGISTICS.SALES} 
-            element={<Sales />} 
-          />
-          
-          <Route 
-            path={PATHS.LOGISTICS.LOGISTICS_MODULE} 
-            element={
-              <div className="container mx-auto py-10">
-                <h1 className="text-3xl font-semibold mb-6">Módulo de Logística</h1>
-                <p className="text-gray-600">Esta funcionalidade está em desenvolvimento.</p>
-              </div> 
-            } 
-          />
-          
-          <Route 
-            path={PATHS.LOGISTICS.SUPPORT} 
-            element={<Support />} 
-          />
-          
-          <Route 
-            path={PATHS.LOGISTICS.HELP} 
-            element={<Help />} 
-          />
-          
-          <Route 
-            path={PATHS.LOGISTICS.SETTINGS} 
-            element={<Settings />} 
-          />
-        </Route>
+      <Route element={
+        <RequireAuth allowedRoles={[UserRole.LOGISTICS]}>
+          <MainLayout />
+        </RequireAuth>
+      }>
+        <Route path={PATHS.LOGISTICS.DASHBOARD} element={<Dashboard />} />
+        
+        <Route path={PATHS.LOGISTICS.CLIENTS} element={<Clients />} />
+        
+        <Route path={PATHS.LOGISTICS.MACHINES} element={<Machines />} />
+        
+        <Route path={PATHS.LOGISTICS.SALES} element={<Sales />} />
+        
+        <Route path={PATHS.LOGISTICS.LOGISTICS_MODULE} element={
+          <div className="container mx-auto py-10">
+            <h1 className="text-3xl font-semibold mb-6">Módulo de Logística</h1>
+            <p className="text-gray-600">Esta funcionalidade está em desenvolvimento.</p>
+          </div> 
+        } />
+        
+        <Route path={PATHS.LOGISTICS.SUPPORT} element={<Support />} />
+        
+        <Route path={PATHS.LOGISTICS.HELP} element={<Help />} />
+        
+        <Route path={PATHS.LOGISTICS.SETTINGS} element={<Settings />} />
       </Route>
 
       {/* 404 */}

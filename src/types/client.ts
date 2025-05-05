@@ -12,7 +12,19 @@ export type SupabaseClientRow = {
 };
 
 // Type for client creation without ID and timestamps
-export type ClientCreate = Omit<Client, "id" | "created_at" | "updated_at" | "status">;
+export type ClientCreate = {
+  business_name: string;
+  document?: string;
+  partner_id?: string;
+  contact_name?: string;
+  email?: string;
+  phone?: string;
+  address?: string;
+  city?: string;
+  state?: string;
+  zip?: string;
+  fee_plan_id?: string;
+};
 
 // Type for client updates
 export type ClientUpdate = Partial<Client>;

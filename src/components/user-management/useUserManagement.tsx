@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { User } from '@supabase/supabase-js';
 import { useToast } from '@/hooks/use-toast';
@@ -7,8 +8,19 @@ import { UserRole } from '@/types';
 import { useNavigate } from 'react-router-dom';
 import { PATHS } from '@/routes/paths';
 
-interface UserData extends User {
+// Enhanced UserData interface that extends User with the role property
+interface UserData {
+  id: string;
+  name: string;
+  email: string;
   role: UserRole;
+  avatar?: string;
+  created_at: string;
+  updated_at: string;
+  app_metadata: any;
+  user_metadata: any;
+  aud: string;
+  phone?: string;
 }
 
 export const useUserManagement = () => {
@@ -18,35 +30,56 @@ export const useUserManagement = () => {
   const [roleDialogOpen, setRoleDialogOpen] = useState(false);
   const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
   const [changingRole, setChangingRole] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [totalUsers, setTotalUsers] = useState(0);
+  const [filters, setFilters] = useState({});
+  const [checkingAccess, setCheckingAccess] = useState(false);
   const { toast } = useToast();
   const { user: currentUser } = useAuth();
   const navigate = useNavigate();
   const { updateUserRole } = useAuth() as any;
 
-  useEffect(() => {
-    const fetchUsers = async () => {
-      setLoading(true);
-      setError(null);
-      try {
-        const { data, error } = await supabase
-          .from('profiles')
-          .select('*');
+  const retryFetch = () => {
+    fetchUsers();
+  };
 
-        if (error) {
-          setError(error.message);
-          return;
-        }
+  const fetchUsers = async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('*');
 
-        setUsers(data as UserData[]);
-      } catch (err: any) {
-        setError(err.message);
-      } finally {
-        setLoading(false);
+      if (error) {
+        setError(error.message);
+        return;
       }
-    };
 
+      // Explicitly cast the data to UserData[]
+      setUsers(data as unknown as UserData[]);
+      setTotalUsers(data?.length || 0);
+      setTotalPages(Math.ceil((data?.length || 0) / 10)); // Assuming 10 users per page
+    } catch (err: any) {
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
     fetchUsers();
   }, []);
+
+  const handlePageChange = (page: number) => {
+    setCurrentPage(page);
+  };
+
+  const handleFilterChange = (newFilters: any) => {
+    setFilters(newFilters);
+    // Implementation would filter users based on the filter criteria
+  };
 
   const openRoleDialog = (userId: string) => {
     setSelectedUserId(userId);
@@ -123,6 +156,7 @@ export const useUserManagement = () => {
 
   return {
     users,
+    setUsers,
     loading,
     error,
     roleDialogOpen,
@@ -131,5 +165,13 @@ export const useUserManagement = () => {
     selectedUserId,
     handleRoleChange,
     changingRole,
+    currentPage,
+    totalPages,
+    totalUsers,
+    handlePageChange,
+    handleFilterChange,
+    filters,
+    checkingAccess,
+    retryFetch
   };
 };

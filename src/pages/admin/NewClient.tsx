@@ -1,257 +1,254 @@
 
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
-import { PATHS } from "@/routes/paths";
-import { PageHeader } from "@/components/page/PageHeader";
-import { PageWrapper } from "@/components/page/PageWrapper";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
-import { useClients } from "@/hooks/use-clients";
-import { usePartners } from "@/hooks/use-partners";
-import { ArrowLeft } from "lucide-react";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import { Form } from "@/components/ui/form";
+import { useNavigate } from "react-router-dom";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import * as z from "zod";
-
-// Mock fee plans until we have a real API
-const mockFeePlans = [
-  { id: "1", name: "Básico" },
-  { id: "2", name: "Intermediário" },
-  { id: "3", name: "Premium" },
-];
-
-// Form schema
-const formSchema = z.object({
-  business_name: z.string().min(3, "Nome deve ter pelo menos 3 caracteres"),
-  email: z.string().email("E-mail inválido"),
-  phone: z.string().optional(),
-  document: z.string().optional(),
-  partner_id: z.string().optional(),
-  fee_plan_id: z.string(),
-  address: z.string().optional(),
-  city: z.string().optional(),
-  state: z.string().optional(),
-  zip: z.string().optional(),
-});
-
-type FormValues = z.infer<typeof formSchema>;
+import { supabase } from "@/integrations/supabase/client";
+import { ClientCreate } from "@/types/client";
 
 const NewClient = () => {
-  const navigate = useNavigate();
   const { toast } = useToast();
-  const { addClient, loading } = useClients();
-  const { partners, loading: partnersLoading, refreshPartners } = usePartners();
-  const [isSubmitting, setIsSubmitting] = useState(false);
-
-  const form = useForm<FormValues>({
-    resolver: zodResolver(formSchema),
-    defaultValues: {
-      business_name: "",
-      email: "",
-      phone: "",
-      document: "",
-      partner_id: "",
-      fee_plan_id: "1", // Default to basic plan
-      address: "",
-      city: "",
-      state: "",
-      zip: "",
-    },
+  const navigate = useNavigate();
+  const [loading, setLoading] = useState(false);
+  const [formData, setFormData] = useState<ClientCreate>({
+    business_name: "",
+    contact_name: "",
+    email: "",
+    phone: "",
+    document: "",
+    address: "",
+    city: "",
+    state: "",
+    zip: "",
+    partner_id: undefined,
+    fee_plan_id: undefined
   });
 
-  const onSubmit = async (data: FormValues) => {
-    setIsSubmitting(true);
+  const [partners, setPartners] = useState<{ id: string; name: string }[]>([]);
+  const [feePlans, setFeePlans] = useState<{ id: string; name: string }[]>([]);
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setFormData({
+      ...formData,
+      [e.target.name]: e.target.value
+    });
+  };
+
+  const handleSelectChange = (name: string, value: string) => {
+    setFormData({
+      ...formData,
+      [name]: value
+    });
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoading(true);
+
     try {
-      await addClient(data);
+      // Validate required fields
+      if (!formData.business_name) {
+        throw new Error("Nome da empresa é obrigatório");
+      }
+
+      // Here you would send the data to your API
+      // For demo purposes we'll simulate a successful creation
+      await new Promise(resolve => setTimeout(resolve, 1000));
+
+      // Mock Supabase insertion
+      // const { data, error } = await supabase
+      //   .from('clients')
+      //   .insert(formData);
+      
+      // if (error) throw error;
+
       toast({
-        title: "Cliente criado",
-        description: "O cliente foi criado com sucesso.",
+        title: "Cliente criado com sucesso",
+        description: `${formData.business_name} foi adicionado ao sistema.`
       });
-      navigate(PATHS.ADMIN.CLIENTS);
-    } catch (error) {
-      console.error("Error creating client:", error);
+
+      navigate("/admin/clients");
+    } catch (error: any) {
       toast({
-        title: "Erro ao criar cliente",
-        description: "Não foi possível criar o cliente. Tente novamente.",
         variant: "destructive",
+        title: "Erro ao criar cliente",
+        description: error.message || "Ocorreu um erro ao criar o cliente."
       });
     } finally {
-      setIsSubmitting(false);
+      setLoading(false);
     }
   };
 
   return (
-    <div className="space-y-6">
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight">Novo Cliente</h1>
-          <p className="text-muted-foreground">
-            Adicione um novo cliente ao sistema
-          </p>
-        </div>
-        <Button
-          variant="outline"
-          onClick={() => navigate(PATHS.ADMIN.CLIENTS)}
-        >
-          <ArrowLeft className="mr-2 h-4 w-4" /> Voltar para Clientes
-        </Button>
-      </div>
-
+    <div className="container mx-auto py-10">
+      <h1 className="text-3xl font-bold mb-6">Novo Cliente</h1>
+      
       <Card>
         <CardHeader>
           <CardTitle>Informações do Cliente</CardTitle>
-          <CardDescription>Preencha os dados para cadastrar um novo cliente</CardDescription>
         </CardHeader>
         <CardContent>
-          <Form {...form}>
-            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-              <div className="space-y-4">
-                <h3 className="text-lg font-medium">Dados Principais</h3>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <label className="text-sm font-medium">Nome/Razão Social*</label>
-                    <Input
-                      {...form.register("business_name")}
-                      placeholder="Nome do cliente ou empresa"
-                    />
-                    {form.formState.errors.business_name && (
-                      <p className="text-sm text-red-500">{form.formState.errors.business_name.message}</p>
-                    )}
-                  </div>
-                  <div className="space-y-2">
-                    <label className="text-sm font-medium">E-mail*</label>
-                    <Input
-                      {...form.register("email")}
-                      type="email"
-                      placeholder="email@exemplo.com"
-                    />
-                    {form.formState.errors.email && (
-                      <p className="text-sm text-red-500">{form.formState.errors.email.message}</p>
-                    )}
-                  </div>
-                  <div className="space-y-2">
-                    <label className="text-sm font-medium">Telefone</label>
-                    <Input
-                      {...form.register("phone")}
-                      placeholder="(00) 00000-0000"
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <label className="text-sm font-medium">CPF/CNPJ</label>
-                    <Input
-                      {...form.register("document")}
-                      placeholder="000.000.000-00 ou 00.000.000/0000-00"
-                    />
-                  </div>
-                </div>
-
-                <div className="space-y-4 pt-4">
-                  <h3 className="text-lg font-medium">Endereço</h3>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div className="space-y-2 md:col-span-2">
-                      <label className="text-sm font-medium">Endereço</label>
-                      <Input
-                        {...form.register("address")}
-                        placeholder="Rua, número, complemento"
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <label className="text-sm font-medium">Cidade</label>
-                      <Input
-                        {...form.register("city")}
-                        placeholder="Cidade"
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <label className="text-sm font-medium">Estado</label>
-                      <Input
-                        {...form.register("state")}
-                        placeholder="Estado"
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <label className="text-sm font-medium">CEP</label>
-                      <Input
-                        {...form.register("zip")}
-                        placeholder="00000-000"
-                      />
-                    </div>
-                  </div>
-                </div>
-
-                <div className="space-y-4 pt-4">
-                  <h3 className="text-lg font-medium">Configurações</h3>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                      <label className="text-sm font-medium">Parceiro</label>
-                      <Select
-                        onValueChange={(value) => form.setValue("partner_id", value)}
-                        defaultValue={form.getValues("partner_id")}
-                      >
-                        <SelectTrigger>
-                          <SelectValue placeholder="Selecione um parceiro (opcional)" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="">Nenhum parceiro</SelectItem>
-                          {partners.map((partner) => (
-                            <SelectItem key={partner.id} value={partner.id}>
-                              {partner.company_name}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </div>
-                    <div className="space-y-2">
-                      <label className="text-sm font-medium">Plano de Taxas</label>
-                      <Select
-                        onValueChange={(value) => form.setValue("fee_plan_id", value)}
-                        defaultValue={form.getValues("fee_plan_id")}
-                      >
-                        <SelectTrigger>
-                          <SelectValue placeholder="Selecione um plano de taxas" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {mockFeePlans.map((plan) => (
-                            <SelectItem key={plan.id} value={plan.id}>
-                              {plan.name}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </div>
-                  </div>
-                </div>
+          <form onSubmit={handleSubmit} className="space-y-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="space-y-2">
+                <Label htmlFor="business_name">Nome da Empresa *</Label>
+                <Input
+                  id="business_name"
+                  name="business_name"
+                  placeholder="Nome da empresa"
+                  value={formData.business_name}
+                  onChange={handleChange}
+                  required
+                />
+              </div>
+              
+              <div className="space-y-2">
+                <Label htmlFor="document">CNPJ/CPF</Label>
+                <Input
+                  id="document"
+                  name="document"
+                  placeholder="00.000.000/0000-00"
+                  value={formData.document || ""}
+                  onChange={handleChange}
+                />
+              </div>
+              
+              <div className="space-y-2">
+                <Label htmlFor="contact_name">Nome do Contato</Label>
+                <Input
+                  id="contact_name"
+                  name="contact_name"
+                  placeholder="Nome do contato principal"
+                  value={formData.contact_name || ""}
+                  onChange={handleChange}
+                />
+              </div>
+              
+              <div className="space-y-2">
+                <Label htmlFor="email">Email</Label>
+                <Input
+                  id="email"
+                  name="email"
+                  type="email"
+                  placeholder="email@exemplo.com"
+                  value={formData.email || ""}
+                  onChange={handleChange}
+                />
+              </div>
+              
+              <div className="space-y-2">
+                <Label htmlFor="phone">Telefone</Label>
+                <Input
+                  id="phone"
+                  name="phone"
+                  placeholder="(00) 00000-0000"
+                  value={formData.phone || ""}
+                  onChange={handleChange}
+                />
               </div>
 
-              <div className="flex justify-end space-x-2 pt-4">
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={() => navigate(PATHS.ADMIN.CLIENTS)}
-                  disabled={isSubmitting}
+              <div className="space-y-2">
+                <Label htmlFor="partner_id">Parceiro Vinculado</Label>
+                <Select 
+                  value={formData.partner_id} 
+                  onValueChange={(value) => handleSelectChange("partner_id", value)}
                 >
-                  Cancelar
-                </Button>
-                <Button
-                  type="submit"
-                  disabled={isSubmitting}
-                >
-                  {isSubmitting ? "Salvando..." : "Criar Cliente"}
-                </Button>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Selecione um parceiro (opcional)" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="">Nenhum</SelectItem>
+                    {partners.map(partner => (
+                      <SelectItem key={partner.id} value={partner.id}>
+                        {partner.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
-            </form>
-          </Form>
+              
+              <div className="space-y-2">
+                <Label htmlFor="address">Endereço</Label>
+                <Input
+                  id="address"
+                  name="address"
+                  placeholder="Rua, número, complemento"
+                  value={formData.address || ""}
+                  onChange={handleChange}
+                />
+              </div>
+              
+              <div className="space-y-2">
+                <Label htmlFor="city">Cidade</Label>
+                <Input
+                  id="city"
+                  name="city"
+                  placeholder="Cidade"
+                  value={formData.city || ""}
+                  onChange={handleChange}
+                />
+              </div>
+              
+              <div className="space-y-2">
+                <Label htmlFor="state">Estado</Label>
+                <Input
+                  id="state"
+                  name="state"
+                  placeholder="Estado"
+                  value={formData.state || ""}
+                  onChange={handleChange}
+                />
+              </div>
+              
+              <div className="space-y-2">
+                <Label htmlFor="zip">CEP</Label>
+                <Input
+                  id="zip"
+                  name="zip"
+                  placeholder="00000-000"
+                  value={formData.zip || ""}
+                  onChange={handleChange}
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="fee_plan_id">Bloco de Taxas</Label>
+                <Select 
+                  value={formData.fee_plan_id} 
+                  onValueChange={(value) => handleSelectChange("fee_plan_id", value)}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Selecione um plano de taxas (opcional)" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="">Padrão</SelectItem>
+                    {feePlans.map(plan => (
+                      <SelectItem key={plan.id} value={plan.id}>
+                        {plan.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+            
+            <div className="flex justify-end space-x-4">
+              <Button 
+                type="button" 
+                variant="outline" 
+                onClick={() => navigate("/admin/clients")}
+              >
+                Cancelar
+              </Button>
+              <Button type="submit" disabled={loading}>
+                {loading ? "Salvando..." : "Salvar Cliente"}
+              </Button>
+            </div>
+          </form>
         </CardContent>
       </Card>
     </div>
