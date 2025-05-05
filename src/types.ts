@@ -1,3 +1,4 @@
+
 export enum UserRole {
   CLIENT = "CLIENT",
   ADMIN = "ADMIN",
@@ -175,7 +176,7 @@ export interface User {
   role: UserRole;
   phone?: string;
   avatar?: string;
-  created_at?: string;
+  created_at: string;
   updated_at?: string;
 }
 
@@ -187,7 +188,7 @@ export interface UserData {
   role: UserRole;
   phone?: string;
   avatar?: string;
-  created_at?: string;
+  created_at: string;
   updated_at?: string;
 }
 
@@ -196,4 +197,14 @@ export interface SalesChartData {
   method: PaymentMethod;
   amount: number;
   percentage: number;
+}
+
+// Machine data types for Dashboard components
+export interface MachineData {
+  id: string;
+  name: string;
+  serial_number: string;
+  model: string;
+  status: string;
+  created_at: string;
 }

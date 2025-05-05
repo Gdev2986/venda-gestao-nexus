@@ -14,20 +14,21 @@ import MainOverviewTabs from "@/components/dashboard/client/MainOverviewTabs";
 // Mock data for the user dashboard
 const mockData = {
   stats: {
-    balance: 2500,
-    transactions: 12,
-    machines: 2
+    totalSales: 2500, // Renamed from balance
+    pendingPayments: 12, // Renamed from transactions  
+    completedPayments: 10, // New field
+    clientBalance: 2000, // New field to match expected type
   },
   salesData: [
-    { date: '2023-04-01', value: 580 },
-    { date: '2023-04-02', value: 450 },
-    { date: '2023-04-03', value: 620 },
-    { date: '2023-04-04', value: 700 },
+    { name: '2023-04-01', total: 580 }, // Changed from date/value to name/total
+    { name: '2023-04-02', total: 450 },
+    { name: '2023-04-03', total: 620 },
+    { name: '2023-04-04', total: 700 },
   ],
   paymentMethodsData: [
-    { method: 'credit', count: 8, percentage: 67 },
-    { method: 'debit', count: 3, percentage: 25 },
-    { method: 'pix', count: 1, percentage: 8 },
+    { name: 'credit', value: 8 }, // Changed from method/count/percentage to name/value
+    { name: 'debit', value: 3 },
+    { name: 'pix', value: 1 },
   ],
   filteredTransactions: [
     { id: 't1', date: '2023-04-04', value: 120, type: 'credit' },
@@ -35,8 +36,22 @@ const mockData = {
     { id: 't3', date: '2023-04-02', value: 200, type: 'credit' },
   ],
   machines: [
-    { id: 'm1', name: 'Terminal 1', serial: 'SP2204785', model: 'SigmaPay S920', status: 'Ativo' },
-    { id: 'm2', name: 'Terminal 2', serial: 'SP2204786', model: 'SigmaPay Mini', status: 'Ativo' },
+    { 
+      id: 'm1', 
+      name: 'Terminal 1', 
+      serial_number: 'SP2204785', 
+      model: 'SigmaPay S920', 
+      status: 'Ativo',
+      created_at: '2023-01-01'
+    },
+    { 
+      id: 'm2', 
+      name: 'Terminal 2', 
+      serial_number: 'SP2204786', 
+      model: 'SigmaPay Mini', 
+      status: 'Ativo',
+      created_at: '2023-02-15'
+    },
   ]
 };
 
@@ -76,10 +91,7 @@ const UserDashboard = () => {
         </CardHeader>
         <CardContent>
           <div className="space-y-4">
-            {[
-              { id: 1, name: "Terminal 1", serial: "SP2204785", model: "SigmaPay S920", status: "Ativo" },
-              { id: 2, name: "Terminal 2", serial: "SP2204786", model: "SigmaPay Mini", status: "Ativo" },
-            ].map((machine) => (
+            {mockData.machines.map((machine) => (
               <div key={machine.id} className="p-3 border rounded-md flex items-center justify-between hover:bg-accent/50 cursor-pointer transition-colors">
                 <div>
                   <div className="flex items-center">
@@ -87,7 +99,7 @@ const UserDashboard = () => {
                     <span className="font-medium">{machine.name}</span>
                   </div>
                   <div className="text-xs text-muted-foreground mt-1">
-                    <p>S/N: {machine.serial}</p>
+                    <p>S/N: {machine.serial_number}</p>
                     <p>Modelo: {machine.model}</p>
                   </div>
                 </div>
