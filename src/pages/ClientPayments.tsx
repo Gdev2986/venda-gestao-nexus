@@ -54,7 +54,7 @@ const ClientPayments = () => {
           description: item.description || "",
           payment_type: PaymentType.PIX,
           receipt_url: item.receipt_url,
-          rejection_reason: item.rejection_reason,
+          rejection_reason: item.rejection_reason || null,
           approved_at: item.approved_at,
           pix_key: item.pix_key ? {
             id: item.pix_key.id,

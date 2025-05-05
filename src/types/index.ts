@@ -1,3 +1,4 @@
+
 export enum UserRole {
   ADMIN = "ADMIN",
   CLIENT = "CLIENT",
@@ -36,7 +37,7 @@ export interface Payment {
   approved_at?: string; 
   receipt_url?: string;
   client_name?: string;
-  rejection_reason?: string;
+  rejection_reason?: string | null;
   payment_type?: PaymentType;
   bank_info?: {
     bank_name?: string;
