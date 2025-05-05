@@ -1,3 +1,4 @@
+
 import { createContext, useContext, useEffect, useState } from "react";
 import { Session, User } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
@@ -128,7 +129,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
             sessionStorage.removeItem('redirectPath');
             navigate(redirectPath);
           } else {
-            navigate(PATHS.DASHBOARD); // Will be handled by RootLayout
+            navigate(PATHS.ROOT); // Fix: Changed from PATHS.DASHBOARD to PATHS.ROOT
           }
         }, 0);
       }
@@ -161,7 +162,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         description: "Please check your email to confirm your account.",
       });
 
-      navigate(PATHS.HOME);
+      navigate(PATHS.ROOT); // Fix: Changed from PATHS.HOME to PATHS.ROOT
     } catch (error: any) {
       console.error("Error during registration:", error);
       // Toast is shown in the error handler above
@@ -182,7 +183,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       const { error } = await signOutUser();
       if (error) throw error;
       
-      navigate(PATHS.HOME);
+      navigate(PATHS.ROOT); // Fix: Changed from PATHS.HOME to PATHS.ROOT
     } catch (error: any) {
       console.error("Error during sign out:", error);
       toast({

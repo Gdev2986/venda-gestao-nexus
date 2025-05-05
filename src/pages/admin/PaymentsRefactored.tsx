@@ -57,7 +57,7 @@ const AdminPaymentsRefactored = () => {
   // Use our custom hook to handle payments data and operations
   const {
     payments,
-    loading,
+    isLoading,
     currentPage,
     totalPages,
     setCurrentPage,
@@ -302,7 +302,7 @@ const AdminPaymentsRefactored = () => {
         title="Pagamentos" 
         description="Gerencie solicitações de pagamento e transações"
         actionLabel="Novo Pagamento"
-        actionLink={PATHS.ADMIN.PAYMENT_NEW}
+        actionLink={PATHS.ADMIN.SALE_NEW} // Fix: Using SALE_NEW instead of nonexistent PAYMENT_NEW
       />
 
       <div className="flex flex-col md:flex-row gap-4 items-start md:items-center mb-6">

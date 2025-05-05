@@ -1,18 +1,37 @@
+
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Payment, PaymentStatus, PaymentType } from "@/types";
+import { useToast } from "@/hooks/use-toast";
 
 interface FilterOptions {
   searchTerm?: string;
+  statusFilter?: string;
   status?: PaymentStatus | "ALL";
   dateRange?: { from: Date; to?: Date };
 }
 
-export function usePayments() {
+export function usePayments(options?: {
+  statusFilter?: string;
+  searchTerm?: string;
+}) {
   const [payments, setPayments] = useState<Payment[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [filterOptions, setFilterOptions] = useState<FilterOptions>({});
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const { toast } = useToast();
+
+  // Set initial filter options from props
+  useEffect(() => {
+    if (options) {
+      setFilterOptions({
+        searchTerm: options.searchTerm,
+        statusFilter: options.statusFilter
+      });
+    }
+  }, [options?.searchTerm, options?.statusFilter]);
 
   // Function to fetch payments from Supabase
   const fetchPayments = async () => {
@@ -25,16 +44,16 @@ export function usePayments() {
         .select(`
           *,
           client: client_id (business_name)
-        `)
+        `, { count: 'exact' })
         .order("created_at", { ascending: false });
 
       // Apply filters
       if (filterOptions.searchTerm) {
-        query = query.ilike("id", `%${filterOptions.searchTerm}%`);
+        query = query.or(`client.business_name.ilike.%${filterOptions.searchTerm}%,id.ilike.%${filterOptions.searchTerm}%`);
       }
 
-      if (filterOptions.status && filterOptions.status !== "ALL") {
-        query = query.eq("status", filterOptions.status);
+      if (filterOptions.statusFilter && filterOptions.statusFilter !== "all") {
+        query = query.eq("status", filterOptions.statusFilter.toUpperCase());
       }
 
       if (filterOptions.dateRange?.from) {
@@ -47,7 +66,14 @@ export function usePayments() {
         query = query.lte("created_at", toDate);
       }
 
-      const { data, error } = await query;
+      // Add pagination
+      const pageSize = 10;
+      const from = (currentPage - 1) * pageSize;
+      const to = from + pageSize - 1;
+      
+      query = query.range(from, to);
+
+      const { data, error, count } = await query;
 
       if (error) {
         throw new Error(error.message);
@@ -57,11 +83,21 @@ export function usePayments() {
         // Transform the data to match our Payment type
         const transformedPayments = data.map(transformPaymentData);
         setPayments(transformedPayments);
+        
+        // Calculate total pages
+        if (count !== null) {
+          setTotalPages(Math.ceil(count / pageSize));
+        }
       } else {
         setPayments([]);
       }
     } catch (err: any) {
       setError(err.message);
+      toast({
+        title: "Erro ao carregar pagamentos",
+        description: err.message,
+        variant: "destructive"
+      });
     } finally {
       setIsLoading(false);
     }
@@ -69,7 +105,7 @@ export function usePayments() {
 
   useEffect(() => {
     fetchPayments();
-  }, [filterOptions]);
+  }, [filterOptions, currentPage]);
 
   // Function to update filter options
   const updateFilterOptions = (newOptions: FilterOptions) => {
@@ -77,6 +113,76 @@ export function usePayments() {
       ...prevOptions,
       ...newOptions,
     }));
+    
+    // Reset to first page when filters change
+    setCurrentPage(1);
+  };
+
+  // Approve payment function
+  const approvePayment = async (paymentId: string, receiptUrl: string | null) => {
+    try {
+      const { error } = await supabase
+        .from('payment_requests')
+        .update({
+          status: PaymentStatus.APPROVED,
+          approved_at: new Date().toISOString(),
+          receipt_url: receiptUrl
+        })
+        .eq('id', paymentId);
+        
+      if (error) throw error;
+      
+      toast({
+        title: "Pagamento aprovado",
+        description: "O pagamento foi aprovado com sucesso."
+      });
+      
+      // Refresh payments list
+      fetchPayments();
+      
+      return true;
+    } catch (error: any) {
+      console.error("Error approving payment:", error);
+      toast({
+        title: "Erro ao aprovar pagamento",
+        description: error.message,
+        variant: "destructive"
+      });
+      return false;
+    }
+  };
+
+  // Reject payment function
+  const rejectPayment = async (paymentId: string, rejectionReason: string) => {
+    try {
+      const { error } = await supabase
+        .from('payment_requests')
+        .update({
+          status: PaymentStatus.REJECTED,
+          rejection_reason: rejectionReason
+        })
+        .eq('id', paymentId);
+        
+      if (error) throw error;
+      
+      toast({
+        title: "Pagamento recusado",
+        description: "O pagamento foi recusado com sucesso."
+      });
+      
+      // Refresh payments list
+      fetchPayments();
+      
+      return true;
+    } catch (error: any) {
+      console.error("Error rejecting payment:", error);
+      toast({
+        title: "Erro ao recusar pagamento",
+        description: error.message,
+        variant: "destructive"
+      });
+      return false;
+    }
   };
 
   // Transform raw database records to Payment objects
@@ -104,5 +210,11 @@ export function usePayments() {
     error,
     updateFilterOptions,
     fetchPayments,
+    currentPage,
+    totalPages,
+    setCurrentPage,
+    approvePayment,
+    rejectPayment,
+    loading: isLoading // Alias for backward compatibility
   };
 }

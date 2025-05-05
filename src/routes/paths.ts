@@ -4,6 +4,8 @@ export const PATHS = {
   REGISTER: "/register",
   FORGOT_PASSWORD: "/forgot-password",
   RESET_PASSWORD: "/reset-password",
+  HOME: "/", // Add HOME path
+  DASHBOARD: "/dashboard", // Add DASHBOARD path
   ADMIN: {
     DASHBOARD: "/admin/dashboard",
     CLIENTS: "/admin/clients",
@@ -11,6 +13,7 @@ export const PATHS = {
     SALES: "/admin/sales",
     PAYMENTS: "/admin/payments",
     PAYMENT_DETAILS: (id: string) => `/admin/payments/${id}`,
+    PAYMENT_NEW: "/admin/payments/new", // Add PAYMENT_NEW path
     REPORTS: "/admin/reports",
     FEES: "/admin/fees",
     NOTIFICATIONS: "/admin/notifications",
@@ -63,9 +66,11 @@ export const PATHS = {
   FINANCIAL: {
     DASHBOARD: "/financial/dashboard",
     PAYMENTS: "/financial/payments",
+    REQUESTS: "/financial/requests", // Add REQUESTS path
     COMMISSIONS: "/financial/commissions",
     REPORTS: "/financial/reports",
-    CLIENTS: "/financial/clients"
+    CLIENTS: "/financial/clients",
+    PARTNERS: "/financial/partners" // Add PARTNERS path
   },
   PARTNER: {
     DASHBOARD: "/partner/dashboard",
