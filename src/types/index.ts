@@ -1,9 +1,16 @@
+
 export enum UserRole {
   ADMIN = "ADMIN",
   CLIENT = "CLIENT",
   FINANCIAL = "FINANCIAL",
   PARTNER = "PARTNER", 
   LOGISTICS = "LOGISTICS"
+}
+
+export enum ClientStatus {
+  ACTIVE = "ACTIVE",
+  BLOCKED = "BLOCKED",
+  PENDING = "PENDING"
 }
 
 export enum PaymentStatus {
@@ -56,10 +63,29 @@ export interface Partner {
   address?: string; // Added for completeness
 }
 
-export enum ClientStatus {
-  ACTIVE = "ACTIVE",
-  BLOCKED = "BLOCKED",
-  PENDING = "PENDING"
+// Update Client interface to include the missing fields used in components
+export interface Client {
+  id: string;
+  business_name: string;
+  document?: string;
+  partner_id?: string;
+  created_at?: string;
+  updated_at?: string;
+  company_name?: string; // For backward compatibility
+  contact_name?: string;
+  email?: string;
+  phone?: string;
+  address?: string;
+  city?: string;
+  state?: string;
+  zip?: string;
+  status?: string;
+  // Add the fields referenced in the components that were causing errors
+  partner_name?: string;
+  machines_count?: number;
+  fee_plan_name?: string;
+  balance?: number;
+  fee_plan_id?: string;
 }
 
 // Add other types here as needed

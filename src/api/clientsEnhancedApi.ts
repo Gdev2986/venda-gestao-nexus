@@ -25,9 +25,9 @@ export const fetchClients = async (page = 1, pageSize = 50): Promise<{clients: C
     // Transform the data to match our Client type
     const enhancedClients = data.map(client => ({
       ...client,
-      partner_name: client.partner?.company_name,
+      partner_name: client.partner?.company_name || null,
       machines_count: client.machines?.length || 0,
-      fee_plan_name: client.fee_plan?.name
+      fee_plan_name: client.fee_plan?.name || null
     })) as Client[];
     
     return { clients: enhancedClients, count: count || 0 };
@@ -55,9 +55,9 @@ export const fetchClientById = async (id: string): Promise<Client | null> => {
     // Transform the data to match our Client type
     return {
       ...data,
-      partner_name: data.partner?.company_name,
+      partner_name: data.partner?.company_name || null,
       machines_count: data.machines?.length || 0,
-      fee_plan_name: data.fee_plan?.name
+      fee_plan_name: data.fee_plan?.name || null
     } as Client;
   } catch (err) {
     console.error("Error fetching client by ID:", err);

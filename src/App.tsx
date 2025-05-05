@@ -108,91 +108,71 @@ function App() {
 
         {/* Auth routes */}
         <Route element={<AuthLayout />}>
-          <Route path={PATHS.AUTH.LOGIN} element={<Login />} />
-          <Route path={PATHS.AUTH.REGISTER} element={<Register />} />
-          <Route path={PATHS.AUTH.FORGOT_PASSWORD} element={<ForgotPassword />} />
-          <Route path={PATHS.AUTH.RESET_PASSWORD} element={<ResetPassword />} />
+          <Route path="/auth/login" element={<Login />} />
+          <Route path="/auth/register" element={<Register />} />
+          <Route path="/auth/forgot-password" element={<ForgotPassword />} />
+          <Route path="/auth/reset-password" element={<ResetPassword />} />
         </Route>
 
         {/* Admin routes */}
-        <Route
-          element={
-            <RequireAuth allowedRoles={[UserRole.ADMIN]}>
-              <AdminLayout />
-            </RequireAuth>
-          }
-        >
-          <Route path={PATHS.ADMIN.DASHBOARD} element={<AdminDashboard />} />
-          <Route path={PATHS.ADMIN.CLIENTS} element={<AdminClients />} />
-          <Route path={PATHS.ADMIN.CLIENT_NEW} element={<NewClient />} />
-          <Route path={PATHS.ADMIN.CLIENT_DETAILS()} element={<ClientDetails />} />
-          <Route path={PATHS.ADMIN.PARTNERS} element={<AdminPartners />} />
-          <Route path={PATHS.ADMIN.SALES} element={<AdminSales />} />
-          <Route path={PATHS.ADMIN.PAYMENTS} element={<AdminPayments />} />
-          <Route path={PATHS.ADMIN.FEES} element={<AdminFees />} />
-          <Route path={PATHS.ADMIN.REPORTS} element={<AdminReports />} />
-          <Route path={PATHS.ADMIN.MACHINES} element={<AdminMachines />} />
-          <Route path={PATHS.ADMIN.NOTIFICATIONS} element={<AdminNotifications />} />
-          <Route path={PATHS.ADMIN.SETTINGS} element={<Settings />} />
-          <Route path={PATHS.ADMIN.USER_MANAGEMENT} element={<UserManagement />} />
+        <Route element={<RequireAuth allowedRoles={[UserRole.ADMIN]} />}>
+          <Route element={<AdminLayout />}>
+            <Route path={PATHS.ADMIN.DASHBOARD} element={<AdminDashboard />} />
+            <Route path={PATHS.ADMIN.CLIENTS} element={<AdminClients />} />
+            <Route path={PATHS.ADMIN.CLIENT_NEW} element={<NewClient />} />
+            <Route path={PATHS.ADMIN.CLIENT_DETAILS()} element={<ClientDetails />} />
+            <Route path={PATHS.ADMIN.PARTNERS} element={<AdminPartners />} />
+            <Route path={PATHS.ADMIN.SALES} element={<AdminSales />} />
+            <Route path={PATHS.ADMIN.PAYMENTS} element={<AdminPayments />} />
+            <Route path={PATHS.ADMIN.FEES} element={<AdminFees />} />
+            <Route path={PATHS.ADMIN.REPORTS} element={<AdminReports />} />
+            <Route path={PATHS.ADMIN.MACHINES} element={<AdminMachines />} />
+            <Route path="/admin/notifications" element={<AdminNotifications />} />
+            <Route path={PATHS.ADMIN.SETTINGS} element={<Settings />} />
+            <Route path={PATHS.ADMIN.USER_MANAGEMENT} element={<UserManagement />} />
+          </Route>
         </Route>
 
         {/* User routes */}
-        <Route
-          element={
-            <RequireAuth allowedRoles={[UserRole.CLIENT]}>
-              <UserLayout />
-            </RequireAuth>
-          }
-        >
-          <Route path={PATHS.USER.DASHBOARD} element={<UserDashboard />} />
-          <Route path={PATHS.USER.PAYMENTS} element={<UserPayments />} />
-          <Route path={PATHS.USER.MACHINES} element={<UserMachines />} />
-          <Route path={PATHS.USER.SUPPORT} element={<UserSupport />} />
-          <Route path={PATHS.USER.SETTINGS} element={<Settings />} />
+        <Route element={<RequireAuth allowedRoles={[UserRole.CLIENT]} />}>
+          <Route element={<UserLayout />}>
+            <Route path={PATHS.USER.DASHBOARD} element={<UserDashboard />} />
+            <Route path={PATHS.USER.PAYMENTS} element={<UserPayments />} />
+            <Route path={PATHS.USER.MACHINES} element={<UserMachines />} />
+            <Route path={PATHS.USER.SUPPORT} element={<UserSupport />} />
+            <Route path={PATHS.USER.SETTINGS} element={<Settings />} />
+          </Route>
         </Route>
 
         {/* Partner routes */}
-        <Route
-          element={
-            <RequireAuth allowedRoles={[UserRole.PARTNER]}>
-              <PartnerLayout />
-            </RequireAuth>
-          }
-        >
-          <Route path={PATHS.PARTNER.DASHBOARD} element={<PartnerDashboard />} />
-          <Route path={PATHS.PARTNER.CLIENTS} element={<PartnerClients />} />
-          <Route path={PATHS.PARTNER.COMMISSIONS} element={<PartnerCommissions />} />
-          <Route path={PATHS.PARTNER.SETTINGS} element={<PartnerSettings />} />
+        <Route element={<RequireAuth allowedRoles={[UserRole.PARTNER]} />}>
+          <Route element={<PartnerLayout />}>
+            <Route path={PATHS.PARTNER.DASHBOARD} element={<PartnerDashboard />} />
+            <Route path={PATHS.PARTNER.CLIENTS} element={<PartnerClients />} />
+            <Route path={PATHS.PARTNER.COMMISSIONS} element={<PartnerCommissions />} />
+            <Route path={PATHS.PARTNER.SETTINGS} element={<PartnerSettings />} />
+          </Route>
         </Route>
 
         {/* Financial routes */}
-        <Route
-          element={
-            <RequireAuth allowedRoles={[UserRole.FINANCIAL]}>
-              <FinancialLayout />
-            </RequireAuth>
-          }
-        >
-          <Route path={PATHS.FINANCIAL.DASHBOARD} element={<FinancialDashboard />} />
-          <Route path={PATHS.FINANCIAL.REQUESTS} element={<FinancialRequests />} />
-          <Route path={PATHS.FINANCIAL.REPORTS} element={<FinancialReports />} />
-          <Route path={PATHS.FINANCIAL.SETTINGS} element={<Settings />} />
+        <Route element={<RequireAuth allowedRoles={[UserRole.FINANCIAL]} />}>
+          <Route element={<FinancialLayout />}>
+            <Route path={PATHS.FINANCIAL.DASHBOARD} element={<FinancialDashboard />} />
+            <Route path={PATHS.FINANCIAL.REQUESTS} element={<FinancialRequests />} />
+            <Route path={PATHS.FINANCIAL.REPORTS} element={<FinancialReports />} />
+            <Route path={PATHS.FINANCIAL.SETTINGS} element={<Settings />} />
+          </Route>
         </Route>
 
         {/* Logistics routes */}
-        <Route
-          element={
-            <RequireAuth allowedRoles={[UserRole.LOGISTICS]}>
-              <LogisticsLayout />
-            </RequireAuth>
-          }
-        >
-          <Route path={PATHS.LOGISTICS.DASHBOARD} element={<LogisticsDashboard />} />
-          <Route path={PATHS.LOGISTICS.MACHINES} element={<LogisticsMachines />} />
-          <Route path={PATHS.LOGISTICS.LOGISTICS_MODULE} element={<LogisticsOperations />} />
-          <Route path={PATHS.LOGISTICS.SUPPORT} element={<LogisticsSupport />} />
-          <Route path={PATHS.LOGISTICS.SETTINGS} element={<Settings />} />
+        <Route element={<RequireAuth allowedRoles={[UserRole.LOGISTICS]} />}>
+          <Route element={<LogisticsLayout />}>
+            <Route path={PATHS.LOGISTICS.DASHBOARD} element={<LogisticsDashboard />} />
+            <Route path={PATHS.LOGISTICS.MACHINES} element={<LogisticsMachines />} />
+            <Route path={PATHS.LOGISTICS.LOGISTICS_MODULE} element={<LogisticsOperations />} />
+            <Route path={PATHS.LOGISTICS.SUPPORT} element={<LogisticsSupport />} />
+            <Route path={PATHS.LOGISTICS.SETTINGS} element={<Settings />} />
+          </Route>
         </Route>
 
         {/* 404 route */}
