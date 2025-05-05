@@ -193,7 +193,9 @@ const AdminPayments = () => {
         
       // Apply status filter if selected
       if (statusFilter !== "all") {
-        query = query.eq("status", statusFilter.toUpperCase());
+        // Convert string to PaymentStatus enum to ensure type safety
+        const statusValue = statusFilter.toUpperCase() as PaymentStatus;
+        query = query.eq("status", statusValue);
       }
       
       // Apply search filter if present
@@ -222,7 +224,7 @@ const AdminPayments = () => {
         receipt_url: item.receipt_url,
         client_name: item.client?.business_name || "Cliente desconhecido",
         payment_type: item.type as PaymentType || PaymentType.PIX,
-        rejection_reason: item.rejection_reason,
+        rejection_reason: item.rejection_reason || null,
         pix_key: item.pix_key ? {
           id: item.pix_key_id,
           key: item.pix_key.key,
@@ -464,10 +466,10 @@ const AdminPayments = () => {
           <div className="space-y-4 py-4">
             <FileUploader
               label="Comprovante de pagamento"
-              onFileSelected={setReceiptFile}
+              onFileSelect={setReceiptFile}
               selectedFile={receiptFile}
-              acceptedTypes={[".jpg", ".jpeg", ".png", ".pdf"]}
-              maxSize={5}
+              accept=".jpg,.jpeg,.png,.pdf"
+              currentFile={null}
             />
             <Textarea
               placeholder="Observações (opcional)"
