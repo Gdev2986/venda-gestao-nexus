@@ -126,6 +126,24 @@ export const usePayments = (options: UsePaymentsOptions = {}) => {
     }
   }, [fetchPayments, fetchOnMount]);
 
+  // Set up real-time subscription for payment changes
+  useEffect(() => {
+    const channel = supabase
+      .channel('payment_changes')
+      .on('postgres_changes', { 
+        event: '*', 
+        schema: 'public', 
+        table: 'payment_requests' 
+      }, () => {
+        fetchPayments();
+      })
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [fetchPayments]);
+
   const approvePayment = useCallback(async (paymentId: string, receiptUrl?: string | null) => {
     setIsLoading(true);
     setError(null);

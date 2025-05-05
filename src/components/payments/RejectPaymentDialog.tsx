@@ -1,13 +1,13 @@
 
 import { useState } from "react";
 import {
-  AlertDialog,
-  AlertDialogContent,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogDescription,
-  AlertDialogFooter,
-} from "@/components/ui/alert-dialog";
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+} from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { formatCurrency } from "@/lib/utils";
@@ -45,34 +45,36 @@ export const RejectPaymentDialog = ({
   if (!payment) return null;
 
   return (
-    <AlertDialog open={open} onOpenChange={onOpenChange}>
-      <AlertDialogContent>
-        <AlertDialogHeader>
-          <AlertDialogTitle>Rejeitar Pagamento</AlertDialogTitle>
-          <AlertDialogDescription>
-            Informe o motivo para rejeitar este pagamento. Esta informação será enviada ao cliente.
-          </AlertDialogDescription>
-        </AlertDialogHeader>
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>Rejeitar Pagamento</DialogTitle>
+          <DialogDescription>
+            Informe o motivo para rejeitar este pagamento.
+          </DialogDescription>
+        </DialogHeader>
         
-        <div className="grid grid-cols-2 gap-4 py-4">
-          <div>
-            <p className="text-sm font-medium mb-1">Cliente</p>
-            <p className="text-sm">{payment.client?.business_name}</p>
+        <div className="space-y-4 py-4">
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <p className="text-sm font-medium mb-1">Cliente</p>
+              <p className="text-sm">{payment.client?.business_name}</p>
+            </div>
+            <div>
+              <p className="text-sm font-medium mb-1">Valor</p>
+              <p className="text-sm">{formatCurrency(payment.amount)}</p>
+            </div>
           </div>
-          <div>
-            <p className="text-sm font-medium mb-1">Valor</p>
-            <p className="text-sm">{formatCurrency(payment.amount)}</p>
-          </div>
+          
+          <Textarea
+            placeholder="Motivo da rejeição"
+            value={rejectionReason}
+            onChange={(e) => setRejectionReason(e.target.value)}
+            className="min-h-[100px]"
+          />
         </div>
         
-        <Textarea
-          placeholder="Motivo da rejeição *"
-          value={rejectionReason}
-          onChange={(e) => setRejectionReason(e.target.value)}
-          className="min-h-[100px]"
-        />
-        
-        <AlertDialogFooter>
+        <DialogFooter>
           <Button
             variant="outline"
             onClick={handleCancel}
@@ -85,10 +87,10 @@ export const RejectPaymentDialog = ({
             onClick={handleReject}
             disabled={isProcessing || !rejectionReason.trim()}
           >
-            Rejeitar Pagamento
+            {isProcessing ? "Processando..." : "Rejeitar Pagamento"}
           </Button>
-        </AlertDialogFooter>
-      </AlertDialogContent>
-    </AlertDialog>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   );
 };
