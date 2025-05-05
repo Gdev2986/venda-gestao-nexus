@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { PageHeader } from "@/components/page/PageHeader";
 import { PageWrapper } from "@/components/page/PageWrapper";
@@ -52,9 +53,6 @@ import {
 import { useToast } from "@/hooks/use-toast";
 import { PATHS } from "@/routes/paths";
 import { useNavigate } from "react-router-dom";
-
-// Define Activity type
-type ActivityType = "client" | "partner" | "payment" | "system" | "sale" | "logistics" | "machine" | "support";
 
 interface Activity {
   id: string;
@@ -878,4 +876,201 @@ const AdminLogistics = () => {
                         </div>
                         <div className="text-xs text-muted-foreground flex items-center">
                           <Clock className="h-3 w-3 mr-1" />
-                          {date.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2
+                          {date.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
+            </div>
+          </CardContent>
+        </Card>
+        
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center">
+              <AlertCircle className="h-5 w-5 mr-2" />
+              Atividades Recentes
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-4">
+              {recentActivities.map((activity) => (
+                <div key={activity.id} className="flex items-start p-3 border rounded-lg">
+                  <div className="mr-3 mt-0.5">
+                    {activity.type === "machine" && (
+                      <Package className="h-4 w-4 text-blue-500" />
+                    )}
+                    {activity.type === "support" && (
+                      <AlertCircle className="h-4 w-4 text-yellow-500" />
+                    )}
+                    {activity.type === "logistics" && (
+                      <Truck className="h-4 w-4 text-green-500" />
+                    )}
+                  </div>
+                  <div className="flex-1">
+                    <h4 className="text-sm font-medium">{activity.title}</h4>
+                    <p className="text-xs text-muted-foreground">{activity.description}</p>
+                    <p className="text-xs text-muted-foreground mt-1">
+                      {new Date(activity.timestamp).toLocaleString('pt-BR')}
+                    </p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+      
+      {/* Request details dialog */}
+      {selectedRequest && (
+        <Dialog open={!!selectedRequest} onOpenChange={() => setSelectedRequest(null)}>
+          <DialogContent className="sm:max-w-lg">
+            <DialogHeader>
+              <DialogTitle>Detalhes da Solicitação #{selectedRequest.id}</DialogTitle>
+            </DialogHeader>
+            <div className="space-y-4">
+              <div>
+                <h4 className="text-sm font-medium">Título</h4>
+                <p>{selectedRequest.title}</p>
+              </div>
+              <div>
+                <h4 className="text-sm font-medium">Descrição</h4>
+                <p className="text-sm text-muted-foreground">{selectedRequest.description}</p>
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <h4 className="text-sm font-medium">Cliente</h4>
+                  <p className="text-sm">{selectedRequest.client_name}</p>
+                </div>
+                <div>
+                  <h4 className="text-sm font-medium">Máquina</h4>
+                  <p className="text-sm">{selectedRequest.machine_serial}</p>
+                </div>
+                <div>
+                  <h4 className="text-sm font-medium">Prioridade</h4>
+                  <Badge className={
+                    selectedRequest.priority === "high"
+                      ? "bg-red-100 text-red-800"
+                      : selectedRequest.priority === "medium"
+                      ? "bg-yellow-100 text-yellow-800"
+                      : "bg-blue-100 text-blue-800"
+                  }>
+                    {selectedRequest.priority === "high"
+                      ? "Alta"
+                      : selectedRequest.priority === "medium"
+                      ? "Média"
+                      : "Baixa"}
+                  </Badge>
+                </div>
+                <div>
+                  <h4 className="text-sm font-medium">Status</h4>
+                  <Badge className={
+                    selectedRequest.status === SupportRequestStatus.OPEN
+                      ? "bg-blue-100 text-blue-800"
+                      : selectedRequest.status === SupportRequestStatus.IN_PROGRESS
+                      ? "bg-yellow-100 text-yellow-800"
+                      : "bg-green-100 text-green-800"
+                  }>
+                    {selectedRequest.status === SupportRequestStatus.OPEN
+                      ? "Aberto"
+                      : selectedRequest.status === SupportRequestStatus.IN_PROGRESS
+                      ? "Em Andamento"
+                      : "Resolvido"}
+                  </Badge>
+                </div>
+              </div>
+              
+              {selectedRequest.status !== SupportRequestStatus.RESOLVED && (
+                <div>
+                  <h4 className="text-sm font-medium mb-2">Responder</h4>
+                  <Textarea
+                    placeholder="Digite sua resposta..."
+                    value={responseText}
+                    onChange={(e) => setResponseText(e.target.value)}
+                    className="min-h-24"
+                  />
+                </div>
+              )}
+              
+              {selectedRequest.resolution && (
+                <div>
+                  <h4 className="text-sm font-medium">Resolução</h4>
+                  <p className="text-sm text-muted-foreground">{selectedRequest.resolution}</p>
+                </div>
+              )}
+            </div>
+            <DialogFooter>
+              {selectedRequest.status !== SupportRequestStatus.RESOLVED && (
+                <Button
+                  variant="default"
+                  onClick={() => {
+                    toast({
+                      title: "Resposta enviada",
+                      description: "Sua resposta foi enviada com sucesso."
+                    });
+                    setSelectedRequest(null);
+                    setResponseText("");
+                  }}
+                  disabled={!responseText.trim()}
+                >
+                  Enviar Resposta
+                </Button>
+              )}
+              <Button
+                variant="outline"
+                onClick={() => {
+                  setSelectedRequest(null);
+                  setResponseText("");
+                }}
+              >
+                Fechar
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+      )}
+      
+      {/* Assign technician dialog */}
+      <Dialog open={assignTechDialog} onOpenChange={setAssignTechDialog}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Atribuir Técnico</DialogTitle>
+            <DialogDescription>
+              Atribuir técnico para a solicitação {selectedRequest?.id}
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="technician">Nome do Técnico</Label>
+              <Input
+                id="technician"
+                placeholder="Digite o nome do técnico..."
+                value={technicianName}
+                onChange={(e) => setTechnicianName(e.target.value)}
+              />
+            </div>
+            <div className="flex items-center space-x-2">
+              <Checkbox id="notify" />
+              <Label htmlFor="notify">Notificar técnico por e-mail</Label>
+            </div>
+            <div className="flex items-center space-x-2">
+              <Checkbox id="priority" />
+              <Label htmlFor="priority">Marcar como alta prioridade</Label>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setAssignTechDialog(false)}>
+              Cancelar
+            </Button>
+            <Button onClick={handleAssignTechnician} disabled={!technicianName.trim()}>
+              Atribuir
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </div>
+  );
+};
+
+export default AdminLogistics;
