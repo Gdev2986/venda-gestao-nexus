@@ -10,13 +10,10 @@ import { addDays, subDays } from 'date-fns';
 const UserDashboard = () => {
   // Mock data
   const stats = {
-    totalClients: 0,
-    totalRevenue: 0,
-    totalTransactions: 0,
-    averageValue: 0,
     totalSales: 0,
     pendingPayments: 0,
-    currentBalance: 0,
+    completedPayments: 0,
+    clientBalance: 0
   };
 
   const [dateRange, setDateRange] = useState({
@@ -49,7 +46,7 @@ const UserDashboard = () => {
             salesData={[]}
             paymentMethodsData={[]}
             filteredTransactions={[]}
-            isLoading={isLoading}
+            loading={isLoading}
             machines={[]}
             dateRange={dateRange}
             totalSales={0}
@@ -62,7 +59,7 @@ const UserDashboard = () => {
         
         {/* Sidebar content */}
         <div className="w-full lg:w-80 space-y-6">
-          <SidebarContent isLoading={isLoading} />
+          <SidebarContent loading={isLoading} />
         </div>
       </div>
     </MainLayout>

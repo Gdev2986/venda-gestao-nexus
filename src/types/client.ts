@@ -24,6 +24,7 @@ export type ClientCreate = {
   state?: string;
   zip?: string;
   fee_plan_id?: string;
+  balance?: number;
 };
 
 // Type for client updates

@@ -11,7 +11,6 @@ import UserFilters from "@/components/user-management/UserFilters";
 const UserManagement = () => {
   const { 
     users, 
-    setUsers, 
     loading, 
     error, 
     checkingAccess,
@@ -59,7 +58,6 @@ const UserManagement = () => {
                 <UserFilters onFilterChange={handleFilterChange} />
                 <UserTable 
                   users={users} 
-                  setUsers={setUsers} 
                   totalPages={totalPages}
                   currentPage={currentPage}
                   onPageChange={handlePageChange}

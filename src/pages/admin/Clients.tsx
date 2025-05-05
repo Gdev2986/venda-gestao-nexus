@@ -1,14 +1,16 @@
 
 import { useState, useEffect, useCallback } from "react";
-import { useNavigate } from "react-router-dom";
 import { PageHeader } from "@/components/page/PageHeader";
 import { PageWrapper } from "@/components/page/PageWrapper";
-import { PATHS } from "@/routes/paths";
 import { useToast } from "@/hooks/use-toast";
 import { useClients } from "@/hooks/use-clients";
 import { usePartners } from "@/hooks/use-partners";
 import { ClientsList, ClientFilters } from "@/components/clients/ClientsList";
 import { Client } from "@/types";
+import { Button } from "@/components/ui/button";
+import { Plus } from "lucide-react";
+import CreateClientModal from "@/components/clients/CreateClientModal";
+import ClientDetailsModal from "@/components/clients/ClientDetailsModal";
 
 // Mock fee plans until we have a real API
 const mockFeePlans = [
@@ -20,7 +22,6 @@ const mockFeePlans = [
 const ITEMS_PER_PAGE = 50;
 
 const AdminClients = () => {
-  const navigate = useNavigate();
   const { toast } = useToast();
   const { getClients, updateClient, loading: clientsLoading, error } = useClients();
   const { partners, loading: partnersLoading, refreshPartners } = usePartners();
@@ -31,6 +32,9 @@ const AdminClients = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [filters, setFilters] = useState<ClientFilters>({});
   const [isLoading, setIsLoading] = useState(true);
+  const [isCreateModalOpen, setCreateModalOpen] = useState(false);
+  const [selectedClientId, setSelectedClientId] = useState<string | undefined>(undefined);
+  const [isDetailsModalOpen, setDetailsModalOpen] = useState(false);
 
   const fetchClients = useCallback(async () => {
     setIsLoading(true);
@@ -42,7 +46,7 @@ const AdminClients = () => {
         partner_name: partners.find(p => p.id === client.partner_id)?.company_name,
         machines_count: Math.floor(Math.random() * 10), // Mock data
         fee_plan_name: mockFeePlans[Math.floor(Math.random() * mockFeePlans.length)].name,
-        balance: Math.random() * 10000, // Mock data
+        balance: client.balance !== undefined ? client.balance : Math.random() * 10000, // Mock data
       }));
       setClients(enhancedData);
       setFilteredClients(enhancedData);
@@ -150,11 +154,12 @@ const AdminClients = () => {
   }, [clients, searchTerm]);
 
   const handleCreateClient = () => {
-    navigate(PATHS.ADMIN.CLIENT_NEW);
+    setCreateModalOpen(true);
   };
 
   const handleViewClient = (clientId: string) => {
-    navigate(PATHS.ADMIN.CLIENT_DETAILS(clientId));
+    setSelectedClientId(clientId);
+    setDetailsModalOpen(true);
   };
 
   const handleLinkPartner = async (clientId: string, partnerId: string) => {
@@ -246,20 +251,50 @@ const AdminClients = () => {
 
   return (
     <div className="space-y-6">
-      <ClientsList
-        clients={paginatedClients}
-        isLoading={isLoading}
-        onSearch={handleSearch}
-        onFilter={handleFilter}
-        onCreateClient={handleCreateClient}
-        onViewClient={handleViewClient}
-        onLinkPartner={handleLinkPartner}
-        onEditBalance={handleEditBalance}
-        partners={partners}
-        feePlans={mockFeePlans}
-        currentPage={currentPage}
-        totalPages={totalPages}
-        onPageChange={handlePageChange}
+      <PageHeader 
+        title="Clientes" 
+        description="Gerencie seus clientes e suas informações"
+        action={
+          <Button onClick={handleCreateClient}>
+            <Plus className="mr-2 h-4 w-4" />
+            Novo Cliente
+          </Button>
+        }
+      />
+      <PageWrapper>
+        <ClientsList
+          clients={paginatedClients}
+          isLoading={isLoading}
+          onSearch={handleSearch}
+          onFilter={handleFilter}
+          onCreateClient={handleCreateClient}
+          onViewClient={handleViewClient}
+          onLinkPartner={handleLinkPartner}
+          onEditBalance={handleEditBalance}
+          partners={partners}
+          feePlans={mockFeePlans}
+          currentPage={currentPage}
+          totalPages={totalPages}
+          onPageChange={handlePageChange}
+        />
+      </PageWrapper>
+      
+      {/* Create Client Modal */}
+      <CreateClientModal 
+        isOpen={isCreateModalOpen} 
+        onClose={() => setCreateModalOpen(false)}
+        onCreated={fetchClients}
+      />
+      
+      {/* Client Details Modal */}
+      <ClientDetailsModal
+        clientId={selectedClientId}
+        isOpen={isDetailsModalOpen}
+        onClose={() => {
+          setDetailsModalOpen(false);
+          setSelectedClientId(undefined);
+        }}
+        onClientUpdated={fetchClients}
       />
     </div>
   );
