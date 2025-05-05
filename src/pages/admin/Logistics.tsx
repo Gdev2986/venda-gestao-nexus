@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { PageHeader } from "@/components/page/PageHeader";
 import { PageWrapper } from "@/components/page/PageWrapper";
@@ -35,7 +34,8 @@ import {
   DialogHeader, 
   DialogTitle, 
   DialogTrigger,
-  DialogFooter
+  DialogFooter,
+  DialogDescription
 } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
@@ -46,7 +46,8 @@ import {
   SupportRequest, 
   SupportRequestStatus,
   DeliveryStatus,
-  Delivery
+  Delivery,
+  ActivityType
 } from "@/types";
 import { useToast } from "@/hooks/use-toast";
 import { PATHS } from "@/routes/paths";
@@ -292,21 +293,21 @@ const AdminLogistics = () => {
       title: "Nova máquina instalada",
       description: "Terminal X3 instalado para Governo GHI Ltda",
       timestamp: "2025-05-01T15:30:00Z",
-      type: "machine"
+      type: "machine" as ActivityType
     },
     {
       id: "ACT-002",
       title: "Suporte respondido",
       description: "Solicitação SR-002 atualizada por Carlos Técnico",
       timestamp: "2025-04-26T10:00:00Z",
-      type: "support"
+      type: "support" as ActivityType
     },
     {
       id: "ACT-003",
       title: "Entrega agendada",
       description: "Nova entrega agendada para Restaurante JKL Ltda",
       timestamp: "2025-04-25T09:15:00Z",
-      type: "logistics"
+      type: "logistics" as ActivityType
     }
   ];
 
@@ -877,207 +878,4 @@ const AdminLogistics = () => {
                         </div>
                         <div className="text-xs text-muted-foreground flex items-center">
                           <Clock className="h-3 w-3 mr-1" />
-                          {date.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}
-                        </div>
-                      </div>
-                    </div>
-                  );
-                })}
-            </div>
-          </CardContent>
-        </Card>
-        
-        <Card>
-          <CardHeader>
-            <CardTitle>Atividades Recentes</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              {recentActivities.map((activity) => (
-                <div key={activity.id} className="border-b pb-3 last:border-0">
-                  <h4 className="font-medium">{activity.title}</h4>
-                  <p className="text-sm text-muted-foreground mt-1">{activity.description}</p>
-                  <p className="text-xs text-muted-foreground mt-1">
-                    {new Date(activity.timestamp).toLocaleString('pt-BR')}
-                  </p>
-                </div>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-      
-      {/* Request details dialog */}
-      <Dialog open={!!selectedRequest && !assignTechDialog} onOpenChange={() => setSelectedRequest(null)}>
-        <DialogContent className="sm:max-w-[600px]">
-          <DialogHeader>
-            <DialogTitle>Detalhes da Solicitação</DialogTitle>
-          </DialogHeader>
-          {selectedRequest && (
-            <div className="space-y-4">
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <Label>ID</Label>
-                  <div className="font-medium">{selectedRequest.id}</div>
-                </div>
-                <div>
-                  <Label>Status</Label>
-                  <div>
-                    <Badge className={
-                      selectedRequest.status === SupportRequestStatus.OPEN ? "bg-blue-100 text-blue-800" :
-                      selectedRequest.status === SupportRequestStatus.IN_PROGRESS ? "bg-yellow-100 text-yellow-800" :
-                      selectedRequest.status === SupportRequestStatus.RESOLVED ? "bg-green-100 text-green-800" :
-                      "bg-gray-100 text-gray-800"
-                    }>
-                      {selectedRequest.status === SupportRequestStatus.OPEN ? "Aberto" :
-                       selectedRequest.status === SupportRequestStatus.IN_PROGRESS ? "Em Andamento" :
-                       selectedRequest.status === SupportRequestStatus.RESOLVED ? "Resolvido" :
-                       selectedRequest.status === SupportRequestStatus.CLOSED ? "Fechado" :
-                       selectedRequest.status}
-                    </Badge>
-                  </div>
-                </div>
-                <div>
-                  <Label>Cliente</Label>
-                  <div className="font-medium">{selectedRequest.client_name}</div>
-                </div>
-                <div>
-                  <Label>Máquina</Label>
-                  <div className="font-medium">{selectedRequest.machine_serial}</div>
-                </div>
-                <div>
-                  <Label>Prioridade</Label>
-                  <div>
-                    <Badge className={
-                      selectedRequest.priority === "high" ? "bg-red-100 text-red-800" :
-                      selectedRequest.priority === "medium" ? "bg-yellow-100 text-yellow-800" :
-                      "bg-blue-100 text-blue-800"
-                    }>
-                      {selectedRequest.priority === "high" ? "Alta" :
-                       selectedRequest.priority === "medium" ? "Média" :
-                       selectedRequest.priority === "low" ? "Baixa" :
-                       selectedRequest.priority}
-                    </Badge>
-                  </div>
-                </div>
-                <div>
-                  <Label>Data de Criação</Label>
-                  <div className="font-medium">
-                    {new Date(selectedRequest.created_at).toLocaleString('pt-BR')}
-                  </div>
-                </div>
-              </div>
-              
-              <div>
-                <Label>Título</Label>
-                <div className="font-medium">{selectedRequest.title}</div>
-              </div>
-              
-              <div>
-                <Label>Descrição</Label>
-                <div className="text-sm mt-1 p-2 border rounded bg-muted/50">
-                  {selectedRequest.description}
-                </div>
-              </div>
-              
-              {selectedRequest.resolution && (
-                <div>
-                  <Label>Resolução</Label>
-                  <div className="text-sm mt-1 p-2 border rounded bg-muted/50">
-                    {selectedRequest.resolution}
-                  </div>
-                </div>
-              )}
-              
-              {selectedRequest.status === SupportRequestStatus.OPEN && (
-                <div>
-                  <Label>Responder</Label>
-                  <Textarea
-                    placeholder="Digite sua resposta..."
-                    value={responseText}
-                    onChange={(e) => setResponseText(e.target.value)}
-                    className="mt-1"
-                  />
-                </div>
-              )}
-            </div>
-          )}
-          <DialogFooter>
-            {selectedRequest?.status === SupportRequestStatus.OPEN && (
-              <>
-                <Button variant="outline" onClick={() => {
-                  setSelectedRequest(selectedRequest);
-                  setAssignTechDialog(true);
-                }}>
-                  Atribuir Técnico
-                </Button>
-                <Button onClick={() => {
-                  toast({
-                    title: "Resposta enviada",
-                    description: "Sua resposta foi enviada com sucesso."
-                  });
-                  setSelectedRequest(null);
-                  setResponseText("");
-                }}>
-                  Enviar Resposta
-                </Button>
-              </>
-            )}
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-      
-      {/* Assign technician dialog */}
-      <Dialog open={assignTechDialog} onOpenChange={setAssignTechDialog}>
-        <DialogContent className="sm:max-w-[425px]">
-          <DialogHeader>
-            <DialogTitle>Atribuir Técnico</DialogTitle>
-            <DialogDescription>
-              Designe um técnico para esta solicitação de suporte.
-            </DialogDescription>
-          </DialogHeader>
-          <div className="grid gap-4 py-4">
-            <div className="grid gap-2">
-              <Label htmlFor="techName">Nome do Técnico</Label>
-              <Input
-                id="techName"
-                placeholder="Digite o nome do técnico"
-                value={technicianName}
-                onChange={(e) => setTechnicianName(e.target.value)}
-              />
-            </div>
-            <div className="grid gap-2">
-              <Label htmlFor="logisticsNote">Observações</Label>
-              <Textarea
-                id="logisticsNote"
-                placeholder="Observações para o técnico (opcional)"
-                value={logisticsNote}
-                onChange={(e) => setLogisticsNote(e.target.value)}
-              />
-            </div>
-            <div className="flex items-center space-x-2">
-              <Checkbox id="notifyClient" />
-              <Label htmlFor="notifyClient">Notificar cliente</Label>
-            </div>
-          </div>
-          <DialogFooter>
-            <Button 
-              variant="outline" 
-              onClick={() => setAssignTechDialog(false)}
-            >
-              Cancelar
-            </Button>
-            <Button 
-              onClick={handleAssignTechnician}
-              disabled={!technicianName.trim()}
-            >
-              Confirmar
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-    </div>
-  );
-};
-
-export default AdminLogistics;
+                          {date.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2

@@ -53,7 +53,11 @@ export function usePayments(options?: {
       }
 
       if (filterOptions.statusFilter && filterOptions.statusFilter !== "all") {
-        query = query.eq("status", filterOptions.statusFilter.toUpperCase());
+        // Fix: Convert string to PaymentStatus enum if valid
+        const statusValue = filterOptions.statusFilter.toUpperCase();
+        if (Object.values(PaymentStatus).includes(statusValue as PaymentStatus)) {
+          query = query.eq("status", statusValue);
+        }
       }
 
       if (filterOptions.dateRange?.from) {
