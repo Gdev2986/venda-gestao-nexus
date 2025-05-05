@@ -1,454 +1,536 @@
 
-import { useState, useEffect } from "react";
-import { useParams, useNavigate } from "react-router-dom";
-import { format } from "date-fns";
-import { ptBR } from "date-fns/locale";
-import { supabase } from "@/integrations/supabase/client";
-import { useToast } from "@/hooks/use-toast";
+import { useEffect, useState } from "react";
+import { useNavigate, useParams } from "react-router-dom";
 import { PageHeader } from "@/components/page/PageHeader";
 import { PageWrapper } from "@/components/page/PageWrapper";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Textarea } from "@/components/ui/textarea";
-import { Skeleton } from "@/components/ui/skeleton";
-import { Separator } from "@/components/ui/separator";
-import { Badge } from "@/components/ui/badge";
-import { ArrowLeft, Check, X, DownloadIcon, ExternalLink } from "lucide-react";
-import { PATHS } from "@/routes/paths";
+import { useToast } from "@/hooks/use-toast";
+import { supabase } from "@/integrations/supabase/client";
 import { PaymentStatus, PaymentType } from "@/types";
+import { Textarea } from "@/components/ui/textarea";
+import { FileUploader } from "@/components/payments/FileUploader";
+import { AlertDialog, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
+import { formatCurrency } from "@/lib/utils";
+import { ArrowLeft, Check, X } from "lucide-react";
+import { format } from "date-fns";
+import { ptBR } from "date-fns/locale";
+import { Skeleton } from "@/components/ui/skeleton";
+import { Badge } from "@/components/ui/badge";
+import { PATHS } from "@/routes/paths";
+
+// Define the payment type
+interface PaymentWithDetails {
+  id: string;
+  amount: number;
+  status: PaymentStatus;
+  created_at: string;
+  updated_at: string;
+  approved_at?: string;
+  receipt_url?: string;
+  description?: string;
+  rejection_reason?: string;
+  client_id: string;
+  client: {
+    id: string;
+    business_name: string;
+    email?: string;
+  };
+  pix_key: {
+    id: string;
+    key: string;
+    type: string;
+  };
+}
 
 const PaymentDetails = () => {
-  const { id } = useParams();
+  const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { toast } = useToast();
   
-  const [payment, setPayment] = useState<any>(null);
-  const [loading, setLoading] = useState(true);
-  const [clientData, setClientData] = useState<any>(null);
+  const [payment, setPayment] = useState<PaymentWithDetails | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  
+  const [approveDialogOpen, setApproveDialogOpen] = useState(false);
   const [rejectDialogOpen, setRejectDialogOpen] = useState(false);
+  const [receiptFile, setReceiptFile] = useState<File | null>(null);
   const [rejectionReason, setRejectionReason] = useState("");
-  const [isRejecting, setIsRejecting] = useState(false);
-  const [isApproving, setIsApproving] = useState(false);
+  const [isProcessing, setIsProcessing] = useState(false);
   
   useEffect(() => {
     const fetchPaymentDetails = async () => {
+      if (!id) return;
+      
+      setIsLoading(true);
+      
       try {
-        // For demo, we'll use mock data
-        // In a real app, fetch from Supabase
-        const mockPayment = {
-          id: id,
-          amount: 1250.00,
-          status: PaymentStatus.PENDING,
-          created_at: "2023-06-15T14:30:00Z",
-          updated_at: "2023-06-15T14:30:00Z",
-          description: "Pagamento para liberação de máquina",
-          client_id: "123",
-          approved_at: null,
-          receipt_url: "https://example.com/receipt.pdf",
-          payment_type: PaymentType.PIX,
-          rejection_reason: "",
-          client: {
-            id: "123",
-            business_name: "Padaria Central",
-            email: "contato@padariacentral.com",
-            document: "12.345.678/0001-90",
-            phone: "(11) 98765-4321"
-          },
-          pix_key: {
-            key: "12345678900",
-            type: "CPF",
-            name: "João da Silva",
-            bank_name: "Banco XYZ"
-          }
-        };
+        const { data, error } = await supabase
+          .from('payment_requests')
+          .select(`
+            *,
+            client:client_id (*),
+            pix_key:pix_key_id (*)
+          `)
+          .eq('id', id)
+          .single();
         
-        setTimeout(() => {
+        if (error) throw error;
+        
+        // If we're mocking data
+        if (!data) {
+          const mockPayment: PaymentWithDetails = {
+            id: id || '1',
+            amount: 1500.00,
+            status: PaymentStatus.PENDING,
+            created_at: new Date().toISOString(),
+            updated_at: new Date().toISOString(),
+            description: "Pagamento via PIX",
+            client_id: "client-123",
+            client: {
+              id: "client-123",
+              business_name: "Empresa ABC Ltda",
+              email: "contato@empresaabc.com"
+            },
+            pix_key: {
+              id: "pix-123",
+              key: "empresa@pix.com",
+              type: PaymentType.PIX
+            },
+            rejection_reason: ""
+          };
+          
           setPayment(mockPayment);
-          setClientData(mockPayment.client);
-          setLoading(false);
-        }, 800);
-        
+        } else {
+          setPayment(data as unknown as PaymentWithDetails);
+        }
       } catch (error) {
-        console.error("Error fetching payment details:", error);
+        console.error('Error fetching payment details:', error);
         toast({
           variant: "destructive",
-          title: "Erro",
-          description: "Não foi possível carregar os detalhes do pagamento.",
+          title: "Erro ao carregar detalhes",
+          description: "Não foi possível obter os detalhes do pagamento."
         });
-        setLoading(false);
+      } finally {
+        setIsLoading(false);
       }
     };
     
     fetchPaymentDetails();
   }, [id, toast]);
   
-  const handleApprove = async () => {
-    setIsApproving(true);
+  const handleApprovePayment = async () => {
+    if (!payment) return;
+    
+    setIsProcessing(true);
+    
     try {
-      // In a real app, this would call Supabase
-      // await supabase.from('payment_requests').update({
-      //   status: 'APPROVED',
-      //   approved_at: new Date().toISOString(),
-      // }).eq('id', id);
+      let receiptUrl = payment.receipt_url;
       
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      // Upload receipt if provided
+      if (receiptFile) {
+        const fileName = `receipt_${payment.id}_${Date.now()}.${receiptFile.name.split('.').pop()}`;
+        
+        const { data: uploadData, error: uploadError } = await supabase.storage
+          .from('payment_receipts')
+          .upload(fileName, receiptFile);
+        
+        if (uploadError) throw uploadError;
+        
+        // Get public URL for the receipt
+        const { data: urlData } = supabase.storage
+          .from('payment_receipts')
+          .getPublicUrl(fileName);
+          
+        receiptUrl = urlData.publicUrl;
+      }
       
-      setPayment({ ...payment, status: PaymentStatus.APPROVED });
+      // Update the payment status
+      const { error } = await supabase
+        .from('payment_requests')
+        .update({
+          status: PaymentStatus.APPROVED,
+          receipt_url: receiptUrl,
+          approved_at: new Date().toISOString(),
+          approved_by: 'admin-user', // In a real app, this would be the current user's ID
+        })
+        .eq('id', payment.id);
       
+      if (error) throw error;
+      
+      // Update local state
+      setPayment({
+        ...payment,
+        status: PaymentStatus.APPROVED,
+        receipt_url: receiptUrl,
+        approved_at: new Date().toISOString()
+      });
+      
+      // Show success message
       toast({
         title: "Pagamento aprovado",
         description: "O pagamento foi aprovado com sucesso."
       });
       
+      // Close dialog
+      setApproveDialogOpen(false);
+      setReceiptFile(null);
+      
     } catch (error) {
-      console.error("Error approving payment:", error);
+      console.error('Error approving payment:', error);
       toast({
         variant: "destructive",
-        title: "Erro",
-        description: "Não foi possível aprovar o pagamento."
+        title: "Erro ao aprovar pagamento",
+        description: "Ocorreu um erro ao aprovar o pagamento."
       });
     } finally {
-      setIsApproving(false);
+      setIsProcessing(false);
     }
   };
   
-  const handleRejectSubmit = async () => {
-    if (!rejectionReason.trim()) {
-      toast({
-        variant: "destructive",
-        title: "Erro",
-        description: "Você precisa fornecer um motivo para a rejeição."
-      });
-      return;
-    }
+  const handleRejectPayment = async () => {
+    if (!payment || !rejectionReason.trim()) return;
     
-    setIsRejecting(true);
+    setIsProcessing(true);
+    
     try {
-      // In a real app, this would call Supabase
-      // await supabase.from('payment_requests').update({
-      //   status: 'REJECTED',
-      //   rejection_reason: rejectionReason
-      // }).eq('id', id);
+      // Update the payment status
+      const { error } = await supabase
+        .from('payment_requests')
+        .update({
+          status: PaymentStatus.REJECTED,
+          rejection_reason: rejectionReason
+        })
+        .eq('id', payment.id);
       
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      if (error) throw error;
       
-      setPayment({ 
-        ...payment, 
+      // Update local state
+      setPayment({
+        ...payment,
         status: PaymentStatus.REJECTED,
-        rejection_reason: rejectionReason 
+        rejection_reason: rejectionReason
       });
       
-      setRejectDialogOpen(false);
-      
+      // Show success message
       toast({
         title: "Pagamento rejeitado",
         description: "O pagamento foi rejeitado com sucesso."
       });
       
+      // Close dialog
+      setRejectDialogOpen(false);
+      setRejectionReason('');
+      
     } catch (error) {
-      console.error("Error rejecting payment:", error);
+      console.error('Error rejecting payment:', error);
       toast({
         variant: "destructive",
-        title: "Erro",
-        description: "Não foi possível rejeitar o pagamento."
+        title: "Erro ao rejeitar pagamento",
+        description: "Ocorreu um erro ao rejeitar o pagamento."
       });
     } finally {
-      setIsRejecting(false);
+      setIsProcessing(false);
     }
   };
   
-  const getStatusBadge = (status: string) => {
-    switch (status) {
-      case PaymentStatus.PENDING:
-        return <Badge className="bg-yellow-500">Pendente</Badge>;
-      case PaymentStatus.APPROVED:
-        return <Badge className="bg-emerald-500">Aprovado</Badge>;
-      case PaymentStatus.REJECTED:
-        return <Badge variant="destructive">Rejeitado</Badge>;
-      case PaymentStatus.PAID:
-        return <Badge className="bg-blue-500">Pago</Badge>;
-      default:
-        return <Badge variant="outline">{status}</Badge>;
-    }
-  };
-  
-  const formatDate = (dateString: string) => {
+  const formatDate = (dateString?: string) => {
+    if (!dateString) return "N/A";
+    
     try {
-      return format(new Date(dateString), "PPP 'às' p", { locale: ptBR });
+      return format(new Date(dateString), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR });
     } catch (error) {
       return "Data inválida";
     }
   };
   
-  const formatCurrency = (value: number) => {
-    return new Intl.NumberFormat('pt-BR', {
-      style: 'currency',
-      currency: 'BRL'
-    }).format(value);
-  };
-  
-  if (loading) {
-    return (
-      <>
-        <PageHeader 
-          title="Detalhes do Pagamento"
-          description="Carregando informações..."
-        >
-          <Button variant="outline" onClick={() => navigate(PATHS.ADMIN.PAYMENTS)}>
-            <ArrowLeft className="mr-2 h-4 w-4" /> Voltar
-          </Button>
-        </PageHeader>
-        
-        <PageWrapper>
-          <div className="space-y-6">
-            <Skeleton className="h-[200px] w-full" />
-            <Skeleton className="h-[300px] w-full" />
-          </div>
-        </PageWrapper>
-      </>
-    );
-  }
-  
-  if (!payment) {
-    return (
-      <>
-        <PageHeader 
-          title="Detalhes do Pagamento"
-          description="Pagamento não encontrado"
-        >
-          <Button variant="outline" onClick={() => navigate(PATHS.ADMIN.PAYMENTS)}>
-            <ArrowLeft className="mr-2 h-4 w-4" /> Voltar
-          </Button>
-        </PageHeader>
-        
-        <PageWrapper>
-          <Card>
-            <CardHeader>
-              <CardTitle>Pagamento não encontrado</CardTitle>
-              <CardDescription>
-                O pagamento solicitado não foi encontrado ou não existe.
-              </CardDescription>
-            </CardHeader>
-            <CardFooter>
-              <Button onClick={() => navigate(PATHS.ADMIN.PAYMENTS)}>
-                Voltar para Pagamentos
-              </Button>
-            </CardFooter>
-          </Card>
-        </PageWrapper>
-      </>
-    );
-  }
-  
   return (
     <>
       <PageHeader 
-        title="Detalhes do Pagamento"
-        description={`Solicitação #${payment.id.substring(0, 8)}`}
+        title="Detalhes do Pagamento" 
+        description="Visualize e gerencie informações do pagamento"
+        actionLabel="Voltar para Pagamentos"
+        actionLink={PATHS.ADMIN.PAYMENTS}
       >
-        <Button variant="outline" onClick={() => navigate(PATHS.ADMIN.PAYMENTS)}>
-          <ArrowLeft className="mr-2 h-4 w-4" /> Voltar
+        <Button 
+          variant="ghost" 
+          size="sm" 
+          onClick={() => navigate(PATHS.ADMIN.PAYMENTS)}
+          className="gap-1"
+        >
+          <ArrowLeft className="h-4 w-4" /> Voltar
         </Button>
       </PageHeader>
       
       <PageWrapper>
-        <div className="space-y-6">
-          <Card>
-            <CardHeader>
-              <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-                <div>
-                  <CardTitle>Pagamento {formatCurrency(payment.amount)}</CardTitle>
-                  <CardDescription>
-                    Criado em {formatDate(payment.created_at)}
-                  </CardDescription>
-                </div>
-                <div className="flex items-center gap-2">
-                  {getStatusBadge(payment.status)}
-                  
-                  {payment.status === PaymentStatus.PENDING && (
-                    <>
-                      <Button 
-                        variant="outline" 
-                        size="sm" 
-                        className="text-destructive border-destructive"
-                        onClick={() => setRejectDialogOpen(true)}
-                      >
-                        <X className="mr-2 h-4 w-4" /> Rejeitar
-                      </Button>
-                      <Button 
-                        variant="default" 
-                        size="sm"
-                        onClick={handleApprove}
-                        disabled={isApproving}
-                      >
-                        <Check className="mr-2 h-4 w-4" /> Aprovar
-                      </Button>
-                    </>
-                  )}
-                </div>
+        {isLoading ? (
+          <div className="space-y-6">
+            <div className="flex justify-between">
+              <Skeleton className="h-8 w-1/3" />
+              <Skeleton className="h-8 w-24" />
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="space-y-4">
+                <Skeleton className="h-24 w-full" />
+                <Skeleton className="h-24 w-full" />
               </div>
-            </CardHeader>
-            <CardContent>
-              <Tabs defaultValue="details">
-                <TabsList>
-                  <TabsTrigger value="details">Detalhes</TabsTrigger>
-                  <TabsTrigger value="client">Cliente</TabsTrigger>
-                </TabsList>
+              <div className="space-y-4">
+                <Skeleton className="h-24 w-full" />
+                <Skeleton className="h-24 w-full" />
+              </div>
+            </div>
+          </div>
+        ) : payment ? (
+          <div className="space-y-6">
+            <div className="flex justify-between items-center">
+              <h2 className="text-2xl font-bold">
+                Pagamento #{payment.id.substring(0, 8)}
+              </h2>
+              <div>
+                {payment.status === PaymentStatus.PENDING && (
+                  <Badge className="bg-yellow-100 text-yellow-800">Pendente</Badge>
+                )}
+                {payment.status === PaymentStatus.APPROVED && (
+                  <Badge className="bg-green-100 text-green-800">Aprovado</Badge>
+                )}
+                {payment.status === PaymentStatus.REJECTED && (
+                  <Badge className="bg-red-100 text-red-800">Rejeitado</Badge>
+                )}
+                {payment.status === PaymentStatus.PAID && (
+                  <Badge className="bg-blue-100 text-blue-800">Pago</Badge>
+                )}
+              </div>
+            </div>
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+              <div className="space-y-8">
+                <div className="bg-card p-6 rounded-lg border">
+                  <h3 className="text-lg font-semibold mb-4">Informações do Cliente</h3>
+                  <div className="space-y-4">
+                    <div>
+                      <p className="text-sm text-muted-foreground">Nome</p>
+                      <p className="font-medium">{payment.client.business_name}</p>
+                    </div>
+                    <div>
+                      <p className="text-sm text-muted-foreground">Email</p>
+                      <p className="font-medium">{payment.client.email || 'N/A'}</p>
+                    </div>
+                    <div>
+                      <p className="text-sm text-muted-foreground">ID do Cliente</p>
+                      <p className="font-mono text-sm">{payment.client.id}</p>
+                    </div>
+                  </div>
+                </div>
                 
-                <TabsContent value="details" className="space-y-6">
-                  <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-                    <div>
-                      <h3 className="text-sm font-medium text-muted-foreground mb-1">Valor</h3>
-                      <p className="text-lg font-medium">{formatCurrency(payment.amount)}</p>
+                <div className="bg-card p-6 rounded-lg border">
+                  <h3 className="text-lg font-semibold mb-4">Detalhes do Pagamento</h3>
+                  <div className="space-y-4">
+                    <div className="flex justify-between items-center">
+                      <p className="text-sm text-muted-foreground">Valor</p>
+                      <p className="font-semibold text-xl">{formatCurrency(payment.amount)}</p>
                     </div>
-                    
-                    <div>
-                      <h3 className="text-sm font-medium text-muted-foreground mb-1">Status</h3>
-                      <p className="text-lg font-medium">{getStatusBadge(payment.status)}</p>
+                    <div className="flex justify-between">
+                      <p className="text-sm text-muted-foreground">Tipo</p>
+                      <p>{payment.pix_key.type}</p>
                     </div>
-                    
-                    <div>
-                      <h3 className="text-sm font-medium text-muted-foreground mb-1">Data de Criação</h3>
+                    <div className="flex justify-between">
+                      <p className="text-sm text-muted-foreground">Chave PIX</p>
+                      <p className="font-mono text-sm">{payment.pix_key.key}</p>
+                    </div>
+                    <div className="flex justify-between">
+                      <p className="text-sm text-muted-foreground">Data da Solicitação</p>
                       <p>{formatDate(payment.created_at)}</p>
                     </div>
-                    
-                    <div>
-                      <h3 className="text-sm font-medium text-muted-foreground mb-1">Tipo de Pagamento</h3>
-                      <p>{payment.payment_type}</p>
-                    </div>
-                    
-                    <div className="md:col-span-2">
-                      <h3 className="text-sm font-medium text-muted-foreground mb-1">Descrição</h3>
-                      <p>{payment.description || "Nenhuma descrição fornecida."}</p>
-                    </div>
-                    
-                    {payment.receipt_url && (
-                      <div className="md:col-span-2">
-                        <h3 className="text-sm font-medium text-muted-foreground mb-1">Comprovante</h3>
-                        <div className="flex items-center gap-2">
-                          <Button variant="outline" size="sm" asChild>
-                            <a href={payment.receipt_url} target="_blank" rel="noopener noreferrer">
-                              <ExternalLink className="mr-2 h-4 w-4" /> Ver Comprovante
-                            </a>
-                          </Button>
-                          <Button variant="outline" size="sm" asChild>
-                            <a href={payment.receipt_url} download>
-                              <DownloadIcon className="mr-2 h-4 w-4" /> Baixar
-                            </a>
-                          </Button>
-                        </div>
+                    {payment.description && (
+                      <div>
+                        <p className="text-sm text-muted-foreground mb-1">Descrição</p>
+                        <p className="bg-muted p-2 rounded text-sm">{payment.description}</p>
                       </div>
+                    )}
+                  </div>
+                </div>
+              </div>
+              
+              <div className="space-y-8">
+                <div className="bg-card p-6 rounded-lg border">
+                  <h3 className="text-lg font-semibold mb-4">Status do Pagamento</h3>
+                  <div className="space-y-4">
+                    <div className="flex justify-between">
+                      <p className="text-sm text-muted-foreground">Status Atual</p>
+                      <div>
+                        {payment.status === PaymentStatus.PENDING && (
+                          <Badge className="bg-yellow-100 text-yellow-800">Pendente</Badge>
+                        )}
+                        {payment.status === PaymentStatus.APPROVED && (
+                          <Badge className="bg-green-100 text-green-800">Aprovado</Badge>
+                        )}
+                        {payment.status === PaymentStatus.REJECTED && (
+                          <Badge className="bg-red-100 text-red-800">Rejeitado</Badge>
+                        )}
+                        {payment.status === PaymentStatus.PAID && (
+                          <Badge className="bg-blue-100 text-blue-800">Pago</Badge>
+                        )}
+                      </div>
+                    </div>
+                    
+                    {payment.status === PaymentStatus.APPROVED && payment.approved_at && (
+                      <>
+                        <div className="flex justify-between">
+                          <p className="text-sm text-muted-foreground">Data de Aprovação</p>
+                          <p>{formatDate(payment.approved_at)}</p>
+                        </div>
+                        {payment.receipt_url && (
+                          <div>
+                            <p className="text-sm text-muted-foreground mb-2">Comprovante</p>
+                            <Button asChild className="w-full">
+                              <a 
+                                href={payment.receipt_url} 
+                                target="_blank"
+                                rel="noopener noreferrer"
+                              >
+                                Visualizar Comprovante
+                              </a>
+                            </Button>
+                          </div>
+                        )}
+                      </>
                     )}
                     
                     {payment.status === PaymentStatus.REJECTED && payment.rejection_reason && (
-                      <div className="md:col-span-2">
-                        <h3 className="text-sm font-medium text-destructive mb-1">Motivo da Rejeição</h3>
-                        <p className="text-destructive">{payment.rejection_reason}</p>
+                      <div>
+                        <p className="text-sm text-muted-foreground mb-1">Motivo da Rejeição</p>
+                        <p className="bg-muted p-2 rounded text-sm text-destructive">
+                          {payment.rejection_reason}
+                        </p>
                       </div>
                     )}
                   </div>
-                  
-                  <Separator />
-                  
-                  <div>
-                    <h3 className="text-lg font-medium mb-3">Dados PIX</h3>
-                    <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-                      <div>
-                        <h4 className="text-sm font-medium text-muted-foreground mb-1">Chave</h4>
-                        <p>{payment.pix_key.key}</p>
-                      </div>
-                      <div>
-                        <h4 className="text-sm font-medium text-muted-foreground mb-1">Tipo</h4>
-                        <p>{payment.pix_key.type}</p>
-                      </div>
-                      <div>
-                        <h4 className="text-sm font-medium text-muted-foreground mb-1">Titular</h4>
-                        <p>{payment.pix_key.name}</p>
-                      </div>
-                      <div>
-                        <h4 className="text-sm font-medium text-muted-foreground mb-1">Banco</h4>
-                        <p>{payment.pix_key.bank_name || "Não informado"}</p>
-                      </div>
-                    </div>
-                  </div>
-                </TabsContent>
+                </div>
                 
-                <TabsContent value="client">
-                  <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-                    <div>
-                      <h3 className="text-sm font-medium text-muted-foreground mb-1">Nome da Empresa</h3>
-                      <p className="text-lg font-medium">{clientData.business_name}</p>
-                    </div>
-                    
-                    <div>
-                      <h3 className="text-sm font-medium text-muted-foreground mb-1">CNPJ</h3>
-                      <p>{clientData.document || "Não informado"}</p>
-                    </div>
-                    
-                    <div>
-                      <h3 className="text-sm font-medium text-muted-foreground mb-1">Email</h3>
-                      <p>{clientData.email || "Não informado"}</p>
-                    </div>
-                    
-                    <div>
-                      <h3 className="text-sm font-medium text-muted-foreground mb-1">Telefone</h3>
-                      <p>{clientData.phone || "Não informado"}</p>
+                {payment.status === PaymentStatus.PENDING && (
+                  <div className="bg-card p-6 rounded-lg border">
+                    <h3 className="text-lg font-semibold mb-4">Ações</h3>
+                    <div className="space-y-4">
+                      <Button 
+                        onClick={() => setApproveDialogOpen(true)}
+                        className="w-full"
+                      >
+                        <Check className="h-4 w-4 mr-2" />
+                        Aprovar Pagamento
+                      </Button>
+                      <Button 
+                        variant="destructive"
+                        onClick={() => setRejectDialogOpen(true)}
+                        className="w-full"
+                      >
+                        <X className="h-4 w-4 mr-2" />
+                        Rejeitar Pagamento
+                      </Button>
                     </div>
                   </div>
-                  
-                  <div className="mt-6">
-                    <Button onClick={() => navigate(PATHS.ADMIN.CLIENT_DETAILS(clientData.id))}>
-                      Ver Detalhes do Cliente
-                    </Button>
-                  </div>
-                </TabsContent>
-              </Tabs>
-            </CardContent>
-          </Card>
-        </div>
+                )}
+              </div>
+            </div>
+          </div>
+        ) : (
+          <div className="text-center py-12">
+            <h3 className="text-lg font-medium mb-2">Pagamento não encontrado</h3>
+            <p className="text-muted-foreground">
+              O pagamento que você está procurando não existe ou não está disponível.
+            </p>
+            <Button 
+              variant="outline" 
+              className="mt-4"
+              onClick={() => navigate(PATHS.ADMIN.PAYMENTS)}
+            >
+              Voltar para Pagamentos
+            </Button>
+          </div>
+        )}
       </PageWrapper>
       
-      {/* Reject Dialog */}
-      <Dialog open={rejectDialogOpen} onOpenChange={setRejectDialogOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Rejeitar Pagamento</DialogTitle>
-            <DialogDescription>
-              Forneça um motivo para a rejeição deste pagamento. Isso será exibido para o cliente.
-            </DialogDescription>
-          </DialogHeader>
+      {/* Approve Payment Dialog */}
+      <AlertDialog
+        open={approveDialogOpen}
+        onOpenChange={setApproveDialogOpen}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Aprovar Pagamento</AlertDialogTitle>
+            <AlertDialogDescription>
+              Faça upload do comprovante para aprovar este pagamento.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
           
-          <div className="py-4">
-            <Textarea
-              placeholder="Motivo da rejeição..."
-              value={rejectionReason}
-              onChange={(e) => setRejectionReason(e.target.value)}
-              className="min-h-[100px]"
+          <div className="space-y-4 py-4">
+            <FileUploader
+              label="Comprovante de pagamento (opcional)"
+              onFileSelect={setReceiptFile}
+              accept=".jpg,.jpeg,.png,.pdf"
+              currentFile={null}
             />
           </div>
           
-          <DialogFooter>
-            <Button 
-              variant="outline" 
-              onClick={() => setRejectDialogOpen(false)}
-              disabled={isRejecting}
+          <AlertDialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => {
+                setApproveDialogOpen(false);
+                setReceiptFile(null);
+              }}
+              disabled={isProcessing}
             >
               Cancelar
             </Button>
-            <Button 
-              variant="destructive" 
-              onClick={handleRejectSubmit}
-              disabled={isRejecting || !rejectionReason.trim()}
+            <Button
+              onClick={handleApprovePayment}
+              disabled={isProcessing}
             >
-              {isRejecting ? "Rejeitando..." : "Rejeitar Pagamento"}
+              {isProcessing ? "Processando..." : "Confirmar Aprovação"}
             </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+      
+      {/* Reject Payment Dialog */}
+      <AlertDialog
+        open={rejectDialogOpen}
+        onOpenChange={setRejectDialogOpen}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Rejeitar Pagamento</AlertDialogTitle>
+            <AlertDialogDescription>
+              Informe o motivo para rejeitar este pagamento. Esta informação será enviada ao cliente.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          
+          <Textarea
+            placeholder="Motivo da rejeição"
+            value={rejectionReason}
+            onChange={(e) => setRejectionReason(e.target.value)}
+            className="min-h-[100px]"
+          />
+          
+          <AlertDialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => {
+                setRejectDialogOpen(false);
+                setRejectionReason('');
+              }}
+              disabled={isProcessing}
+            >
+              Cancelar
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={handleRejectPayment}
+              disabled={isProcessing || !rejectionReason.trim()}
+            >
+              {isProcessing ? "Processando..." : "Confirmar Rejeição"}
+            </Button>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </>
   );
 };

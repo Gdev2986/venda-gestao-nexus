@@ -1,4 +1,5 @@
-import { useCallback, useState } from "react";
+
+import { useCallback, useState, useEffect } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { PaymentStatus, PaymentType } from "@/types";
@@ -16,7 +17,7 @@ export interface PaymentData {
   receipt_url: string;
   status: PaymentStatus;
   updated_at: string;
-  rejection_reason?: string; // Add this field
+  rejection_reason?: string;
   pix_key: {
     id: string;
     key: string;
@@ -74,13 +75,16 @@ export const usePayments = (options: UsePaymentsOptions = {}) => {
       if (error) throw error;
       
       // Map data to our internal format
-      const formattedData = (data || []).map((payment) => ({
-        ...payment,
-        status: payment.status as PaymentStatus,
-        rejection_reason: payment.rejection_reason || "", // Ensure this field exists
-      }));
+      const formattedData = (data || []).map((payment) => {
+        // Ensure payment object has all required fields
+        return {
+          ...payment,
+          status: payment.status as PaymentStatus,
+          rejection_reason: payment.rejection_reason || undefined,
+        } as PaymentData;
+      });
       
-      setPayments(formattedData as PaymentData[]);
+      setPayments(formattedData);
     } catch (err) {
       setError(err as Error);
       toast({
