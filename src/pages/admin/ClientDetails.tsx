@@ -52,8 +52,8 @@ const ClientDetails = () => {
         <PageHeader 
           title="Detalhes do Cliente" 
           description="Carregando..." 
-          backHref={PATHS.ADMIN.CLIENTS}
-          backLabel="Voltar para lista"
+          actionLink={PATHS.ADMIN.CLIENTS}
+          actionLabel="Voltar para lista"
         />
         <PageWrapper>
           <div className="flex items-center justify-center h-64">
@@ -73,8 +73,8 @@ const ClientDetails = () => {
         <PageHeader 
           title="Cliente não encontrado" 
           description="O cliente solicitado não existe."
-          backHref={PATHS.ADMIN.CLIENTS}
-          backLabel="Voltar para lista"
+          actionLink={PATHS.ADMIN.CLIENTS}
+          actionLabel="Voltar para lista"
         />
         <PageWrapper>
           <Card>
@@ -107,8 +107,8 @@ const ClientDetails = () => {
       <PageHeader
         title={client.business_name}
         description="Detalhes e gerenciamento do cliente"
-        backHref={PATHS.ADMIN.CLIENTS}
-        backLabel="Voltar para lista"
+        actionLink={PATHS.ADMIN.CLIENTS}
+        actionLabel="Voltar para lista"
       />
 
       <div className="flex flex-col md:flex-row gap-6 items-start">

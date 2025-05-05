@@ -26,6 +26,12 @@ export enum PaymentType {
   BOLETO = "BOLETO"
 }
 
+export enum PaymentMethod {
+  CREDIT = "CREDIT",
+  DEBIT = "DEBIT",
+  PIX = "PIX"
+}
+
 export interface Payment {
   id: string;
   created_at: string;
@@ -107,6 +113,19 @@ export interface UserData {
   app_metadata?: any;
   user_metadata?: any;
   aud?: string;
+}
+
+export interface Sale {
+  id: string;
+  code: string;
+  terminal: string;
+  date: string;
+  gross_amount: number;
+  net_amount: number;
+  paymentMethod: PaymentMethod;
+  client_id?: string;
+  client_name?: string;
+  installments?: string;
 }
 
 // Add other types here as needed

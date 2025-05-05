@@ -44,8 +44,15 @@ export const useUserManagement = () => {
           return;
         }
 
-        // Type assertion to make TypeScript happy
-        setUsers(data as unknown as UserData[]);
+        // Transform the data to match our UserData interface
+        const userData = data.map(user => ({
+          ...user,
+          app_metadata: {},
+          user_metadata: {},
+          aud: ''
+        })) as UserData[];
+        
+        setUsers(userData);
         
         // For pagination mock (would be replaced with actual pagination)
         setTotalUsers(data.length);
