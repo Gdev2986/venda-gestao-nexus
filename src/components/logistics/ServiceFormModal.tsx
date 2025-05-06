@@ -77,10 +77,26 @@ const ServiceFormModal = ({ open, onOpenChange, service, onSave }: ServiceFormMo
     },
   });
   
+  // Reset form when modal opens with new data
+  React.useEffect(() => {
+    if (open) {
+      form.reset({
+        clientId: service?.clientId || "",
+        machineId: service?.machineId || "",
+        establishment: service?.establishment || "",
+        type: service?.type || "MAINTENANCE",
+        date: service?.scheduledFor ? new Date(service.scheduledFor) : new Date(),
+        time: service?.scheduledFor ? format(new Date(service.scheduledFor), "HH:mm") : "09:00",
+        status: service?.status || "PENDING",
+        notes: service?.notes || "",
+      });
+    }
+  }, [open, service, form]);
+  
   // Filter machines when client changes
   React.useEffect(() => {
     const clientId = form.watch("clientId");
-    if (clientId) {
+    if (clientId && clientId !== "none") {
       const filtered = allMachines.filter(machine => machine.clientId === clientId);
       setClientMachines(filtered);
     } else {
@@ -108,6 +124,7 @@ const ServiceFormModal = ({ open, onOpenChange, service, onSave }: ServiceFormMo
       });
       
       onSave(savedService);
+      form.reset();
     } catch (error) {
       toast({
         variant: "destructive",
@@ -118,8 +135,24 @@ const ServiceFormModal = ({ open, onOpenChange, service, onSave }: ServiceFormMo
     }
   };
   
+  // Handle cancel button click
+  const handleCancel = () => {
+    form.reset();
+    onOpenChange(false);
+  };
+  
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <Dialog open={open} onOpenChange={(isOpen) => {
+      // Ensure clean state when closing the modal
+      if (!isOpen) {
+        // Small delay to allow animation to complete
+        setTimeout(() => {
+          form.reset();
+          setClientMachines([]);
+        }, 100);
+      }
+      onOpenChange(isOpen);
+    }}>
       <DialogContent className="sm:max-w-[525px]">
         <DialogHeader>
           <DialogTitle>
@@ -141,6 +174,7 @@ const ServiceFormModal = ({ open, onOpenChange, service, onSave }: ServiceFormMo
                   <Select
                     onValueChange={field.onChange}
                     defaultValue={field.value}
+                    value={field.value}
                   >
                     <FormControl>
                       <SelectTrigger>
@@ -169,6 +203,7 @@ const ServiceFormModal = ({ open, onOpenChange, service, onSave }: ServiceFormMo
                   <Select
                     onValueChange={field.onChange}
                     defaultValue={field.value}
+                    value={field.value}
                     disabled={clientMachines.length === 0}
                   >
                     <FormControl>
@@ -212,6 +247,7 @@ const ServiceFormModal = ({ open, onOpenChange, service, onSave }: ServiceFormMo
                   <Select
                     onValueChange={field.onChange}
                     defaultValue={field.value}
+                    value={field.value}
                   >
                     <FormControl>
                       <SelectTrigger>
@@ -303,6 +339,7 @@ const ServiceFormModal = ({ open, onOpenChange, service, onSave }: ServiceFormMo
                   <Select
                     onValueChange={field.onChange}
                     defaultValue={field.value}
+                    value={field.value}
                   >
                     <FormControl>
                       <SelectTrigger>
@@ -342,7 +379,7 @@ const ServiceFormModal = ({ open, onOpenChange, service, onSave }: ServiceFormMo
               <Button
                 type="button"
                 variant="outline"
-                onClick={() => onOpenChange(false)}
+                onClick={handleCancel}
               >
                 Cancelar
               </Button>

@@ -50,6 +50,7 @@ const MachineFormModal = ({ open, onOpenChange, machine, onSave }: MachineFormMo
   const { toast } = useToast();
   const { clients } = useClients();
   
+  // Reset form when modal opens or closes
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
@@ -59,6 +60,18 @@ const MachineFormModal = ({ open, onOpenChange, machine, onSave }: MachineFormMo
       clientId: machine?.clientId || undefined,
     },
   });
+  
+  // Reset form when modal opens with new data
+  React.useEffect(() => {
+    if (open) {
+      form.reset({
+        serialNumber: machine?.serialNumber || "",
+        model: machine?.model || "",
+        status: machine?.status || "ACTIVE",
+        clientId: machine?.clientId || undefined,
+      });
+    }
+  }, [open, machine, form]);
   
   const onSubmit = async (data: z.infer<typeof formSchema>) => {
     try {
@@ -70,6 +83,7 @@ const MachineFormModal = ({ open, onOpenChange, machine, onSave }: MachineFormMo
       });
       
       onSave(savedMachine);
+      form.reset();
     } catch (error) {
       toast({
         variant: "destructive",
@@ -80,8 +94,23 @@ const MachineFormModal = ({ open, onOpenChange, machine, onSave }: MachineFormMo
     }
   };
   
+  // Handle cancel button click
+  const handleCancel = () => {
+    form.reset();
+    onOpenChange(false);
+  };
+  
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <Dialog open={open} onOpenChange={(isOpen) => {
+      // Ensure clean state when closing the modal
+      if (!isOpen) {
+        // Small delay to allow animation to complete
+        setTimeout(() => {
+          form.reset();
+        }, 100);
+      }
+      onOpenChange(isOpen);
+    }}>
       <DialogContent className="sm:max-w-[525px]">
         <DialogHeader>
           <DialogTitle>
@@ -182,7 +211,7 @@ const MachineFormModal = ({ open, onOpenChange, machine, onSave }: MachineFormMo
               <Button
                 type="button"
                 variant="outline"
-                onClick={() => onOpenChange(false)}
+                onClick={handleCancel}
               >
                 Cancelar
               </Button>
