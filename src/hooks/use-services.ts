@@ -139,14 +139,24 @@ export const useServices = (params: UseServicesParams = {}) => {
 
 export const saveService = async (serviceData: any) => {
   // In a real app, this would save to Supabase
-  // For now, just return the data with a mock id
+  // For now, just return the data with a mock id if it's new, or the same id if updating
   return new Promise((resolve) => {
     setTimeout(() => {
-      resolve({
-        id: Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15),
-        ...serviceData,
-        createdAt: new Date().toISOString()
-      });
+      if (serviceData.id) {
+        // Update existing service
+        resolve({
+          ...serviceData,
+          updatedAt: new Date().toISOString()
+        });
+      } else {
+        // Create new service
+        resolve({
+          id: Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15),
+          ...serviceData,
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString()
+        });
+      }
     }, 500);
   });
 };

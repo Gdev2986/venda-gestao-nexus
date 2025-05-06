@@ -1,7 +1,7 @@
 
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Search, Plus, Filter } from "lucide-react";
+import { Search, Plus, Filter, Eye, Edit } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import {
   Select,
@@ -12,6 +12,7 @@ import {
 } from "@/components/ui/select";
 import { DataTable } from "@/components/ui/data-table";
 import ServiceFormModal from "./ServiceFormModal";
+import ServiceDetailsModal from "./ServiceDetailsModal";
 import { useServices } from "@/hooks/use-services";
 
 const ServiceList = () => {
@@ -19,6 +20,8 @@ const ServiceList = () => {
   const [statusFilter, setStatusFilter] = useState("all");
   const [typeFilter, setTypeFilter] = useState("all");
   const [showForm, setShowForm] = useState(false);
+  const [showDetails, setShowDetails] = useState(false);
+  const [selectedService, setSelectedService] = useState<any>(null);
   
   const { services, isLoading, currentPage, totalPages, onPageChange, refreshServices } = 
     useServices({ searchTerm, statusFilter, typeFilter });
@@ -104,11 +107,19 @@ const ServiceList = () => {
       header: "Ações",
       cell: ({ row }: any) => (
         <div className="flex gap-2">
-          <Button variant="outline" size="sm">
-            Editar
+          <Button 
+            variant="outline" 
+            size="sm"
+            onClick={() => handleEditService(row.original)}
+          >
+            <Edit className="h-4 w-4 mr-1" /> Editar
           </Button>
-          <Button variant="outline" size="sm">
-            Ver Detalhes
+          <Button 
+            variant="outline" 
+            size="sm"
+            onClick={() => handleViewDetails(row.original)}
+          >
+            <Eye className="h-4 w-4 mr-1" /> Ver Detalhes
           </Button>
         </div>
       ),
@@ -119,12 +130,25 @@ const ServiceList = () => {
     setShowForm(false);
     refreshServices();
   };
+  
+  const handleEditService = (service: any) => {
+    setSelectedService(service);
+    setShowForm(true);
+  };
+  
+  const handleViewDetails = (service: any) => {
+    setSelectedService(service);
+    setShowDetails(true);
+  };
 
   return (
     <div className="space-y-4">
       <div className="flex justify-between items-center">
         <h2 className="text-lg font-semibold">Atendimentos</h2>
-        <Button onClick={() => setShowForm(true)}>
+        <Button onClick={() => {
+          setSelectedService(null);
+          setShowForm(true);
+        }}>
           <Plus className="mr-2 h-4 w-4" /> Novo Atendimento
         </Button>
       </div>
@@ -187,13 +211,18 @@ const ServiceList = () => {
         isLoading={isLoading}
       />
       
-      {showForm && (
-        <ServiceFormModal
-          open={showForm}
-          onOpenChange={setShowForm}
-          onSave={handleAddService}
-        />
-      )}
+      <ServiceFormModal
+        open={showForm}
+        onOpenChange={setShowForm}
+        service={selectedService}
+        onSave={handleAddService}
+      />
+      
+      <ServiceDetailsModal
+        open={showDetails}
+        onOpenChange={setShowDetails}
+        service={selectedService}
+      />
     </div>
   );
 };

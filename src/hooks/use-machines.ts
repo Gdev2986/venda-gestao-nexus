@@ -34,7 +34,8 @@ export const useMachines = (params: UseMachinesParams = {}) => {
             status: "ACTIVE",
             clientId: "1",
             clientName: "Supermercado ABC",
-            createdAt: "2023-01-15T10:30:00Z"
+            createdAt: "2023-01-15T10:30:00Z",
+            updatedAt: "2023-01-15T10:30:00Z"
           },
           {
             id: "2",
@@ -43,7 +44,8 @@ export const useMachines = (params: UseMachinesParams = {}) => {
             status: "MAINTENANCE",
             clientId: "2",
             clientName: "Restaurante XYZ",
-            createdAt: "2023-02-20T14:45:00Z"
+            createdAt: "2023-02-20T14:45:00Z",
+            updatedAt: "2023-03-15T09:20:00Z"
           },
           {
             id: "3",
@@ -52,7 +54,8 @@ export const useMachines = (params: UseMachinesParams = {}) => {
             status: "INACTIVE",
             clientId: "3",
             clientName: "Farmácia Central",
-            createdAt: "2023-03-10T09:15:00Z"
+            createdAt: "2023-03-10T09:15:00Z",
+            updatedAt: "2023-03-10T09:15:00Z"
           },
           {
             id: "4",
@@ -61,7 +64,8 @@ export const useMachines = (params: UseMachinesParams = {}) => {
             status: "ACTIVE",
             clientId: "1",
             clientName: "Supermercado ABC",
-            createdAt: "2023-04-05T11:20:00Z"
+            createdAt: "2023-04-05T11:20:00Z",
+            updatedAt: "2023-04-05T11:20:00Z"
           },
           {
             id: "5",
@@ -70,7 +74,8 @@ export const useMachines = (params: UseMachinesParams = {}) => {
             status: "REPLACEMENT_REQUESTED",
             clientId: "4",
             clientName: "Padaria Sabor",
-            createdAt: "2023-05-18T16:10:00Z"
+            createdAt: "2023-05-18T16:10:00Z",
+            updatedAt: "2023-06-02T14:35:00Z"
           }
         ];
         
@@ -120,14 +125,24 @@ export const useMachines = (params: UseMachinesParams = {}) => {
 
 export const saveMachine = async (machineData: any) => {
   // In a real app, this would save to Supabase
-  // For now, just return the data with a mock id
+  // For now, just return the data with a mock id if it's new, or the same id if updating
   return new Promise((resolve) => {
     setTimeout(() => {
-      resolve({
-        id: Math.random().toString(36).substring(2, 9),
-        ...machineData,
-        createdAt: new Date().toISOString()
-      });
+      if (machineData.id) {
+        // Update existing machine
+        resolve({
+          ...machineData,
+          updatedAt: new Date().toISOString()
+        });
+      } else {
+        // Create new machine
+        resolve({
+          id: Math.random().toString(36).substring(2, 9),
+          ...machineData,
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString()
+        });
+      }
     }, 500);
   });
 };

@@ -1,7 +1,7 @@
 
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Search, Filter, Plus } from "lucide-react";
+import { Search, Filter, Plus, Eye, Edit } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { 
   Select,
@@ -12,12 +12,15 @@ import {
 } from "@/components/ui/select";
 import { DataTable } from "@/components/ui/data-table";
 import MachineFormModal from "./MachineFormModal";
+import MachineDetailsModal from "./MachineDetailsModal";
 import { useMachines } from "@/hooks/use-machines";
 
 const MachineList = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
   const [showForm, setShowForm] = useState(false);
+  const [showDetails, setShowDetails] = useState(false);
+  const [selectedMachine, setSelectedMachine] = useState<any>(null);
   const { machines, isLoading, currentPage, totalPages, onPageChange, refreshMachines } = useMachines({ searchTerm, statusFilter });
   
   const columns = [
@@ -80,11 +83,19 @@ const MachineList = () => {
       header: "Ações",
       cell: ({ row }: any) => (
         <div className="flex gap-2">
-          <Button variant="outline" size="sm">
-            Editar
+          <Button 
+            variant="outline" 
+            size="sm"
+            onClick={() => handleEditMachine(row.original)}
+          >
+            <Edit className="h-4 w-4 mr-1" /> Editar
           </Button>
-          <Button variant="outline" size="sm">
-            Ver Detalhes
+          <Button 
+            variant="outline" 
+            size="sm"
+            onClick={() => handleViewDetails(row.original)}
+          >
+            <Eye className="h-4 w-4 mr-1" /> Ver Detalhes
           </Button>
         </div>
       ),
@@ -95,12 +106,25 @@ const MachineList = () => {
     setShowForm(false);
     refreshMachines();
   };
+  
+  const handleEditMachine = (machine: any) => {
+    setSelectedMachine(machine);
+    setShowForm(true);
+  };
+  
+  const handleViewDetails = (machine: any) => {
+    setSelectedMachine(machine);
+    setShowDetails(true);
+  };
 
   return (
     <div className="space-y-4">
       <div className="flex justify-between items-center">
         <h2 className="text-lg font-semibold">Máquinas</h2>
-        <Button onClick={() => setShowForm(true)}>
+        <Button onClick={() => {
+          setSelectedMachine(null);
+          setShowForm(true);
+        }}>
           <Plus className="mr-2 h-4 w-4" /> Nova Máquina
         </Button>
       </div>
@@ -148,13 +172,18 @@ const MachineList = () => {
         isLoading={isLoading}
       />
       
-      {showForm && (
-        <MachineFormModal
-          open={showForm}
-          onOpenChange={setShowForm}
-          onSave={handleAddMachine}
-        />
-      )}
+      <MachineFormModal
+        open={showForm}
+        onOpenChange={setShowForm}
+        machine={selectedMachine}
+        onSave={handleAddMachine}
+      />
+      
+      <MachineDetailsModal
+        open={showDetails}
+        onOpenChange={setShowDetails}
+        machine={selectedMachine}
+      />
     </div>
   );
 };
