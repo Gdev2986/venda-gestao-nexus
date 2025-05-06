@@ -13,7 +13,7 @@ export interface PaymentRequest {
   approved_at: string | null;
   approved_by: string | null;
   receipt_url: string | null;
-  rejection_reason?: string;
+  rejection_reason: string | null;
   pix_key?: PixKey;
   client?: Client;
 }
@@ -22,9 +22,11 @@ export interface PixKey {
   id: string;
   key: string;
   key_type: PixKeyType;
+  type?: string; // Added for backward compatibility
   client_id: string;
   created_at: string;
   updated_at: string;
+  name?: string; // Added for backward compatibility
 }
 
 export type PixKeyType = 'CPF' | 'CNPJ' | 'EMAIL' | 'PHONE' | 'EVP';
@@ -33,6 +35,7 @@ export interface Client {
   id: string;
   business_name: string;
   document: string;
+  email?: string; // Added email property
 }
 
 // Add the missing PaymentData export that uses the PaymentRequest interface

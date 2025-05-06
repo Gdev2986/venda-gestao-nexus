@@ -1,6 +1,6 @@
 import { Payment, PaymentStatus, PaymentType } from "@/types";
 import { supabase } from "@/integrations/supabase/client";
-import { PaymentData, PaymentRequest } from "@/types/payment.types";
+import { PaymentData, PaymentRequest, PixKeyType } from "@/types/payment.types";
 import { RealtimeChannel } from "@supabase/supabase-js";
 
 export const formatPaymentStatus = (status: string): PaymentStatus => {
@@ -35,7 +35,7 @@ export const formatPaymentRequest = (item: any): Payment => {
     pix_key: item.pix_key ? {
       id: item.pix_key.id,
       key: item.pix_key.key,
-      type: item.pix_key.type,
+      type: item.pix_key.type || item.pix_key.key_type,
       owner_name: item.pix_key.name
     } : undefined
   };
@@ -79,10 +79,11 @@ export const fetchPaymentsData = async (
   if (error) throw error;
   
   // Ensure all required fields are present, including rejection_reason
+  // Use type assertion to resolve type mismatch
   return (data || []).map(item => ({
     ...item,
     rejection_reason: item.rejection_reason || null  // Ensure rejection_reason is always present
-  })) as PaymentData[];
+  })) as unknown as PaymentData[];
 };
 
 // Approve a payment request

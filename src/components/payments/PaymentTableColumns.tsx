@@ -24,7 +24,7 @@ export const createPaymentColumns = ({ onPaymentAction }: PaymentTableColumnsPro
   {
     id: "type",
     header: "Tipo",
-    accessorFn: (row: PaymentData) => row.pix_key?.type || "PIX",
+    accessorFn: (row: PaymentData) => row.pix_key?.type || row.pix_key?.key_type || "PIX",
     cell: (info: any) => info.getValue(),
   },
   {

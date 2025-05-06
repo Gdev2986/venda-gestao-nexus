@@ -95,7 +95,7 @@ export const PaymentDetailsDialog = ({
               </div>
               <div>
                 <p className="text-sm font-medium mb-1">Tipo de Chave</p>
-                <p className="text-sm">{payment.pix_key?.type || 'N/A'}</p>
+                <p className="text-sm">{payment.pix_key?.type || payment.pix_key?.key_type || 'N/A'}</p>
               </div>
               <div>
                 <p className="text-sm font-medium mb-1">Chave PIX</p>
