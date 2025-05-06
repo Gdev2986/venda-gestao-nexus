@@ -20,6 +20,7 @@ import Reports from "../pages/Reports";
 import Settings from "../pages/settings/Settings";
 import Support from "../pages/Support";
 import Help from "../pages/Help";
+import Partners from "../pages/partners/Partners";
 
 export const PartnerRoutes = (
   <Route element={<RequireAuth allowedRoles={[UserRole.PARTNER]} />}>
@@ -72,6 +73,11 @@ export const PartnerRoutes = (
       <Route 
         path={PATHS.PARTNER.HELP} 
         element={<Help />} 
+      />
+      
+      <Route
+        path={PATHS.PARTNER.PARTNERS}
+        element={<Partners />}
       />
     </Route>
   </Route>

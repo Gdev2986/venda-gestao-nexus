@@ -22,7 +22,7 @@ const formSchema = z.object({
     message: "O nome da empresa deve ter pelo menos 2 caracteres.",
   }),
   business_name: z.string().min(2, {
-    message: "O nome da empresa deve ter pelo menos 2 caracteres.",
+    message: "O nome fantasia deve ter pelo menos 2 caracteres.",
   }).optional(),
   contact_name: z.string().min(2, {
     message: "O nome do contato deve ter pelo menos 2 caracteres.",
@@ -33,7 +33,7 @@ const formSchema = z.object({
   phone: z.string().min(10, {
     message: "O telefone deve ter pelo menos 10 caracteres.",
   }).optional(),
-  commission_rate: z.coerce.number().min(0).max(100),
+  commission_rate: z.coerce.number().min(0).max(100).optional(),
 });
 
 export type PartnerFormValues = z.infer<typeof formSchema>;
@@ -41,7 +41,7 @@ export type PartnerFormValues = z.infer<typeof formSchema>;
 export interface PartnerFormProps {
   isOpen: boolean;
   onClose: () => void;
-  onSubmit: (data: PartnerFormValues) => void;
+  onSubmit: (data: PartnerFormValues) => void | Promise<boolean>;
   initialData?: {
     id?: string;
     company_name: string;
@@ -49,10 +49,11 @@ export interface PartnerFormProps {
     contact_name?: string;
     email?: string;
     phone?: string;
-    commission_rate: number;
+    commission_rate?: number;
   };
   title?: string;
   isSubmitting?: boolean;
+  hideCommissionRate?: boolean;
 }
 
 const PartnerForm = ({
@@ -62,6 +63,7 @@ const PartnerForm = ({
   initialData,
   title = "Novo Parceiro",
   isSubmitting = false,
+  hideCommissionRate = false,
 }: PartnerFormProps) => {
   const defaultValues: Partial<PartnerFormValues> = {
     company_name: initialData?.company_name || "",
@@ -156,29 +158,31 @@ const PartnerForm = ({
           />
         </div>
 
-        <FormField
-          control={form.control}
-          name="commission_rate"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Taxa de Comissão (%)</FormLabel>
-              <FormControl>
-                <Input
-                  type="number"
-                  min="0"
-                  max="100"
-                  step="0.1"
-                  placeholder="0.0"
-                  {...field}
-                />
-              </FormControl>
-              <FormDescription>
-                Porcentagem de comissão sobre as vendas (0-100%)
-              </FormDescription>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
+        {!hideCommissionRate && (
+          <FormField
+            control={form.control}
+            name="commission_rate"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Taxa de Comissão (%)</FormLabel>
+                <FormControl>
+                  <Input
+                    type="number"
+                    min="0"
+                    max="100"
+                    step="0.1"
+                    placeholder="0.0"
+                    {...field}
+                  />
+                </FormControl>
+                <FormDescription>
+                  Porcentagem de comissão sobre as vendas (0-100%)
+                </FormDescription>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        )}
 
         <div className="flex justify-end space-x-2 pt-4">
           <Button
