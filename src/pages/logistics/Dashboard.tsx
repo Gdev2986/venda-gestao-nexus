@@ -154,20 +154,20 @@ const LogisticsDashboard = () => {
         </Card>
       </div>
       
-      {/* Charts */}
+      {/* Charts - Modificado para melhor visualização */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <Card>
+        <Card className="h-full">
           <CardHeader>
             <CardTitle>Status das Máquinas</CardTitle>
           </CardHeader>
-          <CardContent>
-            <div className="h-80">
+          <CardContent className="p-2 sm:p-6">
+            <div className="h-64 sm:h-80">
               <ResponsiveContainer width="100%" height="100%">
                 <PieChart>
                   <Pie
                     data={statusData}
-                    innerRadius={60}
-                    outerRadius={100}
+                    innerRadius={40}
+                    outerRadius={80}
                     paddingAngle={2}
                     dataKey="value"
                     nameKey="name"
@@ -181,14 +181,14 @@ const LogisticsDashboard = () => {
                   <Tooltip />
                 </PieChart>
               </ResponsiveContainer>
-              <div className="flex justify-center space-x-8 mt-4">
+              <div className="flex flex-wrap justify-center gap-3 mt-2">
                 {statusData.map((status, i) => (
                   <div key={i} className="flex items-center">
                     <div
                       className="w-3 h-3 rounded-full mr-2"
                       style={{ backgroundColor: status.color }}
                     />
-                    <span className="text-sm text-muted-foreground">{status.name}</span>
+                    <span className="text-xs sm:text-sm text-muted-foreground">{status.name}</span>
                   </div>
                 ))}
               </div>
@@ -196,12 +196,12 @@ const LogisticsDashboard = () => {
           </CardContent>
         </Card>
         
-        <Card>
+        <Card className="h-full">
           <CardHeader>
             <CardTitle>Solicitações Mensais</CardTitle>
           </CardHeader>
-          <CardContent>
-            <div className="h-80">
+          <CardContent className="p-2 sm:p-6">
+            <div className="h-64 sm:h-80">
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart data={requestsData}>
                   <CartesianGrid strokeDasharray="3 3" />

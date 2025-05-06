@@ -1,3 +1,4 @@
+
 import { Payment, PaymentStatus, PaymentType } from "@/types";
 import { supabase } from "@/integrations/supabase/client";
 import { PaymentData, PaymentRequest, PixKeyType } from "@/types/payment.types";
@@ -30,7 +31,7 @@ export const formatPaymentRequest = (item: any): Payment => {
     payment_type: PaymentType.PIX,
     client_name: item.client?.business_name,
     receipt_url: item.receipt_url,
-    rejection_reason: null, // Default to null, will be updated if exists in DB
+    rejection_reason: item.rejection_reason || null, // Garantindo que este valor existe
     approved_at: item.approved_at,
     pix_key: item.pix_key ? {
       id: item.pix_key.id,
