@@ -12,6 +12,7 @@ import { createPaymentColumns, PaymentAction } from "@/components/payments/Payme
 import { ApprovePaymentDialog } from "@/components/payments/ApprovePaymentDialog";
 import { RejectPaymentDialog } from "@/components/payments/RejectPaymentDialog";
 import { PaymentDetailsDialog } from "@/components/payments/PaymentDetailsDialog";
+import { usePaymentSubscription } from "@/hooks/usePaymentSubscription";
 
 const AdminPayments = () => {
   // State for filters
@@ -39,6 +40,9 @@ const AdminPayments = () => {
     statusFilter,
     searchTerm
   });
+
+  // Adicionar uso do hook de inscrição em tempo real para receber atualizações imediatamente
+  usePaymentSubscription(refreshPayments, { notifyUser: true });
 
   // Handle filter changes
   const handleFilterChange = (newStatusFilter: PaymentStatus | "ALL", newSearchTerm: string) => {

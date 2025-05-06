@@ -5,6 +5,7 @@ import { PaymentHistoryCard } from "@/components/payments/PaymentHistoryCard";
 import { PaymentRequestDialog } from "@/components/payments/PaymentRequestDialog";
 import { ClientPaymentsHeader } from "@/components/payments/ClientPaymentsHeader";
 import { useClientPayments } from "@/hooks/useClientPayments";
+import { usePaymentSubscription } from "@/hooks/usePaymentSubscription";
 
 const ClientPayments = () => {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
@@ -12,11 +13,18 @@ const ClientPayments = () => {
   const {
     isLoading,
     payments,
-    clientBalance = 15000, // Default value to prevent errors
+    clientBalance = 15000, // Valor padrão para evitar erros
     pixKeys = [],
     isLoadingPixKeys = false,
-    handleRequestPayment
-  } = useClientPayments("client-id"); // Pass a default client ID
+    handleRequestPayment,
+    loadPayments // Adicionada função de recarga
+  } = useClientPayments("client-id"); // Passa um ID de cliente padrão
+
+  // Configurar inscrição em tempo real para esse cliente específico
+  usePaymentSubscription(loadPayments, { 
+    notifyUser: true,
+    filterByClientId: "client-id" // Em uma implementação real, isso viria do contexto de autenticação
+  });
 
   return (
     <div className="flex-1">
@@ -38,7 +46,7 @@ const ClientPayments = () => {
         pixKeys={pixKeys}
         isLoadingPixKeys={isLoadingPixKeys}
         onRequestPayment={(amount, description, pixKeyId, documentFile) => {
-          // Adapter function to handle type compatibility
+          // Função adaptadora para lidar com compatibilidade de tipos
           const numAmount = typeof amount === 'string' ? parseFloat(amount) : amount;
           return handleRequestPayment(numAmount, pixKeyId, description);
         }}

@@ -5,23 +5,65 @@ import { supabase } from "@/integrations/supabase/client";
 
 type SubscriptionCallback = () => void;
 
-export const usePaymentSubscription = (callback: SubscriptionCallback) => {
+export const usePaymentSubscription = (callback: SubscriptionCallback, options?: { 
+  notifyUser?: boolean;
+  filterByClientId?: string;
+}) => {
   const { toast } = useToast();
+  const notifyUser = options?.notifyUser !== false; // Por padrão, notifica o usuário
 
   useEffect(() => {
-    // Set up real-time subscription for new payment requests
+    // Configurar filtro por client_id se fornecido
+    let filter = {};
+    
+    if (options?.filterByClientId) {
+      filter = {
+        schema: 'public',
+        table: 'payment_requests',
+        filter: `client_id=eq.${options.filterByClientId}`
+      };
+    } else {
+      filter = {
+        schema: 'public',
+        table: 'payment_requests'
+      };
+    }
+
+    // Configurar inscrição em tempo real para solicitações de pagamento
     const channel = supabase
       .channel('payment_requests_changes')
       .on('postgres_changes', 
-        { event: '*', schema: 'public', table: 'payment_requests' }, 
+        { event: '*', ...filter }, 
         (payload) => {
-          console.log('Change received!', payload);
-          // In a real app, we would fetch updated data or update our state directly
-          toast({
-            title: 'Atualização de pagamento',
-            description: 'Status do pagamento foi atualizado',
-          });
-          // Call the callback to reload data
+          console.log('Alteração de pagamento recebida!', payload);
+          
+          // Notificar o usuário se a opção estiver ativada
+          if (notifyUser) {
+            let title = 'Atualização de pagamento';
+            let description = 'Uma solicitação de pagamento foi atualizada';
+            
+            // Personalizar mensagem com base no tipo de evento
+            if (payload.eventType === 'INSERT') {
+              title = 'Nova solicitação de pagamento';
+              description = 'Uma nova solicitação de pagamento foi recebida';
+            } else if (payload.eventType === 'UPDATE') {
+              const newStatus = payload.new?.status;
+              if (newStatus === 'APPROVED') {
+                title = 'Pagamento aprovado';
+                description = 'Uma solicitação de pagamento foi aprovada';
+              } else if (newStatus === 'REJECTED') {
+                title = 'Pagamento rejeitado';
+                description = 'Uma solicitação de pagamento foi rejeitada';
+              }
+            }
+            
+            toast({
+              title,
+              description,
+            });
+          }
+          
+          // Chamar o callback para recarregar os dados
           callback();
         }
       )
@@ -30,5 +72,5 @@ export const usePaymentSubscription = (callback: SubscriptionCallback) => {
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [callback, toast]);
+  }, [callback, toast, notifyUser, options?.filterByClientId]);
 };

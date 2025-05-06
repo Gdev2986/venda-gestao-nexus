@@ -22,7 +22,9 @@ export const usePaymentRequests = (initialBalance: number = 15000) => {
     handleRequestPayment
   } = usePaymentRequestManager(pixKeys, paymentRequests, setPaymentRequests);
   
-  // Set up the subscription to payment changes
+  // Configurar a inscrição para atualizações de pagamentos
+  // Aqui não precisamos passar o ID do cliente, pois o hook usePaymentRequestsFetcher já
+  // carrega os pagamentos do cliente logado
   usePaymentSubscription(loadPaymentRequests);
 
   return {
@@ -33,6 +35,7 @@ export const usePaymentRequests = (initialBalance: number = 15000) => {
     setIsDialogOpen,
     handleRequestPayment,
     pixKeys,
-    isLoadingPixKeys
+    isLoadingPixKeys,
+    loadPaymentRequests // Adicionada para uso externo
   };
 };

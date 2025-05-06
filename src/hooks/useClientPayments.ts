@@ -1,170 +1,126 @@
-import { useState, useEffect } from "react";
-import { useToast } from "@/hooks/use-toast";
-import { Payment, PaymentStatus, PaymentType, PixKey } from "@/types";
-import { supabase } from "@/integrations/supabase/client";
-import { getMockPaymentRequests } from "@/utils/mock-payment-data";
-import { formatPaymentRequest } from "@/services/payment.service";
-import { PaymentData } from "@/types/payment.types";
 
-export const useClientPayments = (clientId: string) => {
-  const { toast } = useToast();
+import { useState, useEffect, useCallback } from "react";
+import { Payment, PaymentStatus, PaymentType, PixKey } from "@/types";
+import { useToast } from "@/hooks/use-toast";
+
+export function useClientPayments(clientId: string) {
   const [isLoading, setIsLoading] = useState(true);
   const [payments, setPayments] = useState<Payment[]>([]);
-  const [clientBalance, setClientBalance] = useState(15000); // Default balance for mock data
+  const [clientBalance, setClientBalance] = useState<number>(15000); // Valor padrão
   const [pixKeys, setPixKeys] = useState<PixKey[]>([]);
   const [isLoadingPixKeys, setIsLoadingPixKeys] = useState(false);
+  const { toast } = useToast();
 
-  const loadClientPayments = async () => {
-    if (!clientId) return;
-    
+  // Função para carregar os pagamentos do cliente
+  const loadPayments = useCallback(async () => {
     setIsLoading(true);
-    
     try {
-      const { data, error } = await supabase
-        .from('payment_requests')
-        .select(`
-          *,
-          pix_key:pix_key_id (
-            id,
-            key,
-            type,
-            name
-          )
-        `)
-        .eq('client_id', clientId)
-        .order('created_at', { ascending: false });
-    
-      if (error) throw error;
-    
-      if (data && data.length > 0) {
-        const formattedData = data.map(item => {
-          const formattedItem = formatPaymentRequest(item);
-          return {
-            id: formattedItem.id,
-            amount: formattedItem.amount,
-            status: formattedItem.status as unknown as PaymentStatus,
-            created_at: formattedItem.created_at,
-            updated_at: formattedItem.updated_at,
-            client_id: formattedItem.client_id,
-            description: formattedItem.description,
-            approved_at: formattedItem.approved_at,
-            receipt_url: formattedItem.receipt_url,
-            client_name: formattedItem.client?.business_name,
+      // Aqui seria feita uma chamada real para a API para buscar os pagamentos do cliente
+      // Simulando dados para este exemplo
+      setTimeout(() => {
+        const mockPayments: Payment[] = [
+          {
+            id: "1",
+            created_at: new Date().toISOString(),
+            updated_at: new Date().toISOString(),
+            amount: 1000,
+            status: PaymentStatus.PENDING,
+            client_id: clientId,
+            client_name: "Cliente Demo",
             payment_type: PaymentType.PIX,
-            rejection_reason: formattedItem.rejection_reason,
-            pix_key: formattedItem.pix_key ? {
-              id: formattedItem.pix_key.id,
-              key: formattedItem.pix_key.key,
-              type: formattedItem.pix_key.type,
-              owner_name: formattedItem.pix_key.name
-            } : undefined
-          } as unknown as Payment;
-        });
-        setPayments(formattedData);
-      } else {
-        // Use mock data if no real data is available
-        const mockData = getMockPaymentRequests().filter(p => p.client_id === clientId);
-        setPayments(mockData as unknown as Payment[]);
-      }
-    } catch (err) {
-      console.error('Error fetching client payment requests:', err);
+            rejection_reason: null
+          },
+          {
+            id: "2",
+            created_at: new Date(Date.now() - 86400000).toISOString(),
+            updated_at: new Date(Date.now() - 86400000).toISOString(),
+            amount: 2000,
+            status: PaymentStatus.APPROVED,
+            client_id: clientId,
+            client_name: "Cliente Demo",
+            payment_type: PaymentType.PIX,
+            rejection_reason: null,
+            approved_at: new Date(Date.now() - 86400000).toISOString()
+          }
+        ];
+        setPayments(mockPayments);
+        setIsLoading(false);
+      }, 500);
+    } catch (error) {
+      console.error("Erro ao carregar pagamentos:", error);
       toast({
         variant: "destructive",
-        title: "Erro ao carregar pagamentos",
-        description: "Não foi possível carregar os pagamentos deste cliente."
+        title: "Erro",
+        description: "Não foi possível carregar os pagamentos"
       });
-      
-      // Use mock data as fallback, filtered by client
-      const mockData = getMockPaymentRequests().filter(p => p.client_id === clientId);
-      setPayments(mockData as unknown as Payment[]);
-    } finally {
       setIsLoading(false);
     }
-  };
+  }, [clientId, toast]);
 
-  // Mock PixKeys retrieval for client
-  const loadPixKeys = async () => {
-    setIsLoadingPixKeys(true);
+  // Carregar pagamentos na montagem do componente
+  useEffect(() => {
+    loadPayments();
     
-    try {
-      // Here we would normally fetch PIX keys for the client
-      // For now, creating mock PIX keys
-      setTimeout(() => {
-        const mockPixKeys: PixKey[] = [
-          { 
-            id: '1', 
-            key: '123.456.789-00', 
-            type: 'CPF', 
-            owner_name: 'João da Silva',
-            user_id: 'user-1',
-            key_type: 'CPF',
-            name: 'João da Silva',
-            isDefault: true,
-            is_active: true,
-            created_at: new Date().toISOString(),
-            updated_at: new Date().toISOString(),
-            bank_name: 'Banco'
-          },
-          { 
-            id: '2', 
-            key: 'email@example.com', 
-            type: 'EMAIL', 
-            owner_name: 'João da Silva',
-            user_id: 'user-1',
-            key_type: 'EMAIL',
-            name: 'João da Silva',
-            isDefault: false,
-            is_active: true,
-            created_at: new Date().toISOString(),
-            updated_at: new Date().toISOString(),
-            bank_name: 'Banco'
-          },
-          { 
-            id: '3', 
-            key: '+5511999999999', 
-            type: 'PHONE', 
-            owner_name: 'João da Silva',
-            user_id: 'user-1',
-            key_type: 'PHONE',
-            name: 'João da Silva',
-            isDefault: false,
-            is_active: true,
-            created_at: new Date().toISOString(),
-            updated_at: new Date().toISOString(),
-            bank_name: 'Banco'
-          },
-        ];
-        setPixKeys(mockPixKeys);
-        setIsLoadingPixKeys(false);
-      }, 1000);
-    } catch (error) {
-      console.error('Error loading PIX keys:', error);
+    // Carregar chaves PIX do cliente
+    setIsLoadingPixKeys(true);
+    setTimeout(() => {
+      setPixKeys([
+        {
+          id: "pix1",
+          key: "exemplo@email.com",
+          type: "EMAIL",
+          owner_name: "Cliente Demo"
+        },
+        {
+          id: "pix2",
+          key: "11999999999",
+          type: "PHONE",
+          owner_name: "Cliente Demo"
+        }
+      ]);
       setIsLoadingPixKeys(false);
-    }
-  };
+    }, 500);
+  }, [clientId, loadPayments]);
 
-  // Mock function for payment requests
-  const handleRequestPayment = async (amount: number, pixKeyId: string, description: string) => {
+  // Função para solicitar um pagamento
+  const handleRequestPayment = async (
+    amount: number,
+    pixKeyId: string | null,
+    description?: string
+  ) => {
     try {
+      // Simulação de criação de pagamento
+      const newPayment: Payment = {
+        id: `new-${Date.now()}`,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+        amount,
+        status: PaymentStatus.PENDING,
+        client_id: clientId,
+        client_name: "Cliente Demo",
+        payment_type: PaymentType.PIX,
+        rejection_reason: null,
+        description
+      };
+      
+      setPayments(prevPayments => [newPayment, ...prevPayments]);
+      
       toast({
         title: "Pagamento solicitado",
-        description: "Sua solicitação de pagamento foi enviada com sucesso."
+        description: `Solicitação de pagamento de R$ ${amount.toFixed(2)} enviada com sucesso`
       });
+      
       return true;
     } catch (error) {
+      console.error("Erro ao solicitar pagamento:", error);
       toast({
         variant: "destructive",
-        title: "Erro ao solicitar pagamento",
-        description: "Não foi possível enviar sua solicitação de pagamento."
+        title: "Erro",
+        description: "Não foi possível enviar a solicitação de pagamento"
       });
       return false;
     }
   };
-
-  useEffect(() => {
-    loadClientPayments();
-    loadPixKeys();
-  }, [clientId, toast]);
 
   return {
     isLoading,
@@ -173,6 +129,6 @@ export const useClientPayments = (clientId: string) => {
     pixKeys,
     isLoadingPixKeys,
     handleRequestPayment,
-    loadClientPayments
+    loadPayments // Exportando a função de recarga para uso com o usePaymentSubscription
   };
-};
+}

@@ -12,7 +12,7 @@ export const usePaymentRequestManager = (
   const { toast } = useToast();
   const [isDialogOpen, setIsDialogOpen] = useState(false);
 
-  // Handler for requesting a payment
+  // Handler para solicitar um pagamento
   const handleRequestPayment = async (
     amount: string,
     description: string,
@@ -41,7 +41,7 @@ export const usePaymentRequestManager = (
     }
     
     try {
-      // Store document if provided
+      // Armazenar documento se fornecido
       let documentUrl = null;
       if (documentFile) {
         const fileName = `payment_doc_${Date.now()}.${documentFile.name.split('.').pop()}`;
@@ -59,7 +59,9 @@ export const usePaymentRequestManager = (
         documentUrl = urlData.publicUrl;
       }
       
-      // Create payment request in Supabase
+      // Criar solicitação de pagamento no Supabase
+      // Aqui estamos usando o canal de comunicação em tempo real
+      // que vai notificar automaticamente o administrador
       const { data, error } = await supabase
         .from('payment_requests')
         .insert({
@@ -74,14 +76,14 @@ export const usePaymentRequestManager = (
       
       if (error) throw error;
 
-      // Create a new payment request object for the UI
+      // Criar um novo objeto de solicitação de pagamento para a UI
       const newPaymentRequest: Payment = {
         id: data?.[0]?.id || `temp_${Date.now()}`,
         amount: parsedAmount,
         status: PaymentStatus.PENDING,
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString(),
-        client_id: "client-1", // In a real app, this would be the actual client ID
+        client_id: "client-1", // Em um aplicativo real, isso seria o ID do cliente atual
         description: description || `Solicitação de pagamento via PIX`,
         payment_type: PaymentType.PIX,
         pix_key: {
@@ -93,12 +95,13 @@ export const usePaymentRequestManager = (
         rejection_reason: null
       };
       
-      // Add the document if provided
+      // Adicionar o documento se fornecido
       if (documentFile) {
         newPaymentRequest.document_url = documentUrl || URL.createObjectURL(documentFile);
       }
       
-      // Add the new payment request to the list
+      // Adicionar a nova solicitação de pagamento à lista
+      // O administrador será notificado em tempo real através da assinatura do canal
       setPaymentRequests([newPaymentRequest, ...paymentRequests]);
       
       toast({
@@ -106,10 +109,10 @@ export const usePaymentRequestManager = (
         description: "Sua solicitação de pagamento foi enviada com sucesso",
       });
       
-      // Close the dialog
+      // Fechar o diálogo
       setIsDialogOpen(false);
     } catch (err) {
-      console.error('Error creating payment request:', err);
+      console.error('Erro ao criar solicitação de pagamento:', err);
       toast({
         variant: "destructive",
         title: "Erro ao criar solicitação",
