@@ -1,7 +1,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { Payment, PaymentStatus } from "@/types";
+import { Payment, PaymentStatus, PaymentType } from "@/types";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
 
@@ -12,7 +12,7 @@ export const usePaymentRequestsFetcher = (initialBalance: number = 15000) => {
   const { toast } = useToast();
   const { user } = useAuth();
 
-  // Função para carregar as solicitações de pagamento do usuário logado
+  // Function to load payment requests from the authenticated user
   const loadPaymentRequests = useCallback(async () => {
     if (!user) {
       console.log("User not authenticated, skipping payment requests fetch");
@@ -24,7 +24,7 @@ export const usePaymentRequestsFetcher = (initialBalance: number = 15000) => {
     try {
       console.log("Fetching user client access...");
       
-      // Primeiro, buscar o client_id do usuário logado
+      // First, fetch the client_id of the logged-in user
       const { data: clientData, error: clientError } = await supabase
         .from('user_client_access')
         .select('client_id')
@@ -45,7 +45,7 @@ export const usePaymentRequestsFetcher = (initialBalance: number = 15000) => {
       const clientId = clientData.client_id;
       console.log("Found client ID:", clientId);
       
-      // Buscar as informações do cliente, incluindo o saldo
+      // Fetch client information, including balance
       const { data: clientInfoData, error: clientInfoError } = await supabase
         .from('clients')
         .select('balance')
@@ -56,11 +56,11 @@ export const usePaymentRequestsFetcher = (initialBalance: number = 15000) => {
       if (clientInfoError) {
         console.error("Error fetching client balance:", clientInfoError);
       } else if (clientInfoData) {
-        // Atualizar o saldo do cliente
+        // Update client balance
         setClientBalance(clientInfoData.balance || initialBalance);
       }
       
-      // Agora buscar as solicitações de pagamento deste cliente
+      // Now fetch payment requests for this client
       console.log("Fetching payment requests for client:", clientId);
       const { data: requestsData, error: requestsError } = await supabase
         .from('payment_requests')
@@ -87,7 +87,7 @@ export const usePaymentRequestsFetcher = (initialBalance: number = 15000) => {
       
       console.log("Fetched payment requests:", requestsData);
       
-      // Transformar os dados para o formato esperado pela interface
+      // Transform the data to match the expected Payment interface
       const formattedRequests: Payment[] = requestsData ? requestsData.map(request => ({
         id: request.id,
         amount: request.amount,
@@ -98,8 +98,13 @@ export const usePaymentRequestsFetcher = (initialBalance: number = 15000) => {
         rejection_reason: request.rejection_reason,
         receipt_url: request.receipt_url,
         client_id: request.client_id,
-        payment_type: 'PIX', // Assumindo PIX como padrão
-        pix_key: request.pix_key || null
+        payment_type: PaymentType.PIX, // Using enum value instead of string "PIX"
+        pix_key: request.pix_key ? {
+          id: request.pix_key.id,
+          key: request.pix_key.key,
+          type: request.pix_key.type,
+          owner_name: request.pix_key.name // Use name as owner_name
+        } : null
       })) : [];
       
       setPaymentRequests(formattedRequests);
@@ -115,7 +120,7 @@ export const usePaymentRequestsFetcher = (initialBalance: number = 15000) => {
     }
   }, [toast, user, initialBalance]);
   
-  // Carregar dados ao montar o componente
+  // Load data when component mounts
   useEffect(() => {
     loadPaymentRequests();
   }, [loadPaymentRequests]);

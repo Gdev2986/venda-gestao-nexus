@@ -22,12 +22,12 @@ const ClientPayments = () => {
   const { user } = useAuth();
   const { toast } = useToast();
   
-  // Função para buscar dados do cliente
+  // Function to fetch client data
   const fetchClientData = async () => {
     if (!user) return;
     
     try {
-      // Buscar o ID do cliente vinculado ao usuário logado
+      // Fetch the client ID linked to the logged-in user
       const { data: clientAccessData, error: clientAccessError } = await supabase
         .from('user_client_access')
         .select('client_id')
@@ -47,7 +47,7 @@ const ClientPayments = () => {
       
       setClientId(clientAccessData.client_id);
       
-      // Buscar dados do cliente como saldo
+      // Fetch client data like balance
       const { data: clientData, error: clientError } = await supabase
         .from('clients')
         .select('balance')
@@ -64,7 +64,7 @@ const ClientPayments = () => {
     }
   };
   
-  // Função para carregar os pagamentos
+  // Function to load payments
   const loadPayments = async () => {
     if (!clientId) return;
     
@@ -93,7 +93,7 @@ const ClientPayments = () => {
         throw error;
       }
       
-      // Transformar os dados para o formato esperado pela interface
+      // Transform the data to match the expected Payment interface
       const formattedPayments: Payment[] = data ? data.map(request => ({
         id: request.id,
         amount: request.amount,
@@ -105,7 +105,12 @@ const ClientPayments = () => {
         receipt_url: request.receipt_url,
         client_id: request.client_id,
         payment_type: PaymentType.PIX,
-        pix_key: request.pix_key || null
+        pix_key: request.pix_key ? {
+          id: request.pix_key.id,
+          key: request.pix_key.key,
+          type: request.pix_key.type,
+          owner_name: request.pix_key.name // Use name as owner_name
+        } : null
       })) : [];
       
       setPayments(formattedPayments);
@@ -121,7 +126,7 @@ const ClientPayments = () => {
     }
   };
   
-  // Função para buscar as chaves PIX
+  // Function to fetch PIX keys
   const fetchPixKeys = async () => {
     if (!user) return;
     
@@ -145,7 +150,7 @@ const ClientPayments = () => {
     }
   };
   
-  // Função para solicitar pagamento
+  // Function to request payment
   const handleRequestPayment = async (amount: number, pixKeyId: string, description: string) => {
     if (!clientId) {
       toast({
@@ -183,7 +188,7 @@ const ClientPayments = () => {
         description: "Sua solicitação de pagamento foi enviada com sucesso"
       });
       
-      // Recarregar os pagamentos após criar um novo
+      // Reload payments after creating a new one
       loadPayments();
       setIsDialogOpen(false);
       return true;
@@ -198,20 +203,20 @@ const ClientPayments = () => {
     }
   };
   
-  // Efeito para carregar dados iniciais
+  // Effect to load initial data
   useEffect(() => {
     fetchClientData();
     fetchPixKeys();
   }, [user]);
   
-  // Efeito para carregar pagamentos quando o clientId estiver disponível
+  // Effect to load payments when clientId is available
   useEffect(() => {
     if (clientId) {
       loadPayments();
     }
   }, [clientId]);
   
-  // Configurar inscrição em tempo real para esse cliente específico
+  // Set up real-time subscription for this specific client
   usePaymentSubscription(loadPayments, { 
     notifyUser: true,
     filterByClientId: clientId

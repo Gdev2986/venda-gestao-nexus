@@ -14,7 +14,7 @@ export const usePaymentRequestManager = (
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const { user } = useAuth();
 
-  // Handler para solicitar um pagamento
+  // Handler for requesting a payment
   const handleRequestPayment = async (
     amount: string,
     description: string,
@@ -86,7 +86,7 @@ export const usePaymentRequestManager = (
       
       console.log("Creating payment request for client:", clientData.client_id);
       
-      // Criar solicitação de pagamento no Supabase
+      // Create payment request in Supabase
       const { data, error } = await supabase
         .from('payment_requests')
         .insert({
@@ -132,7 +132,7 @@ export const usePaymentRequestManager = (
 
       console.log("Created payment request:", data);
 
-      // Criar um novo objeto de solicitação de pagamento para a UI
+      // Create a new payment request object for the UI
       const newPaymentRequest: Payment = {
         id: data.id,
         amount: data.amount,
@@ -142,11 +142,16 @@ export const usePaymentRequestManager = (
         client_id: data.client_id,
         description: data.description,
         payment_type: PaymentType.PIX,
-        pix_key: data.pix_key,
+        pix_key: data.pix_key ? {
+          id: data.pix_key.id,
+          key: data.pix_key.key,
+          type: data.pix_key.type,
+          owner_name: data.pix_key.name // Use name as owner_name since that's what we have
+        } : null,
         rejection_reason: null
       };
       
-      // Adicionar a nova solicitação de pagamento à lista
+      // Add the new payment request to the list
       setPaymentRequests(prev => [newPaymentRequest, ...prev]);
       
       toast({
@@ -154,7 +159,7 @@ export const usePaymentRequestManager = (
         description: "Sua solicitação de pagamento foi enviada com sucesso",
       });
       
-      // Fechar o diálogo
+      // Close the dialog
       setIsDialogOpen(false);
       return true;
     } catch (err) {

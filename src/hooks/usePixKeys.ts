@@ -29,15 +29,17 @@ export const usePixKeys = () => {
           throw error;
         }
 
-        // Formatar as chaves PIX para o formato esperado pela interface
+        // Format the PIX keys to match the expected PixKey interface
         const formattedKeys: PixKey[] = data?.map(key => ({
           id: key.id,
           key: key.key,
           type: key.type,
           key_type: key.type,
           name: key.name,
-          owner_name: key.name,
-          client_id: '',
+          owner_name: key.name, // Use name as owner_name
+          user_id: key.user_id,
+          is_active: true, // Providing default values for required properties
+          bank_name: "Default Bank", // Providing default value
           created_at: key.created_at,
           updated_at: key.updated_at,
           isDefault: key.is_default
@@ -45,11 +47,11 @@ export const usePixKeys = () => {
 
         setPixKeys(formattedKeys);
         
-        // Se não houver chaves PIX, adicionar uma mensagem informativa
+        // If no PIX keys, add a mocked one for testing
         if (formattedKeys.length === 0) {
           console.log("No PIX keys found for user", user.id);
           
-          // Adicionando uma chave PIX mockada se não houver chaves cadastradas
+          // Adding a mocked PIX key if none are registered
           setPixKeys([
             {
               id: "default-key",
@@ -58,7 +60,9 @@ export const usePixKeys = () => {
               key_type: "EMAIL",
               name: "Chave Principal",
               owner_name: "Chave Principal",
-              client_id: '',
+              user_id: user.id,
+              is_active: true,
+              bank_name: "Default Bank",
               created_at: new Date().toISOString(),
               updated_at: new Date().toISOString(),
               isDefault: true
@@ -73,7 +77,7 @@ export const usePixKeys = () => {
           description: "Não foi possível carregar suas chaves PIX",
         });
         
-        // Adicionar uma chave PIX mockada em caso de erro
+        // Add a mocked PIX key in case of error
         setPixKeys([
           {
             id: "default-key",
@@ -82,7 +86,9 @@ export const usePixKeys = () => {
             key_type: "EMAIL",
             name: "Chave Principal",
             owner_name: "Chave Principal",
-            client_id: '',
+            user_id: user ? user.id : "",
+            is_active: true,
+            bank_name: "Default Bank",
             created_at: new Date().toISOString(),
             updated_at: new Date().toISOString(),
             isDefault: true
