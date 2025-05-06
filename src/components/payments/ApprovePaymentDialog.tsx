@@ -12,10 +12,34 @@ import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { PaymentDetailView } from "./PaymentDetailView";
-import { PaymentReceiptUploader } from "./PaymentReceiptUploader";
 import { PaymentData } from "@/hooks/payments/payment.types";
 import { formatCurrency } from "@/lib/formatters";
 import { Loader2 } from "lucide-react";
+
+// Create a simplified PaymentReceiptUploader component
+export function PaymentReceiptUploader({ 
+  onFileSelected, 
+  selectedFile 
+}: { 
+  onFileSelected: (file: File | null) => void; 
+  selectedFile: File | null;
+}) {
+  return (
+    <div className="mt-2">
+      <input
+        type="file"
+        className="w-full"
+        onChange={(e) => onFileSelected(e.target.files ? e.target.files[0] : null)}
+        accept="image/*,.pdf"
+      />
+      {selectedFile && (
+        <p className="text-sm mt-1 text-muted-foreground">
+          Arquivo selecionado: {selectedFile.name}
+        </p>
+      )}
+    </div>
+  );
+}
 
 interface ApprovePaymentDialogProps {
   open: boolean;

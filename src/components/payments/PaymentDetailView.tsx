@@ -17,7 +17,8 @@ interface PaymentDetailViewProps {
   isProcessing?: boolean;
 }
 
-const PaymentDetailView = ({ 
+// Export the component as a named export
+export const PaymentDetailView = ({ 
   payment,
   isLoading = false,
   onApprove,
@@ -233,4 +234,5 @@ const PaymentDetailView = ({
   );
 };
 
+// Also export as default for backward compatibility
 export default PaymentDetailView;

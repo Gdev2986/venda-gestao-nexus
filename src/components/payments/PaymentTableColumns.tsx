@@ -1,105 +1,93 @@
 
 import { ColumnDef } from "@tanstack/react-table";
-import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { 
-  DropdownMenu, 
-  DropdownMenuContent, 
-  DropdownMenuItem, 
-  DropdownMenuTrigger 
-} from "@/components/ui/dropdown-menu";
-import { Eye, MoreHorizontal, Check, X } from "lucide-react";
-import { format } from "date-fns";
+import { Button } from "@/components/ui/button";
+import { MoreHorizontal, Check, X, Eye } from "lucide-react";
 import { formatCurrency } from "@/lib/formatters";
+import { formatDate } from "@/lib/utils";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { PaymentData } from "@/hooks/payments/payment.types";
+import { PaymentStatus } from "@/types";
 
-// Define the available payment actions
-export type PaymentAction = "approve" | "reject" | "details";
+// Action types for payment operations
+export type PaymentAction = 'approve' | 'reject' | 'details';
 
-interface PaymentColumnsOptions {
+// Props for the createPaymentColumns function
+interface PaymentColumnsProps {
   onPaymentAction: (payment: PaymentData, action: PaymentAction) => void;
 }
 
-// Function to create payment columns with actions
-export const createPaymentColumns = ({ onPaymentAction }: PaymentColumnsOptions): ColumnDef<PaymentData>[] => [
+// Function to create payment columns for the data table
+export const createPaymentColumns = ({ onPaymentAction }: PaymentColumnsProps): ColumnDef<PaymentData>[] => [
   {
     accessorKey: "id",
     header: "ID",
-    cell: ({ row }) => {
-      const id = row.getValue("id") as string;
-      return <span className="font-mono text-xs">{id.substring(0, 8)}...</span>;
-    },
+    cell: ({ row }) => <div className="font-mono text-xs">{row.original.id.substring(0, 8)}</div>,
   },
   {
     accessorKey: "client_name",
     header: "Cliente",
-    cell: ({ row }) => <div className="font-medium">{row.getValue("client_name")}</div>,
+    cell: ({ row }) => {
+      const client = row.original.client || {};
+      return <div>{client.business_name || "Cliente não especificado"}</div>;
+    },
   },
   {
     accessorKey: "amount",
     header: "Valor",
-    cell: ({ row }) => {
-      const amount = parseFloat(row.getValue("amount"));
-      return <div className="font-medium">{formatCurrency(amount)}</div>;
-    },
-  },
-  {
-    accessorKey: "description",
-    header: "Descrição",
-    cell: ({ row }) => {
-      const description = row.getValue("description") as string;
-      return <div className="max-w-[200px] truncate">{description || "Sem descrição"}</div>;
-    },
+    cell: ({ row }) => formatCurrency(row.original.amount),
   },
   {
     accessorKey: "created_at",
-    header: "Data",
-    cell: ({ row }) => {
-      const date = new Date(row.getValue("created_at"));
-      return <div>{format(date, "dd/MM/yyyy HH:mm")}</div>;
-    },
+    header: "Data da Solicitação",
+    cell: ({ row }) => formatDate(row.original.created_at),
   },
   {
     accessorKey: "status",
     header: "Status",
     cell: ({ row }) => {
-      const status = row.getValue("status") as string;
+      const status = row.original.status;
       
-      const getBadgeVariant = () => {
-        switch (status) {
-          case "PENDING":
-            return "outline";
-          case "APPROVED":
-            return "success";
-          case "REJECTED":
-            return "destructive";
-          default:
-            return "secondary";
-        }
-      };
-
-      const getStatusLabel = () => {
-        switch (status) {
-          case "PENDING":
-            return "Pendente";
-          case "APPROVED":
-            return "Aprovado";
-          case "REJECTED":
-            return "Rejeitado";
-          default:
-            return status;
-        }
-      };
-
-      return (
-        <Badge variant={getBadgeVariant()} className="capitalize">
-          {getStatusLabel()}
-        </Badge>
-      );
+      switch (status) {
+        case PaymentStatus.PENDING:
+          return (
+            <Badge variant="outline" className="bg-yellow-100 text-yellow-800 border-yellow-200">
+              Pendente
+            </Badge>
+          );
+        case PaymentStatus.APPROVED:
+          return (
+            <Badge variant="outline" className="bg-green-100 text-green-800 border-green-200">
+              Aprovado
+            </Badge>
+          );
+        case PaymentStatus.REJECTED:
+          return (
+            <Badge variant="outline" className="bg-red-100 text-red-800 border-red-200">
+              Rejeitado
+            </Badge>
+          );
+        case PaymentStatus.PAID:
+          return (
+            <Badge variant="outline" className="bg-blue-100 text-blue-800 border-blue-200">
+              Pago
+            </Badge>
+          );
+        default:
+          return <Badge variant="outline">Desconhecido</Badge>;
+      }
     },
   },
   {
     id: "actions",
+    header: "Ações",
     cell: ({ row }) => {
       const payment = row.original;
       
@@ -107,31 +95,32 @@ export const createPaymentColumns = ({ onPaymentAction }: PaymentColumnsOptions)
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button variant="ghost" className="h-8 w-8 p-0">
-              <span className="sr-only">Abrir Menu</span>
+              <span className="sr-only">Abrir menu</span>
               <MoreHorizontal className="h-4 w-4" />
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">
-            <DropdownMenuItem 
-              onClick={() => onPaymentAction(payment, "details")}
-              className="flex items-center gap-2"
-            >
-              <Eye className="w-4 h-4" /> Detalhes
+            <DropdownMenuLabel>Ações</DropdownMenuLabel>
+            <DropdownMenuSeparator />
+            
+            <DropdownMenuItem onClick={() => onPaymentAction(payment, 'details')}>
+              <Eye className="mr-2 h-4 w-4" />
+              Ver detalhes
             </DropdownMenuItem>
             
-            {payment.status === "PENDING" && (
+            {payment.status === PaymentStatus.PENDING && (
               <>
-                <DropdownMenuItem 
-                  onClick={() => onPaymentAction(payment, "approve")}
-                  className="flex items-center gap-2 text-green-600"
-                >
-                  <Check className="w-4 h-4" /> Aprovar
+                <DropdownMenuItem onClick={() => onPaymentAction(payment, 'approve')}>
+                  <Check className="mr-2 h-4 w-4" />
+                  Aprovar
                 </DropdownMenuItem>
+                
                 <DropdownMenuItem 
-                  onClick={() => onPaymentAction(payment, "reject")}
-                  className="flex items-center gap-2 text-red-600"
+                  onClick={() => onPaymentAction(payment, 'reject')}
+                  className="text-red-600"
                 >
-                  <X className="w-4 h-4" /> Rejeitar
+                  <X className="mr-2 h-4 w-4" />
+                  Rejeitar
                 </DropdownMenuItem>
               </>
             )}
