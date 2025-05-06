@@ -12,6 +12,7 @@ import { ApprovePaymentDialog } from "@/components/payments/ApprovePaymentDialog
 import { RejectPaymentDialog } from "@/components/payments/RejectPaymentDialog";
 import { PaymentDetailsDialog } from "@/components/payments/PaymentDetailsDialog";
 import { usePaymentSubscription } from "@/hooks/usePaymentSubscription";
+import { PageWrapper } from "@/components/page/PageWrapper";
 
 const AdminPayments = () => {
   // State for filters
