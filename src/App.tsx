@@ -1,4 +1,3 @@
-
 import { Routes, Route, useLocation, Navigate } from "react-router-dom";
 import { PATHS } from "./routes/paths";
 import { useEffect } from "react";
@@ -58,6 +57,13 @@ import NewPartner from "./pages/partners/NewPartner";
 // Settings
 import Settings from "./pages/settings/Settings";
 import UserManagement from "./pages/settings/UserManagement";
+
+// Logistics pages
+import LogisticsDashboard from "./pages/logistics/Dashboard";
+import Operations from "./pages/logistics/Operations";
+import LogisticsRequests from "./pages/logistics/Requests";
+import LogisticsCalendar from "./pages/logistics/Calendar";
+import LogisticsInventory from "./pages/logistics/Inventory";
 
 // Other
 import NotFound from "./pages/NotFound";
@@ -145,7 +151,7 @@ function App() {
           {/* Logistics routes accessible to admin */}
           <Route 
             path={PATHS.LOGISTICS.DASHBOARD} 
-            element={<Dashboard />} 
+            element={<LogisticsDashboard />} 
           />
           
           <Route 
@@ -170,17 +176,17 @@ function App() {
           
           <Route 
             path={PATHS.LOGISTICS.REQUESTS} 
-            element={<Requests />} 
+            element={<LogisticsRequests />} 
           />
           
           <Route 
             path={PATHS.LOGISTICS.CALENDAR} 
-            element={<Calendar />} 
+            element={<LogisticsCalendar />} 
           />
           
           <Route 
             path={PATHS.LOGISTICS.INVENTORY} 
-            element={<Inventory />} 
+            element={<LogisticsInventory />} 
           />
           
           <Route 
@@ -400,7 +406,7 @@ function App() {
         <Route element={<MainLayout />}>
           <Route 
             path={PATHS.LOGISTICS.DASHBOARD} 
-            element={<Dashboard />} 
+            element={<LogisticsDashboard />} 
           />
           
           <Route 
@@ -421,6 +427,26 @@ function App() {
           <Route 
             path={PATHS.LOGISTICS.SALES} 
             element={<Sales />} 
+          />
+          
+          <Route 
+            path={PATHS.LOGISTICS.OPERATIONS} 
+            element={<Operations />} 
+          />
+          
+          <Route 
+            path={PATHS.LOGISTICS.REQUESTS} 
+            element={<LogisticsRequests />} 
+          />
+          
+          <Route 
+            path={PATHS.LOGISTICS.CALENDAR} 
+            element={<LogisticsCalendar />} 
+          />
+          
+          <Route 
+            path={PATHS.LOGISTICS.INVENTORY} 
+            element={<LogisticsInventory />} 
           />
           
           <Route 

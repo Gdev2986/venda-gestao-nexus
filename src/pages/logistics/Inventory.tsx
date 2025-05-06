@@ -1,499 +1,361 @@
 
-import { useState } from "react";
 import { PageHeader } from "@/components/page/PageHeader";
 import { PageWrapper } from "@/components/page/PageWrapper";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { AlertCircle, BarChart, Box, CheckCircle2, PlusCircle, Search } from "lucide-react";
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { useToast } from "@/hooks/use-toast";
-import { PieChart, Pie, Cell, ResponsiveContainer, Legend, Tooltip } from "recharts";
-
-// Define inventory item type
-interface InventoryItem {
-  id: string;
-  name: string;
-  model: string;
-  category: string;
-  status: "available" | "reserved" | "maintenance" | "broken";
-  serialNumber: string;
-  location: string;
-  lastUpdated: string;
-}
-
-// Define inventory stats
-interface InventoryStats {
-  totalItems: number;
-  availableItems: number;
-  reservedItems: number;
-  maintenanceItems: number;
-  brokenItems: number;
-}
+import { Button } from "@/components/ui/button";
+import { 
+  Package2, 
+  Search, 
+  Filter, 
+  RefreshCw, 
+  CheckCircle2, 
+  ArrowUpDown, 
+  PlusCircle 
+} from "lucide-react";
+import { useState } from "react";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 const Inventory = () => {
-  const { toast } = useToast();
+  const [activeTab, setActiveTab] = useState("machines");
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
-  const [categoryFilter, setCategoryFilter] = useState("all");
-  const [newItemDialogOpen, setNewItemDialogOpen] = useState(false);
-  const [selectedTab, setSelectedTab] = useState("inventory");
+  const [isLoading, setIsLoading] = useState(false);
 
   // Mock inventory data
-  const inventoryData: InventoryItem[] = [
+  const machinesData = [
     {
-      id: "INV001",
-      name: "Terminal de Pagamento A10",
-      model: "A10",
-      category: "terminal",
+      id: "M001",
+      name: "Terminal POS-X1",
+      serial: "SER293847",
       status: "available",
-      serialNumber: "SN-A10-001",
-      location: "Estoque Central",
-      lastUpdated: "2025-04-30"
+      location: "Depósito Central",
+      lastUpdated: "2025-04-30T14:30:00"
     },
     {
-      id: "INV002",
-      name: "Terminal de Pagamento A10",
-      model: "A10",
-      category: "terminal",
+      id: "M002",
+      name: "Terminal POS-X1",
+      serial: "SER293848",
       status: "reserved",
-      serialNumber: "SN-A10-002",
-      location: "Estoque Central",
-      lastUpdated: "2025-05-01"
+      location: "Depósito Central",
+      lastUpdated: "2025-05-01T10:15:00"
     },
     {
-      id: "INV003",
-      name: "Terminal de Pagamento B20",
-      model: "B20",
-      category: "terminal",
-      status: "maintenance",
-      serialNumber: "SN-B20-001",
-      location: "Manutenção",
-      lastUpdated: "2025-04-28"
+      id: "M003",
+      name: "Terminal POS-X2",
+      serial: "SER345678",
+      status: "in_maintenance",
+      location: "Centro de Manutenção",
+      lastUpdated: "2025-04-25T09:20:00"
     },
     {
-      id: "INV004",
-      name: "Bobina Térmica 80mm",
-      model: "80mm",
-      category: "supplies",
+      id: "M004",
+      name: "Terminal POS-X3",
+      serial: "SER456789",
       status: "available",
-      serialNumber: "N/A",
-      location: "Estoque Central",
-      lastUpdated: "2025-05-02"
+      location: "Depósito Sul",
+      lastUpdated: "2025-05-02T16:40:00"
     },
     {
-      id: "INV005",
-      name: "Terminal de Pagamento C30",
-      model: "C30",
-      category: "terminal",
-      status: "broken",
-      serialNumber: "SN-C30-001",
-      location: "Descarte",
-      lastUpdated: "2025-04-25"
-    },
-    {
-      id: "INV006",
-      name: "Bobina Térmica 57mm",
-      model: "57mm",
-      category: "supplies",
-      status: "available",
-      serialNumber: "N/A",
-      location: "Estoque Central",
-      lastUpdated: "2025-05-03"
+      id: "M005",
+      name: "Terminal POS-X2",
+      serial: "SER345679",
+      status: "reserved",
+      location: "Depósito Norte",
+      lastUpdated: "2025-05-01T11:30:00"
     }
   ];
 
-  // Calculate inventory stats
-  const inventoryStats: InventoryStats = {
-    totalItems: inventoryData.length,
-    availableItems: inventoryData.filter(item => item.status === "available").length,
-    reservedItems: inventoryData.filter(item => item.status === "reserved").length,
-    maintenanceItems: inventoryData.filter(item => item.status === "maintenance").length,
-    brokenItems: inventoryData.filter(item => item.status === "broken").length
-  };
+  const suppliesData = [
+    {
+      id: "S001",
+      name: "Bobina Térmica 57mm",
+      sku: "BOB-57-100",
+      quantity: 500,
+      location: "Depósito Central",
+      lastUpdated: "2025-05-02T14:30:00"
+    },
+    {
+      id: "S002",
+      name: "Bobina Térmica 80mm",
+      sku: "BOB-80-100",
+      quantity: 350,
+      location: "Depósito Central",
+      lastUpdated: "2025-05-01T10:15:00"
+    },
+    {
+      id: "S003",
+      name: "Cabo de Alimentação",
+      sku: "CAB-ALI-001",
+      quantity: 120,
+      location: "Depósito Sul",
+      lastUpdated: "2025-04-28T09:20:00"
+    },
+    {
+      id: "S004",
+      name: "Fonte de Energia",
+      sku: "FNT-POS-001",
+      quantity: 75,
+      location: "Depósito Central",
+      lastUpdated: "2025-05-02T16:40:00"
+    },
+    {
+      id: "S005",
+      name: "Kit de Limpeza",
+      sku: "KIT-LMP-001",
+      quantity: 30,
+      location: "Depósito Norte",
+      lastUpdated: "2025-04-25T11:30:00"
+    }
+  ];
 
-  // Filter inventory data based on search and filters
-  const filteredInventory = inventoryData.filter(item => {
+  // Filter data based on search term and filter
+  const filteredMachines = machinesData.filter(machine => {
     const matchesSearch = 
-      item.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
-      item.serialNumber.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      item.model.toLowerCase().includes(searchTerm.toLowerCase());
+      machine.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
+      machine.serial.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      machine.id.toLowerCase().includes(searchTerm.toLowerCase());
     
-    const matchesStatus = statusFilter === "all" || item.status === statusFilter;
-    const matchesCategory = categoryFilter === "all" || item.category === categoryFilter;
+    const matchesStatus = statusFilter === "all" || machine.status === statusFilter;
     
-    return matchesSearch && matchesStatus && matchesCategory;
+    return matchesSearch && matchesStatus;
   });
 
-  // Format status for display
-  const formatStatus = (status: string) => {
+  const filteredSupplies = suppliesData.filter(item => {
+    const matchesSearch = 
+      item.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
+      item.sku.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      item.id.toLowerCase().includes(searchTerm.toLowerCase());
+    
+    return matchesSearch;
+  });
+
+  // Helper for status badges
+  const getStatusBadge = (status: string) => {
     switch (status) {
       case "available":
-        return <span className="inline-flex items-center rounded-full bg-green-100 px-2.5 py-0.5 text-xs font-medium text-green-800">Disponível</span>;
+        return <Badge variant="outline" className="bg-green-100 text-green-800 hover:bg-green-100">Disponível</Badge>;
       case "reserved":
-        return <span className="inline-flex items-center rounded-full bg-blue-100 px-2.5 py-0.5 text-xs font-medium text-blue-800">Reservado</span>;
-      case "maintenance":
-        return <span className="inline-flex items-center rounded-full bg-yellow-100 px-2.5 py-0.5 text-xs font-medium text-yellow-800">Manutenção</span>;
-      case "broken":
-        return <span className="inline-flex items-center rounded-full bg-red-100 px-2.5 py-0.5 text-xs font-medium text-red-800">Danificado</span>;
+        return <Badge variant="outline" className="bg-blue-100 text-blue-800 hover:bg-blue-100">Reservado</Badge>;
+      case "in_maintenance":
+        return <Badge variant="outline" className="bg-yellow-100 text-yellow-800 hover:bg-yellow-100">Em Manutenção</Badge>;
+      case "in_transit":
+        return <Badge variant="outline" className="bg-purple-100 text-purple-800 hover:bg-purple-100">Em Trânsito</Badge>;
       default:
-        return <span className="inline-flex items-center rounded-full bg-gray-100 px-2.5 py-0.5 text-xs font-medium text-gray-800">Desconhecido</span>;
+        return <Badge variant="outline">Desconhecido</Badge>;
     }
   };
 
-  // Data for pie chart
-  const chartData = [
-    { name: "Disponível", value: inventoryStats.availableItems, color: "#10B981" },
-    { name: "Reservado", value: inventoryStats.reservedItems, color: "#3B82F6" },
-    { name: "Manutenção", value: inventoryStats.maintenanceItems, color: "#F59E0B" },
-    { name: "Danificado", value: inventoryStats.brokenItems, color: "#EF4444" }
-  ];
+  // Handle refresh data
+  const handleRefresh = () => {
+    setIsLoading(true);
+    setTimeout(() => {
+      setIsLoading(false);
+    }, 1000);
+  };
 
   return (
     <>
       <PageHeader 
         title="Inventário" 
-        description="Gerencie o estoque de equipamentos e suprimentos"
+        description="Gerenciamento de máquinas e suprimentos em estoque"
         actionLabel="Adicionar Item"
-        onActionClick={() => setNewItemDialogOpen(true)}
+        onActionClick={() => alert("Funcionalidade em desenvolvimento")}
       />
       
       <PageWrapper>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
-          <Card>
-            <CardHeader className="pb-2">
-              <CardTitle className="text-lg font-medium">Total</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{inventoryStats.totalItems}</div>
-              <p className="text-muted-foreground text-sm">Itens no inventário</p>
-            </CardContent>
-          </Card>
-          
-          <Card>
-            <CardHeader className="pb-2">
-              <CardTitle className="text-lg font-medium text-green-600">Disponíveis</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{inventoryStats.availableItems}</div>
-              <p className="text-muted-foreground text-sm">Prontos para uso</p>
-            </CardContent>
-          </Card>
-          
-          <Card>
-            <CardHeader className="pb-2">
-              <CardTitle className="text-lg font-medium text-blue-600">Reservados</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{inventoryStats.reservedItems}</div>
-              <p className="text-muted-foreground text-sm">Em processo de entrega</p>
-            </CardContent>
-          </Card>
-          
-          <Card>
-            <CardHeader className="pb-2">
-              <CardTitle className="text-lg font-medium text-yellow-600">Manutenção</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{inventoryStats.maintenanceItems}</div>
-              <p className="text-muted-foreground text-sm">Em reparo ou manutenção</p>
-            </CardContent>
-          </Card>
-        </div>
-        
-        <Tabs value={selectedTab} onValueChange={setSelectedTab}>
+        <Card className="mb-6">
+          <CardHeader className="pb-3">
+            <CardTitle>Filtros</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="flex flex-col sm:flex-row gap-4">
+              <div className="flex-1 relative">
+                <Search className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
+                <Input
+                  placeholder="Buscar por nome, código ou ID"
+                  className="pl-9"
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                />
+              </div>
+              
+              {activeTab === "machines" && (
+                <div className="w-full sm:w-48">
+                  <Select defaultValue={statusFilter} onValueChange={setStatusFilter}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Status" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">Todos</SelectItem>
+                      <SelectItem value="available">Disponível</SelectItem>
+                      <SelectItem value="reserved">Reservado</SelectItem>
+                      <SelectItem value="in_maintenance">Em Manutenção</SelectItem>
+                      <SelectItem value="in_transit">Em Trânsito</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              )}
+              
+              <Button 
+                variant="outline" 
+                onClick={handleRefresh}
+                disabled={isLoading}
+              >
+                <RefreshCw className={`h-4 w-4 mr-2 ${isLoading ? 'animate-spin' : ''}`} />
+                Atualizar
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Tabs defaultValue={activeTab} value={activeTab} onValueChange={setActiveTab}>
           <TabsList className="mb-6">
-            <TabsTrigger value="inventory">Inventário</TabsTrigger>
-            <TabsTrigger value="stats">Estatísticas</TabsTrigger>
+            <TabsTrigger value="machines">Máquinas</TabsTrigger>
+            <TabsTrigger value="supplies">Suprimentos</TabsTrigger>
           </TabsList>
           
-          <TabsContent value="inventory">
+          <TabsContent value="machines">
             <Card>
               <CardHeader>
-                <CardTitle>Itens do Inventário</CardTitle>
-                <CardDescription>Gerencie todos os equipamentos e suprimentos</CardDescription>
+                <div className="flex justify-between items-center">
+                  <CardTitle>Inventário de Máquinas</CardTitle>
+                  <Button variant="outline" size="sm">
+                    <PlusCircle className="h-4 w-4 mr-2" />
+                    Nova Máquina
+                  </Button>
+                </div>
               </CardHeader>
               <CardContent>
-                <div className="flex flex-col sm:flex-row gap-4 mb-6">
-                  <div className="flex-1 relative">
-                    <Search className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
-                    <Input
-                      placeholder="Buscar por nome, modelo ou número de série"
-                      className="pl-9"
-                      value={searchTerm}
-                      onChange={(e) => setSearchTerm(e.target.value)}
-                    />
-                  </div>
-                  <div className="w-full sm:w-48">
-                    <Select defaultValue={statusFilter} onValueChange={setStatusFilter}>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Status" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="all">Todos</SelectItem>
-                        <SelectItem value="available">Disponível</SelectItem>
-                        <SelectItem value="reserved">Reservado</SelectItem>
-                        <SelectItem value="maintenance">Manutenção</SelectItem>
-                        <SelectItem value="broken">Danificado</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  <div className="w-full sm:w-48">
-                    <Select defaultValue={categoryFilter} onValueChange={setCategoryFilter}>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Categoria" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="all">Todas</SelectItem>
-                        <SelectItem value="terminal">Terminais</SelectItem>
-                        <SelectItem value="supplies">Suprimentos</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                </div>
-                
-                {filteredInventory.length > 0 ? (
-                  <div className="border rounded-md">
-                    <Table>
-                      <TableHeader>
-                        <TableRow>
-                          <TableHead>ID</TableHead>
-                          <TableHead>Nome</TableHead>
-                          <TableHead>Modelo</TableHead>
-                          <TableHead>Status</TableHead>
-                          <TableHead>Nº de Série</TableHead>
-                          <TableHead>Localização</TableHead>
-                          <TableHead>Ações</TableHead>
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead className="w-[100px]">ID</TableHead>
+                      <TableHead>
+                        <div className="flex items-center">
+                          Máquina
+                          <ArrowUpDown className="ml-2 h-4 w-4" />
+                        </div>
+                      </TableHead>
+                      <TableHead>Número Serial</TableHead>
+                      <TableHead>Status</TableHead>
+                      <TableHead>Localização</TableHead>
+                      <TableHead>Última Atualização</TableHead>
+                      <TableHead className="w-[100px]">Ações</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {filteredMachines.length > 0 ? (
+                      filteredMachines.map((machine) => (
+                        <TableRow key={machine.id}>
+                          <TableCell className="font-medium">{machine.id}</TableCell>
+                          <TableCell>{machine.name}</TableCell>
+                          <TableCell>{machine.serial}</TableCell>
+                          <TableCell>{getStatusBadge(machine.status)}</TableCell>
+                          <TableCell>{machine.location}</TableCell>
+                          <TableCell>{new Date(machine.lastUpdated).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric' })}</TableCell>
+                          <TableCell>
+                            <Button variant="ghost" size="sm">
+                              Detalhes
+                            </Button>
+                          </TableCell>
                         </TableRow>
-                      </TableHeader>
-                      <TableBody>
-                        {filteredInventory.map((item) => (
-                          <TableRow key={item.id}>
-                            <TableCell className="font-medium">{item.id}</TableCell>
-                            <TableCell>{item.name}</TableCell>
-                            <TableCell>{item.model}</TableCell>
-                            <TableCell>{formatStatus(item.status)}</TableCell>
-                            <TableCell>{item.serialNumber}</TableCell>
-                            <TableCell>{item.location}</TableCell>
-                            <TableCell>
-                              <Button 
-                                variant="ghost" 
-                                size="sm"
-                                onClick={() => toast({
-                                  title: "Informação",
-                                  description: `Os detalhes do item ${item.id} serão mostrados aqui.`
-                                })}
-                              >
-                                Detalhes
-                              </Button>
-                            </TableCell>
-                          </TableRow>
-                        ))}
-                      </TableBody>
-                    </Table>
-                  </div>
-                ) : (
-                  <div className="flex flex-col items-center justify-center py-12 border rounded-md">
-                    <AlertCircle className="h-10 w-10 text-muted-foreground mb-4" />
-                    <h3 className="text-lg font-medium mb-1">Nenhum item encontrado</h3>
-                    <p className="text-sm text-muted-foreground mb-4">Tente ajustar os filtros ou a busca</p>
-                    <Button onClick={() => {
-                      setSearchTerm("");
-                      setStatusFilter("all");
-                      setCategoryFilter("all");
-                    }}>
-                      Limpar filtros
-                    </Button>
-                  </div>
-                )}
+                      ))
+                    ) : (
+                      <TableRow>
+                        <TableCell colSpan={7} className="text-center py-4">
+                          <div className="flex flex-col items-center gap-2">
+                            <Package2 className="h-8 w-8 text-muted-foreground" />
+                            <p className="text-muted-foreground">Nenhuma máquina encontrada</p>
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    )}
+                  </TableBody>
+                </Table>
               </CardContent>
             </Card>
           </TabsContent>
           
-          <TabsContent value="stats">
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-              <Card>
-                <CardHeader>
-                  <CardTitle>Distribuição por Status</CardTitle>
-                  <CardDescription>Visão geral do status do inventário</CardDescription>
-                </CardHeader>
-                <CardContent className="pt-6">
-                  <div className="h-80">
-                    <ResponsiveContainer width="100%" height="100%">
-                      <PieChart>
-                        <Pie
-                          data={chartData}
-                          cx="50%"
-                          cy="50%"
-                          labelLine={false}
-                          outerRadius={80}
-                          fill="#8884d8"
-                          dataKey="value"
-                          label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(0)}%`}
-                        >
-                          {chartData.map((entry, index) => (
-                            <Cell key={`cell-${index}`} fill={entry.color} />
-                          ))}
-                        </Pie>
-                        <Tooltip />
-                        <Legend />
-                      </PieChart>
-                    </ResponsiveContainer>
-                  </div>
-                </CardContent>
-              </Card>
-              
-              <Card>
-                <CardHeader>
-                  <CardTitle>Resumo de Inventário</CardTitle>
-                  <CardDescription>Detalhes por categoria e status</CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-6">
-                    <div>
-                      <h3 className="text-base font-medium mb-4">Terminais</h3>
-                      <div className="grid grid-cols-2 gap-4">
-                        <div className="flex items-center justify-between border rounded-md p-4">
-                          <div>
-                            <div className="text-muted-foreground text-xs">Disponíveis</div>
-                            <div className="text-xl font-semibold">
-                              {inventoryData.filter(item => item.category === "terminal" && item.status === "available").length}
-                            </div>
-                          </div>
-                          <div className="h-8 w-8 rounded-full bg-green-100 flex items-center justify-center">
-                            <CheckCircle2 className="h-4 w-4 text-green-600" />
-                          </div>
+          <TabsContent value="supplies">
+            <Card>
+              <CardHeader>
+                <div className="flex justify-between items-center">
+                  <CardTitle>Inventário de Suprimentos</CardTitle>
+                  <Button variant="outline" size="sm">
+                    <PlusCircle className="h-4 w-4 mr-2" />
+                    Novo Suprimento
+                  </Button>
+                </div>
+              </CardHeader>
+              <CardContent>
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead className="w-[100px]">ID</TableHead>
+                      <TableHead>
+                        <div className="flex items-center">
+                          Nome
+                          <ArrowUpDown className="ml-2 h-4 w-4" />
                         </div>
-                        <div className="flex items-center justify-between border rounded-md p-4">
-                          <div>
-                            <div className="text-muted-foreground text-xs">Em Manutenção</div>
-                            <div className="text-xl font-semibold">
-                              {inventoryData.filter(item => item.category === "terminal" && item.status === "maintenance").length}
-                            </div>
+                      </TableHead>
+                      <TableHead>SKU</TableHead>
+                      <TableHead>Quantidade</TableHead>
+                      <TableHead>Localização</TableHead>
+                      <TableHead>Última Atualização</TableHead>
+                      <TableHead className="w-[100px]">Ações</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {filteredSupplies.length > 0 ? (
+                      filteredSupplies.map((item) => (
+                        <TableRow key={item.id}>
+                          <TableCell className="font-medium">{item.id}</TableCell>
+                          <TableCell>{item.name}</TableCell>
+                          <TableCell>{item.sku}</TableCell>
+                          <TableCell>{item.quantity}</TableCell>
+                          <TableCell>{item.location}</TableCell>
+                          <TableCell>{new Date(item.lastUpdated).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric' })}</TableCell>
+                          <TableCell>
+                            <Button variant="ghost" size="sm">
+                              Detalhes
+                            </Button>
+                          </TableCell>
+                        </TableRow>
+                      ))
+                    ) : (
+                      <TableRow>
+                        <TableCell colSpan={7} className="text-center py-4">
+                          <div className="flex flex-col items-center gap-2">
+                            <Package2 className="h-8 w-8 text-muted-foreground" />
+                            <p className="text-muted-foreground">Nenhum suprimento encontrado</p>
                           </div>
-                          <div className="h-8 w-8 rounded-full bg-yellow-100 flex items-center justify-center">
-                            <AlertCircle className="h-4 w-4 text-yellow-600" />
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                    
-                    <div>
-                      <h3 className="text-base font-medium mb-4">Suprimentos</h3>
-                      <div className="grid grid-cols-2 gap-4">
-                        <div className="flex items-center justify-between border rounded-md p-4">
-                          <div>
-                            <div className="text-muted-foreground text-xs">Estoque Atual</div>
-                            <div className="text-xl font-semibold">
-                              {inventoryData.filter(item => item.category === "supplies").length}
-                            </div>
-                          </div>
-                          <div className="h-8 w-8 rounded-full bg-blue-100 flex items-center justify-center">
-                            <Box className="h-4 w-4 text-blue-600" />
-                          </div>
-                        </div>
-                        <div className="flex items-center justify-between border rounded-md p-4">
-                          <div>
-                            <div className="text-muted-foreground text-xs">Status</div>
-                            <div className="text-sm font-semibold text-green-600">Adequado</div>
-                          </div>
-                          <div className="h-8 w-8 rounded-full bg-green-100 flex items-center justify-center">
-                            <CheckCircle2 className="h-4 w-4 text-green-600" />
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            </div>
+                        </TableCell>
+                      </TableRow>
+                    )}
+                  </TableBody>
+                </Table>
+              </CardContent>
+            </Card>
           </TabsContent>
         </Tabs>
       </PageWrapper>
-      
-      {/* Dialog for adding a new inventory item */}
-      <Dialog open={newItemDialogOpen} onOpenChange={setNewItemDialogOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Adicionar Item ao Inventário</DialogTitle>
-            <DialogDescription>
-              Preencha os detalhes do novo item a ser adicionado ao inventário.
-            </DialogDescription>
-          </DialogHeader>
-          
-          <div className="grid gap-4 py-4">
-            <div className="grid gap-2">
-              <Label htmlFor="name">Nome do Item</Label>
-              <Input id="name" placeholder="Ex: Terminal de Pagamento A10" />
-            </div>
-            
-            <div className="grid grid-cols-2 gap-4">
-              <div className="grid gap-2">
-                <Label htmlFor="model">Modelo</Label>
-                <Input id="model" placeholder="Ex: A10" />
-              </div>
-              <div className="grid gap-2">
-                <Label htmlFor="category">Categoria</Label>
-                <Select defaultValue="terminal">
-                  <SelectTrigger id="category">
-                    <SelectValue placeholder="Selecione" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="terminal">Terminal</SelectItem>
-                    <SelectItem value="supplies">Suprimento</SelectItem>
-                    <SelectItem value="accessory">Acessório</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
-            
-            <div className="grid grid-cols-2 gap-4">
-              <div className="grid gap-2">
-                <Label htmlFor="serial">Número de Série</Label>
-                <Input id="serial" placeholder="Ex: SN-A10-003" />
-              </div>
-              <div className="grid gap-2">
-                <Label htmlFor="status">Status</Label>
-                <Select defaultValue="available">
-                  <SelectTrigger id="status">
-                    <SelectValue placeholder="Selecione" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="available">Disponível</SelectItem>
-                    <SelectItem value="reserved">Reservado</SelectItem>
-                    <SelectItem value="maintenance">Manutenção</SelectItem>
-                    <SelectItem value="broken">Danificado</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
-            
-            <div className="grid gap-2">
-              <Label htmlFor="location">Localização</Label>
-              <Input id="location" placeholder="Ex: Estoque Central" />
-            </div>
-          </div>
-          
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setNewItemDialogOpen(false)}>
-              Cancelar
-            </Button>
-            <Button onClick={() => {
-              toast({
-                title: "Item adicionado",
-                description: "O item foi adicionado ao inventário com sucesso."
-              });
-              setNewItemDialogOpen(false);
-            }}>
-              Adicionar Item
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
     </>
   );
 };
