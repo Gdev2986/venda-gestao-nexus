@@ -1,5 +1,4 @@
 
-import { useState } from "react";
 import { Client } from "@/types";
 import { Button } from "@/components/ui/button";
 import {
@@ -32,16 +31,6 @@ const ClientsTable = ({
   onEdit,
   onDelete,
 }: ClientsTableProps) => {
-  const [expandedDescription, setExpandedDescription] = useState<string | null>(null);
-
-  const toggleDescription = (clientId: string) => {
-    if (expandedDescription === clientId) {
-      setExpandedDescription(null);
-    } else {
-      setExpandedDescription(clientId);
-    }
-  };
-
   if (isLoading) {
     return (
       <div className="space-y-2">
@@ -77,7 +66,7 @@ const ClientsTable = ({
           ) : (
             clients.map((client) => (
               <TableRow key={client.id}>
-                <TableCell className="font-medium">{client.business_name || client.company_name}</TableCell>
+                <TableCell className="font-medium">{client.business_name || "Nome não informado"}</TableCell>
                 <TableCell>{client.contact_name}</TableCell>
                 <TableCell className="hidden md:table-cell">{client.email}</TableCell>
                 <TableCell className="hidden md:table-cell">{client.phone}</TableCell>
