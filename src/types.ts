@@ -7,32 +7,23 @@ export enum UserRole {
   LOGISTICS = "LOGISTICS"
 }
 
-// Update the PaymentStatus to match PaymentRequestStatus
 export enum PaymentStatus {
   PENDING = "PENDING",
   APPROVED = "APPROVED",
   REJECTED = "REJECTED",
-  PAID = "PAID",
+  PAID = "PAID"
 }
 
 export enum PaymentType {
   PIX = "PIX",
   TED = "TED",
-  BOLETO = "BOLETO",
+  BOLETO = "BOLETO"
 }
 
 export enum PaymentMethod {
   CREDIT = "CREDIT",
   DEBIT = "DEBIT",
-  PIX = "PIX",
-}
-
-// Use the same values as PaymentStatus for consistency
-export enum PaymentRequestStatus {
-  PENDING = "PENDING",
-  APPROVED = "APPROVED",
-  REJECTED = "REJECTED",
-  PAID = "PAID",
+  PIX = "PIX"
 }
 
 // Added ClientStatus enum for the ClientStatus component
@@ -54,6 +45,8 @@ export interface Payment {
   client_name?: string;
   rejection_reason: string | null;
   payment_type?: PaymentType;
+  description?: string; // Added missing property
+  due_date?: string; // Added missing property
   bank_info?: {
     bank_name?: string;
     account_number?: string;
@@ -95,6 +88,7 @@ export interface Partner {
 export interface Client {
   id: string;
   business_name: string;
+  company_name?: string; // Added for backward compatibility
   email?: string;
   phone?: string;
   status?: string;
@@ -123,7 +117,7 @@ export interface PixKey {
   updated_at?: string;
   name?: string;
   owner_name?: string;
-  isDefault?: boolean;
+  isDefault?: boolean;  // Use this instead of is_default
   is_active?: boolean;
   bank_name?: string;
 }
@@ -136,19 +130,22 @@ export interface Sale {
   client_id: string;
   gross_amount: number;
   net_amount: number;
-  payment_method: PaymentMethod;
+  payment_method: PaymentMethod;  // Changed from paymentMethod to payment_method
   terminal: string;
   processing_status?: string;
   created_at: string;
   updated_at: string;
   partner_id?: string;
   machine_id?: string;
+  client_name?: string; // Added to match usage
 }
 
 // Add SalesChartData for reference
 export interface SalesChartData {
   date: string;
   amount: number;
+  method?: PaymentMethod; // Add optional method property
+  percentage?: number; // Add optional percentage property
 }
 
 // Add SalesFilterParams for reference
@@ -160,6 +157,8 @@ export interface SalesFilterParams {
   paymentMethod?: string;
   minAmount?: number;
   maxAmount?: number;
+  search?: string; // Added for filtering
+  terminal?: string; // Added for filtering
 }
 
 // Add FilterValues for reference
@@ -167,6 +166,7 @@ export interface FilterValues {
   search?: string;
   status?: string;
   partnerId?: string;
+  searchTerm?: string; // Added for compatibility
 }
 
 // Add UserData for reference
@@ -175,5 +175,5 @@ export interface UserData {
   name: string;
   email: string;
   role: UserRole;
-  created_at?: string;
+  created_at: string; // Changed from optional to required
 }

@@ -21,7 +21,7 @@ interface DataTableProps<TData> {
   isLoading?: boolean;
 }
 
-export function DataTable<TData>({ 
+export function DataTable<TData extends object>({ 
   columns, 
   data, 
   currentPage, 
@@ -39,7 +39,7 @@ export function DataTable<TData>({
               const columnId = typeof column.id === 'string' 
                 ? column.id 
                 : typeof column.accessorKey === 'string' 
-                ? column.accessorKey 
+                ? column.accessorKey as string
                 : String(column.header);
               
               return (
@@ -63,17 +63,17 @@ export function DataTable<TData>({
                   const columnId = typeof column.id === 'string' 
                     ? column.id 
                     : typeof column.accessorKey === 'string' 
-                    ? column.accessorKey 
+                    ? column.accessorKey as string 
                     : String(column.header);
                     
                   return (
                     <TableCell key={`${rowIndex}-${columnId}`}>
                       {column.cell 
                         ? typeof column.cell === 'function'
-                          ? column.cell({ row: { original: row } })
+                          ? column.cell({ row: { original: row } } as any)
                           : null
                         : typeof column.accessorKey === 'string' && column.accessorKey in row
-                        ? (row as any)[column.accessorKey]
+                        ? (row as any)[column.accessorKey as keyof TData]
                         : null}
                     </TableCell>
                   );

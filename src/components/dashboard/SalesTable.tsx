@@ -127,7 +127,7 @@ const SalesTable = ({ sales, isLoading = false }: SalesTableProps) => {
                           currency: "BRL",
                         }).format(sale.net_amount)}
                       </TableCell>
-                      <TableCell>{getPaymentMethodIcon(sale.paymentMethod)}</TableCell>
+                      <TableCell>{getPaymentMethodIcon(sale.payment_method)}</TableCell>
                       <TableCell>
                         <DropdownMenu>
                           <DropdownMenuTrigger asChild>

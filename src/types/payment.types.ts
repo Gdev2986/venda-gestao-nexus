@@ -17,6 +17,7 @@ export interface PaymentRequest {
   pix_key?: PixKey;
   client?: Client;
   payment_type?: string; // Add this to make compatible with Payment type
+  due_date?: string; // Add missing property
 }
 
 export interface PixKey {
@@ -30,7 +31,7 @@ export interface PixKey {
   updated_at?: string;
   name?: string; // Added for backward compatibility
   owner_name?: string; // Added for display purposes
-  isDefault?: boolean; // Flag for default key
+  isDefault?: boolean; // Flag for default key, use this instead of is_default
   is_active?: boolean;
   bank_name?: string;
 }
