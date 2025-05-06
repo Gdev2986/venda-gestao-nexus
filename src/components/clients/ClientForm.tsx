@@ -6,7 +6,7 @@ import * as z from "zod";
 import { Button } from "@/components/ui/button";
 import { Form } from "@/components/ui/form";
 
-// Import the new component field groups
+// Import the component field groups
 import BusinessInfoFields, { businessInfoSchema } from "./BusinessInfoFields";
 import ContactFields, { contactSchema } from "./ContactFields";
 import AddressFields, { addressSchema } from "./AddressFields";
@@ -18,7 +18,8 @@ const formSchema = z.object({
   ...addressSchema.shape,
 });
 
-type ClientFormValues = z.infer<typeof formSchema>;
+// Export the type for use in other components
+export type ClientFormValues = z.infer<typeof formSchema>;
 
 export interface ClientFormProps {
   id?: string;
@@ -40,6 +41,8 @@ export interface ClientFormProps {
   isOpen: boolean;
   onClose: () => void;
   submitButtonText?: string;
+  isSubmitting?: boolean;
+  title?: string;
 }
 
 export function ClientForm({
@@ -60,10 +63,10 @@ export function ClientForm({
     document: ""
   },
   partners = [],
-  submitButtonText = "Salvar"
+  submitButtonText = "Salvar",
+  isSubmitting = false,
+  title = "Cliente"
 }: ClientFormProps) {
-  const [isLoading, setIsLoading] = useState(false);
-
   const defaultValues: Partial<ClientFormValues> = {
     business_name: initialData?.business_name || "",
     contact_name: initialData?.contact_name || "",
@@ -83,13 +86,10 @@ export function ClientForm({
   });
 
   const handleSubmit = async (data: ClientFormValues) => {
-    setIsLoading(true);
     try {
       await onSubmit(data);
     } catch (error) {
       console.error("Error submitting form:", error);
-    } finally {
-      setIsLoading(false);
     }
   };
 
@@ -105,18 +105,20 @@ export function ClientForm({
             type="button" 
             variant="outline" 
             onClick={onClose}
-            disabled={isLoading}
+            disabled={isSubmitting}
           >
             Cancelar
           </Button>
           <Button 
             type="submit" 
-            disabled={isLoading}
+            disabled={isSubmitting}
           >
-            {isLoading ? "Salvando..." : submitButtonText}
+            {isSubmitting ? "Salvando..." : submitButtonText}
           </Button>
         </div>
       </form>
     </Form>
   );
 }
+
+export default ClientForm;

@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, useCallback } from "react";
 import { Client } from "@/types";
 import { ClientCreate, ClientUpdate } from "@/types/client";
 import { 
@@ -11,16 +11,38 @@ import {
 } from "@/api/clientsApi";
 
 export function useClients() {
+  const [clients, setClients] = useState<Client[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<Error | null>(null);
+  const [filteredClients, setFilteredClients] = useState<Client[]>([]);
+
+  const refreshClients = useCallback(async () => {
+    setLoading(true);
+    setError(null);
+
+    try {
+      const fetchedClients = await getClients();
+      setClients(fetchedClients);
+      setFilteredClients(fetchedClients);
+      return fetchedClients;
+    } catch (err) {
+      const errorObj = err instanceof Error ? err : new Error(String(err));
+      setError(errorObj);
+      throw errorObj;
+    } finally {
+      setLoading(false);
+    }
+  }, []);
 
   const getClients = async (): Promise<Client[]> => {
     setLoading(true);
     setError(null);
 
     try {
-      const clients = await fetchClients();
-      return clients;
+      const fetchedClients = await fetchClients();
+      setClients(fetchedClients);
+      setFilteredClients(fetchedClients);
+      return fetchedClients;
     } catch (err) {
       const errorObj = err instanceof Error ? err : new Error(String(err));
       setError(errorObj);
@@ -30,12 +52,13 @@ export function useClients() {
     }
   };
 
-  const getClientById = async (id: string): Promise<Client | null> => {
+  const getClientById = async (id: string): Promise<Client> => {
     setLoading(true);
     setError(null);
 
     try {
       const client = await fetchClientById(id);
+      if (!client) throw new Error(`Client with ID ${id} not found`);
       return client;
     } catch (err) {
       const errorObj = err instanceof Error ? err : new Error(String(err));
@@ -46,13 +69,15 @@ export function useClients() {
     }
   };
 
-  const addClient = async (clientData: ClientCreate): Promise<Client> => {
+  const addClient = async (clientData: ClientCreate): Promise<boolean> => {
     setLoading(true);
     setError(null);
 
     try {
       const newClient = await createClient(clientData);
-      return newClient;
+      setClients((prevClients) => [...prevClients, newClient]);
+      setFilteredClients((prevClients) => [...prevClients, newClient]);
+      return true;
     } catch (err) {
       const errorObj = err instanceof Error ? err : new Error(String(err));
       setError(errorObj);
@@ -62,13 +87,27 @@ export function useClients() {
     }
   };
 
-  const updateClient = async (id: string, clientData: ClientUpdate): Promise<Client | null> => {
+  const updateClient = async (id: string, clientData: ClientUpdate): Promise<boolean> => {
     setLoading(true);
     setError(null);
 
     try {
       const updatedClient = await apiUpdateClient(id, clientData);
-      return updatedClient;
+      if (!updatedClient) return false;
+      
+      setClients((prevClients) => 
+        prevClients.map(client => 
+          client.id === id ? updatedClient : client
+        )
+      );
+      
+      setFilteredClients((prevClients) => 
+        prevClients.map(client => 
+          client.id === id ? updatedClient : client
+        )
+      );
+      
+      return true;
     } catch (err) {
       const errorObj = err instanceof Error ? err : new Error(String(err));
       setError(errorObj);
@@ -84,6 +123,14 @@ export function useClients() {
 
     try {
       const success = await deleteClientById(id);
+      if (success) {
+        setClients((prevClients) => 
+          prevClients.filter(client => client.id !== id)
+        );
+        setFilteredClients((prevClients) => 
+          prevClients.filter(client => client.id !== id)
+        );
+      }
       return success;
     } catch (err) {
       const errorObj = err instanceof Error ? err : new Error(String(err));
@@ -94,7 +141,33 @@ export function useClients() {
     }
   };
 
+  const filterClients = useCallback((searchTerm: string, status: string) => {
+    if (!clients.length) return;
+    
+    let filtered = [...clients];
+    
+    // Filter by search term if provided
+    if (searchTerm) {
+      const searchLower = searchTerm.toLowerCase();
+      filtered = filtered.filter(
+        (client) =>
+          client.business_name?.toLowerCase().includes(searchLower) ||
+          client.contact_name?.toLowerCase().includes(searchLower) ||
+          client.email?.toLowerCase().includes(searchLower) ||
+          client.document?.toLowerCase().includes(searchLower)
+      );
+    }
+    
+    // Filter by status if not 'all'
+    if (status && status !== 'all') {
+      filtered = filtered.filter((client) => client.status === status);
+    }
+    
+    setFilteredClients(filtered);
+  }, [clients]);
+
   return {
+    clients: filteredClients,
     loading,
     error,
     getClients,
@@ -102,5 +175,7 @@ export function useClients() {
     addClient,
     updateClient,
     deleteClient,
+    refreshClients,
+    filterClients,
   };
 }
