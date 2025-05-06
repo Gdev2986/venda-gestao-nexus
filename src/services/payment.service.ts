@@ -31,7 +31,7 @@ export const formatPaymentRequest = (item: any): Payment => {
     payment_type: PaymentType.PIX,
     client_name: item.client?.business_name,
     receipt_url: item.receipt_url,
-    rejection_reason: item.rejection_reason || null, // Garantindo que este valor existe
+    rejection_reason: item.rejection_reason || null, // Ensure rejection_reason is always present
     approved_at: item.approved_at,
     pix_key: item.pix_key ? {
       id: item.pix_key.id,
@@ -80,7 +80,6 @@ export const fetchPaymentsData = async (
   if (error) throw error;
   
   // Ensure all required fields are present, including rejection_reason
-  // Use type assertion to resolve type mismatch
   return (data || []).map(item => ({
     ...item,
     rejection_reason: item.rejection_reason || null  // Ensure rejection_reason is always present

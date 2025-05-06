@@ -16,8 +16,13 @@ import {
   Calendar,
   Package,
   Search,
-  Box
+  Box,
+  ChevronDown,
+  ChevronRight,
+  Wrench,
+  Archive
 } from "lucide-react";
+import { useState } from "react";
 import SidebarNavItem from "./SidebarNavItem";
 import { SidebarItem } from "./types";
 import { PATHS } from "@/routes/paths";
@@ -27,6 +32,8 @@ interface SidebarNavigationProps {
 }
 
 const SidebarNavigation = ({ userRole }: SidebarNavigationProps) => {
+  const [machinesDropdownOpen, setMachinesDropdownOpen] = useState(false);
+
   // Define role-specific items
   const adminItems: SidebarItem[] = [
     {
@@ -246,6 +253,7 @@ const SidebarNavigation = ({ userRole }: SidebarNavigationProps) => {
     },
   ];
 
+  // Updated logistics items with machine dropdown sections
   const logisticsItems: SidebarItem[] = [
     {
       title: "Dashboard",
@@ -256,8 +264,30 @@ const SidebarNavigation = ({ userRole }: SidebarNavigationProps) => {
     {
       title: "Máquinas",
       icon: CreditCard,
-      href: PATHS.LOGISTICS.MACHINES,
+      href: "#",
       roles: [UserRole.LOGISTICS],
+      subItems: [
+        {
+          title: "Todas as Máquinas",
+          href: PATHS.LOGISTICS.MACHINES,
+          roles: [UserRole.LOGISTICS],
+        },
+        {
+          title: "Estoque",
+          href: "/logistics/stock",
+          roles: [UserRole.LOGISTICS],
+        },
+        {
+          title: "Máquinas de Clientes",
+          href: "/logistics/client-machines",
+          roles: [UserRole.LOGISTICS],
+        },
+        {
+          title: "Nova Máquina",
+          href: PATHS.LOGISTICS.MACHINE_NEW,
+          roles: [UserRole.LOGISTICS],
+        }
+      ]
     },
     {
       title: "Operações",
@@ -268,8 +298,30 @@ const SidebarNavigation = ({ userRole }: SidebarNavigationProps) => {
     {
       title: "Solicitações",
       icon: MessageSquare,
-      href: PATHS.LOGISTICS.REQUESTS,
+      href: "#",
       roles: [UserRole.LOGISTICS],
+      subItems: [
+        {
+          title: "Todas as Solicitações",
+          href: PATHS.LOGISTICS.REQUESTS,
+          roles: [UserRole.LOGISTICS],
+        },
+        {
+          title: "Manutenção",
+          href: "/logistics/maintenance-requests",
+          roles: [UserRole.LOGISTICS],
+        },
+        {
+          title: "Troca de Bobinas",
+          href: "/logistics/paper-requests",
+          roles: [UserRole.LOGISTICS],
+        },
+        {
+          title: "Novas Instalações",
+          href: "/logistics/installation-requests",
+          roles: [UserRole.LOGISTICS],
+        }
+      ]
     },
     {
       title: "Calendário",

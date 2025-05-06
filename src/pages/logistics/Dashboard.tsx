@@ -13,7 +13,8 @@ import {
   ResponsiveContainer, 
   PieChart, 
   Pie, 
-  Cell 
+  Cell, 
+  Legend 
 } from "recharts";
 import { 
   Package,
@@ -154,44 +155,34 @@ const LogisticsDashboard = () => {
         </Card>
       </div>
       
-      {/* Charts - Modificado para melhor visualização */}
+      {/* Charts - Improved for better visualization and responsive sizing */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <Card className="h-full">
           <CardHeader>
             <CardTitle>Status das Máquinas</CardTitle>
           </CardHeader>
-          <CardContent className="p-2 sm:p-6">
-            <div className="h-64 sm:h-80">
+          <CardContent className="flex flex-col items-center justify-center p-2 sm:p-6">
+            <div className="h-72 w-full flex items-center justify-center">
               <ResponsiveContainer width="100%" height="100%">
                 <PieChart>
                   <Pie
                     data={statusData}
-                    innerRadius={40}
-                    outerRadius={80}
+                    innerRadius={70}
+                    outerRadius={110}
                     paddingAngle={2}
                     dataKey="value"
                     nameKey="name"
                     label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
-                    labelLine={false}
+                    labelLine={true}
                   >
                     {statusData.map((entry, index) => (
                       <Cell key={`cell-${index}`} fill={entry.color} />
                     ))}
                   </Pie>
-                  <Tooltip />
+                  <Tooltip formatter={(value, name) => [`${value} máquinas`, name]} />
+                  <Legend layout="horizontal" verticalAlign="bottom" align="center" />
                 </PieChart>
               </ResponsiveContainer>
-              <div className="flex flex-wrap justify-center gap-3 mt-2">
-                {statusData.map((status, i) => (
-                  <div key={i} className="flex items-center">
-                    <div
-                      className="w-3 h-3 rounded-full mr-2"
-                      style={{ backgroundColor: status.color }}
-                    />
-                    <span className="text-xs sm:text-sm text-muted-foreground">{status.name}</span>
-                  </div>
-                ))}
-              </div>
             </div>
           </CardContent>
         </Card>
@@ -200,15 +191,23 @@ const LogisticsDashboard = () => {
           <CardHeader>
             <CardTitle>Solicitações Mensais</CardTitle>
           </CardHeader>
-          <CardContent className="p-2 sm:p-6">
-            <div className="h-64 sm:h-80">
+          <CardContent className="flex flex-col items-center justify-center p-2 sm:p-6">
+            <div className="h-72 w-full">
               <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={requestsData}>
+                <BarChart 
+                  data={requestsData}
+                  margin={{ top: 10, right: 30, left: 0, bottom: 5 }}
+                >
                   <CartesianGrid strokeDasharray="3 3" />
                   <XAxis dataKey="name" />
                   <YAxis />
-                  <Tooltip />
-                  <Bar dataKey="requests" fill="#6366f1" />
+                  <Tooltip formatter={(value) => [`${value} solicitações`, 'Total']} />
+                  <Bar 
+                    dataKey="requests" 
+                    fill="#6366f1" 
+                    radius={[4, 4, 0, 0]} 
+                    name="Solicitações"
+                  />
                 </BarChart>
               </ResponsiveContainer>
             </div>

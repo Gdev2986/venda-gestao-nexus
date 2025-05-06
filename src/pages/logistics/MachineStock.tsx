@@ -10,7 +10,7 @@ import { Input } from "@/components/ui/input";
 import { 
   Search, 
   RefreshCw, 
-  Package2, 
+  Package, 
   PlusCircle,
   Filter,
   ArrowUpDown,

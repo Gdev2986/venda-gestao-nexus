@@ -74,10 +74,16 @@ export const PATHS = {
     DASHBOARD: "/logistics/dashboard",
     CLIENTS: "/logistics/clients",
     MACHINES: "/logistics/machines",
-    MACHINE_NEW: "/logistics/machines/new", // Add machine new path
+    MACHINE_NEW: "/logistics/machines/new",
     MACHINE_DETAILS: (id: string = ":id") => `/logistics/machines/${id}`,
+    STOCK: "/logistics/stock", // Add stock path
+    CLIENT_MACHINES: "/logistics/client-machines", // Add client machines path
     OPERATIONS: "/logistics/operations",
     REQUESTS: "/logistics/requests",
+    SERVICE_REQUESTS: "/logistics/service-requests", // Add service requests path
+    MAINTENANCE_REQUESTS: "/logistics/maintenance-requests", // Add maintenance requests path
+    PAPER_REQUESTS: "/logistics/paper-requests", // Add paper requests path
+    INSTALLATION_REQUESTS: "/logistics/installation-requests", // Add installation requests path
     CALENDAR: "/logistics/calendar",
     INVENTORY: "/logistics/inventory",
     SALES: "/logistics/sales",

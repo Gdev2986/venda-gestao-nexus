@@ -10,11 +10,13 @@ import { Input } from "@/components/ui/input";
 import { 
   Search, 
   RefreshCw, 
-  Building, 
-  Package2, 
-  ArrowUpDown, 
-  Users,
-  PlusCircle
+  Package, 
+  Building2,
+  Wrench,
+  Calendar,
+  ArrowUpDown,
+  Clock,
+  FilterX
 } from "lucide-react";
 import {
   Select,
@@ -28,6 +30,7 @@ import { useToast } from "@/hooks/use-toast";
 const ClientMachines = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [clientFilter, setClientFilter] = useState("all");
+  const [modelFilter, setModelFilter] = useState("all");
   const [statusFilter, setStatusFilter] = useState("all");
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
@@ -36,167 +39,114 @@ const ClientMachines = () => {
   const clientMachinesData = [
     {
       id: "CM001",
-      name: "Terminal POS-X1",
       model: "POS-X1",
-      serial: "SER123456",
-      status: "operating",
-      installDate: "2025-01-15T09:30:00",
-      lastMaintenance: "2025-04-02T09:30:00",
-      nextMaintenance: "2025-07-02T09:30:00",
-      client: {
-        id: "C001",
-        name: "Restaurante Sabores",
-        address: "Rua das Flores, 123",
-        city: "São Paulo",
-        state: "SP",
-        contactName: "Maria Silva",
-        phone: "(11) 98765-4321"
-      }
+      serial: "SER293847",
+      status: "active",
+      client: "Restaurante Sabores",
+      location: "São Paulo, SP",
+      installDate: "2025-01-15T10:30:00",
+      lastService: "2025-03-30T14:30:00"
     },
     {
       id: "CM002",
-      name: "Terminal POS-X2",
-      model: "POS-X2",
-      serial: "SER234567",
-      status: "operating",
-      installDate: "2025-02-10T14:45:00",
-      lastMaintenance: "2025-05-01T14:45:00",
-      nextMaintenance: "2025-08-01T14:45:00",
-      client: {
-        id: "C002",
-        name: "Café Central",
-        address: "Av. Paulista, 1000",
-        city: "São Paulo",
-        state: "SP",
-        contactName: "João Santos",
-        phone: "(11) 91234-5678"
-      }
+      model: "POS-X1",
+      serial: "SER293850",
+      status: "active",
+      client: "Café Central",
+      location: "São Paulo, SP",
+      installDate: "2025-02-20T11:15:00",
+      lastService: "2025-04-25T09:45:00"
     },
     {
       id: "CM003",
-      name: "Terminal POS-X1",
-      model: "POS-X1",
-      serial: "SER345678",
-      status: "in_maintenance",
-      installDate: "2024-11-05T11:20:00",
-      lastMaintenance: "2025-04-28T11:20:00",
-      nextMaintenance: "2025-07-28T11:20:00",
-      client: {
-        id: "C003",
-        name: "Sorveteria Gelatto",
-        address: "Rua Augusta, 500",
-        city: "São Paulo",
-        state: "SP",
-        contactName: "Ana Oliveira",
-        phone: "(11) 99876-5432"
-      }
+      model: "POS-X2",
+      serial: "SER345681",
+      status: "maintenance",
+      client: "Farmácia Saúde",
+      location: "Rio de Janeiro, RJ",
+      installDate: "2025-03-10T09:00:00",
+      lastService: "2025-05-01T16:30:00"
     },
     {
       id: "CM004",
-      name: "Terminal POS-X3",
       model: "POS-X3",
-      serial: "SER456789",
-      status: "operating",
-      installDate: "2025-03-12T10:10:00",
-      lastMaintenance: "2025-05-03T10:10:00",
-      nextMaintenance: "2025-08-03T10:10:00",
-      client: {
-        id: "C004",
-        name: "Farmácia Saúde",
-        address: "Av. Brasil, 200",
-        city: "Rio de Janeiro",
-        state: "RJ",
-        contactName: "Carlos Lima",
-        phone: "(21) 98765-4321"
-      }
+      serial: "SER456791",
+      status: "active",
+      client: "Sorveteria Gelatto",
+      location: "Belo Horizonte, MG",
+      installDate: "2025-01-05T14:30:00",
+      lastService: "2025-03-15T10:30:00"
     },
     {
       id: "CM005",
-      name: "Terminal POS-X2",
       model: "POS-X2",
-      serial: "SER567890",
-      status: "operating",
-      installDate: "2025-02-20T16:30:00",
-      lastMaintenance: "2025-05-02T16:30:00",
-      nextMaintenance: "2025-08-02T16:30:00",
-      client: {
-        id: "C005",
-        name: "Mercado Geral",
-        address: "Rua dos Pinheiros, 300",
-        city: "São Paulo",
-        state: "SP",
-        contactName: "Paulo Mendes",
-        phone: "(11) 97654-3210"
-      }
+      serial: "SER345682",
+      status: "inactive",
+      client: "Mercado Geral",
+      location: "Curitiba, PR",
+      installDate: "2024-12-10T13:15:00",
+      lastService: "2025-02-20T15:45:00"
     },
     {
       id: "CM006",
-      name: "Terminal POS-X3",
-      model: "POS-X3",
-      serial: "SER678901",
-      status: "needs_maintenance",
-      installDate: "2024-12-05T14:20:00",
-      lastMaintenance: "2025-03-05T14:20:00",
-      nextMaintenance: "2025-06-05T14:20:00",
-      client: {
-        id: "C001",
-        name: "Restaurante Sabores",
-        address: "Rua das Flores, 123",
-        city: "São Paulo",
-        state: "SP",
-        contactName: "Maria Silva",
-        phone: "(11) 98765-4321"
-      }
+      model: "POS-X1",
+      serial: "SER293851",
+      status: "active",
+      client: "Restaurante Sabores",
+      location: "São Paulo, SP",
+      installDate: "2025-03-25T10:45:00",
+      lastService: "2025-04-30T11:30:00"
     },
     {
       id: "CM007",
-      name: "Terminal POS-X1",
-      model: "POS-X1",
-      serial: "SER789012",
-      status: "operating",
-      installDate: "2025-01-28T09:15:00",
-      lastMaintenance: "2025-04-28T09:15:00",
-      nextMaintenance: "2025-07-28T09:15:00",
-      client: {
-        id: "C006",
-        name: "Padaria Pão Quente",
-        address: "Rua dos Padeiros, 45",
-        city: "São Paulo",
-        state: "SP",
-        contactName: "Roberto Alves",
-        phone: "(11) 98123-4567"
-      }
+      model: "POS-X3",
+      serial: "SER456792",
+      status: "maintenance",
+      client: "Padaria Trigo",
+      location: "Brasília, DF",
+      installDate: "2025-02-15T09:30:00",
+      lastService: "2025-04-15T14:00:00"
+    },
+    {
+      id: "CM008",
+      model: "POS-X2",
+      serial: "SER345683",
+      status: "active",
+      client: "Livraria Leitura",
+      location: "Salvador, BA",
+      installDate: "2025-01-20T11:00:00",
+      lastService: "2025-03-25T13:30:00"
     }
   ];
 
-  // Get unique clients for filter
-  const clients = [...new Set(clientMachinesData.map(item => item.client.name))];
+  // Get unique clients, models, and statuses for filters
+  const clients = [...new Set(clientMachinesData.map(item => item.client))];
+  const models = [...new Set(clientMachinesData.map(item => item.model))];
 
   // Filter data based on search term and filters
   const filteredMachines = clientMachinesData.filter(machine => {
     const matchesSearch = 
-      machine.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
+      machine.model.toLowerCase().includes(searchTerm.toLowerCase()) || 
       machine.serial.toLowerCase().includes(searchTerm.toLowerCase()) ||
       machine.id.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      machine.client.name.toLowerCase().includes(searchTerm.toLowerCase());
+      machine.client.toLowerCase().includes(searchTerm.toLowerCase());
     
-    const matchesClient = clientFilter === "all" || machine.client.name === clientFilter;
+    const matchesClient = clientFilter === "all" || machine.client === clientFilter;
+    const matchesModel = modelFilter === "all" || machine.model === modelFilter;
     const matchesStatus = statusFilter === "all" || machine.status === statusFilter;
     
-    return matchesSearch && matchesClient && matchesStatus;
+    return matchesSearch && matchesClient && matchesModel && matchesStatus;
   });
 
   // Helper for status badges
   const getStatusBadge = (status: string) => {
     switch (status) {
-      case "operating":
-        return <Badge variant="outline" className="bg-green-100 text-green-800 hover:bg-green-100">Operando</Badge>;
-      case "in_maintenance":
-        return <Badge variant="outline" className="bg-yellow-100 text-yellow-800 hover:bg-yellow-100">Em Manutenção</Badge>;
-      case "needs_maintenance":
-        return <Badge variant="outline" className="bg-orange-100 text-orange-800 hover:bg-orange-100">Requer Manutenção</Badge>;
+      case "active":
+        return <Badge variant="outline" className="bg-green-100 text-green-800 hover:bg-green-100">Ativo</Badge>;
       case "inactive":
         return <Badge variant="outline" className="bg-gray-100 text-gray-800 hover:bg-gray-100">Inativo</Badge>;
+      case "maintenance":
+        return <Badge variant="outline" className="bg-yellow-100 text-yellow-800 hover:bg-yellow-100">Em Manutenção</Badge>;
       default:
         return <Badge variant="outline">Desconhecido</Badge>;
     }
@@ -209,9 +159,17 @@ const ClientMachines = () => {
       setIsLoading(false);
       toast({
         title: "Dados atualizados",
-        description: "Os dados das máquinas foram atualizados com sucesso.",
+        description: "Os dados de máquinas de clientes foram atualizados com sucesso.",
       });
     }, 1000);
+  };
+
+  // Clear all filters
+  const clearFilters = () => {
+    setSearchTerm("");
+    setClientFilter("all");
+    setModelFilter("all");
+    setStatusFilter("all");
   };
 
   const columns = [
@@ -221,24 +179,24 @@ const ClientMachines = () => {
       accessorKey: "id",
     },
     {
-      id: "name",
-      header: "Máquina",
-      accessorKey: "name",
+      id: "client",
+      header: "Cliente",
+      accessorKey: "client",
+    },
+    {
+      id: "location",
+      header: "Localização",
+      accessorKey: "location",
+    },
+    {
+      id: "model",
+      header: "Modelo",
+      accessorKey: "model",
     },
     {
       id: "serial",
       header: "Número Serial",
       accessorKey: "serial",
-    },
-    {
-      id: "client",
-      header: "Cliente",
-      cell: ({ row }: { row: { original: any } }) => (
-        <div className="flex flex-col">
-          <span className="font-medium">{row.original.client.name}</span>
-          <span className="text-xs text-muted-foreground">{row.original.client.city}, {row.original.client.state}</span>
-        </div>
-      ),
     },
     {
       id: "status",
@@ -251,14 +209,14 @@ const ClientMachines = () => {
       cell: ({ row }: { row: { original: any } }) => new Date(row.original.installDate).toLocaleDateString('pt-BR'),
     },
     {
-      id: "lastMaintenance",
-      header: "Última Manutenção",
-      cell: ({ row }: { row: { original: any } }) => new Date(row.original.lastMaintenance).toLocaleDateString('pt-BR'),
+      id: "lastService",
+      header: "Último Serviço",
+      cell: ({ row }: { row: { original: any } }) => new Date(row.original.lastService).toLocaleDateString('pt-BR'),
     },
     {
       id: "actions",
       header: "Ações",
-      cell: () => (
+      cell: ({ row }: { row: { original: any } }) => (
         <div className="flex gap-2">
           <Button variant="ghost" size="sm" onClick={() => toast({
             title: "Detalhes",
@@ -267,9 +225,10 @@ const ClientMachines = () => {
             Detalhes
           </Button>
           <Button variant="outline" size="sm" onClick={() => toast({
-            title: "Solicitar Manutenção",
+            title: "Agendar Manutenção",
             description: "Funcionalidade em desenvolvimento",
           })}>
+            <Wrench className="h-3.5 w-3.5 mr-1" />
             Manutenção
           </Button>
         </div>
@@ -280,39 +239,40 @@ const ClientMachines = () => {
   return (
     <>
       <PageHeader 
-        title="Máquinas em Clientes" 
-        description="Gerenciamento das máquinas instaladas em estabelecimentos"
-        actionLabel="Nova Instalação"
-        onActionClick={() => toast({
-          title: "Funcionalidade em desenvolvimento",
-          description: "Esta funcionalidade estará disponível em breve."
-        })}
+        title="Máquinas de Clientes" 
+        description="Gerenciamento das máquinas instaladas em clientes"
       />
       
       <PageWrapper>
         <Card className="mb-6">
           <CardHeader className="pb-3">
-            <CardTitle>Filtros</CardTitle>
+            <div className="flex items-center justify-between">
+              <CardTitle>Filtros</CardTitle>
+              <Button variant="ghost" size="sm" onClick={clearFilters}>
+                <FilterX className="h-4 w-4 mr-2" />
+                Limpar Filtros
+              </Button>
+            </div>
           </CardHeader>
           <CardContent>
             <div className="flex flex-col sm:flex-row gap-4">
               <div className="flex-1 relative">
                 <Search className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
                 <Input
-                  placeholder="Buscar por cliente, máquina ou serial"
+                  placeholder="Buscar por cliente, modelo, serial ou ID"
                   className="pl-9"
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                 />
               </div>
               
-              <div className="w-full sm:w-64">
+              <div className="w-full sm:w-48">
                 <Select defaultValue={clientFilter} onValueChange={setClientFilter}>
                   <SelectTrigger>
                     <SelectValue placeholder="Cliente" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="all">Todos os Clientes</SelectItem>
+                    <SelectItem value="all">Todos</SelectItem>
                     {clients.map(client => (
                       <SelectItem key={client} value={client}>{client}</SelectItem>
                     ))}
@@ -320,17 +280,30 @@ const ClientMachines = () => {
                 </Select>
               </div>
               
-              <div className="w-full sm:w-48">
+              <div className="w-full sm:w-40">
+                <Select defaultValue={modelFilter} onValueChange={setModelFilter}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Modelo" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">Todos</SelectItem>
+                    {models.map(model => (
+                      <SelectItem key={model} value={model}>{model}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              
+              <div className="w-full sm:w-40">
                 <Select defaultValue={statusFilter} onValueChange={setStatusFilter}>
                   <SelectTrigger>
                     <SelectValue placeholder="Status" />
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="all">Todos</SelectItem>
-                    <SelectItem value="operating">Operando</SelectItem>
-                    <SelectItem value="in_maintenance">Em Manutenção</SelectItem>
-                    <SelectItem value="needs_maintenance">Requer Manutenção</SelectItem>
+                    <SelectItem value="active">Ativo</SelectItem>
                     <SelectItem value="inactive">Inativo</SelectItem>
+                    <SelectItem value="maintenance">Em Manutenção</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -350,21 +323,21 @@ const ClientMachines = () => {
         <Card>
           <CardHeader>
             <div className="flex justify-between items-center">
-              <CardTitle>Máquinas Instaladas</CardTitle>
+              <CardTitle>Máquinas Instaladas em Clientes</CardTitle>
               <div className="flex gap-2">
                 <Button variant="outline" size="sm" onClick={() => toast({
-                  title: "Funcionalidade em desenvolvimento",
-                  description: "Esta funcionalidade estará disponível em breve."
+                  title: "Agendamentos",
+                  description: "Funcionalidade em desenvolvimento",
                 })}>
-                  <Package2 className="h-4 w-4 mr-2" />
-                  Transferir Máquina
+                  <Calendar className="h-4 w-4 mr-2" />
+                  Agendamentos
                 </Button>
                 <Button variant="outline" size="sm" onClick={() => toast({
-                  title: "Funcionalidade em desenvolvimento",
-                  description: "Esta funcionalidade estará disponível em breve."
+                  title: "Histórico de Serviços",
+                  description: "Funcionalidade em desenvolvimento",
                 })}>
-                  <PlusCircle className="h-4 w-4 mr-2" />
-                  Nova Instalação
+                  <Clock className="h-4 w-4 mr-2" />
+                  Histórico
                 </Button>
               </div>
             </div>
