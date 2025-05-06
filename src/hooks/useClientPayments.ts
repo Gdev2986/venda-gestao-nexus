@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { Payment, PaymentStatus, PaymentType, PixKey } from "@/types";
@@ -35,31 +34,53 @@ export const useClientPayments = (clientId: string) => {
         .eq('client_id', clientId)
         .order('created_at', { ascending: false });
     
-    if (error) throw error;
+      if (error) throw error;
     
-    if (data && data.length > 0) {
-      const formattedData = data.map(item => formatPaymentRequest(item)) as unknown as Payment[];
-      setPayments(formattedData);
-    } else {
-      // Use mock data if no real data is available
+      if (data && data.length > 0) {
+        const formattedData = data.map(item => {
+          const formattedItem = formatPaymentRequest(item);
+          return {
+            id: formattedItem.id,
+            amount: formattedItem.amount,
+            status: formattedItem.status as unknown as PaymentStatus,
+            created_at: formattedItem.created_at,
+            updated_at: formattedItem.updated_at,
+            client_id: formattedItem.client_id,
+            description: formattedItem.description,
+            approved_at: formattedItem.approved_at,
+            receipt_url: formattedItem.receipt_url,
+            client_name: formattedItem.client?.business_name,
+            payment_type: PaymentType.PIX,
+            rejection_reason: formattedItem.rejection_reason,
+            pix_key: formattedItem.pix_key ? {
+              id: formattedItem.pix_key.id,
+              key: formattedItem.pix_key.key,
+              type: formattedItem.pix_key.type,
+              owner_name: formattedItem.pix_key.name
+            } : undefined
+          } as unknown as Payment;
+        });
+        setPayments(formattedData);
+      } else {
+        // Use mock data if no real data is available
+        const mockData = getMockPaymentRequests().filter(p => p.client_id === clientId);
+        setPayments(mockData as unknown as Payment[]);
+      }
+    } catch (err) {
+      console.error('Error fetching client payment requests:', err);
+      toast({
+        variant: "destructive",
+        title: "Erro ao carregar pagamentos",
+        description: "Não foi possível carregar os pagamentos deste cliente."
+      });
+      
+      // Use mock data as fallback, filtered by client
       const mockData = getMockPaymentRequests().filter(p => p.client_id === clientId);
       setPayments(mockData as unknown as Payment[]);
+    } finally {
+      setIsLoading(false);
     }
-  } catch (err) {
-    console.error('Error fetching client payment requests:', err);
-    toast({
-      variant: "destructive",
-      title: "Erro ao carregar pagamentos",
-      description: "Não foi possível carregar os pagamentos deste cliente."
-    });
-    
-    // Use mock data as fallback, filtered by client
-    const mockData = getMockPaymentRequests().filter(p => p.client_id === clientId);
-    setPayments(mockData as unknown as Payment[]);
-  } finally {
-    setIsLoading(false);
-  }
-};
+  };
 
   // Mock PixKeys retrieval for client
   const loadPixKeys = async () => {

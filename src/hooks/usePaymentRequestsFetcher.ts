@@ -38,7 +38,29 @@ export const usePaymentRequestsFetcher = (initialBalance: number = 15000) => {
       if (error) throw error;
       
       if (data && data.length > 0) {
-        const formattedData = data.map(item => formatPaymentRequest(item)) as unknown as Payment[];
+        const formattedData = data.map(item => {
+          const formattedItem = formatPaymentRequest(item);
+          return {
+            id: formattedItem.id,
+            amount: formattedItem.amount,
+            status: formattedItem.status as unknown as PaymentStatus,
+            created_at: formattedItem.created_at,
+            updated_at: formattedItem.updated_at,
+            client_id: formattedItem.client_id,
+            description: formattedItem.description,
+            approved_at: formattedItem.approved_at,
+            receipt_url: formattedItem.receipt_url,
+            client_name: formattedItem.client?.business_name,
+            payment_type: PaymentType.PIX,
+            rejection_reason: formattedItem.rejection_reason,
+            pix_key: formattedItem.pix_key ? {
+              id: formattedItem.pix_key.id,
+              key: formattedItem.pix_key.key,
+              type: formattedItem.pix_key.type,
+              owner_name: formattedItem.pix_key.name
+            } : undefined
+          } as unknown as Payment;
+        });
         setPaymentRequests(formattedData);
       } else {
         setPaymentRequests(getMockPaymentRequests() as unknown as Payment[]);

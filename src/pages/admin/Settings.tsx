@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -112,20 +111,20 @@ const AdminSettings = () => {
       if (usersError) throw usersError;
 
       // Create notification objects for each user
-      const notifications = users.map((user) => ({
-        user_id: user.id,
-        title: notificationTitle,
-        message: notificationMessage,
-        type: "SYSTEM",
-        data: { sent_by: "ADMIN", is_system_message: true }
-      }));
+      for (const user of users) {
+        // Insert notifications one by one to avoid type issues with batch insert
+        const { error: insertError } = await supabase
+          .from("notifications")
+          .insert({
+            user_id: user.id,
+            title: notificationTitle,
+            message: notificationMessage,
+            type: "SYSTEM",
+            data: { sent_by: "ADMIN", is_system_message: true }
+          });
 
-      // Insert notifications
-      const { error: insertError } = await supabase
-        .from("notifications")
-        .insert(notifications);
-
-      if (insertError) throw insertError;
+        if (insertError) throw insertError;
+      }
 
       // Reset form and show success
       setNotificationTitle("");

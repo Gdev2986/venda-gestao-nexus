@@ -27,7 +27,7 @@ const AdminPayments = () => {
 
   // Use the payments hook
   const { 
-    payments, 
+    paymentRequests, 
     isLoading, 
     refreshPayments, 
     approvePayment, 
@@ -37,8 +37,7 @@ const AdminPayments = () => {
     setCurrentPage
   } = usePayments({
     statusFilter,
-    searchTerm,
-    fetchOnMount: true
+    searchTerm
   });
 
   // Handle filter changes
@@ -130,7 +129,7 @@ const AdminPayments = () => {
       <PageWrapper>
         <DataTable 
           columns={columns} 
-          data={payments}
+          data={paymentRequests}
           currentPage={currentPage}
           totalPages={totalPages}
           onPageChange={setCurrentPage}
