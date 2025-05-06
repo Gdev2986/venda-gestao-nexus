@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { PageHeader } from "@/components/page/PageHeader";
 import { PageWrapper } from "@/components/page/PageWrapper";
@@ -16,8 +17,6 @@ import { Client } from "@/types";
 import { useDialog } from "@/hooks/use-dialog";
 import { useToast } from "@/hooks/use-toast";
 import { Dialog } from "@/components/ui/dialog";
-import ClientsTable from "@/components/clients/ClientsTable";
-import ClientDetailsView from "@/components/clients/ClientDetailsView";
 import { useClients } from "@/hooks/use-clients";
 import ClientForm, { ClientFormValues } from "@/components/clients/ClientForm";
 import {
@@ -30,6 +29,187 @@ import {
   AlertDialogCancel,
   AlertDialogAction,
 } from "@/components/ui/alert-dialog";
+
+// Import the ClientsTable and ClientDetailsView components
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { EyeIcon, PenIcon, Trash2 } from "lucide-react";
+import { Skeleton } from "@/components/ui/skeleton";
+
+// ClientsTable component
+const ClientsTable = ({ 
+  clients, 
+  isLoading, 
+  onView, 
+  onEdit, 
+  onDelete 
+}: { 
+  clients: Client[];
+  isLoading: boolean;
+  onView: (client: Client) => void;
+  onEdit: (client: Client) => void;
+  onDelete: (client: Client) => void;
+}) => {
+  if (isLoading) {
+    return (
+      <div className="space-y-2">
+        {Array.from({ length: 5 }).map((_, index) => (
+          <div key={index} className="flex space-x-4">
+            <Skeleton className="h-12 w-full" />
+          </div>
+        ))}
+      </div>
+    );
+  }
+
+  return (
+    <div className="rounded-md border overflow-hidden">
+      <Table>
+        <TableHeader>
+          <TableRow>
+            <TableHead>Nome</TableHead>
+            <TableHead>Contato</TableHead>
+            <TableHead className="hidden md:table-cell">Email</TableHead>
+            <TableHead className="hidden md:table-cell">Telefone</TableHead>
+            <TableHead className="hidden lg:table-cell">Localização</TableHead>
+            <TableHead className="text-right">Ações</TableHead>
+          </TableRow>
+        </TableHeader>
+        <TableBody>
+          {clients.length === 0 ? (
+            <TableRow>
+              <TableCell colSpan={6} className="text-center py-10 text-muted-foreground">
+                Nenhum cliente encontrado.
+              </TableCell>
+            </TableRow>
+          ) : (
+            clients.map((client) => (
+              <TableRow key={client.id}>
+                <TableCell className="font-medium">{client.business_name || "Nome não informado"}</TableCell>
+                <TableCell>{client.contact_name}</TableCell>
+                <TableCell className="hidden md:table-cell">{client.email}</TableCell>
+                <TableCell className="hidden md:table-cell">{client.phone}</TableCell>
+                <TableCell className="hidden lg:table-cell">{`${client.city || ''}, ${client.state || ''}`}</TableCell>
+                <TableCell className="text-right">
+                  <div className="flex justify-end gap-2">
+                    <Button variant="ghost" size="icon" onClick={() => onView(client)} title="Visualizar">
+                      <EyeIcon className="h-4 w-4" />
+                    </Button>
+                    <Button variant="ghost" size="icon" onClick={() => onEdit(client)} title="Editar">
+                      <PenIcon className="h-4 w-4" />
+                    </Button>
+                    <Button 
+                      variant="ghost" 
+                      size="icon" 
+                      className="text-destructive hover:text-destructive/80"
+                      onClick={() => onDelete(client)}
+                      title="Excluir"
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  </div>
+                </TableCell>
+              </TableRow>
+            ))
+          )}
+        </TableBody>
+      </Table>
+    </div>
+  );
+};
+
+// ClientDetailsView component
+const ClientDetailsView = ({
+  client,
+  onClose,
+  onEdit,
+  onDelete
+}: {
+  client: Client;
+  onClose: () => void;
+  onEdit: () => void;
+  onDelete: () => void;
+}) => {
+  return (
+    <div className="sm:max-w-md p-6">
+      <div className="space-y-4">
+        <div>
+          <h2 className="text-lg font-semibold">Detalhes do Cliente</h2>
+          <p className="text-sm text-muted-foreground">
+            Informações completas sobre {client.business_name}
+          </p>
+        </div>
+
+        <div className="grid gap-4 py-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+            <div>
+              <h3 className="font-medium text-sm text-muted-foreground mb-1">Nome da Empresa</h3>
+              <p>{client.business_name}</p>
+            </div>
+
+            <div>
+              <h3 className="font-medium text-sm text-muted-foreground mb-1">Documento</h3>
+              <p>{client.document || "Não informado"}</p>
+            </div>
+
+            <div>
+              <h3 className="font-medium text-sm text-muted-foreground mb-1">Contato</h3>
+              <p>{client.contact_name || "Não informado"}</p>
+            </div>
+
+            <div>
+              <h3 className="font-medium text-sm text-muted-foreground mb-1">Email</h3>
+              <p>{client.email || "Não informado"}</p>
+            </div>
+
+            <div>
+              <h3 className="font-medium text-sm text-muted-foreground mb-1">Telefone</h3>
+              <p>{client.phone || "Não informado"}</p>
+            </div>
+
+            {(client.address || client.city || client.state) && (
+              <div>
+                <h3 className="font-medium text-sm text-muted-foreground mb-1">Endereço</h3>
+                <p>
+                  {[
+                    client.address,
+                    client.city && client.state && `${client.city}, ${client.state}`,
+                    client.zip,
+                  ]
+                    .filter(Boolean)
+                    .join(", ")}
+                </p>
+              </div>
+            )}
+          </div>
+        </div>
+
+        <div className="flex flex-row justify-between sm:justify-between gap-2">
+          <Button 
+            variant="outline" 
+            onClick={onClose}
+          >
+            Fechar
+          </Button>
+          <div className="flex flex-row gap-2">
+            <Button 
+              onClick={onEdit}
+              className="gap-2"
+            >
+              <PenIcon size={16} /> Editar
+            </Button>
+            <Button 
+              variant="destructive" 
+              onClick={onDelete}
+              className="gap-2"
+            >
+              <Trash2 size={16} /> Excluir
+            </Button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
 
 const AdminClients = () => {
   const [searchTerm, setSearchTerm] = useState("");
@@ -72,9 +252,9 @@ const AdminClients = () => {
   const handleCreateClient = async (data: ClientFormValues) => {
     setIsSubmitting(true);
     try {
-      const success = await addClient(data);
+      const result = await addClient(data as any);
 
-      if (success) {
+      if (result) {
         toast({
           title: "Cliente criado",
           description: "O cliente foi criado com sucesso.",
@@ -221,15 +401,17 @@ const AdminClients = () => {
           open={!!selectedClient && !isEditDialogOpen}
           onOpenChange={(isOpen) => !isOpen && setSelectedClient(null)}
         >
-          <ClientDetailsView
-            client={selectedClient}
-            onClose={() => setSelectedClient(null)}
-            onEdit={() => setIsEditDialogOpen(true)}
-            onDelete={() => {
-              setClientToDelete(selectedClient);
-              setIsDeleteDialogOpen(true);
-            }}
-          />
+          <div className="max-w-2xl mx-auto bg-background p-6 rounded-lg">
+            <ClientDetailsView
+              client={selectedClient}
+              onClose={() => setSelectedClient(null)}
+              onEdit={() => setIsEditDialogOpen(true)}
+              onDelete={() => {
+                setClientToDelete(selectedClient);
+                setIsDeleteDialogOpen(true);
+              }}
+            />
+          </div>
         </Dialog>
       )}
 
@@ -261,14 +443,14 @@ const AdminClients = () => {
               onSubmit={handleEditClient}
               initialData={{
                 business_name: selectedClient.business_name,
-                document: selectedClient.document,
+                document: selectedClient.document || "",
                 contact_name: selectedClient.contact_name,
                 email: selectedClient.email,
                 phone: selectedClient.phone,
-                address: selectedClient.address,
-                city: selectedClient.city,
-                state: selectedClient.state,
-                zip: selectedClient.zip,
+                address: selectedClient.address || "",
+                city: selectedClient.city || "",
+                state: selectedClient.state || "",
+                zip: selectedClient.zip || "",
               }}
               isSubmitting={isSubmitting}
               title="Editar Cliente"

@@ -3,6 +3,7 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Dialog } from "@/components/ui/dialog";
 import { ArrowLeft, UserPlus } from "lucide-react";
 import { useClients } from "@/hooks/use-clients";
 import { ClientForm } from "@/components/clients/ClientForm";
@@ -13,6 +14,7 @@ const ClientNewPage = () => {
   const { addClient } = useClients();
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [showForm, setShowForm] = useState(false);
 
   const handleBack = () => {
     navigate("/clients");
@@ -21,14 +23,22 @@ const ClientNewPage = () => {
   const handleSubmit = async (data: any) => {
     setIsSubmitting(true);
     try {
-      const newClient = await addClient(data);
-      toast({
-        title: "Cliente cadastrado",
-        description: "Cliente cadastrado com sucesso!"
-      });
-      
-      // Navigate to the client detail page
-      navigate(`/clients/${newClient.id}`);
+      const result = await addClient(data);
+      if (result) {
+        toast({
+          title: "Cliente cadastrado",
+          description: "Cliente cadastrado com sucesso!"
+        });
+        
+        // Navigate to the client detail page
+        navigate(`/clients/${result.id}`);
+      } else {
+        toast({
+          title: "Erro ao cadastrar cliente",
+          description: "Ocorreu um erro ao cadastrar o cliente.",
+          variant: "destructive",
+        });
+      }
     } catch (error: any) {
       console.error("Error creating client:", error);
       toast({
@@ -65,16 +75,31 @@ const ClientNewPage = () => {
             </div>
           </div>
         </CardHeader>
-        <CardContent className="pt-6">
+        <CardContent className="pt-6 text-center">
+          <Button 
+            size="lg" 
+            onClick={() => setShowForm(true)} 
+            className="px-6"
+          >
+            <UserPlus className="w-5 h-5 mr-2" />
+            Iniciar cadastro de cliente
+          </Button>
+        </CardContent>
+      </Card>
+
+      <Dialog open={showForm} onOpenChange={setShowForm}>
+        <div className="max-w-2xl mx-auto bg-background p-6 rounded-lg">
+          <h2 className="text-xl font-semibold mb-4">Cadastrar Cliente</h2>
           <ClientForm
             id="new-client-form"
             onSubmit={handleSubmit}
-            isOpen={true}
-            onClose={handleBack}
+            isOpen={showForm}
+            onClose={() => setShowForm(false)}
             submitButtonText="Cadastrar cliente"
+            isSubmitting={isSubmitting}
           />
-        </CardContent>
-      </Card>
+        </div>
+      </Dialog>
     </div>
   );
 };
