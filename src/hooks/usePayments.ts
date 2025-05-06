@@ -4,7 +4,8 @@ import { usePaymentsFetcher } from "./payments/usePaymentsFetcher";
 import { usePaymentActions } from "./payments/usePaymentActions";
 import { usePaymentRealtimeSubscription } from "./payments/usePaymentRealtimeSubscription";
 
-export { PaymentData } from "./payments/payment.types";
+// Use 'export type' for re-exporting types when isolatedModules is enabled
+export type { PaymentData } from "./payments/payment.types";
 
 export function usePayments(options: UsePaymentsOptions = {}) {
   const {
