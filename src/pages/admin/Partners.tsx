@@ -67,12 +67,14 @@ const AdminPartners = () => {
           description: "O parceiro foi criado com sucesso.",
         });
         setIsCreateDialogOpen(false);
+        return true;
       } else {
         toast({
           variant: "destructive",
           title: "Erro",
           description: "Não foi possível criar o parceiro.",
         });
+        return false;
       }
     } finally {
       setIsSubmitting(false);
@@ -81,7 +83,7 @@ const AdminPartners = () => {
 
   // Handle edit partner form submit
   const handleEditPartner = async (data: PartnerFormValues) => {
-    if (!selectedPartner) return;
+    if (!selectedPartner) return false;
     
     setIsSubmitting(true);
     try {
@@ -101,12 +103,14 @@ const AdminPartners = () => {
           description: "Os dados do parceiro foram atualizados com sucesso.",
         });
         setIsEditDialogOpen(false);
+        return true;
       } else {
         toast({
           variant: "destructive",
           title: "Erro",
           description: "Não foi possível atualizar os dados do parceiro.",
         });
+        return false;
       }
     } finally {
       setIsSubmitting(false);
@@ -247,6 +251,7 @@ const AdminPartners = () => {
             onSubmit={handleCreatePartner}
             isSubmitting={isSubmitting}
             title="Novo Parceiro"
+            hideCommissionRate={true}
           />
         </div>
       </Dialog>
@@ -270,6 +275,7 @@ const AdminPartners = () => {
               }}
               isSubmitting={isSubmitting}
               title="Editar Parceiro"
+              hideCommissionRate={true}
             />
           </div>
         )}

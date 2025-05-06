@@ -8,6 +8,7 @@ interface PageHeaderProps {
   actionLabel?: string;
   actionLink?: string;
   actionOnClick?: () => void;
+  children?: React.ReactNode;
 }
 
 export function PageHeader({
@@ -16,6 +17,7 @@ export function PageHeader({
   actionLabel,
   actionLink,
   actionOnClick,
+  children,
 }: PageHeaderProps) {
   return (
     <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between mb-6">
@@ -25,6 +27,7 @@ export function PageHeader({
           <p className="text-muted-foreground">{description}</p>
         )}
       </div>
+      {children}
       {actionLabel && (actionLink || actionOnClick) && (
         actionOnClick ? (
           <Button onClick={actionOnClick}>{actionLabel}</Button>

@@ -74,11 +74,6 @@ export const PartnerRoutes = (
         path={PATHS.PARTNER.HELP} 
         element={<Help />} 
       />
-      
-      <Route
-        path={PATHS.PARTNER.PARTNERS}
-        element={<Partners />}
-      />
     </Route>
   </Route>
 );
