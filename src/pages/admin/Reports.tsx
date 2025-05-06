@@ -1,6 +1,6 @@
-
 import { useState, useEffect } from 'react';
 import { format } from 'date-fns';
+import { useNavigate } from 'react-router-dom';
 import { 
   BarChart3,
   CalendarDays,
@@ -9,7 +9,8 @@ import {
   Filter,
   Plus,
   Search,
-  Trash2
+  Trash2,
+  ArrowLeft
 } from "lucide-react";
 import { PageHeader } from "@/components/page/PageHeader";
 import { PageWrapper } from "@/components/page/PageWrapper";
@@ -286,12 +287,27 @@ const AdminReports = () => {
     .filter(expense => expense.recurrence !== 'Única')
     .reduce((sum, expense) => sum + expense.amount, 0);
 
+  const handleGoBack = () => {
+    navigate(-1);
+  };
+
   return (
     <PageWrapper>
-      <PageHeader 
-        title="Relatórios Financeiros" 
-        description="Análise detalhada das informações financeiras e operacionais"
-      />
+      <div className="mb-6">
+        <Button 
+          variant="ghost" 
+          onClick={handleGoBack}
+          className="mb-4"
+        >
+          <ArrowLeft className="mr-2 h-4 w-4" />
+          Voltar
+        </Button>
+        
+        <PageHeader 
+          title="Relatórios Financeiros" 
+          description="Análise detalhada das informações financeiras e operacionais"
+        />
+      </div>
       
       <div className="flex flex-col md:flex-row gap-4 items-start md:items-center mb-6 justify-between">
         <div className="flex flex-col sm:flex-row gap-4">
@@ -854,70 +870,4 @@ const AdminReports = () => {
                   <PieChart 
                     data={[
                       { name: 'Enterprise', value: 35 },
-                      { name: 'Mid-Market', value: 42 },
-                      { name: 'Small Business', value: 23 },
-                    ]}
-                    dataKey="value"
-                    nameKey="name"
-                    formatter={(value) => `${value}%`}
-                    height={320}
-                  />
-                </div>
-              </CardContent>
-            </Card>
-            
-            <Card>
-              <CardHeader>
-                <CardTitle>Indicadores de Cliente</CardTitle>
-                <CardDescription>Métricas principais dos clientes</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <div className="p-4 border rounded-md">
-                    <p className="text-sm text-muted-foreground">Retenção</p>
-                    <p className="text-xl font-medium mt-1">92%</p>
-                  </div>
-                  <div className="p-4 border rounded-md">
-                    <p className="text-sm text-muted-foreground">Taxa de conversão</p>
-                    <p className="text-xl font-medium mt-1">26.4%</p>
-                  </div>
-                  <div className="p-4 border rounded-md">
-                    <p className="text-sm text-muted-foreground">LTV médio</p>
-                    <p className="text-xl font-medium mt-1">R$ 5.200,00</p>
-                  </div>
-                  <div className="p-4 border rounded-md">
-                    <p className="text-sm text-muted-foreground">Clientes ativos</p>
-                    <p className="text-xl font-medium mt-1">200</p>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          </div>
-        </TabsContent>
-      </Tabs>
-
-      {/* Alert Dialog for Delete Confirmation */}
-      <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Confirmar exclusão</AlertDialogTitle>
-            <AlertDialogDescription>
-              Tem certeza que deseja excluir esta despesa? Esta ação não pode ser desfeita.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Cancelar</AlertDialogCancel>
-            <AlertDialogAction 
-              onClick={confirmDeleteExpense}
-              className="bg-red-600 text-white hover:bg-red-700"
-            >
-              Excluir
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
-    </PageWrapper>
-  );
-};
-
-export default AdminReports;
+                      { name: 'Mid-Market', value: 4

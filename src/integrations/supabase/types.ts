@@ -378,6 +378,7 @@ export type Database = {
           id: string
           pix_key_id: string
           receipt_url: string | null
+          rejection_reason: string | null
           status: Database["public"]["Enums"]["payment_request_status"] | null
           updated_at: string | null
         }
@@ -391,6 +392,7 @@ export type Database = {
           id?: string
           pix_key_id: string
           receipt_url?: string | null
+          rejection_reason?: string | null
           status?: Database["public"]["Enums"]["payment_request_status"] | null
           updated_at?: string | null
         }
@@ -404,6 +406,7 @@ export type Database = {
           id?: string
           pix_key_id?: string
           receipt_url?: string | null
+          rejection_reason?: string | null
           status?: Database["public"]["Enums"]["payment_request_status"] | null
           updated_at?: string | null
         }
