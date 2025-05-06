@@ -28,6 +28,8 @@ export interface PixKey {
   created_at: string;
   updated_at: string;
   name?: string; // Added for backward compatibility
+  owner_name?: string; // Added for display purposes
+  isDefault?: boolean; // Flag for default key
 }
 
 export type PixKeyType = 'CPF' | 'CNPJ' | 'EMAIL' | 'PHONE' | 'EVP';

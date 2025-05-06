@@ -16,8 +16,7 @@ export const usePaymentRequestManager = (
   const handleRequestPayment = async (
     amount: string,
     description: string,
-    pixKeyId: string | null,
-    documentFile?: File | null
+    pixKeyId: string | null
   ) => {
     if (!pixKeyId) {
       toast({
@@ -41,27 +40,8 @@ export const usePaymentRequestManager = (
     }
     
     try {
-      // Armazenar documento se fornecido
-      let documentUrl = null;
-      if (documentFile) {
-        const fileName = `payment_doc_${Date.now()}.${documentFile.name.split('.').pop()}`;
-        
-        const { data: uploadData, error: uploadError } = await supabase.storage
-          .from('payment_receipts')
-          .upload(fileName, documentFile);
-        
-        if (uploadError) throw uploadError;
-        
-        const { data: urlData } = supabase.storage
-          .from('payment_receipts')
-          .getPublicUrl(fileName);
-          
-        documentUrl = urlData.publicUrl;
-      }
-      
       // Criar solicitação de pagamento no Supabase
-      // Aqui estamos usando o canal de comunicação em tempo real
-      // que vai notificar automaticamente o administrador
+      // A notificação para os administradores será automaticamente gerada pelo trigger SQL
       const { data, error } = await supabase
         .from('payment_requests')
         .insert({
@@ -69,8 +49,7 @@ export const usePaymentRequestManager = (
           status: PaymentStatus.PENDING,
           pix_key_id: pixKeyId,
           client_id: (await supabase.from('clients').select('id').limit(1)).data?.[0]?.id,
-          description: description || 'Solicitação de pagamento via PIX',
-          receipt_url: documentUrl
+          description: description || 'Solicitação de pagamento via PIX'
         })
         .select();
       
@@ -95,13 +74,7 @@ export const usePaymentRequestManager = (
         rejection_reason: null
       };
       
-      // Adicionar o documento se fornecido
-      if (documentFile) {
-        newPaymentRequest.document_url = documentUrl || URL.createObjectURL(documentFile);
-      }
-      
       // Adicionar a nova solicitação de pagamento à lista
-      // O administrador será notificado em tempo real através da assinatura do canal
       setPaymentRequests([newPaymentRequest, ...paymentRequests]);
       
       toast({

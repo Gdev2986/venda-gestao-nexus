@@ -310,6 +310,36 @@ export type Database = {
           },
         ]
       }
+      notification_preferences: {
+        Row: {
+          admin_messages: boolean
+          created_at: string
+          id: string
+          payment_status_updates: boolean
+          payments_received: boolean
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          admin_messages?: boolean
+          created_at?: string
+          id?: string
+          payment_status_updates?: boolean
+          payments_received?: boolean
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          admin_messages?: boolean
+          created_at?: string
+          id?: string
+          payment_status_updates?: boolean
+          payments_received?: boolean
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       notifications: {
         Row: {
           created_at: string | null

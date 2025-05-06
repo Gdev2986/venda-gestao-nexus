@@ -2,6 +2,7 @@
 import { useEffect } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/contexts/AuthContext";
 
 type SubscriptionCallback = () => void;
 
@@ -10,9 +11,12 @@ export const usePaymentSubscription = (callback: SubscriptionCallback, options?:
   filterByClientId?: string;
 }) => {
   const { toast } = useToast();
+  const { user } = useAuth();
   const notifyUser = options?.notifyUser !== false; // Default to true
 
   useEffect(() => {
+    if (!user) return;
+    
     // Configure filter by client_id if provided
     let channelFilter: any = {};
     
@@ -41,21 +45,21 @@ export const usePaymentSubscription = (callback: SubscriptionCallback, options?:
         
         // Notify user if option is enabled
         if (notifyUser) {
-          let title = 'Payment Update';
-          let description = 'A payment request has been updated';
+          let title = 'Atualização de Pagamento';
+          let description = 'Uma solicitação de pagamento foi atualizada';
           
           // Customize message based on event type
           if (payload.eventType === 'INSERT') {
-            title = 'New Payment Request';
-            description = 'A new payment request has been received';
+            title = 'Nova Solicitação de Pagamento';
+            description = 'Uma nova solicitação de pagamento foi recebida';
           } else if (payload.eventType === 'UPDATE') {
             const newStatus = payload.new?.status;
             if (newStatus === 'APPROVED') {
-              title = 'Payment Approved';
-              description = 'A payment request has been approved';
+              title = 'Pagamento Aprovado';
+              description = 'Uma solicitação de pagamento foi aprovada';
             } else if (newStatus === 'REJECTED') {
-              title = 'Payment Rejected';
-              description = 'A payment request has been rejected';
+              title = 'Pagamento Rejeitado';
+              description = 'Uma solicitação de pagamento foi rejeitada';
             }
           }
           
@@ -74,5 +78,5 @@ export const usePaymentSubscription = (callback: SubscriptionCallback, options?:
       console.log('Cleaning up payment subscription');
       supabase.removeChannel(channel);
     };
-  }, [callback, toast, notifyUser, options?.filterByClientId]);
+  }, [callback, toast, notifyUser, options?.filterByClientId, user]);
 };

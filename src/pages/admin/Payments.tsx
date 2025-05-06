@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { PageHeader } from "@/components/page/PageHeader";
 import { DataTable } from "@/components/ui/data-table";
 import { supabase } from "@/integrations/supabase/client";
@@ -13,6 +13,7 @@ import { RejectPaymentDialog } from "@/components/payments/RejectPaymentDialog";
 import { PaymentDetailsDialog } from "@/components/payments/PaymentDetailsDialog";
 import { usePaymentSubscription } from "@/hooks/usePaymentSubscription";
 import { PageWrapper } from "@/components/page/PageWrapper";
+import { useToast } from "@/hooks/use-toast";
 
 const AdminPayments = () => {
   // State for filters
@@ -25,6 +26,7 @@ const AdminPayments = () => {
   const [rejectDialogOpen, setRejectDialogOpen] = useState(false);
   const [detailsDialogOpen, setDetailsDialogOpen] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
+  const { toast } = useToast();
 
   // Use the payments hook
   const { 
@@ -45,6 +47,37 @@ const AdminPayments = () => {
   usePaymentSubscription(refreshPayments, { 
     notifyUser: true 
   });
+
+  // Listen for notifications from the database
+  useEffect(() => {
+    const notificationsChannel = supabase
+      .channel('notifications_admin')
+      .on(
+        'postgres_changes',
+        {
+          event: 'INSERT',
+          schema: 'public',
+          table: 'notifications',
+          filter: "type=eq.PAYMENT_REQUEST"
+        },
+        (payload) => {
+          console.log('New notification received:', payload);
+          
+          toast({
+            title: payload.new.title || "Nova solicitação de pagamento",
+            description: payload.new.message || "Um cliente enviou uma nova solicitação de pagamento"
+          });
+          
+          // Refresh payment requests
+          refreshPayments();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(notificationsChannel);
+    };
+  }, [toast, refreshPayments]);
 
   // Handle filter changes
   const handleFilterChange = (newStatusFilter: PaymentStatus | "ALL", newSearchTerm: string) => {

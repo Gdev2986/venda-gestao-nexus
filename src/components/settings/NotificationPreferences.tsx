@@ -7,7 +7,7 @@ import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 
-type NotificationPreference = {
+interface NotificationPreference {
   id: string;
   user_id: string;
   payments_received: boolean;
@@ -15,7 +15,7 @@ type NotificationPreference = {
   admin_messages: boolean;
   created_at: string;
   updated_at: string;
-};
+}
 
 export function NotificationPreferences() {
   const { user } = useAuth();
@@ -31,23 +31,20 @@ export function NotificationPreferences() {
       setIsLoading(true);
       
       try {
-        // Try to get existing preferences from the database
-        const { data, error } = await supabase
+        // Try to get existing preferences
+        let { data, error } = await supabase
           .from('notification_preferences')
           .select('*')
           .eq('user_id', user.id)
           .maybeSingle();
         
-        if (error && error.code !== 'PGRST116') {
-          // PGRST116 means no rows returned which is fine for a new user
-          throw error;
-        }
+        if (error) throw error;
         
         if (data) {
           setPreferences(data as NotificationPreference);
         } else {
           // If no preferences exist yet, create default ones
-          const defaultPreferences: Omit<NotificationPreference, 'id' | 'created_at' | 'updated_at'> = {
+          const defaultPreferences = {
             user_id: user.id,
             payments_received: true,
             payment_status_updates: true,
@@ -59,7 +56,7 @@ export function NotificationPreferences() {
             .from('notification_preferences')
             .insert(defaultPreferences)
             .select()
-            .maybeSingle();
+            .single();
             
           if (insertError) throw insertError;
           
@@ -103,7 +100,7 @@ export function NotificationPreferences() {
   }, [user, toast]);
 
   // Handle preference toggle
-  const handleTogglePreference = async (field: keyof Omit<NotificationPreference, 'id' | 'user_id' | 'created_at' | 'updated_at'>, value: boolean) => {
+  const handleTogglePreference = async (field: keyof Pick<NotificationPreference, 'payments_received' | 'payment_status_updates' | 'admin_messages'>, value: boolean) => {
     if (!preferences || !user) return;
     
     try {

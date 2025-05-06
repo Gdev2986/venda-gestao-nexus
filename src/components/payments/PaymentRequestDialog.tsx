@@ -6,9 +6,8 @@ import { Input } from "@/components/ui/input";
 import { Separator } from "@/components/ui/separator";
 import { useToast } from "@/hooks/use-toast";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { FileUploader } from "@/components/payments/FileUploader";
 import { PaymentType, PixKey } from "@/types";
-import { AlertCircle, BanknoteIcon, FileIcon, SendIcon, Wallet } from "lucide-react";
+import { AlertCircle, BanknoteIcon, SendIcon, Wallet } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -28,8 +27,7 @@ interface PaymentRequestDialogProps {
   onRequestPayment: (
     amount: string,
     description: string,
-    pixKeyId: string | null,
-    documentFile?: File | null
+    pixKeyId: string | null
   ) => void;
 }
 
@@ -45,7 +43,6 @@ export const PaymentRequestDialog = ({
   const [amount, setAmount] = useState("");
   const [description, setDescription] = useState("");
   const [selectedPixKeyId, setSelectedPixKeyId] = useState<string | null>(null);
-  const [documentFile, setDocumentFile] = useState<File | null>(null);
   
   // Reset form data when dialog is opened/closed
   const handleOpenChange = (open: boolean) => {
@@ -54,7 +51,6 @@ export const PaymentRequestDialog = ({
       setAmount("");
       setDescription("");
       setSelectedPixKeyId(null);
-      setDocumentFile(null);
     } else if (pixKeys.length > 0) {
       // Preselect default key if available
       const defaultKey = pixKeys.find(key => key.isDefault);
@@ -104,15 +100,13 @@ export const PaymentRequestDialog = ({
     onRequestPayment(
       amount,
       description,
-      selectedPixKeyId,
-      documentFile
+      selectedPixKeyId
     );
     
     // Reset fields
     setAmount("");
     setDescription("");
     setSelectedPixKeyId(null);
-    setDocumentFile(null);
   };
   
   return (
@@ -205,19 +199,6 @@ export const PaymentRequestDialog = ({
               value={description}
               onChange={(e) => setDescription(e.target.value)}
             />
-          </div>
-          
-          <div className="space-y-2">
-            <Label htmlFor="attachment">Comprovante (opcional)</Label>
-            <FileUploader
-              onFileSelect={(file) => setDocumentFile(file)}
-              accept=".pdf,.jpg,.jpeg,.png"
-              label="Arraste e solte o comprovante aqui ou clique para selecionar"
-              currentFile={documentFile}
-            />
-            <p className="text-xs text-muted-foreground">
-              Formatos aceitos: PDF, JPG, PNG. Tamanho máximo: 5MB
-            </p>
           </div>
         </div>
         
