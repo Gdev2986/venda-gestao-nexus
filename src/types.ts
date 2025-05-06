@@ -1,4 +1,3 @@
-
 export enum UserRole {
   ADMIN = "ADMIN",
   CLIENT = "CLIENT",
@@ -142,10 +141,12 @@ export interface Sale {
 
 // Add SalesChartData for reference
 export interface SalesChartData {
-  date: string;
+  date?: string;
   amount: number;
-  method?: PaymentMethod; // Added method property
+  method: PaymentMethod; // Changed from optional to required
   percentage?: number; // Added percentage property
+  name?: string; // Added name property for chart compatibility
+  value?: number; // Added value property for chart compatibility
 }
 
 // Add SalesFilterParams for reference
