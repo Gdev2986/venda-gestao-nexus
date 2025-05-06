@@ -1,5 +1,5 @@
 
-import { LayoutDashboard, ListOrdered, Wallet, Settings, Users, BarChart3, MessageSquare, Percent, Building2, HelpCircle, Truck } from "lucide-react";
+import { LayoutDashboard, ListOrdered, Wallet, Settings, Users, BarChart3, MessageSquare, Percent, Building2, Truck } from "lucide-react";
 import { SidebarItem } from "../types";
 import { UserRole } from "@/types";
 import { PATHS } from "@/routes/paths";
@@ -57,12 +57,6 @@ export const adminItems: SidebarItem[] = [
     title: "Suporte",
     icon: MessageSquare,
     href: PATHS.ADMIN.SUPPORT,
-    roles: [UserRole.ADMIN],
-  },
-  {
-    title: "Ajuda",
-    icon: HelpCircle,
-    href: PATHS.ADMIN.HELP,
     roles: [UserRole.ADMIN],
   },
   {

@@ -1,146 +1,172 @@
+
 import { useState, useEffect } from "react";
-import { useToast } from "@/hooks/use-toast";
-import { 
-  fetchPaymentsData,
-  approvePaymentRequest,
-  rejectPaymentRequest,
-  setupPaymentSubscription
-} from "@/services/payment.service";
-import { PaymentData } from "@/types/payment.types";
-import { PaymentStatus } from "@/types";
+import { supabase } from "@/integrations/supabase/client";
+import { PaymentRequest, PaymentRequestStatus } from "@/types/payment.types";
+import { useToast } from "./use-toast";
+import { UserRole } from "@/types";
 
-interface UsePaymentsProps {
-  statusFilter?: PaymentStatus | "ALL";
-  searchTerm?: string;
-  fetchOnMount?: boolean;
-  pageSize?: number;
-}
-
-export const usePayments = (options: UsePaymentsProps = {}) => {
-  const {
-    statusFilter: initialStatusFilter = "ALL",
-    searchTerm: initialSearchTerm = "",
-    fetchOnMount = true,
-    pageSize = 10
-  } = options;
-
-  const [payments, setPayments] = useState<PaymentData[]>([]);
+export function usePayments() {
+  const [paymentRequests, setPaymentRequests] = useState<PaymentRequest[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [statusFilter, setStatusFilter] = useState<PaymentStatus | "ALL">(initialStatusFilter);
-  const [searchTerm, setSearchTerm] = useState(initialSearchTerm);
-  const [currentPage, setCurrentPage] = useState(1);
-  const [totalPages, setTotalPages] = useState(1);
   const { toast } = useToast();
 
-  const fetchPayments = async () => {
+  const fetchPaymentRequests = async () => {
     setIsLoading(true);
-    setError(null);
-    
     try {
-      const data = await fetchPaymentsData(statusFilter, searchTerm);
-      setPayments(data);
-      
-      // Calculate total pages
-      setTotalPages(Math.ceil(data.length / pageSize));
-      
-      // Reset to first page when filters change
-      if (currentPage > Math.ceil(data.length / pageSize)) {
-        setCurrentPage(1);
+      const { data, error } = await supabase
+        .from("payment_requests")
+        .select(`
+          *,
+          client:clients(id, business_name)
+        `)
+        .order("created_at", { ascending: false });
+
+      if (error) {
+        throw error;
       }
-    } catch (err) {
-      console.error("Error fetching payments:", err);
-      setError("Não foi possível carregar os pagamentos.");
+
+      if (data) {
+        // Transform the data to match the PaymentRequest interface
+        const formattedRequests = data.map((request: any) => ({
+          id: request.id,
+          client_id: request.client_id,
+          client_name: request.client?.business_name || 'Unknown Client',
+          amount: request.amount,
+          description: request.description || '',
+          status: request.status as PaymentRequestStatus,
+          created_at: request.created_at,
+          updated_at: request.updated_at,
+          receipt_url: request.receipt_url || null,
+          pix_key_id: request.pix_key_id
+        }));
+
+        setPaymentRequests(formattedRequests);
+      }
+    } catch (error: any) {
+      setError(error.message);
       toast({
+        title: "Error fetching payment requests",
+        description: error.message,
         variant: "destructive",
-        title: "Erro ao carregar pagamentos",
-        description: "Ocorreu um erro ao buscar os pagamentos.",
       });
     } finally {
       setIsLoading(false);
     }
   };
 
-  // Approve payment handler
-  const handleApprovePayment = async (paymentId: string, receiptUrl?: string) => {
-    try {
-      await approvePaymentRequest(paymentId, receiptUrl);
-      
-      toast({
-        title: "Pagamento aprovado",
-        description: "O pagamento foi aprovado com sucesso.",
-      });
-      
-      // Refresh payment list
-      fetchPayments();
-      
-      return true;
-    } catch (error) {
-      console.error("Error approving payment:", error);
-      toast({
-        variant: "destructive",
-        title: "Erro ao aprovar pagamento",
-        description: "Não foi possível aprovar o pagamento.",
-      });
-      return false;
-    }
-  };
-
-  // Reject payment handler
-  const handleRejectPayment = async (paymentId: string, reason: string) => {
-    try {
-      await rejectPaymentRequest(paymentId, reason);
-      
-      toast({
-        title: "Pagamento rejeitado",
-        description: "O pagamento foi rejeitado com sucesso.",
-      });
-      
-      // Refresh payment list
-      fetchPayments();
-      
-      return true;
-    } catch (error) {
-      console.error("Error rejecting payment:", error);
-      toast({
-        variant: "destructive",
-        title: "Erro ao rejeitar pagamento",
-        description: "Não foi possível rejeitar o pagamento.",
-      });
-      return false;
-    }
-  };
-
   useEffect(() => {
-    if (fetchOnMount) {
-      fetchPayments();
-    }
+    fetchPaymentRequests();
 
-    // Set up real-time subscription
-    const subscription = setupPaymentSubscription(() => {
-      fetchPayments();
-    });
+    // Setup real-time subscription
+    const subscription = supabase
+      .channel('payment_requests_changes')
+      .on('postgres_changes', { 
+        event: '*', 
+        schema: 'public', 
+        table: 'payment_requests' 
+      }, () => {
+        fetchPaymentRequests();
+      })
+      .subscribe();
 
+    // Cleanup subscription on component unmount
     return () => {
       subscription.unsubscribe();
     };
-  }, [statusFilter, searchTerm, fetchOnMount, toast]);
+  }, []);
+
+  const approvePayment = async (
+    paymentId: string,
+    adminId: string
+  ): Promise<boolean> => {
+    try {
+      const { error } = await supabase
+        .from("payment_requests")
+        .update({
+          status: "APPROVED",
+          approved_by: adminId,
+          approved_at: new Date().toISOString(),
+        })
+        .eq("id", paymentId);
+
+      if (error) {
+        throw error;
+      }
+
+      // Update the local state
+      setPaymentRequests(
+        paymentRequests.map((request) =>
+          request.id === paymentId
+            ? { ...request, status: "APPROVED" as PaymentRequestStatus }
+            : request
+        )
+      );
+
+      toast({
+        title: "Payment Approved",
+        description: "The payment has been successfully approved.",
+      });
+
+      return true;
+    } catch (error: any) {
+      toast({
+        title: "Error approving payment",
+        description: error.message,
+        variant: "destructive",
+      });
+      return false;
+    }
+  };
+
+  const rejectPayment = async (
+    paymentId: string,
+    adminId: string
+  ): Promise<boolean> => {
+    try {
+      const { error } = await supabase
+        .from("payment_requests")
+        .update({
+          status: "REJECTED",
+          approved_by: adminId,
+        })
+        .eq("id", paymentId);
+
+      if (error) {
+        throw error;
+      }
+
+      // Update the local state
+      setPaymentRequests(
+        paymentRequests.map((request) =>
+          request.id === paymentId
+            ? { ...request, status: "REJECTED" as PaymentRequestStatus }
+            : request
+        )
+      );
+
+      toast({
+        title: "Payment Rejected",
+        description: "The payment has been rejected.",
+      });
+
+      return true;
+    } catch (error: any) {
+      toast({
+        title: "Error rejecting payment",
+        description: error.message,
+        variant: "destructive",
+      });
+      return false;
+    }
+  };
 
   return {
-    payments,
+    paymentRequests,
     isLoading,
     error,
-    statusFilter,
-    setStatusFilter,
-    searchTerm,
-    setSearchTerm,
-    refreshPayments: fetchPayments,
-    approvePayment: handleApprovePayment,
-    rejectPayment: handleRejectPayment,
-    currentPage,
-    totalPages,
-    setCurrentPage
+    approvePayment,
+    rejectPayment,
+    refreshPayments: fetchPaymentRequests,
   };
-};
-
-export type { PaymentData } from "@/types/payment.types";
+}

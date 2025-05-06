@@ -20,7 +20,7 @@ const SidebarNavigation = ({ userRole }: SidebarNavigationProps) => {
   const getSidebarItems = () => {
     switch (userRole) {
       case UserRole.ADMIN:
-        return [...adminItems, ...reportItems.filter(item => item.roles.includes(UserRole.ADMIN))];
+        return adminItems;
       case UserRole.CLIENT:
         return userItems;
       case UserRole.PARTNER:

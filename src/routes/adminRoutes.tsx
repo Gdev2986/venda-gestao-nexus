@@ -1,3 +1,4 @@
+
 import { Route, Navigate } from "react-router-dom";
 import { PATHS } from "./paths";
 import { UserRole } from "@/types";
@@ -46,8 +47,11 @@ import LogisticsInventory from "../pages/logistics/Inventory";
 
 // Other
 import Fees from "../pages/Fees";
-import Reports from "../pages/Reports";
+import AdminReports from "../pages/admin/Reports";
 import Help from "../pages/Help";
+
+// Import Clients from clients folder instead of directly
+import Clients from "../pages/clients/Clients";
 
 export const AdminRoutes = (
   <Route element={<RequireAuth allowedRoles={[UserRole.ADMIN]} />}>
@@ -177,11 +181,9 @@ export const AdminRoutes = (
       
       <Route path={PATHS.ADMIN.FEES} element={<Fees />} />
       
-      <Route path={PATHS.ADMIN.REPORTS} element={<Reports />} />
+      <Route path={PATHS.ADMIN.REPORTS} element={<AdminReports />} />
       
       <Route path={PATHS.ADMIN.SUPPORT} element={<AdminSupport />} />
-      
-      <Route path={PATHS.ADMIN.HELP} element={<Help />} />
     </Route>
   </Route>
 );
