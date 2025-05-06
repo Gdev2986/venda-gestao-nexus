@@ -20,12 +20,57 @@ const mockData = {
     { method: PaymentMethod.PIX, amount: 4200, percentage: 62 }
   ] as SalesChartData[],
   recentSales: [
-    { id: '1', code: 'VND001', terminal: 'T100', client_name: 'Empresa A', gross_amount: 1500, net_amount: 1400, date: '2022-01-07', paymentMethod: PaymentMethod.CREDIT },
-    { id: '2', code: 'VND002', terminal: 'T102', client_name: 'Empresa B', gross_amount: 1200, net_amount: 1150, date: '2022-01-06', paymentMethod: PaymentMethod.DEBIT },
-    { id: '3', code: 'VND003', terminal: 'T103', client_name: 'Empresa C', gross_amount: 950, net_amount: 900, date: '2022-01-05', paymentMethod: PaymentMethod.PIX },
-    { id: '4', code: 'VND004', terminal: 'T101', client_name: 'Empresa D', gross_amount: 1750, net_amount: 1650, date: '2022-01-04', paymentMethod: PaymentMethod.CREDIT },
-    { id: '5', code: 'VND005', terminal: 'T100', client_name: 'Empresa E', gross_amount: 2200, net_amount: 2050, date: '2022-01-03', paymentMethod: PaymentMethod.PIX }
-  ] as Sale[]
+    { 
+      id: '1', 
+      code: 'VND001', 
+      terminal: 'T100', 
+      client_name: 'Empresa A', 
+      gross_amount: 1500, 
+      net_amount: 1400, 
+      date: '2022-01-07', 
+      payment_method: PaymentMethod.CREDIT 
+    },
+    { 
+      id: '2', 
+      code: 'VND002', 
+      terminal: 'T102', 
+      client_name: 'Empresa B', 
+      gross_amount: 1200, 
+      net_amount: 1150, 
+      date: '2022-01-06', 
+      payment_method: PaymentMethod.DEBIT 
+    },
+    { 
+      id: '3', 
+      code: 'VND003', 
+      terminal: 'T103', 
+      client_name: 'Empresa C', 
+      gross_amount: 950, 
+      net_amount: 900, 
+      date: '2022-01-05', 
+      payment_method: PaymentMethod.PIX 
+    },
+    { 
+      id: '4', 
+      code: 'VND004', 
+      terminal: 'T101', 
+      client_name: 'Empresa D', 
+      gross_amount: 1750, 
+      net_amount: 1650, 
+      date: '2022-01-04', 
+      payment_method: PaymentMethod.CREDIT 
+    },
+    { 
+      id: '5', 
+      code: 'VND005', 
+      terminal: 'T100', 
+      client_name: 'Empresa E', 
+      gross_amount: 2200, 
+      net_amount: 2050, 
+      date: '2022-01-03', 
+      payment_method: PaymentMethod.PIX 
+    }
+  ] as unknown as Sale[]
 };
 
 const Dashboard = () => {

@@ -69,7 +69,7 @@ export const filterSales = (sales: Sale[], filters: SalesFilterParams): Sale[] =
     }
     
     // Filter by payment method
-    if (filters.paymentMethod && sale.paymentMethod !== filters.paymentMethod) {
+    if (filters.paymentMethod && sale.payment_method !== filters.paymentMethod) {
       return false;
     }
     
@@ -119,7 +119,7 @@ export const generateMockSales = (count: number, dateRange?: DateRange): Sale[] 
     const net_amount = Math.round((gross_amount - fee) * 100) / 100;
     
     // Random payment method
-    const paymentMethod = paymentMethods[Math.floor(Math.random() * paymentMethods.length)];
+    const payment_method = paymentMethods[Math.floor(Math.random() * paymentMethods.length)];
     
     // Create a sale object
     const sale: Sale = {
@@ -129,9 +129,11 @@ export const generateMockSales = (count: number, dateRange?: DateRange): Sale[] 
       date: date.toISOString(),
       gross_amount,
       net_amount,
-      paymentMethod,
+      payment_method,
       client_id: 'client-1',
-      client_name: 'Client Name'
+      client_name: 'Client Name',
+      created_at: date.toISOString(),
+      updated_at: date.toISOString()
     };
     
     sales.push(sale);

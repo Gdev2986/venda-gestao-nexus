@@ -36,9 +36,9 @@ export const createPaymentColumns = ({ onPaymentAction }: PaymentColumnsProps): 
     header: "Cliente",
     cell: ({ row }) => {
       // Safely access client property
-      const client = row.original.client || {};
+      const client = row.original.client ?? {};
       // Check if client has business_name property and provide a fallback
-      return <div>{client.business_name || "Cliente não especificado"}</div>;
+      return <div>{client.business_name ?? "Cliente não especificado"}</div>;
     },
   },
   {

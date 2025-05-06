@@ -64,7 +64,7 @@ const Sales = () => {
     
     if (filters.paymentMethod) {
       result = result.filter(
-        (sale) => sale.paymentMethod === filters.paymentMethod
+        (sale) => sale.payment_method === filters.paymentMethod
       );
     }
     

@@ -144,8 +144,8 @@ export interface Sale {
 export interface SalesChartData {
   date: string;
   amount: number;
-  method?: PaymentMethod; // Add optional method property
-  percentage?: number; // Add optional percentage property
+  method?: PaymentMethod; // Added method property
+  percentage?: number; // Added percentage property
 }
 
 // Add SalesFilterParams for reference
@@ -167,6 +167,7 @@ export interface FilterValues {
   status?: string;
   partnerId?: string;
   searchTerm?: string; // Added for compatibility
+  commissionRange?: [number, number]; // Added for PartnerFilter
 }
 
 // Add UserData for reference

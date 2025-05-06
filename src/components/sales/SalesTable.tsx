@@ -107,7 +107,7 @@ const SalesTable = ({ sales, page, setPage, totalPages, isLoading, totals }: Sal
                             currency: "BRL",
                           }).format(sale.net_amount)}
                         </TableCell>
-                        <TableCell>{getPaymentMethodLabel(sale.paymentMethod)}</TableCell>
+                        <TableCell>{getPaymentMethodLabel(sale.payment_method)}</TableCell>
                       </TableRow>
                     ))
                   ) : (

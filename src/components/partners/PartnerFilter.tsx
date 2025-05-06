@@ -25,7 +25,7 @@ const PartnerFilter = ({ onFilter }: PartnerFilterProps) => {
     onFilter({
       search: searchTerm,
       searchTerm: searchTerm,
-      commissionRange
+      commissionRange: commissionRange
     });
   };
   

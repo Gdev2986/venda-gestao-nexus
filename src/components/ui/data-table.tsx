@@ -35,15 +35,15 @@ export function DataTable<TData extends object>({
         <TableHeader>
           <TableRow>
             {columns.map((column) => {
-              // Safe way to get column id
-              const columnId = typeof column.id === 'string' 
-                ? column.id 
-                : typeof column.accessorKey === 'string' 
-                ? column.accessorKey as string
-                : String(column.header);
+              // Safely access column header
+              const headerValue = column.header 
+                ? typeof column.header === 'function' 
+                  ? column.header({} as any)
+                  : column.header
+                : '';
               
               return (
-                <TableHead key={columnId}>{String(column.header)}</TableHead>
+                <TableHead key={String(column.id)}>{String(headerValue)}</TableHead>
               );
             })}
           </TableRow>
@@ -59,21 +59,14 @@ export function DataTable<TData extends object>({
             data.map((row, rowIndex) => (
               <TableRow key={rowIndex}>
                 {columns.map((column) => {
-                  // Safe way to get column id
-                  const columnId = typeof column.id === 'string' 
-                    ? column.id 
-                    : typeof column.accessorKey === 'string' 
-                    ? column.accessorKey as string 
-                    : String(column.header);
-                    
+                  const columnId = String(column.id);
+                  
                   return (
                     <TableCell key={`${rowIndex}-${columnId}`}>
                       {column.cell 
                         ? typeof column.cell === 'function'
                           ? column.cell({ row: { original: row } } as any)
                           : null
-                        : typeof column.accessorKey === 'string' && column.accessorKey in row
-                        ? (row as any)[column.accessorKey as keyof TData]
                         : null}
                     </TableCell>
                   );

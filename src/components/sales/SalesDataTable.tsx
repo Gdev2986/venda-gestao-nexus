@@ -48,7 +48,7 @@ const getPaymentMethodLabel = (method: PaymentMethod) => {
 
 // Generate random number of installments based on payment method
 const getInstallments = (sale: Sale) => {
-  if (sale.paymentMethod === PaymentMethod.CREDIT) {
+  if (sale.payment_method === PaymentMethod.CREDIT) {
     // For credit, random between 1x and 12x
     return `${Math.floor(Math.random() * 12) + 1}x`;
   } else {
@@ -119,7 +119,7 @@ const SalesDataTable = ({
                             currency: "BRL",
                           }).format(sale.net_amount)}
                         </TableCell>
-                        <TableCell>{getPaymentMethodLabel(sale.paymentMethod)}</TableCell>
+                        <TableCell>{getPaymentMethodLabel(sale.payment_method)}</TableCell>
                         <TableCell>{getInstallments(sale)}</TableCell>
                       </TableRow>
                     ))
