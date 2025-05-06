@@ -29,6 +29,7 @@ import AdminClients from "./pages/admin/Clients";
 import AdminSales from "./pages/admin/Sales";
 import AdminPartners from "./pages/admin/Partners";
 import AdminPayments from "./pages/admin/Payments";
+import AdminSupport from "./pages/admin/Support"; // Import the new Admin Support page
 
 // Clients
 import Clients from "./pages/clients/Clients";
@@ -64,6 +65,7 @@ import Operations from "./pages/logistics/Operations";
 import LogisticsRequests from "./pages/logistics/Requests";
 import LogisticsCalendar from "./pages/logistics/Calendar";
 import LogisticsInventory from "./pages/logistics/Inventory";
+import LogisticsSupport from "./pages/logistics/Support";
 
 // Other
 import NotFound from "./pages/NotFound";
@@ -255,12 +257,12 @@ function App() {
           
           <Route path={PATHS.ADMIN.REPORTS} element={<Reports />} />
           
-          <Route path={PATHS.ADMIN.SUPPORT} element={<Support />} />
+          <Route path={PATHS.ADMIN.SUPPORT} element={<AdminSupport />} />
           
           <Route path={PATHS.ADMIN.HELP} element={<Help />} />
         </Route>
       </Route>
-      
+
       {/* User Routes */}
       <Route element={<RequireAuth allowedRoles={[UserRole.CLIENT]} />}>
         <Route element={<MainLayout />}>
@@ -450,6 +452,11 @@ function App() {
           />
           
           <Route 
+            path={PATHS.LOGISTICS.SUPPORT} 
+            element={<LogisticsSupport />} 
+          />
+          
+          <Route 
             path={PATHS.LOGISTICS.LOGISTICS_MODULE} 
             element={
               <div className="container mx-auto py-10">
@@ -457,11 +464,6 @@ function App() {
                 <p className="text-gray-600">Esta funcionalidade está em desenvolvimento.</p>
               </div> 
             } 
-          />
-          
-          <Route 
-            path={PATHS.LOGISTICS.SUPPORT} 
-            element={<Support />} 
           />
           
           <Route 
