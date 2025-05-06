@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
@@ -13,7 +12,6 @@ import { PixKeysManager } from "@/components/settings/PixKeysManager";
 
 const Settings = () => {
   const { user } = useAuth();
-  const [pixKeys, setPixKeys] = useState<PixKey[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const { toast } = useToast();
 
@@ -52,7 +50,6 @@ const Settings = () => {
               bank_name: "Banco", // Default value since it's not in the database
             }));
             
-            setPixKeys(transformedKeys);
           }
         }
       } catch (error) {
@@ -78,7 +75,6 @@ const Settings = () => {
     // Use the utility function to create a new PixKey object
     const newPixKey = createDefaultPixKeyProperties(newId, user.id);
     
-    setPixKeys(prev => [...prev, newPixKey]);
   };
 
   return (

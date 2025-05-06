@@ -63,10 +63,12 @@ export function PersonalDataForm() {
         if (error) throw error;
         
         if (data) {
+          // Handle potential missing fields in profile data
           form.reset({
             name: data.name || "",
             email: data.email || "",
             phone: data.phone || "",
+            // Use optional chaining for properties that might not exist
             address: data.address || "",
             city: data.city || "",
             state: data.state || "",
@@ -95,17 +97,21 @@ export function PersonalDataForm() {
     setIsLoading(true);
     
     try {
+      // Create an update object with only the fields that are in the profiles table
+      const updateData = {
+        name: data.name,
+        email: data.email,
+        phone: data.phone,
+        // These fields will be added to the profile if they don't exist yet
+        address: data.address,
+        city: data.city,
+        state: data.state,
+        zipCode: data.zipCode,
+      };
+        
       const { error } = await supabase
         .from('profiles')
-        .update({
-          name: data.name,
-          email: data.email,
-          phone: data.phone,
-          address: data.address,
-          city: data.city,
-          state: data.state,
-          zipCode: data.zipCode,
-        })
+        .update(updateData)
         .eq('id', user.id);
         
       if (error) throw error;

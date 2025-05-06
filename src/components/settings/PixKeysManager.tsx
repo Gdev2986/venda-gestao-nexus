@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
@@ -9,6 +10,9 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { useToast } from "@/hooks/use-toast";
 import { Trash, Plus, Check } from "lucide-react";
 import { Switch } from "@/components/ui/switch";
+
+// Define the PIX key types as a union type to match database requirements
+type PixKeyType = "CPF" | "CNPJ" | "EMAIL" | "PHONE" | "RANDOM";
 
 export function PixKeysManager() {
   const { user } = useAuth();
@@ -43,7 +47,8 @@ export function PixKeysManager() {
           is_active: true,
           created_at: item.created_at,
           updated_at: item.updated_at,
-          bank_name: item.bank_name || "Banco",
+          // Add bank_name only for UI rendering, not for database operations
+          bank_name: "Banco", // Default value since it's not in the database
         }));
         
         setPixKeys(transformedKeys);
@@ -181,14 +186,24 @@ export function PixKeysManager() {
         return;
       }
       
-      // Format the key data for Supabase
+      // Ensure type is one of the allowed values
+      const validType = key.type as PixKeyType;
+      if (!["CPF", "CNPJ", "EMAIL", "PHONE", "RANDOM"].includes(validType)) {
+        toast({
+          title: "Tipo inválido",
+          description: "O tipo de chave PIX selecionado é inválido.",
+          variant: "destructive",
+        });
+        return;
+      }
+      
+      // Format the key data for Supabase - only include fields that exist in the database
       const keyData = {
         user_id: key.user_id,
-        type: key.type,
+        type: validType,
         key: key.key,
         name: key.name || key.owner_name,
         is_default: key.isDefault || key.is_default,
-        bank_name: key.bank_name || "Banco",
       };
       
       let response;
@@ -219,6 +234,7 @@ export function PixKeysManager() {
             ...k,
             ...data?.[0],
             id: data?.[0].id || k.id,
+            bank_name: k.bank_name, // Preserve bank_name for UI
           };
         }
         return k;
