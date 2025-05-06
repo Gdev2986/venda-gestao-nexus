@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { format } from 'date-fns';
 import { useNavigate } from 'react-router-dom';
@@ -141,6 +142,7 @@ const AdminReports = () => {
   
   const itemsPerPage = 50;
   const { toast } = useToast();
+  const navigate = useNavigate();
   
   // Filter expenses based on selected filters and search term
   useEffect(() => {
@@ -870,4 +872,68 @@ const AdminReports = () => {
                   <PieChart 
                     data={[
                       { name: 'Enterprise', value: 35 },
-                      { name: 'Mid-Market', value: 4
+                      { name: 'Mid-Market', value: 45 },
+                      { name: 'Small Business', value: 85 },
+                      { name: 'Startup', value: 35 }
+                    ]} 
+                    dataKey="value"
+                    nameKey="name"
+                    height={320}
+                  />
+                </div>
+              </CardContent>
+            </Card>
+            
+            <Card>
+              <CardHeader>
+                <CardTitle>Retenção de Clientes</CardTitle>
+                <CardDescription>Taxa de retenção ao longo do tempo</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="h-80">
+                  <BarChart 
+                    data={[
+                      { name: 'Jul', total: 92 },
+                      { name: 'Ago', total: 94 },
+                      { name: 'Set', total: 89 },
+                      { name: 'Out', total: 91 },
+                      { name: 'Nov', total: 93 },
+                      { name: 'Dez', total: 95 },
+                    ]} 
+                    dataKey="total"
+                    xAxisKey="name"
+                    formatter={(value) => `${value}%`}
+                    height={320}
+                  />
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        </TabsContent>
+      </Tabs>
+      
+      {/* Delete expense confirmation dialog */}
+      <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Confirmar exclusão</AlertDialogTitle>
+            <AlertDialogDescription>
+              Tem certeza que deseja excluir esta despesa? Esta ação não pode ser desfeita.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction 
+              className="bg-red-600 hover:bg-red-700"
+              onClick={confirmDeleteExpense}
+            >
+              Excluir
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    </PageWrapper>
+  );
+};
+
+export default AdminReports;
