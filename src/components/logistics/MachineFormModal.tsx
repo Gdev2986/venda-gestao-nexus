@@ -165,7 +165,7 @@ const MachineFormModal = ({ open, onOpenChange, machine, onSave }: MachineFormMo
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
-                      <SelectItem value="">Nenhum (estoque)</SelectItem>
+                      <SelectItem value="none">Nenhum (estoque)</SelectItem>
                       {clients?.map((client: any) => (
                         <SelectItem key={client.id} value={client.id}>
                           {client.business_name}
