@@ -32,40 +32,32 @@ export const useClientPayments = (clientId: string) => {
         `)
         .eq('client_id', clientId)
         .order('created_at', { ascending: false });
-      
-      if (error) throw error;
-      
-      if (data && data.length > 0) {
-        // Map the data to our Payment interface using the service function
-        const formattedData = data.map(item => {
-          // Make sure we handle rejection_reason field
-          const itemWithRejectionReason = {
-            ...item,
-            rejection_reason: item.rejection_reason || null
-          };
-          return formatPaymentRequest(itemWithRejectionReason);
-        });
-        setPayments(formattedData);
-      } else {
-        // Use mock data if no real data is available
-        const mockData = getMockPaymentRequests().filter(p => p.client_id === clientId);
-        setPayments(mockData);
-      }
-    } catch (err) {
-      console.error('Error fetching client payment requests:', err);
-      toast({
-        variant: "destructive",
-        title: "Erro ao carregar pagamentos",
-        description: "Não foi possível carregar os pagamentos deste cliente."
-      });
-      
-      // Use mock data as fallback, filtered by client
+    
+    if (error) throw error;
+    
+    if (data && data.length > 0) {
+      const formattedData = data.map(item => formatPaymentRequest(item));
+      setPayments(formattedData);
+    } else {
+      // Use mock data if no real data is available
       const mockData = getMockPaymentRequests().filter(p => p.client_id === clientId);
       setPayments(mockData);
-    } finally {
-      setIsLoading(false);
     }
-  };
+  } catch (err) {
+    console.error('Error fetching client payment requests:', err);
+    toast({
+      variant: "destructive",
+      title: "Erro ao carregar pagamentos",
+      description: "Não foi possível carregar os pagamentos deste cliente."
+    });
+    
+    // Use mock data as fallback, filtered by client
+    const mockData = getMockPaymentRequests().filter(p => p.client_id === clientId);
+    setPayments(mockData);
+  } finally {
+    setIsLoading(false);
+  }
+};
 
   // Mock PixKeys retrieval for client
   const loadPixKeys = async () => {

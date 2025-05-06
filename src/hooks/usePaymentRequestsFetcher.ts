@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { Payment, PaymentStatus, PaymentType } from "@/types";
@@ -38,18 +37,9 @@ export const usePaymentRequestsFetcher = (initialBalance: number = 15000) => {
       if (error) throw error;
       
       if (data && data.length > 0) {
-        // Map the data to our Payment interface using the service function
-        const formattedData = data.map(item => {
-          // Make sure we handle rejection_reason field 
-          const itemWithRejectionReason = {
-            ...item,
-            rejection_reason: item.rejection_reason || null
-          };
-          return formatPaymentRequest(itemWithRejectionReason);
-        });
+        const formattedData = data.map(item => formatPaymentRequest(item));
         setPaymentRequests(formattedData);
       } else {
-        // Use mock data if no real data is available
         setPaymentRequests(getMockPaymentRequests());
       }
     } catch (err) {

@@ -30,12 +30,12 @@ export const formatPaymentRequest = (item: any): Payment => {
     payment_type: PaymentType.PIX,
     client_name: item.client?.business_name,
     receipt_url: item.receipt_url,
-    rejection_reason: item.rejection_reason || null,
+    rejection_reason: null, // Default to null, will be updated if exists in DB
     approved_at: item.approved_at,
     pix_key: item.pix_key ? {
       id: item.pix_key.id,
       key: item.pix_key.key,
-      type: item.pix_key.type || item.pix_key.key_type,
+      type: item.pix_key.type,
       owner_name: item.pix_key.name
     } : undefined
   };
