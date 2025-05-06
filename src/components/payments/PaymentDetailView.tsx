@@ -1,5 +1,5 @@
-
 import { Payment, PaymentStatus } from "@/types";
+import { PaymentRequest } from "@/types/payment.types";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -9,8 +9,11 @@ import { useState } from "react";
 import { Check, Clock, Download, X } from "lucide-react";
 import { formatCurrency } from "@/lib/utils";
 
+// Create a union type that works with both Payment and PaymentRequest
+type PaymentDetailType = Payment | PaymentRequest;
+
 interface PaymentDetailViewProps {
-  payment: Payment;
+  payment: PaymentDetailType;
   isLoading?: boolean;
   onApprove?: (paymentId: string, receiptFile: File | null, notes: string) => Promise<void>;
   onReject?: (paymentId: string, reason: string) => Promise<void>;
@@ -29,7 +32,14 @@ export const PaymentDetailView = ({
   const [notes, setNotes] = useState<string>("");
   const [rejectionReason, setRejectionReason] = useState<string>("");
 
-  const getStatusBadge = (status: PaymentStatus) => {
+  // Helper function to handle PaymentStatus from both types
+  const getStatusValue = (payment: PaymentDetailType): PaymentStatus => {
+    return payment.status as unknown as PaymentStatus;
+  };
+
+  const getStatusBadge = (payment: PaymentDetailType) => {
+    const status = getStatusValue(payment);
+    
     switch (status) {
       case PaymentStatus.PENDING:
         return (
@@ -105,14 +115,16 @@ export const PaymentDetailView = ({
     <Card>
       <CardHeader className="flex flex-row items-center justify-between">
         <CardTitle>Detalhes do Pagamento #{payment.id.substring(0, 8)}</CardTitle>
-        {getStatusBadge(payment.status)}
+        {getStatusBadge(payment)}
       </CardHeader>
       <CardContent>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div className="space-y-4">
             <div>
               <h3 className="text-sm font-medium text-muted-foreground mb-1">Cliente</h3>
-              <p className="text-lg font-medium">{payment.client_name || "N/A"}</p>
+              <p className="text-lg font-medium">
+                {'client' in payment && payment.client ? payment.client.business_name : payment.client_name || "N/A"}
+              </p>
             </div>
             
             <div>
@@ -137,14 +149,14 @@ export const PaymentDetailView = ({
           </div>
           
           <div className="space-y-4">
-            {payment.description && (
+            {'description' in payment && payment.description && (
               <div>
                 <h3 className="text-sm font-medium text-muted-foreground mb-1">Descrição</h3>
                 <p className="text-sm">{payment.description}</p>
               </div>
             )}
             
-            {payment.status === PaymentStatus.APPROVED && (
+            {getStatusValue(payment) === PaymentStatus.APPROVED && (
               <>
                 <div>
                   <h3 className="text-sm font-medium text-muted-foreground mb-1">
@@ -169,7 +181,7 @@ export const PaymentDetailView = ({
               </>
             )}
             
-            {payment.status === PaymentStatus.REJECTED && payment.rejection_reason && (
+            {getStatusValue(payment) === PaymentStatus.REJECTED && payment.rejection_reason && (
               <div>
                 <h3 className="text-sm font-medium text-muted-foreground mb-1">
                   Motivo da Recusa
@@ -178,7 +190,7 @@ export const PaymentDetailView = ({
               </div>
             )}
             
-            {payment.status === PaymentStatus.PENDING && onApprove && onReject && (
+            {getStatusValue(payment) === PaymentStatus.PENDING && onApprove && onReject && (
               <div className="space-y-4 border-t pt-4">
                 <h3 className="text-sm font-medium mb-2">Ações</h3>
                 

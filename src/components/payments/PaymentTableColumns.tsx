@@ -35,8 +35,10 @@ export const createPaymentColumns = ({ onPaymentAction }: PaymentColumnsProps): 
     accessorKey: "client_name",
     header: "Cliente",
     cell: ({ row }) => {
+      // Safely access client property
       const client = row.original.client || {};
-      return <div>{client.business_name || "Cliente não especificado"}</div>;
+      // Check if business_name exists and provide a fallback
+      return <div>{client.business_name || row.original.client_name || "Cliente não especificado"}</div>;
     },
   },
   {

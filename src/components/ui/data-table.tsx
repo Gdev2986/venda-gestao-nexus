@@ -1,5 +1,6 @@
 
 import React from "react";
+import { ColumnDef } from "@tanstack/react-table";
 import {
   Table,
   TableBody,
@@ -10,30 +11,31 @@ import {
 } from "@/components/ui/table";
 import TablePagination from "./table-pagination";
 
-interface Column {
-  id: string;
-  header: string;
-  accessorKey?: string;
-  cell?: (info: any) => React.ReactNode;
-}
-
-interface DataTableProps {
-  columns: Column[];
-  data: any[];
+// Updated interface to use ColumnDef
+interface DataTableProps<TData> {
+  columns: ColumnDef<TData>[];
+  data: TData[];
   currentPage?: number;
   totalPages?: number;
   onPageChange?: (page: number) => void;
   isLoading?: boolean;
 }
 
-export function DataTable({ columns, data, currentPage, totalPages, onPageChange, isLoading }: DataTableProps) {
+export function DataTable<TData>({ 
+  columns, 
+  data, 
+  currentPage, 
+  totalPages, 
+  onPageChange, 
+  isLoading 
+}: DataTableProps<TData>) {
   return (
     <div className="rounded-md border">
       <Table>
         <TableHeader>
           <TableRow>
             {columns.map((column) => (
-              <TableHead key={column.id}>{column.header}</TableHead>
+              <TableHead key={column.id || String(column.accessorKey)}>{String(column.header)}</TableHead>
             ))}
           </TableRow>
         </TableHeader>
@@ -48,11 +50,11 @@ export function DataTable({ columns, data, currentPage, totalPages, onPageChange
             data.map((row, rowIndex) => (
               <TableRow key={rowIndex}>
                 {columns.map((column) => (
-                  <TableCell key={`${rowIndex}-${column.id}`}>
+                  <TableCell key={`${rowIndex}-${column.id || String(column.accessorKey)}`}>
                     {column.cell
                       ? column.cell({ row: { original: row } })
                       : column.accessorKey
-                      ? row[column.accessorKey]
+                      ? (row as any)[column.accessorKey]
                       : null}
                   </TableCell>
                 ))}
