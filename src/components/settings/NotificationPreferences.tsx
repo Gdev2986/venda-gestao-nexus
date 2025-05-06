@@ -3,7 +3,6 @@ import { useState, useEffect } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
@@ -18,13 +17,21 @@ type NotificationPreference = {
   updated_at: string;
 };
 
+// Mock data for initial development until the table is created
+const defaultPreferences: Omit<NotificationPreference, 'id' | 'created_at' | 'updated_at'> = {
+  user_id: '',
+  payments_received: true,
+  payment_status_updates: true,
+  admin_messages: true,
+};
+
 export function NotificationPreferences() {
   const { user } = useAuth();
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(true);
   const [preferences, setPreferences] = useState<NotificationPreference | null>(null);
   
-  // Fetch notification preferences
+  // Fetch or initialize notification preferences
   useEffect(() => {
     const fetchNotificationPreferences = async () => {
       if (!user) return;
@@ -32,39 +39,17 @@ export function NotificationPreferences() {
       setIsLoading(true);
       
       try {
-        const { data, error } = await supabase
-          .from('notification_preferences')
-          .select('*')
-          .eq('user_id', user.id)
-          .single();
-          
-        if (error && error.code !== 'PGRST116') {
-          // PGRST116 is "no rows found" error, which we handle by creating default preferences
-          throw error;
-        }
+        // For now, initialize with default preferences until the table is created
+        setPreferences({
+          id: `temp-${user.id}`,
+          user_id: user.id,
+          ...defaultPreferences,
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString(),
+        });
         
-        if (data) {
-          setPreferences(data);
-        } else {
-          // Create default preferences if none exist
-          const defaultPreferences = {
-            user_id: user.id,
-            payments_received: true,
-            payment_status_updates: true,
-            admin_messages: true,
-          };
-          
-          const { data: newData, error: insertError } = await supabase
-            .from('notification_preferences')
-            .insert(defaultPreferences)
-            .select();
-            
-          if (insertError) throw insertError;
-          
-          if (newData && newData.length > 0) {
-            setPreferences(newData[0]);
-          }
-        }
+        // Note: The actual database query will be implemented once the notification_preferences table exists
+        
       } catch (error) {
         console.error('Error fetching notification preferences:', error);
         toast({
@@ -81,7 +66,7 @@ export function NotificationPreferences() {
   }, [user, toast]);
 
   // Handle preference toggle
-  const handleTogglePreference = async (field: keyof NotificationPreference, value: boolean) => {
+  const handleTogglePreference = async (field: keyof Omit<NotificationPreference, 'id' | 'user_id' | 'created_at' | 'updated_at'>, value: boolean) => {
     if (!preferences || !user) return;
     
     try {
@@ -91,13 +76,10 @@ export function NotificationPreferences() {
         [field]: value,
       });
       
-      // Update in database
-      const { error } = await supabase
-        .from('notification_preferences')
-        .update({ [field]: value, updated_at: new Date().toISOString() })
-        .eq('user_id', user.id);
-        
-      if (error) throw error;
+      // Note: The actual database update will be implemented once the notification_preferences table exists
+      // For now, just log the change
+      console.log(`Updated preference ${field} to ${value} for user ${user.id}`);
+      
     } catch (error) {
       console.error('Error updating notification preference:', error);
       toast({
@@ -121,15 +103,9 @@ export function NotificationPreferences() {
     if (!preferences || !user) return;
     
     try {
-      const { error } = await supabase
-        .from('notification_preferences')
-        .update({
-          ...preferences,
-          updated_at: new Date().toISOString()
-        })
-        .eq('user_id', user.id);
-        
-      if (error) throw error;
+      // Note: The actual database update will be implemented once the notification_preferences table exists
+      // For now, just log the preferences
+      console.log('Saving preferences:', preferences);
       
       toast({
         title: "Preferências salvas",

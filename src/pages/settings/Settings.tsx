@@ -9,7 +9,7 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
 import { createDefaultPixKeyProperties } from "@/utils/settings-utils";
-import PixKeysManager from "@/components/settings/PixKeysManager";
+import { PixKeysManager } from "@/components/settings/PixKeysManager";
 
 const Settings = () => {
   const { user } = useAuth();
@@ -45,6 +45,7 @@ const Settings = () => {
               owner_name: item.name || "",
               name: item.name || "",
               isDefault: item.is_default || false,
+              is_default: item.is_default || false,
               is_active: true,
               created_at: item.created_at,
               updated_at: item.updated_at,
@@ -94,39 +95,8 @@ const Settings = () => {
               <p>Carregando chaves PIX...</p>
             ) : (
               <div className="space-y-4">
-                <PixKeysManager pixKeys={pixKeys} />
-                {pixKeys.map((key) => (
-                  <div key={key.id} className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    <div>
-                      <Label htmlFor={`key-${key.id}`}>Chave PIX</Label>
-                      <Input
-                        type="text"
-                        id={`key-${key.id}`}
-                        defaultValue={key.key}
-                        disabled
-                      />
-                    </div>
-                    <div>
-                      <Label htmlFor={`type-${key.id}`}>Tipo</Label>
-                      <Input
-                        type="text"
-                        id={`type-${key.id}`}
-                        defaultValue={key.type}
-                        disabled
-                      />
-                    </div>
-                    <div>
-                      <Label htmlFor={`bank-${key.id}`}>Banco</Label>
-                      <Input
-                        type="text"
-                        id={`bank-${key.id}`}
-                        defaultValue={key.bank_name}
-                        disabled
-                      />
-                    </div>
-                  </div>
-                ))}
-                <Button onClick={handleAddPixKey}>Adicionar Chave PIX</Button>
+                <PixKeysManager />
+                {/* Remove duplicate rendering of PIX keys since PixKeysManager already handles this */}
               </div>
             )}
           </div>
