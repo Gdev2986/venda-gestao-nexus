@@ -1,5 +1,6 @@
 
 import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
 import { PageHeader } from "@/components/page/PageHeader";
 import { Button } from "@/components/ui/button";
@@ -11,7 +12,7 @@ import {
 import { useNotifications } from "@/hooks/use-notifications";
 import NotificationList from "@/components/notifications/NotificationList";
 import NotificationFilters from "@/components/notifications/NotificationFilters";
-import { Loader2 } from "lucide-react";
+import { Loader2, ArrowLeft } from "lucide-react";
 
 const Notifications = () => {
   const [searchTerm, setSearchTerm] = useState("");
@@ -19,6 +20,7 @@ const Notifications = () => {
   const [statusFilter, setStatusFilter] = useState("all");
   const [currentPage, setCurrentPage] = useState(1);
   const { toast } = useToast();
+  const navigate = useNavigate();
 
   const { 
     notifications, 
@@ -60,12 +62,27 @@ const Notifications = () => {
     }
   };
 
+  const handleGoBack = () => {
+    navigate(-1);
+  };
+
   return (
     <div className="container py-6 max-w-7xl">
-      <PageHeader
-        title="Notificações"
-        description="Gerencie suas notificações do sistema"
-      />
+      <div className="mb-6">
+        <Button 
+          variant="ghost" 
+          onClick={handleGoBack}
+          className="mb-4"
+        >
+          <ArrowLeft className="mr-2 h-4 w-4" />
+          Voltar
+        </Button>
+        
+        <PageHeader
+          title="Notificações"
+          description="Gerencie suas notificações do sistema"
+        />
+      </div>
       
       <div className="flex flex-col md:flex-row gap-4 mb-6">
         <div className="flex-1">
