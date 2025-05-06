@@ -92,3 +92,50 @@ export const createPaymentRequest = async (paymentData) => {
     throw error;
   }
 };
+
+// Added to fix missing functions in hooks
+export const fetchPaymentsData = async () => {
+  try {
+    const { data, error } = await supabase
+      .from('payments')
+      .select('*, client:client_id(business_name)')
+      .order('created_at', { ascending: false });
+      
+    if (error) {
+      throw error;
+    }
+    
+    return data;
+  } catch (error) {
+    console.error("Error fetching payments:", error);
+    throw error;
+  }
+};
+
+// Adding missing functions required by hooks
+export const setupPaymentSubscription = (callback) => {
+  const subscription = supabase
+    .channel('payments-channel')
+    .on('postgres_changes', 
+      { event: '*', schema: 'public', table: 'payments' }, 
+      payload => {
+        callback(payload);
+      }
+    )
+    .subscribe();
+    
+  return () => {
+    supabase.removeChannel(subscription);
+  };
+};
+
+// Define the missing formatPaymentRequest function
+export const formatPaymentRequest = (request) => {
+  return {
+    ...request,
+    client_name: request.client?.business_name || 'Unknown Client',
+    pix_key_type: request.pix_key?.type || null,
+    pix_key_value: request.pix_key?.key || null,
+    pix_owner: request.pix_key?.owner_name || null,
+  };
+};
