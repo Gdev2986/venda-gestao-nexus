@@ -7,9 +7,9 @@ const Reports = () => {
   const navigate = useNavigate();
 
   useEffect(() => {
-    // Redirect to financial reports after a short delay
+    // Redirect to clients page after a short delay
     const timer = setTimeout(() => {
-      navigate("/financial/reports");
+      navigate("/admin/clients");
     }, 1500);
 
     return () => clearTimeout(timer);
@@ -22,7 +22,7 @@ const Reports = () => {
           <CardTitle>Reports</CardTitle>
         </CardHeader>
         <CardContent>
-          <p>Redirecting to Financial Reports page...</p>
+          <p>Redirecting to Clients page...</p>
         </CardContent>
       </Card>
     </div>
