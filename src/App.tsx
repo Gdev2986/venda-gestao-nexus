@@ -1,3 +1,4 @@
+
 import { Routes, Route, useLocation, Navigate } from "react-router-dom";
 import { PATHS } from "./routes/paths";
 import { useEffect } from "react";
@@ -19,8 +20,9 @@ import { LogisticsRoutes } from "./routes/logisticsRoutes";
 // Layouts
 import RootLayout from "./layouts/RootLayout";
 
-// Other
+// Pages
 import NotFound from "./pages/NotFound";
+import Notifications from "./pages/Notifications";
 
 function App() {
   const location = useLocation();
@@ -59,6 +61,9 @@ function App() {
       {PartnerRoutes}
       {FinancialRoutes}
       {LogisticsRoutes}
+
+      {/* Shared Routes (accessible by all roles) */}
+      <Route path="/notifications" element={<Notifications />} />
 
       {/* 404 */}
       <Route path={PATHS.NOT_FOUND} element={<NotFound />} />

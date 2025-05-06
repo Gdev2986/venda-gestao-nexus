@@ -7,6 +7,7 @@ export const PATHS = {
   RESET_PASSWORD: "/reset-password",
   PROFILE: "/profile",
   DASHBOARD: "/dashboard", // Add generic dashboard path
+  NOTIFICATIONS: "/notifications", // Add notifications path
   NOT_FOUND: "*", // Add not found path
   ADMIN: {
     DASHBOARD: "/admin/dashboard",

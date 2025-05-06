@@ -12,6 +12,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/button";
 import { motion, AnimatePresence } from "framer-motion";
+import { Link } from "react-router-dom";
 
 type Notification = {
   id: string;
@@ -188,8 +189,13 @@ const NotificationDropdown = () => {
             </AnimatePresence>
           </div>
           <div className="p-2">
-            <Button variant="outline" size="sm" className="w-full">
-              Ver todas notificações
+            <Button 
+              variant="outline" 
+              size="sm" 
+              className="w-full"
+              asChild
+            >
+              <Link to="/notifications">Ver todas notificações</Link>
             </Button>
           </div>
         </DropdownMenuContent>
