@@ -26,7 +26,7 @@ export const usePaymentRequestManager = (
         title: "Chave PIX não selecionada",
         description: "Por favor, selecione uma chave PIX para continuar.",
       });
-      return;
+      return false;
     }
 
     if (!user) {
@@ -35,7 +35,7 @@ export const usePaymentRequestManager = (
         title: "Usuário não autenticado",
         description: "Por favor, faça login para continuar.",
       });
-      return;
+      return false;
     }
     
     const parsedAmount = parseFloat(amount);
@@ -47,14 +47,14 @@ export const usePaymentRequestManager = (
         title: "Chave PIX inválida",
         description: "A chave PIX selecionada não é válida.",
       });
-      return;
+      return false;
     }
     
     try {
       console.log("Attempting to create payment request with:", {
         amount: parsedAmount,
         pixKeyId,
-        user
+        userId: user.id
       });
       
       // Get the client ID for the current user
@@ -65,10 +65,26 @@ export const usePaymentRequestManager = (
         .limit(1)
         .single();
         
-      if (clientError || !clientData) {
+      if (clientError) {
         console.error("Error fetching client ID:", clientError);
-        throw new Error("Não foi possível encontrar seu ID de cliente");
+        toast({
+          variant: "destructive",
+          title: "Erro ao criar solicitação",
+          description: "Não foi possível identificar seu cliente. Por favor, contate o suporte."
+        });
+        return false;
       }
+      
+      if (!clientData?.client_id) {
+        toast({
+          variant: "destructive",
+          title: "Erro ao criar solicitação",
+          description: "Seu usuário não está vinculado a nenhum cliente. Por favor, contate o suporte."
+        });
+        return false;
+      }
+      
+      console.log("Creating payment request for client:", clientData.client_id);
       
       // Criar solicitação de pagamento no Supabase
       const { data, error } = await supabase
@@ -80,34 +96,58 @@ export const usePaymentRequestManager = (
           client_id: clientData.client_id,
           description: description || 'Solicitação de pagamento via PIX'
         })
-        .select();
+        .select(`
+          id,
+          amount,
+          description,
+          status,
+          created_at,
+          updated_at,
+          rejection_reason,
+          receipt_url,
+          pix_key_id,
+          client_id,
+          pix_key:pix_keys(id, key, type, name)
+        `)
+        .single();
       
       if (error) {
         console.error("Erro ao criar solicitação de pagamento:", error);
-        throw error;
+        toast({
+          variant: "destructive",
+          title: "Erro ao criar solicitação",
+          description: error.message || "Não foi possível criar a solicitação de pagamento."
+        });
+        return false;
       }
+
+      if (!data) {
+        toast({
+          variant: "destructive", 
+          title: "Erro ao criar solicitação",
+          description: "Não foi possível criar a solicitação de pagamento."
+        });
+        return false;
+      }
+
+      console.log("Created payment request:", data);
 
       // Criar um novo objeto de solicitação de pagamento para a UI
       const newPaymentRequest: Payment = {
-        id: data?.[0]?.id || `temp_${Date.now()}`,
-        amount: parsedAmount,
-        status: PaymentStatus.PENDING,
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString(),
-        client_id: clientData.client_id,
-        description: description || `Solicitação de pagamento via PIX`,
+        id: data.id,
+        amount: data.amount,
+        status: data.status as PaymentStatus,
+        created_at: data.created_at,
+        updated_at: data.updated_at,
+        client_id: data.client_id,
+        description: data.description,
         payment_type: PaymentType.PIX,
-        pix_key: {
-          id: selectedPixKey.id,
-          key: selectedPixKey.key,
-          type: selectedPixKey.type,
-          owner_name: selectedPixKey.owner_name
-        },
+        pix_key: data.pix_key,
         rejection_reason: null
       };
       
       // Adicionar a nova solicitação de pagamento à lista
-      setPaymentRequests([newPaymentRequest, ...paymentRequests]);
+      setPaymentRequests(prev => [newPaymentRequest, ...prev]);
       
       toast({
         title: "Solicitação enviada",
@@ -122,7 +162,7 @@ export const usePaymentRequestManager = (
       toast({
         variant: "destructive",
         title: "Erro ao criar solicitação",
-        description: "Não foi possível criar a solicitação de pagamento."
+        description: err instanceof Error ? err.message : "Não foi possível criar a solicitação de pagamento."
       });
       return false;
     }

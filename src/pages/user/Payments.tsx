@@ -8,6 +8,7 @@ import { PaymentHistoryCard } from "@/components/payments/PaymentHistoryCard";
 import { usePaymentSubscription } from "@/hooks/usePaymentSubscription";
 import { useEffect } from "react";
 import { useAuth } from "@/contexts/AuthContext";
+import { usePixKeys } from "@/hooks/usePixKeys";
 
 const UserPayments = () => {
   const { user } = useAuth();
@@ -19,11 +20,11 @@ const UserPayments = () => {
     isDialogOpen,
     setIsDialogOpen,
     handleRequestPayment,
-    pixKeys,
-    isLoadingPixKeys,
     loadPaymentRequests
   } = usePaymentRequests();
 
+  const { pixKeys, isLoadingPixKeys } = usePixKeys();
+  
   // Set up real-time subscription for client-specific payment updates
   // Get client ID from the authenticated user context
   const clientId = user?.id; // In a real implementation, this should be properly mapped to client_id
@@ -36,7 +37,9 @@ const UserPayments = () => {
   // Log some debugging info
   useEffect(() => {
     console.log("Current user role:", user?.role);
-  }, [user]);
+    console.log("Payment requests:", paymentRequests);
+    console.log("Available PIX keys:", pixKeys);
+  }, [user, paymentRequests, pixKeys]);
   
   return (
     <div className="space-y-6">

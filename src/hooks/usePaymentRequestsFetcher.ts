@@ -1,90 +1,125 @@
 
-import { useState, useEffect } from "react";
-import { useToast } from "@/hooks/use-toast";
-import { Payment, PaymentStatus, PaymentType } from "@/types";
+import { useState, useEffect, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { getMockPaymentRequests } from "@/utils/mock-payment-data";
-import { formatPaymentRequest } from "@/services/payment.service";
-import { PaymentData } from "@/types/payment.types";
+import { Payment, PaymentStatus } from "@/types";
+import { useToast } from "@/hooks/use-toast";
+import { useAuth } from "@/contexts/AuthContext";
 
 export const usePaymentRequestsFetcher = (initialBalance: number = 15000) => {
-  const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(true);
   const [clientBalance, setClientBalance] = useState(initialBalance);
   const [paymentRequests, setPaymentRequests] = useState<Payment[]>([]);
+  const { toast } = useToast();
+  const { user } = useAuth();
 
-  const loadPaymentRequests = async () => {
-    setIsLoading(true);
+  // Função para carregar as solicitações de pagamento do usuário logado
+  const loadPaymentRequests = useCallback(async () => {
+    if (!user) {
+      console.log("User not authenticated, skipping payment requests fetch");
+      setIsLoading(false);
+      return;
+    }
     
+    setIsLoading(true);
     try {
-      const { data, error } = await supabase
+      console.log("Fetching user client access...");
+      
+      // Primeiro, buscar o client_id do usuário logado
+      const { data: clientData, error: clientError } = await supabase
+        .from('user_client_access')
+        .select('client_id')
+        .eq('user_id', user.id)
+        .limit(1)
+        .single();
+      
+      if (clientError) {
+        console.error("Error fetching client ID:", clientError);
+        throw new Error("Não foi possível encontrar seu ID de cliente");
+      }
+      
+      if (!clientData) {
+        console.error("No client ID found for user", user.id);
+        throw new Error("Usuário não está vinculado a nenhum cliente");
+      }
+      
+      const clientId = clientData.client_id;
+      console.log("Found client ID:", clientId);
+      
+      // Buscar as informações do cliente, incluindo o saldo
+      const { data: clientInfoData, error: clientInfoError } = await supabase
+        .from('clients')
+        .select('balance')
+        .eq('id', clientId)
+        .limit(1)
+        .single();
+      
+      if (clientInfoError) {
+        console.error("Error fetching client balance:", clientInfoError);
+      } else if (clientInfoData) {
+        // Atualizar o saldo do cliente
+        setClientBalance(clientInfoData.balance || initialBalance);
+      }
+      
+      // Agora buscar as solicitações de pagamento deste cliente
+      console.log("Fetching payment requests for client:", clientId);
+      const { data: requestsData, error: requestsError } = await supabase
         .from('payment_requests')
         .select(`
-          *,
-          pix_key:pix_key_id (
-            id,
-            key,
-            type,
-            name
-          ),
-          client:client_id (
-            id,
-            business_name,
-            email
-          )
+          id,
+          amount,
+          description,
+          status,
+          created_at,
+          updated_at,
+          rejection_reason,
+          receipt_url,
+          pix_key_id,
+          client_id,
+          pix_key:pix_keys(id, key, type, name)
         `)
+        .eq('client_id', clientId)
         .order('created_at', { ascending: false });
       
-      if (error) throw error;
-      
-      if (data && data.length > 0) {
-        const formattedData = data.map(item => {
-          const formattedItem = formatPaymentRequest(item);
-          return {
-            id: formattedItem.id,
-            amount: formattedItem.amount,
-            status: formattedItem.status as unknown as PaymentStatus,
-            created_at: formattedItem.created_at,
-            updated_at: formattedItem.updated_at,
-            client_id: formattedItem.client_id,
-            description: formattedItem.description,
-            approved_at: formattedItem.approved_at,
-            receipt_url: formattedItem.receipt_url,
-            client_name: formattedItem.client?.business_name,
-            payment_type: PaymentType.PIX,
-            rejection_reason: formattedItem.rejection_reason,
-            pix_key: formattedItem.pix_key ? {
-              id: formattedItem.pix_key.id,
-              key: formattedItem.pix_key.key,
-              type: formattedItem.pix_key.type,
-              owner_name: formattedItem.pix_key.name
-            } : undefined
-          } as unknown as Payment;
-        });
-        setPaymentRequests(formattedData);
-      } else {
-        setPaymentRequests(getMockPaymentRequests() as unknown as Payment[]);
+      if (requestsError) {
+        console.error("Error fetching payment requests:", requestsError);
+        throw requestsError;
       }
-    } catch (err) {
-      console.error('Error fetching payment requests:', err);
+      
+      console.log("Fetched payment requests:", requestsData);
+      
+      // Transformar os dados para o formato esperado pela interface
+      const formattedRequests: Payment[] = requestsData ? requestsData.map(request => ({
+        id: request.id,
+        amount: request.amount,
+        description: request.description || '',
+        status: request.status as PaymentStatus,
+        created_at: request.created_at,
+        updated_at: request.updated_at,
+        rejection_reason: request.rejection_reason,
+        receipt_url: request.receipt_url,
+        client_id: request.client_id,
+        payment_type: 'PIX', // Assumindo PIX como padrão
+        pix_key: request.pix_key || null
+      })) : [];
+      
+      setPaymentRequests(formattedRequests);
+    } catch (error) {
+      console.error("Error in loadPaymentRequests:", error);
       toast({
         variant: "destructive",
-        title: "Erro ao carregar pagamentos",
-        description: "Não foi possível carregar as solicitações de pagamento."
+        title: "Erro ao carregar solicitações",
+        description: error instanceof Error ? error.message : "Erro desconhecido ao carregar suas solicitações de pagamento."
       });
-      
-      // Use mock data as fallback
-      setPaymentRequests(getMockPaymentRequests() as unknown as Payment[]);
     } finally {
       setIsLoading(false);
     }
-  };
-
-  // Initial load of payment requests
+  }, [toast, user, initialBalance]);
+  
+  // Carregar dados ao montar o componente
   useEffect(() => {
     loadPaymentRequests();
-  }, [toast]);
-
+  }, [loadPaymentRequests]);
+  
   return {
     isLoading,
     clientBalance,

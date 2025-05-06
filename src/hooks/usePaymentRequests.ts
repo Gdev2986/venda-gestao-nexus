@@ -3,7 +3,6 @@ import { useState } from "react";
 import { usePaymentRequestsFetcher } from "./usePaymentRequestsFetcher";
 import { usePixKeys } from "./usePixKeys";
 import { usePaymentRequestManager } from "./usePaymentRequestManager";
-import { usePaymentSubscription } from "./usePaymentSubscription";
 
 export const usePaymentRequests = (initialBalance: number = 15000) => {
   const {
@@ -22,11 +21,6 @@ export const usePaymentRequests = (initialBalance: number = 15000) => {
     handleRequestPayment
   } = usePaymentRequestManager(pixKeys, paymentRequests, setPaymentRequests);
   
-  // Configurar a inscrição para atualizações de pagamentos
-  // Aqui não precisamos passar o ID do cliente, pois o hook usePaymentRequestsFetcher já
-  // carrega os pagamentos do cliente logado
-  usePaymentSubscription(loadPaymentRequests);
-
   return {
     isLoading,
     clientBalance,
@@ -36,6 +30,6 @@ export const usePaymentRequests = (initialBalance: number = 15000) => {
     handleRequestPayment,
     pixKeys,
     isLoadingPixKeys,
-    loadPaymentRequests // Adicionada para uso externo
+    loadPaymentRequests
   };
 };

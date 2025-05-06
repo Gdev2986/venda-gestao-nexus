@@ -1,60 +1,100 @@
 
 import { useState, useEffect } from "react";
-import { useToast } from "@/hooks/use-toast";
 import { PixKey } from "@/types";
 import { supabase } from "@/integrations/supabase/client";
-import { getMockPixKeys } from "@/utils/mock-payment-data";
+import { useAuth } from "@/contexts/AuthContext";
+import { useToast } from "@/hooks/use-toast";
 
 export const usePixKeys = () => {
-  const { toast } = useToast();
   const [pixKeys, setPixKeys] = useState<PixKey[]>([]);
-  const [isLoadingPixKeys, setIsLoadingPixKeys] = useState(false);
+  const [isLoadingPixKeys, setIsLoadingPixKeys] = useState(true);
+  const { user } = useAuth();
+  const { toast } = useToast();
 
   useEffect(() => {
     const fetchPixKeys = async () => {
+      if (!user) {
+        setIsLoadingPixKeys(false);
+        return;
+      }
+
       setIsLoadingPixKeys(true);
-      
       try {
         const { data, error } = await supabase
           .from('pix_keys')
           .select('*')
-          .order('created_at', { ascending: false });
-        
-        if (error) throw error;
-        
-        const formattedKeys = (data || []).map(key => ({
+          .eq('user_id', user.id);
+
+        if (error) {
+          throw error;
+        }
+
+        // Formatar as chaves PIX para o formato esperado pela interface
+        const formattedKeys: PixKey[] = data?.map(key => ({
           id: key.id,
-          user_id: key.user_id,
-          key_type: key.type,
-          type: key.type,
           key: key.key,
-          owner_name: key.name,
+          type: key.type,
+          key_type: key.type,
           name: key.name,
-          isDefault: key.is_default,
-          is_active: true,
+          owner_name: key.name,
+          client_id: '',
           created_at: key.created_at,
           updated_at: key.updated_at,
-          bank_name: "Banco"
-        }));
-        
+          isDefault: key.is_default
+        })) || [];
+
         setPixKeys(formattedKeys);
-      } catch (err) {
-        console.error('Error fetching PIX keys:', err);
+        
+        // Se não houver chaves PIX, adicionar uma mensagem informativa
+        if (formattedKeys.length === 0) {
+          console.log("No PIX keys found for user", user.id);
+          
+          // Adicionando uma chave PIX mockada se não houver chaves cadastradas
+          setPixKeys([
+            {
+              id: "default-key",
+              key: "example@email.com",
+              type: "EMAIL",
+              key_type: "EMAIL",
+              name: "Chave Principal",
+              owner_name: "Chave Principal",
+              client_id: '',
+              created_at: new Date().toISOString(),
+              updated_at: new Date().toISOString(),
+              isDefault: true
+            }
+          ]);
+        }
+      } catch (error) {
+        console.error("Error fetching PIX keys:", error);
         toast({
           variant: "destructive",
-          title: "Erro ao carregar chaves PIX",
-          description: "Não foi possível carregar suas chaves PIX."
+          title: "Erro ao buscar chaves PIX",
+          description: "Não foi possível carregar suas chaves PIX",
         });
-
-        // Use mock data as fallback
-        setPixKeys(getMockPixKeys());
+        
+        // Adicionar uma chave PIX mockada em caso de erro
+        setPixKeys([
+          {
+            id: "default-key",
+            key: "example@email.com",
+            type: "EMAIL",
+            key_type: "EMAIL",
+            name: "Chave Principal",
+            owner_name: "Chave Principal",
+            client_id: '',
+            created_at: new Date().toISOString(),
+            updated_at: new Date().toISOString(),
+            isDefault: true
+          }
+        ]);
       } finally {
         setIsLoadingPixKeys(false);
       }
     };
-    
+
     fetchPixKeys();
-  }, [toast]);
+  }, [user, toast]);
 
   return { pixKeys, isLoadingPixKeys };
 };

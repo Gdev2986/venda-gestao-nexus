@@ -1,29 +1,220 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { BalanceCards } from "@/components/payments/BalanceCards";
 import { PaymentHistoryCard } from "@/components/payments/PaymentHistoryCard";
 import { PaymentRequestDialog } from "@/components/payments/PaymentRequestDialog";
 import { ClientPaymentsHeader } from "@/components/payments/ClientPaymentsHeader";
-import { useClientPayments } from "@/hooks/useClientPayments";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/contexts/AuthContext";
+import { useToast } from "@/hooks/use-toast";
+import { Payment, PaymentStatus, PaymentType } from "@/types";
 import { usePaymentSubscription } from "@/hooks/usePaymentSubscription";
 
 const ClientPayments = () => {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+  const [payments, setPayments] = useState<Payment[]>([]);
+  const [clientBalance, setClientBalance] = useState(15000);
+  const [pixKeys, setPixKeys] = useState([]);
+  const [isLoadingPixKeys, setIsLoadingPixKeys] = useState(true);
+  const [clientId, setClientId] = useState<string | null>(null);
   
-  const {
-    isLoading,
-    payments,
-    clientBalance = 15000, // Valor padrão para evitar erros
-    pixKeys = [],
-    isLoadingPixKeys = false,
-    handleRequestPayment,
-    loadPayments // Adicionada função de recarga
-  } = useClientPayments("client-id"); // Passa um ID de cliente padrão
-
+  const { user } = useAuth();
+  const { toast } = useToast();
+  
+  // Função para buscar dados do cliente
+  const fetchClientData = async () => {
+    if (!user) return;
+    
+    try {
+      // Buscar o ID do cliente vinculado ao usuário logado
+      const { data: clientAccessData, error: clientAccessError } = await supabase
+        .from('user_client_access')
+        .select('client_id')
+        .eq('user_id', user.id)
+        .limit(1)
+        .single();
+      
+      if (clientAccessError) {
+        console.error("Error fetching client access:", clientAccessError);
+        return;
+      }
+      
+      if (!clientAccessData) {
+        console.log("No client associated with this user");
+        return;
+      }
+      
+      setClientId(clientAccessData.client_id);
+      
+      // Buscar dados do cliente como saldo
+      const { data: clientData, error: clientError } = await supabase
+        .from('clients')
+        .select('balance')
+        .eq('id', clientAccessData.client_id)
+        .single();
+      
+      if (clientError) {
+        console.error("Error fetching client data:", clientError);
+      } else if (clientData) {
+        setClientBalance(clientData.balance || 15000);
+      }
+    } catch (error) {
+      console.error("Error fetching client data:", error);
+    }
+  };
+  
+  // Função para carregar os pagamentos
+  const loadPayments = async () => {
+    if (!clientId) return;
+    
+    setIsLoading(true);
+    try {
+      const { data, error } = await supabase
+        .from('payment_requests')
+        .select(`
+          id,
+          amount,
+          description,
+          status,
+          created_at,
+          updated_at,
+          rejection_reason,
+          receipt_url,
+          pix_key_id,
+          client_id,
+          pix_key:pix_keys(id, key, type, name)
+        `)
+        .eq('client_id', clientId)
+        .order('created_at', { ascending: false });
+      
+      if (error) {
+        console.error("Error fetching payment requests:", error);
+        throw error;
+      }
+      
+      // Transformar os dados para o formato esperado pela interface
+      const formattedPayments: Payment[] = data ? data.map(request => ({
+        id: request.id,
+        amount: request.amount,
+        description: request.description || '',
+        status: request.status as PaymentStatus,
+        created_at: request.created_at,
+        updated_at: request.updated_at,
+        rejection_reason: request.rejection_reason,
+        receipt_url: request.receipt_url,
+        client_id: request.client_id,
+        payment_type: PaymentType.PIX,
+        pix_key: request.pix_key || null
+      })) : [];
+      
+      setPayments(formattedPayments);
+    } catch (error) {
+      console.error("Error loading payments:", error);
+      toast({
+        variant: "destructive",
+        title: "Erro ao carregar pagamentos",
+        description: "Não foi possível carregar as solicitações de pagamento."
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+  
+  // Função para buscar as chaves PIX
+  const fetchPixKeys = async () => {
+    if (!user) return;
+    
+    setIsLoadingPixKeys(true);
+    try {
+      const { data, error } = await supabase
+        .from('pix_keys')
+        .select('*')
+        .eq('user_id', user.id);
+      
+      if (error) {
+        console.error("Error fetching PIX keys:", error);
+        throw error;
+      }
+      
+      setPixKeys(data || []);
+    } catch (error) {
+      console.error("Error fetching PIX keys:", error);
+    } finally {
+      setIsLoadingPixKeys(false);
+    }
+  };
+  
+  // Função para solicitar pagamento
+  const handleRequestPayment = async (amount: number, pixKeyId: string, description: string) => {
+    if (!clientId) {
+      toast({
+        variant: "destructive",
+        title: "Erro",
+        description: "Não foi possível identificar o cliente"
+      });
+      return false;
+    }
+    
+    try {
+      const { data, error } = await supabase
+        .from('payment_requests')
+        .insert({
+          amount,
+          pix_key_id: pixKeyId,
+          client_id: clientId,
+          description: description || "Solicitação de pagamento",
+          status: PaymentStatus.PENDING
+        })
+        .select();
+      
+      if (error) {
+        console.error("Error requesting payment:", error);
+        toast({
+          variant: "destructive",
+          title: "Erro",
+          description: "Não foi possível criar a solicitação de pagamento"
+        });
+        return false;
+      }
+      
+      toast({
+        title: "Solicitação enviada",
+        description: "Sua solicitação de pagamento foi enviada com sucesso"
+      });
+      
+      // Recarregar os pagamentos após criar um novo
+      loadPayments();
+      setIsDialogOpen(false);
+      return true;
+    } catch (error) {
+      console.error("Error requesting payment:", error);
+      toast({
+        variant: "destructive",
+        title: "Erro",
+        description: "Ocorreu um erro ao solicitar o pagamento"
+      });
+      return false;
+    }
+  };
+  
+  // Efeito para carregar dados iniciais
+  useEffect(() => {
+    fetchClientData();
+    fetchPixKeys();
+  }, [user]);
+  
+  // Efeito para carregar pagamentos quando o clientId estiver disponível
+  useEffect(() => {
+    if (clientId) {
+      loadPayments();
+    }
+  }, [clientId]);
+  
   // Configurar inscrição em tempo real para esse cliente específico
   usePaymentSubscription(loadPayments, { 
     notifyUser: true,
-    filterByClientId: "client-id" // Em uma implementação real, isso viria do contexto de autenticação
+    filterByClientId: clientId
   });
 
   return (
@@ -46,8 +237,7 @@ const ClientPayments = () => {
         pixKeys={pixKeys}
         isLoadingPixKeys={isLoadingPixKeys}
         onRequestPayment={(amount, description, pixKeyId) => {
-          // Adapt function to match the expected signature (3 parameters)
-          return handleRequestPayment(parseFloat(amount), pixKeyId, description);
+          return handleRequestPayment(parseFloat(amount), pixKeyId || "", description);
         }}
       />
     </div>
