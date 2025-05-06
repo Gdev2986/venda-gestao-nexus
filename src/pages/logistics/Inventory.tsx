@@ -13,7 +13,10 @@ import {
   RefreshCw, 
   CheckCircle2, 
   ArrowUpDown, 
-  PlusCircle 
+  PlusCircle,
+  Store,
+  Users,
+  Tag 
 } from "lucide-react";
 import { useState } from "react";
 import {
@@ -31,12 +34,16 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { DataTable } from "@/components/ui/data-table";
+import { useToast } from "@/hooks/use-toast";
 
 const Inventory = () => {
   const [activeTab, setActiveTab] = useState("machines");
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
+  const [locationFilter, setLocationFilter] = useState("all");
   const [isLoading, setIsLoading] = useState(false);
+  const { toast } = useToast();
 
   // Mock inventory data
   const machinesData = [
@@ -46,7 +53,8 @@ const Inventory = () => {
       serial: "SER293847",
       status: "available",
       location: "Depósito Central",
-      lastUpdated: "2025-04-30T14:30:00"
+      lastUpdated: "2025-04-30T14:30:00",
+      client: null
     },
     {
       id: "M002",
@@ -54,7 +62,8 @@ const Inventory = () => {
       serial: "SER293848",
       status: "reserved",
       location: "Depósito Central",
-      lastUpdated: "2025-05-01T10:15:00"
+      lastUpdated: "2025-05-01T10:15:00",
+      client: null
     },
     {
       id: "M003",
@@ -62,7 +71,8 @@ const Inventory = () => {
       serial: "SER345678",
       status: "in_maintenance",
       location: "Centro de Manutenção",
-      lastUpdated: "2025-04-25T09:20:00"
+      lastUpdated: "2025-04-25T09:20:00",
+      client: null
     },
     {
       id: "M004",
@@ -70,7 +80,8 @@ const Inventory = () => {
       serial: "SER456789",
       status: "available",
       location: "Depósito Sul",
-      lastUpdated: "2025-05-02T16:40:00"
+      lastUpdated: "2025-05-02T16:40:00",
+      client: null
     },
     {
       id: "M005",
@@ -78,7 +89,92 @@ const Inventory = () => {
       serial: "SER345679",
       status: "reserved",
       location: "Depósito Norte",
-      lastUpdated: "2025-05-01T11:30:00"
+      lastUpdated: "2025-05-01T11:30:00",
+      client: null
+    }
+  ];
+
+  // Mock client-linked machines
+  const clientMachinesData = [
+    {
+      id: "CM001",
+      name: "Terminal POS-X1",
+      serial: "SER123456",
+      status: "operating",
+      location: "Estabelecimento Cliente",
+      lastUpdated: "2025-05-02T09:30:00",
+      client: {
+        id: "C001",
+        name: "Restaurante Sabores",
+        address: "Rua das Flores, 123",
+        city: "São Paulo",
+        contactName: "Maria Silva",
+        phone: "(11) 98765-4321"
+      }
+    },
+    {
+      id: "CM002",
+      name: "Terminal POS-X2",
+      serial: "SER234567",
+      status: "operating",
+      location: "Estabelecimento Cliente",
+      lastUpdated: "2025-05-01T14:45:00",
+      client: {
+        id: "C002",
+        name: "Café Central",
+        address: "Av. Paulista, 1000",
+        city: "São Paulo",
+        contactName: "João Santos",
+        phone: "(11) 91234-5678"
+      }
+    },
+    {
+      id: "CM003",
+      name: "Terminal POS-X1",
+      serial: "SER345678",
+      status: "in_maintenance",
+      location: "Centro de Manutenção",
+      lastUpdated: "2025-04-28T11:20:00",
+      client: {
+        id: "C003",
+        name: "Sorveteria Gelatto",
+        address: "Rua Augusta, 500",
+        city: "São Paulo",
+        contactName: "Ana Oliveira",
+        phone: "(11) 99876-5432"
+      }
+    },
+    {
+      id: "CM004",
+      name: "Terminal POS-X3",
+      serial: "SER456789",
+      status: "operating",
+      location: "Estabelecimento Cliente",
+      lastUpdated: "2025-05-03T10:10:00",
+      client: {
+        id: "C004",
+        name: "Farmácia Saúde",
+        address: "Av. Brasil, 200",
+        city: "Rio de Janeiro",
+        contactName: "Carlos Lima",
+        phone: "(21) 98765-4321"
+      }
+    },
+    {
+      id: "CM005",
+      name: "Terminal POS-X2",
+      serial: "SER567890",
+      status: "operating",
+      location: "Estabelecimento Cliente",
+      lastUpdated: "2025-05-02T16:30:00",
+      client: {
+        id: "C005",
+        name: "Mercado Geral",
+        address: "Rua dos Pinheiros, 300",
+        city: "São Paulo",
+        contactName: "Paulo Mendes",
+        phone: "(11) 97654-3210"
+      }
     }
   ];
 
@@ -133,6 +229,19 @@ const Inventory = () => {
       machine.id.toLowerCase().includes(searchTerm.toLowerCase());
     
     const matchesStatus = statusFilter === "all" || machine.status === statusFilter;
+    const matchesLocation = locationFilter === "all" || machine.location === locationFilter;
+    
+    return matchesSearch && matchesStatus && matchesLocation;
+  });
+
+  const filteredClientMachines = clientMachinesData.filter(machine => {
+    const matchesSearch = 
+      machine.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
+      machine.serial.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      machine.id.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (machine.client && machine.client.name.toLowerCase().includes(searchTerm.toLowerCase()));
+    
+    const matchesStatus = statusFilter === "all" || machine.status === statusFilter;
     
     return matchesSearch && matchesStatus;
   });
@@ -143,7 +252,9 @@ const Inventory = () => {
       item.sku.toLowerCase().includes(searchTerm.toLowerCase()) ||
       item.id.toLowerCase().includes(searchTerm.toLowerCase());
     
-    return matchesSearch;
+    const matchesLocation = locationFilter === "all" || item.location === locationFilter;
+    
+    return matchesSearch && matchesLocation;
   });
 
   // Helper for status badges
@@ -157,6 +268,8 @@ const Inventory = () => {
         return <Badge variant="outline" className="bg-yellow-100 text-yellow-800 hover:bg-yellow-100">Em Manutenção</Badge>;
       case "in_transit":
         return <Badge variant="outline" className="bg-purple-100 text-purple-800 hover:bg-purple-100">Em Trânsito</Badge>;
+      case "operating":
+        return <Badge variant="outline" className="bg-green-100 text-green-800 hover:bg-green-100">Operando</Badge>;
       default:
         return <Badge variant="outline">Desconhecido</Badge>;
     }
@@ -167,8 +280,141 @@ const Inventory = () => {
     setIsLoading(true);
     setTimeout(() => {
       setIsLoading(false);
+      toast({
+        title: "Dados atualizados",
+        description: "Os dados de inventário foram atualizados com sucesso.",
+      });
     }, 1000);
   };
+
+  const machineColumns = [
+    {
+      id: "id",
+      header: "ID",
+      accessorKey: "id",
+    },
+    {
+      id: "name",
+      header: "Máquina",
+      accessorKey: "name",
+    },
+    {
+      id: "serial",
+      header: "Número Serial",
+      accessorKey: "serial",
+    },
+    {
+      id: "status",
+      header: "Status",
+      cell: ({ row }: { row: { original: any } }) => getStatusBadge(row.original.status),
+    },
+    {
+      id: "location",
+      header: "Localização",
+      accessorKey: "location",
+    },
+    {
+      id: "lastUpdated",
+      header: "Última Atualização",
+      cell: ({ row }: { row: { original: any } }) => new Date(row.original.lastUpdated).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric' }),
+    },
+    {
+      id: "actions",
+      header: "Ações",
+      cell: () => (
+        <Button variant="ghost" size="sm">
+          Detalhes
+        </Button>
+      ),
+    },
+  ];
+
+  const clientMachineColumns = [
+    {
+      id: "id",
+      header: "ID",
+      accessorKey: "id",
+    },
+    {
+      id: "name",
+      header: "Máquina",
+      accessorKey: "name",
+    },
+    {
+      id: "serial",
+      header: "Número Serial",
+      accessorKey: "serial",
+    },
+    {
+      id: "client",
+      header: "Cliente",
+      cell: ({ row }: { row: { original: any } }) => row.original.client?.name || "N/A",
+    },
+    {
+      id: "status",
+      header: "Status",
+      cell: ({ row }: { row: { original: any } }) => getStatusBadge(row.original.status),
+    },
+    {
+      id: "lastUpdated",
+      header: "Última Atualização",
+      cell: ({ row }: { row: { original: any } }) => new Date(row.original.lastUpdated).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric' }),
+    },
+    {
+      id: "actions",
+      header: "Ações",
+      cell: () => (
+        <Button variant="ghost" size="sm">
+          Detalhes
+        </Button>
+      ),
+    },
+  ];
+
+  const supplyColumns = [
+    {
+      id: "id",
+      header: "ID",
+      accessorKey: "id",
+    },
+    {
+      id: "name",
+      header: "Nome",
+      accessorKey: "name",
+    },
+    {
+      id: "sku",
+      header: "SKU",
+      accessorKey: "sku",
+    },
+    {
+      id: "quantity",
+      header: "Quantidade",
+      accessorKey: "quantity",
+    },
+    {
+      id: "location",
+      header: "Localização",
+      accessorKey: "location",
+    },
+    {
+      id: "lastUpdated",
+      header: "Última Atualização",
+      cell: ({ row }: { row: { original: any } }) => new Date(row.original.lastUpdated).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric' }),
+    },
+    {
+      id: "actions",
+      header: "Ações",
+      cell: () => (
+        <Button variant="ghost" size="sm">
+          Detalhes
+        </Button>
+      ),
+    },
+  ];
+
+  // Get unique locations for filter
+  const locations = [...new Set([...machinesData, ...suppliesData].map(item => item.location))];
 
   return (
     <>
@@ -176,7 +422,10 @@ const Inventory = () => {
         title="Inventário" 
         description="Gerenciamento de máquinas e suprimentos em estoque"
         actionLabel="Adicionar Item"
-        onActionClick={() => alert("Funcionalidade em desenvolvimento")}
+        onActionClick={() => toast({
+          title: "Funcionalidade em desenvolvimento",
+          description: "Esta funcionalidade estará disponível em breve."
+        })}
       />
       
       <PageWrapper>
@@ -208,10 +457,26 @@ const Inventory = () => {
                       <SelectItem value="reserved">Reservado</SelectItem>
                       <SelectItem value="in_maintenance">Em Manutenção</SelectItem>
                       <SelectItem value="in_transit">Em Trânsito</SelectItem>
+                      <SelectItem value="operating">Operando</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
               )}
+
+              <div className="w-full sm:w-48">
+                <Select defaultValue={locationFilter} onValueChange={setLocationFilter}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Localização" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">Todas</SelectItem>
+                    {locations.map(location => (
+                      <SelectItem key={location} value={location}>{location}</SelectItem>
+                    ))}
+                    <SelectItem value="Estabelecimento Cliente">Estabelecimentos</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
               
               <Button 
                 variant="outline" 
@@ -227,8 +492,18 @@ const Inventory = () => {
 
         <Tabs defaultValue={activeTab} value={activeTab} onValueChange={setActiveTab}>
           <TabsList className="mb-6">
-            <TabsTrigger value="machines">Máquinas</TabsTrigger>
-            <TabsTrigger value="supplies">Suprimentos</TabsTrigger>
+            <TabsTrigger value="machines">
+              <Package2 className="h-4 w-4 mr-2" />
+              Máquinas em Estoque
+            </TabsTrigger>
+            <TabsTrigger value="client-machines">
+              <Store className="h-4 w-4 mr-2" />
+              Máquinas em Clientes
+            </TabsTrigger>
+            <TabsTrigger value="supplies">
+              <Tag className="h-4 w-4 mr-2" />
+              Suprimentos
+            </TabsTrigger>
           </TabsList>
           
           <TabsContent value="machines">
@@ -236,59 +511,45 @@ const Inventory = () => {
               <CardHeader>
                 <div className="flex justify-between items-center">
                   <CardTitle>Inventário de Máquinas</CardTitle>
-                  <Button variant="outline" size="sm">
+                  <Button variant="outline" size="sm" onClick={() => toast({
+                    title: "Funcionalidade em desenvolvimento",
+                    description: "Esta funcionalidade estará disponível em breve."
+                  })}>
                     <PlusCircle className="h-4 w-4 mr-2" />
                     Nova Máquina
                   </Button>
                 </div>
               </CardHeader>
               <CardContent>
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead className="w-[100px]">ID</TableHead>
-                      <TableHead>
-                        <div className="flex items-center">
-                          Máquina
-                          <ArrowUpDown className="ml-2 h-4 w-4" />
-                        </div>
-                      </TableHead>
-                      <TableHead>Número Serial</TableHead>
-                      <TableHead>Status</TableHead>
-                      <TableHead>Localização</TableHead>
-                      <TableHead>Última Atualização</TableHead>
-                      <TableHead className="w-[100px]">Ações</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {filteredMachines.length > 0 ? (
-                      filteredMachines.map((machine) => (
-                        <TableRow key={machine.id}>
-                          <TableCell className="font-medium">{machine.id}</TableCell>
-                          <TableCell>{machine.name}</TableCell>
-                          <TableCell>{machine.serial}</TableCell>
-                          <TableCell>{getStatusBadge(machine.status)}</TableCell>
-                          <TableCell>{machine.location}</TableCell>
-                          <TableCell>{new Date(machine.lastUpdated).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric' })}</TableCell>
-                          <TableCell>
-                            <Button variant="ghost" size="sm">
-                              Detalhes
-                            </Button>
-                          </TableCell>
-                        </TableRow>
-                      ))
-                    ) : (
-                      <TableRow>
-                        <TableCell colSpan={7} className="text-center py-4">
-                          <div className="flex flex-col items-center gap-2">
-                            <Package2 className="h-8 w-8 text-muted-foreground" />
-                            <p className="text-muted-foreground">Nenhuma máquina encontrada</p>
-                          </div>
-                        </TableCell>
-                      </TableRow>
-                    )}
-                  </TableBody>
-                </Table>
+                <DataTable 
+                  columns={machineColumns} 
+                  data={filteredMachines}
+                  isLoading={isLoading}
+                />
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          <TabsContent value="client-machines">
+            <Card>
+              <CardHeader>
+                <div className="flex justify-between items-center">
+                  <CardTitle>Máquinas em Clientes</CardTitle>
+                  <Button variant="outline" size="sm" onClick={() => toast({
+                    title: "Funcionalidade em desenvolvimento",
+                    description: "Esta funcionalidade estará disponível em breve."
+                  })}>
+                    <Users className="h-4 w-4 mr-2" />
+                    Vincular a Cliente
+                  </Button>
+                </div>
+              </CardHeader>
+              <CardContent>
+                <DataTable 
+                  columns={clientMachineColumns} 
+                  data={filteredClientMachines}
+                  isLoading={isLoading}
+                />
               </CardContent>
             </Card>
           </TabsContent>
@@ -298,59 +559,21 @@ const Inventory = () => {
               <CardHeader>
                 <div className="flex justify-between items-center">
                   <CardTitle>Inventário de Suprimentos</CardTitle>
-                  <Button variant="outline" size="sm">
+                  <Button variant="outline" size="sm" onClick={() => toast({
+                    title: "Funcionalidade em desenvolvimento",
+                    description: "Esta funcionalidade estará disponível em breve."
+                  })}>
                     <PlusCircle className="h-4 w-4 mr-2" />
                     Novo Suprimento
                   </Button>
                 </div>
               </CardHeader>
               <CardContent>
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead className="w-[100px]">ID</TableHead>
-                      <TableHead>
-                        <div className="flex items-center">
-                          Nome
-                          <ArrowUpDown className="ml-2 h-4 w-4" />
-                        </div>
-                      </TableHead>
-                      <TableHead>SKU</TableHead>
-                      <TableHead>Quantidade</TableHead>
-                      <TableHead>Localização</TableHead>
-                      <TableHead>Última Atualização</TableHead>
-                      <TableHead className="w-[100px]">Ações</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {filteredSupplies.length > 0 ? (
-                      filteredSupplies.map((item) => (
-                        <TableRow key={item.id}>
-                          <TableCell className="font-medium">{item.id}</TableCell>
-                          <TableCell>{item.name}</TableCell>
-                          <TableCell>{item.sku}</TableCell>
-                          <TableCell>{item.quantity}</TableCell>
-                          <TableCell>{item.location}</TableCell>
-                          <TableCell>{new Date(item.lastUpdated).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric' })}</TableCell>
-                          <TableCell>
-                            <Button variant="ghost" size="sm">
-                              Detalhes
-                            </Button>
-                          </TableCell>
-                        </TableRow>
-                      ))
-                    ) : (
-                      <TableRow>
-                        <TableCell colSpan={7} className="text-center py-4">
-                          <div className="flex flex-col items-center gap-2">
-                            <Package2 className="h-8 w-8 text-muted-foreground" />
-                            <p className="text-muted-foreground">Nenhum suprimento encontrado</p>
-                          </div>
-                        </TableCell>
-                      </TableRow>
-                    )}
-                  </TableBody>
-                </Table>
+                <DataTable 
+                  columns={supplyColumns} 
+                  data={filteredSupplies}
+                  isLoading={isLoading}
+                />
               </CardContent>
             </Card>
           </TabsContent>
