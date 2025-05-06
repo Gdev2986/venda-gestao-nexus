@@ -2,177 +2,219 @@
 import { supabase } from "@/integrations/supabase/client";
 import { PaymentRequest, PaymentRequestStatus } from "@/types/payment.types";
 
-export const createPaymentRequest = async (
-  clientId: string,
-  amount: number,
-  pixKeyId: string,
-  description: string
-): Promise<{ success: boolean; error?: string; data?: any }> => {
+export async function getPaymentRequests() {
   try {
     const { data, error } = await supabase
-      .from("payment_requests")
+      .from('payment_requests')
+      .select(`
+        *,
+        client:clients(id, business_name),
+        pix_key:pix_keys(id, key, key_type)
+      `)
+      .order('created_at', { ascending: false });
+    
+    if (error) {
+      throw error;
+    }
+    
+    return data || [];
+  } catch (error) {
+    console.error('Error fetching payment requests:', error);
+    throw error;
+  }
+}
+
+export async function getPaymentRequestById(id: string) {
+  try {
+    const { data, error } = await supabase
+      .from('payment_requests')
+      .select(`
+        *,
+        client:clients(id, business_name, email, document),
+        pix_key:pix_keys(id, key, key_type)
+      `)
+      .eq('id', id)
+      .single();
+    
+    if (error) {
+      throw error;
+    }
+    
+    return formatPaymentRequest(data);
+  } catch (error) {
+    console.error('Error fetching payment request:', error);
+    throw error;
+  }
+}
+
+export async function createPaymentRequest(paymentData: Omit<PaymentRequest, 'id' | 'created_at' | 'updated_at' | 'status' | 'approved_at' | 'approved_by' | 'receipt_url' | 'rejection_reason'>) {
+  try {
+    const { data, error } = await supabase
+      .from('payment_requests')
       .insert({
-        client_id: clientId,
-        amount,
-        pix_key_id: pixKeyId,
-        description,
-        status: "PENDING" as PaymentRequestStatus,
+        client_id: paymentData.client_id,
+        amount: paymentData.amount,
+        description: paymentData.description,
+        pix_key_id: paymentData.pix_key_id,
+        status: 'PENDING' as PaymentRequestStatus
       })
       .select()
       .single();
-
-    if (error) throw error;
-
-    return { success: true, data };
-  } catch (error: any) {
-    console.error("Error creating payment request:", error);
-    return { success: false, error: error.message };
-  }
-};
-
-export const uploadPaymentReceipt = async (
-  paymentId: string,
-  file: File
-): Promise<{ success: boolean; error?: string; url?: string }> => {
-  try {
-    const fileExt = file.name.split(".").pop();
-    const fileName = `${paymentId}.${fileExt}`;
-    const filePath = `payment-receipts/${fileName}`;
-
-    // Upload to storage
-    const { error: uploadError } = await supabase.storage
-      .from("receipts")
-      .upload(filePath, file, { upsert: true });
-
-    if (uploadError) throw uploadError;
-
-    // Get public URL
-    const { data: urlData } = supabase.storage
-      .from("receipts")
-      .getPublicUrl(filePath);
-
-    const publicUrl = urlData.publicUrl;
-
-    // Update payment record with receipt URL
-    const { error: updateError } = await supabase
-      .from("payment_requests")
-      .update({ receipt_url: publicUrl })
-      .eq("id", paymentId);
-
-    if (updateError) throw updateError;
-
-    return { success: true, url: publicUrl };
-  } catch (error: any) {
-    console.error("Error uploading receipt:", error);
-    return { success: false, error: error.message };
-  }
-};
-
-export const fetchPaymentRequests = async (
-  clientId?: string
-): Promise<{
-  data: PaymentRequest[] | null;
-  error: string | null;
-}> => {
-  try {
-    let query = supabase
-      .from("payment_requests")
-      .select("*, client:clients(id, business_name)");
-
-    if (clientId) {
-      query = query.eq("client_id", clientId);
+    
+    if (error) {
+      throw error;
     }
-
-    const { data, error } = await query.order("created_at", {
-      ascending: false,
-    });
-
-    if (error) throw error;
-
-    // Transform the data to match the PaymentRequest interface
-    const formattedRequests = data.map((request) => ({
-      id: request.id,
-      client_id: request.client_id,
-      client_name: request.client?.business_name || "Unknown Client",
-      amount: request.amount,
-      description: request.description || "",
-      status: request.status as PaymentRequestStatus,
-      created_at: request.created_at,
-      updated_at: request.updated_at,
-      receipt_url: request.receipt_url || null,
-      pix_key_id: request.pix_key_id,
-      approved_at: request.approved_at || null,
-      approved_by: request.approved_by || null,
-      rejection_reason: request.rejection_reason || null
-    })) as PaymentRequest[];
-
-    return { data: formattedRequests, error: null };
-  } catch (error: any) {
-    console.error("Error fetching payment requests:", error);
-    return { data: null, error: error.message };
+    
+    return data;
+  } catch (error) {
+    console.error('Error creating payment request:', error);
+    throw error;
   }
-};
+}
 
-// Fix the missing payments table by using payment_requests instead
-export const fetchPayments = async () => {
+export async function approvePaymentRequest(id: string, approvedBy: string, receiptUrl?: string) {
   try {
+    const updateData: any = {
+      status: 'APPROVED' as PaymentRequestStatus,
+      approved_at: new Date().toISOString(),
+      approved_by: approvedBy
+    };
+    
+    if (receiptUrl) {
+      updateData.receipt_url = receiptUrl;
+    }
+    
     const { data, error } = await supabase
-      .from("payment_requests")
-      .select("*");
-
-    if (error) throw error;
-    return { data, error: null };
-  } catch (error: any) {
-    return { data: null, error: error.message };
-  }
-};
-
-export const getPaymentDetails = async (paymentId: string) => {
-  try {
-    const { data, error } = await supabase
-      .from("payment_requests")
-      .select("*")
-      .eq("id", paymentId)
+      .from('payment_requests')
+      .update(updateData)
+      .eq('id', id)
+      .select()
       .single();
-
-    if (error) throw error;
-    return { data, error: null };
-  } catch (error: any) {
-    return { data: null, error: error.message };
+    
+    if (error) {
+      throw error;
+    }
+    
+    return data;
+  } catch (error) {
+    console.error('Error approving payment request:', error);
+    throw error;
   }
-};
+}
 
-// Fix the formatPaymentRequest function to include all required properties
-export const formatPaymentRequest = (request: any): PaymentRequest => {
+export async function rejectPaymentRequest(id: string, rejectionReason: string) {
+  try {
+    const { data, error } = await supabase
+      .from('payment_requests')
+      .update({
+        status: 'REJECTED' as PaymentRequestStatus,
+        rejection_reason: rejectionReason
+      })
+      .eq('id', id)
+      .select()
+      .single();
+    
+    if (error) {
+      throw error;
+    }
+    
+    return data;
+  } catch (error) {
+    console.error('Error rejecting payment request:', error);
+    throw error;
+  }
+}
+
+export function formatPaymentRequest(paymentRequest: any): PaymentRequest {
   return {
-    id: request.id,
-    client_id: request.client_id,
-    amount: request.amount,
-    description: request.description || "",
-    status: request.status as PaymentRequestStatus,
-    pix_key_id: request.pix_key_id,
-    created_at: request.created_at,
-    updated_at: request.updated_at,
-    approved_at: request.approved_at || null,
-    approved_by: request.approved_by || null,
-    receipt_url: request.receipt_url || null,
-    rejection_reason: request.rejection_reason || null,
-    client_name: request.client?.business_name || "Unknown Client",
-    pix_key: request.pix_key ? {
-      id: request.pix_key.id,
-      key: request.pix_key.key,
-      key_type: request.pix_key.type,
-      type: request.pix_key.type,
-      name: request.pix_key.name,
-      client_id: request.client_id,
-      created_at: request.created_at,
-      updated_at: request.updated_at
-    } : undefined,
-    client: request.client ? {
-      id: request.client.id,
-      business_name: request.client.business_name,
-      document: request.client?.document,
-      email: request.client?.email
-    } : undefined
+    id: paymentRequest.id,
+    client_id: paymentRequest.client_id,
+    amount: paymentRequest.amount,
+    description: paymentRequest.description || "",
+    status: paymentRequest.status,
+    created_at: paymentRequest.created_at,
+    updated_at: paymentRequest.updated_at,
+    receipt_url: paymentRequest.receipt_url || null,
+    pix_key_id: paymentRequest.pix_key_id,
+    approved_at: paymentRequest.approved_at || null,
+    approved_by: paymentRequest.approved_by || null,
+    rejection_reason: paymentRequest.rejection_reason || null,
+    client: paymentRequest.client,
+    pix_key: paymentRequest.pix_key
   };
-};
+}
+
+export async function getMockPaymentRequests() {
+  // Get current date
+  const today = new Date();
+  const yesterday = new Date(today);
+  yesterday.setDate(yesterday.getDate() - 1);
+  const lastWeek = new Date(today);
+  lastWeek.setDate(lastWeek.getDate() - 7);
+  
+  // Mock data for payment requests
+  const mockRequests: PaymentRequest[] = [
+    {
+      id: "pr_001",
+      client_id: "cl_001",
+      amount: 1500,
+      description: "Invoice #0001",
+      status: "PENDING",
+      created_at: today.toISOString(),
+      updated_at: today.toISOString(),
+      approved_at: null,
+      approved_by: null,
+      receipt_url: null,
+      pix_key_id: "pk_001",
+      rejection_reason: null,
+      client: {
+        id: "cl_001",
+        business_name: "Empresa ABC Ltda",
+        document: "12.345.678/0001-90",
+        email: "financeiro@empresaabc.com"
+      }
+    },
+    {
+      id: "pr_002",
+      client_id: "cl_002",
+      amount: 2750,
+      description: "Invoice #0002",
+      status: "APPROVED",
+      created_at: yesterday.toISOString(),
+      updated_at: today.toISOString(),
+      approved_at: today.toISOString(),
+      approved_by: "usr_001",
+      receipt_url: "https://example.com/receipts/0002.pdf",
+      pix_key_id: "pk_002",
+      rejection_reason: null,
+      client: {
+        id: "cl_002",
+        business_name: "XYZ Consultoria",
+        document: "98.765.432/0001-21",
+        email: "pagamentos@xyz.com"
+      }
+    },
+    {
+      id: "pr_003",
+      client_id: "cl_003",
+      amount: 950,
+      description: "Invoice #0003",
+      status: "REJECTED",
+      created_at: lastWeek.toISOString(),
+      updated_at: yesterday.toISOString(),
+      approved_at: null,
+      approved_by: null,
+      receipt_url: null,
+      pix_key_id: "pk_003",
+      rejection_reason: "Valor incorreto, favor revisar",
+      client: {
+        id: "cl_003",
+        business_name: "Tech Solutions SA",
+        document: "45.678.901/0001-32",
+        email: "financeiro@techsolutions.com"
+      }
+    }
+  ];
+  
+  return mockRequests;
+}

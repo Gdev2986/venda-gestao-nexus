@@ -568,7 +568,7 @@ const AdminReports = () => {
                     <SelectValue placeholder="Categoria" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="">Todas categorias</SelectItem>
+                    <SelectItem value="all-categories">Todas categorias</SelectItem>
                     <SelectItem value="Pessoal">Pessoal</SelectItem>
                     <SelectItem value="Marketing">Marketing</SelectItem>
                     <SelectItem value="Infraestrutura">Infraestrutura</SelectItem>
@@ -582,7 +582,7 @@ const AdminReports = () => {
                     <SelectValue placeholder="Recorrência" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="">Todas</SelectItem>
+                    <SelectItem value="all-recurrences">Todas</SelectItem>
                     <SelectItem value="Única">Única</SelectItem>
                     <SelectItem value="Mensal">Mensal</SelectItem>
                     <SelectItem value="Anual">Anual</SelectItem>
