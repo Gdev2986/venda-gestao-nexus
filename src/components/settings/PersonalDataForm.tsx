@@ -10,6 +10,7 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
 
+// Extend the profile schema to include address fields
 const personalFormSchema = z.object({
   name: z.string().min(2, {
     message: "Nome deve ter pelo menos 2 caracteres.",
@@ -27,6 +28,22 @@ const personalFormSchema = z.object({
 });
 
 type PersonalFormValues = z.infer<typeof personalFormSchema>;
+
+// Define the extended profile type to match our expected data
+type ExtendedProfile = {
+  id: string;
+  email: string;
+  name: string;
+  phone?: string;
+  role: "ADMIN" | "FINANCIAL" | "PARTNER" | "LOGISTICS" | "CLIENT";
+  avatar?: string;
+  created_at: string;
+  updated_at: string;
+  address?: string;
+  city?: string;
+  state?: string;
+  zipCode?: string;
+};
 
 export function PersonalDataForm() {
   const { user } = useAuth();
@@ -63,16 +80,17 @@ export function PersonalDataForm() {
         if (error) throw error;
         
         if (data) {
-          // Handle potential missing fields in profile data
+          // Cast data to ExtendedProfile to allow for the address fields
+          const profileData = data as unknown as ExtendedProfile;
+          
           form.reset({
-            name: data.name || "",
-            email: data.email || "",
-            phone: data.phone || "",
-            // Use optional chaining for properties that might not exist
-            address: data.address || "",
-            city: data.city || "",
-            state: data.state || "",
-            zipCode: data.zipCode || "",
+            name: profileData.name || "",
+            email: profileData.email || "",
+            phone: profileData.phone || "",
+            address: profileData.address || "",
+            city: profileData.city || "",
+            state: profileData.state || "",
+            zipCode: profileData.zipCode || "",
           });
         }
       } catch (error) {
@@ -97,12 +115,11 @@ export function PersonalDataForm() {
     setIsLoading(true);
     
     try {
-      // Create an update object with only the fields that are in the profiles table
+      // Create an update object with our fields
       const updateData = {
         name: data.name,
         email: data.email,
         phone: data.phone,
-        // These fields will be added to the profile if they don't exist yet
         address: data.address,
         city: data.city,
         state: data.state,

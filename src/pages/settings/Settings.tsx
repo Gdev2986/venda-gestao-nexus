@@ -1,103 +1,70 @@
-import { useState, useEffect } from "react";
+
+import { useState } from "react";
 import { useAuth } from "@/contexts/AuthContext";
-import { supabase } from "@/integrations/supabase/client";
-import { PixKey } from "@/types";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
-import { createDefaultPixKeyProperties } from "@/utils/settings-utils";
+import { PersonalDataForm } from "@/components/settings/PersonalDataForm";
 import { PixKeysManager } from "@/components/settings/PixKeysManager";
+import { NotificationPreferences } from "@/components/settings/NotificationPreferences";
 
 const Settings = () => {
   const { user } = useAuth();
-  const [isLoading, setIsLoading] = useState(true);
   const { toast } = useToast();
 
-  useEffect(() => {
-    const fetchPixKeys = async () => {
-      setIsLoading(true);
-      try {
-        if (user) {
-          const { data, error } = await supabase
-            .from('pix_keys')
-            .select('*')
-            .eq('user_id', user.id);
-
-          if (error) {
-            console.error("Error fetching pix keys:", error);
-            toast({
-              title: "Erro ao carregar chaves PIX",
-              description: "Não foi possível carregar suas chaves PIX. Tente novamente mais tarde.",
-              variant: "destructive",
-            });
-          } else {
-            // Transform the data from the database to match our PixKey type
-            const transformedKeys: PixKey[] = (data || []).map(item => ({
-              id: item.id,
-              user_id: item.user_id,
-              key_type: item.type || "",
-              type: item.type || "CPF",
-              key: item.key || "",
-              owner_name: item.name || "",
-              name: item.name || "",
-              isDefault: item.is_default || false,
-              is_default: item.is_default || false,
-              is_active: true,
-              created_at: item.created_at,
-              updated_at: item.updated_at,
-              bank_name: "Banco", // Default value since it's not in the database
-            }));
-            
-          }
-        }
-      } catch (error) {
-        console.error("Error fetching pix keys:", error);
-        toast({
-          title: "Erro ao carregar chaves PIX",
-          description: "Ocorreu um erro ao carregar suas chaves PIX. Tente novamente mais tarde.",
-          variant: "destructive",
-        });
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    fetchPixKeys();
-  }, [user, toast]);
-
-  const handleAddPixKey = async () => {
-    if (!user) return;
-
-    const newId = Date.now().toString();
-    
-    // Use the utility function to create a new PixKey object
-    const newPixKey = createDefaultPixKeyProperties(newId, user.id);
-    
-  };
-
   return (
-    <div className="container mx-auto py-10">
-      <Card>
-        <CardHeader>
-          <CardTitle>Configurações</CardTitle>
-          <CardDescription>Gerencie suas configurações de conta e chaves PIX.</CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-6">
-          <div>
-            <h3 className="text-xl font-semibold mb-4">Chaves PIX</h3>
-            {isLoading ? (
-              <p>Carregando chaves PIX...</p>
-            ) : (
-              <div className="space-y-4">
-                <PixKeysManager />
-                {/* Remove duplicate rendering of PIX keys since PixKeysManager already handles this */}
-              </div>
-            )}
-          </div>
-        </CardContent>
-      </Card>
+    <div className="container mx-auto py-6">
+      <h1 className="text-3xl font-bold tracking-tight mb-6">Configurações</h1>
+      
+      <Tabs defaultValue="personal" className="w-full">
+        <TabsList className="mb-6">
+          <TabsTrigger value="personal">Dados Pessoais</TabsTrigger>
+          <TabsTrigger value="pix">Chaves PIX</TabsTrigger>
+          <TabsTrigger value="notifications">Notificações</TabsTrigger>
+        </TabsList>
+        
+        <TabsContent value="personal">
+          <Card>
+            <CardHeader>
+              <CardTitle>Dados Pessoais</CardTitle>
+              <CardDescription>
+                Atualize suas informações pessoais
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <PersonalDataForm />
+            </CardContent>
+          </Card>
+        </TabsContent>
+        
+        <TabsContent value="pix">
+          <Card>
+            <CardHeader>
+              <CardTitle>Chaves PIX</CardTitle>
+              <CardDescription>
+                Gerencie suas chaves PIX para recebimento de pagamentos
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <PixKeysManager />
+            </CardContent>
+          </Card>
+        </TabsContent>
+        
+        <TabsContent value="notifications">
+          <Card>
+            <CardHeader>
+              <CardTitle>Preferências de Notificações</CardTitle>
+              <CardDescription>
+                Configure como deseja receber notificações do sistema
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <NotificationPreferences />
+            </CardContent>
+          </Card>
+        </TabsContent>
+      </Tabs>
     </div>
   );
 };

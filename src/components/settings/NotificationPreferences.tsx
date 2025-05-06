@@ -17,14 +17,6 @@ type NotificationPreference = {
   updated_at: string;
 };
 
-// Mock data for initial development until the table is created
-const defaultPreferences: Omit<NotificationPreference, 'id' | 'created_at' | 'updated_at'> = {
-  user_id: '',
-  payments_received: true,
-  payment_status_updates: true,
-  admin_messages: true,
-};
-
 export function NotificationPreferences() {
   const { user } = useAuth();
   const { toast } = useToast();
@@ -39,23 +31,68 @@ export function NotificationPreferences() {
       setIsLoading(true);
       
       try {
-        // For now, initialize with default preferences until the table is created
-        setPreferences({
-          id: `temp-${user.id}`,
-          user_id: user.id,
-          ...defaultPreferences,
-          created_at: new Date().toISOString(),
-          updated_at: new Date().toISOString(),
-        });
+        // Try to get existing preferences from the database
+        const { data, error } = await supabase
+          .from('notification_preferences')
+          .select('*')
+          .eq('user_id', user.id)
+          .maybeSingle();
         
-        // Note: The actual database query will be implemented once the notification_preferences table exists
+        if (error && error.code !== 'PGRST116') {
+          // PGRST116 means no rows returned which is fine for a new user
+          throw error;
+        }
         
+        if (data) {
+          setPreferences(data as NotificationPreference);
+        } else {
+          // If no preferences exist yet, create default ones
+          const defaultPreferences: Omit<NotificationPreference, 'id' | 'created_at' | 'updated_at'> = {
+            user_id: user.id,
+            payments_received: true,
+            payment_status_updates: true,
+            admin_messages: true,
+          };
+          
+          // Create new preference record
+          const { data: newData, error: insertError } = await supabase
+            .from('notification_preferences')
+            .insert(defaultPreferences)
+            .select()
+            .maybeSingle();
+            
+          if (insertError) throw insertError;
+          
+          if (newData) {
+            setPreferences(newData as NotificationPreference);
+          } else {
+            // Fallback to client-side preferences if database operation fails
+            setPreferences({
+              id: `temp-${user.id}`,
+              user_id: user.id,
+              ...defaultPreferences,
+              created_at: new Date().toISOString(),
+              updated_at: new Date().toISOString(),
+            });
+          }
+        }
       } catch (error) {
         console.error('Error fetching notification preferences:', error);
         toast({
           variant: "destructive",
           title: "Erro ao carregar preferências",
           description: "Não foi possível carregar suas preferências de notificação."
+        });
+        
+        // Use local preferences if there's an error
+        setPreferences({
+          id: `temp-${user.id}`,
+          user_id: user.id,
+          payments_received: true,
+          payment_status_updates: true,
+          admin_messages: true,
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString(),
         });
       } finally {
         setIsLoading(false);
@@ -76,10 +113,15 @@ export function NotificationPreferences() {
         [field]: value,
       });
       
-      // Note: The actual database update will be implemented once the notification_preferences table exists
-      // For now, just log the change
-      console.log(`Updated preference ${field} to ${value} for user ${user.id}`);
-      
+      // If it's not a temp id, update in the database
+      if (!preferences.id.startsWith('temp-')) {
+        const { error } = await supabase
+          .from('notification_preferences')
+          .update({ [field]: value })
+          .eq('id', preferences.id);
+          
+        if (error) throw error;
+      }
     } catch (error) {
       console.error('Error updating notification preference:', error);
       toast({
@@ -103,9 +145,21 @@ export function NotificationPreferences() {
     if (!preferences || !user) return;
     
     try {
-      // Note: The actual database update will be implemented once the notification_preferences table exists
-      // For now, just log the preferences
-      console.log('Saving preferences:', preferences);
+      // If it's a temp id, create a new record
+      if (preferences.id.startsWith('temp-')) {
+        const { payments_received, payment_status_updates, admin_messages } = preferences;
+        
+        const { error } = await supabase
+          .from('notification_preferences')
+          .insert({
+            user_id: user.id,
+            payments_received,
+            payment_status_updates,
+            admin_messages,
+          });
+          
+        if (error) throw error;
+      }
       
       toast({
         title: "Preferências salvas",

@@ -225,15 +225,18 @@ export function PixKeysManager() {
       
       const { data, error } = response;
       
-      if (error) throw error;
+      if (error) {
+        console.error("Error saving PIX key:", error);
+        throw error;
+      }
       
       // Update the key in the state with the new data from the server
-      setPixKeys(pixKeys.map(k => {
+      setPixKeys(prevKeys => prevKeys.map(k => {
         if (k.id === key.id) {
           return {
             ...k,
-            ...data?.[0],
-            id: data?.[0].id || k.id,
+            ...(data?.[0] || {}),
+            id: data?.[0]?.id || k.id,
             bank_name: k.bank_name, // Preserve bank_name for UI
           };
         }
