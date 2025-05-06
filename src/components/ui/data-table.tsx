@@ -34,9 +34,18 @@ export function DataTable<TData>({
       <Table>
         <TableHeader>
           <TableRow>
-            {columns.map((column) => (
-              <TableHead key={column.id || String(column.accessorKey)}>{String(column.header)}</TableHead>
-            ))}
+            {columns.map((column) => {
+              // Safe way to get column id
+              const columnId = typeof column.id === 'string' 
+                ? column.id 
+                : typeof column.accessorKey === 'string' 
+                ? column.accessorKey 
+                : String(column.header);
+              
+              return (
+                <TableHead key={columnId}>{String(column.header)}</TableHead>
+              );
+            })}
           </TableRow>
         </TableHeader>
         <TableBody>
@@ -49,15 +58,26 @@ export function DataTable<TData>({
           ) : data.length > 0 ? (
             data.map((row, rowIndex) => (
               <TableRow key={rowIndex}>
-                {columns.map((column) => (
-                  <TableCell key={`${rowIndex}-${column.id || String(column.accessorKey)}`}>
-                    {column.cell
-                      ? column.cell({ row: { original: row } })
-                      : column.accessorKey
-                      ? (row as any)[column.accessorKey]
-                      : null}
-                  </TableCell>
-                ))}
+                {columns.map((column) => {
+                  // Safe way to get column id
+                  const columnId = typeof column.id === 'string' 
+                    ? column.id 
+                    : typeof column.accessorKey === 'string' 
+                    ? column.accessorKey 
+                    : String(column.header);
+                    
+                  return (
+                    <TableCell key={`${rowIndex}-${columnId}`}>
+                      {column.cell 
+                        ? typeof column.cell === 'function'
+                          ? column.cell({ row: { original: row } })
+                          : null
+                        : typeof column.accessorKey === 'string' && column.accessorKey in row
+                        ? (row as any)[column.accessorKey]
+                        : null}
+                    </TableCell>
+                  );
+                })}
               </TableRow>
             ))
           ) : (

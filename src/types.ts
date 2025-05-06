@@ -1,3 +1,4 @@
+
 export enum UserRole {
   ADMIN = "ADMIN",
   CLIENT = "CLIENT",
@@ -66,6 +67,12 @@ export interface Payment {
     type: string;
     owner_name: string;
   };
+  // Add any missing fields from PaymentRequest that might be used
+  client?: {
+    id: string;
+    business_name: string;
+    email?: string;
+  };
 }
 
 // Types for partners
@@ -104,4 +111,69 @@ export interface Client {
   fee_plan_id?: string;
 }
 
-// Add other types as needed
+// Add necessary types that might be missing
+export interface PixKey {
+  id: string;
+  key: string;
+  key_type?: string;
+  type?: string;
+  client_id?: string;
+  user_id?: string;
+  created_at?: string;
+  updated_at?: string;
+  name?: string;
+  owner_name?: string;
+  isDefault?: boolean;
+  is_active?: boolean;
+  bank_name?: string;
+}
+
+// Add Sale type for reference
+export interface Sale {
+  id: string;
+  code: string;
+  date: string;
+  client_id: string;
+  gross_amount: number;
+  net_amount: number;
+  payment_method: PaymentMethod;
+  terminal: string;
+  processing_status?: string;
+  created_at: string;
+  updated_at: string;
+  partner_id?: string;
+  machine_id?: string;
+}
+
+// Add SalesChartData for reference
+export interface SalesChartData {
+  date: string;
+  amount: number;
+}
+
+// Add SalesFilterParams for reference
+export interface SalesFilterParams {
+  startDate?: string;
+  endDate?: string;
+  clientId?: string;
+  partnerId?: string;
+  paymentMethod?: string;
+  minAmount?: number;
+  maxAmount?: number;
+}
+
+// Add FilterValues for reference
+export interface FilterValues {
+  search?: string;
+  status?: string;
+  partnerId?: string;
+}
+
+// Add UserData for reference
+export interface UserData {
+  id: string;
+  name: string;
+  email: string;
+  role: UserRole;
+  created_at?: string;
+}

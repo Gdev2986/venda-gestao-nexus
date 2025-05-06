@@ -24,12 +24,15 @@ export interface PixKey {
   key: string;
   key_type: PixKeyType;
   type?: string; // Added for backward compatibility
-  client_id: string;
-  created_at: string;
-  updated_at: string;
+  client_id?: string;
+  user_id?: string;
+  created_at?: string;
+  updated_at?: string;
   name?: string; // Added for backward compatibility
   owner_name?: string; // Added for display purposes
   isDefault?: boolean; // Flag for default key
+  is_active?: boolean;
+  bank_name?: string;
 }
 
 export type PixKeyType = 'CPF' | 'CNPJ' | 'EMAIL' | 'PHONE' | 'EVP';
@@ -37,8 +40,20 @@ export type PixKeyType = 'CPF' | 'CNPJ' | 'EMAIL' | 'PHONE' | 'EVP';
 export interface Client {
   id: string;
   business_name: string;
-  document: string;
-  email?: string; // Added email property
+  document?: string;
+  email?: string;
+  phone?: string;
+  status?: string;
+  balance?: number;
+  partner_id?: string;
+  created_at?: string;
+  updated_at?: string;
+  contact_name?: string;
+  address?: string;
+  city?: string;
+  state?: string;
+  zip?: string;
+  fee_plan_id?: string;
 }
 
 // Add the missing PaymentData export that uses the PaymentRequest interface

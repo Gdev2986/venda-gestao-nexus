@@ -1,3 +1,4 @@
+
 import { Payment, PaymentStatus } from "@/types";
 import { PaymentRequest } from "@/types/payment.types";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -111,6 +112,15 @@ export const PaymentDetailView = ({
     );
   }
 
+  // Get client name safely from either type
+  const getClientName = () => {
+    if ('client' in payment && payment.client && payment.client.business_name) {
+      return payment.client.business_name;
+    }
+    
+    return "Cliente não especificado";
+  };
+
   return (
     <Card>
       <CardHeader className="flex flex-row items-center justify-between">
@@ -123,7 +133,7 @@ export const PaymentDetailView = ({
             <div>
               <h3 className="text-sm font-medium text-muted-foreground mb-1">Cliente</h3>
               <p className="text-lg font-medium">
-                {'client' in payment && payment.client ? payment.client.business_name : payment.client_name || "N/A"}
+                {getClientName()}
               </p>
             </div>
             
