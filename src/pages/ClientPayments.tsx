@@ -45,10 +45,9 @@ const ClientPayments = () => {
         clientBalance={clientBalance}
         pixKeys={pixKeys}
         isLoadingPixKeys={isLoadingPixKeys}
-        onRequestPayment={(amount, description, pixKeyId, documentFile) => {
-          // Função adaptadora para lidar com compatibilidade de tipos
-          const numAmount = typeof amount === 'string' ? parseFloat(amount) : amount;
-          return handleRequestPayment(numAmount, pixKeyId, description);
+        onRequestPayment={(amount, description, pixKeyId) => {
+          // Adapt function to match the expected signature (3 parameters)
+          return handleRequestPayment(parseFloat(amount), pixKeyId, description);
         }}
       />
     </div>

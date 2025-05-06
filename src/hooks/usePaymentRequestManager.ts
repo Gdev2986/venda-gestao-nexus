@@ -3,6 +3,7 @@ import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { Payment, PaymentStatus, PaymentType, PixKey } from "@/types";
 import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/contexts/AuthContext";
 
 export const usePaymentRequestManager = (
   pixKeys: PixKey[],
@@ -11,6 +12,7 @@ export const usePaymentRequestManager = (
 ) => {
   const { toast } = useToast();
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const { user } = useAuth();
 
   // Handler para solicitar um pagamento
   const handleRequestPayment = async (
@@ -23,6 +25,15 @@ export const usePaymentRequestManager = (
         variant: "destructive",
         title: "Chave PIX não selecionada",
         description: "Por favor, selecione uma chave PIX para continuar.",
+      });
+      return;
+    }
+
+    if (!user) {
+      toast({
+        variant: "destructive",
+        title: "Usuário não autenticado",
+        description: "Por favor, faça login para continuar.",
       });
       return;
     }
@@ -40,20 +51,41 @@ export const usePaymentRequestManager = (
     }
     
     try {
+      console.log("Attempting to create payment request with:", {
+        amount: parsedAmount,
+        pixKeyId,
+        user
+      });
+      
+      // Get the client ID for the current user
+      const { data: clientData, error: clientError } = await supabase
+        .from('user_client_access')
+        .select('client_id')
+        .eq('user_id', user.id)
+        .limit(1)
+        .single();
+        
+      if (clientError || !clientData) {
+        console.error("Error fetching client ID:", clientError);
+        throw new Error("Não foi possível encontrar seu ID de cliente");
+      }
+      
       // Criar solicitação de pagamento no Supabase
-      // A notificação para os administradores será automaticamente gerada pelo trigger SQL
       const { data, error } = await supabase
         .from('payment_requests')
         .insert({
           amount: parsedAmount,
           status: PaymentStatus.PENDING,
           pix_key_id: pixKeyId,
-          client_id: (await supabase.from('clients').select('id').limit(1)).data?.[0]?.id,
+          client_id: clientData.client_id,
           description: description || 'Solicitação de pagamento via PIX'
         })
         .select();
       
-      if (error) throw error;
+      if (error) {
+        console.error("Erro ao criar solicitação de pagamento:", error);
+        throw error;
+      }
 
       // Criar um novo objeto de solicitação de pagamento para a UI
       const newPaymentRequest: Payment = {
@@ -62,7 +94,7 @@ export const usePaymentRequestManager = (
         status: PaymentStatus.PENDING,
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString(),
-        client_id: "client-1", // Em um aplicativo real, isso seria o ID do cliente atual
+        client_id: clientData.client_id,
         description: description || `Solicitação de pagamento via PIX`,
         payment_type: PaymentType.PIX,
         pix_key: {
@@ -84,6 +116,7 @@ export const usePaymentRequestManager = (
       
       // Fechar o diálogo
       setIsDialogOpen(false);
+      return true;
     } catch (err) {
       console.error('Erro ao criar solicitação de pagamento:', err);
       toast({
@@ -91,6 +124,7 @@ export const usePaymentRequestManager = (
         title: "Erro ao criar solicitação",
         description: "Não foi possível criar a solicitação de pagamento."
       });
+      return false;
     }
   };
 

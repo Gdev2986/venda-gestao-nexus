@@ -7,8 +7,11 @@ import { BalanceCards } from "@/components/payments/BalanceCards";
 import { PaymentHistoryCard } from "@/components/payments/PaymentHistoryCard";
 import { usePaymentSubscription } from "@/hooks/usePaymentSubscription";
 import { useEffect } from "react";
+import { useAuth } from "@/contexts/AuthContext";
 
 const UserPayments = () => {
+  const { user } = useAuth();
+  
   const {
     isLoading,
     clientBalance,
@@ -22,13 +25,18 @@ const UserPayments = () => {
   } = usePaymentRequests();
 
   // Set up real-time subscription for client-specific payment updates
-  // Using a mock client ID for demo purposes - in real app, get from auth context
-  const clientId = "client-id"; // In a real implementation, this would come from auth context
+  // Get client ID from the authenticated user context
+  const clientId = user?.id; // In a real implementation, this should be properly mapped to client_id
   
   usePaymentSubscription(loadPaymentRequests, { 
     notifyUser: true, 
     filterByClientId: clientId 
   });
+  
+  // Log some debugging info
+  useEffect(() => {
+    console.log("Current user role:", user?.role);
+  }, [user]);
   
   return (
     <div className="space-y-6">

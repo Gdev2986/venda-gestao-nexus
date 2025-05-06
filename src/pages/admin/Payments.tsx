@@ -48,37 +48,6 @@ const AdminPayments = () => {
     notifyUser: true 
   });
 
-  // Listen for notifications from the database
-  useEffect(() => {
-    const notificationsChannel = supabase
-      .channel('notifications_admin')
-      .on(
-        'postgres_changes',
-        {
-          event: 'INSERT',
-          schema: 'public',
-          table: 'notifications',
-          filter: "type=eq.PAYMENT_REQUEST"
-        },
-        (payload) => {
-          console.log('New notification received:', payload);
-          
-          toast({
-            title: payload.new.title || "Nova solicitação de pagamento",
-            description: payload.new.message || "Um cliente enviou uma nova solicitação de pagamento"
-          });
-          
-          // Refresh payment requests
-          refreshPayments();
-        }
-      )
-      .subscribe();
-
-    return () => {
-      supabase.removeChannel(notificationsChannel);
-    };
-  }, [toast, refreshPayments]);
-
   // Handle filter changes
   const handleFilterChange = (newStatusFilter: PaymentStatus | "ALL", newSearchTerm: string) => {
     setStatusFilter(newStatusFilter);
@@ -149,6 +118,37 @@ const AdminPayments = () => {
   const columns = createPaymentColumns({
     onPaymentAction: handlePaymentAction
   });
+
+  // Listen for notifications from the database
+  useEffect(() => {
+    const notificationsChannel = supabase
+      .channel('notifications_admin')
+      .on(
+        'postgres_changes',
+        {
+          event: 'INSERT',
+          schema: 'public',
+          table: 'notifications',
+          filter: "type=eq.PAYMENT_REQUEST"
+        },
+        (payload) => {
+          console.log('New notification received:', payload);
+          
+          toast({
+            title: payload.new.title || "Nova solicitação de pagamento",
+            description: payload.new.message || "Um cliente enviou uma nova solicitação de pagamento"
+          });
+          
+          // Refresh payment requests
+          refreshPayments();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(notificationsChannel);
+    };
+  }, [toast, refreshPayments]);
 
   return (
     <>
