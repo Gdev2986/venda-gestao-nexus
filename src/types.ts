@@ -1,4 +1,3 @@
-
 export enum UserRole {
   CLIENT = "CLIENT",
   ADMIN = "ADMIN",
@@ -24,6 +23,14 @@ export enum PaymentMethod {
   CREDIT = "CREDIT",
   DEBIT = "DEBIT",
   PIX = "PIX",
+}
+
+// Add the missing PaymentRequestStatus enum
+export enum PaymentRequestStatus {
+  PENDING = "PENDING",
+  APPROVED = "APPROVED",
+  REJECTED = "REJECTED",
+  CANCELLED = "CANCELLED",
 }
 
 export type PixKey = {

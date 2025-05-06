@@ -1,3 +1,4 @@
+
 import { Routes, Route, useLocation, Navigate } from "react-router-dom";
 import { PATHS } from "./routes/paths";
 import { useEffect } from "react";
@@ -29,7 +30,8 @@ import AdminClients from "./pages/admin/Clients";
 import AdminSales from "./pages/admin/Sales";
 import AdminPartners from "./pages/admin/Partners";
 import AdminPayments from "./pages/admin/Payments";
-import AdminSupport from "./pages/admin/Support"; // Import the new Admin Support page
+import AdminSupport from "./pages/admin/Support";
+import AdminSettings from "./pages/admin/Settings"; // Import the new Admin Settings page
 
 // Clients
 import Clients from "./pages/clients/Clients";
@@ -246,7 +248,7 @@ function App() {
             } 
           />
           
-          <Route path={PATHS.ADMIN.SETTINGS} element={<Settings />} />
+          <Route path={PATHS.ADMIN.SETTINGS} element={<AdminSettings />} />
           
           <Route 
             path={PATHS.ADMIN.USER_MANAGEMENT} 
