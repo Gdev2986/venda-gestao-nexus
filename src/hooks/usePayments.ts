@@ -1,3 +1,4 @@
+
 import { useCallback, useState, useEffect } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { 
@@ -35,11 +36,11 @@ export const usePayments = (options: UsePaymentsOptions = {}): UsePaymentsResult
     setError(null);
     
     try {
-      const formattedData = await fetchPaymentsData(statusFilter, searchTerm);
+      const data = await fetchPaymentsData(statusFilter, searchTerm);
       
-      setPayments(formattedData);
+      setPayments(data);
       // Calculate pagination
-      setTotalPages(Math.ceil(formattedData.length / pageSize));
+      setTotalPages(Math.ceil(data.length / pageSize));
     } catch (err) {
       setError(err as Error);
       toast({

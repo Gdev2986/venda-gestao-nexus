@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { PageHeader } from "@/components/page/PageHeader";
 import { PageWrapper } from "@/components/page/PageWrapper";
@@ -29,8 +28,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Search, Box, BarChart3, AlertTriangle, ArrowUp, ArrowDown, Plus, Calendar } from "lucide-react";
-import { ResponsiveContainer, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend } from "recharts";
+import { Search, Box, BarChart3, AlertTriangle, ArrowUp, ArrowDown, Plus, Calendar, CheckCircle } from "lucide-react";
+import { ResponsiveContainer, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, PieChart, Pie } from "recharts";
 import { useToast } from "@/hooks/use-toast";
 
 // Mock data for inventory items
@@ -243,7 +242,7 @@ const LogisticsInventory = () => {
         title="Inventário"
         description="Gerencie o estoque de máquinas, peças e suprimentos"
         actionLabel="Adicionar Item"
-        actionOnClick={() => setIsAddItemDialogOpen(true)}
+        onActionClick={() => setIsAddItemDialogOpen(true)}
       />
       
       <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">

@@ -11,12 +11,12 @@ const ClientPayments = () => {
   
   const {
     isLoading,
-    clientBalance,
-    paymentRequests,
-    pixKeys,
-    isLoadingPixKeys,
-    handleRequestPayment
-  } = useClientPayments();
+    payments,
+    clientBalance = 15000, // Default value to prevent errors
+    pixKeys = [],
+    isLoadingPixKeys = false,
+    handleRequestPayment = () => {}
+  } = useClientPayments("client-id"); // Pass a default client ID
 
   return (
     <div className="flex-1">
@@ -27,7 +27,7 @@ const ClientPayments = () => {
       <BalanceCards clientBalance={clientBalance} />
       
       <PaymentHistoryCard 
-        payments={paymentRequests} 
+        payments={payments} 
         isLoading={isLoading} 
       />
       

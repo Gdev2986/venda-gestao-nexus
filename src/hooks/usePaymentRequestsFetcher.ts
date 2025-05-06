@@ -4,6 +4,7 @@ import { useToast } from "@/hooks/use-toast";
 import { Payment, PaymentStatus, PaymentType } from "@/types";
 import { supabase } from "@/integrations/supabase/client";
 import { getMockPaymentRequests } from "@/utils/mock-payment-data";
+import { formatPaymentRequest } from "@/services/payment.service";
 
 export const usePaymentRequestsFetcher = (initialBalance: number = 15000) => {
   const { toast } = useToast();
@@ -36,27 +37,8 @@ export const usePaymentRequestsFetcher = (initialBalance: number = 15000) => {
       if (error) throw error;
       
       if (data && data.length > 0) {
-        // Map the data to our Payment interface
-        const formattedData: Payment[] = data.map((item) => ({
-          id: item.id,
-          amount: item.amount,
-          status: item.status as PaymentStatus,
-          created_at: item.created_at,
-          updated_at: item.updated_at,
-          client_id: item.client_id,
-          description: item.description || "",
-          payment_type: PaymentType.PIX,
-          receipt_url: item.receipt_url,
-          rejection_reason: item.rejection_reason || null,
-          approved_at: item.approved_at,
-          pix_key: item.pix_key ? {
-            id: item.pix_key.id,
-            key: item.pix_key.key,
-            type: item.pix_key.type,
-            owner_name: item.pix_key.name
-          } : undefined
-        }));
-        
+        // Map the data to our Payment interface using the service function
+        const formattedData = data.map(item => formatPaymentRequest(item));
         setPaymentRequests(formattedData);
       } else {
         // Use mock data if no real data is available
