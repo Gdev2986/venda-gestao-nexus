@@ -13,7 +13,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
 
 const LogisticsDashboard = () => {
-  const [dateRange, setDateRange] = useState({
+  const [dateRange, setDateRange] = useState<{ from: Date; to?: Date }>({
     from: new Date(new Date().setDate(new Date().getDate() - 30)),
     to: new Date()
   });
@@ -28,6 +28,11 @@ const LogisticsDashboard = () => {
       description: "Os dados da página foram atualizados com sucesso."
     });
   };
+
+  // Handle date range changes with proper typing
+  const handleDateRangeChange = (newRange: { from: Date; to?: Date }) => {
+    setDateRange(newRange);
+  };
   
   return (
     <div className="space-y-6">
@@ -39,7 +44,7 @@ const LogisticsDashboard = () => {
         <div className="flex items-center gap-2">
           <DateRangePicker 
             dateRange={dateRange}
-            onDateRangeChange={setDateRange}
+            onDateRangeChange={handleDateRangeChange}
           />
           <Button variant="outline" size="icon" onClick={handleRefresh}>
             <RefreshCw className="h-4 w-4" />
