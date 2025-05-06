@@ -10,7 +10,7 @@ import { Badge } from "@/components/ui/badge";
 interface PartnersTableProps {
   partners: Partner[];
   isLoading: boolean;
-  onView: (partner: Partner) => void;
+  onView?: (partner: Partner) => void;
   onEdit: (partner: Partner) => void;
   onDelete: (partner: Partner) => void;
 }
@@ -95,14 +95,16 @@ const PartnersTable = ({
                   </TableCell>
                   <TableCell className="text-right">
                     <div className="flex justify-end gap-2">
-                      <Button 
-                        variant="ghost" 
-                        size="icon" 
-                        onClick={() => onView(partner)}
-                        aria-label="Ver detalhes"
-                      >
-                        <EyeIcon className="h-4 w-4" />
-                      </Button>
+                      {onView && (
+                        <Button 
+                          variant="ghost" 
+                          size="icon" 
+                          onClick={() => onView(partner)}
+                          aria-label="Ver detalhes"
+                        >
+                          <EyeIcon className="h-4 w-4" />
+                        </Button>
+                      )}
                       <Button 
                         variant="ghost" 
                         size="icon" 

@@ -17,8 +17,8 @@ export function PartnersTableCard({
   partners, 
   isLoading, 
   error, 
-  onEdit: onEditPartner, 
-  onDelete: onDeletePartner 
+  onEdit, 
+  onDelete
 }: PartnersTableCardProps) {
   return (
     <Card>
@@ -38,8 +38,8 @@ export function PartnersTableCard({
           <PartnersTable 
             partners={partners} 
             isLoading={isLoading} 
-            onEditPartner={onEditPartner}
-            onDeletePartner={(partner) => onDeletePartner(partner.id)}
+            onEdit={onEdit}
+            onDelete={(partner) => onDelete(partner.id)}
           />
         )}
       </CardContent>

@@ -1,336 +1,530 @@
-
 import { useState } from "react";
 import { PageHeader } from "@/components/page/PageHeader";
-import { PageWrapper } from "@/components/page/PageWrapper";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { DataTable } from "@/components/ui/data-table";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { 
-  Search, 
-  RefreshCw, 
-  Package, 
-  PlusCircle,
-  Filter,
-  ArrowUpDown,
-  History,
-  Truck
-} from "lucide-react";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
+  Select, 
+  SelectContent, 
+  SelectItem, 
+  SelectTrigger, 
+  SelectValue 
 } from "@/components/ui/select";
+import { 
+  Table, 
+  TableBody, 
+  TableCell, 
+  TableHead, 
+  TableHeader, 
+  TableRow 
+} from "@/components/ui/table";
+import { 
+  Dialog, 
+  DialogContent, 
+  DialogDescription, 
+  DialogFooter, 
+  DialogHeader, 
+  DialogTitle 
+} from "@/components/ui/dialog";
+import { 
+  Form, 
+  FormControl, 
+  FormField, 
+  FormItem, 
+  FormLabel, 
+  FormMessage 
+} from "@/components/ui/form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useForm } from "react-hook-form";
+import * as z from "zod";
+import { Search, Plus, Filter, ArrowUpDown } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { MachineData } from "@/types";
+
+// Sample machine data
+const sampleMachines: MachineData[] = [
+  {
+    id: "1",
+    name: "Terminal POS A10",
+    serial_number: "SN12345678",
+    model: "A10",
+    status: "available",
+    created_at: "2023-01-15T10:30:00Z"
+  },
+  {
+    id: "2",
+    name: "Terminal POS B20",
+    serial_number: "SN23456789",
+    model: "B20",
+    status: "allocated",
+    created_at: "2023-02-20T14:15:00Z"
+  },
+  {
+    id: "3",
+    name: "Terminal POS A10",
+    serial_number: "SN34567890",
+    model: "A10",
+    status: "maintenance",
+    created_at: "2023-03-05T09:45:00Z"
+  },
+  {
+    id: "4",
+    name: "Terminal POS C30",
+    serial_number: "SN45678901",
+    model: "C30",
+    status: "available",
+    created_at: "2023-04-10T16:20:00Z"
+  },
+  {
+    id: "5",
+    name: "Terminal POS B20",
+    serial_number: "SN56789012",
+    model: "B20",
+    status: "defective",
+    created_at: "2023-05-22T11:10:00Z"
+  }
+];
+
+// Form schema for adding/editing machines
+const machineFormSchema = z.object({
+  name: z.string().min(2, {
+    message: "Nome deve ter pelo menos 2 caracteres.",
+  }),
+  serial_number: z.string().min(5, {
+    message: "Número de série deve ter pelo menos 5 caracteres.",
+  }),
+  model: z.string().min(1, {
+    message: "Modelo é obrigatório.",
+  }),
+  status: z.enum(["available", "allocated", "maintenance", "defective"], {
+    required_error: "Status é obrigatório.",
+  }),
+});
+
+type MachineFormValues = z.infer<typeof machineFormSchema>;
 
 const MachineStock = () => {
+  const [machines, setMachines] = useState<MachineData[]>(sampleMachines);
+  const [filteredMachines, setFilteredMachines] = useState<MachineData[]>(sampleMachines);
   const [searchTerm, setSearchTerm] = useState("");
-  const [modelFilter, setModelFilter] = useState("all");
   const [statusFilter, setStatusFilter] = useState("all");
-  const [locationFilter, setLocationFilter] = useState("all");
-  const [isLoading, setIsLoading] = useState(false);
+  const [modelFilter, setModelFilter] = useState("all");
+  const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const [selectedMachine, setSelectedMachine] = useState<MachineData | null>(null);
   const { toast } = useToast();
 
-  // Mock machine stock data
-  const machineStockData = [
-    {
-      id: "MS001",
-      model: "POS-X1",
-      serial: "SER293847",
+  // Form for adding new machines
+  const form = useForm<MachineFormValues>({
+    resolver: zodResolver(machineFormSchema),
+    defaultValues: {
+      name: "",
+      serial_number: "",
+      model: "",
       status: "available",
-      location: "Depósito Central",
-      arrivalDate: "2025-03-30T14:30:00",
-      lastChecked: "2025-04-30T14:30:00"
     },
-    {
-      id: "MS002",
-      model: "POS-X1",
-      serial: "SER293848",
-      status: "reserved",
-      location: "Depósito Central",
-      arrivalDate: "2025-03-30T14:30:00",
-      lastChecked: "2025-05-01T10:15:00"
-    },
-    {
-      id: "MS003",
-      model: "POS-X2",
-      serial: "SER345678",
-      status: "in_maintenance",
-      location: "Centro de Manutenção",
-      arrivalDate: "2025-02-15T09:30:00",
-      lastChecked: "2025-04-25T09:20:00"
-    },
-    {
-      id: "MS004",
-      model: "POS-X3",
-      serial: "SER456789",
-      status: "available",
-      location: "Depósito Sul",
-      arrivalDate: "2025-04-15T11:30:00",
-      lastChecked: "2025-05-02T16:40:00"
-    },
-    {
-      id: "MS005",
-      model: "POS-X2",
-      serial: "SER345679",
-      status: "reserved",
-      location: "Depósito Norte",
-      arrivalDate: "2025-03-20T10:15:00",
-      lastChecked: "2025-05-01T11:30:00"
-    },
-    {
-      id: "MS006",
-      model: "POS-X1",
-      serial: "SER293849",
-      status: "available",
-      location: "Depósito Central",
-      arrivalDate: "2025-04-02T09:45:00",
-      lastChecked: "2025-05-02T14:30:00"
-    },
-    {
-      id: "MS007",
-      model: "POS-X3",
-      serial: "SER456790",
-      status: "in_transit",
-      location: "Em Trânsito",
-      arrivalDate: "2025-04-25T14:30:00",
-      lastChecked: "2025-05-03T10:15:00"
-    },
-    {
-      id: "MS008",
-      model: "POS-X2",
-      serial: "SER345680",
-      status: "available",
-      location: "Depósito Central",
-      arrivalDate: "2025-03-10T11:45:00",
-      lastChecked: "2025-04-28T09:30:00"
-    }
-  ];
-
-  // Get unique models and locations for filters
-  const models = [...new Set(machineStockData.map(item => item.model))];
-  const locations = [...new Set(machineStockData.map(item => item.location))];
-
-  // Filter data based on search term and filters
-  const filteredMachines = machineStockData.filter(machine => {
-    const matchesSearch = 
-      machine.model.toLowerCase().includes(searchTerm.toLowerCase()) || 
-      machine.serial.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      machine.id.toLowerCase().includes(searchTerm.toLowerCase());
-    
-    const matchesModel = modelFilter === "all" || machine.model === modelFilter;
-    const matchesStatus = statusFilter === "all" || machine.status === statusFilter;
-    const matchesLocation = locationFilter === "all" || machine.location === locationFilter;
-    
-    return matchesSearch && matchesModel && matchesStatus && matchesLocation;
   });
 
-  // Helper for status badges
-  const getStatusBadge = (status: string) => {
+  // Form for editing machines
+  const editForm = useForm<MachineFormValues>({
+    resolver: zodResolver(machineFormSchema),
+    defaultValues: {
+      name: selectedMachine?.name || "",
+      serial_number: selectedMachine?.serial_number || "",
+      model: selectedMachine?.model || "",
+      status: (selectedMachine?.status as "available" | "allocated" | "maintenance" | "defective") || "available",
+    },
+  });
+
+  // Reset edit form when selected machine changes
+  React.useEffect(() => {
+    if (selectedMachine) {
+      editForm.reset({
+        name: selectedMachine.name,
+        serial_number: selectedMachine.serial_number,
+        model: selectedMachine.model,
+        status: selectedMachine.status as "available" | "allocated" | "maintenance" | "defective",
+      });
+    }
+  }, [selectedMachine, editForm]);
+
+  // Filter machines based on search term and filters
+  const filterMachines = () => {
+    let filtered = [...machines];
+    
+    if (searchTerm) {
+      filtered = filtered.filter(
+        machine => 
+          machine.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          machine.serial_number.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          machine.model.toLowerCase().includes(searchTerm.toLowerCase())
+      );
+    }
+    
+    if (statusFilter !== "all") {
+      filtered = filtered.filter(machine => machine.status === statusFilter);
+    }
+    
+    if (modelFilter !== "all") {
+      filtered = filtered.filter(machine => machine.model === modelFilter);
+    }
+    
+    setFilteredMachines(filtered);
+  };
+
+  // Apply filters when dependencies change
+  React.useEffect(() => {
+    filterMachines();
+  }, [searchTerm, statusFilter, modelFilter, machines]);
+
+  // Handle search input change
+  const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setSearchTerm(e.target.value);
+  };
+
+  // Handle adding a new machine
+  const onAddMachine = (data: MachineFormValues) => {
+    const newMachine: MachineData = {
+      id: `${machines.length + 1}`,
+      name: data.name,
+      serial_number: data.serial_number,
+      model: data.model,
+      status: data.status,
+      created_at: new Date().toISOString(),
+    };
+    
+    setMachines([...machines, newMachine]);
+    setIsAddDialogOpen(false);
+    form.reset();
+    
+    toast({
+      title: "Máquina adicionada",
+      description: "A máquina foi adicionada com sucesso ao estoque.",
+    });
+  };
+
+  // Handle editing a machine
+  const onEditMachine = (data: MachineFormValues) => {
+    if (!selectedMachine) return;
+    
+    const updatedMachines = machines.map(machine => 
+      machine.id === selectedMachine.id 
+        ? { ...machine, ...data }
+        : machine
+    );
+    
+    setMachines(updatedMachines);
+    setIsEditDialogOpen(false);
+    setSelectedMachine(null);
+    
+    toast({
+      title: "Máquina atualizada",
+      description: "Os dados da máquina foram atualizados com sucesso.",
+    });
+  };
+
+  // Get unique models for filter dropdown
+  const uniqueModels = Array.from(new Set(machines.map(machine => machine.model)));
+
+  // Get status label based on status code
+  const getStatusLabel = (status: string) => {
     switch (status) {
       case "available":
-        return <Badge variant="outline" className="bg-green-100 text-green-800 hover:bg-green-100">Disponível</Badge>;
-      case "reserved":
-        return <Badge variant="outline" className="bg-blue-100 text-blue-800 hover:bg-blue-100">Reservado</Badge>;
-      case "in_maintenance":
-        return <Badge variant="outline" className="bg-yellow-100 text-yellow-800 hover:bg-yellow-100">Em Manutenção</Badge>;
-      case "in_transit":
-        return <Badge variant="outline" className="bg-purple-100 text-purple-800 hover:bg-purple-100">Em Trânsito</Badge>;
+        return "Disponível";
+      case "allocated":
+        return "Alocada";
+      case "maintenance":
+        return "Em Manutenção";
+      case "defective":
+        return "Defeituosa";
       default:
-        return <Badge variant="outline">Desconhecido</Badge>;
+        return status;
     }
   };
 
-  // Handle refresh data
-  const handleRefresh = () => {
-    setIsLoading(true);
-    setTimeout(() => {
-      setIsLoading(false);
-      toast({
-        title: "Dados atualizados",
-        description: "Os dados de estoque foram atualizados com sucesso.",
-      });
-    }, 1000);
+  // Get status badge color based on status code
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case "available":
+        return "bg-green-100 text-green-800";
+      case "allocated":
+        return "bg-blue-100 text-blue-800";
+      case "maintenance":
+        return "bg-yellow-100 text-yellow-800";
+      case "defective":
+        return "bg-red-100 text-red-800";
+      default:
+        return "bg-gray-100 text-gray-800";
+    }
   };
 
-  const columns = [
-    {
-      id: "id",
-      header: "ID",
-      accessorKey: "id",
-    },
-    {
-      id: "model",
-      header: "Modelo",
-      accessorKey: "model",
-    },
-    {
-      id: "serial",
-      header: "Número Serial",
-      accessorKey: "serial",
-    },
-    {
-      id: "status",
-      header: "Status",
-      cell: ({ row }: { row: { original: any } }) => getStatusBadge(row.original.status),
-    },
-    {
-      id: "location",
-      header: "Localização",
-      accessorKey: "location",
-    },
-    {
-      id: "arrivalDate",
-      header: "Data de Chegada",
-      cell: ({ row }: { row: { original: any } }) => new Date(row.original.arrivalDate).toLocaleDateString('pt-BR'),
-    },
-    {
-      id: "lastChecked",
-      header: "Última Verificação",
-      cell: ({ row }: { row: { original: any } }) => new Date(row.original.lastChecked).toLocaleDateString('pt-BR'),
-    },
-    {
-      id: "actions",
-      header: "Ações",
-      cell: ({ row }: { row: { original: any } }) => (
-        <div className="flex gap-2">
-          <Button variant="ghost" size="sm" onClick={() => toast({
-            title: "Detalhes",
-            description: "Funcionalidade em desenvolvimento",
-          })}>
-            Detalhes
-          </Button>
-          <Button variant="outline" size="sm" onClick={() => toast({
-            title: "Transferir",
-            description: "Funcionalidade em desenvolvimento",
-          })}>
-            <Truck className="h-3.5 w-3.5 mr-1" />
-            Transferir
-          </Button>
-        </div>
-      ),
-    },
-  ];
-
   return (
-    <>
+    <div className="space-y-6">
       <PageHeader 
         title="Estoque de Máquinas" 
-        description="Gerenciamento do estoque de máquinas disponíveis"
+        description="Gerencie o estoque de máquinas disponíveis"
         actionLabel="Adicionar Máquina"
-        onActionClick={() => toast({
-          title: "Funcionalidade em desenvolvimento",
-          description: "Esta funcionalidade estará disponível em breve."
-        })}
+        actionOnClick={() => setIsAddDialogOpen(true)}
       />
       
-      <PageWrapper>
-        <Card className="mb-6">
-          <CardHeader className="pb-3">
-            <CardTitle>Filtros</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="flex flex-col sm:flex-row gap-4">
-              <div className="flex-1 relative">
-                <Search className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
-                <Input
-                  placeholder="Buscar por modelo, serial ou ID"
-                  className="pl-9"
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                />
-              </div>
-              
-              <div className="w-full sm:w-40">
-                <Select defaultValue={modelFilter} onValueChange={setModelFilter}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Modelo" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">Todos</SelectItem>
-                    {models.map(model => (
-                      <SelectItem key={model} value={model}>{model}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-              
-              <div className="w-full sm:w-40">
-                <Select defaultValue={statusFilter} onValueChange={setStatusFilter}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Status" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">Todos</SelectItem>
-                    <SelectItem value="available">Disponível</SelectItem>
-                    <SelectItem value="reserved">Reservado</SelectItem>
-                    <SelectItem value="in_maintenance">Em Manutenção</SelectItem>
-                    <SelectItem value="in_transit">Em Trânsito</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              
-              <div className="w-full sm:w-52">
-                <Select defaultValue={locationFilter} onValueChange={setLocationFilter}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Localização" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">Todas</SelectItem>
-                    {locations.map(location => (
-                      <SelectItem key={location} value={location}>{location}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-              
-              <Button 
-                variant="outline" 
-                onClick={handleRefresh}
-                disabled={isLoading}
-              >
-                <RefreshCw className={`h-4 w-4 mr-2 ${isLoading ? 'animate-spin' : ''}`} />
-                Atualizar
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader>
-            <div className="flex justify-between items-center">
-              <CardTitle>Máquinas em Estoque</CardTitle>
-              <div className="flex gap-2">
-                <Button variant="outline" size="sm" onClick={() => toast({
-                  title: "Funcionalidade em desenvolvimento",
-                  description: "Esta funcionalidade estará disponível em breve."
-                })}>
-                  <History className="h-4 w-4 mr-2" />
-                  Histórico
+      <div className="flex flex-col md:flex-row gap-4">
+        <div className="relative flex-1">
+          <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+          <Input
+            placeholder="Buscar por nome, número de série ou modelo..."
+            className="pl-8 bg-background"
+            value={searchTerm}
+            onChange={handleSearchChange}
+          />
+        </div>
+        
+        <Select value={statusFilter} onValueChange={setStatusFilter}>
+          <SelectTrigger className="w-[180px]">
+            <SelectValue placeholder="Filtrar por status" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">Todos os status</SelectItem>
+            <SelectItem value="available">Disponível</SelectItem>
+            <SelectItem value="allocated">Alocada</SelectItem>
+            <SelectItem value="maintenance">Em Manutenção</SelectItem>
+            <SelectItem value="defective">Defeituosa</SelectItem>
+          </SelectContent>
+        </Select>
+        
+        <Select value={modelFilter} onValueChange={setModelFilter}>
+          <SelectTrigger className="w-[180px]">
+            <SelectValue placeholder="Filtrar por modelo" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">Todos os modelos</SelectItem>
+            {uniqueModels.map(model => (
+              <SelectItem key={model} value={model}>{model}</SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </div>
+      
+      <Card>
+        <CardHeader>
+          <CardTitle>Máquinas em Estoque</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Nome</TableHead>
+                <TableHead>Número de Série</TableHead>
+                <TableHead>Modelo</TableHead>
+                <TableHead>Status</TableHead>
+                <TableHead className="text-right">Ações</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {filteredMachines.length === 0 ? (
+                <TableRow>
+                  <TableCell colSpan={5} className="text-center py-10 text-muted-foreground">
+                    Nenhuma máquina encontrada.
+                  </TableCell>
+                </TableRow>
+              ) : (
+                filteredMachines.map((machine) => (
+                  <TableRow key={machine.id}>
+                    <TableCell className="font-medium">{machine.name}</TableCell>
+                    <TableCell>{machine.serial_number}</TableCell>
+                    <TableCell>{machine.model}</TableCell>
+                    <TableCell>
+                      <span className={`inline-flex items-center rounded-full px-2 py-1 text-xs font-medium ${getStatusColor(machine.status)}`}>
+                        {getStatusLabel(machine.status)}
+                      </span>
+                    </TableCell>
+                    <TableCell className="text-right">
+                      <Button 
+                        variant="ghost" 
+                        size="sm" 
+                        onClick={() => {
+                          setSelectedMachine(machine);
+                          setIsEditDialogOpen(true);
+                        }}
+                      >
+                        Editar
+                      </Button>
+                    </TableCell>
+                  </TableRow>
+                ))
+              )}
+            </TableBody>
+          </Table>
+        </CardContent>
+      </Card>
+      
+      {/* Add Machine Dialog */}
+      <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
+        <DialogContent className="sm:max-w-[425px]">
+          <DialogHeader>
+            <DialogTitle>Adicionar Nova Máquina</DialogTitle>
+            <DialogDescription>
+              Preencha os detalhes da nova máquina a ser adicionada ao estoque.
+            </DialogDescription>
+          </DialogHeader>
+          <Form {...form}>
+            <form onSubmit={form.handleSubmit(onAddMachine)} className="space-y-4">
+              <FormField
+                control={form.control}
+                name="name"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Nome</FormLabel>
+                    <FormControl>
+                      <Input placeholder="Terminal POS A10" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="serial_number"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Número de Série</FormLabel>
+                    <FormControl>
+                      <Input placeholder="SN12345678" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="model"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Modelo</FormLabel>
+                    <FormControl>
+                      <Input placeholder="A10" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="status"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Status</FormLabel>
+                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Selecione o status" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        <SelectItem value="available">Disponível</SelectItem>
+                        <SelectItem value="allocated">Alocada</SelectItem>
+                        <SelectItem value="maintenance">Em Manutenção</SelectItem>
+                        <SelectItem value="defective">Defeituosa</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <DialogFooter>
+                <Button type="button" variant="outline" onClick={() => setIsAddDialogOpen(false)}>
+                  Cancelar
                 </Button>
-                <Button variant="outline" size="sm" onClick={() => toast({
-                  title: "Funcionalidade em desenvolvimento",
-                  description: "Esta funcionalidade estará disponível em breve."
-                })}>
-                  <PlusCircle className="h-4 w-4 mr-2" />
-                  Nova Máquina
+                <Button type="submit">Adicionar</Button>
+              </DialogFooter>
+            </form>
+          </Form>
+        </DialogContent>
+      </Dialog>
+      
+      {/* Edit Machine Dialog */}
+      <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
+        <DialogContent className="sm:max-w-[425px]">
+          <DialogHeader>
+            <DialogTitle>Editar Máquina</DialogTitle>
+            <DialogDescription>
+              Atualize os detalhes da máquina selecionada.
+            </DialogDescription>
+          </DialogHeader>
+          <Form {...editForm}>
+            <form onSubmit={editForm.handleSubmit(onEditMachine)} className="space-y-4">
+              <FormField
+                control={editForm.control}
+                name="name"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Nome</FormLabel>
+                    <FormControl>
+                      <Input {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={editForm.control}
+                name="serial_number"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Número de Série</FormLabel>
+                    <FormControl>
+                      <Input {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={editForm.control}
+                name="model"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Modelo</FormLabel>
+                    <FormControl>
+                      <Input {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={editForm.control}
+                name="status"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Status</FormLabel>
+                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Selecione o status" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        <SelectItem value="available">Disponível</SelectItem>
+                        <SelectItem value="allocated">Alocada</SelectItem>
+                        <SelectItem value="maintenance">Em Manutenção</SelectItem>
+                        <SelectItem value="defective">Defeituosa</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <DialogFooter>
+                <Button type="button" variant="outline" onClick={() => setIsEditDialogOpen(false)}>
+                  Cancelar
                 </Button>
-              </div>
-            </div>
-          </CardHeader>
-          <CardContent>
-            <DataTable 
-              columns={columns} 
-              data={filteredMachines}
-              isLoading={isLoading}
-            />
-          </CardContent>
-        </Card>
-      </PageWrapper>
-    </>
+                <Button type="submit">Salvar Alterações</Button>
+              </DialogFooter>
+            </form>
+          </Form>
+        </DialogContent>
+      </Dialog>
+    </div>
   );
 };
 

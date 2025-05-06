@@ -1,183 +1,139 @@
-
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { PageHeader } from "@/components/page/PageHeader";
 import { PageWrapper } from "@/components/page/PageWrapper";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Input } from "@/components/ui/input";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Search, Filter } from "lucide-react";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import { CalendarIcon, CheckCircle, XCircle } from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
 
-const Requests = () => {
-  const [activeTab, setActiveTab] = useState("pending");
+const LogisticsRequests = () => {
+  const [requests, setRequests] = useState([
+    {
+      id: "1",
+      client: "Empresa A",
+      type: "Instalação",
+      date: "2024-08-15",
+      status: "Pendente",
+    },
+    {
+      id: "2",
+      client: "Empresa B",
+      type: "Manutenção",
+      date: "2024-08-16",
+      status: "Agendado",
+    },
+    {
+      id: "3",
+      client: "Empresa C",
+      type: "Retirada",
+      date: "2024-08-17",
+      status: "Concluído",
+    },
+  ]);
   const [searchTerm, setSearchTerm] = useState("");
-  const [statusFilter, setStatusFilter] = useState("all");
+  const { toast } = useToast();
 
-  // Mock data for requests
-  const mockRequests = [
-    {
-      id: "REQ001",
-      clientName: "Empresa ABC Ltda",
-      clientContact: "contato@empresaabc.com",
-      requestType: "Troca de máquina",
-      requestDate: "2025-05-04T14:30:00",
-      status: "pending",
-      address: "Av. Paulista, 1000 - São Paulo, SP",
-      details: "Terminal apresentando falha na leitura de cartões"
-    },
-    {
-      id: "REQ002",
-      clientName: "Comércio XYZ",
-      clientContact: "admin@comercioxyz.com",
-      requestType: "Envio de bobinas",
-      requestDate: "2025-05-05T09:15:00",
-      status: "in-progress",
-      address: "Rua Augusta, 500 - São Paulo, SP",
-      details: "Solicitação de 20 bobinas para terminais"
-    },
-    {
-      id: "REQ003",
-      clientName: "Restaurante Sabor",
-      clientContact: "contato@sabor.com",
-      requestType: "Manutenção",
-      requestDate: "2025-05-03T11:00:00",
-      status: "completed",
-      address: "Alameda Santos, 800 - São Paulo, SP",
-      details: "Manutenção preventiva nos terminais"
-    }
-  ];
-
-  // Filter requests based on active tab and search term
-  const filteredRequests = mockRequests.filter(request => {
-    const matchesTab = activeTab === "all" || request.status === activeTab;
-    const matchesSearch = request.clientName.toLowerCase().includes(searchTerm.toLowerCase()) || 
-                          request.id.toLowerCase().includes(searchTerm.toLowerCase());
-    return matchesTab && matchesSearch;
-  });
-
-  const getStatusLabel = (status: string) => {
-    switch (status) {
-      case "pending":
-        return <Badge variant="outline" className="bg-yellow-100 text-yellow-800 hover:bg-yellow-100">Pendente</Badge>;
-      case "in-progress":
-        return <Badge variant="outline" className="bg-blue-100 text-blue-800 hover:bg-blue-100">Em Andamento</Badge>;
-      case "completed":
-        return <Badge variant="outline" className="bg-green-100 text-green-800 hover:bg-green-100">Concluído</Badge>;
-      default:
-        return <Badge variant="outline">Desconhecido</Badge>;
-    }
+  const handleNewRequest = () => {
+    toast({
+      title: "Função não implementada",
+      description: "Esta funcionalidade ainda será implementada.",
+    });
   };
 
+  const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setSearchTerm(e.target.value);
+  };
+
+  const filteredRequests = requests.filter((request) =>
+    request.client.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+
   return (
-    <>
+    <div className="space-y-6">
       <PageHeader 
         title="Solicitações" 
-        description="Gerencie as solicitações de clientes"
+        description="Gerencie as solicitações de serviços"
         actionLabel="Nova Solicitação"
-        onActionClick={() => alert("Funcionalidade em desenvolvimento")}
+        actionOnClick={handleNewRequest}
       />
       
+      <div className="flex items-center justify-between">
+        <div className="relative flex-1">
+          <Input
+            placeholder="Buscar solicitações..."
+            className="pl-10 bg-background"
+            value={searchTerm}
+            onChange={handleSearchChange}
+          />
+        </div>
+      </div>
+      
       <PageWrapper>
-        <Card className="mb-6">
-          <CardHeader className="pb-3">
-            <CardTitle>Filtros</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="flex flex-col sm:flex-row gap-4">
-              <div className="flex-1 relative">
-                <Search className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
-                <Input
-                  placeholder="Buscar por cliente ou ID"
-                  className="pl-9"
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                />
-              </div>
-              <div className="w-full sm:w-48">
-                <Select defaultValue={statusFilter} onValueChange={setStatusFilter}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Status" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">Todos</SelectItem>
-                    <SelectItem value="pending">Pendentes</SelectItem>
-                    <SelectItem value="in-progress">Em Andamento</SelectItem>
-                    <SelectItem value="completed">Concluídos</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Tabs defaultValue={activeTab} value={activeTab} onValueChange={setActiveTab}>
-          <TabsList className="mb-6">
-            <TabsTrigger value="all">Todas</TabsTrigger>
-            <TabsTrigger value="pending">Pendentes</TabsTrigger>
-            <TabsTrigger value="in-progress">Em Andamento</TabsTrigger>
-            <TabsTrigger value="completed">Concluídas</TabsTrigger>
-          </TabsList>
-          
-          <TabsContent value={activeTab}>
-            <div className="space-y-4">
-              {filteredRequests.length > 0 ? (
-                filteredRequests.map((request) => (
-                  <Card key={request.id} className="overflow-hidden">
-                    <div className="p-6">
-                      <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-4">
-                        <div>
-                          <h3 className="text-lg font-semibold">{request.clientName}</h3>
-                          <p className="text-sm text-muted-foreground">{request.id} • {new Date(request.requestDate).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric' })}</p>
-                        </div>
-                        <div className="mt-2 md:mt-0">
-                          {getStatusLabel(request.status)}
-                        </div>
-                      </div>
-                      
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-                        <div>
-                          <h4 className="text-sm font-medium mb-1">Tipo de solicitação</h4>
-                          <p className="text-sm">{request.requestType}</p>
-                        </div>
-                        <div>
-                          <h4 className="text-sm font-medium mb-1">Contato</h4>
-                          <p className="text-sm">{request.clientContact}</p>
-                        </div>
-                        <div>
-                          <h4 className="text-sm font-medium mb-1">Endereço</h4>
-                          <p className="text-sm">{request.address}</p>
-                        </div>
-                        <div>
-                          <h4 className="text-sm font-medium mb-1">Detalhes</h4>
-                          <p className="text-sm">{request.details}</p>
-                        </div>
-                      </div>
-                      
-                      <div className="flex gap-2">
-                        <Button variant="outline" size="sm">Detalhes</Button>
-                        {request.status === "pending" && (
-                          <Button variant="default" size="sm">Iniciar atendimento</Button>
-                        )}
-                        {request.status === "in-progress" && (
-                          <Button variant="default" size="sm">Marcar como concluído</Button>
-                        )}
-                      </div>
-                    </div>
-                  </Card>
-                ))
-              ) : (
-                <div className="text-center py-8">
-                  <p className="text-muted-foreground">Nenhuma solicitação encontrada</p>
-                </div>
-              )}
-            </div>
-          </TabsContent>
-        </Tabs>
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead>Cliente</TableHead>
+              <TableHead>Tipo</TableHead>
+              <TableHead>Data</TableHead>
+              <TableHead>Status</TableHead>
+              <TableHead className="text-right">Ações</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {filteredRequests.map((request) => (
+              <TableRow key={request.id}>
+                <TableCell className="font-medium">{request.client}</TableCell>
+                <TableCell>{request.type}</TableCell>
+                <TableCell>
+                  <div className="flex items-center">
+                    <CalendarIcon className="mr-2 h-4 w-4" />
+                    {request.date}
+                  </div>
+                </TableCell>
+                <TableCell>
+                  {request.status === "Pendente" && (
+                    <span className="inline-flex items-center rounded-full px-2 py-1 text-xs font-medium bg-yellow-50 text-yellow-700">
+                      Pendente
+                    </span>
+                  )}
+                  {request.status === "Agendado" && (
+                    <span className="inline-flex items-center rounded-full px-2 py-1 text-xs font-medium bg-blue-50 text-blue-700">
+                      Agendado
+                    </span>
+                  )}
+                  {request.status === "Concluído" && (
+                    <span className="inline-flex items-center rounded-full px-2 py-1 text-xs font-medium bg-green-50 text-green-700">
+                      Concluído
+                    </span>
+                  )}
+                </TableCell>
+                <TableCell className="text-right">
+                  <div className="flex justify-end gap-2">
+                    <Button variant="ghost" size="sm">
+                      Aprovar
+                      <CheckCircle className="ml-2 h-4 w-4" />
+                    </Button>
+                    <Button variant="ghost" size="sm">
+                      Rejeitar
+                      <XCircle className="ml-2 h-4 w-4" />
+                    </Button>
+                  </div>
+                </TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
       </PageWrapper>
-    </>
+    </div>
   );
 };
 
-export default Requests;
+export default LogisticsRequests;
