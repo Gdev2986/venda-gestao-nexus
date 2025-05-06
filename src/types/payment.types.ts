@@ -13,7 +13,7 @@ export interface PaymentRequest {
   approved_at: string | null;
   approved_by: string | null;
   receipt_url: string | null;
-  rejection_reason: string | null;
+  rejection_reason: string | null; // Added this field
   pix_key?: PixKey;
   client?: Client;
 }
