@@ -39,7 +39,7 @@ export const useClientPayments = (clientId: string) => {
       if (data && data.length > 0) {
         // Map the data to our Payment interface using the service function
         const formattedData = data.map(item => {
-          // Add rejection_reason field if it doesn't exist in the database
+          // Ensure rejection_reason field exists
           const itemWithRejectionReason = {
             ...item,
             rejection_reason: item.rejection_reason || null

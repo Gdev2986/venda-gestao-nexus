@@ -1,7 +1,6 @@
-
 import { Payment, PaymentStatus, PaymentType } from "@/types";
 import { supabase } from "@/integrations/supabase/client";
-import { PaymentData } from "@/types/payment.types";
+import { PaymentData, PaymentRequest } from "@/types/payment.types";
 import { RealtimeChannel } from "@supabase/supabase-js";
 
 export const formatPaymentStatus = (status: string): PaymentStatus => {

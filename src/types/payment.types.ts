@@ -1,3 +1,4 @@
+
 export type PaymentRequestStatus = 'PENDING' | 'APPROVED' | 'REJECTED' | 'PAID';
 
 export interface PaymentRequest {
@@ -12,7 +13,7 @@ export interface PaymentRequest {
   approved_at: string | null;
   approved_by: string | null;
   receipt_url: string | null;
-  rejection_reason?: string; // Added this field to fix the type errors
+  rejection_reason?: string;
   pix_key?: PixKey;
   client?: Client;
 }
@@ -33,3 +34,6 @@ export interface Client {
   business_name: string;
   document: string;
 }
+
+// Add the missing PaymentData export that uses the PaymentRequest interface
+export type PaymentData = PaymentRequest;
