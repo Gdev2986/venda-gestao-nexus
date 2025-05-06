@@ -1,3 +1,4 @@
+
 import { PageHeader } from "@/components/page/PageHeader";
 import { PageWrapper } from "@/components/page/PageWrapper";
 import DashboardHeader from "@/components/dashboard/DashboardHeader";
@@ -69,7 +70,7 @@ const mockData = {
       date: '2022-01-03', 
       payment_method: PaymentMethod.PIX 
     }
-  ] as unknown as Sale[]
+  ] as Sale[]
 };
 
 const Dashboard = () => {
