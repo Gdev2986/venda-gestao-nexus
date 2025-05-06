@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { format } from 'date-fns';
 import { 
@@ -559,7 +560,6 @@ const AdminReports = () => {
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
                     className="w-[200px]"
-                    icon={<Search className="h-4 w-4" />}
                   />
                 </div>
                 
@@ -664,6 +664,7 @@ const AdminReports = () => {
                               selected={expenseDate}
                               onSelect={(date) => setExpenseDate(date || new Date())}
                               initialFocus
+                              className="pointer-events-auto"
                             />
                           </PopoverContent>
                         </Popover>
@@ -869,3 +870,54 @@ const AdminReports = () => {
               <CardHeader>
                 <CardTitle>Indicadores de Cliente</CardTitle>
                 <CardDescription>Métricas principais dos clientes</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div className="p-4 border rounded-md">
+                    <p className="text-sm text-muted-foreground">Retenção</p>
+                    <p className="text-xl font-medium mt-1">92%</p>
+                  </div>
+                  <div className="p-4 border rounded-md">
+                    <p className="text-sm text-muted-foreground">Taxa de conversão</p>
+                    <p className="text-xl font-medium mt-1">26.4%</p>
+                  </div>
+                  <div className="p-4 border rounded-md">
+                    <p className="text-sm text-muted-foreground">LTV médio</p>
+                    <p className="text-xl font-medium mt-1">R$ 5.200,00</p>
+                  </div>
+                  <div className="p-4 border rounded-md">
+                    <p className="text-sm text-muted-foreground">Clientes ativos</p>
+                    <p className="text-xl font-medium mt-1">200</p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        </TabsContent>
+      </Tabs>
+
+      {/* Alert Dialog for Delete Confirmation */}
+      <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Confirmar exclusão</AlertDialogTitle>
+            <AlertDialogDescription>
+              Tem certeza que deseja excluir esta despesa? Esta ação não pode ser desfeita.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction 
+              onClick={confirmDeleteExpense}
+              className="bg-red-600 text-white hover:bg-red-700"
+            >
+              Excluir
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    </PageWrapper>
+  );
+};
+
+export default AdminReports;
