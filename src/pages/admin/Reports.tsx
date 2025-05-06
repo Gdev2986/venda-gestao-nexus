@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { format } from 'date-fns';
 import { 
@@ -7,7 +6,9 @@ import {
   Download,
   FileText,
   Filter,
-  Plus
+  Plus,
+  Search,
+  Trash2
 } from "lucide-react";
 import { PageHeader } from "@/components/page/PageHeader";
 import { PageWrapper } from "@/components/page/PageWrapper";
@@ -48,6 +49,7 @@ import { useToast } from "@/hooks/use-toast";
 import { LineChart } from "@/components/charts/LineChart";
 import { BarChart } from "@/components/charts/BarChart";
 import { PieChart } from "@/components/charts/PieChart";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 
 // Mock data for the reports
 const revenueByMonth = [
@@ -88,8 +90,18 @@ const expensesByCategory = [
   { name: 'Administrativo', value: 3680 },
 ];
 
-// Mock data for expenses table
-const expensesData = Array.from({ length: 100 }, (_, i) => ({
+// Interface for expense data
+interface Expense {
+  id: string;
+  description: string;
+  amount: number;
+  category: string;
+  date: Date;
+  recurrence: string;
+}
+
+// Enhanced mock data for expenses table
+const expensesData: Expense[] = Array.from({ length: 100 }, (_, i) => ({
   id: `EXP-${1000 + i}`,
   description: `Despesa ${i + 1}`,
   amount: Math.floor(Math.random() * 10000) + 500,
@@ -107,23 +119,37 @@ const AdminReports = () => {
   const [activeTab, setActiveTab] = useState('overview');
   const [isExporting, setIsExporting] = useState(false);
   const [isAddExpenseOpen, setIsAddExpenseOpen] = useState(false);
+  
+  // Enhanced expense form state
   const [expenseDescription, setExpenseDescription] = useState('');
   const [expenseAmount, setExpenseAmount] = useState('');
   const [expenseCategory, setExpenseCategory] = useState('');
   const [expenseRecurrence, setExpenseRecurrence] = useState('Única');
-  const [filteredExpenses, setFilteredExpenses] = useState(expensesData);
+  const [expenseDate, setExpenseDate] = useState<Date>(new Date());
+  
+  // Expense management state
+  const [expenses, setExpenses] = useState<Expense[]>(expensesData);
+  const [filteredExpenses, setFilteredExpenses] = useState<Expense[]>(expensesData);
   const [recurrenceFilter, setRecurrenceFilter] = useState('');
+  const [categoryFilter, setCategoryFilter] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
   const [searchTerm, setSearchTerm] = useState('');
+  const [expenseToDelete, setExpenseToDelete] = useState<string | null>(null);
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  
   const itemsPerPage = 50;
   const { toast } = useToast();
   
-  // Filter expenses based on selected recurrence and search term
+  // Filter expenses based on selected filters and search term
   useEffect(() => {
-    let filtered = expensesData;
+    let filtered = expenses;
     
     if (recurrenceFilter) {
       filtered = filtered.filter(expense => expense.recurrence === recurrenceFilter);
+    }
+    
+    if (categoryFilter) {
+      filtered = filtered.filter(expense => expense.category === categoryFilter);
     }
     
     if (searchTerm) {
@@ -136,7 +162,7 @@ const AdminReports = () => {
     
     setFilteredExpenses(filtered);
     setCurrentPage(1); // Reset to first page when filters change
-  }, [recurrenceFilter, searchTerm]);
+  }, [recurrenceFilter, categoryFilter, searchTerm, expenses]);
   
   // Handle period selection
   const handlePeriodChange = (value: string) => {
@@ -183,7 +209,7 @@ const AdminReports = () => {
   };
   
   const handleAddExpense = () => {
-    if (!expenseDescription || !expenseAmount || !expenseCategory) {
+    if (!expenseDescription || !expenseAmount || !expenseCategory || !expenseDate) {
       toast({
         title: "Campos obrigatórios",
         description: "Preencha todos os campos para adicionar a despesa",
@@ -191,6 +217,19 @@ const AdminReports = () => {
       });
       return;
     }
+    
+    // Create new expense
+    const newExpense: Expense = {
+      id: `EXP-${1000 + expenses.length + 1}`,
+      description: expenseDescription,
+      amount: parseFloat(expenseAmount),
+      category: expenseCategory,
+      date: expenseDate,
+      recurrence: expenseRecurrence
+    };
+    
+    // Add to expenses list
+    setExpenses([newExpense, ...expenses]);
     
     toast({
       title: "Despesa adicionada",
@@ -202,7 +241,28 @@ const AdminReports = () => {
     setExpenseAmount('');
     setExpenseCategory('');
     setExpenseRecurrence('Única');
+    setExpenseDate(new Date());
     setIsAddExpenseOpen(false);
+  };
+  
+  const handleDeleteExpense = (id: string) => {
+    setExpenseToDelete(id);
+    setIsDeleteDialogOpen(true);
+  };
+  
+  const confirmDeleteExpense = () => {
+    if (!expenseToDelete) return;
+    
+    const updatedExpenses = expenses.filter(expense => expense.id !== expenseToDelete);
+    setExpenses(updatedExpenses);
+    
+    toast({
+      title: "Despesa removida",
+      description: "A despesa foi removida com sucesso"
+    });
+    
+    setExpenseToDelete(null);
+    setIsDeleteDialogOpen(false);
   };
   
   // Calculate pagination
@@ -218,6 +278,12 @@ const AdminReports = () => {
       currency: 'BRL'
     }).format(value);
   };
+
+  // Calculate totals for summary cards
+  const totalExpenses = expenses.reduce((sum, expense) => sum + expense.amount, 0);
+  const recurringExpenses = expenses
+    .filter(expense => expense.recurrence !== 'Única')
+    .reduce((sum, expense) => sum + expense.amount, 0);
 
   return (
     <PageWrapper>
@@ -333,7 +399,7 @@ const AdminReports = () => {
             <CardTitle className="text-sm font-medium text-muted-foreground">Despesas Totais</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">R$ 42.780,00</div>
+            <div className="text-2xl font-bold">{moneyFormatter(totalExpenses)}</div>
             <p className="text-sm text-red-600 mt-2">+5% em relação ao período anterior</p>
           </CardContent>
         </Card>
@@ -431,7 +497,54 @@ const AdminReports = () => {
           </div>
         </TabsContent>
         
+        {/* Enhanced expenses tab */}
         <TabsContent value="expenses" className="space-y-4">
+          {/* Summary cards for expenses */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+            <Card>
+              <CardHeader className="pb-2">
+                <CardTitle className="text-sm font-medium text-muted-foreground">Total de Despesas</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold">{moneyFormatter(totalExpenses)}</div>
+              </CardContent>
+            </Card>
+            
+            <Card>
+              <CardHeader className="pb-2">
+                <CardTitle className="text-sm font-medium text-muted-foreground">Despesas Recorrentes</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold">{moneyFormatter(recurringExpenses)}</div>
+              </CardContent>
+            </Card>
+            
+            <Card>
+              <CardHeader className="pb-2">
+                <CardTitle className="text-sm font-medium text-muted-foreground">Distribuição</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="flex h-14 items-center gap-2">
+                  {expensesByCategory.map((category, i) => (
+                    <div 
+                      key={category.name}
+                      className={`h-full flex-1 rounded-sm ${
+                        i === 0 ? 'bg-blue-500' : 
+                        i === 1 ? 'bg-green-500' : 
+                        i === 2 ? 'bg-yellow-500' : 
+                        i === 3 ? 'bg-purple-500' : 
+                        'bg-red-500'
+                      }`}
+                      style={{
+                        flexBasis: `${(category.value / expensesByCategory.reduce((a, c) => a + c.value, 0)) * 100}%`
+                      }}
+                    />
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+          
           <Card>
             <CardHeader className="flex flex-col sm:flex-row justify-between sm:items-center gap-4">
               <div>
@@ -440,9 +553,33 @@ const AdminReports = () => {
               </div>
               
               <div className="flex flex-wrap gap-2">
+                <div className="flex items-center gap-2">
+                  <Input 
+                    placeholder="Buscar despesas..." 
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    className="w-[200px]"
+                    icon={<Search className="h-4 w-4" />}
+                  />
+                </div>
+                
+                <Select value={categoryFilter} onValueChange={setCategoryFilter}>
+                  <SelectTrigger className="w-[180px]">
+                    <SelectValue placeholder="Categoria" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="">Todas categorias</SelectItem>
+                    <SelectItem value="Pessoal">Pessoal</SelectItem>
+                    <SelectItem value="Marketing">Marketing</SelectItem>
+                    <SelectItem value="Infraestrutura">Infraestrutura</SelectItem>
+                    <SelectItem value="Software">Software</SelectItem>
+                    <SelectItem value="Administrativo">Administrativo</SelectItem>
+                  </SelectContent>
+                </Select>
+                
                 <Select value={recurrenceFilter} onValueChange={setRecurrenceFilter}>
-                  <SelectTrigger className="min-w-[180px]">
-                    <SelectValue placeholder="Filtrar por recorrência" />
+                  <SelectTrigger className="w-[180px]">
+                    <SelectValue placeholder="Recorrência" />
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="">Todas</SelectItem>
@@ -506,6 +643,33 @@ const AdminReports = () => {
                       </div>
                       
                       <div className="grid gap-2">
+                        <Label htmlFor="expense-date">Data</Label>
+                        <Popover>
+                          <PopoverTrigger asChild>
+                            <Button
+                              id="expense-date"
+                              variant="outline"
+                              className="w-full justify-start text-left"
+                            >
+                              {expenseDate ? (
+                                format(expenseDate, 'dd/MM/yyyy')
+                              ) : (
+                                "Selecione uma data"
+                              )}
+                            </Button>
+                          </PopoverTrigger>
+                          <PopoverContent className="w-auto p-0" align="start">
+                            <Calendar
+                              mode="single"
+                              selected={expenseDate}
+                              onSelect={(date) => setExpenseDate(date || new Date())}
+                              initialFocus
+                            />
+                          </PopoverContent>
+                        </Popover>
+                      </div>
+                      
+                      <div className="grid gap-2">
                         <Label htmlFor="expense-recurrence">Recorrência</Label>
                         <Select value={expenseRecurrence} onValueChange={setExpenseRecurrence}>
                           <SelectTrigger id="expense-recurrence">
@@ -544,22 +708,42 @@ const AdminReports = () => {
                         <th className="py-3 px-4 text-left">Valor</th>
                         <th className="py-3 px-4 text-left">Data</th>
                         <th className="py-3 px-4 text-left">Recorrência</th>
+                        <th className="py-3 px-4 text-center">Ações</th>
                       </tr>
                     </thead>
                     <tbody>
-                      {currentExpenses.map((expense, index) => (
-                        <tr 
-                          key={expense.id} 
-                          className={`border-b ${index % 2 ? 'bg-muted/30' : 'bg-white'}`}
-                        >
-                          <td className="py-3 px-4">{expense.id}</td>
-                          <td className="py-3 px-4">{expense.description}</td>
-                          <td className="py-3 px-4">{expense.category}</td>
-                          <td className="py-3 px-4">{moneyFormatter(expense.amount)}</td>
-                          <td className="py-3 px-4">{format(expense.date, 'dd/MM/yyyy')}</td>
-                          <td className="py-3 px-4">{expense.recurrence}</td>
+                      {currentExpenses.length > 0 ? (
+                        currentExpenses.map((expense, index) => (
+                          <tr 
+                            key={expense.id} 
+                            className={`border-b ${index % 2 ? 'bg-muted/30' : 'bg-white'}`}
+                          >
+                            <td className="py-3 px-4">{expense.id}</td>
+                            <td className="py-3 px-4">{expense.description}</td>
+                            <td className="py-3 px-4">{expense.category}</td>
+                            <td className="py-3 px-4">{moneyFormatter(expense.amount)}</td>
+                            <td className="py-3 px-4">{format(expense.date, 'dd/MM/yyyy')}</td>
+                            <td className="py-3 px-4">{expense.recurrence}</td>
+                            <td className="py-3 px-4 text-center">
+                              <Button 
+                                variant="ghost" 
+                                size="sm" 
+                                className="h-8 w-8 p-0 text-red-600 hover:text-red-700 hover:bg-red-50"
+                                onClick={() => handleDeleteExpense(expense.id)}
+                              >
+                                <Trash2 className="h-4 w-4" />
+                                <span className="sr-only">Excluir</span>
+                              </Button>
+                            </td>
+                          </tr>
+                        ))
+                      ) : (
+                        <tr>
+                          <td colSpan={7} className="py-6 text-center text-muted-foreground">
+                            Nenhuma despesa encontrada
+                          </td>
                         </tr>
-                      ))}
+                      )}
                     </tbody>
                   </table>
                 </div>
@@ -591,6 +775,52 @@ const AdminReports = () => {
               )}
             </CardContent>
           </Card>
+          
+          {/* Expense analytics section */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <Card>
+              <CardHeader>
+                <CardTitle>Despesas por Categoria</CardTitle>
+                <CardDescription>Distribuição de gastos</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="h-80">
+                  <PieChart 
+                    data={expensesByCategory}
+                    dataKey="value"
+                    nameKey="name"
+                    formatter={moneyFormatter}
+                    height={320}
+                  />
+                </div>
+              </CardContent>
+            </Card>
+            
+            <Card>
+              <CardHeader>
+                <CardTitle>Evolução de Despesas</CardTitle>
+                <CardDescription>Últimos 6 meses</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="h-80">
+                  <LineChart 
+                    data={[
+                      { name: 'Jul', total: 38400 },
+                      { name: 'Ago', total: 40200 },
+                      { name: 'Set', total: 39800 },
+                      { name: 'Out', total: 41500 },
+                      { name: 'Nov', total: 42100 },
+                      { name: 'Dez', total: 42780 }
+                    ]} 
+                    dataKey="total"
+                    xAxisKey="name"
+                    formatter={moneyFormatter}
+                    height={320}
+                  />
+                </div>
+              </CardContent>
+            </Card>
+          </div>
         </TabsContent>
         
         <TabsContent value="clients" className="space-y-4">
@@ -639,33 +869,3 @@ const AdminReports = () => {
               <CardHeader>
                 <CardTitle>Indicadores de Cliente</CardTitle>
                 <CardDescription>Métricas principais dos clientes</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
-                  <div className="p-4 border rounded-md">
-                    <p className="text-sm text-muted-foreground">Taxa de Retenção</p>
-                    <p className="text-xl font-medium mt-1">94.3%</p>
-                  </div>
-                  <div className="p-4 border rounded-md">
-                    <p className="text-sm text-muted-foreground">Tempo Médio como Cliente</p>
-                    <p className="text-xl font-medium mt-1">2.7 anos</p>
-                  </div>
-                  <div className="p-4 border rounded-md">
-                    <p className="text-sm text-muted-foreground">Valor Médio por Cliente</p>
-                    <p className="text-xl font-medium mt-1">R$ 622,50/mês</p>
-                  </div>
-                  <div className="p-4 border rounded-md">
-                    <p className="text-sm text-muted-foreground">Taxa de Crescimento</p>
-                    <p className="text-xl font-medium mt-1">5.3% ao mês</p>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          </div>
-        </TabsContent>
-      </Tabs>
-    </PageWrapper>
-  );
-};
-
-export default AdminReports;

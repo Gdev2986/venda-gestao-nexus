@@ -1,3 +1,4 @@
+
 import { supabase } from "@/integrations/supabase/client";
 import { PaymentRequest, PaymentRequestStatus } from "@/types/payment.types";
 
@@ -100,7 +101,10 @@ export const fetchPaymentRequests = async (
       updated_at: request.updated_at,
       receipt_url: request.receipt_url || null,
       pix_key_id: request.pix_key_id,
-    }));
+      approved_at: request.approved_at || null,
+      approved_by: request.approved_by || null,
+      rejection_reason: request.rejection_reason || null
+    })) as PaymentRequest[];
 
     return { data: formattedRequests, error: null };
   } catch (error: any) {
@@ -138,7 +142,7 @@ export const getPaymentDetails = async (paymentId: string) => {
   }
 };
 
-// Add the missing formatPaymentRequest function
+// Fix the formatPaymentRequest function to include all required properties
 export const formatPaymentRequest = (request: any): PaymentRequest => {
   return {
     id: request.id,
@@ -153,12 +157,16 @@ export const formatPaymentRequest = (request: any): PaymentRequest => {
     approved_by: request.approved_by || null,
     receipt_url: request.receipt_url || null,
     rejection_reason: request.rejection_reason || null,
+    client_name: request.client?.business_name || "Unknown Client",
     pix_key: request.pix_key ? {
       id: request.pix_key.id,
       key: request.pix_key.key,
       key_type: request.pix_key.type,
       type: request.pix_key.type,
-      name: request.pix_key.name
+      name: request.pix_key.name,
+      client_id: request.client_id,
+      created_at: request.created_at,
+      updated_at: request.updated_at
     } : undefined,
     client: request.client ? {
       id: request.client.id,
