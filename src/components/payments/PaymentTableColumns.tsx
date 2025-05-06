@@ -1,4 +1,3 @@
-
 import { ColumnDef } from "@tanstack/react-table";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -35,10 +34,11 @@ export const createPaymentColumns = ({ onPaymentAction }: PaymentColumnsProps): 
     accessorKey: "client_name",
     header: "Cliente",
     cell: ({ row }) => {
-      // Safely access client property
-      const client = row.original.client ?? {};
-      // Use optional chaining to safely access business_name
-      return <div>{client.business_name ?? "Cliente não especificado"}</div>;
+      // Safely access client property and ensure it's an object with business_name
+      const client = row.original.client || {};
+      // TypeScript doesn't know that client might have business_name, use type assertion
+      const clientName = (client as any).business_name || "Cliente não especificado";
+      return <div>{clientName}</div>;
     },
   },
   {

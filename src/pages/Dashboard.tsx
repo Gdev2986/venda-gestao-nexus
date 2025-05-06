@@ -1,4 +1,3 @@
-
 import { PageHeader } from "@/components/page/PageHeader";
 import { PageWrapper } from "@/components/page/PageWrapper";
 import DashboardHeader from "@/components/dashboard/DashboardHeader";
@@ -15,9 +14,9 @@ const mockData = {
   yesterdayNet: 12350,
   totalSales: 243,
   salesChartData: [
-    { method: PaymentMethod.CREDIT, amount: 1400, percentage: 20 },
-    { method: PaymentMethod.DEBIT, amount: 1200, percentage: 18 },
-    { method: PaymentMethod.PIX, amount: 4200, percentage: 62 }
+    { method: PaymentMethod.CREDIT, amount: 1400, percentage: 20, name: "Crédito", value: 1400 },
+    { method: PaymentMethod.DEBIT, amount: 1200, percentage: 18, name: "Débito", value: 1200 },
+    { method: PaymentMethod.PIX, amount: 4200, percentage: 62, name: "PIX", value: 4200 }
   ] as SalesChartData[],
   recentSales: [
     { 

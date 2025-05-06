@@ -138,7 +138,6 @@ export function PixKeysManager() {
       setPixKeys(pixKeys.map(key => ({
         ...key,
         isDefault: key.id === keyId,
-        is_default: key.id === keyId,
       })));
       
       // If it's not a temp key, update in database
@@ -202,7 +201,7 @@ export function PixKeysManager() {
         type: validType,
         key: key.key,
         name: key.name || key.owner_name,
-        is_default: key.isDefault || key.is_default,
+        is_default: key.isDefault, // Use isDefault property for database field is_default
       };
       
       let response;
