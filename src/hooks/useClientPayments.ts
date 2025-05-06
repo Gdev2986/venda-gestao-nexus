@@ -76,11 +76,51 @@ export const useClientPayments = (clientId: string) => {
       // Here we would normally fetch PIX keys for the client
       // For now, creating mock PIX keys
       setTimeout(() => {
-        setPixKeys([
-          { id: '1', key: '123.456.789-00', type: 'CPF', owner_name: 'João da Silva' },
-          { id: '2', key: 'email@example.com', type: 'EMAIL', owner_name: 'João da Silva' },
-          { id: '3', key: '+5511999999999', type: 'PHONE', owner_name: 'João da Silva' },
-        ]);
+        const mockPixKeys: PixKey[] = [
+          { 
+            id: '1', 
+            key: '123.456.789-00', 
+            type: 'CPF', 
+            owner_name: 'João da Silva',
+            user_id: 'user-1',
+            key_type: 'CPF',
+            name: 'João da Silva',
+            isDefault: true,
+            is_active: true,
+            created_at: new Date().toISOString(),
+            updated_at: new Date().toISOString(),
+            bank_name: 'Banco'
+          },
+          { 
+            id: '2', 
+            key: 'email@example.com', 
+            type: 'EMAIL', 
+            owner_name: 'João da Silva',
+            user_id: 'user-1',
+            key_type: 'EMAIL',
+            name: 'João da Silva',
+            isDefault: false,
+            is_active: true,
+            created_at: new Date().toISOString(),
+            updated_at: new Date().toISOString(),
+            bank_name: 'Banco'
+          },
+          { 
+            id: '3', 
+            key: '+5511999999999', 
+            type: 'PHONE', 
+            owner_name: 'João da Silva',
+            user_id: 'user-1',
+            key_type: 'PHONE',
+            name: 'João da Silva',
+            isDefault: false,
+            is_active: true,
+            created_at: new Date().toISOString(),
+            updated_at: new Date().toISOString(),
+            bank_name: 'Banco'
+          },
+        ];
+        setPixKeys(mockPixKeys);
         setIsLoadingPixKeys(false);
       }, 1000);
     } catch (error) {

@@ -1,5 +1,5 @@
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { PageHeader } from "@/components/page/PageHeader";
 import { PageWrapper } from "@/components/page/PageWrapper";
 import { DataTable } from "@/components/ui/data-table";
@@ -29,7 +29,7 @@ const AdminPayments = () => {
   const { 
     payments, 
     isLoading, 
-    fetchPayments, 
+    refreshPayments, 
     approvePayment, 
     rejectPayment,
     currentPage,
@@ -41,29 +41,10 @@ const AdminPayments = () => {
     fetchOnMount: true
   });
 
-  // Set up real-time subscription for payments
-  useEffect(() => {
-    const channel = supabase
-      .channel('payment_changes')
-      .on('postgres_changes', { 
-        event: '*', 
-        schema: 'public', 
-        table: 'payment_requests' 
-      }, () => {
-        fetchPayments();
-      })
-      .subscribe();
-
-    return () => {
-      supabase.removeChannel(channel);
-    };
-  }, [fetchPayments]);
-
   // Handle filter changes
   const handleFilterChange = (newStatusFilter: PaymentStatus | "ALL", newSearchTerm: string) => {
     setStatusFilter(newStatusFilter);
     setSearchTerm(newSearchTerm);
-    fetchPayments();
   };
 
   // Handle payment actions

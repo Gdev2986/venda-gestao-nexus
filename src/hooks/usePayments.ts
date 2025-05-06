@@ -10,12 +10,28 @@ import {
 import { PaymentData } from "@/types/payment.types";
 import { PaymentStatus } from "@/types";
 
-export const usePayments = () => {
+interface UsePaymentsProps {
+  statusFilter?: PaymentStatus | "ALL";
+  searchTerm?: string;
+  fetchOnMount?: boolean;
+  pageSize?: number;
+}
+
+export const usePayments = (options: UsePaymentsProps = {}) => {
+  const {
+    statusFilter: initialStatusFilter = "ALL",
+    searchTerm: initialSearchTerm = "",
+    fetchOnMount = true,
+    pageSize = 10
+  } = options;
+
   const [payments, setPayments] = useState<PaymentData[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [statusFilter, setStatusFilter] = useState<PaymentStatus | "ALL">("ALL");
-  const [searchTerm, setSearchTerm] = useState("");
+  const [statusFilter, setStatusFilter] = useState<PaymentStatus | "ALL">(initialStatusFilter);
+  const [searchTerm, setSearchTerm] = useState(initialSearchTerm);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
   const { toast } = useToast();
 
   const fetchPayments = async () => {
@@ -25,6 +41,14 @@ export const usePayments = () => {
     try {
       const data = await fetchPaymentsData(statusFilter, searchTerm);
       setPayments(data);
+      
+      // Calculate total pages
+      setTotalPages(Math.ceil(data.length / pageSize));
+      
+      // Reset to first page when filters change
+      if (currentPage > Math.ceil(data.length / pageSize)) {
+        setCurrentPage(1);
+      }
     } catch (err) {
       console.error("Error fetching payments:", err);
       setError("Não foi possível carregar os pagamentos.");
@@ -89,7 +113,9 @@ export const usePayments = () => {
   };
 
   useEffect(() => {
-    fetchPayments();
+    if (fetchOnMount) {
+      fetchPayments();
+    }
 
     // Set up real-time subscription
     const subscription = setupPaymentSubscription(() => {
@@ -99,7 +125,7 @@ export const usePayments = () => {
     return () => {
       subscription.unsubscribe();
     };
-  }, [statusFilter, searchTerm, toast]);
+  }, [statusFilter, searchTerm, fetchOnMount, toast]);
 
   return {
     payments,
@@ -112,5 +138,10 @@ export const usePayments = () => {
     refreshPayments: fetchPayments,
     approvePayment: handleApprovePayment,
     rejectPayment: handleRejectPayment,
+    currentPage,
+    totalPages,
+    setCurrentPage
   };
 };
+
+export type { PaymentData } from "@/types/payment.types";
