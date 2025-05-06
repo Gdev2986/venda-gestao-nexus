@@ -17,7 +17,7 @@ import {
   MapPin, 
   Calendar,
   FileText,
-  Tool
+  Wrench // Changed from Tool to Wrench which is available
 } from "lucide-react";
 
 interface ServiceDetailsModalProps {
@@ -100,7 +100,7 @@ const ServiceDetailsModal = ({ open, onOpenChange, service }: ServiceDetailsModa
             <div className="space-y-1">
               <p className="text-sm text-muted-foreground">Tipo de Atendimento</p>
               <p className="text-lg font-semibold flex items-center gap-2">
-                <Tool className="h-4 w-4 text-primary" />
+                <Wrench className="h-4 w-4 text-primary" /> 
                 {getTypeLabel(service.type)}
               </p>
             </div>
