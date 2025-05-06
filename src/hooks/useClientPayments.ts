@@ -1,7 +1,8 @@
 
 import { useState, useEffect, useCallback } from "react";
-import { Payment, PaymentStatus, PaymentType, PixKey } from "@/types";
+import { Payment, PaymentStatus, PaymentType } from "@/types";
 import { useToast } from "@/hooks/use-toast";
+import { PixKey } from "@/types";
 
 export function useClientPayments(clientId: string) {
   const [isLoading, setIsLoading] = useState(true);
@@ -69,13 +70,29 @@ export function useClientPayments(clientId: string) {
           id: "pix1",
           key: "exemplo@email.com",
           type: "EMAIL",
-          owner_name: "Cliente Demo"
+          key_type: "EMAIL",
+          name: "Cliente Demo",
+          owner_name: "Cliente Demo",
+          user_id: "user1",
+          isDefault: true,
+          is_active: true,
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString(),
+          bank_name: "Banco Demo"
         },
         {
           id: "pix2",
           key: "11999999999",
           type: "PHONE",
-          owner_name: "Cliente Demo"
+          key_type: "PHONE",
+          name: "Cliente Demo",
+          owner_name: "Cliente Demo",
+          user_id: "user1",
+          isDefault: false,
+          is_active: true,
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString(),
+          bank_name: "Banco Demo"
         }
       ]);
       setIsLoadingPixKeys(false);

@@ -14,16 +14,18 @@ export const usePaymentSubscription = (callback: SubscriptionCallback, options?:
 
   useEffect(() => {
     // Configurar filtro por client_id se fornecido
-    let filter = {};
+    let channelFilter: any = {};
     
     if (options?.filterByClientId) {
-      filter = {
+      channelFilter = {
+        event: '*',
         schema: 'public',
         table: 'payment_requests',
         filter: `client_id=eq.${options.filterByClientId}`
       };
     } else {
-      filter = {
+      channelFilter = {
+        event: '*',
         schema: 'public',
         table: 'payment_requests'
       };
@@ -32,41 +34,38 @@ export const usePaymentSubscription = (callback: SubscriptionCallback, options?:
     // Configurar inscrição em tempo real para solicitações de pagamento
     const channel = supabase
       .channel('payment_requests_changes')
-      .on('postgres_changes', 
-        { event: '*', ...filter }, 
-        (payload) => {
-          console.log('Alteração de pagamento recebida!', payload);
+      .on('postgres_changes', channelFilter, (payload) => {
+        console.log('Alteração de pagamento recebida!', payload);
+        
+        // Notificar o usuário se a opção estiver ativada
+        if (notifyUser) {
+          let title = 'Atualização de pagamento';
+          let description = 'Uma solicitação de pagamento foi atualizada';
           
-          // Notificar o usuário se a opção estiver ativada
-          if (notifyUser) {
-            let title = 'Atualização de pagamento';
-            let description = 'Uma solicitação de pagamento foi atualizada';
-            
-            // Personalizar mensagem com base no tipo de evento
-            if (payload.eventType === 'INSERT') {
-              title = 'Nova solicitação de pagamento';
-              description = 'Uma nova solicitação de pagamento foi recebida';
-            } else if (payload.eventType === 'UPDATE') {
-              const newStatus = payload.new?.status;
-              if (newStatus === 'APPROVED') {
-                title = 'Pagamento aprovado';
-                description = 'Uma solicitação de pagamento foi aprovada';
-              } else if (newStatus === 'REJECTED') {
-                title = 'Pagamento rejeitado';
-                description = 'Uma solicitação de pagamento foi rejeitada';
-              }
+          // Personalizar mensagem com base no tipo de evento
+          if (payload.eventType === 'INSERT') {
+            title = 'Nova solicitação de pagamento';
+            description = 'Uma nova solicitação de pagamento foi recebida';
+          } else if (payload.eventType === 'UPDATE') {
+            const newStatus = payload.new?.status;
+            if (newStatus === 'APPROVED') {
+              title = 'Pagamento aprovado';
+              description = 'Uma solicitação de pagamento foi aprovada';
+            } else if (newStatus === 'REJECTED') {
+              title = 'Pagamento rejeitado';
+              description = 'Uma solicitação de pagamento foi rejeitada';
             }
-            
-            toast({
-              title,
-              description,
-            });
           }
           
-          // Chamar o callback para recarregar os dados
-          callback();
+          toast({
+            title,
+            description,
+          });
         }
-      )
+        
+        // Chamar o callback para recarregar os dados
+        callback();
+      })
       .subscribe();
       
     return () => {
