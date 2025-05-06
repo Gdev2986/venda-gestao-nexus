@@ -5,6 +5,7 @@ import { Payment, PaymentStatus, PaymentType } from "@/types";
 import { supabase } from "@/integrations/supabase/client";
 import { getMockPaymentRequests } from "@/utils/mock-payment-data";
 import { formatPaymentRequest } from "@/services/payment.service";
+import { PaymentData } from "@/types/payment.types";
 
 export const usePaymentRequestsFetcher = (initialBalance: number = 15000) => {
   const { toast } = useToast();
