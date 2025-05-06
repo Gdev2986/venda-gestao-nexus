@@ -1,5 +1,5 @@
 
-import { UsePaymentsOptions, PaymentData } from "./payments/payment.types";
+import { UsePaymentsOptions } from "./payments/payment.types";
 import { usePaymentsFetcher } from "./payments/usePaymentsFetcher";
 import { usePaymentActions } from "./payments/usePaymentActions";
 import { usePaymentRealtimeSubscription } from "./payments/usePaymentRealtimeSubscription";
@@ -24,7 +24,7 @@ export function usePayments(options: UsePaymentsOptions = {}) {
     setPaymentRequests
   );
 
-  // Set up real-time subscription
+  // Set up real-time subscription - for admin view (no client filtering)
   usePaymentRealtimeSubscription(fetchPaymentRequests);
 
   return {

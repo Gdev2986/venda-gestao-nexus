@@ -8,5 +8,5 @@ export interface UsePaymentsOptions {
   fetchOnMount?: boolean;
 }
 
-// Export the PaymentData type that's being referenced in other files
+// Export the PaymentData type explicitly 
 export type PaymentData = PaymentRequest;

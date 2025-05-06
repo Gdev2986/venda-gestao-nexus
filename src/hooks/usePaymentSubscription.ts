@@ -10,10 +10,10 @@ export const usePaymentSubscription = (callback: SubscriptionCallback, options?:
   filterByClientId?: string;
 }) => {
   const { toast } = useToast();
-  const notifyUser = options?.notifyUser !== false; // Por padrão, notifica o usuário
+  const notifyUser = options?.notifyUser !== false; // Default to true
 
   useEffect(() => {
-    // Configurar filtro por client_id se fornecido
+    // Configure filter by client_id if provided
     let channelFilter: any = {};
     
     if (options?.filterByClientId) {
@@ -31,29 +31,31 @@ export const usePaymentSubscription = (callback: SubscriptionCallback, options?:
       };
     }
 
-    // Configurar inscrição em tempo real para solicitações de pagamento
+    console.log('Setting up payment subscription', options);
+
+    // Set up real-time subscription for payment requests
     const channel = supabase
       .channel('payment_requests_changes')
       .on('postgres_changes', channelFilter, (payload) => {
-        console.log('Alteração de pagamento recebida!', payload);
+        console.log('Payment change received!', payload);
         
-        // Notificar o usuário se a opção estiver ativada
+        // Notify user if option is enabled
         if (notifyUser) {
-          let title = 'Atualização de pagamento';
-          let description = 'Uma solicitação de pagamento foi atualizada';
+          let title = 'Payment Update';
+          let description = 'A payment request has been updated';
           
-          // Personalizar mensagem com base no tipo de evento
+          // Customize message based on event type
           if (payload.eventType === 'INSERT') {
-            title = 'Nova solicitação de pagamento';
-            description = 'Uma nova solicitação de pagamento foi recebida';
+            title = 'New Payment Request';
+            description = 'A new payment request has been received';
           } else if (payload.eventType === 'UPDATE') {
             const newStatus = payload.new?.status;
             if (newStatus === 'APPROVED') {
-              title = 'Pagamento aprovado';
-              description = 'Uma solicitação de pagamento foi aprovada';
+              title = 'Payment Approved';
+              description = 'A payment request has been approved';
             } else if (newStatus === 'REJECTED') {
-              title = 'Pagamento rejeitado';
-              description = 'Uma solicitação de pagamento foi rejeitada';
+              title = 'Payment Rejected';
+              description = 'A payment request has been rejected';
             }
           }
           
@@ -63,12 +65,13 @@ export const usePaymentSubscription = (callback: SubscriptionCallback, options?:
           });
         }
         
-        // Chamar o callback para recarregar os dados
+        // Call the callback to reload data
         callback();
       })
       .subscribe();
       
     return () => {
+      console.log('Cleaning up payment subscription');
       supabase.removeChannel(channel);
     };
   }, [callback, toast, notifyUser, options?.filterByClientId]);

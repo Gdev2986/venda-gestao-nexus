@@ -1,7 +1,6 @@
 
 import { useState } from "react";
 import { PageHeader } from "@/components/page/PageHeader";
-import { PageWrapper } from "@/components/page/PageWrapper";
 import { DataTable } from "@/components/ui/data-table";
 import { supabase } from "@/integrations/supabase/client";
 import { PATHS } from "@/routes/paths";
@@ -41,8 +40,10 @@ const AdminPayments = () => {
     searchTerm
   });
 
-  // Adicionar uso do hook de inscrição em tempo real para receber atualizações imediatamente
-  usePaymentSubscription(refreshPayments, { notifyUser: true });
+  // Set up real-time subscription for admin (listens to all payment changes)
+  usePaymentSubscription(refreshPayments, { 
+    notifyUser: true 
+  });
 
   // Handle filter changes
   const handleFilterChange = (newStatusFilter: PaymentStatus | "ALL", newSearchTerm: string) => {
@@ -118,9 +119,9 @@ const AdminPayments = () => {
   return (
     <>
       <PageHeader 
-        title="Pagamentos" 
-        description="Gerencie as solicitações de pagamento"
-        actionLabel="Novo Pagamento"
+        title="Payments" 
+        description="Manage payment requests"
+        actionLabel="New Payment"
         actionLink={PATHS.ADMIN.PAYMENT_NEW}
       />
 
