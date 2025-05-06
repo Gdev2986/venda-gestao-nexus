@@ -2,7 +2,14 @@
 import { UserRole } from "@/types";
 import { useState } from "react";
 import SidebarNavItem from "./SidebarNavItem";
-import { adminItems, userItems, partnerItems, financialItems, logisticsItems } from "./navigation-items";
+import { 
+  adminItems, 
+  userItems, 
+  partnerItems, 
+  financialItems, 
+  logisticsItems,
+  reportItems
+} from "./navigation-items";
 
 interface SidebarNavigationProps {
   userRole: UserRole;
@@ -13,13 +20,13 @@ const SidebarNavigation = ({ userRole }: SidebarNavigationProps) => {
   const getSidebarItems = () => {
     switch (userRole) {
       case UserRole.ADMIN:
-        return adminItems;
+        return [...adminItems, ...reportItems.filter(item => item.roles.includes(UserRole.ADMIN))];
       case UserRole.CLIENT:
         return userItems;
       case UserRole.PARTNER:
         return partnerItems;
       case UserRole.FINANCIAL:
-        return financialItems;
+        return [...financialItems, ...reportItems.filter(item => item.roles.includes(UserRole.FINANCIAL))];
       case UserRole.LOGISTICS:
         return logisticsItems;
       default:

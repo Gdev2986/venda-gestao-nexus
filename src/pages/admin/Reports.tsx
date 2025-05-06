@@ -1,11 +1,10 @@
 
 import { useState } from "react";
-import { format, subMonths, subDays, startOfMonth, endOfMonth, subYears, startOfYear } from "date-fns";
+import { format, subMonths, startOfMonth, endOfMonth, subYears, startOfYear } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { PageHeader } from "@/components/page/PageHeader";
-import { PageWrapper } from "@/components/page/PageWrapper";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Calendar } from "@/components/ui/calendar";
 import { ArrowUpRight, Download, Filter, Plus, Printer, ChevronDown } from "lucide-react";
@@ -24,31 +23,16 @@ import {
 import {
   Form,
   FormControl,
-  FormDescription,
   FormField,
   FormItem,
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
-import { LineChart, BarChart } from "@/components/charts";
-import { 
-  ResponsiveContainer, 
-  PieChart, 
-  Pie, 
-  Cell, 
-  Legend, 
-  BarChart as RechartsBarChart, 
-  Bar, 
-  XAxis, 
-  YAxis, 
-  CartesianGrid, 
-  Tooltip
-} from "recharts";
+import { LineChart, BarChart, PieChart } from "@/components/charts";
 
 // Mock data for charts
 const salesData = [
@@ -112,6 +96,14 @@ const partnerCommissions = [
   { name: "Parceiro E", value: 3100 },
 ];
 
+const topClients = [
+  { name: "Cliente A", value: 50000 },
+  { name: "Cliente B", value: 42000 },
+  { name: "Cliente C", value: 35000 },
+  { name: "Cliente D", value: 28000 },
+  { name: "Cliente E", value: 22000 },
+];
+
 // Mock data for expenses
 const mockExpenses = [
   {
@@ -160,9 +152,6 @@ const mockExpenses = [
     status: "Concluída",
   },
 ];
-
-// Colors for pie chart
-const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884d8'];
 
 // Form schema for adding/editing expenses
 const expenseFormSchema = z.object({
@@ -486,7 +475,7 @@ const AdminReports = () => {
               </CardHeader>
               <CardContent className="pt-0">
                 <div className="h-[300px]">
-                  <LineChart data={salesData} />
+                  <LineChart data={salesData} dataKey="total" />
                 </div>
               </CardContent>
             </Card>
@@ -535,7 +524,7 @@ const AdminReports = () => {
               </CardHeader>
               <CardContent className="pt-0">
                 <div className="h-[300px]">
-                  <LineChart data={clientGrowthData} />
+                  <LineChart data={clientGrowthData} dataKey="total" />
                 </div>
               </CardContent>
             </Card>
@@ -547,25 +536,7 @@ const AdminReports = () => {
               </CardHeader>
               <CardContent className="pt-0">
                 <div className="h-[300px]">
-                  <ResponsiveContainer width="100%" height="100%">
-                    <PieChart>
-                      <Pie
-                        data={expensesByCategory}
-                        cx="50%"
-                        cy="50%"
-                        labelLine={false}
-                        label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(0)}%`}
-                        outerRadius={80}
-                        fill="#8884d8"
-                        dataKey="value"
-                      >
-                        {expensesByCategory.map((entry, index) => (
-                          <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                        ))}
-                      </Pie>
-                      <Legend />
-                    </PieChart>
-                  </ResponsiveContainer>
+                  <PieChart data={expensesByCategory} dataKey="value" />
                 </div>
               </CardContent>
             </Card>
@@ -817,19 +788,24 @@ const AdminReports = () => {
               </CardHeader>
               <CardContent className="pt-0">
                 <div className="h-[300px]">
-                  <LineChart data={clientGrowthData} />
+                  <LineChart data={clientGrowthData} dataKey="total" />
                 </div>
               </CardContent>
             </Card>
             
             <Card>
               <CardHeader>
-                <CardTitle>Retenção de Clientes</CardTitle>
-                <CardDescription>Taxa de retenção ao longo do tempo</CardDescription>
+                <CardTitle>Top Clientes por Faturamento</CardTitle>
+                <CardDescription>Clientes que mais geraram receita no período</CardDescription>
               </CardHeader>
               <CardContent className="pt-0">
-                <div className="h-[300px] flex items-center justify-center">
-                  <p className="text-muted-foreground">Dados de retenção em desenvolvimento</p>
+                <div className="h-[300px]">
+                  <BarChart 
+                    data={topClients} 
+                    dataKey="value" 
+                    layout="vertical"
+                    formatter={(value) => formatCurrency(value)}
+                  />
                 </div>
               </CardContent>
             </Card>
@@ -845,29 +821,12 @@ const AdminReports = () => {
             </CardHeader>
             <CardContent className="pt-0">
               <div className="h-[400px]">
-                <ResponsiveContainer width="100%" height="100%">
-                  <RechartsBarChart
-                    layout="vertical"
-                    data={partnerCommissions}
-                    margin={{ top: 20, right: 30, left: 60, bottom: 5 }}
-                  >
-                    <CartesianGrid strokeDasharray="3 3" horizontal={true} vertical={false} />
-                    <XAxis 
-                      type="number" 
-                      tickFormatter={(value) => formatCurrency(value)}
-                    />
-                    <YAxis dataKey="name" type="category" />
-                    <Tooltip 
-                      formatter={(value: any) => formatCurrency(value)}
-                    />
-                    <Bar 
-                      dataKey="value" 
-                      fill="#8884d8" 
-                      name="Comissão" 
-                      radius={[0, 4, 4, 0]}
-                    />
-                  </RechartsBarChart>
-                </ResponsiveContainer>
+                <BarChart 
+                  data={partnerCommissions} 
+                  dataKey="value" 
+                  layout="vertical"
+                  formatter={(value) => formatCurrency(value)}
+                />
               </div>
             </CardContent>
           </Card>
