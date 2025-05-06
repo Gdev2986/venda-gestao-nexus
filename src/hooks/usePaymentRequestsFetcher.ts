@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { Payment, PaymentStatus, PaymentType } from "@/types";
@@ -37,10 +38,10 @@ export const usePaymentRequestsFetcher = (initialBalance: number = 15000) => {
       if (error) throw error;
       
       if (data && data.length > 0) {
-        const formattedData = data.map(item => formatPaymentRequest(item));
+        const formattedData = data.map(item => formatPaymentRequest(item)) as unknown as Payment[];
         setPaymentRequests(formattedData);
       } else {
-        setPaymentRequests(getMockPaymentRequests());
+        setPaymentRequests(getMockPaymentRequests() as unknown as Payment[]);
       }
     } catch (err) {
       console.error('Error fetching payment requests:', err);
@@ -51,7 +52,7 @@ export const usePaymentRequestsFetcher = (initialBalance: number = 15000) => {
       });
       
       // Use mock data as fallback
-      setPaymentRequests(getMockPaymentRequests());
+      setPaymentRequests(getMockPaymentRequests() as unknown as Payment[]);
     } finally {
       setIsLoading(false);
     }

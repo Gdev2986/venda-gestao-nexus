@@ -93,7 +93,7 @@ export function MainOverviewTabs({
               {loading ? (
                 <Skeleton className="h-[300px] w-full" />
               ) : (
-                <LineChart data={salesData} />
+                <LineChart data={salesData} dataKey="total" />
               )}
             </CardContent>
           </Card>
@@ -106,7 +106,7 @@ export function MainOverviewTabs({
               {loading ? (
                 <Skeleton className="h-[300px] w-full" />
               ) : (
-                <BarChart data={paymentMethodsData} />
+                <BarChart data={paymentMethodsData} dataKey="value" />
               )}
             </CardContent>
           </Card>

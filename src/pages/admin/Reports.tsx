@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { format, subMonths, startOfMonth, endOfMonth, subYears, startOfYear } from "date-fns";
 import { ptBR } from "date-fns/locale";
@@ -33,6 +32,18 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { LineChart, BarChart, PieChart } from "@/components/charts";
+import { 
+  ResponsiveContainer, 
+  BarChart as RechartsBarChart, 
+  LineChart as RechartsLineChart, 
+  Bar, 
+  Line, 
+  XAxis, 
+  YAxis, 
+  CartesianGrid, 
+  Tooltip as RechartsTooltip, 
+  Legend 
+} from "recharts";
 
 // Mock data for charts
 const salesData = [
@@ -500,7 +511,7 @@ const AdminReports = () => {
                           compactDisplay: "short",
                         }).format(value)}
                       />
-                      <Tooltip 
+                      <RechartsTooltip 
                         formatter={(value: any) => (
                           new Intl.NumberFormat("pt-BR", {
                             style: "currency",
@@ -807,33 +818,4 @@ const AdminReports = () => {
                     formatter={(value) => formatCurrency(value)}
                   />
                 </div>
-              </CardContent>
-            </Card>
-          </div>
-        </TabsContent>
-        
-        {/* Partners Tab */}
-        <TabsContent value="partners" className="space-y-4">
-          <Card>
-            <CardHeader>
-              <CardTitle>Comissões por Parceiro</CardTitle>
-              <CardDescription>Ranking de parceiros por comissão no período</CardDescription>
-            </CardHeader>
-            <CardContent className="pt-0">
-              <div className="h-[400px]">
-                <BarChart 
-                  data={partnerCommissions} 
-                  dataKey="value" 
-                  layout="vertical"
-                  formatter={(value) => formatCurrency(value)}
-                />
-              </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
-      </Tabs>
-    </div>
-  );
-};
-
-export default AdminReports;
+              </Card

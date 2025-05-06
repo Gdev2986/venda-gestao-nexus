@@ -3,7 +3,7 @@ import { ResponsiveContainer, LineChart as RechartsLineChart, Line, XAxis, YAxis
 
 interface LineChartProps {
   data: any[];
-  dataKey: string;
+  dataKey?: string;
   xAxisKey?: string;
   height?: number;
   color?: string;
@@ -12,7 +12,7 @@ interface LineChartProps {
 
 export const LineChart = ({
   data,
-  dataKey,
+  dataKey = "total",
   xAxisKey = "name",
   height = 300,
   color = "hsl(var(--primary))",

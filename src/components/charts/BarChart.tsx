@@ -3,7 +3,7 @@ import { ResponsiveContainer, BarChart as RechartsBarChart, Bar, XAxis, YAxis, C
 
 interface BarChartProps {
   data: any[];
-  dataKey: string;
+  dataKey?: string;
   xAxisKey?: string;
   height?: number;
   color?: string;
@@ -13,7 +13,7 @@ interface BarChartProps {
 
 export const BarChart = ({
   data,
-  dataKey,
+  dataKey = "value",
   xAxisKey = "name",
   height = 300,
   color = "hsl(var(--primary))",

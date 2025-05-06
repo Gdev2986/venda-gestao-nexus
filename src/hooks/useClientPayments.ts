@@ -1,9 +1,11 @@
+
 import { useState, useEffect } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { Payment, PaymentStatus, PaymentType, PixKey } from "@/types";
 import { supabase } from "@/integrations/supabase/client";
 import { getMockPaymentRequests } from "@/utils/mock-payment-data";
 import { formatPaymentRequest } from "@/services/payment.service";
+import { PaymentData } from "@/types/payment.types";
 
 export const useClientPayments = (clientId: string) => {
   const { toast } = useToast();
@@ -36,12 +38,12 @@ export const useClientPayments = (clientId: string) => {
     if (error) throw error;
     
     if (data && data.length > 0) {
-      const formattedData = data.map(item => formatPaymentRequest(item));
+      const formattedData = data.map(item => formatPaymentRequest(item)) as unknown as Payment[];
       setPayments(formattedData);
     } else {
       // Use mock data if no real data is available
       const mockData = getMockPaymentRequests().filter(p => p.client_id === clientId);
-      setPayments(mockData);
+      setPayments(mockData as unknown as Payment[]);
     }
   } catch (err) {
     console.error('Error fetching client payment requests:', err);
@@ -53,7 +55,7 @@ export const useClientPayments = (clientId: string) => {
     
     // Use mock data as fallback, filtered by client
     const mockData = getMockPaymentRequests().filter(p => p.client_id === clientId);
-    setPayments(mockData);
+    setPayments(mockData as unknown as Payment[]);
   } finally {
     setIsLoading(false);
   }

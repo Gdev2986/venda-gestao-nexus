@@ -1,44 +1,49 @@
 
-import { ResponsiveContainer, PieChart as RechartsPieChart, Pie, Cell, Legend, Tooltip } from "recharts";
+import { ResponsiveContainer, PieChart as RechartsPieChart, Pie, Cell, Tooltip, Legend } from "recharts";
+
+const COLORS = ["#0088FE", "#00C49F", "#FFBB28", "#FF8042", "#8884D8", "#82CA9D"];
 
 interface PieChartProps {
   data: any[];
   dataKey: string;
   nameKey?: string;
   height?: number;
-  colors?: string[];
   formatter?: (value: number) => string;
+  innerRadius?: number;
+  outerRadius?: number;
+  paddingAngle?: number;
 }
-
-const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884d8', '#82ca9d'];
 
 export const PieChart = ({
   data,
   dataKey,
   nameKey = "name",
   height = 300,
-  colors = COLORS,
-  formatter
+  formatter,
+  innerRadius = 0,
+  outerRadius = 80,
+  paddingAngle = 0
 }: PieChartProps) => {
   return (
     <ResponsiveContainer width="100%" height={height}>
-      <RechartsPieChart>
+      <RechartsPieChart margin={{ top: 10, right: 30, left: 20, bottom: 20 }}>
         <Pie
           data={data}
           cx="50%"
           cy="50%"
-          labelLine={false}
+          labelLine={true}
           label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(0)}%`}
-          outerRadius={80}
-          fill="#8884d8"
+          outerRadius={outerRadius}
+          innerRadius={innerRadius}
+          paddingAngle={paddingAngle}
           dataKey={dataKey}
           nameKey={nameKey}
         >
           {data.map((entry, index) => (
-            <Cell key={`cell-${index}`} fill={colors[index % colors.length]} />
+            <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
           ))}
         </Pie>
-        <Tooltip 
+        <Tooltip
           formatter={(value: any) => formatter ? formatter(value) : 
             new Intl.NumberFormat("pt-BR", {
               style: "currency",

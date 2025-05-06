@@ -1,4 +1,3 @@
-
 import { PaymentData } from "@/types/payment.types";
 import { PaymentRequestStatus, PaymentStatus } from "@/types";
 import { supabase } from "@/integrations/supabase/client";
@@ -150,7 +149,9 @@ export const formatPaymentRequest = (data: any): PaymentData => {
   // Ensure rejection_reason is always present, even if null
   return {
     ...data,
-    rejection_reason: data.rejection_reason || null
+    status: data.status as PaymentRequestStatus,
+    rejection_reason: data.rejection_reason || null,
+    payment_type: data.payment_type || "PIX" // Set default payment_type for compatibility
   };
 };
 
