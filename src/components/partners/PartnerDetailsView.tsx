@@ -1,113 +1,107 @@
 
 import { Partner } from "@/types";
 import { Button } from "@/components/ui/button";
-import { DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
-import { Avatar } from "@/components/ui/avatar";
-import { PenIcon, TrashIcon, UserIcon } from "lucide-react";
+import { Edit2, Trash2 } from "lucide-react";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+} from "@/components/ui/dialog";
 
 interface PartnerDetailsViewProps {
   partner: Partner;
+  isOpen: boolean;
   onClose: () => void;
   onEdit: () => void;
   onDelete: () => void;
 }
 
-const PartnerDetailsView = ({ partner, onClose, onEdit, onDelete }: PartnerDetailsViewProps) => {
-  // Mock data for clients and commissions
-  const getRandomClientCount = (partnerId: string) => {
-    const id = partnerId.split("-")[0] || "";
-    const hash = id.split("").reduce((acc, char) => acc + char.charCodeAt(0), 0);
-    return (hash % 30) + 1; // 1-30 clients
-  };
-
-  const getRandomCommission = (partnerId: string) => {
-    const id = partnerId.split("-")[0] || "";
-    const hash = id.split("").reduce((acc, char) => acc + char.charCodeAt(0), 0);
-    return (hash % 5000) + 500; // R$500-5500
-  };
-
-  const clientCount = getRandomClientCount(partner.id);
-  const commission = getRandomCommission(partner.id);
-  const isActive = partner.id.length % 2 !== 0;
-
+const PartnerDetailsView = ({ 
+  partner, 
+  isOpen, 
+  onClose, 
+  onEdit, 
+  onDelete 
+}: PartnerDetailsViewProps) => {
   return (
-    <DialogContent className="sm:max-w-md">
-      <DialogHeader>
-        <DialogTitle>Detalhes do Parceiro</DialogTitle>
-        <DialogDescription>
-          Informações detalhadas sobre o parceiro
-        </DialogDescription>
-      </DialogHeader>
+    <Dialog open={isOpen} onOpenChange={onClose}>
+      <DialogContent className="max-w-2xl">
+        <DialogHeader>
+          <DialogTitle>Detalhes do Parceiro</DialogTitle>
+          <DialogDescription>
+            Informações completas sobre {partner.company_name || partner.business_name}
+          </DialogDescription>
+        </DialogHeader>
+        
+        <div className="grid gap-4 py-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+            <div>
+              <h3 className="font-medium text-sm text-muted-foreground mb-1">Nome da Empresa</h3>
+              <p>{partner.company_name}</p>
+            </div>
 
-      <div className="space-y-4 pt-4">
-        <div className="flex items-center gap-4">
-          <Avatar className="h-16 w-16">
-            <UserIcon className="h-8 w-8" />
-          </Avatar>
-          <div>
-            <h3 className="text-lg font-semibold">{partner.business_name || partner.company_name}</h3>
-            <p className="text-sm text-muted-foreground">{isActive ? "Ativo" : "Inativo"}</p>
+            {partner.business_name && partner.business_name !== partner.company_name && (
+              <div>
+                <h3 className="font-medium text-sm text-muted-foreground mb-1">Nome Fantasia</h3>
+                <p>{partner.business_name}</p>
+              </div>
+            )}
+
+            {partner.contact_name && (
+              <div>
+                <h3 className="font-medium text-sm text-muted-foreground mb-1">Contato</h3>
+                <p>{partner.contact_name}</p>
+              </div>
+            )}
+
+            {partner.email && (
+              <div>
+                <h3 className="font-medium text-sm text-muted-foreground mb-1">Email</h3>
+                <p>{partner.email}</p>
+              </div>
+            )}
+
+            {partner.phone && (
+              <div>
+                <h3 className="font-medium text-sm text-muted-foreground mb-1">Telefone</h3>
+                <p>{partner.phone}</p>
+              </div>
+            )}
+
+            <div>
+              <h3 className="font-medium text-sm text-muted-foreground mb-1">Taxa de Comissão</h3>
+              <p>{partner.commission_rate}%</p>
+            </div>
           </div>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div>
-            <p className="text-sm font-medium text-muted-foreground">Razão Social</p>
-            <p>{partner.company_name}</p>
-          </div>
-          <div>
-            <p className="text-sm font-medium text-muted-foreground">Nome Fantasia</p>
-            <p>{partner.business_name || "-"}</p>
-          </div>
-          <div>
-            <p className="text-sm font-medium text-muted-foreground">Contato</p>
-            <p>{partner.contact_name || "-"}</p>
-          </div>
-          <div>
-            <p className="text-sm font-medium text-muted-foreground">Email</p>
-            <p>{partner.email || "-"}</p>
-          </div>
-          <div>
-            <p className="text-sm font-medium text-muted-foreground">Telefone</p>
-            <p>{partner.phone || "-"}</p>
-          </div>
-        </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 border-t pt-4">
-          <div>
-            <p className="text-sm font-medium text-muted-foreground">Clientes Vinculados</p>
-            <p className="text-lg font-semibold">{clientCount}</p>
-          </div>
-          <div>
-            <p className="text-sm font-medium text-muted-foreground">Comissão Total</p>
-            <p className="text-lg font-semibold">R$ {commission.toFixed(2).replace(".", ",")}</p>
-          </div>
-        </div>
-
-        <div className="flex justify-end space-x-2 pt-4 border-t">
-          <Button
-            variant="outline"
+        <div className="flex flex-row justify-between sm:justify-between gap-2">
+          <Button 
+            variant="outline" 
             onClick={onClose}
           >
             Fechar
           </Button>
-          <Button
-            variant="outline"
-            onClick={onEdit}
-            className="gap-1"
-          >
-            <PenIcon className="h-4 w-4" /> Editar
-          </Button>
-          <Button
-            variant="destructive"
-            onClick={onDelete}
-            className="gap-1"
-          >
-            <TrashIcon className="h-4 w-4" /> Excluir
-          </Button>
+          <div className="flex flex-row gap-2">
+            <Button 
+              onClick={onEdit}
+              className="gap-2"
+            >
+              <Edit2 size={16} /> Editar
+            </Button>
+            <Button 
+              variant="destructive" 
+              onClick={onDelete}
+              className="gap-2"
+            >
+              <Trash2 size={16} /> Excluir
+            </Button>
+          </div>
         </div>
-      </div>
-    </DialogContent>
+      </DialogContent>
+    </Dialog>
   );
 };
 

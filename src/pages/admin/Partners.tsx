@@ -16,6 +16,7 @@ import PartnerDetailsView from "@/components/partners/PartnerDetailsView";
 import { usePartners } from "@/hooks/use-partners";
 import PartnerForm, { PartnerFormValues } from "@/components/partners/PartnerForm";
 import { AlertDialog, AlertDialogContent, AlertDialogHeader, AlertDialogTitle, AlertDialogDescription, AlertDialogFooter, AlertDialogCancel, AlertDialogAction } from "@/components/ui/alert-dialog";
+import PartnerFormModal from "@/components/partners/PartnerFormModal";
 
 const AdminPartners = () => {
   const [searchTerm, setSearchTerm] = useState("");
@@ -26,6 +27,7 @@ const AdminPartners = () => {
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [isViewDialogOpen, setIsViewDialogOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const { partners, loading: isLoading, error, filterPartners, createPartner, updatePartner, deletePartner, refreshPartners } = usePartners();
@@ -45,40 +47,6 @@ const AdminPartners = () => {
   // Handle search input change
   const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setSearchTerm(e.target.value);
-  };
-
-  // Handle create partner form submit
-  const handleCreatePartner = async (data: PartnerFormValues) => {
-    setIsSubmitting(true);
-    try {
-      const success = await createPartner({
-        ...data,
-        company_name: data.company_name,
-        business_name: data.business_name || data.company_name,
-        contact_name: data.contact_name || "",
-        email: data.email || "",
-        phone: data.phone || "",
-        commission_rate: data.commission_rate
-      });
-
-      if (success) {
-        toast({
-          title: "Parceiro criado",
-          description: "O parceiro foi criado com sucesso.",
-        });
-        setIsCreateDialogOpen(false);
-        return true;
-      } else {
-        toast({
-          variant: "destructive",
-          title: "Erro",
-          description: "Não foi possível criar o parceiro.",
-        });
-        return false;
-      }
-    } finally {
-      setIsSubmitting(false);
-    }
   };
 
   // Handle edit partner form submit
@@ -132,6 +100,7 @@ const AdminPartners = () => {
         });
         if (selectedPartner?.id === partnerToDelete.id) {
           setSelectedPartner(null);
+          setIsViewDialogOpen(false);
         }
       } else {
         toast({
@@ -150,17 +119,18 @@ const AdminPartners = () => {
   // Handle opening partner details
   const handleViewPartner = (partner: Partner) => {
     setSelectedPartner(partner);
+    setIsViewDialogOpen(true);
   };
 
   // Handle opening edit dialog
-  const handleEditClick = (partner: Partner) => {
-    setSelectedPartner(partner);
+  const handleEditClick = () => {
     setIsEditDialogOpen(true);
   };
 
   // Handle opening delete confirmation dialog
-  const handleDeleteClick = (partner: Partner) => {
-    setPartnerToDelete(partner);
+  const handleDeleteClick = () => {
+    if (!selectedPartner) return;
+    setPartnerToDelete(selectedPartner);
     setIsDeleteDialogOpen(true);
   };
 
@@ -198,21 +168,6 @@ const AdminPartners = () => {
               <SelectItem value="inactive">Inativos</SelectItem>
             </SelectContent>
           </Select>
-          
-          <Select 
-            value={filterPeriod} 
-            onValueChange={setFilterPeriod}
-          >
-            <SelectTrigger className="w-full">
-              <SelectValue placeholder="Período" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">Todos</SelectItem>
-              <SelectItem value="7days">Últimos 7 dias</SelectItem>
-              <SelectItem value="30days">Últimos 30 dias</SelectItem>
-              <SelectItem value="current_month">Mês atual</SelectItem>
-            </SelectContent>
-          </Select>
         </div>
       </div>
       
@@ -221,65 +176,43 @@ const AdminPartners = () => {
           partners={partners}
           isLoading={isLoading}
           onView={handleViewPartner}
-          onEdit={handleEditClick}
-          onDelete={handleDeleteClick}
+          onEdit={(partner) => {
+            setSelectedPartner(partner);
+            setIsEditDialogOpen(true);
+          }}
+          onDelete={(partner) => {
+            setPartnerToDelete(partner);
+            setIsDeleteDialogOpen(true);
+          }}
         />
       </PageWrapper>
 
       {/* Partner Details Dialog */}
       {selectedPartner && (
-        <Dialog open={!!selectedPartner && !isEditDialogOpen} onOpenChange={(isOpen) => !isOpen && setSelectedPartner(null)}>
-          <PartnerDetailsView 
-            partner={selectedPartner}
-            onClose={() => setSelectedPartner(null)}
-            onEdit={() => setIsEditDialogOpen(true)}
-            onDelete={() => {
-              setPartnerToDelete(selectedPartner);
-              setIsDeleteDialogOpen(true);
-            }}
-          />
-        </Dialog>
+        <PartnerDetailsView 
+          partner={selectedPartner}
+          isOpen={isViewDialogOpen}
+          onClose={() => setIsViewDialogOpen(false)}
+          onEdit={handleEditClick}
+          onDelete={handleDeleteClick}
+        />
       )}
 
-      {/* Create Partner Dialog */}
-      <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
-        <div className="max-w-2xl mx-auto bg-background p-6 rounded-lg">
-          <h2 className="text-xl font-semibold mb-4">Novo Parceiro</h2>
-          <PartnerForm
-            isOpen={isCreateDialogOpen}
-            onClose={() => setIsCreateDialogOpen(false)}
-            onSubmit={handleCreatePartner}
-            isSubmitting={isSubmitting}
-            title="Novo Parceiro"
-            hideCommissionRate={true}
-          />
-        </div>
-      </Dialog>
+      {/* Create Partner Modal */}
+      <PartnerFormModal
+        isOpen={isCreateDialogOpen}
+        onClose={() => setIsCreateDialogOpen(false)}
+        title="Novo Parceiro"
+      />
 
-      {/* Edit Partner Dialog */}
-      <Dialog open={isEditDialogOpen && !!selectedPartner} onOpenChange={setIsEditDialogOpen}>
-        {selectedPartner && (
-          <div className="max-w-2xl mx-auto bg-background p-6 rounded-lg">
-            <h2 className="text-xl font-semibold mb-4">Editar Parceiro</h2>
-            <PartnerForm
-              isOpen={isEditDialogOpen}
-              onClose={() => setIsEditDialogOpen(false)}
-              onSubmit={handleEditPartner}
-              initialData={{
-                company_name: selectedPartner.company_name,
-                business_name: selectedPartner.business_name,
-                contact_name: selectedPartner.contact_name,
-                email: selectedPartner.email,
-                phone: selectedPartner.phone,
-                commission_rate: selectedPartner.commission_rate
-              }}
-              isSubmitting={isSubmitting}
-              title="Editar Parceiro"
-              hideCommissionRate={true}
-            />
-          </div>
-        )}
-      </Dialog>
+      {/* Edit Partner Modal */}
+      {selectedPartner && (
+        <PartnerFormModal
+          isOpen={isEditDialogOpen}
+          onClose={() => setIsEditDialogOpen(false)}
+          title="Editar Parceiro"
+        />
+      )}
 
       {/* Delete Confirmation Dialog */}
       <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>

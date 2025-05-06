@@ -2,25 +2,33 @@
 import { Client } from "@/types";
 import { Button } from "@/components/ui/button";
 import { Edit2, Trash2 } from "lucide-react";
+import { 
+  Dialog, 
+  DialogContent, 
+  DialogHeader, 
+  DialogTitle,
+  DialogDescription
+} from "@/components/ui/dialog";
 
 interface ClientDetailsViewProps {
   client: Client;
+  isOpen: boolean;
   onClose: () => void;
   onEdit: () => void;
   onDelete: () => void;
 }
 
-const ClientDetailsView = ({ client, onClose, onEdit, onDelete }: ClientDetailsViewProps) => {
+const ClientDetailsView = ({ client, isOpen, onClose, onEdit, onDelete }: ClientDetailsViewProps) => {
   return (
-    <div className="max-w-2xl mx-auto bg-background p-6 rounded-lg">
-      <div className="space-y-4">
-        <div>
-          <h2 className="text-lg font-semibold">Detalhes do Cliente</h2>
-          <p className="text-sm text-muted-foreground">
+    <Dialog open={isOpen} onOpenChange={onClose}>
+      <DialogContent className="max-w-2xl">
+        <DialogHeader>
+          <DialogTitle>Detalhes do Cliente</DialogTitle>
+          <DialogDescription>
             Informações completas sobre {client.business_name}
-          </p>
-        </div>
-
+          </DialogDescription>
+        </DialogHeader>
+        
         <div className="grid gap-4 py-4">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
             <div>
@@ -88,8 +96,8 @@ const ClientDetailsView = ({ client, onClose, onEdit, onDelete }: ClientDetailsV
             </Button>
           </div>
         </div>
-      </div>
-    </div>
+      </DialogContent>
+    </Dialog>
   );
 };
 
