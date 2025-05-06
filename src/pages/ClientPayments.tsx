@@ -15,7 +15,7 @@ const ClientPayments = () => {
     clientBalance = 15000, // Default value to prevent errors
     pixKeys = [],
     isLoadingPixKeys = false,
-    handleRequestPayment = () => {}
+    handleRequestPayment
   } = useClientPayments("client-id"); // Pass a default client ID
 
   return (
@@ -37,7 +37,11 @@ const ClientPayments = () => {
         clientBalance={clientBalance}
         pixKeys={pixKeys}
         isLoadingPixKeys={isLoadingPixKeys}
-        onRequestPayment={handleRequestPayment}
+        onRequestPayment={(amount, description, pixKeyId, documentFile) => {
+          // Adapter function to handle type compatibility
+          const numAmount = typeof amount === 'string' ? parseFloat(amount) : amount;
+          return handleRequestPayment(numAmount, pixKeyId, description);
+        }}
       />
     </div>
   );

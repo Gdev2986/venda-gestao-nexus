@@ -79,7 +79,11 @@ export const fetchPaymentsData = async (
   
   if (error) throw error;
   
-  return data || [];
+  // Ensure all required fields are present, including rejection_reason
+  return (data || []).map(item => ({
+    ...item,
+    rejection_reason: item.rejection_reason || null  // Ensure rejection_reason is always present
+  })) as PaymentData[];
 };
 
 // Approve a payment request

@@ -142,8 +142,53 @@ function App() {
             element={<NewClient />} 
           />
           
-          {/* Removed the machine routes from admin */}
+          {/* Logistics routes accessible to admin */}
+          <Route 
+            path={PATHS.LOGISTICS.DASHBOARD} 
+            element={<Dashboard />} 
+          />
           
+          <Route 
+            path={PATHS.LOGISTICS.MACHINES} 
+            element={<Machines />} 
+          />
+          
+          <Route 
+            path={PATHS.LOGISTICS.MACHINE_NEW} 
+            element={<NewMachine />} 
+          />
+          
+          <Route 
+            path={PATHS.LOGISTICS.MACHINE_DETAILS()} 
+            element={<MachineDetails />} 
+          />
+          
+          <Route 
+            path={PATHS.LOGISTICS.OPERATIONS} 
+            element={<Operations />} 
+          />
+          
+          <Route 
+            path={PATHS.LOGISTICS.REQUESTS} 
+            element={<Requests />} 
+          />
+          
+          <Route 
+            path={PATHS.LOGISTICS.CALENDAR} 
+            element={<Calendar />} 
+          />
+          
+          <Route 
+            path={PATHS.LOGISTICS.INVENTORY} 
+            element={<Inventory />} 
+          />
+          
+          <Route 
+            path={PATHS.LOGISTICS.CLIENTS} 
+            element={<Clients />} 
+          />
+          
+          {/* Original admin routes */}
           <Route 
             path={PATHS.ADMIN.SALES} 
             element={<AdminSales />} 
@@ -189,10 +234,7 @@ function App() {
           <Route 
             path={PATHS.ADMIN.LOGISTICS} 
             element={
-              <div className="container mx-auto py-10">
-                <h1 className="text-3xl font-semibold mb-6">Módulo de Logística</h1>
-                <p className="text-gray-600">Esta funcionalidade está em desenvolvimento.</p>
-              </div> 
+              <Navigate to={PATHS.LOGISTICS.DASHBOARD} replace />
             } 
           />
           

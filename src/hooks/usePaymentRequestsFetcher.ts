@@ -38,7 +38,14 @@ export const usePaymentRequestsFetcher = (initialBalance: number = 15000) => {
       
       if (data && data.length > 0) {
         // Map the data to our Payment interface using the service function
-        const formattedData = data.map(item => formatPaymentRequest(item));
+        const formattedData = data.map(item => {
+          // Add rejection_reason field if it doesn't exist in the database
+          const itemWithRejectionReason = {
+            ...item,
+            rejection_reason: item.rejection_reason || null
+          };
+          return formatPaymentRequest(itemWithRejectionReason);
+        });
         setPaymentRequests(formattedData);
       } else {
         // Use mock data if no real data is available

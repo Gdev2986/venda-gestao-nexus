@@ -1,7 +1,7 @@
 
 import { useState, useEffect } from "react";
 import { useToast } from "@/hooks/use-toast";
-import { Payment, PaymentStatus, PaymentType } from "@/types";
+import { Payment, PaymentStatus, PaymentType, PixKey } from "@/types";
 import { supabase } from "@/integrations/supabase/client";
 import { getMockPaymentRequests } from "@/utils/mock-payment-data";
 import { formatPaymentRequest } from "@/services/payment.service";
@@ -11,7 +11,7 @@ export const useClientPayments = (clientId: string) => {
   const [isLoading, setIsLoading] = useState(true);
   const [payments, setPayments] = useState<Payment[]>([]);
   const [clientBalance, setClientBalance] = useState(15000); // Default balance for mock data
-  const [pixKeys, setPixKeys] = useState([]);
+  const [pixKeys, setPixKeys] = useState<PixKey[]>([]);
   const [isLoadingPixKeys, setIsLoadingPixKeys] = useState(false);
 
   const loadClientPayments = async () => {
@@ -38,7 +38,14 @@ export const useClientPayments = (clientId: string) => {
       
       if (data && data.length > 0) {
         // Map the data to our Payment interface using the service function
-        const formattedData = data.map(item => formatPaymentRequest(item));
+        const formattedData = data.map(item => {
+          // Add rejection_reason field if it doesn't exist in the database
+          const itemWithRejectionReason = {
+            ...item,
+            rejection_reason: item.rejection_reason || null
+          };
+          return formatPaymentRequest(itemWithRejectionReason);
+        });
         setPayments(formattedData);
       } else {
         // Use mock data if no real data is available
@@ -58,6 +65,27 @@ export const useClientPayments = (clientId: string) => {
       setPayments(mockData);
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  // Mock PixKeys retrieval for client
+  const loadPixKeys = async () => {
+    setIsLoadingPixKeys(true);
+    
+    try {
+      // Here we would normally fetch PIX keys for the client
+      // For now, creating mock PIX keys
+      setTimeout(() => {
+        setPixKeys([
+          { id: '1', key: '123.456.789-00', type: 'CPF', owner_name: 'João da Silva' },
+          { id: '2', key: 'email@example.com', type: 'EMAIL', owner_name: 'João da Silva' },
+          { id: '3', key: '+5511999999999', type: 'PHONE', owner_name: 'João da Silva' },
+        ]);
+        setIsLoadingPixKeys(false);
+      }, 1000);
+    } catch (error) {
+      console.error('Error loading PIX keys:', error);
+      setIsLoadingPixKeys(false);
     }
   };
 
@@ -81,6 +109,7 @@ export const useClientPayments = (clientId: string) => {
 
   useEffect(() => {
     loadClientPayments();
+    loadPixKeys();
   }, [clientId, toast]);
 
   return {
