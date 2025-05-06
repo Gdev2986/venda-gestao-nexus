@@ -3,16 +3,19 @@ import { useState } from "react";
 import {
   Dialog,
   DialogContent,
-  DialogHeader,
-  DialogTitle,
   DialogDescription,
   DialogFooter,
+  DialogHeader,
+  DialogTitle,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
+import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { formatCurrency } from "@/lib/utils";
-import { FileUploader } from "@/components/payments/FileUploader";
-import { PaymentData } from "@/hooks/usePayments";
+import { PaymentDetailView } from "./PaymentDetailView";
+import { PaymentReceiptUploader } from "./PaymentReceiptUploader";
+import { PaymentData } from "@/hooks/payments/payment.types";
+import { formatCurrency } from "@/lib/formatters";
+import { Loader2 } from "lucide-react";
 
 interface ApprovePaymentDialogProps {
   open: boolean;
@@ -22,85 +25,84 @@ interface ApprovePaymentDialogProps {
   isProcessing: boolean;
 }
 
-export const ApprovePaymentDialog = ({
+export function ApprovePaymentDialog({
   open,
   onOpenChange,
   payment,
   onApprove,
-  isProcessing,
-}: ApprovePaymentDialogProps) => {
+  isProcessing
+}: ApprovePaymentDialogProps) {
   const [receiptFile, setReceiptFile] = useState<File | null>(null);
   const [notes, setNotes] = useState("");
 
   const handleApprove = async () => {
-    if (payment) {
-      await onApprove(payment.id, receiptFile, notes);
-      setReceiptFile(null);
-      setNotes("");
-    }
-  };
+    if (!payment) return;
 
-  const handleCancel = () => {
-    onOpenChange(false);
+    await onApprove(payment.id, receiptFile, notes);
     setReceiptFile(null);
     setNotes("");
   };
 
-  if (!payment) return null;
+  // Reset form when dialog opens/closes
+  const handleOpenChange = (isOpen: boolean) => {
+    if (!isOpen) {
+      setReceiptFile(null);
+      setNotes("");
+    }
+    onOpenChange(isOpen);
+  };
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent>
+    <Dialog open={open} onOpenChange={handleOpenChange}>
+      <DialogContent className="max-w-md">
         <DialogHeader>
           <DialogTitle>Aprovar Pagamento</DialogTitle>
           <DialogDescription>
-            Faça upload do comprovante para aprovar o pagamento.
+            Revise os detalhes antes de aprovar o pagamento de{" "}
+            {payment ? formatCurrency(payment.amount) : ""}
           </DialogDescription>
         </DialogHeader>
-        
-        <div className="space-y-4 py-4">
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <p className="text-sm font-medium mb-1">Cliente</p>
-              <p className="text-sm">{payment.client?.business_name}</p>
-            </div>
-            <div>
-              <p className="text-sm font-medium mb-1">Valor</p>
-              <p className="text-sm">{formatCurrency(payment.amount)}</p>
-            </div>
+
+        {payment && <PaymentDetailView payment={payment} />}
+
+        <div className="space-y-4">
+          <div>
+            <Label htmlFor="receipt">Comprovante de Pagamento (opcional)</Label>
+            <PaymentReceiptUploader
+              onFileSelected={setReceiptFile}
+              selectedFile={receiptFile}
+            />
           </div>
-          
-          <FileUploader
-            label="Comprovante de pagamento (opcional)"
-            onFileSelect={setReceiptFile}
-            accept=".jpg,.jpeg,.png,.pdf"
-            currentFile={null}
-          />
-          
-          <Textarea
-            placeholder="Observações (opcional)"
-            value={notes}
-            onChange={(e) => setNotes(e.target.value)}
-            className="min-h-[100px]"
-          />
+
+          <div>
+            <Label htmlFor="notes">Observações (opcional)</Label>
+            <Textarea
+              id="notes"
+              placeholder="Adicione observações sobre este pagamento"
+              value={notes}
+              onChange={(e) => setNotes(e.target.value)}
+              rows={3}
+            />
+          </div>
         </div>
-        
+
         <DialogFooter>
-          <Button
-            variant="outline"
-            onClick={handleCancel}
-            disabled={isProcessing}
+          <Button variant="outline" onClick={() => onOpenChange(false)}>Cancelar</Button>
+          <Button 
+            onClick={handleApprove} 
+            disabled={isProcessing || !payment}
           >
-            Cancelar
-          </Button>
-          <Button
-            onClick={handleApprove}
-            disabled={isProcessing}
-          >
-            {isProcessing ? "Processando..." : "Aprovar Pagamento"}
+            {isProcessing ? (
+              <>
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                Processando
+              </>
+            ) : (
+              "Aprovar Pagamento"
+            )}
           </Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>
   );
-};
+}

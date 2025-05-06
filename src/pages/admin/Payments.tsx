@@ -153,9 +153,9 @@ const AdminPayments = () => {
   return (
     <>
       <PageHeader 
-        title="Payments" 
-        description="Manage payment requests"
-        actionLabel="New Payment"
+        title="Pagamentos" 
+        description="Gerenciar solicitações de pagamento"
+        actionLabel="Novo Pagamento"
         actionLink={PATHS.ADMIN.PAYMENT_NEW}
       />
 

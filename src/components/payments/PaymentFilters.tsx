@@ -1,72 +1,73 @@
 
-import { useState } from "react";
-import { Button } from "@/components/ui/button";
+import { useState, useEffect } from "react";
 import { Input } from "@/components/ui/input";
-import {
+import { Button } from "@/components/ui/button";
+import { Search, FilterIcon } from "lucide-react";
+import { PaymentStatus } from "@/types";
+import { 
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { PaymentStatus } from "@/types";
-import { Search, Filter } from "lucide-react";
+import { Card } from "@/components/ui/card";
+import { useDebounce } from "@/hooks/use-debounce";
 
 interface PaymentFiltersProps {
   statusFilter: PaymentStatus | "ALL";
   searchTerm: string;
-  onFilterChange: (statusFilter: PaymentStatus | "ALL", searchTerm: string) => void;
+  onFilterChange: (status: PaymentStatus | "ALL", search: string) => void;
 }
 
 export const PaymentFilters = ({
   statusFilter,
   searchTerm,
-  onFilterChange,
+  onFilterChange
 }: PaymentFiltersProps) => {
-  const [localStatusFilter, setLocalStatusFilter] = useState<PaymentStatus | "ALL">(statusFilter);
   const [localSearchTerm, setLocalSearchTerm] = useState(searchTerm);
+  const debouncedSearchTerm = useDebounce(localSearchTerm, 500);
 
-  const handleApplyFilters = () => {
-    onFilterChange(localStatusFilter, localSearchTerm);
-  };
+  useEffect(() => {
+    onFilterChange(statusFilter, debouncedSearchTerm);
+  }, [statusFilter, debouncedSearchTerm, onFilterChange]);
 
   return (
-    <div className="flex flex-col md:flex-row gap-4 mb-6">
-      <div className="relative flex-1">
-        <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-        <Input
-          placeholder="Buscar por cliente, descrição..."
-          className="pl-8 bg-background"
-          value={localSearchTerm}
-          onChange={(e) => setLocalSearchTerm(e.target.value)}
-        />
+    <Card className="p-4 mb-6">
+      <div className="flex flex-col md:flex-row gap-4">
+        <div className="relative flex-grow">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+          <Input
+            placeholder="Buscar por cliente ou descrição"
+            value={localSearchTerm}
+            onChange={(e) => setLocalSearchTerm(e.target.value)}
+            className="pl-9"
+          />
+        </div>
+        <div className="flex flex-col sm:flex-row gap-2">
+          <Select 
+            value={statusFilter} 
+            onValueChange={(value) => onFilterChange(value as PaymentStatus | "ALL", debouncedSearchTerm)}
+          >
+            <SelectTrigger className="w-[180px]">
+              <SelectValue placeholder="Status" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="ALL">Todos os status</SelectItem>
+              <SelectItem value="PENDING">Pendente</SelectItem>
+              <SelectItem value="APPROVED">Aprovado</SelectItem>
+              <SelectItem value="REJECTED">Rejeitado</SelectItem>
+            </SelectContent>
+          </Select>
+          <Button variant="outline" className="flex items-center gap-2" onClick={() => {
+            setLocalSearchTerm('');
+            onFilterChange("ALL", '');
+          }}>
+            <FilterIcon className="h-4 w-4" />
+            Limpar Filtros
+          </Button>
+        </div>
       </div>
-
-      <div className="flex items-center gap-2">
-        <Select
-          value={localStatusFilter}
-          onValueChange={(value) => setLocalStatusFilter(value as PaymentStatus | "ALL")}
-        >
-          <SelectTrigger className="w-[180px]">
-            <SelectValue placeholder="Filtrar por status" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="ALL">Todos os status</SelectItem>
-            <SelectItem value={PaymentStatus.PENDING}>Pendentes</SelectItem>
-            <SelectItem value={PaymentStatus.APPROVED}>Aprovados</SelectItem>
-            <SelectItem value={PaymentStatus.REJECTED}>Rejeitados</SelectItem>
-            <SelectItem value={PaymentStatus.PAID}>Pagos</SelectItem>
-          </SelectContent>
-        </Select>
-
-        <Button 
-          variant="outline" 
-          onClick={handleApplyFilters}
-        >
-          <Filter className="h-4 w-4 mr-2" />
-          Filtrar
-        </Button>
-      </div>
-    </div>
+    </Card>
   );
 };

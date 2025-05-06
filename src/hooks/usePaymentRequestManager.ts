@@ -146,7 +146,7 @@ export const usePaymentRequestManager = (
           id: data.pix_key.id,
           key: data.pix_key.key,
           type: data.pix_key.type,
-          owner_name: data.pix_key.name // Use name as owner_name since that's what we have
+          owner_name: data.pix_key.name
         } : null,
         rejection_reason: null
       };

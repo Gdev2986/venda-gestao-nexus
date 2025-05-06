@@ -1,107 +1,142 @@
 
-import { formatCurrency } from "@/lib/utils";
-import { format } from "date-fns";
-import { ptBR } from "date-fns/locale";
-import { Check, Eye, X } from "lucide-react";
+import { ColumnDef } from "@tanstack/react-table";
 import { Button } from "@/components/ui/button";
-import { PaymentStatusBadge } from "./PaymentStatusBadge";
-import { PaymentData } from "@/hooks/usePayments";
-import { PaymentStatus } from "@/types";
+import { Badge } from "@/components/ui/badge";
+import { 
+  DropdownMenu, 
+  DropdownMenuContent, 
+  DropdownMenuItem, 
+  DropdownMenuTrigger 
+} from "@/components/ui/dropdown-menu";
+import { Eye, MoreHorizontal, Check, X } from "lucide-react";
+import { format } from "date-fns";
+import { formatCurrency } from "@/lib/formatters";
+import { PaymentData } from "@/hooks/payments/payment.types";
 
+// Define the available payment actions
 export type PaymentAction = "approve" | "reject" | "details";
 
-interface PaymentTableColumnsProps {
+interface PaymentColumnsOptions {
   onPaymentAction: (payment: PaymentData, action: PaymentAction) => void;
 }
 
-export const createPaymentColumns = ({ onPaymentAction }: PaymentTableColumnsProps) => [
+// Function to create payment columns with actions
+export const createPaymentColumns = ({ onPaymentAction }: PaymentColumnsOptions): ColumnDef<PaymentData>[] => [
   {
-    id: "client",
+    accessorKey: "id",
+    header: "ID",
+    cell: ({ row }) => {
+      const id = row.getValue("id") as string;
+      return <span className="font-mono text-xs">{id.substring(0, 8)}...</span>;
+    },
+  },
+  {
+    accessorKey: "client_name",
     header: "Cliente",
-    accessorFn: (row: PaymentData) => row.client?.business_name || "N/A",
-    cell: (info: any) => info.getValue(),
+    cell: ({ row }) => <div className="font-medium">{row.getValue("client_name")}</div>,
   },
   {
-    id: "type",
-    header: "Tipo",
-    accessorFn: (row: PaymentData) => row.pix_key?.type || row.pix_key?.key_type || "PIX",
-    cell: (info: any) => info.getValue(),
-  },
-  {
-    id: "key",
-    header: "Chave PIX",
-    accessorFn: (row: PaymentData) => row.pix_key?.key || "N/A",
-    cell: (info: any) => {
-      const key = info.getValue();
-      // Truncate long keys for display
-      return key.length > 20 ? `${key.substring(0, 17)}...` : key;
-    }
-  },
-  {
-    id: "amount",
-    header: "Valor",
     accessorKey: "amount",
-    cell: (info: any) => formatCurrency(info.getValue()),
+    header: "Valor",
+    cell: ({ row }) => {
+      const amount = parseFloat(row.getValue("amount"));
+      return <div className="font-medium">{formatCurrency(amount)}</div>;
+    },
   },
   {
-    id: "status",
-    header: "Status",
-    accessorKey: "status",
-    cell: (info: any) => <PaymentStatusBadge status={info.getValue()} />,
+    accessorKey: "description",
+    header: "Descrição",
+    cell: ({ row }) => {
+      const description = row.getValue("description") as string;
+      return <div className="max-w-[200px] truncate">{description || "Sem descrição"}</div>;
+    },
   },
   {
-    id: "created_at",
-    header: "Data",
     accessorKey: "created_at",
-    cell: (info: any) => {
-      try {
-        return format(new Date(info.getValue()), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR });
-      } catch (error) {
-        return "Data inválida";
-      }
+    header: "Data",
+    cell: ({ row }) => {
+      const date = new Date(row.getValue("created_at"));
+      return <div>{format(date, "dd/MM/yyyy HH:mm")}</div>;
+    },
+  },
+  {
+    accessorKey: "status",
+    header: "Status",
+    cell: ({ row }) => {
+      const status = row.getValue("status") as string;
+      
+      const getBadgeVariant = () => {
+        switch (status) {
+          case "PENDING":
+            return "outline";
+          case "APPROVED":
+            return "success";
+          case "REJECTED":
+            return "destructive";
+          default:
+            return "secondary";
+        }
+      };
+
+      const getStatusLabel = () => {
+        switch (status) {
+          case "PENDING":
+            return "Pendente";
+          case "APPROVED":
+            return "Aprovado";
+          case "REJECTED":
+            return "Rejeitado";
+          default:
+            return status;
+        }
+      };
+
+      return (
+        <Badge variant={getBadgeVariant()} className="capitalize">
+          {getStatusLabel()}
+        </Badge>
+      );
     },
   },
   {
     id: "actions",
-    header: "Ações",
-    cell: (info: any) => {
-      const payment = info.row.original;
-      const isPending = payment.status === PaymentStatus.PENDING;
+    cell: ({ row }) => {
+      const payment = row.original;
       
       return (
-        <div className="flex items-center space-x-2">
-          {isPending && (
-            <>
-              <Button 
-                variant="ghost" 
-                size="sm"
-                onClick={() => onPaymentAction(payment, 'approve')}
-                className="flex items-center text-green-600 hover:text-green-800 hover:bg-green-50"
-              >
-                <Check className="h-4 w-4 mr-1" />
-                Aprovar
-              </Button>
-              <Button 
-                variant="ghost" 
-                size="sm"
-                onClick={() => onPaymentAction(payment, 'reject')}
-                className="flex items-center text-red-600 hover:text-red-800 hover:bg-red-50"
-              >
-                <X className="h-4 w-4 mr-1" />
-                Rejeitar
-              </Button>
-            </>
-          )}
-          <Button 
-            variant="ghost" 
-            size="sm"
-            onClick={() => onPaymentAction(payment, 'details')}
-            className="flex items-center"
-          >
-            <Eye className="h-4 w-4 mr-1" />
-            Detalhes
-          </Button>
-        </div>
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button variant="ghost" className="h-8 w-8 p-0">
+              <span className="sr-only">Abrir Menu</span>
+              <MoreHorizontal className="h-4 w-4" />
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end">
+            <DropdownMenuItem 
+              onClick={() => onPaymentAction(payment, "details")}
+              className="flex items-center gap-2"
+            >
+              <Eye className="w-4 h-4" /> Detalhes
+            </DropdownMenuItem>
+            
+            {payment.status === "PENDING" && (
+              <>
+                <DropdownMenuItem 
+                  onClick={() => onPaymentAction(payment, "approve")}
+                  className="flex items-center gap-2 text-green-600"
+                >
+                  <Check className="w-4 h-4" /> Aprovar
+                </DropdownMenuItem>
+                <DropdownMenuItem 
+                  onClick={() => onPaymentAction(payment, "reject")}
+                  className="flex items-center gap-2 text-red-600"
+                >
+                  <X className="w-4 h-4" /> Rejeitar
+                </DropdownMenuItem>
+              </>
+            )}
+          </DropdownMenuContent>
+        </DropdownMenu>
       );
     },
   },
