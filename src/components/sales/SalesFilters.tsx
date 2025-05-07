@@ -1,28 +1,24 @@
+
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
+import { 
+  Select, 
+  SelectContent, 
+  SelectItem, 
+  SelectTrigger, 
+  SelectValue 
 } from "@/components/ui/select";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { SalesFilterParams } from "@/types";
 import { Calendar } from "@/components/ui/calendar";
-import { format, isBefore, subDays } from "date-fns";
-import { ptBR } from "date-fns/locale";
-import { CalendarIcon, DownloadIcon, SearchIcon, UploadIcon } from "lucide-react";
+import { 
+  Popover, 
+  PopoverContent, 
+  PopoverTrigger 
+} from "@/components/ui/popover";
+import { CalendarIcon, Download, Search, Upload } from "lucide-react";
+import { format } from "date-fns";
 import { cn } from "@/lib/utils";
-import { PaymentMethod, SalesFilterParams } from "@/types";
 
 interface DateRange {
   from: Date;
@@ -31,187 +27,170 @@ interface DateRange {
 
 interface SalesFiltersProps {
   filters: SalesFilterParams;
+  date?: DateRange;
   onFilterChange: (key: keyof SalesFilterParams, value: any) => void;
-  date: DateRange | undefined;
   onDateChange: (date: DateRange | undefined) => void;
   onClearFilters: () => void;
   onExport: () => void;
   onShowImportDialog: () => void;
 }
 
+const PAYMENT_METHODS = [
+  { value: "credit", label: "Crédito" },
+  { value: "debit", label: "Débito" },
+  { value: "pix", label: "Pix" }
+];
+
+const TERMINALS = [
+  "T100", "T101", "T102", "T103", "T104", "T105"
+];
+
 const SalesFilters = ({
   filters,
-  onFilterChange,
   date,
+  onFilterChange,
   onDateChange,
   onClearFilters,
   onExport,
-  onShowImportDialog,
+  onShowImportDialog
 }: SalesFiltersProps) => {
-  const [selectedDates, setSelectedDates] = useState<DateRange | undefined>(date);
+  const [searchTerm, setSearchTerm] = useState(filters.search || "");
 
-  // Function to disable current day and future dates
-  const disabledDays = (date: Date) => {
-    // Allow only dates before yesterday (today - 1)
-    const yesterday = subDays(new Date(), 1);
-    return !isBefore(date, yesterday);
-  };
-
-  // Handle date selection with two clicks
-  const handleDateSelect = (selectedDate: Date | undefined) => {
-    if (!selectedDate) return;
-
-    if (!selectedDates?.from || selectedDates.to) {
-      // Reset range and set new 'from' date
-      const newDates = {
-        from: selectedDate,
-        to: undefined,
-      };
-      setSelectedDates(newDates);
-      
-      // Don't trigger onDateChange yet, wait for the second click
-    } else {
-      // Second click - complete the range
-      const from = selectedDate < selectedDates.from ? selectedDate : selectedDates.from;
-      const to = selectedDate < selectedDates.from ? selectedDates.from : selectedDate;
-      
-      const newRange = { from, to };
-      setSelectedDates(newRange);
-      onDateChange(newRange);
-    }
-  };
-
-  // Format date for display
-  const formatDateString = () => {
-    if (!selectedDates?.from) {
-      return "Selecione uma data";
-    }
-    
-    if (!selectedDates.to) {
-      return `${format(selectedDates.from, "dd/MM/yyyy", { locale: ptBR })} - Selecione fim`;
-    }
-    
-    return `${format(selectedDates.from, "dd/MM/yyyy", { locale: ptBR })} - ${format(selectedDates.to, "dd/MM/yyyy", { locale: ptBR })}`;
+  const handleSearchSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    onFilterChange("search", searchTerm);
   };
 
   return (
-    <Card className="mb-6">
-      <CardHeader>
-        <CardTitle>Filtros</CardTitle>
-        <CardDescription>
-          Filtre as vendas por período, forma de pagamento, terminal e mais
-        </CardDescription>
-      </CardHeader>
-      <CardContent>
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-          <div className="space-y-2">
-            <Label htmlFor="date">Período</Label>
-            <Popover>
-              <PopoverTrigger asChild>
-                <Button
-                  variant="outline"
-                  className={cn(
-                    "w-full justify-start text-left font-normal",
-                    !selectedDates && "text-muted-foreground"
-                  )}
-                >
-                  <CalendarIcon className="mr-2 h-4 w-4" />
-                  {formatDateString()}
-                </Button>
-              </PopoverTrigger>
-              <PopoverContent className="w-auto p-0 pointer-events-auto" align="start">
-                <Calendar
-                  mode="single"
-                  selected={selectedDates?.to || selectedDates?.from}
-                  onSelect={handleDateSelect}
-                  numberOfMonths={2}
-                  className="p-3 pointer-events-auto"
-                  disabled={disabledDays}
-                  modifiers={{
-                    selected: selectedDates?.to 
-                      ? [selectedDates.from, selectedDates.to] 
-                      : selectedDates?.from ? [selectedDates.from] : [],
-                    range: selectedDates?.to 
-                      ? { from: selectedDates.from, to: selectedDates.to } 
-                      : undefined,
-                  }}
-                />
-              </PopoverContent>
-            </Popover>
+    <div className="space-y-4">
+      <div className="flex flex-col sm:flex-row gap-4">
+        {/* Search Bar */}
+        <form 
+          className="flex-1" 
+          onSubmit={handleSearchSubmit}
+        >
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+            <Input
+              placeholder="Buscar por código ou terminal..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="pl-10"
+            />
           </div>
-          
-          <div className="space-y-2">
-            <Label htmlFor="paymentMethod">Forma de Pagamento</Label>
-            <Select
-              value={filters.paymentMethod}
-              onValueChange={(value) =>
-                onFilterChange("paymentMethod", value as PaymentMethod)
-              }
+        </form>
+        
+        {/* Date Range Picker */}
+        <Popover>
+          <PopoverTrigger asChild>
+            <Button
+              variant={"outline"}
+              className={cn(
+                "sm:w-[240px] justify-start text-left font-normal",
+                !date && "text-muted-foreground"
+              )}
             >
-              <SelectTrigger id="paymentMethod">
-                <SelectValue placeholder="Selecione" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">Todas</SelectItem>
-                <SelectItem value={PaymentMethod.CREDIT}>Crédito</SelectItem>
-                <SelectItem value={PaymentMethod.DEBIT}>Débito</SelectItem>
-                <SelectItem value={PaymentMethod.PIX}>Pix</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-          
-          <div className="space-y-2">
-            <Label htmlFor="terminal">Terminal</Label>
-            <Select
-              value={filters.terminal}
-              onValueChange={(value) => onFilterChange("terminal", value)}
-            >
-              <SelectTrigger id="terminal">
-                <SelectValue placeholder="Selecione" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">Todos</SelectItem>
-                <SelectItem value="T123456">T123456</SelectItem>
-                <SelectItem value="T789012">T789012</SelectItem>
-                <SelectItem value="T345678">T345678</SelectItem>
-                <SelectItem value="T901234">T901234</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-          
-          <div className="space-y-2">
-            <Label htmlFor="search">Código da Venda</Label>
-            <div className="relative">
-              <SearchIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-              <Input
-                id="search"
-                placeholder="Buscar por código..."
-                className="pl-9"
-                value={filters.search || ""}
-                onChange={(e) => onFilterChange("search", e.target.value)}
-              />
-            </div>
-          </div>
+              <CalendarIcon className="mr-2 h-4 w-4" />
+              {date?.from ? (
+                date.to ? (
+                  <>
+                    {format(date.from, "dd/MM/yyyy")} -{" "}
+                    {format(date.to, "dd/MM/yyyy")}
+                  </>
+                ) : (
+                  format(date.from, "dd/MM/yyyy")
+                )
+              ) : (
+                <span>Filtrar por data</span>
+              )}
+            </Button>
+          </PopoverTrigger>
+          <PopoverContent className="w-auto p-0" align="start">
+            <Calendar
+              initialFocus
+              mode="range"
+              defaultMonth={date?.from}
+              selected={date}
+              onSelect={onDateChange}
+              numberOfMonths={2}
+              className="pointer-events-auto"
+            />
+          </PopoverContent>
+        </Popover>
+        
+        {/* Actions */}
+        <div className="flex gap-2">
+          <Button 
+            variant="outline" 
+            className="flex items-center gap-1"
+            onClick={onShowImportDialog}
+          >
+            <Upload className="h-4 w-4" />
+            <span className="hidden sm:inline">Importar</span>
+          </Button>
+          <Button 
+            variant="outline" 
+            className="flex items-center gap-1"
+            onClick={onExport}
+          >
+            <Download className="h-4 w-4" />
+            <span className="hidden sm:inline">Exportar</span>
+          </Button>
+        </div>
+      </div>
+      
+      <div className="flex flex-col sm:flex-row gap-4">
+        {/* Payment Method Filter */}
+        <div className="flex-1">
+          <Select
+            value={filters.paymentMethod || ""}
+            onValueChange={(value) => onFilterChange("paymentMethod", value || undefined)}
+          >
+            <SelectTrigger>
+              <SelectValue placeholder="Forma de Pagamento" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="">Todas as formas</SelectItem>
+              {PAYMENT_METHODS.map((method) => (
+                <SelectItem key={method.value} value={method.value}>
+                  {method.label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         </div>
         
-        <div className="flex justify-between mt-4">
-          <Button variant="outline" onClick={onClearFilters}>
-            Limpar Filtros
-          </Button>
-          <div className="space-x-2">
-            <Button variant="outline" onClick={onShowImportDialog}>
-              <UploadIcon className="h-4 w-4 mr-2" />
-              Importar Vendas
-            </Button>
-            <Button onClick={onExport}>
-              <DownloadIcon className="h-4 w-4 mr-2" />
-              Exportar
-            </Button>
-          </div>
+        {/* Terminal Filter */}
+        <div className="flex-1">
+          <Select
+            value={filters.terminal || ""}
+            onValueChange={(value) => onFilterChange("terminal", value || undefined)}
+          >
+            <SelectTrigger>
+              <SelectValue placeholder="Terminal" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="">Todos os terminais</SelectItem>
+              {TERMINALS.map((terminal) => (
+                <SelectItem key={terminal} value={terminal}>
+                  {terminal}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         </div>
-      </CardContent>
-    </Card>
+        
+        {/* Clear Filters Button */}
+        <Button 
+          variant="ghost" 
+          onClick={onClearFilters} 
+          className="sm:self-center"
+        >
+          Limpar filtros
+        </Button>
+      </div>
+    </div>
   );
-}
+};
 
 export default SalesFilters;

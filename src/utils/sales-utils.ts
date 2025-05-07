@@ -36,8 +36,8 @@ export const generateRandomSale = (): Sale => {
   const net_amount = gross_amount * 0.8; // Simulate a 20% reduction
   return {
     id: faker.string.uuid(),
-    code: faker.string.alphanumeric(8),
-    terminal: faker.string.alphanumeric(6),
+    code: faker.string.alphanumeric(8).toUpperCase(),
+    terminal: `T${faker.number.int({ min: 100, max: 200 })}`,
     client_name: faker.company.name(),
     gross_amount: gross_amount,
     net_amount: net_amount,
@@ -52,92 +52,8 @@ export const generateRandomSale = (): Sale => {
 /**
  * Generates an array of random sale objects
  */
-export const generateSales = (count: number): Sale[] => {
-  return Array.from({ length: count }, () => generateRandomSale());
-};
-
-/**
- * Alias for generateSales to fix ClientDashboard.tsx error
- */
-export const generateMockSales = (count: number, dateRange?: any): Sale[] => {
-  return generateSales(count);
-};
-
-/**
- * Generate daily sales data for charts
- */
-export const generateDailySalesData = (dateRange: any): any[] => {
-  const days = 7;
-  const result = [];
-  const today = new Date();
-  
-  for (let i = 0; i < days; i++) {
-    const date = new Date(today);
-    date.setDate(today.getDate() - i);
-    
-    result.push({
-      name: date.toISOString().split('T')[0],
-      total: faker.number.int({ min: 300, max: 1200 })
-    });
-  }
-  
-  return result.reverse();
-};
-
-/**
- * Generate payment methods data for charts
- */
-export const generatePaymentMethodsData = (dateRange: any): any[] => {
-  return [
-    { name: 'credit', value: faker.number.int({ min: 5, max: 20 }) },
-    { name: 'debit', value: faker.number.int({ min: 3, max: 15 }) },
-    { name: 'pix', value: faker.number.int({ min: 2, max: 10 }) }
-  ];
-};
-
 export const generateMockSalesData = (count: number): Sale[] => {
-  const mockSales: Sale[] = [];
-  const today = new Date();
-  const paymentMethods = Object.values(PaymentMethod);
-  
-  const clients = [
-    "Empresa A",
-    "Empresa B",
-    "Empresa C", 
-    "Comércio XYZ",
-    "Tech Solutions"
-  ];
-  
-  const terminals = ["T100", "T101", "T102", "T103", "T104"];
-  
-  for (let i = 0; i < count; i++) {
-    const createdDate = new Date(today);
-    createdDate.setDate(today.getDate() - Math.floor(Math.random() * 30));
-    
-    const grossAmount = Math.floor(Math.random() * 10000) / 10;
-    const fee = grossAmount * 0.05; // 5% fee
-    const netAmount = grossAmount - fee;
-    
-    const clientIndex = Math.floor(Math.random() * clients.length);
-    const terminalIndex = Math.floor(Math.random() * terminals.length);
-    const paymentMethodIndex = Math.floor(Math.random() * paymentMethods.length);
-    
-    mockSales.push({
-      id: `sale-${i + 1}`,
-      code: `VND${String(i + 1).padStart(3, '0')}`,
-      terminal: terminals[terminalIndex],
-      client_name: clients[clientIndex],
-      gross_amount: grossAmount,
-      net_amount: netAmount,
-      date: createdDate.toISOString(),
-      payment_method: paymentMethods[paymentMethodIndex],
-      client_id: `client-${clientIndex + 1}`,
-      created_at: createdDate.toISOString(),
-      updated_at: createdDate.toISOString()
-    });
-  }
-  
-  return mockSales;
+  return Array.from({ length: count }, () => generateRandomSale());
 };
 
 /**

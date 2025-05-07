@@ -1,7 +1,8 @@
 
+import { useState } from "react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import { ChevronLeft, ChevronRight } from "lucide-react";
+import { ChevronLeft, ChevronRight, CreditCard } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -17,6 +18,7 @@ import {
   CardContent,
   CardHeader,
   CardTitle,
+  CardDescription,
 } from "@/components/ui/card";
 import { PaymentMethod, Sale } from "@/types";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -30,6 +32,7 @@ interface SalesDataTableProps {
   totals: {
     grossAmount: number;
     netAmount: number;
+    count: number;
   };
 }
 
@@ -38,9 +41,9 @@ const getPaymentMethodLabel = (method: PaymentMethod) => {
     case PaymentMethod.CREDIT:
       return <Badge variant="outline">Crédito</Badge>;
     case PaymentMethod.DEBIT:
-      return <Badge variant="outline" className="border-green-500 text-green-500">Débito</Badge>;
+      return <Badge variant="outline" className="border-green-600 text-green-600">Débito</Badge>;
     case PaymentMethod.PIX:
-      return <Badge variant="outline" className="border-yellow-500 text-yellow-500">Pix</Badge>;
+      return <Badge variant="outline" className="border-yellow-600 text-yellow-600">Pix</Badge>;
     default:
       return null;
   }
@@ -68,11 +71,36 @@ const SalesDataTable = ({
   return (
     <Card>
       <CardHeader>
-        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-          <CardTitle>Lista de Vendas</CardTitle>
-          <div className="text-sm text-muted-foreground space-x-4">
-            <span>Total Bruto: {new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(totals.grossAmount)}</span>
-            <span>Total Líquido: {new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(totals.netAmount)}</span>
+        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+          <div>
+            <CardTitle>Vendas</CardTitle>
+            <CardDescription>
+              {isLoading 
+                ? "Carregando..." 
+                : `${totals.count} ${totals.count === 1 ? 'venda encontrada' : 'vendas encontradas'}`}
+            </CardDescription>
+          </div>
+          
+          <div className="flex flex-col sm:flex-row gap-4 text-sm text-muted-foreground">
+            <div className="flex flex-col sm:items-center">
+              <span className="font-medium">Total Bruto:</span>
+              <span className="text-foreground font-bold">
+                {new Intl.NumberFormat("pt-BR", { 
+                  style: "currency", 
+                  currency: "BRL" 
+                }).format(totals.grossAmount)}
+              </span>
+            </div>
+            
+            <div className="flex flex-col sm:items-center">
+              <span className="font-medium">Total Líquido:</span>
+              <span className="text-foreground font-bold">
+                {new Intl.NumberFormat("pt-BR", { 
+                  style: "currency", 
+                  currency: "BRL" 
+                }).format(totals.netAmount)}
+              </span>
+            </div>
           </div>
         </div>
       </CardHeader>
@@ -92,6 +120,7 @@ const SalesDataTable = ({
                     <TableHead className="w-[100px]">Código</TableHead>
                     <TableHead>Data/Hora</TableHead>
                     <TableHead>Terminal</TableHead>
+                    <TableHead>Cliente</TableHead>
                     <TableHead className="text-right">Valor Bruto</TableHead>
                     <TableHead className="text-right">Valor Líquido</TableHead>
                     <TableHead>Tipo</TableHead>
@@ -101,12 +130,13 @@ const SalesDataTable = ({
                 <TableBody>
                   {sales.length > 0 ? (
                     sales.map((sale) => (
-                      <TableRow key={sale.id}>
+                      <TableRow key={sale.id} className="cursor-pointer hover:bg-muted/80">
                         <TableCell className="font-medium">{sale.code}</TableCell>
                         <TableCell>
                           {format(new Date(sale.date), "dd/MM/yyyy HH:mm", { locale: ptBR })}
                         </TableCell>
                         <TableCell>{sale.terminal}</TableCell>
+                        <TableCell>{sale.client_name}</TableCell>
                         <TableCell className="text-right">
                           {new Intl.NumberFormat("pt-BR", {
                             style: "currency",
@@ -125,7 +155,7 @@ const SalesDataTable = ({
                     ))
                   ) : (
                     <TableRow>
-                      <TableCell colSpan={7} className="text-center py-8 text-muted-foreground">
+                      <TableCell colSpan={8} className="text-center py-8 text-muted-foreground">
                         Nenhuma venda encontrada. Tente outros filtros.
                       </TableCell>
                     </TableRow>
@@ -135,9 +165,9 @@ const SalesDataTable = ({
             </div>
             
             {sales.length > 0 && totalPages > 1 && (
-              <div className="flex items-center justify-between mt-4">
+              <div className="flex items-center justify-between mt-4 py-2">
                 <div className="text-sm text-muted-foreground">
-                  {currentPage} de {totalPages} páginas
+                  Página {currentPage} de {totalPages}
                 </div>
                 <div className="flex items-center space-x-2">
                   <Button
