@@ -7,7 +7,7 @@ import LogisticsDashboard from "../../pages/logistics/Dashboard";
 import Operations from "../../pages/logistics/Operations";
 import LogisticsRequests from "../../pages/logistics/Requests";
 import LogisticsInventory from "../../pages/logistics/Inventory";
-import Machines from "../../pages/machines/Machines";
+import LogisticsMachines from "../../pages/logistics/Machines";
 import NewMachine from "../../pages/machines/NewMachine";
 import MachineDetails from "../../pages/machines/MachineDetails";
 
@@ -26,7 +26,7 @@ export const logisticsRoutes = [
   <Route 
     key="logistics-machines" 
     path={PATHS.LOGISTICS.MACHINES} 
-    element={<Machines />} 
+    element={<LogisticsMachines />} 
   />,
   <Route 
     key="logistics-machine-new" 

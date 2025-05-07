@@ -1,19 +1,17 @@
 
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { useEffect } from "react";
+import { useNavigate } from "react-router-dom";
+import { PATHS } from "@/routes/paths";
 
 const Machines = () => {
-  return (
-    <div className="container mx-auto py-10">
-      <Card>
-        <CardHeader>
-          <CardTitle>Machines</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <p>This page is under construction.</p>
-        </CardContent>
-      </Card>
-    </div>
-  );
+  const navigate = useNavigate();
+  
+  useEffect(() => {
+    // Redirect to logistics machines page
+    navigate(PATHS.LOGISTICS.MACHINES);
+  }, [navigate]);
+  
+  return null; // Component will redirect, no need to render anything
 };
 
 export default Machines;

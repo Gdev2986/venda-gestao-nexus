@@ -14,7 +14,7 @@ import LogisticsDashboard from "../pages/logistics/Dashboard";
 import Operations from "../pages/logistics/Operations";
 import LogisticsRequests from "../pages/logistics/Requests";
 import LogisticsInventory from "../pages/logistics/Inventory";
-import Machines from "../pages/machines/Machines";
+import LogisticsMachines from "../pages/logistics/Machines";
 import NewMachine from "../pages/machines/NewMachine";
 import MachineDetails from "../pages/machines/MachineDetails";
 import Clients from "../pages/clients/Clients";
@@ -35,7 +35,7 @@ export const LogisticsRoutes = (
       
       <Route 
         path={PATHS.LOGISTICS.MACHINES} 
-        element={<Machines />} 
+        element={<LogisticsMachines />} 
       />
 
       <Route 
@@ -61,16 +61,6 @@ export const LogisticsRoutes = (
       <Route 
         path={PATHS.LOGISTICS.INVENTORY} 
         element={<LogisticsInventory />} 
-      />
-      
-      <Route 
-        path={PATHS.LOGISTICS.LOGISTICS_MODULE} 
-        element={
-          <div className="container mx-auto py-10">
-            <h1 className="text-3xl font-semibold mb-6">Módulo de Logística</h1>
-            <p className="text-gray-600">Esta funcionalidade está em desenvolvimento.</p>
-          </div> 
-        } 
       />
       
       <Route 
