@@ -6,6 +6,7 @@ import RequestsChart from "./RequestsChart";
 import SLAChart from "./SLAChart";
 import MachinesTable from "./MachinesTable";
 import RequestsTable from "./RequestsTable";
+import StorageOptimizationCard from "./StorageOptimizationCard";
 
 interface DashboardTabsProps {
   machineStatusData: Array<{ name: string; value: number }>;
@@ -16,10 +17,11 @@ interface DashboardTabsProps {
 const DashboardTabs: React.FC<DashboardTabsProps> = ({ machineStatusData, requestsMonthlyData, slaData }) => {
   return (
     <Tabs defaultValue="overview" className="w-full">
-      <TabsList className="grid w-full grid-cols-3 mb-4">
+      <TabsList className="grid w-full grid-cols-4 mb-4">
         <TabsTrigger value="overview">Visão Geral</TabsTrigger>
         <TabsTrigger value="machines">Máquinas</TabsTrigger>
         <TabsTrigger value="requests">Solicitações</TabsTrigger>
+        <TabsTrigger value="inventory">Estoque</TabsTrigger>
       </TabsList>
       
       {/* Overview Tab */}
@@ -42,6 +44,11 @@ const DashboardTabs: React.FC<DashboardTabsProps> = ({ machineStatusData, reques
       {/* Requests Tab */}
       <TabsContent value="requests">
         <RequestsTable />
+      </TabsContent>
+      
+      {/* Inventory Tab */}
+      <TabsContent value="inventory" className="space-y-6">
+        <StorageOptimizationCard />
       </TabsContent>
     </Tabs>
   );
