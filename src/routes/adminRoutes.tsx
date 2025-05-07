@@ -55,8 +55,8 @@ import Help from "../pages/Help";
 import Clients from "../pages/clients/Clients";
 import { useUserRole } from "@/hooks/use-user-role";
 
-// Custom layout selector based on user role
-const AdminLayoutSelector = ({ children }: { children: React.ReactNode }) => {
+// Custom layout selector based on user role - fixed to use correct props pattern
+const AdminLayoutSelector = () => {
   const { userRole } = useUserRole();
   
   // Use LogisticsLayout for Logistics users
@@ -65,7 +65,7 @@ const AdminLayoutSelector = ({ children }: { children: React.ReactNode }) => {
   }
   
   // Use default MainLayout for other roles
-  return <MainLayout>{children}</MainLayout>;
+  return <MainLayout />;
 };
 
 export const AdminRoutes = (
