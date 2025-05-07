@@ -1,135 +1,126 @@
-
-import { format } from "date-fns";
-import { PenIcon, EyeIcon, TrashIcon, UserIcon } from "lucide-react";
+import React from 'react';
 import { Partner } from "@/types";
-
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
+import { Pagination, PaginationContent, PaginationItem, PaginationLink, PaginationNext, PaginationPrevious } from "@/components/ui/pagination";
 import { Badge } from "@/components/ui/badge";
+import { Skeleton } from "@/components/ui/skeleton";
+import { MoreHorizontal } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 
-interface PartnersTableProps {
+export interface PartnersTableProps {
   partners: Partner[];
+  page: number;
+  setPage: React.Dispatch<React.SetStateAction<number>>;
+  totalPages: number;
   isLoading: boolean;
-  onView?: (partner: Partner) => void;
-  onEdit: (partner: Partner) => void;
-  onDelete: (partner: Partner) => void;
 }
 
-const PartnersTable = ({
-  partners,
-  isLoading,
-  onView,
-  onEdit,
-  onDelete,
-}: PartnersTableProps) => {
-  // Mock data for clients and commissions
-  const getRandomClientCount = (partnerId: string) => {
-    // Use partner ID to deterministically generate a random number
-    const id = partnerId.split("-")[0] || "";
-    const hash = id.split("").reduce((acc, char) => acc + char.charCodeAt(0), 0);
-    return (hash % 30) + 1; // 1-30 clients
-  };
+const PartnersTable: React.FC<PartnersTableProps> = ({ 
+  partners, 
+  page, 
+  setPage, 
+  totalPages, 
+  isLoading 
+}) => {
+  const itemsPerPage = 10;
 
-  const getRandomCommission = (partnerId: string) => {
-    // Use partner ID to deterministically generate a random commission
-    const id = partnerId.split("-")[0] || "";
-    const hash = id.split("").reduce((acc, char) => acc + char.charCodeAt(0), 0);
-    return (hash % 5000) + 500; // R$500-5500
+  const handlePageChange = (newPage: number) => {
+    setPage(newPage);
   };
 
   return (
-    <div className="w-full overflow-auto">
+    <Card>
       <Table>
         <TableHeader>
           <TableRow>
-            <TableHead className="min-w-[150px]">Nome</TableHead>
-            <TableHead className="hidden sm:table-cell">Email</TableHead>
-            <TableHead className="hidden md:table-cell">Telefone</TableHead>
-            <TableHead className="hidden lg:table-cell">Clientes</TableHead>
-            <TableHead className="hidden lg:table-cell">Comissão Total</TableHead>
-            <TableHead className="hidden md:table-cell">Status</TableHead>
+            <TableHead>Empresa</TableHead>
+            <TableHead>Contato</TableHead>
+            <TableHead>Email</TableHead>
+            <TableHead>Telefone</TableHead>
+            <TableHead>Status</TableHead>
             <TableHead className="text-right">Ações</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
           {isLoading ? (
+            // Display skeleton rows while loading
+            [...Array(itemsPerPage)].map((_, i) => (
+              <TableRow key={`skeleton-${i}`}>
+                <TableCell><Skeleton /></TableCell>
+                <TableCell><Skeleton /></TableCell>
+                <TableCell><Skeleton /></TableCell>
+                <TableCell><Skeleton /></TableCell>
+                <TableCell><Skeleton /></TableCell>
+                <TableCell className="text-right"><Skeleton /></TableCell>
+              </TableRow>
+            ))
+          ) : partners.length > 0 ? (
+            // Display partner data rows
+            partners.map((partner) => (
+              <TableRow key={partner.id}>
+                <TableCell className="font-medium">{partner.company_name}</TableCell>
+                <TableCell>{partner.contact_name}</TableCell>
+                <TableCell>{partner.email}</TableCell>
+                <TableCell>{partner.phone}</TableCell>
+                <TableCell>
+                  {partner.status === "active" ? (
+                    <Badge variant="default">Ativo</Badge>
+                  ) : (
+                    <Badge className="bg-gray-100 text-gray-500 border-gray-200">Inativo</Badge>
+                  )}
+                </TableCell>
+                <TableCell className="text-right">
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button variant="ghost" className="h-8 w-8 p-0">
+                        <span className="sr-only">Abrir menu</span>
+                        <MoreHorizontal className="h-4 w-4" />
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end">
+                      <DropdownMenuLabel>Ações</DropdownMenuLabel>
+                      <DropdownMenuItem>Editar</DropdownMenuItem>
+                      <DropdownMenuItem>Deletar</DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                </TableCell>
+              </TableRow>
+            ))
+          ) : (
+            // Display message when no partners are found
             <TableRow>
-              <TableCell colSpan={7} className="text-center py-10">
-                <div className="flex justify-center items-center h-10">
-                  <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary"></div>
-                </div>
-              </TableCell>
-            </TableRow>
-          ) : partners.length === 0 ? (
-            <TableRow>
-              <TableCell colSpan={7} className="text-center py-10 text-muted-foreground">
+              <TableCell colSpan={6} className="text-center">
                 Nenhum parceiro encontrado.
               </TableCell>
             </TableRow>
-          ) : (
-            partners.map((partner) => {
-              const clientCount = getRandomClientCount(partner.id);
-              const commission = getRandomCommission(partner.id);
-              
-              return (
-                <TableRow key={partner.id}>
-                  <TableCell className="font-medium">
-                    <div>
-                      <span className="block">{partner.business_name || partner.company_name}</span>
-                      <span className="block sm:hidden text-xs text-muted-foreground">{partner.email}</span>
-                    </div>
-                  </TableCell>
-                  <TableCell className="hidden sm:table-cell">{partner.email}</TableCell>
-                  <TableCell className="hidden md:table-cell">{partner.phone}</TableCell>
-                  <TableCell className="hidden lg:table-cell">{clientCount}</TableCell>
-                  <TableCell className="hidden lg:table-cell">
-                    R$ {commission.toFixed(2).replace(".", ",")}
-                  </TableCell>
-                  <TableCell className="hidden md:table-cell">
-                    <Badge 
-                      variant={partner.id.length % 2 === 0 ? "outline" : "default"}
-                      className={partner.id.length % 2 === 0 ? "border-yellow-500 text-yellow-500" : "bg-green-500/10 text-green-700"}
-                    >
-                      {partner.id.length % 2 === 0 ? "Inativo" : "Ativo"}
-                    </Badge>
-                  </TableCell>
-                  <TableCell className="text-right">
-                    <div className="flex justify-end gap-2">
-                      {onView && (
-                        <Button 
-                          variant="ghost" 
-                          size="icon" 
-                          onClick={() => onView(partner)}
-                          aria-label="Ver detalhes"
-                        >
-                          <EyeIcon className="h-4 w-4" />
-                        </Button>
-                      )}
-                      <Button 
-                        variant="ghost" 
-                        size="icon" 
-                        onClick={() => onEdit(partner)}
-                        aria-label="Editar parceiro"
-                      >
-                        <PenIcon className="h-4 w-4" />
-                      </Button>
-                      <Button 
-                        variant="ghost" 
-                        size="icon" 
-                        onClick={() => onDelete(partner)}
-                        aria-label="Excluir parceiro"
-                      >
-                        <TrashIcon className="h-4 w-4" />
-                      </Button>
-                    </div>
-                  </TableCell>
-                </TableRow>
-              );
-            })
           )}
         </TableBody>
       </Table>
-    </div>
+
+      {partners.length > 0 && (
+        <div className="flex items-center justify-between p-4">
+          <Button
+            onClick={() => handlePageChange(page - 1)}
+            disabled={page === 1}
+            variant="outline"
+            size="sm"
+          >
+            Anterior
+          </Button>
+          <span>Página {page} de {totalPages}</span>
+          <Button
+            onClick={() => handlePageChange(page + 1)}
+            disabled={page === totalPages}
+            variant="outline"
+            size="sm"
+          >
+            Próximo
+          </Button>
+        </div>
+      )}
+    </Card>
   );
 };
 

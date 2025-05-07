@@ -6,7 +6,7 @@ import { Printer, Info, History, ArrowRightLeft } from "lucide-react";
 import { useDialog } from "@/hooks/use-dialog";
 import MachineDetailsModal from "@/components/logistics/MachineDetailsModal";
 import { MachineHistoryDialog } from "@/components/logistics/machine-dialogs/MachineHistoryDialog";
-import { MachineTransferDialog } from "@/components/logistics/machine-dialogs/MachineTransferDialog";
+import MachineTransferDialog from "@/components/logistics/machine-dialogs/MachineTransferDialog";
 
 // Prop interface
 export interface MachineListProps {
@@ -201,7 +201,8 @@ const MachineList: React.FC<MachineListProps> = ({
           <MachineTransferDialog 
             open={transferDialog.isOpen} 
             onOpenChange={transferDialog.close} 
-            machineId={selectedMachine.id} 
+            machine={selectedMachine}
+            onTransferred={() => {}} 
           />
         </>
       )}

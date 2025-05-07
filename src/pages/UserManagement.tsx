@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { UserData, UserRole } from "@/types";
 import { useToast } from "@/hooks/use-toast";
@@ -25,6 +26,7 @@ import {
   DialogTrigger,
   DialogClose,
   DialogFooter,
+  DialogDescription,
 } from "@/components/ui/dialog";
 import { MoreVertical, Edit, Trash2, Plus } from "lucide-react";
 import {
@@ -228,8 +230,8 @@ interface EditUserFormProps {
 const EditUserForm = ({ user, onUpdate, onCancel }: EditUserFormProps) => {
   const [name, setName] = useState(user?.name || "");
   const [email, setEmail] = useState(user?.email || "");
-  const [role, setRole] = useState(user?.role || UserRole.CLIENT);
-  const [status, setStatus] = useState(user?.status || "active");
+  const [role, setRole] = useState<UserRole>(user?.role || UserRole.CLIENT);
+  const [status, setStatus] = useState<"active" | "inactive" | "pending">(user?.status as "active" | "inactive" | "pending" || "active");
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -266,7 +268,10 @@ const EditUserForm = ({ user, onUpdate, onCancel }: EditUserFormProps) => {
       </div>
       <div className="grid gap-2">
         <Label htmlFor="role">Role</Label>
-        <Select value={role} onValueChange={setRole}>
+        <Select 
+          value={role} 
+          onValueChange={(value) => setRole(value as UserRole)}
+        >
           <SelectTrigger id="role">
             <SelectValue placeholder="Selecione um role" />
           </SelectTrigger>
@@ -281,7 +286,10 @@ const EditUserForm = ({ user, onUpdate, onCancel }: EditUserFormProps) => {
       </div>
       <div className="grid gap-2">
         <Label htmlFor="status">Status</Label>
-        <Select value={status} onValueChange={setStatus}>
+        <Select 
+          value={status} 
+          onValueChange={(value) => setStatus(value as "active" | "inactive" | "pending")}
+        >
           <SelectTrigger id="status">
             <SelectValue placeholder="Selecione um status" />
           </SelectTrigger>

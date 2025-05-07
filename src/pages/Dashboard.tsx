@@ -1,3 +1,4 @@
+
 import { useEffect, useState } from "react";
 import MainLayout from "@/components/layout/MainLayout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -11,58 +12,58 @@ import { CalendarIcon } from "lucide-react";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
 import { PaymentMethod } from "@/types";
+import { Button } from "@/components/ui/button";
 
 interface DateRange {
   from: Date;
   to?: Date;
 }
 
-const PaymentMethodsChart = ({ data }: { data: SalesChartData[] }) => (
-  <ResponsiveContainer width="100%" height={300}>
-    <AreaChart data={data} margin={{ top: 10, right: 30, left: 0, bottom: 0 }}>
-      <CartesianGrid strokeDasharray="3 3" />
-      <XAxis dataKey="name" />
-      <YAxis />
-      <Tooltip />
-      <Area type="monotone" dataKey="value" stroke="#8884d8" fill="#8884d8" />
-    </AreaChart>
-  </ResponsiveContainer>
-);
+interface PaymentMethodData {
+  name: string;
+  total: number; // Changed from value to total for consistent naming
+}
 
-const DailySalesChart = ({ data }: { data: SalesChartData[] }) => (
+const PaymentMethodsChart = ({ data }: { data: PaymentMethodData[] }) => (
   <ResponsiveContainer width="100%" height={300}>
     <AreaChart data={data} margin={{ top: 10, right: 30, left: 0, bottom: 0 }}>
       <CartesianGrid strokeDasharray="3 3" />
       <XAxis dataKey="name" />
       <YAxis />
       <Tooltip />
-      <Area type="monotone" dataKey="total" stroke="#82ca9d" fill="#82ca9d" />
+      <Area type="monotone" dataKey="total" stroke="#8884d8" fill="#8884d8" />
     </AreaChart>
   </ResponsiveContainer>
 );
 
 const Dashboard = () => {
-  const [dateRange, setDateRange] = useState<DateRange | undefined>({
+  const [dateRange, setDateRange] = useState<DateRange>({
     from: new Date(new Date().getFullYear(), new Date().getMonth() - 1, new Date().getDate()),
     to: new Date()
   });
   const [dailySales, setDailySales] = useState<SalesChartData[]>([]);
-  const [paymentMethods, setPaymentMethods] = useState<SalesChartData[]>([]);
+  const [paymentMethods, setPaymentMethods] = useState<PaymentMethodData[]>([]);
 
   useEffect(() => {
-    if (dateRange?.from && dateRange?.to) {
+    if (dateRange?.from) {
+      // Ensure we have both from and to for the date range
+      const rangeToParse = {
+        from: dateRange.from,
+        to: dateRange.to || dateRange.from // Default to 'from' if 'to' is not set
+      };
+
       // Simulate data fetch for daily sales chart
-      const dailySalesData = generateDailySalesData(dateRange);
+      const dailySalesData = generateDailySalesData(rangeToParse);
       setDailySales(dailySalesData);
     }
   }, [dateRange]);
 
   useEffect(() => {
-    // Simulate data fetch for payment methods chart
-    const paymentMethodsData: SalesChartData[] = [
-      { name: PaymentMethod.CREDIT, value: 45 },
-      { name: PaymentMethod.DEBIT, value: 30 },
-      { name: PaymentMethod.PIX, value: 25 }
+    // Simulate data fetch for payment methods chart with correct property name
+    const paymentMethodsData: PaymentMethodData[] = [
+      { name: PaymentMethod.CREDIT, total: 45 },
+      { name: PaymentMethod.DEBIT, total: 30 },
+      { name: PaymentMethod.PIX, total: 25 }
     ];
     
     setPaymentMethods(paymentMethodsData);

@@ -1,3 +1,4 @@
+
 import { useState, useEffect, useCallback } from "react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -15,9 +16,6 @@ import { MoreVertical, Edit, Copy, Trash2, ArrowRight, Plus } from "lucide-react
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { useToast } from "@/hooks/use-toast";
 import { useDialog } from "@/hooks/use-dialog";
-import { Label } from "@/components/ui/label";
-import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select";
-import { Checkbox } from "@/components/ui/checkbox";
 import { Badge } from "@/components/ui/badge";
 import { Pagination, PaginationContent, PaginationItem, PaginationLink, PaginationNext, PaginationPrevious } from "@/components/ui/pagination";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -245,10 +243,16 @@ const MachineList: React.FC<MachineListProps> = ({
             <Pagination className="w-full justify-center">
               <PaginationContent>
                 <PaginationItem>
-                  <PaginationPrevious
+                  <Button 
                     onClick={() => handlePageChange(currentPage - 1)}
                     disabled={currentPage === 1}
-                  />
+                    variant="outline"
+                    size="sm"
+                    className="h-9 w-9 p-0"
+                  >
+                    <span className="sr-only">Previous page</span>
+                    <PaginationPrevious className="h-4 w-4" />
+                  </Button>
                 </PaginationItem>
                 {/* Display page numbers */}
                 {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
@@ -262,10 +266,16 @@ const MachineList: React.FC<MachineListProps> = ({
                   </PaginationItem>
                 ))}
                 <PaginationItem>
-                  <PaginationNext
+                  <Button 
                     onClick={() => handlePageChange(currentPage + 1)}
                     disabled={currentPage === totalPages}
-                  />
+                    variant="outline"
+                    size="sm"
+                    className="h-9 w-9 p-0"
+                  >
+                    <span className="sr-only">Next page</span>
+                    <PaginationNext className="h-4 w-4" />
+                  </Button>
                 </PaginationItem>
               </PaginationContent>
             </Pagination>
