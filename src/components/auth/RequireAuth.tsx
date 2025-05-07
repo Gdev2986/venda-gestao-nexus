@@ -51,9 +51,8 @@ const RequireAuth = ({ allowedRoles = [], redirectTo = PATHS.LOGIN }: RequireAut
             variant: "destructive",
           });
           
-          // Redirect to role-specific dashboard
+          // Redirect to role-specific dashboard based on user role
           setTimeout(() => {
-            // Redirect to role-specific dashboard
             switch(userRole) {
               case UserRole.ADMIN:
                 window.location.href = PATHS.ADMIN.DASHBOARD;
@@ -119,7 +118,6 @@ const RequireAuth = ({ allowedRoles = [], redirectTo = PATHS.LOGIN }: RequireAut
 
   // Special check for Financial users accessing admin routes
   if (userRole === UserRole.FINANCIAL && 
-      allowedRoles.includes(UserRole.ADMIN) &&
       (location.pathname.includes('/admin/payments') || 
        location.pathname.includes('/admin/clients') || 
        location.pathname.includes('/admin/reports'))) {

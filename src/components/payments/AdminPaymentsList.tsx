@@ -1,3 +1,4 @@
+
 import { useState } from 'react';
 import { Payment, PaymentStatus } from '@/types';
 import { Button } from '@/components/ui/button';
@@ -277,7 +278,6 @@ const AdminPaymentsList = ({ payments, onAction, isLoading }: AdminPaymentsListP
         </div>
       )}
       
-      {/* Dialogs para aprovação, rejeição e detalhes de pagamentos */}
       {selectedPayment && (
         <>
           <ApprovePaymentDialog

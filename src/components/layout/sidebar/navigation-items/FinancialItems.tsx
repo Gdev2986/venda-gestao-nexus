@@ -14,19 +14,19 @@ export const financialItems: SidebarItem[] = [
   {
     title: "Pagamentos",
     icon: CreditCard,
-    href: PATHS.ADMIN.PAYMENTS, // Link to admin payments page
+    href: PATHS.ADMIN.PAYMENTS,
     roles: [UserRole.FINANCIAL],
   },
   {
     title: "Clientes",
     icon: Building2,
-    href: PATHS.ADMIN.CLIENTS, // Link to admin clients page
+    href: PATHS.ADMIN.CLIENTS,
     roles: [UserRole.FINANCIAL],
   },
   {
     title: "Relatórios",
     icon: BarChart3,
-    href: PATHS.ADMIN.REPORTS, // Link to admin reports page
+    href: PATHS.ADMIN.REPORTS,
     roles: [UserRole.FINANCIAL],
   },
 ];

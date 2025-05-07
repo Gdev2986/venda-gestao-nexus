@@ -27,7 +27,7 @@ export const FinancialRoutes = (
         element={<FinancialDashboard />} 
       />
       
-      {/* Reuse admin pages for these routes */}
+      {/* Use admin pages for these routes */}
       <Route 
         path={PATHS.ADMIN.PAYMENTS} 
         element={<AdminPayments />} 
