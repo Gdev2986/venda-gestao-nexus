@@ -9,8 +9,9 @@ import MainLayout from "../layouts/MainLayout";
 // Auth Protection Component
 import RequireAuth from "../components/auth/RequireAuth";
 
-// Financial Dashboard
+// Financial Pages
 import FinancialDashboard from "../pages/financial/Dashboard";
+import FinancialSettings from "../pages/financial/Settings";
 
 // Reused Admin Pages
 import AdminPayments from "../pages/admin/Payments";
@@ -21,10 +22,15 @@ import AdminReports from "../pages/admin/Reports";
 export const FinancialRoutes = (
   <Route element={<RequireAuth allowedRoles={[UserRole.FINANCIAL]} />}>
     <Route element={<MainLayout />}>
-      {/* Financial-specific dashboard */}
+      {/* Financial-specific pages */}
       <Route 
         path={PATHS.FINANCIAL.DASHBOARD} 
         element={<FinancialDashboard />} 
+      />
+      
+      <Route 
+        path={PATHS.FINANCIAL.SETTINGS} 
+        element={<FinancialSettings />} 
       />
       
       {/* Use admin pages for these routes */}

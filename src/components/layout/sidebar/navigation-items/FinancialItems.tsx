@@ -1,5 +1,5 @@
 
-import { LayoutDashboard, CreditCard, Building2, BarChart3 } from "lucide-react";
+import { LayoutDashboard, CreditCard, Building2, BarChart3, Settings } from "lucide-react";
 import { SidebarItem } from "../types";
 import { UserRole } from "@/types";
 import { PATHS } from "@/routes/paths";
@@ -29,4 +29,10 @@ export const financialItems: SidebarItem[] = [
     href: PATHS.ADMIN.REPORTS,
     roles: [UserRole.FINANCIAL],
   },
+  {
+    title: "Configurações",
+    icon: Settings,
+    href: PATHS.FINANCIAL.SETTINGS,
+    roles: [UserRole.FINANCIAL],
+  }
 ];

@@ -39,8 +39,38 @@ const convertToPaymentRequest = (payment: Payment): PaymentRequest => {
     approved_by: null, // Default to null since Payment doesn't have this
     receipt_url: payment.receipt_url || null,
     rejection_reason: payment.rejection_reason,
-    pix_key: payment.pix_key,
-    client: payment.client,
+    // Ensure key_type is included for PixKey
+    pix_key: payment.pix_key ? {
+      id: payment.pix_key.id || '',
+      key_type: payment.pix_key.key_type || '',
+      type: payment.pix_key.type || '',
+      key: payment.pix_key.key || '',
+      owner_name: payment.pix_key.owner_name || '',
+      name: payment.pix_key.name || '',
+      isDefault: payment.pix_key.isDefault || false,
+      is_active: payment.pix_key.is_active || true,
+      created_at: payment.pix_key.created_at || '',
+      updated_at: payment.pix_key.updated_at || '',
+      bank_name: payment.pix_key.bank_name || '',
+    } : null,
+    // Ensure client has all required properties
+    client: payment.client ? {
+      id: payment.client.id,
+      business_name: payment.client.business_name || '',
+      company_name: payment.client.company_name || '',
+      contact_name: payment.client.contact_name || '',
+      email: payment.client.email || '',
+      phone: payment.client.phone || '',
+      document: payment.client.document || '',
+      address: payment.client.address || '',
+      city: payment.client.city || '',
+      state: payment.client.state || '',
+      postal_code: payment.client.postal_code || '',
+      zip: payment.client.zip || '',
+      created_at: payment.client.created_at || '',
+      updated_at: payment.client.updated_at || '',
+      status: payment.client.status || 'ACTIVE',
+    } : null,
   };
 };
 

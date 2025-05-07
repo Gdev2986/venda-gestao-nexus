@@ -6,8 +6,7 @@ import {
   userItems, 
   partnerItems, 
   financialItems, 
-  logisticsItems,
-  reportItems
+  logisticsItems
 } from "./navigation-items";
 
 interface SidebarNavigationProps {
@@ -25,7 +24,7 @@ const SidebarNavigation = ({ userRole }: SidebarNavigationProps) => {
       case UserRole.PARTNER:
         return partnerItems;
       case UserRole.FINANCIAL:
-        return [...financialItems, ...reportItems.filter(item => item.roles.includes(UserRole.FINANCIAL))];
+        return financialItems;
       case UserRole.LOGISTICS:
         return logisticsItems;
       default:
