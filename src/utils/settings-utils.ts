@@ -16,7 +16,7 @@ export const createDefaultPixKeyProperties = (
     key: "",
     owner_name: "",
     name: "",
-    isDefault: false, // Changed from is_default to isDefault
+    isDefault: false, 
     is_active: true,
     bank_name: "",
     created_at: new Date().toISOString(),
@@ -36,7 +36,7 @@ export const mapPixKeyFromDb = (dbKey: any): PixKey => {
     key: dbKey.key,
     owner_name: dbKey.name,
     name: dbKey.name,
-    isDefault: dbKey.is_default || false, // Changed from is_default to isDefault
+    isDefault: dbKey.is_default || false, // Map from is_default (DB) to isDefault (frontend)
     is_active: true,
     bank_name: "Banco", // Default value since it's not in the database
     created_at: dbKey.created_at,

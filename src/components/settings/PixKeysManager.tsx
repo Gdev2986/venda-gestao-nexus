@@ -41,8 +41,7 @@ export function PixKeysManager() {
           key: item.key,
           owner_name: item.name,
           name: item.name,
-          isDefault: item.is_default,
-          is_default: item.is_default,
+          isDefault: item.is_default, // Map from DB is_default to frontend isDefault
           is_active: true,
           created_at: item.created_at,
           updated_at: item.updated_at,
@@ -79,7 +78,6 @@ export function PixKeysManager() {
       owner_name: "",
       name: "",
       isDefault: pixKeys.length === 0,
-      is_default: pixKeys.length === 0,
       is_active: true,
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString(),
@@ -201,7 +199,7 @@ export function PixKeysManager() {
         type: validType,
         key: key.key,
         name: key.name || key.owner_name,
-        is_default: key.isDefault, // Use isDefault property for database field is_default
+        is_default: key.isDefault, // Map from frontend isDefault to DB is_default
       };
       
       let response;
@@ -250,7 +248,7 @@ export function PixKeysManager() {
       toast({
         title: "Erro ao salvar chave PIX",
         description: "Não foi possível salvar a chave PIX.",
-        variant: "destructive",
+        variant: "destructive,
       });
     }
   };

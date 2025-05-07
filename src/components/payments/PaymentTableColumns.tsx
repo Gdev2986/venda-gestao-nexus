@@ -37,8 +37,8 @@ export const createPaymentColumns = ({ onPaymentAction }: PaymentColumnsProps): 
     cell: ({ row }) => {
       // Safely access client property and ensure it's an object with business_name
       const client = row.original.client || {};
-      // Use optional chaining to safely access business_name
-      const clientName = client.business_name || "Cliente não especificado";
+      // Use optional chaining and nullish coalescing for safe access
+      const clientName = client.business_name || row.original.client_name || "Cliente não especificado";
       return <div>{clientName}</div>;
     },
   },

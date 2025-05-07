@@ -28,7 +28,8 @@ const mockData = {
       gross_amount: 1500, 
       net_amount: 1400, 
       date: '2022-01-07', 
-      payment_method: PaymentMethod.CREDIT 
+      payment_method: PaymentMethod.CREDIT,
+      client_id: 'client-1'
     },
     { 
       id: '2', 
@@ -38,7 +39,8 @@ const mockData = {
       gross_amount: 1200, 
       net_amount: 1150, 
       date: '2022-01-06', 
-      payment_method: PaymentMethod.DEBIT 
+      payment_method: PaymentMethod.DEBIT,
+      client_id: 'client-2'
     },
     { 
       id: '3', 
@@ -48,7 +50,8 @@ const mockData = {
       gross_amount: 950, 
       net_amount: 900, 
       date: '2022-01-05', 
-      payment_method: PaymentMethod.PIX 
+      payment_method: PaymentMethod.PIX,
+      client_id: 'client-3'
     },
     { 
       id: '4', 
@@ -58,7 +61,8 @@ const mockData = {
       gross_amount: 1750, 
       net_amount: 1650, 
       date: '2022-01-04', 
-      payment_method: PaymentMethod.CREDIT 
+      payment_method: PaymentMethod.CREDIT,
+      client_id: 'client-4'
     },
     { 
       id: '5', 
@@ -68,7 +72,8 @@ const mockData = {
       gross_amount: 2200, 
       net_amount: 2050, 
       date: '2022-01-03', 
-      payment_method: PaymentMethod.PIX 
+      payment_method: PaymentMethod.PIX,
+      client_id: 'client-5'
     }
   ] as Sale[]
 };

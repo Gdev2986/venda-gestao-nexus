@@ -55,6 +55,8 @@ export interface Payment {
     account_holder?: string;
   };
   document_url?: string;
+  description?: string; // Added property for description
+  due_date?: string; // Added property for due_date
   pix_key?: {
     id: string;
     key: string;
@@ -102,6 +104,7 @@ export interface Client {
   zip?: string;
   document?: string;
   fee_plan_id?: string;
+  company_name?: string; // Added property for backward compatibility
 }
 
 export interface PixKey {
@@ -119,12 +122,12 @@ export interface PixKey {
   updated_at: string;
 }
 
-// Add SalesChartData interface
+// Update SalesChartData interface
 export interface SalesChartData {
   date?: string;
   amount: number;
-  method: PaymentMethod;
-  percentage: number;
+  method: PaymentMethod; // Making method required
+  percentage: number; // Making percentage required
   name?: string;
   value?: number;
 }
@@ -138,10 +141,12 @@ export interface Sale {
   net_amount: number;
   date: string;
   payment_method: PaymentMethod;
+  client_id?: string; // Added client_id
 }
 
 export interface FilterValues {
   search?: string;
+  searchTerm?: string; // Added searchTerm property
   status?: string;
   role?: UserRole;
   commissionRange?: [number, number];
@@ -152,11 +157,12 @@ export interface SalesFilterParams {
   endDate?: Date;
   paymentMethod?: PaymentMethod;
   terminal?: string;
+  search?: string; // Added search property
 }
 
 export interface UserData {
   id: string;
-  name?: string;
+  name: string; // Changed from optional to required
   email: string;
   role: UserRole;
   created_at: string;
