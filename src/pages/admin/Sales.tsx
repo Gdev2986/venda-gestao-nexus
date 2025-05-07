@@ -1,15 +1,16 @@
 
 import { useState, useEffect } from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { generateMockSalesData, calculateSalesTotals } from "@/utils/sales-utils";
-import SalesAdvancedFilters from "@/components/sales/SalesAdvancedFilters";
-import SalesDataTable from "@/components/sales/SalesDataTable";
+import { Card, CardHeader, CardTitle } from "@/components/ui/card";
+import { generateMockSalesData } from "@/utils/sales-utils";
 import { Button } from "@/components/ui/button";
-import { Download, Upload, RefreshCw } from "lucide-react";
-import { Sale, SalesFilterParams } from "@/types";
+import { Upload, Download, RefreshCw } from "lucide-react";
+import { SalesFilterParams } from "@/types";
 import ImportSalesDialog from "@/components/sales/ImportSalesDialog";
 import { useToast } from "@/hooks/use-toast";
 import SalesUploader from "@/components/sales/SalesUploader";
+import AdminSalesLayout from "@/components/admin/sales/AdminSalesLayout";
+import AdminSalesFilters from "@/components/admin/sales/AdminSalesFilters";
+import AdminSalesContent from "@/components/admin/sales/AdminSalesContent";
 
 interface DateRange {
   from: Date;
@@ -18,8 +19,8 @@ interface DateRange {
 
 const AdminSales = () => {
   const [isLoading, setIsLoading] = useState(true);
-  const [sales, setSales] = useState<Sale[]>([]);
-  const [filteredSales, setFilteredSales] = useState<Sale[]>([]);
+  const [sales, setSales] = useState([]);
+  const [filteredSales, setFilteredSales] = useState([]);
   const [page, setPage] = useState(1);
   const [itemsPerPage] = useState(50);
   const [filters, setFilters] = useState<SalesFilterParams>({});
@@ -58,87 +59,6 @@ const AdminSales = () => {
     }, 1500);
   };
   
-  // Apply filters when they change
-  useEffect(() => {
-    let result = [...sales];
-    
-    // Filter by payment method
-    if (filters.paymentMethod) {
-      result = result.filter(sale => 
-        sale.payment_method === filters.paymentMethod
-      );
-    }
-    
-    // Filter by terminal
-    if (filters.terminal) {
-      result = result.filter(sale => 
-        sale.terminal === filters.terminal
-      );
-    }
-    
-    // Filter by search term
-    if (filters.search) {
-      const searchTerm = filters.search.toLowerCase();
-      result = result.filter(sale => 
-        sale.code.toLowerCase().includes(searchTerm) ||
-        sale.terminal.toLowerCase().includes(searchTerm) ||
-        sale.client_name.toLowerCase().includes(searchTerm)
-      );
-    }
-    
-    // Filter by date range
-    if (dateRange?.from) {
-      const startDate = new Date(dateRange.from);
-      startDate.setHours(0, 0, 0, 0);
-      
-      const endDate = dateRange.to ? new Date(dateRange.to) : new Date(dateRange.from);
-      endDate.setHours(23, 59, 59, 999);
-      
-      result = result.filter(sale => {
-        const saleDate = new Date(sale.date);
-        return saleDate >= startDate && saleDate <= endDate;
-      });
-    }
-    
-    // Apply additional advanced filters
-    if (filters.minAmount) {
-      result = result.filter(sale => sale.gross_amount >= filters.minAmount);
-    }
-    
-    if (filters.maxAmount) {
-      result = result.filter(sale => sale.gross_amount <= filters.maxAmount);
-    }
-    
-    if (filters.startHour !== undefined && filters.endHour !== undefined) {
-      result = result.filter(sale => {
-        const saleHour = new Date(sale.date).getHours();
-        return saleHour >= filters.startHour! && saleHour <= filters.endHour!;
-      });
-    }
-    
-    setFilteredSales(result);
-    setPage(1); // Reset to first page when filters change
-  }, [filters, dateRange, sales]);
-  
-  // Calculate pagination
-  const totalPages = Math.ceil(filteredSales.length / itemsPerPage);
-  const startIndex = (page - 1) * itemsPerPage;
-  const paginatedSales = filteredSales.slice(startIndex, startIndex + itemsPerPage);
-  
-  // Calculate totals
-  const totals = calculateSalesTotals(filteredSales);
-  
-  const handleFilterChange = (newFilters: SalesFilterParams) => {
-    setFilters(prev => ({
-      ...prev,
-      ...newFilters
-    }));
-  };
-  
-  const handleDateRangeChange = (range: DateRange | undefined) => {
-    setDateRange(range);
-  };
-  
   const handleExport = (format: 'csv' | 'pdf') => {
     toast({
       title: `Exportando ${filteredSales.length} registros em ${format.toUpperCase()}`,
@@ -157,49 +77,12 @@ const AdminSales = () => {
   };
 
   return (
-    <div className="container mx-auto py-10">
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-8">
-        <div>
-          <h1 className="text-2xl font-bold">Gestão de Vendas</h1>
-          <p className="text-muted-foreground">
-            Visualize, filtre e gerencie todas as vendas realizadas
-          </p>
-        </div>
-        
-        <div className="flex items-center gap-2">
-          <Button 
-            variant="outline" 
-            size="sm"
-            className="flex items-center gap-1"
-            onClick={handleRefresh}
-            disabled={isRefreshing}
-          >
-            <RefreshCw className={`h-4 w-4 ${isRefreshing ? 'animate-spin' : ''}`} />
-            {isRefreshing ? "Atualizando..." : "Atualizar"}
-          </Button>
-          
-          <Button 
-            variant="outline"
-            size="sm"
-            className="flex items-center gap-1"
-            onClick={() => setShowImportDialog(true)}
-          >
-            <Upload className="h-4 w-4" />
-            Importar
-          </Button>
-          
-          <Button 
-            variant="outline"
-            size="sm"
-            className="flex items-center gap-1"
-            onClick={() => handleExport('csv')}
-          >
-            <Download className="h-4 w-4" />
-            Exportar
-          </Button>
-        </div>
-      </div>
-      
+    <AdminSalesLayout 
+      isRefreshing={isRefreshing}
+      onRefresh={handleRefresh}
+      onImport={() => setShowImportDialog(true)}
+      onExport={() => handleExport('csv')}
+    >
       <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
         {/* Left column - Filters and Stats */}
         <div className="lg:col-span-1 space-y-6">
@@ -207,18 +90,16 @@ const AdminSales = () => {
             <CardHeader>
               <CardTitle>Filtros</CardTitle>
             </CardHeader>
-            <CardContent>
-              <SalesAdvancedFilters
-                filters={filters}
-                dateRange={dateRange}
-                onFilterChange={handleFilterChange}
-                onDateRangeChange={handleDateRangeChange}
-                onClearFilters={() => {
-                  setFilters({});
-                  setDateRange(undefined);
-                }}
-              />
-            </CardContent>
+            <AdminSalesFilters
+              filters={filters}
+              dateRange={dateRange}
+              onFilterChange={setFilters}
+              onDateRangeChange={setDateRange}
+              onClearFilters={() => {
+                setFilters({});
+                setDateRange(undefined);
+              }}
+            />
           </Card>
           
           {!showImportDialog && (
@@ -227,23 +108,22 @@ const AdminSales = () => {
         </div>
         
         {/* Right column - Sales Table */}
-        <div className="lg:col-span-3">
-          <SalesDataTable 
-            sales={paginatedSales}
-            currentPage={page}
-            totalPages={totalPages}
-            isLoading={isLoading}
-            onPageChange={setPage}
-            totals={totals}
-          />
-        </div>
+        <AdminSalesContent 
+          sales={sales}
+          filters={filters}
+          dateRange={dateRange}
+          page={page}
+          setPage={setPage}
+          itemsPerPage={itemsPerPage}
+          isLoading={isLoading}
+        />
       </div>
       
       <ImportSalesDialog
         open={showImportDialog}
         onOpenChange={setShowImportDialog}
       />
-    </div>
+    </AdminSalesLayout>
   );
 };
 
