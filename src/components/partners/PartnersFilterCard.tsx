@@ -1,25 +1,31 @@
 
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import PartnerFilter from "@/components/partners/PartnerFilter";
+import React from 'react';
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import PartnerFilter from './PartnerFilter';
 import { FilterValues } from "@/types";
 
 interface PartnersFilterCardProps {
   onFilter: (values: FilterValues) => void;
-  loading?: boolean;
+  isLoading?: boolean;
 }
 
-export function PartnersFilterCard({ onFilter, loading }: PartnersFilterCardProps) {
+const PartnersFilterCard: React.FC<PartnersFilterCardProps> = ({ 
+  onFilter,
+  isLoading = false
+}) => {
   return (
     <Card>
-      <CardHeader>
+      <CardHeader className="pb-3">
         <CardTitle>Filtros</CardTitle>
-        <CardDescription>
-          Utilize os filtros abaixo para encontrar parceiros específicos.
-        </CardDescription>
       </CardHeader>
       <CardContent>
-        <PartnerFilter onFilter={onFilter} />
+        <PartnerFilter 
+          onApplyFilter={onFilter}
+          isLoading={isLoading} 
+        />
       </CardContent>
     </Card>
   );
-}
+};
+
+export default PartnersFilterCard;

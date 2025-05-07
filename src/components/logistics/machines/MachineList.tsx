@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -6,8 +5,8 @@ import { Button } from "@/components/ui/button";
 import { Printer, Info, History, ArrowRightLeft } from "lucide-react";
 import { useDialog } from "@/hooks/use-dialog";
 import MachineDetailsModal from "@/components/logistics/MachineDetailsModal";
-import MachineHistoryDialog from "@/components/logistics/machine-dialogs/MachineHistoryDialog";
-import MachineTransferDialog from "@/components/logistics/machine-dialogs/MachineTransferDialog";
+import { MachineHistoryDialog } from "@/components/logistics/machine-dialogs/MachineHistoryDialog";
+import { MachineTransferDialog } from "@/components/logistics/machine-dialogs/MachineTransferDialog";
 
 // Prop interface
 export interface MachineListProps {
@@ -73,24 +72,10 @@ const MachineList: React.FC<MachineListProps> = ({
   const [machines, setMachines] = useState<any[]>([]);
   const [selectedMachine, setSelectedMachine] = useState<any>(null);
   
-  // Dialogs state
-  const { 
-    isOpen: isDetailsOpen, 
-    onOpen: onOpenDetails, 
-    onClose: onCloseDetails 
-  } = useDialog();
-  
-  const { 
-    isOpen: isHistoryOpen, 
-    onOpen: onOpenHistory, 
-    onClose: onCloseHistory 
-  } = useDialog();
-  
-  const { 
-    isOpen: isTransferOpen, 
-    onOpen: onOpenTransfer, 
-    onClose: onCloseTransfer 
-  } = useDialog();
+  // Dialogs state using proper hook pattern
+  const detailsDialog = useDialog();
+  const historyDialog = useDialog();
+  const transferDialog = useDialog();
 
   // Load and filter machines
   useEffect(() => {
@@ -121,17 +106,17 @@ const MachineList: React.FC<MachineListProps> = ({
 
   const handleViewDetails = (machine: any) => {
     setSelectedMachine(machine);
-    onOpenDetails();
+    detailsDialog.open();
   };
   
   const handleViewHistory = (machine: any) => {
     setSelectedMachine(machine);
-    onOpenHistory();
+    historyDialog.open();
   };
   
   const handleTransferMachine = (machine: any) => {
     setSelectedMachine(machine);
-    onOpenTransfer();
+    transferDialog.open();
   };
 
   // Helper function to get status badge color
@@ -202,20 +187,20 @@ const MachineList: React.FC<MachineListProps> = ({
       {selectedMachine && (
         <>
           <MachineDetailsModal 
-            open={isDetailsOpen} 
-            onOpenChange={onCloseDetails} 
+            open={detailsDialog.isOpen} 
+            onOpenChange={detailsDialog.close} 
             machine={selectedMachine} 
           />
           
           <MachineHistoryDialog 
-            open={isHistoryOpen} 
-            onOpenChange={onCloseHistory} 
+            isOpen={historyDialog.isOpen} 
+            onClose={historyDialog.close} 
             machineId={selectedMachine.id} 
           />
           
           <MachineTransferDialog 
-            open={isTransferOpen} 
-            onOpenChange={onCloseTransfer} 
+            open={transferDialog.isOpen} 
+            onOpenChange={transferDialog.close} 
             machineId={selectedMachine.id} 
           />
         </>

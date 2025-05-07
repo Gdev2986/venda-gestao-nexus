@@ -14,10 +14,10 @@ const MachinesTabNavigation = () => {
   const [modelFilter, setModelFilter] = useState("");
   const [statusFilter, setStatusFilter] = useState("");
   
-  const { isOpen: isNewMachineOpen, onOpen: onOpenNewMachine, onClose: onCloseNewMachine } = useDialog();
+  const newMachineDialog = useDialog();
 
   const handleAddNewMachine = () => {
-    onOpenNewMachine();
+    newMachineDialog.open();
   };
 
   return (
@@ -56,8 +56,8 @@ const MachinesTabNavigation = () => {
       </Tabs>
 
       <NewMachineDialog 
-        open={isNewMachineOpen} 
-        onOpenChange={onCloseNewMachine} 
+        open={newMachineDialog.isOpen} 
+        onOpenChange={newMachineDialog.close} 
       />
     </>
   );
