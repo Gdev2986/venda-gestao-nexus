@@ -1,4 +1,3 @@
-
 export const PATHS = {
   HOME: "/",
   LOGIN: "/login",
@@ -6,14 +5,14 @@ export const PATHS = {
   FORGOT_PASSWORD: "/forgot-password",
   RESET_PASSWORD: "/reset-password",
   PROFILE: "/profile",
-  DASHBOARD: "/dashboard", // Add generic dashboard path
-  NOTIFICATIONS: "/notifications", // Add notifications path
-  NOT_FOUND: "*", // Add not found path
+  DASHBOARD: "/dashboard",
+  NOTIFICATIONS: "/notifications", 
+  NOT_FOUND: "*", 
   ADMIN: {
     DASHBOARD: "/admin/dashboard",
     SALES: "/admin/sales",
-    SALES_NEW: "/admin/sales/new", // Add sales new path
-    SALES_DETAILS: (id: string = ":id") => `/admin/sales/${id}`, // Add sales details path with optional param
+    SALES_NEW: "/admin/sales/new",
+    SALES_DETAILS: (id: string = ":id") => `/admin/sales/${id}`,
     CLIENTS: "/admin/clients",
     CLIENT_DETAILS: (id: string = ":id") => `/admin/clients/${id}`,
     CLIENT_EDIT: (id: string = ":id") => `/admin/clients/${id}/edit`,
@@ -30,7 +29,7 @@ export const PATHS = {
     HELP: "/admin/help",
     SETTINGS: "/admin/settings",
     USERS: "/admin/users",
-    USER_MANAGEMENT: "/admin/users/management", // Add user management path
+    USER_MANAGEMENT: "/admin/users/management",
     USER_DETAILS: (id: string = ":id") => `/admin/users/${id}`,
     USER_EDIT: (id: string = ":id") => `/admin/users/${id}/edit`,
     USER_NEW: "/admin/users/new",
@@ -61,15 +60,15 @@ export const PATHS = {
     DASHBOARD: "/financial/dashboard",
     SALES: "/financial/sales",
     CLIENTS: "/financial/clients",
-    CLIENT_DETAILS: (id: string = ":id") => `/financial/clients/${id}`, // Add client details path
-    PAYMENTS: "/admin/payments", // Share the same route
+    CLIENT_DETAILS: (id: string = ":id") => `/financial/clients/${id}`,
+    PAYMENTS: "/admin/payments", // Use the same admin payments route
     PARTNERS: "/financial/partners",
     REPORTS: "/financial/reports",
     FEES: "/financial/fees",
     SUPPORT: "/financial/support",
     HELP: "/financial/help",
     SETTINGS: "/financial/settings",
-    REQUESTS: "/financial/requests", // Add requests path
+    REQUESTS: "/financial/requests",
   },
   LOGISTICS: {
     DASHBOARD: "/logistics/dashboard",

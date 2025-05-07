@@ -14,7 +14,7 @@ export const financialItems: SidebarItem[] = [
   {
     title: "Pagamentos",
     icon: CreditCard,
-    href: PATHS.FINANCIAL.PAYMENTS,
+    href: PATHS.ADMIN.PAYMENTS, // Point to the admin payments page
     roles: [UserRole.FINANCIAL],
   },
   {

@@ -61,7 +61,7 @@ export const PaymentFilters = ({
           </Select>
           <Button variant="outline" className="flex items-center gap-2" onClick={() => {
             setLocalSearchTerm('');
-            onFilterChange("ALL", '');
+            onFilterChange('', 'ALL');
           }}>
             <FilterIcon className="h-4 w-4" />
             Limpar Filtros
