@@ -35,10 +35,12 @@ export const createPaymentColumns = ({ onPaymentAction }: PaymentColumnsProps): 
     accessorKey: "client_name",
     header: "Cliente",
     cell: ({ row }) => {
-      // Safely access client property and ensure it's an object with business_name
+      // Safely access client property and ensure it's an object
       const client = row.original.client || {};
-      // Use optional chaining and nullish coalescing for safe access
-      const clientName = client.business_name || row.original.client_name || "Cliente não especificado";
+      // Check if business_name exists on client object, if not fallback to client_name or default
+      const clientName = client && typeof client === 'object' && 'business_name' in client 
+        ? client.business_name 
+        : row.original.client_name || "Cliente não especificado";
       return <div>{clientName}</div>;
     },
   },

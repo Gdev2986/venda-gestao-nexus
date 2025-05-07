@@ -1,4 +1,3 @@
-
 export enum UserRole {
   ADMIN = "ADMIN",
   CLIENT = "CLIENT",
@@ -126,8 +125,8 @@ export interface PixKey {
 export interface SalesChartData {
   date?: string;
   amount: number;
-  method: PaymentMethod; // Making method required
-  percentage: number; // Making percentage required
+  method: PaymentMethod;
+  percentage: number;
   name?: string;
   value?: number;
 }
@@ -141,7 +140,9 @@ export interface Sale {
   net_amount: number;
   date: string;
   payment_method: PaymentMethod;
-  client_id?: string; // Added client_id
+  client_id?: string;
+  created_at?: string; // Added created_at property 
+  updated_at?: string; // Added updated_at property
 }
 
 export interface FilterValues {
