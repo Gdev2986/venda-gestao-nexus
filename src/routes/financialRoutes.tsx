@@ -9,42 +9,48 @@ import MainLayout from "../layouts/MainLayout";
 // Auth Protection Component
 import RequireAuth from "../components/auth/RequireAuth";
 
-// Dashboard
-import Dashboard from "../pages/Dashboard";
+// Financial Dashboard
+import FinancialDashboard from "../pages/financial/Dashboard";
 
-// Pages
+// Reused Admin Pages
+import AdminPayments from "../pages/admin/Payments";
 import Clients from "../pages/clients/Clients";
 import ClientDetails from "../pages/clients/ClientDetails";
-import AdminPayments from "../pages/admin/Payments";
-import FinancialReports from "../pages/financial/Reports";
-import FinancialDashboard from "../pages/financial/Dashboard";
+import AdminReports from "../pages/admin/Reports";
 
 export const FinancialRoutes = (
   <Route element={<RequireAuth allowedRoles={[UserRole.FINANCIAL]} />}>
     <Route element={<MainLayout />}>
+      {/* Financial-specific dashboard */}
       <Route 
         path={PATHS.FINANCIAL.DASHBOARD} 
         element={<FinancialDashboard />} 
       />
       
+      {/* Reuse admin pages for these routes */}
       <Route 
-        path={PATHS.FINANCIAL.CLIENTS} 
-        element={<Clients />} 
-      />
-      
-      <Route 
-        path={PATHS.FINANCIAL.CLIENT_DETAILS()} 
-        element={<ClientDetails />} 
-      />
-      
-      <Route 
-        path={PATHS.FINANCIAL.PAYMENTS} 
+        path={PATHS.ADMIN.PAYMENTS} 
         element={<AdminPayments />} 
       />
       
       <Route 
-        path={PATHS.FINANCIAL.REPORTS} 
-        element={<FinancialReports />} 
+        path={PATHS.ADMIN.PAYMENT_DETAILS()} 
+        element={<AdminPayments />} 
+      />
+      
+      <Route 
+        path={PATHS.ADMIN.CLIENTS} 
+        element={<Clients />} 
+      />
+      
+      <Route 
+        path={PATHS.ADMIN.CLIENT_DETAILS()} 
+        element={<ClientDetails />} 
+      />
+      
+      <Route 
+        path={PATHS.ADMIN.REPORTS} 
+        element={<AdminReports />} 
       />
     </Route>
   </Route>

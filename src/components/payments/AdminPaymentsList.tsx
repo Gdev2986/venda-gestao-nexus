@@ -22,6 +22,7 @@ interface AdminPaymentsListProps {
   isLoading: boolean;
 }
 
+// Define the component both as default export and named export for compatibility
 const AdminPaymentsList = ({ payments, onAction, isLoading }: AdminPaymentsListProps) => {
   const { toast } = useToast();
   const [selectedPayments, setSelectedPayments] = useState<string[]>([]);
@@ -30,6 +31,8 @@ const AdminPaymentsList = ({ payments, onAction, isLoading }: AdminPaymentsListP
   const [detailsDialogOpen, setDetailsDialogOpen] = useState(false);
   const [selectedPayment, setSelectedPayment] = useState<Payment | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
+
+  // ... keep existing code (handle action, selection and dialog functions)
 
   const handleAction = (paymentId: string, action: PaymentAction) => {
     onAction(paymentId, action);
@@ -131,6 +134,8 @@ const AdminPaymentsList = ({ payments, onAction, isLoading }: AdminPaymentsListP
       setIsProcessing(false);
     }
   };
+
+  // ... keep existing code (loading and empty states)
 
   if (isLoading) {
     return (
@@ -273,31 +278,35 @@ const AdminPaymentsList = ({ payments, onAction, isLoading }: AdminPaymentsListP
       )}
       
       {/* Dialogs para aprovação, rejeição e detalhes de pagamentos */}
-      <ApprovePaymentDialog
-        open={approveDialogOpen}
-        onOpenChange={setApproveDialogOpen}
-        payment={selectedPayment}
-        onApprove={handleApprovePayment}
-        isProcessing={isProcessing}
-      />
-      
-      <RejectPaymentDialog
-        open={rejectDialogOpen}
-        onOpenChange={setRejectDialogOpen}
-        payment={selectedPayment}
-        onReject={handleRejectPayment}
-        isProcessing={isProcessing}
-      />
-      
-      <PaymentDetailsDialog 
-        open={detailsDialogOpen}
-        onOpenChange={setDetailsDialogOpen}
-        payment={selectedPayment}
-      />
+      {selectedPayment && (
+        <>
+          <ApprovePaymentDialog
+            open={approveDialogOpen}
+            onOpenChange={setApproveDialogOpen}
+            payment={selectedPayment}
+            onApprove={handleApprovePayment}
+            isProcessing={isProcessing}
+          />
+          
+          <RejectPaymentDialog
+            open={rejectDialogOpen}
+            onOpenChange={setRejectDialogOpen}
+            payment={selectedPayment}
+            onReject={handleRejectPayment}
+            isProcessing={isProcessing}
+          />
+          
+          <PaymentDetailsDialog 
+            open={detailsDialogOpen}
+            onOpenChange={setDetailsDialogOpen}
+            payment={selectedPayment}
+          />
+        </>
+      )}
     </>
   );
 };
 
-// Exportar como default e como named export para compatibilidade
+// Export both as default and named export for compatibility
 export { AdminPaymentsList };
 export default AdminPaymentsList;

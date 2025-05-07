@@ -32,42 +32,52 @@ const RequireAuth = ({ allowedRoles = [], redirectTo = PATHS.LOGIN }: RequireAut
         console.log("Setting shouldRedirect to true - no user");
         setShouldRedirect(true);
       } else if (allowedRoles.length > 0 && !allowedRoles.includes(userRole)) {
-        // If role-specific access control is defined and user doesn't have permission
-        console.log(`User role ${userRole} not allowed to access this route`);
-        
-        // Show unauthorized toast message
-        toast({
-          title: "Acesso não autorizado",
-          description: "Você não tem permissão para acessar esta página",
-          variant: "destructive",
-        });
-        
-        // Redirect to role-specific dashboard
-        setTimeout(() => {
+        // Special case: Financial users can access admin routes for payments, clients and reports
+        if (userRole === UserRole.FINANCIAL && 
+            allowedRoles.includes(UserRole.ADMIN) &&
+            (location.pathname.includes('/admin/payments') || 
+             location.pathname.includes('/admin/clients') || 
+             location.pathname.includes('/admin/reports'))) {
+          // Allow financial users to access these specific admin routes
+          console.log("Financial user accessing permitted admin route:", location.pathname);
+        } else {
+          // If role-specific access control is defined and user doesn't have permission
+          console.log(`User role ${userRole} not allowed to access this route`);
+          
+          // Show unauthorized toast message
+          toast({
+            title: "Acesso não autorizado",
+            description: "Você não tem permissão para acessar esta página",
+            variant: "destructive",
+          });
+          
           // Redirect to role-specific dashboard
-          switch(userRole) {
-            case UserRole.ADMIN:
-              window.location.href = PATHS.ADMIN.DASHBOARD;
-              break;
-            case UserRole.CLIENT:
-              window.location.href = PATHS.USER.DASHBOARD;
-              break;
-            case UserRole.PARTNER:
-              window.location.href = PATHS.PARTNER.DASHBOARD;
-              break;
-            case UserRole.FINANCIAL:
-              window.location.href = PATHS.FINANCIAL.DASHBOARD;
-              break;
-            case UserRole.LOGISTICS:
-              window.location.href = PATHS.LOGISTICS.DASHBOARD;
-              break;
-            default:
-              window.location.href = PATHS.USER.DASHBOARD;
-          }
-        }, 0);
+          setTimeout(() => {
+            // Redirect to role-specific dashboard
+            switch(userRole) {
+              case UserRole.ADMIN:
+                window.location.href = PATHS.ADMIN.DASHBOARD;
+                break;
+              case UserRole.CLIENT:
+                window.location.href = PATHS.USER.DASHBOARD;
+                break;
+              case UserRole.PARTNER:
+                window.location.href = PATHS.PARTNER.DASHBOARD;
+                break;
+              case UserRole.FINANCIAL:
+                window.location.href = PATHS.FINANCIAL.DASHBOARD;
+                break;
+              case UserRole.LOGISTICS:
+                window.location.href = PATHS.LOGISTICS.DASHBOARD;
+                break;
+              default:
+                window.location.href = PATHS.USER.DASHBOARD;
+            }
+          }, 0);
+        }
       }
     }
-  }, [isLoading, isRoleLoading, user, userRole, allowedRoles, toast]);
+  }, [isLoading, isRoleLoading, user, userRole, allowedRoles, toast, location.pathname]);
 
   // Add a slight delay for loading animation
   useEffect(() => {
@@ -105,6 +115,16 @@ const RequireAuth = ({ allowedRoles = [], redirectTo = PATHS.LOGIN }: RequireAut
     // Store the current location using sessionStorage for better security
     sessionStorage.setItem("redirectPath", location.pathname);
     return <Navigate to={PATHS.LOGIN} state={{ from: location.pathname }} replace />;
+  }
+
+  // Special check for Financial users accessing admin routes
+  if (userRole === UserRole.FINANCIAL && 
+      allowedRoles.includes(UserRole.ADMIN) &&
+      (location.pathname.includes('/admin/payments') || 
+       location.pathname.includes('/admin/clients') || 
+       location.pathname.includes('/admin/reports'))) {
+    // Allow financial users to access these specific admin routes
+    return <Outlet />;
   }
 
   // Check if user has permission to access this route
