@@ -30,12 +30,6 @@ export const logisticsItems: SidebarItem[] = [
     roles: [UserRole.LOGISTICS],
   },
   {
-    title: "Inventário",
-    icon: Box,
-    href: PATHS.LOGISTICS.INVENTORY,
-    roles: [UserRole.LOGISTICS],
-  },
-  {
     title: "Clientes",
     icon: Building2,
     href: PATHS.LOGISTICS.CLIENTS,

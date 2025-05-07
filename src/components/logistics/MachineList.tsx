@@ -23,22 +23,46 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Search, Plus } from "lucide-react";
 import { Link } from "react-router-dom";
 import { PATHS } from "@/routes/paths";
+import { useDialog } from "@/hooks/use-dialog";
+import { MachineAssociationDialog } from "./machine-dialogs/MachineAssociationDialog";
+import { MachineTransferDialog } from "./machine-dialogs/MachineTransferDialog";
+import { MachineHistoryDialog } from "./machine-dialogs/MachineHistoryDialog";
 
 const MachineList = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
+  const [selectedMachine, setSelectedMachine] = useState<any>(null);
+  
+  const associationDialog = useDialog();
+  const transferDialog = useDialog();
+  const historyDialog = useDialog();
   
   const { machines, isLoading, refreshMachines } = useMachines({
     searchTerm,
     statusFilter,
   });
 
+  const handleAssociateClick = (machine: any) => {
+    setSelectedMachine(machine);
+    associationDialog.open();
+  };
+
+  const handleTransferClick = (machine: any) => {
+    setSelectedMachine(machine);
+    transferDialog.open();
+  };
+
+  const handleHistoryClick = (machine: any) => {
+    setSelectedMachine(machine);
+    historyDialog.open();
+  };
+
   const getStatusBadge = (status: string) => {
     const statusMap: Record<string, { color: string; label: string }> = {
-      ACTIVE: { color: "bg-green-100 text-green-800", label: "Ativa" },
+      ACTIVE: { color: "bg-green-100 text-green-800", label: "Operando" },
       MAINTENANCE: { color: "bg-orange-100 text-orange-800", label: "Manutenção" },
-      INACTIVE: { color: "bg-red-100 text-red-800", label: "Inativa" },
-      REPLACEMENT_REQUESTED: { color: "bg-blue-100 text-blue-800", label: "Troca Solicitada" },
+      INACTIVE: { color: "bg-red-100 text-red-800", label: "Quebrada" },
+      STOCK: { color: "bg-blue-100 text-blue-800", label: "Em Estoque" },
     };
 
     const statusInfo = statusMap[status] || { color: "bg-gray-100 text-gray-800", label: status };
@@ -48,6 +72,16 @@ const MachineList = () => {
         {statusInfo.label}
       </span>
     );
+  };
+
+  const handleAssociationComplete = () => {
+    refreshMachines();
+    associationDialog.close();
+  };
+
+  const handleTransferComplete = () => {
+    refreshMachines();
+    transferDialog.close();
   };
 
   return (
@@ -74,10 +108,10 @@ const MachineList = () => {
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">Todos os status</SelectItem>
-                <SelectItem value="ACTIVE">Ativas</SelectItem>
+                <SelectItem value="ACTIVE">Operando</SelectItem>
                 <SelectItem value="MAINTENANCE">Em manutenção</SelectItem>
-                <SelectItem value="INACTIVE">Inativas</SelectItem>
-                <SelectItem value="REPLACEMENT_REQUESTED">Troca solicitada</SelectItem>
+                <SelectItem value="STOCK">Em estoque</SelectItem>
+                <SelectItem value="INACTIVE">Quebrada</SelectItem>
               </SelectContent>
             </Select>
 
@@ -105,10 +139,10 @@ const MachineList = () => {
                 <TableRow>
                   <TableHead>Serial</TableHead>
                   <TableHead>Modelo</TableHead>
-                  <TableHead>Cliente</TableHead>
                   <TableHead>Status</TableHead>
-                  <TableHead>Cadastrado</TableHead>
-                  <TableHead className="w-[80px]">Ações</TableHead>
+                  <TableHead>Cliente</TableHead>
+                  <TableHead>Local</TableHead>
+                  <TableHead className="w-[220px]">Ações</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -123,15 +157,41 @@ const MachineList = () => {
                     <TableRow key={machine.id}>
                       <TableCell className="font-medium">{machine.serialNumber}</TableCell>
                       <TableCell>{machine.model}</TableCell>
-                      <TableCell>{machine.clientName || "—"}</TableCell>
                       <TableCell>{getStatusBadge(machine.status)}</TableCell>
-                      <TableCell>{new Date(machine.createdAt).toLocaleDateString("pt-BR")}</TableCell>
+                      <TableCell>{machine.clientName || "—"}</TableCell>
+                      <TableCell>{machine.location || "—"}</TableCell>
                       <TableCell>
-                        <Button variant="ghost" size="sm" asChild>
-                          <Link to={PATHS.LOGISTICS.MACHINE_DETAILS(machine.id)}>
-                            Detalhes
-                          </Link>
-                        </Button>
+                        <div className="flex space-x-2">
+                          {!machine.clientId && machine.status !== "INACTIVE" ? (
+                            <Button 
+                              variant="outline" 
+                              size="sm" 
+                              onClick={() => handleAssociateClick(machine)}
+                            >
+                              Associar
+                            </Button>
+                          ) : machine.clientId && machine.status !== "INACTIVE" ? (
+                            <Button 
+                              variant="outline" 
+                              size="sm" 
+                              onClick={() => handleTransferClick(machine)}
+                            >
+                              Transferir
+                            </Button>
+                          ) : null}
+                          <Button
+                            variant="ghost" 
+                            size="sm"
+                            onClick={() => handleHistoryClick(machine)}
+                          >
+                            Histórico
+                          </Button>
+                          <Button variant="ghost" size="sm" asChild>
+                            <Link to={PATHS.LOGISTICS.MACHINE_DETAILS(machine.id)}>
+                              Detalhes
+                            </Link>
+                          </Button>
+                        </div>
                       </TableCell>
                     </TableRow>
                   ))
@@ -141,6 +201,29 @@ const MachineList = () => {
           </div>
         )}
       </CardContent>
+
+      {/* Machine Association Dialog */}
+      <MachineAssociationDialog
+        isOpen={associationDialog.isOpen}
+        onClose={associationDialog.close}
+        machine={selectedMachine}
+        onAssociated={handleAssociationComplete}
+      />
+
+      {/* Machine Transfer Dialog */}
+      <MachineTransferDialog
+        isOpen={transferDialog.isOpen}
+        onClose={transferDialog.close}
+        machine={selectedMachine}
+        onTransferred={handleTransferComplete}
+      />
+
+      {/* Machine History Dialog */}
+      <MachineHistoryDialog
+        isOpen={historyDialog.isOpen}
+        onClose={historyDialog.close}
+        machineId={selectedMachine?.id}
+      />
     </Card>
   );
 };

@@ -34,6 +34,7 @@ export const useMachines = (params: UseMachinesParams = {}) => {
             status: "ACTIVE",
             clientId: "1",
             clientName: "Supermercado ABC",
+            location: "Matriz",
             createdAt: "2023-01-15T10:30:00Z",
             updatedAt: "2023-01-15T10:30:00Z"
           },
@@ -44,6 +45,7 @@ export const useMachines = (params: UseMachinesParams = {}) => {
             status: "MAINTENANCE",
             clientId: "2",
             clientName: "Restaurante XYZ",
+            location: "Unidade Central",
             createdAt: "2023-02-20T14:45:00Z",
             updatedAt: "2023-03-15T09:20:00Z"
           },
@@ -54,6 +56,7 @@ export const useMachines = (params: UseMachinesParams = {}) => {
             status: "INACTIVE",
             clientId: "3",
             clientName: "Farmácia Central",
+            location: "Filial Norte",
             createdAt: "2023-03-10T09:15:00Z",
             updatedAt: "2023-03-10T09:15:00Z"
           },
@@ -64,6 +67,7 @@ export const useMachines = (params: UseMachinesParams = {}) => {
             status: "ACTIVE",
             clientId: "1",
             clientName: "Supermercado ABC",
+            location: "Filial Sul",
             createdAt: "2023-04-05T11:20:00Z",
             updatedAt: "2023-04-05T11:20:00Z"
           },
@@ -71,9 +75,10 @@ export const useMachines = (params: UseMachinesParams = {}) => {
             id: "5",
             serialNumber: "SN-567890",
             model: "Terminal Standard",
-            status: "REPLACEMENT_REQUESTED",
-            clientId: "4",
-            clientName: "Padaria Sabor",
+            status: "STOCK",
+            clientId: null,
+            clientName: null,
+            location: "Estoque Central",
             createdAt: "2023-05-18T16:10:00Z",
             updatedAt: "2023-06-02T14:35:00Z"
           }
@@ -87,7 +92,8 @@ export const useMachines = (params: UseMachinesParams = {}) => {
           filtered = filtered.filter(machine => 
             machine.serialNumber.toLowerCase().includes(term) ||
             machine.model.toLowerCase().includes(term) ||
-            machine.clientName.toLowerCase().includes(term)
+            (machine.clientName && machine.clientName.toLowerCase().includes(term)) ||
+            (machine.location && machine.location.toLowerCase().includes(term))
           );
         }
         
@@ -99,8 +105,58 @@ export const useMachines = (params: UseMachinesParams = {}) => {
         setTotalPages(1); // With real data, calculate based on total count
         setIsLoading(false);
       }, 500);
+
+      // In a real implementation, this would use Supabase:
+      /*
+      let query = supabase
+        .from('machines')
+        .select(`
+          id,
+          serial_number,
+          model,
+          status,
+          client_id,
+          clients:client_id (
+            business_name
+          ),
+          machine_transfers (
+            location
+          )
+        `)
+        .order('created_at', { ascending: false });
+        
+      // Apply filters
+      if (statusFilter !== 'all') {
+        query = query.eq('status', statusFilter);
+      }
+      
+      if (searchTerm) {
+        query = query.or(`serial_number.ilike.%${searchTerm}%,model.ilike.%${searchTerm}%`);
+      }
+        
+      const { data, error } = await query;
+        
+      if (error) {
+        throw error;
+      }
+      
+      const formattedMachines = data.map(item => ({
+        id: item.id,
+        serialNumber: item.serial_number,
+        model: item.model,
+        status: item.status,
+        clientId: item.client_id,
+        clientName: item.clients?.business_name || null,
+        location: item.machine_transfers[0]?.location || null,
+        createdAt: item.created_at,
+        updatedAt: item.updated_at
+      }));
+      
+      setMachines(formattedMachines);
+      */
     } catch (error) {
       console.error("Error fetching machines:", error);
+    } finally {
       setIsLoading(false);
     }
   };
