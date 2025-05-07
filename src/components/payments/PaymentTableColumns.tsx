@@ -1,145 +1,165 @@
-
-import { ColumnDef } from "@tanstack/react-table";
-import { Badge } from "@/components/ui/badge";
+import { format } from "date-fns";
+import { ptBR } from "date-fns/locale";
+import { ArrowUpDown, Copy, MoreHorizontal } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { MoreHorizontal, Check, X, Eye } from "lucide-react";
-import { formatCurrency } from "@/lib/formatters";
-import { formatDate } from "@/lib/utils";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
-  DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { PaymentData } from "@/hooks/payments/payment.types";
-import { PaymentStatus } from "@/types";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import { Payment, PaymentStatus } from "@/types";
+import { Badge } from "@/components/ui/badge";
+import { cn } from "@/lib/utils";
+import { useState } from "react";
+import { useToast } from "@/hooks/use-toast";
 
-// Action types for payment operations
-export type PaymentAction = 'approve' | 'reject' | 'details';
-
-// Props for the createPaymentColumns function
-interface PaymentColumnsProps {
-  onPaymentAction: (payment: PaymentData, action: PaymentAction) => void;
+interface DataTableProps<TData, TValue> {
+  columns: ColumnDef<TData, TValue>[];
+  data: TData[];
 }
 
-// Function to create payment columns for the data table
-export const createPaymentColumns = ({ onPaymentAction }: PaymentColumnsProps): ColumnDef<PaymentData>[] => [
-  {
-    accessorKey: "id",
-    header: "ID",
-    cell: ({ row }) => <div className="font-mono text-xs">{row.original.id.substring(0, 8)}</div>,
-  },
-  {
-    accessorKey: "client_name",
-    header: "Cliente",
-    cell: ({ row }) => {
-      // Safely access client property and ensure it's an object
-      const client = row.original.client || {};
-      // Handle client_name access safely
-      let clientName = "Cliente não especificado";
-      
-      // Use object properties if they exist
-      if (client && typeof client === 'object') {
-        if ('business_name' in client) {
-          clientName = client.business_name;
-        } else if (row.original.client_name) {
-          clientName = row.original.client_name;
-        }
-      }
-      
-      return <div>{clientName}</div>;
+export interface ColumnDef<TData = any, TValue = any> {
+  accessorKey?: keyof TData;
+  header?: string | ((props: { column: ColumnDef<TData, TValue> }) => React.ReactNode);
+  cell?: (props: { row: TData }) => React.ReactNode;
+  footer?: string | ((props: { column: ColumnDef<TData, TValue> }) => React.ReactNode);
+}
+
+// Function to determine the color based on payment status
+const getStatusColor = (status: PaymentStatus) => {
+  switch (status) {
+    case PaymentStatus.PENDING:
+      return "bg-yellow-100 text-yellow-800";
+    case PaymentStatus.APPROVED:
+      return "bg-green-100 text-green-800";
+    case PaymentStatus.REJECTED:
+      return "bg-red-100 text-red-800";
+    case PaymentStatus.PAID:
+      return "bg-blue-100 text-blue-800";
+    default:
+      return "bg-gray-100 text-gray-800";
+  }
+};
+
+// Function to format the date
+export const formatDate = (dateString: string): string => {
+  try {
+    const date = new Date(dateString);
+    return format(date, "dd/MM/yyyy HH:mm", { locale: ptBR });
+  } catch (error) {
+    console.error("Error formatting date:", error);
+    return "Data inválida";
+  }
+};
+
+// Function to format currency
+export const formatCurrency = (amount: number): string => {
+  return new Intl.NumberFormat("pt-BR", {
+    style: "currency",
+    currency: "BRL",
+  }).format(amount);
+};
+
+// Function to get client name safely
+export const getPaymentClientName = (payment: any): string => {
+  // Safety check for client object and properties
+  if (payment.client && typeof payment.client === 'object') {
+    return payment.client.business_name || payment.client.company_name || 'Cliente';
+  }
+  
+  // Fallback to client_name property or default value
+  return payment.client_name || 'Cliente';
+};
+
+const PaymentTableColumns = () => {
+  const { toast } = useToast();
+  const [copiedPaymentId, setCopiedPaymentId] = useState<string | null>(null);
+
+  const copyToClipboard = (text: string, paymentId: string) => {
+    navigator.clipboard.writeText(text);
+    setCopiedPaymentId(paymentId);
+    toast({
+      title: "Copiado para área de transferência",
+      description: "O ID do pagamento foi copiado com sucesso.",
+    });
+    setTimeout(() => {
+      setCopiedPaymentId(null);
+    }, 3000);
+  };
+
+  const columns: ColumnDef<Payment>[] = [
+    {
+      accessorKey: "id",
+      header: "ID do Pagamento",
+      cell: ({ row }) => (
+        <div className="flex items-center space-x-2">
+          <span>{row.id}</span>
+          <Button
+            variant="ghost"
+            size="sm"
+            className={cn("w-4 h-4", copiedPaymentId === row.id ? "text-green-500" : "")}
+            onClick={() => copyToClipboard(row.id, row.id)}
+            disabled={copiedPaymentId === row.id}
+          >
+            <Copy className="h-4 w-4" />
+          </Button>
+        </div>
+      ),
     },
-  },
-  {
-    accessorKey: "amount",
-    header: "Valor",
-    cell: ({ row }) => formatCurrency(row.original.amount),
-  },
-  {
-    accessorKey: "created_at",
-    header: "Data da Solicitação",
-    cell: ({ row }) => formatDate(row.original.created_at),
-  },
-  {
-    accessorKey: "status",
-    header: "Status",
-    cell: ({ row }) => {
-      const status = row.original.status;
-      
-      switch (status) {
-        case PaymentStatus.PENDING:
-          return (
-            <Badge variant="outline" className="bg-yellow-100 text-yellow-800 border-yellow-200">
-              Pendente
-            </Badge>
-          );
-        case PaymentStatus.APPROVED:
-          return (
-            <Badge variant="outline" className="bg-green-100 text-green-800 border-green-200">
-              Aprovado
-            </Badge>
-          );
-        case PaymentStatus.REJECTED:
-          return (
-            <Badge variant="outline" className="bg-red-100 text-red-800 border-red-200">
-              Rejeitado
-            </Badge>
-          );
-        case PaymentStatus.PAID:
-          return (
-            <Badge variant="outline" className="bg-blue-100 text-blue-800 border-blue-200">
-              Pago
-            </Badge>
-          );
-        default:
-          return <Badge variant="outline">Desconhecido</Badge>;
-      }
+    {
+      accessorKey: "created_at",
+      header: "Data de Criação",
+      cell: ({ row }) => <div>{formatDate(row.created_at)}</div>,
     },
-  },
-  {
-    id: "actions",
-    header: "Ações",
-    cell: ({ row }) => {
-      const payment = row.original;
-      
-      return (
+    {
+      accessorKey: "amount",
+      header: "Valor",
+      cell: ({ row }) => <div>{formatCurrency(row.amount)}</div>,
+    },
+    {
+      accessorKey: "status",
+      header: "Status",
+      cell: ({ row }) => (
+        <Badge className={getStatusColor(row.status)}>{row.status}</Badge>
+      ),
+    },
+    {
+      accessorKey: "client",
+      header: "Cliente",
+      cell: ({ row }) => <div>{getPaymentClientName(row)}</div>,
+    },
+    {
+      id: "actions",
+      cell: ({ row }) => (
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button variant="ghost" className="h-8 w-8 p-0">
-              <span className="sr-only">Abrir menu</span>
+              <span className="sr-only">Open menu</span>
               <MoreHorizontal className="h-4 w-4" />
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">
-            <DropdownMenuLabel>Ações</DropdownMenuLabel>
+            <DropdownMenuItem>Visualizar Detalhes</DropdownMenuItem>
             <DropdownMenuSeparator />
-            
-            <DropdownMenuItem onClick={() => onPaymentAction(payment, 'details')}>
-              <Eye className="mr-2 h-4 w-4" />
-              Ver detalhes
-            </DropdownMenuItem>
-            
-            {payment.status === PaymentStatus.PENDING && (
-              <>
-                <DropdownMenuItem onClick={() => onPaymentAction(payment, 'approve')}>
-                  <Check className="mr-2 h-4 w-4" />
-                  Aprovar
-                </DropdownMenuItem>
-                
-                <DropdownMenuItem 
-                  onClick={() => onPaymentAction(payment, 'reject')}
-                  className="text-red-600"
-                >
-                  <X className="mr-2 h-4 w-4" />
-                  Rejeitar
-                </DropdownMenuItem>
-              </>
-            )}
+            <DropdownMenuItem>Editar</DropdownMenuItem>
+            <DropdownMenuItem>Excluir</DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
-      );
+      ),
     },
-  },
-];
+  ];
+
+  return columns;
+};
+
+export default PaymentTableColumns;

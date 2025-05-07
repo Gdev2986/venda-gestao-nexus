@@ -1,3 +1,4 @@
+
 import { faker } from '@faker-js/faker';
 import { PaymentMethod, Sale } from "@/types";
 
@@ -53,6 +54,45 @@ export const generateRandomSale = (): Sale => {
  */
 export const generateSales = (count: number): Sale[] => {
   return Array.from({ length: count }, () => generateRandomSale());
+};
+
+/**
+ * Alias for generateSales to fix ClientDashboard.tsx error
+ */
+export const generateMockSales = (count: number, dateRange?: any): Sale[] => {
+  return generateSales(count);
+};
+
+/**
+ * Generate daily sales data for charts
+ */
+export const generateDailySalesData = (dateRange: any): any[] => {
+  const days = 7;
+  const result = [];
+  const today = new Date();
+  
+  for (let i = 0; i < days; i++) {
+    const date = new Date(today);
+    date.setDate(today.getDate() - i);
+    
+    result.push({
+      name: date.toISOString().split('T')[0],
+      total: faker.number.int({ min: 300, max: 1200 })
+    });
+  }
+  
+  return result.reverse();
+};
+
+/**
+ * Generate payment methods data for charts
+ */
+export const generatePaymentMethodsData = (dateRange: any): any[] => {
+  return [
+    { name: 'credit', value: faker.number.int({ min: 5, max: 20 }) },
+    { name: 'debit', value: faker.number.int({ min: 3, max: 15 }) },
+    { name: 'pix', value: faker.number.int({ min: 2, max: 10 }) }
+  ];
 };
 
 export const generateMockSalesData = (count: number): Sale[] => {
@@ -118,4 +158,15 @@ export const filterSalesData = (sales: Sale[], searchTerm: string): Sale[] => {
       sale.payment_method.toLowerCase().includes(lowerSearchTerm)
     );
   });
+};
+
+/**
+ * Calculate sales totals for the Sales page
+ */
+export const calculateSalesTotals = (sales: Sale[]) => {
+  return {
+    gross: sales.reduce((sum, sale) => sum + sale.gross_amount, 0),
+    net: sales.reduce((sum, sale) => sum + sale.net_amount, 0),
+    count: sales.length
+  };
 };
