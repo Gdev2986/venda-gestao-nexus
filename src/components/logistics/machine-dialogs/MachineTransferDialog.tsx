@@ -1,102 +1,87 @@
 
 import { useState } from "react";
-import { useToast } from "@/hooks/use-toast";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogFooter,
-} from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
+import { useToast } from "@/hooks/use-toast";
+import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
 
-interface MachineTransferDialogProps {
+export interface MachineTransferDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  machineId?: string;
+  machine: any; // Machine type
+  onTransferred: () => void;
 }
 
-export function MachineTransferDialog({
+const MachineTransferDialog = ({
   open,
   onOpenChange,
-  machineId,
-}: MachineTransferDialogProps) {
-  const [clientId, setClientId] = useState("");
-  const [location, setLocation] = useState("");
+  machine,
+  onTransferred
+}: MachineTransferDialogProps) => {
+  const [selectedClient, setSelectedClient] = useState<string>("");
+  const [transferDate, setTransferDate] = useState<string>("");
   const [isSubmitting, setIsSubmitting] = useState(false);
-  
   const { toast } = useToast();
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!clientId) {
+  const handleSubmit = () => {
+    if (!selectedClient) {
       toast({
-        variant: "destructive",
         title: "Erro",
-        description: "Selecione um cliente para transferir a máquina.",
+        description: "Selecione um cliente para a transferência",
+        variant: "destructive"
       });
       return;
     }
 
     setIsSubmitting(true);
-    try {
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      
-      toast({
-        title: "Sucesso",
-        description: "Máquina transferida com sucesso.",
-      });
-      
-      onOpenChange(false);
-    } catch (error) {
-      console.error("Error transferring machine:", error);
-      toast({
-        variant: "destructive",
-        title: "Erro",
-        description: "Não foi possível transferir a máquina.",
-      });
-    } finally {
+
+    // Simulate API call
+    setTimeout(() => {
       setIsSubmitting(false);
-    }
+      onOpenChange(false);
+      
+      toast({
+        title: "Máquina transferida",
+        description: `Máquina ${machine.serial_number} transferida com sucesso para o cliente selecionado.`
+      });
+      
+      onTransferred();
+    }, 1000);
   };
 
-  // Mock clients for demo
+  // Mock clients data
   const clients = [
-    { id: "1", name: "Supermercado ABC" },
-    { id: "2", name: "Farmácia Central" },
-    { id: "3", name: "Padaria Sabor" },
-    { id: "4", name: "Restaurante Delícia" },
+    { id: "1", name: "Cliente A" },
+    { id: "2", name: "Cliente B" },
+    { id: "3", name: "Cliente C" }
   ];
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[500px]">
         <DialogHeader>
-          <DialogTitle>Transferir Máquina</DialogTitle>
+          <DialogTitle>Transferir máquina</DialogTitle>
         </DialogHeader>
-
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div className="space-y-2">
-            <Label htmlFor="client">Cliente</Label>
-            <Select
-              value={clientId}
-              onValueChange={setClientId}
-            >
+        
+        <div className="grid gap-4 py-4">
+          <div className="grid gap-2">
+            <Label htmlFor="machine-info">Máquina selecionada</Label>
+            <div className="px-4 py-3 bg-muted rounded-md text-sm">
+              <p><span className="font-semibold">Número de série:</span> {machine?.serial_number}</p>
+              <p><span className="font-semibold">Modelo:</span> {machine?.model}</p>
+            </div>
+          </div>
+          
+          <div className="grid gap-2">
+            <Label htmlFor="client">Cliente de destino</Label>
+            <Select value={selectedClient} onValueChange={setSelectedClient}>
               <SelectTrigger id="client">
                 <SelectValue placeholder="Selecione um cliente" />
               </SelectTrigger>
               <SelectContent>
-                {clients.map((client) => (
+                {clients.map(client => (
                   <SelectItem key={client.id} value={client.id}>
                     {client.name}
                   </SelectItem>
@@ -104,32 +89,36 @@ export function MachineTransferDialog({
               </SelectContent>
             </Select>
           </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="location">Local (opcional)</Label>
-            <Input
-              id="location"
-              value={location}
-              onChange={(e) => setLocation(e.target.value)}
-              placeholder="Ex: Filial Sul, Matriz, etc."
+          
+          <div className="grid gap-2">
+            <Label htmlFor="transfer-date">Data da transferência</Label>
+            <Input 
+              id="transfer-date" 
+              type="date" 
+              value={transferDate}
+              onChange={(e) => setTransferDate(e.target.value)}
             />
           </div>
-
-          <DialogFooter>
-            <Button 
-              type="button" 
-              variant="outline" 
-              onClick={() => onOpenChange(false)}
-              disabled={isSubmitting}
-            >
-              Cancelar
-            </Button>
-            <Button type="submit" disabled={isSubmitting}>
-              {isSubmitting ? "Transferindo..." : "Transferir"}
-            </Button>
-          </DialogFooter>
-        </form>
+        </div>
+        
+        <DialogFooter>
+          <Button 
+            variant="outline" 
+            onClick={() => onOpenChange(false)}
+            disabled={isSubmitting}
+          >
+            Cancelar
+          </Button>
+          <Button 
+            onClick={handleSubmit}
+            disabled={isSubmitting}
+          >
+            {isSubmitting ? "Transferindo..." : "Confirmar transferência"}
+          </Button>
+        </DialogFooter>
       </DialogContent>
     </Dialog>
   );
-}
+};
+
+export default MachineTransferDialog;

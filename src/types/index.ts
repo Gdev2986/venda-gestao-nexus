@@ -1,8 +1,9 @@
+
 export enum UserRole {
   ADMIN = "ADMIN",
-  CLIENT = "CLIENT",
+  CLIENT = "CLIENT", 
   FINANCIAL = "FINANCIAL",
-  PARTNER = "PARTNER", 
+  PARTNER = "PARTNER",
   LOGISTICS = "LOGISTICS"
 }
 
@@ -26,6 +27,12 @@ export enum ClientStatus {
   PENDING = "pending"
 }
 
+export enum PaymentMethod {
+  CREDIT = "credit",
+  DEBIT = "debit",
+  PIX = "pix"
+}
+
 export interface Payment {
   id: string;
   created_at: string;
@@ -45,6 +52,7 @@ export interface Payment {
     account_holder?: string;
   };
   document_url?: string;
+  due_date?: string;
   pix_key?: {
     id: string;
     key: string;
@@ -87,6 +95,68 @@ export interface Client {
   zip?: string;
   document?: string;
   fee_plan_id?: string;
+  company_name?: string;
+}
+
+export interface FilterValues {
+  search?: string;
+  status?: string;
+  category?: string;
+  dateRange?: {
+    from: Date;
+    to?: Date;
+  };
+}
+
+export interface PixKey {
+  id: string;
+  key: string;
+  type: string;
+  name: string;
+  owner_name?: string;
+  is_default?: boolean;
+  user_id?: string;
+  created_at?: string;
+  updated_at?: string;
+}
+
+export interface Sale {
+  id: string;
+  code: string;
+  terminal: string;
+  client_name: string;
+  gross_amount: number;
+  net_amount: number;
+  date: string;
+  payment_method: PaymentMethod;
+  client_id: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface SalesFilterParams {
+  search?: string;
+  paymentMethod?: string;
+  terminal?: string;
+  minAmount?: number;
+  maxAmount?: number;
+  startHour?: number;
+  endHour?: number;
+  installments?: string;
+}
+
+export interface UserData {
+  id: string;
+  name: string;
+  email: string;
+  role: UserRole;
+  created_at: string;
+  status: string;
+}
+
+export interface SalesChartData {
+  name: string;
+  value: number;
 }
 
 // Add other types as needed

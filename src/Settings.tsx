@@ -1,134 +1,188 @@
-
-import { useState, useEffect } from "react";
-import { useAuth } from "@/hooks/use-auth";
-import { supabase } from "@/integrations/supabase/client";
-import { PixKey } from "@/types";
+import { useState } from "react";
+import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { useToast } from "@/hooks/use-toast";
-import { createDefaultPixKeyProperties } from "@/utils/settings-utils";
+import { Switch } from "@/components/ui/switch";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 const Settings = () => {
-  const { user } = useAuth();
-  const [pixKeys, setPixKeys] = useState<PixKey[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
+  const [theme, setTheme] = useState("light");
+  const [language, setLanguage] = useState("pt-BR");
+  const [notificationsEnabled, setNotificationsEnabled] = useState(true);
 
-  useEffect(() => {
-    const fetchPixKeys = async () => {
-      setIsLoading(true);
-      try {
-        if (user) {
-          const { data, error } = await supabase
-            .from('pix_keys')
-            .select('*')
-            .eq('user_id', user.id);
+  const handleThemeChange = (newTheme: string) => {
+    setTheme(newTheme);
+    // Apply theme logic here
+  };
 
-          if (error) {
-            console.error("Error fetching pix keys:", error);
-            toast({
-              title: "Erro ao carregar chaves PIX",
-              description: "Não foi possível carregar suas chaves PIX. Tente novamente mais tarde.",
-              variant: "destructive",
-            });
-          } else {
-            // Transform the data from the database to match our PixKey type
-            const transformedKeys: PixKey[] = (data || []).map(item => ({
-              id: item.id,
-              user_id: item.user_id,
-              key_type: item.type || "",
-              type: item.type || "CPF",
-              key: item.key || "",
-              owner_name: item.name || "",
-              name: item.name || "",
-              isDefault: item.is_default || false,
-              is_active: true,
-              created_at: item.created_at,
-              updated_at: item.updated_at,
-              bank_name: "Banco", // Default value since it's not in the database
-            }));
-            
-            setPixKeys(transformedKeys);
-          }
-        }
-      } catch (error) {
-        console.error("Error fetching pix keys:", error);
-        toast({
-          title: "Erro ao carregar chaves PIX",
-          description: "Ocorreu um erro ao carregar suas chaves PIX. Tente novamente mais tarde.",
-          variant: "destructive",
-        });
-      } finally {
-        setIsLoading(false);
-      }
-    };
+  const handleLanguageChange = (newLanguage: string) => {
+    setLanguage(newLanguage);
+    // Apply language logic here
+  };
 
-    fetchPixKeys();
-  }, [user]);
+  const handleNotificationToggle = () => {
+    setNotificationsEnabled(!notificationsEnabled);
+  };
 
-  const handleAddPixKey = async () => {
-    if (!user) return;
+  const handleSaveProfile = (e: React.FormEvent) => {
+    e.preventDefault();
+    // Save profile settings
+    useToast().toast({
+      title: "Perfil atualizado",
+      description: "Suas informações de perfil foram salvas com sucesso."
+    });
+  };
 
-    const newId = Date.now().toString();
-    
-    // Use the utility function to create a new PixKey object
-    const newPixKey = createDefaultPixKeyProperties(newId, user.id);
-    
-    setPixKeys(prev => [...prev, newPixKey]);
+  const handleSaveNotifications = (e: React.FormEvent) => {
+    e.preventDefault();
+    // Save notification settings
+    useToast().toast({
+      title: "Configurações salvas",
+      description: "Suas preferências de notificações foram atualizadas."
+    });
+  };
+
+  const handleChangePassword = (e: React.FormEvent) => {
+    e.preventDefault();
+    // Change password logic
+    useToast().toast({
+      title: "Senha alterada",
+      description: "Sua senha foi alterada com sucesso."
+    });
+  };
+
+  const handleManagePixKeys = () => {
+    // Open PIX key management dialog
+    useToast().toast({
+      title: "Gerenciamento de chaves PIX",
+      description: "Funcionalidade em desenvolvimento."
+    });
   };
 
   return (
     <div className="container mx-auto py-10">
-      <Card>
-        <CardHeader>
-          <CardTitle>Configurações</CardTitle>
-          <CardDescription>Gerencie suas configurações de conta e chaves PIX.</CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-6">
-          <div>
-            <h3 className="text-xl font-semibold mb-4">Chaves PIX</h3>
-            {isLoading ? (
-              <p>Carregando chaves PIX...</p>
-            ) : (
-              <div className="space-y-4">
-                {pixKeys.map((key) => (
-                  <div key={key.id} className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    <div>
-                      <Label htmlFor={`key-${key.id}`}>Chave PIX</Label>
-                      <Input
-                        type="text"
-                        id={`key-${key.id}`}
-                        defaultValue={key.key}
-                        disabled
-                      />
-                    </div>
-                    <div>
-                      <Label htmlFor={`type-${key.id}`}>Tipo</Label>
-                      <Input
-                        type="text"
-                        id={`type-${key.id}`}
-                        defaultValue={key.type}
-                        disabled
-                      />
-                    </div>
-                    <div>
-                      <Label htmlFor={`bank-${key.id}`}>Banco</Label>
-                      <Input
-                        type="text"
-                        id={`bank-${key.id}`}
-                        defaultValue={key.bank_name}
-                        disabled
-                      />
-                    </div>
-                  </div>
-                ))}
-                <Button onClick={handleAddPixKey}>Adicionar Chave PIX</Button>
+      <h1 className="text-2xl font-bold tracking-tight mb-8">Configurações</h1>
+
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        {/* Profile Settings */}
+        <Card>
+          <CardHeader>
+            <CardTitle>Perfil</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <form onSubmit={handleSaveProfile} className="space-y-4">
+              <div>
+                <Label htmlFor="name">Nome</Label>
+                <Input type="text" id="name" defaultValue="Nome do Usuário" />
               </div>
-            )}
-          </div>
-        </CardContent>
-      </Card>
+              <div>
+                <Label htmlFor="email">Email</Label>
+                <Input type="email" id="email" defaultValue="email@example.com" />
+              </div>
+              <Button type="submit">Salvar Perfil</Button>
+            </form>
+          </CardContent>
+        </Card>
+
+        {/* Appearance Settings */}
+        <Card>
+          <CardHeader>
+            <CardTitle>Aparência</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div>
+              <Label htmlFor="theme">Tema</Label>
+              <Select value={theme} onValueChange={handleThemeChange}>
+                <SelectTrigger id="theme">
+                  <SelectValue placeholder="Selecione um tema" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="light">Claro</SelectItem>
+                  <SelectItem value="dark">Escuro</SelectItem>
+                  <SelectItem value="system">Sistema</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div>
+              <Label htmlFor="language">Idioma</Label>
+              <Select value={language} onValueChange={handleLanguageChange}>
+                <SelectTrigger id="language">
+                  <SelectValue placeholder="Selecione um idioma" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="pt-BR">Português (Brasil)</SelectItem>
+                  <SelectItem value="en-US">Inglês (Estados Unidos)</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Notifications Settings */}
+        <Card>
+          <CardHeader>
+            <CardTitle>Notificações</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <form onSubmit={handleSaveNotifications} className="space-y-4">
+              <div className="flex items-center justify-between">
+                <Label htmlFor="notifications">Ativar notificações</Label>
+                <Switch
+                  id="notifications"
+                  checked={notificationsEnabled}
+                  onCheckedChange={handleNotificationToggle}
+                />
+              </div>
+              <Button type="submit">Salvar Notificações</Button>
+            </form>
+          </CardContent>
+        </Card>
+
+        {/* Security Settings */}
+        <Card>
+          <CardHeader>
+            <CardTitle>Segurança</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <form onSubmit={handleChangePassword} className="space-y-4">
+              <div>
+                <Label htmlFor="currentPassword">Senha atual</Label>
+                <Input type="password" id="currentPassword" />
+              </div>
+              <div>
+                <Label htmlFor="newPassword">Nova senha</Label>
+                <Input type="password" id="newPassword" />
+              </div>
+              <div>
+                <Label htmlFor="confirmPassword">Confirmar nova senha</Label>
+                <Input type="password" id="confirmPassword" />
+              </div>
+              <Button type="submit">Alterar Senha</Button>
+            </form>
+          </CardContent>
+        </Card>
+
+        {/* Payments Settings */}
+        <Card>
+          <CardHeader>
+            <CardTitle>Pagamentos</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <Button onClick={handleManagePixKeys} variant="outline">
+              Gerenciar chaves PIX
+            </Button>
+            {/* Add payment settings content here */}
+          </CardContent>
+        </Card>
+      </div>
     </div>
   );
 };

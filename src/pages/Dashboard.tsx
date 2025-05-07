@@ -1,117 +1,170 @@
+import { useEffect, useState } from "react";
+import MainLayout from "@/components/layout/MainLayout";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { generateDailySalesData, generatePaymentMethodsData } from "@/utils/sales-utils";
+import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
+import { SalesChartData } from "@/types";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Calendar } from "@/components/ui/calendar";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { CalendarIcon } from "lucide-react";
+import { format } from "date-fns";
+import { cn } from "@/lib/utils";
+import { PaymentMethod } from "@/types";
 
-import { PageHeader } from "@/components/page/PageHeader";
-import { PageWrapper } from "@/components/page/PageWrapper";
-import DashboardHeader from "@/components/dashboard/DashboardHeader";
-import StatsCards from "@/components/dashboard/StatsCards";
-import SalesChart from "@/components/dashboard/SalesChart";
-import SalesTable from "@/components/dashboard/SalesTable";
-import { useState } from "react";
-import { PaymentMethod, Sale, SalesChartData } from "@/types";
+interface DateRange {
+  from: Date;
+  to?: Date;
+}
 
-// Mock data for dashboard
-const mockData = {
-  currentBalance: 124500,
-  yesterdayGross: 15200,
-  yesterdayNet: 12350,
-  totalSales: 243,
-  salesChartData: [
-    { method: PaymentMethod.CREDIT, amount: 1400, percentage: 20, name: "Crédito", value: 1400 },
-    { method: PaymentMethod.DEBIT, amount: 1200, percentage: 18, name: "Débito", value: 1200 },
-    { method: PaymentMethod.PIX, amount: 4200, percentage: 62, name: "PIX", value: 4200 }
-  ] as SalesChartData[],
-  recentSales: [
-    { 
-      id: '1', 
-      code: 'VND001', 
-      terminal: 'T100', 
-      client_name: 'Empresa A', 
-      gross_amount: 1500, 
-      net_amount: 1400, 
-      date: '2022-01-07', 
-      payment_method: PaymentMethod.CREDIT,
-      client_id: 'client-1'
-    },
-    { 
-      id: '2', 
-      code: 'VND002', 
-      terminal: 'T102', 
-      client_name: 'Empresa B', 
-      gross_amount: 1200, 
-      net_amount: 1150, 
-      date: '2022-01-06', 
-      payment_method: PaymentMethod.DEBIT,
-      client_id: 'client-2'
-    },
-    { 
-      id: '3', 
-      code: 'VND003', 
-      terminal: 'T103', 
-      client_name: 'Empresa C', 
-      gross_amount: 950, 
-      net_amount: 900, 
-      date: '2022-01-05', 
-      payment_method: PaymentMethod.PIX,
-      client_id: 'client-3'
-    },
-    { 
-      id: '4', 
-      code: 'VND004', 
-      terminal: 'T101', 
-      client_name: 'Empresa D', 
-      gross_amount: 1750, 
-      net_amount: 1650, 
-      date: '2022-01-04', 
-      payment_method: PaymentMethod.CREDIT,
-      client_id: 'client-4'
-    },
-    { 
-      id: '5', 
-      code: 'VND005', 
-      terminal: 'T100', 
-      client_name: 'Empresa E', 
-      gross_amount: 2200, 
-      net_amount: 2050, 
-      date: '2022-01-03', 
-      payment_method: PaymentMethod.PIX,
-      client_id: 'client-5'
-    }
-  ] as Sale[]
-};
+const PaymentMethodsChart = ({ data }: { data: SalesChartData[] }) => (
+  <ResponsiveContainer width="100%" height={300}>
+    <AreaChart data={data} margin={{ top: 10, right: 30, left: 0, bottom: 0 }}>
+      <CartesianGrid strokeDasharray="3 3" />
+      <XAxis dataKey="name" />
+      <YAxis />
+      <Tooltip />
+      <Area type="monotone" dataKey="value" stroke="#8884d8" fill="#8884d8" />
+    </AreaChart>
+  </ResponsiveContainer>
+);
+
+const DailySalesChart = ({ data }: { data: SalesChartData[] }) => (
+  <ResponsiveContainer width="100%" height={300}>
+    <AreaChart data={data} margin={{ top: 10, right: 30, left: 0, bottom: 0 }}>
+      <CartesianGrid strokeDasharray="3 3" />
+      <XAxis dataKey="name" />
+      <YAxis />
+      <Tooltip />
+      <Area type="monotone" dataKey="total" stroke="#82ca9d" fill="#82ca9d" />
+    </AreaChart>
+  </ResponsiveContainer>
+);
 
 const Dashboard = () => {
-  const [dateRange, setDateRange] = useState<{ from: Date; to: Date } | undefined>(undefined);
+  const [dateRange, setDateRange] = useState<DateRange | undefined>({
+    from: new Date(new Date().getFullYear(), new Date().getMonth() - 1, new Date().getDate()),
+    to: new Date()
+  });
+  const [dailySales, setDailySales] = useState<SalesChartData[]>([]);
+  const [paymentMethods, setPaymentMethods] = useState<SalesChartData[]>([]);
 
-  const handleDateRangeChange = (range: { from: Date; to: Date } | undefined) => {
-    setDateRange(range);
-    // In a real app, you would fetch new data based on date range here
-    console.log("Date range changed:", range);
-  };
+  useEffect(() => {
+    if (dateRange?.from && dateRange?.to) {
+      // Simulate data fetch for daily sales chart
+      const dailySalesData = generateDailySalesData(dateRange);
+      setDailySales(dailySalesData);
+    }
+  }, [dateRange]);
+
+  useEffect(() => {
+    // Simulate data fetch for payment methods chart
+    const paymentMethodsData: SalesChartData[] = [
+      { name: PaymentMethod.CREDIT, value: 45 },
+      { name: PaymentMethod.DEBIT, value: 30 },
+      { name: PaymentMethod.PIX, value: 25 }
+    ];
+    
+    setPaymentMethods(paymentMethodsData);
+  }, []);
 
   return (
-    <div className="space-y-6">
-      <PageHeader 
-        title="Dashboard" 
-        description="Visão geral de vendas, métricas e atividades"
-      />
-      
-      <DashboardHeader 
-        onDateRangeChange={handleDateRangeChange}
-      />
-      
-      <StatsCards 
-        currentBalance={mockData.currentBalance}
-        yesterdayGross={mockData.yesterdayGross}
-        yesterdayNet={mockData.yesterdayNet}
-        totalSales={mockData.totalSales}
-      />
-      
-      <PageWrapper>
-        <div className="space-y-6">
-          <SalesChart data={mockData.salesChartData} />
-          <SalesTable sales={mockData.recentSales} />
+    <MainLayout>
+      <div className="container mx-auto py-10">
+        <h1 className="text-3xl font-bold mb-6">Dashboard</h1>
+
+        <div className="mb-4">
+          <Card>
+            <CardHeader>
+              <CardTitle>Período</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="flex items-center space-x-4">
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <div className="grid gap-1.5">
+                      <label
+                        htmlFor="date"
+                        className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                      >
+                        Data
+                      </label>
+                      <PopoverTrigger asChild>
+                        <Button
+                          id="date"
+                          variant={"outline"}
+                          className={cn(
+                            "w-[240px] justify-start text-left font-normal",
+                            !dateRange?.from && "text-muted-foreground"
+                          )}
+                        >
+                          <CalendarIcon className="mr-2 h-4 w-4" />
+                          {dateRange?.from ? (
+                            dateRange.to ? (
+                              <>
+                                {format(dateRange.from, "dd/MM/yyyy")} -{" "}
+                                {format(dateRange.to, "dd/MM/yyyy")}
+                              </>
+                            ) : (
+                              format(dateRange.from, "dd/MM/yyyy")
+                            )
+                          ) : (
+                            <span>Pick a date</span>
+                          )}
+                        </Button>
+                      </PopoverTrigger>
+                    </div>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0" align="start">
+                    <Calendar
+                      mode="range"
+                      defaultMonth={dateRange?.from}
+                      selected={dateRange}
+                      onSelect={setDateRange}
+                      numberOfMonths={2}
+                    />
+                  </PopoverContent>
+                </Popover>
+
+                <Select>
+                  <SelectTrigger className="w-[180px]">
+                    <SelectValue placeholder="Filtros rápidos" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="day">Hoje</SelectItem>
+                    <SelectItem value="week">Essa semana</SelectItem>
+                    <SelectItem value="month">Esse mês</SelectItem>
+                    <SelectItem value="year">Esse ano</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </CardContent>
+          </Card>
         </div>
-      </PageWrapper>
-    </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <Card>
+            <CardHeader>
+              <CardTitle>Vendas Diárias</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <DailySalesChart data={dailySales} />
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <CardTitle>Métodos de Pagamento</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <PaymentMethodsChart 
+                data={paymentMethods}
+              />
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+    </MainLayout>
   );
 };
 

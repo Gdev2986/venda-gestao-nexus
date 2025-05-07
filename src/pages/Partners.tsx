@@ -1,153 +1,135 @@
-
 import { useState, useEffect } from "react";
 import MainLayout from "@/components/layout/MainLayout";
-import { Button } from "@/components/ui/button";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Card } from "@/components/ui/card";
-import { PartnersHeader } from "@/components/partners/PartnersHeader";
-import { PartnersTableCard } from "@/components/partners/PartnersTableCard";
-import { PartnersFilterCard } from "@/components/partners/PartnersFilterCard";
-import PartnerForm from "@/components/partners/PartnerForm";
-import type { Partner, FilterValues } from "@/types";
-import { usePartners } from "@/hooks/use-partners";
+import { Partner, FilterValues } from "@/types";
 import { useToast } from "@/hooks/use-toast";
-import { supabase } from "@/integrations/supabase/client";
+import PartnersTable from "@/components/partners/PartnersTable";
+import { generateMockPartners } from "@/utils/partners-utils";
+import { Button } from "@/components/ui/button";
+import { RefreshCw, FileText } from "lucide-react";
+import { Card } from "@/components/ui/card";
+import PartnersFilterCard from "@/components/partners/PartnersFilterCard";
 
-export default function Partners() {
-  const [isDialogOpen, setIsDialogOpen] = useState(false);
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [editingPartner, setEditingPartner] = useState<Partner | null>(null);
+const Partners = () => {
+  const [isLoading, setIsLoading] = useState(true);
+  const [partners, setPartners] = useState<Partner[]>([]);
+  const [filteredPartners, setFilteredPartners] = useState<Partner[]>([]);
+  const [page, setPage] = useState(1);
+  const [itemsPerPage] = useState(10);
+  const [filters, setFilters] = useState<FilterValues>({});
+  const [isRefreshing, setIsRefreshing] = useState(false);
   const { toast } = useToast();
-  
-  const { 
-    partners, 
-    loading, 
-    error, 
-    filterPartners, 
-    createPartner, 
-    updatePartner, 
-    deletePartner,
-    refreshPartners
-  } = usePartners();
 
+  // Load initial data
   useEffect(() => {
-    if (error) {
-      toast({
-        title: "Erro",
-        description: error,
-        variant: "destructive",
-      });
-    }
-  }, [error, toast]);
+    fetchPartners();
+  }, []);
 
-  const handleCreatePartner = () => {
-    setEditingPartner(null);
-    setIsDialogOpen(true);
+  const fetchPartners = () => {
+    setIsLoading(true);
+
+    // Simulate API call
+    setTimeout(() => {
+      const mockPartners = generateMockPartners(50);
+      setPartners(mockPartners);
+      setFilteredPartners(mockPartners);
+      setIsLoading(false);
+    }, 1000);
   };
 
-  const handleEditPartner = (partner: Partner) => {
-    setEditingPartner(partner);
-    setIsDialogOpen(true);
+  const handleRefresh = () => {
+    setIsRefreshing(true);
+    fetchPartners();
+
+    setTimeout(() => {
+      setIsRefreshing(false);
+      toast({
+        title: "Dados atualizados",
+        description: "Lista de parceiros atualizada com sucesso"
+      });
+    }, 1500);
   };
 
-  const handleDeletePartner = async (partnerId: string) => {
-    try {
-      await deletePartner(partnerId);
-      toast({
-        title: "Sucesso",
-        description: "Parceiro excluído com sucesso.",
-      });
-      return true;
-    } catch (error: any) {
-      toast({
-        title: "Erro ao excluir",
-        description: error.message || "Ocorreu um erro ao excluir o parceiro.",
-        variant: "destructive",
-      });
-      return false;
+  // Apply filters when they change
+  useEffect(() => {
+    let result = [...partners];
+
+    if (filters.search) {
+      result = result.filter(
+        (partner) =>
+          partner.company_name.toLowerCase().includes(filters.search!.toLowerCase()) ||
+          (partner.email && partner.email.toLowerCase().includes(filters.search!.toLowerCase())) ||
+          (partner.phone && partner.phone.toLowerCase().includes(filters.search!.toLowerCase()))
+      );
     }
+
+    setFilteredPartners(result);
+    setPage(1); // Reset to first page when filters change
+  }, [filters, partners]);
+
+  // Calculate pagination
+  const totalPages = Math.ceil(filteredPartners.length / itemsPerPage);
+  const startIndex = (page - 1) * itemsPerPage;
+  const paginatedPartners = filteredPartners.slice(startIndex, startIndex + itemsPerPage);
+
+  const handleFilterChange = (values: FilterValues) => {
+    setFilters(values);
   };
 
-  const handleSubmit = async (partnerData: Omit<Partner, "id" | "created_at" | "updated_at">) => {
-    try {
-      setIsSubmitting(true);
-      
-      if (editingPartner) {
-        await updatePartner(editingPartner.id, partnerData);
-        toast({
-          title: "Sucesso",
-          description: "Parceiro atualizado com sucesso."
-        });
-      } else {
-        await createPartner(partnerData);
-        toast({
-          title: "Sucesso",
-          description: "Parceiro criado com sucesso."
-        });
-      }
-      
-      setIsDialogOpen(false);
-      return true;
-    } catch (error: any) {
-      toast({
-        title: "Erro",
-        description: error.message || "Ocorreu um erro ao salvar o parceiro.",
-        variant: "destructive",
-      });
-      return false;
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
-
-  const handleFilter = (values: FilterValues) => {
-    if (values.searchTerm && values.commissionRange) {
-      filterPartners(values.searchTerm, values.commissionRange as [number, number]);
-    } else if (values.searchTerm) {
-      filterPartners(values.searchTerm, [0, 100]); // default range
-    } else {
-      filterPartners("", [0, 100]); // default values
-    }
+  const clearFilters = () => {
+    setFilters({});
   };
 
   return (
     <MainLayout>
-      <div className="space-y-4">
-        <PartnersHeader onCreateClick={handleCreatePartner} />
-        
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <PartnersFilterCard onFilter={handleFilter} loading={loading} />
-          
-          <div className="md:col-span-2">
-            <PartnersTableCard 
-              partners={partners} 
-              isLoading={loading} 
-              error={error || ""} 
-              onEdit={handleEditPartner} 
-              onDelete={handleDeletePartner} 
-            />
-          </div>
+      <div className="mb-6 flex flex-col sm:flex-row justify-between items-start sm:items-center">
+        <div>
+          <h1 className="text-2xl font-bold tracking-tight">Parceiros</h1>
+          <p className="text-muted-foreground">
+            Gerencie e visualize todos os seus parceiros
+          </p>
         </div>
-        
-        <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-          <DialogContent className="sm:max-w-md">
-            <DialogHeader>
-              <DialogTitle>
-                {editingPartner ? "Editar Parceiro" : "Novo Parceiro"}
-              </DialogTitle>
-            </DialogHeader>
-            
-            <PartnerForm 
-              initialData={editingPartner || undefined}
-              onSubmit={handleSubmit}
-              isSubmitting={isSubmitting}
-              isOpen={isDialogOpen}
-              onClose={() => setIsDialogOpen(false)}
-              title={editingPartner ? "Editar Parceiro" : "Novo Parceiro"}
-            />
-          </DialogContent>
-        </Dialog>
+        <div className="flex gap-2 mt-2 sm:mt-0">
+          <Button
+            variant="outline"
+            size="sm"
+            className="flex items-center gap-1"
+            onClick={handleRefresh}
+            disabled={isRefreshing || isLoading}
+          >
+            <RefreshCw className={`h-4 w-4 ${isRefreshing ? 'animate-spin' : ''}`} />
+            {isRefreshing ? "Atualizando..." : "Atualizar"}
+          </Button>
+
+          <Button
+            variant="default"
+            size="sm"
+            className="flex items-center gap-1"
+          >
+            <FileText className="h-4 w-4" />
+            Novo parceiro
+          </Button>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+        <div className="md:col-span-1">
+          <PartnersFilterCard
+            onFilter={handleFilterChange}
+            isLoading={isLoading}
+          />
+        </div>
+        <div className="md:col-span-3">
+          <PartnersTable
+            partners={paginatedPartners}
+            page={page}
+            setPage={setPage}
+            totalPages={totalPages}
+            isLoading={isLoading}
+          />
+        </div>
       </div>
     </MainLayout>
   );
-}
+};
+
+export default Partners;

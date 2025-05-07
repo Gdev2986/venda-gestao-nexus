@@ -5,10 +5,11 @@ import { generateMockSalesData, calculateSalesTotals } from "@/utils/sales-utils
 import SalesAdvancedFilters from "@/components/sales/SalesAdvancedFilters";
 import SalesDataTable from "@/components/sales/SalesDataTable";
 import { Button } from "@/components/ui/button";
-import { Download, Upload } from "lucide-react";
+import { Download, Upload, RefreshCw } from "lucide-react";
 import { Sale, SalesFilterParams } from "@/types";
 import ImportSalesDialog from "@/components/sales/ImportSalesDialog";
 import { useToast } from "@/hooks/use-toast";
+import SalesUploader from "@/components/sales/SalesUploader";
 
 interface DateRange {
   from: Date;
@@ -24,6 +25,7 @@ const AdminSales = () => {
   const [filters, setFilters] = useState<SalesFilterParams>({});
   const [dateRange, setDateRange] = useState<DateRange | undefined>();
   const [showImportDialog, setShowImportDialog] = useState(false);
+  const [isRefreshing, setIsRefreshing] = useState(false);
   const { toast } = useToast();
   
   // Load initial data
@@ -41,6 +43,19 @@ const AdminSales = () => {
       setFilteredSales(mockSales);
       setIsLoading(false);
     }, 800);
+  };
+  
+  const handleRefresh = () => {
+    setIsRefreshing(true);
+    fetchSales();
+    
+    setTimeout(() => {
+      setIsRefreshing(false);
+      toast({
+        title: "Dados atualizados",
+        description: "Lista de vendas atualizada com sucesso"
+      });
+    }, 1500);
   };
   
   // Apply filters when they change
@@ -131,9 +146,19 @@ const AdminSales = () => {
     });
   };
 
+  const handleFileProcessed = (file: File, recordCount: number) => {
+    toast({
+      title: "Upload concluído",
+      description: `${recordCount} registros de vendas importados com sucesso.`
+    });
+    
+    setShowImportDialog(false);
+    fetchSales(); // Refresh data after import
+  };
+
   return (
-    <div className="container mx-auto py-10 space-y-8">
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+    <div className="container mx-auto py-10">
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-8">
         <div>
           <h1 className="text-2xl font-bold">Gestão de Vendas</h1>
           <p className="text-muted-foreground">
@@ -144,50 +169,75 @@ const AdminSales = () => {
         <div className="flex items-center gap-2">
           <Button 
             variant="outline" 
+            size="sm"
+            className="flex items-center gap-1"
+            onClick={handleRefresh}
+            disabled={isRefreshing}
+          >
+            <RefreshCw className={`h-4 w-4 ${isRefreshing ? 'animate-spin' : ''}`} />
+            {isRefreshing ? "Atualizando..." : "Atualizar"}
+          </Button>
+          
+          <Button 
+            variant="outline"
+            size="sm"
             className="flex items-center gap-1"
             onClick={() => setShowImportDialog(true)}
           >
             <Upload className="h-4 w-4" />
-            Importar Vendas
+            Importar
           </Button>
           
           <Button 
-            variant="outline" 
+            variant="outline"
+            size="sm"
             className="flex items-center gap-1"
             onClick={() => handleExport('csv')}
           >
             <Download className="h-4 w-4" />
-            Exportar CSV
+            Exportar
           </Button>
         </div>
       </div>
       
-      <Card>
-        <CardHeader>
-          <CardTitle>Filtros Avançados</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <SalesAdvancedFilters
-            filters={filters}
-            dateRange={dateRange}
-            onFilterChange={handleFilterChange}
-            onDateRangeChange={handleDateRangeChange}
-            onClearFilters={() => {
-              setFilters({});
-              setDateRange(undefined);
-            }}
+      <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
+        {/* Left column - Filters and Stats */}
+        <div className="lg:col-span-1 space-y-6">
+          <Card>
+            <CardHeader>
+              <CardTitle>Filtros</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <SalesAdvancedFilters
+                filters={filters}
+                dateRange={dateRange}
+                onFilterChange={handleFilterChange}
+                onDateRangeChange={handleDateRangeChange}
+                onClearFilters={() => {
+                  setFilters({});
+                  setDateRange(undefined);
+                }}
+              />
+            </CardContent>
+          </Card>
+          
+          {!showImportDialog && (
+            <SalesUploader onFileProcessed={handleFileProcessed} />
+          )}
+        </div>
+        
+        {/* Right column - Sales Table */}
+        <div className="lg:col-span-3">
+          <SalesDataTable 
+            sales={paginatedSales}
+            currentPage={page}
+            totalPages={totalPages}
+            isLoading={isLoading}
+            onPageChange={setPage}
+            totals={totals}
           />
-        </CardContent>
-      </Card>
-      
-      <SalesDataTable 
-        sales={paginatedSales}
-        currentPage={page}
-        totalPages={totalPages}
-        isLoading={isLoading}
-        onPageChange={setPage}
-        totals={totals}
-      />
+        </div>
+      </div>
       
       <ImportSalesDialog
         open={showImportDialog}

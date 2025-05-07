@@ -1,16 +1,6 @@
-
-import { useState } from "react";
-import { useMachines } from "@/hooks/use-machines";
-import { Card, CardContent } from "@/components/ui/card";
+import { useState, useEffect, useCallback } from "react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import {
   Table,
   TableBody,
@@ -19,211 +9,278 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Skeleton } from "@/components/ui/skeleton";
-import { Search, Plus } from "lucide-react";
-import { Link } from "react-router-dom";
-import { PATHS } from "@/routes/paths";
+import { Card, CardContent } from "@/components/ui/card";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { MoreVertical, Edit, Copy, Trash2, ArrowRight, Plus } from "lucide-react";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { useToast } from "@/hooks/use-toast";
 import { useDialog } from "@/hooks/use-dialog";
-import { MachineAssociationDialog } from "./machine-dialogs/MachineAssociationDialog";
-import { MachineTransferDialog } from "./machine-dialogs/MachineTransferDialog";
-import { MachineHistoryDialog } from "./machine-dialogs/MachineHistoryDialog";
+import { Label } from "@/components/ui/label";
+import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Badge } from "@/components/ui/badge";
+import { Pagination, PaginationContent, PaginationItem, PaginationLink, PaginationNext, PaginationPrevious } from "@/components/ui/pagination";
+import { Skeleton } from "@/components/ui/skeleton";
+import MachineTransferDialog from "@/components/logistics/machine-dialogs/MachineTransferDialog";
 
-const MachineList = () => {
-  const [searchTerm, setSearchTerm] = useState("");
-  const [statusFilter, setStatusFilter] = useState("all");
-  const [selectedMachine, setSelectedMachine] = useState<any>(null);
-  
-  const associationDialog = useDialog();
-  const transferDialog = useDialog();
-  const historyDialog = useDialog();
-  
-  const { machines, isLoading, refreshMachines } = useMachines({
-    searchTerm,
-    statusFilter,
-  });
+interface Machine {
+  id: string;
+  serial_number: string;
+  model: string;
+  status: string;
+  client: string | null;
+  location: string;
+  last_maintenance: string | null;
+  next_maintenance: string | null;
+}
 
-  const handleAssociateClick = (machine: any) => {
+interface MachineListProps {
+  searchTerm: string;
+  modelFilter: string;
+  statusFilter: string;
+  onSearchChange: (term: string) => void;
+  onModelFilterChange: (model: string) => void;
+  onStatusFilterChange: (status: string) => void;
+  onAddNewClick: () => void;
+}
+
+const MachineList: React.FC<MachineListProps> = ({
+  searchTerm,
+  modelFilter,
+  statusFilter,
+  onSearchChange,
+  onModelFilterChange,
+  onStatusFilterChange,
+  onAddNewClick
+}) => {
+  const [machines, setMachines] = useState<Machine[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
+  const [selectedMachine, setSelectedMachine] = useState<Machine | null>(null);
+  const [transferDialogIsOpen, setTransferDialogIsOpen] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage] = useState(10);
+  const [totalItems, setTotalItems] = useState(0);
+  const { toast } = useToast();
+  const editMachineDialog = useDialog();
+  const deleteMachineDialog = useDialog();
+  const duplicateMachineDialog = useDialog();
+
+  const handleOpenTransferDialog = (machine: Machine) => {
     setSelectedMachine(machine);
-    associationDialog.open();
+    setTransferDialogIsOpen(true);
   };
 
-  const handleTransferClick = (machine: any) => {
-    setSelectedMachine(machine);
-    transferDialog.open();
+  const handleCloseTransferDialog = () => {
+    setTransferDialogIsOpen(false);
+    setSelectedMachine(null);
   };
 
-  const handleHistoryClick = (machine: any) => {
-    setSelectedMachine(machine);
-    historyDialog.open();
+  const handleRefreshData = () => {
+    fetchMachines();
   };
 
-  const getStatusBadge = (status: string) => {
-    const statusMap: Record<string, { color: string; label: string }> = {
-      ACTIVE: { color: "bg-green-100 text-green-800", label: "Operando" },
-      MAINTENANCE: { color: "bg-orange-100 text-orange-800", label: "Manutenção" },
-      INACTIVE: { color: "bg-red-100 text-red-800", label: "Quebrada" },
-      STOCK: { color: "bg-blue-100 text-blue-800", label: "Em Estoque" },
-    };
+  const fetchMachines = useCallback(async () => {
+    setIsLoading(true);
+    // Simulate API call
+    setTimeout(() => {
+      const mockMachines: Machine[] = [
+        { id: "1", serial_number: "SN001", model: "Model A", status: "Active", client: "Client X", location: "Warehouse", last_maintenance: "2023-01-01", next_maintenance: "2024-01-01" },
+        { id: "2", serial_number: "SN002", model: "Model B", status: "Inactive", client: null, location: "Client Site", last_maintenance: "2023-02-01", next_maintenance: null },
+        { id: "3", serial_number: "SN003", model: "Model A", status: "Active", client: "Client Y", location: "Warehouse", last_maintenance: "2023-03-01", next_maintenance: "2024-03-01" },
+        { id: "4", serial_number: "SN004", model: "Model C", status: "Active", client: "Client Z", location: "Client Site", last_maintenance: "2023-04-01", next_maintenance: "2024-04-01" },
+        { id: "5", serial_number: "SN005", model: "Model B", status: "Inactive", client: null, location: "Warehouse", last_maintenance: "2023-05-01", next_maintenance: null },
+        { id: "6", serial_number: "SN006", model: "Model A", status: "Active", client: "Client X", location: "Client Site", last_maintenance: "2023-06-01", next_maintenance: "2024-06-01" },
+        { id: "7", serial_number: "SN007", model: "Model C", status: "Active", client: "Client Y", location: "Warehouse", last_maintenance: "2023-07-01", next_maintenance: "2024-07-01" },
+        { id: "8", serial_number: "SN008", model: "Model B", status: "Inactive", client: null, location: "Client Site", last_maintenance: "2023-08-01", next_maintenance: null },
+        { id: "9", serial_number: "SN009", model: "Model A", status: "Active", client: "Client Z", location: "Warehouse", last_maintenance: "2023-09-01", next_maintenance: "2024-09-01" },
+        { id: "10", serial_number: "SN010", model: "Model C", status: "Active", client: "Client X", location: "Client Site", last_maintenance: "2023-10-01", next_maintenance: "2024-10-01" },
+        { id: "11", serial_number: "SN011", model: "Model B", status: "Inactive", client: null, location: "Warehouse", last_maintenance: "2023-11-01", next_maintenance: null },
+        { id: "12", serial_number: "SN012", model: "Model A", status: "Active", client: "Client Y", location: "Client Site", last_maintenance: "2023-12-01", next_maintenance: "2024-12-01" },
+        { id: "13", serial_number: "SN013", model: "Model C", status: "Active", client: "Client Z", location: "Warehouse", last_maintenance: "2024-01-01", next_maintenance: "2025-01-01" },
+        { id: "14", serial_number: "SN014", model: "Model B", status: "Inactive", client: null, location: "Client Site", last_maintenance: "2024-02-01", next_maintenance: null },
+        { id: "15", serial_number: "SN015", model: "Model A", status: "Active", client: "Client X", location: "Warehouse", last_maintenance: "2024-03-01", next_maintenance: "2025-03-01" },
+        { id: "16", serial_number: "SN016", model: "Model C", status: "Active", client: "Client Y", location: "Client Site", last_maintenance: "2024-04-01", next_maintenance: "2025-04-01" },
+        { id: "17", serial_number: "SN017", model: "Model B", status: "Inactive", client: null, location: "Warehouse", last_maintenance: "2024-05-01", next_maintenance: null },
+        { id: "18", serial_number: "SN018", model: "Model A", status: "Active", client: "Client Z", location: "Client Site", last_maintenance: "2024-06-01", next_maintenance: "2025-06-01" },
+        { id: "19", serial_number: "SN019", model: "Model C", status: "Active", client: "Client X", location: "Warehouse", last_maintenance: "2024-07-01", next_maintenance: "2025-07-01" },
+        { id: "20", serial_number: "SN020", model: "Model B", status: "Inactive", client: null, location: "Client Site", last_maintenance: "2024-08-01", next_maintenance: null },
+      ];
 
-    const statusInfo = statusMap[status] || { color: "bg-gray-100 text-gray-800", label: status };
+      // Apply filters
+      let filteredMachines = mockMachines.filter(machine => {
+        const searchRegex = new RegExp(searchTerm, 'i');
+        const modelMatch = modelFilter ? machine.model === modelFilter : true;
+        const statusMatch = statusFilter ? machine.status === statusFilter : true;
+        const searchMatch = searchRegex.test(machine.serial_number) || searchRegex.test(machine.model) || (machine.client ? searchRegex.test(machine.client) : false);
 
-    return (
-      <span className={`inline-flex items-center rounded-full px-2 py-1 text-xs font-medium ${statusInfo.color}`}>
-        {statusInfo.label}
-      </span>
-    );
+        return modelMatch && statusMatch && searchMatch;
+      });
+
+      setTotalItems(filteredMachines.length);
+
+      // Apply pagination
+      const startIndex = (currentPage - 1) * itemsPerPage;
+      const paginatedMachines = filteredMachines.slice(startIndex, startIndex + itemsPerPage);
+
+      setMachines(paginatedMachines);
+      setIsLoading(false);
+    }, 500);
+  }, [searchTerm, modelFilter, statusFilter, currentPage, itemsPerPage]);
+
+  useEffect(() => {
+    fetchMachines();
+  }, [fetchMachines]);
+
+  const handlePageChange = (newPage: number) => {
+    setCurrentPage(newPage);
   };
 
-  const handleAssociationComplete = () => {
-    refreshMachines();
-    associationDialog.close();
-  };
-
-  const handleTransferComplete = () => {
-    refreshMachines();
-    transferDialog.close();
-  };
+  const totalPages = Math.ceil(totalItems / itemsPerPage);
 
   return (
-    <Card>
-      <CardContent className="p-6">
-        <div className="flex flex-col space-y-4 md:flex-row md:items-center md:space-y-0 md:space-x-4 mb-4">
-          <div className="relative flex-1">
-            <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
-            <Input
-              placeholder="Buscar por serial, modelo ou cliente..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="pl-8"
-            />
-          </div>
-
-          <div className="flex items-center space-x-2">
-            <Select
-              value={statusFilter}
-              onValueChange={setStatusFilter}
-            >
-              <SelectTrigger className="w-[180px]">
-                <SelectValue placeholder="Status" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">Todos os status</SelectItem>
-                <SelectItem value="ACTIVE">Operando</SelectItem>
-                <SelectItem value="MAINTENANCE">Em manutenção</SelectItem>
-                <SelectItem value="STOCK">Em estoque</SelectItem>
-                <SelectItem value="INACTIVE">Quebrada</SelectItem>
-              </SelectContent>
-            </Select>
-
-            <Button asChild>
-              <Link to={PATHS.LOGISTICS.MACHINE_NEW}>
-                <Plus className="mr-2 h-4 w-4" />
-                Nova Máquina
-              </Link>
-            </Button>
-          </div>
+    <Card className="h-full">
+      <CardContent className="relative h-full overflow-hidden">
+        <div className="absolute top-2 left-2 right-2 z-10 flex items-center justify-between">
+          <Input
+            placeholder="Buscar máquinas..."
+            value={searchTerm}
+            onChange={(e) => onSearchChange(e.target.value)}
+          />
+          <Button size="sm" onClick={onAddNewClick}>
+            <Plus className="mr-2 h-4 w-4" />
+            Adicionar
+          </Button>
         </div>
 
-        {isLoading ? (
-          <div className="space-y-3">
-            <Skeleton className="h-10 w-full" />
-            <Skeleton className="h-10 w-full" />
-            <Skeleton className="h-10 w-full" />
-            <Skeleton className="h-10 w-full" />
-            <Skeleton className="h-10 w-full" />
-          </div>
-        ) : (
-          <div className="rounded-md border">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Serial</TableHead>
-                  <TableHead>Modelo</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead>Cliente</TableHead>
-                  <TableHead>Local</TableHead>
-                  <TableHead className="w-[220px]">Ações</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {machines.length === 0 ? (
-                  <TableRow>
-                    <TableCell colSpan={6} className="h-24 text-center">
-                      Nenhuma máquina encontrada.
+        <ScrollArea className="absolute top-16 left-0 right-0 bottom-0 py-4">
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead className="w-[100px]">Número de Série</TableHead>
+                <TableHead>Modelo</TableHead>
+                <TableHead>Status</TableHead>
+                <TableHead>Cliente</TableHead>
+                <TableHead>Localização</TableHead>
+                <TableHead>Última Manutenção</TableHead>
+                <TableHead className="text-right">Ações</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {isLoading ? (
+                // Display skeleton rows while loading
+                [...Array(itemsPerPage)].map((_, i) => (
+                  <TableRow key={`skeleton-${i}`}>
+                    <TableCell><Skeleton /></TableCell>
+                    <TableCell><Skeleton /></TableCell>
+                    <TableCell><Skeleton /></TableCell>
+                    <TableCell><Skeleton /></TableCell>
+                    <TableCell><Skeleton /></TableCell>
+                    <TableCell><Skeleton /></TableCell>
+                    <TableCell className="text-right"><Skeleton /></TableCell>
+                  </TableRow>
+                ))
+              ) : machines.length > 0 ? (
+                // Display machine data rows
+                machines.map((machine) => (
+                  <TableRow key={machine.id}>
+                    <TableCell className="font-medium">{machine.serial_number}</TableCell>
+                    <TableCell>{machine.model}</TableCell>
+                    <TableCell>
+                      {machine.status === "Active" ? (
+                        <Badge variant="outline">Ativa</Badge>
+                      ) : (
+                        <Badge className="bg-gray-100 text-gray-500 border-gray-200">Inativa</Badge>
+                      )}
+                    </TableCell>
+                    <TableCell>{machine.client || "N/A"}</TableCell>
+                    <TableCell>{machine.location}</TableCell>
+                    <TableCell>{machine.last_maintenance || "N/A"}</TableCell>
+                    <TableCell className="text-right">
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button variant="ghost" className="h-8 w-8 p-0">
+                            <span className="sr-only">Abrir menu</span>
+                            <MoreVertical className="h-4 w-4" />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                          <DropdownMenuLabel>Ações</DropdownMenuLabel>
+                          <DropdownMenuItem onClick={() => editMachineDialog.open()}>
+                            <Edit className="mr-2 h-4 w-4" />
+                            Editar
+                          </DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => duplicateMachineDialog.open()}>
+                            <Copy className="mr-2 h-4 w-4" />
+                            Duplicar
+                          </DropdownMenuItem>
+                          <DropdownMenuSeparator />
+                          <DropdownMenuItem onClick={() => deleteMachineDialog.open()}>
+                            <Trash2 className="mr-2 h-4 w-4" />
+                            Deletar
+                          </DropdownMenuItem>
+                          <DropdownMenuSeparator />
+                          <DropdownMenuItem onClick={() => handleOpenTransferDialog(machine)}>
+                            <ArrowRight className="mr-2 h-4 w-4" />
+                            Transferir
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
                     </TableCell>
                   </TableRow>
-                ) : (
-                  machines.map((machine) => (
-                    <TableRow key={machine.id}>
-                      <TableCell className="font-medium">{machine.serialNumber}</TableCell>
-                      <TableCell>{machine.model}</TableCell>
-                      <TableCell>{getStatusBadge(machine.status)}</TableCell>
-                      <TableCell>{machine.clientName || "—"}</TableCell>
-                      <TableCell>{machine.location || "—"}</TableCell>
-                      <TableCell>
-                        <div className="flex space-x-2">
-                          {!machine.clientId && machine.status !== "INACTIVE" ? (
-                            <Button 
-                              variant="outline" 
-                              size="sm" 
-                              onClick={() => handleAssociateClick(machine)}
-                            >
-                              Associar
-                            </Button>
-                          ) : machine.clientId && machine.status !== "INACTIVE" ? (
-                            <Button 
-                              variant="outline" 
-                              size="sm" 
-                              onClick={() => handleTransferClick(machine)}
-                            >
-                              Transferir
-                            </Button>
-                          ) : null}
-                          <Button
-                            variant="ghost" 
-                            size="sm"
-                            onClick={() => handleHistoryClick(machine)}
-                          >
-                            Histórico
-                          </Button>
-                          <Button variant="ghost" size="sm" asChild>
-                            <Link to={PATHS.LOGISTICS.MACHINE_DETAILS(machine.id)}>
-                              Detalhes
-                            </Link>
-                          </Button>
-                        </div>
-                      </TableCell>
-                    </TableRow>
-                  ))
-                )}
-              </TableBody>
-            </Table>
+                ))
+              ) : (
+                // Display message when no machines are found
+                <TableRow>
+                  <TableCell colSpan={7} className="text-center">
+                    Nenhuma máquina encontrada.
+                  </TableCell>
+                </TableRow>
+              )}
+            </TableBody>
+          </Table>
+        </ScrollArea>
+
+        {machines.length > 0 && (
+          <div className="absolute bottom-2 left-2 right-2 z-10">
+            <Pagination className="w-full justify-center">
+              <PaginationContent>
+                <PaginationItem>
+                  <PaginationPrevious
+                    onClick={() => handlePageChange(currentPage - 1)}
+                    disabled={currentPage === 1}
+                  />
+                </PaginationItem>
+                {/* Display page numbers */}
+                {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
+                  <PaginationItem key={page}>
+                    <PaginationLink
+                      isActive={currentPage === page}
+                      onClick={() => handlePageChange(page)}
+                    >
+                      {page}
+                    </PaginationLink>
+                  </PaginationItem>
+                ))}
+                <PaginationItem>
+                  <PaginationNext
+                    onClick={() => handlePageChange(currentPage + 1)}
+                    disabled={currentPage === totalPages}
+                  />
+                </PaginationItem>
+              </PaginationContent>
+            </Pagination>
           </div>
         )}
+
+      {selectedMachine && (
+        <MachineTransferDialog
+          open={transferDialogIsOpen} 
+          onOpenChange={handleCloseTransferDialog}
+          machine={selectedMachine}
+          onTransferred={handleRefreshData}
+        />
+      )}
       </CardContent>
-
-      {/* Machine Association Dialog */}
-      <MachineAssociationDialog
-        isOpen={associationDialog.isOpen}
-        onClose={associationDialog.close}
-        machine={selectedMachine}
-        onAssociated={handleAssociationComplete}
-      />
-
-      {/* Machine Transfer Dialog */}
-      <MachineTransferDialog
-        isOpen={transferDialog.isOpen}
-        onClose={transferDialog.close}
-        machine={selectedMachine}
-        onTransferred={handleTransferComplete}
-      />
-
-      {/* Machine History Dialog */}
-      <MachineHistoryDialog
-        isOpen={historyDialog.isOpen}
-        onClose={historyDialog.close}
-        machineId={selectedMachine?.id}
-      />
     </Card>
   );
 };
