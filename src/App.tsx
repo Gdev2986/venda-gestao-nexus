@@ -67,6 +67,9 @@ function App() {
 
       {/* 404 */}
       <Route path={PATHS.NOT_FOUND} element={<NotFound />} />
+      
+      {/* Catch-all redirect to the appropriate dashboard */}
+      <Route path="*" element={<Navigate to={PATHS.DASHBOARD} replace />} />
     </Routes>
   );
 }

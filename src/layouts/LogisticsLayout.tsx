@@ -50,15 +50,15 @@ const LogisticsLayout = () => {
 
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center h-screen w-full" style={{ backgroundColor: 'hsl(196, 70%, 20%)' }}>
+      <div className="flex items-center justify-center h-screen w-full bg-background">
         <motion.div
           initial={{ opacity: 0, scale: 0.8 }}
           animate={{ opacity: 1, scale: 1 }}
           transition={{ duration: 0.5 }}
           className="flex flex-col items-center"
         >
-          <Spinner size="lg" className="border-white border-t-transparent" />
-          <p className="mt-4 text-white">Carregando...</p>
+          <Spinner size="lg" />
+          <p className="mt-4 text-muted-foreground">Carregando...</p>
         </motion.div>
       </div>
     );

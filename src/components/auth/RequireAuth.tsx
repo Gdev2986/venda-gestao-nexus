@@ -32,14 +32,26 @@ const RequireAuth = ({ allowedRoles = [], redirectTo = PATHS.LOGIN }: RequireAut
         console.log("Setting shouldRedirect to true - no user");
         setShouldRedirect(true);
       } else if (allowedRoles.length > 0 && !allowedRoles.includes(userRole)) {
-        // Special case: Financial users can access admin routes for payments, clients and reports
+        // Special cases for role access:
+        // Financial users can access admin routes for payments, clients and reports
         if (userRole === UserRole.FINANCIAL && 
             (location.pathname.includes('/admin/payments') || 
              location.pathname.includes('/admin/clients') || 
              location.pathname.includes('/admin/reports'))) {
           // Allow financial users to access these specific admin routes
           console.log("Financial user accessing permitted admin route:", location.pathname);
-        } else {
+        } 
+        // If the user is trying to access their own role's dashboard, allow it
+        else if (
+          (userRole === UserRole.ADMIN && location.pathname === PATHS.ADMIN.DASHBOARD) ||
+          (userRole === UserRole.CLIENT && location.pathname === PATHS.USER.DASHBOARD) ||
+          (userRole === UserRole.PARTNER && location.pathname === PATHS.PARTNER.DASHBOARD) || 
+          (userRole === UserRole.FINANCIAL && location.pathname === PATHS.FINANCIAL.DASHBOARD) ||
+          (userRole === UserRole.LOGISTICS && location.pathname === PATHS.LOGISTICS.DASHBOARD)
+        ) {
+          console.log("User accessing their own dashboard:", location.pathname);
+        }
+        else {
           // If role-specific access control is defined and user doesn't have permission
           console.log(`User role ${userRole} not allowed to access this route`);
           

@@ -4,7 +4,7 @@ import { PATHS } from "./paths";
 import { UserRole } from "@/types";
 
 // Layouts
-import MainLayout from "../layouts/MainLayout";
+import LogisticsLayout from "../layouts/LogisticsLayout";
 
 // Auth Protection Component
 import RequireAuth from "../components/auth/RequireAuth";
@@ -25,7 +25,7 @@ import Help from "../pages/Help";
 
 export const LogisticsRoutes = (
   <Route element={<RequireAuth allowedRoles={[UserRole.LOGISTICS]} />}>
-    <Route element={<MainLayout />}>
+    <Route element={<LogisticsLayout />}>
       <Route 
         path={PATHS.LOGISTICS.DASHBOARD} 
         element={<LogisticsDashboard />} 
