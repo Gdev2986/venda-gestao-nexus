@@ -34,7 +34,6 @@ const RequireAuth = ({ allowedRoles = [], redirectTo = PATHS.LOGIN }: RequireAut
       } else if (allowedRoles.length > 0 && !allowedRoles.includes(userRole)) {
         // Special case: Financial users can access admin routes for payments, clients and reports
         if (userRole === UserRole.FINANCIAL && 
-            allowedRoles.includes(UserRole.ADMIN) &&
             (location.pathname.includes('/admin/payments') || 
              location.pathname.includes('/admin/clients') || 
              location.pathname.includes('/admin/reports'))) {

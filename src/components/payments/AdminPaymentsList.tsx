@@ -16,12 +16,33 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger
 } from '@/components/ui/dropdown-menu';
+import { PaymentRequest } from '@/types/payment.types';
 
 interface AdminPaymentsListProps {
   payments: Payment[];
   onAction: (paymentId: string, action: PaymentAction) => void;
   isLoading: boolean;
 }
+
+// Define a function to convert Payment to PaymentRequest
+const convertToPaymentRequest = (payment: Payment): PaymentRequest => {
+  return {
+    id: payment.id,
+    client_id: payment.client_id,
+    amount: payment.amount,
+    description: payment.description || '',
+    status: payment.status,
+    pix_key_id: payment.pix_key?.id || '',
+    created_at: payment.created_at,
+    updated_at: payment.updated_at,
+    approved_at: payment.approved_at || null,
+    approved_by: null, // Default to null since Payment doesn't have this
+    receipt_url: payment.receipt_url || null,
+    rejection_reason: payment.rejection_reason,
+    pix_key: payment.pix_key,
+    client: payment.client,
+  };
+};
 
 // Define the component both as default export and named export for compatibility
 const AdminPaymentsList = ({ payments, onAction, isLoading }: AdminPaymentsListProps) => {
@@ -283,7 +304,7 @@ const AdminPaymentsList = ({ payments, onAction, isLoading }: AdminPaymentsListP
           <ApprovePaymentDialog
             open={approveDialogOpen}
             onOpenChange={setApproveDialogOpen}
-            payment={selectedPayment}
+            payment={convertToPaymentRequest(selectedPayment)}
             onApprove={handleApprovePayment}
             isProcessing={isProcessing}
           />
@@ -291,7 +312,7 @@ const AdminPaymentsList = ({ payments, onAction, isLoading }: AdminPaymentsListP
           <RejectPaymentDialog
             open={rejectDialogOpen}
             onOpenChange={setRejectDialogOpen}
-            payment={selectedPayment}
+            payment={convertToPaymentRequest(selectedPayment)}
             onReject={handleRejectPayment}
             isProcessing={isProcessing}
           />
@@ -299,7 +320,7 @@ const AdminPaymentsList = ({ payments, onAction, isLoading }: AdminPaymentsListP
           <PaymentDetailsDialog 
             open={detailsDialogOpen}
             onOpenChange={setDetailsDialogOpen}
-            payment={selectedPayment}
+            payment={convertToPaymentRequest(selectedPayment)}
           />
         </>
       )}
