@@ -1,5 +1,4 @@
 
-import { Navigate } from "react-router-dom";
 import { PATHS } from "./paths";
 import { UserRole } from "@/types";
 
@@ -28,5 +27,5 @@ export const getDashboardPath = (userRole: UserRole): string => {
  */
 export const getDashboardRedirect = (userRole: UserRole) => {
   const path = getDashboardPath(userRole);
-  return <Navigate to={path} replace />;
+  return path;
 };

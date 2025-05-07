@@ -7,7 +7,7 @@ import { useUserRole } from "./hooks/use-user-role";
 import { UserRole } from "./types";
 
 // Route utils
-import { getDashboardRedirect } from "./routes/routeUtils";
+import { getDashboardPath } from "./routes/routeUtils";
 
 // Route groups
 import { AuthRoutes } from "./routes/authRoutes";
@@ -49,7 +49,7 @@ function App() {
       {/* Generic dashboard route */}
       <Route 
         path={PATHS.DASHBOARD} 
-        element={<Navigate to={getDashboardRedirect(userRole)} replace />} 
+        element={<Navigate to={getDashboardPath(userRole)} />} 
       />
 
       {/* Auth Routes */}
@@ -69,7 +69,7 @@ function App() {
       <Route path={PATHS.NOT_FOUND} element={<NotFound />} />
       
       {/* Catch-all redirect to the appropriate dashboard */}
-      <Route path="*" element={<Navigate to={PATHS.DASHBOARD} replace />} />
+      <Route path="*" element={<Navigate to={PATHS.DASHBOARD} />} />
     </Routes>
   );
 }
