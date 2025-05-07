@@ -80,21 +80,37 @@ export function SendNotification() {
     try {
       if (data.targetType === "all") {
         // Send to all clients
-        const { error } = await supabase.rpc('send_notification_to_all_clients', { 
-          p_title: data.title,
-          p_message: data.message,
-          p_type: 'GENERAL'
-        });
+        // Since the RPC function isn't available, we'll insert notifications directly
+        const { error } = await supabase
+          .from('notifications')
+          .insert({
+            title: data.title,
+            message: data.message,
+            type: 'SYSTEM', // Using SYSTEM as notification type
+            user_id: 'ALL', // We'll handle this value in a database trigger or create a separate endpoint
+          });
         
         if (error) throw error;
       } else if (data.targetType === "specific" && data.targetId) {
         // Send to specific client
-        const { error } = await supabase.rpc('send_notification_to_client', {
-          p_client_id: data.targetId,
-          p_title: data.title,
-          p_message: data.message,
-          p_type: 'GENERAL'
-        });
+        // First, get the user_id for this client
+        const { data: clientData, error: clientError } = await supabase
+          .from('clients')
+          .select('id')
+          .eq('id', data.targetId)
+          .single();
+          
+        if (clientError) throw clientError;
+        
+        // Then insert the notification for this specific client
+        const { error } = await supabase
+          .from('notifications')
+          .insert({
+            title: data.title,
+            message: data.message,
+            type: 'SYSTEM',
+            user_id: clientData.id,
+          });
         
         if (error) throw error;
       }

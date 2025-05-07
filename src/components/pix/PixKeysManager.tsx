@@ -221,7 +221,7 @@ const PixKeysManager = ({ userId }: PixKeysManagerProps) => {
                 <Label htmlFor="key-type">Tipo da chave</Label>
                 <Select 
                   value={newKey.type} 
-                  onValueChange={(value) => setNewKey({...newKey, type: value})}
+                  onValueChange={(value) => setNewKey({...newKey, type: value as PixKeyType})}
                 >
                   <SelectTrigger id="key-type">
                     <SelectValue placeholder="Selecione o tipo" />
