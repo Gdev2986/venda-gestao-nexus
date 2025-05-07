@@ -1,43 +1,40 @@
 
+import { useState } from "react";
 import { PageHeader } from "@/components/page/PageHeader";
 import { PATHS } from "@/routes/paths";
 import { PaymentFilters } from "@/components/payments/PaymentFilters";
 import { PageWrapper } from "@/components/page/PageWrapper";
-import { AdminPaymentsList } from "@/components/payments/AdminPaymentsList";
-import { PaymentDialogs } from "@/components/payments/PaymentDialogs";
-import { PaymentNotifications } from "@/components/payments/PaymentNotifications";
+import AdminPaymentsList from "@/components/payments/AdminPaymentsList";
 import { useAdminPayments } from "@/hooks/payments/useAdminPayments";
+import { PaymentStatus } from "@/types";
+import { PaymentAction } from "@/components/payments/PaymentTableColumns";
 
 const AdminPayments = () => {
+  const [searchTerm, setSearchTerm] = useState('');
+  const [statusFilter, setStatusFilter] = useState<PaymentStatus | 'all'>('all');
+  const [page, setPage] = useState(1);
+  
   const {
-    // Payment data
-    paymentRequests,
+    payments,
     isLoading,
-    currentPage,
     totalPages,
-    setCurrentPage,
-    refreshPayments,
-    
-    // Filters
-    statusFilter,
+    refetch,
+    performPaymentAction,
+  } = useAdminPayments({
     searchTerm,
-    handleFilterChange,
-    
-    // Dialog state
-    selectedPayment,
-    approveDialogOpen,
-    rejectDialogOpen,
-    detailsDialogOpen,
-    setApproveDialogOpen,
-    setRejectDialogOpen,
-    setDetailsDialogOpen,
-    
-    // Actions
-    handlePaymentAction,
-    handleApprovePayment,
-    handleRejectPayment,
-    isProcessing
-  } = useAdminPayments();
+    statusFilter,
+    page,
+  });
+
+  const handleFilterChange = (newSearchTerm: string, newStatus: PaymentStatus | 'all') => {
+    setSearchTerm(newSearchTerm);
+    setStatusFilter(newStatus);
+    setPage(1); // Reset to first page when filters change
+  };
+
+  const handlePaymentAction = (paymentId: string, action: PaymentAction) => {
+    performPaymentAction(paymentId, action);
+  };
 
   return (
     <>
@@ -56,33 +53,11 @@ const AdminPayments = () => {
 
       <PageWrapper>
         <AdminPaymentsList 
-          paymentRequests={paymentRequests}
+          payments={payments}
           isLoading={isLoading}
-          currentPage={currentPage}
-          totalPages={totalPages}
-          onPageChange={setCurrentPage}
-          onPaymentAction={handlePaymentAction}
+          onAction={handlePaymentAction}
         />
       </PageWrapper>
-      
-      <PaymentDialogs
-        selectedPayment={selectedPayment}
-        
-        approveDialogOpen={approveDialogOpen}
-        setApproveDialogOpen={setApproveDialogOpen}
-        handleApprovePayment={handleApprovePayment}
-        
-        rejectDialogOpen={rejectDialogOpen}
-        setRejectDialogOpen={setRejectDialogOpen}
-        handleRejectPayment={handleRejectPayment}
-        
-        detailsDialogOpen={detailsDialogOpen}
-        setDetailsDialogOpen={setDetailsDialogOpen}
-        
-        isProcessing={isProcessing}
-      />
-      
-      <PaymentNotifications refreshPayments={refreshPayments} />
     </>
   );
 };

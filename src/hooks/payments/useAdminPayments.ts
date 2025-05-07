@@ -1,3 +1,4 @@
+
 import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { Payment, PaymentStatus } from '@/types';
@@ -19,7 +20,7 @@ export const useAdminPayments = ({ searchTerm, statusFilter, page }: UseAdminPay
 
   const fetchPayments = async () => {
     let query = supabase
-      .from('payments')
+      .from('payment_requests')
       .select('*, client:clients(*)')
       .order('created_at', { ascending: false })
       .range((page - 1) * PAGE_SIZE, page * PAGE_SIZE - 1);
@@ -50,13 +51,10 @@ export const useAdminPayments = ({ searchTerm, statusFilter, page }: UseAdminPay
     isLoading,
     error,
     refetch,
-  } = useQuery(
-    ['adminPayments', searchTerm, statusFilter, page],
-    fetchPayments,
-    {
-      keepPreviousData: true,
-    }
-  );
+  } = useQuery({
+    queryKey: ['adminPayments', searchTerm, statusFilter, page],
+    queryFn: fetchPayments
+  });
 
   const totalPages = Math.ceil((data?.totalCount || 0) / PAGE_SIZE);
 
@@ -74,7 +72,7 @@ export const useAdminPayments = ({ searchTerm, statusFilter, page }: UseAdminPay
       }
 
       const { error } = await supabase
-        .from('payments')
+        .from('payment_requests')
         .update(updateData)
         .eq('id', paymentId);
 

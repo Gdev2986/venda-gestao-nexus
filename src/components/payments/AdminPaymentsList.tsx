@@ -1,8 +1,9 @@
+
 import { useState } from 'react';
-import { createPaymentColumns, PaymentAction } from '@/components/payments/PaymentTableColumns';
-import { Payment } from '@/types';
+import { Payment, PaymentStatus } from '@/types';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
+import { PaymentAction } from './PaymentTableColumns';
 
 interface AdminPaymentsListProps {
   payments: Payment[];
@@ -10,8 +11,7 @@ interface AdminPaymentsListProps {
   isLoading: boolean;
 }
 
-const AdminPaymentsList: React.FC<AdminPaymentsListProps> = ({ payments, onAction, isLoading }) => {
-  const columns = createPaymentColumns();
+export const AdminPaymentsList: React.FC<AdminPaymentsListProps> = ({ payments, onAction, isLoading }) => {
   const { toast } = useToast();
   const [selectedPayments, setSelectedPayments] = useState<string[]>([]);
 
@@ -69,14 +69,24 @@ const AdminPaymentsList: React.FC<AdminPaymentsListProps> = ({ payments, onActio
                   onChange={handleSelectAllPayments}
                 />
               </th>
-              {columns.map((column) => (
-                <th
-                  key={column.id}
-                  className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
-                >
-                  {column.header}
-                </th>
-              ))}
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                ID
+              </th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                Cliente
+              </th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                Valor
+              </th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                Status
+              </th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                Data
+              </th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                Ações
+              </th>
             </tr>
           </thead>
           <tbody className="bg-white divide-y divide-gray-200">
@@ -90,11 +100,53 @@ const AdminPaymentsList: React.FC<AdminPaymentsListProps> = ({ payments, onActio
                     onChange={() => handleSelectPayment(payment.id)}
                   />
                 </td>
-                {columns.map((column) => (
-                  <td key={`${payment.id}-${column.id}`} className="px-6 py-4 whitespace-nowrap">
-                    {column.cell ? column.cell({ row: payment }) : null}
-                  </td>
-                ))}
+                <td className="px-6 py-4 whitespace-nowrap">{payment.id}</td>
+                <td className="px-6 py-4 whitespace-nowrap">{payment.client?.business_name || 'N/A'}</td>
+                <td className="px-6 py-4 whitespace-nowrap">
+                  {payment.amount ? new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(payment.amount) : 'N/A'}
+                </td>
+                <td className="px-6 py-4 whitespace-nowrap">
+                  <span
+                    className={`px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full 
+                    ${payment.status === PaymentStatus.PENDING ? 'bg-yellow-100 text-yellow-800' : ''}
+                    ${payment.status === PaymentStatus.APPROVED ? 'bg-green-100 text-green-800' : ''}
+                    ${payment.status === PaymentStatus.REJECTED ? 'bg-red-100 text-red-800' : ''}
+                    ${payment.status === PaymentStatus.PAID ? 'bg-blue-100 text-blue-800' : ''}
+                    `}
+                  >
+                    {payment.status}
+                  </span>
+                </td>
+                <td className="px-6 py-4 whitespace-nowrap">
+                  {payment.created_at ? new Date(payment.created_at).toLocaleDateString('pt-BR') : 'N/A'}
+                </td>
+                <td className="px-6 py-4 whitespace-nowrap space-x-2">
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => handleAction(payment.id, PaymentAction.VIEW)}
+                  >
+                    Ver
+                  </Button>
+                  {payment.status === PaymentStatus.PENDING && (
+                    <>
+                      <Button
+                        size="sm"
+                        variant="default"
+                        onClick={() => handleAction(payment.id, PaymentAction.APPROVE)}
+                      >
+                        Aprovar
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="destructive"
+                        onClick={() => handleAction(payment.id, PaymentAction.REJECT)}
+                      >
+                        Rejeitar
+                      </Button>
+                    </>
+                  )}
+                </td>
               </tr>
             ))}
           </tbody>
