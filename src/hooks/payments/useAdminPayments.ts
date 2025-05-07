@@ -1,138 +1,112 @@
+import { useState } from 'react';
+import { useQuery } from '@tanstack/react-query';
+import { Payment, PaymentStatus } from '@/types';
+import { supabase } from '@/integrations/supabase/client';
+import { useToast } from '@/hooks/use-toast';
+import { PaymentAction } from '@/components/payments/PaymentTableColumns';
 
-import { useState } from "react";
-import { supabase } from "@/integrations/supabase/client";
-import { useToast } from "@/hooks/use-toast";
-import { usePayments, PaymentData } from "@/hooks/usePayments";
-import { usePaymentSubscription } from "@/hooks/usePaymentSubscription";
-import { PaymentStatus } from "@/types";
-import { PaymentAction } from "@/components/payments/PaymentTableColumns";
+interface UseAdminPaymentsProps {
+  searchTerm: string;
+  statusFilter: PaymentStatus | 'all';
+  page: number;
+}
 
-export const useAdminPayments = () => {
-  // State for filters
-  const [statusFilter, setStatusFilter] = useState<PaymentStatus | "ALL">("ALL");
-  const [searchTerm, setSearchTerm] = useState("");
-  
-  // State for modals
-  const [selectedPayment, setSelectedPayment] = useState<PaymentData | null>(null);
-  const [approveDialogOpen, setApproveDialogOpen] = useState(false);
-  const [rejectDialogOpen, setRejectDialogOpen] = useState(false);
-  const [detailsDialogOpen, setDetailsDialogOpen] = useState(false);
-  const [isProcessing, setIsProcessing] = useState(false);
+const PAGE_SIZE = 10;
+
+export const useAdminPayments = ({ searchTerm, statusFilter, page }: UseAdminPaymentsProps) => {
+  const [actionLoading, setActionLoading] = useState<string | null>(null);
   const { toast } = useToast();
 
-  // Use the payments hook
-  const { 
-    paymentRequests, 
-    isLoading, 
-    refreshPayments, 
-    approvePayment, 
-    rejectPayment,
-    currentPage,
-    totalPages,
-    setCurrentPage
-  } = usePayments({
-    statusFilter,
-    searchTerm
-  });
+  const fetchPayments = async () => {
+    let query = supabase
+      .from('payments')
+      .select('*, client:clients(*)')
+      .order('created_at', { ascending: false })
+      .range((page - 1) * PAGE_SIZE, page * PAGE_SIZE - 1);
 
-  // Set up real-time subscription for admin (listens to all payment changes)
-  usePaymentSubscription(refreshPayments, { 
-    notifyUser: true 
-  });
-
-  // Handle filter changes
-  const handleFilterChange = (newStatusFilter: PaymentStatus | "ALL", newSearchTerm: string) => {
-    setStatusFilter(newStatusFilter);
-    setSearchTerm(newSearchTerm);
-  };
-
-  // Handle payment actions
-  const handlePaymentAction = (payment: PaymentData, action: PaymentAction) => {
-    setSelectedPayment(payment);
-    
-    if (action === 'approve') {
-      setApproveDialogOpen(true);
-    } else if (action === 'reject') {
-      setRejectDialogOpen(true);
-    } else if (action === 'details') {
-      setDetailsDialogOpen(true);
+    if (searchTerm) {
+      query = query.ilike('id', `%${searchTerm}%`);
     }
+
+    if (statusFilter !== 'all') {
+      query = query.eq('status', statusFilter);
+    }
+
+    const { data, error, count } = await query;
+
+    if (error) {
+      console.error("Error fetching payments:", error);
+      throw new Error(error.message);
+    }
+
+    return {
+      data: data as Payment[],
+      totalCount: count || 0,
+    };
   };
 
-  // Handle payment approval with receipt upload
-  const handleApprovePayment = async (paymentId: string, receiptFile: File | null, notes: string) => {
-    setIsProcessing(true);
-    
+  const {
+    data,
+    isLoading,
+    error,
+    refetch,
+  } = useQuery(
+    ['adminPayments', searchTerm, statusFilter, page],
+    fetchPayments,
+    {
+      keepPreviousData: true,
+    }
+  );
+
+  const totalPages = Math.ceil((data?.totalCount || 0) / PAGE_SIZE);
+
+  const performPaymentAction = async (paymentId: string, action: PaymentAction, newStatus?: PaymentStatus) => {
+    setActionLoading(paymentId);
     try {
-      let receiptUrl = null;
-      
-      // Upload receipt if provided
-      if (receiptFile) {
-        const fileName = `payment_${paymentId}_${Date.now()}.${receiptFile.name.split('.').pop()}`;
-        
-        const { data: uploadData, error: uploadError } = await supabase.storage
-          .from('payment_receipts')
-          .upload(fileName, receiptFile);
-        
-        if (uploadError) throw uploadError;
-        
-        // Get public URL for the file
-        const { data: urlData } = supabase.storage
-          .from('payment_receipts')
-          .getPublicUrl(fileName);
-          
-        receiptUrl = urlData.publicUrl;
+      let updateData: any = {};
+
+      if (action === PaymentAction.APPROVE) {
+        updateData = { status: PaymentStatus.APPROVED };
+      } else if (action === PaymentAction.REJECT) {
+        updateData = { status: PaymentStatus.REJECTED };
+      } else if (newStatus) {
+        updateData = { status: newStatus };
       }
-      
-      await approvePayment(paymentId, receiptUrl);
-      setApproveDialogOpen(false);
-    } catch (error) {
-      console.error('Error approving payment:', error);
-    } finally {
-      setIsProcessing(false);
-    }
-  };
 
-  // Handle payment rejection
-  const handleRejectPayment = async (paymentId: string, rejectionReason: string) => {
-    setIsProcessing(true);
-    try {
-      await rejectPayment(paymentId, rejectionReason);
-      setRejectDialogOpen(false);
-    } catch (error) {
-      console.error('Error rejecting payment:', error);
+      const { error } = await supabase
+        .from('payments')
+        .update(updateData)
+        .eq('id', paymentId);
+
+      if (error) {
+        throw new Error(`Failed to ${action} payment: ${error.message}`);
+      }
+
+      toast({
+        title: "Sucesso",
+        description: `Pagamento ${action} com sucesso.`,
+      });
+      refetch();
+    } catch (err: any) {
+      console.error(`Error performing action ${action}:`, err);
+      toast({
+        variant: "destructive",
+        title: "Erro",
+        description: `Falha ao ${action} pagamento: ${err.message}`,
+      });
     } finally {
-      setIsProcessing(false);
+      setActionLoading(null);
     }
   };
 
   return {
-    // Payment data
-    paymentRequests,
+    payments: data?.data || [],
     isLoading,
-    currentPage,
+    error,
+    totalCount: data?.totalCount || 0,
     totalPages,
-    setCurrentPage,
-    refreshPayments,
-    
-    // Filters
-    statusFilter,
-    searchTerm,
-    handleFilterChange,
-    
-    // Dialog state
-    selectedPayment,
-    approveDialogOpen,
-    rejectDialogOpen,
-    detailsDialogOpen,
-    setApproveDialogOpen,
-    setRejectDialogOpen,
-    setDetailsDialogOpen,
-    
-    // Actions
-    handlePaymentAction,
-    handleApprovePayment,
-    handleRejectPayment,
-    isProcessing
+    refetch,
+    actionLoading,
+    performPaymentAction,
   };
 };

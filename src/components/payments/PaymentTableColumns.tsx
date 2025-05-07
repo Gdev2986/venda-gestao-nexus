@@ -1,3 +1,4 @@
+
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { ArrowUpDown, Copy, MoreHorizontal } from "lucide-react";
@@ -29,10 +30,19 @@ interface DataTableProps<TData, TValue> {
 }
 
 export interface ColumnDef<TData = any, TValue = any> {
+  id?: string;
   accessorKey?: keyof TData;
   header?: string | ((props: { column: ColumnDef<TData, TValue> }) => React.ReactNode);
   cell?: (props: { row: TData }) => React.ReactNode;
   footer?: string | ((props: { column: ColumnDef<TData, TValue> }) => React.ReactNode);
+}
+
+// Export PaymentAction for other components to use
+export enum PaymentAction {
+  APPROVE = 'approve',
+  REJECT = 'reject',
+  VIEW = 'view',
+  DELETE = 'delete',
 }
 
 // Function to determine the color based on payment status
@@ -81,9 +91,9 @@ export const getPaymentClientName = (payment: any): string => {
   return payment.client_name || 'Cliente';
 };
 
-const PaymentTableColumns = () => {
-  const { toast } = useToast();
+export const createPaymentColumns = () => {
   const [copiedPaymentId, setCopiedPaymentId] = useState<string | null>(null);
+  const { toast } = useToast();
 
   const copyToClipboard = (text: string, paymentId: string) => {
     navigator.clipboard.writeText(text);
@@ -99,6 +109,7 @@ const PaymentTableColumns = () => {
 
   const columns: ColumnDef<Payment>[] = [
     {
+      id: "id",
       accessorKey: "id",
       header: "ID do Pagamento",
       cell: ({ row }) => (
@@ -117,16 +128,19 @@ const PaymentTableColumns = () => {
       ),
     },
     {
+      id: "created_at",
       accessorKey: "created_at",
       header: "Data de Criação",
       cell: ({ row }) => <div>{formatDate(row.created_at)}</div>,
     },
     {
+      id: "amount",
       accessorKey: "amount",
       header: "Valor",
       cell: ({ row }) => <div>{formatCurrency(row.amount)}</div>,
     },
     {
+      id: "status",
       accessorKey: "status",
       header: "Status",
       cell: ({ row }) => (
@@ -134,6 +148,7 @@ const PaymentTableColumns = () => {
       ),
     },
     {
+      id: "client",
       accessorKey: "client",
       header: "Cliente",
       cell: ({ row }) => <div>{getPaymentClientName(row)}</div>,
@@ -160,6 +175,10 @@ const PaymentTableColumns = () => {
   ];
 
   return columns;
+};
+
+const PaymentTableColumns = () => {
+  return createPaymentColumns();
 };
 
 export default PaymentTableColumns;

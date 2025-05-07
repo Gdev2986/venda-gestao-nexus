@@ -1,7 +1,8 @@
+
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import PixKeysManager from "@/components/pix/PixKeysManager";
-import { useAuth } from "@/hooks/use-auth"; // Add this if not already imported
+import { useAuth } from "@/hooks/use-auth";
 
 const UserSettings = () => {
   const { user } = useAuth();
@@ -19,7 +20,6 @@ const UserSettings = () => {
               Gerencie suas chaves Pix para receber pagamentos.
             </p>
             <Separator />
-            {/* Update the PixKeysManager with userId prop */}
             <PixKeysManager userId={user?.id || ''} />
           </div>
         </CardContent>

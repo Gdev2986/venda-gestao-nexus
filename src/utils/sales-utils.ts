@@ -16,7 +16,7 @@ export const getRandomDate = (): Date => {
  * Generates a random amount between min and max
  */
 export const getRandomAmount = (min: number, max: number): number => {
-  const amount = faker.number.float({ min, max, precision: 2 });
+  const amount = faker.number.float({ min, max, fractionDigits: 2 });
   return parseFloat(amount.toFixed(2));
 };
 
@@ -165,8 +165,8 @@ export const filterSalesData = (sales: Sale[], searchTerm: string): Sale[] => {
  */
 export const calculateSalesTotals = (sales: Sale[]) => {
   return {
-    gross: sales.reduce((sum, sale) => sum + sale.gross_amount, 0),
-    net: sales.reduce((sum, sale) => sum + sale.net_amount, 0),
+    grossAmount: sales.reduce((sum, sale) => sum + sale.gross_amount, 0),
+    netAmount: sales.reduce((sum, sale) => sum + sale.net_amount, 0),
     count: sales.length
   };
 };

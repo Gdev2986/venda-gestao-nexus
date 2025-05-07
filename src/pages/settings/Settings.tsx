@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -7,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/use-auth";
-import PixKeysManager from "@/components/settings/PixKeysManager";
+import { PixKeysManager } from "@/components/settings/PixKeysManager";
 import NotificationsSettings from "@/components/settings/NotificationsSettings";
 import SecuritySettings from "@/components/settings/SecuritySettings";
 import { Separator } from "@/components/ui/separator";
