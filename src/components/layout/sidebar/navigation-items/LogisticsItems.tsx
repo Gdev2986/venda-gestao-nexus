@@ -14,30 +14,8 @@ export const logisticsItems: SidebarItem[] = [
   {
     title: "Máquinas",
     icon: CreditCard,
-    href: "#",
+    href: PATHS.LOGISTICS.MACHINES,
     roles: [UserRole.LOGISTICS],
-    subItems: [
-      {
-        title: "Todas as Máquinas",
-        href: PATHS.LOGISTICS.MACHINES,
-        roles: [UserRole.LOGISTICS],
-      },
-      {
-        title: "Estoque",
-        href: PATHS.LOGISTICS.STOCK,
-        roles: [UserRole.LOGISTICS],
-      },
-      {
-        title: "Máquinas de Clientes",
-        href: PATHS.LOGISTICS.CLIENT_MACHINES,
-        roles: [UserRole.LOGISTICS],
-      },
-      {
-        title: "Nova Máquina",
-        href: PATHS.LOGISTICS.MACHINE_NEW,
-        roles: [UserRole.LOGISTICS],
-      }
-    ]
   },
   {
     title: "Operações",
@@ -48,30 +26,8 @@ export const logisticsItems: SidebarItem[] = [
   {
     title: "Solicitações",
     icon: MessageSquare,
-    href: "#",
+    href: PATHS.LOGISTICS.REQUESTS,
     roles: [UserRole.LOGISTICS],
-    subItems: [
-      {
-        title: "Todas as Solicitações",
-        href: PATHS.LOGISTICS.REQUESTS,
-        roles: [UserRole.LOGISTICS],
-      },
-      {
-        title: "Manutenção",
-        href: PATHS.LOGISTICS.MAINTENANCE_REQUESTS,
-        roles: [UserRole.LOGISTICS],
-      },
-      {
-        title: "Troca de Bobinas",
-        href: PATHS.LOGISTICS.PAPER_REQUESTS,
-        roles: [UserRole.LOGISTICS],
-      },
-      {
-        title: "Novas Instalações",
-        href: PATHS.LOGISTICS.INSTALLATION_REQUESTS,
-        roles: [UserRole.LOGISTICS],
-      }
-    ]
   },
   {
     title: "Calendário",

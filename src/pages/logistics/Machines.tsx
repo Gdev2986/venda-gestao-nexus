@@ -27,7 +27,20 @@ import {
   DialogDescription,
   DialogFooter,
 } from "@/components/ui/dialog";
-import { Search } from "lucide-react";
+import { 
+  Tabs, 
+  TabsContent, 
+  TabsList, 
+  TabsTrigger 
+} from "@/components/ui/tabs";
+import { 
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Search, Plus, Archive, BarChart4, Building2, Server } from "lucide-react";
+import { Link } from "react-router-dom";
 import { PATHS } from "@/routes/paths";
 
 // Mock data for machines
@@ -90,6 +103,39 @@ const mockMachines = [
   },
 ];
 
+// Mock data for machines by client
+const mockClientMachines = [
+  {
+    clientName: "Supermercado ABC",
+    machines: [
+      { serial: "SN-100001", model: "Terminal Pro", status: "Instalada", establishment: "Loja Central" },
+      { serial: "SN-100005", model: "Terminal Standard", status: "Instalada", establishment: "Loja Filial" }
+    ]
+  },
+  {
+    clientName: "Farmácia Saúde",
+    machines: [
+      { serial: "SN-100010", model: "Terminal Mini", status: "Instalada", establishment: "Matriz" }
+    ]
+  },
+  {
+    clientName: "Restaurante Sabor",
+    machines: [
+      { serial: "SN-100012", model: "Terminal Standard", status: "Instalada", establishment: "Unidade 1" },
+      { serial: "SN-100013", model: "Terminal Standard", status: "Instalada", establishment: "Unidade 2" }
+    ]
+  }
+];
+
+// Mock data for machines in stock
+const mockStockMachines = [
+  { serial: "SN-100003", model: "Terminal Pro", status: "Novo", location: "Depósito Central", arrivalDate: "15/04/2025" },
+  { serial: "SN-100004", model: "Terminal Mini", status: "Novo", location: "Depósito Central", arrivalDate: "15/04/2025" },
+  { serial: "SN-100006", model: "Terminal Pro", status: "Revisado", location: "Depósito Central", arrivalDate: "10/04/2025" },
+  { serial: "SN-100008", model: "Terminal Standard", status: "Novo", location: "Depósito Central", arrivalDate: "05/04/2025" },
+  { serial: "SN-100009", model: "Terminal Pro", status: "Revisado", location: "Depósito Central", arrivalDate: "01/04/2025" }
+];
+
 const LogisticsMachines = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
@@ -133,108 +179,296 @@ const LogisticsMachines = () => {
     <div className="space-y-6">
       <PageHeader 
         title="Gestão de Máquinas" 
-        description="Gerencie o estoque e instalações de máquinas"
+        description="Gerencie o estoque, instalações e manutenção de máquinas"
         actionLabel="Cadastrar Máquina"
         actionLink={PATHS.LOGISTICS.MACHINE_NEW}
       />
-
-      <div className="flex flex-col md:flex-row gap-4 items-start md:items-center mb-6">
-        <div className="relative flex-1">
-          <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-          <Input
-            placeholder="Buscar por serial, modelo, cliente..."
-            className="pl-8 bg-background"
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-          />
-        </div>
-        <div className="flex items-center gap-2">
-          <Select 
-            value={statusFilter} 
-            onValueChange={setStatusFilter}
-          >
-            <SelectTrigger className="w-[150px]">
-              <SelectValue placeholder="Status" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">Todos Status</SelectItem>
-              <SelectItem value="em estoque">Em Estoque</SelectItem>
-              <SelectItem value="instalada">Instalada</SelectItem>
-              <SelectItem value="em manutenção">Em Manutenção</SelectItem>
-            </SelectContent>
-          </Select>
-          <Select 
-            value={modelFilter} 
-            onValueChange={setModelFilter}
-          >
-            <SelectTrigger className="w-[150px]">
-              <SelectValue placeholder="Modelo" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">Todos Modelos</SelectItem>
-              <SelectItem value="pro">Terminal Pro</SelectItem>
-              <SelectItem value="standard">Terminal Standard</SelectItem>
-              <SelectItem value="mini">Terminal Mini</SelectItem>
-            </SelectContent>
-          </Select>
-          <Button variant="outline">Filtrar</Button>
-        </div>
-      </div>
       
-      <PageWrapper>
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>Serial</TableHead>
-              <TableHead>Modelo</TableHead>
-              <TableHead>Status</TableHead>
-              <TableHead>Local Atual</TableHead>
-              <TableHead>Estabelecimento</TableHead>
-              <TableHead>Última Atualização</TableHead>
-              <TableHead className="w-[150px]">Ações</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {filteredMachines.map((machine, i) => (
-              <TableRow key={i}>
-                <TableCell>{machine.serial}</TableCell>
-                <TableCell>{machine.model}</TableCell>
-                <TableCell>
-                  <span className={`inline-flex items-center rounded-full px-2 py-1 text-xs font-medium ${
-                    machine.status === "Instalada" ? "bg-green-50 text-green-700" : 
-                    machine.status === "Em Manutenção" ? "bg-yellow-50 text-yellow-700" : 
-                    "bg-blue-50 text-blue-700"
-                  }`}>
-                    {machine.status}
-                  </span>
-                </TableCell>
-                <TableCell>{machine.location}</TableCell>
-                <TableCell>{machine.establishment}</TableCell>
-                <TableCell>{machine.lastUpdate}</TableCell>
-                <TableCell>
-                  <div className="flex space-x-2">
-                    <Button 
-                      variant="outline" 
-                      size="sm"
-                      onClick={() => handleTransferClick(machine)}
-                      disabled={machine.status === "Em Manutenção"}
-                    >
-                      Transferir
-                    </Button>
-                    <Button 
-                      variant="ghost" 
-                      size="sm"
-                      onClick={() => handleHistoryClick(machine)}
-                    >
-                      Histórico
-                    </Button>
-                  </div>
-                </TableCell>
-              </TableRow>
+      <Tabs defaultValue="all" className="w-full">
+        <TabsList className="grid w-full grid-cols-4 mb-4">
+          <TabsTrigger value="all" className="flex items-center gap-2">
+            <Server size={16} />
+            <span>Todas</span>
+          </TabsTrigger>
+          <TabsTrigger value="stock" className="flex items-center gap-2">
+            <Archive size={16} />
+            <span>Estoque</span>
+          </TabsTrigger>
+          <TabsTrigger value="clients" className="flex items-center gap-2">
+            <Building2 size={16} />
+            <span>Por Cliente</span>
+          </TabsTrigger>
+          <TabsTrigger value="stats" className="flex items-center gap-2">
+            <BarChart4 size={16} />
+            <span>Estatísticas</span>
+          </TabsTrigger>
+        </TabsList>
+        
+        {/* All Machines Tab */}
+        <TabsContent value="all">
+          <div className="flex flex-col md:flex-row gap-4 items-start md:items-center mb-6">
+            <div className="relative flex-1">
+              <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+              <Input
+                placeholder="Buscar por serial, modelo, cliente..."
+                className="pl-8 bg-background"
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+              />
+            </div>
+            <div className="flex items-center gap-2">
+              <Select 
+                value={statusFilter} 
+                onValueChange={setStatusFilter}
+              >
+                <SelectTrigger className="w-[150px]">
+                  <SelectValue placeholder="Status" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Todos Status</SelectItem>
+                  <SelectItem value="em estoque">Em Estoque</SelectItem>
+                  <SelectItem value="instalada">Instalada</SelectItem>
+                  <SelectItem value="em manutenção">Em Manutenção</SelectItem>
+                </SelectContent>
+              </Select>
+              <Select 
+                value={modelFilter} 
+                onValueChange={setModelFilter}
+              >
+                <SelectTrigger className="w-[150px]">
+                  <SelectValue placeholder="Modelo" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Todos Modelos</SelectItem>
+                  <SelectItem value="pro">Terminal Pro</SelectItem>
+                  <SelectItem value="standard">Terminal Standard</SelectItem>
+                  <SelectItem value="mini">Terminal Mini</SelectItem>
+                </SelectContent>
+              </Select>
+              <Button variant="outline">Filtrar</Button>
+            </div>
+          </div>
+          
+          <PageWrapper>
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Serial</TableHead>
+                  <TableHead>Modelo</TableHead>
+                  <TableHead>Status</TableHead>
+                  <TableHead>Local Atual</TableHead>
+                  <TableHead>Estabelecimento</TableHead>
+                  <TableHead>Última Atualização</TableHead>
+                  <TableHead className="w-[150px]">Ações</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {filteredMachines.map((machine, i) => (
+                  <TableRow key={i}>
+                    <TableCell>{machine.serial}</TableCell>
+                    <TableCell>{machine.model}</TableCell>
+                    <TableCell>
+                      <span className={`inline-flex items-center rounded-full px-2 py-1 text-xs font-medium ${
+                        machine.status === "Instalada" ? "bg-green-50 text-green-700" : 
+                        machine.status === "Em Manutenção" ? "bg-yellow-50 text-yellow-700" : 
+                        "bg-blue-50 text-blue-700"
+                      }`}>
+                        {machine.status}
+                      </span>
+                    </TableCell>
+                    <TableCell>{machine.location}</TableCell>
+                    <TableCell>{machine.establishment}</TableCell>
+                    <TableCell>{machine.lastUpdate}</TableCell>
+                    <TableCell>
+                      <div className="flex space-x-2">
+                        <Button 
+                          variant="outline" 
+                          size="sm"
+                          onClick={() => handleTransferClick(machine)}
+                          disabled={machine.status === "Em Manutenção"}
+                        >
+                          Transferir
+                        </Button>
+                        <Button 
+                          variant="ghost" 
+                          size="sm"
+                          onClick={() => handleHistoryClick(machine)}
+                        >
+                          Histórico
+                        </Button>
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </PageWrapper>
+        </TabsContent>
+        
+        {/* Stock Tab */}
+        <TabsContent value="stock">
+          <div className="flex justify-between items-center mb-6">
+            <h3 className="text-lg font-medium">Máquinas em Estoque</h3>
+            <div className="flex gap-2">
+              <Button variant="outline" size="sm">
+                Gerar Relatório
+              </Button>
+              <Button size="sm">
+                <Plus className="mr-2 h-4 w-4" />
+                Entrada no Estoque
+              </Button>
+            </div>
+          </div>
+          
+          <Card>
+            <CardContent className="p-6">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Serial</TableHead>
+                    <TableHead>Modelo</TableHead>
+                    <TableHead>Status</TableHead>
+                    <TableHead>Local</TableHead>
+                    <TableHead>Data de Entrada</TableHead>
+                    <TableHead className="w-[150px]">Ações</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {mockStockMachines.map((machine, i) => (
+                    <TableRow key={i}>
+                      <TableCell>{machine.serial}</TableCell>
+                      <TableCell>{machine.model}</TableCell>
+                      <TableCell>
+                        <span className={`inline-flex items-center rounded-full px-2 py-1 text-xs font-medium ${
+                          machine.status === "Novo" ? "bg-green-50 text-green-700" : 
+                          "bg-blue-50 text-blue-700"
+                        }`}>
+                          {machine.status}
+                        </span>
+                      </TableCell>
+                      <TableCell>{machine.location}</TableCell>
+                      <TableCell>{machine.arrivalDate}</TableCell>
+                      <TableCell>
+                        <div className="flex space-x-2">
+                          <Button variant="outline" size="sm">
+                            Transferir
+                          </Button>
+                          <Button variant="ghost" size="sm">
+                            Detalhes
+                          </Button>
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </CardContent>
+          </Card>
+        </TabsContent>
+        
+        {/* Client Machines Tab */}
+        <TabsContent value="clients">
+          <div className="flex justify-between items-center mb-6">
+            <h3 className="text-lg font-medium">Máquinas por Cliente</h3>
+            <Select defaultValue="all">
+              <SelectTrigger className="w-[200px]">
+                <SelectValue placeholder="Filtrar por Cliente" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Todos os Clientes</SelectItem>
+                <SelectItem value="abc">Supermercado ABC</SelectItem>
+                <SelectItem value="saude">Farmácia Saúde</SelectItem>
+                <SelectItem value="sabor">Restaurante Sabor</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+          
+          <div className="space-y-6">
+            {mockClientMachines.map((client, idx) => (
+              <Card key={idx}>
+                <CardHeader>
+                  <CardTitle>{client.clientName}</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Serial</TableHead>
+                        <TableHead>Modelo</TableHead>
+                        <TableHead>Status</TableHead>
+                        <TableHead>Estabelecimento</TableHead>
+                        <TableHead className="w-[150px]">Ações</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {client.machines.map((machine, i) => (
+                        <TableRow key={i}>
+                          <TableCell>{machine.serial}</TableCell>
+                          <TableCell>{machine.model}</TableCell>
+                          <TableCell>
+                            <span className="inline-flex items-center rounded-full px-2 py-1 text-xs font-medium bg-green-50 text-green-700">
+                              {machine.status}
+                            </span>
+                          </TableCell>
+                          <TableCell>{machine.establishment}</TableCell>
+                          <TableCell>
+                            <div className="flex space-x-2">
+                              <Button variant="outline" size="sm">
+                                Manutenção
+                              </Button>
+                              <Button variant="ghost" size="sm">
+                                Detalhes
+                              </Button>
+                            </div>
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </CardContent>
+              </Card>
             ))}
-          </TableBody>
-        </Table>
-      </PageWrapper>
+          </div>
+        </TabsContent>
+        
+        {/* Statistics Tab */}
+        <TabsContent value="stats">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <Card>
+              <CardHeader>
+                <CardTitle>Distribuição por Modelo</CardTitle>
+              </CardHeader>
+              <CardContent className="h-[300px] flex items-center justify-center">
+                <div className="text-center text-muted-foreground">
+                  Componente de gráfico seria mostrado aqui
+                </div>
+              </CardContent>
+            </Card>
+            
+            <Card>
+              <CardHeader>
+                <CardTitle>Distribuição por Status</CardTitle>
+              </CardHeader>
+              <CardContent className="h-[300px] flex items-center justify-center">
+                <div className="text-center text-muted-foreground">
+                  Componente de gráfico seria mostrado aqui
+                </div>
+              </CardContent>
+            </Card>
+            
+            <Card>
+              <CardHeader>
+                <CardTitle>Histórico de Operações</CardTitle>
+              </CardHeader>
+              <CardContent className="h-[300px] flex items-center justify-center">
+                <div className="text-center text-muted-foreground">
+                  Componente de gráfico seria mostrado aqui
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        </TabsContent>
+      </Tabs>
 
       {/* Transfer Dialog */}
       <Dialog open={isTransferDialogOpen} onOpenChange={setIsTransferDialogOpen}>
