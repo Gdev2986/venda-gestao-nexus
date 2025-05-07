@@ -17,7 +17,7 @@ import { useDebounce } from "@/hooks/use-debounce";
 interface PaymentFiltersProps {
   statusFilter: PaymentStatus | "ALL";
   searchTerm: string;
-  onFilterChange: (status: PaymentStatus | "ALL", search: string) => void;
+  onFilterChange: (search: string, status: PaymentStatus | "ALL") => void;
 }
 
 export const PaymentFilters = ({
@@ -29,7 +29,7 @@ export const PaymentFilters = ({
   const debouncedSearchTerm = useDebounce(localSearchTerm, 500);
 
   useEffect(() => {
-    onFilterChange(statusFilter, debouncedSearchTerm);
+    onFilterChange(debouncedSearchTerm, statusFilter);
   }, [statusFilter, debouncedSearchTerm, onFilterChange]);
 
   return (
@@ -47,7 +47,7 @@ export const PaymentFilters = ({
         <div className="flex flex-col sm:flex-row gap-2">
           <Select 
             value={statusFilter} 
-            onValueChange={(value) => onFilterChange(value as PaymentStatus | "ALL", debouncedSearchTerm)}
+            onValueChange={(value) => onFilterChange(debouncedSearchTerm, value as PaymentStatus | "ALL")}
           >
             <SelectTrigger className="w-[180px]">
               <SelectValue placeholder="Status" />

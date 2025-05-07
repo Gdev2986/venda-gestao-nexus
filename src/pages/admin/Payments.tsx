@@ -11,7 +11,7 @@ import { PaymentAction } from "@/components/payments/PaymentTableColumns";
 
 const AdminPayments = () => {
   const [searchTerm, setSearchTerm] = useState('');
-  const [statusFilter, setStatusFilter] = useState<PaymentStatus | 'all'>('all');
+  const [statusFilter, setStatusFilter] = useState<PaymentStatus | 'ALL'>('ALL');
   const [page, setPage] = useState(1);
   
   const {
@@ -26,7 +26,7 @@ const AdminPayments = () => {
     page,
   });
 
-  const handleFilterChange = (newSearchTerm: string, newStatus: PaymentStatus | 'all') => {
+  const handleFilterChange = (newSearchTerm: string, newStatus: PaymentStatus | 'ALL') => {
     setSearchTerm(newSearchTerm);
     setStatusFilter(newStatus);
     setPage(1); // Reset to first page when filters change

@@ -4,6 +4,18 @@ import { Payment, PaymentStatus } from '@/types';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
 import { PaymentAction } from './PaymentTableColumns';
+import { Card, CardContent } from '@/components/ui/card';
+import { ApprovePaymentDialog } from './ApprovePaymentDialog';
+import { RejectPaymentDialog } from './RejectPaymentDialog';
+import { PaymentDetailsDialog } from './PaymentDetailsDialog';
+import { formatCurrency } from '@/lib/utils';
+import { Check, X, Eye, MoreHorizontal } from 'lucide-react';
+import { 
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger
+} from '@/components/ui/dropdown-menu';
 
 interface AdminPaymentsListProps {
   payments: Payment[];
@@ -11,9 +23,14 @@ interface AdminPaymentsListProps {
   isLoading: boolean;
 }
 
-export const AdminPaymentsList: React.FC<AdminPaymentsListProps> = ({ payments, onAction, isLoading }) => {
+const AdminPaymentsList = ({ payments, onAction, isLoading }: AdminPaymentsListProps) => {
   const { toast } = useToast();
   const [selectedPayments, setSelectedPayments] = useState<string[]>([]);
+  const [approveDialogOpen, setApproveDialogOpen] = useState(false);
+  const [rejectDialogOpen, setRejectDialogOpen] = useState(false);
+  const [detailsDialogOpen, setDetailsDialogOpen] = useState(false);
+  const [selectedPayment, setSelectedPayment] = useState<Payment | null>(null);
+  const [isProcessing, setIsProcessing] = useState(false);
 
   const handleAction = (paymentId: string, action: PaymentAction) => {
     onAction(paymentId, action);
@@ -49,15 +66,101 @@ export const AdminPaymentsList: React.FC<AdminPaymentsListProps> = ({ payments, 
     setSelectedPayments([]);
   };
 
+  const openApproveDialog = (payment: Payment) => {
+    setSelectedPayment(payment);
+    setApproveDialogOpen(true);
+  };
+
+  const openRejectDialog = (payment: Payment) => {
+    setSelectedPayment(payment);
+    setRejectDialogOpen(true);
+  };
+
+  const openDetailsDialog = (payment: Payment) => {
+    setSelectedPayment(payment);
+    setDetailsDialogOpen(true);
+  };
+
+  const handleApprovePayment = async (paymentId: string, receiptFile: File | null, notes: string) => {
+    setIsProcessing(true);
+    try {
+      // Simular upload de arquivo
+      let receiptUrl = null;
+      if (receiptFile) {
+        // Em um caso real, faria upload para o Supabase Storage
+        receiptUrl = URL.createObjectURL(receiptFile);
+      }
+
+      // Depois aprovaria o pagamento
+      await handleAction(paymentId, PaymentAction.APPROVE);
+      
+      toast({
+        title: "Pagamento aprovado",
+        description: "O pagamento foi aprovado com sucesso.",
+      });
+      
+      setApproveDialogOpen(false);
+    } catch (error) {
+      toast({
+        variant: "destructive",
+        title: "Erro",
+        description: "Ocorreu um erro ao aprovar o pagamento.",
+      });
+    } finally {
+      setIsProcessing(false);
+    }
+  };
+
+  const handleRejectPayment = async (paymentId: string, reason: string) => {
+    setIsProcessing(true);
+    try {
+      await handleAction(paymentId, PaymentAction.REJECT);
+      
+      toast({
+        title: "Pagamento rejeitado",
+        description: "O pagamento foi rejeitado com sucesso.",
+      });
+      
+      setRejectDialogOpen(false);
+    } catch (error) {
+      toast({
+        variant: "destructive",
+        title: "Erro",
+        description: "Ocorreu um erro ao rejeitar o pagamento.",
+      });
+    } finally {
+      setIsProcessing(false);
+    }
+  };
+
   if (isLoading) {
-    return <div className="text-center py-4">Carregando pagamentos...</div>;
+    return (
+      <Card>
+        <CardContent className="p-6">
+          <div className="text-center py-4">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto"></div>
+            <p className="mt-2 text-sm text-muted-foreground">Carregando pagamentos...</p>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  if (payments.length === 0) {
+    return (
+      <Card>
+        <CardContent className="p-6">
+          <div className="text-center py-4">
+            <p className="text-muted-foreground">Nenhum pagamento encontrado.</p>
+          </div>
+        </CardContent>
+      </Card>
+    );
   }
 
   return (
-    <div className="overflow-x-auto">
-      {payments.length === 0 ? (
-        <div className="text-center py-4">Nenhum pagamento encontrado.</div>
-      ) : (
+    <>
+      <div className="overflow-x-auto">
         <table className="min-w-full divide-y divide-gray-200">
           <thead className="bg-gray-50">
             <tr>
@@ -91,7 +194,7 @@ export const AdminPaymentsList: React.FC<AdminPaymentsListProps> = ({ payments, 
           </thead>
           <tbody className="bg-white divide-y divide-gray-200">
             {payments.map((payment) => (
-              <tr key={payment.id}>
+              <tr key={payment.id} className="hover:bg-gray-50">
                 <td className="px-6 py-4 whitespace-nowrap">
                   <input
                     type="checkbox"
@@ -100,10 +203,14 @@ export const AdminPaymentsList: React.FC<AdminPaymentsListProps> = ({ payments, 
                     onChange={() => handleSelectPayment(payment.id)}
                   />
                 </td>
-                <td className="px-6 py-4 whitespace-nowrap">{payment.id}</td>
-                <td className="px-6 py-4 whitespace-nowrap">{payment.client?.business_name || 'N/A'}</td>
+                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                  {payment.id.substring(0, 8)}...
+                </td>
                 <td className="px-6 py-4 whitespace-nowrap">
-                  {payment.amount ? new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(payment.amount) : 'N/A'}
+                  {payment.client?.business_name || 'N/A'}
+                </td>
+                <td className="px-6 py-4 whitespace-nowrap font-medium">
+                  {payment.amount ? formatCurrency(payment.amount) : 'N/A'}
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap">
                   <span
@@ -117,41 +224,47 @@ export const AdminPaymentsList: React.FC<AdminPaymentsListProps> = ({ payments, 
                     {payment.status}
                   </span>
                 </td>
-                <td className="px-6 py-4 whitespace-nowrap">
+                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                   {payment.created_at ? new Date(payment.created_at).toLocaleDateString('pt-BR') : 'N/A'}
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap space-x-2">
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    onClick={() => handleAction(payment.id, PaymentAction.VIEW)}
-                  >
-                    Ver
-                  </Button>
-                  {payment.status === PaymentStatus.PENDING && (
-                    <>
-                      <Button
-                        size="sm"
-                        variant="default"
-                        onClick={() => handleAction(payment.id, PaymentAction.APPROVE)}
-                      >
-                        Aprovar
-                      </Button>
-                      <Button
-                        size="sm"
-                        variant="destructive"
-                        onClick={() => handleAction(payment.id, PaymentAction.REJECT)}
-                      >
-                        Rejeitar
-                      </Button>
-                    </>
-                  )}
+                  <div className="flex space-x-2">
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => openDetailsDialog(payment)}
+                    >
+                      <Eye className="h-4 w-4 mr-1" />
+                      Ver
+                    </Button>
+                    
+                    {payment.status === PaymentStatus.PENDING && (
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button size="sm" variant="outline">
+                            <MoreHorizontal className="h-4 w-4" />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                          <DropdownMenuItem onClick={() => openApproveDialog(payment)}>
+                            <Check className="h-4 w-4 mr-2" />
+                            <span>Aprovar</span>
+                          </DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => openRejectDialog(payment)}>
+                            <X className="h-4 w-4 mr-2" />
+                            <span>Rejeitar</span>
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    )}
+                  </div>
                 </td>
               </tr>
             ))}
           </tbody>
         </table>
-      )}
+      </div>
+      
       {selectedPayments.length > 0 && (
         <div className="mt-4">
           <Button variant="destructive" onClick={handleDeleteSelected}>
@@ -159,8 +272,33 @@ export const AdminPaymentsList: React.FC<AdminPaymentsListProps> = ({ payments, 
           </Button>
         </div>
       )}
-    </div>
+      
+      {/* Dialogs para aprovação, rejeição e detalhes de pagamentos */}
+      <ApprovePaymentDialog
+        open={approveDialogOpen}
+        onOpenChange={setApproveDialogOpen}
+        payment={selectedPayment}
+        onApprove={handleApprovePayment}
+        isProcessing={isProcessing}
+      />
+      
+      <RejectPaymentDialog
+        open={rejectDialogOpen}
+        onOpenChange={setRejectDialogOpen}
+        payment={selectedPayment}
+        onReject={handleRejectPayment}
+        isProcessing={isProcessing}
+      />
+      
+      <PaymentDetailsDialog 
+        open={detailsDialogOpen}
+        onOpenChange={setDetailsDialogOpen}
+        payment={selectedPayment}
+      />
+    </>
   );
 };
 
+// Exportar como default e como named export para compatibilidade
+export { AdminPaymentsList };
 export default AdminPaymentsList;

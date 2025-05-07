@@ -8,7 +8,7 @@ import { PaymentAction } from '@/components/payments/PaymentTableColumns';
 
 interface UseAdminPaymentsProps {
   searchTerm: string;
-  statusFilter: PaymentStatus | 'all';
+  statusFilter: PaymentStatus | 'ALL';
   page: number;
 }
 
@@ -29,7 +29,7 @@ export const useAdminPayments = ({ searchTerm, statusFilter, page }: UseAdminPay
       query = query.ilike('id', `%${searchTerm}%`);
     }
 
-    if (statusFilter !== 'all') {
+    if (statusFilter !== 'ALL') {
       query = query.eq('status', statusFilter);
     }
 
