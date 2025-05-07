@@ -24,12 +24,12 @@ export const logisticsItems: SidebarItem[] = [
       },
       {
         title: "Estoque",
-        href: "/logistics/stock",
+        href: PATHS.LOGISTICS.STOCK,
         roles: [UserRole.LOGISTICS],
       },
       {
         title: "Máquinas de Clientes",
-        href: "/logistics/client-machines",
+        href: PATHS.LOGISTICS.CLIENT_MACHINES,
         roles: [UserRole.LOGISTICS],
       },
       {
@@ -58,17 +58,17 @@ export const logisticsItems: SidebarItem[] = [
       },
       {
         title: "Manutenção",
-        href: "/logistics/maintenance-requests",
+        href: PATHS.LOGISTICS.MAINTENANCE_REQUESTS,
         roles: [UserRole.LOGISTICS],
       },
       {
         title: "Troca de Bobinas",
-        href: "/logistics/paper-requests",
+        href: PATHS.LOGISTICS.PAPER_REQUESTS,
         roles: [UserRole.LOGISTICS],
       },
       {
         title: "Novas Instalações",
-        href: "/logistics/installation-requests",
+        href: PATHS.LOGISTICS.INSTALLATION_REQUESTS,
         roles: [UserRole.LOGISTICS],
       }
     ]

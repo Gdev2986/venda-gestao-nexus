@@ -1,8 +1,8 @@
 
 import { useState } from "react";
-import { Button } from "@/components/ui/button";
-import { Search, Plus, Filter, Eye, Edit } from "lucide-react";
+import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
 import {
   Select,
   SelectContent,
@@ -10,220 +10,195 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { DataTable } from "@/components/ui/data-table";
-import ServiceFormModal from "./ServiceFormModal";
-import ServiceDetailsModal from "./ServiceDetailsModal";
-import { useServices } from "@/hooks/use-services";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import { Skeleton } from "@/components/ui/skeleton";
+import { Search, Plus, Calendar } from "lucide-react";
+import { Link } from "react-router-dom";
+import { PATHS } from "@/routes/paths";
 
 const ServiceList = () => {
-  const [searchTerm, setSearchTerm] = useState("");
-  const [statusFilter, setStatusFilter] = useState("all");
-  const [typeFilter, setTypeFilter] = useState("all");
-  const [showForm, setShowForm] = useState(false);
-  const [showDetails, setShowDetails] = useState(false);
-  const [selectedService, setSelectedService] = useState<any>(null);
-  
-  const { services, isLoading, currentPage, totalPages, onPageChange, refreshServices } = 
-    useServices({ searchTerm, statusFilter, typeFilter });
-  
-  const columns = [
+  const [isLoading] = useState(false);
+  const [services] = useState([
     {
-      id: "id",
-      header: "ID",
-      accessorKey: "id",
-      cell: ({ row }: any) => {
-        return row.original.id.substring(0, 8) + "...";
-      },
+      id: "1",
+      type: "MAINTENANCE",
+      status: "PENDING",
+      client: "Supermercado ABC",
+      address: "Rua das Flores, 123",
+      scheduledFor: "2025-05-15T14:00:00Z",
+      createdAt: "2025-05-10T10:30:00Z",
+      machineSerial: "SN-123456"
     },
     {
-      id: "client",
-      header: "Cliente",
-      accessorKey: "clientName",
+      id: "2",
+      type: "PAPER_REPLACEMENT",
+      status: "COMPLETED",
+      client: "Farmácia Central",
+      address: "Av. Principal, 456",
+      scheduledFor: "2025-05-08T10:00:00Z",
+      createdAt: "2025-05-07T08:15:00Z",
+      machineSerial: "SN-345678"
     },
     {
-      id: "establishment",
-      header: "Estabelecimento",
-      accessorKey: "establishment",
-    },
-    {
-      id: "machine",
-      header: "Máquina",
-      accessorKey: "machineSerial",
-    },
-    {
-      id: "type",
-      header: "Tipo de Atendimento",
-      cell: ({ row }: any) => {
-        const type = row.original.type;
-        return (
-          <span>
-            {type === "MAINTENANCE"
-              ? "Manutenção"
-              : type === "PAPER_REPLACEMENT"
-              ? "Troca de Bobina"
-              : type === "INSTALLATION"
-              ? "Instalação"
-              : "Entrega de Bobina"}
-          </span>
-        );
-      },
-    },
-    {
-      id: "scheduledFor",
-      header: "Data/Hora",
-      cell: ({ row }: any) => {
-        return new Date(row.original.scheduledFor).toLocaleString("pt-BR");
-      },
-    },
-    {
-      id: "status",
-      header: "Status",
-      cell: ({ row }: any) => {
-        const status = row.original.status;
-        return (
-          <div className="flex items-center">
-            <div
-              className={`h-2 w-2 rounded-full mr-2 ${
-                status === "PENDING"
-                  ? "bg-amber-500"
-                  : status === "IN_PROGRESS"
-                  ? "bg-blue-500"
-                  : "bg-green-500"
-              }`}
-            />
-            <span>
-              {status === "PENDING"
-                ? "Pendente"
-                : status === "IN_PROGRESS"
-                ? "Em Andamento"
-                : "Concluído"}
-            </span>
-          </div>
-        );
-      },
-    },
-    {
-      id: "actions",
-      header: "Ações",
-      cell: ({ row }: any) => (
-        <div className="flex gap-2">
-          <Button 
-            variant="outline" 
-            size="sm"
-            onClick={() => handleEditService(row.original)}
-          >
-            <Edit className="h-4 w-4 mr-1" /> Editar
-          </Button>
-          <Button 
-            variant="outline" 
-            size="sm"
-            onClick={() => handleViewDetails(row.original)}
-          >
-            <Eye className="h-4 w-4 mr-1" /> Ver Detalhes
-          </Button>
-        </div>
-      ),
-    },
-  ];
+      id: "3",
+      type: "MACHINE_REPLACEMENT",
+      status: "SCHEDULED",
+      client: "Restaurante XYZ",
+      address: "Rua Comercial, 789",
+      scheduledFor: "2025-05-20T09:00:00Z",
+      createdAt: "2025-05-12T16:45:00Z",
+      machineSerial: "SN-789012"
+    }
+  ]);
 
-  const handleAddService = (service: any) => {
-    setShowForm(false);
-    refreshServices();
+  const getStatusBadge = (status: string) => {
+    const statusMap: Record<string, { color: string; label: string }> = {
+      PENDING: { color: "bg-yellow-100 text-yellow-800", label: "Pendente" },
+      SCHEDULED: { color: "bg-blue-100 text-blue-800", label: "Agendado" },
+      IN_PROGRESS: { color: "bg-purple-100 text-purple-800", label: "Em andamento" },
+      COMPLETED: { color: "bg-green-100 text-green-800", label: "Concluído" },
+      CANCELLED: { color: "bg-red-100 text-red-800", label: "Cancelado" },
+    };
+
+    const statusInfo = statusMap[status] || { color: "bg-gray-100 text-gray-800", label: status };
+
+    return (
+      <span className={`inline-flex items-center rounded-full px-2 py-1 text-xs font-medium ${statusInfo.color}`}>
+        {statusInfo.label}
+      </span>
+    );
   };
-  
-  const handleEditService = (service: any) => {
-    setSelectedService(service);
-    setShowForm(true);
-  };
-  
-  const handleViewDetails = (service: any) => {
-    setSelectedService(service);
-    setShowDetails(true);
+
+  const getServiceTypeBadge = (type: string) => {
+    const typeMap: Record<string, { color: string; label: string }> = {
+      MAINTENANCE: { color: "bg-orange-100 text-orange-800", label: "Manutenção" },
+      PAPER_REPLACEMENT: { color: "bg-indigo-100 text-indigo-800", label: "Troca de Bobina" },
+      MACHINE_REPLACEMENT: { color: "bg-cyan-100 text-cyan-800", label: "Substituição" },
+      INSTALLATION: { color: "bg-emerald-100 text-emerald-800", label: "Instalação" },
+    };
+
+    const typeInfo = typeMap[type] || { color: "bg-gray-100 text-gray-800", label: type };
+
+    return (
+      <span className={`inline-flex items-center rounded-full px-2 py-1 text-xs font-medium ${typeInfo.color}`}>
+        {typeInfo.label}
+      </span>
+    );
   };
 
   return (
-    <div className="space-y-4">
-      <div className="flex justify-between items-center">
-        <h2 className="text-lg font-semibold">Atendimentos</h2>
-        <Button onClick={() => {
-          setSelectedService(null);
-          setShowForm(true);
-        }}>
-          <Plus className="mr-2 h-4 w-4" /> Novo Atendimento
-        </Button>
-      </div>
-      
-      <div className="flex flex-col md:flex-row gap-4 items-end">
-        <div className="relative flex-1">
-          <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-          <Input
-            placeholder="Buscar por cliente, máquina..."
-            className="pl-8 bg-background"
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-          />
+    <Card>
+      <CardContent className="p-6">
+        <div className="flex flex-col space-y-4 md:flex-row md:items-center md:space-y-0 md:space-x-4 mb-4">
+          <div className="relative flex-1">
+            <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
+            <Input
+              placeholder="Buscar por cliente, endereço ou serial..."
+              className="pl-8"
+            />
+          </div>
+
+          <div className="flex flex-wrap gap-2">
+            <Select defaultValue="all">
+              <SelectTrigger className="w-[160px]">
+                <SelectValue placeholder="Status" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Todos os status</SelectItem>
+                <SelectItem value="PENDING">Pendentes</SelectItem>
+                <SelectItem value="SCHEDULED">Agendados</SelectItem>
+                <SelectItem value="IN_PROGRESS">Em andamento</SelectItem>
+                <SelectItem value="COMPLETED">Concluídos</SelectItem>
+                <SelectItem value="CANCELLED">Cancelados</SelectItem>
+              </SelectContent>
+            </Select>
+
+            <Select defaultValue="all">
+              <SelectTrigger className="w-[160px]">
+                <SelectValue placeholder="Tipo" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Todos os tipos</SelectItem>
+                <SelectItem value="MAINTENANCE">Manutenção</SelectItem>
+                <SelectItem value="PAPER_REPLACEMENT">Troca de Bobina</SelectItem>
+                <SelectItem value="MACHINE_REPLACEMENT">Substituição</SelectItem>
+                <SelectItem value="INSTALLATION">Instalação</SelectItem>
+              </SelectContent>
+            </Select>
+
+            <Button asChild>
+              <Link to={PATHS.LOGISTICS.CALENDAR}>
+                <Calendar className="mr-2 h-4 w-4" />
+                Calendário
+              </Link>
+            </Button>
+
+            <Button>
+              <Plus className="mr-2 h-4 w-4" />
+              Novo Atendimento
+            </Button>
+          </div>
         </div>
-        
-        <div className="flex flex-wrap gap-2 items-center">
-          <Select
-            value={statusFilter}
-            onValueChange={setStatusFilter}
-          >
-            <SelectTrigger className="w-[160px]">
-              <SelectValue placeholder="Status" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">Todos Status</SelectItem>
-              <SelectItem value="PENDING">Pendente</SelectItem>
-              <SelectItem value="IN_PROGRESS">Em Andamento</SelectItem>
-              <SelectItem value="COMPLETED">Concluído</SelectItem>
-            </SelectContent>
-          </Select>
-          
-          <Select
-            value={typeFilter}
-            onValueChange={setTypeFilter}
-          >
-            <SelectTrigger className="w-[180px]">
-              <SelectValue placeholder="Tipo de Atendimento" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">Todos Tipos</SelectItem>
-              <SelectItem value="MAINTENANCE">Manutenção</SelectItem>
-              <SelectItem value="PAPER_REPLACEMENT">Troca de Bobina</SelectItem>
-              <SelectItem value="INSTALLATION">Instalação</SelectItem>
-              <SelectItem value="PAPER_DELIVERY">Entrega de Bobina</SelectItem>
-            </SelectContent>
-          </Select>
-          
-          <Button variant="outline" className="flex items-center gap-2">
-            <Filter className="h-4 w-4" /> Filtrar
-          </Button>
-        </div>
-      </div>
-      
-      <DataTable
-        columns={columns}
-        data={services}
-        currentPage={currentPage}
-        totalPages={totalPages}
-        onPageChange={onPageChange}
-        isLoading={isLoading}
-      />
-      
-      <ServiceFormModal
-        open={showForm}
-        onOpenChange={setShowForm}
-        service={selectedService}
-        onSave={handleAddService}
-      />
-      
-      <ServiceDetailsModal
-        open={showDetails}
-        onOpenChange={setShowDetails}
-        service={selectedService}
-      />
-    </div>
+
+        {isLoading ? (
+          <div className="space-y-3">
+            <Skeleton className="h-10 w-full" />
+            <Skeleton className="h-10 w-full" />
+            <Skeleton className="h-10 w-full" />
+            <Skeleton className="h-10 w-full" />
+          </div>
+        ) : (
+          <div className="rounded-md border">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Tipo</TableHead>
+                  <TableHead>Cliente</TableHead>
+                  <TableHead>Serial</TableHead>
+                  <TableHead>Status</TableHead>
+                  <TableHead>Agendado para</TableHead>
+                  <TableHead className="w-[80px]">Ações</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {services.length === 0 ? (
+                  <TableRow>
+                    <TableCell colSpan={6} className="h-24 text-center">
+                      Nenhum atendimento encontrado.
+                    </TableCell>
+                  </TableRow>
+                ) : (
+                  services.map((service) => (
+                    <TableRow key={service.id}>
+                      <TableCell>{getServiceTypeBadge(service.type)}</TableCell>
+                      <TableCell className="font-medium">{service.client}</TableCell>
+                      <TableCell>{service.machineSerial}</TableCell>
+                      <TableCell>{getStatusBadge(service.status)}</TableCell>
+                      <TableCell>
+                        {new Date(service.scheduledFor).toLocaleDateString("pt-BR")}{" "}
+                        {new Date(service.scheduledFor).toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })}
+                      </TableCell>
+                      <TableCell>
+                        <Button variant="ghost" size="sm">
+                          Detalhes
+                        </Button>
+                      </TableCell>
+                    </TableRow>
+                  ))
+                )}
+              </TableBody>
+            </Table>
+          </div>
+        )}
+      </CardContent>
+    </Card>
   );
 };
 

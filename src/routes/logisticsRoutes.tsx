@@ -20,7 +20,7 @@ import Machines from "../pages/machines/Machines";
 import NewMachine from "../pages/machines/NewMachine";
 import Clients from "../pages/clients/Clients";
 import Sales from "../pages/sales/Sales";
-import Settings from "../pages/settings/Settings";
+import Settings from "../pages/logistics/Settings";
 import Help from "../pages/Help";
 
 export const LogisticsRoutes = (

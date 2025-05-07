@@ -12,6 +12,9 @@ import { Switch } from "@/components/ui/switch";
 import { useToast } from "@/hooks/use-toast";
 import { Trash2, Plus, Check } from "lucide-react";
 
+// Define the allowed PIX key types as a union type
+type PixKeyType = "CPF" | "CNPJ" | "EMAIL" | "PHONE" | "RANDOM";
+
 interface PixKeysManagerProps {
   userId?: string;
 }
@@ -24,7 +27,7 @@ const PixKeysManager = ({ userId }: PixKeysManagerProps) => {
   const [isAdding, setIsAdding] = useState(false);
   const [newKey, setNewKey] = useState({
     key: "",
-    type: "CPF",
+    type: "CPF" as PixKeyType,
     name: "Minha chave",
     isDefault: false
   });
@@ -69,7 +72,7 @@ const PixKeysManager = ({ userId }: PixKeysManagerProps) => {
       setIsAdding(false);
       setNewKey({
         key: "",
-        type: "CPF",
+        type: "CPF" as PixKeyType,
         name: "Minha chave",
         isDefault: false
       });
