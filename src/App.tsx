@@ -55,6 +55,7 @@ function App() {
       {ClientRoutes}
       {PartnerRoutes}
       {FinancialRoutes}
+      {/* Logistics users still need access to their specific routes */}
       {LogisticsRoutes}
 
       {/* Shared Routes (accessible by all roles) */}

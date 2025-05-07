@@ -17,7 +17,8 @@ export const getDashboardPath = (userRole: UserRole): string => {
     case UserRole.FINANCIAL:
       return PATHS.FINANCIAL.DASHBOARD;
     case UserRole.LOGISTICS:
-      return PATHS.LOGISTICS.DASHBOARD;
+      // Redirect Logistics users to Admin dashboard
+      return PATHS.ADMIN.DASHBOARD;
     default:
       console.log("Unknown role, defaulting to USER dashboard");
       return PATHS.USER.DASHBOARD;

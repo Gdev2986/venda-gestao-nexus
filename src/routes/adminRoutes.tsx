@@ -5,6 +5,7 @@ import { UserRole } from "@/types";
 
 // Layouts
 import MainLayout from "../layouts/MainLayout";
+import LogisticsLayout from "../layouts/LogisticsLayout";
 
 // Auth Protection Component
 import RequireAuth from "../components/auth/RequireAuth";
@@ -52,10 +53,24 @@ import Help from "../pages/Help";
 
 // Import Clients from clients folder instead of directly
 import Clients from "../pages/clients/Clients";
+import { useUserRole } from "@/hooks/use-user-role";
+
+// Custom layout selector based on user role
+const AdminLayoutSelector = ({ children }: { children: React.ReactNode }) => {
+  const { userRole } = useUserRole();
+  
+  // Use LogisticsLayout for Logistics users
+  if (userRole === UserRole.LOGISTICS) {
+    return <LogisticsLayout />;
+  }
+  
+  // Use default MainLayout for other roles
+  return <MainLayout>{children}</MainLayout>;
+};
 
 export const AdminRoutes = (
-  <Route element={<RequireAuth allowedRoles={[UserRole.ADMIN]} />}>
-    <Route element={<MainLayout />}>
+  <Route element={<RequireAuth allowedRoles={[UserRole.ADMIN, UserRole.LOGISTICS]} />}>
+    <Route element={<AdminLayoutSelector />}>
       <Route
         path={PATHS.ADMIN.DASHBOARD}
         element={<AdminDashboard />}

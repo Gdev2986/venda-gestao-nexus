@@ -44,7 +44,7 @@ const LogisticsLayout = () => {
     }
   }, [sidebarOpen, isMobile]);
 
-  // Add loading animation
+  // Add loading animation with shorter duration
   useEffect(() => {
     // Simulate loading for smoother transitions
     setIsLoading(true);

@@ -47,6 +47,10 @@ const RequireAuth = ({ allowedRoles = [], redirectTo = PATHS.LOGIN }: RequireAut
           // Allow financial users to access these specific admin routes
           console.log("Financial user accessing permitted admin route:", location.pathname);
         } 
+        // Logistics users can access admin routes
+        else if (userRole === UserRole.LOGISTICS && location.pathname.startsWith('/admin')) {
+          console.log("Logistics user accessing admin route:", location.pathname);
+        }
         // If the user is trying to access their role's dashboard or direct routes, allow it
         else if (
           (userRole === UserRole.ADMIN && location.pathname.startsWith('/admin')) ||
@@ -128,6 +132,12 @@ const RequireAuth = ({ allowedRoles = [], redirectTo = PATHS.LOGIN }: RequireAut
        location.pathname.includes('/admin/clients') || 
        location.pathname.includes('/admin/reports'))) {
     // Allow financial users to access these specific admin routes
+    return <Outlet />;
+  }
+
+  // Special check for Logistics users accessing admin routes
+  if (userRole === UserRole.LOGISTICS && location.pathname.startsWith('/admin')) {
+    // Allow logistics users to access all admin routes
     return <Outlet />;
   }
 
