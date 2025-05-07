@@ -16,7 +16,7 @@ import LogisticsRequests from "../pages/logistics/Requests";
 import LogisticsCalendar from "../pages/logistics/Calendar";
 import LogisticsInventory from "../pages/logistics/Inventory";
 import LogisticsSupport from "../pages/logistics/Support";
-import Machines from "../pages/machines/Machines";
+import Machines from "../pages/logistics/Machines";
 import NewMachine from "../pages/machines/NewMachine";
 import Clients from "../pages/clients/Clients";
 import Sales from "../pages/sales/Sales";

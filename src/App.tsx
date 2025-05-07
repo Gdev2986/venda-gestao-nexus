@@ -49,7 +49,7 @@ function App() {
       {/* Generic dashboard route */}
       <Route 
         path={PATHS.DASHBOARD} 
-        element={getDashboardRedirect(userRole)} 
+        element={<Navigate to={getDashboardRedirect(userRole)} replace />} 
       />
 
       {/* Auth Routes */}

@@ -4,21 +4,29 @@ import { PATHS } from "./paths";
 import { UserRole } from "@/types";
 
 /**
+ * Returns the appropriate dashboard path based on user role
+ */
+export const getDashboardPath = (userRole: UserRole): string => {
+  switch (userRole) {
+    case UserRole.ADMIN:
+      return PATHS.ADMIN.DASHBOARD;
+    case UserRole.CLIENT:
+      return PATHS.USER.DASHBOARD;
+    case UserRole.PARTNER:
+      return PATHS.PARTNER.DASHBOARD;
+    case UserRole.FINANCIAL:
+      return PATHS.FINANCIAL.DASHBOARD;
+    case UserRole.LOGISTICS:
+      return PATHS.LOGISTICS.DASHBOARD;
+    default:
+      return PATHS.USER.DASHBOARD;
+  }
+};
+
+/**
  * Returns the appropriate dashboard redirect based on user role
  */
 export const getDashboardRedirect = (userRole: UserRole) => {
-  switch (userRole) {
-    case UserRole.ADMIN:
-      return <Navigate to={PATHS.ADMIN.DASHBOARD} replace />;
-    case UserRole.CLIENT:
-      return <Navigate to={PATHS.USER.DASHBOARD} replace />;
-    case UserRole.PARTNER:
-      return <Navigate to={PATHS.PARTNER.DASHBOARD} replace />;
-    case UserRole.FINANCIAL:
-      return <Navigate to={PATHS.FINANCIAL.DASHBOARD} replace />;
-    case UserRole.LOGISTICS:
-      return <Navigate to={PATHS.LOGISTICS.DASHBOARD} replace />;
-    default:
-      return <Navigate to={PATHS.USER.DASHBOARD} replace />;
-  }
+  const path = getDashboardPath(userRole);
+  return <Navigate to={path} replace />;
 };

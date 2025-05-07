@@ -7,6 +7,7 @@ import { motion } from "framer-motion";
 import { useState, useEffect } from "react";
 import { useUserRole } from "@/hooks/use-user-role";
 import { UserRole } from "@/types";
+import { getDashboardPath } from "@/routes/routeUtils";
 
 const RootLayout = () => {
   const { user, isLoading } = useAuth();
@@ -40,30 +41,15 @@ const RootLayout = () => {
     );
   }
   
-  // Helper function to get the appropriate dashboard based on role
-  const getRoleBasedDashboard = () => {
-    switch (userRole) {
-      case UserRole.ADMIN:
-        return PATHS.ADMIN.DASHBOARD;
-      case UserRole.CLIENT:
-        return PATHS.USER.DASHBOARD;
-      case UserRole.PARTNER:
-        return PATHS.PARTNER.DASHBOARD;
-      case UserRole.FINANCIAL:
-        return PATHS.FINANCIAL.DASHBOARD;
-      case UserRole.LOGISTICS:
-        return PATHS.LOGISTICS.DASHBOARD;
-      default:
-        return PATHS.USER.DASHBOARD;
-    }
-  };
-  
   // If authenticated, redirect to role-specific dashboard
   if (user) {
-    return <Navigate to={getRoleBasedDashboard()} replace />;
+    const dashboardPath = getDashboardPath(userRole);
+    console.log(`User authenticated, redirecting to ${dashboardPath}`);
+    return <Navigate to={dashboardPath} replace />;
   }
   
   // If not authenticated, redirect to login
+  console.log("User not authenticated, redirecting to login");
   return <Navigate to={PATHS.LOGIN} replace />;
 };
 

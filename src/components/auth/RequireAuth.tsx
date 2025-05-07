@@ -8,6 +8,7 @@ import { PATHS } from "@/routes/paths";
 import { UserRole } from "@/types";
 import { useUserRole } from "@/hooks/use-user-role";
 import { useToast } from "@/hooks/use-toast";
+import { getDashboardPath } from "@/routes/routeUtils";
 
 interface RequireAuthProps {
   allowedRoles?: UserRole[];
@@ -41,15 +42,15 @@ const RequireAuth = ({ allowedRoles = [], redirectTo = PATHS.LOGIN }: RequireAut
           // Allow financial users to access these specific admin routes
           console.log("Financial user accessing permitted admin route:", location.pathname);
         } 
-        // If the user is trying to access their own role's dashboard, allow it
+        // If the user is trying to access their role's dashboard or direct routes, allow it
         else if (
-          (userRole === UserRole.ADMIN && location.pathname === PATHS.ADMIN.DASHBOARD) ||
-          (userRole === UserRole.CLIENT && location.pathname === PATHS.USER.DASHBOARD) ||
-          (userRole === UserRole.PARTNER && location.pathname === PATHS.PARTNER.DASHBOARD) || 
-          (userRole === UserRole.FINANCIAL && location.pathname === PATHS.FINANCIAL.DASHBOARD) ||
-          (userRole === UserRole.LOGISTICS && location.pathname === PATHS.LOGISTICS.DASHBOARD)
+          (userRole === UserRole.ADMIN && location.pathname.startsWith('/admin')) ||
+          (userRole === UserRole.CLIENT && location.pathname.startsWith('/user')) ||
+          (userRole === UserRole.PARTNER && location.pathname.startsWith('/partner')) || 
+          (userRole === UserRole.FINANCIAL && location.pathname.startsWith('/financial')) ||
+          (userRole === UserRole.LOGISTICS && location.pathname.startsWith('/logistics'))
         ) {
-          console.log("User accessing their own dashboard:", location.pathname);
+          console.log("User accessing their own routes:", location.pathname);
         }
         else {
           // If role-specific access control is defined and user doesn't have permission
@@ -62,28 +63,9 @@ const RequireAuth = ({ allowedRoles = [], redirectTo = PATHS.LOGIN }: RequireAut
             variant: "destructive",
           });
           
-          // Redirect to role-specific dashboard based on user role
-          setTimeout(() => {
-            switch(userRole) {
-              case UserRole.ADMIN:
-                window.location.href = PATHS.ADMIN.DASHBOARD;
-                break;
-              case UserRole.CLIENT:
-                window.location.href = PATHS.USER.DASHBOARD;
-                break;
-              case UserRole.PARTNER:
-                window.location.href = PATHS.PARTNER.DASHBOARD;
-                break;
-              case UserRole.FINANCIAL:
-                window.location.href = PATHS.FINANCIAL.DASHBOARD;
-                break;
-              case UserRole.LOGISTICS:
-                window.location.href = PATHS.LOGISTICS.DASHBOARD;
-                break;
-              default:
-                window.location.href = PATHS.USER.DASHBOARD;
-            }
-          }, 0);
+          // Redirect to role-specific dashboard
+          const dashboardPath = getDashboardPath(userRole);
+          window.location.href = dashboardPath;
         }
       }
     }
@@ -138,30 +120,8 @@ const RequireAuth = ({ allowedRoles = [], redirectTo = PATHS.LOGIN }: RequireAut
 
   // Check if user has permission to access this route
   if (allowedRoles.length > 0 && !allowedRoles.includes(userRole)) {
-    // Get the appropriate dashboard based on user role
-    let roleDashboard;
-    switch(userRole) {
-      case UserRole.ADMIN:
-        roleDashboard = PATHS.ADMIN.DASHBOARD;
-        break;
-      case UserRole.CLIENT:
-        roleDashboard = PATHS.USER.DASHBOARD;
-        break;
-      case UserRole.PARTNER:
-        roleDashboard = PATHS.PARTNER.DASHBOARD;
-        break;
-      case UserRole.FINANCIAL:
-        roleDashboard = PATHS.FINANCIAL.DASHBOARD;
-        break;
-      case UserRole.LOGISTICS:
-        roleDashboard = PATHS.LOGISTICS.DASHBOARD;
-        break;
-      default:
-        roleDashboard = PATHS.USER.DASHBOARD;
-    }
-    
-    console.log(`Redirecting user with role ${userRole} to ${roleDashboard}`);
-    return <Navigate to={roleDashboard} replace />;
+    console.log(`Redirecting user with role ${userRole} to ${getDashboardPath(userRole)}`);
+    return <Navigate to={getDashboardPath(userRole)} replace />;
   }
 
   // If authenticated and has the right role, render the protected content
