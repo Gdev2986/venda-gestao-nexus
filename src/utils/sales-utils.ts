@@ -56,6 +56,31 @@ export const generateMockSalesData = (count: number): Sale[] => {
   return Array.from({ length: count }, () => generateRandomSale());
 };
 
+// Adding alias for backward compatibility
+export const generateMockSales = (count: number, dateRange?: { from: Date; to: Date }): Sale[] => {
+  if (!dateRange) {
+    return generateMockSalesData(count);
+  }
+
+  // Filter sales to be within the date range
+  const sales = generateMockSalesData(count * 2); // Generate extra to allow for filtering
+  return sales.filter(sale => {
+    const saleDate = new Date(sale.date);
+    return saleDate >= dateRange.from && saleDate <= dateRange.to;
+  }).slice(0, count);
+};
+
+/**
+ * Calculate sales totals for the Sales page
+ */
+export const calculateSalesTotals = (sales: Sale[]) => {
+  return {
+    grossAmount: sales.reduce((sum, sale) => sum + sale.gross_amount, 0),
+    netAmount: sales.reduce((sum, sale) => sum + sale.net_amount, 0),
+    count: sales.length
+  };
+};
+
 /**
  * Helper function to filter sales data based on search term
  */
@@ -77,12 +102,33 @@ export const filterSalesData = (sales: Sale[], searchTerm: string): Sale[] => {
 };
 
 /**
- * Calculate sales totals for the Sales page
+ * Generate daily sales data for charts
  */
-export const calculateSalesTotals = (sales: Sale[]) => {
-  return {
-    grossAmount: sales.reduce((sum, sale) => sum + sale.gross_amount, 0),
-    netAmount: sales.reduce((sum, sale) => sum + sale.net_amount, 0),
-    count: sales.length
-  };
+export const generateDailySalesData = (dateRange: { from: Date; to: Date }) => {
+  const result = [];
+  const currentDate = new Date(dateRange.from);
+  const endDate = new Date(dateRange.to);
+  
+  while (currentDate <= endDate) {
+    result.push({
+      name: currentDate.toISOString().split('T')[0],
+      total: faker.number.int({ min: 200, max: 1500 })
+    });
+    
+    currentDate.setDate(currentDate.getDate() + 1);
+  }
+  
+  return result;
+};
+
+/**
+ * Generate payment methods data for charts
+ */
+export const generatePaymentMethodsData = (dateRange: { from: Date; to: Date }) => {
+  const methods = Object.values(PaymentMethod);
+  
+  return methods.map(method => ({
+    name: method,
+    value: faker.number.int({ min: 1, max: 20 })
+  }));
 };

@@ -60,6 +60,7 @@ export interface Payment {
     owner_name: string;
   };
   client?: Client;
+  due_date?: string; // Added due_date property
 }
 
 // Types for partners
@@ -129,6 +130,8 @@ export interface FilterValues {
   status?: string;
   sortBy?: string;
   page?: number;
+  searchTerm?: string; // Added for backward compatibility
+  commissionRange?: [number, number]; // Added for backward compatibility
 }
 
 // User data for user management
@@ -166,6 +169,8 @@ export interface Sale {
   client_id: string;
   created_at: string;
   updated_at: string;
+  amount?: number; // Added for backward compatibility
+  status?: string; // Added for backward compatibility
 }
 
 // Machine interface
@@ -186,4 +191,10 @@ export interface User {
   name: string;
   email: string;
   role: UserRole;
+}
+
+// SalesChartData interface for dashboard
+export interface SalesChartData {
+  name: string;
+  total: number;
 }

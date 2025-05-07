@@ -1,102 +1,226 @@
 
-import { useState } from "react";
-import { Filter } from "lucide-react";
-import { PageWrapper } from "@/components/page/PageWrapper";
+import React, { useState, useEffect } from 'react';
+import { Card, CardContent } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader } from "@/components/ui/card";
-import { 
-  Select, 
-  SelectContent, 
-  SelectGroup, 
-  SelectItem, 
-  SelectLabel, 
-  SelectTrigger, 
-  SelectValue 
-} from "@/components/ui/select";
-import { Input } from "@/components/ui/input";
-import MachinesAllTab from "./MachinesAllTab";
+import { Printer, Info, History, ArrowRightLeft } from "lucide-react";
+import { useDialog } from "@/hooks/use-dialog";
+import MachineDetailsModal from "@/components/logistics/MachineDetailsModal";
+import MachineHistoryDialog from "@/components/logistics/machine-dialogs/MachineHistoryDialog";
+import MachineTransferDialog from "@/components/logistics/machine-dialogs/MachineTransferDialog";
 
-const MachineList = () => {
-  const [searchTerm, setSearchTerm] = useState("");
-  const [modelFilter, setModelFilter] = useState("all");
-  const [statusFilter, setStatusFilter] = useState("all");
-  const [showFilters, setShowFilters] = useState(false);
+// Prop interface
+export interface MachineListProps {
+  searchTerm: string;
+  modelFilter: string;
+  statusFilter: string;
+}
+
+// Sample data for machines
+const mockMachines = [
+  {
+    id: "1",
+    serial: "SN12345678",
+    model: "POS X200",
+    status: "active",
+    location: "São Paulo",
+    client: "Cliente A",
+    lastMaintenance: "2023-01-15",
+  },
+  {
+    id: "2",
+    serial: "SN87654321",
+    model: "Terminal Y100",
+    status: "maintenance",
+    location: "Rio de Janeiro",
+    client: "Cliente B",
+    lastMaintenance: "2023-02-20",
+  },
+  {
+    id: "3",
+    serial: "SN11223344",
+    model: "Mobile Z50",
+    status: "inactive",
+    location: "Estoque",
+    client: "-",
+    lastMaintenance: "2022-11-05",
+  },
+  {
+    id: "4",
+    serial: "SN55667788",
+    model: "POS X300",
+    status: "active",
+    location: "Belo Horizonte",
+    client: "Cliente C",
+    lastMaintenance: "2023-03-10",
+  },
+  {
+    id: "5",
+    serial: "SN99887766",
+    model: "Terminal Y200",
+    status: "active",
+    location: "Porto Alegre",
+    client: "Cliente D",
+    lastMaintenance: "2023-02-28",
+  },
+];
+
+const MachineList: React.FC<MachineListProps> = ({ 
+  searchTerm, 
+  modelFilter, 
+  statusFilter 
+}) => {
+  const [machines, setMachines] = useState<any[]>([]);
+  const [selectedMachine, setSelectedMachine] = useState<any>(null);
+  
+  // Dialogs state
+  const { 
+    isOpen: isDetailsOpen, 
+    onOpen: onOpenDetails, 
+    onClose: onCloseDetails 
+  } = useDialog();
+  
+  const { 
+    isOpen: isHistoryOpen, 
+    onOpen: onOpenHistory, 
+    onClose: onCloseHistory 
+  } = useDialog();
+  
+  const { 
+    isOpen: isTransferOpen, 
+    onOpen: onOpenTransfer, 
+    onClose: onCloseTransfer 
+  } = useDialog();
+
+  // Load and filter machines
+  useEffect(() => {
+    // Apply filters
+    let filtered = [...mockMachines];
+    
+    if (searchTerm) {
+      const term = searchTerm.toLowerCase();
+      filtered = filtered.filter(
+        m => 
+          m.serial.toLowerCase().includes(term) || 
+          m.model.toLowerCase().includes(term) || 
+          m.client.toLowerCase().includes(term)
+      );
+    }
+    
+    if (modelFilter) {
+      const term = modelFilter.toLowerCase();
+      filtered = filtered.filter(m => m.model.toLowerCase().includes(term));
+    }
+    
+    if (statusFilter) {
+      filtered = filtered.filter(m => m.status === statusFilter);
+    }
+    
+    setMachines(filtered);
+  }, [searchTerm, modelFilter, statusFilter]);
+
+  const handleViewDetails = (machine: any) => {
+    setSelectedMachine(machine);
+    onOpenDetails();
+  };
+  
+  const handleViewHistory = (machine: any) => {
+    setSelectedMachine(machine);
+    onOpenHistory();
+  };
+  
+  const handleTransferMachine = (machine: any) => {
+    setSelectedMachine(machine);
+    onOpenTransfer();
+  };
+
+  // Helper function to get status badge color
+  const getStatusBadge = (status: string) => {
+    switch (status) {
+      case "active":
+        return <Badge variant="default" className="bg-green-500">Ativo</Badge>;
+      case "maintenance":
+        return <Badge variant="outline" className="bg-amber-100 text-amber-800 border-amber-300">Manutenção</Badge>;
+      case "inactive":
+        return <Badge variant="outline" className="bg-gray-100 text-gray-800 border-gray-300">Inativo</Badge>;
+      default:
+        return <Badge variant="outline">Desconhecido</Badge>;
+    }
+  };
 
   return (
-    <PageWrapper>
-      <div className="mb-4">
-        <div className="flex justify-between items-center mb-4">
-          <div className="flex-1 mr-4">
-            <Input
-              placeholder="Buscar por serial, modelo ou cliente..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full"
-            />
-          </div>
-          <div className="flex gap-2">
-            <Button
-              variant="outline"
-              onClick={() => setShowFilters(!showFilters)}
-            >
-              <Filter className="w-4 h-4 mr-2" />
-              Filtros
-            </Button>
-          </div>
-        </div>
-
-        {showFilters && (
-          <Card className="mb-4">
-            <CardHeader className="pb-2">
-              <h3 className="text-sm font-medium">Filtros</h3>
-            </CardHeader>
-            <CardContent>
-              <div className="flex flex-col md:flex-row gap-4">
-                <div className="w-full md:w-1/2">
-                  <Select value={modelFilter} onValueChange={setModelFilter}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Filtrar por modelo" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectGroup>
-                        <SelectLabel>Modelos</SelectLabel>
-                        <SelectItem value="all">Todos os modelos</SelectItem>
-                        <SelectItem value="Terminal Pro">Terminal Pro</SelectItem>
-                        <SelectItem value="Terminal Mini">Terminal Mini</SelectItem>
-                        <SelectItem value="Terminal Standard">Terminal Standard</SelectItem>
-                      </SelectGroup>
-                    </SelectContent>
-                  </Select>
+    <div className="space-y-4">
+      {machines.length === 0 ? (
+        <Card>
+          <CardContent className="pt-6">
+            <p className="text-center text-muted-foreground">Nenhuma máquina encontrada.</p>
+          </CardContent>
+        </Card>
+      ) : (
+        machines.map((machine) => (
+          <Card key={machine.id} className="overflow-hidden">
+            <CardContent className="p-0">
+              <div className="p-6 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+                <div className="space-y-1">
+                  <div className="flex items-center gap-2">
+                    <h3 className="font-medium">{machine.model}</h3>
+                    {getStatusBadge(machine.status)}
+                  </div>
+                  <p className="text-sm text-muted-foreground">Serial: {machine.serial}</p>
+                  <p className="text-sm">
+                    <span className="text-muted-foreground">Cliente:</span> {machine.client}
+                  </p>
+                  <p className="text-sm">
+                    <span className="text-muted-foreground">Localização:</span> {machine.location}
+                  </p>
                 </div>
-                <div className="w-full md:w-1/2">
-                  <Select value={statusFilter} onValueChange={setStatusFilter}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Filtrar por status" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectGroup>
-                        <SelectLabel>Status</SelectLabel>
-                        <SelectItem value="all">Todos os status</SelectItem>
-                        <SelectItem value="ACTIVE">Ativas</SelectItem>
-                        <SelectItem value="INACTIVE">Inativas</SelectItem>
-                        <SelectItem value="MAINTENANCE">Manutenção</SelectItem>
-                        <SelectItem value="STOCK">Estoque</SelectItem>
-                      </SelectGroup>
-                    </SelectContent>
-                  </Select>
+                
+                <div className="flex flex-wrap gap-2">
+                  <Button variant="outline" size="sm" onClick={() => handleViewDetails(machine)}>
+                    <Info className="h-4 w-4 mr-2" />
+                    Detalhes
+                  </Button>
+                  <Button variant="outline" size="sm" onClick={() => handleViewHistory(machine)}>
+                    <History className="h-4 w-4 mr-2" />
+                    Histórico
+                  </Button>
+                  <Button variant="outline" size="sm" onClick={() => handleTransferMachine(machine)}>
+                    <ArrowRightLeft className="h-4 w-4 mr-2" />
+                    Transferir
+                  </Button>
+                  <Button variant="outline" size="sm">
+                    <Printer className="h-4 w-4 mr-2" />
+                    Relatório
+                  </Button>
                 </div>
               </div>
             </CardContent>
           </Card>
-        )}
-      </div>
+        ))
+      )}
       
-      <MachinesAllTab 
-        searchTerm={searchTerm}
-        modelFilter={modelFilter}
-        statusFilter={statusFilter}
-      />
-    </PageWrapper>
+      {selectedMachine && (
+        <>
+          <MachineDetailsModal 
+            open={isDetailsOpen} 
+            onOpenChange={onCloseDetails} 
+            machine={selectedMachine} 
+          />
+          
+          <MachineHistoryDialog 
+            open={isHistoryOpen} 
+            onOpenChange={onCloseHistory} 
+            machineId={selectedMachine.id} 
+          />
+          
+          <MachineTransferDialog 
+            open={isTransferOpen} 
+            onOpenChange={onCloseTransfer} 
+            machineId={selectedMachine.id} 
+          />
+        </>
+      )}
+    </div>
   );
 };
 

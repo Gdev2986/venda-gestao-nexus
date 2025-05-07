@@ -1,79 +1,77 @@
 
-import { useState } from "react";
+import React, { useState } from 'react';
+import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Button } from "@/components/ui/button";
 import { Slider } from "@/components/ui/slider";
 import { FilterValues } from "@/types";
 
 interface PartnerFilterProps {
-  onFilter: (filter: FilterValues) => void;
+  onApplyFilter: (values: FilterValues) => void;
+  isLoading?: boolean;
 }
 
-const PartnerFilter = ({ onFilter }: PartnerFilterProps) => {
-  const [searchTerm, setSearchTerm] = useState<string>("");
+const PartnerFilter: React.FC<PartnerFilterProps> = ({ onApplyFilter, isLoading = false }) => {
+  const [searchTerm, setSearchTerm] = useState("");
   const [commissionRange, setCommissionRange] = useState<[number, number]>([0, 100]);
-  
-  const handleCommissionChange = (value: number[]) => {
-    // Ensure we have exactly two values and they are numbers
-    if (Array.isArray(value) && value.length >= 2) {
-      setCommissionRange([value[0], value[1]]);
-    }
-  };
-  
-  const handleFilter = () => {
-    onFilter({
-      search: searchTerm,
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    const values: FilterValues = {
       searchTerm: searchTerm,
       commissionRange: commissionRange
-    });
+    };
+    onApplyFilter(values);
   };
-  
+
   const handleReset = () => {
     setSearchTerm("");
     setCommissionRange([0, 100]);
-    onFilter({
-      search: "",
+    
+    const values: FilterValues = {
       searchTerm: "",
       commissionRange: [0, 100]
-    });
+    };
+    onApplyFilter(values);
   };
-  
+
   return (
-    <div className="space-y-6">
-      <div className="space-y-2">
-        <Label htmlFor="company-name">Company Name</Label>
+    <form onSubmit={handleSubmit} className="space-y-4">
+      <div>
+        <Label htmlFor="search">Buscar</Label>
         <Input
-          id="company-name"
-          placeholder="Search by company name"
+          id="search"
+          placeholder="Nome, email ou telefone..."
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
         />
       </div>
       
-      <div className="space-y-2">
-        <Label>Commission Range (%)</Label>
-        <div className="pt-4 px-2">
-          <Slider 
-            min={0} 
-            max={100} 
-            step={1} 
-            value={[commissionRange[0], commissionRange[1]]} 
-            onValueChange={handleCommissionChange}
-            className="mb-6" 
-          />
-          <div className="flex justify-between text-sm text-muted-foreground">
-            <span>{commissionRange[0]}%</span>
-            <span>{commissionRange[1]}%</span>
-          </div>
+      <div>
+        <div className="flex justify-between mb-2">
+          <Label>Comissão (%)</Label>
+          <span className="text-sm text-muted-foreground">
+            {commissionRange[0]}% - {commissionRange[1]}%
+          </span>
         </div>
+        <Slider
+          defaultValue={[0, 100]}
+          max={100}
+          step={1}
+          value={commissionRange}
+          onValueChange={(value: [number, number]) => setCommissionRange(value)}
+        />
       </div>
       
-      <div className="flex flex-col gap-2">
-        <Button onClick={handleFilter} variant="default">Apply Filters</Button>
-        <Button onClick={handleReset} variant="outline">Reset</Button>
+      <div className="flex justify-between pt-2">
+        <Button type="button" variant="outline" onClick={handleReset}>
+          Limpar
+        </Button>
+        <Button type="submit" disabled={isLoading}>
+          {isLoading ? 'Filtrando...' : 'Aplicar Filtros'}
+        </Button>
       </div>
-    </div>
+    </form>
   );
 };
 

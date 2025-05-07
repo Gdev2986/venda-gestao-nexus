@@ -1,67 +1,65 @@
 
-import { Server, Archive, Building2, BarChart4 } from "lucide-react";
-import { 
-  Tabs, 
-  TabsContent, 
-  TabsList, 
-  TabsTrigger 
-} from "@/components/ui/tabs";
-import { PageWrapper } from "@/components/page/PageWrapper";
+import { useState } from "react";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import MachinesAllTab from "./MachinesAllTab";
 import MachinesStockTab from "./MachinesStockTab";
 import MachinesClientsTab from "./MachinesClientsTab";
 import MachinesStatsTab from "./MachinesStatsTab";
+import { useDialog } from "@/hooks/use-dialog";
+import NewMachineDialog from "@/components/logistics/modals/NewMachineDialog";
 
-interface MachinesTabNavigationProps {
-  defaultTab?: string;
-}
+const MachinesTabNavigation = () => {
+  // State for filters
+  const [searchTerm, setSearchTerm] = useState("");
+  const [modelFilter, setModelFilter] = useState("");
+  const [statusFilter, setStatusFilter] = useState("");
+  
+  const { isOpen: isNewMachineOpen, onOpen: onOpenNewMachine, onClose: onCloseNewMachine } = useDialog();
 
-const MachinesTabNavigation = ({ defaultTab = "all" }: MachinesTabNavigationProps) => {
+  const handleAddNewMachine = () => {
+    onOpenNewMachine();
+  };
+
   return (
-    <Tabs defaultValue={defaultTab} className="w-full">
-      <TabsList className="grid w-full grid-cols-4 mb-4">
-        <TabsTrigger value="all" className="flex items-center gap-2">
-          <Server size={16} />
-          <span>Todas</span>
-        </TabsTrigger>
-        <TabsTrigger value="stock" className="flex items-center gap-2">
-          <Archive size={16} />
-          <span>Estoque</span>
-        </TabsTrigger>
-        <TabsTrigger value="clients" className="flex items-center gap-2">
-          <Building2 size={16} />
-          <span>Por Cliente</span>
-        </TabsTrigger>
-        <TabsTrigger value="stats" className="flex items-center gap-2">
-          <BarChart4 size={16} />
-          <span>Estatísticas</span>
-        </TabsTrigger>
-      </TabsList>
-      
-      {/* All Machines Tab */}
-      <TabsContent value="all">
-        <MachinesAllTab />
-      </TabsContent>
-      
-      {/* Stock Tab */}
-      <TabsContent value="stock">
-        <PageWrapper>
+    <>
+      <Tabs defaultValue="all" className="w-full">
+        <TabsList className="mb-4">
+          <TabsTrigger value="all">Todas Máquinas</TabsTrigger>
+          <TabsTrigger value="stock">Em Estoque</TabsTrigger>
+          <TabsTrigger value="clients">Com Clientes</TabsTrigger>
+          <TabsTrigger value="stats">Estatísticas</TabsTrigger>
+        </TabsList>
+        
+        <TabsContent value="all">
+          <MachinesAllTab
+            searchTerm={searchTerm}
+            modelFilter={modelFilter}
+            statusFilter={statusFilter}
+            onSearchChange={setSearchTerm}
+            onModelFilterChange={setModelFilter}
+            onStatusFilterChange={setStatusFilter}
+            onAddNewClick={handleAddNewMachine}
+          />
+        </TabsContent>
+        
+        <TabsContent value="stock">
           <MachinesStockTab />
-        </PageWrapper>
-      </TabsContent>
-      
-      {/* Client Machines Tab */}
-      <TabsContent value="clients">
-        <PageWrapper>
+        </TabsContent>
+        
+        <TabsContent value="clients">
           <MachinesClientsTab />
-        </PageWrapper>
-      </TabsContent>
-      
-      {/* Statistics Tab */}
-      <TabsContent value="stats">
-        <MachinesStatsTab />
-      </TabsContent>
-    </Tabs>
+        </TabsContent>
+        
+        <TabsContent value="stats">
+          <MachinesStatsTab />
+        </TabsContent>
+      </Tabs>
+
+      <NewMachineDialog 
+        open={isNewMachineOpen} 
+        onOpenChange={onCloseNewMachine} 
+      />
+    </>
   );
 };
 

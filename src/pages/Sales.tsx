@@ -6,7 +6,7 @@ import { useToast } from "@/hooks/use-toast";
 import SalesFilters from "@/components/sales/SalesFilters";
 import SalesTable from "@/components/sales/SalesTable";
 import ImportSalesDialog from "@/components/sales/ImportSalesDialog";
-import { generateMockSales, calculateSalesTotals } from "@/utils/sales-utils";
+import { generateMockSalesData, calculateSalesTotals } from "@/utils/sales-utils";
 import { Button } from "@/components/ui/button";
 import { RefreshCw } from "lucide-react";
 import { Card } from "@/components/ui/card";
@@ -38,7 +38,7 @@ const Sales = () => {
     
     // Simulate API call
     setTimeout(() => {
-      const mockSales = generateMockSales(50);
+      const mockSales = generateMockSalesData(50);
       setSales(mockSales);
       setFilteredSales(mockSales);
       setIsLoading(false);
