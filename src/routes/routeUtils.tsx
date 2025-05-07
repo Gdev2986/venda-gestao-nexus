@@ -6,6 +6,7 @@ import { UserRole } from "@/types";
  * Returns the appropriate dashboard path based on user role
  */
 export const getDashboardPath = (userRole: UserRole): string => {
+  console.log("getDashboardPath - userRole:", userRole);
   switch (userRole) {
     case UserRole.ADMIN:
       return PATHS.ADMIN.DASHBOARD;
@@ -18,14 +19,15 @@ export const getDashboardPath = (userRole: UserRole): string => {
     case UserRole.LOGISTICS:
       return PATHS.LOGISTICS.DASHBOARD;
     default:
+      console.log("Unknown role, defaulting to USER dashboard");
       return PATHS.USER.DASHBOARD;
   }
 };
 
 /**
- * Returns the appropriate dashboard redirect based on user role
+ * Returns the appropriate dashboard redirect path based on user role
  */
-export const getDashboardRedirect = (userRole: UserRole) => {
+export const getDashboardRedirect = (userRole: UserRole): string => {
   const path = getDashboardPath(userRole);
   return path;
 };

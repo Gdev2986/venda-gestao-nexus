@@ -36,6 +36,7 @@ export const useUserRole = () => {
       
       // If there's no user, don't fetch profile
       if (!user) {
+        console.log("useUserRole - No user, defaulting to CLIENT");
         setUserRole(UserRole.CLIENT); // Default to client when not logged in
         setIsRoleLoading(false);
         return;
@@ -46,10 +47,12 @@ export const useUserRole = () => {
         const cachedRole = getAuthData("userRole");
         
         if (cachedRole && Object.values(UserRole).includes(cachedRole as UserRole)) {
+          console.log("useUserRole - Using cached role:", cachedRole);
           setUserRole(cachedRole as UserRole);
         }
         
         // Always verify with database to ensure role is current
+        console.log("useUserRole - Fetching user role from database for user ID:", user.id);
         const { data, error } = await supabase
           .from('profiles')
           .select('role')
@@ -64,9 +67,12 @@ export const useUserRole = () => {
 
         if (data && data.role) {
           const role = data.role as UserRole;
+          console.log("useUserRole - Database role:", role);
           setUserRole(role);
           // Store in sessionStorage for persistence
           setAuthData("userRole", role);
+        } else {
+          console.log("useUserRole - No role found in database, keeping default or cached role");
         }
       } catch (error) {
         console.error('Error fetching profile:', error);
@@ -80,6 +86,7 @@ export const useUserRole = () => {
   }, [user]);
 
   const updateUserRole = (role: UserRole) => {
+    console.log("useUserRole - Updating role to:", role);
     setUserRole(role);
     setAuthData("userRole", role);
   };

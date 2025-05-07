@@ -6,7 +6,6 @@ import { PATHS } from "@/routes/paths";
 import { motion } from "framer-motion";
 import { useState, useEffect } from "react";
 import { useUserRole } from "@/hooks/use-user-role";
-import { UserRole } from "@/types";
 import { getDashboardPath } from "@/routes/routeUtils";
 
 const RootLayout = () => {
@@ -23,6 +22,14 @@ const RootLayout = () => {
     
     return () => clearTimeout(timer);
   }, []);
+  
+  // Log for debugging
+  useEffect(() => {
+    console.log("RootLayout - isLoading:", isLoading, "isRoleLoading:", isRoleLoading, "user:", !!user);
+    if (!isLoading && !isRoleLoading && user) {
+      console.log("RootLayout - will redirect to:", getDashboardPath(userRole));
+    }
+  }, [isLoading, isRoleLoading, user, userRole]);
   
   // If still loading or showing loading animation, show a spinner
   if (isLoading || isRoleLoading || showLoading) {

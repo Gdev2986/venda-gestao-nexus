@@ -22,10 +22,15 @@ const RequireAuth = ({ allowedRoles = [], redirectTo = PATHS.LOGIN }: RequireAut
   const { toast } = useToast();
   const [shouldRedirect, setShouldRedirect] = useState(false);
   const [showLoading, setShowLoading] = useState(true);
+  const [unauthorized, setUnauthorized] = useState(false);
+  const [redirectPath, setRedirectPath] = useState("");
   
   // Use effect to prevent immediate redirects that can cause loops
   useEffect(() => {
-    console.log("RequireAuth effect - isLoading:", isLoading, "user:", !!user);
+    console.log("RequireAuth effect - isLoading:", isLoading, "isRoleLoading:", isRoleLoading, "user:", !!user);
+    console.log("Current location:", location.pathname);
+    console.log("Current user role:", userRole);
+    console.log("Allowed roles:", allowedRoles);
     
     // Only determine redirect after loading is complete
     if (!isLoading && !isRoleLoading) {
@@ -63,9 +68,11 @@ const RequireAuth = ({ allowedRoles = [], redirectTo = PATHS.LOGIN }: RequireAut
             variant: "destructive",
           });
           
-          // Redirect to role-specific dashboard
+          // Set redirect path to role-specific dashboard
           const dashboardPath = getDashboardPath(userRole);
-          window.location.href = dashboardPath;
+          console.log("Will redirect to dashboard path:", dashboardPath);
+          setRedirectPath(dashboardPath);
+          setUnauthorized(true);
         }
       }
     }
@@ -82,7 +89,7 @@ const RequireAuth = ({ allowedRoles = [], redirectTo = PATHS.LOGIN }: RequireAut
     }
   }, [isLoading, isRoleLoading]);
 
-  console.log("RequireAuth render - isLoading:", isLoading, "shouldRedirect:", shouldRedirect);
+  console.log("RequireAuth render - isLoading:", isLoading, "shouldRedirect:", shouldRedirect, "unauthorized:", unauthorized);
 
   // If still loading or showing loading animation, show a spinner
   if (isLoading || isRoleLoading || showLoading) {
@@ -107,6 +114,12 @@ const RequireAuth = ({ allowedRoles = [], redirectTo = PATHS.LOGIN }: RequireAut
     // Store the current location using sessionStorage for better security
     sessionStorage.setItem("redirectPath", location.pathname);
     return <Navigate to={PATHS.LOGIN} state={{ from: location.pathname }} replace />;
+  }
+
+  // If unauthorized, redirect to dashboard
+  if (unauthorized && redirectPath) {
+    console.log(`Redirecting unauthorized user with role ${userRole} to ${redirectPath}`);
+    return <Navigate to={redirectPath} replace />;
   }
 
   // Special check for Financial users accessing admin routes

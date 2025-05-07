@@ -1,5 +1,5 @@
 
-import { Routes, Route, useLocation, Navigate } from "react-router-dom";
+import { Routes, Route, Navigate } from "react-router-dom";
 import { PATHS } from "./routes/paths";
 import { useEffect } from "react";
 import { useToast } from "@/hooks/use-toast";
@@ -25,19 +25,14 @@ import NotFound from "./pages/NotFound";
 import Notifications from "./pages/Notifications";
 
 function App() {
-  const location = useLocation();
   const { userRole, isRoleLoading } = useUserRole();
   const { toast } = useToast();
-
-  // Scroll to top on route change
-  useEffect(() => {
-    window.scrollTo(0, 0);
-  }, [location.pathname]);
 
   // Log role changes for debugging
   useEffect(() => {
     if (!isRoleLoading) {
-      console.log("Current user role:", userRole);
+      console.log("App.tsx - Current user role:", userRole);
+      console.log("App.tsx - Will redirect to dashboard:", getDashboardPath(userRole));
     }
   }, [userRole, isRoleLoading]);
 
@@ -49,7 +44,7 @@ function App() {
       {/* Generic dashboard route */}
       <Route 
         path={PATHS.DASHBOARD} 
-        element={<Navigate to={getDashboardPath(userRole)} />} 
+        element={<Navigate to={getDashboardPath(userRole)} replace />} 
       />
 
       {/* Auth Routes */}
@@ -69,7 +64,7 @@ function App() {
       <Route path={PATHS.NOT_FOUND} element={<NotFound />} />
       
       {/* Catch-all redirect to the appropriate dashboard */}
-      <Route path="*" element={<Navigate to={PATHS.DASHBOARD} />} />
+      <Route path="*" element={<Navigate to={PATHS.DASHBOARD} replace />} />
     </Routes>
   );
 }

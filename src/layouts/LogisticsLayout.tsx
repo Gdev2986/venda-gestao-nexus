@@ -1,5 +1,5 @@
 
-import { Outlet } from "react-router-dom";
+import { Outlet, useLocation } from "react-router-dom";
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import MainSidebar from "./MainSidebar";
@@ -22,6 +22,13 @@ const LogisticsLayout = () => {
   const isMobile = useIsMobile();
   const { userRole } = useUserRole();
   const [isLoading, setIsLoading] = useState(true);
+  const location = useLocation();
+
+  // Log for debugging
+  useEffect(() => {
+    console.log("LogisticsLayout rendering at path:", location.pathname);
+    console.log("LogisticsLayout - userRole:", userRole);
+  }, [location.pathname, userRole]);
 
   // Close sidebar on mobile by default
   useEffect(() => {
@@ -43,7 +50,7 @@ const LogisticsLayout = () => {
     setIsLoading(true);
     const timer = setTimeout(() => {
       setIsLoading(false);
-    }, 500); // 0.5 second loading time
+    }, 300); // 0.3 second loading time (reduced for better UX)
     
     return () => clearTimeout(timer);
   }, []);
@@ -54,7 +61,7 @@ const LogisticsLayout = () => {
         <motion.div
           initial={{ opacity: 0, scale: 0.8 }}
           animate={{ opacity: 1, scale: 1 }}
-          transition={{ duration: 0.5 }}
+          transition={{ duration: 0.3 }}
           className="flex flex-col items-center"
         >
           <Spinner size="lg" />
