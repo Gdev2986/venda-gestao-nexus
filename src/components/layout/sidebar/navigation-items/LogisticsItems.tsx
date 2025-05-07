@@ -1,5 +1,5 @@
 
-import { LayoutDashboard, CreditCard, Truck, MessageSquare, Calendar, Box, Building2, ListOrdered, HelpCircle, Settings } from "lucide-react";
+import { LayoutDashboard, Truck, MessageSquare, Box, Building2, Settings } from "lucide-react";
 import { SidebarItem } from "../types";
 import { UserRole } from "@/types";
 import { PATHS } from "@/routes/paths";
@@ -13,7 +13,7 @@ export const logisticsItems: SidebarItem[] = [
   },
   {
     title: "Máquinas",
-    icon: CreditCard,
+    icon: Box,
     href: PATHS.LOGISTICS.MACHINES,
     roles: [UserRole.LOGISTICS],
   },
@@ -24,15 +24,9 @@ export const logisticsItems: SidebarItem[] = [
     roles: [UserRole.LOGISTICS],
   },
   {
-    title: "Solicitações",
+    title: "Solicitações e Suporte",
     icon: MessageSquare,
     href: PATHS.LOGISTICS.REQUESTS,
-    roles: [UserRole.LOGISTICS],
-  },
-  {
-    title: "Calendário",
-    icon: Calendar,
-    href: PATHS.LOGISTICS.CALENDAR,
     roles: [UserRole.LOGISTICS],
   },
   {
@@ -45,24 +39,6 @@ export const logisticsItems: SidebarItem[] = [
     title: "Clientes",
     icon: Building2,
     href: PATHS.LOGISTICS.CLIENTS,
-    roles: [UserRole.LOGISTICS],
-  },
-  {
-    title: "Vendas",
-    icon: ListOrdered,
-    href: PATHS.LOGISTICS.SALES,
-    roles: [UserRole.LOGISTICS],
-  },
-  {
-    title: "Suporte",
-    icon: MessageSquare,
-    href: PATHS.LOGISTICS.SUPPORT,
-    roles: [UserRole.LOGISTICS],
-  },
-  {
-    title: "Ajuda",
-    icon: HelpCircle,
-    href: PATHS.LOGISTICS.HELP,
     roles: [UserRole.LOGISTICS],
   },
   {

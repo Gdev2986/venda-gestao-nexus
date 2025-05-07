@@ -6,7 +6,6 @@ import { PATHS } from "../paths";
 import LogisticsDashboard from "../../pages/logistics/Dashboard";
 import Operations from "../../pages/logistics/Operations";
 import LogisticsRequests from "../../pages/logistics/Requests";
-import LogisticsCalendar from "../../pages/logistics/Calendar";
 import LogisticsInventory from "../../pages/logistics/Inventory";
 import Machines from "../../pages/machines/Machines";
 import NewMachine from "../../pages/machines/NewMachine";
@@ -48,11 +47,6 @@ export const logisticsRoutes = [
     key="logistics-requests" 
     path={PATHS.LOGISTICS.REQUESTS} 
     element={<LogisticsRequests />} 
-  />,
-  <Route 
-    key="logistics-calendar" 
-    path={PATHS.LOGISTICS.CALENDAR} 
-    element={<LogisticsCalendar />} 
   />,
   <Route 
     key="logistics-inventory" 

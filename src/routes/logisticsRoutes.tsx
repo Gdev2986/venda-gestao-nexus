@@ -13,15 +13,12 @@ import RequireAuth from "../components/auth/RequireAuth";
 import LogisticsDashboard from "../pages/logistics/Dashboard";
 import Operations from "../pages/logistics/Operations";
 import LogisticsRequests from "../pages/logistics/Requests";
-import LogisticsCalendar from "../pages/logistics/Calendar";
 import LogisticsInventory from "../pages/logistics/Inventory";
-import LogisticsSupport from "../pages/logistics/Support";
-import Machines from "../pages/logistics/Machines";
+import Machines from "../pages/machines/Machines";
 import NewMachine from "../pages/machines/NewMachine";
+import MachineDetails from "../pages/machines/MachineDetails";
 import Clients from "../pages/clients/Clients";
-import Sales from "../pages/sales/Sales";
 import Settings from "../pages/logistics/Settings";
-import Help from "../pages/Help";
 
 export const LogisticsRoutes = (
   <Route element={<RequireAuth allowedRoles={[UserRole.LOGISTICS]} />}>
@@ -47,8 +44,8 @@ export const LogisticsRoutes = (
       />
       
       <Route 
-        path={PATHS.LOGISTICS.SALES} 
-        element={<Sales />} 
+        path={PATHS.LOGISTICS.MACHINE_DETAILS()} 
+        element={<MachineDetails />} 
       />
       
       <Route 
@@ -62,18 +59,8 @@ export const LogisticsRoutes = (
       />
       
       <Route 
-        path={PATHS.LOGISTICS.CALENDAR} 
-        element={<LogisticsCalendar />} 
-      />
-      
-      <Route 
         path={PATHS.LOGISTICS.INVENTORY} 
         element={<LogisticsInventory />} 
-      />
-      
-      <Route 
-        path={PATHS.LOGISTICS.SUPPORT} 
-        element={<LogisticsSupport />} 
       />
       
       <Route 
@@ -84,11 +71,6 @@ export const LogisticsRoutes = (
             <p className="text-gray-600">Esta funcionalidade está em desenvolvimento.</p>
           </div> 
         } 
-      />
-      
-      <Route 
-        path={PATHS.LOGISTICS.HELP} 
-        element={<Help />} 
       />
       
       <Route 
