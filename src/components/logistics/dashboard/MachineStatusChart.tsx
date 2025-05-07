@@ -1,21 +1,45 @@
 
-import React from "react";
+import React, { useState } from "react";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
 import { PieChart } from "@/components/charts";
+import { Select, SelectContent, SelectGroup, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 interface MachineStatusChartProps {
   data: Array<{ name: string; value: number }>;
 }
 
 const MachineStatusChart: React.FC<MachineStatusChartProps> = ({ data }) => {
+  const [selectedStatus, setSelectedStatus] = useState<string>("all");
+  
+  const filteredData = selectedStatus === "all" 
+    ? data 
+    : data.filter(item => item.name.toLowerCase() === selectedStatus.toLowerCase());
+
   return (
     <Card>
-      <CardHeader>
-        <CardTitle className="text-lg">Status das Máquinas</CardTitle>
+      <CardHeader className="space-y-0 pb-2">
+        <div className="flex items-center justify-between">
+          <CardTitle className="text-lg">Status das Máquinas</CardTitle>
+          <Select value={selectedStatus} onValueChange={setSelectedStatus}>
+            <SelectTrigger className="h-8 w-[180px]">
+              <SelectValue placeholder="Filtrar por status" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectGroup>
+                <SelectItem value="all">Todos os Status</SelectItem>
+                {data.map((item) => (
+                  <SelectItem key={item.name} value={item.name.toLowerCase()}>
+                    {item.name}
+                  </SelectItem>
+                ))}
+              </SelectGroup>
+            </SelectContent>
+          </Select>
+        </div>
         <CardDescription>Distribuição por status atual</CardDescription>
       </CardHeader>
       <CardContent className="h-80">
-        <PieChart data={data} dataKey="value" />
+        <PieChart data={filteredData} dataKey="value" />
       </CardContent>
     </Card>
   );
