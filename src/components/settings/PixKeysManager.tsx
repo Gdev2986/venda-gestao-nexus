@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
@@ -248,7 +249,7 @@ export function PixKeysManager() {
       toast({
         title: "Erro ao salvar chave PIX",
         description: "Não foi possível salvar a chave PIX.",
-        variant: "destructive,
+        variant: "destructive"
       });
     }
   };
