@@ -22,13 +22,16 @@ import Fees from "../pages/Fees";
 import Reports from "../pages/Reports";
 import Support from "../pages/Support";
 import Help from "../pages/Help";
+import FinancialReports from "../pages/financial/Reports";
+import FinancialRequests from "../pages/financial/Requests";
+import FinancialDashboard from "../pages/financial/Dashboard";
 
 export const FinancialRoutes = (
   <Route element={<RequireAuth allowedRoles={[UserRole.FINANCIAL]} />}>
     <Route element={<MainLayout />}>
       <Route 
         path={PATHS.FINANCIAL.DASHBOARD} 
-        element={<Dashboard />} 
+        element={<FinancialDashboard />} 
       />
       
       <Route 
@@ -63,17 +66,12 @@ export const FinancialRoutes = (
       
       <Route 
         path={PATHS.FINANCIAL.REPORTS} 
-        element={<Reports />} 
+        element={<FinancialReports />} 
       />
       
       <Route
         path={PATHS.FINANCIAL.REQUESTS}
-        element={
-          <div className="container mx-auto py-10">
-            <h1 className="text-3xl font-semibold mb-6">Solicitações de Pagamento</h1>
-            <p className="text-gray-600">Gerenciamento de solicitações de pagamento em desenvolvimento.</p>
-          </div>
-        }
+        element={<FinancialRequests />}
       />
       
       <Route 

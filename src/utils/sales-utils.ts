@@ -1,194 +1,121 @@
+import { faker } from '@faker-js/faker';
+import { PaymentMethod, Sale } from "@/types";
 
-import { format } from 'date-fns';
-import { PaymentMethod, Sale, SalesFilterParams } from '@/types';
-
-// The raw sale data might have different properties than our internal model
-interface RawSale {
-  id: string;
-  code: string;
-  terminal: string;
-  date: string;
-  gross_amount: number; 
-  net_amount: number;
-  payment_method: string;
-  client_id?: string;
-  client_name?: string;
-}
-
-// Convert date string to a standard ISO format
-export const formatDateToISO = (dateStr: string): string => {
-  // Try to parse the date and return the ISO string
-  try {
-    const date = new Date(dateStr);
-    return date.toISOString();
-  } catch (error) {
-    console.error('Error parsing date:', error);
-    return new Date().toISOString(); // Return current date as fallback
-  }
+/**
+ * Generates a random date within the last year
+ */
+export const getRandomDate = (): Date => {
+  const today = new Date();
+  const lastYear = new Date(today);
+  lastYear.setFullYear(today.getFullYear() - 1);
+  return faker.date.between({ from: lastYear, to: today });
 };
 
-// Parse a payment method string to our PaymentMethod enum
-export const parsePaymentMethod = (method: string): PaymentMethod => {
-  method = method.toUpperCase();
-  if (method === 'CREDIT' || method === 'CRÉDITO' || method === 'CREDITO') {
-    return PaymentMethod.CREDIT;
-  } else if (method === 'DEBIT' || method === 'DÉBITO' || method === 'DEBITO') {
-    return PaymentMethod.DEBIT;
-  } else if (method === 'PIX') {
-    return PaymentMethod.PIX;
-  } else {
-    return PaymentMethod.CREDIT; // Default
-  }
+/**
+ * Generates a random amount between min and max
+ */
+export const getRandomAmount = (min: number, max: number): number => {
+  const amount = faker.number.float({ min, max, precision: 2 });
+  return parseFloat(amount.toFixed(2));
 };
 
-// Check if a value is a valid date
-export const isValidDate = (value: any): boolean => {
-  if (!value) return false;
-  
-  // If it's already a valid Date object
-  if (value && value instanceof Date && !isNaN(value.getTime())) {
-    return true;
-  }
-  
-  // If it's a string, try to convert it to a Date
-  if (typeof value === 'string') {
-    const date = new Date(value);
-    return !isNaN(date.getTime());
-  }
-  
-  return false;
+/**
+ * Generates a random payment method
+ */
+export const getRandomPaymentMethod = (): PaymentMethod => {
+  const methods = Object.values(PaymentMethod);
+  return methods[Math.floor(Math.random() * methods.length)];
 };
 
-// Filter sales based on criteria
-export const filterSales = (sales: Sale[], filters: SalesFilterParams): Sale[] => {
-  return sales.filter(sale => {
-    // Filter by search term (code or terminal)
-    if (filters.search && !sale.code.toLowerCase().includes(filters.search.toLowerCase()) && 
-        !sale.terminal.toLowerCase().includes(filters.search.toLowerCase())) {
-      return false;
-    }
-    
-    // Filter by payment method
-    if (filters.paymentMethod && sale.payment_method !== filters.paymentMethod) {
-      return false;
-    }
-    
-    // Filter by terminal
-    if (filters.terminal && sale.terminal !== filters.terminal) {
-      return false;
-    }
-    
-    return true;
-  });
+/**
+ * Generates a random sale object
+ */
+export const generateRandomSale = (): Sale => {
+  const gross_amount = getRandomAmount(50, 2000);
+  const net_amount = gross_amount * 0.8; // Simulate a 20% reduction
+  return {
+    id: faker.string.uuid(),
+    code: faker.string.alphanumeric(8),
+    terminal: faker.string.alphanumeric(6),
+    client_name: faker.company.name(),
+    gross_amount: gross_amount,
+    net_amount: net_amount,
+    date: getRandomDate().toISOString(),
+    payment_method: getRandomPaymentMethod(),
+    client_id: faker.string.uuid(),
+    created_at: getRandomDate().toISOString(),
+    updated_at: getRandomDate().toISOString()
+  };
 };
 
-// Calculate the total values for a list of sales
-export const calculateSalesTotals = (sales: Sale[]) => {
-  return sales.reduce((acc, sale) => {
-    return {
-      grossAmount: acc.grossAmount + sale.gross_amount,
-      netAmount: acc.netAmount + sale.net_amount
-    };
-  }, { grossAmount: 0, netAmount: 0 });
+/**
+ * Generates an array of random sale objects
+ */
+export const generateSales = (count: number): Sale[] => {
+  return Array.from({ length: count }, () => generateRandomSale());
 };
 
-// Generate mock sales data for a given date range
-export interface DateRange {
-  from: Date;
-  to: Date;
-}
-
-// Function to generate mock sales data
-export const generateMockSales = (count: number, dateRange?: DateRange): Sale[] => {
-  const terminals = ['POS001', 'POS002', 'POS003', 'POS004', 'POS005'];
-  const paymentMethods = [PaymentMethod.CREDIT, PaymentMethod.DEBIT, PaymentMethod.PIX];
-  const sales: Sale[] = [];
+export const generateMockSalesData = (count: number): Sale[] => {
+  const mockSales: Sale[] = [];
+  const today = new Date();
+  const paymentMethods = Object.values(PaymentMethod);
   
-  const startDate = dateRange?.from || new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
-  const endDate = dateRange?.to || new Date();
-
-  for (let i = 0; i < count; i++) {
-    // Generate a random date between the start and end dates
-    const date = new Date(startDate.getTime() + Math.random() * (endDate.getTime() - startDate.getTime()));
-    
-    // Generate a random gross amount between 50 and 1000
-    const gross_amount = Math.round((Math.random() * 950 + 50) * 100) / 100;
-    
-    // Calculate a net amount (gross - random fee)
-    const fee = (Math.random() * 0.05 + 0.01) * gross_amount; // Random fee between 1% and 6%
-    const net_amount = Math.round((gross_amount - fee) * 100) / 100;
-    
-    // Random payment method
-    const payment_method = paymentMethods[Math.floor(Math.random() * paymentMethods.length)];
-    
-    // Create a sale object
-    const sale: Sale = {
-      id: `sale-${i}-${Date.now()}`,
-      code: `INV${String(Math.floor(Math.random() * 10000)).padStart(4, '0')}`,
-      terminal: terminals[Math.floor(Math.random() * terminals.length)],
-      date: date.toISOString(),
-      gross_amount,
-      net_amount,
-      payment_method,
-      client_id: 'client-1',
-      client_name: 'Client Name',
-      created_at: date.toISOString(),
-      updated_at: date.toISOString()
-    };
-    
-    sales.push(sale);
-  }
-  
-  // Sort by date, newest first
-  return sales.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
-};
-
-// Generate daily sales data for charts
-export const generateDailySalesData = (dateRange: DateRange) => {
-  const days = [];
-  const currentDate = new Date(dateRange.from);
-  const endDate = new Date(dateRange.to);
-  
-  while (currentDate <= endDate) {
-    days.push(new Date(currentDate));
-    currentDate.setDate(currentDate.getDate() + 1);
-  }
-  
-  return days.map(day => {
-    // Generate random sales value between 1000 and 10000
-    const total = Math.round(Math.random() * 9000 + 1000);
-    
-    return {
-      name: format(day, 'dd/MM'),
-      total: total
-    };
-  });
-};
-
-// Generate payment methods data for pie/bar charts
-export const generatePaymentMethodsData = (dateRange: DateRange) => {
-  // Generate mock data for payment methods
-  const creditAmount = Math.round(Math.random() * 15000 + 5000);
-  const debitAmount = Math.round(Math.random() * 10000 + 3000);
-  const pixAmount = Math.round(Math.random() * 8000 + 2000);
-  
-  const total = creditAmount + debitAmount + pixAmount;
-  
-  return [
-    {
-      method: PaymentMethod.CREDIT,
-      amount: creditAmount,
-      percentage: Math.round((creditAmount / total) * 100)
-    },
-    {
-      method: PaymentMethod.DEBIT,
-      amount: debitAmount,
-      percentage: Math.round((debitAmount / total) * 100)
-    },
-    {
-      method: PaymentMethod.PIX,
-      amount: pixAmount,
-      percentage: Math.round((pixAmount / total) * 100)
-    }
+  const clients = [
+    "Empresa A",
+    "Empresa B",
+    "Empresa C", 
+    "Comércio XYZ",
+    "Tech Solutions"
   ];
+  
+  const terminals = ["T100", "T101", "T102", "T103", "T104"];
+  
+  for (let i = 0; i < count; i++) {
+    const createdDate = new Date(today);
+    createdDate.setDate(today.getDate() - Math.floor(Math.random() * 30));
+    
+    const grossAmount = Math.floor(Math.random() * 10000) / 10;
+    const fee = grossAmount * 0.05; // 5% fee
+    const netAmount = grossAmount - fee;
+    
+    const clientIndex = Math.floor(Math.random() * clients.length);
+    const terminalIndex = Math.floor(Math.random() * terminals.length);
+    const paymentMethodIndex = Math.floor(Math.random() * paymentMethods.length);
+    
+    mockSales.push({
+      id: `sale-${i + 1}`,
+      code: `VND${String(i + 1).padStart(3, '0')}`,
+      terminal: terminals[terminalIndex],
+      client_name: clients[clientIndex],
+      gross_amount: grossAmount,
+      net_amount: netAmount,
+      date: createdDate.toISOString(),
+      payment_method: paymentMethods[paymentMethodIndex],
+      client_id: `client-${clientIndex + 1}`,
+      created_at: createdDate.toISOString(),
+      updated_at: createdDate.toISOString()
+    });
+  }
+  
+  return mockSales;
+};
+
+/**
+ * Helper function to filter sales data based on search term
+ */
+export const filterSalesData = (sales: Sale[], searchTerm: string): Sale[] => {
+  if (!searchTerm) {
+    return sales;
+  }
+
+  const lowerSearchTerm = searchTerm.toLowerCase();
+
+  return sales.filter(sale => {
+    return (
+      sale.code.toLowerCase().includes(lowerSearchTerm) ||
+      sale.terminal.toLowerCase().includes(lowerSearchTerm) ||
+      sale.client_name.toLowerCase().includes(lowerSearchTerm) ||
+      sale.payment_method.toLowerCase().includes(lowerSearchTerm)
+    );
+  });
 };

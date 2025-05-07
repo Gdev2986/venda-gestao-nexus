@@ -37,10 +37,18 @@ export const createPaymentColumns = ({ onPaymentAction }: PaymentColumnsProps): 
     cell: ({ row }) => {
       // Safely access client property and ensure it's an object
       const client = row.original.client || {};
-      // Check if business_name exists on client object, if not fallback to client_name or default
-      const clientName = client && typeof client === 'object' && 'business_name' in client 
-        ? client.business_name 
-        : row.original.client_name || "Cliente não especificado";
+      // Handle client_name access safely
+      let clientName = "Cliente não especificado";
+      
+      // Use object properties if they exist
+      if (client && typeof client === 'object') {
+        if ('business_name' in client) {
+          clientName = client.business_name;
+        } else if (row.original.client_name) {
+          clientName = row.original.client_name;
+        }
+      }
+      
       return <div>{clientName}</div>;
     },
   },

@@ -107,19 +107,19 @@ const FinancialDashboard = () => {
           <CardHeader>
             <CardTitle className="flex items-center text-lg">
               <Users className="h-5 w-5 mr-2" /> 
-              Clientes e Parceiros
+              Clientes e Relatórios
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
             <p className="text-sm text-muted-foreground">
-              Acesse a lista de clientes e parceiros para visualizar detalhes financeiros.
+              Acesse a lista de clientes e gere relatórios financeiros.
             </p>
             <div className="grid grid-cols-2 gap-4">
               <Button variant="outline" className="w-full" asChild>
                 <Link to={PATHS.FINANCIAL.CLIENTS}>Clientes</Link>
               </Button>
               <Button variant="outline" className="w-full" asChild>
-                <Link to={PATHS.FINANCIAL.PARTNERS}>Parceiros</Link>
+                <Link to={PATHS.FINANCIAL.REPORTS}>Relatórios</Link>
               </Button>
             </div>
           </CardContent>

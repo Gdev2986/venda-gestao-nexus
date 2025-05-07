@@ -1,249 +1,175 @@
 
-import { useState, useEffect } from "react";
-import { useAuth } from "@/contexts/AuthContext";
-import { supabase } from "@/integrations/supabase/client";
-import { PixKey } from "@/types";
+import React, { useState, useEffect } from "react";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useForm } from "react-hook-form";
+import * as z from "zod";
 import { Button } from "@/components/ui/button";
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 import { useToast } from "@/hooks/use-toast";
-import { Trash, Plus, Check } from "lucide-react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Trash2, Check, Plus } from "lucide-react";
 import { Switch } from "@/components/ui/switch";
+import { PixKey } from "@/types";
+import { mapPixKeyFromDb, createDefaultPixKeyProperties } from "@/utils/settings-utils";
 
-// Define the PIX key types as a union type to match database requirements
-type PixKeyType = "CPF" | "CNPJ" | "EMAIL" | "PHONE" | "RANDOM";
+const pixKeySchema = z.object({
+  name: z.string().min(2, {
+    message: "Nome deve ter pelo menos 2 caracteres.",
+  }),
+  key: z.string().min(2, {
+    message: "Chave PIX inválida.",
+  }),
+  type: z.enum(["CPF", "EMAIL", "PHONE", "RANDOM"]),
+  isDefault: z.boolean().default(false),
+});
 
-export function PixKeysManager() {
-  const { user } = useAuth();
+export type PixKeyFormValues = z.infer<typeof pixKeySchema>;
+
+interface PixKeysManagerProps {
+  userId: string;
+}
+
+export function PixKeysManager({ userId }: PixKeysManagerProps) {
   const [pixKeys, setPixKeys] = useState<PixKey[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState<boolean>(true);
+  const [isEditing, setIsEditing] = useState<string | null>(null);
   const { toast } = useToast();
-  
-  // Fetch PIX keys
-  useEffect(() => {
-    const fetchPixKeys = async () => {
-      if (!user) return;
-      
-      setIsLoading(true);
-      try {
-        const { data, error } = await supabase
-          .from('pix_keys')
-          .select('*')
-          .eq('user_id', user.id);
 
-        if (error) throw error;
-        
-        const transformedKeys: PixKey[] = (data || []).map(item => ({
-          id: item.id,
-          user_id: item.user_id,
-          key_type: item.type,
-          type: item.type,
-          key: item.key,
-          owner_name: item.name,
-          name: item.name,
-          isDefault: item.is_default, // Map from DB is_default to frontend isDefault
-          is_active: true,
-          created_at: item.created_at,
-          updated_at: item.updated_at,
-          // Add bank_name only for UI rendering, not for database operations
-          bank_name: "Banco", // Default value since it's not in the database
-        }));
-        
-        setPixKeys(transformedKeys);
-      } catch (error) {
-        console.error("Error fetching PIX keys:", error);
-        toast({
-          title: "Erro ao carregar chaves PIX",
-          description: "Não foi possível carregar suas chaves PIX.",
-          variant: "destructive",
-        });
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    fetchPixKeys();
-  }, [user, toast]);
-
-  // Create a new PIX key
-  const handleAddPixKey = () => {
-    if (!user) return;
-    
-    const newKey: PixKey = {
-      id: `temp-${Date.now()}`,
-      user_id: user.id,
-      key_type: "CPF",
-      type: "CPF",
-      key: "",
-      owner_name: "",
+  // Initialize form with default values
+  const form = useForm<PixKeyFormValues>({
+    resolver: zodResolver(pixKeySchema),
+    defaultValues: {
       name: "",
-      isDefault: pixKeys.length === 0,
-      is_active: true,
-      created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString(),
-      bank_name: "",
-    };
-    
-    setPixKeys([...pixKeys, newKey]);
+      key: "",
+      type: "CPF",
+      isDefault: false,
+    },
+  });
+
+  // Mock function to fetch PIX keys from database
+  const fetchPixKeys = async () => {
+    setIsLoading(true);
+    try {
+      // Simulate API call
+      await new Promise((resolve) => setTimeout(resolve, 500));
+      
+      // Mock data
+      const mockData = [
+        mapPixKeyFromDb({
+          id: '1',
+          user_id: userId,
+          type: 'CPF',
+          key: '123.456.789-00',
+          name: 'Meu CPF',
+          is_default: true,
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString()
+        }),
+        mapPixKeyFromDb({
+          id: '2',
+          user_id: userId,
+          type: 'EMAIL',
+          key: 'email@example.com',
+          name: 'Meu Email',
+          is_default: false,
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString()
+        })
+      ];
+
+      setPixKeys(mockData);
+    } catch (error) {
+      console.error("Error fetching PIX keys:", error);
+      toast({
+        title: "Erro",
+        description: "Não foi possível carregar as chaves PIX.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
+    }
   };
 
-  // Remove a PIX key
-  const handleRemovePixKey = async (keyId: string) => {
+  useEffect(() => {
+    fetchPixKeys();
+  }, [userId]);
+
+  const onSubmit = async (values: PixKeyFormValues) => {
     try {
-      if (keyId.startsWith('temp-')) {
-        // Just remove from state if it's a temporary key
-        setPixKeys(pixKeys.filter(key => key.id !== keyId));
-        return;
-      }
+      setIsLoading(true);
       
-      const { error } = await supabase
-        .from('pix_keys')
-        .delete()
-        .eq('id', keyId);
+      // If editing existing key
+      if (isEditing) {
+        const updatedKeys = pixKeys.map(key => {
+          if (key.id === isEditing) {
+            return { 
+              ...key, 
+              name: values.name, 
+              key: values.key, 
+              type: values.type as any, 
+              isDefault: values.isDefault 
+            };
+          }
+          // If this key is set to default, remove default from others
+          if (values.isDefault && key.id !== isEditing) {
+            return { ...key, isDefault: false };
+          }
+          return key;
+        });
         
-      if (error) throw error;
-      
-      setPixKeys(pixKeys.filter(key => key.id !== keyId));
-      
-      toast({
-        title: "Chave PIX removida",
-        description: "A chave PIX foi removida com sucesso."
-      });
-    } catch (error) {
-      console.error("Error removing PIX key:", error);
-      toast({
-        title: "Erro ao remover chave PIX",
-        description: "Não foi possível remover a chave PIX.",
-        variant: "destructive",
-      });
-    }
-  };
-
-  // Handle input change for a PIX key
-  const handleKeyChange = (keyId: string, field: keyof PixKey, value: string | boolean) => {
-    setPixKeys(pixKeys.map(key => {
-      if (key.id === keyId) {
-        return { ...key, [field]: value };
-      }
-      return key;
-    }));
-  };
-
-  // Set a PIX key as default
-  const handleSetDefault = async (keyId: string) => {
-    try {
-      // Update state first
-      setPixKeys(pixKeys.map(key => ({
-        ...key,
-        isDefault: key.id === keyId,
-      })));
-      
-      // If it's not a temp key, update in database
-      if (!keyId.startsWith('temp-')) {
-        // First, remove default from all keys
-        await supabase
-          .from('pix_keys')
-          .update({ is_default: false })
-          .eq('user_id', user?.id);
-          
-        // Then set the selected key as default
-        const { error } = await supabase
-          .from('pix_keys')
-          .update({ is_default: true })
-          .eq('id', keyId);
-          
-        if (error) throw error;
-      }
-      
-      toast({
-        title: "Chave PIX padrão atualizada",
-        description: "A chave PIX padrão foi atualizada com sucesso."
-      });
-    } catch (error) {
-      console.error("Error setting default PIX key:", error);
-      toast({
-        title: "Erro ao atualizar chave PIX padrão",
-        description: "Não foi possível definir a chave PIX como padrão.",
-        variant: "destructive",
-      });
-    }
-  };
-
-  // Save a PIX key
-  const handleSavePixKey = async (key: PixKey) => {
-    try {
-      // Validate required fields
-      if (!key.key || !key.type) {
+        setPixKeys(updatedKeys);
+        setIsEditing(null);
         toast({
-          title: "Campos obrigatórios",
-          description: "Preencha todos os campos obrigatórios.",
-          variant: "destructive",
+          title: "Chave PIX atualizada",
+          description: "A chave PIX foi atualizada com sucesso.",
         });
-        return;
-      }
-      
-      // Ensure type is one of the allowed values
-      const validType = key.type as PixKeyType;
-      if (!["CPF", "CNPJ", "EMAIL", "PHONE", "RANDOM"].includes(validType)) {
-        toast({
-          title: "Tipo inválido",
-          description: "O tipo de chave PIX selecionado é inválido.",
-          variant: "destructive",
-        });
-        return;
-      }
-      
-      // Format the key data for Supabase - only include fields that exist in the database
-      const keyData = {
-        user_id: key.user_id,
-        type: validType,
-        key: key.key,
-        name: key.name || key.owner_name,
-        is_default: key.isDefault, // Map from frontend isDefault to DB is_default
-      };
-      
-      let response;
-      
-      if (key.id.startsWith('temp-')) {
-        // Create new key
-        response = await supabase
-          .from('pix_keys')
-          .insert(keyData)
-          .select();
       } else {
-        // Update existing key
-        response = await supabase
-          .from('pix_keys')
-          .update(keyData)
-          .eq('id', key.id)
-          .select();
+        // Create new PIX key
+        const newId = `new-${Date.now()}`;
+        const newKey: PixKey = {
+          ...createDefaultPixKeyProperties(newId, userId),
+          name: values.name,
+          key: values.key,
+          type: values.type as any,
+          isDefault: values.isDefault
+        };
+        
+        // If new key is default, remove default from others
+        const updatedKeys = pixKeys.map(key => 
+          values.isDefault ? { ...key, isDefault: false } : key
+        );
+        
+        setPixKeys([...updatedKeys, newKey]);
+        toast({
+          title: "Chave PIX adicionada",
+          description: "A chave PIX foi adicionada com sucesso.",
+        });
       }
       
-      const { data, error } = response;
-      
-      if (error) {
-        console.error("Error saving PIX key:", error);
-        throw error;
-      }
-      
-      // Update the key in the state with the new data from the server
-      setPixKeys(prevKeys => prevKeys.map(k => {
-        if (k.id === key.id) {
-          return {
-            ...k,
-            ...(data?.[0] || {}),
-            id: data?.[0]?.id || k.id,
-            bank_name: k.bank_name, // Preserve bank_name for UI
-          };
-        }
-        return k;
-      }));
-      
-      toast({
-        title: "Chave PIX salva",
-        description: "A chave PIX foi salva com sucesso."
-      });
+      form.reset();
     } catch (error) {
       console.error("Error saving PIX key:", error);
       toast({
@@ -251,108 +177,240 @@ export function PixKeysManager() {
         description: "Não foi possível salvar a chave PIX.",
         variant: "destructive"
       });
+    } finally {
+      setIsLoading(false);
     }
   };
 
-  if (isLoading) {
-    return <div className="text-center py-4">Carregando chaves PIX...</div>;
-  }
+  const handleEdit = (key: PixKey) => {
+    form.reset({
+      name: key.name,
+      key: key.key,
+      type: key.type as any,
+      isDefault: key.isDefault,
+    });
+    setIsEditing(key.id);
+  };
+
+  const handleDelete = async (id: string) => {
+    try {
+      setIsLoading(true);
+      
+      const filteredKeys = pixKeys.filter(key => key.id !== id);
+      setPixKeys(filteredKeys);
+      
+      // If editing this key, cancel edit
+      if (isEditing === id) {
+        setIsEditing(null);
+        form.reset();
+      }
+      
+      toast({
+        title: "Chave PIX removida",
+        description: "A chave PIX foi removida com sucesso.",
+      });
+    } catch (error) {
+      console.error("Error removing PIX key:", error);
+      toast({
+        title: "Erro",
+        description: "Não foi possível remover a chave PIX.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleSetDefault = async (id: string) => {
+    try {
+      setIsLoading(true);
+      
+      const updatedKeys = pixKeys.map(key => ({
+        ...key,
+        isDefault: key.id === id
+      }));
+      
+      setPixKeys(updatedKeys);
+      
+      toast({
+        title: "Chave padrão alterada",
+        description: "A chave PIX padrão foi atualizada com sucesso.",
+      });
+    } catch (error) {
+      console.error("Error updating default PIX key:", error);
+      toast({
+        title: "Erro",
+        description: "Não foi possível atualizar a chave PIX padrão.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const cancelEdit = () => {
+    setIsEditing(null);
+    form.reset();
+  };
 
   return (
     <div className="space-y-6">
-      {pixKeys.map((key) => (
-        <div key={key.id} className="border rounded-lg p-4 space-y-4">
-          <div className="flex justify-between items-center">
-            <h3 className="font-medium">Chave PIX</h3>
-            <div className="flex space-x-2">
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => handleRemovePixKey(key.id)}
-              >
-                <Trash className="h-4 w-4" />
-              </Button>
-            </div>
-          </div>
+      <Card>
+        <CardHeader>
+          <CardTitle>Chaves PIX</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <Form {...form}>
+            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <FormField
+                  control={form.control}
+                  name="name"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Nome da Chave</FormLabel>
+                      <FormControl>
+                        <Input placeholder="Ex: Meu CPF" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                
+                <FormField
+                  control={form.control}
+                  name="type"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Tipo</FormLabel>
+                      <Select onValueChange={field.onChange} defaultValue={field.value}>
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Selecione o tipo" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          <SelectItem value="CPF">CPF</SelectItem>
+                          <SelectItem value="EMAIL">Email</SelectItem>
+                          <SelectItem value="PHONE">Telefone</SelectItem>
+                          <SelectItem value="RANDOM">Aleatória</SelectItem>
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                
+                <FormField
+                  control={form.control}
+                  name="key"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Chave PIX</FormLabel>
+                      <FormControl>
+                        <Input placeholder="Digite sua chave PIX" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                
+                <FormField
+                  control={form.control}
+                  name="isDefault"
+                  render={({ field }) => (
+                    <FormItem className="flex flex-row items-end space-x-2 pt-6">
+                      <FormControl>
+                        <Switch
+                          checked={field.value}
+                          onCheckedChange={field.onChange}
+                        />
+                      </FormControl>
+                      <FormLabel>Chave padrão para recebimentos</FormLabel>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+              
+              <div className="flex justify-end space-x-2">
+                {isEditing && (
+                  <Button type="button" variant="outline" onClick={cancelEdit}>
+                    Cancelar
+                  </Button>
+                )}
+                <Button type="submit" disabled={isLoading}>
+                  {isEditing ? "Atualizar Chave" : "Adicionar Chave"}
+                </Button>
+              </div>
+            </form>
+          </Form>
           
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <Label htmlFor={`type-${key.id}`}>Tipo</Label>
-              <Select 
-                value={key.type} 
-                onValueChange={(value) => handleKeyChange(key.id, 'type', value)}
-              >
-                <SelectTrigger id={`type-${key.id}`}>
-                  <SelectValue placeholder="Selecione o tipo" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="CPF">CPF</SelectItem>
-                  <SelectItem value="CNPJ">CNPJ</SelectItem>
-                  <SelectItem value="EMAIL">E-mail</SelectItem>
-                  <SelectItem value="PHONE">Telefone</SelectItem>
-                  <SelectItem value="RANDOM">Chave aleatória</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            
-            <div>
-              <Label htmlFor={`key-${key.id}`}>Chave</Label>
-              <Input
-                id={`key-${key.id}`}
-                value={key.key}
-                onChange={(e) => handleKeyChange(key.id, 'key', e.target.value)}
-                placeholder="Digite sua chave PIX"
-              />
-            </div>
+          <div className="mt-6">
+            <h3 className="text-lg font-medium mb-4">Minhas Chaves PIX</h3>
+            {isLoading ? (
+              <div className="py-4 text-center">Carregando...</div>
+            ) : pixKeys.length === 0 ? (
+              <div className="py-4 text-center text-muted-foreground">
+                Nenhuma chave PIX cadastrada
+              </div>
+            ) : (
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Nome</TableHead>
+                    <TableHead>Tipo</TableHead>
+                    <TableHead>Chave</TableHead>
+                    <TableHead className="w-[100px]">Padrão</TableHead>
+                    <TableHead className="w-[100px]">Ações</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {pixKeys.map((key) => (
+                    <TableRow key={key.id}>
+                      <TableCell>{key.name}</TableCell>
+                      <TableCell>{key.type}</TableCell>
+                      <TableCell>{key.key}</TableCell>
+                      <TableCell>
+                        {key.isDefault ? (
+                          <Check className="h-5 w-5 text-green-500" />
+                        ) : (
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => handleSetDefault(key.id)}
+                          >
+                            Definir
+                          </Button>
+                        )}
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex space-x-1">
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => handleEdit(key)}
+                          >
+                            Editar
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="text-red-600"
+                            onClick={() => handleDelete(key.id)}
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            )}
           </div>
-          
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <Label htmlFor={`name-${key.id}`}>Nome</Label>
-              <Input
-                id={`name-${key.id}`}
-                value={key.name}
-                onChange={(e) => handleKeyChange(key.id, 'name', e.target.value)}
-                placeholder="Nome associado à chave"
-              />
-            </div>
-            
-            <div>
-              <Label htmlFor={`bank-${key.id}`}>Banco</Label>
-              <Input
-                id={`bank-${key.id}`}
-                value={key.bank_name || ""}
-                onChange={(e) => handleKeyChange(key.id, 'bank_name', e.target.value)}
-                placeholder="Nome do banco"
-              />
-            </div>
-          </div>
-          
-          <div className="flex justify-between items-center pt-2">
-            <div className="flex items-center space-x-2">
-              <Switch
-                checked={key.isDefault}
-                onCheckedChange={() => handleSetDefault(key.id)}
-                id={`default-${key.id}`}
-              />
-              <Label htmlFor={`default-${key.id}`}>Definir como chave principal</Label>
-            </div>
-            
-            <Button
-              onClick={() => handleSavePixKey(key)}
-              size="sm"
-            >
-              <Check className="h-4 w-4 mr-2" />
-              Salvar
-            </Button>
-          </div>
-        </div>
-      ))}
-      
-      <Button onClick={handleAddPixKey} className="w-full">
-        <Plus className="h-4 w-4 mr-2" />
-        Adicionar chave PIX
-      </Button>
+        </CardContent>
+      </Card>
     </div>
   );
 }

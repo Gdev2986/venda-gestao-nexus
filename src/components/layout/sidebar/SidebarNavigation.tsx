@@ -1,6 +1,5 @@
 
 import { UserRole } from "@/types";
-import { useState } from "react";
 import SidebarNavItem from "./SidebarNavItem";
 import { 
   adminItems, 
