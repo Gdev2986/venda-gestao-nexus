@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { PageHeader } from "@/components/page/PageHeader";
 import { PageWrapper } from "@/components/page/PageWrapper";
@@ -39,7 +38,7 @@ import {
   Plus, 
   Search,
   Settings,
-  Tool,
+  Wrench,
   Printer,
   Upload,
 } from "lucide-react";
@@ -150,7 +149,7 @@ const LogisticsRequests = () => {
             <span>Todas</span>
           </TabsTrigger>
           <TabsTrigger value="maintenance" className="flex items-center gap-2">
-            <Tool size={16} />
+            <Wrench size={16} />
             <span>Manutenção</span>
           </TabsTrigger>
           <TabsTrigger value="paper" className="flex items-center gap-2">
