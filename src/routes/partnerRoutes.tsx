@@ -16,11 +16,13 @@ import Dashboard from "../pages/Dashboard";
 import Clients from "../pages/clients/Clients";
 import ClientDetails from "../pages/clients/ClientDetails";
 import Sales from "../pages/sales/Sales";
-import Reports from "../pages/Reports";
 import Settings from "../pages/settings/Settings";
 import Support from "../pages/Support";
 import Help from "../pages/Help";
 import Partners from "../pages/partners/Partners";
+
+// Create a simple Reports component if it doesn't exist yet
+import AdminReports from "../pages/admin/Reports";
 
 export const PartnerRoutes = (
   <Route element={<RequireAuth allowedRoles={[UserRole.PARTNER]} />}>
@@ -47,7 +49,7 @@ export const PartnerRoutes = (
       
       <Route 
         path={PATHS.PARTNER.REPORTS} 
-        element={<Reports />} 
+        element={<AdminReports />} 
       />
       
       <Route 
