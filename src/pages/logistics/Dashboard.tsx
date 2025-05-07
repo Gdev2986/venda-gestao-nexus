@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useMachineStats } from "@/hooks/use-machine-stats";
 import { PageWrapper } from "@/components/page/PageWrapper";
@@ -191,7 +190,7 @@ const LogisticsDashboard = () => {
                     <CardDescription>Distribuição por status atual</CardDescription>
                   </CardHeader>
                   <CardContent className="h-80">
-                    <PieChart data={machineStatusData} />
+                    <PieChart data={machineStatusData} dataKey="value" />
                   </CardContent>
                 </Card>
                 
