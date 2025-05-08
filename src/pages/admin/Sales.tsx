@@ -7,9 +7,8 @@ import ImportSalesDialog from "@/components/sales/ImportSalesDialog";
 import { useToast } from "@/hooks/use-toast";
 import AdminSalesContent from "@/components/admin/sales/AdminSalesContent";
 import SalesUploader from "@/components/sales/SalesUploader";
-import SalesAdvancedFilters from "@/components/sales/SalesAdvancedFilters";
-import { Button } from "@/components/ui/button";
-import { RefreshCw, Upload, Download } from "lucide-react";
+import AdminSalesFilters from "@/components/admin/sales/AdminSalesFilters";
+import AdminSalesLayout from "@/components/admin/sales/AdminSalesLayout";
 
 interface DateRange {
   from: Date;
@@ -19,9 +18,8 @@ interface DateRange {
 const AdminSales = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [sales, setSales] = useState([]);
-  const [filteredSales, setFilteredSales] = useState([]);
   const [page, setPage] = useState(1);
-  const [itemsPerPage] = useState(50);
+  const [itemsPerPage] = useState(50); // Changed to 50 items per page
   const [filters, setFilters] = useState<SalesFilterParams>({});
   const [dateRange, setDateRange] = useState<DateRange | undefined>();
   const [showImportDialog, setShowImportDialog] = useState(false);
@@ -40,7 +38,6 @@ const AdminSales = () => {
     setTimeout(() => {
       const mockSales = generateMockSalesData(150);
       setSales(mockSales);
-      setFilteredSales(mockSales);
       setIsLoading(false);
     }, 800);
   };
@@ -60,7 +57,7 @@ const AdminSales = () => {
   
   const handleExport = (format: 'csv' | 'pdf') => {
     toast({
-      title: `Exportando ${filteredSales.length} registros em ${format.toUpperCase()}`,
+      title: `Exportando registros em ${format.toUpperCase()}`,
       description: "O arquivo será gerado e disponibilizado para download em breve."
     });
   };
@@ -86,92 +83,55 @@ const AdminSales = () => {
 
   return (
     <div className="container mx-auto py-10">
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-8">
-        <div>
-          <h1 className="text-2xl font-bold">Gestão de Vendas</h1>
-          <p className="text-muted-foreground">
-            Visualize, filtre e gerencie todas as vendas realizadas
-          </p>
-        </div>
-        
-        <div className="flex items-center gap-2">
-          <Button 
-            variant="outline" 
-            size="sm"
-            className="flex items-center gap-1"
-            onClick={handleRefresh}
-            disabled={isRefreshing}
-          >
-            <RefreshCw className={`h-4 w-4 ${isRefreshing ? 'animate-spin' : ''}`} />
-            {isRefreshing ? "Atualizando..." : "Atualizar"}
-          </Button>
-          
-          <Button 
-            variant="outline"
-            size="sm"
-            className="flex items-center gap-1"
-            onClick={() => setShowImportDialog(true)}
-          >
-            <Upload className="h-4 w-4" />
-            Importar
-          </Button>
-          
-          <Button 
-            variant="outline"
-            size="sm"
-            className="flex items-center gap-1"
-            onClick={() => handleExport('csv')}
-          >
-            <Download className="h-4 w-4" />
-            Exportar
-          </Button>
-        </div>
-      </div>
-
-      {/* Filters and Upload Section */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
-        {/* Filters Card - 2/3 width */}
-        <Card className="md:col-span-2">
-          <CardHeader>
-            <CardTitle>Filtros</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <SalesAdvancedFilters 
+      <AdminSalesLayout
+        isRefreshing={isRefreshing}
+        onRefresh={handleRefresh}
+        onImport={() => setShowImportDialog(true)}
+        onExport={() => handleExport('csv')}
+      >
+        {/* Filters and Upload Section */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+          {/* Filters Card - 2/3 width */}
+          <Card className="md:col-span-2">
+            <CardHeader>
+              <CardTitle>Filtros</CardTitle>
+            </CardHeader>
+            <AdminSalesFilters 
               filters={filters}
               dateRange={dateRange}
               onFilterChange={handleFilterChange}
               onDateRangeChange={setDateRange}
               onClearFilters={handleClearFilters}
             />
-          </CardContent>
-        </Card>
-        
-        {/* Uploader Card - 1/3 width */}
-        <Card className="md:col-span-1">
-          <CardHeader>
-            <CardTitle>Upload de Vendas</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <SalesUploader onFileProcessed={handleFileProcessed} />
-          </CardContent>
-        </Card>
-      </div>
+          </Card>
+          
+          {/* Uploader Card - 1/3 width */}
+          <Card className="md:col-span-1">
+            <CardHeader>
+              <CardTitle>Upload de Vendas</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <SalesUploader onFileProcessed={handleFileProcessed} />
+            </CardContent>
+          </Card>
+        </div>
 
-      {/* Sales Data Table - Full Width */}
-      <AdminSalesContent 
-        sales={sales}
-        filters={filters}
-        dateRange={dateRange}
-        page={page}
-        setPage={setPage}
-        itemsPerPage={itemsPerPage}
-        isLoading={isLoading}
-      />
-      
-      <ImportSalesDialog
-        open={showImportDialog}
-        onOpenChange={setShowImportDialog}
-      />
+        {/* Sales Data Table - Full Width */}
+        <AdminSalesContent 
+          sales={sales}
+          filters={filters}
+          dateRange={dateRange}
+          page={page}
+          setPage={setPage}
+          itemsPerPage={itemsPerPage}
+          isLoading={isLoading}
+        />
+        
+        <ImportSalesDialog
+          open={showImportDialog}
+          onOpenChange={setShowImportDialog}
+        />
+      </AdminSalesLayout>
     </div>
   );
 };

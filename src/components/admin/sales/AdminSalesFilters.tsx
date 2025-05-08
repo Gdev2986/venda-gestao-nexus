@@ -21,6 +21,7 @@ import { format } from "date-fns";
 import { cn } from "@/lib/utils";
 import { useState } from "react";
 import { SalesFilterParams } from "@/types";
+import { TimeRangePicker } from "../../../components/sales/filters";
 
 interface DateRange {
   from: Date;
@@ -71,8 +72,8 @@ const AdminSalesFilters = ({
     });
   };
 
-  const handleTimeRangeChange = (values: number[]) => {
-    setTimeRange([values[0], values[1]]);
+  const handleTimeRangeChange = (values: [number, number]) => {
+    setTimeRange(values);
     onFilterChange({
       ...filters,
       startHour: values[0],
@@ -177,20 +178,13 @@ const AdminSalesFilters = ({
       </div>
 
       {/* Time Range Filter */}
-      <div className="space-y-4">
+      <div className="space-y-2">
         <label className="text-sm font-medium">Horário (h)</label>
-        <Slider
-          defaultValue={[timeRange[0], timeRange[1]]}
-          min={0}
-          max={23}
-          step={1}
-          onValueChange={handleTimeRangeChange}
-          className="my-6"
+        <TimeRangePicker
+          value={timeRange}
+          onChange={handleTimeRangeChange}
+          className="w-full"
         />
-        <div className="flex items-center justify-between text-sm">
-          <span>{timeRange[0]}:00</span>
-          <span>{timeRange[1]}:00</span>
-        </div>
       </div>
 
       {/* Clear Filters Button */}

@@ -70,9 +70,9 @@ export const useAdminPayments = ({ searchTerm, statusFilter, page }: UseAdminPay
       let updateData: any = {};
 
       if (action === PaymentAction.APPROVE) {
-        updateData = { status: PaymentStatus.APPROVED.toLowerCase() };
+        updateData = { status: 'approved' };
       } else if (action === PaymentAction.REJECT) {
-        updateData = { status: PaymentStatus.REJECTED.toLowerCase() };
+        updateData = { status: 'rejected' };
       } else if (newStatus) {
         updateData = { status: newStatus.toLowerCase() };
       }
