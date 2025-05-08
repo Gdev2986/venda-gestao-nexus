@@ -1,32 +1,19 @@
-
 import { CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { 
-  Select, 
-  SelectContent, 
-  SelectItem, 
-  SelectTrigger, 
-  SelectValue 
-} from "@/components/ui/select";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Calendar } from "@/components/ui/calendar";
-import { 
-  Popover, 
-  PopoverContent, 
-  PopoverTrigger 
-} from "@/components/ui/popover";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { CalendarIcon, Search } from "lucide-react";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
 import { useState, useEffect } from "react";
 import { SalesFilterParams } from "@/types";
 import { TimeRangePicker } from "../../../components/sales/filters";
-
 interface DateRange {
   from: Date;
   to?: Date;
 }
-
 interface AdminSalesFiltersProps {
   filters: SalesFilterParams;
   dateRange?: DateRange;
@@ -34,13 +21,16 @@ interface AdminSalesFiltersProps {
   onDateRangeChange: (range: DateRange | undefined) => void;
   onClearFilters: () => void;
 }
-
-const PAYMENT_METHODS = [
-  { value: "credit", label: "Crédito" },
-  { value: "debit", label: "Débito" },
-  { value: "pix", label: "Pix" }
-];
-
+const PAYMENT_METHODS = [{
+  value: "credit",
+  label: "Crédito"
+}, {
+  value: "debit",
+  label: "Débito"
+}, {
+  value: "pix",
+  label: "Pix"
+}];
 const AdminSalesFilters = ({
   filters,
   dateRange,
@@ -49,19 +39,15 @@ const AdminSalesFilters = ({
   onClearFilters
 }: AdminSalesFiltersProps) => {
   const [searchValue, setSearchValue] = useState(filters.search || "");
-  const [timeRange, setTimeRange] = useState<[number, number]>([
-    filters.startHour || 0,
-    filters.endHour || 23
-  ]);
-  const [amountValue, setAmountValue] = useState(
-    filters.minAmount ? filters.minAmount.toString().replace(".", ",") : ""
-  );
-
+  const [timeRange, setTimeRange] = useState<[number, number]>([filters.startHour || 0, filters.endHour || 23]);
+  const [amountValue, setAmountValue] = useState(filters.minAmount ? filters.minAmount.toString().replace(".", ",") : "");
   const handleSearchSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    onFilterChange({ ...filters, search: searchValue });
+    onFilterChange({
+      ...filters,
+      search: searchValue
+    });
   };
-
   const handleTimeRangeChange = (values: [number, number]) => {
     setTimeRange(values);
     onFilterChange({
@@ -70,11 +56,9 @@ const AdminSalesFilters = ({
       endHour: values[1]
     });
   };
-
   const handleAmountChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setAmountValue(e.target.value);
   };
-
   const handleAmountBlur = () => {
     if (amountValue) {
       // Convert comma to dot for numeric value
@@ -95,9 +79,7 @@ const AdminSalesFilters = ({
       });
     }
   };
-
-  return (
-    <CardContent className="p-4">
+  return <CardContent className="p-4">
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         {/* Left column with search and payment method */}
         <div className="space-y-3">
@@ -106,18 +88,10 @@ const AdminSalesFilters = ({
             <form onSubmit={handleSearchSubmit} className="flex-1">
               <div className="relative">
                 <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
-                <Input
-                  placeholder="Buscar vendas..."
-                  className="pl-8"
-                  value={searchValue}
-                  onChange={(e) => setSearchValue(e.target.value)}
-                />
+                <Input placeholder="Buscar vendas..." className="pl-8" value={searchValue} onChange={e => setSearchValue(e.target.value)} />
               </div>
             </form>
-            <Button 
-              variant="outline" 
-              onClick={onClearFilters}
-            >
+            <Button variant="outline" onClick={onClearFilters}>
               Limpar Filtros
             </Button>
           </div>
@@ -125,23 +99,18 @@ const AdminSalesFilters = ({
           {/* Payment Method Filter */}
           <div>
             <label className="text-sm font-medium mb-1 block">Forma de Pagamento</label>
-            <Select 
-              value={filters.paymentMethod || "all"} 
-              onValueChange={(value) => onFilterChange({
-                ...filters,
-                paymentMethod: value === "all" ? undefined : value
-              })}
-            >
+            <Select value={filters.paymentMethod || "all"} onValueChange={value => onFilterChange({
+            ...filters,
+            paymentMethod: value === "all" ? undefined : value
+          })}>
               <SelectTrigger>
                 <SelectValue placeholder="Selecione..." />
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">Todas</SelectItem>
-                {PAYMENT_METHODS.map(method => (
-                  <SelectItem key={method.value} value={method.value}>
+                {PAYMENT_METHODS.map(method => <SelectItem key={method.value} value={method.value}>
                     {method.label}
-                  </SelectItem>
-                ))}
+                  </SelectItem>)}
               </SelectContent>
             </Select>
           </div>
@@ -151,56 +120,28 @@ const AdminSalesFilters = ({
             <label className="text-sm font-medium mb-1 block">Valor (R$)</label>
             <div className="relative">
               <span className="absolute left-3 top-2.5 text-muted-foreground">R$</span>
-              <Input 
-                value={amountValue}
-                onChange={handleAmountChange}
-                onBlur={handleAmountBlur}
-                className="pl-10"
-                placeholder="1.500,50"
-              />
+              <Input value={amountValue} onChange={handleAmountChange} onBlur={handleAmountBlur} className="pl-10" placeholder="1.500,50" />
             </div>
           </div>
         </div>
 
         {/* Right column with date and time */}
-        <div className="space-y-3">
+        <div className="space-y-3 py-[40px]">
           {/* Date Range Filter */}
           <div>
             <label className="text-sm font-medium mb-1 block">Período</label>
             <Popover>
               <PopoverTrigger asChild>
-                <Button
-                  variant="outline"
-                  className={cn(
-                    "w-full justify-start text-left font-normal",
-                    !dateRange && "text-muted-foreground"
-                  )}
-                >
+                <Button variant="outline" className={cn("w-full justify-start text-left font-normal", !dateRange && "text-muted-foreground")}>
                   <CalendarIcon className="mr-2 h-4 w-4" />
-                  {dateRange?.from ? (
-                    dateRange.to ? (
-                      <>
+                  {dateRange?.from ? dateRange.to ? <>
                         {format(dateRange.from, "dd/MM/yyyy")} -{" "}
                         {format(dateRange.to, "dd/MM/yyyy")}
-                      </>
-                    ) : (
-                      format(dateRange.from, "dd/MM/yyyy")
-                    )
-                  ) : (
-                    <span>Selecione o período</span>
-                  )}
+                      </> : format(dateRange.from, "dd/MM/yyyy") : <span>Selecione o período</span>}
                 </Button>
               </PopoverTrigger>
               <PopoverContent className="w-auto p-0" align="start">
-                <Calendar
-                  initialFocus
-                  mode="range"
-                  defaultMonth={dateRange?.from}
-                  selected={dateRange}
-                  onSelect={onDateRangeChange}
-                  numberOfMonths={2}
-                  className="pointer-events-auto"
-                />
+                <Calendar initialFocus mode="range" defaultMonth={dateRange?.from} selected={dateRange} onSelect={onDateRangeChange} numberOfMonths={2} className="pointer-events-auto" />
               </PopoverContent>
             </Popover>
           </div>
@@ -208,16 +149,10 @@ const AdminSalesFilters = ({
           {/* Time Range Filter */}
           <div>
             <label className="text-sm font-medium mb-1 block">Horário</label>
-            <TimeRangePicker
-              value={timeRange}
-              onChange={handleTimeRangeChange}
-              className="w-full"
-            />
+            <TimeRangePicker value={timeRange} onChange={handleTimeRangeChange} className="w-full" />
           </div>
         </div>
       </div>
-    </CardContent>
-  );
+    </CardContent>;
 };
-
 export default AdminSalesFilters;
