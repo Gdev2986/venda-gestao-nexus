@@ -101,18 +101,26 @@ const AdminSalesFilters = ({
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         {/* Left column with search and payment method */}
         <div className="space-y-3">
-          {/* Search Filter */}
-          <form onSubmit={handleSearchSubmit}>
-            <div className="relative">
-              <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
-              <Input
-                placeholder="Buscar vendas..."
-                className="pl-8"
-                value={searchValue}
-                onChange={(e) => setSearchValue(e.target.value)}
-              />
-            </div>
-          </form>
+          {/* Search Filter with Clear Filters Button */}
+          <div className="flex gap-2">
+            <form onSubmit={handleSearchSubmit} className="flex-1">
+              <div className="relative">
+                <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
+                <Input
+                  placeholder="Buscar vendas..."
+                  className="pl-8"
+                  value={searchValue}
+                  onChange={(e) => setSearchValue(e.target.value)}
+                />
+              </div>
+            </form>
+            <Button 
+              variant="outline" 
+              onClick={onClearFilters}
+            >
+              Limpar Filtros
+            </Button>
+          </div>
 
           {/* Payment Method Filter */}
           <div>
@@ -206,15 +214,6 @@ const AdminSalesFilters = ({
               className="w-full"
             />
           </div>
-
-          {/* Clear Filters Button */}
-          <Button 
-            variant="outline" 
-            className="w-full mt-2" 
-            onClick={onClearFilters}
-          >
-            Limpar Filtros
-          </Button>
         </div>
       </div>
     </CardContent>

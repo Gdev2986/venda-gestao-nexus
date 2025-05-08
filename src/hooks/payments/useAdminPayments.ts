@@ -42,7 +42,7 @@ export const useAdminPayments = ({ searchTerm, statusFilter, page }: UseAdminPay
       throw new Error(error.message);
     }
 
-    // Converter dados com type assertion para garantir compatibilidade
+    // Convert data with type assertion to ensure compatibility
     return {
       data: data.map(item => ({
         ...item,
