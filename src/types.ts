@@ -1,27 +1,26 @@
-
 export enum UserRole {
-  ADMIN = "admin",
-  USER = "user",
-  MANAGER = "manager",
-  LOGISTICS = "logistics",
-  FINANCE = "finance",
-  SUPPORT = "support",
-  CLIENT = "client",
-  PARTNER = "partner", 
-  FINANCIAL = "financial"
+  ADMIN = "ADMIN",
+  CLIENT = "CLIENT", 
+  FINANCIAL = "FINANCIAL",
+  PARTNER = "PARTNER",
+  LOGISTICS = "LOGISTICS",
+  MANAGER = "MANAGER",
+  FINANCE = "FINANCE",
+  SUPPORT = "SUPPORT",
+  USER = "USER"
 }
 
 export enum PaymentStatus {
-  PENDING = "pending",
-  APPROVED = "approved",
-  REJECTED = "rejected",
-  PAID = "paid"
+  PENDING = "PENDING",
+  APPROVED = "APPROVED",
+  REJECTED = "REJECTED",
+  PAID = "PAID"
 }
 
 export enum PaymentType {
-  PIX = "pix",
-  TED = "ted",
-  BOLETO = "boleto"
+  PIX = "PIX",
+  TED = "TED",
+  BOLETO = "BOLETO"
 }
 
 // Added ClientStatus enum for the ClientStatus component
@@ -34,9 +33,7 @@ export enum ClientStatus {
 export enum PaymentMethod {
   CREDIT = "credit",
   DEBIT = "debit",
-  PIX = "pix",
-  CASH = "cash",
-  TRANSFER = "transfer",
+  PIX = "pix"
 }
 
 export interface Payment {
@@ -65,24 +62,22 @@ export interface Payment {
     type: string;
     owner_name: string;
   };
-  description?: string;
-  client?: Client;
 }
 
 // Types for partners
 export interface Partner {
   id: string;
   company_name: string;
-  business_name: string;
-  commission_rate: number;
   created_at: string;
   updated_at: string;
-  contact_name: string;
-  email: string;
-  phone: string;
-  address: string;
-  total_sales: number;
-  total_commission: number;
+  commission_rate: number;
+  contact_name?: string;
+  contact_email?: string;
+  contact_phone?: string;
+  business_name?: string; // For backward compatibility
+  email?: string; // Added for consistency with filtering
+  phone?: string; // Added for consistency with filtering
+  address?: string; // Added for completeness
 }
 
 // Added Client interface to ensure type safety
@@ -114,8 +109,6 @@ export interface FilterValues {
     from: Date;
     to?: Date;
   };
-  searchTerm?: string;
-  commissionRange?: [number, number];
 }
 
 export interface PixKey {
@@ -125,37 +118,29 @@ export interface PixKey {
   name: string;
   owner_name?: string;
   is_default?: boolean;
-  isDefault?: boolean; // Alias for backward compatibility
   user_id?: string;
   created_at?: string;
   updated_at?: string;
-  key_type?: string;
-  bank_name?: string;
-  is_active?: boolean;
 }
 
 export interface Sale {
   id: string;
   code: string;
-  date: string;
-  amount: number;
-  payment_method: PaymentMethod;
   terminal: string;
-  client_id: string;
   client_name: string;
-  status: string;
-  created_at: string;
-  updated_at: string;
   gross_amount: number;
   net_amount: number;
+  date: string;
+  payment_method: PaymentMethod;
+  client_id: string;
+  created_at: string;
+  updated_at: string;
 }
 
 export interface SalesFilterParams {
   search?: string;
   paymentMethod?: string;
   terminal?: string;
-  startDate?: string;
-  endDate?: string;
   minAmount?: number;
   maxAmount?: number;
   startHour?: number;
@@ -175,18 +160,4 @@ export interface UserData {
 export interface SalesChartData {
   name: string;
   value: number;
-  total?: number; // Add optional total property for backward compatibility
-}
-
-export interface Machine {
-  id: string;
-  name?: string;
-  client_id: string;
-  client_name: string;
-  created_at: string;
-  updated_at: string;
-  model: string;
-  serial_number: string;
-  serialNumber: string;  // Make this required to match the expected type
-  status?: string;
 }

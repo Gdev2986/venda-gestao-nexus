@@ -2,17 +2,25 @@
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Label } from "@/components/ui/label";
-import {
+import { useToast } from "@/hooks/use-toast";
+import { UserRole } from "@/types";
+import { supabase } from "@/integrations/supabase/client";
+import { 
+  Table, 
+  TableBody, 
+  TableCell, 
+  TableHead, 
+  TableHeader, 
+  TableRow 
+} from "@/components/ui/table";
+import { 
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { useToast } from "@/hooks/use-toast";
-import { UserRole } from "@/types";
-import { supabase } from "@/integrations/supabase/client";
+import UserRoleChangeModal from "@/components/user-management/UserRoleChangeModal";
 
 interface ProfileData {
   id: string;
@@ -35,7 +43,10 @@ export const UsersTab = ({ openRoleModal }: UsersTabProps) => {
   const [loading, setLoading] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
-  
+  const [showRoleChangeModal, setShowRoleChangeModal] = useState(false);
+  const [selectedUser, setSelectedUser] = useState<ProfileData | null>(null);
+  const [newUserRole, setNewUserRole] = useState<string>("USER");
+
   const { toast } = useToast();
   const itemsPerPage = 10;
 
@@ -52,6 +63,7 @@ export const UsersTab = ({ openRoleModal }: UsersTabProps) => {
         .select('*', { count: 'exact' });
       
       if (selectedRole !== 'all') {
+        // Use the exact case that's stored in the database
         query = query.eq('role', selectedRole);
       }
       
@@ -82,6 +94,40 @@ export const UsersTab = ({ openRoleModal }: UsersTabProps) => {
     }
   };
 
+  const handleRoleChangeClick = (user: ProfileData) => {
+    setSelectedUser(user);
+    setNewUserRole(user.role);
+    setShowRoleChangeModal(true);
+  };
+
+  const handleRoleChangeConfirm = async (notes: string) => {
+    if (!selectedUser || !newUserRole) return;
+    
+    try {
+      const { error } = await supabase
+        .from('profiles')
+        .update({ role: newUserRole })
+        .eq('id', selectedUser.id);
+        
+      if (error) throw error;
+      
+      toast({
+        title: "Função atualizada",
+        description: `A função de ${selectedUser.name} foi atualizada para ${newUserRole}.`
+      });
+      
+      setShowRoleChangeModal(false);
+      fetchUsers(); // Refresh the user list
+    } catch (error) {
+      console.error("Error updating role:", error);
+      toast({
+        variant: "destructive",
+        title: "Erro ao atualizar função",
+        description: "Não foi possível atualizar a função do usuário."
+      });
+    }
+  };
+
   return (
     <Card>
       <CardHeader>
@@ -89,7 +135,6 @@ export const UsersTab = ({ openRoleModal }: UsersTabProps) => {
       </CardHeader>
       <CardContent>
         <div className="mb-4">
-          <Label htmlFor="roleFilter">Filtrar por função:</Label>
           <Select
             value={selectedRole}
             onValueChange={(value) => {
@@ -97,13 +142,17 @@ export const UsersTab = ({ openRoleModal }: UsersTabProps) => {
               setCurrentPage(1); // Reset to first page when role changes
             }}
           >
-            <SelectTrigger>
-              <SelectValue placeholder="Todas as funções" />
+            <SelectTrigger className="w-[200px]">
+              <SelectValue placeholder="Filtrar por função" />
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="all">Todas as funções</SelectItem>
               <SelectItem value="ADMIN">Administrador</SelectItem>
               <SelectItem value="USER">Usuário</SelectItem>
+              <SelectItem value="FINANCIAL">Financeiro</SelectItem>
+              <SelectItem value="PARTNER">Parceiro</SelectItem>
+              <SelectItem value="CLIENT">Cliente</SelectItem>
+              <SelectItem value="LOGISTICS">Logística</SelectItem>
             </SelectContent>
           </Select>
         </div>
@@ -111,23 +160,37 @@ export const UsersTab = ({ openRoleModal }: UsersTabProps) => {
         {loading ? (
           <p>Carregando usuários...</p>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {users.map((user) => (
-              <Card key={user.id} className="shadow-sm">
-                <CardContent className="flex flex-col gap-2">
-                  <div className="text-sm font-medium">{user.name}</div>
-                  <div className="text-xs text-muted-foreground">{user.email}</div>
-                  <div className="text-xs text-muted-foreground">Função: {user.role}</div>
-                  <Button 
-                    variant="outline" 
-                    size="sm"
-                    onClick={() => openRoleModal(user)}
-                  >
-                    Alterar Função
-                  </Button>
-                </CardContent>
-              </Card>
-            ))}
+          <div className="border rounded-md overflow-hidden">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Nome</TableHead>
+                  <TableHead>E-mail</TableHead>
+                  <TableHead>Função</TableHead>
+                  <TableHead>Data de criação</TableHead>
+                  <TableHead>Ações</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {users.map((user) => (
+                  <TableRow key={user.id}>
+                    <TableCell className="font-medium">{user.name}</TableCell>
+                    <TableCell>{user.email}</TableCell>
+                    <TableCell>{user.role}</TableCell>
+                    <TableCell>{new Date(user.created_at).toLocaleDateString('pt-BR')}</TableCell>
+                    <TableCell>
+                      <Button 
+                        variant="outline" 
+                        size="sm"
+                        onClick={() => handleRoleChangeClick(user)}
+                      >
+                        Alterar Função
+                      </Button>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
           </div>
         )}
         
@@ -149,6 +212,19 @@ export const UsersTab = ({ openRoleModal }: UsersTabProps) => {
             Próximo
           </Button>
         </div>
+
+        {/* Role Change Modal */}
+        {showRoleChangeModal && selectedUser && (
+          <UserRoleChangeModal
+            isOpen={showRoleChangeModal}
+            onClose={() => setShowRoleChangeModal(false)}
+            onConfirm={handleRoleChangeConfirm}
+            userName={selectedUser.name}
+            userEmail={selectedUser.email}
+            currentRole={selectedUser.role as UserRole}
+            newRole={newUserRole as UserRole}
+          />
+        )}
       </CardContent>
     </Card>
   );

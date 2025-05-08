@@ -31,6 +31,7 @@ export const useAdminPayments = ({ searchTerm, statusFilter, page }: UseAdminPay
 
     if (statusFilter !== 'ALL') {
       // Convert status to lowercase for database compatibility
+      // In the database, the status is stored in lowercase
       const dbStatus = statusFilter.toLowerCase();
       query = query.eq('status', dbStatus);
     }
@@ -43,10 +44,11 @@ export const useAdminPayments = ({ searchTerm, statusFilter, page }: UseAdminPay
     }
 
     // Convert data with type assertion to ensure compatibility
+    // Convert the database status (lowercase) back to the enum format (uppercase)
     return {
       data: data.map(item => ({
         ...item,
-        status: item.status as PaymentStatus
+        status: item.status.toUpperCase() as PaymentStatus
       })) as Payment[],
       totalCount: count || 0,
     };
