@@ -7,21 +7,39 @@ import { motion } from "framer-motion";
 import { useState, useEffect } from "react";
 import { useUserRole } from "@/hooks/use-user-role";
 import { getDashboardPath } from "@/routes/routeUtils";
+import { UserRole } from "@/types";
 
 const RootLayout = () => {
-  const { user, isLoading } = useAuth();
+  const { user, isLoading, signOut } = useAuth();
   const { userRole, isRoleLoading } = useUserRole();
   const location = useLocation();
   const [showLoading, setShowLoading] = useState(true);
+  const [errorState, setErrorState] = useState(false);
   
   // Log para depuração
   useEffect(() => {
     console.log("RootLayout - isLoading:", isLoading, "isRoleLoading:", isRoleLoading, "user:", !!user);
-    if (!isLoading && !isRoleLoading && user) {
-      console.log("RootLayout - userRole:", userRole);
-      console.log("RootLayout - will redirect to:", getDashboardPath(userRole));
+    
+    // Detectar possível loop infinito com token expirado
+    const tokenExpired = !!user && (userRole === undefined || userRole === null);
+    
+    if (tokenExpired && !isLoading && !isRoleLoading) {
+      console.log("Possível token expirado detectado, forçando logout");
+      setErrorState(true);
+      // Tentativa de corrigir o estado de autenticação
+      signOut().catch(err => console.error("Erro ao fazer logout:", err));
     }
-  }, [isLoading, isRoleLoading, user, userRole]);
+    
+    if (!isLoading && !isRoleLoading && user && userRole) {
+      console.log("RootLayout - userRole:", userRole);
+      try {
+        const dashPath = getDashboardPath(userRole);
+        console.log("RootLayout - will redirect to:", dashPath);
+      } catch (error) {
+        console.error("Erro ao obter caminho do dashboard:", error);
+      }
+    }
+  }, [isLoading, isRoleLoading, user, userRole, signOut]);
   
   // Add a slight delay for loading animation
   useEffect(() => {
@@ -33,7 +51,7 @@ const RootLayout = () => {
   }, []);
   
   // Se ainda estiver carregando ou mostrando animação de carregamento, mostre um spinner
-  if (isLoading || isRoleLoading || showLoading) {
+  if ((isLoading || isRoleLoading || showLoading) && !errorState) {
     return (
       <div className="flex flex-col items-center justify-center h-screen bg-background">
         <motion.div
@@ -49,8 +67,14 @@ const RootLayout = () => {
     );
   }
   
+  // Se houver um estado de erro ou token expirado, redirecione para login
+  if (errorState || (user && !userRole)) {
+    console.log("Estado de erro ou token expirado detectado, redirecionando para login");
+    return <Navigate to={PATHS.LOGIN} replace />;
+  }
+  
   // Se estiver autenticado, redirecione para o dashboard específico do papel
-  if (user) {
+  if (user && userRole) {
     let dashboardPath = PATHS.LOGIN; // Fallback default para evitar loops
     
     try {

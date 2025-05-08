@@ -69,6 +69,9 @@ export const signInWithEmail = async (email: string, password: string): Promise<
   error: Error | null;
 }> => {
   try {
+    // Clear existing auth data before sign in
+    clearAllAuthData();
+    
     const { data, error } = await supabase.auth.signInWithPassword({
       email,
       password,
@@ -107,6 +110,9 @@ export const signUpWithEmail = async (
   error: Error | null;
 }> => {
   try {
+    // Clear existing auth data before sign up
+    clearAllAuthData();
+    
     const { error, data } = await supabase.auth.signUp({
       email,
       password,
@@ -141,14 +147,14 @@ export const signUpWithEmail = async (
 // Sign out
 export const signOutUser = async (): Promise<{ error: Error | null }> => {
   try {
-    const { error } = await supabase.auth.signOut();
+    // Clear auth data first
+    clearAllAuthData();
     
-    // Clear auth-related storage items regardless of result
-    sessionStorage.removeItem('userRole');
-    sessionStorage.removeItem('redirectPath');
-    localStorage.removeItem('userRole');
+    // Attempt global sign out
+    const { error } = await supabase.auth.signOut({ scope: 'global' });
     
     if (error) {
+      console.error("Error during sign out:", error);
       return { error };
     }
     
@@ -163,7 +169,31 @@ export const signOutUser = async (): Promise<{ error: Error | null }> => {
 
 // Clear all authentication data from storage
 export const clearAuthData = (): void => {
-  sessionStorage.removeItem('userRole');
-  sessionStorage.removeItem('redirectPath');
-  localStorage.removeItem('userRole');
+  clearAllAuthData();
+};
+
+// Helper function to clear all auth data
+export const clearAllAuthData = (): void => {
+  try {
+    sessionStorage.removeItem('userRole');
+    sessionStorage.removeItem('redirectPath');
+    localStorage.removeItem('userRole');
+    
+    // Remove all Supabase auth related items
+    Object.keys(localStorage).forEach(key => {
+      if (key.startsWith('supabase.auth.') || key.includes('sb-')) {
+        localStorage.removeItem(key);
+      }
+    });
+    
+    Object.keys(sessionStorage).forEach(key => {
+      if (key.startsWith('supabase.auth.') || key.includes('sb-')) {
+        sessionStorage.removeItem(key);
+      }
+    });
+    
+    console.log("Auth data cleared");
+  } catch (error) {
+    console.error("Error clearing auth data:", error);
+  }
 };

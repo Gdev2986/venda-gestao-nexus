@@ -1,3 +1,4 @@
+
 import { createContext, useContext, useEffect, useState } from "react";
 import { Session, User } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
@@ -12,6 +13,37 @@ import {
   clearAuthData 
 } from "@/services/auth-service";
 import { AuthContextType } from "./auth-types";
+
+// Função para limpar todos os dados relacionados ao Supabase
+const cleanupSupabaseState = () => {
+  try {
+    // Limpar tokens padrão
+    localStorage.removeItem('supabase.auth.token');
+    
+    // Remover todas as chaves do Supabase do localStorage
+    Object.keys(localStorage).forEach((key) => {
+      if (key.startsWith('supabase.auth.') || key.includes('sb-')) {
+        localStorage.removeItem(key);
+      }
+    });
+    
+    // Remover do sessionStorage se estiver em uso
+    Object.keys(sessionStorage).forEach((key) => {
+      if (key.startsWith('supabase.auth.') || key.includes('sb-')) {
+        sessionStorage.removeItem(key);
+      }
+    });
+    
+    // Limpar outros dados de autenticação
+    sessionStorage.removeItem('userRole');
+    sessionStorage.removeItem('redirectPath');
+    localStorage.removeItem('userRole');
+    
+    console.log("Limpeza completa do estado de autenticação");
+  } catch (error) {
+    console.error("Erro ao limpar estado de autenticação:", error);
+  }
+};
 
 // Create a context for authentication
 export const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -58,6 +90,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
           
           // Clear auth data
           clearAuthData();
+          cleanupSupabaseState();
           
           // Use setTimeout to avoid calling toast inside the callback
           setTimeout(() => {
@@ -65,7 +98,18 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
               title: "Signed out",
               description: "You have been successfully signed out.",
             });
+            
+            // Força recarregamento da página para limpar completamente o estado
+            window.location.href = PATHS.LOGIN;
           }, 0);
+        }
+        
+        if (event === "TOKEN_REFRESHED") {
+          console.log("Token refreshed event");
+        }
+        
+        if (event === "USER_UPDATED") {
+          console.log("User updated event");
         }
       }
     );
@@ -79,6 +123,8 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         
         if (error) {
           console.error("Error getting session:", error);
+          // Limpar dados em caso de erro
+          cleanupSupabaseState();
           throw error;
         }
         
@@ -105,8 +151,19 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
   const signIn = async (email: string, password: string) => {
     try {
+      // Limpar qualquer dado de autenticação antes de tentar login
+      cleanupSupabaseState();
+      
       console.log("Sign in attempt for:", email);
       setIsLoading(true);
+      
+      // Tentativa de logout global antes de fazer login
+      try {
+        await supabase.auth.signOut({ scope: 'global' });
+      } catch (err) {
+        // Continuar mesmo se falhar
+        console.log("Falha ao fazer logout global antes do login, continuando...");
+      }
       
       const { user: signedInUser, error } = await signInWithEmail(email, password);
 
@@ -142,8 +199,18 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
   const signUp = async (email: string, password: string, userData: { name: string }) => {
     try {
+      // Limpar qualquer dado de autenticação antes de tentar cadastro
+      cleanupSupabaseState();
+      
       console.log("Sign up attempt for:", email);
       setIsLoading(true);
+      
+      // Tentativa de logout global antes de fazer cadastro
+      try {
+        await supabase.auth.signOut({ scope: 'global' });
+      } catch (err) {
+        // Continuar mesmo se falhar
+      }
       
       const { user: newUser, error } = await signUpWithEmail(email, password, userData);
 
@@ -175,14 +242,23 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       console.log("Sign out attempt");
       setIsLoading(true);
       
-      // Clear local state immediately for better UX
+      // Limpar estado local imediatamente para melhor UX
       setUser(null);
       setSession(null);
       
-      const { error } = await signOutUser();
-      if (error) throw error;
+      // Limpar todos os dados de autenticação
+      cleanupSupabaseState();
       
-      navigate(PATHS.HOME);
+      const { error } = await signOutUser();
+      
+      if (error) {
+        console.error("Erro ao fazer logout:", error);
+      }
+      
+      // Forçar recarga completa da página para limpar todo o estado
+      window.location.href = PATHS.HOME;
+      
+      return { success: true, error: null };
     } catch (error: any) {
       console.error("Error during sign out:", error);
       toast({
@@ -190,6 +266,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         description: error.message || "An error occurred while trying to sign out",
         variant: "destructive",
       });
+      return { success: false, error };
     } finally {
       setIsLoading(false);
     }

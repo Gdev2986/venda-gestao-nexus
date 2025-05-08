@@ -7,6 +7,7 @@ import { UserRole } from "@/types";
  */
 export const getDashboardPath = (userRole: UserRole): string => {
   console.log("getDashboardPath - userRole:", userRole);
+  
   switch (userRole) {
     case UserRole.ADMIN:
       return PATHS.ADMIN.DASHBOARD;
@@ -18,6 +19,12 @@ export const getDashboardPath = (userRole: UserRole): string => {
       return PATHS.FINANCIAL.DASHBOARD;
     case UserRole.LOGISTICS:
       return PATHS.LOGISTICS.DASHBOARD;
+    case UserRole.MANAGER:
+    case UserRole.FINANCE:
+    case UserRole.SUPPORT:
+    case UserRole.USER:
+      // Mapeamento de outros tipos para rotas padrão
+      return PATHS.USER.DASHBOARD;
     default:
       console.log("Role não reconhecido:", userRole);
       // Em vez de redirecionar para o login quando não reconhecermos o papel

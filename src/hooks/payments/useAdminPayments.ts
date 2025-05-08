@@ -30,8 +30,8 @@ export const useAdminPayments = ({ searchTerm, statusFilter, page }: UseAdminPay
     }
 
     if (statusFilter !== 'ALL') {
-      // Convert the enum to string to ensure compatibility
-      query = query.eq('status', statusFilter.toString());
+      // Convert the statusFilter to string to ensure compatibility
+      query = query.eq('status', statusFilter);
     }
 
     const { data, error, count } = await query;

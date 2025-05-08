@@ -3,7 +3,34 @@ import { UserRole } from "@/types";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 
-// Helper for storing and retrieving auth data securely
+// Helper para limpar todos os dados de autenticação do storage
+const clearAllAuthData = () => {
+  try {
+    // Limpar sessionStorage
+    sessionStorage.removeItem("userRole");
+    sessionStorage.removeItem("redirectPath");
+    
+    // Limpar localStorage
+    localStorage.removeItem("userRole");
+    
+    // Limpar todos os itens relacionados ao Supabase
+    Object.keys(localStorage).forEach((key) => {
+      if (key.startsWith('supabase.auth.') || key.includes('sb-')) {
+        localStorage.removeItem(key);
+      }
+    });
+    
+    Object.keys(sessionStorage).forEach((key) => {
+      if (key.startsWith('supabase.auth.') || key.includes('sb-')) {
+        sessionStorage.removeItem(key);
+      }
+    });
+  } catch (error) {
+    console.error("Erro ao limpar dados de autenticação:", error);
+  }
+};
+
+// Helper para armazenar e recuperar dados de autenticação com segurança
 const getAuthData = (key: string) => {
   try {
     const item = sessionStorage.getItem(key);
@@ -26,7 +53,7 @@ const setAuthData = (key: string, value: any) => {
 export const useUserRole = () => {
   const [userRole, setUserRole] = useState<UserRole>(UserRole.CLIENT); // Default to CLIENT
   const [isRoleLoading, setIsRoleLoading] = useState<boolean>(true);
-  const { user } = useAuth();
+  const { user, signOut } = useAuth();
   
   useEffect(() => {
     const fetchUserRole = async () => {
@@ -63,6 +90,15 @@ export const useUserRole = () => {
 
         if (error) {
           console.error('Error fetching user profile:', error);
+          
+          // Se for um erro de autenticação ou não encontrado, fazer logout
+          if (error.code === 'PGRST116' || error.code === '404') {
+            console.log("Token expirado ou usuário não encontrado, fazendo logout");
+            clearAllAuthData();
+            await signOut();
+            return;
+          }
+          
           // If there's an error but we have a cached role, keep using it
           if (!cachedRole) {
             console.log("useUserRole - Error fetching role and no cache, using default CLIENT");
@@ -76,9 +112,14 @@ export const useUserRole = () => {
           setAuthData("userRole", role);
         } else {
           console.log("useUserRole - No role found in database, using default or cached role");
+          if (!cachedRole) {
+            setUserRole(UserRole.CLIENT);
+          }
         }
       } catch (error) {
         console.error('Error fetching profile:', error);
+        // Em caso de erro, tentar fazer logout para limpar o estado
+        clearAllAuthData();
       } finally {
         setIsRoleLoading(false);
       }
@@ -86,7 +127,7 @@ export const useUserRole = () => {
 
     // Fetch profile when user changes
     fetchUserRole();
-  }, [user]);
+  }, [user, signOut]);
 
   const updateUserRole = (role: UserRole) => {
     console.log("useUserRole - Updating role to:", role);

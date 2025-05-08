@@ -16,7 +16,7 @@ interface RequireAuthProps {
 }
 
 const RequireAuth = ({ allowedRoles = [], redirectTo = PATHS.LOGIN }: RequireAuthProps) => {
-  const { user, isLoading } = useAuth();
+  const { user, isLoading, signOut } = useAuth();
   const { userRole, isRoleLoading } = useUserRole();
   const location = useLocation();
   const { toast } = useToast();
@@ -31,6 +31,16 @@ const RequireAuth = ({ allowedRoles = [], redirectTo = PATHS.LOGIN }: RequireAut
     console.log("Current location:", location.pathname);
     console.log("Current user role:", userRole);
     console.log("Allowed roles:", allowedRoles);
+    
+    // Verificar se há um possível token expirado
+    const tokenExpired = !!user && (userRole === undefined || userRole === null);
+    
+    if (tokenExpired && !isLoading && !isRoleLoading) {
+      console.log("Possível token expirado detectado, forçando logout");
+      // Tentativa de corrigir o estado de autenticação
+      signOut().catch(err => console.error("Erro ao fazer logout:", err));
+      return;
+    }
     
     // Only determine redirect after loading is complete
     if (!isLoading && !isRoleLoading) {
@@ -78,20 +88,27 @@ const RequireAuth = ({ allowedRoles = [], redirectTo = PATHS.LOGIN }: RequireAut
         });
         
         // Definir caminho de redirecionamento para dashboard específico do papel
-        const dashboardPath = getDashboardPath(userRole);
-        
-        // Verificar se já estamos no caminho de redirecionamento
-        if (location.pathname !== dashboardPath) {
-          console.log("Will redirect to dashboard path:", dashboardPath);
-          setRedirectPath(dashboardPath);
+        try {
+          const dashboardPath = getDashboardPath(userRole);
+          
+          // Verificar se já estamos no caminho de redirecionamento
+          if (location.pathname !== dashboardPath) {
+            console.log("Will redirect to dashboard path:", dashboardPath);
+            setRedirectPath(dashboardPath);
+            setUnauthorized(true);
+          } else {
+            // Se já estivermos no caminho de redirecionamento, não redirecionamos novamente
+            console.log("Already on redirect path, not redirecting again");
+          }
+        } catch (error) {
+          console.error("Erro ao obter caminho do dashboard:", error);
+          // Redirecionar para login em caso de erro
+          setRedirectPath(PATHS.LOGIN);
           setUnauthorized(true);
-        } else {
-          // Se já estivermos no caminho de redirecionamento, não redirecionamos novamente
-          console.log("Already on redirect path, not redirecting again");
         }
       }
     }
-  }, [isLoading, isRoleLoading, user, userRole, allowedRoles, toast, location.pathname]);
+  }, [isLoading, isRoleLoading, user, userRole, allowedRoles, toast, location.pathname, signOut]);
 
   // Add a slight delay for loading animation
   useEffect(() => {
@@ -121,6 +138,13 @@ const RequireAuth = ({ allowedRoles = [], redirectTo = PATHS.LOGIN }: RequireAut
         </motion.div>
       </div>
     );
+  }
+
+  // Se o token estiver expirado, redirecionar para login
+  const tokenExpired = !!user && (userRole === undefined || userRole === null);
+  if (tokenExpired) {
+    console.log("Token possivelmente expirado, redirecionando para login");
+    return <Navigate to={PATHS.LOGIN} state={{ from: location.pathname }} replace />;
   }
 
   // If not authenticated and not loading, redirect to login
@@ -154,9 +178,14 @@ const RequireAuth = ({ allowedRoles = [], redirectTo = PATHS.LOGIN }: RequireAut
 
   // Check if user has permission to access this route
   if (allowedRoles.length > 0 && !allowedRoles.includes(userRole)) {
-    const dashboardPath = getDashboardPath(userRole);
-    console.log(`Redirecting user with role ${userRole} to ${dashboardPath}`);
-    return <Navigate to={dashboardPath} replace />;
+    try {
+      const dashboardPath = getDashboardPath(userRole);
+      console.log(`Redirecting user with role ${userRole} to ${dashboardPath}`);
+      return <Navigate to={dashboardPath} replace />;
+    } catch (error) {
+      console.error("Erro ao obter caminho do dashboard:", error);
+      return <Navigate to={PATHS.LOGIN} replace />;
+    }
   }
 
   // If authenticated and has the right role, render the protected content
