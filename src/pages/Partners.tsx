@@ -1,133 +1,126 @@
+
 import { useState, useEffect } from "react";
 import MainLayout from "@/components/layout/MainLayout";
-import { Partner, FilterValues } from "@/types";
-import { useToast } from "@/hooks/use-toast";
+import { PageHeader } from "@/components/page/PageHeader";
+import { PageWrapper } from "@/components/page/PageWrapper";
 import PartnersTable from "@/components/partners/PartnersTable";
-import { generateMockPartners } from "@/utils/partners-utils";
+import { Partner } from "@/types";
+import { generateMockPartners, filterPartners } from "@/utils/partners-utils";
+import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { RefreshCw, FileText } from "lucide-react";
-import { Card } from "@/components/ui/card";
-import PartnersFilterCard from "@/components/partners/PartnersFilterCard";
+import { Search, Plus } from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
 
 const Partners = () => {
-  const [isLoading, setIsLoading] = useState(true);
   const [partners, setPartners] = useState<Partner[]>([]);
   const [filteredPartners, setFilteredPartners] = useState<Partner[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [searchTerm, setSearchTerm] = useState("");
   const [page, setPage] = useState(1);
-  const [itemsPerPage] = useState(10);
-  const [filters, setFilters] = useState<FilterValues>({});
-  const [isRefreshing, setIsRefreshing] = useState(false);
   const { toast } = useToast();
-
-  // Load initial data
+  
+  const itemsPerPage = 10;
+  
   useEffect(() => {
+    // Simulate API fetch
+    const fetchPartners = async () => {
+      setIsLoading(true);
+      try {
+        // In a real app, this would fetch from an API
+        setTimeout(() => {
+          const mockPartners = generateMockPartners(25);
+          setPartners(mockPartners);
+          setFilteredPartners(mockPartners);
+          setIsLoading(false);
+        }, 800);
+      } catch (error) {
+        console.error("Error fetching partners:", error);
+        setIsLoading(false);
+        toast({
+          title: "Erro ao carregar parceiros",
+          description: "Não foi possível carregar a lista de parceiros.",
+          variant: "destructive",
+        });
+      }
+    };
+    
     fetchPartners();
-  }, []);
-
-  const fetchPartners = () => {
-    setIsLoading(true);
-
-    // Simulate API call
-    setTimeout(() => {
-      const mockPartners = generateMockPartners(50);
-      setPartners(mockPartners);
-      setFilteredPartners(mockPartners);
-      setIsLoading(false);
-    }, 1000);
-  };
-
-  const handleRefresh = () => {
-    setIsRefreshing(true);
-    fetchPartners();
-
-    setTimeout(() => {
-      setIsRefreshing(false);
-      toast({
-        title: "Dados atualizados",
-        description: "Lista de parceiros atualizada com sucesso"
-      });
-    }, 1500);
-  };
-
-  // Apply filters when they change
+  }, [toast]);
+  
   useEffect(() => {
-    let result = [...partners];
-
-    if (filters.search) {
-      result = result.filter(
-        (partner) =>
-          partner.company_name.toLowerCase().includes(filters.search!.toLowerCase()) ||
-          (partner.email && partner.email.toLowerCase().includes(filters.search!.toLowerCase())) ||
-          (partner.phone && partner.phone.toLowerCase().includes(filters.search!.toLowerCase()))
-      );
-    }
-
+    // Filter partners based on search term
+    const result = filterPartners(partners, searchTerm);
     setFilteredPartners(result);
-    setPage(1); // Reset to first page when filters change
-  }, [filters, partners]);
-
-  // Calculate pagination
+    // Reset to first page when filter changes
+    setPage(1);
+  }, [searchTerm, partners]);
+  
+  // Get current page of partners
+  const getCurrentPartners = () => {
+    const startIndex = (page - 1) * itemsPerPage;
+    return filteredPartners.slice(startIndex, startIndex + itemsPerPage);
+  };
+  
   const totalPages = Math.ceil(filteredPartners.length / itemsPerPage);
-  const startIndex = (page - 1) * itemsPerPage;
-  const paginatedPartners = filteredPartners.slice(startIndex, startIndex + itemsPerPage);
-
-  const handleFilterChange = (values: FilterValues) => {
-    setFilters(values);
+  
+  const handleViewPartner = (partner: Partner) => {
+    toast({
+      title: "Visualizando parceiro",
+      description: `Detalhes de ${partner.company_name}`,
+    });
   };
-
-  const clearFilters = () => {
-    setFilters({});
+  
+  const handleEditPartner = (partner: Partner) => {
+    toast({
+      title: "Editando parceiro",
+      description: `Editar ${partner.company_name}`,
+    });
   };
-
+  
+  const handleDeletePartner = (partner: Partner) => {
+    toast({
+      title: "Confirmação",
+      description: `Deseja realmente excluir ${partner.company_name}?`,
+    });
+  };
+  
   return (
     <MainLayout>
-      <div className="mb-6 flex flex-col sm:flex-row justify-between items-start sm:items-center">
-        <div>
-          <h1 className="text-2xl font-bold tracking-tight">Parceiros</h1>
-          <p className="text-muted-foreground">
-            Gerencie e visualize todos os seus parceiros
-          </p>
-        </div>
-        <div className="flex gap-2 mt-2 sm:mt-0">
-          <Button
-            variant="outline"
-            size="sm"
-            className="flex items-center gap-1"
-            onClick={handleRefresh}
-            disabled={isRefreshing || isLoading}
-          >
-            <RefreshCw className={`h-4 w-4 ${isRefreshing ? 'animate-spin' : ''}`} />
-            {isRefreshing ? "Atualizando..." : "Atualizar"}
-          </Button>
-
-          <Button
-            variant="default"
-            size="sm"
-            className="flex items-center gap-1"
-          >
-            <FileText className="h-4 w-4" />
-            Novo parceiro
-          </Button>
-        </div>
-      </div>
-
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <div className="md:col-span-1">
-          <PartnersFilterCard
-            onFilter={handleFilterChange}
+      <PageHeader 
+        title="Parceiros" 
+        description="Gerenciar parceiros e suas comissões"
+      >
+        <Button>
+          <Plus className="mr-2 h-4 w-4" /> Novo Parceiro
+        </Button>
+      </PageHeader>
+      
+      <PageWrapper>
+        <div className="space-y-6">
+          <div className="flex items-center">
+            <div className="relative flex-1">
+              <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+              <Input
+                placeholder="Buscar parceiros..."
+                className="pl-8 w-full md:w-[300px]"
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+              />
+            </div>
+          </div>
+          
+          <PartnersTable 
+            partners={getCurrentPartners()}
             isLoading={isLoading}
-          />
-        </div>
-        <div className="md:col-span-3">
-          <PartnersTable
-            partners={paginatedPartners}
+            onView={handleViewPartner}
+            onEdit={handleEditPartner}
+            onDelete={handleDeletePartner}
             page={page}
             setPage={setPage}
             totalPages={totalPages}
-            isLoading={isLoading}
           />
         </div>
-      </div>
+      </PageWrapper>
     </MainLayout>
   );
 };

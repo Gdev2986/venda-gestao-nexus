@@ -270,7 +270,7 @@ const EditUserForm = ({ user, onUpdate, onCancel }: EditUserFormProps) => {
         <Label htmlFor="role">Role</Label>
         <Select 
           value={role} 
-          onValueChange={(value) => setRole(value as UserRole)}
+          onValueChange={(value: any) => setRole(value as UserRole)}
         >
           <SelectTrigger id="role">
             <SelectValue placeholder="Selecione um role" />
@@ -288,7 +288,7 @@ const EditUserForm = ({ user, onUpdate, onCancel }: EditUserFormProps) => {
         <Label htmlFor="status">Status</Label>
         <Select 
           value={status} 
-          onValueChange={(value) => setStatus(value as "active" | "inactive" | "pending")}
+          onValueChange={(value: any) => setStatus(value as "active" | "inactive" | "pending")}
         >
           <SelectTrigger id="status">
             <SelectValue placeholder="Selecione um status" />
@@ -318,8 +318,8 @@ interface CreateUserFormProps {
 const CreateUserForm = ({ onCreate, onCancel }: CreateUserFormProps) => {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
-  const [role, setRole] = useState(UserRole.CLIENT);
-  const [status, setStatus] = useState("active");
+  const [role, setRole] = useState<UserRole>(UserRole.CLIENT);
+  const [status, setStatus] = useState<"active" | "inactive" | "pending">("active");
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -330,7 +330,7 @@ const CreateUserForm = ({ onCreate, onCancel }: CreateUserFormProps) => {
       email,
       role,
       created_at: new Date().toISOString(),
-      status
+      status: status
     };
     onCreate(newUser);
   };
@@ -356,7 +356,7 @@ const CreateUserForm = ({ onCreate, onCancel }: CreateUserFormProps) => {
       </div>
       <div className="grid gap-2">
         <Label htmlFor="role">Role</Label>
-        <Select value={role} onValueChange={setRole}>
+        <Select value={role} onValueChange={(value: any) => setRole(value as UserRole)}>
           <SelectTrigger id="role">
             <SelectValue placeholder="Selecione um role" />
           </SelectTrigger>
@@ -371,7 +371,7 @@ const CreateUserForm = ({ onCreate, onCancel }: CreateUserFormProps) => {
       </div>
       <div className="grid gap-2">
         <Label htmlFor="status">Status</Label>
-        <Select value={status} onValueChange={setStatus}>
+        <Select value={status} onValueChange={(value: any) => setStatus(value as "active" | "inactive" | "pending")}>
           <SelectTrigger id="status">
             <SelectValue placeholder="Selecione um status" />
           </SelectTrigger>

@@ -3,7 +3,6 @@ import { useEffect, useState } from "react";
 import MainLayout from "@/components/layout/MainLayout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { generateDailySalesData, generatePaymentMethodsData } from "@/utils/sales-utils";
-import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { SalesChartData } from "@/types";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Calendar } from "@/components/ui/calendar";
@@ -26,15 +25,9 @@ interface PaymentMethodData {
 }
 
 const PaymentMethodsChart = ({ data }: { data: PaymentMethodData[] }) => (
-  <ResponsiveContainer width="100%" height={300}>
-    <AreaChart data={data} margin={{ top: 10, right: 30, left: 0, bottom: 0 }}>
-      <CartesianGrid strokeDasharray="3 3" />
-      <XAxis dataKey="name" />
-      <YAxis />
-      <Tooltip />
-      <Area type="monotone" dataKey="total" stroke="#8884d8" fill="#8884d8" />
-    </AreaChart>
-  </ResponsiveContainer>
+  <div className="h-[300px]">
+    <DailySalesChart data={data.map(item => ({ date: item.name, amount: item.total }))} />
+  </div>
 );
 
 const Dashboard = () => {
@@ -60,7 +53,7 @@ const Dashboard = () => {
   }, [dateRange]);
 
   useEffect(() => {
-    // Simulate data fetch for payment methods chart with correct property name
+    // Simulate data fetch for payment methods chart with correct property names
     const paymentMethodsData: PaymentMethodData[] = [
       { name: PaymentMethod.CREDIT, total: 45 },
       { name: PaymentMethod.DEBIT, total: 30 },
@@ -159,9 +152,7 @@ const Dashboard = () => {
               <CardTitle>Métodos de Pagamento</CardTitle>
             </CardHeader>
             <CardContent>
-              <PaymentMethodsChart 
-                data={paymentMethods}
-              />
+              <PaymentMethodsChart data={paymentMethods} />
             </CardContent>
           </Card>
         </div>
