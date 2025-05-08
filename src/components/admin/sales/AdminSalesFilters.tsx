@@ -120,7 +120,7 @@ const AdminSalesFilters = ({
             <label className="text-sm font-medium mb-1 block">Valor (R$)</label>
             <div className="relative">
               <span className="absolute left-3 top-2.5 text-muted-foreground">R$</span>
-              <Input value={amountValue} onChange={handleAmountChange} onBlur={handleAmountBlur} className="pl-10" placeholder="1.500,50" />
+              <Input value={amountValue} onChange={handleAmountChange} onBlur={handleAmountBlur} className="pl-10"  />
             </div>
           </div>
         </div>
