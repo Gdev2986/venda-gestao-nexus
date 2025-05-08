@@ -126,7 +126,7 @@ const AdminSalesFilters = ({
         </div>
 
         {/* Right column with date and time */}
-        <div className="space-y-3 py-[40px]">
+        <div className="space-y-3 py-[41px]">
           {/* Date Range Filter */}
           <div>
             <label className="text-sm font-medium mb-1 block">Período</label>
