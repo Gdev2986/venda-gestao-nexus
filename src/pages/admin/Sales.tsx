@@ -1,13 +1,15 @@
 
 import { useState, useEffect } from "react";
-import { Card, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { generateMockSalesData } from "@/utils/sales-utils";
 import { SalesFilterParams } from "@/types";
 import ImportSalesDialog from "@/components/sales/ImportSalesDialog";
 import { useToast } from "@/hooks/use-toast";
-import AdminSalesLayout from "@/components/admin/sales/AdminSalesLayout";
 import AdminSalesContent from "@/components/admin/sales/AdminSalesContent";
 import SalesUploader from "@/components/sales/SalesUploader";
+import SalesAdvancedFilters from "@/components/sales/SalesAdvancedFilters";
+import { Button } from "@/components/ui/button";
+import { RefreshCw, Upload, Download } from "lucide-react";
 
 interface DateRange {
   from: Date;
@@ -72,6 +74,15 @@ const AdminSales = () => {
     setShowImportDialog(false);
     fetchSales(); // Refresh data after import
   };
+  
+  const handleFilterChange = (newFilters: SalesFilterParams) => {
+    setFilters(newFilters);
+  };
+  
+  const handleClearFilters = () => {
+    setFilters({});
+    setDateRange(undefined);
+  };
 
   return (
     <div className="container mx-auto py-10">
@@ -84,37 +95,69 @@ const AdminSales = () => {
         </div>
         
         <div className="flex items-center gap-2">
-          <AdminSalesLayout
-            isRefreshing={isRefreshing}
-            onRefresh={handleRefresh}
-            onImport={() => setShowImportDialog(true)}
-            onExport={() => handleExport('csv')}
+          <Button 
+            variant="outline" 
+            size="sm"
+            className="flex items-center gap-1"
+            onClick={handleRefresh}
+            disabled={isRefreshing}
           >
-            {/* Content will be rendered inside */}
-          </AdminSalesLayout>
+            <RefreshCw className={`h-4 w-4 ${isRefreshing ? 'animate-spin' : ''}`} />
+            {isRefreshing ? "Atualizando..." : "Atualizar"}
+          </Button>
+          
+          <Button 
+            variant="outline"
+            size="sm"
+            className="flex items-center gap-1"
+            onClick={() => setShowImportDialog(true)}
+          >
+            <Upload className="h-4 w-4" />
+            Importar
+          </Button>
+          
+          <Button 
+            variant="outline"
+            size="sm"
+            className="flex items-center gap-1"
+            onClick={() => handleExport('csv')}
+          >
+            <Download className="h-4 w-4" />
+            Exportar
+          </Button>
         </div>
       </div>
 
-      {/* Top section with filters and uploader */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-        {/* Left card - Filters */}
-        <Card className="w-full">
+      {/* Filters and Upload Section */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+        {/* Filters Card - 2/3 width */}
+        <Card className="md:col-span-2">
           <CardHeader>
             <CardTitle>Filtros</CardTitle>
           </CardHeader>
-          <div className="p-4">
-            <div className="space-y-6">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="col-span-2">
-                  <SalesUploader onFileProcessed={handleFileProcessed} />
-                </div>
-              </div>
-            </div>
-          </div>
+          <CardContent>
+            <SalesAdvancedFilters 
+              filters={filters}
+              dateRange={dateRange}
+              onFilterChange={handleFilterChange}
+              onDateRangeChange={setDateRange}
+              onClearFilters={handleClearFilters}
+            />
+          </CardContent>
+        </Card>
+        
+        {/* Uploader Card - 1/3 width */}
+        <Card className="md:col-span-1">
+          <CardHeader>
+            <CardTitle>Upload de Vendas</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <SalesUploader onFileProcessed={handleFileProcessed} />
+          </CardContent>
         </Card>
       </div>
 
-      {/* Sales Table */}
+      {/* Sales Data Table - Full Width */}
       <AdminSalesContent 
         sales={sales}
         filters={filters}

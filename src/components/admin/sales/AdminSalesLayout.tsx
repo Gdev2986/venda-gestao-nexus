@@ -19,7 +19,7 @@ const AdminSalesLayout = ({
   onExport 
 }: AdminSalesLayoutProps) => {
   return (
-    <div className="container mx-auto py-10">
+    <>
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-8">
         <div>
           <h1 className="text-2xl font-bold">Gestão de Vendas</h1>
@@ -63,7 +63,7 @@ const AdminSalesLayout = ({
       </div>
       
       {children}
-    </div>
+    </>
   );
 };
 
