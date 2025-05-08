@@ -1,55 +1,42 @@
 
-import { clsx, type ClassValue } from "clsx"
-import { twMerge } from "tailwind-merge"
+import { type ClassValue, clsx } from "clsx";
+import { twMerge } from "tailwind-merge";
+import { format, parseISO } from 'date-fns';
+import { ptBR } from 'date-fns/locale';
 
 export function cn(...inputs: ClassValue[]) {
-  return twMerge(clsx(inputs))
+  return twMerge(clsx(inputs));
 }
 
-/**
- * Formats a number as a currency string in BRL (Brazilian Real)
- */
 export function formatCurrency(value: number): string {
-  return new Intl.NumberFormat("pt-BR", {
-    style: "currency",
-    currency: "BRL",
+  return new Intl.NumberFormat('pt-BR', {
+    style: 'currency',
+    currency: 'BRL'
   }).format(value);
 }
 
-/**
- * Formats a number with a specific number of decimal places
- */
-export function formatNumber(value: number, decimals = 2): string {
-  return new Intl.NumberFormat("pt-BR", {
-    minimumFractionDigits: decimals,
-    maximumFractionDigits: decimals,
-  }).format(value);
+export function formatDate(date: Date): string {
+  return format(date, 'dd/MM/yyyy', { locale: ptBR });
 }
 
-/**
- * Formats a date string to the Brazilian date format (dd/mm/yyyy)
- */
-export function formatDate(date: Date | string): string {
-  const d = typeof date === "string" ? new Date(date) : date;
-  return d.toLocaleDateString("pt-BR");
+export function formatDateTime(date: Date): string {
+  return format(date, 'dd/MM/yyyy HH:mm', { locale: ptBR });
 }
 
-/**
- * Generates a random string
- */
-export function randomString(length = 8): string {
-  const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
-  let result = "";
-  for (let i = 0; i < length; i++) {
-    result += chars.charAt(Math.floor(Math.random() * chars.length));
+export function formatDateString(dateString: string): string {
+  try {
+    const date = parseISO(dateString);
+    return formatDate(date);
+  } catch (error) {
+    return dateString;
   }
-  return result;
 }
 
-/**
- * Generates mock data for development purposes
- */
-export function generateMockData() {
-  // This would be replaced with actual API calls in production
-  // Here we just generate some sample data for the UI development
+export function formatDateTimeString(dateString: string): string {
+  try {
+    const date = parseISO(dateString);
+    return formatDateTime(date);
+  } catch (error) {
+    return dateString;
+  }
 }

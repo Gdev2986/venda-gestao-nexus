@@ -1,202 +1,255 @@
 
+import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { PageHeader } from "@/components/page/PageHeader";
 import { PageWrapper } from "@/components/page/PageWrapper";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { 
-  Table, 
-  TableBody, 
-  TableCell, 
-  TableHead, 
-  TableHeader, 
-  TableRow 
-} from "@/components/ui/table";
-import { 
-  Tabs, 
-  TabsContent, 
-  TabsList, 
-  TabsTrigger 
-} from "@/components/ui/tabs";
-import { PATHS } from "@/routes/paths";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Textarea } from "@/components/ui/textarea";
+import { Badge } from "@/components/ui/badge";
+import { useToast } from "@/hooks/use-toast";
+import { Wallet, Calendar, Download, Check, X } from "lucide-react";
+import { formatCurrency, formatDate } from "@/lib/utils";
+import { usePartnerCommissions } from "@/hooks/use-partner-commissions";
+import { usePixKeys } from "@/hooks/usePixKeys";
 
-const PartnerCommissions = () => {
+const Commissions = () => {
+  const [isRequestDialogOpen, setIsRequestDialogOpen] = useState(false);
+  const [selectedPixKeyId, setSelectedPixKeyId] = useState("");
+  const [description, setDescription] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  
+  const { summary, commissions, isLoading, requestPayment } = usePartnerCommissions();
+  const { pixKeys, isLoadingPixKeys } = usePixKeys();
+  const { toast } = useToast();
+  const navigate = useNavigate();
+
+  const handleRequestPayment = async () => {
+    if (!selectedPixKeyId) {
+      toast({
+        variant: "destructive",
+        title: "Erro",
+        description: "Selecione uma chave PIX para continuar.",
+      });
+      return;
+    }
+
+    setIsSubmitting(true);
+    const success = await requestPayment(
+      summary.pendingCommission,
+      selectedPixKeyId,
+      description
+    );
+    
+    setIsSubmitting(false);
+    
+    if (success) {
+      setIsRequestDialogOpen(false);
+      setSelectedPixKeyId("");
+      setDescription("");
+    }
+  };
+
   return (
-    <div className="space-y-6">
+    <div>
       <PageHeader 
-        title="Comissões" 
-        description="Gerencie suas comissões e solicite pagamentos"
+        title="Minhas Comissões" 
+        description="Gerencie e solicite pagamentos de comissões"
       />
       
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
         <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">Disponível para Saque</CardTitle>
+          <CardHeader className="pb-3">
+            <CardTitle className="text-sm font-medium">Comissão Total</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">R$ 4.578,90</div>
-            <Button className="mt-4">Solicitar Pagamento</Button>
+            <div className="text-2xl font-bold">{formatCurrency(summary.totalCommission)}</div>
+            <p className="text-xs text-muted-foreground mt-1">Valor total acumulado</p>
           </CardContent>
         </Card>
         
         <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">Em Processamento</CardTitle>
+          <CardHeader className="pb-3">
+            <CardTitle className="text-sm font-medium">Comissão Paga</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">R$ 1.200,00</div>
-            <p className="text-sm text-muted-foreground mt-2">Previsão: 15/05/2025</p>
+            <div className="text-2xl font-bold">{formatCurrency(summary.paidCommission)}</div>
+            <p className="text-xs text-muted-foreground mt-1">Valor já pago</p>
           </CardContent>
         </Card>
         
         <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">Total Recebido (2025)</CardTitle>
+          <CardHeader className="pb-3">
+            <CardTitle className="text-sm font-medium">Comissão Disponível</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">R$ 15.780,00</div>
+            <div className="text-2xl font-bold">{formatCurrency(summary.pendingCommission)}</div>
+            <div className="flex justify-between items-center mt-1">
+              <p className="text-xs text-muted-foreground">Disponível para saque</p>
+              <Button 
+                size="sm" 
+                disabled={summary.pendingCommission <= 0}
+                onClick={() => setIsRequestDialogOpen(true)}
+              >
+                Solicitar
+              </Button>
+            </div>
           </CardContent>
         </Card>
       </div>
       
-      <Tabs defaultValue="pending">
-        <TabsList className="mb-6">
-          <TabsTrigger value="pending">Comissões Pendentes</TabsTrigger>
-          <TabsTrigger value="history">Histórico de Pagamentos</TabsTrigger>
-          <TabsTrigger value="settings">Configurações</TabsTrigger>
-        </TabsList>
-        
-        <TabsContent value="pending">
-          <PageWrapper>
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Cliente</TableHead>
-                  <TableHead>Venda</TableHead>
-                  <TableHead>Data</TableHead>
-                  <TableHead>Comissão</TableHead>
-                  <TableHead>Status</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {[
-                  { client: "Cliente ABC", sale: "#1001", date: "22/04/2025", commission: "R$ 350,00", status: "Disponível" },
-                  { client: "Cliente XYZ", sale: "#1002", date: "20/04/2025", commission: "R$ 280,00", status: "Disponível" },
-                  { client: "Cliente 123", sale: "#1003", date: "18/04/2025", commission: "R$ 510,00", status: "Em análise" },
-                  { client: "Cliente DEF", sale: "#1004", date: "15/04/2025", commission: "R$ 420,00", status: "Disponível" },
-                  { client: "Cliente GHI", sale: "#1005", date: "12/04/2025", commission: "R$ 390,00", status: "Em análise" },
-                ].map((commission, i) => (
-                  <TableRow key={i}>
-                    <TableCell>{commission.client}</TableCell>
-                    <TableCell>{commission.sale}</TableCell>
-                    <TableCell>{commission.date}</TableCell>
-                    <TableCell>{commission.commission}</TableCell>
-                    <TableCell>
-                      <span className={`inline-flex items-center rounded-full px-2 py-1 text-xs font-medium ${
-                        commission.status === "Disponível" ? "bg-green-50 text-green-700" : "bg-yellow-50 text-yellow-700"
-                      }`}>
-                        {commission.status}
-                      </span>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </PageWrapper>
-        </TabsContent>
-        
-        <TabsContent value="history">
-          <PageWrapper>
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>ID</TableHead>
-                  <TableHead>Data</TableHead>
-                  <TableHead>Valor</TableHead>
-                  <TableHead>Método</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead className="w-[100px]">Ações</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {[
-                  { id: "#4001", date: "10/04/2025", value: "R$ 2.340,00", method: "PIX", status: "Pago" },
-                  { id: "#3994", date: "10/03/2025", value: "R$ 1.850,00", method: "PIX", status: "Pago" },
-                  { id: "#3985", date: "10/02/2025", value: "R$ 2.180,00", method: "Transferência", status: "Pago" },
-                  { id: "#3976", date: "10/01/2025", value: "R$ 1.990,00", method: "PIX", status: "Pago" },
-                ].map((payment, i) => (
-                  <TableRow key={i}>
-                    <TableCell>{payment.id}</TableCell>
-                    <TableCell>{payment.date}</TableCell>
-                    <TableCell>{payment.value}</TableCell>
-                    <TableCell>{payment.method}</TableCell>
-                    <TableCell>
-                      <span className="inline-flex items-center rounded-full px-2 py-1 text-xs font-medium bg-green-50 text-green-700">
-                        {payment.status}
-                      </span>
-                    </TableCell>
-                    <TableCell>
-                      <Button variant="ghost" size="sm">Comprovante</Button>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </PageWrapper>
-        </TabsContent>
-        
-        <TabsContent value="settings">
-          <Card>
-            <CardHeader>
-              <CardTitle>Configurações de Pagamento</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
-                    <h3 className="font-medium mb-2">Chave PIX</h3>
-                    <p className="text-muted-foreground">CNPJ: 12.345.678/0001-00</p>
-                    <Button variant="outline" className="mt-2" size="sm">Alterar</Button>
-                  </div>
-                  <div>
-                    <h3 className="font-medium mb-2">Conta Bancária</h3>
-                    <p className="text-muted-foreground">Banco XYZ - Ag. 0001 - CC 12345-6</p>
-                    <Button variant="outline" className="mt-2" size="sm">Alterar</Button>
-                  </div>
-                </div>
-                
-                <div>
-                  <h3 className="font-medium mb-2">Notificações</h3>
-                  <div className="flex items-center space-x-2">
-                    <input 
-                      type="checkbox"
-                      id="notification-commission" 
-                      defaultChecked 
-                      className="h-4 w-4 border-gray-300 rounded text-primary focus:ring-primary"
-                    />
-                    <label htmlFor="notification-commission" className="text-sm">Notificar quando houver nova comissão</label>
-                  </div>
-                  <div className="flex items-center space-x-2 mt-2">
-                    <input 
-                      type="checkbox"
-                      id="notification-payment" 
-                      defaultChecked 
-                      className="h-4 w-4 border-gray-300 rounded text-primary focus:ring-primary"
-                    />
-                    <label htmlFor="notification-payment" className="text-sm">Notificar quando um pagamento for processado</label>
-                  </div>
-                </div>
-                
-                <div className="pt-4">
-                  <Button>Salvar Configurações</Button>
-                </div>
+      <PageWrapper>
+        <Card>
+          <CardHeader>
+            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center">
+              <div>
+                <CardTitle className="flex items-center">
+                  <Wallet className="mr-2 h-5 w-5" />
+                  Histórico de Comissões
+                </CardTitle>
+                <CardDescription>
+                  Acompanhe suas comissões geradas e pagas
+                </CardDescription>
               </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
-      </Tabs>
+              <Button variant="outline" className="mt-2 sm:mt-0">
+                <Download className="mr-2 h-4 w-4" />
+                Exportar
+              </Button>
+            </div>
+          </CardHeader>
+          <CardContent>
+            {isLoading ? (
+              <div className="w-full p-8 flex justify-center">
+                <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent"></div>
+              </div>
+            ) : commissions.length === 0 ? (
+              <div className="p-8 text-center">
+                <h3 className="text-lg font-medium">Nenhuma comissão encontrada</h3>
+                <p className="text-muted-foreground mt-1">
+                  Você ainda não gerou comissões.
+                </p>
+              </div>
+            ) : (
+              <div className="rounded-md border">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Data</TableHead>
+                      <TableHead>ID da Venda</TableHead>
+                      <TableHead className="text-right">Valor</TableHead>
+                      <TableHead>Status</TableHead>
+                      <TableHead>Pago em</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {commissions.map((commission) => (
+                      <TableRow key={commission.id}>
+                        <TableCell>
+                          <div className="flex items-center">
+                            <Calendar className="mr-2 h-4 w-4 text-muted-foreground" />
+                            {formatDate(new Date(commission.created_at))}
+                          </div>
+                        </TableCell>
+                        <TableCell className="font-medium">{commission.sale_id.substring(0, 8)}</TableCell>
+                        <TableCell className="text-right">{formatCurrency(commission.amount)}</TableCell>
+                        <TableCell>
+                          <Badge variant={commission.is_paid ? "success" : "outline"}>
+                            {commission.is_paid ? "Pago" : "Pendente"}
+                          </Badge>
+                        </TableCell>
+                        <TableCell>
+                          {commission.paid_at ? formatDate(new Date(commission.paid_at)) : "-"}
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      </PageWrapper>
+      
+      {/* Payment Request Dialog */}
+      <Dialog open={isRequestDialogOpen} onOpenChange={setIsRequestDialogOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Solicitar Pagamento</DialogTitle>
+            <DialogDescription>
+              Solicite o pagamento da sua comissão disponível de {formatCurrency(summary.pendingCommission)}.
+            </DialogDescription>
+          </DialogHeader>
+          
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <label className="text-sm font-medium">Selecione uma chave PIX</label>
+              {isLoadingPixKeys ? (
+                <div className="w-full p-2 flex justify-center">
+                  <div className="h-4 w-4 animate-spin rounded-full border-2 border-primary border-t-transparent"></div>
+                </div>
+              ) : (
+                <Select value={selectedPixKeyId} onValueChange={setSelectedPixKeyId}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Selecione uma chave PIX" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {pixKeys.map((pixKey) => (
+                      <SelectItem key={pixKey.id} value={pixKey.id}>
+                        {pixKey.name} ({pixKey.key})
+                        {pixKey.is_default && " - Favorita"}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              )}
+            </div>
+            
+            <div className="space-y-2">
+              <label className="text-sm font-medium">Observação (opcional)</label>
+              <Textarea 
+                placeholder="Adicione uma observação se necessário"
+                value={description}
+                onChange={(e) => setDescription(e.target.value)}
+              />
+            </div>
+          </div>
+          
+          <DialogFooter className="flex flex-col sm:flex-row sm:justify-between sm:space-x-2">
+            <Button 
+              type="button" 
+              variant="outline" 
+              onClick={() => setIsRequestDialogOpen(false)}
+              disabled={isSubmitting}
+              className="mb-2 sm:mb-0"
+            >
+              <X className="mr-2 h-4 w-4" />
+              Cancelar
+            </Button>
+            <Button 
+              type="button" 
+              onClick={handleRequestPayment}
+              disabled={isSubmitting || !selectedPixKeyId}
+            >
+              {isSubmitting ? (
+                <>
+                  <div className="h-4 w-4 mr-2 animate-spin rounded-full border-2 border-current border-t-white"></div>
+                  Solicitando...
+                </>
+              ) : (
+                <>
+                  <Check className="mr-2 h-4 w-4" />
+                  Confirmar Solicitação
+                </>
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
 
-export default PartnerCommissions;
+export default Commissions;

@@ -1,73 +1,163 @@
 
+import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { PageHeader } from "@/components/page/PageHeader";
 import { PageWrapper } from "@/components/page/PageWrapper";
-import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { 
-  Table, 
-  TableBody, 
-  TableCell, 
-  TableHead, 
-  TableHeader, 
-  TableRow 
-} from "@/components/ui/table";
+import { Button } from "@/components/ui/button";
+import { Search, BarChart2, Users } from "lucide-react";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Badge } from "@/components/ui/badge";
+import { ClientStatus } from "@/types";
+import { usePartnerClients } from "@/hooks/use-partner-clients";
+import { formatCurrency } from "@/lib/utils";
 import { PATHS } from "@/routes/paths";
-import { Search } from "lucide-react";
 
 const PartnerClients = () => {
+  const [searchTerm, setSearchTerm] = useState("");
+  const { clients, isLoading, error } = usePartnerClients();
+  const navigate = useNavigate();
+
+  // Handle client detail view
+  const handleViewClient = (clientId: string) => {
+    navigate(PATHS.PARTNER.CLIENT_DETAILS(clientId));
+  };
+
+  // Get status badge variant based on client status
+  const getStatusBadgeVariant = (status: string | undefined) => {
+    switch (status) {
+      case "active":
+        return "success";
+      case "inactive":
+        return "secondary";
+      case "pending":
+        return "warning";
+      default:
+        return "outline";
+    }
+  };
+
+  // Get status display text
+  const getStatusText = (status: string | undefined) => {
+    switch (status) {
+      case "active":
+        return "Ativo";
+      case "inactive":
+        return "Inativo";
+      case "pending":
+        return "Pendente";
+      default:
+        return "Desconhecido";
+    }
+  };
+
   return (
-    <div className="space-y-6">
+    <div>
       <PageHeader 
         title="Meus Clientes" 
-        description="Gerencie os clientes que você indicou"
-        actionLabel="Adicionar Cliente"
-        actionLink="#"
+        description="Visualize e acompanhe seus clientes vinculados"
       />
-
-      <div className="flex items-center gap-2 mb-6">
-        <div className="relative flex-1">
+      
+      <div className="mb-6 flex items-center justify-between">
+        <div className="relative max-w-sm">
           <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
           <Input
             placeholder="Buscar clientes..."
-            className="pl-8 bg-background"
+            className="pl-8 w-[300px]"
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
           />
         </div>
-        <Button variant="outline">Filtrar</Button>
+        
+        <div className="flex gap-2">
+          <Button variant="outline" onClick={() => navigate(PATHS.PARTNER.REPORTS)}>
+            <BarChart2 className="mr-2 h-4 w-4" />
+            Ver Relatórios
+          </Button>
+        </div>
       </div>
-      
+
       <PageWrapper>
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>Nome</TableHead>
-              <TableHead>Data de Cadastro</TableHead>
-              <TableHead>Vendas</TableHead>
-              <TableHead>Valor Total</TableHead>
-              <TableHead>Comissão Gerada</TableHead>
-              <TableHead className="w-[100px]">Ações</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {[
-              { name: "Cliente ABC", date: "22/04/2025", sales: 3, value: "R$ 7.500,00", commission: "R$ 750,00" },
-              { name: "Cliente XYZ", date: "15/04/2025", sales: 2, value: "R$ 4.200,00", commission: "R$ 420,00" },
-              { name: "Cliente DEF", date: "08/04/2025", sales: 5, value: "R$ 12.800,00", commission: "R$ 1.280,00" },
-              { name: "Cliente 123", date: "01/04/2025", sales: 1, value: "R$ 2.100,00", commission: "R$ 210,00" },
-              { name: "Cliente GHI", date: "25/03/2025", sales: 4, value: "R$ 9.300,00", commission: "R$ 930,00" },
-            ].map((client, i) => (
-              <TableRow key={i}>
-                <TableCell>{client.name}</TableCell>
-                <TableCell>{client.date}</TableCell>
-                <TableCell>{client.sales}</TableCell>
-                <TableCell>{client.value}</TableCell>
-                <TableCell>{client.commission}</TableCell>
-                <TableCell>
-                  <Button variant="ghost" size="sm">Detalhes</Button>
-                </TableCell>
-              </TableRow>
-            ))}
-          </TableBody>
-        </Table>
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center">
+              <Users className="mr-2 h-5 w-5" />
+              Clientes Vinculados
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            {isLoading ? (
+              <div className="w-full p-8 flex justify-center">
+                <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent"></div>
+              </div>
+            ) : error ? (
+              <div className="p-4 text-center text-destructive">
+                <p>{error}</p>
+              </div>
+            ) : clients.length === 0 ? (
+              <div className="p-8 text-center">
+                <h3 className="text-lg font-medium">Nenhum cliente encontrado</h3>
+                <p className="text-muted-foreground mt-1">
+                  Você ainda não possui clientes vinculados.
+                </p>
+              </div>
+            ) : (
+              <div className="rounded-md border">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Nome</TableHead>
+                      <TableHead>Contato</TableHead>
+                      <TableHead>Status</TableHead>
+                      <TableHead className="text-right">Saldo</TableHead>
+                      <TableHead className="w-[100px]"></TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {clients
+                      .filter(client => 
+                        client.business_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                        client.contact_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                        client.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                        client.phone?.includes(searchTerm)
+                      )
+                      .map((client) => (
+                        <TableRow key={client.id}>
+                          <TableCell className="font-medium">{client.business_name}</TableCell>
+                          <TableCell>
+                            {client.contact_name && (
+                              <div>{client.contact_name}</div>
+                            )}
+                            <div className="text-sm text-muted-foreground">
+                              {client.email || "Sem email"} • {client.phone || "Sem telefone"}
+                            </div>
+                          </TableCell>
+                          <TableCell>
+                            <Badge variant={getStatusBadgeVariant(client.status) as any}>
+                              {getStatusText(client.status)}
+                            </Badge>
+                          </TableCell>
+                          <TableCell className="text-right">
+                            {formatCurrency(client.balance || 0)}
+                          </TableCell>
+                          <TableCell>
+                            <Button 
+                              variant="ghost" 
+                              size="sm" 
+                              onClick={() => handleViewClient(client.id)}
+                            >
+                              Ver detalhes
+                            </Button>
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                  </TableBody>
+                </Table>
+              </div>
+            )}
+          </CardContent>
+        </Card>
       </PageWrapper>
     </div>
   );

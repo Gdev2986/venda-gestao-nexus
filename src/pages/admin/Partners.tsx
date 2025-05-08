@@ -1,172 +1,192 @@
 
-import { useState, useEffect } from "react";
-import MainLayout from "@/components/layout/MainLayout";
+import { useState } from "react";
 import { PageHeader } from "@/components/page/PageHeader";
 import { PageWrapper } from "@/components/page/PageWrapper";
-import PartnersTable from "@/components/partners/PartnersTable";
-import { Partner } from "@/types";
-import { generateMockPartners, filterPartners } from "@/utils/partners-utils";
+import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { Search, Plus } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { usePartners } from "@/hooks/use-partners";
+import PartnersTable from "@/components/partners/PartnersTable";
 import PartnerFormModal from "@/components/partners/PartnerFormModal";
+import PartnerDetailsView from "@/components/partners/PartnerDetailsView";
+import { Partner } from "@/types";
+import { formatCurrency } from "@/lib/utils";
+import PartnersFilterCard from "@/components/partners/PartnersFilterCard";
+import PartnersTableCard from "@/components/partners/PartnersTableCard";
+import { FilterValues } from "@/types";
 
 const AdminPartners = () => {
-  const [partners, setPartners] = useState<Partner[]>([]);
-  const [filteredPartners, setFilteredPartners] = useState<Partner[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
-  const [page, setPage] = useState(1);
-  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [isViewModalOpen, setIsViewModalOpen] = useState(false);
+  const [selectedPartner, setSelectedPartner] = useState<Partner | null>(null);
+
+  const { partners, loading: isLoading, error, filterPartners, createPartner, updatePartner, deletePartner } = usePartners();
   const { toast } = useToast();
-  
-  const itemsPerPage = 10;
-  
-  useEffect(() => {
-    // Simulate API fetch
-    const fetchPartners = async () => {
-      setIsLoading(true);
-      try {
-        // In a real app, this would fetch from an API
-        setTimeout(() => {
-          const mockPartners = generateMockPartners(25);
-          setPartners(mockPartners);
-          setFilteredPartners(mockPartners);
-          setIsLoading(false);
-        }, 800);
-      } catch (error) {
-        console.error("Error fetching partners:", error);
-        setIsLoading(false);
-        toast({
-          title: "Erro ao carregar parceiros",
-          description: "Não foi possível carregar a lista de parceiros.",
-          variant: "destructive",
-        });
-      }
-    };
-    
-    fetchPartners();
-  }, [toast]);
-  
-  useEffect(() => {
-    // Filter partners based on search term
-    const result = filterPartners(partners, searchTerm);
-    setFilteredPartners(result);
-    // Reset to first page when filter changes
-    setPage(1);
-  }, [searchTerm, partners]);
-  
-  // Get current page of partners
-  const getCurrentPartners = () => {
-    const startIndex = (page - 1) * itemsPerPage;
-    return filteredPartners.slice(startIndex, startIndex + itemsPerPage);
-  };
-  
-  const totalPages = Math.ceil(filteredPartners.length / itemsPerPage);
-  
-  const handleViewPartner = (partner: Partner) => {
-    toast({
-      title: "Visualizando parceiro",
-      description: `Detalhes de ${partner.company_name}`,
-    });
-  };
-  
-  const handleEditPartner = (partner: Partner) => {
-    toast({
-      title: "Editando parceiro",
-      description: `Editar ${partner.company_name}`,
-    });
-  };
-  
-  const handleDeletePartner = (partner: Partner) => {
-    toast({
-      title: "Confirmação",
-      description: `Deseja realmente excluir ${partner.company_name}?`,
-    });
+
+  const handleSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setSearchTerm(e.target.value);
+    filterPartners(e.target.value);
   };
 
-  const handleCreatePartner = async (data: any): Promise<boolean> => {
-    // Prepare complete partner data with required fields
-    const partnerData = {
-      company_name: data.company_name,
-      business_name: data.business_name || data.company_name,
-      contact_name: data.contact_name || "",
-      email: data.email || "",
-      phone: data.phone || "",
-      commission_rate: data.commission_rate || 0,
-      address: data.address || "", // Add required field
-      total_sales: data.total_sales || 0, // Add required field
-      total_commission: data.total_commission || 0 // Add required field
-    };
-    
-    // Simulate API call to create partner
-    return new Promise<boolean>((resolve) => {
-      setTimeout(() => {
-        const newPartner: Partner = {
-          id: Math.random().toString(), // Mock ID generation
-          created_at: new Date().toISOString(),
-          updated_at: new Date().toISOString(),
-          ...partnerData,
-        };
-        
-        setPartners((prevPartners) => [newPartner, ...prevPartners]);
-        setFilteredPartners((prevFilteredPartners) => [newPartner, ...prevFilteredPartners]);
-        
-        toast({
-          title: "Parceiro criado",
-          description: "O parceiro foi criado com sucesso.",
-        });
-        
-        resolve(true);
-      }, 500);
-    });
+  const handleOpenCreateModal = () => {
+    setIsCreateModalOpen(true);
   };
-  
+
+  const handleOpenEditModal = (partner: Partner) => {
+    setSelectedPartner(partner);
+    setIsEditModalOpen(true);
+  };
+
+  const handleOpenDeleteDialog = (partner: Partner) => {
+    setSelectedPartner(partner);
+    setIsDeleteDialogOpen(true);
+  };
+
+  const handleViewPartner = (partner: Partner) => {
+    setSelectedPartner(partner);
+    setIsViewModalOpen(true);
+  };
+
+  const handleDeletePartner = async () => {
+    if (!selectedPartner) return;
+
+    const success = await deletePartner(selectedPartner.id);
+
+    if (success) {
+      toast({
+        title: "Parceiro excluído",
+        description: "O parceiro foi excluído com sucesso."
+      });
+      setIsDeleteDialogOpen(false);
+    }
+  };
+
+  const handleFilter = (values: FilterValues) => {
+    filterPartners(values.search, values.commissionRange);
+  };
+
   return (
-    <MainLayout>
+    <div>
       <PageHeader 
         title="Parceiros" 
-        description="Gerenciar parceiros e suas comissões"
-      >
-        <Button onClick={() => setIsModalOpen(true)}>
-          <Plus className="mr-2 h-4 w-4" /> Novo Parceiro
-        </Button>
-      </PageHeader>
-      
-      <PageWrapper>
-        <div className="space-y-6">
-          <div className="flex items-center">
-            <div className="relative flex-1">
-              <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-              <Input
-                placeholder="Buscar parceiros..."
-                className="pl-8 w-full md:w-[300px]"
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-              />
-            </div>
-          </div>
-          
-          <PartnersTable 
-            partners={getCurrentPartners()}
+        description="Gerencie os parceiros e consultores do sistema"
+        actionLabel="Novo Parceiro"
+        actionIcon={<Plus className="h-4 w-4 mr-2" />}
+        actionOnClick={handleOpenCreateModal}
+      />
+
+      <div className="grid grid-cols-1 lg:grid-cols-4 gap-6 mb-6">
+        <div className="lg:col-span-1">
+          <PartnersFilterCard 
+            onFilter={handleFilter}
             isLoading={isLoading}
-            onView={handleViewPartner}
-            onEdit={handleEditPartner}
-            onDelete={handleDeletePartner}
-            page={page}
-            setPage={setPage}
-            totalPages={totalPages}
           />
         </div>
-      </PageWrapper>
+        
+        <div className="lg:col-span-3">
+          <PartnersTableCard 
+            partners={partners}
+            isLoading={isLoading}
+            error={error || ""}
+            onEdit={handleOpenEditModal}
+            onDelete={handleOpenDeleteDialog}
+          />
+        </div>
+      </div>
 
-      <PartnerFormModal
-        isOpen={isModalOpen}
-        onClose={() => setIsModalOpen(false)}
-        onSubmit={handleCreatePartner}
-      />
-    </MainLayout>
+      {/* Create Partner Modal */}
+      {isCreateModalOpen && (
+        <PartnerFormModal 
+          isOpen={isCreateModalOpen}
+          onClose={() => setIsCreateModalOpen(false)}
+          title="Novo Parceiro"
+          onSubmit={async (data) => {
+            const result = await createPartner({
+              company_name: data.company_name,
+              business_name: data.business_name || data.company_name,
+              contact_name: data.contact_name || "",
+              email: data.email || "",
+              phone: data.phone || "",
+              commission_rate: data.commission_rate || 0,
+              address: "",
+              total_sales: 0,
+              total_commission: 0
+            });
+            return result;
+          }}
+        />
+      )}
+
+      {/* Edit Partner Modal */}
+      {isEditModalOpen && selectedPartner && (
+        <PartnerFormModal
+          isOpen={isEditModalOpen}
+          onClose={() => setIsEditModalOpen(false)}
+          title="Editar Parceiro"
+          onSubmit={async (data) => {
+            if (!selectedPartner) return false;
+            
+            const result = await updatePartner(selectedPartner.id, {
+              company_name: data.company_name,
+              business_name: data.business_name || data.company_name,
+              contact_name: data.contact_name || "",
+              email: data.email || "",
+              phone: data.phone || "",
+              commission_rate: data.commission_rate || selectedPartner.commission_rate
+            });
+            
+            return result;
+          }}
+        />
+      )}
+
+      {/* View Partner Details */}
+      {isViewModalOpen && selectedPartner && (
+        <PartnerDetailsView
+          partner={selectedPartner}
+          isOpen={isViewModalOpen}
+          onClose={() => setIsViewModalOpen(false)}
+          onEdit={() => {
+            setIsViewModalOpen(false);
+            setIsEditModalOpen(true);
+          }}
+          onDelete={() => {
+            setIsViewModalOpen(false);
+            setIsDeleteDialogOpen(true);
+          }}
+        />
+      )}
+
+      {/* Delete Confirmation Dialog */}
+      <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Confirmar exclusão</AlertDialogTitle>
+            <AlertDialogDescription>
+              Tem certeza que deseja excluir este parceiro? Esta ação não pode ser desfeita.
+              {selectedPartner && (
+                <p className="font-medium mt-2">{selectedPartner.company_name}</p>
+              )}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleDeletePartner}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              Excluir
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    </div>
   );
 };
 
