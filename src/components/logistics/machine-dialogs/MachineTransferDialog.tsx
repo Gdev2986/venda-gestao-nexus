@@ -66,18 +66,17 @@ const MachineTransferDialog = ({
     }
   };
 
-  // Create a properly typed machine array with both serial_number and serialNumber properties
+  // Create a properly typed machine object
   const machineArray: Machine[] = machineId ? [{ 
     id: machineId, 
-    name: machineName || '', 
-    client_id: currentClientId || '',
-    client_name: currentClientName || '',
+    serial_number: machineName || '', 
+    model: '',
+    status: 'active',
+    client_id: currentClientId,
+    name: machineName,
+    client_name: currentClientName,
     created_at: new Date().toISOString(),
-    updated_at: new Date().toISOString(),
-    model: '', 
-    serial_number: '',
-    serialNumber: '',  // Add this field to match the expected type
-    status: 'active'
+    updated_at: new Date().toISOString()
   }] : [];
 
   return (

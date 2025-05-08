@@ -43,7 +43,7 @@ const pixKeySchema = z.object({
     message: "Chave PIX inválida.",
   }),
   type: z.enum(["CPF", "EMAIL", "PHONE", "RANDOM"]),
-  isDefault: z.boolean().default(false),
+  is_default: z.boolean().default(false),
 });
 
 export type PixKeyFormValues = z.infer<typeof pixKeySchema>;
@@ -65,7 +65,7 @@ export function PixKeysManager({ userId }: PixKeysManagerProps) {
       name: "",
       key: "",
       type: "CPF",
-      isDefault: false,
+      is_default: false,
     },
   });
 
@@ -130,12 +130,12 @@ export function PixKeysManager({ userId }: PixKeysManagerProps) {
               name: values.name, 
               key: values.key, 
               type: values.type as any, 
-              isDefault: values.isDefault 
+              is_default: values.is_default 
             };
           }
           // If this key is set to default, remove default from others
-          if (values.isDefault && key.id !== isEditing) {
-            return { ...key, isDefault: false };
+          if (values.is_default && key.id !== isEditing) {
+            return { ...key, is_default: false };
           }
           return key;
         });
@@ -154,12 +154,12 @@ export function PixKeysManager({ userId }: PixKeysManagerProps) {
           name: values.name,
           key: values.key,
           type: values.type as any,
-          isDefault: values.isDefault
+          is_default: values.is_default
         };
         
         // If new key is default, remove default from others
         const updatedKeys = pixKeys.map(key => 
-          values.isDefault ? { ...key, isDefault: false } : key
+          values.is_default ? { ...key, is_default: false } : key
         );
         
         setPixKeys([...updatedKeys, newKey]);
@@ -187,7 +187,7 @@ export function PixKeysManager({ userId }: PixKeysManagerProps) {
       name: key.name,
       key: key.key,
       type: key.type as any,
-      isDefault: key.isDefault,
+      is_default: key.is_default,
     });
     setIsEditing(key.id);
   };
@@ -227,7 +227,7 @@ export function PixKeysManager({ userId }: PixKeysManagerProps) {
       
       const updatedKeys = pixKeys.map(key => ({
         ...key,
-        isDefault: key.id === id
+        is_default: key.id === id
       }));
       
       setPixKeys(updatedKeys);
@@ -317,7 +317,7 @@ export function PixKeysManager({ userId }: PixKeysManagerProps) {
                 
                 <FormField
                   control={form.control}
-                  name="isDefault"
+                  name="is_default"
                   render={({ field }) => (
                     <FormItem className="flex flex-row items-end space-x-2 pt-6">
                       <FormControl>
@@ -372,7 +372,7 @@ export function PixKeysManager({ userId }: PixKeysManagerProps) {
                       <TableCell>{key.type}</TableCell>
                       <TableCell>{key.key}</TableCell>
                       <TableCell>
-                        {key.isDefault ? (
+                        {key.is_default ? (
                           <Check className="h-5 w-5 text-green-500" />
                         ) : (
                           <Button

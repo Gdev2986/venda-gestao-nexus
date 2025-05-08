@@ -36,7 +36,7 @@ interface UsersTabProps {
 }
 
 export const UsersTab = ({ openRoleModal }: UsersTabProps) => {
-  const [selectedRole, setSelectedRole] = useState("all");
+  const [selectedRole, setSelectedRole] = useState<string>("all");
   const [users, setUsers] = useState<ProfileData[]>([]);
   const [loading, setLoading] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
@@ -119,7 +119,7 @@ export const UsersTab = ({ openRoleModal }: UsersTabProps) => {
         <div className="mb-4">
           <Select
             value={selectedRole}
-            onValueChange={(value) => {
+            onValueChange={(value: string) => {
               setSelectedRole(value);
               setCurrentPage(1); // Reset to first page when role changes
             }}

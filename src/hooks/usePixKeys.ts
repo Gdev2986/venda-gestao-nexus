@@ -37,12 +37,10 @@ export const usePixKeys = () => {
           name: key.name,
           owner_name: key.name, // Use name as owner_name
           user_id: key.user_id,
-          is_active: true, // Providing default values for required properties
-          bank_name: "Default Bank", // Providing default value
+          is_default: key.is_default || false,
           created_at: key.created_at,
           updated_at: key.updated_at,
-          is_default: key.is_default,
-          isDefault: key.is_default, // Add alias for backward compatibility
+          bank_name: "Default Bank", // Providing default value
           key_type: key.type // Add key_type as alias for type
         })) || [];
 
@@ -62,12 +60,10 @@ export const usePixKeys = () => {
               name: "Chave Principal",
               owner_name: "Chave Principal",
               user_id: user.id,
-              is_active: true,
-              bank_name: "Default Bank",
+              is_default: true,
               created_at: new Date().toISOString(),
               updated_at: new Date().toISOString(),
-              is_default: true,
-              isDefault: true // Add isDefault
+              bank_name: "Default Bank"
             }
           ]);
         }
@@ -89,12 +85,10 @@ export const usePixKeys = () => {
             name: "Chave Principal",
             owner_name: "Chave Principal",
             user_id: user ? user.id : "",
-            is_active: true,
-            bank_name: "Default Bank",
+            is_default: true,
             created_at: new Date().toISOString(),
             updated_at: new Date().toISOString(),
-            is_default: true,
-            isDefault: true // Add isDefault
+            bank_name: "Default Bank"
           }
         ]);
       } finally {

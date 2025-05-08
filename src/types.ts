@@ -1,4 +1,3 @@
-
 export enum UserRole {
   ADMIN = "ADMIN",
   CLIENT = "CLIENT", 
@@ -84,6 +83,7 @@ export interface Partner {
   address?: string; // Added for completeness
   // Add missing property
   total_sales?: number;
+  total_commission?: number;
 }
 
 // Added Client interface to ensure type safety
@@ -131,6 +131,7 @@ export interface PixKey {
   updated_at?: string;
   bank_name?: string; // Add missing property
   key_type?: string; // Add missing property used in code
+  is_active?: boolean; // Add missing property used in code
 }
 
 export interface Sale {
@@ -146,6 +147,7 @@ export interface Sale {
   created_at: string;
   updated_at: string;
   amount?: number; // Add missing property
+  status?: string; // Add missing property used in code
 }
 
 export interface SalesFilterParams {
@@ -163,7 +165,7 @@ export interface UserData {
   id: string;
   name: string;
   email: string;
-  role: UserRole;
+  role: UserRole | string; // Allow string role from database
   created_at: string;
   status: string;
 }
@@ -182,4 +184,7 @@ export interface Machine {
   client_id?: string;
   created_at?: string;
   updated_at?: string;
+  name?: string;          // Add missing property
+  client_name?: string;   // Add missing property
+  serialNumber?: string;  // Add missing property for backward compatibility
 }
