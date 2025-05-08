@@ -30,8 +30,8 @@ export const useAdminPayments = ({ searchTerm, statusFilter, page }: UseAdminPay
     }
 
     if (statusFilter !== 'ALL') {
-      // Use the statusFilter as is, since it's already a valid PaymentStatus value
-      query = query.eq('status', statusFilter);
+      // Convert the statusFilter to string before using it with eq
+      query = query.eq('status', statusFilter.toString());
     }
 
     const { data, error, count } = await query;

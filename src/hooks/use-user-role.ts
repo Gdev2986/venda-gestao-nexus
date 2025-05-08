@@ -4,17 +4,17 @@ import { UserRole } from "@/types";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 
-// Helper para limpar todos os dados de autenticação do storage
+// Helper to clean up all auth data from storage
 const clearAllAuthData = () => {
   try {
-    // Limpar sessionStorage
+    // Clear sessionStorage
     sessionStorage.removeItem("userRole");
     sessionStorage.removeItem("redirectPath");
     
-    // Limpar localStorage
+    // Clear localStorage
     localStorage.removeItem("userRole");
     
-    // Limpar todos os itens relacionados ao Supabase
+    // Clear all items related to Supabase
     Object.keys(localStorage).forEach((key) => {
       if (key.startsWith('supabase.auth.') || key.includes('sb-')) {
         localStorage.removeItem(key);
@@ -27,11 +27,11 @@ const clearAllAuthData = () => {
       }
     });
   } catch (error) {
-    console.error("Erro ao limpar dados de autenticação:", error);
+    console.error("Error clearing auth data:", error);
   }
 };
 
-// Helper para armazenar e recuperar dados de autenticação com segurança
+// Helper to store and retrieve auth data safely
 const getAuthData = (key: string) => {
   try {
     const item = sessionStorage.getItem(key);
@@ -121,9 +121,9 @@ export const useUserRole = () => {
         if (error) {
           console.error('Error fetching user profile:', error);
           
-          // Se for um erro de autenticação ou não encontrado, fazer logout
+          // If it's an authentication error or not found, log out
           if (error.code === 'PGRST116' || error.code === '404') {
-            console.log("Token expirado ou usuário não encontrado, fazendo logout");
+            console.log("Token expired or user not found, logging out");
             clearAllAuthData();
             await signOut();
             return;
@@ -150,7 +150,7 @@ export const useUserRole = () => {
         }
       } catch (error) {
         console.error('Error fetching profile:', error);
-        // Em caso de erro, tentar fazer logout para limpar o estado
+        // In case of error, try to log out to clear state
         clearAllAuthData();
       } finally {
         setIsRoleLoading(false);

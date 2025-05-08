@@ -1,3 +1,4 @@
+
 import { Navigate, Outlet, useLocation } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { Spinner } from "@/components/ui/spinner";
@@ -26,18 +27,17 @@ const RequireAuth = ({ allowedRoles = [], redirectTo = PATHS.LOGIN }: RequireAut
   
   // Use effect to prevent immediate redirects that can cause loops
   useEffect(() => {
-    console.log("RequireAuth effect - isLoading:", isLoading, "isRoleLoading:", isRoleLoading, "user:", !!user);
+    console.log("RequireAuth effect - isLoading:", isLoading, "isRoleLoading:", isRoleLoading);
     console.log("Current location:", location.pathname);
     console.log("Current user role:", userRole);
     console.log("Allowed roles:", allowedRoles);
     
-    // Verificar se há um possível token expirado
+    // Check for possible expired token
     const tokenExpired = !!user && (userRole === undefined || userRole === null);
     
     if (tokenExpired && !isLoading && !isRoleLoading) {
-      console.log("Possível token expirado detectado, forçando logout");
-      // Tentativa de corrigir o estado de autenticação
-      signOut().catch(err => console.error("Erro ao fazer logout:", err));
+      console.log("Possibly expired token detected, forcing logout");
+      signOut().catch(err => console.error("Error during logout:", err));
       return;
     }
     
@@ -49,40 +49,33 @@ const RequireAuth = ({ allowedRoles = [], redirectTo = PATHS.LOGIN }: RequireAut
         return;
       }
       
-      // Special check for LOGISTICS users accessing admin routes
+      // Special rules for LOGISTICS users
       if (userRole === UserRole.LOGISTICS) {
-        console.log("LOGISTICS user detected, checking route access");
-        
-        // Give LOGISTICS users access to their own dashboard and admin routes
-        if (location.pathname.startsWith('/logistics') || location.pathname.startsWith('/admin')) {
-          console.log("LOGISTICS user accessing permitted route:", location.pathname);
+        // If a LOGISTICS user is trying to access logistics routes, allow it
+        if (location.pathname.startsWith('/logistics')) {
+          console.log("LOGISTICS user accessing logistics routes:", location.pathname);
           return;
         }
       }
       
-      // Verificações especiais para certos papéis e rotas
-      if (userRole === UserRole.FINANCIAL && 
-          (location.pathname.includes('/admin/payments') || 
-           location.pathname.includes('/admin/clients') || 
-           location.pathname.includes('/admin/reports'))) {
-        // Permitir que usuários financeiros acessem essas rotas específicas de admin
-        console.log("Financial user accessing permitted admin route:", location.pathname);
-        return;
-      } 
-      
-      // Se o usuário estiver tentando acessar o dashboard do seu papel específico, permitir
-      if (
-        (userRole === UserRole.ADMIN && location.pathname.startsWith('/admin')) ||
-        (userRole === UserRole.CLIENT && location.pathname.startsWith('/user')) ||
-        (userRole === UserRole.PARTNER && location.pathname.startsWith('/partner')) || 
-        (userRole === UserRole.FINANCIAL && location.pathname.startsWith('/financial')) ||
-        (userRole === UserRole.LOGISTICS && location.pathname.startsWith('/logistics'))
-      ) {
-        console.log("User accessing their own routes:", location.pathname);
-        return;
+      // Special rules for FINANCIAL users
+      if (userRole === UserRole.FINANCIAL) {
+        // If a FINANCIAL user is trying to access financial routes, allow it
+        if (location.pathname.startsWith('/financial')) {
+          console.log("FINANCIAL user accessing financial routes:", location.pathname);
+          return;
+        }
+        
+        // Allow FINANCIAL users to access specific admin routes
+        if (location.pathname.includes('/admin/payments') || 
+            location.pathname.includes('/admin/clients') || 
+            location.pathname.includes('/admin/reports')) {
+          console.log("Financial user accessing permitted admin route:", location.pathname);
+          return;
+        }
       }
       
-      // Verificação de papéis permitidos
+      // Check if user has permission to access this route
       if (allowedRoles.length > 0 && !allowedRoles.includes(userRole)) {
         console.log(`User role ${userRole} not allowed to access this route`);
         
@@ -92,22 +85,20 @@ const RequireAuth = ({ allowedRoles = [], redirectTo = PATHS.LOGIN }: RequireAut
           variant: "destructive",
         });
         
-        // Definir caminho de redirecionamento para dashboard específico do papel
+        // Set redirect path to specific dashboard
         try {
           const dashboardPath = getDashboardPath(userRole);
           
-          // Verificar se já estamos no caminho de redirecionamento
+          // Check if we're already on the redirect path
           if (location.pathname !== dashboardPath) {
             console.log("Will redirect to dashboard path:", dashboardPath);
             setRedirectPath(dashboardPath);
             setUnauthorized(true);
           } else {
-            // Se já estivermos no caminho de redirecionamento, não redirecionamos novamente
             console.log("Already on redirect path, not redirecting again");
           }
         } catch (error) {
-          console.error("Erro ao obter caminho do dashboard:", error);
-          // Redirecionar para login em caso de erro
+          console.error("Error getting dashboard path:", error);
           setRedirectPath(PATHS.LOGIN);
           setUnauthorized(true);
         }
@@ -126,8 +117,6 @@ const RequireAuth = ({ allowedRoles = [], redirectTo = PATHS.LOGIN }: RequireAut
     }
   }, [isLoading, isRoleLoading]);
 
-  console.log("RequireAuth render - isLoading:", isLoading, "shouldRedirect:", shouldRedirect, "unauthorized:", unauthorized);
-
   // If still loading or showing loading animation, show a spinner
   if (isLoading || isRoleLoading || showLoading) {
     return (
@@ -145,10 +134,10 @@ const RequireAuth = ({ allowedRoles = [], redirectTo = PATHS.LOGIN }: RequireAut
     );
   }
 
-  // Se o token estiver expirado, redirecionar para login
+  // If token has expired, redirect to login
   const tokenExpired = !!user && (userRole === undefined || userRole === null);
   if (tokenExpired) {
-    console.log("Token possivelmente expirado, redirecionando para login");
+    console.log("Token possibly expired, redirecting to login");
     return <Navigate to={PATHS.LOGIN} state={{ from: location.pathname }} replace />;
   }
 
@@ -166,21 +155,22 @@ const RequireAuth = ({ allowedRoles = [], redirectTo = PATHS.LOGIN }: RequireAut
     return <Navigate to={redirectPath} replace />;
   }
 
-  // Special check for LOGISTICS users accessing admin routes
-  if (userRole === UserRole.LOGISTICS) {
-    // Allow LOGISTICS users to access all admin routes AND their own routes
-    if (location.pathname.startsWith('/logistics') || location.pathname.startsWith('/admin')) {
+  // Special cases for specific user roles
+  if (userRole === UserRole.FINANCIAL) {
+    // Allow FINANCIAL users to access financial routes AND specific admin routes
+    if (location.pathname.startsWith('/financial') || 
+        location.pathname.includes('/admin/payments') ||
+        location.pathname.includes('/admin/clients') ||
+        location.pathname.includes('/admin/reports')) {
       return <Outlet />;
     }
   }
-
-  // Special check for Financial users accessing admin routes
-  if (userRole === UserRole.FINANCIAL && 
-      (location.pathname.includes('/admin/payments') || 
-       location.pathname.includes('/admin/clients') || 
-       location.pathname.includes('/admin/reports'))) {
-    // Allow financial users to access these specific admin routes
-    return <Outlet />;
+  
+  if (userRole === UserRole.LOGISTICS) {
+    // Allow LOGISTICS users to access logistics routes
+    if (location.pathname.startsWith('/logistics')) {
+      return <Outlet />;
+    }
   }
 
   // Check if user has permission to access this route
@@ -190,7 +180,7 @@ const RequireAuth = ({ allowedRoles = [], redirectTo = PATHS.LOGIN }: RequireAut
       console.log(`Redirecting user with role ${userRole} to ${dashboardPath}`);
       return <Navigate to={dashboardPath} replace />;
     } catch (error) {
-      console.error("Erro ao obter caminho do dashboard:", error);
+      console.error("Error getting dashboard path:", error);
       return <Navigate to={PATHS.LOGIN} replace />;
     }
   }

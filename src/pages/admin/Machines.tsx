@@ -2,12 +2,15 @@
 import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { PATHS } from "@/routes/paths";
+import { useUserRole } from "@/hooks/use-user-role";
+import { UserRole } from "@/types";
 
 const Machines = () => {
   const navigate = useNavigate();
+  const { userRole } = useUserRole();
   
   useEffect(() => {
-    // Since Machines is now in the logistics module, redirect to logistics machines
+    // Always redirect to logistics machines page - admin can access logistics routes
     navigate(PATHS.LOGISTICS.MACHINES);
   }, [navigate]);
   
