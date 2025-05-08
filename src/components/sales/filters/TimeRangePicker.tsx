@@ -6,11 +6,15 @@ import {
   PopoverContent, 
   PopoverTrigger 
 } from "@/components/ui/popover";
-import { 
-  Slider 
-} from "@/components/ui/slider";
 import { Clock } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { 
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue
+} from "@/components/ui/select";
 
 interface TimeRangePickerProps {
   value: [number, number];
@@ -25,17 +29,36 @@ const TimeRangePicker = ({
 }: TimeRangePickerProps) => {
   const [localValue, setLocalValue] = useState<[number, number]>(value);
   
-  const handleSliderChange = (newValues: number[]) => {
-    setLocalValue([newValues[0], newValues[1]]);
+  const formatHour = (hour: number) => {
+    return `${hour.toString().padStart(2, '0')}:00`;
+  };
+  
+  const handleStartHourChange = (hourStr: string) => {
+    const hour = parseInt(hourStr);
+    // Ensure end time is always greater than or equal to start time
+    if (hour > localValue[1]) {
+      setLocalValue([hour, hour]);
+    } else {
+      setLocalValue([hour, localValue[1]]);
+    }
+  };
+  
+  const handleEndHourChange = (hourStr: string) => {
+    const hour = parseInt(hourStr);
+    // Ensure start time is always less than or equal to end time
+    if (hour < localValue[0]) {
+      setLocalValue([hour, hour]);
+    } else {
+      setLocalValue([localValue[0], hour]);
+    }
   };
   
   const handleApply = () => {
     onChange(localValue);
   };
 
-  const formatHour = (hour: number) => {
-    return `${hour.toString().padStart(2, '0')}:00`;
-  };
+  // Generate hours for select dropdowns
+  const hours = Array.from({ length: 24 }, (_, i) => i);
   
   return (
     <div className={cn("grid gap-2", className)}>
@@ -58,22 +81,47 @@ const TimeRangePicker = ({
         <PopoverContent className="w-auto p-4" align="start">
           <div className="space-y-6">
             <div className="space-y-2">
-              <h4 className="font-medium text-sm">Faixa de horário</h4>
-              <Slider
-                defaultValue={localValue}
-                value={localValue}
-                min={0}
-                max={23}
-                step={1}
-                minStepsBetweenThumbs={1}
-                onValueChange={handleSliderChange}
-                className="mt-6"
-              />
-            </div>
-            
-            <div className="flex justify-between text-xs text-muted-foreground">
-              <span>{formatHour(localValue[0])}</span>
-              <span>{formatHour(localValue[1])}</span>
+              <h4 className="font-medium text-sm mb-4">Faixa de horário</h4>
+              
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <label className="text-sm text-muted-foreground">De</label>
+                  <Select
+                    value={localValue[0].toString()}
+                    onValueChange={handleStartHourChange}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Início" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {hours.map((hour) => (
+                        <SelectItem key={`start-${hour}`} value={hour.toString()}>
+                          {formatHour(hour)}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                
+                <div className="space-y-2">
+                  <label className="text-sm text-muted-foreground">Até</label>
+                  <Select
+                    value={localValue[1].toString()}
+                    onValueChange={handleEndHourChange}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Fim" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {hours.map((hour) => (
+                        <SelectItem key={`end-${hour}`} value={hour.toString()}>
+                          {formatHour(hour)}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
             </div>
             
             <Button 

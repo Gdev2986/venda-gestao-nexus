@@ -1,16 +1,6 @@
 import { useState, useEffect } from "react";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   Select,
   SelectContent,
@@ -18,477 +8,277 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import { useToast } from "@/hooks/use-toast";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
-import { useToast } from "@/hooks/use-toast";
+import { Input } from "@/components/ui/input";
 import { UserRole } from "@/types";
-import TablePagination from "@/components/ui/table-pagination";
 import { supabase } from "@/integrations/supabase/client";
 
+// Update ProfileData interface to accept string for role
 interface ProfileData {
   id: string;
   name: string;
   email: string;
-  role: string; // Changed to string to be compatible with both enum types
-  last_login?: string;
-  created_at?: string;
-  updated_at?: string;
-  phone?: string;
-  avatar?: string;
+  avatar: string;
+  phone: string;
+  role: string;
+  created_at: string;
+  updated_at: string;
 }
 
-const Settings = () => {
-  const [profiles, setProfiles] = useState<ProfileData[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
+const AdminSettings = () => {
+  const [activeTab, setActiveTab] = useState("usuarios");
+  const [maintenance, setMaintenance] = useState(false);
+  const [notificationsEnabled, setNotificationsEnabled] = useState(true);
+  const [selectedRole, setSelectedRole] = useState<string>("all");
+  const [users, setUsers] = useState<ProfileData[]>([]);
+  const [loading, setLoading] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
-  const [activeTab, setActiveTab] = useState("users");
-  const [totalCount, setTotalCount] = useState(0);
+  const [totalPages, setTotalPages] = useState(1);
+  const [selectedUser, setSelectedUser] = useState<ProfileData | null>(null);
+  const [newRole, setNewRole] = useState<string>("");
+  const [showRoleModal, setShowRoleModal] = useState(false);
+  
   const { toast } = useToast();
   const itemsPerPage = 10;
 
-  // Fetch user profiles from Supabase
+  // Fetch users from Supabase
   useEffect(() => {
-    const fetchProfiles = async () => {
-      setIsLoading(true);
-      try {
-        const { data, error, count } = await supabase
-          .from('profiles')
-          .select('*', { count: 'exact' })
-          .range((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage - 1)
-          .order('created_at', { ascending: false });
+    fetchUsers();
+  }, [currentPage, selectedRole]);
 
-        if (error) {
-          throw error;
-        }
-
-        if (data) {
-          // Convert the data to ProfileData type
-          const profilesData: ProfileData[] = data.map(item => ({
-            id: item.id,
-            name: item.name,
-            email: item.email,
-            role: item.role,
-            last_login: undefined, // We don't have this data from profiles table
-            created_at: item.created_at,
-            updated_at: item.updated_at,
-            phone: item.phone,
-            avatar: item.avatar
-          }));
-          
-          setProfiles(profilesData);
-          if (count !== null) {
-            setTotalCount(count);
-          }
-        }
-      } catch (error) {
-        console.error("Error fetching profiles:", error);
-        toast({
-          variant: "destructive",
-          title: "Erro",
-          description: "Falha ao carregar os perfis de usuários."
-        });
-      } finally {
-        setIsLoading(false);
+  const fetchUsers = async () => {
+    setLoading(true);
+    try {
+      let query = supabase
+        .from('profiles')
+        .select('*', { count: 'exact' });
+      
+      if (selectedRole !== 'all') {
+        query = query.eq('role', selectedRole);
       }
-    };
+      
+      // Apply pagination
+      const startRange = (currentPage - 1) * itemsPerPage;
+      const endRange = startRange + itemsPerPage - 1;
+      
+      const { data, error, count } = await query
+        .range(startRange, endRange);
+      
+      if (error) throw error;
+      
+      // Calculate total pages
+      const total = count ? Math.ceil(count / itemsPerPage) : 0;
+      setTotalPages(total);
+      
+      // Cast the data to ProfileData type
+      setUsers(data as ProfileData[]);
+    } catch (error) {
+      console.error("Error fetching users:", error);
+      toast({
+        variant: "destructive",
+        title: "Erro ao carregar usuários",
+        description: "Não foi possível carregar a lista de usuários."
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
 
-    fetchProfiles();
-  }, [currentPage, toast]);
-
-  // Handle role change
-  const handleRoleChange = async (userId: string, newRole: string) => {
+  const handleRoleChange = async () => {
+    if (!selectedUser || !newRole) return;
+    
     try {
       const { error } = await supabase
         .from('profiles')
         .update({ role: newRole })
-        .eq('id', userId);
-
-      if (error) {
-        throw error;
-      }
-
-      // Update the local state to reflect the change
-      setProfiles(prevProfiles =>
-        prevProfiles.map(profile =>
-          profile.id === userId ? { ...profile, role: newRole } : profile
-        )
-      );
-
+        .eq('id', selectedUser.id);
+        
+      if (error) throw error;
+      
       toast({
         title: "Função atualizada",
-        description: `Função do usuário alterada para ${getRoleName(newRole)}`
+        description: `A função de ${selectedUser.name} foi atualizada para ${newRole}.`
       });
+      
+      setShowRoleModal(false);
+      fetchUsers();
     } catch (error) {
       console.error("Error updating role:", error);
       toast({
         variant: "destructive",
-        title: "Erro",
-        description: "Falha ao atualizar a função do usuário."
+        title: "Erro ao atualizar função",
+        description: "Não foi possível atualizar a função do usuário."
       });
     }
   };
 
-  // Get role name in Portuguese
-  const getRoleName = (role: string): string => {
-    switch(role) {
-      case "ADMIN":
-        return "Administrador";
-      case "FINANCIAL":
-        return "Financeiro";
-      case "LOGISTICS":
-        return "Logística";
-      case "PARTNER":
-        return "Parceiro";
-      case "CLIENT":
-        return "Cliente";
-      default:
-        return role;
-    }
+  const openRoleModal = (user: ProfileData) => {
+    setSelectedUser(user);
+    setNewRole(user.role);
+    setShowRoleModal(true);
   };
-
-  // Get role badge
-  const getRoleBadge = (role: string) => {
-    switch (role) {
-      case "ADMIN":
-        return <Badge className="bg-purple-500 hover:bg-purple-600">Administrador</Badge>;
-      case "FINANCIAL":
-        return <Badge className="bg-blue-500 hover:bg-blue-600">Financeiro</Badge>;
-      case "LOGISTICS":
-        return <Badge className="bg-green-500 hover:bg-green-600">Logística</Badge>;
-      case "PARTNER":
-        return <Badge className="bg-amber-500 hover:bg-amber-600">Parceiro</Badge>;
-      case "CLIENT":
-        return <Badge className="bg-gray-500 hover:bg-gray-600">Cliente</Badge>;
-      default:
-        return <Badge>{role}</Badge>;
-    }
-  };
-
-  // Calculate pagination
-  const totalPages = Math.ceil(totalCount / itemsPerPage);
-
-  // Format date
-  const formatDate = (dateString?: string) => {
-    if (!dateString) return "Nunca";
-    
-    try {
-      return new Date(dateString).toLocaleDateString('pt-BR', {
-        day: '2-digit',
-        month: '2-digit',
-        year: 'numeric',
-        hour: '2-digit',
-        minute: '2-digit'
-      });
-    } catch (error) {
-      return "Data inválida";
-    }
-  };
-
-  // Simulated save handlers
-  const handleSaveSystem = () => {
+  
+  const toggleMaintenance = () => {
+    setMaintenance(!maintenance);
     toast({
-      title: "Configurações salvas",
-      description: "As configurações do sistema foram atualizadas com sucesso."
-    });
-  };
-
-  const handleSaveNotification = () => {
-    toast({
-      title: "Notificações configuradas",
-      description: "As configurações de notificação foram salvas com sucesso."
-    });
-  };
-
-  const handleSendNotification = () => {
-    toast({
-      title: "Notificação enviada",
-      description: "A notificação foi enviada com sucesso para os destinatários selecionados."
-    });
-  };
-
-  const handleSaveSecurity = () => {
-    toast({
-      title: "Configurações de segurança salvas",
-      description: "As configurações de segurança foram atualizadas com sucesso."
+      title: !maintenance ? "Modo manutenção ativado" : "Modo manutenção desativado",
+      description: !maintenance 
+        ? "O sistema está em modo de manutenção. Apenas administradores podem acessar." 
+        : "O sistema está disponível para todos os usuários."
     });
   };
 
   return (
-    
     <div className="container mx-auto py-10">
-      <h1 className="text-2xl font-bold mb-6">Configurações do Administrador</h1>
-      
-      <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-        <TabsList className="mb-4">
-          <TabsTrigger value="users">Usuários</TabsTrigger>
-          <TabsTrigger value="system">Sistema</TabsTrigger>
-          <TabsTrigger value="notifications">Notificações</TabsTrigger>
-          <TabsTrigger value="security">Segurança</TabsTrigger>
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+        <TabsList>
+          <TabsTrigger value="usuarios">Usuários</TabsTrigger>
+          <TabsTrigger value="sistema">Sistema</TabsTrigger>
         </TabsList>
         
-        {/* Usuários Tab */}
-        <TabsContent value="users">
+        {/* Users Tab */}
+        <TabsContent value="usuarios" className="mt-6">
           <Card>
             <CardHeader>
-              <CardTitle>Gerenciamento de Usuários</CardTitle>
-              <CardDescription>
-                Configure as permissões e funções dos usuários do sistema
-              </CardDescription>
+              <CardTitle>Gerenciar Usuários</CardTitle>
             </CardHeader>
             <CardContent>
-              {isLoading ? (
-                <div className="space-y-4">
-                  {Array.from({ length: 5 }).map((_, i) => (
-                    <div key={i} className="h-12 bg-muted animate-pulse rounded" />
+              <div className="mb-4">
+                <Label htmlFor="roleFilter">Filtrar por função:</Label>
+                <Select
+                  id="roleFilter"
+                  value={selectedRole}
+                  onValueChange={(value) => {
+                    setSelectedRole(value);
+                    setCurrentPage(1); // Reset to first page when role changes
+                  }}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Todas as funções" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">Todas as funções</SelectItem>
+                    <SelectItem value={UserRole.ADMIN}>Administrador</SelectItem>
+                    <SelectItem value={UserRole.USER}>Usuário</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              
+              {loading ? (
+                <p>Carregando usuários...</p>
+              ) : (
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                  {users.map((user) => (
+                    <Card key={user.id} className="shadow-sm">
+                      <CardContent className="flex flex-col gap-2">
+                        <div className="text-sm font-medium">{user.name}</div>
+                        <div className="text-xs text-muted-foreground">{user.email}</div>
+                        <div className="text-xs text-muted-foreground">Função: {user.role}</div>
+                        <Button 
+                          variant="outline" 
+                          size="sm"
+                          onClick={() => openRoleModal(user)}
+                        >
+                          Alterar Função
+                        </Button>
+                      </CardContent>
+                    </Card>
                   ))}
                 </div>
-              ) : (
-                <>
-                  <div className="rounded-md border overflow-x-auto">
-                    <Table>
-                      <TableHeader>
-                        <TableRow>
-                          <TableHead>Usuário</TableHead>
-                          <TableHead>Email</TableHead>
-                          <TableHead>Função Atual</TableHead>
-                          <TableHead>Data de Criação</TableHead>
-                          <TableHead>Alterar Função</TableHead>
-                        </TableRow>
-                      </TableHeader>
-                      <TableBody>
-                        {profiles.map((profile) => (
-                          <TableRow key={profile.id}>
-                            <TableCell className="font-medium">{profile.name}</TableCell>
-                            <TableCell>{profile.email}</TableCell>
-                            <TableCell>{getRoleBadge(profile.role)}</TableCell>
-                            <TableCell>{formatDate(profile.created_at)}</TableCell>
-                            <TableCell>
-                              <Select 
-                                value={profile.role} 
-                                onValueChange={(value) => handleRoleChange(profile.id, value)}
-                              >
-                                <SelectTrigger className="w-[180px]">
-                                  <SelectValue placeholder="Selecionar função" />
-                                </SelectTrigger>
-                                <SelectContent>
-                                  <SelectItem value="ADMIN">Administrador</SelectItem>
-                                  <SelectItem value="FINANCIAL">Financeiro</SelectItem>
-                                  <SelectItem value="LOGISTICS">Logística</SelectItem>
-                                  <SelectItem value="PARTNER">Parceiro</SelectItem>
-                                  <SelectItem value="CLIENT">Cliente</SelectItem>
-                                </SelectContent>
-                              </Select>
-                            </TableCell>
-                          </TableRow>
-                        ))}
-                      </TableBody>
-                    </Table>
-                  </div>
-                  
-                  <div className="mt-4">
-                    <TablePagination
-                      currentPage={currentPage}
-                      totalPages={totalPages}
-                      onPageChange={setCurrentPage}
-                    />
-                  </div>
-                </>
               )}
+              
+              {/* Pagination Controls */}
+              <div className="flex justify-between items-center mt-4">
+                <Button
+                  variant="outline"
+                  onClick={() => setCurrentPage(currentPage - 1)}
+                  disabled={currentPage === 1}
+                >
+                  Anterior
+                </Button>
+                <span>Página {currentPage} de {totalPages}</span>
+                <Button
+                  variant="outline"
+                  onClick={() => setCurrentPage(currentPage + 1)}
+                  disabled={currentPage === totalPages}
+                >
+                  Próximo
+                </Button>
+              </div>
             </CardContent>
           </Card>
         </TabsContent>
         
-        {/* Sistema Tab */}
-        <TabsContent value="system">
+        {/* System Tab */}
+        <TabsContent value="sistema" className="mt-6">
           <Card>
             <CardHeader>
               <CardTitle>Configurações do Sistema</CardTitle>
-              <CardDescription>
-                Configure as opções gerais do sistema
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-6">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="system-name">Nome do Sistema</Label>
-                  <Input id="system-name" defaultValue="SigmaPay" />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="system-url">URL do Sistema</Label>
-                  <Input id="system-url" defaultValue="https://app.sigmapay.com" />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="system-email">Email de Contato</Label>
-                  <Input id="system-email" defaultValue="contato@sigmapay.com" />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="timezone">Fuso Horário</Label>
-                  <Select defaultValue="America/Sao_Paulo">
-                    <SelectTrigger id="timezone">
-                      <SelectValue placeholder="Selecionar fuso horário" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="America/Sao_Paulo">América/São Paulo</SelectItem>
-                      <SelectItem value="America/New_York">América/Nova York</SelectItem>
-                      <SelectItem value="Europe/London">Europa/Londres</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
-              
-              <div className="space-y-4">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <h3 className="font-medium">Modo de Manutenção</h3>
-                    <p className="text-sm text-muted-foreground">Ativar modo de manutenção no sistema</p>
-                  </div>
-                  <Switch />
-                </div>
-                
-                <div className="flex items-center justify-between">
-                  <div>
-                    <h3 className="font-medium">Logins Permitidos</h3>
-                    <p className="text-sm text-muted-foreground">Permitir que usuários façam login durante manutenção</p>
-                  </div>
-                  <Switch defaultChecked />
-                </div>
-              </div>
-              
-              <Button onClick={handleSaveSystem}>Salvar Configurações</Button>
-            </CardContent>
-          </Card>
-        </TabsContent>
-        
-        {/* Notificações Tab */}
-        <TabsContent value="notifications">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            <Card>
-              <CardHeader>
-                <CardTitle>Enviar Notificação</CardTitle>
-                <CardDescription>
-                  Envie comunicados e avisos para usuários do sistema
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="space-y-2">
-                  <Label htmlFor="notification-title">Título</Label>
-                  <Input id="notification-title" placeholder="Digite o título da notificação" />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="notification-content">Conteúdo</Label>
-                  <textarea 
-                    id="notification-content" 
-                    placeholder="Digite o conteúdo da notificação"
-                    className="w-full min-h-32 p-2 border rounded-md"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="notification-recipients">Destinatários</Label>
-                  <Select defaultValue="all">
-                    <SelectTrigger id="notification-recipients">
-                      <SelectValue placeholder="Selecione os destinatários" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="all">Todos os usuários</SelectItem>
-                      <SelectItem value="clients">Somente clientes</SelectItem>
-                      <SelectItem value="partners">Somente parceiros</SelectItem>
-                      <SelectItem value="admin">Somente administradores</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div className="flex items-center justify-between">
-                  <div>
-                    <h3 className="font-medium">Enviar como prioritária</h3>
-                    <p className="text-sm text-muted-foreground">A notificação será destacada para os usuários</p>
-                  </div>
-                  <Switch />
-                </div>
-                <Button onClick={handleSendNotification}>Enviar Notificação</Button>
-              </CardContent>
-            </Card>
-            
-            <Card>
-              <CardHeader>
-                <CardTitle>Configurar Notificações</CardTitle>
-                <CardDescription>
-                  Configure as notificações automáticas do sistema
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-4">
+              <CardContent className="pl-0 pb-0">
                 <div className="space-y-4">
                   <div className="flex items-center justify-between">
-                    <div>
-                      <h3 className="font-medium">Notificações de Pagamento</h3>
-                      <p className="text-sm text-muted-foreground">Enviar notificações de pagamentos</p>
-                    </div>
-                    <Switch defaultChecked />
+                    <Label htmlFor="maintenanceMode">Modo de Manutenção</Label>
+                    <Switch
+                      id="maintenanceMode"
+                      checked={maintenance}
+                      onCheckedChange={toggleMaintenance}
+                    />
                   </div>
                   
                   <div className="flex items-center justify-between">
-                    <div>
-                      <h3 className="font-medium">Notificações de Novos Usuários</h3>
-                      <p className="text-sm text-muted-foreground">Avisar sobre registro de novos usuários</p>
-                    </div>
-                    <Switch defaultChecked />
-                  </div>
-                  
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <h3 className="font-medium">Alertas de Sistema</h3>
-                      <p className="text-sm text-muted-foreground">Enviar alertas sobre eventos do sistema</p>
-                    </div>
-                    <Switch defaultChecked />
-                  </div>
-                  
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <h3 className="font-medium">Notificações por Email</h3>
-                      <p className="text-sm text-muted-foreground">Encaminhar notificações como email</p>
-                    </div>
-                    <Switch />
+                    <Label htmlFor="notifications">Notificações</Label>
+                    <Switch
+                      id="notifications"
+                      checked={notificationsEnabled}
+                      onCheckedChange={() => setNotificationsEnabled(!notificationsEnabled)}
+                    />
                   </div>
                 </div>
-                <Button onClick={handleSaveNotification}>Salvar Configurações</Button>
               </CardContent>
-            </Card>
-          </div>
-        </TabsContent>
-        
-        {/* Segurança Tab - Only change password */}
-        <TabsContent value="security">
-          <Card>
-            <CardHeader>
-              <CardTitle>Alterar Senha</CardTitle>
-              <CardDescription>
-                Altere sua senha de acesso ao sistema
-              </CardDescription>
             </CardHeader>
-            <CardContent className="space-y-6">
-              <div className="space-y-4">
-                <div className="space-y-2">
-                  <Label htmlFor="currentPassword">Senha atual</Label>
-                  <Input type="password" id="currentPassword" />
-                </div>
-                
-                <div className="space-y-2">
-                  <Label htmlFor="newPassword">Nova senha</Label>
-                  <Input type="password" id="newPassword" />
-                </div>
-                
-                <div className="space-y-2">
-                  <Label htmlFor="confirmPassword">Confirmar nova senha</Label>
-                  <Input type="password" id="confirmPassword" />
-                </div>
-              </div>
-              
-              <Button onClick={handleSaveSecurity}>Salvar Nova Senha</Button>
-            </CardContent>
           </Card>
         </TabsContent>
       </Tabs>
+      
+      {/* Role Modal */}
+      {showRoleModal && selectedUser && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex justify-center items-center">
+          <div className="bg-white p-6 rounded-md shadow-lg">
+            <h2 className="text-lg font-semibold mb-4">
+              Alterar Função de {selectedUser.name}
+            </h2>
+            <div className="mb-4">
+              <Label htmlFor="newRole">Nova Função:</Label>
+              <Select
+                id="newRole"
+                value={newRole}
+                onValueChange={(value) => setNewRole(value)}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Selecione a função" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value={UserRole.ADMIN}>Administrador</SelectItem>
+                  <SelectItem value={UserRole.USER}>Usuário</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="flex justify-end gap-2">
+              <Button variant="ghost" onClick={() => setShowRoleModal(false)}>
+                Cancelar
+              </Button>
+              <Button variant="primary" onClick={handleRoleChange}>
+                Salvar
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
 
-export default Settings;
+export default AdminSettings;

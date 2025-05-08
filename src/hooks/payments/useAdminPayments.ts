@@ -30,9 +30,8 @@ export const useAdminPayments = ({ searchTerm, statusFilter, page }: UseAdminPay
     }
 
     if (statusFilter !== 'ALL') {
-      // Convert to lowercase to match the database values
-      const dbStatus = statusFilter.toLowerCase();
-      query = query.eq('status', dbStatus);
+      // Convert to lowercase for database compatibility
+      query = query.eq('status', statusFilter.toLowerCase());
     }
 
     const { data, error, count } = await query;
@@ -74,6 +73,7 @@ export const useAdminPayments = ({ searchTerm, statusFilter, page }: UseAdminPay
       } else if (action === PaymentAction.REJECT) {
         updateData = { status: 'rejected' };
       } else if (newStatus) {
+        // Convert to lowercase for database compatibility
         updateData = { status: newStatus.toLowerCase() };
       }
 
