@@ -74,8 +74,10 @@ const MachineTransferDialog = ({
     client_name: currentClientName || '',
     created_at: new Date().toISOString(),
     updated_at: new Date().toISOString(),
-    serial_number: '', // Add required field
-    serialNumber: ''   // Add required field
+    model: '', 
+    serial_number: '',
+    serialNumber: '',
+    status: 'active'
   }] : [];
 
   return (

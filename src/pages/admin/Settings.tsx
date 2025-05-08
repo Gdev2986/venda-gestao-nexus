@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
@@ -17,21 +18,18 @@ const AdminSettings = () => {
       setAllowedRoles(JSON.parse(storedRoles));
     } else {
       // Set default roles if nothing is stored
-      setAllowedRoles([UserRole.ADMIN, UserRole.LOGISTICS, UserRole.CLIENT, UserRole.PARTNER, UserRole.FINANCIAL].map(role => role.toString()));
+      setAllowedRoles([
+        UserRole.ADMIN.toString(), 
+        UserRole.LOGISTICS.toString(), 
+        UserRole.CLIENT.toString(), 
+        UserRole.PARTNER.toString(), 
+        UserRole.FINANCIAL.toString()
+      ]);
     }
   }, []);
   
   const handleSavePermissions = async (values: any) => {
     try {
-      // Convert enum values to strings
-      const allowedRoles = [
-        UserRole.ADMIN.toString(),
-        UserRole.LOGISTICS.toString(),
-        UserRole.CLIENT.toString(),
-        UserRole.PARTNER.toString(),
-        UserRole.FINANCIAL.toString()
-      ];
-      
       // Save the selected roles to local storage
       localStorage.setItem('allowedRoles', JSON.stringify(values.roles));
       
@@ -60,10 +58,8 @@ const AdminSettings = () => {
             <div>
               <Label htmlFor="allowedRoles">Permissões de Acesso</Label>
               <Select
-                id="allowedRoles"
-                multiple
-                onValueChange={(values) => handleSavePermissions({ roles: values })}
                 defaultValue={allowedRoles}
+                onValueChange={(value) => handleSavePermissions({ roles: value.split(',') })}
               >
                 <SelectTrigger className="w-[300px]">
                   <SelectValue placeholder="Selecione as permissões" />

@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -11,6 +12,7 @@ import { PaymentStatus } from "@/types";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { formatDate } from "@/lib/formatters";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 
 const PaymentDetails = () => {
   const { id: paymentId } = useParams();
@@ -22,6 +24,7 @@ const PaymentDetails = () => {
   const [isApproving, setIsApproving] = useState(false);
   const [isRejecting, setIsRejecting] = useState(false);
   const [rejectionReason, setRejectionReason] = useState("");
+  const [isRejectDialogOpen, setIsRejectDialogOpen] = useState(false);
 
   useEffect(() => {
     const fetchPaymentDetails = async () => {
@@ -58,7 +61,7 @@ const PaymentDetails = () => {
       const { error } = await supabase
         .from('payment_requests')
         .update({ 
-          status: PaymentStatus.APPROVED.toString(),
+          status: "APPROVED",
         })
         .eq('id', paymentId);
 
@@ -88,7 +91,7 @@ const PaymentDetails = () => {
       const { error } = await supabase
         .from('payment_requests')
         .update({ 
-          status: PaymentStatus.REJECTED.toString(),
+          status: "REJECTED",
           rejection_reason: rejectionReason,
         })
         .eq('id', paymentId);
@@ -101,6 +104,7 @@ const PaymentDetails = () => {
         title: "Sucesso",
         description: "Pagamento rejeitado com sucesso.",
       });
+      setIsRejectDialogOpen(false);
       navigate("/admin/payments");
     } catch (error: any) {
       toast({
@@ -170,11 +174,11 @@ const PaymentDetails = () => {
             )}
           </div>
 
-          {payment.status === PaymentStatus.PENDING && (
+          {payment.status === "PENDING" && (
             <div className="flex justify-end space-x-2">
               <Button
                 variant="destructive"
-                onClick={() => document.getElementById('reject-modal')?.showModal()}
+                onClick={() => setIsRejectDialogOpen(true)}
               >
                 <XCircle className="h-4 w-4 mr-2" />
                 Rejeitar Pagamento
@@ -201,28 +205,30 @@ const PaymentDetails = () => {
         </CardContent>
       </Card>
 
-      {/* Reject Payment Modal */}
-      <dialog id="reject-modal" className="modal">
-        <div className="modal-box">
-          <h3 className="font-bold text-lg">Rejeitar Pagamento</h3>
-          <p className="py-4">Tem certeza de que deseja rejeitar este pagamento?</p>
-
-          <div className="py-2">
-            <Label htmlFor="rejectionReason">Motivo da Rejeição</Label>
-            <Textarea
-              id="rejectionReason"
-              placeholder="Informe o motivo da rejeição..."
-              value={rejectionReason}
-              onChange={(e) => setRejectionReason(e.target.value)}
-            />
+      {/* Reject Payment Dialog */}
+      <Dialog open={isRejectDialogOpen} onOpenChange={setIsRejectDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Rejeitar Pagamento</DialogTitle>
+          </DialogHeader>
+          <div className="py-4">
+            <p className="mb-4">Tem certeza de que deseja rejeitar este pagamento?</p>
+            <div className="py-2">
+              <Label htmlFor="rejectionReason">Motivo da Rejeição</Label>
+              <Textarea
+                id="rejectionReason"
+                placeholder="Informe o motivo da rejeição..."
+                value={rejectionReason}
+                onChange={(e) => setRejectionReason(e.target.value)}
+              />
+            </div>
           </div>
-
-          <div className="modal-action">
-            <form method="dialog">
-              <Button variant="ghost">Cancelar</Button>
-            </form>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setIsRejectDialogOpen(false)}>
+              Cancelar
+            </Button>
             <Button
-              variant="primary"
+              variant="destructive"
               onClick={handleRejectPayment}
               disabled={isRejecting}
             >
@@ -235,9 +241,9 @@ const PaymentDetails = () => {
                 "Confirmar Rejeição"
               )}
             </Button>
-          </div>
-        </div>
-      </dialog>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };

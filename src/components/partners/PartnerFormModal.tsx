@@ -13,10 +13,11 @@ import { usePartners } from "@/hooks/use-partners";
 interface PartnerFormModalProps {
   isOpen: boolean;
   onClose: () => void;
+  onSubmit?: (data: PartnerFormValues) => Promise<boolean>;
   title?: string;
 }
 
-const PartnerFormModal = ({ isOpen, onClose, title = "Novo Parceiro" }: PartnerFormModalProps) => {
+const PartnerFormModal = ({ isOpen, onClose, onSubmit, title = "Novo Parceiro" }: PartnerFormModalProps) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { createPartner } = usePartners();
   const { toast } = useToast();
@@ -37,7 +38,10 @@ const PartnerFormModal = ({ isOpen, onClose, title = "Novo Parceiro" }: PartnerF
         total_commission: 0 // Add required field
       };
 
-      const success = await createPartner(partnerData);
+      // Use provided onSubmit prop if available, otherwise use createPartner
+      const success = onSubmit 
+        ? await onSubmit(data)
+        : await createPartner(partnerData);
 
       if (success) {
         toast({

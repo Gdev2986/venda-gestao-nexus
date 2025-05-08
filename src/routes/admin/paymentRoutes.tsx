@@ -4,6 +4,7 @@ import { PATHS } from "../paths";
 
 // Payment pages
 import AdminPayments from "../../pages/admin/Payments";
+import PaymentDetails from "../../pages/admin/PaymentDetails";
 
 // Payment Routes for Admin Module
 export const paymentRoutes = [
@@ -15,7 +16,7 @@ export const paymentRoutes = [
   <Route 
     key="admin-payment-details" 
     path={PATHS.ADMIN.PAYMENT_DETAILS()} 
-    element={<AdminPayments />} 
+    element={<PaymentDetails />} 
   />,
   <Route 
     key="admin-payment-new" 

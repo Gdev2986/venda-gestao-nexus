@@ -110,7 +110,7 @@ const ClientPayments = () => {
           key: request.pix_key.key,
           type: request.pix_key.type,
           owner_name: request.pix_key.name // Use name as owner_name
-        } : null
+        } : undefined
       })) : [];
       
       setPayments(formattedPayments);
@@ -173,8 +173,8 @@ const ClientPayments = () => {
           pix_key_id: pixKeyId,
           client_id: clientId,
           description: description || "Solicitação de pagamento",
-          // Convert enum to string for database storage
-          status: PaymentStatus.PENDING.toString()
+          // Use the string value directly instead of enum
+          status: "PENDING"
         })
         .select();
       

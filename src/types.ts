@@ -1,3 +1,4 @@
+
 export enum UserRole {
   ADMIN = "admin",
   USER = "user",
@@ -126,7 +127,7 @@ export interface PixKey {
   name: string;
   owner_name?: string;
   is_default?: boolean;
-  // Add alias for backward compatibility with other components
+  // Alias for backward compatibility
   isDefault?: boolean; 
   user_id?: string;
   created_at?: string;
@@ -188,8 +189,8 @@ export interface Machine {
   client_name: string;
   created_at: string;
   updated_at: string;
-  model?: string;
-  serial_number?: string; // Use snake_case to match the database
+  model: string;
+  serial_number: string; // Use snake_case to match the database
   serialNumber?: string;   // Add camelCase for components that use this
   status?: string;
 }
