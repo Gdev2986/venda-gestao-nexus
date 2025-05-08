@@ -23,12 +23,10 @@ export const getDashboardPath = (userRole: UserRole): string => {
     case UserRole.FINANCE:
     case UserRole.SUPPORT:
     case UserRole.USER:
-      // Mapeamento de outros tipos para rotas padrão
       return PATHS.USER.DASHBOARD;
     default:
       console.log("Role não reconhecido:", userRole);
-      // Em vez de redirecionar para o login quando não reconhecermos o papel
-      // vamos redirecionar para um caminho padrão
+      // Default to login as a safe fallback
       return PATHS.LOGIN;
   }
 };

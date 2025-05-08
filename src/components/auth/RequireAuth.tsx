@@ -1,4 +1,3 @@
-
 import { Navigate, Outlet, useLocation } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { Spinner } from "@/components/ui/spinner";
@@ -50,6 +49,17 @@ const RequireAuth = ({ allowedRoles = [], redirectTo = PATHS.LOGIN }: RequireAut
         return;
       }
       
+      // Special check for LOGISTICS users accessing admin routes
+      if (userRole === UserRole.LOGISTICS) {
+        console.log("LOGISTICS user detected, checking route access");
+        
+        // Give LOGISTICS users access to their own dashboard and admin routes
+        if (location.pathname.startsWith('/logistics') || location.pathname.startsWith('/admin')) {
+          console.log("LOGISTICS user accessing permitted route:", location.pathname);
+          return;
+        }
+      }
+      
       // Verificações especiais para certos papéis e rotas
       if (userRole === UserRole.FINANCIAL && 
           (location.pathname.includes('/admin/payments') || 
@@ -59,11 +69,6 @@ const RequireAuth = ({ allowedRoles = [], redirectTo = PATHS.LOGIN }: RequireAut
         console.log("Financial user accessing permitted admin route:", location.pathname);
         return;
       } 
-      // Usuários de logística podem acessar rotas de admin
-      else if (userRole === UserRole.LOGISTICS && location.pathname.startsWith('/admin')) {
-        console.log("Logistics user accessing admin route:", location.pathname);
-        return;
-      }
       
       // Se o usuário estiver tentando acessar o dashboard do seu papel específico, permitir
       if (
@@ -161,18 +166,20 @@ const RequireAuth = ({ allowedRoles = [], redirectTo = PATHS.LOGIN }: RequireAut
     return <Navigate to={redirectPath} replace />;
   }
 
+  // Special check for LOGISTICS users accessing admin routes
+  if (userRole === UserRole.LOGISTICS) {
+    // Allow LOGISTICS users to access all admin routes AND their own routes
+    if (location.pathname.startsWith('/logistics') || location.pathname.startsWith('/admin')) {
+      return <Outlet />;
+    }
+  }
+
   // Special check for Financial users accessing admin routes
   if (userRole === UserRole.FINANCIAL && 
       (location.pathname.includes('/admin/payments') || 
        location.pathname.includes('/admin/clients') || 
        location.pathname.includes('/admin/reports'))) {
     // Allow financial users to access these specific admin routes
-    return <Outlet />;
-  }
-
-  // Special check for Logistics users accessing admin routes
-  if (userRole === UserRole.LOGISTICS && location.pathname.startsWith('/admin')) {
-    // Allow logistics users to access all admin routes
     return <Outlet />;
   }
 

@@ -7,7 +7,6 @@ import { motion } from "framer-motion";
 import { useState, useEffect } from "react";
 import { useUserRole } from "@/hooks/use-user-role";
 import { getDashboardPath } from "@/routes/routeUtils";
-import { UserRole } from "@/types";
 
 const RootLayout = () => {
   const { user, isLoading, signOut } = useAuth();
