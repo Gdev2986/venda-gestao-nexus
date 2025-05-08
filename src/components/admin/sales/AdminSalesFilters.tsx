@@ -120,7 +120,7 @@ const AdminSalesFilters = ({
             <label className="text-sm font-medium mb-1 block">Valor (R$)</label>
             <div className="relative">
               <span className="absolute left-3 top-2.5 text-muted-foreground">R$</span>
-              <Input value={amountValue} onChange={handleAmountChange} onBlur={handleAmountBlur} className="pl-10"  />
+              <Input value={amountValue} onChange={handleAmountChange} onBlur={handleAmountBlur} className="pl-10" />
             </div>
           </div>
         </div>
@@ -128,7 +128,7 @@ const AdminSalesFilters = ({
         {/* Right column with date and time */}
         <div className="space-y-3 py-[41px]">
           {/* Date Range Filter */}
-          <div>
+          <div className="px-0 py-0 my-[9px]">
             <label className="text-sm font-medium mb-1 block">Período</label>
             <Popover>
               <PopoverTrigger asChild>
