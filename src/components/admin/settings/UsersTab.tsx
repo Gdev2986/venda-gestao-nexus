@@ -37,7 +37,7 @@ interface UsersTabProps {
 }
 
 export const UsersTab = ({ openRoleModal }: UsersTabProps) => {
-  const [selectedRole, setSelectedRole] = useState<string>("all");
+  const [selectedRole, setSelectedRole] = useState("all");
   const [users, setUsers] = useState<ProfileData[]>([]);
   const [loading, setLoading] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
