@@ -6,6 +6,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { UsersTab } from "@/components/admin/settings/UsersTab";
 import { SystemTab } from "@/components/admin/settings/SystemTab";
 import { RoleChangeModal } from "@/components/admin/settings/RoleChangeModal";
+import { UserRole } from "@/types";
 
 // Update ProfileData interface to accept string for role
 interface ProfileData {

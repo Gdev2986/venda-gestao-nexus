@@ -30,7 +30,7 @@ export const useAdminPayments = ({ searchTerm, statusFilter, page }: UseAdminPay
     }
 
     if (statusFilter !== 'ALL') {
-      // Convert to lowercase for database compatibility
+      // Convert status to lowercase for database compatibility
       const dbStatus = statusFilter.toLowerCase();
       query = query.eq('status', dbStatus);
     }
