@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { Payment, PaymentStatus } from '@/types';
@@ -30,8 +29,8 @@ export const useAdminPayments = ({ searchTerm, statusFilter, page }: UseAdminPay
     }
 
     if (statusFilter !== 'ALL') {
-      // Convert the statusFilter to the appropriate PaymentStatus enum value
-      query = query.eq('status', statusFilter as string);
+      // Ensure we're passing the correct type for the 'status' column
+      query = query.eq('status', statusFilter);
     }
 
     const { data, error, count } = await query;

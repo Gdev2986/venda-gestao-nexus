@@ -25,136 +25,94 @@ import { Switch } from "@/components/ui/switch";
 import { useToast } from "@/hooks/use-toast";
 import { UserRole } from "@/types";
 import TablePagination from "@/components/ui/table-pagination";
+import { supabase } from "@/integrations/supabase/client";
 
-interface User {
+interface ProfileData {
   id: string;
   name: string;
   email: string;
   role: UserRole;
-  lastLogin?: string;
+  last_login?: string;
 }
 
 const Settings = () => {
-  const [users, setUsers] = useState<User[]>([]);
+  const [profiles, setProfiles] = useState<ProfileData[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [currentPage, setCurrentPage] = useState(1);
   const [activeTab, setActiveTab] = useState("users");
+  const [totalCount, setTotalCount] = useState(0);
   const { toast } = useToast();
   const itemsPerPage = 10;
 
-  // Fetch mock users
+  // Fetch user profiles from Supabase
   useEffect(() => {
-    const fetchUsers = () => {
+    const fetchProfiles = async () => {
       setIsLoading(true);
-      // Mock data
-      const mockUsers: User[] = [
-        {
-          id: "1",
-          name: "John Doe",
-          email: "john@example.com",
-          role: UserRole.ADMIN,
-          lastLogin: "2023-10-15T10:30:00Z",
-        },
-        {
-          id: "2",
-          name: "Jane Smith",
-          email: "jane@example.com",
-          role: UserRole.FINANCIAL,
-          lastLogin: "2023-10-14T15:45:00Z",
-        },
-        {
-          id: "3",
-          name: "Alan Jackson",
-          email: "alan@example.com",
-          role: UserRole.LOGISTICS,
-          lastLogin: "2023-10-13T09:20:00Z",
-        },
-        {
-          id: "4",
-          name: "Sarah Wilson",
-          email: "sarah@example.com",
-          role: UserRole.CLIENT,
-          lastLogin: "2023-10-12T12:10:00Z",
-        },
-        {
-          id: "5",
-          name: "Michael Brown",
-          email: "michael@example.com",
-          role: UserRole.PARTNER,
-          lastLogin: "2023-10-11T16:30:00Z",
-        },
-        {
-          id: "6",
-          name: "Lisa Taylor",
-          email: "lisa@example.com",
-          role: UserRole.CLIENT,
-          lastLogin: "2023-10-10T14:25:00Z",
-        },
-        {
-          id: "7",
-          name: "David Miller",
-          email: "david@example.com",
-          role: UserRole.CLIENT,
-          lastLogin: "2023-10-09T11:15:00Z",
-        },
-        {
-          id: "8",
-          name: "Emma Wilson",
-          email: "emma@example.com",
-          role: UserRole.PARTNER,
-          lastLogin: "2023-10-08T09:45:00Z",
-        },
-        {
-          id: "9",
-          name: "Robert Johnson",
-          email: "robert@example.com",
-          role: UserRole.LOGISTICS,
-          lastLogin: "2023-10-07T10:50:00Z",
-        },
-        {
-          id: "10",
-          name: "Olivia Davis",
-          email: "olivia@example.com",
-          role: UserRole.FINANCIAL,
-          lastLogin: "2023-10-06T13:40:00Z",
-        },
-        {
-          id: "11",
-          name: "William Garcia",
-          email: "william@example.com",
-          role: UserRole.CLIENT,
-          lastLogin: "2023-10-05T16:20:00Z",
-        },
-        {
-          id: "12",
-          name: "Sophia Martinez",
-          email: "sophia@example.com",
-          role: UserRole.CLIENT,
-          lastLogin: "2023-10-04T15:10:00Z",
-        },
-      ];
+      try {
+        const { data, error, count } = await supabase
+          .from('profiles')
+          .select('*', { count: 'exact' })
+          .range((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage - 1)
+          .order('created_at', { ascending: false });
 
-      setUsers(mockUsers);
-      setIsLoading(false);
+        if (error) {
+          throw error;
+        }
+
+        if (data) {
+          setProfiles(data as ProfileData[]);
+          if (count !== null) {
+            setTotalCount(count);
+          }
+        }
+      } catch (error) {
+        console.error("Error fetching profiles:", error);
+        toast({
+          variant: "destructive",
+          title: "Erro",
+          description: "Falha ao carregar os perfis de usuários."
+        });
+      } finally {
+        setIsLoading(false);
+      }
     };
 
-    fetchUsers();
-  }, []);
+    fetchProfiles();
+  }, [currentPage, toast]);
 
   // Handle role change
-  const handleRoleChange = (userId: string, newRole: string) => {
+  const handleRoleChange = async (userId: string, newRole: string) => {
     const validRole = newRole as UserRole;
     
-    setUsers(prevUsers =>
-      prevUsers.map(user =>
-        user.id === userId ? { ...user, role: validRole } : user
-      )
-    );
+    try {
+      const { error } = await supabase
+        .from('profiles')
+        .update({ role: validRole })
+        .eq('id', userId);
 
-    toast({
-      title: "Função atualizada",
-      description: `Função do usuário alterada para ${getRoleName(validRole)}`
-    });
+      if (error) {
+        throw error;
+      }
+
+      // Update the local state to reflect the change
+      setProfiles(prevProfiles =>
+        prevProfiles.map(profile =>
+          profile.id === userId ? { ...profile, role: validRole } : profile
+        )
+      );
+
+      toast({
+        title: "Função atualizada",
+        description: `Função do usuário alterada para ${getRoleName(validRole)}`
+      });
+    } catch (error) {
+      console.error("Error updating role:", error);
+      toast({
+        variant: "destructive",
+        title: "Erro",
+        description: "Falha ao atualizar a função do usuário."
+      });
+    }
   };
 
   // Get role name in Portuguese
@@ -194,11 +152,7 @@ const Settings = () => {
   };
 
   // Calculate pagination
-  const totalPages = Math.ceil(users.length / itemsPerPage);
-  const paginatedUsers = users.slice(
-    (currentPage - 1) * itemsPerPage,
-    currentPage * itemsPerPage
-  );
+  const totalPages = Math.ceil(totalCount / itemsPerPage);
 
   // Format date
   const formatDate = (dateString?: string) => {
@@ -236,6 +190,13 @@ const Settings = () => {
     toast({
       title: "Notificação enviada",
       description: "A notificação foi enviada com sucesso para os destinatários selecionados."
+    });
+  };
+
+  const handleSaveSecurity = () => {
+    toast({
+      title: "Configurações de segurança salvas",
+      description: "As configurações de segurança foram atualizadas com sucesso."
     });
   };
 
@@ -281,16 +242,16 @@ const Settings = () => {
                         </TableRow>
                       </TableHeader>
                       <TableBody>
-                        {paginatedUsers.map((user) => (
-                          <TableRow key={user.id}>
-                            <TableCell className="font-medium">{user.name}</TableCell>
-                            <TableCell>{user.email}</TableCell>
-                            <TableCell>{getRoleBadge(user.role)}</TableCell>
-                            <TableCell>{formatDate(user.lastLogin)}</TableCell>
+                        {profiles.map((profile) => (
+                          <TableRow key={profile.id}>
+                            <TableCell className="font-medium">{profile.name}</TableCell>
+                            <TableCell>{profile.email}</TableCell>
+                            <TableCell>{getRoleBadge(profile.role)}</TableCell>
+                            <TableCell>{formatDate(profile.last_login)}</TableCell>
                             <TableCell>
                               <Select 
-                                value={user.role} 
-                                onValueChange={(value) => handleRoleChange(user.id, value)}
+                                value={profile.role} 
+                                onValueChange={(value) => handleRoleChange(profile.id, value)}
                               >
                                 <SelectTrigger className="w-[180px]">
                                   <SelectValue placeholder="Selecionar função" />
@@ -479,7 +440,7 @@ const Settings = () => {
           </div>
         </TabsContent>
         
-        {/* Segurança Tab */}
+        {/* Segurança Tab - Simplified to just change password */}
         <TabsContent value="security">
           <Card>
             <CardHeader>
@@ -489,36 +450,6 @@ const Settings = () => {
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="password-policy">Política de Senha</Label>
-                  <Select defaultValue="strong">
-                    <SelectTrigger id="password-policy">
-                      <SelectValue placeholder="Selecionar política" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="basic">Básica (min. 6 caracteres)</SelectItem>
-                      <SelectItem value="medium">Média (min. 8 chars, letras e números)</SelectItem>
-                      <SelectItem value="strong">Forte (min. 10 chars, letras, números e símbolos)</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="password-expiry">Expiração da Senha</Label>
-                  <Select defaultValue="90">
-                    <SelectTrigger id="password-expiry">
-                      <SelectValue placeholder="Selecionar período" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="never">Nunca</SelectItem>
-                      <SelectItem value="30">30 dias</SelectItem>
-                      <SelectItem value="60">60 dias</SelectItem>
-                      <SelectItem value="90">90 dias</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
-              
               <div className="space-y-4">
                 <div className="flex items-center justify-between">
                   <div>
@@ -545,7 +476,7 @@ const Settings = () => {
                 </div>
               </div>
               
-              <Button onClick={handleSaveSystem}>Salvar Configurações</Button>
+              <Button onClick={handleSaveSecurity}>Salvar Configurações</Button>
             </CardContent>
           </Card>
         </TabsContent>
