@@ -53,7 +53,7 @@ export const PaymentRequestDialog = ({
       setSelectedPixKeyId(null);
     } else if (pixKeys.length > 0) {
       // Preselect default key if available
-      const defaultKey = pixKeys.find(key => key.isDefault);
+      const defaultKey = pixKeys.find(key => key.is_default || key.isDefault);
       if (defaultKey) {
         setSelectedPixKeyId(defaultKey.id);
       } else {
@@ -164,7 +164,7 @@ export const PaymentRequestDialog = ({
                         <span>{pixKey.owner_name || pixKey.name}</span>
                         <span className="text-xs text-muted-foreground">{pixKey.type}: {pixKey.key}</span>
                       </div>
-                      {pixKey.isDefault && (
+                      {(pixKey.is_default || pixKey.isDefault) && (
                         <span className="ml-2 text-xs bg-primary/10 text-primary px-2 py-0.5 rounded">
                           Padrão
                         </span>

@@ -66,6 +66,16 @@ const MachineTransferDialog = ({
     }
   };
 
+  // Create a properly typed machine array
+  const machineArray: Machine[] = machineId ? [{ 
+    id: machineId, 
+    name: machineName || '', 
+    client_id: currentClientId || '',
+    client_name: currentClientName || '',
+    created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString()
+  }] : [];
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[600px]">
@@ -82,7 +92,7 @@ const MachineTransferDialog = ({
         </DialogHeader>
         
         <MachineTransferForm
-          machines={machineId ? [{ id: machineId, name: machineName || '' }] : []}
+          machines={machineArray}
           currentClientId={currentClientId}
           onSubmit={handleTransfer}
           isSubmitting={isSubmitting}

@@ -86,12 +86,12 @@ export const usePaymentRequestManager = (
       
       console.log("Creating payment request for client:", clientData.client_id);
       
-      // Create payment request in Supabase
+      // Create payment request in Supabase with string status instead of enum
       const { data, error } = await supabase
         .from('payment_requests')
         .insert({
           amount: parsedAmount,
-          status: PaymentStatus.PENDING,
+          status: "PENDING", // Use string literal instead of enum
           pix_key_id: pixKeyId,
           client_id: clientData.client_id,
           description: description || 'Solicitação de pagamento via PIX'
@@ -136,7 +136,7 @@ export const usePaymentRequestManager = (
       const newPaymentRequest: Payment = {
         id: data.id,
         amount: data.amount,
-        status: data.status as PaymentStatus,
+        status: data.status as PaymentStatus, // Cast status
         created_at: data.created_at,
         updated_at: data.updated_at,
         client_id: data.client_id,
@@ -147,7 +147,7 @@ export const usePaymentRequestManager = (
           key: data.pix_key.key,
           type: data.pix_key.type,
           owner_name: data.pix_key.name
-        } : null,
+        } : undefined,
         rejection_reason: null
       };
       

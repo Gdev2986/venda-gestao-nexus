@@ -24,14 +24,17 @@ const PartnerFormModal = ({ isOpen, onClose, title = "Novo Parceiro" }: PartnerF
   const handleCreatePartner = async (data: PartnerFormValues) => {
     setIsSubmitting(true);
     try {
-      // Prepare partner data
+      // Prepare partner data with all required fields
       const partnerData = {
         company_name: data.company_name,
         business_name: data.business_name || data.company_name,
         contact_name: data.contact_name || "",
         email: data.email || "",
         phone: data.phone || "",
-        commission_rate: data.commission_rate || 0
+        commission_rate: data.commission_rate || 0,
+        address: "", // Add required field
+        total_sales: 0, // Add required field
+        total_commission: 0 // Add required field
       };
 
       const success = await createPartner(partnerData);

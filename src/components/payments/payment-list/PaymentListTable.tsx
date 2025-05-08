@@ -72,7 +72,7 @@ export const PaymentListTable = ({
                 {payment.id.substring(0, 8)}...
               </td>
               <td className="px-6 py-4 whitespace-nowrap">
-                {payment.client?.business_name || 'N/A'}
+                {payment.client?.business_name || payment.client_name || 'N/A'}
               </td>
               <td className="px-6 py-4 whitespace-nowrap font-medium">
                 {payment.amount ? formatCurrency(payment.amount) : 'N/A'}

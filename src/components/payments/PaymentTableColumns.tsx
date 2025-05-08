@@ -1,4 +1,3 @@
-
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { ArrowUpDown, Copy, MoreHorizontal } from "lucide-react";
@@ -148,10 +147,14 @@ export const createPaymentColumns = () => {
       ),
     },
     {
-      id: "client",
-      accessorKey: "client",
+      id: "client_name", // Change from "client" to "client_name" which exists in Payment
+      accessorKey: "client_name", // Use client_name instead of client
       header: "Cliente",
-      cell: ({ row }) => <div>{getPaymentClientName(row)}</div>,
+      cell: ({ row }) => {
+        const payment = row;
+        const clientName = payment.client?.business_name || payment.client_name || 'N/A';
+        return <div>{clientName}</div>;
+      },
     },
     {
       id: "actions",

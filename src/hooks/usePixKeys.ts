@@ -34,7 +34,6 @@ export const usePixKeys = () => {
           id: key.id,
           key: key.key,
           type: key.type,
-          key_type: key.type,
           name: key.name,
           owner_name: key.name, // Use name as owner_name
           user_id: key.user_id,
@@ -42,7 +41,9 @@ export const usePixKeys = () => {
           bank_name: "Default Bank", // Providing default value
           created_at: key.created_at,
           updated_at: key.updated_at,
-          isDefault: key.is_default
+          is_default: key.is_default,
+          isDefault: key.is_default, // Add alias for backward compatibility
+          key_type: key.type // Add key_type as alias for type
         })) || [];
 
         setPixKeys(formattedKeys);
@@ -57,7 +58,7 @@ export const usePixKeys = () => {
               id: "default-key",
               key: "example@email.com",
               type: "EMAIL",
-              key_type: "EMAIL",
+              key_type: "EMAIL", // Add key_type
               name: "Chave Principal",
               owner_name: "Chave Principal",
               user_id: user.id,
@@ -65,7 +66,8 @@ export const usePixKeys = () => {
               bank_name: "Default Bank",
               created_at: new Date().toISOString(),
               updated_at: new Date().toISOString(),
-              isDefault: true
+              is_default: true,
+              isDefault: true // Add isDefault
             }
           ]);
         }
@@ -83,7 +85,7 @@ export const usePixKeys = () => {
             id: "default-key",
             key: "example@email.com",
             type: "EMAIL",
-            key_type: "EMAIL",
+            key_type: "EMAIL", // Add key_type
             name: "Chave Principal",
             owner_name: "Chave Principal",
             user_id: user ? user.id : "",
@@ -91,7 +93,8 @@ export const usePixKeys = () => {
             bank_name: "Default Bank",
             created_at: new Date().toISOString(),
             updated_at: new Date().toISOString(),
-            isDefault: true
+            is_default: true,
+            isDefault: true // Add isDefault
           }
         ]);
       } finally {

@@ -65,6 +65,9 @@ export interface Payment {
     type: string;
     owner_name: string;
   };
+  // Add missing properties that are being used in components
+  description?: string;
+  client?: Client; // Add client object
 }
 
 // Types for partners
@@ -112,6 +115,9 @@ export interface FilterValues {
     from: Date;
     to?: Date;
   };
+  // Add missing property
+  searchTerm?: string;
+  commissionRange?: [number, number];
 }
 
 export interface PixKey {
@@ -121,9 +127,15 @@ export interface PixKey {
   name: string;
   owner_name?: string;
   is_default?: boolean;
+  // Add alias for backward compatibility with other components
+  isDefault?: boolean; 
   user_id?: string;
   created_at?: string;
   updated_at?: string;
+  // Add missing properties
+  key_type?: string;
+  bank_name?: string;
+  is_active?: boolean;
 }
 
 export interface Sale {
@@ -171,9 +183,12 @@ export interface SalesChartData {
 
 export interface Machine {
   id: string;
-  name: string;
+  name?: string; // Add name property that's being used
   client_id: string;
   client_name: string;
   created_at: string;
   updated_at: string;
+  model?: string;
+  serial_number?: string;
+  status?: string;
 }

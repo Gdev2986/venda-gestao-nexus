@@ -9,7 +9,7 @@ export const convertToPaymentRequest = (payment: Payment): PaymentRequest => {
     client_id: payment.client_id,
     amount: payment.amount,
     description: payment.description || '',
-    status: payment.status,
+    status: payment.status as any, // Cast to compatible type
     pix_key_id: payment.pix_key?.id || '',
     created_at: payment.created_at,
     updated_at: payment.updated_at,
@@ -31,20 +31,20 @@ export const convertToPaymentRequest = (payment: Payment): PaymentRequest => {
       updated_at: '',
       bank_name: '',
     } : undefined,
-    // Ensure client has all required properties
-    client: payment.client ? {
-      id: payment.client.id,
-      business_name: payment.client.business_name || '',
-      document: payment.client.document || '',
-      email: payment.client.email || '',
-      phone: payment.client.phone || '',
-      address: payment.client.address || '',
-      city: payment.client.city || '',
-      state: payment.client.state || '',
-      zip: payment.client.zip || '',
-      created_at: payment.client.created_at || '',
-      updated_at: payment.client.updated_at || '',
-      status: payment.client.status || 'ACTIVE',
-    } : undefined,
+    // Handle client property if it exists
+    client: payment.client || {
+      id: payment.client_id,
+      business_name: payment.client_name || '',
+      document: '',
+      email: '',
+      phone: '',
+      address: '',
+      city: '',
+      state: '',
+      zip: '',
+      created_at: '',
+      updated_at: '',
+      status: 'ACTIVE',
+    },
   };
 };
