@@ -1,213 +1,279 @@
-import React, { useState, useEffect } from 'react';
-import { Card, CardContent } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
+// Importações necessárias
+import React, { useState } from "react";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import {
+  Table,
+  TableBody,
+  TableCaption,
+  TableCell,
+  TableFooter,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
-import { Printer, Info, History, ArrowRightLeft } from "lucide-react";
-import { useDialog } from "@/hooks/use-dialog";
-import MachineDetailsModal from "@/components/logistics/MachineDetailsModal";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
+import { useToast } from "@/hooks/use-toast";
+import { MoreHorizontal, Copy, Edit, Trash } from "lucide-react";
+import { format } from "date-fns";
+import { ptBR } from "date-fns/locale";
+import { Machine } from "@/types";
+import { Pagination } from "@/components/ui/pagination";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList,
+  CommandSeparator,
+  CommandShortcut,
+} from "@/components/ui/command";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { Checkbox } from "@/components/ui/checkbox";
 import { MachineHistoryDialog } from "@/components/logistics/machine-dialogs/MachineHistoryDialog";
 import MachineTransferDialog from "@/components/logistics/machine-dialogs/MachineTransferDialog";
 
-// Prop interface
-export interface MachineListProps {
-  searchTerm: string;
-  modelFilter: string;
-  statusFilter: string;
+interface DataTableProps {
+  data: Machine[];
 }
 
-// Sample data for machines
-const mockMachines = [
-  {
-    id: "1",
-    serial: "SN12345678",
-    model: "POS X200",
-    status: "active",
-    location: "São Paulo",
-    client: "Cliente A",
-    lastMaintenance: "2023-01-15",
-  },
-  {
-    id: "2",
-    serial: "SN87654321",
-    model: "Terminal Y100",
-    status: "maintenance",
-    location: "Rio de Janeiro",
-    client: "Cliente B",
-    lastMaintenance: "2023-02-20",
-  },
-  {
-    id: "3",
-    serial: "SN11223344",
-    model: "Mobile Z50",
-    status: "inactive",
-    location: "Estoque",
-    client: "-",
-    lastMaintenance: "2022-11-05",
-  },
-  {
-    id: "4",
-    serial: "SN55667788",
-    model: "POS X300",
-    status: "active",
-    location: "Belo Horizonte",
-    client: "Cliente C",
-    lastMaintenance: "2023-03-10",
-  },
-  {
-    id: "5",
-    serial: "SN99887766",
-    model: "Terminal Y200",
-    status: "active",
-    location: "Porto Alegre",
-    client: "Cliente D",
-    lastMaintenance: "2023-02-28",
-  },
+interface Machine {
+  id: string;
+  name: string;
+  client_id: string;
+  client_name: string;
+  created_at: string;
+  updated_at: string;
+}
+
+const statuses = [
+  "disponível",
+  "em uso",
+  "manutenção",
+  "desativado",
 ];
 
-const MachineList: React.FC<MachineListProps> = ({ 
-  searchTerm, 
-  modelFilter, 
-  statusFilter 
-}) => {
-  const [machines, setMachines] = useState<any[]>([]);
-  const [selectedMachine, setSelectedMachine] = useState<any>(null);
-  
-  // Dialogs state using proper hook pattern
-  const detailsDialog = useDialog();
-  const historyDialog = useDialog();
-  const transferDialog = useDialog();
+export function MachineList({ data }: DataTableProps) {
+  const [status, setStatus] = React.useState<string | undefined>(undefined);
+  const [search, setSearch] = React.useState("");
+  const [page, setPage] = React.useState(1);
+  const [selectedMachine, setSelectedMachine] = useState<Machine | null>(null);
+  const [showHistoryDialog, setShowHistoryDialog] = useState(false);
+  const [showTransferDialog, setShowTransferDialog] = useState(false);
+  const { toast } = useToast();
 
-  // Load and filter machines
-  useEffect(() => {
-    // Apply filters
-    let filtered = [...mockMachines];
-    
-    if (searchTerm) {
-      const term = searchTerm.toLowerCase();
-      filtered = filtered.filter(
-        m => 
-          m.serial.toLowerCase().includes(term) || 
-          m.model.toLowerCase().includes(term) || 
-          m.client.toLowerCase().includes(term)
-      );
-    }
-    
-    if (modelFilter) {
-      const term = modelFilter.toLowerCase();
-      filtered = filtered.filter(m => m.model.toLowerCase().includes(term));
-    }
-    
-    if (statusFilter) {
-      filtered = filtered.filter(m => m.status === statusFilter);
-    }
-    
-    setMachines(filtered);
-  }, [searchTerm, modelFilter, statusFilter]);
+  const itemsPerPage = 10;
 
-  const handleViewDetails = (machine: any) => {
-    setSelectedMachine(machine);
-    detailsDialog.open();
-  };
-  
-  const handleViewHistory = (machine: any) => {
-    setSelectedMachine(machine);
-    historyDialog.open();
-  };
-  
-  const handleTransferMachine = (machine: any) => {
-    setSelectedMachine(machine);
-    transferDialog.open();
+  const filteredData = data.filter((machine) => {
+    const searchRegex = new RegExp(search, "i");
+    return searchRegex.test(machine.name);
+  });
+
+  const paginatedData = filteredData.slice(
+    (page - 1) * itemsPerPage,
+    page * itemsPerPage
+  );
+
+  const totalPages = Math.ceil(filteredData.length / itemsPerPage);
+
+  const handleCopyMachineId = (id: string) => {
+    navigator.clipboard.writeText(id);
+    toast({
+      title: "ID da máquina copiado",
+      description: "O ID da máquina foi copiado para a área de transferência.",
+    });
   };
 
-  // Helper function to get status badge color
-  const getStatusBadge = (status: string) => {
-    switch (status) {
-      case "active":
-        return <Badge variant="default" className="bg-green-500">Ativo</Badge>;
-      case "maintenance":
-        return <Badge variant="outline" className="bg-amber-100 text-amber-800 border-amber-300">Manutenção</Badge>;
-      case "inactive":
-        return <Badge variant="outline" className="bg-gray-100 text-gray-800 border-gray-300">Inativo</Badge>;
-      default:
-        return <Badge variant="outline">Desconhecido</Badge>;
-    }
+  const handleEditMachine = (machine: Machine) => {
+    toast({
+      title: "Editar máquina",
+      description: `Editando a máquina ${machine.name}.`,
+    });
+  };
+
+  const handleDeleteMachine = (machine: Machine) => {
+    toast({
+      title: "Deletar máquina",
+      description: `Deletando a máquina ${machine.name}.`,
+    });
+  };
+
+  const handleViewHistory = (machine: Machine) => {
+    setSelectedMachine(machine);
+    setShowHistoryDialog(true);
+  };
+
+  const handleTransferMachine = (machine: Machine) => {
+    setSelectedMachine(machine);
+    setShowTransferDialog(true);
+  };
+
+  const handleRefresh = () => {
+    toast({
+      title: "Máquinas atualizadas",
+      description: "A lista de máquinas foi atualizada com sucesso.",
+    });
   };
 
   return (
-    <div className="space-y-4">
-      {machines.length === 0 ? (
-        <Card>
-          <CardContent className="pt-6">
-            <p className="text-center text-muted-foreground">Nenhuma máquina encontrada.</p>
-          </CardContent>
-        </Card>
-      ) : (
-        machines.map((machine) => (
-          <Card key={machine.id} className="overflow-hidden">
-            <CardContent className="p-0">
-              <div className="p-6 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-                <div className="space-y-1">
-                  <div className="flex items-center gap-2">
-                    <h3 className="font-medium">{machine.model}</h3>
-                    {getStatusBadge(machine.status)}
-                  </div>
-                  <p className="text-sm text-muted-foreground">Serial: {machine.serial}</p>
-                  <p className="text-sm">
-                    <span className="text-muted-foreground">Cliente:</span> {machine.client}
-                  </p>
-                  <p className="text-sm">
-                    <span className="text-muted-foreground">Localização:</span> {machine.location}
-                  </p>
-                </div>
-                
-                <div className="flex flex-wrap gap-2">
-                  <Button variant="outline" size="sm" onClick={() => handleViewDetails(machine)}>
-                    <Info className="h-4 w-4 mr-2" />
-                    Detalhes
-                  </Button>
-                  <Button variant="outline" size="sm" onClick={() => handleViewHistory(machine)}>
-                    <History className="h-4 w-4 mr-2" />
-                    Histórico
-                  </Button>
-                  <Button variant="outline" size="sm" onClick={() => handleTransferMachine(machine)}>
-                    <ArrowRightLeft className="h-4 w-4 mr-2" />
-                    Transferir
-                  </Button>
-                  <Button variant="outline" size="sm">
-                    <Printer className="h-4 w-4 mr-2" />
-                    Relatório
-                  </Button>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        ))
-      )}
-      
-      {selectedMachine && (
-        <>
-          <MachineDetailsModal 
-            open={detailsDialog.isOpen} 
-            onOpenChange={detailsDialog.close} 
-            machine={selectedMachine} 
+    <Card className="w-full">
+      <CardHeader>
+        <CardTitle>Máquinas</CardTitle>
+        <CardDescription>
+          Gerencie as máquinas da sua empresa.
+        </CardDescription>
+      </CardHeader>
+      <CardContent>
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <div className="relative w-full md:w-auto">
+            <Input
+              placeholder="Buscar máquinas..."
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+            />
+          </div>
+          <div className="flex gap-2">
+            <Button onClick={handleRefresh}>Atualizar</Button>
+            <Button>Adicionar Máquina</Button>
+          </div>
+        </div>
+        <div className="relative overflow-x-auto mt-4">
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead className="w-[100px]">ID</TableHead>
+                <TableHead>Nome</TableHead>
+                <TableHead>Cliente</TableHead>
+                <TableHead>Criado em</TableHead>
+                <TableHead className="text-right">Ações</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {paginatedData.map((machine) => (
+                <TableRow key={machine.id}>
+                  <TableCell className="font-medium">{machine.id}</TableCell>
+                  <TableCell>{machine.name}</TableCell>
+                  <TableCell>{machine.client_name}</TableCell>
+                  <TableCell>
+                    {format(new Date(machine.created_at), "dd/MM/yyyy", {
+                      locale: ptBR,
+                    })}
+                  </TableCell>
+                  <TableCell className="text-right">
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button variant="ghost" className="h-8 w-8 p-0">
+                          <span className="sr-only">Abrir menu</span>
+                          <MoreHorizontal className="h-4 w-4" />
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end">
+                        <DropdownMenuLabel>Ações</DropdownMenuLabel>
+                        <DropdownMenuItem
+                          onClick={() => handleCopyMachineId(machine.id)}
+                        >
+                          <Copy className="h-4 w-4 mr-2" />
+                          Copiar ID
+                        </DropdownMenuItem>
+                        <DropdownMenuItem
+                          onClick={() => handleEditMachine(machine)}
+                        >
+                          <Edit className="h-4 w-4 mr-2" />
+                          Editar
+                        </DropdownMenuItem>
+                        <DropdownMenuItem
+                          onClick={() => handleViewHistory(machine)}
+                        >
+                          <Edit className="h-4 w-4 mr-2" />
+                          Ver histórico
+                        </DropdownMenuItem>
+                        <DropdownMenuItem
+                          onClick={() => handleTransferMachine(machine)}
+                        >
+                          <Edit className="h-4 w-4 mr-2" />
+                          Transferir
+                        </DropdownMenuItem>
+                        <DropdownMenuSeparator />
+                        <DropdownMenuItem
+                          onClick={() => handleDeleteMachine(machine)}
+                        >
+                          <Trash className="h-4 w-4 mr-2" />
+                          Deletar
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </div>
+        <div className="flex items-center justify-between space-x-2 py-2">
+          <div className="text-sm text-muted-foreground">
+            Total de máquinas: {filteredData.length}
+          </div>
+          <Pagination
+            page={page}
+            setPage={setPage}
+            totalPages={totalPages}
           />
-          
-          <MachineHistoryDialog 
-            isOpen={historyDialog.isOpen} 
-            onClose={historyDialog.close} 
-            machineId={selectedMachine.id} 
-          />
-          
-          <MachineTransferDialog 
-            open={transferDialog.isOpen} 
-            onOpenChange={transferDialog.close} 
-            machine={selectedMachine}
-            onTransferred={() => {}} 
-          />
-        </>
-      )}
-    </div>
-  );
-};
+        </div>
+      </CardContent>
 
-export default MachineList;
+      {showHistoryDialog && selectedMachine && (
+        <MachineHistoryDialog
+          open={showHistoryDialog}
+          onOpenChange={() => setShowHistoryDialog(false)}
+          machineId={selectedMachine.id}
+          machineName={selectedMachine.name}
+        />
+      )}
+
+      {showTransferDialog && selectedMachine && (
+        <MachineTransferDialog
+          open={showTransferDialog}
+          onOpenChange={() => setShowTransferDialog(false)}
+          machineId={selectedMachine.id}
+          machineName={selectedMachine.name}
+          currentClientId={selectedMachine.client_id}
+          currentClientName={selectedMachine.client_name}
+          onTransferComplete={handleRefresh}
+        />
+      )}
+    </Card>
+  );
+}

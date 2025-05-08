@@ -19,14 +19,27 @@ interface DateRange {
   to?: Date;
 }
 
+interface DashboardChartData {
+  date: string;
+  amount: number;
+}
+
 interface PaymentMethodData {
   name: string;
-  total: number;
+  amount: number;
 }
+
+// Adapter function to convert our data format to what the chart component expects
+const adaptDataForChart = (data: PaymentMethodData[] | DashboardChartData[]): SalesChartData[] => {
+  return data.map(item => ({
+    name: 'date' in item ? item.date : item.name,
+    total: 'amount' in item ? item.amount : item.amount
+  }));
+};
 
 const PaymentMethodsChart = ({ data }: { data: PaymentMethodData[] }) => (
   <div className="h-[300px]">
-    <DailySalesChart data={data.map(item => ({ date: item.name, amount: item.total }))} />
+    <DailySalesChart data={adaptDataForChart(data)} />
   </div>
 );
 
@@ -35,7 +48,7 @@ const Dashboard = () => {
     from: new Date(new Date().getFullYear(), new Date().getMonth() - 1, new Date().getDate()),
     to: new Date()
   });
-  const [dailySales, setDailySales] = useState<SalesChartData[]>([]);
+  const [dailySales, setDailySales] = useState<DashboardChartData[]>([]);
   const [paymentMethods, setPaymentMethods] = useState<PaymentMethodData[]>([]);
 
   useEffect(() => {
@@ -47,17 +60,20 @@ const Dashboard = () => {
       };
 
       // Simulate data fetch for daily sales chart
-      const dailySalesData = generateDailySalesData(rangeToParse);
+      const dailySalesData = generateDailySalesData(rangeToParse).map(item => ({
+        date: item.name,
+        amount: item.total
+      }));
       setDailySales(dailySalesData);
     }
   }, [dateRange]);
 
   useEffect(() => {
-    // Simulate data fetch for payment methods chart with correct property names
+    // Simulate data fetch for payment methods chart
     const paymentMethodsData: PaymentMethodData[] = [
-      { name: PaymentMethod.CREDIT, total: 45 },
-      { name: PaymentMethod.DEBIT, total: 30 },
-      { name: PaymentMethod.PIX, total: 25 }
+      { name: PaymentMethod.CREDIT, amount: 45 },
+      { name: PaymentMethod.DEBIT, amount: 30 },
+      { name: PaymentMethod.PIX, amount: 25 }
     ];
     
     setPaymentMethods(paymentMethodsData);
@@ -84,30 +100,28 @@ const Dashboard = () => {
                       >
                         Data
                       </label>
-                      <PopoverTrigger asChild>
-                        <Button
-                          id="date"
-                          variant={"outline"}
-                          className={cn(
-                            "w-[240px] justify-start text-left font-normal",
-                            !dateRange?.from && "text-muted-foreground"
-                          )}
-                        >
-                          <CalendarIcon className="mr-2 h-4 w-4" />
-                          {dateRange?.from ? (
-                            dateRange.to ? (
-                              <>
-                                {format(dateRange.from, "dd/MM/yyyy")} -{" "}
-                                {format(dateRange.to, "dd/MM/yyyy")}
-                              </>
-                            ) : (
-                              format(dateRange.from, "dd/MM/yyyy")
-                            )
+                      <Button
+                        id="date"
+                        variant={"outline"}
+                        className={cn(
+                          "w-[240px] justify-start text-left font-normal",
+                          !dateRange?.from && "text-muted-foreground"
+                        )}
+                      >
+                        <CalendarIcon className="mr-2 h-4 w-4" />
+                        {dateRange?.from ? (
+                          dateRange.to ? (
+                            <>
+                              {format(dateRange.from, "dd/MM/yyyy")} -{" "}
+                              {format(dateRange.to, "dd/MM/yyyy")}
+                            </>
                           ) : (
-                            <span>Pick a date</span>
-                          )}
-                        </Button>
-                      </PopoverTrigger>
+                            format(dateRange.from, "dd/MM/yyyy")
+                          )
+                        ) : (
+                          <span>Pick a date</span>
+                        )}
+                      </Button>
                     </div>
                   </PopoverTrigger>
                   <PopoverContent className="w-auto p-0" align="start">
@@ -117,6 +131,7 @@ const Dashboard = () => {
                       selected={dateRange}
                       onSelect={setDateRange}
                       numberOfMonths={2}
+                      className="pointer-events-auto"
                     />
                   </PopoverContent>
                 </Popover>
@@ -143,7 +158,7 @@ const Dashboard = () => {
               <CardTitle>Vendas Diárias</CardTitle>
             </CardHeader>
             <CardContent>
-              <DailySalesChart data={dailySales} />
+              <DailySalesChart data={adaptDataForChart(dailySales)} />
             </CardContent>
           </Card>
 

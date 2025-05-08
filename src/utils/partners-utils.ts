@@ -21,8 +21,7 @@ export const generateMockPartners = (count: number): Partner[] => {
       email: `partner${i}@example.com`,
       phone: `+55 11 ${Math.floor(10000000 + Math.random() * 90000000)}`,
       address: `Street ${i}, Building ${Math.floor(Math.random() * 1000)}`,
-      // Using standard Partner properties without city field
-      state: ['SP', 'RJ', 'MG', 'DF', 'BA'][Math.floor(Math.random() * 5)],
+      city: `City ${i % 5 + 1}`, // Add city property
       total_sales: Math.floor(Math.random() * 1000),
       total_commission: Math.floor(Math.random() * 50000) / 100
     };

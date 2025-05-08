@@ -3,7 +3,6 @@ import { useState, useEffect } from "react";
 import { Card, CardHeader, CardTitle } from "@/components/ui/card";
 import { generateMockSalesData } from "@/utils/sales-utils";
 import { Button } from "@/components/ui/button";
-import { Upload, Download, RefreshCw } from "lucide-react";
 import { SalesFilterParams } from "@/types";
 import ImportSalesDialog from "@/components/sales/ImportSalesDialog";
 import { useToast } from "@/hooks/use-toast";

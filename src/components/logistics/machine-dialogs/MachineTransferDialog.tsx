@@ -81,7 +81,7 @@ export const MachineTransferDialog = ({
         </DialogHeader>
         
         <MachineTransferForm
-          machineId={machineId}
+          machines={[{ id: machineId || '', name: machineName || '' }]}
           currentClientId={currentClientId}
           onSubmit={handleTransfer}
           isSubmitting={isSubmitting}
