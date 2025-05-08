@@ -38,20 +38,19 @@ const RequireAuth = ({ allowedRoles = [], redirectTo = PATHS.LOGIN }: RequireAut
         console.log("Setting shouldRedirect to true - no user");
         setShouldRedirect(true);
       } else if (allowedRoles.length > 0 && !allowedRoles.includes(userRole)) {
-        // Special cases for role access:
-        // Financial users can access admin routes for payments, clients and reports
+        // Verificação para papéis específicos
         if (userRole === UserRole.FINANCIAL && 
             (location.pathname.includes('/admin/payments') || 
              location.pathname.includes('/admin/clients') || 
              location.pathname.includes('/admin/reports'))) {
-          // Allow financial users to access these specific admin routes
+          // Permitir que usuários financeiros acessem essas rotas específicas de admin
           console.log("Financial user accessing permitted admin route:", location.pathname);
         } 
-        // Logistics users can access admin routes
+        // Usuários de logística podem acessar rotas de admin
         else if (userRole === UserRole.LOGISTICS && location.pathname.startsWith('/admin')) {
           console.log("Logistics user accessing admin route:", location.pathname);
         }
-        // If the user is trying to access their role's dashboard or direct routes, allow it
+        // Se o usuário estiver tentando acessar o dashboard do seu papel específico, permitir
         else if (
           (userRole === UserRole.ADMIN && location.pathname.startsWith('/admin')) ||
           (userRole === UserRole.CLIENT && location.pathname.startsWith('/user')) ||
@@ -61,22 +60,30 @@ const RequireAuth = ({ allowedRoles = [], redirectTo = PATHS.LOGIN }: RequireAut
         ) {
           console.log("User accessing their own routes:", location.pathname);
         }
+        // Evitamos loops infinitos verificando se já estamos no caminho de redirecionamento
         else {
-          // If role-specific access control is defined and user doesn't have permission
+          // Controle de acesso específico para papéis que o usuário não possui permissão
           console.log(`User role ${userRole} not allowed to access this route`);
           
-          // Show unauthorized toast message
+          // Mostrar mensagem de não autorizado
           toast({
             title: "Acesso não autorizado",
             description: "Você não tem permissão para acessar esta página",
             variant: "destructive",
           });
           
-          // Set redirect path to role-specific dashboard
+          // Definir caminho de redirecionamento para dashboard específico do papel
           const dashboardPath = getDashboardPath(userRole);
-          console.log("Will redirect to dashboard path:", dashboardPath);
-          setRedirectPath(dashboardPath);
-          setUnauthorized(true);
+          
+          // Verificar se já estamos no caminho de redirecionamento
+          if (location.pathname !== dashboardPath) {
+            console.log("Will redirect to dashboard path:", dashboardPath);
+            setRedirectPath(dashboardPath);
+            setUnauthorized(true);
+          } else {
+            // Se já estivermos no caminho de redirecionamento, não redirecionamos novamente
+            console.log("Already on redirect path, not redirecting again");
+          }
         }
       }
     }
@@ -120,8 +127,8 @@ const RequireAuth = ({ allowedRoles = [], redirectTo = PATHS.LOGIN }: RequireAut
     return <Navigate to={PATHS.LOGIN} state={{ from: location.pathname }} replace />;
   }
 
-  // If unauthorized, redirect to dashboard
-  if (unauthorized && redirectPath) {
+  // If unauthorized and we have a redirect path, and we're not already on that path
+  if (unauthorized && redirectPath && location.pathname !== redirectPath) {
     console.log(`Redirecting unauthorized user with role ${userRole} to ${redirectPath}`);
     return <Navigate to={redirectPath} replace />;
   }
@@ -143,8 +150,9 @@ const RequireAuth = ({ allowedRoles = [], redirectTo = PATHS.LOGIN }: RequireAut
 
   // Check if user has permission to access this route
   if (allowedRoles.length > 0 && !allowedRoles.includes(userRole)) {
-    console.log(`Redirecting user with role ${userRole} to ${getDashboardPath(userRole)}`);
-    return <Navigate to={getDashboardPath(userRole)} replace />;
+    const dashboardPath = getDashboardPath(userRole);
+    console.log(`Redirecting user with role ${userRole} to ${dashboardPath}`);
+    return <Navigate to={dashboardPath} replace />;
   }
 
   // If authenticated and has the right role, render the protected content

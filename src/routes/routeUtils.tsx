@@ -17,11 +17,12 @@ export const getDashboardPath = (userRole: UserRole): string => {
     case UserRole.FINANCIAL:
       return PATHS.FINANCIAL.DASHBOARD;
     case UserRole.LOGISTICS:
-      // Direct Logistics users to their proper dashboard
       return PATHS.LOGISTICS.DASHBOARD;
     default:
-      console.log("Unknown role, defaulting to USER dashboard");
-      return PATHS.USER.DASHBOARD;
+      console.log("Role não reconhecido:", userRole);
+      // Em vez de redirecionar para o dashboard do usuário quando não reconhecermos o papel
+      // vamos redirecionar para o login para evitar loops infinitos
+      return PATHS.LOGIN;
   }
 };
 

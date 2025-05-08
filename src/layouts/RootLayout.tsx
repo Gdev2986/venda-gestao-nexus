@@ -23,7 +23,7 @@ const RootLayout = () => {
     return () => clearTimeout(timer);
   }, []);
   
-  // Log for debugging
+  // Log para depuração
   useEffect(() => {
     console.log("RootLayout - isLoading:", isLoading, "isRoleLoading:", isRoleLoading, "user:", !!user);
     if (!isLoading && !isRoleLoading && user) {
@@ -31,7 +31,7 @@ const RootLayout = () => {
     }
   }, [isLoading, isRoleLoading, user, userRole]);
   
-  // If still loading or showing loading animation, show a spinner
+  // Se ainda estiver carregando ou mostrando animação de carregamento, mostre um spinner
   if (isLoading || isRoleLoading || showLoading) {
     return (
       <div className="flex flex-col items-center justify-center h-screen bg-background">
@@ -48,14 +48,22 @@ const RootLayout = () => {
     );
   }
   
-  // If authenticated, redirect to role-specific dashboard
+  // Se estiver autenticado, redirecione para o dashboard específico do papel
   if (user) {
-    const dashboardPath = getDashboardPath(userRole);
+    let dashboardPath;
+    
+    try {
+      dashboardPath = getDashboardPath(userRole);
+    } catch (error) {
+      console.error("Erro ao obter caminho do dashboard:", error);
+      dashboardPath = PATHS.LOGIN; // Fallback para login se houver erro
+    }
+    
     console.log(`User authenticated, redirecting to ${dashboardPath}`);
     return <Navigate to={dashboardPath} replace />;
   }
   
-  // If not authenticated, redirect to login
+  // Se não estiver autenticado, redirecione para login
   console.log("User not authenticated, redirecting to login");
   return <Navigate to={PATHS.LOGIN} replace />;
 };

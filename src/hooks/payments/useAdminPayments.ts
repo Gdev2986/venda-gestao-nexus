@@ -30,8 +30,8 @@ export const useAdminPayments = ({ searchTerm, statusFilter, page }: UseAdminPay
     }
 
     if (statusFilter !== 'ALL') {
-      // Convert enum to string value
-      query = query.eq('status', statusFilter.toString());
+      // Converter o enum para string
+      query = query.eq('status', statusFilter);
     }
 
     const { data, error, count } = await query;
@@ -41,7 +41,7 @@ export const useAdminPayments = ({ searchTerm, statusFilter, page }: UseAdminPay
       throw new Error(error.message);
     }
 
-    // Cast the data with type assertion to ensure compatibility
+    // Converter dados com type assertion para garantir compatibilidade
     return {
       data: data.map(item => ({
         ...item,
@@ -69,11 +69,11 @@ export const useAdminPayments = ({ searchTerm, statusFilter, page }: UseAdminPay
       let updateData: any = {};
 
       if (action === PaymentAction.APPROVE) {
-        updateData = { status: PaymentStatus.APPROVED.toString() };
+        updateData = { status: PaymentStatus.APPROVED };
       } else if (action === PaymentAction.REJECT) {
-        updateData = { status: PaymentStatus.REJECTED.toString() };
+        updateData = { status: PaymentStatus.REJECTED };
       } else if (newStatus) {
-        updateData = { status: newStatus.toString() };
+        updateData = { status: newStatus };
       }
 
       const { error } = await supabase

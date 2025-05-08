@@ -8,29 +8,41 @@ import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
 
 const AdminSettings = () => {
-  const [allowedRoles, setAllowedRoles] = useState<string[]>([]);
+  const [allowedRoles, setAllowedRoles] = useState<UserRole[]>([]);
   const { toast } = useToast();
 
   useEffect(() => {
-    // Load initial allowed roles from local storage or default values
+    // Carregar papéis permitidos do localStorage ou valores padrão
     const storedRoles = localStorage.getItem('allowedRoles');
     if (storedRoles) {
-      setAllowedRoles(JSON.parse(storedRoles));
+      try {
+        setAllowedRoles(JSON.parse(storedRoles) as UserRole[]);
+      } catch (error) {
+        console.error("Erro ao analisar allowedRoles:", error);
+        // Definir papéis padrão se houver erro
+        setAllowedRoles([
+          UserRole.ADMIN, 
+          UserRole.LOGISTICS, 
+          UserRole.CLIENT, 
+          UserRole.PARTNER, 
+          UserRole.FINANCIAL
+        ]);
+      }
     } else {
-      // Set default roles if nothing is stored
+      // Definir papéis padrão se nada estiver armazenado
       setAllowedRoles([
-        UserRole.ADMIN.toString(), 
-        UserRole.LOGISTICS.toString(), 
-        UserRole.CLIENT.toString(), 
-        UserRole.PARTNER.toString(), 
-        UserRole.FINANCIAL.toString()
+        UserRole.ADMIN, 
+        UserRole.LOGISTICS, 
+        UserRole.CLIENT, 
+        UserRole.PARTNER, 
+        UserRole.FINANCIAL
       ]);
     }
   }, []);
   
-  const handleSavePermissions = async (values: any) => {
+  const handleSavePermissions = async (values: { roles: UserRole[] }) => {
     try {
-      // Save the selected roles to local storage
+      // Salvar os papéis selecionados no localStorage
       localStorage.setItem('allowedRoles', JSON.stringify(values.roles));
       
       toast({
@@ -38,13 +50,23 @@ const AdminSettings = () => {
         description: "As permissões foram salvas com sucesso.",
       });
     } catch (error) {
-      console.error("Error saving permissions:", error);
+      console.error("Erro ao salvar permissões:", error);
       toast({
         variant: "destructive",
         title: "Erro ao salvar",
         description: "Ocorreu um erro ao salvar as permissões.",
       });
     }
+  };
+
+  const handleSelectionChange = (value: string) => {
+    // Converter string separada por vírgula para array de UserRole
+    const selectedRoles = value
+      .split(',')
+      .map(role => role as UserRole);
+    
+    setAllowedRoles(selectedRoles);
+    handleSavePermissions({ roles: selectedRoles });
   };
 
   return (
@@ -58,18 +80,18 @@ const AdminSettings = () => {
             <div>
               <Label htmlFor="allowedRoles">Permissões de Acesso</Label>
               <Select
-                defaultValue={allowedRoles.join(',')}
-                onValueChange={(value) => handleSavePermissions({ roles: value.split(',') })}
+                value={allowedRoles.join(',')}
+                onValueChange={handleSelectionChange}
               >
                 <SelectTrigger className="w-[300px]">
                   <SelectValue placeholder="Selecione as permissões" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value={UserRole.ADMIN.toString()}>Administrador</SelectItem>
-                  <SelectItem value={UserRole.LOGISTICS.toString()}>Logística</SelectItem>
-                  <SelectItem value={UserRole.CLIENT.toString()}>Cliente</SelectItem>
-                  <SelectItem value={UserRole.PARTNER.toString()}>Parceiro</SelectItem>
-                  <SelectItem value={UserRole.FINANCIAL.toString()}>Financeiro</SelectItem>
+                  <SelectItem value={UserRole.ADMIN}>Administrador</SelectItem>
+                  <SelectItem value={UserRole.LOGISTICS}>Logística</SelectItem>
+                  <SelectItem value={UserRole.CLIENT}>Cliente</SelectItem>
+                  <SelectItem value={UserRole.PARTNER}>Parceiro</SelectItem>
+                  <SelectItem value={UserRole.FINANCIAL}>Financeiro</SelectItem>
                 </SelectContent>
               </Select>
             </div>
