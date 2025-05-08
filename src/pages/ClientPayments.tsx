@@ -151,7 +151,11 @@ const ClientPayments = () => {
   };
   
   // Function to request payment
-  const handleRequestPayment = async (amount: number, pixKeyId: string, description: string) => {
+  const handleRequestPayment = async (
+    amount: number,
+    pixKeyId: string | null,
+    description?: string
+  ) => {
     if (!clientId) {
       toast({
         variant: "destructive",
@@ -169,7 +173,8 @@ const ClientPayments = () => {
           pix_key_id: pixKeyId,
           client_id: clientId,
           description: description || "Solicitação de pagamento",
-          status: PaymentStatus.PENDING
+          // Convert enum to string for database storage
+          status: PaymentStatus.PENDING.toString()
         })
         .select();
       

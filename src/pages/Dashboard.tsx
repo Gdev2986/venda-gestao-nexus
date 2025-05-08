@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from "react";
 import MainLayout from "@/components/layout/MainLayout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -33,7 +32,8 @@ interface PaymentMethodData {
 const adaptDataForChart = (data: PaymentMethodData[] | DashboardChartData[]): SalesChartData[] => {
   return data.map(item => ({
     name: 'date' in item ? item.date : item.name,
-    total: 'amount' in item ? item.amount : item.amount
+    value: 'amount' in item ? item.amount : item.amount,
+    total: 'amount' in item ? item.amount : item.amount // Set total for backward compatibility
   }));
 };
 

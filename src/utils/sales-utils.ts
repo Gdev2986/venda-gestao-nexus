@@ -1,4 +1,3 @@
-
 import { faker } from '@faker-js/faker';
 import { PaymentMethod, Sale } from "@/types";
 
@@ -45,7 +44,9 @@ export const generateRandomSale = (): Sale => {
     payment_method: getRandomPaymentMethod(),
     client_id: faker.string.uuid(),
     created_at: getRandomDate().toISOString(),
-    updated_at: getRandomDate().toISOString()
+    updated_at: getRandomDate().toISOString(),
+    amount: gross_amount, // Add required field
+    status: 'COMPLETED' // Add required field
   };
 };
 

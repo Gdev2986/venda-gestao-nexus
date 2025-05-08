@@ -1,4 +1,3 @@
-
 export enum UserRole {
   ADMIN = "admin",
   USER = "user",
@@ -115,7 +114,7 @@ export interface FilterValues {
     from: Date;
     to?: Date;
   };
-  // Add missing property
+  // Add missing properties
   searchTerm?: string;
   commissionRange?: [number, number];
 }
@@ -179,16 +178,18 @@ export interface UserData {
 export interface SalesChartData {
   name: string;
   value: number;
+  total?: number; // Add optional total property for backward compatibility
 }
 
 export interface Machine {
   id: string;
-  name?: string; // Add name property that's being used
+  name?: string;
   client_id: string;
   client_name: string;
   created_at: string;
   updated_at: string;
   model?: string;
-  serial_number?: string;
+  serial_number?: string; // Use snake_case to match the database
+  serialNumber?: string;   // Add camelCase for components that use this
   status?: string;
 }
