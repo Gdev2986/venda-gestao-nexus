@@ -43,8 +43,7 @@ const Settings = () => {
               key: item.key || "",
               owner_name: item.name || "",
               name: item.name || "",
-              isDefault: item.is_default || false,
-              is_active: true,
+              is_default: item.is_default || false,
               created_at: item.created_at,
               updated_at: item.updated_at,
               bank_name: "Banco", // Default value since it's not in the database
@@ -118,7 +117,7 @@ const Settings = () => {
                       <Input
                         type="text"
                         id={`bank-${key.id}`}
-                        defaultValue={key.bank_name}
+                        defaultValue={key.bank_name || "Banco"}
                         disabled
                       />
                     </div>

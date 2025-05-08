@@ -1,3 +1,4 @@
+
 export enum UserRole {
   ADMIN = "ADMIN",
   CLIENT = "CLIENT", 
@@ -62,6 +63,9 @@ export interface Payment {
     type: string;
     owner_name: string;
   };
+  // Add missing properties being used in code
+  client?: any;
+  description?: string;
 }
 
 // Types for partners
@@ -78,6 +82,8 @@ export interface Partner {
   email?: string; // Added for consistency with filtering
   phone?: string; // Added for consistency with filtering
   address?: string; // Added for completeness
+  // Add missing property
+  total_sales?: number;
 }
 
 // Added Client interface to ensure type safety
@@ -109,6 +115,8 @@ export interface FilterValues {
     from: Date;
     to?: Date;
   };
+  searchTerm?: string; // Add searchTerm to fix errors
+  commissionRange?: [number, number]; // Add property for partner filtering
 }
 
 export interface PixKey {
@@ -117,10 +125,12 @@ export interface PixKey {
   type: string;
   name: string;
   owner_name?: string;
-  is_default?: boolean;
+  is_default?: boolean; // Changed from isDefault to is_default
   user_id?: string;
   created_at?: string;
   updated_at?: string;
+  bank_name?: string; // Add missing property
+  key_type?: string; // Add missing property used in code
 }
 
 export interface Sale {
@@ -135,6 +145,7 @@ export interface Sale {
   client_id: string;
   created_at: string;
   updated_at: string;
+  amount?: number; // Add missing property
 }
 
 export interface SalesFilterParams {
@@ -160,4 +171,15 @@ export interface UserData {
 export interface SalesChartData {
   name: string;
   value: number;
+}
+
+// Add Machine interface to fix missing type errors
+export interface Machine {
+  id: string;
+  serial_number: string;
+  model: string;
+  status: string;
+  client_id?: string;
+  created_at?: string;
+  updated_at?: string;
 }

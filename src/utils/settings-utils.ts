@@ -1,45 +1,47 @@
 
 import { PixKey } from "@/types";
 
-/**
- * Create default properties for a new PixKey
- */
-export const createDefaultPixKeyProperties = (
-  id: string, 
-  userId: string
-): PixKey => {
+export const createDefaultPixKeyProperties = (id: string, userId: string): PixKey => {
   return {
     id,
-    user_id: userId,
-    key_type: "CPF",
-    type: "CPF",
     key: "",
-    owner_name: "",
-    name: "",
-    isDefault: false, 
-    is_active: true,
-    bank_name: "",
+    type: "CPF",
+    name: "Nova chave PIX",
+    owner_name: "Nova chave PIX",
+    user_id: userId,
+    is_default: false,
     created_at: new Date().toISOString(),
-    updated_at: new Date().toISOString()
+    updated_at: new Date().toISOString(),
+    bank_name: "Banco"
   };
 };
 
-/**
- * Maps PixKey from database to frontend format
- */
-export const mapPixKeyFromDb = (dbKey: any): PixKey => {
+export const mapPixKeyFromDb = (data: any): PixKey => {
   return {
-    id: dbKey.id,
-    user_id: dbKey.user_id,
-    key_type: dbKey.type,
-    type: dbKey.type,
-    key: dbKey.key,
-    owner_name: dbKey.name,
-    name: dbKey.name,
-    isDefault: dbKey.is_default || false, // Map from is_default (DB) to isDefault (frontend)
-    is_active: true,
-    bank_name: "Banco", // Default value since it's not in the database
-    created_at: dbKey.created_at,
-    updated_at: dbKey.updated_at
+    id: data.id,
+    key: data.key,
+    type: data.type,
+    name: data.name,
+    owner_name: data.owner_name || data.name,
+    user_id: data.user_id,
+    is_default: data.is_default || false,
+    created_at: data.created_at,
+    updated_at: data.updated_at,
+    bank_name: data.bank_name || "Banco"
+  };
+};
+
+export const normalizePixKeyFormat = (pixKey: PixKey): PixKey => {
+  return {
+    id: pixKey.id,
+    key: pixKey.key,
+    type: pixKey.type,
+    name: pixKey.name,
+    owner_name: pixKey.owner_name || pixKey.name,
+    user_id: pixKey.user_id,
+    is_default: pixKey.is_default,
+    created_at: pixKey.created_at,
+    updated_at: pixKey.updated_at,
+    bank_name: pixKey.bank_name || "Banco"
   };
 };

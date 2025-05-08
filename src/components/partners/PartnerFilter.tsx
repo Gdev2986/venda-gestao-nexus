@@ -19,7 +19,6 @@ const PartnerFilter: React.FC<PartnerFilterProps> = ({ onApplyFilter, isLoading 
     e.preventDefault();
     const values: FilterValues = {
       search: searchTerm, // Use search which is in the FilterValues interface
-      searchTerm: searchTerm, // Keep for backward compatibility
       commissionRange: commissionRange
     };
     onApplyFilter(values);
@@ -31,7 +30,6 @@ const PartnerFilter: React.FC<PartnerFilterProps> = ({ onApplyFilter, isLoading 
     
     const values: FilterValues = {
       search: "",
-      searchTerm: "",
       commissionRange: [0, 100]
     };
     onApplyFilter(values);

@@ -47,7 +47,7 @@ export const useAdminPayments = ({ searchTerm, statusFilter, page }: UseAdminPay
     return {
       data: data.map(item => ({
         ...item,
-        status: item.status.toUpperCase() as PaymentStatus
+        status: (item.status.toUpperCase() as PaymentStatus)
       })) as Payment[],
       totalCount: count || 0,
     };
