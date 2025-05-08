@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import MainLayout from "@/components/layout/MainLayout";
 import { PageHeader } from "@/components/page/PageHeader";
@@ -85,7 +86,7 @@ const AdminPartners = () => {
     });
   };
 
-  const handleCreatePartner = async (data: any) => {
+  const handleCreatePartner = async (data: any): Promise<boolean> => {
     // Prepare complete partner data with required fields
     const partnerData = {
       company_name: data.company_name,
@@ -100,7 +101,7 @@ const AdminPartners = () => {
     };
     
     // Simulate API call to create partner
-    return new Promise((resolve) => {
+    return new Promise<boolean>((resolve) => {
       setTimeout(() => {
         const newPartner: Partner = {
           id: Math.random().toString(), // Mock ID generation

@@ -65,9 +65,8 @@ export interface Payment {
     type: string;
     owner_name: string;
   };
-  // Add missing properties that are being used in components
   description?: string;
-  client?: Client; // Add client object
+  client?: Client;
 }
 
 // Types for partners
@@ -115,7 +114,6 @@ export interface FilterValues {
     from: Date;
     to?: Date;
   };
-  // Add missing properties
   searchTerm?: string;
   commissionRange?: [number, number];
 }
@@ -127,12 +125,10 @@ export interface PixKey {
   name: string;
   owner_name?: string;
   is_default?: boolean;
-  // Alias for backward compatibility
-  isDefault?: boolean; 
+  isDefault?: boolean; // Alias for backward compatibility
   user_id?: string;
   created_at?: string;
   updated_at?: string;
-  // Add missing properties
   key_type?: string;
   bank_name?: string;
   is_active?: boolean;
@@ -190,7 +186,7 @@ export interface Machine {
   created_at: string;
   updated_at: string;
   model: string;
-  serial_number: string; // Use snake_case to match the database
-  serialNumber?: string;   // Add camelCase for components that use this
+  serial_number: string;
+  serialNumber: string;  // Make this required to match the expected type
   status?: string;
 }

@@ -58,7 +58,7 @@ const AdminSettings = () => {
             <div>
               <Label htmlFor="allowedRoles">Permissões de Acesso</Label>
               <Select
-                defaultValue={allowedRoles}
+                defaultValue={allowedRoles.join(',')}
                 onValueChange={(value) => handleSavePermissions({ roles: value.split(',') })}
               >
                 <SelectTrigger className="w-[300px]">

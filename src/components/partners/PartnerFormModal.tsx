@@ -10,7 +10,7 @@ import {
 import PartnerForm, { PartnerFormValues } from "./PartnerForm";
 import { usePartners } from "@/hooks/use-partners";
 
-interface PartnerFormModalProps {
+export interface PartnerFormModalProps {
   isOpen: boolean;
   onClose: () => void;
   onSubmit?: (data: PartnerFormValues) => Promise<boolean>;
@@ -22,7 +22,7 @@ const PartnerFormModal = ({ isOpen, onClose, onSubmit, title = "Novo Parceiro" }
   const { createPartner } = usePartners();
   const { toast } = useToast();
 
-  const handleCreatePartner = async (data: PartnerFormValues) => {
+  const handleCreatePartner = async (data: PartnerFormValues): Promise<boolean> => {
     setIsSubmitting(true);
     try {
       // Prepare partner data with all required fields
@@ -58,6 +58,13 @@ const PartnerFormModal = ({ isOpen, onClose, onSubmit, title = "Novo Parceiro" }
         });
         return false;
       }
+    } catch (error) {
+      toast({
+        variant: "destructive",
+        title: "Erro",
+        description: "Ocorreu um erro ao criar o parceiro.",
+      });
+      return false;
     } finally {
       setIsSubmitting(false);
     }

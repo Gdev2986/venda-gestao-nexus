@@ -66,7 +66,7 @@ const MachineTransferDialog = ({
     }
   };
 
-  // Create a properly typed machine array
+  // Create a properly typed machine array with both serial_number and serialNumber properties
   const machineArray: Machine[] = machineId ? [{ 
     id: machineId, 
     name: machineName || '', 
@@ -76,7 +76,7 @@ const MachineTransferDialog = ({
     updated_at: new Date().toISOString(),
     model: '', 
     serial_number: '',
-    serialNumber: '',
+    serialNumber: '',  // Add this field to match the expected type
     status: 'active'
   }] : [];
 
