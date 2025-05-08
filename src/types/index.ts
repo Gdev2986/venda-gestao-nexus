@@ -1,10 +1,13 @@
-
 export enum UserRole {
   ADMIN = "ADMIN",
   CLIENT = "CLIENT", 
   FINANCIAL = "FINANCIAL",
   PARTNER = "PARTNER",
-  LOGISTICS = "LOGISTICS"
+  LOGISTICS = "LOGISTICS",
+  MANAGER = "MANAGER",
+  FINANCE = "FINANCE",
+  SUPPORT = "SUPPORT",
+  USER = "USER"
 }
 
 export enum PaymentStatus {
@@ -158,5 +161,3 @@ export interface SalesChartData {
   name: string;
   value: number;
 }
-
-// Add other types as needed

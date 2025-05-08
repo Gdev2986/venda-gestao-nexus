@@ -32,9 +32,25 @@ function App() {
   useEffect(() => {
     if (!isRoleLoading) {
       console.log("App.tsx - Current user role:", userRole);
-      console.log("App.tsx - Will redirect to dashboard:", getDashboardPath(userRole));
+      
+      try {
+        const dashPath = getDashboardPath(userRole);
+        console.log("App.tsx - Will redirect to dashboard:", dashPath);
+      } catch (error) {
+        console.error("Error getting dashboard path:", error);
+      }
     }
   }, [userRole, isRoleLoading]);
+
+  // Get the dashboard path safely
+  const getDashboardRedirectPath = () => {
+    try {
+      return getDashboardPath(userRole);
+    } catch (error) {
+      console.error("Error in getDashboardRedirectPath:", error);
+      return PATHS.LOGIN;
+    }
+  };
 
   return (
     <Routes>
@@ -44,7 +60,7 @@ function App() {
       {/* Generic dashboard route */}
       <Route 
         path={PATHS.DASHBOARD} 
-        element={<Navigate to={getDashboardPath(userRole)} replace />} 
+        element={<Navigate to={getDashboardRedirectPath()} replace />} 
       />
 
       {/* Auth Routes */}

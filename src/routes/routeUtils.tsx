@@ -4,25 +4,29 @@ import { UserRole } from "@/types";
 
 /**
  * Returns the appropriate dashboard path based on user role
+ * Handles case sensitivity and string/enum conversions
  */
 export const getDashboardPath = (userRole: UserRole): string => {
   console.log("getDashboardPath - userRole:", userRole);
   
-  switch (userRole) {
-    case UserRole.ADMIN:
+  // Normalize role to uppercase string for consistent comparison
+  const normalizedRole = userRole?.toString().toUpperCase();
+  
+  switch (normalizedRole) {
+    case "ADMIN":
       return PATHS.ADMIN.DASHBOARD;
-    case UserRole.CLIENT:
+    case "CLIENT":
       return PATHS.USER.DASHBOARD;
-    case UserRole.PARTNER:
+    case "PARTNER":
       return PATHS.PARTNER.DASHBOARD;
-    case UserRole.FINANCIAL:
+    case "FINANCIAL":
       return PATHS.FINANCIAL.DASHBOARD;
-    case UserRole.LOGISTICS:
+    case "LOGISTICS":
       return PATHS.LOGISTICS.DASHBOARD;
-    case UserRole.MANAGER:
-    case UserRole.FINANCE:
-    case UserRole.SUPPORT:
-    case UserRole.USER:
+    case "MANAGER":
+    case "FINANCE":
+    case "SUPPORT":
+    case "USER":
       return PATHS.USER.DASHBOARD;
     default:
       console.log("Role não reconhecido:", userRole);

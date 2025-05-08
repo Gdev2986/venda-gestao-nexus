@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { UserRole } from "@/types";
 import { useAuth } from "@/contexts/AuthContext";
@@ -50,6 +51,35 @@ const setAuthData = (key: string, value: any) => {
   }
 };
 
+// Function to normalize role values 
+const normalizeUserRole = (role: any): UserRole => {
+  if (!role) return UserRole.CLIENT; // Default fallback
+  
+  // If it's already a valid UserRole enum value, return it
+  if (Object.values(UserRole).includes(role as UserRole)) {
+    return role as UserRole;
+  }
+  
+  // Convert to uppercase string for comparison
+  const upperRole = role.toString().toUpperCase();
+  
+  // Map to correct UserRole enum value
+  switch (upperRole) {
+    case "ADMIN": return UserRole.ADMIN;
+    case "CLIENT": return UserRole.CLIENT;
+    case "PARTNER": return UserRole.PARTNER;
+    case "FINANCIAL": return UserRole.FINANCIAL;
+    case "LOGISTICS": return UserRole.LOGISTICS;
+    case "MANAGER": return UserRole.MANAGER;
+    case "FINANCE": return UserRole.FINANCE;
+    case "SUPPORT": return UserRole.SUPPORT;
+    case "USER": return UserRole.USER;
+    default: 
+      console.warn(`Unknown role value: ${role}, defaulting to CLIENT`);
+      return UserRole.CLIENT;
+  }
+};
+
 export const useUserRole = () => {
   const [userRole, setUserRole] = useState<UserRole>(UserRole.CLIENT); // Default to CLIENT
   const [isRoleLoading, setIsRoleLoading] = useState<boolean>(true);
@@ -74,7 +104,7 @@ export const useUserRole = () => {
         
         if (cachedRole && Object.values(UserRole).includes(cachedRole as UserRole)) {
           console.log("useUserRole - Using cached role:", cachedRole);
-          setUserRole(cachedRole as UserRole);
+          setUserRole(normalizeUserRole(cachedRole));
           setIsRoleLoading(false);
         } else {
           console.log("useUserRole - No valid cached role found, fetching from database");
@@ -105,11 +135,13 @@ export const useUserRole = () => {
             setUserRole(UserRole.CLIENT);
           }
         } else if (data && data.role) {
-          const role = data.role as UserRole;
-          console.log("useUserRole - Database role:", role);
-          setUserRole(role);
+          // Normalize the role to ensure it matches our enum
+          const normalizedRole = normalizeUserRole(data.role);
+          console.log("useUserRole - Database role:", data.role, "Normalized role:", normalizedRole);
+          setUserRole(normalizedRole);
+          
           // Store in sessionStorage for persistence
-          setAuthData("userRole", role);
+          setAuthData("userRole", normalizedRole);
         } else {
           console.log("useUserRole - No role found in database, using default or cached role");
           if (!cachedRole) {
@@ -130,9 +162,10 @@ export const useUserRole = () => {
   }, [user, signOut]);
 
   const updateUserRole = (role: UserRole) => {
-    console.log("useUserRole - Updating role to:", role);
-    setUserRole(role);
-    setAuthData("userRole", role);
+    const normalizedRole = normalizeUserRole(role);
+    console.log("useUserRole - Updating role to:", normalizedRole);
+    setUserRole(normalizedRole);
+    setAuthData("userRole", normalizedRole);
   };
 
   return { userRole, isRoleLoading, updateUserRole };
