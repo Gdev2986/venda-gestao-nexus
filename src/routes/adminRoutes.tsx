@@ -19,7 +19,7 @@ import { settingsRoutes } from "./admin/settingsRoutes";
 
 // Combine all admin routes
 export const AdminRoutes = (
-  <Route element={<RequireAuth allowedRoles={[UserRole.ADMIN]} />}>
+  <Route element={<RequireAuth allowedRoles={[UserRole.ADMIN, UserRole.LOGISTICS, UserRole.FINANCIAL]} />}>
     <Route element={<AdminLayoutSelector />}>
       {/* Dashboard Route */}
       {dashboardRoute}

@@ -1,6 +1,5 @@
 
 import { useState, useEffect } from "react";
-import MainLayout from "@/components/layout/MainLayout";
 import { PageHeader } from "@/components/page/PageHeader";
 import { PageWrapper } from "@/components/page/PageWrapper";
 import PartnersTable from "@/components/partners/PartnersTable";
@@ -85,7 +84,7 @@ const Partners = () => {
   };
   
   return (
-    <MainLayout>
+    <div className="max-w-full">
       <PageHeader 
         title="Parceiros" 
         description="Gerenciar parceiros e suas comissões"
@@ -121,7 +120,7 @@ const Partners = () => {
           />
         </div>
       </PageWrapper>
-    </MainLayout>
+    </div>
   );
 };
 

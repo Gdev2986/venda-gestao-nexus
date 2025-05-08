@@ -10,9 +10,11 @@ const Machines = () => {
   const { userRole } = useUserRole();
   
   useEffect(() => {
+    console.log("Admin Machines page redirect - userRole:", userRole);
+    
     // Always redirect to logistics machines page - admin can access logistics routes
     navigate(PATHS.LOGISTICS.MACHINES);
-  }, [navigate]);
+  }, [navigate, userRole]);
   
   return null; // Component will redirect, no need to render anything
 };

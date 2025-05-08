@@ -76,12 +76,46 @@ const AdminSales = () => {
   };
 
   return (
-    <AdminSalesLayout 
-      isRefreshing={isRefreshing}
-      onRefresh={handleRefresh}
-      onImport={() => setShowImportDialog(true)}
-      onExport={() => handleExport('csv')}
-    >
+    <div className="container mx-auto py-10">
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-8">
+        <div>
+          <h1 className="text-2xl font-bold">Gestão de Vendas</h1>
+          <p className="text-muted-foreground">
+            Visualize, filtre e gerencie todas as vendas realizadas
+          </p>
+        </div>
+        
+        <div className="flex items-center gap-2">
+          <Button 
+            variant="outline" 
+            size="sm"
+            className="flex items-center gap-1"
+            onClick={handleRefresh}
+            disabled={isRefreshing}
+          >
+            {isRefreshing ? "Atualizando..." : "Atualizar"}
+          </Button>
+          
+          <Button 
+            variant="outline"
+            size="sm"
+            className="flex items-center gap-1"
+            onClick={() => setShowImportDialog(true)}
+          >
+            Importar
+          </Button>
+          
+          <Button 
+            variant="outline"
+            size="sm"
+            className="flex items-center gap-1"
+            onClick={() => handleExport('csv')}
+          >
+            Exportar
+          </Button>
+        </div>
+      </div>
+
       <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
         {/* Left column - Filters and Stats */}
         <div className="lg:col-span-1 space-y-6">
@@ -122,7 +156,7 @@ const AdminSales = () => {
         open={showImportDialog}
         onOpenChange={setShowImportDialog}
       />
-    </AdminSalesLayout>
+    </div>
   );
 };
 
