@@ -7,6 +7,8 @@ import { UsersTab } from "@/components/admin/settings/UsersTab";
 import { SystemTab } from "@/components/admin/settings/SystemTab";
 import { RoleChangeModal } from "@/components/admin/settings/RoleChangeModal";
 import { UserRole } from "@/types";
+import { AdminNotificationsTab } from "@/components/admin/settings/AdminNotificationsTab";
+import { AdminSecurityTab } from "@/components/admin/settings/AdminSecurityTab";
 
 // Update ProfileData interface to accept string for role
 interface ProfileData {
@@ -67,6 +69,8 @@ const AdminSettings = () => {
         <TabsList>
           <TabsTrigger value="usuarios">Usuários</TabsTrigger>
           <TabsTrigger value="sistema">Sistema</TabsTrigger>
+          <TabsTrigger value="notificacoes">Notificações</TabsTrigger>
+          <TabsTrigger value="seguranca">Segurança</TabsTrigger>
         </TabsList>
         
         {/* Users Tab */}
@@ -77,6 +81,16 @@ const AdminSettings = () => {
         {/* System Tab */}
         <TabsContent value="sistema" className="mt-6">
           <SystemTab />
+        </TabsContent>
+        
+        {/* Notifications Tab */}
+        <TabsContent value="notificacoes" className="mt-6">
+          <AdminNotificationsTab />
+        </TabsContent>
+        
+        {/* Security Tab */}
+        <TabsContent value="seguranca" className="mt-6">
+          <AdminSecurityTab />
         </TabsContent>
       </Tabs>
       

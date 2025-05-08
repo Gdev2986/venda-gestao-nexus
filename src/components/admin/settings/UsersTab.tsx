@@ -102,8 +102,8 @@ export const UsersTab = ({ openRoleModal }: UsersTabProps) => {
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="all">Todas as funções</SelectItem>
-              <SelectItem value={UserRole.ADMIN}>Administrador</SelectItem>
-              <SelectItem value={UserRole.USER}>Usuário</SelectItem>
+              <SelectItem value="ADMIN">Administrador</SelectItem>
+              <SelectItem value="USER">Usuário</SelectItem>
             </SelectContent>
           </Select>
         </div>
