@@ -31,7 +31,6 @@ export const useAdminPayments = ({ searchTerm, statusFilter, page }: UseAdminPay
 
     if (statusFilter !== 'ALL') {
       // Convert status to lowercase for database compatibility
-      // In the database, the status is stored in lowercase
       const dbStatus = statusFilter.toLowerCase();
       query = query.eq('status', dbStatus);
     }

@@ -38,22 +38,29 @@ export const RoleChangeModal = ({
 }: RoleChangeModalProps) => {
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex justify-center items-center">
-      <div className="bg-white p-6 rounded-md shadow-lg">
-        <h2 className="text-lg font-semibold mb-4">
+      <div className="bg-white p-6 rounded-md shadow-lg w-96">
+        <h2 className="text-xl font-semibold mb-4">
           Alterar Função de {user.name}
         </h2>
-        <div className="mb-4">
-          <Label htmlFor="newRole">Nova Função:</Label>
+        <div className="mb-6">
+          <Label htmlFor="newRole" className="mb-2 block">Nova Função:</Label>
           <Select
             value={newRole}
             onValueChange={(value) => setNewRole(value)}
           >
-            <SelectTrigger>
+            <SelectTrigger className="w-full">
               <SelectValue placeholder="Selecione a função" />
             </SelectTrigger>
             <SelectContent>
               <SelectItem value={UserRole.ADMIN}>Administrador</SelectItem>
               <SelectItem value={UserRole.USER}>Usuário</SelectItem>
+              <SelectItem value={UserRole.CLIENT}>Cliente</SelectItem>
+              <SelectItem value={UserRole.FINANCIAL}>Financeiro</SelectItem>
+              <SelectItem value={UserRole.PARTNER}>Parceiro</SelectItem>
+              <SelectItem value={UserRole.LOGISTICS}>Logística</SelectItem>
+              <SelectItem value={UserRole.MANAGER}>Gerente</SelectItem>
+              <SelectItem value={UserRole.FINANCE}>Finanças</SelectItem>
+              <SelectItem value={UserRole.SUPPORT}>Suporte</SelectItem>
             </SelectContent>
           </Select>
         </div>

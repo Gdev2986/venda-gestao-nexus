@@ -20,7 +20,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import UserRoleChangeModal from "@/components/user-management/UserRoleChangeModal";
 
 interface ProfileData {
   id: string;
@@ -43,9 +42,6 @@ export const UsersTab = ({ openRoleModal }: UsersTabProps) => {
   const [loading, setLoading] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
-  const [showRoleChangeModal, setShowRoleChangeModal] = useState(false);
-  const [selectedUser, setSelectedUser] = useState<ProfileData | null>(null);
-  const [newUserRole, setNewUserRole] = useState<string>("USER");
 
   const { toast } = useToast();
   const itemsPerPage = 10;
@@ -63,7 +59,6 @@ export const UsersTab = ({ openRoleModal }: UsersTabProps) => {
         .select('*', { count: 'exact' });
       
       if (selectedRole !== 'all') {
-        // Use the exact case that's stored in the database
         query = query.eq('role', selectedRole);
       }
       
@@ -80,7 +75,6 @@ export const UsersTab = ({ openRoleModal }: UsersTabProps) => {
       const total = count ? Math.ceil(count / itemsPerPage) : 0;
       setTotalPages(total);
       
-      // Cast the data to ProfileData type
       setUsers(data as ProfileData[]);
     } catch (error) {
       console.error("Error fetching users:", error);
@@ -91,40 +85,6 @@ export const UsersTab = ({ openRoleModal }: UsersTabProps) => {
       });
     } finally {
       setLoading(false);
-    }
-  };
-
-  const handleRoleChangeClick = (user: ProfileData) => {
-    setSelectedUser(user);
-    setNewUserRole(user.role);
-    setShowRoleChangeModal(true);
-  };
-
-  const handleRoleChangeConfirm = async (notes: string) => {
-    if (!selectedUser || !newUserRole) return;
-    
-    try {
-      const { error } = await supabase
-        .from('profiles')
-        .update({ role: newUserRole })
-        .eq('id', selectedUser.id);
-        
-      if (error) throw error;
-      
-      toast({
-        title: "Função atualizada",
-        description: `A função de ${selectedUser.name} foi atualizada para ${newUserRole}.`
-      });
-      
-      setShowRoleChangeModal(false);
-      fetchUsers(); // Refresh the user list
-    } catch (error) {
-      console.error("Error updating role:", error);
-      toast({
-        variant: "destructive",
-        title: "Erro ao atualizar função",
-        description: "Não foi possível atualizar a função do usuário."
-      });
     }
   };
 
@@ -147,12 +107,15 @@ export const UsersTab = ({ openRoleModal }: UsersTabProps) => {
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="all">Todas as funções</SelectItem>
-              <SelectItem value="ADMIN">Administrador</SelectItem>
-              <SelectItem value="USER">Usuário</SelectItem>
-              <SelectItem value="FINANCIAL">Financeiro</SelectItem>
-              <SelectItem value="PARTNER">Parceiro</SelectItem>
-              <SelectItem value="CLIENT">Cliente</SelectItem>
-              <SelectItem value="LOGISTICS">Logística</SelectItem>
+              <SelectItem value={UserRole.ADMIN}>Administrador</SelectItem>
+              <SelectItem value={UserRole.USER}>Usuário</SelectItem>
+              <SelectItem value={UserRole.FINANCIAL}>Financeiro</SelectItem>
+              <SelectItem value={UserRole.PARTNER}>Parceiro</SelectItem>
+              <SelectItem value={UserRole.CLIENT}>Cliente</SelectItem>
+              <SelectItem value={UserRole.LOGISTICS}>Logística</SelectItem>
+              <SelectItem value={UserRole.MANAGER}>Gerente</SelectItem>
+              <SelectItem value={UserRole.FINANCE}>Finanças</SelectItem>
+              <SelectItem value={UserRole.SUPPORT}>Suporte</SelectItem>
             </SelectContent>
           </Select>
         </div>
@@ -182,7 +145,7 @@ export const UsersTab = ({ openRoleModal }: UsersTabProps) => {
                       <Button 
                         variant="outline" 
                         size="sm"
-                        onClick={() => handleRoleChangeClick(user)}
+                        onClick={() => openRoleModal(user)}
                       >
                         Alterar Função
                       </Button>
@@ -212,19 +175,6 @@ export const UsersTab = ({ openRoleModal }: UsersTabProps) => {
             Próximo
           </Button>
         </div>
-
-        {/* Role Change Modal */}
-        {showRoleChangeModal && selectedUser && (
-          <UserRoleChangeModal
-            isOpen={showRoleChangeModal}
-            onClose={() => setShowRoleChangeModal(false)}
-            onConfirm={handleRoleChangeConfirm}
-            userName={selectedUser.name}
-            userEmail={selectedUser.email}
-            currentRole={selectedUser.role as UserRole}
-            newRole={newUserRole as UserRole}
-          />
-        )}
       </CardContent>
     </Card>
   );
