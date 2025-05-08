@@ -66,19 +66,10 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Checkbox } from "@/components/ui/checkbox";
 import { MachineHistoryDialog } from "@/components/logistics/machine-dialogs/MachineHistoryDialog";
 import MachineTransferDialog from "@/components/logistics/machine-dialogs/MachineTransferDialog";
+import { Machine } from "@/types";
 
 interface DataTableProps {
-  data: MachineType[];
-}
-
-// Define the MachineType interface to avoid conflict with the component name
-interface MachineType {
-  id: string;
-  name: string;
-  client_id: string;
-  client_name: string;
-  created_at: string;
-  updated_at: string;
+  data: Machine[];
 }
 
 const statuses = [
@@ -92,7 +83,7 @@ export function MachineList({ data }: DataTableProps) {
   const [status, setStatus] = React.useState<string | undefined>(undefined);
   const [search, setSearch] = React.useState("");
   const [page, setPage] = React.useState(1);
-  const [selectedMachine, setSelectedMachine] = useState<MachineType | null>(null);
+  const [selectedMachine, setSelectedMachine] = useState<Machine | null>(null);
   const [showHistoryDialog, setShowHistoryDialog] = useState(false);
   const [showTransferDialog, setShowTransferDialog] = useState(false);
   const { toast } = useToast();
@@ -119,26 +110,26 @@ export function MachineList({ data }: DataTableProps) {
     });
   };
 
-  const handleEditMachine = (machine: MachineType) => {
+  const handleEditMachine = (machine: Machine) => {
     toast({
       title: "Editar máquina",
       description: `Editando a máquina ${machine.name}.`,
     });
   };
 
-  const handleDeleteMachine = (machine: MachineType) => {
+  const handleDeleteMachine = (machine: Machine) => {
     toast({
       title: "Deletar máquina",
       description: `Deletando a máquina ${machine.name}.`,
     });
   };
 
-  const handleViewHistory = (machine: MachineType) => {
+  const handleViewHistory = (machine: Machine) => {
     setSelectedMachine(machine);
     setShowHistoryDialog(true);
   };
 
-  const handleTransferMachine = (machine: MachineType) => {
+  const handleTransferMachine = (machine: Machine) => {
     setSelectedMachine(machine);
     setShowTransferDialog(true);
   };
@@ -301,5 +292,5 @@ export function MachineList({ data }: DataTableProps) {
   );
 }
 
-// Add a default export for the component
+// Export both as named and default export
 export default MachineList;

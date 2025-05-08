@@ -11,6 +11,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
 import MachineTransferForm from '@/components/machines/MachineTransferForm';
+import { Machine } from '@/types';
 
 export interface MachineTransferDialogProps {
   open: boolean;

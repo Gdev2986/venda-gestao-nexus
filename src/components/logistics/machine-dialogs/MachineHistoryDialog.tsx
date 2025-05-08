@@ -1,13 +1,11 @@
 
-import { useState, useEffect } from "react";
-import { useToast } from "@/hooks/use-toast";
-import { supabase } from "@/integrations/supabase/client";
+import React, { useState, useEffect } from "react";
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
-  DialogFooter,
+  DialogDescription,
 } from "@/components/ui/dialog";
 import {
   Table,
@@ -17,168 +15,144 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Button } from "@/components/ui/button";
-import { Skeleton } from "@/components/ui/skeleton";
+import { format } from "date-fns";
+import { ptBR } from "date-fns/locale";
+import { Separator } from "@/components/ui/separator";
+import { useToast } from "@/hooks/use-toast";
 
-interface MachineHistoryDialogProps {
-  isOpen: boolean;
-  onClose: () => void;
-  machineId?: string;
+export interface MachineHistoryDialogProps {
+  machineId: string;
+  machineName: string;
+  onOpenChange: () => void;
 }
 
-interface TransferRecord {
+interface HistoryItem {
   id: string;
-  transfer_date: string;
-  from_client_name: string | null;
-  to_client_name: string;
-  location: string | null;
+  date: string;
+  action: string;
+  user: string;
+  description: string;
 }
 
 export function MachineHistoryDialog({
-  isOpen,
-  onClose,
   machineId,
+  machineName,
+  onOpenChange,
 }: MachineHistoryDialogProps) {
-  const [historyRecords, setHistoryRecords] = useState<TransferRecord[]>([]);
-  const [isLoading, setIsLoading] = useState(false);
+  const [historyItems, setHistoryItems] = useState<HistoryItem[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
   const { toast } = useToast();
 
   useEffect(() => {
-    if (isOpen && machineId) {
-      fetchMachineHistory();
-    }
-  }, [isOpen, machineId]);
+    const fetchHistory = async () => {
+      try {
+        // Simulate API call with timeout
+        await new Promise((resolve) => setTimeout(resolve, 1500));
 
-  const fetchMachineHistory = async () => {
-    if (!machineId) return;
-    
-    setIsLoading(true);
-    try {
-      // In a real implementation, you would fetch actual history from Supabase
-      // For now, we'll use mock data
-      setTimeout(() => {
-        setHistoryRecords([
+        // Mock data
+        const mockHistory: HistoryItem[] = [
           {
             id: "1",
-            transfer_date: "2025-03-15T10:30:00Z",
-            from_client_name: null,
-            to_client_name: "Supermercado ABC",
-            location: "Matriz",
+            date: new Date(2023, 5, 15, 14, 30).toISOString(),
+            action: "Criação",
+            user: "Admin",
+            description: "Máquina cadastrada no sistema",
           },
           {
             id: "2",
-            transfer_date: "2025-04-10T14:20:00Z",
-            from_client_name: "Supermercado ABC",
-            to_client_name: "Farmácia Central",
-            location: "Filial Centro",
+            date: new Date(2023, 6, 20, 10, 15).toISOString(),
+            action: "Atribuição",
+            user: "Gerente",
+            description: "Máquina atribuída ao cliente ABC Comércio",
           },
           {
             id: "3",
-            transfer_date: "2025-05-01T09:15:00Z",
-            from_client_name: "Farmácia Central",
-            to_client_name: "Padaria Sabor",
-            location: "Unidade 2",
+            date: new Date(2023, 7, 5, 16, 45).toISOString(),
+            action: "Manutenção",
+            user: "Técnico",
+            description: "Manutenção preventiva realizada",
           },
-        ]);
+          {
+            id: "4",
+            date: new Date(2023, 8, 12, 9, 30).toISOString(),
+            action: "Transferência",
+            user: "Supervisor",
+            description: "Transferida para o cliente XYZ Distribuidora",
+          },
+          {
+            id: "5",
+            date: new Date(2023, 9, 30, 11, 20).toISOString(),
+            action: "Atualização",
+            user: "Técnico",
+            description: "Atualização de software para versão 2.3.1",
+          },
+        ];
+
+        setHistoryItems(mockHistory);
         setIsLoading(false);
-      }, 500);
+      } catch (error) {
+        console.error("Error fetching machine history:", error);
+        toast({
+          title: "Erro ao carregar histórico",
+          description: "Não foi possível carregar o histórico da máquina.",
+          variant: "destructive",
+        });
+        setIsLoading(false);
+      }
+    };
 
-      // Actual Supabase implementation would be something like:
-      /*
-      const { data, error } = await supabase
-        .from('machine_transfers')
-        .select(`
-          id,
-          transfer_date,
-          from_client:from_client_id(business_name),
-          to_client:to_client_id(business_name),
-          location
-        `)
-        .eq('machine_id', machineId)
-        .order('transfer_date', { ascending: false });
-
-      if (error) throw error;
-
-      setHistoryRecords(data.map(item => ({
-        id: item.id,
-        transfer_date: item.transfer_date,
-        from_client_name: item.from_client?.business_name || null,
-        to_client_name: item.to_client.business_name,
-        location: item.location,
-      })));
-      */
-    } catch (error) {
-      console.error("Error fetching machine history:", error);
-      toast({
-        variant: "destructive",
-        title: "Erro",
-        description: "Não foi possível carregar o histórico da máquina.",
-      });
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString("pt-BR", {
-      day: "2-digit",
-      month: "2-digit",
-      year: "numeric",
-    });
-  };
+    fetchHistory();
+  }, [machineId, toast]);
 
   return (
-    <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-[700px]">
+    <Dialog open={true} onOpenChange={onOpenChange}>
+      <DialogContent className="sm:max-w-[800px] max-h-[80vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>Histórico de Transferências</DialogTitle>
+          <DialogTitle>Histórico da Máquina</DialogTitle>
+          <DialogDescription>
+            Histórico completo de eventos da máquina {machineName} (ID: {machineId.substring(0, 8)}...)
+          </DialogDescription>
         </DialogHeader>
 
+        <Separator className="my-2" />
+
         {isLoading ? (
-          <div className="space-y-2">
-            <Skeleton className="h-10 w-full" />
-            <Skeleton className="h-10 w-full" />
-            <Skeleton className="h-10 w-full" />
+          <div className="flex justify-center py-8">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
           </div>
-        ) : historyRecords.length === 0 ? (
-          <p className="text-center py-4 text-muted-foreground">
-            Nenhum histórico de transferência encontrado para esta máquina.
-          </p>
-        ) : (
+        ) : historyItems.length > 0 ? (
           <Table>
             <TableHeader>
               <TableRow>
                 <TableHead>Data</TableHead>
-                <TableHead>De</TableHead>
-                <TableHead>Para</TableHead>
-                <TableHead>Local</TableHead>
+                <TableHead>Ação</TableHead>
+                <TableHead>Usuário</TableHead>
+                <TableHead>Descrição</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
-              {historyRecords.map((record) => (
-                <TableRow key={record.id}>
-                  <TableCell>{formatDate(record.transfer_date)}</TableCell>
+              {historyItems.map((item) => (
+                <TableRow key={item.id}>
                   <TableCell>
-                    {record.from_client_name || (
-                      <span className="text-muted-foreground italic">Estoque</span>
-                    )}
+                    {format(new Date(item.date), "dd/MM/yyyy HH:mm", {
+                      locale: ptBR,
+                    })}
                   </TableCell>
-                  <TableCell>{record.to_client_name}</TableCell>
-                  <TableCell>
-                    {record.location || (
-                      <span className="text-muted-foreground">—</span>
-                    )}
-                  </TableCell>
+                  <TableCell>{item.action}</TableCell>
+                  <TableCell>{item.user}</TableCell>
+                  <TableCell>{item.description}</TableCell>
                 </TableRow>
               ))}
             </TableBody>
           </Table>
+        ) : (
+          <div className="text-center py-8 text-muted-foreground">
+            Nenhum registro encontrado para esta máquina.
+          </div>
         )}
-
-        <DialogFooter>
-          <Button onClick={onClose}>Fechar</Button>
-        </DialogFooter>
       </DialogContent>
     </Dialog>
   );
 }
+
+export default MachineHistoryDialog;
