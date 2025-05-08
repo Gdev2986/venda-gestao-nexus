@@ -37,53 +37,57 @@ const RequireAuth = ({ allowedRoles = [], redirectTo = PATHS.LOGIN }: RequireAut
       if (!user) {
         console.log("Setting shouldRedirect to true - no user");
         setShouldRedirect(true);
-      } else if (allowedRoles.length > 0 && !allowedRoles.includes(userRole)) {
-        // Verificação para papéis específicos
-        if (userRole === UserRole.FINANCIAL && 
-            (location.pathname.includes('/admin/payments') || 
-             location.pathname.includes('/admin/clients') || 
-             location.pathname.includes('/admin/reports'))) {
-          // Permitir que usuários financeiros acessem essas rotas específicas de admin
-          console.log("Financial user accessing permitted admin route:", location.pathname);
-        } 
-        // Usuários de logística podem acessar rotas de admin
-        else if (userRole === UserRole.LOGISTICS && location.pathname.startsWith('/admin')) {
-          console.log("Logistics user accessing admin route:", location.pathname);
-        }
-        // Se o usuário estiver tentando acessar o dashboard do seu papel específico, permitir
-        else if (
-          (userRole === UserRole.ADMIN && location.pathname.startsWith('/admin')) ||
-          (userRole === UserRole.CLIENT && location.pathname.startsWith('/user')) ||
-          (userRole === UserRole.PARTNER && location.pathname.startsWith('/partner')) || 
-          (userRole === UserRole.FINANCIAL && location.pathname.startsWith('/financial')) ||
-          (userRole === UserRole.LOGISTICS && location.pathname.startsWith('/logistics'))
-        ) {
-          console.log("User accessing their own routes:", location.pathname);
-        }
-        // Evitamos loops infinitos verificando se já estamos no caminho de redirecionamento
-        else {
-          // Controle de acesso específico para papéis que o usuário não possui permissão
-          console.log(`User role ${userRole} not allowed to access this route`);
-          
-          // Mostrar mensagem de não autorizado
-          toast({
-            title: "Acesso não autorizado",
-            description: "Você não tem permissão para acessar esta página",
-            variant: "destructive",
-          });
-          
-          // Definir caminho de redirecionamento para dashboard específico do papel
-          const dashboardPath = getDashboardPath(userRole);
-          
-          // Verificar se já estamos no caminho de redirecionamento
-          if (location.pathname !== dashboardPath) {
-            console.log("Will redirect to dashboard path:", dashboardPath);
-            setRedirectPath(dashboardPath);
-            setUnauthorized(true);
-          } else {
-            // Se já estivermos no caminho de redirecionamento, não redirecionamos novamente
-            console.log("Already on redirect path, not redirecting again");
-          }
+        return;
+      }
+      
+      // Verificações especiais para certos papéis e rotas
+      if (userRole === UserRole.FINANCIAL && 
+          (location.pathname.includes('/admin/payments') || 
+           location.pathname.includes('/admin/clients') || 
+           location.pathname.includes('/admin/reports'))) {
+        // Permitir que usuários financeiros acessem essas rotas específicas de admin
+        console.log("Financial user accessing permitted admin route:", location.pathname);
+        return;
+      } 
+      // Usuários de logística podem acessar rotas de admin
+      else if (userRole === UserRole.LOGISTICS && location.pathname.startsWith('/admin')) {
+        console.log("Logistics user accessing admin route:", location.pathname);
+        return;
+      }
+      
+      // Se o usuário estiver tentando acessar o dashboard do seu papel específico, permitir
+      if (
+        (userRole === UserRole.ADMIN && location.pathname.startsWith('/admin')) ||
+        (userRole === UserRole.CLIENT && location.pathname.startsWith('/user')) ||
+        (userRole === UserRole.PARTNER && location.pathname.startsWith('/partner')) || 
+        (userRole === UserRole.FINANCIAL && location.pathname.startsWith('/financial')) ||
+        (userRole === UserRole.LOGISTICS && location.pathname.startsWith('/logistics'))
+      ) {
+        console.log("User accessing their own routes:", location.pathname);
+        return;
+      }
+      
+      // Verificação de papéis permitidos
+      if (allowedRoles.length > 0 && !allowedRoles.includes(userRole)) {
+        console.log(`User role ${userRole} not allowed to access this route`);
+        
+        toast({
+          title: "Acesso não autorizado",
+          description: "Você não tem permissão para acessar esta página",
+          variant: "destructive",
+        });
+        
+        // Definir caminho de redirecionamento para dashboard específico do papel
+        const dashboardPath = getDashboardPath(userRole);
+        
+        // Verificar se já estamos no caminho de redirecionamento
+        if (location.pathname !== dashboardPath) {
+          console.log("Will redirect to dashboard path:", dashboardPath);
+          setRedirectPath(dashboardPath);
+          setUnauthorized(true);
+        } else {
+          // Se já estivermos no caminho de redirecionamento, não redirecionamos novamente
+          console.log("Already on redirect path, not redirecting again");
         }
       }
     }

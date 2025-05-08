@@ -20,8 +20,8 @@ export const getDashboardPath = (userRole: UserRole): string => {
       return PATHS.LOGISTICS.DASHBOARD;
     default:
       console.log("Role não reconhecido:", userRole);
-      // Em vez de redirecionar para o dashboard do usuário quando não reconhecermos o papel
-      // vamos redirecionar para o login para evitar loops infinitos
+      // Em vez de redirecionar para o login quando não reconhecermos o papel
+      // vamos redirecionar para um caminho padrão
       return PATHS.LOGIN;
   }
 };

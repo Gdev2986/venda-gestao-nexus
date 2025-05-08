@@ -20,7 +20,7 @@ const MachineTransferForm = ({
   onSubmit,
   isSubmitting = false // Definir valor padrão false
 }: MachineTransferFormProps) => {
-  const { clients, isLoading } = useClients();
+  const { clients, loading } = useClients();
   const [selectedClient, setSelectedClient] = useState<string>("");
   const [error, setError] = useState<string | null>(null);
 
@@ -45,7 +45,7 @@ const MachineTransferForm = ({
     }
   };
 
-  if (isLoading) {
+  if (loading) {
     return <div className="flex justify-center p-4"><Spinner size="lg" /></div>;
   }
 

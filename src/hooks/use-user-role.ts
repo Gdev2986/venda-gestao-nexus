@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { UserRole } from "@/types";
 import { useAuth } from "@/contexts/AuthContext";
@@ -49,6 +48,9 @@ export const useUserRole = () => {
         if (cachedRole && Object.values(UserRole).includes(cachedRole as UserRole)) {
           console.log("useUserRole - Using cached role:", cachedRole);
           setUserRole(cachedRole as UserRole);
+          setIsRoleLoading(false);
+        } else {
+          console.log("useUserRole - No valid cached role found, fetching from database");
         }
         
         // Always verify with database to ensure role is current
@@ -61,18 +63,19 @@ export const useUserRole = () => {
 
         if (error) {
           console.error('Error fetching user profile:', error);
-          setIsRoleLoading(false);
-          return;
-        }
-
-        if (data && data.role) {
+          // If there's an error but we have a cached role, keep using it
+          if (!cachedRole) {
+            console.log("useUserRole - Error fetching role and no cache, using default CLIENT");
+            setUserRole(UserRole.CLIENT);
+          }
+        } else if (data && data.role) {
           const role = data.role as UserRole;
           console.log("useUserRole - Database role:", role);
           setUserRole(role);
           // Store in sessionStorage for persistence
           setAuthData("userRole", role);
         } else {
-          console.log("useUserRole - No role found in database, keeping default or cached role");
+          console.log("useUserRole - No role found in database, using default or cached role");
         }
       } catch (error) {
         console.error('Error fetching profile:', error);

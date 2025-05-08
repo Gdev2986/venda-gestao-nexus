@@ -14,6 +14,15 @@ const RootLayout = () => {
   const location = useLocation();
   const [showLoading, setShowLoading] = useState(true);
   
+  // Log para depuração
+  useEffect(() => {
+    console.log("RootLayout - isLoading:", isLoading, "isRoleLoading:", isRoleLoading, "user:", !!user);
+    if (!isLoading && !isRoleLoading && user) {
+      console.log("RootLayout - userRole:", userRole);
+      console.log("RootLayout - will redirect to:", getDashboardPath(userRole));
+    }
+  }, [isLoading, isRoleLoading, user, userRole]);
+  
   // Add a slight delay for loading animation
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -22,14 +31,6 @@ const RootLayout = () => {
     
     return () => clearTimeout(timer);
   }, []);
-  
-  // Log para depuração
-  useEffect(() => {
-    console.log("RootLayout - isLoading:", isLoading, "isRoleLoading:", isRoleLoading, "user:", !!user);
-    if (!isLoading && !isRoleLoading && user) {
-      console.log("RootLayout - will redirect to:", getDashboardPath(userRole));
-    }
-  }, [isLoading, isRoleLoading, user, userRole]);
   
   // Se ainda estiver carregando ou mostrando animação de carregamento, mostre um spinner
   if (isLoading || isRoleLoading || showLoading) {
@@ -50,13 +51,12 @@ const RootLayout = () => {
   
   // Se estiver autenticado, redirecione para o dashboard específico do papel
   if (user) {
-    let dashboardPath;
+    let dashboardPath = PATHS.LOGIN; // Fallback default para evitar loops
     
     try {
       dashboardPath = getDashboardPath(userRole);
     } catch (error) {
       console.error("Erro ao obter caminho do dashboard:", error);
-      dashboardPath = PATHS.LOGIN; // Fallback para login se houver erro
     }
     
     console.log(`User authenticated, redirecting to ${dashboardPath}`);

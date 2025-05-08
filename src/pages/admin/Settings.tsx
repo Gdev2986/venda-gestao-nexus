@@ -59,14 +59,15 @@ const AdminSettings = () => {
     }
   };
 
-  const handleSelectionChange = (value: string) => {
-    // Converter string separada por vírgula para array de UserRole
-    const selectedRoles = value
-      .split(',')
-      .map(role => role as UserRole);
-    
-    setAllowedRoles(selectedRoles);
-    handleSavePermissions({ roles: selectedRoles });
+  // Handle single role selection
+  const handleRoleToggle = (role: UserRole) => {
+    if (allowedRoles.includes(role)) {
+      // Remove role if already selected
+      setAllowedRoles(allowedRoles.filter(r => r !== role));
+    } else {
+      // Add role if not selected
+      setAllowedRoles([...allowedRoles, role]);
+    }
   };
 
   return (
@@ -79,21 +80,22 @@ const AdminSettings = () => {
           <div className="space-y-4">
             <div>
               <Label htmlFor="allowedRoles">Permissões de Acesso</Label>
-              <Select
-                value={allowedRoles.join(',')}
-                onValueChange={handleSelectionChange}
-              >
-                <SelectTrigger className="w-[300px]">
-                  <SelectValue placeholder="Selecione as permissões" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value={UserRole.ADMIN}>Administrador</SelectItem>
-                  <SelectItem value={UserRole.LOGISTICS}>Logística</SelectItem>
-                  <SelectItem value={UserRole.CLIENT}>Cliente</SelectItem>
-                  <SelectItem value={UserRole.PARTNER}>Parceiro</SelectItem>
-                  <SelectItem value={UserRole.FINANCIAL}>Financeiro</SelectItem>
-                </SelectContent>
-              </Select>
+              <div className="mt-2 space-y-2">
+                {Object.values(UserRole).map(role => (
+                  <div key={role} className="flex items-center space-x-2">
+                    <input 
+                      type="checkbox" 
+                      id={`role-${role}`}
+                      checked={allowedRoles.includes(role)}
+                      onChange={() => handleRoleToggle(role)}
+                      className="h-4 w-4 rounded border-gray-300"
+                    />
+                    <label htmlFor={`role-${role}`} className="text-sm">
+                      {role.charAt(0).toUpperCase() + role.slice(1)}
+                    </label>
+                  </div>
+                ))}
+              </div>
             </div>
             <Button onClick={() => handleSavePermissions({ roles: allowedRoles })}>Salvar Permissões</Button>
           </div>
