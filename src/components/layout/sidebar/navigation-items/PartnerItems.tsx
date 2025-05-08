@@ -1,5 +1,5 @@
 
-import { LayoutDashboard, ListOrdered, Building2, BarChart3, MessageSquare, HelpCircle, Settings } from "lucide-react";
+import { LayoutDashboard, ListOrdered, Building2, BarChart3, MessageSquare, HelpCircle, Settings, DollarSign } from "lucide-react";
 import { SidebarItem } from "../types";
 import { UserRole } from "@/types";
 import { PATHS } from "@/routes/paths";
@@ -21,6 +21,12 @@ export const partnerItems: SidebarItem[] = [
     title: "Clientes",
     icon: Building2,
     href: PATHS.PARTNER.CLIENTS,
+    roles: [UserRole.PARTNER],
+  },
+  {
+    title: "Comissões",
+    icon: DollarSign,
+    href: PATHS.PARTNER.COMMISSIONS,
     roles: [UserRole.PARTNER],
   },
   {

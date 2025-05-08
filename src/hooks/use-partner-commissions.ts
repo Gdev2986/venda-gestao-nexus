@@ -154,10 +154,10 @@ export const usePartnerCommissions = () => {
     }
 
     try {
-      // Get client ID for this partner
+      // Get partner data for this user
       const { data: partnerData, error: partnerError } = await supabase
         .from('partners')
-        .select('id, client_id')
+        .select('id')
         .eq('user_id', user.id)
         .single();
 
@@ -165,9 +165,24 @@ export const usePartnerCommissions = () => {
         throw new Error('Não foi possível encontrar sua conta de parceiro');
       }
 
-      const clientId = partnerData?.client_id;
+      const partnerId = partnerData?.id;
+      
+      // Get a client_id associated with this partner
+      // This might need to be adjusted based on your database structure
+      const { data: clientData, error: clientError } = await supabase
+        .from('clients')
+        .select('id')
+        .eq('partner_id', partnerId)
+        .limit(1)
+        .single();
+        
+      if (clientError) {
+        throw new Error('Não foi possível encontrar um cliente vinculado a este parceiro');
+      }
+      
+      const clientId = clientData?.id;
       if (!clientId) {
-        throw new Error('Sua conta de parceiro não está vinculada a um cliente');
+        throw new Error('Sua conta não está vinculada a nenhum cliente');
       }
 
       // Create payment request
@@ -178,7 +193,7 @@ export const usePartnerCommissions = () => {
           amount,
           pix_key_id: pixKeyId,
           description: description || 'Solicitação de pagamento de comissão',
-          status: 'pending'
+          status: 'PENDING'
         })
         .select();
 

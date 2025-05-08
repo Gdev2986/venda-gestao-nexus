@@ -1,3 +1,4 @@
+
 import { CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -10,10 +11,12 @@ import { cn } from "@/lib/utils";
 import { useState, useEffect } from "react";
 import { SalesFilterParams } from "@/types";
 import { TimeRangePicker } from "../../../components/sales/filters";
+
 interface DateRange {
   from: Date;
   to?: Date;
 }
+
 interface AdminSalesFiltersProps {
   filters: SalesFilterParams;
   dateRange?: DateRange;
@@ -21,16 +24,22 @@ interface AdminSalesFiltersProps {
   onDateRangeChange: (range: DateRange | undefined) => void;
   onClearFilters: () => void;
 }
-const PAYMENT_METHODS = [{
-  value: "credit",
-  label: "Crédito"
-}, {
-  value: "debit",
-  label: "Débito"
-}, {
-  value: "pix",
-  label: "Pix"
-}];
+
+const PAYMENT_METHODS = [
+  {
+    value: "credit",
+    label: "Crédito"
+  },
+  {
+    value: "debit",
+    label: "Débito"
+  },
+  {
+    value: "pix",
+    label: "Pix"
+  }
+];
+
 const AdminSalesFilters = ({
   filters,
   dateRange,
@@ -155,4 +164,5 @@ const AdminSalesFilters = ({
       </div>
     </CardContent>;
 };
+
 export default AdminSalesFilters;

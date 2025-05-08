@@ -1,3 +1,4 @@
+
 export enum UserRole {
   ADMIN = "ADMIN",
   CLIENT = "CLIENT", 
@@ -41,7 +42,7 @@ export interface Payment {
   created_at: string;
   updated_at: string;
   amount: number;
-  status: PaymentStatus;
+  status: PaymentStatus | string;
   client_id: string;
   approved_at?: string; 
   receipt_url?: string;
@@ -81,7 +82,7 @@ export interface Partner {
   email?: string; // Added for consistency with filtering
   phone?: string; // Added for consistency with filtering
   address?: string; // Added for completeness
-  // Add missing property
+  // Add missing properties
   total_sales?: number;
   total_commission?: number;
 }
@@ -125,13 +126,13 @@ export interface PixKey {
   type: string;
   name: string;
   owner_name?: string;
-  is_default?: boolean; // Changed from isDefault to is_default
+  is_default?: boolean;
   user_id?: string;
   created_at?: string;
   updated_at?: string;
-  bank_name?: string; // Add missing property
-  key_type?: string; // Add missing property used in code
-  is_active?: boolean; // Add missing property used in code
+  bank_name?: string;
+  key_type?: string;
+  is_active?: boolean;
 }
 
 export interface Sale {
@@ -142,12 +143,12 @@ export interface Sale {
   gross_amount: number;
   net_amount: number;
   date: string;
-  payment_method: PaymentMethod;
+  payment_method: PaymentMethod | string;
   client_id: string;
   created_at: string;
   updated_at: string;
-  amount?: number; // Add missing property
-  status?: string; // Add missing property used in code
+  amount?: number;
+  status?: string;
 }
 
 export interface SalesFilterParams {
@@ -184,7 +185,7 @@ export interface Machine {
   client_id?: string;
   created_at?: string;
   updated_at?: string;
-  name?: string;          // Add missing property
-  client_name?: string;   // Add missing property
-  serialNumber?: string;  // Add missing property for backward compatibility
+  name?: string;
+  client_name?: string;
+  serialNumber?: string;
 }

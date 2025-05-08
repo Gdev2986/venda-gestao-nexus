@@ -2,7 +2,7 @@
 import { useState } from "react";
 import { PageHeader } from "@/components/page/PageHeader";
 import { PageWrapper } from "@/components/page/PageWrapper";
-import { AdminSalesFilters } from "@/components/admin/sales/AdminSalesFilters";
+import AdminSalesFilters from "@/components/admin/sales/AdminSalesFilters";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
