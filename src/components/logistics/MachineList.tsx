@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useCallback } from "react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -257,12 +256,14 @@ const MachineList: React.FC<MachineListProps> = ({
                 {/* Display page numbers */}
                 {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
                   <PaginationItem key={page}>
-                    <PaginationLink
-                      isActive={currentPage === page}
+                    <Button
+                      variant={currentPage === page ? "default" : "outline"}
+                      size="sm"
                       onClick={() => handlePageChange(page)}
+                      className={currentPage === page ? "pointer-events-none" : ""}
                     >
                       {page}
-                    </PaginationLink>
+                    </Button>
                   </PaginationItem>
                 ))}
                 <PaginationItem>

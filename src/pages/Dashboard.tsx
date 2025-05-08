@@ -13,6 +13,7 @@ import { format } from "date-fns";
 import { cn } from "@/lib/utils";
 import { PaymentMethod } from "@/types";
 import { Button } from "@/components/ui/button";
+import DailySalesChart from "@/components/dashboard/DailySalesChart";
 
 interface DateRange {
   from: Date;
@@ -21,7 +22,7 @@ interface DateRange {
 
 interface PaymentMethodData {
   name: string;
-  total: number; // Changed from value to total for consistent naming
+  total: number;
 }
 
 const PaymentMethodsChart = ({ data }: { data: PaymentMethodData[] }) => (

@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { Partner } from "@/types";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -11,23 +12,31 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel,
 
 export interface PartnersTableProps {
   partners: Partner[];
-  page: number;
-  setPage: React.Dispatch<React.SetStateAction<number>>;
-  totalPages: number;
   isLoading: boolean;
+  onView?: (partner: Partner) => void;
+  onEdit?: (partner: Partner) => void;
+  onDelete?: (partner: Partner) => void;
+  page?: number;
+  setPage?: React.Dispatch<React.SetStateAction<number>>;
+  totalPages?: number;
 }
 
 const PartnersTable: React.FC<PartnersTableProps> = ({ 
   partners, 
-  page, 
-  setPage, 
-  totalPages, 
-  isLoading 
+  isLoading,
+  onView,
+  onEdit,
+  onDelete,
+  page = 1,
+  setPage,
+  totalPages = 1
 }) => {
   const itemsPerPage = 10;
 
   const handlePageChange = (newPage: number) => {
-    setPage(newPage);
+    if (setPage) {
+      setPage(newPage);
+    }
   };
 
   return (
@@ -39,7 +48,6 @@ const PartnersTable: React.FC<PartnersTableProps> = ({
             <TableHead>Contato</TableHead>
             <TableHead>Email</TableHead>
             <TableHead>Telefone</TableHead>
-            <TableHead>Status</TableHead>
             <TableHead className="text-right">Ações</TableHead>
           </TableRow>
         </TableHeader>
@@ -48,7 +56,6 @@ const PartnersTable: React.FC<PartnersTableProps> = ({
             // Display skeleton rows while loading
             [...Array(itemsPerPage)].map((_, i) => (
               <TableRow key={`skeleton-${i}`}>
-                <TableCell><Skeleton /></TableCell>
                 <TableCell><Skeleton /></TableCell>
                 <TableCell><Skeleton /></TableCell>
                 <TableCell><Skeleton /></TableCell>
@@ -64,13 +71,6 @@ const PartnersTable: React.FC<PartnersTableProps> = ({
                 <TableCell>{partner.contact_name}</TableCell>
                 <TableCell>{partner.email}</TableCell>
                 <TableCell>{partner.phone}</TableCell>
-                <TableCell>
-                  {partner.status === "active" ? (
-                    <Badge variant="default">Ativo</Badge>
-                  ) : (
-                    <Badge className="bg-gray-100 text-gray-500 border-gray-200">Inativo</Badge>
-                  )}
-                </TableCell>
                 <TableCell className="text-right">
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>
@@ -81,8 +81,15 @@ const PartnersTable: React.FC<PartnersTableProps> = ({
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end">
                       <DropdownMenuLabel>Ações</DropdownMenuLabel>
-                      <DropdownMenuItem>Editar</DropdownMenuItem>
-                      <DropdownMenuItem>Deletar</DropdownMenuItem>
+                      {onView && (
+                        <DropdownMenuItem onClick={() => onView(partner)}>Ver detalhes</DropdownMenuItem>
+                      )}
+                      {onEdit && (
+                        <DropdownMenuItem onClick={() => onEdit(partner)}>Editar</DropdownMenuItem>
+                      )}
+                      {onDelete && (
+                        <DropdownMenuItem onClick={() => onDelete(partner)}>Deletar</DropdownMenuItem>
+                      )}
                     </DropdownMenuContent>
                   </DropdownMenu>
                 </TableCell>
@@ -91,7 +98,7 @@ const PartnersTable: React.FC<PartnersTableProps> = ({
           ) : (
             // Display message when no partners are found
             <TableRow>
-              <TableCell colSpan={6} className="text-center">
+              <TableCell colSpan={5} className="text-center">
                 Nenhum parceiro encontrado.
               </TableCell>
             </TableRow>
@@ -99,7 +106,7 @@ const PartnersTable: React.FC<PartnersTableProps> = ({
         </TableBody>
       </Table>
 
-      {partners.length > 0 && (
+      {partners.length > 0 && setPage && (
         <div className="flex items-center justify-between p-4">
           <Button
             onClick={() => handlePageChange(page - 1)}
