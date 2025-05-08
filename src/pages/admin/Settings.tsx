@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -149,7 +150,6 @@ const AdminSettings = () => {
               <div className="mb-4">
                 <Label htmlFor="roleFilter">Filtrar por função:</Label>
                 <Select
-                  id="roleFilter"
                   value={selectedRole}
                   onValueChange={(value) => {
                     setSelectedRole(value);
@@ -253,7 +253,6 @@ const AdminSettings = () => {
             <div className="mb-4">
               <Label htmlFor="newRole">Nova Função:</Label>
               <Select
-                id="newRole"
                 value={newRole}
                 onValueChange={(value) => setNewRole(value)}
               >
@@ -270,7 +269,7 @@ const AdminSettings = () => {
               <Button variant="ghost" onClick={() => setShowRoleModal(false)}>
                 Cancelar
               </Button>
-              <Button variant="primary" onClick={handleRoleChange}>
+              <Button onClick={handleRoleChange}>
                 Salvar
               </Button>
             </div>
