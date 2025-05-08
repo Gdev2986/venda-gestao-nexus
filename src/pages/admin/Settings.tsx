@@ -6,7 +6,6 @@ import { supabase } from "@/integrations/supabase/client";
 import { UsersTab } from "@/components/admin/settings/UsersTab";
 import { SystemTab } from "@/components/admin/settings/SystemTab";
 import { RoleChangeModal } from "@/components/admin/settings/RoleChangeModal";
-import { UserRole } from "@/types";
 import { AdminNotificationsTab } from "@/components/admin/settings/AdminNotificationsTab";
 import { AdminSecurityTab } from "@/components/admin/settings/AdminSecurityTab";
 
@@ -25,7 +24,7 @@ interface ProfileData {
 const AdminSettings = () => {
   const [activeTab, setActiveTab] = useState("usuarios");
   const [selectedUser, setSelectedUser] = useState<ProfileData | null>(null);
-  const [newRole, setNewRole] = useState<string>(UserRole.USER);
+  const [newRole, setNewRole] = useState<string>("");
   const [showRoleModal, setShowRoleModal] = useState(false);
   
   const { toast } = useToast();

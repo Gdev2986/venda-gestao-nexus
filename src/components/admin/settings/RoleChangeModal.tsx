@@ -1,6 +1,8 @@
 
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
+import { supabase } from "@/integrations/supabase/client";
 import {
   Select,
   SelectContent,
@@ -8,7 +10,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { UserRole } from "@/types";
 
 interface ProfileData {
   id: string;
@@ -36,6 +37,34 @@ export const RoleChangeModal = ({
   onClose, 
   onSave 
 }: RoleChangeModalProps) => {
+  const [availableRoles, setAvailableRoles] = useState<string[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  // Fetch available roles from the profiles table
+  useEffect(() => {
+    const fetchRoles = async () => {
+      setLoading(true);
+      try {
+        const { data, error } = await supabase
+          .from('profiles')
+          .select('role')
+          .not('role', 'is', null);
+
+        if (error) throw error;
+
+        // Extract unique roles
+        const uniqueRoles = Array.from(new Set(data.map(item => item.role)));
+        setAvailableRoles(uniqueRoles);
+      } catch (error) {
+        console.error("Error fetching roles:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchRoles();
+  }, []);
+
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex justify-center items-center">
       <div className="bg-white p-6 rounded-md shadow-lg w-96">
@@ -44,31 +73,29 @@ export const RoleChangeModal = ({
         </h2>
         <div className="mb-6">
           <Label htmlFor="newRole" className="mb-2 block">Nova Função:</Label>
-          <Select
-            value={newRole}
-            onValueChange={(value) => setNewRole(value)}
-          >
-            <SelectTrigger className="w-full">
-              <SelectValue placeholder="Selecione a função" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value={UserRole.ADMIN}>Administrador</SelectItem>
-              <SelectItem value={UserRole.USER}>Usuário</SelectItem>
-              <SelectItem value={UserRole.CLIENT}>Cliente</SelectItem>
-              <SelectItem value={UserRole.FINANCIAL}>Financeiro</SelectItem>
-              <SelectItem value={UserRole.PARTNER}>Parceiro</SelectItem>
-              <SelectItem value={UserRole.LOGISTICS}>Logística</SelectItem>
-              <SelectItem value={UserRole.MANAGER}>Gerente</SelectItem>
-              <SelectItem value={UserRole.FINANCE}>Finanças</SelectItem>
-              <SelectItem value={UserRole.SUPPORT}>Suporte</SelectItem>
-            </SelectContent>
-          </Select>
+          {loading ? (
+            <p className="text-sm text-muted-foreground">Carregando funções disponíveis...</p>
+          ) : (
+            <Select
+              value={newRole}
+              onValueChange={(value) => setNewRole(value)}
+            >
+              <SelectTrigger className="w-full">
+                <SelectValue placeholder="Selecione a função" />
+              </SelectTrigger>
+              <SelectContent>
+                {availableRoles.map(role => (
+                  <SelectItem key={role} value={role}>{role}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          )}
         </div>
         <div className="flex justify-end gap-2">
           <Button variant="ghost" onClick={onClose}>
             Cancelar
           </Button>
-          <Button onClick={onSave}>
+          <Button onClick={onSave} disabled={loading}>
             Salvar
           </Button>
         </div>

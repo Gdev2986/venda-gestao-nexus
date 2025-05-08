@@ -42,9 +42,32 @@ export const UsersTab = ({ openRoleModal }: UsersTabProps) => {
   const [loading, setLoading] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
+  const [availableRoles, setAvailableRoles] = useState<string[]>([]);
 
   const { toast } = useToast();
   const itemsPerPage = 10;
+
+  // Fetch available roles from the profiles table
+  useEffect(() => {
+    const fetchRoles = async () => {
+      try {
+        const { data, error } = await supabase
+          .from('profiles')
+          .select('role')
+          .not('role', 'is', null);
+
+        if (error) throw error;
+
+        // Extract unique roles
+        const uniqueRoles = Array.from(new Set(data.map(item => item.role)));
+        setAvailableRoles(uniqueRoles);
+      } catch (error) {
+        console.error("Error fetching roles:", error);
+      }
+    };
+
+    fetchRoles();
+  }, []);
 
   // Fetch users from Supabase
   useEffect(() => {
@@ -107,15 +130,9 @@ export const UsersTab = ({ openRoleModal }: UsersTabProps) => {
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="all">Todas as funções</SelectItem>
-              <SelectItem value={UserRole.ADMIN}>Administrador</SelectItem>
-              <SelectItem value={UserRole.USER}>Usuário</SelectItem>
-              <SelectItem value={UserRole.FINANCIAL}>Financeiro</SelectItem>
-              <SelectItem value={UserRole.PARTNER}>Parceiro</SelectItem>
-              <SelectItem value={UserRole.CLIENT}>Cliente</SelectItem>
-              <SelectItem value={UserRole.LOGISTICS}>Logística</SelectItem>
-              <SelectItem value={UserRole.MANAGER}>Gerente</SelectItem>
-              <SelectItem value={UserRole.FINANCE}>Finanças</SelectItem>
-              <SelectItem value={UserRole.SUPPORT}>Suporte</SelectItem>
+              {availableRoles.map((role) => (
+                <SelectItem key={role} value={role}>{role}</SelectItem>
+              ))}
             </SelectContent>
           </Select>
         </div>
