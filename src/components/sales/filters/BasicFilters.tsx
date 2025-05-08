@@ -34,7 +34,7 @@ const HOUR_RANGES = [
 
 const BasicFilters = ({ filters, onFilterChange }: BasicFiltersProps) => {
   const handleHourRangeChange = (rangeString: string) => {
-    if (!rangeString) {
+    if (rangeString === "all") {
       onFilterChange("startHour", undefined);
       onFilterChange("endHour", undefined);
       return;

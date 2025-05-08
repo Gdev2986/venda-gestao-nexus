@@ -2,14 +2,12 @@
 import { useState, useEffect } from "react";
 import { Card, CardHeader, CardTitle } from "@/components/ui/card";
 import { generateMockSalesData } from "@/utils/sales-utils";
-import { Button } from "@/components/ui/button";
 import { SalesFilterParams } from "@/types";
 import ImportSalesDialog from "@/components/sales/ImportSalesDialog";
 import { useToast } from "@/hooks/use-toast";
-import SalesUploader from "@/components/sales/SalesUploader";
 import AdminSalesLayout from "@/components/admin/sales/AdminSalesLayout";
-import AdminSalesFilters from "@/components/admin/sales/AdminSalesFilters";
 import AdminSalesContent from "@/components/admin/sales/AdminSalesContent";
+import SalesUploader from "@/components/sales/SalesUploader";
 
 interface DateRange {
   from: Date;
@@ -86,71 +84,46 @@ const AdminSales = () => {
         </div>
         
         <div className="flex items-center gap-2">
-          <Button 
-            variant="outline" 
-            size="sm"
-            className="flex items-center gap-1"
-            onClick={handleRefresh}
-            disabled={isRefreshing}
+          <AdminSalesLayout
+            isRefreshing={isRefreshing}
+            onRefresh={handleRefresh}
+            onImport={() => setShowImportDialog(true)}
+            onExport={() => handleExport('csv')}
           >
-            {isRefreshing ? "Atualizando..." : "Atualizar"}
-          </Button>
-          
-          <Button 
-            variant="outline"
-            size="sm"
-            className="flex items-center gap-1"
-            onClick={() => setShowImportDialog(true)}
-          >
-            Importar
-          </Button>
-          
-          <Button 
-            variant="outline"
-            size="sm"
-            className="flex items-center gap-1"
-            onClick={() => handleExport('csv')}
-          >
-            Exportar
-          </Button>
+            {/* Content will be rendered inside */}
+          </AdminSalesLayout>
         </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
-        {/* Left column - Filters and Stats */}
-        <div className="lg:col-span-1 space-y-6">
-          <Card>
-            <CardHeader>
-              <CardTitle>Filtros</CardTitle>
-            </CardHeader>
-            <AdminSalesFilters
-              filters={filters}
-              dateRange={dateRange}
-              onFilterChange={setFilters}
-              onDateRangeChange={setDateRange}
-              onClearFilters={() => {
-                setFilters({});
-                setDateRange(undefined);
-              }}
-            />
-          </Card>
-          
-          {!showImportDialog && (
-            <SalesUploader onFileProcessed={handleFileProcessed} />
-          )}
-        </div>
-        
-        {/* Right column - Sales Table */}
-        <AdminSalesContent 
-          sales={sales}
-          filters={filters}
-          dateRange={dateRange}
-          page={page}
-          setPage={setPage}
-          itemsPerPage={itemsPerPage}
-          isLoading={isLoading}
-        />
+      {/* Top section with filters and uploader */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+        {/* Left card - Filters */}
+        <Card className="w-full">
+          <CardHeader>
+            <CardTitle>Filtros</CardTitle>
+          </CardHeader>
+          <div className="p-4">
+            <div className="space-y-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="col-span-2">
+                  <SalesUploader onFileProcessed={handleFileProcessed} />
+                </div>
+              </div>
+            </div>
+          </div>
+        </Card>
       </div>
+
+      {/* Sales Table */}
+      <AdminSalesContent 
+        sales={sales}
+        filters={filters}
+        dateRange={dateRange}
+        page={page}
+        setPage={setPage}
+        itemsPerPage={itemsPerPage}
+        isLoading={isLoading}
+      />
       
       <ImportSalesDialog
         open={showImportDialog}

@@ -1,458 +1,291 @@
 
 import { useState, useEffect } from "react";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Label } from "@/components/ui/label";
-import { Input } from "@/components/ui/input";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
-import { Switch } from "@/components/ui/switch";
+import { Badge } from "@/components/ui/badge";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
-import { useAuth } from "@/hooks/use-auth";
 import { UserRole } from "@/types";
-import { Separator } from "@/components/ui/separator";
-import { PersonalDataForm } from "@/components/settings/PersonalDataForm";
-import SecuritySettings from "@/components/settings/SecuritySettings";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { useState as useStateInner } from "react";
-import { supabase } from "@/integrations/supabase/client";
+import TablePagination from "@/components/ui/table-pagination";
 
-// User profile type definition
-interface UserProfile {
+interface User {
   id: string;
-  email: string;
   name: string;
+  email: string;
   role: UserRole;
-  created_at: string;
-  // Add other properties if needed
-  avatar?: string;
-  phone?: string;
-  updated_at?: string;
+  lastLogin?: string;
 }
 
-// Notification type
-interface NotificationSettings {
-  title: string;
-  message: string;
-  recipients: 'ALL' | 'CLIENTS' | 'PARTNERS' | 'SPECIFIC';
-  specificUser?: string;
-}
-
-const AdminSettings = () => {
-  const { user } = useAuth();
+const Settings = () => {
+  const [users, setUsers] = useState<User[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [currentPage, setCurrentPage] = useState(1);
   const { toast } = useToast();
-  const [isLoading, setIsLoading] = useState(false);
-  const [activeTab, setActiveTab] = useState("profile");
-  const [users, setUsers] = useState<UserProfile[]>([]);
-  const [loadingUsers, setLoadingUsers] = useState(false);
-  const [notificationSettings, setNotificationSettings] = useState<NotificationSettings>({
-    title: '',
-    message: '',
-    recipients: 'ALL',
-    specificUser: ''
-  });
-  const [allowedRoles, setAllowedRoles] = useState<UserRole[]>([]);
+  const itemsPerPage = 10;
 
-  // Load users for user management
+  // Fetch mock users
   useEffect(() => {
-    const fetchUsers = async () => {
-      setLoadingUsers(true);
-      try {
-        const { data, error } = await supabase
-          .from('profiles')
-          .select('*')
-          .order('created_at', { ascending: false });
+    const fetchUsers = () => {
+      setIsLoading(true);
+      // Mock data
+      const mockUsers: User[] = [
+        {
+          id: "1",
+          name: "John Doe",
+          email: "john@example.com",
+          role: UserRole.ADMIN,
+          lastLogin: "2023-10-15T10:30:00Z",
+        },
+        {
+          id: "2",
+          name: "Jane Smith",
+          email: "jane@example.com",
+          role: UserRole.FINANCIAL,
+          lastLogin: "2023-10-14T15:45:00Z",
+        },
+        {
+          id: "3",
+          name: "Alan Jackson",
+          email: "alan@example.com",
+          role: UserRole.LOGISTICS,
+          lastLogin: "2023-10-13T09:20:00Z",
+        },
+        {
+          id: "4",
+          name: "Sarah Wilson",
+          email: "sarah@example.com",
+          role: UserRole.CLIENT,
+          lastLogin: "2023-10-12T12:10:00Z",
+        },
+        {
+          id: "5",
+          name: "Michael Brown",
+          email: "michael@example.com",
+          role: UserRole.PARTNER,
+          lastLogin: "2023-10-11T16:30:00Z",
+        },
+        {
+          id: "6",
+          name: "Lisa Taylor",
+          email: "lisa@example.com",
+          role: UserRole.CLIENT,
+          lastLogin: "2023-10-10T14:25:00Z",
+        },
+        {
+          id: "7",
+          name: "David Miller",
+          email: "david@example.com",
+          role: UserRole.CLIENT,
+          lastLogin: "2023-10-09T11:15:00Z",
+        },
+        {
+          id: "8",
+          name: "Emma Wilson",
+          email: "emma@example.com",
+          role: UserRole.PARTNER,
+          lastLogin: "2023-10-08T09:45:00Z",
+        },
+        {
+          id: "9",
+          name: "Robert Johnson",
+          email: "robert@example.com",
+          role: UserRole.LOGISTICS,
+          lastLogin: "2023-10-07T10:50:00Z",
+        },
+        {
+          id: "10",
+          name: "Olivia Davis",
+          email: "olivia@example.com",
+          role: UserRole.FINANCIAL,
+          lastLogin: "2023-10-06T13:40:00Z",
+        },
+        {
+          id: "11",
+          name: "William Garcia",
+          email: "william@example.com",
+          role: UserRole.CLIENT,
+          lastLogin: "2023-10-05T16:20:00Z",
+        },
+        {
+          id: "12",
+          name: "Sophia Martinez",
+          email: "sophia@example.com",
+          role: UserRole.CLIENT,
+          lastLogin: "2023-10-04T15:10:00Z",
+        },
+      ];
 
-        if (error) throw error;
-        
-        // Cast the data to UserProfile[] to handle the type mismatch
-        setUsers(data as unknown as UserProfile[]);
-      } catch (error) {
-        console.error("Error fetching users:", error);
-        toast({
-          variant: "destructive",
-          title: "Erro ao carregar usuários",
-          description: "Houve um problema ao carregar a lista de usuários."
-        });
-      } finally {
-        setLoadingUsers(false);
-      }
+      setUsers(mockUsers);
+      setIsLoading(false);
     };
-    
+
     fetchUsers();
+  }, []);
+
+  // Handle role change
+  const handleRoleChange = (userId: string, newRole: string) => {
+    const validRole = newRole as UserRole;
     
-    // Carregar papéis permitidos do localStorage ou valores padrão
-    const storedRoles = localStorage.getItem('allowedRoles');
-    if (storedRoles) {
-      try {
-        setAllowedRoles(JSON.parse(storedRoles) as UserRole[]);
-      } catch (error) {
-        console.error("Erro ao analisar allowedRoles:", error);
-        setAllowedRoles([
-          UserRole.ADMIN, 
-          UserRole.LOGISTICS, 
-          UserRole.CLIENT, 
-          UserRole.PARTNER, 
-          UserRole.FINANCIAL
-        ]);
-      }
-    } else {
-      setAllowedRoles([
-        UserRole.ADMIN, 
-        UserRole.LOGISTICS, 
-        UserRole.CLIENT, 
-        UserRole.PARTNER, 
-        UserRole.FINANCIAL
-      ]);
-    }
-  }, [toast]);
+    setUsers(prevUsers =>
+      prevUsers.map(user =>
+        user.id === userId ? { ...user, role: validRole } : user
+      )
+    );
 
-  // Handle role change for a user
-  const handleRoleChange = async (userId: string, newRole: string) => {
-    try {
-      const { error } = await supabase
-        .from('profiles')
-        .update({ role: newRole })
-        .eq('id', userId);
-
-      if (error) throw error;
-
-      // Update the users state with the new role
-      setUsers(users.map(user => 
-        user.id === userId ? { ...user, role: newRole as UserRole } : user
-      ));
-
-      toast({
-        title: "Função atualizada",
-        description: "A função do usuário foi atualizada com sucesso."
-      });
-    } catch (error) {
-      console.error("Error updating user role:", error);
-      toast({
-        variant: "destructive",
-        title: "Erro",
-        description: "Não foi possível atualizar a função do usuário."
-      });
-    }
-  };
-
-  // Handle notification settings change
-  const handleNotificationChange = (field: keyof NotificationSettings, value: any) => {
-    setNotificationSettings({
-      ...notificationSettings,
-      [field]: value
+    toast({
+      title: "Função atualizada",
+      description: `Função do usuário alterada para ${getRoleName(validRole)}`
     });
   };
 
-  // Send notification to users
-  const handleSendNotification = async () => {
-    setIsLoading(true);
-    try {
-      // Example implementation - in a real app you would send to your notification service
-      let recipientIds: string[] = [];
-
-      if (notificationSettings.recipients === 'ALL') {
-        recipientIds = users.map(user => user.id);
-      } else if (notificationSettings.recipients === 'CLIENTS') {
-        recipientIds = users
-          .filter(user => user.role === UserRole.CLIENT)
-          .map(user => user.id);
-      } else if (notificationSettings.recipients === 'PARTNERS') {
-        recipientIds = users
-          .filter(user => user.role === UserRole.PARTNER)
-          .map(user => user.id);
-      } else if (notificationSettings.recipients === 'SPECIFIC' && notificationSettings.specificUser) {
-        recipientIds = [notificationSettings.specificUser];
-      }
-
-      // In a real application, you would insert into a notifications table
-      const notificationsToInsert = recipientIds.map(userId => ({
-        user_id: userId,
-        title: notificationSettings.title,
-        message: notificationSettings.message,
-        created_at: new Date(),
-        read: false
-      }));
-
-      console.log("Would send notifications to:", notificationsToInsert);
-
-      // Example: insert into notifications table
-      // const { error } = await supabase.from('notifications').insert(notificationsToInsert);
-      // if (error) throw error;
-
-      toast({
-        title: "Notificações enviadas",
-        description: `Notificação "${notificationSettings.title}" enviada para ${recipientIds.length} usuários.`
-      });
-
-      // Reset form
-      setNotificationSettings({
-        title: '',
-        message: '',
-        recipients: 'ALL',
-        specificUser: ''
-      });
-    } catch (error) {
-      console.error("Error sending notifications:", error);
-      toast({
-        variant: "destructive",
-        title: "Erro ao enviar notificações",
-        description: "Houve um problema ao enviar as notificações."
-      });
-    } finally {
-      setIsLoading(false);
+  // Get role name in Portuguese
+  const getRoleName = (role: UserRole): string => {
+    switch(role) {
+      case UserRole.ADMIN:
+        return "Administrador";
+      case UserRole.FINANCIAL:
+        return "Financeiro";
+      case UserRole.LOGISTICS:
+        return "Logística";
+      case UserRole.PARTNER:
+        return "Parceiro";
+      case UserRole.CLIENT:
+        return "Cliente";
+      default:
+        return role;
     }
   };
 
-  // Handle single role selection
-  const handleRoleToggle = (role: UserRole) => {
-    if (allowedRoles.includes(role)) {
-      // Remove role if already selected
-      setAllowedRoles(allowedRoles.filter(r => r !== role));
-    } else {
-      // Add role if not selected
-      setAllowedRoles([...allowedRoles, role]);
+  // Get role badge
+  const getRoleBadge = (role: UserRole) => {
+    switch (role) {
+      case UserRole.ADMIN:
+        return <Badge className="bg-purple-500 hover:bg-purple-600">Administrador</Badge>;
+      case UserRole.FINANCIAL:
+        return <Badge className="bg-blue-500 hover:bg-blue-600">Financeiro</Badge>;
+      case UserRole.LOGISTICS:
+        return <Badge className="bg-green-500 hover:bg-green-600">Logística</Badge>;
+      case UserRole.PARTNER:
+        return <Badge className="bg-amber-500 hover:bg-amber-600">Parceiro</Badge>;
+      case UserRole.CLIENT:
+        return <Badge className="bg-gray-500 hover:bg-gray-600">Cliente</Badge>;
+      default:
+        return <Badge>{role}</Badge>;
     }
   };
 
-  const handleSavePermissions = async () => {
+  // Calculate pagination
+  const totalPages = Math.ceil(users.length / itemsPerPage);
+  const paginatedUsers = users.slice(
+    (currentPage - 1) * itemsPerPage,
+    currentPage * itemsPerPage
+  );
+
+  // Format date
+  const formatDate = (dateString?: string) => {
+    if (!dateString) return "Nunca";
+    
     try {
-      // Salvar os papéis selecionados no localStorage
-      localStorage.setItem('allowedRoles', JSON.stringify(allowedRoles));
-      
-      toast({
-        title: "Permissões salvas",
-        description: "As permissões foram salvas com sucesso.",
+      return new Date(dateString).toLocaleDateString('pt-BR', {
+        day: '2-digit',
+        month: '2-digit',
+        year: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit'
       });
     } catch (error) {
-      console.error("Erro ao salvar permissões:", error);
-      toast({
-        variant: "destructive",
-        title: "Erro ao salvar",
-        description: "Ocorreu um erro ao salvar as permissões.",
-      });
+      return "Data inválida";
     }
   };
 
   return (
     <div className="container mx-auto py-10">
-      <h1 className="text-2xl font-bold tracking-tight mb-6">Configurações de Administrador</h1>
+      <h1 className="text-2xl font-bold mb-6">Configurações do Administrador</h1>
       
-      <Tabs defaultValue="profile" className="space-y-4" value={activeTab} onValueChange={setActiveTab}>
-        <TabsList className="mb-4 grid sm:grid-cols-4 grid-cols-2 gap-2">
-          <TabsTrigger value="profile">Dados Pessoais</TabsTrigger>
-          <TabsTrigger value="permissions">Permissões</TabsTrigger>
-          <TabsTrigger value="notifications">Notificações</TabsTrigger>
-          <TabsTrigger value="security">Segurança</TabsTrigger>
-        </TabsList>
-
-        {/* Personal Data Tab */}
-        <TabsContent value="profile">
-          <Card>
-            <CardHeader>
-              <CardTitle>Dados Pessoais</CardTitle>
-              <CardDescription>
-                Atualize suas informações pessoais e de contato.
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <PersonalDataForm />
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        {/* User Permissions Tab */}
-        <TabsContent value="permissions">
-          <Card>
-            <CardHeader>
-              <CardTitle>Gerenciamento de Permissões</CardTitle>
-              <CardDescription>
-                Gerencie os papéis e permissões dos usuários do sistema.
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-6">
-              <div>
-                <Label htmlFor="allowedRoles" className="text-base font-semibold">Permissões de Acesso</Label>
-                <div className="mt-2 space-y-2 grid grid-cols-2 sm:grid-cols-3 gap-2">
-                  {Object.values(UserRole).map(role => (
-                    <div key={role} className="flex items-center space-x-2">
-                      <input 
-                        type="checkbox" 
-                        id={`role-${role}`}
-                        checked={allowedRoles.includes(role)}
-                        onChange={() => handleRoleToggle(role)}
-                        className="h-4 w-4 rounded border-gray-300"
-                      />
-                      <label htmlFor={`role-${role}`} className="text-sm">
-                        {role.charAt(0).toUpperCase() + role.slice(1)}
-                      </label>
-                    </div>
-                  ))}
-                </div>
-                <Button onClick={handleSavePermissions} className="mt-4">Salvar Permissões</Button>
+      <Card>
+        <CardHeader>
+          <CardTitle>Gerenciamento de Usuários</CardTitle>
+          <CardDescription>
+            Configure as permissões e funções dos usuários do sistema
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          {isLoading ? (
+            <div className="space-y-4">
+              {Array.from({ length: 5 }).map((_, i) => (
+                <div key={i} className="h-12 bg-muted animate-pulse rounded" />
+              ))}
+            </div>
+          ) : (
+            <>
+              <div className="rounded-md border overflow-x-auto">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Usuário</TableHead>
+                      <TableHead>Email</TableHead>
+                      <TableHead>Função Atual</TableHead>
+                      <TableHead>Último Acesso</TableHead>
+                      <TableHead>Alterar Função</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {paginatedUsers.map((user) => (
+                      <TableRow key={user.id}>
+                        <TableCell className="font-medium">{user.name}</TableCell>
+                        <TableCell>{user.email}</TableCell>
+                        <TableCell>{getRoleBadge(user.role)}</TableCell>
+                        <TableCell>{formatDate(user.lastLogin)}</TableCell>
+                        <TableCell>
+                          <Select 
+                            value={user.role} 
+                            onValueChange={(value) => handleRoleChange(user.id, value)}
+                          >
+                            <SelectTrigger className="w-[180px]">
+                              <SelectValue placeholder="Selecionar função" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value={UserRole.ADMIN}>Administrador</SelectItem>
+                              <SelectItem value={UserRole.FINANCIAL}>Financeiro</SelectItem>
+                              <SelectItem value={UserRole.LOGISTICS}>Logística</SelectItem>
+                              <SelectItem value={UserRole.PARTNER}>Parceiro</SelectItem>
+                              <SelectItem value={UserRole.CLIENT}>Cliente</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
               </div>
-
-              <Separator className="my-6" />
-
-              <div>
-                <h3 className="text-base font-semibold mb-4">Usuários do Sistema</h3>
-                {loadingUsers ? (
-                  <p>Carregando usuários...</p>
-                ) : (
-                  <div className="overflow-x-auto">
-                    <Table>
-                      <TableHeader>
-                        <TableRow>
-                          <TableHead>Nome</TableHead>
-                          <TableHead>Email</TableHead>
-                          <TableHead>Função</TableHead>
-                          <TableHead>Ações</TableHead>
-                        </TableRow>
-                      </TableHeader>
-                      <TableBody>
-                        {users.length === 0 ? (
-                          <TableRow>
-                            <TableCell colSpan={4} className="text-center">
-                              Nenhum usuário encontrado
-                            </TableCell>
-                          </TableRow>
-                        ) : (
-                          users.map((user) => (
-                            <TableRow key={user.id}>
-                              <TableCell>{user.name}</TableCell>
-                              <TableCell>{user.email}</TableCell>
-                              <TableCell>
-                                <Select
-                                  value={user.role}
-                                  onValueChange={(value) => handleRoleChange(user.id, value)}
-                                >
-                                  <SelectTrigger className="w-full">
-                                    <SelectValue placeholder="Selecione uma função" />
-                                  </SelectTrigger>
-                                  <SelectContent>
-                                    {Object.values(UserRole).map((role) => (
-                                      <SelectItem key={role} value={role}>
-                                        {role.charAt(0).toUpperCase() + role.slice(1)}
-                                      </SelectItem>
-                                    ))}
-                                  </SelectContent>
-                                </Select>
-                              </TableCell>
-                              <TableCell>
-                                <Button 
-                                  variant="outline" 
-                                  size="sm"
-                                  onClick={() => {
-                                    toast({
-                                      title: "Ação em desenvolvimento",
-                                      description: "Esta funcionalidade será implementada em breve."
-                                    });
-                                  }}
-                                >
-                                  Detalhes
-                                </Button>
-                              </TableCell>
-                            </TableRow>
-                          ))
-                        )}
-                      </TableBody>
-                    </Table>
-                  </div>
-                )}
-              </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        {/* Notifications Tab */}
-        <TabsContent value="notifications">
-          <Card>
-            <CardHeader>
-              <CardTitle>Enviar Notificações</CardTitle>
-              <CardDescription>
-                Envie notificações e comunicados para os usuários do sistema.
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="notification-title">Título</Label>
-                <Input
-                  id="notification-title"
-                  value={notificationSettings.title}
-                  onChange={(e) => handleNotificationChange('title', e.target.value)}
-                  placeholder="Digite o título da notificação"
+              
+              <div className="mt-4">
+                <TablePagination
+                  currentPage={currentPage}
+                  totalPages={totalPages}
+                  onPageChange={setCurrentPage}
                 />
               </div>
-              
-              <div className="space-y-2">
-                <Label htmlFor="notification-message">Mensagem</Label>
-                <Input
-                  id="notification-message"
-                  value={notificationSettings.message}
-                  onChange={(e) => handleNotificationChange('message', e.target.value)}
-                  placeholder="Digite a mensagem da notificação"
-                  className="min-h-[100px]"
-                />
-              </div>
-              
-              <div className="space-y-2">
-                <Label htmlFor="notification-recipients">Destinatários</Label>
-                <Select
-                  value={notificationSettings.recipients}
-                  onValueChange={(value: any) => handleNotificationChange('recipients', value)}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Selecione os destinatários" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="ALL">Todos os usuários</SelectItem>
-                    <SelectItem value="CLIENTS">Somente clientes</SelectItem>
-                    <SelectItem value="PARTNERS">Somente parceiros</SelectItem>
-                    <SelectItem value="SPECIFIC">Usuário específico</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              
-              {notificationSettings.recipients === 'SPECIFIC' && (
-                <div className="space-y-2">
-                  <Label htmlFor="specific-user">Selecione o usuário</Label>
-                  <Select
-                    value={notificationSettings.specificUser || "no-user"}
-                    onValueChange={(value) => handleNotificationChange('specificUser', value)}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Selecione um usuário" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="no-user">Escolha um usuário</SelectItem>
-                      {users.map((user) => (
-                        <SelectItem key={user.id} value={user.id}>
-                          {user.name} ({user.email})
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-              )}
-              
-              <Button 
-                onClick={handleSendNotification} 
-                disabled={isLoading || !notificationSettings.title || !notificationSettings.message}
-                className="w-full mt-4"
-              >
-                {isLoading ? "Enviando..." : "Enviar Notificação"}
-              </Button>
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        {/* Security Tab */}
-        <TabsContent value="security">
-          <SecuritySettings />
-        </TabsContent>
-      </Tabs>
+            </>
+          )}
+        </CardContent>
+      </Card>
     </div>
   );
 };
 
-export default AdminSettings;
+export default Settings;

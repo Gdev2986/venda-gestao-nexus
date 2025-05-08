@@ -30,8 +30,8 @@ export const useAdminPayments = ({ searchTerm, statusFilter, page }: UseAdminPay
     }
 
     if (statusFilter !== 'ALL') {
-      // Convert the statusFilter to string to ensure type compatibility
-      query = query.eq('status', statusFilter as string);
+      // Convert the statusFilter to the appropriate PaymentStatus enum
+      query = query.eq('status', statusFilter);
     }
 
     const { data, error, count } = await query;
@@ -45,7 +45,7 @@ export const useAdminPayments = ({ searchTerm, statusFilter, page }: UseAdminPay
     return {
       data: data.map(item => ({
         ...item,
-        status: item.status as unknown as PaymentStatus
+        status: item.status as PaymentStatus
       })) as Payment[],
       totalCount: count || 0,
     };
