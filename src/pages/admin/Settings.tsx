@@ -24,6 +24,10 @@ interface UserProfile {
   name: string;
   role: UserRole;
   created_at: string;
+  // Add other properties if needed
+  avatar?: string;
+  phone?: string;
+  updated_at?: string;
 }
 
 // Notification type
@@ -61,7 +65,8 @@ const AdminSettings = () => {
 
         if (error) throw error;
         
-        setUsers(data as UserProfile[]);
+        // Cast the data to UserProfile[] to handle the type mismatch
+        setUsers(data as unknown as UserProfile[]);
       } catch (error) {
         console.error("Error fetching users:", error);
         toast({
@@ -103,7 +108,7 @@ const AdminSettings = () => {
   }, [toast]);
 
   // Handle role change for a user
-  const handleRoleChange = async (userId: string, newRole: UserRole) => {
+  const handleRoleChange = async (userId: string, newRole: string) => {
     try {
       const { error } = await supabase
         .from('profiles')
@@ -112,8 +117,9 @@ const AdminSettings = () => {
 
       if (error) throw error;
 
+      // Update the users state with the new role
       setUsers(users.map(user => 
-        user.id === userId ? { ...user, role: newRole } : user
+        user.id === userId ? { ...user, role: newRole as UserRole } : user
       ));
 
       toast({
@@ -318,7 +324,7 @@ const AdminSettings = () => {
                               <TableCell>
                                 <Select
                                   value={user.role}
-                                  onValueChange={(value) => handleRoleChange(user.id, value as UserRole)}
+                                  onValueChange={(value) => handleRoleChange(user.id, value)}
                                 >
                                   <SelectTrigger className="w-full">
                                     <SelectValue placeholder="Selecione uma função" />
@@ -411,13 +417,14 @@ const AdminSettings = () => {
                 <div className="space-y-2">
                   <Label htmlFor="specific-user">Selecione o usuário</Label>
                   <Select
-                    value={notificationSettings.specificUser}
+                    value={notificationSettings.specificUser || "no-user"}
                     onValueChange={(value) => handleNotificationChange('specificUser', value)}
                   >
                     <SelectTrigger>
                       <SelectValue placeholder="Selecione um usuário" />
                     </SelectTrigger>
                     <SelectContent>
+                      <SelectItem value="no-user">Escolha um usuário</SelectItem>
                       {users.map((user) => (
                         <SelectItem key={user.id} value={user.id}>
                           {user.name} ({user.email})

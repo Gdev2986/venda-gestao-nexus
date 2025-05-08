@@ -143,14 +143,14 @@ const SalesFilters = ({
         {/* Payment Method Filter */}
         <div className="flex-1">
           <Select
-            value={filters.paymentMethod || ""}
-            onValueChange={(value) => onFilterChange("paymentMethod", value || undefined)}
+            value={filters.paymentMethod || "all"}
+            onValueChange={(value) => onFilterChange("paymentMethod", value === "all" ? undefined : value)}
           >
             <SelectTrigger>
               <SelectValue placeholder="Forma de Pagamento" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="">Todas as formas</SelectItem>
+              <SelectItem value="all">Todas as formas</SelectItem>
               {PAYMENT_METHODS.map((method) => (
                 <SelectItem key={method.value} value={method.value}>
                   {method.label}
@@ -163,14 +163,14 @@ const SalesFilters = ({
         {/* Terminal Filter */}
         <div className="flex-1">
           <Select
-            value={filters.terminal || ""}
-            onValueChange={(value) => onFilterChange("terminal", value || undefined)}
+            value={filters.terminal || "all"}
+            onValueChange={(value) => onFilterChange("terminal", value === "all" ? undefined : value)}
           >
             <SelectTrigger>
               <SelectValue placeholder="Terminal" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="">Todos os terminais</SelectItem>
+              <SelectItem value="all">Todos os terminais</SelectItem>
               {TERMINALS.map((terminal) => (
                 <SelectItem key={terminal} value={terminal}>
                   {terminal}

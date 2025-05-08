@@ -99,17 +99,17 @@ const AdminSalesFilters = ({
       <div className="space-y-2">
         <label className="text-sm font-medium">Forma de Pagamento</label>
         <Select 
-          value={filters.paymentMethod || ""} 
+          value={filters.paymentMethod || "all"} 
           onValueChange={(value) => onFilterChange({
             ...filters,
-            paymentMethod: value || undefined
+            paymentMethod: value === "all" ? undefined : value
           })}
         >
           <SelectTrigger>
             <SelectValue placeholder="Selecione..." />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="">Todas</SelectItem>
+            <SelectItem value="all">Todas</SelectItem>
             {PAYMENT_METHODS.map(method => (
               <SelectItem key={method.value} value={method.value}>
                 {method.label}

@@ -53,14 +53,14 @@ const BasicFilters = ({ filters, onFilterChange }: BasicFiltersProps) => {
       <div className="w-full sm:w-1/3">
         <Label htmlFor="paymentMethod" className="mb-1 block">Forma de Pagamento</Label>
         <Select
-          value={filters.paymentMethod || ""}
-          onValueChange={(value) => onFilterChange("paymentMethod", value || undefined)}
+          value={filters.paymentMethod || "all"}
+          onValueChange={(value) => onFilterChange("paymentMethod", value === "all" ? undefined : value)}
         >
           <SelectTrigger id="paymentMethod">
             <SelectValue placeholder="Qualquer método" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="">Qualquer método</SelectItem>
+            <SelectItem value="all">Qualquer método</SelectItem>
             {PAYMENT_METHODS.map((method) => (
               <SelectItem key={method.value} value={method.value}>
                 {method.label}
@@ -74,14 +74,14 @@ const BasicFilters = ({ filters, onFilterChange }: BasicFiltersProps) => {
       <div className="w-full sm:w-1/3">
         <Label htmlFor="terminal" className="mb-1 block">Terminal</Label>
         <Select
-          value={filters.terminal || ""}
-          onValueChange={(value) => onFilterChange("terminal", value || undefined)}
+          value={filters.terminal || "all"}
+          onValueChange={(value) => onFilterChange("terminal", value === "all" ? undefined : value)}
         >
           <SelectTrigger id="terminal">
             <SelectValue placeholder="Qualquer terminal" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="">Qualquer terminal</SelectItem>
+            <SelectItem value="all">Qualquer terminal</SelectItem>
             {TERMINALS.map((terminal) => (
               <SelectItem key={terminal} value={terminal}>
                 {terminal}
@@ -95,14 +95,14 @@ const BasicFilters = ({ filters, onFilterChange }: BasicFiltersProps) => {
       <div className="w-full sm:w-1/3">
         <Label htmlFor="hourRange" className="mb-1 block">Horário</Label>
         <Select
-          value={filters.startHour !== undefined ? `${filters.startHour}-${filters.endHour}` : ""}
+          value={filters.startHour !== undefined ? `${filters.startHour}-${filters.endHour}` : "all"}
           onValueChange={handleHourRangeChange}
         >
           <SelectTrigger id="hourRange">
             <SelectValue placeholder="Qualquer horário" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="">Qualquer horário</SelectItem>
+            <SelectItem value="all">Qualquer horário</SelectItem>
             {HOUR_RANGES.map((range, index) => (
               <SelectItem key={index} value={range.value.join('-')}>
                 {range.label}
