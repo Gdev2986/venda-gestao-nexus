@@ -2,7 +2,6 @@
 import { CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Slider } from "@/components/ui/slider";
 import { 
   Select, 
   SelectContent, 
@@ -19,7 +18,7 @@ import {
 import { CalendarIcon, Search } from "lucide-react";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { SalesFilterParams } from "@/types";
 import { TimeRangePicker } from "../../../components/sales/filters";
 
@@ -54,18 +53,13 @@ const AdminSalesFilters = ({
     filters.startHour || 0,
     filters.endHour || 23
   ]);
+  const [amountValue, setAmountValue] = useState(
+    filters.minAmount ? filters.minAmount.toString().replace(".", ",") : ""
+  );
 
   const handleSearchSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     onFilterChange({ ...filters, search: searchValue });
-  };
-
-  const handleAmountFilterChange = (values: number[]) => {
-    onFilterChange({
-      ...filters,
-      minAmount: values[0],
-      maxAmount: values[1]
-    });
   };
 
   const handleTimeRangeChange = (values: [number, number]) => {
@@ -75,6 +69,31 @@ const AdminSalesFilters = ({
       startHour: values[0],
       endHour: values[1]
     });
+  };
+
+  const handleAmountChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setAmountValue(e.target.value);
+  };
+
+  const handleAmountBlur = () => {
+    if (amountValue) {
+      // Convert comma to dot for numeric value
+      const numValue = parseFloat(amountValue.replace(/\./g, "").replace(",", "."));
+      if (!isNaN(numValue)) {
+        onFilterChange({
+          ...filters,
+          minAmount: numValue,
+          maxAmount: undefined
+        });
+      }
+    } else {
+      // Clear the filter if input is empty
+      onFilterChange({
+        ...filters,
+        minAmount: undefined,
+        maxAmount: undefined
+      });
+    }
   };
 
   return (
@@ -119,20 +138,19 @@ const AdminSalesFilters = ({
             </Select>
           </div>
 
-          {/* Amount Range Filter */}
+          {/* Amount Filter (specific value input) */}
           <div>
-            <div className="flex justify-between text-sm font-medium mb-1">
-              <span>Faixa de Valor (R$)</span>
-              <span className="text-muted-foreground">
-                {filters.minAmount || 0} - {filters.maxAmount || 5000}
-              </span>
+            <label className="text-sm font-medium mb-1 block">Valor (R$)</label>
+            <div className="relative">
+              <span className="absolute left-3 top-2.5 text-muted-foreground">R$</span>
+              <Input 
+                value={amountValue}
+                onChange={handleAmountChange}
+                onBlur={handleAmountBlur}
+                className="pl-10"
+                placeholder="1.500,50"
+              />
             </div>
-            <Slider
-              defaultValue={[filters.minAmount || 0, filters.maxAmount || 5000]}
-              max={5000}
-              step={100}
-              onValueChange={handleAmountFilterChange}
-            />
           </div>
         </div>
 

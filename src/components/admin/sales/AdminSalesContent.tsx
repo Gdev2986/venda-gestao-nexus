@@ -72,15 +72,14 @@ const AdminSalesContent = ({
       });
     }
     
-    // Apply additional advanced filters
-    if (filters.minAmount) {
-      result = result.filter(sale => sale.gross_amount >= filters.minAmount);
+    // Filter by specific amount (if specified)
+    if (filters.minAmount !== undefined) {
+      result = result.filter(sale => 
+        Math.abs(sale.gross_amount - filters.minAmount!) < 0.01 // Using a small epsilon for floating-point comparison
+      );
     }
     
-    if (filters.maxAmount) {
-      result = result.filter(sale => sale.gross_amount <= filters.maxAmount);
-    }
-    
+    // Filter by time range
     if (filters.startHour !== undefined && filters.endHour !== undefined) {
       result = result.filter(sale => {
         const saleHour = new Date(sale.date).getHours();
