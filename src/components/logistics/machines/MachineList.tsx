@@ -1,3 +1,4 @@
+
 // Importações necessárias
 import React, { useState } from "react";
 import {
@@ -43,8 +44,7 @@ import { useToast } from "@/hooks/use-toast";
 import { MoreHorizontal, Copy, Edit, Trash } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import { Machine } from "@/types";
-import { Pagination } from "@/components/ui/pagination";
+import { Pagination, PaginationContent, PaginationItem, PaginationLink, PaginationNext, PaginationPrevious } from "@/components/ui/pagination";
 import {
   Select,
   SelectContent,
@@ -68,10 +68,11 @@ import { MachineHistoryDialog } from "@/components/logistics/machine-dialogs/Mac
 import MachineTransferDialog from "@/components/logistics/machine-dialogs/MachineTransferDialog";
 
 interface DataTableProps {
-  data: Machine[];
+  data: MachineType[];
 }
 
-interface Machine {
+// Define the MachineType interface to avoid conflict with the component name
+interface MachineType {
   id: string;
   name: string;
   client_id: string;
@@ -91,7 +92,7 @@ export function MachineList({ data }: DataTableProps) {
   const [status, setStatus] = React.useState<string | undefined>(undefined);
   const [search, setSearch] = React.useState("");
   const [page, setPage] = React.useState(1);
-  const [selectedMachine, setSelectedMachine] = useState<Machine | null>(null);
+  const [selectedMachine, setSelectedMachine] = useState<MachineType | null>(null);
   const [showHistoryDialog, setShowHistoryDialog] = useState(false);
   const [showTransferDialog, setShowTransferDialog] = useState(false);
   const { toast } = useToast();
@@ -118,26 +119,26 @@ export function MachineList({ data }: DataTableProps) {
     });
   };
 
-  const handleEditMachine = (machine: Machine) => {
+  const handleEditMachine = (machine: MachineType) => {
     toast({
       title: "Editar máquina",
       description: `Editando a máquina ${machine.name}.`,
     });
   };
 
-  const handleDeleteMachine = (machine: Machine) => {
+  const handleDeleteMachine = (machine: MachineType) => {
     toast({
       title: "Deletar máquina",
       description: `Deletando a máquina ${machine.name}.`,
     });
   };
 
-  const handleViewHistory = (machine: Machine) => {
+  const handleViewHistory = (machine: MachineType) => {
     setSelectedMachine(machine);
     setShowHistoryDialog(true);
   };
 
-  const handleTransferMachine = (machine: Machine) => {
+  const handleTransferMachine = (machine: MachineType) => {
     setSelectedMachine(machine);
     setShowTransferDialog(true);
   };
@@ -246,20 +247,42 @@ export function MachineList({ data }: DataTableProps) {
           <div className="text-sm text-muted-foreground">
             Total de máquinas: {filteredData.length}
           </div>
-          <Pagination
-            page={page}
-            setPage={setPage}
-            totalPages={totalPages}
-          />
+          <div className="flex items-center justify-center space-x-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setPage(Math.max(1, page - 1))}
+              disabled={page === 1}
+            >
+              <PaginationPrevious className="h-4 w-4" />
+            </Button>
+            {Array.from({ length: Math.min(totalPages, 5) }, (_, i) => (
+              <Button
+                key={i + 1}
+                variant={page === i + 1 ? "default" : "outline"}
+                size="sm"
+                onClick={() => setPage(i + 1)}
+              >
+                {i + 1}
+              </Button>
+            ))}
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setPage(Math.min(totalPages, page + 1))}
+              disabled={page === totalPages}
+            >
+              <PaginationNext className="h-4 w-4" />
+            </Button>
+          </div>
         </div>
       </CardContent>
 
       {showHistoryDialog && selectedMachine && (
         <MachineHistoryDialog
-          open={showHistoryDialog}
-          onOpenChange={() => setShowHistoryDialog(false)}
           machineId={selectedMachine.id}
           machineName={selectedMachine.name}
+          onOpenChange={() => setShowHistoryDialog(false)}
         />
       )}
 
@@ -277,3 +300,6 @@ export function MachineList({ data }: DataTableProps) {
     </Card>
   );
 }
+
+// Add a default export for the component
+export default MachineList;

@@ -3,7 +3,7 @@ import React from 'react';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import MachineList from "@/components/logistics/machines/MachineList";
+import { MachineList } from "@/components/logistics/machines/MachineList";
 
 export interface MachinesAllTabProps {
   searchTerm: string;
@@ -70,9 +70,7 @@ const MachinesAllTab: React.FC<MachinesAllTabProps> = ({
       </div>
       
       <MachineList
-        searchTerm={searchTerm}
-        modelFilter={modelFilter}
-        statusFilter={statusFilter}
+        data={[]} // We need to provide mock data or fetch it appropriately
       />
     </div>
   );

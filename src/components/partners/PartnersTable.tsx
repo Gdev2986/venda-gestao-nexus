@@ -1,3 +1,4 @@
+
 import React from "react";
 import { Partner } from "@/types";
 import {
@@ -91,7 +92,7 @@ const PartnersTable = ({
                       <TableCell>{partner.contact_name}</TableCell>
                       <TableCell>{partner.email}</TableCell>
                       <TableCell>{partner.phone}</TableCell>
-                      <TableCell className="text-right">{partner.total_sales}</TableCell>
+                      <TableCell className="text-right">{partner.total_sales ?? 0}</TableCell>
                       <TableCell className="text-right">
                         <div className="flex justify-end gap-2">
                           <Button variant="outline" size="icon" onClick={() => onView?.(partner)}>
@@ -123,13 +124,17 @@ const PartnersTable = ({
             <Pagination>
               <PaginationContent>
                 <PaginationItem>
-                  <PaginationPrevious
-                    href="#"
+                  <Button 
+                    variant="outline" 
+                    size="icon"
                     onClick={(e) => {
                       e.preventDefault();
                       if (page && page > 1 && setPage) setPage(page - 1);
                     }}
-                  />
+                    disabled={page <= 1}
+                  >
+                    <PaginationPrevious className="h-4 w-4" />
+                  </Button>
                 </PaginationItem>
                 {page && totalPages &&
                   Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
@@ -147,16 +152,15 @@ const PartnersTable = ({
 
                     return (
                       <PaginationItem key={pageNumber}>
-                        <PaginationLink
-                          href="#"
+                        <Button
+                          variant={pageNumber === page ? "default" : "outline"}
                           onClick={(e) => {
                             e.preventDefault();
                             setPage?.(pageNumber);
                           }}
-                          isCurrent={pageNumber === page}
                         >
                           {pageNumber}
-                        </PaginationLink>
+                        </Button>
                       </PaginationItem>
                     );
                   })}
@@ -166,13 +170,17 @@ const PartnersTable = ({
                   </PaginationItem>
                 )}
                 <PaginationItem>
-                  <PaginationNext
-                    href="#"
+                  <Button
+                    variant="outline"
+                    size="icon"
                     onClick={(e) => {
                       e.preventDefault();
                       if (page && totalPages && page < totalPages && setPage) setPage(page + 1);
                     }}
-                  />
+                    disabled={page >= totalPages}
+                  >
+                    <PaginationNext className="h-4 w-4" />
+                  </Button>
                 </PaginationItem>
               </PaginationContent>
             </Pagination>

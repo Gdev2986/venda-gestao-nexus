@@ -22,7 +22,7 @@ export interface MachineTransferDialogProps {
   onTransferComplete?: () => void;
 }
 
-export const MachineTransferDialog = ({
+const MachineTransferDialog = ({
   open,
   onOpenChange,
   machineId,
@@ -81,7 +81,7 @@ export const MachineTransferDialog = ({
         </DialogHeader>
         
         <MachineTransferForm
-          machines={[{ id: machineId || '', name: machineName || '' }]}
+          machines={machineId ? [{ id: machineId, name: machineName || '' }] : []}
           currentClientId={currentClientId}
           onSubmit={handleTransfer}
           isSubmitting={isSubmitting}

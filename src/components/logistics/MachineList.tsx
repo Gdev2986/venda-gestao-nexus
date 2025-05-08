@@ -1,3 +1,4 @@
+
 import { useState, useEffect, useCallback } from "react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -239,47 +240,40 @@ const MachineList: React.FC<MachineListProps> = ({
 
         {machines.length > 0 && (
           <div className="absolute bottom-2 left-2 right-2 z-10">
-            <Pagination className="w-full justify-center">
-              <PaginationContent>
-                <PaginationItem>
-                  <Button 
-                    onClick={() => handlePageChange(currentPage - 1)}
-                    disabled={currentPage === 1}
-                    variant="outline"
-                    size="sm"
-                    className="h-9 w-9 p-0"
-                  >
-                    <span className="sr-only">Previous page</span>
-                    <PaginationPrevious className="h-4 w-4" />
-                  </Button>
-                </PaginationItem>
+            <div className="flex justify-center">
+              <div className="flex items-center space-x-2">
+                <Button 
+                  onClick={() => handlePageChange(currentPage - 1)}
+                  disabled={currentPage === 1}
+                  variant="outline"
+                  size="sm"
+                  className="h-9 w-9 p-0"
+                >
+                  <PaginationPrevious className="h-4 w-4" />
+                </Button>
                 {/* Display page numbers */}
                 {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
-                  <PaginationItem key={page}>
-                    <Button
-                      variant={currentPage === page ? "default" : "outline"}
-                      size="sm"
-                      onClick={() => handlePageChange(page)}
-                      className={currentPage === page ? "pointer-events-none" : ""}
-                    >
-                      {page}
-                    </Button>
-                  </PaginationItem>
-                ))}
-                <PaginationItem>
-                  <Button 
-                    onClick={() => handlePageChange(currentPage + 1)}
-                    disabled={currentPage === totalPages}
-                    variant="outline"
+                  <Button
+                    key={page}
+                    variant={currentPage === page ? "default" : "outline"}
                     size="sm"
-                    className="h-9 w-9 p-0"
+                    onClick={() => handlePageChange(page)}
+                    className={currentPage === page ? "pointer-events-none" : ""}
                   >
-                    <span className="sr-only">Next page</span>
-                    <PaginationNext className="h-4 w-4" />
+                    {page}
                   </Button>
-                </PaginationItem>
-              </PaginationContent>
-            </Pagination>
+                ))}
+                <Button 
+                  onClick={() => handlePageChange(currentPage + 1)}
+                  disabled={currentPage === totalPages}
+                  variant="outline"
+                  size="sm"
+                  className="h-9 w-9 p-0"
+                >
+                  <PaginationNext className="h-4 w-4" />
+                </Button>
+              </div>
+            </div>
           </div>
         )}
 
@@ -287,8 +281,9 @@ const MachineList: React.FC<MachineListProps> = ({
         <MachineTransferDialog
           open={transferDialogIsOpen} 
           onOpenChange={handleCloseTransferDialog}
-          machine={selectedMachine}
-          onTransferred={handleRefreshData}
+          machineId={selectedMachine.id}
+          machineName={selectedMachine.serial_number}
+          onTransferComplete={handleRefreshData}
         />
       )}
       </CardContent>
