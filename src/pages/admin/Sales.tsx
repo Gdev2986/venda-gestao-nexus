@@ -19,7 +19,7 @@ const AdminSales = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [sales, setSales] = useState([]);
   const [page, setPage] = useState(1);
-  const [itemsPerPage] = useState(50); // Changed to 50 items per page
+  const [itemsPerPage] = useState(50); // 50 items per page
   const [filters, setFilters] = useState<SalesFilterParams>({});
   const [dateRange, setDateRange] = useState<DateRange | undefined>();
   const [showImportDialog, setShowImportDialog] = useState(false);
@@ -93,7 +93,7 @@ const AdminSales = () => {
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
           {/* Filters Card - 2/3 width */}
           <Card className="md:col-span-2">
-            <CardHeader>
+            <CardHeader className="pb-2">
               <CardTitle>Filtros</CardTitle>
             </CardHeader>
             <AdminSalesFilters 
@@ -107,7 +107,7 @@ const AdminSales = () => {
           
           {/* Uploader Card - 1/3 width */}
           <Card className="md:col-span-1">
-            <CardHeader>
+            <CardHeader className="pb-2">
               <CardTitle>Upload de Vendas</CardTitle>
             </CardHeader>
             <CardContent>

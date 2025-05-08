@@ -50,8 +50,6 @@ const AdminSalesFilters = ({
   onClearFilters
 }: AdminSalesFiltersProps) => {
   const [searchValue, setSearchValue] = useState(filters.search || "");
-  const [minAmount, setMinAmount] = useState(filters.minAmount || 0);
-  const [maxAmount, setMaxAmount] = useState(filters.maxAmount || 5000);
   const [timeRange, setTimeRange] = useState<[number, number]>([
     filters.startHour || 0,
     filters.endHour || 23
@@ -63,8 +61,6 @@ const AdminSalesFilters = ({
   };
 
   const handleAmountFilterChange = (values: number[]) => {
-    setMinAmount(values[0]);
-    setMaxAmount(values[1]);
     onFilterChange({
       ...filters,
       minAmount: values[0],
@@ -82,119 +78,127 @@ const AdminSalesFilters = ({
   };
 
   return (
-    <CardContent className="space-y-6">
-      {/* Search Filter */}
-      <form onSubmit={handleSearchSubmit}>
-        <div className="relative">
-          <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
-          <Input
-            placeholder="Buscar vendas..."
-            className="pl-8"
-            value={searchValue}
-            onChange={(e) => setSearchValue(e.target.value)}
-          />
-        </div>
-      </form>
+    <CardContent className="p-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        {/* Left column with search and payment method */}
+        <div className="space-y-3">
+          {/* Search Filter */}
+          <form onSubmit={handleSearchSubmit}>
+            <div className="relative">
+              <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
+              <Input
+                placeholder="Buscar vendas..."
+                className="pl-8"
+                value={searchValue}
+                onChange={(e) => setSearchValue(e.target.value)}
+              />
+            </div>
+          </form>
 
-      {/* Payment Method Filter */}
-      <div className="space-y-2">
-        <label className="text-sm font-medium">Forma de Pagamento</label>
-        <Select 
-          value={filters.paymentMethod || "all"} 
-          onValueChange={(value) => onFilterChange({
-            ...filters,
-            paymentMethod: value === "all" ? undefined : value
-          })}
-        >
-          <SelectTrigger>
-            <SelectValue placeholder="Selecione..." />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">Todas</SelectItem>
-            {PAYMENT_METHODS.map(method => (
-              <SelectItem key={method.value} value={method.value}>
-                {method.label}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-      </div>
-
-      {/* Date Range Filter */}
-      <div className="space-y-2">
-        <label className="text-sm font-medium">Período</label>
-        <Popover>
-          <PopoverTrigger asChild>
-            <Button
-              variant="outline"
-              className={cn(
-                "w-full justify-start text-left font-normal",
-                !dateRange && "text-muted-foreground"
-              )}
+          {/* Payment Method Filter */}
+          <div>
+            <label className="text-sm font-medium mb-1 block">Forma de Pagamento</label>
+            <Select 
+              value={filters.paymentMethod || "all"} 
+              onValueChange={(value) => onFilterChange({
+                ...filters,
+                paymentMethod: value === "all" ? undefined : value
+              })}
             >
-              <CalendarIcon className="mr-2 h-4 w-4" />
-              {dateRange?.from ? (
-                dateRange.to ? (
-                  <>
-                    {format(dateRange.from, "dd/MM/yyyy")} -{" "}
-                    {format(dateRange.to, "dd/MM/yyyy")}
-                  </>
-                ) : (
-                  format(dateRange.from, "dd/MM/yyyy")
-                )
-              ) : (
-                <span>Selecione o período</span>
-              )}
-            </Button>
-          </PopoverTrigger>
-          <PopoverContent className="w-auto p-0" align="start">
-            <Calendar
-              initialFocus
-              mode="range"
-              defaultMonth={dateRange?.from}
-              selected={dateRange}
-              onSelect={onDateRangeChange}
-              numberOfMonths={2}
-              className="pointer-events-auto"
-            />
-          </PopoverContent>
-        </Popover>
-      </div>
+              <SelectTrigger>
+                <SelectValue placeholder="Selecione..." />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Todas</SelectItem>
+                {PAYMENT_METHODS.map(method => (
+                  <SelectItem key={method.value} value={method.value}>
+                    {method.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
 
-      {/* Amount Range Filter */}
-      <div className="space-y-4">
-        <label className="text-sm font-medium">Faixa de Valor (R$)</label>
-        <Slider
-          defaultValue={[minAmount, maxAmount]}
-          max={5000}
-          step={100}
-          onValueChange={handleAmountFilterChange}
-          className="my-6"
-        />
-        <div className="flex items-center justify-between text-sm">
-          <span>R$ {minAmount}</span>
-          <span>R$ {maxAmount}</span>
+          {/* Amount Range Filter */}
+          <div>
+            <div className="flex justify-between text-sm font-medium mb-1">
+              <span>Faixa de Valor (R$)</span>
+              <span className="text-muted-foreground">
+                {filters.minAmount || 0} - {filters.maxAmount || 5000}
+              </span>
+            </div>
+            <Slider
+              defaultValue={[filters.minAmount || 0, filters.maxAmount || 5000]}
+              max={5000}
+              step={100}
+              onValueChange={handleAmountFilterChange}
+            />
+          </div>
+        </div>
+
+        {/* Right column with date and time */}
+        <div className="space-y-3">
+          {/* Date Range Filter */}
+          <div>
+            <label className="text-sm font-medium mb-1 block">Período</label>
+            <Popover>
+              <PopoverTrigger asChild>
+                <Button
+                  variant="outline"
+                  className={cn(
+                    "w-full justify-start text-left font-normal",
+                    !dateRange && "text-muted-foreground"
+                  )}
+                >
+                  <CalendarIcon className="mr-2 h-4 w-4" />
+                  {dateRange?.from ? (
+                    dateRange.to ? (
+                      <>
+                        {format(dateRange.from, "dd/MM/yyyy")} -{" "}
+                        {format(dateRange.to, "dd/MM/yyyy")}
+                      </>
+                    ) : (
+                      format(dateRange.from, "dd/MM/yyyy")
+                    )
+                  ) : (
+                    <span>Selecione o período</span>
+                  )}
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-auto p-0" align="start">
+                <Calendar
+                  initialFocus
+                  mode="range"
+                  defaultMonth={dateRange?.from}
+                  selected={dateRange}
+                  onSelect={onDateRangeChange}
+                  numberOfMonths={2}
+                  className="pointer-events-auto"
+                />
+              </PopoverContent>
+            </Popover>
+          </div>
+
+          {/* Time Range Filter */}
+          <div>
+            <label className="text-sm font-medium mb-1 block">Horário</label>
+            <TimeRangePicker
+              value={timeRange}
+              onChange={handleTimeRangeChange}
+              className="w-full"
+            />
+          </div>
+
+          {/* Clear Filters Button */}
+          <Button 
+            variant="outline" 
+            className="w-full mt-2" 
+            onClick={onClearFilters}
+          >
+            Limpar Filtros
+          </Button>
         </div>
       </div>
-
-      {/* Time Range Filter */}
-      <div className="space-y-2">
-        <label className="text-sm font-medium">Horário (h)</label>
-        <TimeRangePicker
-          value={timeRange}
-          onChange={handleTimeRangeChange}
-          className="w-full"
-        />
-      </div>
-
-      {/* Clear Filters Button */}
-      <Button 
-        variant="outline" 
-        className="w-full" 
-        onClick={onClearFilters}
-      >
-        Limpar Filtros
-      </Button>
     </CardContent>
   );
 };

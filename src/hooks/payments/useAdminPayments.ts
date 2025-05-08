@@ -31,7 +31,8 @@ export const useAdminPayments = ({ searchTerm, statusFilter, page }: UseAdminPay
 
     if (statusFilter !== 'ALL') {
       // Convert to lowercase for database compatibility
-      query = query.eq('status', statusFilter.toLowerCase());
+      const dbStatus = statusFilter.toLowerCase();
+      query = query.eq('status', dbStatus);
     }
 
     const { data, error, count } = await query;

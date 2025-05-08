@@ -68,7 +68,7 @@ const TimeRangePicker = ({
             id="time"
             variant="outline"
             className={cn(
-              "w-[240px] justify-start text-left font-normal",
+              "w-full justify-start text-left font-normal",
               "text-muted-foreground"
             )}
           >
@@ -79,54 +79,52 @@ const TimeRangePicker = ({
           </Button>
         </PopoverTrigger>
         <PopoverContent className="w-auto p-4" align="start">
-          <div className="space-y-6">
-            <div className="space-y-2">
-              <h4 className="font-medium text-sm mb-4">Faixa de horário</h4>
+          <div className="space-y-2">
+            <h4 className="font-medium text-sm">Horário</h4>
+            
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-1">
+                <label className="text-xs text-muted-foreground">De</label>
+                <Select
+                  value={localValue[0].toString()}
+                  onValueChange={handleStartHourChange}
+                >
+                  <SelectTrigger className="h-8">
+                    <SelectValue placeholder="Início" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {hours.map((hour) => (
+                      <SelectItem key={`start-${hour}`} value={hour.toString()}>
+                        {formatHour(hour)}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
               
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <label className="text-sm text-muted-foreground">De</label>
-                  <Select
-                    value={localValue[0].toString()}
-                    onValueChange={handleStartHourChange}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Início" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {hours.map((hour) => (
-                        <SelectItem key={`start-${hour}`} value={hour.toString()}>
-                          {formatHour(hour)}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-                
-                <div className="space-y-2">
-                  <label className="text-sm text-muted-foreground">Até</label>
-                  <Select
-                    value={localValue[1].toString()}
-                    onValueChange={handleEndHourChange}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Fim" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {hours.map((hour) => (
-                        <SelectItem key={`end-${hour}`} value={hour.toString()}>
-                          {formatHour(hour)}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
+              <div className="space-y-1">
+                <label className="text-xs text-muted-foreground">Até</label>
+                <Select
+                  value={localValue[1].toString()}
+                  onValueChange={handleEndHourChange}
+                >
+                  <SelectTrigger className="h-8">
+                    <SelectValue placeholder="Fim" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {hours.map((hour) => (
+                      <SelectItem key={`end-${hour}`} value={hour.toString()}>
+                        {formatHour(hour)}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
             </div>
             
             <Button 
               size="sm" 
-              className="w-full mt-4"
+              className="w-full mt-2"
               onClick={handleApply}
             >
               Aplicar
