@@ -1,3 +1,4 @@
+
 import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { Payment, PaymentStatus } from '@/types';
@@ -29,8 +30,9 @@ export const useAdminPayments = ({ searchTerm, statusFilter, page }: UseAdminPay
     }
 
     if (statusFilter !== 'ALL') {
-      // Ensure we're passing the correct type for the 'status' column
-      query = query.eq('status', statusFilter);
+      // Convert to lowercase to match the database values
+      const dbStatus = statusFilter.toLowerCase();
+      query = query.eq('status', dbStatus);
     }
 
     const { data, error, count } = await query;
@@ -68,11 +70,11 @@ export const useAdminPayments = ({ searchTerm, statusFilter, page }: UseAdminPay
       let updateData: any = {};
 
       if (action === PaymentAction.APPROVE) {
-        updateData = { status: PaymentStatus.APPROVED };
+        updateData = { status: PaymentStatus.APPROVED.toLowerCase() };
       } else if (action === PaymentAction.REJECT) {
-        updateData = { status: PaymentStatus.REJECTED };
+        updateData = { status: PaymentStatus.REJECTED.toLowerCase() };
       } else if (newStatus) {
-        updateData = { status: newStatus };
+        updateData = { status: newStatus.toLowerCase() };
       }
 
       const { error } = await supabase

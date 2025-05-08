@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -31,8 +30,12 @@ interface ProfileData {
   id: string;
   name: string;
   email: string;
-  role: UserRole;
+  role: string; // Changed to string to be compatible with both enum types
   last_login?: string;
+  created_at?: string;
+  updated_at?: string;
+  phone?: string;
+  avatar?: string;
 }
 
 const Settings = () => {
@@ -60,7 +63,20 @@ const Settings = () => {
         }
 
         if (data) {
-          setProfiles(data as ProfileData[]);
+          // Convert the data to ProfileData type
+          const profilesData: ProfileData[] = data.map(item => ({
+            id: item.id,
+            name: item.name,
+            email: item.email,
+            role: item.role,
+            last_login: undefined, // We don't have this data from profiles table
+            created_at: item.created_at,
+            updated_at: item.updated_at,
+            phone: item.phone,
+            avatar: item.avatar
+          }));
+          
+          setProfiles(profilesData);
           if (count !== null) {
             setTotalCount(count);
           }
@@ -82,12 +98,10 @@ const Settings = () => {
 
   // Handle role change
   const handleRoleChange = async (userId: string, newRole: string) => {
-    const validRole = newRole as UserRole;
-    
     try {
       const { error } = await supabase
         .from('profiles')
-        .update({ role: validRole })
+        .update({ role: newRole })
         .eq('id', userId);
 
       if (error) {
@@ -97,13 +111,13 @@ const Settings = () => {
       // Update the local state to reflect the change
       setProfiles(prevProfiles =>
         prevProfiles.map(profile =>
-          profile.id === userId ? { ...profile, role: validRole } : profile
+          profile.id === userId ? { ...profile, role: newRole } : profile
         )
       );
 
       toast({
         title: "Função atualizada",
-        description: `Função do usuário alterada para ${getRoleName(validRole)}`
+        description: `Função do usuário alterada para ${getRoleName(newRole)}`
       });
     } catch (error) {
       console.error("Error updating role:", error);
@@ -116,17 +130,17 @@ const Settings = () => {
   };
 
   // Get role name in Portuguese
-  const getRoleName = (role: UserRole): string => {
+  const getRoleName = (role: string): string => {
     switch(role) {
-      case UserRole.ADMIN:
+      case "ADMIN":
         return "Administrador";
-      case UserRole.FINANCIAL:
+      case "FINANCIAL":
         return "Financeiro";
-      case UserRole.LOGISTICS:
+      case "LOGISTICS":
         return "Logística";
-      case UserRole.PARTNER:
+      case "PARTNER":
         return "Parceiro";
-      case UserRole.CLIENT:
+      case "CLIENT":
         return "Cliente";
       default:
         return role;
@@ -134,17 +148,17 @@ const Settings = () => {
   };
 
   // Get role badge
-  const getRoleBadge = (role: UserRole) => {
+  const getRoleBadge = (role: string) => {
     switch (role) {
-      case UserRole.ADMIN:
+      case "ADMIN":
         return <Badge className="bg-purple-500 hover:bg-purple-600">Administrador</Badge>;
-      case UserRole.FINANCIAL:
+      case "FINANCIAL":
         return <Badge className="bg-blue-500 hover:bg-blue-600">Financeiro</Badge>;
-      case UserRole.LOGISTICS:
+      case "LOGISTICS":
         return <Badge className="bg-green-500 hover:bg-green-600">Logística</Badge>;
-      case UserRole.PARTNER:
+      case "PARTNER":
         return <Badge className="bg-amber-500 hover:bg-amber-600">Parceiro</Badge>;
-      case UserRole.CLIENT:
+      case "CLIENT":
         return <Badge className="bg-gray-500 hover:bg-gray-600">Cliente</Badge>;
       default:
         return <Badge>{role}</Badge>;
@@ -201,6 +215,7 @@ const Settings = () => {
   };
 
   return (
+    
     <div className="container mx-auto py-10">
       <h1 className="text-2xl font-bold mb-6">Configurações do Administrador</h1>
       
@@ -237,7 +252,7 @@ const Settings = () => {
                           <TableHead>Usuário</TableHead>
                           <TableHead>Email</TableHead>
                           <TableHead>Função Atual</TableHead>
-                          <TableHead>Último Acesso</TableHead>
+                          <TableHead>Data de Criação</TableHead>
                           <TableHead>Alterar Função</TableHead>
                         </TableRow>
                       </TableHeader>
@@ -247,7 +262,7 @@ const Settings = () => {
                             <TableCell className="font-medium">{profile.name}</TableCell>
                             <TableCell>{profile.email}</TableCell>
                             <TableCell>{getRoleBadge(profile.role)}</TableCell>
-                            <TableCell>{formatDate(profile.last_login)}</TableCell>
+                            <TableCell>{formatDate(profile.created_at)}</TableCell>
                             <TableCell>
                               <Select 
                                 value={profile.role} 
@@ -257,11 +272,11 @@ const Settings = () => {
                                   <SelectValue placeholder="Selecionar função" />
                                 </SelectTrigger>
                                 <SelectContent>
-                                  <SelectItem value={UserRole.ADMIN}>Administrador</SelectItem>
-                                  <SelectItem value={UserRole.FINANCIAL}>Financeiro</SelectItem>
-                                  <SelectItem value={UserRole.LOGISTICS}>Logística</SelectItem>
-                                  <SelectItem value={UserRole.PARTNER}>Parceiro</SelectItem>
-                                  <SelectItem value={UserRole.CLIENT}>Cliente</SelectItem>
+                                  <SelectItem value="ADMIN">Administrador</SelectItem>
+                                  <SelectItem value="FINANCIAL">Financeiro</SelectItem>
+                                  <SelectItem value="LOGISTICS">Logística</SelectItem>
+                                  <SelectItem value="PARTNER">Parceiro</SelectItem>
+                                  <SelectItem value="CLIENT">Cliente</SelectItem>
                                 </SelectContent>
                               </Select>
                             </TableCell>
@@ -440,43 +455,34 @@ const Settings = () => {
           </div>
         </TabsContent>
         
-        {/* Segurança Tab - Simplified to just change password */}
+        {/* Segurança Tab - Only change password */}
         <TabsContent value="security">
           <Card>
             <CardHeader>
-              <CardTitle>Configurações de Segurança</CardTitle>
+              <CardTitle>Alterar Senha</CardTitle>
               <CardDescription>
-                Configure as opções de segurança do sistema
+                Altere sua senha de acesso ao sistema
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">
               <div className="space-y-4">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <h3 className="font-medium">Autenticação em Dois Fatores</h3>
-                    <p className="text-sm text-muted-foreground">Exigir 2FA para todos os usuários</p>
-                  </div>
-                  <Switch />
+                <div className="space-y-2">
+                  <Label htmlFor="currentPassword">Senha atual</Label>
+                  <Input type="password" id="currentPassword" />
                 </div>
                 
-                <div className="flex items-center justify-between">
-                  <div>
-                    <h3 className="font-medium">Bloqueio após tentativas</h3>
-                    <p className="text-sm text-muted-foreground">Bloquear conta após 5 tentativas falhas</p>
-                  </div>
-                  <Switch defaultChecked />
+                <div className="space-y-2">
+                  <Label htmlFor="newPassword">Nova senha</Label>
+                  <Input type="password" id="newPassword" />
                 </div>
                 
-                <div className="flex items-center justify-between">
-                  <div>
-                    <h3 className="font-medium">Histórico de Senhas</h3>
-                    <p className="text-sm text-muted-foreground">Impedir reutilização das últimas 5 senhas</p>
-                  </div>
-                  <Switch defaultChecked />
+                <div className="space-y-2">
+                  <Label htmlFor="confirmPassword">Confirmar nova senha</Label>
+                  <Input type="password" id="confirmPassword" />
                 </div>
               </div>
               
-              <Button onClick={handleSaveSecurity}>Salvar Configurações</Button>
+              <Button onClick={handleSaveSecurity}>Salvar Nova Senha</Button>
             </CardContent>
           </Card>
         </TabsContent>
