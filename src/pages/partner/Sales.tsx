@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { PageHeader } from "@/components/page/PageHeader";
 import { PageWrapper } from "@/components/page/PageWrapper";
@@ -14,6 +13,8 @@ const PartnerSales = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [sales, setSales] = useState<Sale[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [filters, setFilters] = useState({});
+  const [date, setDate] = useState<{ from: Date; to?: Date } | undefined>(undefined);
 
   // Mock data - to be replaced with real API calls
   useEffect(() => {
@@ -52,10 +53,21 @@ const PartnerSales = () => {
     }, 1000);
   }, []);
 
-  // Filter handling to be implemented with real data
-  const handleFilter = (filters: any) => {
-    console.log("Filters applied:", filters);
-    // Will be implemented with real API integration
+  const handleFilterChange = (key: keyof any, value: any) => {
+    setFilters(prev => ({ ...prev, [key]: value }));
+  };
+  
+  const handleDateChange = (dateRange: { from: Date; to?: Date } | undefined) => {
+    setDate(dateRange);
+  };
+  
+  const handleClearFilters = () => {
+    setFilters({});
+    setDate(undefined);
+  };
+
+  const handleExport = () => {
+    console.log("Exporting data...");
   };
 
   return (
@@ -82,7 +94,14 @@ const PartnerSales = () => {
                 onChange={(e) => setSearchTerm(e.target.value)}
               />
             </div>
-            <SalesFilters onFilter={handleFilter} />
+            <SalesFilters 
+              onFilterChange={handleFilterChange}
+              onDateChange={handleDateChange}
+              onClearFilters={handleClearFilters}
+              date={date}
+              filters={filters}
+              onExport={handleExport}
+            />
           </div>
           
           <Card>

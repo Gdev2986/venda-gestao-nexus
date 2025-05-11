@@ -1,5 +1,4 @@
 
-import { Label } from "@/components/ui/label";
 import { 
   Select, 
   SelectContent, 
@@ -7,107 +6,53 @@ import {
   SelectTrigger, 
   SelectValue 
 } from "@/components/ui/select";
-import { PaymentMethod, SalesFilterParams } from "@/types";
+import { SalesFilterParams } from "@/types";
+import { Label } from "@/components/ui/label";
 
 interface BasicFiltersProps {
   filters: SalesFilterParams;
   onFilterChange: (key: keyof SalesFilterParams, value: any) => void;
 }
 
-// Constants
-const PAYMENT_METHODS = [
-  { value: PaymentMethod.CREDIT, label: "Crédito" },
-  { value: PaymentMethod.DEBIT, label: "Débito" },
-  { value: PaymentMethod.PIX, label: "Pix" }
-];
-
-const TERMINALS = [
-  "T100", "T101", "T102", "T103", "T104", "T105"
-];
-
-const HOUR_RANGES = [
-  { value: [0, 23], label: "Qualquer horário" },
-  { value: [9, 12], label: "Manhã (9h-12h)" },
-  { value: [13, 17], label: "Tarde (13h-17h)" },
-  { value: [18, 22], label: "Noite (18h-22h)" }
-];
-
 const BasicFilters = ({ filters, onFilterChange }: BasicFiltersProps) => {
-  const handleHourRangeChange = (rangeString: string) => {
-    if (rangeString === "all") {
-      onFilterChange("startHour", undefined);
-      onFilterChange("endHour", undefined);
-      return;
-    }
-    
-    const selectedRange = HOUR_RANGES.find(hr => hr.value.join('-') === rangeString);
-    if (selectedRange) {
-      onFilterChange("startHour", selectedRange.value[0]);
-      onFilterChange("endHour", selectedRange.value[1]);
-    }
-  };
-
   return (
-    <div className="flex flex-col sm:flex-row gap-4">
-      {/* Payment Method Filter */}
-      <div className="w-full sm:w-1/3">
-        <Label htmlFor="paymentMethod" className="mb-1 block">Forma de Pagamento</Label>
-        <Select
-          value={filters.paymentMethod || "all"}
-          onValueChange={(value) => onFilterChange("paymentMethod", value === "all" ? undefined : value)}
-        >
-          <SelectTrigger id="paymentMethod">
-            <SelectValue placeholder="Qualquer método" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">Qualquer método</SelectItem>
-            {PAYMENT_METHODS.map((method) => (
-              <SelectItem key={method.value} value={method.value}>
-                {method.label}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-      </div>
-      
+    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
       {/* Terminal Filter */}
-      <div className="w-full sm:w-1/3">
-        <Label htmlFor="terminal" className="mb-1 block">Terminal</Label>
+      <div className="space-y-2">
+        <Label htmlFor="terminal-filter">Terminal</Label>
         <Select
-          value={filters.terminal || "all"}
-          onValueChange={(value) => onFilterChange("terminal", value === "all" ? undefined : value)}
+          value={filters.terminal || ""}
+          onValueChange={(value) => onFilterChange('terminal', value)}
         >
-          <SelectTrigger id="terminal">
-            <SelectValue placeholder="Qualquer terminal" />
+          <SelectTrigger id="terminal-filter">
+            <SelectValue placeholder="Todos os terminais" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="all">Qualquer terminal</SelectItem>
-            {TERMINALS.map((terminal) => (
-              <SelectItem key={terminal} value={terminal}>
-                {terminal}
-              </SelectItem>
-            ))}
+            <SelectItem value="">Todos os terminais</SelectItem>
+            <SelectItem value="POS-001">POS-001</SelectItem>
+            <SelectItem value="POS-002">POS-002</SelectItem>
+            <SelectItem value="POS-003">POS-003</SelectItem>
+            <SelectItem value="MOBILE-001">MOBILE-001</SelectItem>
+            <SelectItem value="MOBILE-002">MOBILE-002</SelectItem>
           </SelectContent>
         </Select>
       </div>
-      
-      {/* Hours Filter */}
-      <div className="w-full sm:w-1/3">
-        <Label htmlFor="hourRange" className="mb-1 block">Horário</Label>
+
+      {/* Payment Method Filter */}
+      <div className="space-y-2">
+        <Label htmlFor="payment-method-filter">Método de Pagamento</Label>
         <Select
-          value={filters.startHour !== undefined ? `${filters.startHour}-${filters.endHour}` : "all"}
-          onValueChange={handleHourRangeChange}
+          value={filters.paymentMethod || ""}
+          onValueChange={(value) => onFilterChange('paymentMethod', value)}
         >
-          <SelectTrigger id="hourRange">
-            <SelectValue placeholder="Qualquer horário" />
+          <SelectTrigger id="payment-method-filter">
+            <SelectValue placeholder="Todos os métodos" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="all">Qualquer horário</SelectItem>
-            {HOUR_RANGES.map((range, index) => (
-              <SelectItem key={index} value={range.value.join('-')}>
-                {range.label}
-              </SelectItem>
-            ))}
+            <SelectItem value="">Todos os métodos</SelectItem>
+            <SelectItem value="credit">Crédito</SelectItem>
+            <SelectItem value="debit">Débito</SelectItem>
+            <SelectItem value="pix">PIX</SelectItem>
           </SelectContent>
         </Select>
       </div>
