@@ -1,6 +1,6 @@
 
 import { useState, useEffect, useCallback } from "react";
-import { Partner } from "@/types";
+import { Partner, FilterValues } from "@/types";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 
@@ -105,16 +105,20 @@ export const usePartners = () => {
 
   const createPartner = async (partnerData: Omit<Partner, "id" | "created_at" | "updated_at">) => {
     try {
+      // Create a partner object with only the fields that exist in the database table
+      const partnerToInsert = {
+        company_name: partnerData.company_name,
+        commission_rate: partnerData.commission_rate,
+        // Add only the fields that actually exist in your database table
+        ...(partnerData.contact_name && { contact_name: partnerData.contact_name }),
+        ...(partnerData.email && { email: partnerData.email }),
+        ...(partnerData.phone && { phone: partnerData.phone }),
+        ...(partnerData.address && { address: partnerData.address })
+      };
+
       const { data, error } = await supabase
         .from('partners')
-        .insert([{
-          company_name: partnerData.company_name,
-          commission_rate: partnerData.commission_rate,
-          contact_name: partnerData.contact_name,
-          contact_email: partnerData.email,
-          contact_phone: partnerData.phone,
-          address: partnerData.address
-        }])
+        .insert([partnerToInsert])
         .select();
 
       if (error) throw error;
@@ -141,16 +145,19 @@ export const usePartners = () => {
   
   const updatePartner = async (partnerId: string, partnerData: Partial<Partner>) => {
     try {
+      // Create an update object with only the fields that exist in the database table
+      const updateData = {
+        ...(partnerData.company_name && { company_name: partnerData.company_name }),
+        ...(partnerData.commission_rate !== undefined && { commission_rate: partnerData.commission_rate }),
+        ...(partnerData.contact_name && { contact_name: partnerData.contact_name }),
+        ...(partnerData.email && { email: partnerData.email }),
+        ...(partnerData.phone && { phone: partnerData.phone }),
+        ...(partnerData.address && { address: partnerData.address })
+      };
+
       const { error } = await supabase
         .from('partners')
-        .update({
-          company_name: partnerData.company_name,
-          commission_rate: partnerData.commission_rate,
-          contact_name: partnerData.contact_name,
-          contact_email: partnerData.email,
-          contact_phone: partnerData.phone,
-          address: partnerData.address
-        })
+        .update(updateData)
         .eq('id', partnerId);
 
       if (error) throw error;

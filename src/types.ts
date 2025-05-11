@@ -32,9 +32,9 @@ export enum ClientStatus {
 }
 
 export enum PaymentMethod {
-  CREDIT = "credit",
-  DEBIT = "debit",
-  PIX = "pix"
+  CREDIT = "CREDIT",
+  DEBIT = "DEBIT",
+  PIX = "PIX"
 }
 
 export interface Payment {
@@ -149,6 +149,9 @@ export interface Sale {
   updated_at: string;
   amount?: number;
   status?: string;
+  partner_id?: string;
+  machine_id?: string;
+  processing_status?: string;
 }
 
 export interface SalesFilterParams {

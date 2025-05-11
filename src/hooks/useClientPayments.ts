@@ -1,8 +1,7 @@
 
 import { useState, useEffect, useCallback } from "react";
-import { Payment, PaymentStatus, PaymentType } from "@/types";
+import { Payment, PaymentStatus, PaymentType, PixKey } from "@/types";
 import { useToast } from "@/hooks/use-toast";
-import { PixKey } from "@/types";
 
 export function useClientPayments(clientId: string) {
   const [isLoading, setIsLoading] = useState(true);
@@ -74,7 +73,7 @@ export function useClientPayments(clientId: string) {
           name: "Cliente Demo",
           owner_name: "Cliente Demo",
           user_id: "user1",
-          isDefault: true,
+          is_default: true,
           is_active: true,
           created_at: new Date().toISOString(),
           updated_at: new Date().toISOString(),
@@ -88,7 +87,7 @@ export function useClientPayments(clientId: string) {
           name: "Cliente Demo",
           owner_name: "Cliente Demo",
           user_id: "user1",
-          isDefault: false,
+          is_default: false,
           is_active: true,
           created_at: new Date().toISOString(),
           updated_at: new Date().toISOString(),

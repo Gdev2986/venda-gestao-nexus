@@ -23,8 +23,8 @@ import {
 } from "@/components/ui/dialog";
 import { PageHeader } from "@/components/page/PageHeader";
 import { PageWrapper } from "@/components/page/PageWrapper";
-import { PartnersTable } from "@/components/partners/PartnersTable";
-import { PartnersFilterCard } from "@/components/partners/PartnersFilterCard";
+import PartnersTable from "@/components/partners/PartnersTable";
+import PartnersFilterCard from "@/components/partners/PartnersFilterCard";
 
 const PartnersPage = () => {
   const {
@@ -63,25 +63,21 @@ const PartnersPage = () => {
       <PageHeader
         title="Parceiros"
         description="Gerencie todos os parceiros da plataforma"
-        action={
-          <Button>
-            <PlusCircle className="mr-2 h-4 w-4" />
-            Novo Parceiro
-          </Button>
-        }
+        actionLabel="Novo Parceiro"
+        actionOnClick={() => {}}
       />
       
       <PageWrapper>
         <div className="grid gap-6">
           <PartnersFilterCard
-            onSearch={handleSearchChange}
-            searchTerm={searchTerm}
+            onFilter={(values) => filterPartners(values.search || "")}
+            isLoading={isLoading}
           />
           
           <PartnersTable 
             partners={partners}
             isLoading={isLoading}
-            onDeletePartner={handleDeletePartner}
+            onDelete={handleDeletePartner}
           />
         </div>
         

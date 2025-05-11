@@ -1,267 +1,253 @@
 
-import { useEffect, useState } from "react";
+import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { PageHeader } from "@/components/page/PageHeader";
 import { PageWrapper } from "@/components/page/PageWrapper";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { Separator } from "@/components/ui/separator";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { ArrowLeft, Phone, Mail, MapPin, BarChart3, Building } from "lucide-react";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { useToast } from "@/hooks/use-toast";
+import { Sale, Client } from "@/types";
+import { FileText, ArrowLeft } from "lucide-react";
 import { PATHS } from "@/routes/paths";
-import { usePartnerClients } from "@/hooks/use-partner-clients";
-import { formatCurrency, formatDate } from "@/lib/utils";
-import { Sale } from "@/types";
 
 const ClientDetails = () => {
-  const { id } = useParams<{ id: string }>();
+  const { clientId } = useParams<{ clientId: string }>();
   const navigate = useNavigate();
-  const { clients, getClientSales, isLoading } = usePartnerClients();
-  const [clientSales, setClientSales] = useState<Sale[]>([]);
-  const [loadingSales, setLoadingSales] = useState(false);
-
-  const client = clients.find(c => c.id === id);
-
-  // Load client sales when client is available
+  const { toast } = useToast();
+  
+  const [client, setClient] = useState<Client | null>(null);
+  const [sales, setSales] = useState<Sale[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  
   useEffect(() => {
-    const loadSales = async () => {
-      if (id) {
-        setLoadingSales(true);
-        const sales = await getClientSales(id);
-        setClientSales(sales);
-        setLoadingSales(false);
+    const fetchClientDetails = async () => {
+      setIsLoading(true);
+      try {
+        // Simulate API call
+        setTimeout(() => {
+          // Mock client data
+          const mockClient: Client = {
+            id: clientId || "1",
+            business_name: "Empresa Cliente XYZ",
+            email: "contato@xyz.com",
+            phone: "(11) 3456-7890",
+            status: "active",
+            address: "Rua A, 123",
+            city: "São Paulo",
+            state: "SP",
+            balance: 5000,
+            created_at: new Date().toISOString()
+          };
+          
+          // Mock sales data
+          const mockSalesData: Sale[] = [
+            {
+              id: "s1",
+              client_id: clientId || "1",
+              client_name: "Empresa Cliente XYZ",
+              code: "VDA001",
+              terminal: "TERM001",
+              date: new Date().toISOString(),
+              payment_method: "CREDIT",
+              gross_amount: 1500,
+              net_amount: 1425,
+              created_at: new Date().toISOString(),
+              updated_at: new Date().toISOString()
+            },
+            {
+              id: "s2",
+              client_id: clientId || "1",
+              client_name: "Empresa Cliente XYZ",
+              code: "VDA002",
+              terminal: "TERM001",
+              date: new Date(Date.now() - 86400000).toISOString(),
+              payment_method: "PIX",
+              gross_amount: 980,
+              net_amount: 980,
+              created_at: new Date(Date.now() - 86400000).toISOString(),
+              updated_at: new Date(Date.now() - 86400000).toISOString()
+            }
+          ];
+          
+          setClient(mockClient);
+          setSales(mockSalesData);
+          setIsLoading(false);
+        }, 800);
+        
+      } catch (error) {
+        console.error("Error fetching client details:", error);
+        toast({
+          variant: "destructive",
+          title: "Erro",
+          description: "Não foi possível carregar os detalhes do cliente."
+        });
+        setIsLoading(false);
       }
     };
     
-    if (client) {
-      loadSales();
-    }
-  }, [client, id, getClientSales]);
-
-  // Get status badge variant based on client status
-  const getStatusBadgeVariant = (status: string | undefined) => {
-    switch (status) {
-      case "active":
-        return "success";
-      case "inactive":
-        return "secondary";
-      case "pending":
-        return "warning";
-      default:
-        return "outline";
-    }
+    fetchClientDetails();
+  }, [clientId, toast]);
+  
+  const formatCurrency = (value: number) => {
+    return new Intl.NumberFormat('pt-BR', {
+      style: 'currency',
+      currency: 'BRL'
+    }).format(value);
   };
-
-  // Format status display text
-  const getStatusText = (status: string | undefined) => {
-    switch (status) {
-      case "active":
-        return "Ativo";
-      case "inactive":
-        return "Inativo";
-      case "pending":
-        return "Pendente";
-      default:
-        return "Desconhecido";
-    }
+  
+  const formatDate = (dateString: string) => {
+    return new Date(dateString).toLocaleDateString('pt-BR');
   };
-
-  if (isLoading) {
-    return (
-      <div className="w-full p-8 flex justify-center">
-        <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent"></div>
-      </div>
-    );
-  }
-
-  if (!client) {
-    return (
-      <div className="p-8 text-center">
-        <h3 className="text-lg font-medium">Cliente não encontrado</h3>
-        <p className="text-muted-foreground mt-1">
-          O cliente solicitado não foi encontrado ou você não tem permissão para acessá-lo.
-        </p>
-        <Button 
-          variant="outline" 
-          className="mt-4" 
-          onClick={() => navigate(PATHS.PARTNER.CLIENTS)}
-        >
-          <ArrowLeft className="mr-2 h-4 w-4" />
-          Voltar para lista de clientes
-        </Button>
-      </div>
-    );
-  }
-
+  
   return (
     <div>
       <PageHeader 
-        title={client.business_name} 
-        description="Detalhes do cliente"
+        title={client?.business_name || "Detalhes do Cliente"}
+        description="Visualize informações detalhadas e vendas do cliente"
         actionLabel="Voltar"
-        actionIcon={<ArrowLeft className="h-4 w-4" />}
         actionOnClick={() => navigate(PATHS.PARTNER.CLIENTS)}
-      />
-      
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
-        <Card>
-          <CardHeader className="pb-3">
-            <CardTitle className="text-sm font-medium">Saldo Total</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{formatCurrency(client.balance || 0)}</div>
-          </CardContent>
-        </Card>
-        
-        <Card>
-          <CardHeader className="pb-3">
-            <CardTitle className="text-sm font-medium">Total de Vendas</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{clientSales.length}</div>
-          </CardContent>
-        </Card>
-        
-        <Card>
-          <CardHeader className="pb-3">
-            <CardTitle className="text-sm font-medium">Status</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <Badge variant={getStatusBadgeVariant(client.status) as any} className="text-base px-3 py-1">
-              {getStatusText(client.status)}
-            </Badge>
-          </CardContent>
-        </Card>
-      </div>
+      >
+        <Button variant="outline" onClick={() => navigate(PATHS.PARTNER.CLIENTS)}>
+          <ArrowLeft className="mr-2 h-4 w-4" />
+          Voltar
+        </Button>
+      </PageHeader>
       
       <PageWrapper>
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          <Card className="lg:col-span-1">
+        <div className="grid gap-6">
+          {/* Client Info Card */}
+          <Card>
             <CardHeader>
-              <CardTitle className="flex items-center">
-                <Building className="mr-2 h-5 w-5" />
-                Informações do Cliente
-              </CardTitle>
+              <CardTitle>Informações do Cliente</CardTitle>
             </CardHeader>
-            <CardContent className="space-y-4">
-              <div>
-                <h3 className="text-sm font-medium text-muted-foreground mb-1">Nome Fantasia</h3>
-                <p className="font-medium">{client.business_name}</p>
-              </div>
-              
-              {client.company_name && (
-                <div>
-                  <h3 className="text-sm font-medium text-muted-foreground mb-1">Razão Social</h3>
-                  <p>{client.company_name}</p>
+            <CardContent>
+              {isLoading ? (
+                <div className="animate-pulse space-y-4">
+                  <div className="h-4 bg-gray-200 rounded w-3/4"></div>
+                  <div className="h-4 bg-gray-200 rounded w-1/2"></div>
+                  <div className="h-4 bg-gray-200 rounded w-2/3"></div>
                 </div>
-              )}
-              
-              {client.document && (
-                <div>
-                  <h3 className="text-sm font-medium text-muted-foreground mb-1">CNPJ/CPF</h3>
-                  <p>{client.document}</p>
-                </div>
-              )}
-              
-              <Separator />
-              
-              {client.contact_name && (
-                <div>
-                  <h3 className="text-sm font-medium text-muted-foreground mb-1">Contato</h3>
-                  <p>{client.contact_name}</p>
-                </div>
-              )}
-              
-              {client.email && (
-                <div className="flex items-center">
-                  <Mail className="h-4 w-4 mr-2 text-muted-foreground" />
-                  <p>{client.email}</p>
-                </div>
-              )}
-              
-              {client.phone && (
-                <div className="flex items-center">
-                  <Phone className="h-4 w-4 mr-2 text-muted-foreground" />
-                  <p>{client.phone}</p>
-                </div>
-              )}
-              
-              {client.address && (
-                <div className="flex items-start">
-                  <MapPin className="h-4 w-4 mr-2 mt-0.5 text-muted-foreground" />
+              ) : client ? (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div>
-                    <p>{client.address}</p>
-                    {client.city && client.state && (
-                      <p>{client.city}, {client.state}</p>
-                    )}
-                    {client.zip && (
-                      <p>{client.zip}</p>
-                    )}
+                    <p className="text-sm font-medium">Nome / Razão Social</p>
+                    <p className="text-lg">{client.business_name}</p>
+                    
+                    <div className="mt-4">
+                      <p className="text-sm font-medium">Email</p>
+                      <p>{client.email || "Não informado"}</p>
+                    </div>
+                    
+                    <div className="mt-4">
+                      <p className="text-sm font-medium">Telefone</p>
+                      <p>{client.phone || "Não informado"}</p>
+                    </div>
+                    
+                    <div className="mt-4">
+                      <p className="text-sm font-medium">Status</p>
+                      <span className={`inline-block px-2 py-1 text-xs rounded-full ${
+                        client.status === "active" 
+                          ? "bg-green-100 text-green-800" 
+                          : client.status === "inactive"
+                            ? "bg-red-100 text-red-800"
+                            : "bg-yellow-100 text-yellow-800"
+                      }`}>
+                        {client.status === "active" 
+                          ? "Ativo" 
+                          : client.status === "inactive" 
+                            ? "Inativo" 
+                            : "Pendente"}
+                      </span>
+                    </div>
+                  </div>
+                  
+                  <div>
+                    <p className="text-sm font-medium">Endereço</p>
+                    <p>
+                      {client.address || "Não informado"}
+                      {client.city && client.state && `, ${client.city}/${client.state}`}
+                    </p>
+                    
+                    <div className="mt-4">
+                      <p className="text-sm font-medium">Cliente desde</p>
+                      <p>{client.created_at ? formatDate(client.created_at) : "Não informado"}</p>
+                    </div>
+                    
+                    <div className="mt-4">
+                      <p className="text-sm font-medium">Saldo</p>
+                      <p className="text-lg font-bold">{formatCurrency(client.balance || 0)}</p>
+                    </div>
                   </div>
                 </div>
+              ) : (
+                <p className="text-center py-4">Cliente não encontrado</p>
               )}
-              
-              <Separator />
-              
-              <div>
-                <h3 className="text-sm font-medium text-muted-foreground mb-1">Cliente desde</h3>
-                <p>{client.created_at ? formatDate(new Date(client.created_at)) : "Data não disponível"}</p>
-              </div>
             </CardContent>
           </Card>
           
-          <Card className="lg:col-span-2">
+          {/* Sales Card */}
+          <Card>
             <CardHeader>
-              <CardTitle className="flex items-center">
-                <BarChart3 className="mr-2 h-5 w-5" />
-                Histórico de Vendas
-              </CardTitle>
+              <CardTitle>Vendas Recentes</CardTitle>
             </CardHeader>
             <CardContent>
-              {loadingSales ? (
-                <div className="w-full p-8 flex justify-center">
-                  <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent"></div>
+              {isLoading ? (
+                <div className="animate-pulse space-y-4">
+                  <div className="h-10 bg-gray-200 rounded"></div>
+                  <div className="h-10 bg-gray-200 rounded"></div>
+                  <div className="h-10 bg-gray-200 rounded"></div>
                 </div>
-              ) : clientSales.length === 0 ? (
-                <div className="p-6 text-center">
-                  <h3 className="text-lg font-medium">Nenhuma venda encontrada</h3>
-                  <p className="text-muted-foreground mt-1">
-                    Este cliente ainda não possui vendas registradas.
-                  </p>
+              ) : sales && sales.length > 0 ? (
+                <div className="overflow-x-auto">
+                  <table className="w-full">
+                    <thead>
+                      <tr className="border-b text-left">
+                        <th className="pb-2">Código</th>
+                        <th className="pb-2">Data</th>
+                        <th className="pb-2">Terminal</th>
+                        <th className="pb-2">Pagamento</th>
+                        <th className="pb-2 text-right">Valor Bruto</th>
+                        <th className="pb-2 text-right">Valor Líquido</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {sales.map(sale => (
+                        <tr key={sale.id} className="border-b hover:bg-muted/50">
+                          <td className="py-3">{sale.code}</td>
+                          <td className="py-3">{formatDate(sale.date)}</td>
+                          <td className="py-3">{sale.terminal}</td>
+                          <td className="py-3">
+                            <span className={`inline-block px-2 py-0.5 text-xs rounded-full ${
+                              sale.payment_method === "PIX" 
+                                ? "bg-green-100 text-green-800" 
+                                : sale.payment_method === "CREDIT"
+                                  ? "bg-blue-100 text-blue-800" 
+                                  : "bg-purple-100 text-purple-800"
+                            }`}>
+                              {sale.payment_method === "PIX" 
+                                ? "PIX" 
+                                : sale.payment_method === "CREDIT" 
+                                  ? "Crédito" 
+                                  : "Débito"}
+                            </span>
+                          </td>
+                          <td className="py-3 text-right">{formatCurrency(sale.gross_amount)}</td>
+                          <td className="py-3 text-right">{formatCurrency(sale.net_amount)}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
                 </div>
               ) : (
-                <div className="rounded-md border">
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead>Código</TableHead>
-                        <TableHead>Data</TableHead>
-                        <TableHead>Terminal</TableHead>
-                        <TableHead>Forma de Pagamento</TableHead>
-                        <TableHead className="text-right">Valor</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {clientSales.map((sale) => (
-                        <TableRow key={sale.id}>
-                          <TableCell className="font-medium">{sale.code || sale.id.substring(0, 8)}</TableCell>
-                          <TableCell>{formatDate(new Date(sale.date))}</TableCell>
-                          <TableCell>{sale.terminal}</TableCell>
-                          <TableCell>
-                            {sale.payment_method === 'credit' && 'Crédito'}
-                            {sale.payment_method === 'debit' && 'Débito'}
-                            {sale.payment_method === 'pix' && 'PIX'}
-                            {sale.payment_method !== 'credit' && 
-                             sale.payment_method !== 'debit' && 
-                             sale.payment_method !== 'pix' && 
-                             sale.payment_method}
-                          </TableCell>
-                          <TableCell className="text-right">{formatCurrency(sale.gross_amount)}</TableCell>
-                        </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
+                <p className="text-center py-4">Nenhuma venda registrada</p>
+              )}
+              
+              {sales && sales.length > 0 && (
+                <div className="mt-6 flex justify-end">
+                  <Button variant="outline" className="gap-2">
+                    <FileText className="h-4 w-4" />
+                    Exportar Relatório
+                  </Button>
                 </div>
               )}
             </CardContent>

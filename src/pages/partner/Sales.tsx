@@ -1,223 +1,236 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { PageHeader } from "@/components/page/PageHeader";
 import { PageWrapper } from "@/components/page/PageWrapper";
-import AdminSalesFilters from "@/components/admin/sales/AdminSalesFilters";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Badge } from "@/components/ui/badge";
-import { Download, FileText } from "lucide-react";
-import { SalesFilterParams } from "@/types";
-import { formatCurrency, formatDate } from "@/lib/utils";
-
-// Mock data for partner sales
-const MOCK_SALES = [
-  {
-    id: "1",
-    code: "VENDA-001",
-    client_name: "Restaurante Bom Sabor",
-    client_id: "client-001",
-    terminal: "POS-12345",
-    date: "2023-05-10T14:30:00Z",
-    payment_method: "credit",
-    gross_amount: 1500.00,
-    net_amount: 1455.00,
-    status: "completed"
-  },
-  {
-    id: "2",
-    code: "VENDA-002",
-    client_name: "Loja Tech Mais",
-    client_id: "client-002",
-    terminal: "POS-54321",
-    date: "2023-05-11T09:15:00Z",
-    payment_method: "debit",
-    gross_amount: 890.50,
-    net_amount: 872.69,
-    status: "completed"
-  },
-  {
-    id: "3",
-    code: "VENDA-003",
-    client_name: "Restaurante Bom Sabor",
-    client_id: "client-001",
-    terminal: "POS-12345",
-    date: "2023-05-12T18:45:00Z",
-    payment_method: "pix",
-    gross_amount: 2100.00,
-    net_amount: 2058.00,
-    status: "completed"
-  },
-  {
-    id: "4",
-    code: "VENDA-004",
-    client_name: "Loja Tech Mais",
-    client_id: "client-002",
-    terminal: "POS-54321",
-    date: "2023-05-13T11:20:00Z",
-    payment_method: "credit",
-    gross_amount: 1250.75,
-    net_amount: 1213.23,
-    status: "processing"
-  }
-];
+import { useToast } from "@/hooks/use-toast";
+import { Sale } from "@/types";
+import { CalendarRange, FileText, Download } from "lucide-react";
+import { AdminSalesFilters } from "@/components/admin/sales/AdminSalesFilters";
 
 const PartnerSales = () => {
-  const [filters, setFilters] = useState<SalesFilterParams>({});
-  const [dateRange, setDateRange] = useState<{ from: Date; to?: Date }>();
+  const [sales, setSales] = useState<Sale[]>([]);
+  const [filteredSales, setFilteredSales] = useState<Sale[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const { toast } = useToast();
   
-  // Filtered sales based on filters
-  const filteredSales = MOCK_SALES.filter(sale => {
-    if (filters.search && 
-        !sale.client_name.toLowerCase().includes(filters.search.toLowerCase()) &&
-        !sale.code.toLowerCase().includes(filters.search.toLowerCase())) {
-      return false;
-    }
-    
-    if (filters.paymentMethod && sale.payment_method !== filters.paymentMethod) {
-      return false;
-    }
-    
-    if (filters.minAmount && sale.gross_amount < filters.minAmount) {
-      return false;
-    }
-    
-    if (dateRange?.from) {
-      const saleDate = new Date(sale.date);
-      const fromDate = new Date(dateRange.from);
-      fromDate.setHours(0, 0, 0, 0);
-      
-      if (saleDate < fromDate) {
-        return false;
-      }
-      
-      if (dateRange.to) {
-        const toDate = new Date(dateRange.to);
-        toDate.setHours(23, 59, 59, 999);
+  useEffect(() => {
+    const fetchSales = async () => {
+      setIsLoading(true);
+      try {
+        // Simulate API call
+        setTimeout(() => {
+          // Mock sales data
+          const mockSalesData: Sale[] = [
+            {
+              id: "s1",
+              client_id: "c1",
+              client_name: "Empresa Cliente ABC",
+              code: "VDA001",
+              terminal: "TERM001",
+              date: new Date().toISOString(),
+              payment_method: "CREDIT",
+              gross_amount: 1500,
+              net_amount: 1425,
+              created_at: new Date().toISOString(),
+              updated_at: new Date().toISOString()
+            },
+            {
+              id: "s2",
+              client_id: "c2",
+              client_name: "Empresa Cliente XYZ",
+              code: "VDA002",
+              terminal: "TERM001",
+              date: new Date(Date.now() - 86400000).toISOString(),
+              payment_method: "PIX",
+              gross_amount: 980,
+              net_amount: 980,
+              created_at: new Date(Date.now() - 86400000).toISOString(),
+              updated_at: new Date(Date.now() - 86400000).toISOString()
+            },
+            {
+              id: "s3",
+              client_id: "c1",
+              client_name: "Empresa Cliente ABC",
+              code: "VDA003",
+              terminal: "TERM002",
+              date: new Date(Date.now() - 172800000).toISOString(),
+              payment_method: "DEBIT",
+              gross_amount: 750,
+              net_amount: 735,
+              created_at: new Date(Date.now() - 172800000).toISOString(),
+              updated_at: new Date(Date.now() - 172800000).toISOString()
+            }
+          ];
+          
+          setSales(mockSalesData);
+          setFilteredSales(mockSalesData);
+          setIsLoading(false);
+        }, 800);
         
-        if (saleDate > toDate) {
-          return false;
-        }
+      } catch (error) {
+        console.error("Error fetching sales:", error);
+        toast({
+          variant: "destructive",
+          title: "Erro",
+          description: "Não foi possível carregar as vendas."
+        });
+        setIsLoading(false);
       }
+    };
+    
+    fetchSales();
+  }, [toast]);
+  
+  const handleFilter = (filters: any) => {
+    let filtered = [...sales];
+    
+    // Apply filters
+    if (filters.search) {
+      const searchTerm = filters.search.toLowerCase();
+      filtered = filtered.filter(sale => 
+        sale.code.toLowerCase().includes(searchTerm) ||
+        sale.client_name.toLowerCase().includes(searchTerm) ||
+        sale.terminal.toLowerCase().includes(searchTerm)
+      );
     }
     
-    return true;
-  });
-
-  // Handle filter changes
-  const handleFilterChange = (newFilters: SalesFilterParams) => {
-    setFilters(newFilters);
-  };
-
-  // Handle date range changes
-  const handleDateRangeChange = (range: { from: Date; to?: Date } | undefined) => {
-    setDateRange(range);
-  };
-
-  // Clear all filters
-  const handleClearFilters = () => {
-    setFilters({});
-    setDateRange(undefined);
-  };
-
-  // Get payment method display text
-  const getPaymentMethodText = (method: string) => {
-    switch (method) {
-      case "credit":
-        return "Crédito";
-      case "debit":
-        return "Débito";
-      case "pix":
-        return "PIX";
-      default:
-        return method;
+    if (filters.paymentMethod) {
+      filtered = filtered.filter(sale => 
+        sale.payment_method === filters.paymentMethod
+      );
     }
+    
+    setFilteredSales(filtered);
   };
-
+  
+  const formatCurrency = (value: number) => {
+    return new Intl.NumberFormat('pt-BR', {
+      style: 'currency',
+      currency: 'BRL'
+    }).format(value);
+  };
+  
+  const formatDate = (dateString: string) => {
+    return new Date(dateString).toLocaleDateString('pt-BR');
+  };
+  
+  const totalSales = filteredSales.reduce((acc, sale) => acc + sale.gross_amount, 0);
+  
   return (
     <div>
       <PageHeader 
-        title="Vendas" 
-        description="Acompanhe as vendas dos seus clientes vinculados"
+        title="Vendas"
+        description="Acompanhe todas as vendas dos seus clientes"
       />
       
       <PageWrapper>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+          <Card>
+            <CardContent className="p-6">
+              <div className="text-sm text-muted-foreground mb-1">Total de Vendas</div>
+              <div className="text-3xl font-bold">
+                {isLoading ? "..." : filteredSales.length}
+              </div>
+            </CardContent>
+          </Card>
+          
+          <Card>
+            <CardContent className="p-6">
+              <div className="text-sm text-muted-foreground mb-1">Valor Total</div>
+              <div className="text-3xl font-bold text-green-600">
+                {isLoading ? "..." : formatCurrency(totalSales)}
+              </div>
+            </CardContent>
+          </Card>
+          
+          <Card>
+            <CardContent className="p-6">
+              <div className="text-sm text-muted-foreground mb-1">Média por Venda</div>
+              <div className="text-3xl font-bold">
+                {isLoading ? "..." : formatCurrency(filteredSales.length ? totalSales / filteredSales.length : 0)}
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+        
         <Card className="mb-6">
-          <AdminSalesFilters
-            filters={filters}
-            dateRange={dateRange}
-            onFilterChange={handleFilterChange}
-            onDateRangeChange={handleDateRangeChange}
-            onClearFilters={handleClearFilters}
-          />
+          <CardHeader className="pb-3">
+            <CardTitle>Filtros</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <AdminSalesFilters onFilter={handleFilter} />
+          </CardContent>
         </Card>
         
         <Card>
-          <CardHeader className="flex flex-col sm:flex-row justify-between sm:items-center">
-            <CardTitle>Histórico de Vendas</CardTitle>
-            <div className="flex space-x-2 mt-2 sm:mt-0">
-              <Button variant="outline">
-                <Download className="mr-2 h-4 w-4" />
-                Exportar CSV
-              </Button>
-              <Button variant="outline">
-                <FileText className="mr-2 h-4 w-4" />
-                Relatório
-              </Button>
-            </div>
+          <CardHeader>
+            <CardTitle>Vendas</CardTitle>
+            <CardDescription>Todas as vendas dos seus clientes</CardDescription>
           </CardHeader>
           <CardContent>
-            {filteredSales.length === 0 ? (
-              <div className="p-8 text-center">
-                <h3 className="text-lg font-medium">Nenhuma venda encontrada</h3>
-                <p className="text-muted-foreground mt-1">
-                  Não encontramos vendas com os filtros aplicados.
-                </p>
-                {(filters.search || filters.paymentMethod || filters.minAmount || dateRange) && (
-                  <Button variant="outline" className="mt-4" onClick={handleClearFilters}>
-                    Limpar Filtros
-                  </Button>
-                )}
+            {isLoading ? (
+              <div className="animate-pulse space-y-4">
+                <div className="h-10 bg-gray-100 rounded"></div>
+                <div className="h-10 bg-gray-100 rounded"></div>
+                <div className="h-10 bg-gray-100 rounded"></div>
+              </div>
+            ) : filteredSales.length > 0 ? (
+              <div className="overflow-x-auto">
+                <table className="w-full">
+                  <thead>
+                    <tr className="border-b text-left">
+                      <th className="pb-2">Código</th>
+                      <th className="pb-2">Data</th>
+                      <th className="pb-2">Cliente</th>
+                      <th className="pb-2">Terminal</th>
+                      <th className="pb-2">Pagamento</th>
+                      <th className="pb-2 text-right">Valor Bruto</th>
+                      <th className="pb-2 text-right">Valor Líquido</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {filteredSales.map(sale => (
+                      <tr key={sale.id} className="border-b hover:bg-muted/50">
+                        <td className="py-3">{sale.code}</td>
+                        <td className="py-3">{formatDate(sale.date)}</td>
+                        <td className="py-3">{sale.client_name}</td>
+                        <td className="py-3">{sale.terminal}</td>
+                        <td className="py-3">
+                          <span className={`inline-block px-2 py-0.5 text-xs rounded-full ${
+                            sale.payment_method === "PIX" 
+                              ? "bg-green-100 text-green-800" 
+                              : sale.payment_method === "CREDIT"
+                                ? "bg-blue-100 text-blue-800" 
+                                : "bg-purple-100 text-purple-800"
+                          }`}>
+                            {sale.payment_method === "PIX" 
+                              ? "PIX" 
+                              : sale.payment_method === "CREDIT" 
+                                ? "Crédito" 
+                                : "Débito"}
+                          </span>
+                        </td>
+                        <td className="py-3 text-right">{formatCurrency(sale.gross_amount)}</td>
+                        <td className="py-3 text-right">{formatCurrency(sale.net_amount)}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
               </div>
             ) : (
-              <div className="rounded-md border">
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Código</TableHead>
-                      <TableHead>Cliente</TableHead>
-                      <TableHead>Terminal</TableHead>
-                      <TableHead>Data</TableHead>
-                      <TableHead>Forma de Pagamento</TableHead>
-                      <TableHead>Status</TableHead>
-                      <TableHead className="text-right">Valor Bruto</TableHead>
-                      <TableHead className="text-right">Valor Líquido</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {filteredSales.map((sale) => (
-                      <TableRow key={sale.id}>
-                        <TableCell className="font-medium">{sale.code}</TableCell>
-                        <TableCell>{sale.client_name}</TableCell>
-                        <TableCell>{sale.terminal}</TableCell>
-                        <TableCell>{formatDate(new Date(sale.date))}</TableCell>
-                        <TableCell>{getPaymentMethodText(sale.payment_method)}</TableCell>
-                        <TableCell>
-                          <Badge variant={sale.status === "completed" ? "success" : "warning"}>
-                            {sale.status === "completed" ? "Finalizada" : "Processando"}
-                          </Badge>
-                        </TableCell>
-                        <TableCell className="text-right">{formatCurrency(sale.gross_amount)}</TableCell>
-                        <TableCell className="text-right">
-                          <span className="font-medium">{formatCurrency(sale.net_amount)}</span>
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              </div>
+              <p className="text-center py-6 text-muted-foreground">
+                Nenhuma venda encontrada para os filtros selecionados
+              </p>
             )}
+            
+            <div className="flex justify-end mt-6">
+              <Button variant="outline" className="gap-2">
+                <Download className="h-4 w-4" />
+                Exportar CSV
+              </Button>
+            </div>
           </CardContent>
         </Card>
       </PageWrapper>

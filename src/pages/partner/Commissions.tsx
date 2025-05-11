@@ -1,253 +1,302 @@
 
-import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useState, useEffect } from "react";
+import { usePartnerCommissions } from "@/hooks/use-partner-commissions";
 import { PageHeader } from "@/components/page/PageHeader";
 import { PageWrapper } from "@/components/page/PageWrapper";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Textarea } from "@/components/ui/textarea";
-import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
-import { Wallet, Calendar, Download, Check, X } from "lucide-react";
-import { formatCurrency, formatDate } from "@/lib/utils";
-import { usePartnerCommissions } from "@/hooks/use-partner-commissions";
 import { usePixKeys } from "@/hooks/usePixKeys";
+import { PixKey } from "@/types";
+import { 
+  CalendarRange, 
+  DollarSign, 
+  PlusCircle, 
+  FileText, 
+  ArrowUpCircle,
+  Calendar,
+} from "lucide-react";
 
 const Commissions = () => {
-  const [isRequestDialogOpen, setIsRequestDialogOpen] = useState(false);
-  const [selectedPixKeyId, setSelectedPixKeyId] = useState("");
-  const [description, setDescription] = useState("");
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  
-  const { summary, commissions, isLoading, requestPayment } = usePartnerCommissions();
+  const { summary, isLoading, requestPayment } = usePartnerCommissions();
   const { pixKeys, isLoadingPixKeys } = usePixKeys();
+  const [isRequestDialogOpen, setIsRequestDialogOpen] = useState(false);
+  const [selectedPixKey, setSelectedPixKey] = useState<string>("");
+  const [requestAmount, setRequestAmount] = useState<string>("");
+  const [description, setDescription] = useState<string>("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const { toast } = useToast();
-  const navigate = useNavigate();
-
+  
   const handleRequestPayment = async () => {
-    if (!selectedPixKeyId) {
+    if (!selectedPixKey) {
       toast({
         variant: "destructive",
-        title: "Erro",
-        description: "Selecione uma chave PIX para continuar.",
+        title: "Chave PIX obrigatória",
+        description: "Selecione uma chave PIX para receber o pagamento",
       });
       return;
     }
-
-    setIsSubmitting(true);
-    const success = await requestPayment(
-      summary.pendingCommission,
-      selectedPixKeyId,
-      description
-    );
     
+    const amount = parseFloat(requestAmount);
+    if (isNaN(amount) || amount <= 0) {
+      toast({
+        variant: "destructive",
+        title: "Valor inválido",
+        description: "Insira um valor válido para solicitação",
+      });
+      return;
+    }
+    
+    setIsSubmitting(true);
+    const success = await requestPayment(amount, selectedPixKey, description);
     setIsSubmitting(false);
     
     if (success) {
       setIsRequestDialogOpen(false);
-      setSelectedPixKeyId("");
+      setSelectedPixKey("");
+      setRequestAmount("");
       setDescription("");
     }
   };
-
+  
+  const formatCurrency = (value: number) => {
+    return new Intl.NumberFormat('pt-BR', {
+      style: 'currency',
+      currency: 'BRL'
+    }).format(value);
+  };
+  
+  const formatDate = (dateString: string) => {
+    return new Date(dateString).toLocaleDateString('pt-BR');
+  };
+  
   return (
     <div>
-      <PageHeader 
-        title="Minhas Comissões" 
-        description="Gerencie e solicite pagamentos de comissões"
-      />
-      
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
-        <Card>
-          <CardHeader className="pb-3">
-            <CardTitle className="text-sm font-medium">Comissão Total</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{formatCurrency(summary.totalCommission)}</div>
-            <p className="text-xs text-muted-foreground mt-1">Valor total acumulado</p>
-          </CardContent>
-        </Card>
-        
-        <Card>
-          <CardHeader className="pb-3">
-            <CardTitle className="text-sm font-medium">Comissão Paga</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{formatCurrency(summary.paidCommission)}</div>
-            <p className="text-xs text-muted-foreground mt-1">Valor já pago</p>
-          </CardContent>
-        </Card>
-        
-        <Card>
-          <CardHeader className="pb-3">
-            <CardTitle className="text-sm font-medium">Comissão Disponível</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{formatCurrency(summary.pendingCommission)}</div>
-            <div className="flex justify-between items-center mt-1">
-              <p className="text-xs text-muted-foreground">Disponível para saque</p>
-              <Button 
-                size="sm" 
-                disabled={summary.pendingCommission <= 0}
-                onClick={() => setIsRequestDialogOpen(true)}
-              >
-                Solicitar
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
+      <PageHeader
+        title="Comissões"
+        description="Acompanhe suas comissões e solicite pagamentos"
+      >
+        <Button onClick={() => setIsRequestDialogOpen(true)} className="inline-flex items-center gap-2">
+          <ArrowUpCircle className="h-4 w-4" />
+          Solicitar Pagamento
+        </Button>
+      </PageHeader>
       
       <PageWrapper>
-        <Card>
-          <CardHeader>
-            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center">
-              <div>
-                <CardTitle className="flex items-center">
-                  <Wallet className="mr-2 h-5 w-5" />
-                  Histórico de Comissões
-                </CardTitle>
-                <CardDescription>
-                  Acompanhe suas comissões geradas e pagas
-                </CardDescription>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+          <Card>
+            <CardContent className="p-6">
+              <div className="text-sm text-muted-foreground mb-1">Total acumulado</div>
+              <div className="text-3xl font-bold">
+                {isLoading ? "..." : formatCurrency(summary.totalCommission)}
               </div>
-              <Button variant="outline" className="mt-2 sm:mt-0">
-                <Download className="mr-2 h-4 w-4" />
-                Exportar
-              </Button>
-            </div>
-          </CardHeader>
-          <CardContent>
-            {isLoading ? (
-              <div className="w-full p-8 flex justify-center">
-                <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent"></div>
-              </div>
-            ) : commissions.length === 0 ? (
-              <div className="p-8 text-center">
-                <h3 className="text-lg font-medium">Nenhuma comissão encontrada</h3>
-                <p className="text-muted-foreground mt-1">
-                  Você ainda não gerou comissões.
-                </p>
-              </div>
-            ) : (
-              <div className="rounded-md border">
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Data</TableHead>
-                      <TableHead>ID da Venda</TableHead>
-                      <TableHead className="text-right">Valor</TableHead>
-                      <TableHead>Status</TableHead>
-                      <TableHead>Pago em</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {commissions.map((commission) => (
-                      <TableRow key={commission.id}>
-                        <TableCell>
-                          <div className="flex items-center">
-                            <Calendar className="mr-2 h-4 w-4 text-muted-foreground" />
-                            {formatDate(new Date(commission.created_at))}
-                          </div>
-                        </TableCell>
-                        <TableCell className="font-medium">{commission.sale_id.substring(0, 8)}</TableCell>
-                        <TableCell className="text-right">{formatCurrency(commission.amount)}</TableCell>
-                        <TableCell>
-                          <Badge variant={commission.is_paid ? "success" : "outline"}>
-                            {commission.is_paid ? "Pago" : "Pendente"}
-                          </Badge>
-                        </TableCell>
-                        <TableCell>
-                          {commission.paid_at ? formatDate(new Date(commission.paid_at)) : "-"}
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              </div>
-            )}
-          </CardContent>
-        </Card>
-      </PageWrapper>
-      
-      {/* Payment Request Dialog */}
-      <Dialog open={isRequestDialogOpen} onOpenChange={setIsRequestDialogOpen}>
-        <DialogContent className="sm:max-w-md">
-          <DialogHeader>
-            <DialogTitle>Solicitar Pagamento</DialogTitle>
-            <DialogDescription>
-              Solicite o pagamento da sua comissão disponível de {formatCurrency(summary.pendingCommission)}.
-            </DialogDescription>
-          </DialogHeader>
+            </CardContent>
+          </Card>
           
-          <div className="space-y-4 py-4">
-            <div className="space-y-2">
-              <label className="text-sm font-medium">Selecione uma chave PIX</label>
-              {isLoadingPixKeys ? (
-                <div className="w-full p-2 flex justify-center">
-                  <div className="h-4 w-4 animate-spin rounded-full border-2 border-primary border-t-transparent"></div>
+          <Card>
+            <CardContent className="p-6">
+              <div className="text-sm text-muted-foreground mb-1">Já recebido</div>
+              <div className="text-3xl font-bold text-green-600">
+                {isLoading ? "..." : formatCurrency(summary.paidCommission)}
+              </div>
+            </CardContent>
+          </Card>
+          
+          <Card>
+            <CardContent className="p-6">
+              <div className="text-sm text-muted-foreground mb-1">Disponível para saque</div>
+              <div className="text-3xl font-bold text-blue-600">
+                {isLoading ? "..." : formatCurrency(summary.pendingCommission)}
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+        
+        <Tabs defaultValue="history">
+          <TabsList className="grid grid-cols-2 w-[400px] mb-6">
+            <TabsTrigger value="history">Histórico de Comissões</TabsTrigger>
+            <TabsTrigger value="payments">Solicitações de Pagamento</TabsTrigger>
+          </TabsList>
+          
+          <TabsContent value="history">
+            <Card>
+              <CardHeader>
+                <CardTitle>Histórico de Comissões</CardTitle>
+                <CardDescription>Todas as comissões geradas por vendas dos seus clientes</CardDescription>
+              </CardHeader>
+              <CardContent>
+                {isLoading ? (
+                  <div className="animate-pulse space-y-4">
+                    <div className="h-10 bg-gray-100 rounded"></div>
+                    <div className="h-10 bg-gray-100 rounded"></div>
+                    <div className="h-10 bg-gray-100 rounded"></div>
+                  </div>
+                ) : (
+                  <div className="overflow-x-auto">
+                    <table className="w-full">
+                      <thead>
+                        <tr className="border-b text-left">
+                          <th className="pb-2">Data</th>
+                          <th className="pb-2">Cliente</th>
+                          <th className="pb-2">Venda</th>
+                          <th className="pb-2 text-right">Comissão</th>
+                          <th className="pb-2 text-center">Status</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {summary.recentCommissions && summary.recentCommissions.length > 0 ? (
+                          summary.recentCommissions.map(commission => (
+                            <tr key={commission.id} className="border-b hover:bg-muted/50">
+                              <td className="py-3">{formatDate(commission.created_at)}</td>
+                              <td className="py-3">Cliente {commission.sale_id.substring(0, 5)}</td>
+                              <td className="py-3">Venda #{commission.sale_id.substring(0, 8)}</td>
+                              <td className="py-3 text-right font-medium">{formatCurrency(commission.amount)}</td>
+                              <td className="py-3 text-center">
+                                <span className={`inline-block px-2 py-0.5 text-xs rounded-full ${
+                                  commission.is_paid 
+                                    ? "bg-green-100 text-green-800" 
+                                    : "bg-yellow-100 text-yellow-800"
+                                }`}>
+                                  {commission.is_paid ? "Pago" : "Pendente"}
+                                </span>
+                              </td>
+                            </tr>
+                          ))
+                        ) : (
+                          <tr>
+                            <td colSpan={5} className="py-6 text-center text-muted-foreground">
+                              Nenhuma comissão registrada
+                            </td>
+                          </tr>
+                        )}
+                      </tbody>
+                    </table>
+                  </div>
+                )}
+                
+                <div className="flex justify-between mt-6">
+                  <div className="flex items-center text-sm text-muted-foreground">
+                    Mostrando últimas comissões
+                  </div>
+                  <Button variant="outline" className="gap-2">
+                    <FileText className="h-4 w-4" />
+                    Exportar Extrato
+                  </Button>
                 </div>
-              ) : (
-                <Select value={selectedPixKeyId} onValueChange={setSelectedPixKeyId}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Selecione uma chave PIX" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {pixKeys.map((pixKey) => (
-                      <SelectItem key={pixKey.id} value={pixKey.id}>
-                        {pixKey.name} ({pixKey.key})
-                        {pixKey.is_default && " - Favorita"}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              )}
-            </div>
-            
-            <div className="space-y-2">
-              <label className="text-sm font-medium">Observação (opcional)</label>
-              <Textarea 
-                placeholder="Adicione uma observação se necessário"
-                value={description}
-                onChange={(e) => setDescription(e.target.value)}
-              />
-            </div>
-          </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
           
-          <DialogFooter className="flex flex-col sm:flex-row sm:justify-between sm:space-x-2">
-            <Button 
-              type="button" 
-              variant="outline" 
-              onClick={() => setIsRequestDialogOpen(false)}
-              disabled={isSubmitting}
-              className="mb-2 sm:mb-0"
-            >
-              <X className="mr-2 h-4 w-4" />
-              Cancelar
-            </Button>
-            <Button 
-              type="button" 
-              onClick={handleRequestPayment}
-              disabled={isSubmitting || !selectedPixKeyId}
-            >
-              {isSubmitting ? (
-                <>
-                  <div className="h-4 w-4 mr-2 animate-spin rounded-full border-2 border-current border-t-white"></div>
-                  Solicitando...
-                </>
-              ) : (
-                <>
-                  <Check className="mr-2 h-4 w-4" />
-                  Confirmar Solicitação
-                </>
-              )}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+          <TabsContent value="payments">
+            <Card>
+              <CardHeader>
+                <CardTitle>Solicitações de Pagamento</CardTitle>
+                <CardDescription>Acompanhe as solicitações de pagamento das suas comissões</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="overflow-x-auto">
+                  <table className="w-full">
+                    <thead>
+                      <tr className="border-b text-left">
+                        <th className="pb-2">Data</th>
+                        <th className="pb-2">Valor</th>
+                        <th className="pb-2">Chave PIX</th>
+                        <th className="pb-2 text-center">Status</th>
+                        <th className="pb-2">Observação</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr>
+                        <td colSpan={5} className="py-6 text-center text-muted-foreground">
+                          Nenhuma solicitação de pagamento registrada
+                        </td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+        </Tabs>
+        
+        <Dialog open={isRequestDialogOpen} onOpenChange={setIsRequestDialogOpen}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Solicitar Pagamento de Comissões</DialogTitle>
+            </DialogHeader>
+            <div className="space-y-4 py-4">
+              <div className="space-y-2">
+                <Label htmlFor="amount">Valor</Label>
+                <div className="relative">
+                  <span className="absolute left-3 top-2.5 text-muted-foreground">R$</span>
+                  <Input
+                    id="amount"
+                    type="text"
+                    className="pl-8"
+                    placeholder="0,00"
+                    value={requestAmount}
+                    onChange={(e) => setRequestAmount(e.target.value)}
+                  />
+                </div>
+              </div>
+              
+              <div className="space-y-2">
+                <Label htmlFor="pixKey">Chave PIX</Label>
+                {isLoadingPixKeys ? (
+                  <div className="h-10 bg-gray-100 rounded animate-pulse"></div>
+                ) : pixKeys && pixKeys.length > 0 ? (
+                  <Select value={selectedPixKey} onValueChange={setSelectedPixKey}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Selecione uma chave PIX" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {pixKeys.map((key) => (
+                        <SelectItem key={key.id} value={key.id}>
+                          {key.name} - {key.key}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                ) : (
+                  <div className="text-sm text-muted-foreground">
+                    Nenhuma chave PIX cadastrada. Adicione uma chave nas configurações.
+                  </div>
+                )}
+              </div>
+              
+              <div className="space-y-2">
+                <Label htmlFor="description">Observação (opcional)</Label>
+                <Input
+                  id="description"
+                  placeholder="Adicione uma observação"
+                  value={description}
+                  onChange={(e) => setDescription(e.target.value)}
+                />
+              </div>
+            </div>
+            <DialogFooter>
+              <Button
+                variant="outline"
+                onClick={() => setIsRequestDialogOpen(false)}
+                disabled={isSubmitting}
+              >
+                Cancelar
+              </Button>
+              <Button 
+                onClick={handleRequestPayment} 
+                disabled={isSubmitting || !selectedPixKey || !requestAmount}
+              >
+                {isSubmitting ? "Enviando..." : "Solicitar Pagamento"}
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+      </PageWrapper>
     </div>
   );
 };
