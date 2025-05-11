@@ -5,7 +5,7 @@ import { Search, CalendarRange, Filter, X, Download } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { SearchBar, DateRangePicker } from "@/components/sales/filters";
-import { SalesAdvancedFilters } from "./SalesAdvancedFilters";
+import SalesAdvancedFilters from "./SalesAdvancedFilters";
 import SalesDataTable from "./SalesDataTable";
 
 interface DateRange {

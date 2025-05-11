@@ -10,77 +10,22 @@ interface DateRange {
 }
 
 interface SalesAdvancedFiltersProps {
-  filters: SalesFilterParams;
-  dateRange?: DateRange;
-  onFilterChange: (filters: SalesFilterParams) => void;
-  onDateRangeChange: (dateRange: DateRange | undefined) => void;
-  onClearFilters: () => void;
+  onFilterChange: (key: keyof SalesFilterParams, value: any) => void;
 }
 
 const SalesAdvancedFilters = ({
-  filters,
-  dateRange,
-  onFilterChange,
-  onDateRangeChange,
-  onClearFilters
+  onFilterChange
 }: SalesAdvancedFiltersProps) => {
-  const [searchTerm, setSearchTerm] = useState(filters.search || "");
   const [showMoreFilters, setShowMoreFilters] = useState(false);
-  
-  const handleSearchSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    onFilterChange({ ...filters, search: searchTerm });
-  };
+  const [filters, setFilters] = useState<SalesFilterParams>({});
   
   const handleFilterChange = (key: keyof SalesFilterParams, value: any) => {
-    onFilterChange({ ...filters, [key]: value });
+    setFilters(prev => ({ ...prev, [key]: value }));
+    onFilterChange(key, value);
   };
   
-  const handleDatePreset = (preset: 'today' | 'week' | 'month') => {
-    const today = new Date();
-    let from = new Date();
-    let to = new Date();
-    
-    switch (preset) {
-      case 'today':
-        // Already set to today
-        break;
-        
-      case 'week':
-        // Start of the week (Monday)
-        const day = today.getDay();
-        const diff = today.getDate() - day + (day === 0 ? -6 : 1);
-        from = new Date(today.setDate(diff));
-        to = new Date();
-        break;
-        
-      case 'month':
-        from = new Date(today.getFullYear(), today.getMonth(), 1);
-        to = new Date();
-        break;
-    }
-    
-    onDateRangeChange({ from, to });
-  };
-
   return (
-    <div className="space-y-6">
-      <div className="flex flex-col sm:flex-row gap-4">
-        {/* Search Bar */}
-        <SearchBar
-          searchTerm={searchTerm}
-          onSearchChange={setSearchTerm}
-          onSearchSubmit={handleSearchSubmit}
-        />
-        
-        {/* Date Range Picker */}
-        <DateRangePicker
-          dateRange={dateRange}
-          onDateRangeChange={onDateRangeChange}
-          onDatePreset={handleDatePreset}
-        />
-      </div>
-      
+    <div className="space-y-4">
       {/* Basic Filters */}
       <BasicFilters 
         filters={filters}
@@ -103,15 +48,6 @@ const SalesAdvancedFilters = ({
           type="button"
         >
           {showMoreFilters ? "Menos filtros" : "Mais filtros"}
-        </Button>
-        
-        <Button
-          variant="ghost"
-          onClick={onClearFilters}
-          className="text-sm text-muted-foreground"
-          type="button"
-        >
-          Limpar filtros
         </Button>
       </div>
     </div>
