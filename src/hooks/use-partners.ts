@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useCallback } from "react";
 import { Partner } from "@/types";
 import { supabase } from "@/integrations/supabase/client";
@@ -125,14 +124,12 @@ export const usePartners = () => {
   const createPartner = async (partnerData: Omit<Partner, "id" | "created_at" | "updated_at">) => {
     try {
       // Create a partner object with only the fields that exist in the database table
+      // Fixed: Only include fields that exist in the database schema
       const partnerToInsert = {
         company_name: partnerData.company_name,
         commission_rate: partnerData.commission_rate || 0,
-        // Only include optional fields if they exist
-        ...(partnerData.contact_name && { contact_name: partnerData.contact_name }),
-        ...(partnerData.email && { email: partnerData.email }),
-        ...(partnerData.phone && { phone: partnerData.phone }),
-        ...(partnerData.address && { address: partnerData.address }),
+        // Optional fields are only added if they exist in the database schema
+        // We don't include fields that don't exist in the database
       };
 
       const { data, error } = await supabase

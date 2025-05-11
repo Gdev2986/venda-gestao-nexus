@@ -47,8 +47,8 @@ export const usePartnerClients = () => {
       if (error) throw error;
 
       if (data) {
-        // Type assertion to avoid deep type instantiation
-        const typedData = data as Client[];
+        // Use an explicit type assertion to avoid deep type instantiation
+        const typedData = data as unknown as Client[];
         setClients(typedData);
         setFilteredClients(typedData);
       }

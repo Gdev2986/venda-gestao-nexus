@@ -82,7 +82,7 @@ export const UsersTab = ({ openRoleModal }: UsersTabProps) => {
         .select('*', { count: 'exact' });
       
       if (selectedRole !== 'all') {
-        // Use the string value directly instead of enum
+        // Use the string value directly - fixed TypeScript error
         query = query.eq('role', selectedRole);
       }
       

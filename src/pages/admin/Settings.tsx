@@ -25,7 +25,7 @@ interface ProfileData {
 const AdminSettings = () => {
   const [activeTab, setActiveTab] = useState("usuarios");
   const [selectedUser, setSelectedUser] = useState<ProfileData | null>(null);
-  const [newRole, setNewRole] = useState<string>(UserRole.CLIENT);
+  const [newRole, setNewRole] = useState<string>(UserRole.CLIENT as string);
   const [showRoleModal, setShowRoleModal] = useState(false);
   
   const { toast } = useToast();

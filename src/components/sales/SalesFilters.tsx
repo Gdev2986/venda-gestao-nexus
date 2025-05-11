@@ -16,6 +16,7 @@ export interface SalesFiltersProps {
   onFilterChange: (key: keyof SalesFilterParams, value: any) => void;
   onClearFilters: () => void;
   onExport?: () => void;
+  onShowImportDialog?: () => void; // Make this optional to support both components
 }
 
 const SalesFilters = ({
@@ -24,7 +25,8 @@ const SalesFilters = ({
   onDateChange,
   onFilterChange,
   onClearFilters,
-  onExport
+  onExport,
+  onShowImportDialog
 }: SalesFiltersProps) => {
   // Format date range for display
   const formatDateRange = () => {
@@ -90,6 +92,12 @@ const SalesFilters = ({
       {onExport && (
         <Button variant="outline" onClick={onExport}>
           Exportar
+        </Button>
+      )}
+      
+      {onShowImportDialog && (
+        <Button variant="outline" onClick={onShowImportDialog}>
+          Importar
         </Button>
       )}
     </div>

@@ -6,7 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import SalesTable from "@/components/sales/SalesTable";
-import { Sale, PaymentMethod } from "@/types";
+import { Sale, PaymentMethod, SalesFilterParams } from "@/types";
 import { CalendarRange, FileText, Download, Search } from "lucide-react";
 import SalesFilters from "@/components/sales/SalesFilters";
 
@@ -14,7 +14,7 @@ const PartnerSales = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [sales, setSales] = useState<Sale[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [filters, setFilters] = useState<any>({});
+  const [filters, setFilters] = useState<SalesFilterParams>({});
   const [date, setDate] = useState<{ from: Date; to?: Date } | undefined>(undefined);
 
   // Mock data - to be replaced with real API calls
@@ -54,7 +54,7 @@ const PartnerSales = () => {
     }, 1000);
   }, []);
 
-  const handleFilterChange = (key: keyof any, value: any) => {
+  const handleFilterChange = (key: keyof SalesFilterParams, value: any) => {
     setFilters(prev => ({ ...prev, [key]: value }));
   };
   
@@ -69,11 +69,6 @@ const PartnerSales = () => {
 
   const handleExport = () => {
     console.log("Exporting data...");
-  };
-
-  // Function to handle filter changes from SalesFilters component
-  const handleFiltersChange = (newFilters: any) => {
-    setFilters(newFilters);
   };
 
   return (
@@ -104,9 +99,9 @@ const PartnerSales = () => {
               date={date}
               filters={filters}
               onDateChange={handleDateChange}
+              onFilterChange={handleFilterChange}
               onClearFilters={handleClearFilters}
               onExport={handleExport}
-              onFilterChange={handleFilterChange}
             />
           </div>
           

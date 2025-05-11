@@ -1,11 +1,9 @@
 
 import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
-import { Sale } from "@/types";
+import { Sale, PaymentMethod } from "@/types";
 import { supabase } from "@/integrations/supabase/client";
 
-// This is a very simplified version assuming this file exists
-// When adding actual content, replace it accordingly
 const ClientDetails = () => {
   const { clientId } = useParams();
   const [sales, setSales] = useState<Sale[]>([]);
@@ -42,8 +40,17 @@ const ClientDetails = () => {
           if (supabaseData) {
             // Transform to match the Sale type
             const transformedData: Sale[] = supabaseData.map(sale => ({
-              ...sale,
-              client_name: sale.clients?.business_name || "Unknown Client"
+              id: sale.id,
+              code: sale.code,
+              terminal: sale.terminal,
+              client_name: sale.clients?.business_name || "Unknown Client",
+              gross_amount: sale.gross_amount,
+              net_amount: sale.net_amount,
+              date: sale.date,
+              payment_method: sale.payment_method as PaymentMethod, // Type cast to PaymentMethod enum
+              client_id: sale.client_id,
+              created_at: sale.created_at,
+              updated_at: sale.updated_at
             }));
             
             setSales(transformedData);
