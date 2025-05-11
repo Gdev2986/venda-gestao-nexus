@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { PageHeader } from "@/components/page/PageHeader";
 import { PageWrapper } from "@/components/page/PageWrapper";
@@ -13,7 +14,7 @@ const PartnerSales = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [sales, setSales] = useState<Sale[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [filters, setFilters] = useState({});
+  const [filters, setFilters] = useState<any>({});
   const [date, setDate] = useState<{ from: Date; to?: Date } | undefined>(undefined);
 
   // Mock data - to be replaced with real API calls
@@ -70,6 +71,11 @@ const PartnerSales = () => {
     console.log("Exporting data...");
   };
 
+  // Function to handle filter changes from SalesFilters component
+  const handleFiltersChange = (newFilters: any) => {
+    setFilters(newFilters);
+  };
+
   return (
     <div>
       <PageHeader 
@@ -95,12 +101,12 @@ const PartnerSales = () => {
               />
             </div>
             <SalesFilters 
-              onFilterChange={handleFilterChange}
-              onDateChange={handleDateChange}
-              onClearFilters={handleClearFilters}
               date={date}
               filters={filters}
+              onDateChange={handleDateChange}
+              onClearFilters={handleClearFilters}
               onExport={handleExport}
+              onFilterChange={handleFilterChange}
             />
           </div>
           

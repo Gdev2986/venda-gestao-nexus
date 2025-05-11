@@ -47,8 +47,10 @@ export const usePartnerClients = () => {
       if (error) throw error;
 
       if (data) {
-        setClients(data as Client[]);
-        setFilteredClients(data as Client[]);
+        // Type assertion to avoid deep type instantiation
+        const typedData = data as Client[];
+        setClients(typedData);
+        setFilteredClients(typedData);
       }
     } catch (err: any) {
       console.error("Error fetching clients:", err);

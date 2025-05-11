@@ -1,8 +1,25 @@
 
 import { useState, useEffect, useCallback } from "react";
-import { Partner, FilterValues } from "@/types";
+import { Partner } from "@/types";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+
+// Create a type that matches what's in the database
+interface PartnerRecord {
+  id: string;
+  company_name: string;
+  commission_rate: number;
+  created_at: string;
+  updated_at: string;
+  // Optional fields that may or may not be in the database
+  contact_name?: string;
+  email?: string;
+  phone?: string;
+  address?: string;
+  total_sales?: number;
+  total_commission?: number;
+  user_id?: string;
+}
 
 export const usePartners = () => {
   const [partners, setPartners] = useState<Partner[]>([]);
@@ -25,8 +42,8 @@ export const usePartners = () => {
 
       if (data) {
         // Transform data to match our Partner interface
-        const transformedPartners: Partner[] = data.map(partner => {
-          // Create a properly typed partner object
+        const transformedPartners: Partner[] = data.map((partner: PartnerRecord) => {
+          // Create a properly typed partner object with available fields
           const typedPartner: Partner = {
             id: partner.id,
             company_name: partner.company_name,
@@ -35,8 +52,6 @@ export const usePartners = () => {
             commission_rate: partner.commission_rate || 0,
             // Only include fields that are defined in the data object
             ...(partner.contact_name && { contact_name: partner.contact_name }),
-            ...(partner.contact_email && { contact_email: partner.contact_email }),
-            ...(partner.contact_phone && { contact_phone: partner.contact_phone }),
             ...(partner.email && { email: partner.email }),
             ...(partner.phone && { phone: partner.phone }),
             ...(partner.address && { address: partner.address }),
@@ -115,8 +130,6 @@ export const usePartners = () => {
         commission_rate: partnerData.commission_rate || 0,
         // Only include optional fields if they exist
         ...(partnerData.contact_name && { contact_name: partnerData.contact_name }),
-        ...(partnerData.contact_email && { contact_email: partnerData.contact_email }),
-        ...(partnerData.contact_phone && { contact_phone: partnerData.contact_phone }),
         ...(partnerData.email && { email: partnerData.email }),
         ...(partnerData.phone && { phone: partnerData.phone }),
         ...(partnerData.address && { address: partnerData.address }),

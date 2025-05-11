@@ -99,7 +99,7 @@ const AdminSettings = () => {
         <RoleChangeModal
           user={selectedUser}
           newRole={newRole}
-          setNewRole={(role: UserRole) => setNewRole(role)}
+          setNewRole={setNewRole}
           onClose={() => setShowRoleModal(false)}
           onSave={handleRoleChange}
         />

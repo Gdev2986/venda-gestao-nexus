@@ -1,121 +1,96 @@
 
-import { useState, FormEvent } from "react";
 import { Button } from "@/components/ui/button";
-import { Search, CalendarRange, Filter, X, Download } from "lucide-react";
-import { Card } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { SearchBar, DateRangePicker } from "@/components/sales/filters";
-import SalesAdvancedFilters from "./SalesAdvancedFilters";
-import SalesDataTable from "./SalesDataTable";
+import { Calendar } from "lucide-react";
+import { format } from "date-fns";
+import { ptBR } from "date-fns/locale";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Calendar as CalendarComponent } from "@/components/ui/calendar";
+import { cn } from "@/lib/utils";
+import BasicFilters from "./filters/BasicFilters";
+import { SalesFilterParams } from "@/types";
 
-interface DateRange {
-  from: Date;
-  to?: Date;
-}
-
-interface SalesFiltersProps {
-  onFilterChange: (key: keyof any, value: any) => void;
-  onDateChange: (date: DateRange | undefined) => void;
+export interface SalesFiltersProps {
+  date?: { from: Date; to?: Date } | undefined;
+  filters: SalesFilterParams;
+  onDateChange: (date: { from: Date; to?: Date } | undefined) => void;
+  onFilterChange: (key: keyof SalesFilterParams, value: any) => void;
   onClearFilters: () => void;
   onExport?: () => void;
-  onShowImportDialog?: () => void;
-  date?: DateRange;
-  filters?: Record<string, any>;
 }
 
 const SalesFilters = ({
-  onFilterChange,
   date,
+  filters,
   onDateChange,
+  onFilterChange,
   onClearFilters,
-  onExport,
-  onShowImportDialog,
+  onExport
 }: SalesFiltersProps) => {
-  const [searchTerm, setSearchTerm] = useState("");
-  const [showAdvancedFilters, setShowAdvancedFilters] = useState(false);
-
-  const handleSearchChange = (value: string) => {
-    setSearchTerm(value);
-  };
-
-  const handleSearchSubmit = (e: FormEvent) => {
-    e.preventDefault();
-    onFilterChange("search", searchTerm);
-  };
-
-  const handleDatePreset = (preset: "today" | "week" | "month") => {
-    const today = new Date();
-    let from = new Date();
-    let to = undefined;
-
-    if (preset === "today") {
-      from = new Date();
-    } else if (preset === "week") {
-      const day = today.getDay();
-      from = new Date(today);
-      from.setDate(today.getDate() - day);
-    } else if (preset === "month") {
-      from = new Date(today.getFullYear(), today.getMonth(), 1);
+  // Format date range for display
+  const formatDateRange = () => {
+    if (!date?.from) return "Selecionar período";
+    
+    if (date.to) {
+      return `${format(date.from, 'PP', { locale: ptBR })} - ${format(date.to, 'PP', { locale: ptBR })}`;
     }
-
-    onDateChange({ from, to });
+    
+    return format(date.from, 'PP', { locale: ptBR });
   };
-
+  
   return (
-    <div className="space-y-4 w-full">
-      <div className="flex flex-col sm:flex-row gap-3 w-full">
-        {/* Search Box */}
-        <SearchBar
-          searchTerm={searchTerm}
-          onSearchChange={handleSearchChange}
-          onSearchSubmit={handleSearchSubmit}
-        />
-
-        {/* Action Buttons */}
-        <div className="flex gap-2 w-full sm:w-auto">
-          <Button
-            variant="outline"
-            type="button"
-            size="icon"
-            onClick={() => setShowAdvancedFilters(!showAdvancedFilters)}
-            className="h-10 w-10"
-          >
-            <Filter className="h-4 w-4" />
+    <div className="flex flex-wrap items-center gap-2">
+      <Popover>
+        <PopoverTrigger asChild>
+          <Button variant="outline" className="gap-2">
+            <Calendar className="h-4 w-4" />
+            <span className="hidden sm:inline">{formatDateRange()}</span>
+            <span className="sm:hidden">Período</span>
           </Button>
-
-          <DateRangePicker
-            dateRange={date}
-            onDateRangeChange={onDateChange}
-            onDatePreset={handleDatePreset}
+        </PopoverTrigger>
+        <PopoverContent className="w-auto p-0" align="end">
+          <CalendarComponent
+            initialFocus
+            mode="range"
+            defaultMonth={date?.from}
+            selected={date}
+            onSelect={onDateChange}
+            numberOfMonths={1}
           />
-
-          {onExport && (
-            <Button
-              variant="outline"
-              type="button"
-              onClick={onExport}
-              className="hidden sm:flex items-center gap-1"
-            >
-              <Download className="h-4 w-4" />
-              <span>Exportar</span>
-            </Button>
-          )}
-
-          <Button
-            variant="ghost"
-            type="button"
-            onClick={onClearFilters}
-            className="h-10 px-2 sm:px-4"
-          >
-            <X className="h-4 w-4 mr-0 sm:mr-2" />
-            <span className="hidden sm:inline">Limpar</span>
-          </Button>
-        </div>
-      </div>
-
-      {/* Advanced Filters */}
-      {showAdvancedFilters && (
-        <SalesAdvancedFilters onFilterChange={onFilterChange} />
+        </PopoverContent>
+      </Popover>
+      
+      <Popover>
+        <PopoverTrigger asChild>
+          <Button variant="outline">Filtros</Button>
+        </PopoverTrigger>
+        <PopoverContent className="w-[300px] sm:w-[400px]" align="end">
+          <div className="space-y-4">
+            <h4 className="font-medium text-sm">Filtros de Vendas</h4>
+            <BasicFilters filters={filters} onFilterChange={onFilterChange} />
+            
+            <div className="flex items-center justify-between pt-4">
+              <Button 
+                variant="ghost" 
+                size="sm" 
+                onClick={onClearFilters}
+              >
+                Limpar filtros
+              </Button>
+              <Button 
+                size="sm"
+                onClick={() => {}}
+              >
+                Aplicar
+              </Button>
+            </div>
+          </div>
+        </PopoverContent>
+      </Popover>
+      
+      {onExport && (
+        <Button variant="outline" onClick={onExport}>
+          Exportar
+        </Button>
       )}
     </div>
   );
