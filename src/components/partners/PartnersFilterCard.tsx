@@ -55,3 +55,4 @@ const PartnersFilterCard = ({ onFilter, isLoading }: PartnersFilterCardProps) =>
 };
 
 export default PartnersFilterCard;
+export { PartnersFilterCard };

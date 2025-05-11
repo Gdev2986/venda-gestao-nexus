@@ -6,12 +6,15 @@ import { Partner } from "@/types";
 import { MoreHorizontal, Trash, Pencil, User } from "lucide-react";
 import { formatCurrency } from "@/lib/formatters";
 
-interface PartnersTableProps {
+export interface PartnersTableProps {
   partners: Partner[];
   isLoading: boolean;
   onDelete?: (partner: Partner) => void;
   onEdit?: (partner: Partner) => void;
   onViewDetails?: (partner: Partner) => void;
+  page?: number;
+  setPage?: (page: number) => void;
+  totalPages?: number;
 }
 
 const PartnersTable = ({ partners, isLoading, onDelete, onEdit, onViewDetails }: PartnersTableProps) => {
@@ -115,3 +118,4 @@ const PartnersTable = ({ partners, isLoading, onDelete, onEdit, onViewDetails }:
 };
 
 export default PartnersTable;
+export { PartnersTable };

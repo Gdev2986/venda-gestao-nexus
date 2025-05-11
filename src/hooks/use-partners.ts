@@ -107,8 +107,10 @@ export const usePartners = () => {
       // Create a partner object with only the fields that exist in the database table
       const partnerToInsert = {
         company_name: partnerData.company_name,
-        commission_rate: partnerData.commission_rate,
+        commission_rate: partnerData.commission_rate || 0,
         contact_name: partnerData.contact_name || null,
+        contact_email: partnerData.contact_email || null,
+        contact_phone: partnerData.contact_phone || null,
         email: partnerData.email || null,
         phone: partnerData.phone || null,
         address: partnerData.address || null
@@ -116,7 +118,7 @@ export const usePartners = () => {
 
       const { data, error } = await supabase
         .from('partners')
-        .insert(partnerToInsert)
+        .insert([partnerToInsert])
         .select();
 
       if (error) throw error;

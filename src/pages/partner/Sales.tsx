@@ -1,238 +1,160 @@
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
 import { PageHeader } from "@/components/page/PageHeader";
 import { PageWrapper } from "@/components/page/PageWrapper";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { useToast } from "@/hooks/use-toast";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Sale } from "@/types";
 import { CalendarRange, FileText, Download } from "lucide-react";
 import AdminSalesFilters from "@/components/admin/sales/AdminSalesFilters";
 
 const PartnerSales = () => {
+  const [selectedPeriod, setSelectedPeriod] = useState("hoje");
   const [sales, setSales] = useState<Sale[]>([]);
-  const [filteredSales, setFilteredSales] = useState<Sale[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const { toast } = useToast();
+  const [isLoading, setIsLoading] = useState(false);
   
-  useEffect(() => {
-    const fetchSales = async () => {
-      setIsLoading(true);
-      try {
-        // Simulate API call
-        setTimeout(() => {
-          // Mock sales data
-          const mockSalesData: Sale[] = [
-            {
-              id: "s1",
-              client_id: "c1",
-              client_name: "Empresa Cliente ABC",
-              code: "VDA001",
-              terminal: "TERM001",
-              date: new Date().toISOString(),
-              payment_method: "CREDIT",
-              gross_amount: 1500,
-              net_amount: 1425,
-              created_at: new Date().toISOString(),
-              updated_at: new Date().toISOString()
-            },
-            {
-              id: "s2",
-              client_id: "c2",
-              client_name: "Empresa Cliente XYZ",
-              code: "VDA002",
-              terminal: "TERM001",
-              date: new Date(Date.now() - 86400000).toISOString(),
-              payment_method: "PIX",
-              gross_amount: 980,
-              net_amount: 980,
-              created_at: new Date(Date.now() - 86400000).toISOString(),
-              updated_at: new Date(Date.now() - 86400000).toISOString()
-            },
-            {
-              id: "s3",
-              client_id: "c1",
-              client_name: "Empresa Cliente ABC",
-              code: "VDA003",
-              terminal: "TERM002",
-              date: new Date(Date.now() - 172800000).toISOString(),
-              payment_method: "DEBIT",
-              gross_amount: 750,
-              net_amount: 735,
-              created_at: new Date(Date.now() - 172800000).toISOString(),
-              updated_at: new Date(Date.now() - 172800000).toISOString()
-            }
-          ];
-          
-          setSales(mockSalesData);
-          setFilteredSales(mockSalesData);
-          setIsLoading(false);
-        }, 800);
-        
-      } catch (error) {
-        console.error("Error fetching sales:", error);
-        toast({
-          variant: "destructive",
-          title: "Erro",
-          description: "Não foi possível carregar as vendas."
-        });
-        setIsLoading(false);
-      }
-    };
-    
-    fetchSales();
-  }, [toast]);
-  
-  const handleFilter = (filters: any) => {
-    let filtered = [...sales];
-    
-    // Apply filters
-    if (filters.search) {
-      const searchTerm = filters.search.toLowerCase();
-      filtered = filtered.filter(sale => 
-        sale.code.toLowerCase().includes(searchTerm) ||
-        sale.client_name.toLowerCase().includes(searchTerm) ||
-        sale.terminal.toLowerCase().includes(searchTerm)
-      );
-    }
-    
-    if (filters.paymentMethod) {
-      filtered = filtered.filter(sale => 
-        sale.payment_method === filters.paymentMethod
-      );
-    }
-    
-    setFilteredSales(filtered);
-  };
-  
-  const formatCurrency = (value: number) => {
-    return new Intl.NumberFormat('pt-BR', {
-      style: 'currency',
-      currency: 'BRL'
-    }).format(value);
-  };
-  
-  const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('pt-BR');
-  };
-  
-  const totalSales = filteredSales.reduce((acc, sale) => acc + sale.gross_amount, 0);
+  // Placeholder for API data
+  const salesTotal = 5678.90;
+  const salesCount = 12;
+  const averageTicket = salesTotal / salesCount;
   
   return (
     <div>
-      <PageHeader 
+      <PageHeader
         title="Vendas"
-        description="Acompanhe todas as vendas dos seus clientes"
-      />
+        description="Acompanhe todas as suas transações"
+      >
+        <div className="flex space-x-2">
+          <Button variant="outline" size="sm">
+            <CalendarRange className="mr-2 h-4 w-4" />
+            Exportar Relatório
+          </Button>
+          <Button variant="outline" size="sm">
+            <FileText className="mr-2 h-4 w-4" />
+            Gerar Extrato
+          </Button>
+        </div>
+      </PageHeader>
       
       <PageWrapper>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+        <div className="grid gap-4 md:grid-cols-3 mb-6">
           <Card>
-            <CardContent className="p-6">
-              <div className="text-sm text-muted-foreground mb-1">Total de Vendas</div>
-              <div className="text-3xl font-bold">
-                {isLoading ? "..." : filteredSales.length}
-              </div>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Total de Vendas</CardTitle>
+              <Download className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">R$ {salesTotal.toFixed(2)}</div>
+              <p className="text-xs text-muted-foreground">
+                +2.1% em relação ao período anterior
+              </p>
             </CardContent>
           </Card>
           
           <Card>
-            <CardContent className="p-6">
-              <div className="text-sm text-muted-foreground mb-1">Valor Total</div>
-              <div className="text-3xl font-bold text-green-600">
-                {isLoading ? "..." : formatCurrency(totalSales)}
-              </div>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Quantidade</CardTitle>
+              <Download className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{salesCount}</div>
+              <p className="text-xs text-muted-foreground">
+                +5.1% em relação ao período anterior
+              </p>
             </CardContent>
           </Card>
           
           <Card>
-            <CardContent className="p-6">
-              <div className="text-sm text-muted-foreground mb-1">Média por Venda</div>
-              <div className="text-3xl font-bold">
-                {isLoading ? "..." : formatCurrency(filteredSales.length ? totalSales / filteredSales.length : 0)}
-              </div>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Ticket Médio</CardTitle>
+              <Download className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">R$ {averageTicket.toFixed(2)}</div>
+              <p className="text-xs text-muted-foreground">
+                -0.5% em relação ao período anterior
+              </p>
             </CardContent>
           </Card>
         </div>
         
-        <Card className="mb-6">
-          <CardHeader className="pb-3">
-            <CardTitle>Filtros</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <AdminSalesFilters onFilter={handleFilter} />
-          </CardContent>
-        </Card>
-        
-        <Card>
-          <CardHeader>
-            <CardTitle>Vendas</CardTitle>
-            <CardDescription>Todas as vendas dos seus clientes</CardDescription>
-          </CardHeader>
-          <CardContent>
-            {isLoading ? (
-              <div className="animate-pulse space-y-4">
-                <div className="h-10 bg-gray-100 rounded"></div>
-                <div className="h-10 bg-gray-100 rounded"></div>
-                <div className="h-10 bg-gray-100 rounded"></div>
-              </div>
-            ) : filteredSales.length > 0 ? (
-              <div className="overflow-x-auto">
-                <table className="w-full">
-                  <thead>
-                    <tr className="border-b text-left">
-                      <th className="pb-2">Código</th>
-                      <th className="pb-2">Data</th>
-                      <th className="pb-2">Cliente</th>
-                      <th className="pb-2">Terminal</th>
-                      <th className="pb-2">Pagamento</th>
-                      <th className="pb-2 text-right">Valor Bruto</th>
-                      <th className="pb-2 text-right">Valor Líquido</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {filteredSales.map(sale => (
-                      <tr key={sale.id} className="border-b hover:bg-muted/50">
-                        <td className="py-3">{sale.code}</td>
-                        <td className="py-3">{formatDate(sale.date)}</td>
-                        <td className="py-3">{sale.client_name}</td>
-                        <td className="py-3">{sale.terminal}</td>
-                        <td className="py-3">
-                          <span className={`inline-block px-2 py-0.5 text-xs rounded-full ${
-                            sale.payment_method === "PIX" 
-                              ? "bg-green-100 text-green-800" 
-                              : sale.payment_method === "CREDIT"
-                                ? "bg-blue-100 text-blue-800" 
-                                : "bg-purple-100 text-purple-800"
-                          }`}>
-                            {sale.payment_method === "PIX" 
-                              ? "PIX" 
-                              : sale.payment_method === "CREDIT" 
-                                ? "Crédito" 
-                                : "Débito"}
-                          </span>
-                        </td>
-                        <td className="py-3 text-right">{formatCurrency(sale.gross_amount)}</td>
-                        <td className="py-3 text-right">{formatCurrency(sale.net_amount)}</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            ) : (
-              <p className="text-center py-6 text-muted-foreground">
-                Nenhuma venda encontrada para os filtros selecionados
-              </p>
-            )}
-            
-            <div className="flex justify-end mt-6">
-              <Button variant="outline" className="gap-2">
-                <Download className="h-4 w-4" />
-                Exportar CSV
-              </Button>
+        <div className="space-y-4">
+          <Tabs 
+            value={selectedPeriod} 
+            onValueChange={setSelectedPeriod}
+            className="space-y-4"
+          >
+            <div className="flex items-center justify-between">
+              <TabsList>
+                <TabsTrigger value="hoje">Hoje</TabsTrigger>
+                <TabsTrigger value="7dias">Últimos 7 dias</TabsTrigger>
+                <TabsTrigger value="30dias">Últimos 30 dias</TabsTrigger>
+                <TabsTrigger value="personalizado">Personalizado</TabsTrigger>
+              </TabsList>
             </div>
-          </CardContent>
-        </Card>
+          </Tabs>
+          
+          <Card>
+            <CardHeader>
+              <CardTitle>Filtros</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <AdminSalesFilters onFilter={() => {}} />
+            </CardContent>
+          </Card>
+          
+          <Card>
+            <CardHeader>
+              <CardTitle>Transações</CardTitle>
+            </CardHeader>
+            <CardContent>
+              {isLoading ? (
+                <div className="flex items-center justify-center h-64">
+                  <p>Carregando...</p>
+                </div>
+              ) : sales.length > 0 ? (
+                <div className="overflow-x-auto">
+                  <table className="w-full">
+                    <thead>
+                      <tr>
+                        <th className="text-left p-2">Data</th>
+                        <th className="text-left p-2">Cliente</th>
+                        <th className="text-left p-2">Terminal</th>
+                        <th className="text-left p-2">Pagamento</th>
+                        <th className="text-right p-2">Valor Bruto</th>
+                        <th className="text-right p-2">Valor Líquido</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {sales.map((sale) => (
+                        <tr key={sale.id} className="border-t hover:bg-muted/50">
+                          <td className="p-2">{new Date(sale.date).toLocaleDateString()}</td>
+                          <td className="p-2">{sale.client_name}</td>
+                          <td className="p-2">{sale.terminal}</td>
+                          <td className="p-2">{sale.payment_method}</td>
+                          <td className="p-2 text-right">
+                            R$ {sale.gross_amount.toFixed(2)}
+                          </td>
+                          <td className="p-2 text-right">
+                            R$ {sale.net_amount.toFixed(2)}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              ) : (
+                <div className="text-center py-10">
+                  <h3 className="text-lg font-semibold mb-2">Nenhuma transação encontrada</h3>
+                  <p className="text-muted-foreground">
+                    Não há transações para o período selecionado. Tente mudar os filtros de busca.
+                  </p>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </div>
       </PageWrapper>
     </div>
   );

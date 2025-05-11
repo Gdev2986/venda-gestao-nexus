@@ -10,8 +10,8 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { PersonalDataForm } from "@/components/settings/PersonalDataForm";
-import { SecuritySettings } from "@/components/settings/SecuritySettings";
-import { NotificationsSettings } from "@/components/settings/NotificationsSettings";
+import SecuritySettings from "@/components/settings/SecuritySettings";
+import NotificationsSettings from "@/components/settings/NotificationsSettings";
 
 const Settings = () => {
   const [activeTab, setActiveTab] = useState("profile");

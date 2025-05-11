@@ -114,7 +114,6 @@ export const usePartnerClients = () => {
   }, [clients]);
 
   const getClientSales = async (clientId: string) => {
-    setIsLoading(true);
     try {
       const { data, error } = await supabase
         .from('sales')
@@ -132,8 +131,6 @@ export const usePartnerClients = () => {
         description: "Não foi possível carregar as vendas deste cliente.",
       });
       return [];
-    } finally {
-      setIsLoading(false);
     }
   };
 
