@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { Sale } from "@/types";
 import { CalendarRange, FileText, Download } from "lucide-react";
-import { AdminSalesFilters } from "@/components/admin/sales/AdminSalesFilters";
+import AdminSalesFilters from "@/components/admin/sales/AdminSalesFilters";
 
 const PartnerSales = () => {
   const [sales, setSales] = useState<Sale[]>([]);

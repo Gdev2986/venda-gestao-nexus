@@ -31,14 +31,13 @@ export const usePartners = () => {
           created_at: partner.created_at,
           updated_at: partner.updated_at,
           commission_rate: partner.commission_rate,
-          // Add optional fields if they exist in the database
+          // Add optional fields with proper null checking
           contact_name: partner.contact_name || undefined,
           contact_email: partner.contact_email || undefined,
           contact_phone: partner.contact_phone || undefined,
           email: partner.email || undefined,
           phone: partner.phone || undefined,
           address: partner.address || undefined,
-          // These may need to be calculated separately if not directly in the database
           total_sales: partner.total_sales || 0,
           total_commission: partner.total_commission || 0,
         }));
@@ -109,16 +108,15 @@ export const usePartners = () => {
       const partnerToInsert = {
         company_name: partnerData.company_name,
         commission_rate: partnerData.commission_rate,
-        // Add only the fields that actually exist in your database table
-        ...(partnerData.contact_name && { contact_name: partnerData.contact_name }),
-        ...(partnerData.email && { email: partnerData.email }),
-        ...(partnerData.phone && { phone: partnerData.phone }),
-        ...(partnerData.address && { address: partnerData.address })
+        contact_name: partnerData.contact_name || null,
+        email: partnerData.email || null,
+        phone: partnerData.phone || null,
+        address: partnerData.address || null
       };
 
       const { data, error } = await supabase
         .from('partners')
-        .insert([partnerToInsert])
+        .insert(partnerToInsert)
         .select();
 
       if (error) throw error;

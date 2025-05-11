@@ -18,11 +18,12 @@ interface DateRange {
 }
 
 interface AdminSalesFiltersProps {
-  filters: SalesFilterParams;
+  filters?: SalesFilterParams;
   dateRange?: DateRange;
-  onFilterChange: (filters: SalesFilterParams) => void;
-  onDateRangeChange: (range: DateRange | undefined) => void;
-  onClearFilters: () => void;
+  onFilterChange?: (filters: SalesFilterParams) => void;
+  onDateRangeChange?: (range: DateRange | undefined) => void;
+  onClearFilters?: () => void;
+  onFilter?: (filters: SalesFilterParams) => void;
 }
 
 const PAYMENT_METHODS = [
@@ -41,45 +42,61 @@ const PAYMENT_METHODS = [
 ];
 
 const AdminSalesFilters = ({
-  filters,
+  filters = {},
   dateRange,
   onFilterChange,
   onDateRangeChange,
-  onClearFilters
+  onClearFilters,
+  onFilter
 }: AdminSalesFiltersProps) => {
   const [searchValue, setSearchValue] = useState(filters.search || "");
   const [timeRange, setTimeRange] = useState<[number, number]>([filters.startHour || 0, filters.endHour || 23]);
   const [amountValue, setAmountValue] = useState(filters.minAmount ? filters.minAmount.toString().replace(".", ",") : "");
+  
   const handleSearchSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    onFilterChange({
-      ...filters,
-      search: searchValue
-    });
+    if (onFilterChange) {
+      onFilterChange({
+        ...filters,
+        search: searchValue
+      });
+    }
+    
+    if (onFilter) {
+      onFilter({
+        ...filters,
+        search: searchValue
+      });
+    }
   };
+  
   const handleTimeRangeChange = (values: [number, number]) => {
     setTimeRange(values);
-    onFilterChange({
-      ...filters,
-      startHour: values[0],
-      endHour: values[1]
-    });
+    if (onFilterChange) {
+      onFilterChange({
+        ...filters,
+        startHour: values[0],
+        endHour: values[1]
+      });
+    }
   };
+  
   const handleAmountChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setAmountValue(e.target.value);
   };
+  
   const handleAmountBlur = () => {
     if (amountValue) {
       // Convert comma to dot for numeric value
       const numValue = parseFloat(amountValue.replace(/\./g, "").replace(",", "."));
-      if (!isNaN(numValue)) {
+      if (!isNaN(numValue) && onFilterChange) {
         onFilterChange({
           ...filters,
           minAmount: numValue,
           maxAmount: undefined
         });
       }
-    } else {
+    } else if (onFilterChange) {
       // Clear the filter if input is empty
       onFilterChange({
         ...filters,
@@ -88,7 +105,9 @@ const AdminSalesFilters = ({
       });
     }
   };
-  return <CardContent className="p-4">
+  
+  return (
+    <CardContent className="p-4">
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         {/* Left column with search and payment method */}
         <div className="space-y-3">
@@ -100,7 +119,12 @@ const AdminSalesFilters = ({
                 <Input placeholder="Buscar vendas..." className="pl-8" value={searchValue} onChange={e => setSearchValue(e.target.value)} />
               </div>
             </form>
-            <Button variant="outline" onClick={onClearFilters}>
+            <Button 
+              variant="outline" 
+              onClick={() => {
+                if (onClearFilters) onClearFilters();
+              }}
+            >
               Limpar Filtros
             </Button>
           </div>
@@ -108,18 +132,27 @@ const AdminSalesFilters = ({
           {/* Payment Method Filter */}
           <div>
             <label className="text-sm font-medium mb-1 block">Forma de Pagamento</label>
-            <Select value={filters.paymentMethod || "all"} onValueChange={value => onFilterChange({
-            ...filters,
-            paymentMethod: value === "all" ? undefined : value
-          })}>
+            <Select 
+              value={filters.paymentMethod || "all"} 
+              onValueChange={value => {
+                if (onFilterChange) {
+                  onFilterChange({
+                    ...filters,
+                    paymentMethod: value === "all" ? undefined : value
+                  });
+                }
+              }}
+            >
               <SelectTrigger>
                 <SelectValue placeholder="Selecione..." />
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">Todas</SelectItem>
-                {PAYMENT_METHODS.map(method => <SelectItem key={method.value} value={method.value}>
+                {PAYMENT_METHODS.map(method => (
+                  <SelectItem key={method.value} value={method.value}>
                     {method.label}
-                  </SelectItem>)}
+                  </SelectItem>
+                ))}
               </SelectContent>
             </Select>
           </div>
@@ -150,7 +183,17 @@ const AdminSalesFilters = ({
                 </Button>
               </PopoverTrigger>
               <PopoverContent className="w-auto p-0" align="start">
-                <Calendar initialFocus mode="range" defaultMonth={dateRange?.from} selected={dateRange} onSelect={onDateRangeChange} numberOfMonths={2} className="pointer-events-auto" />
+                <Calendar 
+                  initialFocus 
+                  mode="range" 
+                  defaultMonth={dateRange?.from} 
+                  selected={dateRange} 
+                  onSelect={value => {
+                    if (onDateRangeChange) onDateRangeChange(value);
+                  }} 
+                  numberOfMonths={2} 
+                  className="pointer-events-auto" 
+                />
               </PopoverContent>
             </Popover>
           </div>
@@ -162,7 +205,8 @@ const AdminSalesFilters = ({
           </div>
         </div>
       </div>
-    </CardContent>;
+    </CardContent>
+  );
 };
 
 export default AdminSalesFilters;

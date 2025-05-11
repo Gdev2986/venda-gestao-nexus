@@ -32,9 +32,9 @@ export enum ClientStatus {
 }
 
 export enum PaymentMethod {
-  CREDIT = "CREDIT",
-  DEBIT = "DEBIT",
-  PIX = "PIX"
+  CREDIT = "credit",
+  DEBIT = "debit",
+  PIX = "pix"
 }
 
 export interface Payment {

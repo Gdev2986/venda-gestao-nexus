@@ -1,3 +1,4 @@
+
 import { PixKey } from "@/types";
 
 // Helper function to create default PixKey properties for new keys
@@ -10,7 +11,7 @@ export const createDefaultPixKeyProperties = (id: string, user_id: string): PixK
     key: "",
     owner_name: "",
     name: "",
-    isDefault: false,
+    is_default: false,
     is_active: true,
     created_at: new Date().toISOString(),
     updated_at: new Date().toISOString(),

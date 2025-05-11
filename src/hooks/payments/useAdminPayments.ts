@@ -44,13 +44,13 @@ export const useAdminPayments = ({ searchTerm, statusFilter, page }: UseAdminPay
 
     // Convert data with type assertion to ensure compatibility
     // Convert the database status (lowercase) back to the enum format (uppercase)
-    const typedData = data.map(item => ({
+    const typedData = data?.map(item => ({
       ...item,
-      status: (item.status.toUpperCase() as PaymentStatus)
+      status: item.status ? (item.status.toUpperCase() as PaymentStatus) : PaymentStatus.PENDING
     })) as Payment[];
 
     return {
-      data: typedData,
+      data: typedData || [],
       totalCount: count || 0,
     };
   };
