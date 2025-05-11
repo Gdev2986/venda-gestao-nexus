@@ -11,13 +11,14 @@ export interface PartnersTableProps {
   isLoading: boolean;
   onDelete?: (partner: Partner) => void;
   onEdit?: (partner: Partner) => void;
+  onView?: (partner: Partner) => void;
   onViewDetails?: (partner: Partner) => void;
   page?: number;
   setPage?: (page: number) => void;
   totalPages?: number;
 }
 
-const PartnersTable = ({ partners, isLoading, onDelete, onEdit, onViewDetails }: PartnersTableProps) => {
+const PartnersTable = ({ partners, isLoading, onDelete, onEdit, onView, onViewDetails }: PartnersTableProps) => {
   if (isLoading) {
     return (
       <div className="rounded-md border">
@@ -59,7 +60,7 @@ const PartnersTable = ({ partners, isLoading, onDelete, onEdit, onViewDetails }:
   }
 
   return (
-    <div className="rounded-md border">
+    <div className="rounded-md border overflow-x-auto">
       <Table>
         <TableHeader>
           <TableRow>
@@ -88,8 +89,8 @@ const PartnersTable = ({ partners, isLoading, onDelete, onEdit, onViewDetails }:
                     </Button>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="end">
-                    {onViewDetails && (
-                      <DropdownMenuItem onClick={() => onViewDetails(partner)}>
+                    {(onView || onViewDetails) && (
+                      <DropdownMenuItem onClick={() => (onView ? onView(partner) : onViewDetails?.(partner))}>
                         <User className="mr-2 h-4 w-4" />
                         Ver detalhes
                       </DropdownMenuItem>

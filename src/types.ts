@@ -1,4 +1,5 @@
 
+// User roles and permissions
 export enum UserRole {
   ADMIN = "ADMIN",
   CLIENT = "CLIENT", 
@@ -11,6 +12,7 @@ export enum UserRole {
   USER = "USER"
 }
 
+// Payment status options
 export enum PaymentStatus {
   PENDING = "PENDING",
   APPROVED = "APPROVED",
@@ -24,7 +26,7 @@ export enum PaymentType {
   BOLETO = "BOLETO"
 }
 
-// Added ClientStatus enum for the ClientStatus component
+// Client status options
 export enum ClientStatus {
   ACTIVE = "active",
   INACTIVE = "inactive",
@@ -37,12 +39,13 @@ export enum PaymentMethod {
   PIX = "pix"
 }
 
+// Payment interface
 export interface Payment {
   id: string;
   created_at: string;
   updated_at: string;
   amount: number;
-  status: PaymentStatus | string;
+  status: PaymentStatus;
   client_id: string;
   approved_at?: string; 
   receipt_url?: string;
@@ -68,7 +71,7 @@ export interface Payment {
   description?: string;
 }
 
-// Types for partners
+// Partner interface
 export interface Partner {
   id: string;
   company_name: string;
@@ -78,16 +81,17 @@ export interface Partner {
   contact_name?: string;
   contact_email?: string;
   contact_phone?: string;
-  business_name?: string; // For backward compatibility
-  email?: string; // Added for consistency with filtering
-  phone?: string; // Added for consistency with filtering
-  address?: string; // Added for completeness
+  business_name?: string;
+  email?: string;
+  phone?: string;
+  address?: string;
   // Add missing properties
   total_sales?: number;
   total_commission?: number;
+  user_id?: string; // Link to auth user
 }
 
-// Added Client interface to ensure type safety
+// Client interface
 export interface Client {
   id: string;
   business_name: string;
@@ -116,8 +120,8 @@ export interface FilterValues {
     from: Date;
     to?: Date;
   };
-  searchTerm?: string; // Add searchTerm to fix errors
-  commissionRange?: [number, number]; // Add property for partner filtering
+  searchTerm?: string; // Add for compatibility with existing filters
+  commissionRange?: [number, number]; // For partner filtering
 }
 
 export interface PixKey {
@@ -143,11 +147,11 @@ export interface Sale {
   gross_amount: number;
   net_amount: number;
   date: string;
-  payment_method: PaymentMethod | string;
+  payment_method: PaymentMethod;
   client_id: string;
   created_at: string;
   updated_at: string;
-  amount?: number;
+  amount?: number; // For compatibility
   status?: string;
   partner_id?: string;
   machine_id?: string;
@@ -169,7 +173,7 @@ export interface UserData {
   id: string;
   name: string;
   email: string;
-  role: UserRole | string; // Allow string role from database
+  role: UserRole;
   created_at: string;
   status: string;
 }

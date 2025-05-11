@@ -40,10 +40,10 @@ const PartnersFilterCard = ({ onFilter, isLoading }: PartnersFilterCardProps) =>
               />
             </div>
             <div className="flex gap-2">
-              <Button type="submit" disabled={isLoading}>
+              <Button type="submit" disabled={isLoading} className="flex-1 sm:flex-none">
                 Filtrar
               </Button>
-              <Button type="button" variant="outline" onClick={handleClearFilters} disabled={isLoading}>
+              <Button type="button" variant="outline" onClick={handleClearFilters} disabled={isLoading} className="flex-1 sm:flex-none">
                 Limpar
               </Button>
             </div>

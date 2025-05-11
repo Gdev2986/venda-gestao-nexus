@@ -1,195 +1,160 @@
 
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { 
-  Select, 
-  SelectContent, 
-  SelectItem, 
-  SelectTrigger, 
-  SelectValue 
-} from "@/components/ui/select";
-import { SalesFilterParams } from "@/types";
 import { Calendar } from "@/components/ui/calendar";
-import { 
-  Popover, 
-  PopoverContent, 
-  PopoverTrigger 
+import { Input } from "@/components/ui/input";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
 } from "@/components/ui/popover";
-import { CalendarIcon, Download, Search, Upload } from "lucide-react";
-import { format } from "date-fns";
-import { cn } from "@/lib/utils";
-
-interface DateRange {
-  from: Date;
-  to?: Date;
-}
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Slider } from "@/components/ui/slider";
+import { PaymentMethod } from "@/types";
+import { CalendarIcon, FilterIcon } from "lucide-react";
+import { format, addDays, subDays } from "date-fns";
+import { ptBR } from "date-fns/locale";
 
 interface SalesFiltersProps {
-  filters: SalesFilterParams;
-  date?: DateRange;
-  onFilterChange: (key: keyof SalesFilterParams, value: any) => void;
-  onDateChange: (date: DateRange | undefined) => void;
-  onClearFilters: () => void;
-  onExport: () => void;
-  onShowImportDialog: () => void;
+  onFilter: (filters: any) => void;
 }
 
-const PAYMENT_METHODS = [
-  { value: "credit", label: "Crédito" },
-  { value: "debit", label: "Débito" },
-  { value: "pix", label: "Pix" }
-];
+const SalesFilters = ({ onFilter }: SalesFiltersProps) => {
+  const [isOpen, setIsOpen] = useState(false);
+  const [method, setMethod] = useState<string | undefined>();
+  const [terminal, setTerminal] = useState("");
+  const [dateRange, setDateRange] = useState<{
+    from: Date;
+    to?: Date;
+  }>({
+    from: subDays(new Date(), 30),
+    to: new Date(),
+  });
+  const [amountRange, setAmountRange] = useState<[number, number]>([0, 5000]);
 
-const TERMINALS = [
-  "T100", "T101", "T102", "T103", "T104", "T105"
-];
+  const handleApplyFilters = () => {
+    onFilter({
+      method,
+      terminal,
+      dateRange,
+      amountRange,
+    });
+    setIsOpen(false);
+  };
 
-const SalesFilters = ({
-  filters,
-  date,
-  onFilterChange,
-  onDateChange,
-  onClearFilters,
-  onExport,
-  onShowImportDialog
-}: SalesFiltersProps) => {
-  const [searchTerm, setSearchTerm] = useState(filters.search || "");
-
-  const handleSearchSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    onFilterChange("search", searchTerm);
+  const handleResetFilters = () => {
+    setMethod(undefined);
+    setTerminal("");
+    setDateRange({
+      from: subDays(new Date(), 30),
+      to: new Date(),
+    });
+    setAmountRange([0, 5000]);
   };
 
   return (
-    <div className="space-y-4">
-      <div className="flex flex-col sm:flex-row gap-4">
-        {/* Search Bar */}
-        <form 
-          className="flex-1" 
-          onSubmit={handleSearchSubmit}
-        >
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-            <Input
-              placeholder="Buscar por código ou terminal..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="pl-10"
+    <Popover open={isOpen} onOpenChange={setIsOpen}>
+      <PopoverTrigger asChild>
+        <Button variant="outline" className="flex items-center gap-2">
+          <FilterIcon className="h-4 w-4" />
+          <span className="hidden sm:inline">Filtros</span>
+        </Button>
+      </PopoverTrigger>
+      <PopoverContent className="w-[300px] p-4" align="end">
+        <div className="space-y-4">
+          <h4 className="font-medium mb-2">Filtros de Vendas</h4>
+          
+          <div className="space-y-2">
+            <label className="text-sm font-medium">Método de Pagamento</label>
+            <Select value={method} onValueChange={setMethod}>
+              <SelectTrigger>
+                <SelectValue placeholder="Todos" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="">Todos</SelectItem>
+                <SelectItem value={PaymentMethod.CREDIT}>Crédito</SelectItem>
+                <SelectItem value={PaymentMethod.DEBIT}>Débito</SelectItem>
+                <SelectItem value={PaymentMethod.PIX}>Pix</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+          
+          <div className="space-y-2">
+            <label className="text-sm font-medium">Terminal</label>
+            <Input 
+              placeholder="Número do terminal"
+              value={terminal}
+              onChange={(e) => setTerminal(e.target.value)}
             />
           </div>
-        </form>
-        
-        {/* Date Range Picker */}
-        <Popover>
-          <PopoverTrigger asChild>
-            <Button
-              variant={"outline"}
-              className={cn(
-                "sm:w-[240px] justify-start text-left font-normal",
-                !date && "text-muted-foreground"
-              )}
-            >
-              <CalendarIcon className="mr-2 h-4 w-4" />
-              {date?.from ? (
-                date.to ? (
-                  <>
-                    {format(date.from, "dd/MM/yyyy")} -{" "}
-                    {format(date.to, "dd/MM/yyyy")}
-                  </>
-                ) : (
-                  format(date.from, "dd/MM/yyyy")
-                )
-              ) : (
-                <span>Filtrar por data</span>
-              )}
-            </Button>
-          </PopoverTrigger>
-          <PopoverContent className="w-auto p-0" align="start">
-            <Calendar
-              initialFocus
-              mode="range"
-              defaultMonth={date?.from}
-              selected={date}
-              onSelect={onDateChange}
-              numberOfMonths={2}
-              className="pointer-events-auto"
+          
+          <div className="space-y-2">
+            <label className="text-sm font-medium">Período</label>
+            <div className="flex gap-2">
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button variant="outline" className="w-full justify-start text-left font-normal">
+                    <CalendarIcon className="mr-2 h-4 w-4" />
+                    {dateRange?.from ? (
+                      dateRange.to ? (
+                        <>
+                          {format(dateRange.from, "P", { locale: ptBR })} -{" "}
+                          {format(dateRange.to, "P", { locale: ptBR })}
+                        </>
+                      ) : (
+                        format(dateRange.from, "P", { locale: ptBR })
+                      )
+                    ) : (
+                      <span>Selecione as datas</span>
+                    )}
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0" align="center">
+                  <Calendar
+                    mode="range"
+                    defaultMonth={dateRange?.from}
+                    selected={dateRange}
+                    onSelect={(range) => setDateRange(range || { from: new Date() })}
+                    numberOfMonths={1}
+                    locale={ptBR}
+                  />
+                </PopoverContent>
+              </Popover>
+            </div>
+          </div>
+          
+          <div className="space-y-2">
+            <div className="flex justify-between">
+              <label className="text-sm font-medium">Valor</label>
+              <span className="text-sm text-muted-foreground">
+                R$ {amountRange[0]} - R$ {amountRange[1]}
+              </span>
+            </div>
+            <Slider
+              defaultValue={amountRange}
+              max={5000}
+              step={100}
+              onValueChange={(values) => setAmountRange(values as [number, number])}
             />
-          </PopoverContent>
-        </Popover>
-        
-        {/* Actions */}
-        <div className="flex gap-2">
-          <Button 
-            variant="outline" 
-            className="flex items-center gap-1"
-            onClick={onShowImportDialog}
-          >
-            <Upload className="h-4 w-4" />
-            <span className="hidden sm:inline">Importar</span>
-          </Button>
-          <Button 
-            variant="outline" 
-            className="flex items-center gap-1"
-            onClick={onExport}
-          >
-            <Download className="h-4 w-4" />
-            <span className="hidden sm:inline">Exportar</span>
-          </Button>
+          </div>
+          
+          <div className="flex gap-2 pt-2">
+            <Button variant="outline" className="flex-1" onClick={handleResetFilters}>
+              Limpar
+            </Button>
+            <Button className="flex-1" onClick={handleApplyFilters}>
+              Aplicar
+            </Button>
+          </div>
         </div>
-      </div>
-      
-      <div className="flex flex-col sm:flex-row gap-4">
-        {/* Payment Method Filter */}
-        <div className="flex-1">
-          <Select
-            value={filters.paymentMethod || "all"}
-            onValueChange={(value) => onFilterChange("paymentMethod", value === "all" ? undefined : value)}
-          >
-            <SelectTrigger>
-              <SelectValue placeholder="Forma de Pagamento" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">Todas as formas</SelectItem>
-              {PAYMENT_METHODS.map((method) => (
-                <SelectItem key={method.value} value={method.value}>
-                  {method.label}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-        
-        {/* Terminal Filter */}
-        <div className="flex-1">
-          <Select
-            value={filters.terminal || "all"}
-            onValueChange={(value) => onFilterChange("terminal", value === "all" ? undefined : value)}
-          >
-            <SelectTrigger>
-              <SelectValue placeholder="Terminal" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">Todos os terminais</SelectItem>
-              {TERMINALS.map((terminal) => (
-                <SelectItem key={terminal} value={terminal}>
-                  {terminal}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-        
-        {/* Clear Filters Button */}
-        <Button 
-          variant="ghost" 
-          onClick={onClearFilters} 
-          className="sm:self-center"
-        >
-          Limpar filtros
-        </Button>
-      </div>
-    </div>
+      </PopoverContent>
+    </Popover>
   );
 };
 

@@ -66,7 +66,7 @@ const AdminSettings = () => {
   return (
     <div className="container mx-auto py-10">
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-        <TabsList>
+        <TabsList className="mb-6 overflow-x-auto flex whitespace-nowrap sm:inline-flex">
           <TabsTrigger value="usuarios">Usuários</TabsTrigger>
           <TabsTrigger value="sistema">Sistema</TabsTrigger>
           <TabsTrigger value="notificacoes">Notificações</TabsTrigger>
@@ -99,7 +99,7 @@ const AdminSettings = () => {
         <RoleChangeModal
           user={selectedUser}
           newRole={newRole}
-          setNewRole={setNewRole}
+          setNewRole={(role: UserRole) => setNewRole(role)}
           onClose={() => setShowRoleModal(false)}
           onSave={handleRoleChange}
         />
