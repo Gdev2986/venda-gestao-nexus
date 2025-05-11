@@ -26,26 +26,25 @@ export const usePartners = () => {
       if (data) {
         // Transform data to match our Partner interface
         const transformedPartners: Partner[] = data.map(partner => {
-          // Use type assertion for proper typing
-          const typedPartner = partner as any;
-          
-          return {
-            id: typedPartner.id,
-            company_name: typedPartner.company_name,
-            created_at: typedPartner.created_at,
-            updated_at: typedPartner.updated_at,
-            commission_rate: typedPartner.commission_rate || 0,
+          // Create a properly typed partner object
+          const typedPartner: Partner = {
+            id: partner.id,
+            company_name: partner.company_name,
+            created_at: partner.created_at,
+            updated_at: partner.updated_at,
+            commission_rate: partner.commission_rate || 0,
             // Add optional fields with proper null checking
-            contact_name: typedPartner.contact_name || undefined,
-            contact_email: typedPartner.contact_email || undefined,
-            contact_phone: typedPartner.contact_phone || undefined,
-            email: typedPartner.email || undefined,
-            phone: typedPartner.phone || undefined,
-            address: typedPartner.address || undefined,
-            total_sales: typedPartner.total_sales || 0,
-            total_commission: typedPartner.total_commission || 0,
-            user_id: typedPartner.user_id || undefined,
+            contact_name: partner.contact_name || undefined,
+            contact_email: partner.contact_email || undefined,
+            contact_phone: partner.contact_phone || undefined,
+            email: partner.email || undefined,
+            phone: partner.phone || undefined,
+            address: partner.address || undefined,
+            total_sales: partner.total_sales || 0,
+            total_commission: partner.total_commission || 0,
+            user_id: partner.user_id || undefined,
           };
+          return typedPartner;
         });
 
         setPartners(transformedPartners);
@@ -228,9 +227,87 @@ export const usePartners = () => {
     isLoading,
     error,
     refreshPartners: fetchPartners,
-    filterPartners,
+    filterPartners: useCallback((searchTerm = "", status = "") => {
+      let filtered = [...partners];
+
+      if (searchTerm) {
+        const term = searchTerm.toLowerCase();
+        filtered = filtered.filter(partner =>
+          partner.company_name.toLowerCase().includes(term) ||
+          (partner.contact_name && partner.contact_name.toLowerCase().includes(term)) ||
+          (partner.email && partner.email.toLowerCase().includes(term)) ||
+          (partner.phone && partner.phone.includes(term))
+        );
+      }
+
+      setFilteredPartners(filtered);
+    }, [partners]),
     createPartner,
-    updatePartner,
-    deletePartner
+    updatePartner: async (partnerId: string, partnerData: Partial<Partner>) => {
+      try {
+        // Create an update object with only the fields that exist in the database table
+        const updateData = {
+          ...(partnerData.company_name && { company_name: partnerData.company_name }),
+          ...(partnerData.commission_rate !== undefined && { commission_rate: partnerData.commission_rate }),
+          ...(partnerData.contact_name && { contact_name: partnerData.contact_name }),
+          ...(partnerData.email && { email: partnerData.email }),
+          ...(partnerData.phone && { phone: partnerData.phone }),
+          ...(partnerData.address && { address: partnerData.address })
+        };
+
+        const { error } = await supabase
+          .from('partners')
+          .update(updateData)
+          .eq('id', partnerId);
+
+        if (error) throw error;
+
+        toast({
+          title: "Parceiro atualizado",
+          description: "As informações foram atualizadas com sucesso."
+        });
+
+        await fetchPartners(); // Refresh the partners list
+        return true;
+      } catch (err: any) {
+        console.error("Error updating partner:", err);
+        
+        toast({
+          variant: "destructive",
+          title: "Erro",
+          description: err.message || "Não foi possível atualizar o parceiro."
+        });
+        
+        return false;
+      }
+    },
+    deletePartner: async (partnerId: string) => {
+      try {
+        const { error } = await supabase
+          .from('partners')
+          .delete()
+          .eq('id', partnerId);
+
+        if (error) throw error;
+
+        toast({
+          title: "Parceiro removido",
+          description: "O parceiro foi removido com sucesso."
+        });
+
+        await fetchPartners(); // Refresh the partners list
+        return true;
+      } catch (err: any) {
+        console.error("Error deleting partner:", err);
+        
+        toast({
+          variant: "destructive",
+          title: "Erro",
+          description: err.message || "Não foi possível remover o parceiro."
+        });
+        
+        return false;
+      }
+    }
   };
 };

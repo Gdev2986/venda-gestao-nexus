@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useCallback } from "react";
 import { Client } from "@/types";
 import { supabase } from "@/integrations/supabase/client";
@@ -47,10 +46,8 @@ export const usePartnerClients = () => {
       if (error) throw error;
 
       if (data) {
-        // Use type assertion to ensure proper typing
-        const typedClients = data as Client[];
-        setClients(typedClients);
-        setFilteredClients(typedClients);
+        setClients(data as Client[]);
+        setFilteredClients(data as Client[]);
       }
     } catch (err: any) {
       console.error("Error fetching clients:", err);
@@ -95,47 +92,6 @@ export const usePartnerClients = () => {
     }
   }, [user, toast]);
 
-  const filterClients = useCallback((searchTerm = "", status = "") => {
-    let filtered = [...clients];
-
-    if (searchTerm) {
-      const term = searchTerm.toLowerCase();
-      filtered = filtered.filter(client =>
-        client.business_name.toLowerCase().includes(term) ||
-        (client.contact_name && client.contact_name.toLowerCase().includes(term)) ||
-        (client.email && client.email.toLowerCase().includes(term)) ||
-        (client.phone && client.phone.includes(term))
-      );
-    }
-
-    if (status && status !== "all") {
-      filtered = filtered.filter(client => client.status === status);
-    }
-
-    setFilteredClients(filtered);
-  }, [clients]);
-
-  const getClientSales = async (clientId: string) => {
-    try {
-      const { data, error } = await supabase
-        .from('sales')
-        .select('*')
-        .eq('client_id', clientId);
-
-      if (error) throw error;
-
-      return data || [];
-    } catch (err) {
-      console.error("Error fetching client sales:", err);
-      toast({
-        variant: "destructive",
-        title: "Erro",
-        description: "Não foi possível carregar as vendas deste cliente.",
-      });
-      return [];
-    }
-  };
-
   useEffect(() => {
     fetchClients();
   }, [fetchClients]);
@@ -146,7 +102,44 @@ export const usePartnerClients = () => {
     isLoading,
     error,
     refreshClients: fetchClients,
-    filterClients,
-    getClientSales
+    filterClients: useCallback((searchTerm = "", status = "") => {
+      let filtered = [...clients];
+
+      if (searchTerm) {
+        const term = searchTerm.toLowerCase();
+        filtered = filtered.filter(client =>
+          client.business_name.toLowerCase().includes(term) ||
+          (client.contact_name && client.contact_name.toLowerCase().includes(term)) ||
+          (client.email && client.email.toLowerCase().includes(term)) ||
+          (client.phone && client.phone.includes(term))
+        );
+      }
+
+      if (status && status !== "all") {
+        filtered = filtered.filter(client => client.status === status);
+      }
+
+      setFilteredClients(filtered);
+    }, [clients]),
+    getClientSales: async (clientId: string) => {
+      try {
+        const { data, error } = await supabase
+          .from('sales')
+          .select('*')
+          .eq('client_id', clientId);
+
+        if (error) throw error;
+
+        return data || [];
+      } catch (err) {
+        console.error("Error fetching client sales:", err);
+        toast({
+          variant: "destructive",
+          title: "Erro",
+          description: "Não foi possível carregar as vendas deste cliente.",
+        });
+        return [];
+      }
+    }
   };
 };

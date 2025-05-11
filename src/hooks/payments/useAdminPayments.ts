@@ -1,120 +1,113 @@
-
-import { useState } from 'react';
-import { useQuery } from '@tanstack/react-query';
-import { Payment, PaymentStatus } from '@/types';
-import { supabase } from '@/integrations/supabase/client';
-import { useToast } from '@/hooks/use-toast';
-import { PaymentAction } from '@/components/payments/PaymentTableColumns';
+import { useState, useEffect } from "react";
+import { PaymentStatus } from "@/types";
+import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/hooks/use-toast";
 
 interface UseAdminPaymentsProps {
-  searchTerm: string;
-  statusFilter: PaymentStatus | 'ALL';
-  page: number;
+  searchTerm?: string;
+  statusFilter?: PaymentStatus | 'ALL';
+  page?: number;
 }
 
-const PAGE_SIZE = 10;
+export type PaymentAction = 'APPROVE' | 'REJECT';
 
-export const useAdminPayments = ({ searchTerm, statusFilter, page }: UseAdminPaymentsProps) => {
-  const [actionLoading, setActionLoading] = useState<string | null>(null);
+const itemsPerPage = 10;
+
+export const useAdminPayments = ({ 
+  searchTerm = '', 
+  statusFilter = 'ALL', 
+  page = 1
+}: UseAdminPaymentsProps) => {
+  const [payments, setPayments] = useState([]);
+  const [isLoading, setIsLoading] = useState(false);
+  const [totalPages, setTotalPages] = useState(1);
   const { toast } = useToast();
 
+  useEffect(() => {
+    fetchPayments();
+  }, [searchTerm, statusFilter, page]);
+
   const fetchPayments = async () => {
-    let query = supabase
-      .from('payment_requests')
-      .select('*, client:clients(*)')
-      .order('created_at', { ascending: false })
-      .range((page - 1) * PAGE_SIZE, page * PAGE_SIZE - 1);
-
-    if (searchTerm) {
-      query = query.ilike('id', `%${searchTerm}%`);
-    }
-
-    if (statusFilter !== 'ALL') {
-      // Convert enum status to lowercase for database compatibility
-      const dbStatus = statusFilter.toLowerCase();
-      query = query.eq('status', dbStatus);
-    }
-
-    const { data, error, count } = await query;
-
-    if (error) {
+    setIsLoading(true);
+    try {
+      let query = supabase
+        .from('payment_requests')
+        .select('*', { count: 'exact' });
+      
+      // Apply filters if provided
+      if (searchTerm) {
+        query = query.or(`client_id.ilike.%${searchTerm}%`);
+      }
+      
+      if (statusFilter !== 'ALL') {
+        // Use type casting to avoid type errors
+        query = query.eq('status', statusFilter as PaymentStatus);
+      }
+      
+      // Apply pagination
+      const startRange = (page - 1) * itemsPerPage;
+      const endRange = startRange + itemsPerPage - 1;
+      
+      const { data, error, count } = await query
+        .order('created_at', { ascending: false })
+        .range(startRange, endRange);
+      
+      if (error) throw error;
+      
+      // Calculate total pages
+      const total = count ? Math.ceil(count / itemsPerPage) : 0;
+      setTotalPages(total);
+      
+      setPayments(data || []);
+    } catch (error: any) {
       console.error("Error fetching payments:", error);
-      throw new Error(error.message);
+      toast({
+        variant: "destructive",
+        title: "Erro ao carregar pagamentos",
+        description: error.message || "Não foi possível carregar a lista de pagamentos."
+      });
+    } finally {
+      setIsLoading(false);
     }
-
-    // Convert data with type assertion to ensure compatibility
-    // Convert the database status (lowercase) back to the enum format (uppercase)
-    const typedData = data?.map(item => ({
-      ...item,
-      status: item.status ? (item.status.toUpperCase() as PaymentStatus) : PaymentStatus.PENDING
-    })) as Payment[];
-
-    return {
-      data: typedData || [],
-      totalCount: count || 0,
-    };
   };
 
-  const {
-    data,
-    isLoading,
-    error,
-    refetch,
-  } = useQuery({
-    queryKey: ['adminPayments', searchTerm, statusFilter, page],
-    queryFn: fetchPayments
-  });
-
-  const totalPages = Math.ceil((data?.totalCount || 0) / PAGE_SIZE);
-
-  const performPaymentAction = async (paymentId: string, action: PaymentAction, newStatus?: PaymentStatus) => {
-    setActionLoading(paymentId);
+  const performPaymentAction = async (paymentId: string, action: PaymentAction) => {
+    setIsLoading(true);
     try {
-      let updateData: any = {};
-
-      if (action === PaymentAction.APPROVE) {
-        updateData = { status: 'approved' };
-      } else if (action === PaymentAction.REJECT) {
-        updateData = { status: 'rejected' };
-      } else if (newStatus) {
-        // Convert to lowercase for database compatibility
-        updateData = { status: newStatus.toLowerCase() };
-      }
-
       const { error } = await supabase
         .from('payment_requests')
-        .update(updateData)
+        .update({ status: action === 'APPROVE' ? 'APPROVED' : 'REJECTED' })
         .eq('id', paymentId);
 
-      if (error) {
-        throw new Error(`Failed to ${action} payment: ${error.message}`);
-      }
+      if (error) throw error;
 
       toast({
-        title: "Sucesso",
-        description: `Pagamento ${action} com sucesso.`,
+        title: `Pagamento ${action === 'APPROVE' ? 'aprovado' : 'rejeitado'}`,
+        description: `O pagamento foi ${action === 'APPROVE' ? 'aprovado' : 'rejeitado'} com sucesso.`
       });
-      refetch();
-    } catch (err: any) {
-      console.error(`Error performing action ${action}:`, err);
+
+      refetch(); // Refresh the payments list
+    } catch (error: any) {
+      console.error("Error performing payment action:", error);
       toast({
         variant: "destructive",
         title: "Erro",
-        description: `Falha ao ${action} pagamento: ${err.message}`,
+        description: `Não foi possível ${action === 'APPROVE' ? 'aprovar' : 'rejeitar'} o pagamento. ${error.message}`
       });
     } finally {
-      setActionLoading(null);
+      setIsLoading(false);
     }
   };
 
+  const refetch = () => {
+    fetchPayments();
+  };
+
   return {
-    payments: data?.data || [],
+    payments,
     isLoading,
-    error,
-    totalCount: data?.totalCount || 0,
     totalPages,
     refetch,
-    actionLoading,
     performPaymentAction,
   };
 };

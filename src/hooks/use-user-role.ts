@@ -1,55 +1,8 @@
-
 import { useState, useEffect } from "react";
 import { UserRole } from "@/types";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
-
-// Helper to clean up all auth data from storage
-const clearAllAuthData = () => {
-  try {
-    // Clear sessionStorage
-    sessionStorage.removeItem("userRole");
-    sessionStorage.removeItem("redirectPath");
-    
-    // Clear localStorage
-    localStorage.removeItem("userRole");
-    
-    // Clear all items related to Supabase
-    Object.keys(localStorage).forEach((key) => {
-      if (key.startsWith('supabase.auth.') || key.includes('sb-')) {
-        localStorage.removeItem(key);
-      }
-    });
-    
-    Object.keys(sessionStorage).forEach((key) => {
-      if (key.startsWith('supabase.auth.') || key.includes('sb-')) {
-        sessionStorage.removeItem(key);
-      }
-    });
-  } catch (error) {
-    console.error("Error clearing auth data:", error);
-  }
-};
-
-// Helper to store and retrieve auth data safely
-const getAuthData = (key: string) => {
-  try {
-    const item = sessionStorage.getItem(key);
-    return item ? JSON.parse(item) : null;
-  } catch (error) {
-    console.error(`Error getting ${key} from storage:`, error);
-    return null;
-  }
-};
-
-const setAuthData = (key: string, value: any) => {
-  try {
-    // Use sessionStorage for auth data for better security
-    sessionStorage.setItem(key, JSON.stringify(value));
-  } catch (error) {
-    console.error(`Error setting ${key} in storage:`, error);
-  }
-};
+import { cleanupAuthState, getAuthData, setAuthData } from "@/utils/auth-utils";
 
 // Function to normalize role values 
 const normalizeUserRole = (role: any): UserRole => {
@@ -124,7 +77,7 @@ export const useUserRole = () => {
           // If it's an authentication error or not found, log out
           if (error.code === 'PGRST116' || error.code === '404') {
             console.log("Token expired or user not found, logging out");
-            clearAllAuthData();
+            cleanupAuthState();
             await signOut();
             return;
           }
@@ -151,7 +104,7 @@ export const useUserRole = () => {
       } catch (error) {
         console.error('Error fetching profile:', error);
         // In case of error, try to log out to clear state
-        clearAllAuthData();
+        cleanupAuthState();
       } finally {
         setIsRoleLoading(false);
       }

@@ -162,7 +162,6 @@ const Sales = () => {
       <div className="space-y-4">
         <Card className="p-4">
           <SalesFilters 
-            filters={filters}
             onFilterChange={handleFilterChange}
             date={date}
             onDateChange={setDate}
@@ -174,8 +173,8 @@ const Sales = () => {
         
         <SalesTable 
           sales={paginatedSales}
-          page={page}
-          setPage={setPage}
+          currentPage={page}
+          onPageChange={setPage}
           totalPages={totalPages}
           isLoading={isLoading}
           totals={totals}

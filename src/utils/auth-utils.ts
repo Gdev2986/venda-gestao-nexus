@@ -87,3 +87,77 @@ export const fetchUserRole = async (userId: string): Promise<UserRole | null> =>
 export const hasRole = (userRole: UserRole, allowedRoles: UserRole[]): boolean => {
   return allowedRoles.includes(userRole);
 };
+
+/**
+ * Thorough cleanup of auth state to prevent auth limbo states
+ */
+export const cleanupAuthState = () => {
+  try {
+    // Clear all auth-related tokens from localStorage
+    Object.keys(localStorage).forEach((key) => {
+      if (key.startsWith('supabase.auth.') || key.includes('sb-')) {
+        localStorage.removeItem(key);
+      }
+    });
+    
+    // Also clear from sessionStorage if being used
+    Object.keys(sessionStorage || {}).forEach((key) => {
+      if (key.startsWith('supabase.auth.') || key.includes('sb-')) {
+        sessionStorage.removeItem(key);
+      }
+    });
+    
+    // Clear application specific role/auth data
+    localStorage.removeItem('userRole');
+    sessionStorage.removeItem('userRole');
+    sessionStorage.removeItem('redirectPath');
+    
+    console.log('Auth state cleaned up');
+  } catch (error) {
+    console.error('Error cleaning up auth state:', error);
+  }
+};
+
+/**
+ * Secure sign-out with cleanup
+ */
+export const secureSignOut = async () => {
+  try {
+    // Clean up first
+    cleanupAuthState();
+    
+    // Attempt global sign-out - ignore errors
+    try {
+      await supabase.auth.signOut({ scope: 'global' });
+    } catch (err) {
+      console.error('Error during sign out:', err);
+    }
+    
+    // Force page reload for a clean state
+    window.location.href = '/';
+    
+    return true;
+  } catch (error) {
+    console.error('Exception during secure sign out:', error);
+    return false;
+  }
+};
+
+/**
+ * Safely refresh session token
+ */
+export const refreshSession = async () => {
+  try {
+    const { data, error } = await supabase.auth.refreshSession();
+    
+    if (error) {
+      console.error('Error refreshing session:', error);
+      return null;
+    }
+    
+    return data.session;
+  } catch (error) {
+    console.error('Exception refreshing session:', error);
+    return null;
+  }
+};

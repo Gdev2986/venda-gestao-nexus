@@ -4,6 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
+import { UserRole } from "@/types";
 import { 
   Table, 
   TableBody, 
@@ -81,7 +82,8 @@ export const UsersTab = ({ openRoleModal }: UsersTabProps) => {
         .select('*', { count: 'exact' });
       
       if (selectedRole !== 'all') {
-        query = query.eq('role', selectedRole);
+        // Use type casting to avoid type errors
+        query = query.eq('role', selectedRole as UserRole);
       }
       
       // Apply pagination
@@ -195,3 +197,5 @@ export const UsersTab = ({ openRoleModal }: UsersTabProps) => {
     </Card>
   );
 };
+
+export default UsersTab;

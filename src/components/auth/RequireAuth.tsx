@@ -9,6 +9,7 @@ import { UserRole } from "@/types";
 import { useUserRole } from "@/hooks/use-user-role";
 import { useToast } from "@/hooks/use-toast";
 import { getDashboardPath } from "@/routes/routeUtils";
+import { refreshSession, cleanupAuthState } from "@/utils/auth-utils";
 
 interface RequireAuthProps {
   allowedRoles?: UserRole[];
@@ -25,6 +26,19 @@ const RequireAuth = ({ allowedRoles = [], redirectTo = PATHS.LOGIN }: RequireAut
   const [unauthorized, setUnauthorized] = useState(false);
   const [redirectPath, setRedirectPath] = useState("");
   
+  // Periodically refresh the session token
+  useEffect(() => {
+    if (user) {
+      // Set up token refresh every 10 minutes
+      const tokenRefreshInterval = setInterval(async () => {
+        console.log("Refreshing auth token...");
+        await refreshSession();
+      }, 10 * 60 * 1000); // 10 minutes
+      
+      return () => clearInterval(tokenRefreshInterval);
+    }
+  }, [user]);
+  
   // Use effect to prevent immediate redirects that can cause loops
   useEffect(() => {
     console.log("RequireAuth effect - isLoading:", isLoading, "isRoleLoading:", isRoleLoading);
@@ -37,6 +51,7 @@ const RequireAuth = ({ allowedRoles = [], redirectTo = PATHS.LOGIN }: RequireAut
     
     if (tokenExpired && !isLoading && !isRoleLoading) {
       console.log("Possibly expired token detected, forcing logout");
+      cleanupAuthState();
       signOut().catch(err => console.error("Error during logout:", err));
       return;
     }

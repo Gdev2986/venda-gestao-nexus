@@ -1,12 +1,12 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { PageHeader } from "@/components/page/PageHeader";
 import { PageWrapper } from "@/components/page/PageWrapper";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import SalesTable from "@/components/sales/SalesTable";
-import { Sale } from "@/types";
+import { Sale, PaymentMethod } from "@/types";
 import { CalendarRange, FileText, Download, Search } from "lucide-react";
 import SalesFilters from "@/components/sales/SalesFilters";
 
@@ -16,7 +16,7 @@ const PartnerSales = () => {
   const [isLoading, setIsLoading] = useState(true);
 
   // Mock data - to be replaced with real API calls
-  useState(() => {
+  useEffect(() => {
     const mockSales: Sale[] = [
       {
         id: "1",
@@ -26,7 +26,7 @@ const PartnerSales = () => {
         gross_amount: 1200,
         net_amount: 1140,
         date: new Date().toISOString(),
-        payment_method: "credit" as any,
+        payment_method: PaymentMethod.CREDIT,
         client_id: "c1",
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString()
@@ -39,7 +39,7 @@ const PartnerSales = () => {
         gross_amount: 850,
         net_amount: 807.5,
         date: new Date().toISOString(),
-        payment_method: "debit" as any,
+        payment_method: PaymentMethod.DEBIT,
         client_id: "c2",
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString()
@@ -50,7 +50,7 @@ const PartnerSales = () => {
       setSales(mockSales);
       setIsLoading(false);
     }, 1000);
-  });
+  }, []);
 
   // Filter handling to be implemented with real data
   const handleFilter = (filters: any) => {
@@ -92,8 +92,11 @@ const PartnerSales = () => {
                 Histórico de Vendas
               </CardTitle>
             </CardHeader>
-            <CardContent>
-              <SalesTable sales={sales} isLoading={isLoading} />
+            <CardContent className="overflow-x-auto">
+              <SalesTable 
+                sales={sales} 
+                isLoading={isLoading} 
+              />
             </CardContent>
           </Card>
         </div>
