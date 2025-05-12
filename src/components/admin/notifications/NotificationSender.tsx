@@ -46,6 +46,7 @@ export function NotificationSender() {
         message: values.message,
         type: values.type as any,
         role: values.role as UserRole,
+        user_id: "", // This will be determined by the role
         data: {},
       });
       

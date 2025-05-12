@@ -8,7 +8,6 @@ import NotificationList from "@/components/notifications/NotificationList";
 import { Card, CardContent } from "@/components/ui/card";
 import { Loader2 } from "lucide-react";
 import { useState } from "react";
-import { UserRole } from "@/types";
 
 const AdminNotifications = () => {
   const [currentPage, setCurrentPage] = useState(1);
@@ -19,7 +18,7 @@ const AdminNotifications = () => {
     markAsRead, 
     markAsUnread, 
     deleteNotification,
-    totalPages 
+    totalPages = 1
   } = useNotifications({
     page: currentPage,
     pageSize: 10

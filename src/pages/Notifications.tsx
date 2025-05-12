@@ -31,7 +31,7 @@ const Notifications = () => {
     markAsUnread,
     markAllAsRead,
     deleteNotification,
-    totalPages,
+    totalPages = 1,
     refreshNotifications
   } = useNotifications({
     page: currentPage,
@@ -54,6 +54,7 @@ const Notifications = () => {
       title: "Sucesso",
       description: "Todas as notificações foram marcadas como lidas",
     });
+    refreshNotifications();
   };
 
   const handleGoBack = () => {
