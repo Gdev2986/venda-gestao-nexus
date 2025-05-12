@@ -1,9 +1,10 @@
 
 import { Suspense, lazy } from "react";
-import { createBrowserRouter, RouterProvider } from "react-router-dom";
+import { Routes, Route, Navigate } from "react-router-dom";
 import { Spinner } from "./components/ui/spinner";
-import RootLayout from "./layouts/RootLayout";
 import { Toaster } from "./components/ui/sonner";
+import { AuthProvider } from "@/contexts/AuthContext";
+import RootLayout from "./layouts/RootLayout";
 
 // Route imports
 const Home = lazy(() => import("./pages/Index"));
@@ -27,41 +28,41 @@ const NotFound = lazy(() => import("./pages/NotFound"));
 const Unauthorized = lazy(() => import("./pages/NotFound"));
 
 // Import admin routes
-import { AdminRoutes } from "./routes/adminRoutes";
-
-// Route definitions
-const router = createBrowserRouter([
-  {
-    path: "/",
-    element: <RootLayout />,
-    errorElement: <NotFound />,
-    children: [
-      { index: true, element: <Home /> },
-      { path: "/login", element: <Login /> },
-      { path: "/register", element: <Register /> },
-      { path: "/forgot-password", element: <ForgotPassword /> },
-      { path: "/reset-password", element: <ResetPassword /> },
-      { path: "/profile", element: <Profile /> },
-      { path: "/clients", element: <Clients /> },
-      { path: "/sales", element: <Sales /> },
-      { path: "/partners", element: <Partners /> },
-      { path: "/notifications", element: <NotificationsPage /> },
-      { path: "/payments", element: <Payments /> },
-      { path: "/pix-keys", element: <PixKeys /> },
-      { path: "/unauthorized", element: <Unauthorized /> },
-      // Admin Routes
-      { path: "/admin", element: <AdminDashboard /> },
-      // Include admin routes
-    ],
-  },
-]);
+import { adminRoutes } from "./routes/adminRoutes";
 
 function App() {
   return (
-    <Suspense fallback={<Spinner />}>
-      <RouterProvider router={router} />
+    <AuthProvider>
+      <Suspense fallback={<Spinner />}>
+        <Routes>
+          <Route path="/" element={<RootLayout />}>
+            <Route index element={<Home />} />
+            <Route path="login" element={<Login />} />
+            <Route path="register" element={<Register />} />
+            <Route path="forgot-password" element={<ForgotPassword />} />
+            <Route path="reset-password" element={<ResetPassword />} />
+            <Route path="profile" element={<Profile />} />
+            <Route path="clients" element={<Clients />} />
+            <Route path="sales" element={<Sales />} />
+            <Route path="partners" element={<Partners />} />
+            <Route path="notifications" element={<NotificationsPage />} />
+            <Route path="payments" element={<Payments />} />
+            <Route path="pix-keys" element={<PixKeys />} />
+            <Route path="unauthorized" element={<Unauthorized />} />
+            
+            {/* Admin Routes */}
+            <Route path="admin" element={<AdminDashboard />} />
+            
+            {/* Include all admin routes */}
+            {adminRoutes}
+            
+            {/* Catch-all route */}
+            <Route path="*" element={<NotFound />} />
+          </Route>
+        </Routes>
+      </Suspense>
       <Toaster />
-    </Suspense>
+    </AuthProvider>
   );
 }
 

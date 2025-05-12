@@ -19,7 +19,7 @@ const Index = () => {
   return (
     <div className="h-screen flex items-center justify-center">
       <Spinner size="lg" className="text-primary" />
-      <span className="ml-2 text-lg">Redirecionando...</span>
+      <span className="ml-2 text-lg">Redirecting...</span>
     </div>
   );
 };

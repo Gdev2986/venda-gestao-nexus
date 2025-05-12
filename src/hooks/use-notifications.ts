@@ -3,8 +3,9 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { notificationService } from "@/services/NotificationService";
-import { DatabaseNotificationType } from "@/types";
+import { DatabaseNotificationType, UserRole } from "@/types";
 import { toast } from "@/components/ui/sonner";
+import type { RefetchOptions } from "@tanstack/react-query";
 
 export const useNotifications = (initialPage = 1, pageSize = 10) => {
   const { user } = useAuth();
@@ -44,6 +45,15 @@ export const useNotifications = (initialPage = 1, pageSize = 10) => {
     }
   });
 
+  const markAllAsReadMutation = useMutation({
+    mutationFn: (userId: string) => notificationService.markAllAsRead(userId),
+    onSuccess: () => {
+      toast.success("All notifications marked as read");
+      queryClient.invalidateQueries({ queryKey: ['notifications'] });
+      queryClient.invalidateQueries({ queryKey: ['unreadCount'] });
+    }
+  });
+
   const markAsUnreadMutation = useMutation({
     mutationFn: (id: string) => notificationService.markAsUnread(id),
     onSuccess: () => {
@@ -64,13 +74,13 @@ export const useNotifications = (initialPage = 1, pageSize = 10) => {
     }
   });
 
-  const sendNotification = useMutation({
+  const sendNotificationMutation = useMutation({
     mutationFn: (params: {
       title: string;
       message: string;
       type: DatabaseNotificationType;
       recipients: {
-        role?: any;
+        role?: UserRole;
         userId?: string;
       };
       data?: Record<string, any>;
@@ -81,6 +91,31 @@ export const useNotifications = (initialPage = 1, pageSize = 10) => {
     },
     onError: () => {
       toast.error("Erro ao enviar notificação");
+    }
+  });
+
+  const sendNotificationToRoleMutation = useMutation({
+    mutationFn: (params: {
+      title: string;
+      message: string;
+      type: DatabaseNotificationType;
+      role: UserRole;
+      data?: Record<string, any>;
+    }) => {
+      return notificationService.sendNotificationToRole(
+        params.title,
+        params.message,
+        params.type,
+        params.role,
+        params.data
+      );
+    },
+    onSuccess: () => {
+      toast.success("Notificação enviada com sucesso para o grupo");
+      queryClient.invalidateQueries({ queryKey: ['notifications'] });
+    },
+    onError: () => {
+      toast.error("Erro ao enviar notificação para o grupo");
     }
   });
 
@@ -99,6 +134,20 @@ export const useNotifications = (initialPage = 1, pageSize = 10) => {
   const handleStatusFilterChange = (status: string) => {
     setStatusFilter(status);
     setCurrentPage(1); // Reset to first page when filter changes
+  };
+
+  const refreshNotifications = (filters?: {
+    page?: number;
+    typeFilter?: string;
+    statusFilter?: string;
+    searchTerm?: string;
+  }) => {
+    if (filters?.page !== undefined) setCurrentPage(filters.page);
+    if (filters?.typeFilter !== undefined) setTypeFilter(filters.typeFilter);
+    if (filters?.statusFilter !== undefined) setStatusFilter(filters.statusFilter);
+    
+    // Always refetch after changing filters
+    return refetch();
   };
 
   const { data: unreadCountData } = useQuery({
@@ -126,8 +175,11 @@ export const useNotifications = (initialPage = 1, pageSize = 10) => {
     handleStatusFilterChange,
     markAsRead: markAsReadMutation.mutate,
     markAsUnread: markAsUnreadMutation.mutate,
+    markAllAsRead: (userId: string) => markAllAsReadMutation.mutate(userId),
     deleteNotification: deleteNotificationMutation.mutate,
-    sendNotification: sendNotification.mutate,
+    sendNotification: sendNotificationMutation.mutate,
+    sendNotificationToRole: sendNotificationToRoleMutation.mutate,
     refetchNotifications: refetch,
+    refreshNotifications,
   };
 };

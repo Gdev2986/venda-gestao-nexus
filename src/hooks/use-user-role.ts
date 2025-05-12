@@ -121,5 +121,6 @@ export const useUserRole = () => {
     setAuthData("userRole", normalizedRole);
   };
 
-  return { userRole, isRoleLoading, updateUserRole };
+  // Renamed isLoading to isRoleLoading for clarity and compatibility
+  return { userRole, isLoading: isRoleLoading, isRoleLoading, updateUserRole };
 };

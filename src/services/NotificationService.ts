@@ -2,6 +2,7 @@
 import { supabase } from "@/integrations/supabase/client";
 import { DatabaseNotificationType, UserRole } from "@/types";
 import { toast } from "@/components/ui/sonner";
+import { Json } from "@/integrations/supabase/types";
 
 export interface Notification {
   id: string;
@@ -9,9 +10,8 @@ export interface Notification {
   message: string;
   type: DatabaseNotificationType;
   created_at: string;
-  read: boolean;
+  is_read: boolean;
   user_id: string;
-  role: UserRole;
   target_id?: string;
   data?: Record<string, any>;
 }
@@ -88,15 +88,15 @@ class NotificationService {
         .order("created_at", { ascending: false });
 
       // Apply type filter if not 'all'
-      if (typeFilter !== "all") {
-        query = query.eq("type", typeFilter);
+      if (typeFilter !== "all" && typeFilter) {
+        query = query.eq("type", typeFilter as DatabaseNotificationType);
       }
 
       // Apply read status filter if not 'all'
       if (statusFilter === "read") {
-        query = query.eq("read", true);
+        query = query.eq("is_read", true);
       } else if (statusFilter === "unread") {
-        query = query.eq("read", false);
+        query = query.eq("is_read", false);
       }
 
       // Apply pagination
@@ -115,11 +115,10 @@ class NotificationService {
         message: item.message,
         type: item.type as DatabaseNotificationType,
         created_at: item.created_at,
-        read: item.read || false,
+        is_read: !!item.is_read,
         user_id: item.user_id,
-        role: item.role || UserRole.USER,
         target_id: item.target_id,
-        data: item.data
+        data: item.data && typeof item.data === 'object' ? item.data : {}
       })) || [];
 
       return {
@@ -170,9 +169,8 @@ class NotificationService {
             message,
             type,
             user_id: user.id,
-            read: false,
+            is_read: false,
             created_at: new Date().toISOString(),
-            role: dbRole,
             target_id: target_id || null,
             data: data || null,
           };
@@ -202,9 +200,8 @@ class NotificationService {
         message,
         type,
         user_id,
-        read: false,
+        is_read: false,
         created_at: new Date().toISOString(),
-        role: role ? mapUserRoleToDBRole(role) : null,
         target_id: target_id || null,
         data: data || null,
       };
@@ -226,11 +223,10 @@ class NotificationService {
         message: notification.message,
         type: notification.type as DatabaseNotificationType,
         created_at: notification.created_at,
-        read: notification.read,
+        is_read: notification.is_read,
         user_id: notification.user_id,
-        role: (notification.role as UserRole) || UserRole.USER,
         target_id: notification.target_id,
-        data: notification.data,
+        data: notification.data as Record<string, any>,
       };
     } catch (error) {
       console.error("Error creating notification:", error);
@@ -243,7 +239,7 @@ class NotificationService {
     try {
       const { error } = await supabase
         .from("notifications")
-        .update({ read: true })
+        .update({ is_read: true })
         .eq("id", id);
 
       if (error) {
@@ -257,12 +253,32 @@ class NotificationService {
     }
   }
 
+  // Mark all notifications as read for a user
+  async markAllAsRead(userId: string): Promise<boolean> {
+    try {
+      const { error } = await supabase
+        .from("notifications")
+        .update({ is_read: true })
+        .eq("user_id", userId)
+        .eq("is_read", false);
+
+      if (error) {
+        throw error;
+      }
+
+      return true;
+    } catch (error) {
+      console.error("Error marking all notifications as read:", error);
+      return false;
+    }
+  }
+
   // Mark notification as unread
   async markAsUnread(id: string): Promise<boolean> {
     try {
       const { error } = await supabase
         .from("notifications")
-        .update({ read: false })
+        .update({ is_read: false })
         .eq("id", id);
 
       if (error) {
@@ -302,7 +318,7 @@ class NotificationService {
         .from("notifications")
         .select("*", { count: "exact", head: true })
         .eq("user_id", userId)
-        .eq("read", false);
+        .eq("is_read", false);
 
       if (error) {
         throw error;
@@ -359,6 +375,23 @@ class NotificationService {
       toast.error("Erro ao enviar notificação");
       return false;
     }
+  }
+
+  // Send notification to users with specific roles
+  async sendNotificationToRole(
+    title: string,
+    message: string,
+    type: DatabaseNotificationType,
+    role: UserRole,
+    data?: Record<string, any>
+  ): Promise<boolean> {
+    return this.sendNotification({
+      title,
+      message,
+      type,
+      recipients: { role },
+      data,
+    });
   }
 }
 
