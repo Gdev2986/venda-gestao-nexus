@@ -48,6 +48,7 @@ export interface Notification {
   created_at: string;
   user_id: string;
   data?: Record<string, any>;
+  role?: UserRole;
 }
 
 // Database notification model
@@ -60,6 +61,7 @@ export interface DatabaseNotification {
   created_at: string;
   user_id: string;
   data?: Record<string, any>;
+  role?: UserRole;
 }
 
 export enum ClientStatus {
@@ -100,7 +102,6 @@ export interface Payment {
     type: string;
     owner_name: string;
   };
-  // Adding missing properties referenced in errors
   description?: string;
   client?: {
     id: string;
@@ -130,7 +131,6 @@ export interface PixKey {
   bank_name?: string;
   created_at: string;
   updated_at: string;
-  // Adding missing property
   is_active?: boolean;
 }
 
@@ -183,7 +183,6 @@ export interface Partner {
   email?: string;
   phone?: string;
   address?: string;
-  // Adding missing properties
   user_id?: string;
   total_commission?: number;
   total_sales?: number;
@@ -197,7 +196,6 @@ export interface FilterValues {
     from: Date;
     to?: Date;
   };
-  // Adding missing property
   commissionRange?: [number, number];
 }
 
@@ -235,7 +233,6 @@ export interface Machine {
   location?: string;
   created_at: string;
   updated_at?: string;
-  // Adding missing properties
   name?: string;
   client_name?: string;
 }

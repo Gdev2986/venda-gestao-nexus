@@ -8,6 +8,7 @@ import RootLayout from "./layouts/RootLayout";
 import MainLayout from "./layouts/MainLayout";
 import AdminLayout from "./layouts/AdminLayout";
 import LogisticsLayout from "./layouts/LogisticsLayout";
+import PartnerLayout from "./layouts/PartnerLayout"; // Adicionado import do PartnerLayout
 import RequireAuth from "@/components/auth/RequireAuth";
 import { UserRole } from "@/types";
 
@@ -30,6 +31,16 @@ const AdminDashboard = lazy(() => import("./pages/admin/Dashboard"));
 const AdminSettings = lazy(() => import("./pages/admin/Settings"));
 const AdminNotifications = lazy(() => import("./pages/admin/Notifications"));
 
+// Client Routes
+const ClientDashboard = lazy(() => import("./pages/user/Dashboard"));
+const UserMachines = lazy(() => import("./pages/user/Machines"));
+const UserPayments = lazy(() => import("./pages/user/Payments"));
+const UserSettings = lazy(() => import("./pages/user/Settings"));
+const UserSupport = lazy(() => import("./pages/user/Support"));
+
+// Partner Routes
+const PartnerDashboard = lazy(() => import("./pages/partner/Dashboard"));
+
 // Error Pages
 const NotFound = lazy(() => import("./pages/NotFound"));
 const Unauthorized = lazy(() => import("./pages/NotFound"));
@@ -38,6 +49,12 @@ const Unauthorized = lazy(() => import("./pages/NotFound"));
 import { adminRoutes } from "./routes/adminRoutes";
 // Import logistics routes
 import { logisticsMainRoutes } from "./routes/admin/logisticsRoutes";
+// Import partner routes
+import { PartnerRoutes } from "./routes/partnerRoutes";
+// Import client routes
+import { ClientRoutes } from "./routes/clientRoutes";
+// Import financial routes
+import { FinancialRoutes } from "./routes/financialRoutes";
 
 function App() {
   return (
@@ -77,12 +94,18 @@ function App() {
             >
               <Route path="admin" element={<AdminLayout />}>
                 <Route index element={<Navigate to="dashboard" replace />} />
-                <Route path="dashboard" element={<AdminDashboard />} />
-                <Route path="notifications" element={<AdminNotifications />} />
-                <Route path="settings" element={<AdminSettings />} />
                 {adminRoutes}
               </Route>
             </Route>
+
+            {/* Client Routes */}
+            {ClientRoutes}
+
+            {/* Partner Routes */}
+            {PartnerRoutes}
+
+            {/* Financial Routes */}
+            {FinancialRoutes}
 
             {/* Logistics Layout with Logistics Routes - requires logistics role */}
             <Route 
