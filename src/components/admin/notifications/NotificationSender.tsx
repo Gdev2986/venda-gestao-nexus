@@ -52,6 +52,7 @@ export function NotificationSender() {
                 title: values.title,
                 message: values.message,
                 type: values.type as NotificationType,
+                data: {},
               },
               role
             )
@@ -64,6 +65,7 @@ export function NotificationSender() {
             title: values.title,
             message: values.message,
             type: values.type as NotificationType,
+            data: {},
           },
           values.targetRole
         );
@@ -143,11 +145,11 @@ export function NotificationSender() {
                       </FormControl>
                       <SelectContent>
                         <SelectItem value="ALL">Todos os usuários</SelectItem>
-                        <SelectItem value={UserRole.ADMIN}>Administradores</SelectItem>
-                        <SelectItem value={UserRole.CLIENT}>Clientes</SelectItem>
-                        <SelectItem value={UserRole.PARTNER}>Parceiros</SelectItem>
-                        <SelectItem value={UserRole.FINANCIAL}>Financeiro</SelectItem>
-                        <SelectItem value={UserRole.LOGISTICS}>Logística</SelectItem>
+                        <SelectItem value="ADMIN">Administradores</SelectItem>
+                        <SelectItem value="CLIENT">Clientes</SelectItem>
+                        <SelectItem value="PARTNER">Parceiros</SelectItem>
+                        <SelectItem value="FINANCIAL">Financeiro</SelectItem>
+                        <SelectItem value="LOGISTICS">Logística</SelectItem>
                       </SelectContent>
                     </Select>
                     <FormMessage />

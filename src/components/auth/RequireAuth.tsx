@@ -106,9 +106,8 @@ const RequireAuth = ({ allowedRoles = [], redirectTo = PATHS.LOGIN }: RequireAut
     return <Navigate to={PATHS.LOGIN} state={{ from: location.pathname }} replace />;
   }
 
-  // FIX: Remove the checks below that were causing unwanted redirects for partner routes
   // Check if user has permission to access this route
-  if (allowedRoles.length > 0 && !allowedRoles.includes(userRole as UserRole)) {
+  if (allowedRoles.length > 0 && userRole && !allowedRoles.includes(userRole)) {
     console.log(`User role ${userRole} not allowed to access this route ${location.pathname}`);
     toast({
       title: "Acesso não autorizado",
@@ -117,7 +116,7 @@ const RequireAuth = ({ allowedRoles = [], redirectTo = PATHS.LOGIN }: RequireAut
     });
     
     try {
-      const dashboardPath = getDashboardPath(userRole as UserRole);
+      const dashboardPath = getDashboardPath(userRole);
       return <Navigate to={dashboardPath} replace />;
     } catch (error) {
       console.error("Error getting dashboard path:", error);

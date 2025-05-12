@@ -1,7 +1,6 @@
 
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/components/ui/sonner";
-import { useAuth } from "@/contexts/AuthContext";
 
 export type NotificationType = 
   | "GENERAL" 
@@ -41,7 +40,7 @@ export const NotificationService = {
       .range(start, end);
       
     if (unreadOnly) {
-      query = query.eq('read', false);
+      query = query.eq('is_read', false);
     }
     
     const { data, error, count } = await query;
@@ -51,8 +50,21 @@ export const NotificationService = {
       throw error;
     }
     
+    // Map database fields to our interface
+    const notifications: Notification[] = data?.map(item => ({
+      id: item.id,
+      user_id: item.user_id,
+      title: item.title,
+      message: item.message,
+      type: item.type as NotificationType,
+      read: item.is_read === false ? false : true,
+      data: item.data,
+      created_at: item.created_at,
+      updated_at: item.created_at // Using created_at as updated_at if not available
+    })) || [];
+    
     return {
-      notifications: data || [],
+      notifications,
       count,
       pages: count ? Math.ceil(count / limit) : 1
     };
@@ -62,7 +74,7 @@ export const NotificationService = {
   async markAsRead(id: string) {
     const { error } = await supabase
       .from('notifications')
-      .update({ read: true })
+      .update({ is_read: true })
       .eq('id', id);
       
     if (error) {
@@ -75,7 +87,7 @@ export const NotificationService = {
   async markAsUnread(id: string) {
     const { error } = await supabase
       .from('notifications')
-      .update({ read: false })
+      .update({ is_read: false })
       .eq('id', id);
       
     if (error) {
@@ -88,7 +100,7 @@ export const NotificationService = {
   async markAllAsRead(userId: string) {
     const { error } = await supabase
       .from('notifications')
-      .update({ read: true })
+      .update({ is_read: true })
       .eq('user_id', userId);
       
     if (error) {
@@ -115,8 +127,12 @@ export const NotificationService = {
     const { data, error } = await supabase
       .from('notifications')
       .insert({
-        ...notification,
-        read: false
+        user_id: notification.user_id,
+        title: notification.title,
+        message: notification.message,
+        type: notification.type,
+        data: notification.data || {},
+        is_read: false
       })
       .select();
       
@@ -156,7 +172,7 @@ export const NotificationService = {
       message: notification.message,
       type: notification.type,
       data: notification.data || {},
-      read: false
+      is_read: false
     }));
     
     const { data, error } = await supabase
@@ -183,7 +199,19 @@ export const NotificationService = {
         filter: `user_id=eq.${userId}`
       }, (payload) => {
         console.log('New notification received:', payload);
-        const newNotification = payload.new as Notification;
+        // Transform the database fields to match our Notification interface
+        const dbNotification = payload.new as any;
+        const newNotification: Notification = {
+          id: dbNotification.id,
+          user_id: dbNotification.user_id,
+          title: dbNotification.title,
+          message: dbNotification.message,
+          type: dbNotification.type as NotificationType,
+          read: dbNotification.is_read === false ? false : true,
+          data: dbNotification.data,
+          created_at: dbNotification.created_at,
+          updated_at: dbNotification.created_at
+        };
         
         // Show a toast notification
         toast({
