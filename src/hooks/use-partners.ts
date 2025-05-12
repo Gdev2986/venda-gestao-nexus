@@ -22,7 +22,10 @@ interface PartnerRecord {
 }
 
 // Create a type that matches what we need to insert into the database
-type PartnerInsert = Omit<PartnerRecord, 'id' | 'created_at' | 'updated_at'>;
+type PartnerInsert = Omit<
+  Pick<PartnerRecord, 'company_name' | 'commission_rate' | 'contact_name' | 'email' | 'phone' | 'address' | 'user_id'>, 
+  'id' | 'created_at' | 'updated_at'
+>;
 
 export const usePartners = () => {
   const [partners, setPartners] = useState<Partner[]>([]);
@@ -128,7 +131,7 @@ export const usePartners = () => {
   const createPartner = async (partnerData: Omit<Partner, "id" | "created_at" | "updated_at">) => {
     try {
       // Create a partner object with only the fields that exist in the database table
-      const partnerToInsert: PartnerInsert = {
+      const partnerToInsert = {
         company_name: partnerData.company_name,
         commission_rate: partnerData.commission_rate || 0,
         // Include optional fields if they exist in the data

@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -18,6 +19,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { UserRole } from "@/types";
 
 interface ProfileData {
   id: string;
@@ -25,7 +27,7 @@ interface ProfileData {
   email: string;
   avatar: string;
   phone: string;
-  role: string;
+  role: UserRole | string;
   created_at: string;
   updated_at: string;
 }
@@ -80,7 +82,7 @@ export const UsersTab = ({ openRoleModal }: UsersTabProps) => {
         .select('*', { count: 'exact' });
       
       if (selectedRole !== 'all') {
-        // Use the string value directly since role is stored as string in ProfileData
+        // Use the string value directly since role can be string in ProfileData
         query = query.eq('role', selectedRole);
       }
       

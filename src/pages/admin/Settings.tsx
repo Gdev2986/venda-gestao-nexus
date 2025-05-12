@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
@@ -9,14 +10,14 @@ import { AdminNotificationsTab } from "@/components/admin/settings/AdminNotifica
 import { AdminSecurityTab } from "@/components/admin/settings/AdminSecurityTab";
 import { UserRole } from "@/types";
 
-// Update ProfileData interface to accept UserRole for role
+// Update ProfileData interface to use UserRole for role
 interface ProfileData {
   id: string;
   name: string;
   email: string;
   avatar: string;
   phone: string;
-  role: string;
+  role: UserRole | string;
   created_at: string;
   updated_at: string;
 }
@@ -24,7 +25,7 @@ interface ProfileData {
 const AdminSettings = () => {
   const [activeTab, setActiveTab] = useState("usuarios");
   const [selectedUser, setSelectedUser] = useState<ProfileData | null>(null);
-  const [newRole, setNewRole] = useState<string>("CLIENT");
+  const [newRole, setNewRole] = useState<UserRole | string>("CLIENT");
   const [showRoleModal, setShowRoleModal] = useState(false);
   
   const { toast } = useToast();

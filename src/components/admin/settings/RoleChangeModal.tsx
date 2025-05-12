@@ -10,6 +10,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { UserRole } from "@/types";
 
 interface ProfileData {
   id: string;
@@ -17,15 +18,15 @@ interface ProfileData {
   email: string;
   avatar: string;
   phone: string;
-  role: string;
+  role: UserRole | string;
   created_at: string;
   updated_at: string;
 }
 
 interface RoleChangeModalProps {
   user: ProfileData;
-  newRole: string;
-  setNewRole: (role: string) => void;
+  newRole: UserRole | string;
+  setNewRole: (role: UserRole | string) => void;
   onClose: () => void;
   onSave: () => void;
 }
