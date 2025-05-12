@@ -6,7 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import SalesTable from "@/components/sales/SalesTable";
-import { Sale, PaymentMethod, SalesFilterParams } from "@/types";
+import { Sale, PaymentMethod } from "@/types";
 import { CalendarRange, FileText, Download, Search } from "lucide-react";
 import SalesFilters from "@/components/sales/SalesFilters";
 
@@ -14,7 +14,7 @@ const PartnerSales = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [sales, setSales] = useState<Sale[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [filters, setFilters] = useState<SalesFilterParams>({});
+  const [filters, setFilters] = useState<any>({});
   const [date, setDate] = useState<{ from: Date; to?: Date } | undefined>(undefined);
 
   // Mock data - to be replaced with real API calls
@@ -27,13 +27,11 @@ const PartnerSales = () => {
         client_name: "Restaurante Silva",
         gross_amount: 1200,
         net_amount: 1140,
-        amount: 1200,
         date: new Date().toISOString(),
         payment_method: PaymentMethod.CREDIT,
         client_id: "c1",
         created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString(),
-        status: "completed"
+        updated_at: new Date().toISOString()
       },
       {
         id: "2",
@@ -42,13 +40,11 @@ const PartnerSales = () => {
         client_name: "Mercado Central",
         gross_amount: 850,
         net_amount: 807.5,
-        amount: 850,
         date: new Date().toISOString(),
         payment_method: PaymentMethod.DEBIT,
         client_id: "c2",
         created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString(),
-        status: "completed"
+        updated_at: new Date().toISOString()
       }
     ];
     
@@ -58,7 +54,7 @@ const PartnerSales = () => {
     }, 1000);
   }, []);
 
-  const handleFilterChange = (key: keyof SalesFilterParams, value: any) => {
+  const handleFilterChange = (key: keyof any, value: any) => {
     setFilters(prev => ({ ...prev, [key]: value }));
   };
   
@@ -73,6 +69,11 @@ const PartnerSales = () => {
 
   const handleExport = () => {
     console.log("Exporting data...");
+  };
+
+  // Function to handle filter changes from SalesFilters component
+  const handleFiltersChange = (newFilters: any) => {
+    setFilters(newFilters);
   };
 
   return (
@@ -103,9 +104,9 @@ const PartnerSales = () => {
               date={date}
               filters={filters}
               onDateChange={handleDateChange}
-              onFilterChange={handleFilterChange}
               onClearFilters={handleClearFilters}
               onExport={handleExport}
+              onFilterChange={handleFilterChange}
             />
           </div>
           

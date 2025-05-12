@@ -1,212 +1,256 @@
-import { useState, useEffect, useCallback } from "react";
-import { notificationService } from "@/services/NotificationService";
-import { useAuth } from "@/contexts/AuthContext";
-import { Notification, NotificationType, UserRole } from "@/types";
 
-interface UseNotificationsOptions {
-  page?: number;
-  pageSize?: number;
+import { useState, useEffect } from "react";
+import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/hooks/use-toast";
+
+interface UseNotificationsParams {
+  searchTerm?: string;
   typeFilter?: string;
   statusFilter?: string;
-  searchTerm?: string;
+  page?: number;
+  pageSize?: number;
 }
 
-interface NotificationHook {
-  notifications: Notification[];
-  isLoading: boolean;
-  totalCount?: number;
-  totalPages?: number;
-  markAsRead: (id: string) => Promise<void>;
-  markAsUnread: (id: string) => Promise<void>;
-  markAllAsRead: (userId: string) => Promise<void>;
-  fetchNotifications: () => Promise<void>;
-  refreshNotifications: () => Promise<void>;
-  deleteNotification: (id: string) => Promise<void>;
-  deleteAllNotifications: (userId: string) => Promise<void>;
-  createNotification: (
-    title: string, 
-    message: string, 
-    type: NotificationType,
-    data?: Record<string, any>
-  ) => Promise<void>;
-  sendNotificationToRole: (
-    title: string, 
-    message: string, 
-    type: NotificationType, 
-    role: UserRole, 
-    data?: Record<string, any>
-  ) => Promise<void>;
-}
-
-export const useNotifications = (options: UseNotificationsOptions = {}): NotificationHook => {
-  const { page = 1, pageSize = 10, typeFilter = "all", statusFilter = "all", searchTerm = "" } = options;
-  const [notifications, setNotifications] = useState<Notification[]>([]);
+export const useNotifications = (params: UseNotificationsParams = {}) => {
+  const { searchTerm = "", typeFilter = "all", statusFilter = "all", page = 1, pageSize = 50 } = params;
+  
+  const [notifications, setNotifications] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(true);
-  const [totalCount, setTotalCount] = useState<number>(0);
-  const [totalPages, setTotalPages] = useState<number>(0);
-  const { user } = useAuth();
-
-  const fetchNotifications = useCallback(async () => {
-    if (!user) {
-      setNotifications([]);
-      setIsLoading(false);
-      return;
-    }
-
-    try {
-      setIsLoading(true);
-      const { notifications: notificationsData, totalCount, totalPages } = await notificationService.getNotifications(
-        user.id,
-        page,
-        pageSize,
-        typeFilter,
-        statusFilter,
-        searchTerm
-      );
-
-      setNotifications(notificationsData);
-      setTotalCount(totalCount);
-      setTotalPages(totalPages);
-    } catch (error) {
-      console.error("Exception fetching notifications:", error);
-    } finally {
-      setIsLoading(false);
-    }
-  }, [user, page, pageSize, typeFilter, statusFilter, searchTerm]);
-
+  const [totalPages, setTotalPages] = useState<number>(1);
+  const { toast } = useToast();
+  
+  // Subscribe to real-time updates
+  useEffect(() => {
+    // In a real implementation with Supabase, subscribe to real-time updates here
+    // const channel = supabase.channel('public:notifications')
+    // channel.on('INSERT', handleInsert).on('UPDATE', handleUpdate).subscribe()
+    // return () => { supabase.removeChannel(channel) }
+  }, []);
+  
   useEffect(() => {
     fetchNotifications();
-  }, [fetchNotifications]);
-
-  const refreshNotifications = async () => {
-    await fetchNotifications();
+  }, [searchTerm, typeFilter, statusFilter, page]);
+  
+  const fetchNotifications = async () => {
+    setIsLoading(true);
+    
+    try {
+      // In a real implementation, this would fetch from the Supabase table
+      // let query = supabase.from('notifications').select('*').eq('user_id', userId)
+      
+      // For now, we'll mock the data
+      setTimeout(() => {
+        const mockNotifications = getMockNotifications();
+        
+        // Apply filters
+        let filtered = mockNotifications;
+        
+        if (searchTerm) {
+          const term = searchTerm.toLowerCase();
+          filtered = filtered.filter(notification => 
+            notification.title.toLowerCase().includes(term) ||
+            notification.message.toLowerCase().includes(term)
+          );
+        }
+        
+        if (typeFilter !== "all") {
+          filtered = filtered.filter(notification => notification.type === typeFilter);
+        }
+        
+        if (statusFilter === "read") {
+          filtered = filtered.filter(notification => notification.read);
+        } else if (statusFilter === "unread") {
+          filtered = filtered.filter(notification => !notification.read);
+        }
+        
+        // Calculate pagination
+        const total = filtered.length;
+        const maxPages = Math.ceil(total / pageSize);
+        setTotalPages(maxPages || 1);
+        
+        // Apply pagination
+        const startIndex = (page - 1) * pageSize;
+        const paginatedNotifications = filtered.slice(startIndex, startIndex + pageSize);
+        
+        setNotifications(paginatedNotifications);
+        setIsLoading(false);
+      }, 600);
+    } catch (error) {
+      console.error("Error fetching notifications:", error);
+      toast({
+        title: "Erro",
+        description: "Falha ao carregar notificações",
+        variant: "destructive",
+      });
+      setIsLoading(false);
+    }
   };
-
+  
   const markAsRead = async (id: string) => {
     try {
-      await notificationService.markNotificationAsRead(id);
+      // In a real implementation:
+      // await supabase.from('notifications').update({ is_read: true }).eq('id', id)
       
-      // Update local state
-      setNotifications((prevNotifications) =>
-        prevNotifications.map((notification) =>
+      // For mocking
+      setNotifications(prevNotifications =>
+        prevNotifications.map(notification =>
           notification.id === id ? { ...notification, read: true } : notification
         )
       );
     } catch (error) {
-      console.error("Exception marking notification as read:", error);
+      console.error("Error marking notification as read:", error);
+      toast({
+        title: "Erro",
+        description: "Falha ao marcar notificação como lida",
+        variant: "destructive",
+      });
     }
   };
-
+  
   const markAsUnread = async (id: string) => {
     try {
-      // There's no markAsUnread in the service, but we can handle it client-side for now
-      // TODO: Implement this in the NotificationService
+      // In a real implementation:
+      // await supabase.from('notifications').update({ is_read: false }).eq('id', id)
       
-      // Update local state
-      setNotifications((prevNotifications) =>
-        prevNotifications.map((notification) =>
+      // For mocking
+      setNotifications(prevNotifications =>
+        prevNotifications.map(notification =>
           notification.id === id ? { ...notification, read: false } : notification
         )
       );
     } catch (error) {
-      console.error("Exception marking notification as unread:", error);
+      console.error("Error marking notification as unread:", error);
+      toast({
+        title: "Erro",
+        description: "Falha ao marcar notificação como não lida",
+        variant: "destructive",
+      });
     }
   };
-
-  const markAllAsRead = async (userId: string) => {
+  
+  const markAllAsRead = async () => {
     try {
-      await notificationService.markAllAsRead(userId);
+      // In a real implementation:
+      // await supabase.from('notifications').update({ is_read: true }).eq('user_id', userId)
       
-      // Update local state
-      setNotifications((prevNotifications) =>
-        prevNotifications.map((notification) => ({ ...notification, read: true }))
+      // For mocking
+      setNotifications(prevNotifications =>
+        prevNotifications.map(notification => ({ ...notification, read: true }))
       );
     } catch (error) {
-      console.error("Exception marking all notifications as read:", error);
+      console.error("Error marking all notifications as read:", error);
+      toast({
+        title: "Erro",
+        description: "Falha ao marcar todas notificações como lidas",
+        variant: "destructive",
+      });
     }
   };
-
+  
   const deleteNotification = async (id: string) => {
     try {
-      await notificationService.deleteNotification(id);
+      // In a real implementation:
+      // await supabase.from('notifications').delete().eq('id', id)
       
-      // Update local state
-      setNotifications((prevNotifications) =>
-        prevNotifications.filter((notification) => notification.id !== id)
+      // For mocking
+      setNotifications(prevNotifications =>
+        prevNotifications.filter(notification => notification.id !== id)
       );
     } catch (error) {
-      console.error("Exception deleting notification:", error);
+      console.error("Error deleting notification:", error);
+      toast({
+        title: "Erro",
+        description: "Falha ao excluir notificação",
+        variant: "destructive",
+      });
     }
   };
-
-  const deleteAllNotifications = async (userId: string) => {
+  
+  const deleteAllNotifications = async () => {
     try {
-      // We don't have this in the service yet, but we'll prepare the client-side part
+      // In a real implementation:
+      // await supabase.from('notifications').delete().eq('user_id', userId)
       
-      // Update local state
+      // For mocking
       setNotifications([]);
     } catch (error) {
-      console.error("Exception deleting all notifications:", error);
-    }
-  };
-
-  const createNotification = async (
-    title: string,
-    message: string,
-    type: NotificationType,
-    data?: Record<string, any>
-  ) => {
-    if (!user) return;
-
-    try {
-      await notificationService.createNotification({
-        title,
-        message,
-        type,
-        user_id: user.id,
-        data
+      console.error("Error deleting all notifications:", error);
+      toast({
+        title: "Erro",
+        description: "Falha ao excluir todas as notificações",
+        variant: "destructive",
       });
-      
-      // Refresh notifications to show the new one
-      await fetchNotifications();
-    } catch (error) {
-      console.error("Exception creating notification:", error);
     }
   };
-
-  const sendNotificationToRole = async (
-    title: string,
-    message: string,
-    type: NotificationType,
-    role: UserRole,
-    data?: Record<string, any>
-  ) => {
-    try {
-      await notificationService.sendNotificationToRole(
-        title,
-        message,
-        type,
-        role,
-        data
-      );
-    } catch (error) {
-      console.error("Exception sending notifications to role:", error);
-    }
+  
+  const refreshNotifications = () => {
+    fetchNotifications();
   };
-
+  
   return {
     notifications,
     isLoading,
-    totalCount,
-    totalPages,
     markAsRead,
     markAsUnread,
     markAllAsRead,
-    fetchNotifications,
-    refreshNotifications,
     deleteNotification,
     deleteAllNotifications,
-    createNotification,
-    sendNotificationToRole
+    totalPages,
+    refreshNotifications,
   };
+};
+
+// Mock data generator function
+const getMockNotifications = () => {
+  const now = new Date();
+  return [
+    {
+      id: "1",
+      title: "Nova venda registrada",
+      message: "Uma nova venda foi processada no valor de R$ 150,00",
+      type: "SALE",
+      read: false,
+      timestamp: new Date(now.getTime() - 1000 * 60 * 30), // 30 minutes ago
+    },
+    {
+      id: "2",
+      title: "Pagamento aprovado",
+      message: "Seu pagamento no valor de R$ 500,00 foi aprovado",
+      type: "PAYMENT_APPROVED",
+      read: false,
+      timestamp: new Date(now.getTime() - 1000 * 60 * 60 * 2), // 2 hours ago
+    },
+    {
+      id: "3",
+      title: "Atualização de sistema",
+      message: "O sistema foi atualizado com novas funcionalidades",
+      type: "GENERAL",
+      read: true,
+      timestamp: new Date(now.getTime() - 1000 * 60 * 60 * 24), // 1 day ago
+    },
+    {
+      id: "4",
+      title: "Máquina em manutenção",
+      message: "A máquina #SN-234567 entrou em manutenção",
+      type: "MACHINE",
+      read: false,
+      timestamp: new Date(now.getTime() - 1000 * 60 * 60 * 36), // 1.5 days ago
+    },
+    {
+      id: "5",
+      title: "Novo chamado de suporte",
+      message: "Um novo chamado de suporte foi aberto para você",
+      type: "SUPPORT",
+      read: true,
+      timestamp: new Date(now.getTime() - 1000 * 60 * 60 * 48), // 2 days ago
+    },
+    {
+      id: "6",
+      title: "Promoção disponível",
+      message: "Nova promoção para seus clientes disponível",
+      type: "GENERAL",
+      read: false,
+      timestamp: new Date(now.getTime() - 1000 * 60 * 60 * 72), // 3 days ago
+    },
+  ];
 };

@@ -1,3 +1,4 @@
+
 import { useState, useEffect, useCallback } from "react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -19,7 +20,17 @@ import { Badge } from "@/components/ui/badge";
 import { Pagination, PaginationContent, PaginationItem, PaginationLink, PaginationNext, PaginationPrevious } from "@/components/ui/pagination";
 import { Skeleton } from "@/components/ui/skeleton";
 import MachineTransferDialog from "@/components/logistics/machine-dialogs/MachineTransferDialog";
-import { Machine } from "@/types";
+
+interface Machine {
+  id: string;
+  serial_number: string;
+  model: string;
+  status: string;
+  client: string | null;
+  location: string;
+  last_maintenance: string | null;
+  next_maintenance: string | null;
+}
 
 interface MachineListProps {
   searchTerm: string;
@@ -71,26 +82,26 @@ const MachineList: React.FC<MachineListProps> = ({
     // Simulate API call
     setTimeout(() => {
       const mockMachines: Machine[] = [
-        { id: "1", serial_number: "SN001", model: "Model A", status: "Active", client_id: "cx1", location: "Warehouse", created_at: "2023-01-01", name: "Machine 1", client_name: "Client X" },
-        { id: "2", serial_number: "SN002", model: "Model B", status: "Inactive", client_id: undefined, location: "Client Site", created_at: "2023-02-01", name: "Machine 2", client_name: undefined },
-        { id: "3", serial_number: "SN003", model: "Model A", status: "Active", client_id: "cy1", location: "Warehouse", created_at: "2023-03-01", name: "Machine 3", client_name: "Client Y" },
-        { id: "4", serial_number: "SN004", model: "Model C", status: "Active", client_id: "cz1", location: "Client Site", created_at: "2023-04-01", name: "Machine 4", client_name: "Client Z" },
-        { id: "5", serial_number: "SN005", model: "Model B", status: "Inactive", client_id: undefined, location: "Warehouse", created_at: "2023-05-01", name: "Machine 5", client_name: undefined },
-        { id: "6", serial_number: "SN006", model: "Model A", status: "Active", client_id: "cx2", location: "Client Site", created_at: "2023-06-01", name: "Machine 6", client_name: "Client X" },
-        { id: "7", serial_number: "SN007", model: "Model C", status: "Active", client_id: "cy2", location: "Warehouse", created_at: "2023-07-01", name: "Machine 7", client_name: "Client Y" },
-        { id: "8", serial_number: "SN008", model: "Model B", status: "Inactive", client_id: undefined, location: "Client Site", created_at: "2023-08-01", name: "Machine 8", client_name: undefined },
-        { id: "9", serial_number: "SN009", model: "Model A", status: "Active", client_id: "cz2", location: "Warehouse", created_at: "2023-09-01", name: "Machine 9", client_name: "Client Z" },
-        { id: "10", serial_number: "SN010", model: "Model C", status: "Active", client_id: "cx3", location: "Client Site", created_at: "2023-10-01", name: "Machine 10", client_name: "Client X" },
-        { id: "11", serial_number: "SN011", model: "Model B", status: "Inactive", client_id: undefined, location: "Warehouse", created_at: "2023-11-01", name: "Machine 11", client_name: undefined },
-        { id: "12", serial_number: "SN012", model: "Model A", status: "Active", client_id: "cy3", location: "Client Site", created_at: "2023-12-01", name: "Machine 12", client_name: "Client Y" },
-        { id: "13", serial_number: "SN013", model: "Model C", status: "Active", client_id: "cz3", location: "Warehouse", created_at: "2024-01-01", name: "Machine 13", client_name: "Client Z" },
-        { id: "14", serial_number: "SN014", model: "Model B", status: "Inactive", client_id: undefined, location: "Client Site", created_at: "2024-02-01", name: "Machine 14", client_name: undefined },
-        { id: "15", serial_number: "SN015", model: "Model A", status: "Active", client_id: "cx4", location: "Warehouse", created_at: "2024-03-01", name: "Machine 15", client_name: "Client X" },
-        { id: "16", serial_number: "SN016", model: "Model C", status: "Active", client_id: "cy4", location: "Client Site", created_at: "2024-04-01", name: "Machine 16", client_name: "Client Y" },
-        { id: "17", serial_number: "SN017", model: "Model B", status: "Inactive", client_id: undefined, location: "Warehouse", created_at: "2024-05-01", name: "Machine 17", client_name: undefined },
-        { id: "18", serial_number: "SN018", model: "Model A", status: "Active", client_id: "cz4", location: "Client Site", created_at: "2024-06-01", name: "Machine 18", client_name: "Client Z" },
-        { id: "19", serial_number: "SN019", model: "Model C", status: "Active", client_id: "cx5", location: "Warehouse", created_at: "2024-07-01", name: "Machine 19", client_name: "Client X" },
-        { id: "20", serial_number: "SN020", model: "Model B", status: "Inactive", client_id: undefined, location: "Client Site", created_at: "2024-08-01", name: "Machine 20", client_name: undefined },
+        { id: "1", serial_number: "SN001", model: "Model A", status: "Active", client: "Client X", location: "Warehouse", last_maintenance: "2023-01-01", next_maintenance: "2024-01-01" },
+        { id: "2", serial_number: "SN002", model: "Model B", status: "Inactive", client: null, location: "Client Site", last_maintenance: "2023-02-01", next_maintenance: null },
+        { id: "3", serial_number: "SN003", model: "Model A", status: "Active", client: "Client Y", location: "Warehouse", last_maintenance: "2023-03-01", next_maintenance: "2024-03-01" },
+        { id: "4", serial_number: "SN004", model: "Model C", status: "Active", client: "Client Z", location: "Client Site", last_maintenance: "2023-04-01", next_maintenance: "2024-04-01" },
+        { id: "5", serial_number: "SN005", model: "Model B", status: "Inactive", client: null, location: "Warehouse", last_maintenance: "2023-05-01", next_maintenance: null },
+        { id: "6", serial_number: "SN006", model: "Model A", status: "Active", client: "Client X", location: "Client Site", last_maintenance: "2023-06-01", next_maintenance: "2024-06-01" },
+        { id: "7", serial_number: "SN007", model: "Model C", status: "Active", client: "Client Y", location: "Warehouse", last_maintenance: "2023-07-01", next_maintenance: "2024-07-01" },
+        { id: "8", serial_number: "SN008", model: "Model B", status: "Inactive", client: null, location: "Client Site", last_maintenance: "2023-08-01", next_maintenance: null },
+        { id: "9", serial_number: "SN009", model: "Model A", status: "Active", client: "Client Z", location: "Warehouse", last_maintenance: "2023-09-01", next_maintenance: "2024-09-01" },
+        { id: "10", serial_number: "SN010", model: "Model C", status: "Active", client: "Client X", location: "Client Site", last_maintenance: "2023-10-01", next_maintenance: "2024-10-01" },
+        { id: "11", serial_number: "SN011", model: "Model B", status: "Inactive", client: null, location: "Warehouse", last_maintenance: "2023-11-01", next_maintenance: null },
+        { id: "12", serial_number: "SN012", model: "Model A", status: "Active", client: "Client Y", location: "Client Site", last_maintenance: "2023-12-01", next_maintenance: "2024-12-01" },
+        { id: "13", serial_number: "SN013", model: "Model C", status: "Active", client: "Client Z", location: "Warehouse", last_maintenance: "2024-01-01", next_maintenance: "2025-01-01" },
+        { id: "14", serial_number: "SN014", model: "Model B", status: "Inactive", client: null, location: "Client Site", last_maintenance: "2024-02-01", next_maintenance: null },
+        { id: "15", serial_number: "SN015", model: "Model A", status: "Active", client: "Client X", location: "Warehouse", last_maintenance: "2024-03-01", next_maintenance: "2025-03-01" },
+        { id: "16", serial_number: "SN016", model: "Model C", status: "Active", client: "Client Y", location: "Client Site", last_maintenance: "2024-04-01", next_maintenance: "2025-04-01" },
+        { id: "17", serial_number: "SN017", model: "Model B", status: "Inactive", client: null, location: "Warehouse", last_maintenance: "2024-05-01", next_maintenance: null },
+        { id: "18", serial_number: "SN018", model: "Model A", status: "Active", client: "Client Z", location: "Client Site", last_maintenance: "2024-06-01", next_maintenance: "2025-06-01" },
+        { id: "19", serial_number: "SN019", model: "Model C", status: "Active", client: "Client X", location: "Warehouse", last_maintenance: "2024-07-01", next_maintenance: "2025-07-01" },
+        { id: "20", serial_number: "SN020", model: "Model B", status: "Inactive", client: null, location: "Client Site", last_maintenance: "2024-08-01", next_maintenance: null },
       ];
 
       // Apply filters
@@ -98,7 +109,7 @@ const MachineList: React.FC<MachineListProps> = ({
         const searchRegex = new RegExp(searchTerm, 'i');
         const modelMatch = modelFilter ? machine.model === modelFilter : true;
         const statusMatch = statusFilter ? machine.status === statusFilter : true;
-        const searchMatch = searchRegex.test(machine.serial_number) || searchRegex.test(machine.model) || (machine.name ? searchRegex.test(machine.name) : false) || (machine.client_name ? searchRegex.test(machine.client_name) : false);
+        const searchMatch = searchRegex.test(machine.serial_number) || searchRegex.test(machine.model) || (machine.client ? searchRegex.test(machine.client) : false);
 
         return modelMatch && statusMatch && searchMatch;
       });
@@ -179,9 +190,9 @@ const MachineList: React.FC<MachineListProps> = ({
                         <Badge className="bg-gray-100 text-gray-500 border-gray-200">Inativa</Badge>
                       )}
                     </TableCell>
-                    <TableCell>{machine.client_name || "N/A"}</TableCell>
+                    <TableCell>{machine.client || "N/A"}</TableCell>
                     <TableCell>{machine.location}</TableCell>
-                    <TableCell>N/A</TableCell>
+                    <TableCell>{machine.last_maintenance || "N/A"}</TableCell>
                     <TableCell className="text-right">
                       <DropdownMenu>
                         <DropdownMenuTrigger asChild>
@@ -271,7 +282,7 @@ const MachineList: React.FC<MachineListProps> = ({
           open={transferDialogIsOpen} 
           onOpenChange={handleCloseTransferDialog}
           machineId={selectedMachine.id}
-          machineName={selectedMachine.name || selectedMachine.serial_number}
+          machineName={selectedMachine.serial_number}
           onTransferComplete={handleRefreshData}
         />
       )}

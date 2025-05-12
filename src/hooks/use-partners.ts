@@ -128,23 +128,16 @@ export const usePartners = () => {
       const partnerToInsert = {
         company_name: partnerData.company_name,
         commission_rate: partnerData.commission_rate || 0,
-        // Include optional fields if they exist in the data
+        // Only include optional fields if they exist
         ...(partnerData.contact_name && { contact_name: partnerData.contact_name }),
         ...(partnerData.email && { email: partnerData.email }),
         ...(partnerData.phone && { phone: partnerData.phone }),
         ...(partnerData.address && { address: partnerData.address }),
-        ...(partnerData.user_id && { user_id: partnerData.user_id }),
       };
 
-      // Generate a UUID for the partner
-      const id = crypto.randomUUID();
-      
       const { data, error } = await supabase
         .from('partners')
-        .insert({
-          id,
-          ...partnerToInsert
-        })
+        .insert([partnerToInsert])
         .select();
 
       if (error) throw error;

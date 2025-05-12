@@ -10,7 +10,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { UserRole } from "@/types";
 
 interface ProfileData {
   id: string;
@@ -18,15 +17,15 @@ interface ProfileData {
   email: string;
   avatar: string;
   phone: string;
-  role: UserRole;
+  role: string;
   created_at: string;
   updated_at: string;
 }
 
 interface RoleChangeModalProps {
   user: ProfileData;
-  newRole: UserRole;
-  setNewRole: (role: UserRole) => void;
+  newRole: string;
+  setNewRole: (role: string) => void;
   onClose: () => void;
   onSave: () => void;
 }
@@ -38,7 +37,7 @@ export const RoleChangeModal = ({
   onClose, 
   onSave 
 }: RoleChangeModalProps) => {
-  const [availableRoles, setAvailableRoles] = useState<UserRole[]>([]);
+  const [availableRoles, setAvailableRoles] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
 
   // Fetch available roles from the profiles table
@@ -46,17 +45,18 @@ export const RoleChangeModal = ({
     const fetchRoles = async () => {
       setLoading(true);
       try {
-        // Get all UserRole enum values to use as options
-        const roleValues: UserRole[] = [
-          UserRole.ADMIN,
-          UserRole.CLIENT,
-          UserRole.FINANCIAL,
-          UserRole.PARTNER,
-          UserRole.LOGISTICS
-        ];
-        setAvailableRoles(roleValues);
+        const { data, error } = await supabase
+          .from('profiles')
+          .select('role')
+          .not('role', 'is', null);
+
+        if (error) throw error;
+
+        // Extract unique roles
+        const uniqueRoles = Array.from(new Set(data.map(item => item.role)));
+        setAvailableRoles(uniqueRoles);
       } catch (error) {
-        console.error("Error getting roles:", error);
+        console.error("Error fetching roles:", error);
       } finally {
         setLoading(false);
       }
@@ -78,7 +78,7 @@ export const RoleChangeModal = ({
           ) : (
             <Select
               value={newRole}
-              onValueChange={(value) => setNewRole(value as UserRole)}
+              onValueChange={(value) => setNewRole(value)}
             >
               <SelectTrigger className="w-full">
                 <SelectValue placeholder="Selecione a função" />
