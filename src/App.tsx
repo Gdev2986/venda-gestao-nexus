@@ -1,87 +1,77 @@
-
-import { Routes, Route, Navigate } from "react-router-dom";
-import { PATHS } from "./routes/paths";
-import { useEffect } from "react";
-import { useToast } from "@/hooks/use-toast";
-import { useUserRole } from "./hooks/use-user-role";
-import { UserRole } from "./types";
-
-// Route utils
-import { getDashboardPath } from "./routes/routeUtils";
-
-// Route groups
-import { AuthRoutes } from "./routes/authRoutes";
-import { AdminRoutes } from "./routes/adminRoutes";
-import { ClientRoutes } from "./routes/clientRoutes";
-import { PartnerRoutes } from "./routes/partnerRoutes";
-import { FinancialRoutes } from "./routes/financialRoutes";
-import { LogisticsRoutes } from "./routes/logisticsRoutes";
-
-// Layouts
+import { Suspense, lazy } from "react";
+import { createBrowserRouter, RouterProvider } from "react-router-dom";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { AuthProvider } from "./contexts/AuthContext";
+import { Spinner } from "./components/ui/spinner";
+import { ThemeProvider } from "./components/theme-provider";
 import RootLayout from "./layouts/RootLayout";
+import { Toaster } from "./components/ui/sonner";
 
-// Pages
-import NotFound from "./pages/NotFound";
-import Notifications from "./pages/Notifications";
+// Route imports
+const Home = lazy(() => import("./pages/Home"));
+const Login = lazy(() => import("./pages/Login"));
+const Register = lazy(() => import("./pages/Register"));
+const ForgotPassword = lazy(() => import("./pages/ForgotPassword"));
+const ResetPassword = lazy(() => import("./pages/ResetPassword"));
+const Profile = lazy(() => import("./pages/Profile"));
+const Clients = lazy(() => import("./pages/Clients"));
+const Sales = lazy(() => import("./pages/Sales"));
+const Partners = lazy(() => import("./pages/Partners"));
+const NotificationsPage = lazy(() => import("./pages/Notifications"));
+const Payments = lazy(() => import("./pages/Payments"));
+const PixKeys = lazy(() => import("./pages/PixKeys"));
+
+// Admin Routes
+const AdminDashboard = lazy(() => import("./pages/admin/Dashboard"));
+
+// Error Pages
+const NotFound = lazy(() => import("./pages/NotFound"));
+const Unauthorized = lazy(() => import("./pages/Unauthorized"));
+
+// Route definitions
+import { adminRoutes } from "./routes/admin/adminRoutes";
+
+const router = createBrowserRouter([
+  {
+    path: "/",
+    element: <RootLayout />,
+    errorElement: <NotFound />,
+    children: [
+      { index: true, element: <Home /> },
+      { path: "/login", element: <Login /> },
+      { path: "/register", element: <Register /> },
+      { path: "/forgot-password", element: <ForgotPassword /> },
+      { path: "/reset-password", element: <ResetPassword /> },
+      { path: "/profile", element: <Profile /> },
+      { path: "/clients", element: <Clients /> },
+      { path: "/sales", element: <Sales /> },
+      { path: "/partners", element: <Partners /> },
+      { path: "/notifications", element: <NotificationsPage /> },
+      { path: "/payments", element: <Payments /> },
+      { path: "/pix-keys", element: <PixKeys /> },
+      { path: "/unauthorized", element: <Unauthorized /> },
+      // Admin Routes
+      { path: "/admin", element: <AdminDashboard /> },
+      ...adminRoutes,
+    ],
+  },
+]);
+
+// Create a client
+const queryClient = new QueryClient();
 
 function App() {
-  const { userRole, isRoleLoading } = useUserRole();
-  const { toast } = useToast();
-
-  // Log role changes for debugging
-  useEffect(() => {
-    if (!isRoleLoading) {
-      console.log("App.tsx - Current user role:", userRole);
-      
-      try {
-        const dashPath = getDashboardPath(userRole);
-        console.log("App.tsx - Will redirect to dashboard:", dashPath);
-      } catch (error) {
-        console.error("Error getting dashboard path:", error);
-      }
-    }
-  }, [userRole, isRoleLoading]);
-
-  // Get the dashboard path safely
-  const getDashboardRedirectPath = () => {
-    try {
-      return getDashboardPath(userRole);
-    } catch (error) {
-      console.error("Error in getDashboardRedirectPath:", error);
-      return PATHS.LOGIN;
-    }
-  };
-
   return (
-    <Routes>
-      {/* Root path handling */}
-      <Route path={PATHS.HOME} element={<RootLayout />} />
-      
-      {/* Generic dashboard route */}
-      <Route 
-        path={PATHS.DASHBOARD} 
-        element={<Navigate to={getDashboardRedirectPath()} replace />} 
-      />
-
-      {/* Auth Routes */}
-      {AuthRoutes}
-
-      {/* Protected Routes by Role */}
-      {AdminRoutes}
-      {ClientRoutes}
-      {PartnerRoutes}
-      {FinancialRoutes}
-      {LogisticsRoutes}
-
-      {/* Shared Routes (accessible by all roles) */}
-      <Route path="/notifications" element={<Notifications />} />
-
-      {/* 404 */}
-      <Route path={PATHS.NOT_FOUND} element={<NotFound />} />
-      
-      {/* Catch-all redirect to the appropriate dashboard */}
-      <Route path="*" element={<Navigate to={PATHS.DASHBOARD} replace />} />
-    </Routes>
+    <QueryClientProvider client={queryClient}>
+      <ThemeProvider defaultTheme="light" storageKey="ui-theme">
+        <AuthProvider>
+          <Suspense fallback={<Spinner />}>
+            <RouterProvider router={router} />
+          </Suspense>
+          <Toaster />
+        </AuthProvider>
+      </ThemeProvider>
+    </QueryClientProvider>
   );
 }
 
