@@ -1,7 +1,7 @@
 
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { useToast } from "@/hooks/use-toast";
+import { useNotifications } from "@/hooks/use-notifications";
 import { PageHeader } from "@/components/page/PageHeader";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -9,7 +9,6 @@ import {
   Card,
   CardContent,
 } from "@/components/ui/card";
-import { useNotifications } from "@/hooks/use-notifications";
 import NotificationList from "@/components/notifications/NotificationList";
 import NotificationFilters from "@/components/notifications/NotificationFilters";
 import { Loader2, ArrowLeft } from "lucide-react";
@@ -19,7 +18,6 @@ const Notifications = () => {
   const [typeFilter, setTypeFilter] = useState("all");
   const [statusFilter, setStatusFilter] = useState("all");
   const [currentPage, setCurrentPage] = useState(1);
-  const { toast } = useToast();
   const navigate = useNavigate();
 
   const { 
@@ -44,24 +42,6 @@ const Notifications = () => {
     setCurrentPage(1); // Reset to first page when searching
   };
   
-  const handleMarkAllAsRead = async () => {
-    await markAllAsRead();
-    toast({
-      title: "Sucesso",
-      description: "Todas as notificações foram marcadas como lidas",
-    });
-  };
-  
-  const handleDeleteAll = async () => {
-    if (confirm("Tem certeza que deseja excluir todas as notificações?")) {
-      await deleteAllNotifications();
-      toast({
-        title: "Sucesso",
-        description: "Todas as notificações foram excluídas",
-      });
-    }
-  };
-
   const handleGoBack = () => {
     navigate(-1);
   };
@@ -104,7 +84,7 @@ const Notifications = () => {
         <div className="flex gap-2">
           <Button 
             variant="outline" 
-            onClick={handleMarkAllAsRead}
+            onClick={markAllAsRead}
             disabled={isLoading || notifications.every(n => n.read)}
           >
             Marcar todas como lidas
@@ -112,7 +92,7 @@ const Notifications = () => {
           <Button 
             variant="outline" 
             className="text-destructive hover:text-destructive" 
-            onClick={handleDeleteAll}
+            onClick={deleteAllNotifications}
             disabled={isLoading || notifications.length === 0}
           >
             Excluir todas

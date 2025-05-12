@@ -31,8 +31,11 @@ const NotificationFilters = ({
           <SelectItem value="GENERAL">Geral</SelectItem>
           <SelectItem value="SALE">Vendas</SelectItem>
           <SelectItem value="PAYMENT">Pagamentos</SelectItem>
+          <SelectItem value="BALANCE">Saldo</SelectItem>
           <SelectItem value="MACHINE">Máquinas</SelectItem>
           <SelectItem value="SUPPORT">Suporte</SelectItem>
+          <SelectItem value="COMMISSION">Comissões</SelectItem>
+          <SelectItem value="SYSTEM">Sistema</SelectItem>
         </SelectContent>
       </Select>
       

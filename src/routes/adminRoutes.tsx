@@ -1,46 +1,62 @@
 
+// Admin Routes
 import { Route } from "react-router-dom";
-import { UserRole } from "@/types";
 
-// Auth Protection Component
+// Layouts
+import AdminLayout from "../layouts/AdminLayout";
+import { UserRole } from "@/types";
 import RequireAuth from "../components/auth/RequireAuth";
 
-// Layout Selector
-import AdminLayoutSelector from "../layouts/AdminLayoutSelector";
-
-// Import route groups
-import { dashboardRoute } from "./admin/dashboardRoute";
+// Client Routes (within Admin module)
 import { clientRoutes } from "./admin/clientRoutes";
-import { logisticsRoutes } from "./admin/logisticsRoutes";
-import { salesRoutes } from "./admin/salesRoutes";
+
+// Partner Routes (within Admin module)
 import { partnerRoutes } from "./admin/partnerRoutes";
+
+// Payment Routes (within Admin module)
 import { paymentRoutes } from "./admin/paymentRoutes";
+
+// Sales Routes (within Admin module)
+import { salesRoutes } from "./admin/salesRoutes";
+
+// Logistics Routes (within Admin module)
+import { logisticsRoutes } from "./admin/logisticsRoutes";
+
+// Dashboard Route
+import { dashboardRoute } from "./admin/dashboardRoute";
+
+// Settings Routes
 import { settingsRoutes } from "./admin/settingsRoutes";
 
-// Combine all admin routes
-export const AdminRoutes = (
+// Notification Routes
+import { notificationRoutes } from "./admin/notificationRoutes";
+
+export const adminRoutes = (
   <Route element={<RequireAuth allowedRoles={[UserRole.ADMIN, UserRole.LOGISTICS, UserRole.FINANCIAL]} />}>
-    <Route element={<AdminLayoutSelector />}>
-      {/* Dashboard Route */}
+    <Route element={<AdminLayout />}>
+      {/* Dashboard */}
       {dashboardRoute}
       
       {/* Client Routes */}
       {clientRoutes}
       
-      {/* Logistics Routes */}
-      {logisticsRoutes}
-      
-      {/* Sales Routes */}
-      {salesRoutes}
+      {/* Partner Routes */}
+      {partnerRoutes}
       
       {/* Payment Routes */}
       {paymentRoutes}
       
-      {/* Partner Routes */}
-      {partnerRoutes}
+      {/* Sales Routes */}
+      {salesRoutes}
       
-      {/* Settings and Other Routes */}
+      {/* Logistics Routes */}
+      {logisticsRoutes}
+      
+      {/* Settings Routes */}
       {settingsRoutes}
+
+      {/* Notification Routes */}
+      {notificationRoutes}
     </Route>
   </Route>
 );

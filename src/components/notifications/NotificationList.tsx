@@ -1,18 +1,10 @@
 
 import { formatDistanceToNow } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import { Bell, ShoppingCart, CreditCard, Wrench, LifeBuoy } from "lucide-react";
+import { Bell, ShoppingCart, CreditCard, Wrench, LifeBuoy, LineChart, Cog, Info } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import TablePagination from "@/components/ui/table-pagination";
-
-interface Notification {
-  id: string;
-  title: string;
-  message: string;
-  type: string;
-  read: boolean;
-  timestamp: Date;
-}
+import { Notification } from "@/services/NotificationService";
 
 interface NotificationListProps {
   notifications: Notification[];
@@ -46,8 +38,15 @@ const NotificationList = ({
         return <Wrench className="h-4 w-4 text-primary" />;
       case "SUPPORT":
         return <LifeBuoy className="h-4 w-4 text-primary" />;
+      case "BALANCE":
+        return <LineChart className="h-4 w-4 text-primary" />;
+      case "COMMISSION":
+        return <CreditCard className="h-4 w-4 text-emerald-500" />;
+      case "SYSTEM":
+        return <Cog className="h-4 w-4 text-primary" />;
+      case "GENERAL":
       default:
-        return <Bell className="h-4 w-4 text-primary" />;
+        return <Info className="h-4 w-4 text-primary" />;
     }
   };
 
@@ -73,7 +72,7 @@ const NotificationList = ({
               <div className="flex items-center">
                 <h4 className="text-sm font-medium flex-1">{notification.title}</h4>
                 <span className="text-xs text-muted-foreground">
-                  {formatDistanceToNow(new Date(notification.timestamp), { 
+                  {formatDistanceToNow(notification.timestamp, { 
                     addSuffix: true,
                     locale: ptBR
                   })}
@@ -121,13 +120,15 @@ const NotificationList = ({
         ))}
       </div>
       
-      <div className="p-4 border-t">
-        <TablePagination
-          currentPage={currentPage}
-          totalPages={totalPages}
-          onPageChange={onPageChange}
-        />
-      </div>
+      {totalPages > 1 && (
+        <div className="p-4 border-t">
+          <TablePagination
+            currentPage={currentPage}
+            totalPages={totalPages}
+            onPageChange={onPageChange}
+          />
+        </div>
+      )}
     </div>
   );
 };

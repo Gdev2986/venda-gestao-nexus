@@ -7,6 +7,8 @@ import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
+import { notificationService } from "@/services/NotificationService";
+import { supabase } from "@/integrations/supabase/client";
 import {
   Select,
   SelectContent,
@@ -19,6 +21,10 @@ export const AdminNotificationsTab = () => {
   const [systemNotifications, setSystemNotifications] = useState(true);
   const [paymentNotifications, setPaymentNotifications] = useState(true);
   const [userNotifications, setUserNotifications] = useState(true);
+  const [title, setTitle] = useState("");
+  const [message, setMessage] = useState("");
+  const [target, setTarget] = useState("all");
+  const [isSending, setIsSending] = useState(false);
   const { toast } = useToast();
 
   const handleSaveSettings = () => {
@@ -26,6 +32,87 @@ export const AdminNotificationsTab = () => {
       title: "Configurações salvas",
       description: "As configurações de notificações foram atualizadas."
     });
+  };
+
+  const handleSendNotification = async () => {
+    if (!title || !message) {
+      toast({
+        title: "Campos obrigatórios",
+        description: "Preencha o título e a mensagem da notificação.",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    setIsSending(true);
+
+    try {
+      let success = false;
+
+      if (target === "all") {
+        // Get all users
+        const { data: users } = await supabase
+          .from('profiles')
+          .select('id');
+        
+        if (users && users.length > 0) {
+          // Send notification to each user
+          const promises = users.map(user => 
+            notificationService.sendNotification(
+              user.id, 
+              title, 
+              message, 
+              "SYSTEM"
+            )
+          );
+          
+          await Promise.all(promises);
+          success = true;
+        }
+      } else {
+        // Get users with specific role
+        const { data: users } = await supabase
+          .from('profiles')
+          .select('id')
+          .eq('role', target);
+        
+        if (users && users.length > 0) {
+          // Send notification to each user with the specified role
+          const promises = users.map(user => 
+            notificationService.sendNotification(
+              user.id, 
+              title, 
+              message, 
+              "SYSTEM"
+            )
+          );
+          
+          await Promise.all(promises);
+          success = true;
+        }
+      }
+
+      if (success) {
+        toast({
+          title: "Notificação enviada",
+          description: "A notificação foi enviada com sucesso."
+        });
+        
+        // Reset form
+        setTitle("");
+        setMessage("");
+        setTarget("all");
+      }
+    } catch (error) {
+      console.error("Error sending notification:", error);
+      toast({
+        title: "Erro",
+        description: "Ocorreu um erro ao enviar a notificação.",
+        variant: "destructive"
+      });
+    } finally {
+      setIsSending(false);
+    }
   };
 
   return (
@@ -99,22 +186,32 @@ export const AdminNotificationsTab = () => {
               <Label className="block text-sm font-medium mb-1" htmlFor="title">
                 Título
               </Label>
-              <Input id="title" placeholder="Título da notificação" />
+              <Input 
+                id="title" 
+                placeholder="Título da notificação" 
+                value={title} 
+                onChange={(e) => setTitle(e.target.value)} 
+              />
             </div>
             
             <div>
               <Label className="block text-sm font-medium mb-1" htmlFor="target">
                 Destinatários
               </Label>
-              <Select defaultValue="all">
+              <Select 
+                value={target} 
+                onValueChange={(value) => setTarget(value)}
+              >
                 <SelectTrigger id="target">
                   <SelectValue placeholder="Selecione os destinatários" />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">Todos os usuários</SelectItem>
-                  <SelectItem value="clients">Apenas clientes</SelectItem>
-                  <SelectItem value="partners">Apenas parceiros</SelectItem>
-                  <SelectItem value="admins">Apenas administradores</SelectItem>
+                  <SelectItem value="CLIENT">Apenas clientes</SelectItem>
+                  <SelectItem value="PARTNER">Apenas parceiros</SelectItem>
+                  <SelectItem value="ADMIN">Apenas administradores</SelectItem>
+                  <SelectItem value="FINANCIAL">Apenas financeiro</SelectItem>
+                  <SelectItem value="LOGISTICS">Apenas logística</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -127,11 +224,18 @@ export const AdminNotificationsTab = () => {
                 id="message" 
                 placeholder="Digite a mensagem da notificação..." 
                 className="min-h-[150px]"
+                value={message}
+                onChange={(e) => setMessage(e.target.value)}
               />
             </div>
             
             <div className="pt-4">
-              <Button>Enviar Notificação</Button>
+              <Button 
+                onClick={handleSendNotification}
+                disabled={isSending}
+              >
+                {isSending ? "Enviando..." : "Enviar Notificação"}
+              </Button>
             </div>
           </div>
         </CardContent>
