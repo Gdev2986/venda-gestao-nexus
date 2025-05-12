@@ -1,7 +1,8 @@
 
-import { useState, useEffect } from "react";
-import { supabase } from "@/integrations/supabase/client";
+import { useState, useEffect, useCallback } from "react";
+import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
+import { NotificationService, Notification } from "@/services/NotificationService";
 
 interface UseNotificationsParams {
   searchTerm?: string;
@@ -14,67 +15,76 @@ interface UseNotificationsParams {
 export const useNotifications = (params: UseNotificationsParams = {}) => {
   const { searchTerm = "", typeFilter = "all", statusFilter = "all", page = 1, pageSize = 50 } = params;
   
-  const [notifications, setNotifications] = useState<any[]>([]);
+  const [notifications, setNotifications] = useState<Notification[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [totalPages, setTotalPages] = useState<number>(1);
+  const [unreadCount, setUnreadCount] = useState<number>(0);
+  const { user } = useAuth();
   const { toast } = useToast();
   
   // Subscribe to real-time updates
   useEffect(() => {
-    // In a real implementation with Supabase, subscribe to real-time updates here
-    // const channel = supabase.channel('public:notifications')
-    // channel.on('INSERT', handleInsert).on('UPDATE', handleUpdate).subscribe()
-    // return () => { supabase.removeChannel(channel) }
-  }, []);
+    if (!user) return;
+
+    const unsubscribe = NotificationService.subscribeToNotifications(
+      user.id,
+      (newNotification) => {
+        // Add the new notification to the list
+        setNotifications(prev => [newNotification, ...prev]);
+        
+        // Update unread count
+        setUnreadCount(prev => prev + 1);
+      }
+    );
+    
+    return () => {
+      if (unsubscribe) unsubscribe();
+    };
+  }, [user]);
   
-  useEffect(() => {
-    fetchNotifications();
-  }, [searchTerm, typeFilter, statusFilter, page]);
-  
-  const fetchNotifications = async () => {
+  const fetchNotifications = useCallback(async () => {
+    if (!user) {
+      setIsLoading(false);
+      return;
+    }
+
     setIsLoading(true);
     
     try {
-      // In a real implementation, this would fetch from the Supabase table
-      // let query = supabase.from('notifications').select('*').eq('user_id', userId)
+      // Fetch notifications from the service
+      const result = await NotificationService.getUserNotifications(user.id, {
+        page,
+        limit: pageSize
+      });
       
-      // For now, we'll mock the data
-      setTimeout(() => {
-        const mockNotifications = getMockNotifications();
-        
-        // Apply filters
-        let filtered = mockNotifications;
-        
-        if (searchTerm) {
-          const term = searchTerm.toLowerCase();
-          filtered = filtered.filter(notification => 
-            notification.title.toLowerCase().includes(term) ||
-            notification.message.toLowerCase().includes(term)
-          );
-        }
-        
-        if (typeFilter !== "all") {
-          filtered = filtered.filter(notification => notification.type === typeFilter);
-        }
-        
-        if (statusFilter === "read") {
-          filtered = filtered.filter(notification => notification.read);
-        } else if (statusFilter === "unread") {
-          filtered = filtered.filter(notification => !notification.read);
-        }
-        
-        // Calculate pagination
-        const total = filtered.length;
-        const maxPages = Math.ceil(total / pageSize);
-        setTotalPages(maxPages || 1);
-        
-        // Apply pagination
-        const startIndex = (page - 1) * pageSize;
-        const paginatedNotifications = filtered.slice(startIndex, startIndex + pageSize);
-        
-        setNotifications(paginatedNotifications);
-        setIsLoading(false);
-      }, 600);
+      // Apply client-side filtering - we'd usually do this server-side but
+      // for demo purposes we'll do it client-side
+      let filtered = result.notifications;
+      
+      if (searchTerm) {
+        const term = searchTerm.toLowerCase();
+        filtered = filtered.filter(notification => 
+          notification.title.toLowerCase().includes(term) ||
+          notification.message.toLowerCase().includes(term)
+        );
+      }
+      
+      if (typeFilter !== "all") {
+        filtered = filtered.filter(notification => notification.type === typeFilter);
+      }
+      
+      if (statusFilter === "read") {
+        filtered = filtered.filter(notification => notification.read);
+      } else if (statusFilter === "unread") {
+        filtered = filtered.filter(notification => !notification.read);
+      }
+      
+      // Get unread count
+      const unreadItems = result.notifications.filter(notification => !notification.read);
+      setUnreadCount(unreadItems.length);
+      
+      setNotifications(filtered);
+      setTotalPages(result.pages);
     } catch (error) {
       console.error("Error fetching notifications:", error);
       toast({
@@ -82,21 +92,28 @@ export const useNotifications = (params: UseNotificationsParams = {}) => {
         description: "Falha ao carregar notificações",
         variant: "destructive",
       });
+    } finally {
       setIsLoading(false);
     }
-  };
+  }, [user, page, pageSize, searchTerm, typeFilter, statusFilter, toast]);
+  
+  useEffect(() => {
+    fetchNotifications();
+  }, [fetchNotifications]);
   
   const markAsRead = async (id: string) => {
     try {
-      // In a real implementation:
-      // await supabase.from('notifications').update({ is_read: true }).eq('id', id)
+      await NotificationService.markAsRead(id);
       
-      // For mocking
+      // Update UI
       setNotifications(prevNotifications =>
         prevNotifications.map(notification =>
           notification.id === id ? { ...notification, read: true } : notification
         )
       );
+      
+      // Update unread count
+      setUnreadCount(prev => prev - 1);
     } catch (error) {
       console.error("Error marking notification as read:", error);
       toast({
@@ -109,15 +126,17 @@ export const useNotifications = (params: UseNotificationsParams = {}) => {
   
   const markAsUnread = async (id: string) => {
     try {
-      // In a real implementation:
-      // await supabase.from('notifications').update({ is_read: false }).eq('id', id)
+      await NotificationService.markAsUnread(id);
       
-      // For mocking
+      // Update UI
       setNotifications(prevNotifications =>
         prevNotifications.map(notification =>
           notification.id === id ? { ...notification, read: false } : notification
         )
       );
+      
+      // Update unread count
+      setUnreadCount(prev => prev + 1);
     } catch (error) {
       console.error("Error marking notification as unread:", error);
       toast({
@@ -129,14 +148,18 @@ export const useNotifications = (params: UseNotificationsParams = {}) => {
   };
   
   const markAllAsRead = async () => {
+    if (!user) return;
+    
     try {
-      // In a real implementation:
-      // await supabase.from('notifications').update({ is_read: true }).eq('user_id', userId)
+      await NotificationService.markAllAsRead(user.id);
       
-      // For mocking
+      // Update UI
       setNotifications(prevNotifications =>
         prevNotifications.map(notification => ({ ...notification, read: true }))
       );
+      
+      // Update unread count
+      setUnreadCount(0);
     } catch (error) {
       console.error("Error marking all notifications as read:", error);
       toast({
@@ -149,13 +172,18 @@ export const useNotifications = (params: UseNotificationsParams = {}) => {
   
   const deleteNotification = async (id: string) => {
     try {
-      // In a real implementation:
-      // await supabase.from('notifications').delete().eq('id', id)
+      await NotificationService.deleteNotification(id);
       
-      // For mocking
+      // Update UI
+      const deletedNotification = notifications.find(notification => notification.id === id);
       setNotifications(prevNotifications =>
         prevNotifications.filter(notification => notification.id !== id)
       );
+      
+      // Update unread count if needed
+      if (deletedNotification && !deletedNotification.read) {
+        setUnreadCount(prev => prev - 1);
+      }
     } catch (error) {
       console.error("Error deleting notification:", error);
       toast({
@@ -166,91 +194,48 @@ export const useNotifications = (params: UseNotificationsParams = {}) => {
     }
   };
   
-  const deleteAllNotifications = async () => {
+  const sendNotification = async (notification: Omit<Notification, 'id' | 'created_at' | 'updated_at' | 'read'>) => {
     try {
-      // In a real implementation:
-      // await supabase.from('notifications').delete().eq('user_id', userId)
-      
-      // For mocking
-      setNotifications([]);
+      const result = await NotificationService.sendNotification(notification);
+      return result;
     } catch (error) {
-      console.error("Error deleting all notifications:", error);
+      console.error("Error sending notification:", error);
       toast({
         title: "Erro",
-        description: "Falha ao excluir todas as notificações",
+        description: "Falha ao enviar notificação",
         variant: "destructive",
       });
     }
   };
   
-  const refreshNotifications = () => {
-    fetchNotifications();
+  const sendNotificationToRole = async (
+    notification: Omit<Notification, 'id' | 'created_at' | 'updated_at' | 'read' | 'user_id'>,
+    role: string
+  ) => {
+    try {
+      const result = await NotificationService.sendNotificationToRole(notification, role);
+      return result;
+    } catch (error) {
+      console.error("Error sending notification to role:", error);
+      toast({
+        title: "Erro",
+        description: "Falha ao enviar notificação para função",
+        variant: "destructive",
+      });
+    }
   };
   
   return {
     notifications,
+    unreadCount,
     isLoading,
     markAsRead,
     markAsUnread,
     markAllAsRead,
     deleteNotification,
-    deleteAllNotifications,
+    sendNotification,
+    sendNotificationToRole,
     totalPages,
-    refreshNotifications,
+    refreshNotifications: fetchNotifications,
   };
-};
-
-// Mock data generator function
-const getMockNotifications = () => {
-  const now = new Date();
-  return [
-    {
-      id: "1",
-      title: "Nova venda registrada",
-      message: "Uma nova venda foi processada no valor de R$ 150,00",
-      type: "SALE",
-      read: false,
-      timestamp: new Date(now.getTime() - 1000 * 60 * 30), // 30 minutes ago
-    },
-    {
-      id: "2",
-      title: "Pagamento aprovado",
-      message: "Seu pagamento no valor de R$ 500,00 foi aprovado",
-      type: "PAYMENT_APPROVED",
-      read: false,
-      timestamp: new Date(now.getTime() - 1000 * 60 * 60 * 2), // 2 hours ago
-    },
-    {
-      id: "3",
-      title: "Atualização de sistema",
-      message: "O sistema foi atualizado com novas funcionalidades",
-      type: "GENERAL",
-      read: true,
-      timestamp: new Date(now.getTime() - 1000 * 60 * 60 * 24), // 1 day ago
-    },
-    {
-      id: "4",
-      title: "Máquina em manutenção",
-      message: "A máquina #SN-234567 entrou em manutenção",
-      type: "MACHINE",
-      read: false,
-      timestamp: new Date(now.getTime() - 1000 * 60 * 60 * 36), // 1.5 days ago
-    },
-    {
-      id: "5",
-      title: "Novo chamado de suporte",
-      message: "Um novo chamado de suporte foi aberto para você",
-      type: "SUPPORT",
-      read: true,
-      timestamp: new Date(now.getTime() - 1000 * 60 * 60 * 48), // 2 days ago
-    },
-    {
-      id: "6",
-      title: "Promoção disponível",
-      message: "Nova promoção para seus clientes disponível",
-      type: "GENERAL",
-      read: false,
-      timestamp: new Date(now.getTime() - 1000 * 60 * 60 * 72), // 3 days ago
-    },
-  ];
 };

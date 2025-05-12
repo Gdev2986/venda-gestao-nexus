@@ -13,70 +13,32 @@ import {
 import { Button } from "@/components/ui/button";
 import { motion, AnimatePresence } from "framer-motion";
 import { Link } from "react-router-dom";
-
-type Notification = {
-  id: string;
-  title: string;
-  description: string;
-  timestamp: Date;
-  read: boolean;
-};
+import { useNotifications } from "@/hooks/use-notifications";
+import { formatDistanceToNow } from "date-fns";
+import { ptBR } from "date-fns/locale";
+import { useAuth } from "@/contexts/AuthContext";
 
 const NotificationDropdown = () => {
-  // Fake notifications data
-  const [notifications, setNotifications] = useState<Notification[]>([
-    {
-      id: "1",
-      title: "Nova venda registrada",
-      description: "Uma nova venda foi registrada no sistema.",
-      timestamp: new Date(Date.now() - 1000 * 60 * 30),
-      read: false,
-    },
-    {
-      id: "2",
-      title: "Pagamento recebido",
-      description: "Um novo pagamento foi recebido com sucesso.",
-      timestamp: new Date(Date.now() - 1000 * 60 * 60 * 2),
-      read: false,
-    },
-    {
-      id: "3",
-      title: "Máquina registrada",
-      description: "Uma nova máquina foi adicionada ao sistema.",
-      timestamp: new Date(Date.now() - 1000 * 60 * 60 * 24),
-      read: true,
-    },
-  ]);
-
   const [isOpen, setIsOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
+  const { user } = useAuth();
+  
+  const { 
+    notifications, 
+    unreadCount, 
+    markAsRead, 
+    markAllAsRead
+  } = useNotifications({
+    page: 1,
+    pageSize: 10,
+    statusFilter: "all"
+  });
 
-  const unreadCount = notifications.filter((n) => !n.read).length;
-
-  const markAsRead = (id: string) => {
-    setNotifications((prev) =>
-      prev.map((n) => (n.id === id ? { ...n, read: true } : n))
-    );
-  };
-
-  const markAllAsRead = () => {
-    setNotifications((prev) => prev.map((n) => ({ ...n, read: true })));
-  };
-
-  const formatTimestamp = (date: Date) => {
-    const now = new Date();
-    const diffMs = now.getTime() - date.getTime();
-    const diffMins = Math.floor(diffMs / (1000 * 60));
-    const diffHrs = Math.floor(diffMs / (1000 * 60 * 60));
-    const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
-
-    if (diffMins < 60) {
-      return `${diffMins}m atrás`;
-    } else if (diffHrs < 24) {
-      return `${diffHrs}h atrás`;
-    } else {
-      return `${diffDays}d atrás`;
-    }
+  const formatTimestamp = (date: string) => {
+    return formatDistanceToNow(new Date(date), { 
+      addSuffix: true,
+      locale: ptBR
+    });
   };
 
   // Close dropdown when clicking outside
@@ -140,7 +102,7 @@ const NotificationDropdown = () => {
                 variant="ghost"
                 size="sm"
                 className="h-auto px-2 py-1 text-xs"
-                onClick={markAllAsRead}
+                onClick={() => user && markAllAsRead()}
               >
                 Marcar todas como lidas
               </Button>
@@ -172,11 +134,11 @@ const NotificationDropdown = () => {
                       <div className="flex w-full justify-between">
                         <span className="font-medium">{notification.title}</span>
                         <span className="text-xs text-muted-foreground">
-                          {formatTimestamp(notification.timestamp)}
+                          {formatTimestamp(notification.created_at)}
                         </span>
                       </div>
                       <span className="text-sm text-muted-foreground">
-                        {notification.description}
+                        {notification.message}
                       </span>
                       {!notification.read && (
                         <div className="mt-1 h-2 w-2 rounded-full bg-primary" />

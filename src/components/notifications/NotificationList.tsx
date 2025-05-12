@@ -4,15 +4,7 @@ import { ptBR } from "date-fns/locale";
 import { Bell, ShoppingCart, CreditCard, Wrench, LifeBuoy } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import TablePagination from "@/components/ui/table-pagination";
-
-interface Notification {
-  id: string;
-  title: string;
-  message: string;
-  type: string;
-  read: boolean;
-  timestamp: Date;
-}
+import { Notification } from "@/services/NotificationService";
 
 interface NotificationListProps {
   notifications: Notification[];
@@ -73,7 +65,7 @@ const NotificationList = ({
               <div className="flex items-center">
                 <h4 className="text-sm font-medium flex-1">{notification.title}</h4>
                 <span className="text-xs text-muted-foreground">
-                  {formatDistanceToNow(new Date(notification.timestamp), { 
+                  {formatDistanceToNow(new Date(notification.created_at), { 
                     addSuffix: true,
                     locale: ptBR
                   })}

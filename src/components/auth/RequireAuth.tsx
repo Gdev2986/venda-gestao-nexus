@@ -23,8 +23,6 @@ const RequireAuth = ({ allowedRoles = [], redirectTo = PATHS.LOGIN }: RequireAut
   const { toast } = useToast();
   const [shouldRedirect, setShouldRedirect] = useState(false);
   const [showLoading, setShowLoading] = useState(true);
-  const [unauthorized, setUnauthorized] = useState(false);
-  const [redirectPath, setRedirectPath] = useState("");
   
   // Periodically refresh the session token
   useEffect(() => {
@@ -39,7 +37,6 @@ const RequireAuth = ({ allowedRoles = [], redirectTo = PATHS.LOGIN }: RequireAut
     }
   }, [user]);
   
-  // Use effect to prevent immediate redirects that can cause loops
   useEffect(() => {
     console.log("RequireAuth effect - isLoading:", isLoading, "isRoleLoading:", isRoleLoading);
     console.log("Current location:", location.pathname);
@@ -63,63 +60,8 @@ const RequireAuth = ({ allowedRoles = [], redirectTo = PATHS.LOGIN }: RequireAut
         setShouldRedirect(true);
         return;
       }
-      
-      // Special rules for LOGISTICS users
-      if (userRole === UserRole.LOGISTICS) {
-        // If a LOGISTICS user is trying to access logistics routes, allow it
-        if (location.pathname.startsWith('/logistics')) {
-          console.log("LOGISTICS user accessing logistics routes:", location.pathname);
-          return;
-        }
-      }
-      
-      // Special rules for FINANCIAL users
-      if (userRole === UserRole.FINANCIAL) {
-        // If a FINANCIAL user is trying to access financial routes, allow it
-        if (location.pathname.startsWith('/financial')) {
-          console.log("FINANCIAL user accessing financial routes:", location.pathname);
-          return;
-        }
-        
-        // Allow FINANCIAL users to access specific admin routes
-        if (location.pathname.includes('/admin/payments') || 
-            location.pathname.includes('/admin/clients') || 
-            location.pathname.includes('/admin/reports')) {
-          console.log("Financial user accessing permitted admin route:", location.pathname);
-          return;
-        }
-      }
-      
-      // Check if user has permission to access this route
-      if (allowedRoles.length > 0 && !allowedRoles.includes(userRole)) {
-        console.log(`User role ${userRole} not allowed to access this route`);
-        
-        toast({
-          title: "Acesso não autorizado",
-          description: "Você não tem permissão para acessar esta página",
-          variant: "destructive",
-        });
-        
-        // Set redirect path to specific dashboard
-        try {
-          const dashboardPath = getDashboardPath(userRole);
-          
-          // Check if we're already on the redirect path
-          if (location.pathname !== dashboardPath) {
-            console.log("Will redirect to dashboard path:", dashboardPath);
-            setRedirectPath(dashboardPath);
-            setUnauthorized(true);
-          } else {
-            console.log("Already on redirect path, not redirecting again");
-          }
-        } catch (error) {
-          console.error("Error getting dashboard path:", error);
-          setRedirectPath(PATHS.LOGIN);
-          setUnauthorized(true);
-        }
-      }
     }
-  }, [isLoading, isRoleLoading, user, userRole, allowedRoles, toast, location.pathname, signOut]);
+  }, [isLoading, isRoleLoading, user, userRole, signOut, location.pathname]);
 
   // Add a slight delay for loading animation
   useEffect(() => {
@@ -164,35 +106,18 @@ const RequireAuth = ({ allowedRoles = [], redirectTo = PATHS.LOGIN }: RequireAut
     return <Navigate to={PATHS.LOGIN} state={{ from: location.pathname }} replace />;
   }
 
-  // If unauthorized and we have a redirect path, and we're not already on that path
-  if (unauthorized && redirectPath && location.pathname !== redirectPath) {
-    console.log(`Redirecting unauthorized user with role ${userRole} to ${redirectPath}`);
-    return <Navigate to={redirectPath} replace />;
-  }
-
-  // Special cases for specific user roles
-  if (userRole === UserRole.FINANCIAL) {
-    // Allow FINANCIAL users to access financial routes AND specific admin routes
-    if (location.pathname.startsWith('/financial') || 
-        location.pathname.includes('/admin/payments') ||
-        location.pathname.includes('/admin/clients') ||
-        location.pathname.includes('/admin/reports')) {
-      return <Outlet />;
-    }
-  }
-  
-  if (userRole === UserRole.LOGISTICS) {
-    // Allow LOGISTICS users to access logistics routes
-    if (location.pathname.startsWith('/logistics')) {
-      return <Outlet />;
-    }
-  }
-
+  // FIX: Remove the checks below that were causing unwanted redirects for partner routes
   // Check if user has permission to access this route
-  if (allowedRoles.length > 0 && !allowedRoles.includes(userRole)) {
+  if (allowedRoles.length > 0 && !allowedRoles.includes(userRole as UserRole)) {
+    console.log(`User role ${userRole} not allowed to access this route ${location.pathname}`);
+    toast({
+      title: "Acesso não autorizado",
+      description: "Você não tem permissão para acessar esta página",
+      variant: "destructive",
+    });
+    
     try {
-      const dashboardPath = getDashboardPath(userRole);
-      console.log(`Redirecting user with role ${userRole} to ${dashboardPath}`);
+      const dashboardPath = getDashboardPath(userRole as UserRole);
       return <Navigate to={dashboardPath} replace />;
     } catch (error) {
       console.error("Error getting dashboard path:", error);

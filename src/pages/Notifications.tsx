@@ -1,5 +1,5 @@
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
 import { PageHeader } from "@/components/page/PageHeader";
@@ -13,6 +13,7 @@ import { useNotifications } from "@/hooks/use-notifications";
 import NotificationList from "@/components/notifications/NotificationList";
 import NotificationFilters from "@/components/notifications/NotificationFilters";
 import { Loader2, ArrowLeft } from "lucide-react";
+import { useAuth } from "@/contexts/AuthContext";
 
 const Notifications = () => {
   const [searchTerm, setSearchTerm] = useState("");
@@ -21,6 +22,7 @@ const Notifications = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const { toast } = useToast();
   const navigate = useNavigate();
+  const { user } = useAuth();
 
   const { 
     notifications, 
@@ -29,7 +31,6 @@ const Notifications = () => {
     markAsUnread,
     markAllAsRead,
     deleteNotification,
-    deleteAllNotifications,
     totalPages,
     refreshNotifications
   } = useNotifications({
@@ -45,21 +46,13 @@ const Notifications = () => {
   };
   
   const handleMarkAllAsRead = async () => {
+    if (!user) return;
+
     await markAllAsRead();
     toast({
       title: "Sucesso",
       description: "Todas as notificações foram marcadas como lidas",
     });
-  };
-  
-  const handleDeleteAll = async () => {
-    if (confirm("Tem certeza que deseja excluir todas as notificações?")) {
-      await deleteAllNotifications();
-      toast({
-        title: "Sucesso",
-        description: "Todas as notificações foram excluídas",
-      });
-    }
   };
 
   const handleGoBack = () => {
@@ -108,14 +101,6 @@ const Notifications = () => {
             disabled={isLoading || notifications.every(n => n.read)}
           >
             Marcar todas como lidas
-          </Button>
-          <Button 
-            variant="outline" 
-            className="text-destructive hover:text-destructive" 
-            onClick={handleDeleteAll}
-            disabled={isLoading || notifications.length === 0}
-          >
-            Excluir todas
           </Button>
         </div>
       </div>
