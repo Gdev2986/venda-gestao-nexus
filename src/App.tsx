@@ -8,6 +8,8 @@ import RootLayout from "./layouts/RootLayout";
 import MainLayout from "./layouts/MainLayout";
 import AdminLayout from "./layouts/AdminLayout";
 import LogisticsLayout from "./layouts/LogisticsLayout";
+import RequireAuth from "@/components/auth/RequireAuth";
+import { UserRole } from "@/types";
 
 // Route imports
 const Home = lazy(() => import("./pages/Index"));
@@ -25,6 +27,7 @@ const PixKeys = lazy(() => import("./pages/settings/Settings"));
 
 // Admin Routes
 const AdminDashboard = lazy(() => import("./pages/admin/Dashboard"));
+const AdminSettings = lazy(() => import("./pages/admin/Settings"));
 const AdminNotifications = lazy(() => import("./pages/admin/Notifications"));
 
 // Error Pages
@@ -42,36 +45,57 @@ function App() {
       <Suspense fallback={<Spinner />}>
         <Routes>
           <Route path="/" element={<RootLayout />}>
-            {/* Auth routes */}
+            {/* Auth routes - public */}
             <Route path="login" element={<Login />} />
             <Route path="register" element={<Register />} />
             <Route path="forgot-password" element={<ForgotPassword />} />
             <Route path="reset-password" element={<ResetPassword />} />
             <Route path="unauthorized" element={<Unauthorized />} />
             
-            {/* Main Layout for regular pages */}
-            <Route element={<MainLayout />}>
-              <Route index element={<Home />} />
-              <Route path="profile" element={<Profile />} />
-              <Route path="clients" element={<Clients />} />
-              <Route path="sales" element={<Sales />} />
-              <Route path="partners" element={<Partners />} />
-              <Route path="notifications" element={<NotificationsPage />} />
-              <Route path="payments" element={<Payments />} />
-              <Route path="pix-keys" element={<PixKeys />} />
+            {/* Main Layout for regular pages - requires authentication */}
+            <Route element={<RequireAuth />}>
+              <Route element={<MainLayout />}>
+                <Route index element={<Home />} />
+                <Route path="profile" element={<Profile />} />
+                <Route path="clients" element={<Clients />} />
+                <Route path="sales" element={<Sales />} />
+                <Route path="partners" element={<Partners />} />
+                <Route path="notifications" element={<NotificationsPage />} />
+                <Route path="payments" element={<Payments />} />
+                <Route path="pix-keys" element={<PixKeys />} />
+              </Route>
             </Route>
             
-            {/* Admin Layout with Admin Routes */}
-            <Route path="admin" element={<AdminLayout />}>
-              <Route index element={<AdminDashboard />} />
-              <Route path="notifications" element={<AdminNotifications />} />
-              {/* Include all admin routes */}
-              {adminRoutes}
+            {/* Admin Layout with Admin Routes - requires admin role */}
+            <Route 
+              element={
+                <RequireAuth 
+                  allowedRoles={[UserRole.ADMIN, UserRole.MANAGER]} 
+                  redirectTo="/unauthorized"
+                />
+              }
+            >
+              <Route path="admin" element={<AdminLayout />}>
+                <Route index element={<Navigate to="dashboard" replace />} />
+                <Route path="dashboard" element={<AdminDashboard />} />
+                <Route path="notifications" element={<AdminNotifications />} />
+                <Route path="settings" element={<AdminSettings />} />
+                {adminRoutes}
+              </Route>
             </Route>
 
-            {/* Logistics Layout with Logistics Routes */}
-            <Route path="logistics" element={<LogisticsLayout />}>
-              {logisticsMainRoutes}
+            {/* Logistics Layout with Logistics Routes - requires logistics role */}
+            <Route 
+              element={
+                <RequireAuth 
+                  allowedRoles={[UserRole.LOGISTICS, UserRole.ADMIN]} 
+                  redirectTo="/unauthorized"
+                />
+              }
+            >
+              <Route path="logistics" element={<LogisticsLayout />}>
+                {logisticsMainRoutes}
+              </Route>
             </Route>
             
             {/* Catch-all route */}

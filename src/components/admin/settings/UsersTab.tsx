@@ -64,7 +64,6 @@ export const UsersTab = ({ openRoleModal }: UsersTabProps) => {
         
         // Safely adding known UserRole values that exist in the data
         for (const role of uniqueRolesSet) {
-          // Check if the role is a valid UserRole
           if (Object.values(UserRole).includes(role as UserRole)) {
             uniqueRoles.push(role as UserRole);
           }
@@ -92,8 +91,8 @@ export const UsersTab = ({ openRoleModal }: UsersTabProps) => {
         .select('*', { count: 'exact' });
       
       if (selectedRole !== 'all') {
-        // Cast the selectedRole string to UserRole enum value
-        query = query.eq('role', selectedRole as UserRole);
+        // Filter by the selected role
+        query = query.eq('role', selectedRole);
       }
       
       // Apply pagination
@@ -127,6 +126,8 @@ export const UsersTab = ({ openRoleModal }: UsersTabProps) => {
       setLoading(false);
     }
   };
+
+  
 
   return (
     <Card>

@@ -1,33 +1,11 @@
 
 import { Fragment } from "react";
-import { dashboardRoute } from "./dashboardRoute";
-import { clientRoutes } from "./clientRoutes";
-import { logisticsRoutes } from "./logisticsRoutes";
-import { salesRoutes } from "./salesRoutes";
-import { partnerRoutes } from "./partnerRoutes";
-import { paymentRoutes } from "./paymentRoutes";
-import { settingsRoutes } from "./settingsRoutes";
+import { Route } from "react-router-dom";
+import AdminDashboard from "@/pages/admin/Dashboard";
+import AdminSettings from "@/pages/admin/Settings";
 
-// Combine all admin routes into a flat array
+// Use arrays of Route components for better compatibility with React Router
 export const adminRoutes = [
-  // Dashboard Route
-  ...dashboardRoute,
-  
-  // Client Routes
-  ...clientRoutes,
-  
-  // Logistics Routes
-  ...logisticsRoutes,
-  
-  // Sales Routes
-  ...salesRoutes,
-  
-  // Payment Routes
-  ...paymentRoutes,
-  
-  // Partner Routes
-  ...partnerRoutes,
-  
-  // Settings and Other Routes
-  ...settingsRoutes,
+  <Route key="dashboard" path="dashboard" element={<AdminDashboard />} />,
+  <Route key="settings" path="settings" element={<AdminSettings />} />
 ];

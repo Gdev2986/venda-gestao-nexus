@@ -161,13 +161,13 @@ export interface Sale {
   client_name: string;
   gross_amount: number;
   net_amount: number;
-  amount: number; // Adding required property
+  amount: number;
   date: string;
   payment_method: PaymentMethod;
   client_id: string;
   created_at: string;
   updated_at: string;
-  status: string; // Adding required property
+  status: string;
 }
 
 export interface Partner {

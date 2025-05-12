@@ -107,20 +107,32 @@ const RequireAuth = ({ allowedRoles = [], redirectTo = PATHS.LOGIN }: RequireAut
   }
 
   // Check if user has permission to access this route
-  if (allowedRoles.length > 0 && userRole && !allowedRoles.includes(userRole)) {
-    console.log(`User role ${userRole} not allowed to access this route ${location.pathname}`);
-    toast({
-      title: "Acesso não autorizado",
-      description: "Você não tem permissão para acessar esta página",
-      variant: "destructive",
-    });
+  if (allowedRoles.length > 0 && userRole) {
+    let hasPermission = false;
     
-    try {
-      const dashboardPath = getDashboardPath(userRole);
-      return <Navigate to={dashboardPath} replace />;
-    } catch (error) {
-      console.error("Error getting dashboard path:", error);
-      return <Navigate to={PATHS.LOGIN} replace />;
+    // Check if userRole is included in allowedRoles
+    for (const role of allowedRoles) {
+      if (userRole === role) {
+        hasPermission = true;
+        break;
+      }
+    }
+    
+    if (!hasPermission) {
+      console.log(`User role ${userRole} not allowed to access this route ${location.pathname}`);
+      toast({
+        title: "Acesso não autorizado",
+        description: "Você não tem permissão para acessar esta página",
+        variant: "destructive",
+      });
+      
+      try {
+        const dashboardPath = getDashboardPath(userRole);
+        return <Navigate to={dashboardPath} replace />;
+      } catch (error) {
+        console.error("Error getting dashboard path:", error);
+        return <Navigate to={PATHS.LOGIN} replace />;
+      }
     }
   }
 

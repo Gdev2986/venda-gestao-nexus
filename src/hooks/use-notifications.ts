@@ -1,8 +1,43 @@
 
 import { useState, useEffect, useCallback } from "react";
-import { NotificationService, NotificationType } from "@/services/NotificationService";
-import { Notification, UserRole } from "@/types";
+import { NotificationType, UserRole, Notification } from "@/types";
 import { useAuth } from "@/contexts/AuthContext";
+
+// Mock NotificationService to be replaced with actual implementation
+const NotificationService = {
+  getNotifications: async (
+    userId: string,
+    page: number,
+    pageSize: number,
+    typeFilter?: string,
+    statusFilter?: string,
+    searchTerm?: string
+  ) => {
+    // Mock implementation
+    return {
+      notifications: [],
+      totalCount: 0
+    };
+  },
+  markAsRead: async (id: string) => {},
+  markAsUnread: async (id: string) => {},
+  markAllAsRead: async (userId: string) => {},
+  deleteNotification: async (id: string) => {},
+  createNotification: async (params: {
+    title: string;
+    message: string;
+    type: NotificationType;
+    user_id: string;
+    data?: Record<string, any>;
+  }) => {},
+  sendNotificationToRole: async (
+    title: string,
+    message: string,
+    type: NotificationType,
+    role: UserRole,
+    data: Record<string, any> = {}
+  ) => {}
+};
 
 interface UseNotificationsProps {
   page?: number;
@@ -123,15 +158,15 @@ export function useNotifications({
     title: string,
     message: string,
     type: NotificationType,
-    role: UserRole,
+    userId: string,
     data: Record<string, any> = {}
   ) => {
     try {
       await NotificationService.createNotification({
         title,
         message,
-        type: type as any,
-        role,
+        type,
+        user_id: userId,
         data
       });
     } catch (error) {
@@ -139,23 +174,21 @@ export function useNotifications({
     }
   }, []);
 
-  // Add the missing sendNotificationToRole function
+  // Add the sendNotificationToRole function
   const sendNotificationToRole = useCallback(async (
-    notification: {
-      title: string;
-      message: string;
-      type: NotificationType;
-      data?: Record<string, any>;
-    },
-    role: UserRole
+    title: string,
+    message: string,
+    type: NotificationType,
+    role: UserRole,
+    data: Record<string, any> = {}
   ) => {
     try {
       await NotificationService.sendNotificationToRole(
-        notification.title,
-        notification.message,
-        notification.type,
+        title,
+        message,
+        type,
         role,
-        notification.data || {}
+        data
       );
       return true;
     } catch (error) {
