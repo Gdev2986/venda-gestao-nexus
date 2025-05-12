@@ -1,13 +1,10 @@
 
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { useState } from "react";
+import { useState, useEffect, useCallback } from "react";
+import { NotificationService } from "@/services/NotificationService";
+import { Notification, NotificationType, UserRole } from "@/types";
 import { useAuth } from "@/contexts/AuthContext";
-import { notificationService } from "@/services/NotificationService";
-import { DatabaseNotificationType, UserRole, Notification } from "@/types";
-import { toast } from "sonner";
 
-interface GetNotificationsParams {
-  userId: string;
+interface UseNotificationsProps {
   page?: number;
   pageSize?: number;
   typeFilter?: string;
@@ -15,197 +12,143 @@ interface GetNotificationsParams {
   searchTerm?: string;
 }
 
-export const useNotifications = (initialParams: {
-  page?: number;
-  pageSize?: number;
-  typeFilter?: string;
-  statusFilter?: string;
-  searchTerm?: string;
-} = { page: 1, pageSize: 10 }) => {
+export function useNotifications({
+  page = 1,
+  pageSize = 10,
+  typeFilter = 'all',
+  statusFilter = 'all',
+  searchTerm = ''
+}: UseNotificationsProps = {}) {
+  const [notifications, setNotifications] = useState<Notification[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [totalCount, setTotalCount] = useState(0);
+  const [totalPages, setTotalPages] = useState(1);
   const { user } = useAuth();
-  const queryClient = useQueryClient();
-  const [currentPage, setCurrentPage] = useState(initialParams.page || 1);
-  const [pageSize] = useState(initialParams.pageSize || 10);
-  const [typeFilter, setTypeFilter] = useState(initialParams.typeFilter || 'all');
-  const [statusFilter, setStatusFilter] = useState(initialParams.statusFilter || 'all');
-  const [searchTerm, setSearchTerm] = useState(initialParams.searchTerm || '');
-  
-  const { 
-    data, 
-    isLoading, 
-    error, 
-    refetch 
-  } = useQuery({
-    queryKey: ['notifications', user?.id, currentPage, pageSize, typeFilter, statusFilter, searchTerm],
-    queryFn: async () => {
-      if (!user?.id) return { notifications: [], count: 0 };
-      return await notificationService.getNotifications({
-        userId: user.id,
-        page: currentPage,
-        pageSize,
-        typeFilter,
+
+  const fetchNotifications = useCallback(async () => {
+    if (!user) return;
+
+    try {
+      setIsLoading(true);
+      const result = await NotificationService.getNotifications(
+        user.id, 
+        page, 
+        pageSize, 
+        typeFilter, 
         statusFilter,
         searchTerm
-      });
-    },
-    enabled: !!user?.id,
-  });
-
-  const notifications = data?.notifications || [];
-  const totalPages = data?.count ? Math.ceil(data.count / pageSize) : 1;
-
-  const markAsReadMutation = useMutation({
-    mutationFn: (id: string) => notificationService.markAsRead(id),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['notifications'] });
-      queryClient.invalidateQueries({ queryKey: ['unreadCount'] });
-    }
-  });
-
-  const markAllAsReadMutation = useMutation({
-    mutationFn: (userId: string) => notificationService.markAllAsRead(userId),
-    onSuccess: () => {
-      toast.success("All notifications marked as read");
-      queryClient.invalidateQueries({ queryKey: ['notifications'] });
-      queryClient.invalidateQueries({ queryKey: ['unreadCount'] });
-    }
-  });
-
-  const markAsUnreadMutation = useMutation({
-    mutationFn: (id: string) => notificationService.markAsUnread(id),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['notifications'] });
-      queryClient.invalidateQueries({ queryKey: ['unreadCount'] });
-    }
-  });
-
-  const deleteNotificationMutation = useMutation({
-    mutationFn: (id: string) => notificationService.deleteNotification(id),
-    onSuccess: () => {
-      toast.success("Notificação excluída com sucesso");
-      queryClient.invalidateQueries({ queryKey: ['notifications'] });
-      queryClient.invalidateQueries({ queryKey: ['unreadCount'] });
-    },
-    onError: () => {
-      toast.error("Erro ao excluir notificação");
-    }
-  });
-
-  const sendNotificationMutation = useMutation({
-    mutationFn: (params: {
-      title: string;
-      message: string;
-      type: DatabaseNotificationType;
-      recipients: {
-        role?: UserRole;
-        userId?: string;
-      };
-      data?: Record<string, any>;
-    }) => notificationService.sendNotification(params),
-    onSuccess: () => {
-      toast.success("Notificação enviada com sucesso");
-      queryClient.invalidateQueries({ queryKey: ['notifications'] });
-    },
-    onError: () => {
-      toast.error("Erro ao enviar notificação");
-    }
-  });
-
-  const sendNotificationToRoleMutation = useMutation({
-    mutationFn: (params: {
-      title: string;
-      message: string;
-      type: DatabaseNotificationType;
-      role: UserRole;
-      data?: Record<string, any>;
-    }) => {
-      return notificationService.sendNotificationToRole(
-        params.title,
-        params.message,
-        params.type,
-        params.role,
-        params.data
       );
-    },
-    onSuccess: () => {
-      toast.success("Notificação enviada com sucesso para o grupo");
-      queryClient.invalidateQueries({ queryKey: ['notifications'] });
-    },
-    onError: () => {
-      toast.error("Erro ao enviar notificação para o grupo");
+      
+      setNotifications(result.notifications);
+      setTotalCount(result.totalCount);
+      setTotalPages(Math.ceil(result.totalCount / pageSize));
+    } catch (error) {
+      console.error("Error fetching notifications:", error);
+    } finally {
+      setIsLoading(false);
     }
-  });
+  }, [user, page, pageSize, typeFilter, statusFilter, searchTerm]);
 
-  // Handle page change
-  const handlePageChange = (page: number) => {
-    setCurrentPage(page);
-  };
+  useEffect(() => {
+    if (user) {
+      fetchNotifications();
+    }
+  }, [user, fetchNotifications]);
 
-  // Handle type filter change
-  const handleTypeFilterChange = (type: string) => {
-    setTypeFilter(type);
-    setCurrentPage(1); // Reset to first page when filter changes
-  };
+  const markAsRead = useCallback(async (id: string) => {
+    try {
+      await NotificationService.markAsRead(id);
+      
+      setNotifications((prevNotifications) =>
+        prevNotifications.map((notification) =>
+          notification.id === id ? { ...notification, read: true } : notification
+        )
+      );
+    } catch (error) {
+      console.error("Error marking notification as read:", error);
+    }
+  }, []);
 
-  // Handle status filter change
-  const handleStatusFilterChange = (status: string) => {
-    setStatusFilter(status);
-    setCurrentPage(1); // Reset to first page when filter changes
-  };
-  
-  // Handle search term change
-  const handleSearchChange = (search: string) => {
-    setSearchTerm(search);
-    setCurrentPage(1); // Reset to first page when search changes
-  };
+  const markAsUnread = useCallback(async (id: string) => {
+    try {
+      await NotificationService.markAsUnread(id);
+      
+      setNotifications((prevNotifications) =>
+        prevNotifications.map((notification) =>
+          notification.id === id ? { ...notification, read: false } : notification
+        )
+      );
+    } catch (error) {
+      console.error("Error marking notification as unread:", error);
+    }
+  }, []);
 
-  const refreshNotifications = (filters?: {
-    page?: number;
-    typeFilter?: string;
-    statusFilter?: string;
-    searchTerm?: string;
-  }) => {
-    if (filters?.page !== undefined) setCurrentPage(filters.page);
-    if (filters?.typeFilter !== undefined) setTypeFilter(filters.typeFilter);
-    if (filters?.statusFilter !== undefined) setStatusFilter(filters.statusFilter);
-    if (filters?.searchTerm !== undefined) setSearchTerm(filters.searchTerm);
+  const deleteNotification = useCallback(async (id: string) => {
+    try {
+      await NotificationService.deleteNotification(id);
+      
+      setNotifications((prevNotifications) =>
+        prevNotifications.filter((notification) => notification.id !== id)
+      );
+      
+      // Update total count after deletion
+      setTotalCount((prev) => (prev > 0 ? prev - 1 : 0));
+      // Recalculate total pages
+      setTotalPages((prev) => Math.max(1, Math.ceil((totalCount - 1) / pageSize)));
+    } catch (error) {
+      console.error("Error deleting notification:", error);
+    }
+  }, [totalCount, pageSize]);
+
+  const markAllAsRead = useCallback(async (userId: string) => {
+    if (!userId) return;
     
-    // Always refetch after changing filters
-    return refetch();
-  };
+    try {
+      await NotificationService.markAllAsRead(userId);
+      
+      // Update local state
+      setNotifications((prevNotifications) =>
+        prevNotifications.map((notification) => ({ ...notification, read: true }))
+      );
+    } catch (error) {
+      console.error("Error marking all notifications as read:", error);
+    }
+  }, []);
 
-  const { data: unreadCountData } = useQuery({
-    queryKey: ['unreadCount', user?.id],
-    queryFn: async () => {
-      if (!user?.id) return 0;
-      return await notificationService.getUnreadCount(user.id);
-    },
-    enabled: !!user?.id,
-  });
+  const refreshNotifications = useCallback(() => {
+    fetchNotifications();
+  }, [fetchNotifications]);
 
-  const unreadCount = unreadCountData || 0;
+  const createNotification = useCallback(async (
+    title: string,
+    message: string,
+    type: NotificationType,
+    role: UserRole,
+    data: Record<string, any> = {}
+  ) => {
+    try {
+      await NotificationService.createNotification({
+        title,
+        message,
+        type: type as any,
+        role,
+        data
+      });
+    } catch (error) {
+      console.error("Error creating notification:", error);
+    }
+  }, []);
 
   return {
     notifications,
     isLoading,
-    error,
-    currentPage,
+    markAsRead,
+    markAsUnread,
+    markAllAsRead,
+    deleteNotification,
+    totalCount,
     totalPages,
-    unreadCount,
-    typeFilter,
-    statusFilter,
-    searchTerm,
-    handlePageChange,
-    handleTypeFilterChange,
-    handleStatusFilterChange,
-    handleSearchChange,
-    markAsRead: markAsReadMutation.mutate,
-    markAsUnread: markAsUnreadMutation.mutate,
-    markAllAsRead: (userId: string) => markAllAsReadMutation.mutate(userId),
-    deleteNotification: deleteNotificationMutation.mutate,
-    sendNotification: sendNotificationMutation.mutate,
-    sendNotificationToRole: sendNotificationToRoleMutation.mutate,
-    refetchNotifications: refetch,
     refreshNotifications,
+    createNotification
   };
-};
+}

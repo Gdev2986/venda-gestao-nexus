@@ -5,6 +5,8 @@ import { Spinner } from "./components/ui/spinner";
 import { Toaster } from "./components/ui/sonner";
 import { AuthProvider } from "@/contexts/AuthContext";
 import RootLayout from "./layouts/RootLayout";
+import MainLayout from "./layouts/MainLayout";
+import AdminLayout from "./layouts/AdminLayout";
 
 // Route imports
 const Home = lazy(() => import("./pages/Index"));
@@ -22,6 +24,7 @@ const PixKeys = lazy(() => import("./pages/settings/Settings"));
 
 // Admin Routes
 const AdminDashboard = lazy(() => import("./pages/admin/Dashboard"));
+const AdminNotifications = lazy(() => import("./pages/admin/Notifications"));
 
 // Error Pages
 const NotFound = lazy(() => import("./pages/NotFound"));
@@ -36,25 +39,32 @@ function App() {
       <Suspense fallback={<Spinner />}>
         <Routes>
           <Route path="/" element={<RootLayout />}>
-            <Route index element={<Home />} />
+            {/* Auth routes */}
             <Route path="login" element={<Login />} />
             <Route path="register" element={<Register />} />
             <Route path="forgot-password" element={<ForgotPassword />} />
             <Route path="reset-password" element={<ResetPassword />} />
-            <Route path="profile" element={<Profile />} />
-            <Route path="clients" element={<Clients />} />
-            <Route path="sales" element={<Sales />} />
-            <Route path="partners" element={<Partners />} />
-            <Route path="notifications" element={<NotificationsPage />} />
-            <Route path="payments" element={<Payments />} />
-            <Route path="pix-keys" element={<PixKeys />} />
             <Route path="unauthorized" element={<Unauthorized />} />
             
-            {/* Admin Routes */}
-            <Route path="admin" element={<AdminDashboard />} />
+            {/* Main Layout for regular pages */}
+            <Route element={<MainLayout />}>
+              <Route index element={<Home />} />
+              <Route path="profile" element={<Profile />} />
+              <Route path="clients" element={<Clients />} />
+              <Route path="sales" element={<Sales />} />
+              <Route path="partners" element={<Partners />} />
+              <Route path="notifications" element={<NotificationsPage />} />
+              <Route path="payments" element={<Payments />} />
+              <Route path="pix-keys" element={<PixKeys />} />
+            </Route>
             
-            {/* Include all admin routes */}
-            {adminRoutes}
+            {/* Admin Layout with Admin Routes */}
+            <Route path="admin" element={<AdminLayout />}>
+              <Route index element={<AdminDashboard />} />
+              <Route path="notifications" element={<AdminNotifications />} />
+              {/* Include all admin routes */}
+              {adminRoutes}
+            </Route>
             
             {/* Catch-all route */}
             <Route path="*" element={<NotFound />} />

@@ -1,7 +1,34 @@
 
 import { Fragment } from "react";
 import { Route } from "react-router-dom";
-import { adminRoutes as adminRoutesConfig } from "./admin/adminRoutes";
+import { dashboardRoute } from "./admin/dashboardRoute";
+import { clientRoutes } from "./admin/clientRoutes";
+import { logisticsRoutes } from "./admin/logisticsRoutes";
+import { salesRoutes } from "./admin/salesRoutes";
+import { partnerRoutes } from "./admin/partnerRoutes";
+import { paymentRoutes } from "./admin/paymentRoutes";
+import { settingsRoutes } from "./admin/settingsRoutes";
 
-// Convert the admin route config array to actual Route components
-export const adminRoutes = adminRoutesConfig;
+// Combine all admin routes into a flat array
+export const adminRoutes = [
+  // Dashboard Route
+  dashboardRoute,
+  
+  // Client Routes
+  ...clientRoutes,
+  
+  // Logistics Routes
+  ...logisticsRoutes,
+  
+  // Sales Routes
+  ...salesRoutes,
+  
+  // Payment Routes
+  ...paymentRoutes,
+  
+  // Partner Routes
+  ...partnerRoutes,
+  
+  // Settings and Other Routes
+  ...settingsRoutes,
+];
