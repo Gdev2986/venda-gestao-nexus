@@ -3,14 +3,23 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { notificationService } from "@/services/NotificationService";
-import { DatabaseNotificationType, UserRole } from "@/types";
-import { toast } from "@/components/ui/sonner";
+import { DatabaseNotificationType, UserRole, Notification } from "@/types";
+import { toast } from "sonner";
 import type { RefetchOptions } from "@tanstack/react-query";
 
-export const useNotifications = (initialPage = 1, pageSize = 10) => {
+interface GetNotificationsParams {
+  userId: string;
+  page?: number;
+  pageSize?: number;
+  typeFilter?: string;
+  statusFilter?: string;
+}
+
+export const useNotifications = (initialParams = { page: 1, pageSize: 10 }) => {
   const { user } = useAuth();
   const queryClient = useQueryClient();
-  const [currentPage, setCurrentPage] = useState(initialPage);
+  const [currentPage, setCurrentPage] = useState(initialParams.page || 1);
+  const [pageSize] = useState(initialParams.pageSize || 10);
   const [typeFilter, setTypeFilter] = useState('all');
   const [statusFilter, setStatusFilter] = useState('all');
   
