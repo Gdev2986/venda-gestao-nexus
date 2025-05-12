@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
@@ -14,9 +13,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { UserRole } from "@/types";
+import { UserRole, NotificationType } from "@/types";
 import { useNotifications } from "@/hooks/use-notifications";
-import { NotificationType } from "@/services/NotificationService";
 
 export const AdminNotificationsTab = () => {
   const [systemNotifications, setSystemNotifications] = useState(true);
@@ -68,7 +66,7 @@ export const AdminNotificationsTab = () => {
               {
                 title: notificationTitle,
                 message: notificationMessage,
-                type: 'GENERAL' as NotificationType,
+                type: NotificationType.SYSTEM,
                 data: {},
               },
               role
@@ -81,7 +79,7 @@ export const AdminNotificationsTab = () => {
           {
             title: notificationTitle,
             message: notificationMessage,
-            type: 'GENERAL' as NotificationType,
+            type: NotificationType.SYSTEM,
             data: {},
           },
           notificationTarget as UserRole

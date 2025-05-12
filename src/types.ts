@@ -100,6 +100,22 @@ export interface Payment {
     type: string;
     owner_name: string;
   };
+  // Adding missing properties referenced in errors
+  description?: string;
+  client?: {
+    id: string;
+    business_name: string;
+    document?: string;
+    email?: string;
+    phone?: string;
+    address?: string;
+    city?: string;
+    state?: string;
+    zip?: string;
+    created_at?: string;
+    updated_at?: string;
+    status?: string;
+  };
 }
 
 export interface PixKey {
@@ -114,6 +130,8 @@ export interface PixKey {
   bank_name?: string;
   created_at: string;
   updated_at: string;
+  // Adding missing property
+  is_active?: boolean;
 }
 
 export interface Client {
@@ -143,13 +161,13 @@ export interface Sale {
   client_name: string;
   gross_amount: number;
   net_amount: number;
-  amount: number;
+  amount: number; // Adding required property
   date: string;
   payment_method: PaymentMethod;
   client_id: string;
   created_at: string;
   updated_at: string;
-  status: string;
+  status: string; // Adding required property
 }
 
 export interface Partner {
@@ -165,6 +183,10 @@ export interface Partner {
   email?: string;
   phone?: string;
   address?: string;
+  // Adding missing properties
+  user_id?: string;
+  total_commission?: number;
+  total_sales?: number;
 }
 
 export interface FilterValues {
@@ -175,6 +197,8 @@ export interface FilterValues {
     from: Date;
     to?: Date;
   };
+  // Adding missing property
+  commissionRange?: [number, number];
 }
 
 export interface SalesFilterParams {
@@ -211,4 +235,7 @@ export interface Machine {
   location?: string;
   created_at: string;
   updated_at?: string;
+  // Adding missing properties
+  name?: string;
+  client_name?: string;
 }

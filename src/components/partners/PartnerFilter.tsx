@@ -18,7 +18,7 @@ const PartnerFilter: React.FC<PartnerFilterProps> = ({ onApplyFilter, isLoading 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     const values: FilterValues = {
-      search: searchTerm, // Use search which is in the FilterValues interface
+      search: searchTerm,
       commissionRange: commissionRange
     };
     onApplyFilter(values);

@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -93,7 +92,8 @@ export const UsersTab = ({ openRoleModal }: UsersTabProps) => {
         .select('*', { count: 'exact' });
       
       if (selectedRole !== 'all') {
-        query = query.eq('role', selectedRole);
+        // Cast the selectedRole string to UserRole enum value
+        query = query.eq('role', selectedRole as UserRole);
       }
       
       // Apply pagination

@@ -1,7 +1,7 @@
 
 import { useState, useEffect, useCallback } from "react";
-import { NotificationService } from "@/services/NotificationService";
-import { Notification, NotificationType, UserRole } from "@/types";
+import { NotificationService, NotificationType } from "@/services/NotificationService";
+import { Notification, UserRole } from "@/types";
 import { useAuth } from "@/contexts/AuthContext";
 
 interface UseNotificationsProps {
@@ -139,6 +139,31 @@ export function useNotifications({
     }
   }, []);
 
+  // Add the missing sendNotificationToRole function
+  const sendNotificationToRole = useCallback(async (
+    notification: {
+      title: string;
+      message: string;
+      type: NotificationType;
+      data?: Record<string, any>;
+    },
+    role: UserRole
+  ) => {
+    try {
+      await NotificationService.sendNotificationToRole(
+        notification.title,
+        notification.message,
+        notification.type,
+        role,
+        notification.data || {}
+      );
+      return true;
+    } catch (error) {
+      console.error("Error sending notification to role:", error);
+      return false;
+    }
+  }, []);
+
   return {
     notifications,
     isLoading,
@@ -149,6 +174,7 @@ export function useNotifications({
     totalCount,
     totalPages,
     refreshNotifications,
-    createNotification
+    createNotification,
+    sendNotificationToRole
   };
 }

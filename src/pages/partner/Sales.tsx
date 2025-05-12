@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { PageHeader } from "@/components/page/PageHeader";
 import { PageWrapper } from "@/components/page/PageWrapper";
@@ -27,11 +26,13 @@ const PartnerSales = () => {
         client_name: "Restaurante Silva",
         gross_amount: 1200,
         net_amount: 1140,
+        amount: 1200, // Added required property
         date: new Date().toISOString(),
         payment_method: PaymentMethod.CREDIT,
         client_id: "c1",
         created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString()
+        updated_at: new Date().toISOString(),
+        status: "completed" // Added required property
       },
       {
         id: "2",
@@ -40,11 +41,13 @@ const PartnerSales = () => {
         client_name: "Mercado Central",
         gross_amount: 850,
         net_amount: 807.5,
+        amount: 850, // Added required property
         date: new Date().toISOString(),
         payment_method: PaymentMethod.DEBIT,
         client_id: "c2",
         created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString()
+        updated_at: new Date().toISOString(),
+        status: "completed" // Added required property
       }
     ];
     
