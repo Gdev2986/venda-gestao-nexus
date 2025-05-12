@@ -27,20 +27,20 @@ export interface Notification {
 }
 
 // Helper function to map our app notification types to database notification types
-const mapToDatabaseType = (type: NotificationType): string => {
+const mapToDatabaseType = (type: NotificationType): DatabaseNotificationType => {
   // Map our notification types to database types
   switch (type) {
     case "PAYMENT":
     case "PAYMENT_APPROVED":
     case "PAYMENT_REJECTED":
     case "PAYMENT_REQUEST":
-      return "PAYMENT";
+      return DatabaseNotificationType.PAYMENT;
     case "MACHINE":
-      return "MACHINE";
+      return DatabaseNotificationType.MACHINE;
     case "SALE":
-      return "COMMISSION";
+      return DatabaseNotificationType.COMMISSION;
     default:
-      return "SYSTEM"; // Default to SYSTEM for any other type
+      return DatabaseNotificationType.SYSTEM; // Default to SYSTEM for any other type
   }
 };
 
@@ -169,7 +169,7 @@ export const NotificationService = {
   // Send a notification to all users with a specific role
   async sendNotificationToRole(
     notification: Omit<Notification, 'id' | 'created_at' | 'updated_at' | 'read' | 'user_id'>, 
-    role: UserRole | string
+    role: UserRole
   ) {
     // Map our notification type to database notification type
     const dbType = mapToDatabaseType(notification.type);
@@ -222,7 +222,6 @@ export const NotificationService = {
         table: 'notifications',
         filter: `user_id=eq.${userId}`
       }, (payload) => {
-        console.log('New notification received:', payload);
         // Transform the database fields to match our Notification interface
         const dbNotification = payload.new as any;
         const newNotification: Notification = {

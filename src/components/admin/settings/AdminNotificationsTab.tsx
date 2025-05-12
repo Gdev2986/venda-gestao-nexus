@@ -14,18 +14,92 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { UserRole } from "@/types";
+import { useNotifications } from "@/hooks/use-notifications";
+import { NotificationType } from "@/services/NotificationService";
 
 export const AdminNotificationsTab = () => {
   const [systemNotifications, setSystemNotifications] = useState(true);
   const [paymentNotifications, setPaymentNotifications] = useState(true);
   const [userNotifications, setUserNotifications] = useState(true);
+  
+  // New state for notification sending form
+  const [notificationTitle, setNotificationTitle] = useState('');
+  const [notificationMessage, setNotificationMessage] = useState('');
+  const [notificationTarget, setNotificationTarget] = useState('all');
+  const [isSending, setIsSending] = useState(false);
+  
   const { toast } = useToast();
+  const { sendNotificationToRole } = useNotifications();
 
   const handleSaveSettings = () => {
     toast({
       title: "Configurações salvas",
       description: "As configurações de notificações foram atualizadas."
     });
+  };
+  
+  const handleSendNotification = async () => {
+    if (!notificationTitle || !notificationMessage) {
+      toast({
+        variant: "destructive",
+        title: "Campos obrigatórios",
+        description: "Preencha o título e a mensagem da notificação."
+      });
+      return;
+    }
+    
+    setIsSending(true);
+    
+    try {
+      if (notificationTarget === 'all') {
+        // Send to all roles
+        const roles = Object.values(UserRole);
+        await Promise.all(
+          roles.map(role => 
+            sendNotificationToRole(
+              {
+                title: notificationTitle,
+                message: notificationMessage,
+                type: 'GENERAL' as NotificationType,
+                data: {},
+              },
+              role
+            )
+          )
+        );
+      } else {
+        // Send to specific role
+        await sendNotificationToRole(
+          {
+            title: notificationTitle,
+            message: notificationMessage,
+            type: 'GENERAL' as NotificationType,
+            data: {},
+          },
+          notificationTarget as UserRole
+        );
+      }
+      
+      toast({
+        title: "Notificação enviada",
+        description: "Sua notificação foi enviada com sucesso."
+      });
+      
+      // Reset form
+      setNotificationTitle('');
+      setNotificationMessage('');
+      setNotificationTarget('all');
+    } catch (error) {
+      console.error("Error sending notification:", error);
+      toast({
+        variant: "destructive",
+        title: "Erro",
+        description: "Não foi possível enviar a notificação."
+      });
+    } finally {
+      setIsSending(false);
+    }
   };
 
   return (
@@ -99,22 +173,32 @@ export const AdminNotificationsTab = () => {
               <Label className="block text-sm font-medium mb-1" htmlFor="title">
                 Título
               </Label>
-              <Input id="title" placeholder="Título da notificação" />
+              <Input 
+                id="title" 
+                placeholder="Título da notificação" 
+                value={notificationTitle}
+                onChange={e => setNotificationTitle(e.target.value)}
+              />
             </div>
             
             <div>
               <Label className="block text-sm font-medium mb-1" htmlFor="target">
                 Destinatários
               </Label>
-              <Select defaultValue="all">
+              <Select 
+                value={notificationTarget} 
+                onValueChange={setNotificationTarget}
+              >
                 <SelectTrigger id="target">
                   <SelectValue placeholder="Selecione os destinatários" />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">Todos os usuários</SelectItem>
-                  <SelectItem value="clients">Apenas clientes</SelectItem>
-                  <SelectItem value="partners">Apenas parceiros</SelectItem>
-                  <SelectItem value="admins">Apenas administradores</SelectItem>
+                  <SelectItem value={UserRole.ADMIN}>Administradores</SelectItem>
+                  <SelectItem value={UserRole.CLIENT}>Clientes</SelectItem>
+                  <SelectItem value={UserRole.PARTNER}>Parceiros</SelectItem>
+                  <SelectItem value={UserRole.FINANCIAL}>Financeiro</SelectItem>
+                  <SelectItem value={UserRole.LOGISTICS}>Logística</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -127,11 +211,15 @@ export const AdminNotificationsTab = () => {
                 id="message" 
                 placeholder="Digite a mensagem da notificação..." 
                 className="min-h-[150px]"
+                value={notificationMessage}
+                onChange={e => setNotificationMessage(e.target.value)}
               />
             </div>
             
             <div className="pt-4">
-              <Button>Enviar Notificação</Button>
+              <Button onClick={handleSendNotification} disabled={isSending}>
+                {isSending ? "Enviando..." : "Enviar Notificação"}
+              </Button>
             </div>
           </div>
         </CardContent>

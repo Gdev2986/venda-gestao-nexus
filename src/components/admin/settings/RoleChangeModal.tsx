@@ -46,18 +46,11 @@ export const RoleChangeModal = ({
     const fetchRoles = async () => {
       setLoading(true);
       try {
-        const { data, error } = await supabase
-          .from('profiles')
-          .select('role')
-          .not('role', 'is', null);
-
-        if (error) throw error;
-
-        // Extract unique roles and convert them to UserRole enum values
-        const uniqueRoles = Array.from(new Set(data.map(item => item.role))) as UserRole[];
-        setAvailableRoles(uniqueRoles);
+        // Get all UserRole enum values to use as options
+        const roleValues = Object.values(UserRole);
+        setAvailableRoles(roleValues);
       } catch (error) {
-        console.error("Error fetching roles:", error);
+        console.error("Error getting roles:", error);
       } finally {
         setLoading(false);
       }

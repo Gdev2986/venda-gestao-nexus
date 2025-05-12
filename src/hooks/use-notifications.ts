@@ -2,7 +2,8 @@
 import { useState, useEffect, useCallback } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
-import { NotificationService, Notification } from "@/services/NotificationService";
+import { NotificationService, Notification, NotificationType } from "@/services/NotificationService";
+import { UserRole } from "@/types";
 
 interface UseNotificationsParams {
   searchTerm?: string;
@@ -113,7 +114,7 @@ export const useNotifications = (params: UseNotificationsParams = {}) => {
       );
       
       // Update unread count
-      setUnreadCount(prev => prev - 1);
+      setUnreadCount(prev => Math.max(0, prev - 1));
     } catch (error) {
       console.error("Error marking notification as read:", error);
       toast({
@@ -182,7 +183,7 @@ export const useNotifications = (params: UseNotificationsParams = {}) => {
       
       // Update unread count if needed
       if (deletedNotification && !deletedNotification.read) {
-        setUnreadCount(prev => prev - 1);
+        setUnreadCount(prev => Math.max(0, prev - 1));
       }
     } catch (error) {
       console.error("Error deleting notification:", error);
@@ -210,10 +211,13 @@ export const useNotifications = (params: UseNotificationsParams = {}) => {
   
   const sendNotificationToRole = async (
     notification: Omit<Notification, 'id' | 'created_at' | 'updated_at' | 'read' | 'user_id'>,
-    role: string
+    role: UserRole | string
   ) => {
     try {
-      const result = await NotificationService.sendNotificationToRole(notification, role);
+      // Convert string role to UserRole if needed
+      const userRole = role as UserRole;
+      
+      const result = await NotificationService.sendNotificationToRole(notification, userRole);
       return result;
     } catch (error) {
       console.error("Error sending notification to role:", error);
@@ -222,6 +226,7 @@ export const useNotifications = (params: UseNotificationsParams = {}) => {
         description: "Falha ao enviar notificação para função",
         variant: "destructive",
       });
+      throw error; // Re-throw to allow component to handle the error
     }
   };
   

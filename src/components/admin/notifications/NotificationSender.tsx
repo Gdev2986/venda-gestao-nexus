@@ -33,7 +33,7 @@ export function NotificationSender() {
     defaultValues: {
       title: "",
       message: "",
-      targetRole: "ALL",
+      targetRole: UserRole.CLIENT,
       type: "GENERAL",
     },
   });
@@ -44,7 +44,7 @@ export function NotificationSender() {
       // Handle "ALL" role specially
       if (values.targetRole === "ALL") {
         // Send to each role separately
-        const roles = ["ADMIN", "CLIENT", "PARTNER", "FINANCIAL", "LOGISTICS"];
+        const roles = Object.values(UserRole);
         await Promise.all(
           roles.map(role => 
             sendNotificationToRole(
@@ -67,7 +67,7 @@ export function NotificationSender() {
             type: values.type as NotificationType,
             data: {},
           },
-          values.targetRole
+          values.targetRole as UserRole
         );
       }
       
@@ -145,11 +145,11 @@ export function NotificationSender() {
                       </FormControl>
                       <SelectContent>
                         <SelectItem value="ALL">Todos os usuários</SelectItem>
-                        <SelectItem value="ADMIN">Administradores</SelectItem>
-                        <SelectItem value="CLIENT">Clientes</SelectItem>
-                        <SelectItem value="PARTNER">Parceiros</SelectItem>
-                        <SelectItem value="FINANCIAL">Financeiro</SelectItem>
-                        <SelectItem value="LOGISTICS">Logística</SelectItem>
+                        <SelectItem value={UserRole.ADMIN}>{UserRole.ADMIN}</SelectItem>
+                        <SelectItem value={UserRole.CLIENT}>{UserRole.CLIENT}</SelectItem>
+                        <SelectItem value={UserRole.PARTNER}>{UserRole.PARTNER}</SelectItem>
+                        <SelectItem value={UserRole.FINANCIAL}>{UserRole.FINANCIAL}</SelectItem>
+                        <SelectItem value={UserRole.LOGISTICS}>{UserRole.LOGISTICS}</SelectItem>
                       </SelectContent>
                     </Select>
                     <FormMessage />
