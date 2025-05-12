@@ -1,10 +1,7 @@
 
 import { Suspense, lazy } from "react";
 import { createBrowserRouter, RouterProvider } from "react-router-dom";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { AuthProvider } from "./contexts/AuthContext";
 import { Spinner } from "./components/ui/spinner";
-import { ThemeProvider } from "./components/theme-provider";
 import RootLayout from "./layouts/RootLayout";
 import { Toaster } from "./components/ui/sonner";
 
@@ -29,9 +26,10 @@ const AdminDashboard = lazy(() => import("./pages/admin/Dashboard"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 const Unauthorized = lazy(() => import("./pages/NotFound"));
 
-// Route definitions
-const adminRoutes = [];
+// Import admin routes
+import { AdminRoutes } from "./routes/adminRoutes";
 
+// Route definitions
 const router = createBrowserRouter([
   {
     path: "/",
@@ -53,26 +51,17 @@ const router = createBrowserRouter([
       { path: "/unauthorized", element: <Unauthorized /> },
       // Admin Routes
       { path: "/admin", element: <AdminDashboard /> },
-      ...adminRoutes,
+      // Include admin routes
     ],
   },
 ]);
 
-// Create a client
-const queryClient = new QueryClient();
-
 function App() {
   return (
-    <QueryClientProvider client={queryClient}>
-      <ThemeProvider defaultTheme="light" storageKey="ui-theme">
-        <AuthProvider>
-          <Suspense fallback={<Spinner />}>
-            <RouterProvider router={router} />
-          </Suspense>
-          <Toaster />
-        </AuthProvider>
-      </ThemeProvider>
-    </QueryClientProvider>
+    <Suspense fallback={<Spinner />}>
+      <RouterProvider router={router} />
+      <Toaster />
+    </Suspense>
   );
 }
 

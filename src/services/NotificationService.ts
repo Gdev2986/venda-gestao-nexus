@@ -1,13 +1,13 @@
 
 import { supabase } from "@/integrations/supabase/client";
-import { DatabaseNotificationType, UserRole, ValidRole } from "@/types";
+import { DatabaseNotificationType, UserRole } from "@/types";
 import { toast } from "@/components/ui/sonner";
 
 export interface Notification {
   id: string;
   title: string;
   message: string;
-  type: string;
+  type: DatabaseNotificationType;
   created_at: string;
   read: boolean;
   user_id: string;
@@ -19,7 +19,7 @@ export interface Notification {
 interface CreateNotificationParams {
   title: string;
   message: string;
-  type: string;
+  type: DatabaseNotificationType;
   user_id?: string;
   role?: UserRole;
   target_id?: string;
@@ -37,7 +37,7 @@ interface GetNotificationsParams {
 interface SendNotificationParams {
   title: string;
   message: string;
-  type: string;
+  type: DatabaseNotificationType;
   recipients: {
     role?: UserRole;
     userId?: string;
@@ -108,8 +108,22 @@ class NotificationService {
         throw error;
       }
 
+      // Map database results to the Notification interface
+      const notifications = data?.map((item: any) => ({
+        id: item.id,
+        title: item.title,
+        message: item.message,
+        type: item.type as DatabaseNotificationType,
+        created_at: item.created_at,
+        read: item.read || false,
+        user_id: item.user_id,
+        role: item.role || UserRole.USER,
+        target_id: item.target_id,
+        data: item.data
+      })) || [];
+
       return {
-        notifications: data as Notification[],
+        notifications,
         count: count || 0,
       };
     } catch (error) {
@@ -138,10 +152,11 @@ class NotificationService {
       // If role is provided but not user_id, create notifications for all users with that role
       if (role && !user_id) {
         // Get all users with the specified role
+        const dbRole = mapUserRoleToDBRole(role);
         const { data: users, error: usersError } = await supabase
-          .from("users")
+          .from("profiles")
           .select("id")
-          .eq("role", mapUserRoleToDBRole(role));
+          .eq("role", dbRole);
 
         if (usersError) {
           console.error("Error getting users with role:", usersError);
@@ -157,23 +172,24 @@ class NotificationService {
             user_id: user.id,
             read: false,
             created_at: new Date().toISOString(),
-            role: mapUserRoleToDBRole(role),
+            role: dbRole,
             target_id: target_id || null,
             data: data || null,
           };
 
-          const { data: notification, error } = await supabase
+          const { error } = await supabase
             .from("notifications")
-            .insert(notificationData)
-            .select()
-            .single();
+            .insert(notificationData);
 
           if (error) {
             console.error("Error creating notification:", error);
             return null;
           }
 
-          return notification;
+          return {
+            ...notificationData,
+            id: '', // This will be assigned by the database
+          };
         });
 
         await Promise.all(promises);
@@ -204,7 +220,18 @@ class NotificationService {
         return null;
       }
 
-      return notification as Notification;
+      return {
+        id: notification.id,
+        title: notification.title,
+        message: notification.message,
+        type: notification.type as DatabaseNotificationType,
+        created_at: notification.created_at,
+        read: notification.read,
+        user_id: notification.user_id,
+        role: (notification.role as UserRole) || UserRole.USER,
+        target_id: notification.target_id,
+        data: notification.data,
+      };
     } catch (error) {
       console.error("Error creating notification:", error);
       return null;
