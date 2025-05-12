@@ -1,4 +1,3 @@
-
 import { PageHeader } from "@/components/page/PageHeader";
 import { PageWrapper } from "@/components/page/PageWrapper";
 import { Button } from "@/components/ui/button";
@@ -26,6 +25,7 @@ import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { notificationService } from "@/services/NotificationService";
 import { supabase } from "@/integrations/supabase/client";
+import { UserRole } from "@/types";
 
 const AdminNotifications = () => {
   const [title, setTitle] = useState("");
@@ -115,6 +115,11 @@ const AdminNotifications = () => {
     }
   };
 
+  const handleTargetChange = (value: string) => {
+    const roleValue = value === "all" ? "all" : value as UserRole;
+    setTarget(roleValue);
+  };
+
   return (
     <div className="space-y-6">
       <PageHeader 
@@ -154,18 +159,18 @@ const AdminNotifications = () => {
                   </label>
                   <Select
                     value={target}
-                    onValueChange={setTarget}
+                    onValueChange={handleTargetChange}
                   >
                     <SelectTrigger id="target">
                       <SelectValue placeholder="Selecione os destinatários" />
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="all">Todos os usuários</SelectItem>
-                      <SelectItem value="CLIENT">Apenas clientes</SelectItem>
-                      <SelectItem value="PARTNER">Apenas parceiros</SelectItem>
-                      <SelectItem value="ADMIN">Apenas administradores</SelectItem>
-                      <SelectItem value="FINANCIAL">Apenas financeiro</SelectItem>
-                      <SelectItem value="LOGISTICS">Apenas logística</SelectItem>
+                      <SelectItem value={UserRole.CLIENT}>Apenas clientes</SelectItem>
+                      <SelectItem value={UserRole.PARTNER}>Apenas parceiros</SelectItem>
+                      <SelectItem value={UserRole.ADMIN}>Apenas administradores</SelectItem>
+                      <SelectItem value={UserRole.FINANCIAL}>Apenas financeiro</SelectItem>
+                      <SelectItem value={UserRole.LOGISTICS}>Apenas logística</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
