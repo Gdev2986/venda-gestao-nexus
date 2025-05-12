@@ -27,7 +27,7 @@ interface ProfileData {
   email: string;
   avatar: string;
   phone: string;
-  role: UserRole | string;
+  role: UserRole;
   created_at: string;
   updated_at: string;
 }
@@ -42,7 +42,7 @@ export const UsersTab = ({ openRoleModal }: UsersTabProps) => {
   const [loading, setLoading] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
-  const [availableRoles, setAvailableRoles] = useState<string[]>([]);
+  const [availableRoles, setAvailableRoles] = useState<UserRole[]>([]);
 
   const { toast } = useToast();
   const itemsPerPage = 10;
@@ -58,8 +58,8 @@ export const UsersTab = ({ openRoleModal }: UsersTabProps) => {
 
         if (error) throw error;
 
-        // Extract unique roles
-        const uniqueRoles = Array.from(new Set(data.map(item => item.role)));
+        // Extract unique roles and convert them to UserRole enum values
+        const uniqueRoles = Array.from(new Set(data.map(item => item.role))) as UserRole[];
         setAvailableRoles(uniqueRoles);
       } catch (error) {
         console.error("Error fetching roles:", error);
@@ -82,7 +82,6 @@ export const UsersTab = ({ openRoleModal }: UsersTabProps) => {
         .select('*', { count: 'exact' });
       
       if (selectedRole !== 'all') {
-        // Use the string value directly since role can be string in ProfileData
         query = query.eq('role', selectedRole);
       }
       
@@ -99,7 +98,13 @@ export const UsersTab = ({ openRoleModal }: UsersTabProps) => {
       const total = count ? Math.ceil(count / itemsPerPage) : 0;
       setTotalPages(total);
       
-      setUsers(data as ProfileData[]);
+      // Ensure the role is properly typed
+      const typedUsers = (data || []).map(user => ({
+        ...user,
+        role: user.role as UserRole
+      })) as ProfileData[];
+      
+      setUsers(typedUsers);
     } catch (error) {
       console.error("Error fetching users:", error);
       toast({

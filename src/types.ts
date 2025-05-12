@@ -39,6 +39,15 @@ export enum PaymentMethod {
   PIX = "pix"
 }
 
+// Database notification types
+export enum DatabaseNotificationType {
+  PAYMENT = "PAYMENT",
+  BALANCE = "BALANCE",
+  MACHINE = "MACHINE",
+  COMMISSION = "COMMISSION",
+  SYSTEM = "SYSTEM"
+}
+
 // Payment interface
 export interface Payment {
   id: string;

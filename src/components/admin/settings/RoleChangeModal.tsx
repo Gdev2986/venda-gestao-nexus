@@ -18,15 +18,15 @@ interface ProfileData {
   email: string;
   avatar: string;
   phone: string;
-  role: UserRole | string;
+  role: UserRole;
   created_at: string;
   updated_at: string;
 }
 
 interface RoleChangeModalProps {
   user: ProfileData;
-  newRole: UserRole | string;
-  setNewRole: (role: UserRole | string) => void;
+  newRole: UserRole;
+  setNewRole: (role: UserRole) => void;
   onClose: () => void;
   onSave: () => void;
 }
@@ -38,7 +38,7 @@ export const RoleChangeModal = ({
   onClose, 
   onSave 
 }: RoleChangeModalProps) => {
-  const [availableRoles, setAvailableRoles] = useState<string[]>([]);
+  const [availableRoles, setAvailableRoles] = useState<UserRole[]>([]);
   const [loading, setLoading] = useState(true);
 
   // Fetch available roles from the profiles table
@@ -53,8 +53,8 @@ export const RoleChangeModal = ({
 
         if (error) throw error;
 
-        // Extract unique roles
-        const uniqueRoles = Array.from(new Set(data.map(item => item.role)));
+        // Extract unique roles and convert them to UserRole enum values
+        const uniqueRoles = Array.from(new Set(data.map(item => item.role))) as UserRole[];
         setAvailableRoles(uniqueRoles);
       } catch (error) {
         console.error("Error fetching roles:", error);
@@ -79,7 +79,7 @@ export const RoleChangeModal = ({
           ) : (
             <Select
               value={newRole}
-              onValueChange={(value) => setNewRole(value)}
+              onValueChange={(value) => setNewRole(value as UserRole)}
             >
               <SelectTrigger className="w-full">
                 <SelectValue placeholder="Selecione a função" />

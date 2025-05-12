@@ -17,7 +17,7 @@ interface ProfileData {
   email: string;
   avatar: string;
   phone: string;
-  role: UserRole | string;
+  role: UserRole;
   created_at: string;
   updated_at: string;
 }
@@ -25,7 +25,7 @@ interface ProfileData {
 const AdminSettings = () => {
   const [activeTab, setActiveTab] = useState("usuarios");
   const [selectedUser, setSelectedUser] = useState<ProfileData | null>(null);
-  const [newRole, setNewRole] = useState<UserRole | string>("CLIENT");
+  const [newRole, setNewRole] = useState<UserRole>(UserRole.CLIENT);
   const [showRoleModal, setShowRoleModal] = useState(false);
   
   const { toast } = useToast();

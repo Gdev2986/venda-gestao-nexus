@@ -1,6 +1,7 @@
 
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/components/ui/sonner";
+import { DatabaseNotificationType, UserRole } from "@/types";
 
 export type NotificationType = 
   | "GENERAL" 
@@ -24,6 +25,24 @@ export interface Notification {
   created_at: string;
   updated_at: string;
 }
+
+// Helper function to map our app notification types to database notification types
+const mapToDatabaseType = (type: NotificationType): string => {
+  // Map our notification types to database types
+  switch (type) {
+    case "PAYMENT":
+    case "PAYMENT_APPROVED":
+    case "PAYMENT_REJECTED":
+    case "PAYMENT_REQUEST":
+      return "PAYMENT";
+    case "MACHINE":
+      return "MACHINE";
+    case "SALE":
+      return "COMMISSION";
+    default:
+      return "SYSTEM"; // Default to SYSTEM for any other type
+  }
+};
 
 export const NotificationService = {
   // Get notifications for the current user
@@ -124,13 +143,16 @@ export const NotificationService = {
   
   // Send a notification to a specific user
   async sendNotification(notification: Omit<Notification, 'id' | 'created_at' | 'updated_at' | 'read'>) {
+    // Map our notification type to database notification type
+    const dbType = mapToDatabaseType(notification.type);
+    
     const { data, error } = await supabase
       .from('notifications')
       .insert({
         user_id: notification.user_id,
         title: notification.title,
         message: notification.message,
-        type: notification.type,
+        type: dbType,
         data: notification.data || {},
         is_read: false
       })
@@ -147,8 +169,11 @@ export const NotificationService = {
   // Send a notification to all users with a specific role
   async sendNotificationToRole(
     notification: Omit<Notification, 'id' | 'created_at' | 'updated_at' | 'read' | 'user_id'>, 
-    role: string
+    role: UserRole | string
   ) {
+    // Map our notification type to database notification type
+    const dbType = mapToDatabaseType(notification.type);
+    
     // First get all users with this role
     const { data: users, error: usersError } = await supabase
       .from('profiles')
@@ -170,15 +195,14 @@ export const NotificationService = {
       user_id: user.id,
       title: notification.title,
       message: notification.message,
-      type: notification.type,
+      type: dbType,
       data: notification.data || {},
       is_read: false
     }));
     
     const { data, error } = await supabase
       .from('notifications')
-      .insert(notificationsToInsert)
-      .select();
+      .insert(notificationsToInsert);
       
     if (error) {
       console.error("Error sending notifications to role:", error);

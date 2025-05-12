@@ -21,12 +21,6 @@ interface PartnerRecord {
   user_id?: string;
 }
 
-// Create a type that matches what we need to insert into the database
-type PartnerInsert = Omit<
-  Pick<PartnerRecord, 'company_name' | 'commission_rate' | 'contact_name' | 'email' | 'phone' | 'address' | 'user_id'>, 
-  'id' | 'created_at' | 'updated_at'
->;
-
 export const usePartners = () => {
   const [partners, setPartners] = useState<Partner[]>([]);
   const [filteredPartners, setFilteredPartners] = useState<Partner[]>([]);
@@ -142,9 +136,15 @@ export const usePartners = () => {
         ...(partnerData.user_id && { user_id: partnerData.user_id }),
       };
 
+      // Generate a UUID for the partner
+      const id = crypto.randomUUID();
+      
       const { data, error } = await supabase
         .from('partners')
-        .insert(partnerToInsert)
+        .insert({
+          id,
+          ...partnerToInsert
+        })
         .select();
 
       if (error) throw error;
