@@ -6,10 +6,10 @@ import { PATHS } from "../paths";
 import AdminDashboard from "../../pages/admin/Dashboard";
 
 // Dashboard Route for Admin Module
-export const dashboardRoute = (
+export const dashboardRoute = [
   <Route 
     key="admin-dashboard"
     path={PATHS.ADMIN.DASHBOARD}
     element={<AdminDashboard />}
   />
-);
+];

@@ -53,7 +53,13 @@ export type DatabaseNotificationType =
   | "BALANCE" 
   | "MACHINE" 
   | "COMMISSION" 
-  | "SYSTEM";
+  | "SYSTEM"
+  | "SALE"
+  | "PAYMENT_APPROVED"
+  | "PAYMENT_REJECTED" 
+  | "PAYMENT_REQUEST"
+  | "SUPPORT"
+  | "GENERAL";
 
 // Export the NotificationType for components that need it
 export const NotificationType = {
@@ -61,7 +67,13 @@ export const NotificationType = {
   BALANCE: "BALANCE" as DatabaseNotificationType,
   MACHINE: "MACHINE" as DatabaseNotificationType,
   COMMISSION: "COMMISSION" as DatabaseNotificationType,
-  SYSTEM: "SYSTEM" as DatabaseNotificationType
+  SYSTEM: "SYSTEM" as DatabaseNotificationType,
+  SALE: "SALE" as DatabaseNotificationType,
+  PAYMENT_APPROVED: "PAYMENT_APPROVED" as DatabaseNotificationType,
+  PAYMENT_REJECTED: "PAYMENT_REJECTED" as DatabaseNotificationType,
+  PAYMENT_REQUEST: "PAYMENT_REQUEST" as DatabaseNotificationType,
+  SUPPORT: "SUPPORT" as DatabaseNotificationType,
+  GENERAL: "GENERAL" as DatabaseNotificationType
 };
 
 export interface Payment {
@@ -90,6 +102,10 @@ export interface Payment {
     type: string;
     owner_name: string;
   };
+  description?: string;
+  client?: {
+    business_name: string;
+  };
 }
 
 export interface Partner {
@@ -105,6 +121,9 @@ export interface Partner {
   email?: string; // Added for consistency with filtering
   phone?: string; // Added for consistency with filtering
   address?: string; // Added for completeness
+  total_commission?: number;
+  total_sales?: number;
+  user_id?: string;
 }
 
 export interface Client {
@@ -131,6 +150,10 @@ export interface FilterValues {
   search?: string;
   status?: string;
   category?: string;
+  commissionRange?: {
+    min: number;
+    max: number;
+  };
   dateRange?: {
     from: Date;
     to?: Date;
@@ -147,6 +170,8 @@ export interface PixKey {
   user_id?: string;
   created_at?: string;
   updated_at?: string;
+  bank_name?: string;
+  key_type?: string;
 }
 
 export interface Sale {
@@ -202,6 +227,7 @@ export interface Machine {
   last_maintenance?: string;
   created_at?: string;
   updated_at?: string;
+  name?: string; // Added for compatibility with existing code
 }
 
 // Type for notifications

@@ -1,7 +1,7 @@
 
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { DatabaseNotificationType, UserRole, Notification } from "@/types";
+import { DatabaseNotificationType, UserRole, Notification, NotificationType } from "@/types";
 
 class NotificationService {
   // Get all notifications for a user
@@ -10,13 +10,15 @@ class NotificationService {
     page = 1, 
     pageSize = 10, 
     typeFilter = 'all',
-    statusFilter = 'all'
+    statusFilter = 'all',
+    searchTerm = '' 
   }: { 
     userId: string;
     page?: number;
     pageSize?: number;
     typeFilter?: string;
     statusFilter?: string;
+    searchTerm?: string;
   }) {
     try {
       let query = supabase
@@ -35,6 +37,11 @@ class NotificationService {
         query = query.eq('read', true);
       } else if (statusFilter === 'unread') {
         query = query.eq('read', false);
+      }
+      
+      // Apply search filter
+      if (searchTerm) {
+        query = query.or(`title.ilike.%${searchTerm}%,message.ilike.%${searchTerm}%`);
       }
 
       // Apply pagination

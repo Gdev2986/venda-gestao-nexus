@@ -5,7 +5,6 @@ import { useAuth } from "@/contexts/AuthContext";
 import { notificationService } from "@/services/NotificationService";
 import { DatabaseNotificationType, UserRole, Notification } from "@/types";
 import { toast } from "sonner";
-import type { RefetchOptions } from "@tanstack/react-query";
 
 interface GetNotificationsParams {
   userId: string;
@@ -13,15 +12,23 @@ interface GetNotificationsParams {
   pageSize?: number;
   typeFilter?: string;
   statusFilter?: string;
+  searchTerm?: string;
 }
 
-export const useNotifications = (initialParams = { page: 1, pageSize: 10 }) => {
+export const useNotifications = (initialParams: {
+  page?: number;
+  pageSize?: number;
+  typeFilter?: string;
+  statusFilter?: string;
+  searchTerm?: string;
+} = { page: 1, pageSize: 10 }) => {
   const { user } = useAuth();
   const queryClient = useQueryClient();
   const [currentPage, setCurrentPage] = useState(initialParams.page || 1);
   const [pageSize] = useState(initialParams.pageSize || 10);
-  const [typeFilter, setTypeFilter] = useState('all');
-  const [statusFilter, setStatusFilter] = useState('all');
+  const [typeFilter, setTypeFilter] = useState(initialParams.typeFilter || 'all');
+  const [statusFilter, setStatusFilter] = useState(initialParams.statusFilter || 'all');
+  const [searchTerm, setSearchTerm] = useState(initialParams.searchTerm || '');
   
   const { 
     data, 
@@ -29,7 +36,7 @@ export const useNotifications = (initialParams = { page: 1, pageSize: 10 }) => {
     error, 
     refetch 
   } = useQuery({
-    queryKey: ['notifications', user?.id, currentPage, pageSize, typeFilter, statusFilter],
+    queryKey: ['notifications', user?.id, currentPage, pageSize, typeFilter, statusFilter, searchTerm],
     queryFn: async () => {
       if (!user?.id) return { notifications: [], count: 0 };
       return await notificationService.getNotifications({
@@ -38,6 +45,7 @@ export const useNotifications = (initialParams = { page: 1, pageSize: 10 }) => {
         pageSize,
         typeFilter,
         statusFilter,
+        searchTerm
       });
     },
     enabled: !!user?.id,
@@ -144,6 +152,12 @@ export const useNotifications = (initialParams = { page: 1, pageSize: 10 }) => {
     setStatusFilter(status);
     setCurrentPage(1); // Reset to first page when filter changes
   };
+  
+  // Handle search term change
+  const handleSearchChange = (search: string) => {
+    setSearchTerm(search);
+    setCurrentPage(1); // Reset to first page when search changes
+  };
 
   const refreshNotifications = (filters?: {
     page?: number;
@@ -154,6 +168,7 @@ export const useNotifications = (initialParams = { page: 1, pageSize: 10 }) => {
     if (filters?.page !== undefined) setCurrentPage(filters.page);
     if (filters?.typeFilter !== undefined) setTypeFilter(filters.typeFilter);
     if (filters?.statusFilter !== undefined) setStatusFilter(filters.statusFilter);
+    if (filters?.searchTerm !== undefined) setSearchTerm(filters.searchTerm);
     
     // Always refetch after changing filters
     return refetch();
@@ -179,9 +194,11 @@ export const useNotifications = (initialParams = { page: 1, pageSize: 10 }) => {
     unreadCount,
     typeFilter,
     statusFilter,
+    searchTerm,
     handlePageChange,
     handleTypeFilterChange,
     handleStatusFilterChange,
+    handleSearchChange,
     markAsRead: markAsReadMutation.mutate,
     markAsUnread: markAsUnreadMutation.mutate,
     markAllAsRead: (userId: string) => markAllAsReadMutation.mutate(userId),

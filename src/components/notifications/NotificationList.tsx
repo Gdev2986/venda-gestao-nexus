@@ -4,7 +4,7 @@ import { ptBR } from "date-fns/locale";
 import { Bell, ShoppingCart, CreditCard, Wrench, LifeBuoy } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import TablePagination from "@/components/ui/table-pagination";
-import { Notification } from "@/services/NotificationService";
+import { Notification } from "@/types";
 
 interface NotificationListProps {
   notifications: Notification[];

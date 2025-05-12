@@ -20,7 +20,8 @@ const AdminNotifications = () => {
     deleteNotification,
     totalPages 
   } = useNotifications({
-    page: currentPage
+    page: currentPage,
+    pageSize: 10
   });
   
   return (

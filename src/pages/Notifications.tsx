@@ -34,10 +34,11 @@ const Notifications = () => {
     totalPages,
     refreshNotifications
   } = useNotifications({
-    searchTerm,
+    page: currentPage,
+    pageSize: 10,
     typeFilter,
     statusFilter,
-    page: currentPage
+    searchTerm
   });
   
   const handleSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -47,8 +48,8 @@ const Notifications = () => {
   
   const handleMarkAllAsRead = async () => {
     if (!user) return;
-
-    await markAllAsRead();
+    
+    await markAllAsRead(user.id);
     toast({
       title: "Sucesso",
       description: "Todas as notificações foram marcadas como lidas",
