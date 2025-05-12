@@ -1,3 +1,4 @@
+
 export enum UserRole {
   ADMIN = "ADMIN",
   CLIENT = "CLIENT", 
@@ -23,7 +24,19 @@ export enum PaymentType {
   BOLETO = "BOLETO"
 }
 
-// Added ClientStatus enum for the ClientStatus component
+export enum NotificationType {
+  PAYMENT = "PAYMENT",
+  BALANCE = "BALANCE",
+  MACHINE = "MACHINE",
+  COMMISSION = "COMMISSION",
+  SYSTEM = "SYSTEM",
+  SALE = "SALE",
+  SUPPORT = "SUPPORT"
+}
+
+// Database notification type - matches what's in the database
+export type DatabaseNotificationType = "PAYMENT" | "BALANCE" | "MACHINE" | "COMMISSION" | "SYSTEM" | "SALE" | "SUPPORT";
+
 export enum ClientStatus {
   ACTIVE = "active",
   INACTIVE = "inactive",
@@ -33,7 +46,34 @@ export enum ClientStatus {
 export enum PaymentMethod {
   CREDIT = "credit",
   DEBIT = "debit",
-  PIX = "pix"
+  PIX = "pix",
+  BOLETO = "boleto",
+  TRANSFER = "transfer"
+}
+
+export interface Notification {
+  id: string;
+  title: string;
+  message: string;
+  type: NotificationType;
+  read: boolean;
+  created_at: string;
+  user_id: string;
+  data?: Record<string, any>;
+  role?: UserRole;
+}
+
+// Database notification model
+export interface DatabaseNotification {
+  id: string;
+  title: string;
+  message: string;
+  type: DatabaseNotificationType;
+  is_read: boolean;
+  created_at: string;
+  user_id: string;
+  data?: Record<string, any>;
+  role?: UserRole;
 }
 
 export interface Payment {
@@ -62,28 +102,42 @@ export interface Payment {
     type: string;
     owner_name: string;
   };
+  description?: string;
+  client?: {
+    id: string;
+    business_name: string;
+    document?: string;
+    email?: string;
+    phone?: string;
+    address?: string;
+    city?: string;
+    state?: string;
+    zip?: string;
+    created_at?: string;
+    updated_at?: string;
+    status?: string;
+  };
 }
 
-// Types for partners
-export interface Partner {
+export interface PixKey {
   id: string;
-  company_name: string;
+  user_id: string;
+  type: string;
+  key_type?: string;
+  key: string;
+  owner_name?: string;
+  name?: string;
+  is_default: boolean;
+  bank_name?: string;
   created_at: string;
   updated_at: string;
-  commission_rate: number;
-  contact_name?: string;
-  contact_email?: string;
-  contact_phone?: string;
-  business_name?: string; // For backward compatibility
-  email?: string; // Added for consistency with filtering
-  phone?: string; // Added for consistency with filtering
-  address?: string; // Added for completeness
+  is_active?: boolean;
 }
 
-// Added Client interface to ensure type safety
 export interface Client {
   id: string;
   business_name: string;
+  document?: string;
   email?: string;
   phone?: string;
   status?: string;
@@ -96,9 +150,45 @@ export interface Client {
   city?: string;
   state?: string;
   zip?: string;
-  document?: string;
   fee_plan_id?: string;
   company_name?: string;
+}
+
+export interface Sale {
+  id: string;
+  code: string;
+  terminal: string;
+  client_name: string;
+  gross_amount: number;
+  net_amount: number;
+  amount: number;
+  date: string;
+  payment_method: PaymentMethod;
+  client_id: string;
+  created_at: string;
+  updated_at: string;
+  status: string;
+  machine_id?: string;
+  partner_id?: string;
+  processing_status?: "RAW" | "PROCESSED";
+}
+
+export interface Partner {
+  id: string;
+  company_name: string;
+  created_at: string;
+  updated_at: string;
+  commission_rate: number;
+  contact_name?: string;
+  contact_email?: string;
+  contact_phone?: string;
+  business_name?: string;
+  email?: string;
+  phone?: string;
+  address?: string;
+  user_id?: string;
+  total_commission?: number;
+  total_sales?: number;
 }
 
 export interface FilterValues {
@@ -109,32 +199,7 @@ export interface FilterValues {
     from: Date;
     to?: Date;
   };
-}
-
-export interface PixKey {
-  id: string;
-  key: string;
-  type: string;
-  name: string;
-  owner_name?: string;
-  is_default?: boolean;
-  user_id?: string;
-  created_at?: string;
-  updated_at?: string;
-}
-
-export interface Sale {
-  id: string;
-  code: string;
-  terminal: string;
-  client_name: string;
-  gross_amount: number;
-  net_amount: number;
-  date: string;
-  payment_method: PaymentMethod;
-  client_id: string;
-  created_at: string;
-  updated_at: string;
+  commissionRange?: [number, number];
 }
 
 export interface SalesFilterParams {
@@ -160,4 +225,17 @@ export interface UserData {
 export interface SalesChartData {
   name: string;
   value: number;
+}
+
+export interface Machine {
+  id: string;
+  model: string;
+  serial_number: string;
+  status: string;
+  client_id?: string;
+  location?: string;
+  created_at: string;
+  updated_at?: string;
+  name?: string;
+  client_name?: string;
 }

@@ -1,7 +1,6 @@
 
 import { supabase } from "@/integrations/supabase/client";
-import { DatabaseNotification, NotificationType, UserRole } from "@/types";
-import { Json } from "@/integrations/supabase/types";
+import { DatabaseNotification, NotificationType, UserRole, DatabaseNotificationType } from "@/types";
 
 export interface NotificationPayload {
   title: string;
@@ -15,14 +14,14 @@ export interface NotificationPayload {
 /**
  * Convert from application notification type to database notification type
  */
-const convertToDatabaseType = (type: NotificationType): string => {
-  return type;
+const convertToDatabaseType = (type: NotificationType): DatabaseNotificationType => {
+  return type as DatabaseNotificationType;
 };
 
 /**
  * Convert from database notification format to application format
  */
-const convertFromDatabaseType = (type: string): NotificationType => {
+const convertFromDatabaseType = (type: DatabaseNotificationType): NotificationType => {
   switch (type) {
     case "PAYMENT": return NotificationType.PAYMENT;
     case "BALANCE": return NotificationType.BALANCE;
@@ -44,7 +43,7 @@ export const NotificationService = {
    */
   createNotification: async (payload: NotificationPayload): Promise<string | null> => {
     try {
-      const { title, message, type, user_id, data, role } = payload;
+      const { title, message, type, user_id, data } = payload;
       const dbType = convertToDatabaseType(type);
       
       const { data: insertData, error } = await supabase
@@ -55,7 +54,7 @@ export const NotificationService = {
           type: dbType,
           user_id,
           is_read: false,
-          data: data as unknown as Json || {}
+          data: data || {}
         })
         .select('id')
         .single();
@@ -150,7 +149,7 @@ export const NotificationService = {
       
       // Apply type filter
       if (typeFilter !== "all") {
-        query = query.eq('type', typeFilter);
+        query = query.eq('type', typeFilter as DatabaseNotificationType);
       }
       
       // Apply status filter
@@ -179,15 +178,15 @@ export const NotificationService = {
       }
 
       // Convert database format to application format
-      const notifications = (data || []).map((notification: DatabaseNotification) => ({
-        id: notification.id,
-        title: notification.title,
-        message: notification.message,
-        type: convertFromDatabaseType(notification.type),
-        read: notification.is_read,
-        created_at: notification.created_at,
-        user_id: notification.user_id,
-        data: notification.data || {}
+      const notifications = (data || []).map((dbNotification: any) => ({
+        id: dbNotification.id,
+        title: dbNotification.title,
+        message: dbNotification.message,
+        type: convertFromDatabaseType(dbNotification.type as DatabaseNotificationType),
+        read: dbNotification.is_read,
+        created_at: dbNotification.created_at,
+        user_id: dbNotification.user_id,
+        data: dbNotification.data || {}
       }));
 
       const totalCount = count || 0;
@@ -238,7 +237,7 @@ export const NotificationService = {
       const { data: users, error: usersError } = await supabase
         .from('profiles')
         .select('id')
-        .eq('role', role.toString());
+        .eq('role', role);
 
       if (usersError) {
         console.error("Error fetching users by role:", usersError);
@@ -257,7 +256,7 @@ export const NotificationService = {
         type: convertToDatabaseType(type),
         user_id: user.id,
         is_read: false,
-        data: data as unknown as Json || {},
+        data: data || {},
       }));
 
       const { error: insertError } = await supabase
@@ -276,4 +275,3 @@ export const NotificationService = {
     }
   }
 };
-

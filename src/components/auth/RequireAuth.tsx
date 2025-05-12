@@ -61,7 +61,7 @@ const RequireAuth = ({ allowedRoles = [], redirectTo = PATHS.LOGIN }: RequireAut
         return;
       }
     }
-  }, [isLoading, isRoleLoading, user, userRole, signOut, location.pathname]);
+  }, [isLoading, isRoleLoading, user, userRole, signOut, location.pathname, allowedRoles]);
 
   // Add a slight delay for loading animation
   useEffect(() => {
@@ -128,6 +128,7 @@ const RequireAuth = ({ allowedRoles = [], redirectTo = PATHS.LOGIN }: RequireAut
       
       try {
         const dashboardPath = getDashboardPath(userRole);
+        console.log("Redirecting to appropriate dashboard:", dashboardPath);
         return <Navigate to={dashboardPath} replace />;
       } catch (error) {
         console.error("Error getting dashboard path:", error);

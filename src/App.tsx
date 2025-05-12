@@ -8,7 +8,7 @@ import RootLayout from "./layouts/RootLayout";
 import MainLayout from "./layouts/MainLayout";
 import AdminLayout from "./layouts/AdminLayout";
 import LogisticsLayout from "./layouts/LogisticsLayout";
-import PartnerLayout from "./layouts/PartnerLayout"; // Adicionado import do PartnerLayout
+import PartnerLayout from "./layouts/PartnerLayout";
 import RequireAuth from "@/components/auth/RequireAuth";
 import { UserRole } from "@/types";
 
@@ -26,34 +26,18 @@ const NotificationsPage = lazy(() => import("./pages/Notifications"));
 const Payments = lazy(() => import("./pages/Payments"));
 const PixKeys = lazy(() => import("./pages/settings/Settings"));
 
-// Admin Routes
-const AdminDashboard = lazy(() => import("./pages/admin/Dashboard"));
-const AdminSettings = lazy(() => import("./pages/admin/Settings"));
-const AdminNotifications = lazy(() => import("./pages/admin/Notifications"));
-
-// Client Routes
-const ClientDashboard = lazy(() => import("./pages/user/Dashboard"));
-const UserMachines = lazy(() => import("./pages/user/Machines"));
-const UserPayments = lazy(() => import("./pages/user/Payments"));
-const UserSettings = lazy(() => import("./pages/user/Settings"));
-const UserSupport = lazy(() => import("./pages/user/Support"));
-
-// Partner Routes
-const PartnerDashboard = lazy(() => import("./pages/partner/Dashboard"));
-
 // Error Pages
 const NotFound = lazy(() => import("./pages/NotFound"));
 const Unauthorized = lazy(() => import("./pages/NotFound"));
 
 // Import admin routes
-import { adminRoutes } from "./routes/adminRoutes";
+import { adminRoutes } from "./routes/admin/adminRoutes";
 // Import logistics routes
 import { logisticsMainRoutes } from "./routes/admin/logisticsRoutes";
-// Import partner routes
-import { PartnerRoutes } from "./routes/partnerRoutes";
-// Import client routes
+
+// Import client, partner and financial routes
 import { ClientRoutes } from "./routes/clientRoutes";
-// Import financial routes
+import { PartnerRoutes } from "./routes/partnerRoutes";
 import { FinancialRoutes } from "./routes/financialRoutes";
 
 function App() {
@@ -99,13 +83,42 @@ function App() {
             </Route>
 
             {/* Client Routes */}
-            {ClientRoutes}
+            <Route
+              element={
+                <RequireAuth
+                  allowedRoles={[UserRole.CLIENT, UserRole.USER]}
+                  redirectTo="/unauthorized"
+                />
+              }
+            >
+              <Route path="user">{ClientRoutes}</Route>
+            </Route>
 
             {/* Partner Routes */}
-            {PartnerRoutes}
+            <Route
+              element={
+                <RequireAuth
+                  allowedRoles={[UserRole.PARTNER]}
+                  redirectTo="/unauthorized"
+                />
+              }
+            >
+              <Route path="partner" element={<PartnerLayout />}>
+                {PartnerRoutes}
+              </Route>
+            </Route>
 
             {/* Financial Routes */}
-            {FinancialRoutes}
+            <Route
+              element={
+                <RequireAuth
+                  allowedRoles={[UserRole.FINANCIAL, UserRole.FINANCE]}
+                  redirectTo="/unauthorized"
+                />
+              }
+            >
+              <Route path="financial">{FinancialRoutes}</Route>
+            </Route>
 
             {/* Logistics Layout with Logistics Routes - requires logistics role */}
             <Route 
