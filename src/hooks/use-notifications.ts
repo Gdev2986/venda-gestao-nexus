@@ -1,6 +1,5 @@
-
 import { useState, useEffect, useCallback } from "react";
-import { NotificationService } from "@/services/NotificationService";
+import { notificationService } from "@/services/NotificationService";
 import { useAuth } from "@/contexts/AuthContext";
 import { Notification, NotificationType, UserRole } from "@/types";
 
@@ -56,7 +55,7 @@ export const useNotifications = (options: UseNotificationsOptions = {}): Notific
 
     try {
       setIsLoading(true);
-      const { notifications: notificationsData, totalCount, totalPages } = await NotificationService.getNotifications(
+      const { notifications: notificationsData, totalCount, totalPages } = await notificationService.getNotifications(
         user.id,
         page,
         pageSize,
@@ -85,7 +84,7 @@ export const useNotifications = (options: UseNotificationsOptions = {}): Notific
 
   const markAsRead = async (id: string) => {
     try {
-      await NotificationService.markNotificationAsRead(id);
+      await notificationService.markNotificationAsRead(id);
       
       // Update local state
       setNotifications((prevNotifications) =>
@@ -116,7 +115,7 @@ export const useNotifications = (options: UseNotificationsOptions = {}): Notific
 
   const markAllAsRead = async (userId: string) => {
     try {
-      await NotificationService.markAllAsRead(userId);
+      await notificationService.markAllAsRead(userId);
       
       // Update local state
       setNotifications((prevNotifications) =>
@@ -129,7 +128,7 @@ export const useNotifications = (options: UseNotificationsOptions = {}): Notific
 
   const deleteNotification = async (id: string) => {
     try {
-      await NotificationService.deleteNotification(id);
+      await notificationService.deleteNotification(id);
       
       // Update local state
       setNotifications((prevNotifications) =>
@@ -160,7 +159,7 @@ export const useNotifications = (options: UseNotificationsOptions = {}): Notific
     if (!user) return;
 
     try {
-      await NotificationService.createNotification({
+      await notificationService.createNotification({
         title,
         message,
         type,
@@ -183,7 +182,7 @@ export const useNotifications = (options: UseNotificationsOptions = {}): Notific
     data?: Record<string, any>
   ) => {
     try {
-      await NotificationService.sendNotificationToRole(
+      await notificationService.sendNotificationToRole(
         title,
         message,
         type,

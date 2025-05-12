@@ -1,180 +1,220 @@
 
+import React from "react";
 import { PageHeader } from "@/components/page/PageHeader";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { 
+  Card, 
+  CardContent, 
+  CardDescription, 
+  CardHeader, 
+  CardTitle 
+} from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { BarChart, LineChart, PieChart } from "@/components/charts";
-import { Skeleton } from "@/components/ui/skeleton";
-import { useState } from "react";
+import { PieChart } from "@/components/charts";
 
 const FinancialDashboard = () => {
-  const [isLoading, setIsLoading] = useState(false);
-
-  // Mock data para gráficos
-  const salesChartData = [
-    { name: "Jan", total: 900 },
-    { name: "Fev", total: 1200 },
-    { name: "Mar", total: 900 },
-    { name: "Abr", total: 1600 },
-    { name: "Mai", total: 1800 },
-    { name: "Jun", total: 1400 },
-  ];
-
+  // Sample data for financial dashboard
   const paymentMethodData = [
-    { name: "PIX", value: 60 },
-    { name: "Crédito", value: 30 },
-    { name: "Débito", value: 10 },
+    { name: "PIX", value: 45 },
+    { name: "Boleto", value: 25 },
+    { name: "Cartão", value: 30 },
   ];
 
-  const clientGrowthData = [
-    { name: "Jan", active: 12, inactive: 3 },
-    { name: "Fev", active: 15, inactive: 2 },
-    { name: "Mar", active: 18, inactive: 4 },
-    { name: "Abr", active: 22, inactive: 5 },
-    { name: "Mai", active: 28, inactive: 3 },
-    { name: "Jun", active: 32, inactive: 4 },
+  const clientStatusData = [
+    { name: "Ativos", value: 75 },
+    { name: "Inativos", value: 15 },
+    { name: "Pendentes", value: 10 },
   ];
 
   return (
-    <div className="container mx-auto py-10">
-      <PageHeader 
-        title="Dashboard Financeiro" 
-        description="Visão geral do sistema financeiro"
+    <div className="container py-8 max-w-7xl">
+      <PageHeader
+        title="Dashboard Financeiro"
+        description="Visão geral das operações financeiras"
       />
-      
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4 mt-6">
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">
-              Faturamento Total
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            {isLoading ? (
-              <Skeleton className="h-7 w-36" />
-            ) : (
-              <div className="text-2xl font-bold">
-                R$ 320.500,00
-              </div>
-            )}
-            <p className="text-xs text-muted-foreground mt-1">
-              +12,3% em relação ao mês anterior
-            </p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">
-              Total de Clientes
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            {isLoading ? (
-              <Skeleton className="h-7 w-36" />
-            ) : (
-              <div className="text-2xl font-bold">
-                216
-              </div>
-            )}
-            <p className="text-xs text-muted-foreground mt-1">
-              +5 novos clientes este mês
-            </p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">
-              Pagamentos Processados
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            {isLoading ? (
-              <Skeleton className="h-7 w-36" />
-            ) : (
-              <div className="text-2xl font-bold">
-                3.204
-              </div>
-            )}
-            <p className="text-xs text-muted-foreground mt-1">
-              +18,2% em relação ao mês anterior
-            </p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">
-              Comissões Pagas
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            {isLoading ? (
-              <Skeleton className="h-7 w-36" />
-            ) : (
-              <div className="text-2xl font-bold">
-                R$ 28.450,00
-              </div>
-            )}
-            <p className="text-xs text-muted-foreground mt-1">
-              +8,4% em relação ao mês anterior
-            </p>
-          </CardContent>
-        </Card>
-      </div>
 
-      <div className="mt-8">
-        <Tabs defaultValue="overview" className="w-full">
-          <TabsList className="grid grid-cols-3 mb-6">
+      <div className="grid gap-6 mt-6">
+        {/* Stats Cards */}
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4">
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between pb-2">
+              <CardTitle className="text-sm font-medium">
+                Pagamentos do Mês
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">R$ 47.350,00</div>
+              <p className="text-xs text-muted-foreground mt-1">
+                +15% em relação ao mês anterior
+              </p>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between pb-2">
+              <CardTitle className="text-sm font-medium">
+                Pagamentos Pendentes
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">R$ 12.250,00</div>
+              <p className="text-xs text-muted-foreground mt-1">
+                8 pagamentos aguardando aprovação
+              </p>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between pb-2">
+              <CardTitle className="text-sm font-medium">
+                Clientes Ativos
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">243</div>
+              <p className="text-xs text-muted-foreground mt-1">
+                +5 novos clientes este mês
+              </p>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between pb-2">
+              <CardTitle className="text-sm font-medium">
+                Taxa de Aprovação
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">92%</div>
+              <p className="text-xs text-muted-foreground mt-1">
+                +2% em relação ao mês anterior
+              </p>
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Tabs */}
+        <Tabs defaultValue="overview" className="space-y-4">
+          <TabsList>
             <TabsTrigger value="overview">Visão Geral</TabsTrigger>
-            <TabsTrigger value="methods">Métodos de Pagamento</TabsTrigger>
-            <TabsTrigger value="clients">Crescimento de Clientes</TabsTrigger>
+            <TabsTrigger value="analytics">Análises</TabsTrigger>
+            <TabsTrigger value="reports">Relatórios</TabsTrigger>
           </TabsList>
-          <TabsContent value="overview">
+          
+          <TabsContent value="overview" className="space-y-4">
+            <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
+              {/* Payment Methods Chart */}
+              <Card className="col-span-1">
+                <CardHeader>
+                  <CardTitle>Métodos de Pagamento</CardTitle>
+                  <CardDescription>
+                    Distribuição por tipo de pagamento
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="pl-2">
+                  <PieChart 
+                    data={paymentMethodData}
+                    dataKey="value"
+                    nameKey="name"
+                    height={250}
+                    innerRadius={60}
+                    outerRadius={80}
+                  />
+                </CardContent>
+              </Card>
+
+              {/* Client Status Chart */}
+              <Card className="col-span-1">
+                <CardHeader>
+                  <CardTitle>Status dos Clientes</CardTitle>
+                  <CardDescription>
+                    Distribuição por status de cliente
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="pl-2">
+                  <PieChart 
+                    data={clientStatusData}
+                    dataKey="value"
+                    nameKey="name"
+                    height={250}
+                    innerRadius={60}
+                    outerRadius={80}
+                  />
+                </CardContent>
+              </Card>
+
+              {/* Recent Activities */}
+              <Card className="col-span-1">
+                <CardHeader>
+                  <CardTitle>Atividades Recentes</CardTitle>
+                  <CardDescription>
+                    Últimas operações financeiras
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-4">
+                    <div className="flex items-center">
+                      <div className="ml-4 space-y-1">
+                        <p className="text-sm font-medium">Pagamento Aprovado</p>
+                        <p className="text-sm text-muted-foreground">
+                          Cliente: Empresa ABC
+                        </p>
+                      </div>
+                      <div className="ml-auto font-medium">R$ 1.250,00</div>
+                    </div>
+                    <div className="flex items-center">
+                      <div className="ml-4 space-y-1">
+                        <p className="text-sm font-medium">Pagamento Pendente</p>
+                        <p className="text-sm text-muted-foreground">
+                          Cliente: Empresa XYZ
+                        </p>
+                      </div>
+                      <div className="ml-auto font-medium">R$ 3.500,00</div>
+                    </div>
+                    <div className="flex items-center">
+                      <div className="ml-4 space-y-1">
+                        <p className="text-sm font-medium">Pagamento Rejeitado</p>
+                        <p className="text-sm text-muted-foreground">
+                          Cliente: Empresa DEF
+                        </p>
+                      </div>
+                      <div className="ml-auto font-medium">R$ 750,00</div>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+          </TabsContent>
+          
+          <TabsContent value="analytics" className="space-y-4">
             <Card>
               <CardHeader>
-                <CardTitle>Faturamento Mensal</CardTitle>
+                <CardTitle>Análises Financeiras</CardTitle>
                 <CardDescription>
-                  Análise do faturamento nos últimos 6 meses.
+                  Análises detalhadas das operações financeiras
                 </CardDescription>
               </CardHeader>
-              <CardContent className="pl-2">
-                {isLoading ? (
-                  <Skeleton className="h-[350px] w-full" />
-                ) : (
-                  <BarChart data={salesChartData} />
-                )}
+              <CardContent className="h-96">
+                {/* Analytics content will go here */}
+                <div className="flex items-center justify-center h-full">
+                  <p className="text-muted-foreground">Dados de análise em desenvolvimento</p>
+                </div>
               </CardContent>
             </Card>
           </TabsContent>
-          <TabsContent value="methods">
+          
+          <TabsContent value="reports" className="space-y-4">
             <Card>
               <CardHeader>
-                <CardTitle>Métodos de Pagamento</CardTitle>
+                <CardTitle>Relatórios Financeiros</CardTitle>
                 <CardDescription>
-                  Distribuição dos métodos de pagamento utilizados.
+                  Relatórios e exportações de dados financeiros
                 </CardDescription>
               </CardHeader>
-              <CardContent className="flex items-center justify-center h-80">
-                {isLoading ? (
-                  <Skeleton className="h-full w-full" />
-                ) : (
-                  <PieChart data={paymentMethodData} />
-                )}
-              </CardContent>
-            </Card>
-          </TabsContent>
-          <TabsContent value="clients">
-            <Card>
-              <CardHeader>
-                <CardTitle>Crescimento de Clientes</CardTitle>
-                <CardDescription>
-                  Evolução da base de clientes ativos e inativos.
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="pl-2">
-                {isLoading ? (
-                  <Skeleton className="h-[350px] w-full" />
-                ) : (
-                  <LineChart data={clientGrowthData} />
-                )}
+              <CardContent className="h-96">
+                {/* Reports content will go here */}
+                <div className="flex items-center justify-center h-full">
+                  <p className="text-muted-foreground">Relatórios em desenvolvimento</p>
+                </div>
               </CardContent>
             </Card>
           </TabsContent>

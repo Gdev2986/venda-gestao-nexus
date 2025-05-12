@@ -30,6 +30,27 @@ export const checkSession = async () => {
 };
 
 /**
+ * Gets the current user ID from the session
+ */
+export const getUserId = (): string | null => {
+  try {
+    // Get user from localStorage if available
+    const userSession = localStorage.getItem('supabase.auth.token');
+    if (userSession) {
+      const parsedSession = JSON.parse(userSession);
+      return parsedSession?.currentSession?.user?.id || null;
+    }
+    
+    // Alternative approach to get user ID
+    const user = supabase.auth.getUser();
+    return user?.data?.user?.id || null;
+  } catch (error) {
+    console.error("Error getting user ID:", error);
+    return null;
+  }
+};
+
+/**
  * Helper to safely set auth related data in localStorage
  */
 export const setAuthData = (key: string, value: any) => {

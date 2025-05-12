@@ -4,7 +4,7 @@ import { Link } from "react-router-dom";
 import { Bell, MailCheck, Loader2 } from "lucide-react";
 import { formatDistanceToNow, parseISO } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import { NotificationService } from "@/services/NotificationService";
+import { notificationService } from "@/services/NotificationService";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/AuthContext";
 import { useUserRole } from "@/hooks/use-user-role";
