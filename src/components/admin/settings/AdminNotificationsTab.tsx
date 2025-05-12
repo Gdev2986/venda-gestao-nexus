@@ -54,7 +54,14 @@ export const AdminNotificationsTab = () => {
     try {
       if (notificationTarget === 'all') {
         // Send to all roles
-        const roles = Object.values(UserRole);
+        const roles = [
+          UserRole.ADMIN, 
+          UserRole.CLIENT, 
+          UserRole.PARTNER, 
+          UserRole.FINANCIAL, 
+          UserRole.LOGISTICS
+        ];
+        
         await Promise.all(
           roles.map(role => 
             sendNotificationToRole(

@@ -59,7 +59,18 @@ export const UsersTab = ({ openRoleModal }: UsersTabProps) => {
         if (error) throw error;
 
         // Extract unique roles and convert them to UserRole enum values
-        const uniqueRoles = Array.from(new Set(data.map(item => item.role))) as UserRole[];
+        const uniqueRolesSet = new Set(data.map(item => item.role));
+        // Convert the set to an array of UserRole values
+        const uniqueRoles: UserRole[] = [];
+        
+        // Safely adding known UserRole values that exist in the data
+        for (const role of uniqueRolesSet) {
+          // Check if the role is a valid UserRole
+          if (Object.values(UserRole).includes(role as UserRole)) {
+            uniqueRoles.push(role as UserRole);
+          }
+        }
+        
         setAvailableRoles(uniqueRoles);
       } catch (error) {
         console.error("Error fetching roles:", error);

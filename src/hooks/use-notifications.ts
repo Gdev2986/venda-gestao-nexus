@@ -211,13 +211,10 @@ export const useNotifications = (params: UseNotificationsParams = {}) => {
   
   const sendNotificationToRole = async (
     notification: Omit<Notification, 'id' | 'created_at' | 'updated_at' | 'read' | 'user_id'>,
-    role: UserRole | string
+    role: UserRole
   ) => {
     try {
-      // Convert string role to UserRole if needed
-      const userRole = role as UserRole;
-      
-      const result = await NotificationService.sendNotificationToRole(notification, userRole);
+      const result = await NotificationService.sendNotificationToRole(notification, role);
       return result;
     } catch (error) {
       console.error("Error sending notification to role:", error);

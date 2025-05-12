@@ -44,7 +44,14 @@ export function NotificationSender() {
       // Handle "ALL" role specially
       if (values.targetRole === "ALL") {
         // Send to each role separately
-        const roles = Object.values(UserRole);
+        const roles = [
+          UserRole.ADMIN,
+          UserRole.CLIENT,
+          UserRole.PARTNER,
+          UserRole.FINANCIAL,
+          UserRole.LOGISTICS
+        ];
+        
         await Promise.all(
           roles.map(role => 
             sendNotificationToRole(

@@ -47,8 +47,8 @@ export const usePartnerClients = () => {
       if (error) throw error;
 
       if (data) {
-        // Fix type conversion
-        const typedClients = data as unknown as Client[];
+        // Fix type casting - explicitly type the data as Client[]
+        const typedClients = data as Client[];
         setClients(typedClients);
         setFilteredClients(typedClients);
       }

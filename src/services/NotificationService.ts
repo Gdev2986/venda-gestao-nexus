@@ -237,8 +237,7 @@ export const NotificationService = {
         };
         
         // Show a toast notification
-        toast({
-          title: newNotification.title,
+        toast(newNotification.title, {
           description: newNotification.message,
         });
         

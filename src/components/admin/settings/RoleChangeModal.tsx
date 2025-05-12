@@ -47,7 +47,13 @@ export const RoleChangeModal = ({
       setLoading(true);
       try {
         // Get all UserRole enum values to use as options
-        const roleValues = Object.values(UserRole);
+        const roleValues: UserRole[] = [
+          UserRole.ADMIN,
+          UserRole.CLIENT,
+          UserRole.FINANCIAL,
+          UserRole.PARTNER,
+          UserRole.LOGISTICS
+        ];
         setAvailableRoles(roleValues);
       } catch (error) {
         console.error("Error getting roles:", error);
