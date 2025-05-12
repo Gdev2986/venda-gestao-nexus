@@ -14,7 +14,7 @@ import { Button } from "@/components/ui/button";
 import { motion, AnimatePresence } from "framer-motion";
 import { Link } from "react-router-dom";
 import { useNotifications } from "@/hooks/use-notifications";
-import { formatDistanceToNow } from "date-fns";
+import { formatDistanceToNow, parseISO } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { useAuth } from "@/contexts/AuthContext";
 
@@ -35,10 +35,17 @@ const NotificationDropdown = () => {
   });
 
   const formatTimestamp = (date: string) => {
-    return formatDistanceToNow(new Date(date), { 
-      addSuffix: true,
-      locale: ptBR
-    });
+    try {
+      // Parse the ISO string to a Date object
+      const parsedDate = parseISO(date);
+      return formatDistanceToNow(parsedDate, { 
+        addSuffix: true,
+        locale: ptBR
+      });
+    } catch (error) {
+      console.error("Error parsing date:", error);
+      return date; // Return original string if parsing fails
+    }
   };
 
   // Close dropdown when clicking outside

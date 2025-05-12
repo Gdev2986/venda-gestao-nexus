@@ -1,5 +1,5 @@
 
-import { formatDistanceToNow } from "date-fns";
+import { formatDistanceToNow, parseISO } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { Bell, ShoppingCart, CreditCard, Wrench, LifeBuoy } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -43,6 +43,20 @@ const NotificationList = ({
     }
   };
 
+  const formatDate = (dateStr: string) => {
+    try {
+      // Parse the ISO string to a Date object
+      const date = parseISO(dateStr);
+      return formatDistanceToNow(date, { 
+        addSuffix: true,
+        locale: ptBR
+      });
+    } catch (error) {
+      console.error("Error parsing date:", error);
+      return dateStr; // Return original string if parsing fails
+    }
+  };
+
   if (notifications.length === 0) {
     return (
       <div className="p-8 text-center">
@@ -65,10 +79,7 @@ const NotificationList = ({
               <div className="flex items-center">
                 <h4 className="text-sm font-medium flex-1">{notification.title}</h4>
                 <span className="text-xs text-muted-foreground">
-                  {formatDistanceToNow(new Date(notification.created_at), { 
-                    addSuffix: true,
-                    locale: ptBR
-                  })}
+                  {formatDate(notification.created_at)}
                 </span>
               </div>
               

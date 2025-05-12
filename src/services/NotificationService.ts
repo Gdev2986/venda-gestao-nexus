@@ -39,6 +39,8 @@ const mapToDatabaseType = (type: NotificationType): DatabaseNotificationType => 
       return DatabaseNotificationType.MACHINE;
     case "SALE":
       return DatabaseNotificationType.COMMISSION;
+    case "GENERAL":
+      return DatabaseNotificationType.SYSTEM;
     default:
       return DatabaseNotificationType.SYSTEM; // Default to SYSTEM for any other type
   }
