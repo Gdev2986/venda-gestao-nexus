@@ -17,6 +17,7 @@ export interface SalesFiltersProps {
   onClearFilters: () => void;
   onExport?: () => void;
   onShowImportDialog?: () => void; // Make this optional to support both components
+  onFilter?: (filters: any) => void; // Add this prop to support the Sales.tsx component
 }
 
 const SalesFilters = ({
@@ -26,7 +27,8 @@ const SalesFilters = ({
   onFilterChange,
   onClearFilters,
   onExport,
-  onShowImportDialog
+  onShowImportDialog,
+  onFilter
 }: SalesFiltersProps) => {
   // Format date range for display
   const formatDateRange = () => {
@@ -37,6 +39,13 @@ const SalesFilters = ({
     }
     
     return format(date.from, 'PP', { locale: ptBR });
+  };
+  
+  // Add a handler for the Apply button
+  const handleApply = () => {
+    if (onFilter) {
+      onFilter(filters);
+    }
   };
   
   return (
@@ -80,7 +89,7 @@ const SalesFilters = ({
               </Button>
               <Button 
                 size="sm"
-                onClick={() => {}}
+                onClick={handleApply}
               >
                 Aplicar
               </Button>

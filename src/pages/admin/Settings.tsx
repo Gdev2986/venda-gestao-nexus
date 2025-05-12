@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
@@ -25,7 +24,7 @@ interface ProfileData {
 const AdminSettings = () => {
   const [activeTab, setActiveTab] = useState("usuarios");
   const [selectedUser, setSelectedUser] = useState<ProfileData | null>(null);
-  const [newRole, setNewRole] = useState<string>(UserRole.CLIENT as string);
+  const [newRole, setNewRole] = useState<string>("CLIENT");
   const [showRoleModal, setShowRoleModal] = useState(false);
   
   const { toast } = useToast();

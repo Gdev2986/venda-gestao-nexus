@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useCallback } from "react";
 import { Client } from "@/types";
 import { supabase } from "@/integrations/supabase/client";
@@ -47,10 +46,9 @@ export const usePartnerClients = () => {
       if (error) throw error;
 
       if (data) {
-        // Use an explicit type assertion to avoid deep type instantiation
-        const typedData = data as unknown as Client[];
-        setClients(typedData);
-        setFilteredClients(typedData);
+        // Type assertion without nested generics to avoid infinite type instantiation
+        setClients(data as Client[]);
+        setFilteredClients(data as Client[]);
       }
     } catch (err: any) {
       console.error("Error fetching clients:", err);

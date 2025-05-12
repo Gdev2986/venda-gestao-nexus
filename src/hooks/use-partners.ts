@@ -1,3 +1,4 @@
+
 import { useState, useEffect, useCallback } from "react";
 import { Partner } from "@/types";
 import { supabase } from "@/integrations/supabase/client";
@@ -19,6 +20,9 @@ interface PartnerRecord {
   total_commission?: number;
   user_id?: string;
 }
+
+// Create a type that matches what we need to insert into the database
+type PartnerInsert = Omit<PartnerRecord, 'id' | 'created_at' | 'updated_at'>;
 
 export const usePartners = () => {
   const [partners, setPartners] = useState<Partner[]>([]);
@@ -124,17 +128,20 @@ export const usePartners = () => {
   const createPartner = async (partnerData: Omit<Partner, "id" | "created_at" | "updated_at">) => {
     try {
       // Create a partner object with only the fields that exist in the database table
-      // Fixed: Only include fields that exist in the database schema
-      const partnerToInsert = {
+      const partnerToInsert: PartnerInsert = {
         company_name: partnerData.company_name,
         commission_rate: partnerData.commission_rate || 0,
-        // Optional fields are only added if they exist in the database schema
-        // We don't include fields that don't exist in the database
+        // Include optional fields if they exist in the data
+        ...(partnerData.contact_name && { contact_name: partnerData.contact_name }),
+        ...(partnerData.email && { email: partnerData.email }),
+        ...(partnerData.phone && { phone: partnerData.phone }),
+        ...(partnerData.address && { address: partnerData.address }),
+        ...(partnerData.user_id && { user_id: partnerData.user_id }),
       };
 
       const { data, error } = await supabase
         .from('partners')
-        .insert([partnerToInsert])
+        .insert(partnerToInsert)
         .select();
 
       if (error) throw error;
