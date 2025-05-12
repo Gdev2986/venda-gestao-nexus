@@ -1,4 +1,5 @@
-import { useState, useEffect } from "react";
+
+import React, { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import {
   Table,
@@ -23,7 +24,6 @@ import {
   DialogDescription,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
   DialogFooter,
 } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
@@ -44,14 +44,18 @@ const UsersTab = () => {
   const [page, setPage] = useState(1);
   const [pageSize] = useState(10);
   const queryClient = useQueryClient();
+  const [open, setOpen] = useState(false);
+  const [selectedUser, setSelectedUser] = useState<User | null>(null);
+  const [newRole, setNewRole] = useState<UserRole | null>(null);
 
+  // Fetch users with proper query setup
   const {
     data: users,
     isLoading,
     error,
-  } = useQuery(
-    ["users", searchTerm, roleFilter, page, pageSize],
-    async () => {
+  } = useQuery({
+    queryKey: ["users", searchTerm, roleFilter, page, pageSize],
+    queryFn: async () => {
       let query = supabase
         .from("profiles")
         .select("*")
@@ -69,12 +73,13 @@ const UsersTab = () => {
       }
 
       return data as User[];
-    }
-  );
+    },
+  });
 
-  const { data: totalUsersCount, isLoading: isCountLoading } = useQuery(
-    ["usersCount", searchTerm, roleFilter],
-    async () => {
+  // Count total users for pagination
+  const { data: totalUsersCount, isLoading: isCountLoading } = useQuery({
+    queryKey: ["usersCount", searchTerm, roleFilter],
+    queryFn: async () => {
       let query = supabase
         .from("profiles")
         .select("*", { count: "exact" })
@@ -91,15 +96,17 @@ const UsersTab = () => {
       }
 
       return count || 0;
-    }
-  );
+    },
+  });
 
-  const totalPages = Math.ceil(totalUsersCount / pageSize);
+  // Calculate total pages
+  const totalPages = Math.ceil((totalUsersCount || 0) / pageSize);
 
-  useEffect(() => {
-    queryClient.prefetchQuery(
-      ["users", searchTerm, roleFilter, page + 1, pageSize],
-      async () => {
+  // Prefetch next page
+  React.useEffect(() => {
+    queryClient.prefetchQuery({
+      queryKey: ["users", searchTerm, roleFilter, page + 1, pageSize],
+      queryFn: async () => {
         let query = supabase
           .from("profiles")
           .select("*")
@@ -117,8 +124,8 @@ const UsersTab = () => {
         }
 
         return data as User[];
-      }
-    );
+      },
+    });
   }, [users, searchTerm, roleFilter, page, pageSize, queryClient]);
 
   const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -132,10 +139,6 @@ const UsersTab = () => {
     setPage(1);
   };
 
-  const [open, setOpen] = useState(false);
-  const [selectedUser, setSelectedUser] = useState<User | null>(null);
-  const [newRole, setNewRole] = useState<UserRole | null>(null);
-
   const handleOpenDialog = (user: User) => {
     setSelectedUser(user);
     setNewRole(user.role);
@@ -148,8 +151,9 @@ const UsersTab = () => {
     setNewRole(null);
   };
 
-  const updateRoleMutation = useMutation(
-    async ({ userId, newRole }: { userId: string; newRole: UserRole }) => {
+  // Update user role mutation
+  const updateRoleMutation = useMutation({
+    mutationFn: async ({ userId, newRole }: { userId: string; newRole: UserRole }) => {
       const { data, error } = await supabase
         .from("profiles")
         .update({ role: newRole })
@@ -161,28 +165,26 @@ const UsersTab = () => {
 
       return data;
     },
-    {
-      onSuccess: () => {
-        queryClient.invalidateQueries(["users", searchTerm, roleFilter, page, pageSize]);
-        toast({
-          title: "Sucesso",
-          description: "Perfil do usuário atualizado com sucesso.",
-        });
-        handleCloseDialog();
-      },
-      onError: (error: any) => {
-        toast({
-          variant: "destructive",
-          title: "Erro",
-          description: error.message,
-        });
-      },
-    }
-  );
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["users"] });
+      toast({
+        title: "Sucesso",
+        description: "Perfil do usuário atualizado com sucesso.",
+      });
+      handleCloseDialog();
+    },
+    onError: (error: any) => {
+      toast({
+        variant: "destructive",
+        title: "Erro",
+        description: error.message,
+      });
+    },
+  });
 
   const handleUpdateRole = async () => {
     if (!selectedUser || !newRole) return;
-    await updateRoleMutation.mutateAsync({
+    updateRoleMutation.mutate({
       userId: selectedUser.id,
       newRole: newRole,
     });
@@ -195,9 +197,10 @@ const UsersTab = () => {
           placeholder="Buscar usuários..."
           value={searchTerm}
           onChange={handleSearchChange}
+          className="max-w-xs"
         />
-        <Select onValueChange={handleRoleFilterChange} value={roleFilter}>
-          <SelectTrigger>
+        <Select value={roleFilter} onValueChange={handleRoleFilterChange}>
+          <SelectTrigger className="w-[180px]">
             <SelectValue placeholder="Filtrar por perfil" />
           </SelectTrigger>
           <SelectContent>
@@ -210,127 +213,57 @@ const UsersTab = () => {
           </SelectContent>
         </Select>
       </div>
-      <div className="relative overflow-x-auto shadow-md sm:rounded-lg">
-        <Table>
-          <TableHeader>
+      
+      <Table>
+        <TableHeader>
+          <TableRow>
+            <TableHead>Email</TableHead>
+            <TableHead>Perfil</TableHead>
+            <TableHead className="text-right">Ações</TableHead>
+          </TableRow>
+        </TableHeader>
+        <TableBody>
+          {isLoading || isCountLoading ? (
             <TableRow>
-              <TableHead>Email</TableHead>
-              <TableHead>Perfil</TableHead>
-              <TableHead className="sr-only">Editar</TableHead>
+              <TableCell colSpan={3} className="text-center py-4">
+                <Loader2 className="h-4 w-4 mr-2 inline-block animate-spin" />
+                Carregando usuários...
+              </TableCell>
             </TableRow>
-          </TableHeader>
-          <TableBody>
-            {isLoading || isCountLoading ? (
-              <TableRow>
-                <TableCell colSpan={3} className="text-center py-4">
-                  <Loader2 className="h-4 w-4 mr-2 inline-block animate-spin" />
-                  Carregando usuários...
+          ) : error ? (
+            <TableRow>
+              <TableCell colSpan={3} className="text-center py-4">
+                Erro ao carregar usuários.
+              </TableCell>
+            </TableRow>
+          ) : users && users.length > 0 ? (
+            users.map((user) => (
+              <TableRow key={user.id}>
+                <TableCell>{user.email}</TableCell>
+                <TableCell>{user.role}</TableCell>
+                <TableCell className="text-right">
+                  <Button
+                    variant="ghost"
+                    onClick={() => handleOpenDialog(user)}
+                  >
+                    Editar
+                  </Button>
                 </TableCell>
               </TableRow>
-            ) : error ? (
-              <TableRow>
-                <TableCell colSpan={3} className="text-center py-4">
-                  Erro ao carregar usuários.
-                </TableCell>
-              </TableRow>
-            ) : users && users.length > 0 ? (
-              users.map((user) => (
-                <TableRow key={user.id}>
-                  <TableCell>{user.email}</TableCell>
-                  <TableCell>{user.role}</TableCell>
-                  <TableCell>
-                    <Dialog>
-                      <DialogTrigger asChild>
-                        <Button
-                          variant="ghost"
-                          onClick={() => handleOpenDialog(user)}
-                        >
-                          Editar
-                        </Button>
-                      </DialogTrigger>
-                      <DialogContent className="sm:max-w-[425px]">
-                        <DialogHeader>
-                          <DialogTitle>Editar Perfil</DialogTitle>
-                          <DialogDescription>
-                            Atualize o perfil do usuário.
-                          </DialogDescription>
-                        </DialogHeader>
-                        <div className="grid gap-4 py-4">
-                          <div className="grid grid-cols-4 items-center gap-4">
-                            <Label htmlFor="email" className="text-right">
-                              Email
-                            </Label>
-                            <Input
-                              type="email"
-                              id="email"
-                              value={user.email}
-                              className="col-span-3"
-                              disabled
-                            />
-                          </div>
-                          <div className="grid grid-cols-4 items-center gap-4">
-                            <Label htmlFor="role" className="text-right">
-                              Perfil
-                            </Label>
-                            <Select
-                              value={newRole || user.role}
-                              onValueChange={(value) =>
-                                setNewRole(value as UserRole)
-                              }
-                            >
-                              <SelectTrigger>
-                                <SelectValue placeholder="Selecione um perfil" />
-                              </SelectTrigger>
-                              <SelectContent>
-                                <SelectItem value={UserRole.ADMIN}>
-                                  Administrador
-                                </SelectItem>
-                                <SelectItem value={UserRole.CLIENT}>
-                                  Cliente
-                                </SelectItem>
-                                <SelectItem value={UserRole.PARTNER}>
-                                  Parceiro
-                                </SelectItem>
-                                <SelectItem value={UserRole.FINANCIAL}>
-                                  Financeiro
-                                </SelectItem>
-                                <SelectItem value={UserRole.LOGISTICS}>
-                                  Logística
-                                </SelectItem>
-                              </SelectContent>
-                            </Select>
-                          </div>
-                        </div>
-                        <DialogFooter>
-                          <Button
-                            type="button"
-                            variant="secondary"
-                            onClick={handleCloseDialog}
-                          >
-                            Cancelar
-                          </Button>
-                          <Button type="submit" onClick={handleUpdateRole}>
-                            Salvar
-                          </Button>
-                        </DialogFooter>
-                      </DialogContent>
-                    </Dialog>
-                  </TableCell>
-                </TableRow>
-              ))
-            ) : (
-              <TableRow>
-                <TableCell colSpan={3} className="text-center py-4">
-                  Nenhum usuário encontrado.
-                </TableCell>
-              </TableRow>
-            )}
-          </TableBody>
-        </Table>
-      </div>
+            ))
+          ) : (
+            <TableRow>
+              <TableCell colSpan={3} className="text-center py-4">
+                Nenhum usuário encontrado.
+              </TableCell>
+            </TableRow>
+          )}
+        </TableBody>
+      </Table>
+      
       <div className="flex items-center justify-between py-4">
         <span>
-          Total: {totalUsersCount} usuários - Página {page} de {totalPages}
+          Total: {totalUsersCount || 0} usuários - Página {page} de {totalPages || 1}
         </span>
         <div>
           <Button
@@ -343,13 +276,86 @@ const UsersTab = () => {
           </Button>
           <Button
             variant="outline"
-            onClick={() => setPage((prev) => Math.min(prev + 1, totalPages))}
-            disabled={page === totalPages}
+            onClick={() => setPage((prev) => Math.min(prev + 1, totalPages || 1))}
+            disabled={page === totalPages || !totalPages}
           >
             Próximo
           </Button>
         </div>
       </div>
+
+      <Dialog open={open} onOpenChange={setOpen}>
+        <DialogContent className="sm:max-w-[425px]">
+          <DialogHeader>
+            <DialogTitle>Editar Perfil</DialogTitle>
+            <DialogDescription>
+              Atualize o perfil do usuário.
+            </DialogDescription>
+          </DialogHeader>
+          {selectedUser && (
+            <div className="grid gap-4 py-4">
+              <div className="grid grid-cols-4 items-center gap-4">
+                <Label htmlFor="email" className="text-right">
+                  Email
+                </Label>
+                <Input
+                  type="email"
+                  id="email"
+                  value={selectedUser.email}
+                  className="col-span-3"
+                  disabled
+                />
+              </div>
+              <div className="grid grid-cols-4 items-center gap-4">
+                <Label htmlFor="role" className="text-right">
+                  Perfil
+                </Label>
+                <div className="col-span-3">
+                  <Select
+                    value={newRole || selectedUser.role}
+                    onValueChange={(value) =>
+                      setNewRole(value as UserRole)
+                    }
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Selecione um perfil" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value={UserRole.ADMIN}>
+                        Administrador
+                      </SelectItem>
+                      <SelectItem value={UserRole.CLIENT}>
+                        Cliente
+                      </SelectItem>
+                      <SelectItem value={UserRole.PARTNER}>
+                        Parceiro
+                      </SelectItem>
+                      <SelectItem value={UserRole.FINANCIAL}>
+                        Financeiro
+                      </SelectItem>
+                      <SelectItem value={UserRole.LOGISTICS}>
+                        Logística
+                      </SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+            </div>
+          )}
+          <DialogFooter>
+            <Button
+              type="button"
+              variant="secondary"
+              onClick={handleCloseDialog}
+            >
+              Cancelar
+            </Button>
+            <Button type="submit" onClick={handleUpdateRole}>
+              Salvar
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };

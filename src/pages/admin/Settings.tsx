@@ -1,3 +1,4 @@
+
 import { PageHeader } from "@/components/page/PageHeader";
 import { Card, CardContent } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -9,9 +10,10 @@ import { UserRole } from "@/types";
 import { AdminProfile } from "@/components/admin/settings/AdminProfile";
 import AdminNotificationsTab from "@/components/admin/settings/AdminNotificationsTab";
 import UsersTab from "@/components/admin/settings/UsersTab";
+import { supabase } from "@/integrations/supabase/client";
 
 const AdminSettings = () => {
-  const { user, updateUserProfile } = useAuth();
+  const { user } = useAuth();
   const { toast } = useToast();
   const navigate = useNavigate();
   const [name, setName] = useState("");
@@ -26,6 +28,41 @@ const AdminSettings = () => {
       setRole(user.user_metadata?.role || "");
     }
   }, [user]);
+
+  const updateUserProfile = async ({
+    name,
+    email,
+    role,
+  }: {
+    name: string;
+    email: string;
+    role: UserRole;
+  }) => {
+    // Since updateUserProfile doesn't exist in AuthContext, we implement it here
+    try {
+      const { error } = await supabase.auth.updateUser({
+        email,
+        data: { name, role }
+      });
+
+      if (error) throw error;
+      
+      // Update profile table if needed
+      if (user) {
+        const { error: profileError } = await supabase
+          .from('profiles')
+          .update({ name, role })
+          .eq('id', user.id);
+          
+        if (profileError) throw profileError;
+      }
+      
+      return { success: true };
+    } catch (error) {
+      console.error("Failed to update user profile:", error);
+      throw error;
+    }
+  };
 
   const handleProfileUpdate = async () => {
     setIsSaving(true);

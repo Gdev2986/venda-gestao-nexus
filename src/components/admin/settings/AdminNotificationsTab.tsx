@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -21,9 +22,12 @@ const AdminNotificationsTab = () => {
   const [frequency, setFrequency] = useState("immediate");
 
   const handleTargetChange = (value: string) => {
-    // Convert string to UserRole type before setting it
-    const roleValue = value === "all" ? "all" : value as UserRole;
-    setTargetRole(roleValue);
+    // Convert string to UserRole type or "all"
+    if (value === "all") {
+      setTargetRole("all");
+    } else {
+      setTargetRole(value as UserRole);
+    }
   };
 
   return (
@@ -97,7 +101,10 @@ const AdminNotificationsTab = () => {
 
         <div>
           <Label htmlFor="notification-target">Perfil Padrão para Notificações</Label>
-          <Select onValueChange={handleTargetChange} value={targetRole}>
+          <Select 
+            value={targetRole} 
+            onValueChange={handleTargetChange}
+          >
             <SelectTrigger>
               <SelectValue placeholder="Selecione um perfil" />
             </SelectTrigger>
