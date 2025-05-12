@@ -1,130 +1,182 @@
 
-import { PageHeader } from "@/components/page/PageHeader";
-import { PageWrapper } from "@/components/page/PageWrapper";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Button } from "@/components/ui/button";
-import { CreditCard, ArrowRight } from "lucide-react";
-import { Link } from "react-router-dom";
-import { PATHS } from "@/routes/paths";
-import SidebarContent from "@/components/dashboard/client/SidebarContent";
+import { useState, useEffect } from "react";
+import { useToast } from "@/hooks/use-toast";
+import { subDays } from "date-fns";
+import { generateMockSales, generateDailySalesData, generatePaymentMethodsData } from "@/utils/sales-utils";
+
+// Import the components
+import DateRangeFilter, { DateRange } from "@/components/dashboard/client/DateRangeFilter";
 import StatsCards from "@/components/dashboard/client/StatsCards";
 import MainOverviewTabs from "@/components/dashboard/client/MainOverviewTabs";
-
-// Mock data for the user dashboard
-const mockData = {
-  stats: {
-    totalSales: 2500, // Renamed from balance
-    pendingPayments: 12, // Renamed from transactions  
-    completedPayments: 10, // New field
-    clientBalance: 2000, // New field to match expected type
-  },
-  salesData: [
-    { name: '2023-04-01', total: 580 }, // Changed from date/value to name/total
-    { name: '2023-04-02', total: 450 },
-    { name: '2023-04-03', total: 620 },
-    { name: '2023-04-04', total: 700 },
-  ],
-  paymentMethodsData: [
-    { name: 'credit', value: 8 }, // Changed from method/count/percentage to name/value
-    { name: 'debit', value: 3 },
-    { name: 'pix', value: 1 },
-  ],
-  filteredTransactions: [
-    { id: 't1', date: '2023-04-04', value: 120, type: 'credit' },
-    { id: 't2', date: '2023-04-03', value: 85, type: 'debit' },
-    { id: 't3', date: '2023-04-02', value: 200, type: 'credit' },
-  ],
-  machines: [
-    { 
-      id: 'm1', 
-      name: 'Terminal 1', 
-      serial_number: 'SP2204785', 
-      model: 'SigmaPay S920', 
-      status: 'Ativo',
-      created_at: '2023-01-01'
-    },
-    { 
-      id: 'm2', 
-      name: 'Terminal 2', 
-      serial_number: 'SP2204786', 
-      model: 'SigmaPay Mini', 
-      status: 'Ativo',
-      created_at: '2023-02-15'
-    },
-  ]
-};
+import SidebarContent from "@/components/dashboard/client/SidebarContent";
 
 const UserDashboard = () => {
+  const { toast } = useToast();
+  const [loading, setLoading] = useState(true);
+  const [transactions, setTransactions] = useState<any[]>([]);
+  const [filteredTransactions, setFilteredTransactions] = useState<any[]>([]);
+  const [paginatedTransactions, setPaginatedTransactions] = useState<any[]>([]);
+  const [machines, setMachines] = useState<any[]>([]);
+  const [paginatedMachines, setPaginatedMachines] = useState<any[]>([]);
+  const [stats, setStats] = useState({
+    totalSales: 2500.00, // Valores fixos conforme imagem de referência
+    pendingPayments: 12.00,
+    completedPayments: 10.00,
+    clientBalance: 2000.00,
+  });
+  const [dateRange, setDateRange] = useState<DateRange>({
+    from: subDays(new Date(), 30),
+    to: new Date(),
+  });
+  const [salesData, setSalesData] = useState<any[]>([]);
+  const [paymentMethodsData, setPaymentMethodsData] = useState<any[]>([]);
+  
+  // Pagination states
+  const [transactionsPage, setTransactionsPage] = useState(1);
+  const [machinesPage, setMachinesPage] = useState(1);
+  const transactionsPerPage = 5;
+  const machinesPerPage = 3;
+  const [totalTransactionsPages, setTotalTransactionsPages] = useState(1);
+  const [totalMachinesPages, setTotalMachinesPages] = useState(1);
+
+  // Fetch mock data and apply filters based on date range
+  useEffect(() => {
+    const fetchDashboardData = async () => {
+      try {
+        setLoading(true);
+        
+        // Generate mock data based on selected date range
+        const mockTransactions = generateMockSales(50, dateRange);
+        
+        // Mock machines data
+        const mockMachines = [
+          { id: "1", model: "POS X200", serial_number: "SN12345678", status: "ACTIVE", created_at: new Date().toISOString() },
+          { id: "2", model: "POS X300", serial_number: "SN87654321", status: "ACTIVE", created_at: new Date().toISOString() },
+          { id: "3", model: "POS X100", serial_number: "SN11223344", status: "MAINTENANCE", created_at: new Date().toISOString() },
+          { id: "4", model: "POS X400", serial_number: "SN22334455", status: "ACTIVE", created_at: new Date().toISOString() },
+          { id: "5", model: "POS X200", serial_number: "SN33445566", status: "INACTIVE", created_at: new Date().toISOString() },
+          { id: "6", model: "POS X500", serial_number: "SN44556677", status: "ACTIVE", created_at: new Date().toISOString() },
+          { id: "7", model: "POS X300", serial_number: "SN55667788", status: "MAINTENANCE", created_at: new Date().toISOString() },
+        ];
+        
+        // Generate chart data based on selected date range
+        const dailySalesData = generateDailySalesData(dateRange);
+        const methodsData = generatePaymentMethodsData(dateRange);
+        
+        setTransactions(mockTransactions);
+        setMachines(mockMachines);
+        setSalesData(dailySalesData);
+        setPaymentMethodsData(methodsData);
+
+        // Filter transactions by date
+        filterTransactionsByDate(mockTransactions, dateRange);
+        
+        // Calculate machines pagination
+        setTotalMachinesPages(Math.ceil(mockMachines.length / machinesPerPage));
+        updateMachinesPagination(mockMachines, machinesPage, machinesPerPage);
+        
+        // Reset to first page when data changes
+        setTransactionsPage(1);
+        setMachinesPage(1);
+        
+        // Simulate loading delay
+        setTimeout(() => {
+          setLoading(false);
+        }, 500);
+      } catch (error: any) {
+        toast({
+          variant: "destructive",
+          title: "Erro ao carregar dados",
+          description: error.message,
+        });
+        setLoading(false);
+      }
+    };
+    
+    fetchDashboardData();
+  }, [dateRange, toast]);
+
+  // Effect for paginating transactions when filtered transactions or page changes
+  useEffect(() => {
+    const startIndex = (transactionsPage - 1) * transactionsPerPage;
+    const endIndex = startIndex + transactionsPerPage;
+    setPaginatedTransactions(filteredTransactions.slice(startIndex, endIndex));
+  }, [filteredTransactions, transactionsPage, transactionsPerPage]);
+
+  const filterTransactionsByDate = (transactions: any[], range: DateRange) => {
+    const filtered = transactions.filter(tx => {
+      const txDate = new Date(tx.date);
+      const fromDate = new Date(range.from);
+      fromDate.setHours(0, 0, 0, 0);
+      const toDate = new Date(range.to);
+      toDate.setHours(23, 59, 59, 999);
+      return txDate >= fromDate && txDate <= toDate;
+    });
+    
+    setFilteredTransactions(filtered);
+    setTotalTransactionsPages(Math.ceil(filtered.length / transactionsPerPage));
+  };
+
+  const updateMachinesPagination = (machines: any[], page: number, perPage: number) => {
+    const startIndex = (page - 1) * perPage;
+    const endIndex = startIndex + perPage;
+    setPaginatedMachines(machines.slice(startIndex, endIndex));
+  };
+
+  // Handle date range selection
+  const handleDateRangeChange = (newRange: DateRange) => {
+    setDateRange(newRange);
+    // The useEffect will trigger data reload with new date range
+  };
+
+  // Handle page changes
+  const handleTransactionsPageChange = (page: number) => {
+    setTransactionsPage(page);
+  };
+
+  const handleMachinesPageChange = (page: number) => {
+    setMachinesPage(page);
+    updateMachinesPagination(machines, page, machinesPerPage);
+  };
+
   return (
-    <div className="space-y-6">
-      <PageHeader 
-        title="Meu Painel" 
-        description="Acompanhe seus pagamentos e máquinas"
-      />
+    <div className="container mx-auto py-10">
+      <div className="flex flex-col mb-6">
+        <h1 className="text-3xl font-bold mb-2">Meu Painel</h1>
+        <p className="text-muted-foreground">Acompanhe seus pagamentos e máquinas</p>
+      </div>
       
-      <StatsCards stats={mockData.stats} loading={false} />
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6">
+        <h2 className="sr-only">Visão geral</h2>
+        <DateRangeFilter 
+          dateRange={dateRange}
+          onDateRangeChange={handleDateRangeChange}
+        />
+      </div>
       
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <StatsCards stats={stats} loading={loading} />
+      
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mt-8">
         <div className="lg:col-span-2">
-          <MainOverviewTabs 
-            salesData={mockData.salesData}
-            paymentMethodsData={mockData.paymentMethodsData}
-            filteredTransactions={mockData.filteredTransactions}
-            machines={mockData.machines}
-            loading={false} // Changed from isLoading to loading to match interface
-            period="week"
-            onChangePeriod={() => {}}
-            onViewAllTransactions={() => {}}
-            onViewAllMachines={() => {}}
-            transactionsPage={1}
-            totalTransactionsPages={1}
-            onTransactionsPageChange={() => {}}
-            machinesPage={1}
-            totalMachinesPages={1}
-            onMachinesPageChange={() => {}}
+          <MainOverviewTabs
+            salesData={salesData}
+            paymentMethodsData={paymentMethodsData}
+            filteredTransactions={paginatedTransactions}
+            machines={paginatedMachines}
+            loading={loading}
+            transactionsPage={transactionsPage}
+            totalTransactionsPages={totalTransactionsPages}
+            onTransactionsPageChange={handleTransactionsPageChange}
+            machinesPage={machinesPage}
+            totalMachinesPages={totalMachinesPages}
+            onMachinesPageChange={handleMachinesPageChange}
           />
         </div>
         
-        <div className="space-y-6">
-          <SidebarContent loading={false} />
+        <div>
+          <SidebarContent loading={loading} />
         </div>
       </div>
-      
-      <PageWrapper>
-        <CardHeader>
-          <CardTitle className="text-xl">Minhas Máquinas</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-4">
-            {mockData.machines.map((machine) => (
-              <div key={machine.id} className="p-3 border rounded-md flex items-center justify-between hover:bg-accent/50 cursor-pointer transition-colors">
-                <div>
-                  <div className="flex items-center">
-                    <CreditCard className="h-4 w-4 mr-2 text-muted-foreground" />
-                    <span className="font-medium">{machine.name}</span>
-                  </div>
-                  <div className="text-xs text-muted-foreground mt-1">
-                    <p>S/N: {machine.serial_number}</p>
-                    <p>Modelo: {machine.model}</p>
-                  </div>
-                </div>
-                <div>
-                  <span className="inline-block px-2 py-1 text-xs font-medium rounded bg-green-100 text-green-800">{machine.status}</span>
-                </div>
-              </div>
-            ))}
-          </div>
-          
-          <div className="mt-6">
-            <Button variant="outline" className="w-full" asChild>
-              <Link to={PATHS.USER.MACHINES}>
-                Ver todas as máquinas <ArrowRight className="ml-2 h-4 w-4" />
-              </Link>
-            </Button>
-          </div>
-        </CardContent>
-      </PageWrapper>
     </div>
   );
 };

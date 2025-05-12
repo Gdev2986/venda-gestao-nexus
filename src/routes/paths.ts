@@ -80,5 +80,7 @@ export const PATHS = {
     OPERATIONS: "/logistics/operations",
     REQUESTS: "/logistics/requests",
     INVENTORY: "/logistics/inventory",
+    SETTINGS: "/logistics/settings",
+    CALENDAR: "/logistics/calendar"
   }
 };

@@ -91,7 +91,9 @@ function App() {
                 />
               }
             >
-              <Route path="user">{ClientRoutes}</Route>
+              <Route path="user" element={<MainLayout />}>
+                {ClientRoutes}
+              </Route>
             </Route>
 
             {/* Partner Routes */}
@@ -117,7 +119,9 @@ function App() {
                 />
               }
             >
-              <Route path="financial">{FinancialRoutes}</Route>
+              <Route path="financial" element={<MainLayout />}>
+                {FinancialRoutes}
+              </Route>
             </Route>
 
             {/* Logistics Layout with Logistics Routes - requires logistics role */}

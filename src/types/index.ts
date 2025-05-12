@@ -18,6 +18,14 @@ export enum PaymentStatus {
   PAID = "PAID"
 }
 
+export enum PaymentMethod {
+  CREDIT = "credit",
+  DEBIT = "debit",
+  PIX = "pix",
+  BOLETO = "boleto",
+  TRANSFER = "transfer"
+}
+
 export enum PaymentType {
   PIX = "PIX",
   TED = "TED",
@@ -41,14 +49,6 @@ export enum ClientStatus {
   ACTIVE = "active",
   INACTIVE = "inactive",
   PENDING = "pending"
-}
-
-export enum PaymentMethod {
-  CREDIT = "credit",
-  DEBIT = "debit",
-  PIX = "pix",
-  BOLETO = "boleto",
-  TRANSFER = "transfer"
 }
 
 export interface Notification {
@@ -158,16 +158,16 @@ export interface Sale {
   id: string;
   code: string;
   terminal: string;
-  client_name: string;
+  client_name?: string;
   gross_amount: number;
   net_amount: number;
-  amount: number;
+  amount?: number;
   date: string;
   payment_method: PaymentMethod;
   client_id: string;
   created_at: string;
   updated_at: string;
-  status: string;
+  status?: string;
   machine_id?: string;
   partner_id?: string;
   processing_status?: "RAW" | "PROCESSED";
