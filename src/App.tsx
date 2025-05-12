@@ -7,6 +7,7 @@ import { AuthProvider } from "@/contexts/AuthContext";
 import RootLayout from "./layouts/RootLayout";
 import MainLayout from "./layouts/MainLayout";
 import AdminLayout from "./layouts/AdminLayout";
+import LogisticsLayout from "./layouts/LogisticsLayout";
 
 // Route imports
 const Home = lazy(() => import("./pages/Index"));
@@ -32,6 +33,8 @@ const Unauthorized = lazy(() => import("./pages/NotFound"));
 
 // Import admin routes
 import { adminRoutes } from "./routes/adminRoutes";
+// Import logistics routes
+import { logisticsMainRoutes } from "./routes/admin/logisticsRoutes";
 
 function App() {
   return (
@@ -64,6 +67,11 @@ function App() {
               <Route path="notifications" element={<AdminNotifications />} />
               {/* Include all admin routes */}
               {adminRoutes}
+            </Route>
+
+            {/* Logistics Layout with Logistics Routes */}
+            <Route path="logistics" element={<LogisticsLayout />}>
+              {logisticsMainRoutes}
             </Route>
             
             {/* Catch-all route */}
