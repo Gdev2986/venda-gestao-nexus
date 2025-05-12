@@ -1,4 +1,3 @@
-
 // User roles and permissions
 export enum UserRole {
   ADMIN = "ADMIN",
@@ -11,6 +10,9 @@ export enum UserRole {
   SUPPORT = "SUPPORT",
   USER = "USER"
 }
+
+// For services that expect specific roles
+export type ValidRole = UserRole.ADMIN | UserRole.CLIENT | UserRole.FINANCIAL | UserRole.PARTNER | UserRole.LOGISTICS;
 
 // Payment status options
 export enum PaymentStatus {

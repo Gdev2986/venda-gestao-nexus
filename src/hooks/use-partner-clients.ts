@@ -15,6 +15,7 @@ export const usePartnerClients = (options: UsePartnerClientsOptions) => {
   const [isLoading, setIsLoading] = useState(true);
   const [currentPage, setCurrentPage] = useState(initialPage);
   const [totalPages, setTotalPages] = useState(1);
+  const [error, setError] = useState<Error | null>(null);
 
   // Fetch clients for the partner
   const fetchClients = useCallback(async () => {
@@ -25,20 +26,22 @@ export const usePartnerClients = (options: UsePartnerClientsOptions) => {
 
     setIsLoading(true);
     try {
-      const { data, error, count } = await supabase
+      const { data, error: supabaseError, count } = await supabase
         .from("clients")
         .select("*", { count: "exact" })
         .eq("partner_id", partnerId)
         .range((currentPage - 1) * pageSize, currentPage * pageSize - 1);
 
-      if (error) {
-        throw error;
+      if (supabaseError) {
+        throw supabaseError;
       }
 
       setClients(data || []);
       setTotalPages(count ? Math.ceil(count / pageSize) : 1);
-    } catch (error) {
-      console.error("Error fetching partner clients:", error);
+      setError(null);
+    } catch (err) {
+      console.error("Error fetching partner clients:", err);
+      setError(err instanceof Error ? err : new Error("Unknown error fetching clients"));
     } finally {
       setIsLoading(false);
     }
@@ -58,6 +61,7 @@ export const usePartnerClients = (options: UsePartnerClientsOptions) => {
     isLoading,
     currentPage,
     totalPages,
+    error,
     handlePageChange,
     refreshClients: fetchClients,
   };

@@ -1,3 +1,4 @@
+
 import { Suspense, lazy } from "react";
 import { createBrowserRouter, RouterProvider } from "react-router-dom";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
@@ -8,28 +9,28 @@ import RootLayout from "./layouts/RootLayout";
 import { Toaster } from "./components/ui/sonner";
 
 // Route imports
-const Home = lazy(() => import("./pages/Home"));
-const Login = lazy(() => import("./pages/Login"));
-const Register = lazy(() => import("./pages/Register"));
-const ForgotPassword = lazy(() => import("./pages/ForgotPassword"));
-const ResetPassword = lazy(() => import("./pages/ResetPassword"));
-const Profile = lazy(() => import("./pages/Profile"));
+const Home = lazy(() => import("./pages/Index"));
+const Login = lazy(() => import("./pages/auth/Login"));
+const Register = lazy(() => import("./pages/auth/Register"));
+const ForgotPassword = lazy(() => import("./pages/auth/ForgotPassword"));
+const ResetPassword = lazy(() => import("./pages/auth/ResetPassword"));
+const Profile = lazy(() => import("./pages/Settings"));
 const Clients = lazy(() => import("./pages/Clients"));
 const Sales = lazy(() => import("./pages/Sales"));
 const Partners = lazy(() => import("./pages/Partners"));
 const NotificationsPage = lazy(() => import("./pages/Notifications"));
 const Payments = lazy(() => import("./pages/Payments"));
-const PixKeys = lazy(() => import("./pages/PixKeys"));
+const PixKeys = lazy(() => import("./pages/settings/Settings"));
 
 // Admin Routes
 const AdminDashboard = lazy(() => import("./pages/admin/Dashboard"));
 
 // Error Pages
 const NotFound = lazy(() => import("./pages/NotFound"));
-const Unauthorized = lazy(() => import("./pages/Unauthorized"));
+const Unauthorized = lazy(() => import("./pages/NotFound"));
 
 // Route definitions
-import { adminRoutes } from "./routes/admin/adminRoutes";
+const adminRoutes = [];
 
 const router = createBrowserRouter([
   {
