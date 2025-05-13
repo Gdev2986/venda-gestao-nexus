@@ -28,3 +28,6 @@ export const adminRoutes = [
   ...paymentRoutes,
   ...settingsRoutes
 ];
+
+// Also export as AdminRoutes for backwards compatibility
+export { adminRoutes as AdminRoutes };
