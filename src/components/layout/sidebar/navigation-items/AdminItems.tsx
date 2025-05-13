@@ -38,7 +38,7 @@ export const adminItems: SidebarItem[] = [
   {
     title: "Logística",
     icon: Truck,
-    href: "/logistics/dashboard", // Correção do caminho
+    href: PATHS.ADMIN.LOGISTICS, // Using the correct path from PATHS
     roles: [UserRole.ADMIN],
   },
   {

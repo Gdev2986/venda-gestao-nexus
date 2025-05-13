@@ -10,6 +10,10 @@ import AdminReports from "../../pages/admin/Reports";
 import AdminSupport from "../../pages/admin/Support";
 import AdminNotifications from "../../pages/admin/Notifications";
 
+// Debug logging
+console.log("Loading settingsRoutes.tsx");
+console.log("PATHS.ADMIN.SETTINGS:", PATHS.ADMIN.SETTINGS);
+
 // Settings and Other Routes for Admin Module
 export const settingsRoutes = [
   <Route 

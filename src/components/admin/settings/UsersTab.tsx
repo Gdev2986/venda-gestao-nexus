@@ -35,7 +35,7 @@ import { Loader2 } from "lucide-react";
 interface User {
   id: string;
   email: string;
-  role: UserRole;
+  role: string;
 }
 
 const UsersTab = () => {
@@ -46,7 +46,7 @@ const UsersTab = () => {
   const queryClient = useQueryClient();
   const [open, setOpen] = useState(false);
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
-  const [newRole, setNewRole] = useState<UserRole | null>(null);
+  const [newRole, setNewRole] = useState<string | null>(null);
 
   // Fetch users with proper query setup
   const {
@@ -63,7 +63,7 @@ const UsersTab = () => {
         .range((page - 1) * pageSize, page * pageSize - 1);
 
       if (roleFilter !== "all") {
-        query = query.eq("role", roleFilter as UserRole);
+        query = query.eq("role", roleFilter);
       }
 
       const { data, error } = await query;
@@ -86,7 +86,7 @@ const UsersTab = () => {
         .ilike("email", `%${searchTerm}%`);
 
       if (roleFilter !== "all") {
-        query = query.eq("role", roleFilter as UserRole);
+        query = query.eq("role", roleFilter);
       }
 
       const { count, error } = await query;
@@ -114,7 +114,7 @@ const UsersTab = () => {
           .range(page * pageSize, (page + 1) * pageSize - 1);
 
         if (roleFilter !== "all") {
-          query = query.eq("role", roleFilter as UserRole);
+          query = query.eq("role", roleFilter);
         }
 
         const { data, error } = await query;
@@ -152,7 +152,7 @@ const UsersTab = () => {
 
   // Update user role mutation
   const updateRoleMutation = useMutation({
-    mutationFn: async ({ userId, newRole }: { userId: string; newRole: UserRole }) => {
+    mutationFn: async ({ userId, newRole }: { userId: string; newRole: string }) => {
       const { data, error } = await supabase
         .from("profiles")
         .update({ role: newRole })
@@ -312,9 +312,7 @@ const UsersTab = () => {
                 <div className="col-span-3">
                   <Select
                     value={String(newRole || selectedUser.role)}
-                    onValueChange={(value) =>
-                      setNewRole(value as UserRole)
-                    }
+                    onValueChange={(value) => setNewRole(value)}
                   >
                     <SelectTrigger>
                       <SelectValue placeholder="Selecione um perfil" />
