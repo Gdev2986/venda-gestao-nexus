@@ -1,7 +1,14 @@
 
 import { useState } from "react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Label } from "@/components/ui/label";
+import { Switch } from "@/components/ui/switch";
 import { Button } from "@/components/ui/button";
+import { useToast } from "@/hooks/use-toast";
+import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
+import { notificationService } from "@/services/NotificationService";
+import { supabase } from "@/integrations/supabase/client";
 import {
   Select,
   SelectContent,
@@ -9,137 +16,230 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Label } from "@/components/ui/label";
-import { Switch } from "@/components/ui/switch";
-import { UserRole } from "@/types";
 
-const AdminNotificationsTab = () => {
-  const [emailEnabled, setEmailEnabled] = useState(true);
-  const [pushEnabled, setPushEnabled] = useState(true);
-  const [smsEnabled, setSmsEnabled] = useState(false);
-  const [targetRole, setTargetRole] = useState<UserRole | "all">("all");
-  const [frequency, setFrequency] = useState("immediate");
+export const AdminNotificationsTab = () => {
+  const [systemNotifications, setSystemNotifications] = useState(true);
+  const [paymentNotifications, setPaymentNotifications] = useState(true);
+  const [userNotifications, setUserNotifications] = useState(true);
+  const [title, setTitle] = useState("");
+  const [message, setMessage] = useState("");
+  const [target, setTarget] = useState("all");
+  const [isSending, setIsSending] = useState(false);
+  const { toast } = useToast();
 
-  const handleTargetChange = (value: string) => {
-    // Convert string to UserRole type or "all"
-    if (value === "all") {
-      setTargetRole("all");
-    } else {
-      setTargetRole(value as UserRole);
+  const handleSaveSettings = () => {
+    toast({
+      title: "Configurações salvas",
+      description: "As configurações de notificações foram atualizadas."
+    });
+  };
+
+  const handleSendNotification = async () => {
+    if (!title || !message) {
+      toast({
+        title: "Campos obrigatórios",
+        description: "Preencha o título e a mensagem da notificação.",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    setIsSending(true);
+
+    try {
+      let success = false;
+
+      if (target === "all") {
+        // Get all users
+        const { data: users } = await supabase
+          .from('profiles')
+          .select('id');
+        
+        if (users && users.length > 0) {
+          // Send notification to each user
+          const promises = users.map(user => 
+            notificationService.sendNotification(
+              user.id, 
+              title, 
+              message, 
+              "SYSTEM"
+            )
+          );
+          
+          await Promise.all(promises);
+          success = true;
+        }
+      } else {
+        // Get users with specific role
+        const { data: users } = await supabase
+          .from('profiles')
+          .select('id')
+          .eq('role', target);
+        
+        if (users && users.length > 0) {
+          // Send notification to each user with the specified role
+          const promises = users.map(user => 
+            notificationService.sendNotification(
+              user.id, 
+              title, 
+              message, 
+              "SYSTEM"
+            )
+          );
+          
+          await Promise.all(promises);
+          success = true;
+        }
+      }
+
+      if (success) {
+        toast({
+          title: "Notificação enviada",
+          description: "A notificação foi enviada com sucesso."
+        });
+        
+        // Reset form
+        setTitle("");
+        setMessage("");
+        setTarget("all");
+      }
+    } catch (error) {
+      console.error("Error sending notification:", error);
+      toast({
+        title: "Erro",
+        description: "Ocorreu um erro ao enviar a notificação.",
+        variant: "destructive"
+      });
+    } finally {
+      setIsSending(false);
     }
   };
 
   return (
-    <div className="space-y-6">
-      <div>
-        <h3 className="text-lg font-medium">Configurações de Notificações</h3>
-        <p className="text-sm text-muted-foreground">
-          Configure como as notificações são enviadas e recebidas no sistema.
-        </p>
-      </div>
-
-      <div className="space-y-4">
-        <div className="flex items-center justify-between">
-          <div className="space-y-0.5">
-            <Label htmlFor="email-notifications">Notificações por Email</Label>
-            <p className="text-sm text-muted-foreground">
-              Receba notificações importantes por email
-            </p>
+    <div className="grid gap-6">
+      <Card>
+        <CardHeader>
+          <CardTitle>Configurações de Notificações</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="flex items-center justify-between">
+            <div>
+              <Label htmlFor="system-notifications" className="text-base font-medium">
+                Notificações do Sistema
+              </Label>
+              <p className="text-sm text-muted-foreground">
+                Receba alertas sobre atualizações do sistema e manutenção
+              </p>
+            </div>
+            <Switch 
+              id="system-notifications" 
+              checked={systemNotifications} 
+              onCheckedChange={setSystemNotifications}
+            />
           </div>
-          <Switch
-            id="email-notifications"
-            checked={emailEnabled}
-            onCheckedChange={setEmailEnabled}
-          />
-        </div>
-
-        <div className="flex items-center justify-between">
-          <div className="space-y-0.5">
-            <Label htmlFor="push-notifications">Notificações Push</Label>
-            <p className="text-sm text-muted-foreground">
-              Receba notificações em tempo real no navegador
-            </p>
+          
+          <div className="flex items-center justify-between">
+            <div>
+              <Label htmlFor="payment-notifications" className="text-base font-medium">
+                Notificações de Pagamentos
+              </Label>
+              <p className="text-sm text-muted-foreground">
+                Receba alertas sobre novos pagamentos e solicitações
+              </p>
+            </div>
+            <Switch 
+              id="payment-notifications" 
+              checked={paymentNotifications} 
+              onCheckedChange={setPaymentNotifications}
+            />
           </div>
-          <Switch
-            id="push-notifications"
-            checked={pushEnabled}
-            onCheckedChange={setPushEnabled}
-          />
-        </div>
-
-        <div className="flex items-center justify-between">
-          <div className="space-y-0.5">
-            <Label htmlFor="sms-notifications">Notificações por SMS</Label>
-            <p className="text-sm text-muted-foreground">
-              Receba alertas importantes por SMS (podem ser aplicadas taxas)
-            </p>
+          
+          <div className="flex items-center justify-between">
+            <div>
+              <Label htmlFor="user-notifications" className="text-base font-medium">
+                Notificações de Usuários
+              </Label>
+              <p className="text-sm text-muted-foreground">
+                Receba alertas sobre novas contas e atualizações de perfil
+              </p>
+            </div>
+            <Switch 
+              id="user-notifications" 
+              checked={userNotifications} 
+              onCheckedChange={setUserNotifications}
+            />
           </div>
-          <Switch
-            id="sms-notifications"
-            checked={smsEnabled}
-            onCheckedChange={setSmsEnabled}
-          />
-        </div>
-      </div>
+          
+          <Button onClick={handleSaveSettings} className="mt-4">
+            Salvar Configurações
+          </Button>
+        </CardContent>
+      </Card>
 
-      <div className="space-y-4">
-        <div>
-          <Label htmlFor="notification-frequency">Frequência de Notificações</Label>
-          <Select value={frequency} onValueChange={setFrequency}>
-            <SelectTrigger id="notification-frequency">
-              <SelectValue placeholder="Selecione a frequência" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="immediate">Imediato</SelectItem>
-              <SelectItem value="hourly">Resumo por hora</SelectItem>
-              <SelectItem value="daily">Resumo diário</SelectItem>
-              <SelectItem value="weekly">Resumo semanal</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
-
-        <div>
-          <Label htmlFor="notification-target">Perfil Padrão para Notificações</Label>
-          <Select 
-            value={targetRole === "all" ? "all" : targetRole} 
-            onValueChange={handleTargetChange}
-          >
-            <SelectTrigger>
-              <SelectValue placeholder="Selecione um perfil" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">Todos</SelectItem>
-              <SelectItem value="ADMIN">Administradores</SelectItem>
-              <SelectItem value="CLIENT">Clientes</SelectItem>
-              <SelectItem value="PARTNER">Parceiros</SelectItem>
-              <SelectItem value="FINANCIAL">Financeiro</SelectItem>
-              <SelectItem value="LOGISTICS">Logística</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
-      </div>
-
-      <div className="space-y-4">
-        <div>
-          <Label htmlFor="notification-webhook">Webhook URL</Label>
-          <Input
-            id="notification-webhook"
-            placeholder="https://seu-webhook.com/notifications"
-          />
-          <p className="text-xs text-muted-foreground mt-1">
-            URL para receber notificações via webhook
-          </p>
-        </div>
-      </div>
-
-      <div className="flex justify-end">
-        <Button variant="outline" className="mr-2">
-          Cancelar
-        </Button>
-        <Button>Salvar Configurações</Button>
-      </div>
+      <Card>
+        <CardHeader>
+          <CardTitle>Enviar Nova Notificação</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-4">
+            <div>
+              <Label className="block text-sm font-medium mb-1" htmlFor="title">
+                Título
+              </Label>
+              <Input 
+                id="title" 
+                placeholder="Título da notificação" 
+                value={title} 
+                onChange={(e) => setTitle(e.target.value)} 
+              />
+            </div>
+            
+            <div>
+              <Label className="block text-sm font-medium mb-1" htmlFor="target">
+                Destinatários
+              </Label>
+              <Select 
+                value={target} 
+                onValueChange={(value) => setTarget(value)}
+              >
+                <SelectTrigger id="target">
+                  <SelectValue placeholder="Selecione os destinatários" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Todos os usuários</SelectItem>
+                  <SelectItem value="CLIENT">Apenas clientes</SelectItem>
+                  <SelectItem value="PARTNER">Apenas parceiros</SelectItem>
+                  <SelectItem value="ADMIN">Apenas administradores</SelectItem>
+                  <SelectItem value="FINANCIAL">Apenas financeiro</SelectItem>
+                  <SelectItem value="LOGISTICS">Apenas logística</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            
+            <div>
+              <Label className="block text-sm font-medium mb-1" htmlFor="message">
+                Mensagem
+              </Label>
+              <Textarea 
+                id="message" 
+                placeholder="Digite a mensagem da notificação..." 
+                className="min-h-[150px]"
+                value={message}
+                onChange={(e) => setMessage(e.target.value)}
+              />
+            </div>
+            
+            <div className="pt-4">
+              <Button 
+                onClick={handleSendNotification}
+                disabled={isSending}
+              >
+                {isSending ? "Enviando..." : "Enviar Notificação"}
+              </Button>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
     </div>
   );
 };
-
-export default AdminNotificationsTab;

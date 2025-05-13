@@ -8,12 +8,6 @@ import UserManagement from "../../pages/settings/UserManagement";
 import Fees from "../../pages/Fees";
 import AdminReports from "../../pages/admin/Reports";
 import AdminSupport from "../../pages/admin/Support";
-import AdminNotifications from "../../pages/admin/Notifications";
-
-// Debug logging
-console.log("Loading settingsRoutes.tsx");
-console.log("PATHS.ADMIN.SETTINGS:", PATHS.ADMIN.SETTINGS);
-console.log("AdminSettings component:", typeof AdminSettings);
 
 // Settings and Other Routes for Admin Module
 export const settingsRoutes = [
@@ -21,11 +15,6 @@ export const settingsRoutes = [
     key="admin-settings" 
     path={PATHS.ADMIN.SETTINGS} 
     element={<AdminSettings />} 
-  />,
-  <Route 
-    key="admin-notifications" 
-    path={PATHS.ADMIN.NOTIFICATIONS} 
-    element={<AdminNotifications />} 
   />,
   <Route 
     key="admin-user-management" 

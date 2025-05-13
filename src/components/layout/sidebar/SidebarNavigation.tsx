@@ -14,8 +14,6 @@ interface SidebarNavigationProps {
 }
 
 const SidebarNavigation = ({ userRole }: SidebarNavigationProps) => {
-  console.log("SidebarNavigation: Current user role:", userRole);
-  
   // Get items based on user role
   const getSidebarItems = () => {
     switch (userRole) {
@@ -30,13 +28,11 @@ const SidebarNavigation = ({ userRole }: SidebarNavigationProps) => {
       case UserRole.LOGISTICS:
         return logisticsItems;
       default:
-        console.log("SidebarNavigation: Unknown user role, defaulting to user items");
         return userItems; // Default to user items
     }
   };
 
   const sidebarItems = getSidebarItems();
-  console.log("SidebarNavigation: Loaded items for role:", userRole, "Count:", sidebarItems.length);
 
   return (
     <nav className="space-y-1">

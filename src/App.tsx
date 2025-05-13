@@ -11,7 +11,7 @@ import { getDashboardPath } from "./routes/routeUtils";
 
 // Route groups
 import { AuthRoutes } from "./routes/authRoutes";
-import { adminRoutes } from "./routes/adminRoutes";
+import { AdminRoutes } from "./routes/adminRoutes";
 import { ClientRoutes } from "./routes/clientRoutes";
 import { PartnerRoutes } from "./routes/partnerRoutes";
 import { FinancialRoutes } from "./routes/financialRoutes";
@@ -59,7 +59,7 @@ function App() {
       
       {/* Generic dashboard route */}
       <Route 
-        path="/dashboard" 
+        path={PATHS.DASHBOARD} 
         element={<Navigate to={getDashboardRedirectPath()} replace />} 
       />
 
@@ -67,7 +67,7 @@ function App() {
       {AuthRoutes}
 
       {/* Protected Routes by Role */}
-      {adminRoutes}
+      {AdminRoutes}
       {ClientRoutes}
       {PartnerRoutes}
       {FinancialRoutes}
@@ -77,7 +77,10 @@ function App() {
       <Route path="/notifications" element={<Notifications />} />
 
       {/* 404 */}
-      <Route path="*" element={<NotFound />} />
+      <Route path={PATHS.NOT_FOUND} element={<NotFound />} />
+      
+      {/* Catch-all redirect to the appropriate dashboard */}
+      <Route path="*" element={<Navigate to={PATHS.DASHBOARD} replace />} />
     </Routes>
   );
 }

@@ -1,175 +1,109 @@
 
-import { PageHeader } from "@/components/page/PageHeader";
-import { Card, CardContent } from "@/components/ui/card";
+import { useState } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { useState, useEffect } from "react";
-import { useAuth } from "@/hooks/use-auth";
 import { useToast } from "@/hooks/use-toast";
-import { useNavigate } from "react-router-dom";
-import { UserRole } from "@/types";
-import { AdminProfile } from "@/components/admin/settings/AdminProfile";
-import AdminNotificationsTab from "@/components/admin/settings/AdminNotificationsTab";
-import UsersTab from "@/components/admin/settings/UsersTab";
 import { supabase } from "@/integrations/supabase/client";
+import { UsersTab } from "@/components/admin/settings/UsersTab";
+import { SystemTab } from "@/components/admin/settings/SystemTab";
+import { RoleChangeModal } from "@/components/admin/settings/RoleChangeModal";
+import { AdminNotificationsTab } from "@/components/admin/settings/AdminNotificationsTab";
+import { AdminSecurityTab } from "@/components/admin/settings/AdminSecurityTab";
+import { UserRole } from "@/types";
+
+// Update ProfileData interface to accept UserRole for role
+interface ProfileData {
+  id: string;
+  name: string;
+  email: string;
+  avatar: string;
+  phone: string;
+  role: string;
+  created_at: string;
+  updated_at: string;
+}
 
 const AdminSettings = () => {
-  const { user } = useAuth();
+  const [activeTab, setActiveTab] = useState("usuarios");
+  const [selectedUser, setSelectedUser] = useState<ProfileData | null>(null);
+  const [newRole, setNewRole] = useState<string>(UserRole.CLIENT);
+  const [showRoleModal, setShowRoleModal] = useState(false);
+  
   const { toast } = useToast();
-  const navigate = useNavigate();
-  const [name, setName] = useState("");
-  const [email, setEmail] = useState("");
-  const [role, setRole] = useState<UserRole>(UserRole.CLIENT);
-  const [isSaving, setIsSaving] = useState(false);
 
-  // Convert string role to UserRole enum
-  const convertToUserRole = (roleStr: string | null | undefined): UserRole => {
-    if (!roleStr) return UserRole.CLIENT;
+  const handleRoleChange = async () => {
+    if (!selectedUser || !newRole) return;
     
-    switch (roleStr.toUpperCase()) {
-      case "ADMIN": return UserRole.ADMIN;
-      case "CLIENT": return UserRole.CLIENT;
-      case "PARTNER": return UserRole.PARTNER;
-      case "FINANCIAL": return UserRole.FINANCIAL;
-      case "LOGISTICS": return UserRole.LOGISTICS;
-      default: return UserRole.CLIENT;
-    }
-  };
-
-  useEffect(() => {
-    console.log("AdminSettings: User loaded:", user);
-    if (user) {
-      setName(user.user_metadata?.name || "");
-      setEmail(user.email || "");
-      
-      // Convert role string to UserRole enum
-      const userRole = convertToUserRole(user.user_metadata?.role);
-      setRole(userRole);
-      console.log("AdminSettings: Role set to:", userRole);
-    }
-  }, [user]);
-
-  const updateUserProfile = async ({
-    name,
-    email,
-    role,
-  }: {
-    name: string;
-    email: string;
-    role: UserRole;
-  }) => {
     try {
-      console.log("Updating profile with role:", role);
-      const { error } = await supabase.auth.updateUser({
-        email,
-        data: { name, role }
-      });
-
+      const { error } = await supabase
+        .from('profiles')
+        .update({ role: newRole })
+        .eq('id', selectedUser.id);
+        
       if (error) throw error;
       
-      // Update profile table if needed
-      if (user) {
-        const { error: profileError } = await supabase
-          .from('profiles')
-          .update({ name, role })
-          .eq('id', user.id);
-          
-        if (profileError) throw profileError;
-      }
+      toast({
+        title: "Função atualizada",
+        description: `A função de ${selectedUser.name} foi atualizada para ${newRole}.`
+      });
       
-      return { success: true };
+      setShowRoleModal(false);
     } catch (error) {
-      console.error("Failed to update user profile:", error);
-      throw error;
-    }
-  };
-
-  const handleProfileUpdate = async () => {
-    setIsSaving(true);
-    try {
-      if (!name || !email) {
-        toast({
-          title: "Erro",
-          description: "Nome e email são obrigatórios.",
-          variant: "destructive",
-        });
-        return;
-      }
-
-      // Update user profile
-      await updateUserProfile({
-        name: name,
-        email: email,
-        role: role,
-      });
-
+      console.error("Error updating role:", error);
       toast({
-        title: "Sucesso",
-        description: "Perfil atualizado com sucesso.",
-      });
-    } catch (error: any) {
-      console.error("Error updating profile:", error);
-      toast({
-        title: "Erro",
-        description: error.message || "Ocorreu um erro ao atualizar o perfil.",
         variant: "destructive",
+        title: "Erro ao atualizar função",
+        description: "Não foi possível atualizar a função do usuário."
       });
-    } finally {
-      setIsSaving(false);
     }
   };
 
-  const handleCancel = () => {
-    navigate(-1);
+  const openRoleModal = (user: ProfileData) => {
+    setSelectedUser(user);
+    setNewRole(user.role);
+    setShowRoleModal(true);
   };
 
   return (
-    <div className="space-y-6">
-      <PageHeader
-        title="Configurações"
-        description="Gerencie as configurações da sua conta e do sistema"
-      />
-
-      <Tabs defaultValue="profile" className="space-y-4">
-        <TabsList>
-          <TabsTrigger value="profile">Perfil</TabsTrigger>
-          <TabsTrigger value="notifications">Notificações</TabsTrigger>
-          <TabsTrigger value="users">Usuários</TabsTrigger>
+    <div className="container mx-auto py-10">
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+        <TabsList className="mb-6 overflow-x-auto flex whitespace-nowrap sm:inline-flex">
+          <TabsTrigger value="usuarios">Usuários</TabsTrigger>
+          <TabsTrigger value="sistema">Sistema</TabsTrigger>
+          <TabsTrigger value="notificacoes">Notificações</TabsTrigger>
+          <TabsTrigger value="seguranca">Segurança</TabsTrigger>
         </TabsList>
-
-        <TabsContent value="profile">
-          <Card>
-            <CardContent className="space-y-4">
-              <AdminProfile
-                name={name}
-                email={email}
-                role={role}
-                setName={setName}
-                setEmail={setEmail}
-                setRole={(roleValue: UserRole) => setRole(roleValue)}
-                isSaving={isSaving}
-                onProfileUpdate={handleProfileUpdate}
-                onCancel={handleCancel}
-              />
-            </CardContent>
-          </Card>
+        
+        {/* Users Tab */}
+        <TabsContent value="usuarios" className="mt-6">
+          <UsersTab openRoleModal={openRoleModal} />
         </TabsContent>
-
-        <TabsContent value="notifications">
-          <Card>
-            <CardContent>
-              <AdminNotificationsTab />
-            </CardContent>
-          </Card>
+        
+        {/* System Tab */}
+        <TabsContent value="sistema" className="mt-6">
+          <SystemTab />
         </TabsContent>
-
-        <TabsContent value="users">
-          <Card>
-            <CardContent>
-              <UsersTab />
-            </CardContent>
-          </Card>
+        
+        {/* Notifications Tab */}
+        <TabsContent value="notificacoes" className="mt-6">
+          <AdminNotificationsTab />
+        </TabsContent>
+        
+        {/* Security Tab */}
+        <TabsContent value="seguranca" className="mt-6">
+          <AdminSecurityTab />
         </TabsContent>
       </Tabs>
+      
+      {/* Role Modal */}
+      {showRoleModal && selectedUser && (
+        <RoleChangeModal
+          user={selectedUser}
+          newRole={newRole}
+          setNewRole={setNewRole}
+          onClose={() => setShowRoleModal(false)}
+          onSave={handleRoleChange}
+        />
+      )}
     </div>
   );
 };

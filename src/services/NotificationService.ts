@@ -1,250 +1,147 @@
 
 import { supabase } from "@/integrations/supabase/client";
+import { UserRole } from "@/types";
 
-// Define notification type enum to match database
-export type NotificationType = "PAYMENT" | "BALANCE" | "MACHINE" | "COMMISSION" | "SYSTEM";
-
-// Define notification type
-export type Notification = {
+export interface Notification {
   id: string;
-  user_id: string;
   title: string;
   message: string;
-  type: NotificationType;
+  type: "PAYMENT" | "BALANCE" | "MACHINE" | "COMMISSION" | "SYSTEM" | "GENERAL" | "SALE" | "SUPPORT";
+  read: boolean;
+  timestamp: Date;
   data?: any;
-  is_read: boolean;
-  created_at: string;
-  timestamp: Date; // Alias for created_at for backwards compatibility
-  read: boolean; // Alias for is_read for backwards compatibility
-};
+}
 
-export class NotificationService {
-  /**
-   * Fetches notifications for a specific user
-   * @param userId - The ID of the user
-   * @param limit - The maximum number of notifications to return (optional, default is 10)
-   * @param offset - The starting point for fetching notifications (optional, default is 0)
-   * @returns A promise that resolves to an array of notifications or rejects with an error
-   */
-  async getNotifications(userId: string, limit: number = 10, offset: number = 0): Promise<Notification[]> {
+class NotificationService {
+  async getUserNotifications() {
     try {
+      const { data: user } = await supabase.auth.getUser();
+      if (!user) throw new Error("User not authenticated");
+
       const { data, error } = await supabase
         .from('notifications')
         .select('*')
-        .eq('user_id', userId)
-        .order('created_at', { ascending: false })
-        .range(offset, offset + limit - 1);
+        .eq('user_id', user.user.id)
+        .order('created_at', { ascending: false });
 
-      if (error) {
-        throw new Error(`Error fetching notifications: ${error.message}`);
-      }
+      if (error) throw error;
 
-      return (data || []).map(notification => ({
-        ...notification,
-        timestamp: new Date(notification.created_at || new Date()),
+      return data?.map(notification => ({
+        id: notification.id,
+        title: notification.title,
+        message: notification.message,
+        type: notification.type,
         read: notification.is_read || false,
-        type: notification.type as NotificationType
-      })) as Notification[];
-    } catch (error: any) {
-      console.error('Error in getNotifications:', error);
+        timestamp: new Date(notification.created_at),
+        data: notification.data
+      })) || [];
+
+    } catch (error) {
+      console.error("Error fetching notifications:", error);
       return [];
     }
   }
 
-  /**
-   * Fetches all notifications for the current user
-   */
-  async getUserNotifications(): Promise<Notification[]> {
-    const { data: userData } = await supabase.auth.getUser();
-    if (!userData?.user) return [];
-    
-    return this.getNotifications(userData.user.id);
-  }
-
-  /**
-   * Marks a notification as read
-   * @param notificationId - The ID of the notification to mark as read
-   * @returns A promise that resolves when the notification is successfully marked as read or rejects with an error
-   */
-  async markAsRead(notificationId: string): Promise<boolean> {
+  async markAsRead(id: string) {
     try {
       const { error } = await supabase
         .from('notifications')
         .update({ is_read: true })
-        .eq('id', notificationId);
+        .eq('id', id);
 
-      if (error) {
-        throw new Error(`Error marking notification as read: ${error.message}`);
-      }
-
+      if (error) throw error;
       return true;
-    } catch (error: any) {
-      console.error('Error in markAsRead:', error);
+    } catch (error) {
+      console.error("Error marking notification as read:", error);
       return false;
     }
   }
 
-  /**
-   * Marks a notification as unread
-   */
-  async markAsUnread(notificationId: string): Promise<boolean> {
+  async markAsUnread(id: string) {
     try {
       const { error } = await supabase
         .from('notifications')
         .update({ is_read: false })
-        .eq('id', notificationId);
+        .eq('id', id);
 
-      if (error) {
-        throw new Error(`Error marking notification as unread: ${error.message}`);
-      }
-
+      if (error) throw error;
       return true;
-    } catch (error: any) {
-      console.error('Error in markAsUnread:', error);
+    } catch (error) {
+      console.error("Error marking notification as unread:", error);
       return false;
     }
   }
 
-  /**
-   * Marks all notifications for a user as read
-   */
-  async markAllAsRead(): Promise<boolean> {
+  async markAllAsRead() {
     try {
-      const { data: userData } = await supabase.auth.getUser();
-      if (!userData?.user) return false;
+      const { data: user } = await supabase.auth.getUser();
+      if (!user) throw new Error("User not authenticated");
 
       const { error } = await supabase
         .from('notifications')
         .update({ is_read: true })
-        .eq('user_id', userData.user.id)
-        .eq('is_read', false);
+        .eq('user_id', user.user.id);
 
-      if (error) {
-        throw new Error(`Error marking all notifications as read: ${error.message}`);
-      }
-
+      if (error) throw error;
       return true;
-    } catch (error: any) {
-      console.error('Error in markAllAsRead:', error);
+    } catch (error) {
+      console.error("Error marking all notifications as read:", error);
       return false;
     }
   }
 
-  /**
-   * Deletes a notification
-   * @param notificationId - The ID of the notification to delete
-   * @returns A promise that resolves when the notification is successfully deleted or rejects with an error
-   */
-  async deleteNotification(notificationId: string): Promise<boolean> {
+  async deleteNotification(id: string) {
     try {
       const { error } = await supabase
         .from('notifications')
         .delete()
-        .eq('id', notificationId);
+        .eq('id', id);
 
-      if (error) {
-        throw new Error(`Error deleting notification: ${error.message}`);
-      }
-
+      if (error) throw error;
       return true;
-    } catch (error: any) {
-      console.error('Error in deleteNotification:', error);
+    } catch (error) {
+      console.error("Error deleting notification:", error);
       return false;
     }
   }
-  
-  /**
-   * Deletes all notifications for a user
-   */
-  async deleteAllNotifications(): Promise<boolean> {
+
+  async deleteAllNotifications() {
     try {
-      const { data: userData } = await supabase.auth.getUser();
-      if (!userData?.user) return false;
+      const { data: user } = await supabase.auth.getUser();
+      if (!user) throw new Error("User not authenticated");
 
       const { error } = await supabase
         .from('notifications')
         .delete()
-        .eq('user_id', userData.user.id);
+        .eq('user_id', user.user.id);
 
-      if (error) {
-        throw new Error(`Error deleting all notifications: ${error.message}`);
-      }
-
+      if (error) throw error;
       return true;
-    } catch (error: any) {
-      console.error('Error in deleteAllNotifications:', error);
+    } catch (error) {
+      console.error("Error deleting all notifications:", error);
       return false;
     }
   }
-  
-  /**
-   * Creates a new notification
-   */
-  async createNotification(notification: {
-    user_id: string;
-    title: string;
-    message: string;
-    type: NotificationType;
-    data?: any;
-  }): Promise<{success: boolean, error?: string}> {
+
+  async sendNotification(userId: string, title: string, message: string, type: string, data?: any) {
     try {
       const { error } = await supabase
         .from('notifications')
         .insert({
-          user_id: notification.user_id,
-          title: notification.title,
-          message: notification.message,
-          type: notification.type,
-          data: notification.data || {},
-          is_read: false
+          user_id: userId,
+          title,
+          message,
+          type,
+          data
         });
 
-      if (error) {
-        throw new Error(`Error creating notification: ${error.message}`);
-      }
-
-      return { success: true };
-    } catch (error: any) {
-      console.error('Error in createNotification:', error);
-      return { success: false, error: error.message };
-    }
-  }
-
-  /**
-   * Creates notifications for multiple users
-   */
-  async createBulkNotifications(notifications: {
-    user_ids: string[];
-    title: string;
-    message: string;
-    type: NotificationType;
-    data?: any;
-  }): Promise<{success: boolean, error?: string}> {
-    try {
-      const notificationsToInsert = notifications.user_ids.map(userId => ({
-        user_id: userId,
-        title: notifications.title,
-        message: notifications.message,
-        type: notifications.type,
-        data: notifications.data || {},
-        is_read: false
-      }));
-
-      const { error } = await supabase
-        .from('notifications')
-        .insert(notificationsToInsert);
-
-      if (error) {
-        throw new Error(`Error creating bulk notifications: ${error.message}`);
-      }
-
-      return { success: true };
-    } catch (error: any) {
-      console.error('Error in createBulkNotifications:', error);
-      return { success: false, error: error.message };
+      if (error) throw error;
+      return true;
+    } catch (error) {
+      console.error("Error sending notification:", error);
+      return false;
     }
   }
 }
 
-// Export a singleton instance of the service
 export const notificationService = new NotificationService();

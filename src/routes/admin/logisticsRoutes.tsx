@@ -15,8 +15,8 @@ import MachineDetails from "../../pages/machines/MachineDetails";
 export const logisticsRoutes = [
   <Route
     key="admin-logistics-redirect"
-    path={PATHS.ADMIN.SETTINGS}
-    element={<Navigate to={PATHS.ADMIN.DASHBOARD} replace />}
+    path={PATHS.ADMIN.LOGISTICS}
+    element={<Navigate to={PATHS.LOGISTICS.DASHBOARD} replace />}
   />,
   <Route 
     key="logistics-dashboard" 
