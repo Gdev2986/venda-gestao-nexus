@@ -35,12 +35,17 @@ const SidebarNavItem = ({ item, userRole }: SidebarNavItemProps) => {
   }, [item, location.pathname]);
 
   const toggleExpanded = (e: React.MouseEvent) => {
-    e.preventDefault(); // Prevent navigation
-    setExpanded(prev => !prev);
+    if (item.subItems) {
+      e.preventDefault(); // Prevent navigation for items with subitems
+      setExpanded(prev => !prev);
+    } else {
+      handleItemClick(e, item.href);
+    }
   };
 
   const handleItemClick = (e: React.MouseEvent, href: string) => {
     e.preventDefault(); // Prevent default browser navigation
+    console.log("Navigating to:", href); // Debug log
     navigate(href); // Use React Router navigation
   };
 
