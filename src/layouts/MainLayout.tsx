@@ -1,4 +1,3 @@
-
 import { Outlet } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { useState, useEffect } from "react";
@@ -8,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Menu } from "lucide-react";
 import NotificationDropdown from "@/components/layout/NotificationDropdown";
 import ThemeToggle from "@/components/theme/theme-toggle";
-import { Toaster } from "@/components/ui/toaster";
+import { Toaster } from "sonner"; // Update to use sonner instead of custom Toaster
 import MainSidebar from "./MainSidebar";
 
 const MainLayout = () => {
