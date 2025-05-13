@@ -63,7 +63,7 @@ const UsersTab = () => {
         .range((page - 1) * pageSize, page * pageSize - 1);
 
       if (roleFilter !== "all") {
-        query = query.eq("role", roleFilter as UserRole);
+        query = query.eq("role", roleFilter);
       }
 
       const { data, error } = await query;
@@ -86,7 +86,7 @@ const UsersTab = () => {
         .ilike("email", `%${searchTerm}%`);
 
       if (roleFilter !== "all") {
-        query = query.eq("role", roleFilter as UserRole);
+        query = query.eq("role", roleFilter);
       }
 
       const { count, error } = await query;
@@ -114,7 +114,7 @@ const UsersTab = () => {
           .range(page * pageSize, (page + 1) * pageSize - 1);
 
         if (roleFilter !== "all") {
-          query = query.eq("role", roleFilter as UserRole);
+          query = query.eq("role", roleFilter);
         }
 
         const { data, error } = await query;
@@ -198,7 +198,7 @@ const UsersTab = () => {
           onChange={handleSearchChange}
           className="max-w-xs"
         />
-        <Select value={roleFilter} onValueChange={handleRoleFilterChange}>
+        <Select value={roleFilter as string} onValueChange={handleRoleFilterChange}>
           <SelectTrigger className="w-[180px]">
             <SelectValue placeholder="Filtrar por perfil" />
           </SelectTrigger>
@@ -311,7 +311,7 @@ const UsersTab = () => {
                 </Label>
                 <div className="col-span-3">
                   <Select
-                    value={newRole || selectedUser.role}
+                    value={String(newRole || selectedUser.role)}
                     onValueChange={(value) =>
                       setNewRole(value as UserRole)
                     }

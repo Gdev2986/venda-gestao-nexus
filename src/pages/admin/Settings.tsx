@@ -18,7 +18,7 @@ const AdminSettings = () => {
   const navigate = useNavigate();
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
-  const [role, setRole] = useState("");
+  const [role, setRole] = useState<string>("");
   const [isSaving, setIsSaving] = useState(false);
 
   useEffect(() => {
@@ -36,9 +36,8 @@ const AdminSettings = () => {
   }: {
     name: string;
     email: string;
-    role: UserRole;
+    role: string;
   }) => {
-    // Since updateUserProfile doesn't exist in AuthContext, we implement it here
     try {
       const { error } = await supabase.auth.updateUser({
         email,
@@ -51,7 +50,7 @@ const AdminSettings = () => {
       if (user) {
         const { error: profileError } = await supabase
           .from('profiles')
-          .update({ name, role })
+          .update({ name, role: role as UserRole })
           .eq('id', user.id);
           
         if (profileError) throw profileError;
@@ -76,22 +75,11 @@ const AdminSettings = () => {
         return;
       }
 
-      // Ensure role is a valid UserRole enum value
-      // If the role is a string representation, convert it to the enum value
-      let userRoleTyped: UserRole;
-      
-      if (Object.values(UserRole).includes(role as UserRole)) {
-        userRoleTyped = role as UserRole;
-      } else {
-        // Default to ADMIN if role is not valid
-        userRoleTyped = UserRole.ADMIN;
-      }
-
       // Update user profile
       await updateUserProfile({
         name: name,
         email: email,
-        role: userRoleTyped,
+        role: role,
       });
 
       toast({
