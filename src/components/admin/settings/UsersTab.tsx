@@ -35,7 +35,7 @@ import { Loader2 } from "lucide-react";
 interface User {
   id: string;
   email: string;
-  role: string;
+  role: UserRole;
 }
 
 const UsersTab = () => {
@@ -46,7 +46,19 @@ const UsersTab = () => {
   const queryClient = useQueryClient();
   const [open, setOpen] = useState(false);
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
-  const [newRole, setNewRole] = useState<string | null>(null);
+  const [newRole, setNewRole] = useState<UserRole | null>(null);
+
+  // Safe conversion from string to UserRole
+  const convertToUserRole = (role: string): UserRole => {
+    switch (role.toUpperCase()) {
+      case "ADMIN": return UserRole.ADMIN;
+      case "CLIENT": return UserRole.CLIENT;
+      case "PARTNER": return UserRole.PARTNER;
+      case "FINANCIAL": return UserRole.FINANCIAL; 
+      case "LOGISTICS": return UserRole.LOGISTICS;
+      default: return UserRole.CLIENT;
+    }
+  };
 
   // Fetch users with proper query setup
   const {
@@ -72,7 +84,11 @@ const UsersTab = () => {
         throw new Error(error.message);
       }
 
-      return data as User[];
+      // Convert string role to UserRole enum
+      return (data || []).map(user => ({
+        ...user,
+        role: convertToUserRole(user.role)
+      })) as User[];
     },
   });
 
@@ -123,7 +139,10 @@ const UsersTab = () => {
           throw new Error(error.message);
         }
 
-        return data as User[];
+        return (data || []).map(user => ({
+          ...user,
+          role: convertToUserRole(user.role)
+        })) as User[];
       },
     });
   }, [users, searchTerm, roleFilter, page, pageSize, queryClient]);
@@ -152,7 +171,7 @@ const UsersTab = () => {
 
   // Update user role mutation
   const updateRoleMutation = useMutation({
-    mutationFn: async ({ userId, newRole }: { userId: string; newRole: string }) => {
+    mutationFn: async ({ userId, newRole }: { userId: string; newRole: UserRole }) => {
       const { data, error } = await supabase
         .from("profiles")
         .update({ role: newRole })
@@ -311,8 +330,8 @@ const UsersTab = () => {
                 </Label>
                 <div className="col-span-3">
                   <Select
-                    value={String(newRole || selectedUser.role)}
-                    onValueChange={(value) => setNewRole(value)}
+                    value={String(newRole)}
+                    onValueChange={(value) => setNewRole(convertToUserRole(value))}
                   >
                     <SelectTrigger>
                       <SelectValue placeholder="Selecione um perfil" />

@@ -3,7 +3,7 @@ import { PageHeader } from "@/components/page/PageHeader";
 import { Card, CardContent } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useState, useEffect } from "react";
-import { useAuth } from "@/contexts/AuthContext";
+import { useAuth } from "@/hooks/use-auth";
 import { useToast } from "@/hooks/use-toast";
 import { useNavigate } from "react-router-dom";
 import { UserRole } from "@/types";
@@ -18,14 +18,33 @@ const AdminSettings = () => {
   const navigate = useNavigate();
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
-  const [role, setRole] = useState<string>(UserRole.CLIENT);
+  const [role, setRole] = useState<UserRole>(UserRole.CLIENT);
   const [isSaving, setIsSaving] = useState(false);
 
+  // Convert string role to UserRole enum
+  const convertToUserRole = (roleStr: string | null | undefined): UserRole => {
+    if (!roleStr) return UserRole.CLIENT;
+    
+    switch (roleStr.toUpperCase()) {
+      case "ADMIN": return UserRole.ADMIN;
+      case "CLIENT": return UserRole.CLIENT;
+      case "PARTNER": return UserRole.PARTNER;
+      case "FINANCIAL": return UserRole.FINANCIAL;
+      case "LOGISTICS": return UserRole.LOGISTICS;
+      default: return UserRole.CLIENT;
+    }
+  };
+
   useEffect(() => {
+    console.log("AdminSettings: User loaded:", user);
     if (user) {
       setName(user.user_metadata?.name || "");
       setEmail(user.email || "");
-      setRole(user.user_metadata?.role as string || UserRole.CLIENT);
+      
+      // Convert role string to UserRole enum
+      const userRole = convertToUserRole(user.user_metadata?.role);
+      setRole(userRole);
+      console.log("AdminSettings: Role set to:", userRole);
     }
   }, [user]);
 
@@ -36,9 +55,10 @@ const AdminSettings = () => {
   }: {
     name: string;
     email: string;
-    role: string;
+    role: UserRole;
   }) => {
     try {
+      console.log("Updating profile with role:", role);
       const { error } = await supabase.auth.updateUser({
         email,
         data: { name, role }
@@ -125,7 +145,7 @@ const AdminSettings = () => {
                 role={role}
                 setName={setName}
                 setEmail={setEmail}
-                setRole={(role: string) => setRole(role)}
+                setRole={(roleValue: UserRole) => setRole(roleValue)}
                 isSaving={isSaving}
                 onProfileUpdate={handleProfileUpdate}
                 onCancel={handleCancel}

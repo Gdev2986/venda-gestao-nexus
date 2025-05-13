@@ -13,6 +13,7 @@ import AdminNotifications from "../../pages/admin/Notifications";
 // Debug logging
 console.log("Loading settingsRoutes.tsx");
 console.log("PATHS.ADMIN.SETTINGS:", PATHS.ADMIN.SETTINGS);
+console.log("AdminSettings component:", typeof AdminSettings);
 
 // Settings and Other Routes for Admin Module
 export const settingsRoutes = [

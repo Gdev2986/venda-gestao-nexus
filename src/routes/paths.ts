@@ -44,6 +44,7 @@ export const PATHS = {
     SETTINGS: "/admin/settings",
     FEES: "/admin/fees",
     USER_MANAGEMENT: "/admin/settings/users",
+    LOGISTICS: "/admin/logistics", // Added missing LOGISTICS path
   },
   
   // Partner paths
