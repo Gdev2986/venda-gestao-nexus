@@ -71,6 +71,8 @@ export const PATHS = {
   LOGISTICS: {
     DASHBOARD: "/logistics/dashboard",
     MACHINES: "/logistics/machines",
+    MACHINE_DETAILS: (id = ":id") => `/logistics/machines/${id}`,
+    MACHINE_NEW: "/logistics/machines/new",
     OPERATIONS: "/logistics/operations",
     INVENTORY: "/logistics/inventory",
     REQUESTS: "/logistics/requests",
