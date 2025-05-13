@@ -60,3 +60,6 @@ export const adminRoutes = (
     </Route>
   </Route>
 );
+
+// Add named export to match the import in App.tsx
+export const AdminRoutes = adminRoutes;
