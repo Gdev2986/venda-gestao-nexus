@@ -4,7 +4,7 @@ import { PATHS } from "../paths";
 
 // Logistics pages
 import AdminLogistics from "../../pages/admin/Logistics";
-import { Machines } from "../../pages/Machines";
+import Machines from "../../pages/Machines"; // Updated import to match actual export
 import MachineDetails from "../../pages/machines/MachineDetails";
 import NewMachine from "../../pages/machines/NewMachine";
 

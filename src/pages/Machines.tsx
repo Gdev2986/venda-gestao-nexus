@@ -22,4 +22,7 @@ const Machines = () => {
   return null; // Component will redirect, no need to render anything
 };
 
+// Add a named export for compatibility with imports that expect it
+export { Machines };
+
 export default Machines;
