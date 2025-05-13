@@ -18,14 +18,14 @@ const AdminSettings = () => {
   const navigate = useNavigate();
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
-  const [role, setRole] = useState<string>("");
+  const [role, setRole] = useState<UserRole>(UserRole.CLIENT);
   const [isSaving, setIsSaving] = useState(false);
 
   useEffect(() => {
     if (user) {
       setName(user.user_metadata?.name || "");
       setEmail(user.email || "");
-      setRole(user.user_metadata?.role || "");
+      setRole(user.user_metadata?.role as UserRole || UserRole.CLIENT);
     }
   }, [user]);
 
@@ -36,7 +36,7 @@ const AdminSettings = () => {
   }: {
     name: string;
     email: string;
-    role: string;
+    role: UserRole;
   }) => {
     try {
       const { error } = await supabase.auth.updateUser({
@@ -50,7 +50,7 @@ const AdminSettings = () => {
       if (user) {
         const { error: profileError } = await supabase
           .from('profiles')
-          .update({ name, role: role as UserRole })
+          .update({ name, role })
           .eq('id', user.id);
           
         if (profileError) throw profileError;

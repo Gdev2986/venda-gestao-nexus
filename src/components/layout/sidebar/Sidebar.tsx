@@ -4,13 +4,7 @@ import { UserRole } from '@/types';
 import SidebarNavigation from './SidebarNavigation';
 import SidebarFooter from './SidebarFooter';
 import SidebarUserProfile from './SidebarUserProfile';
-
-interface SidebarProps {
-  isOpen: boolean;
-  isMobile: boolean;
-  onClose: () => void;
-  userRole: UserRole;
-}
+import { SidebarProps } from './types';
 
 const Sidebar = ({ isOpen, isMobile, onClose, userRole }: SidebarProps) => {
   return (

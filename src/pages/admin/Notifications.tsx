@@ -14,11 +14,9 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { NotificationService } from "@/services/NotificationService";
+import { notificationService, NotificationType } from "@/services/NotificationService";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
-
-const notificationService = new NotificationService();
 
 const AdminNotifications = () => {
   const [title, setTitle] = useState("");
@@ -140,7 +138,7 @@ const AdminNotifications = () => {
         toast({
           title: "Aviso",
           description: "Não há usuários no grupo selecionado.",
-          variant: "warning",
+          variant: "default",
         });
         setIsSending(false);
         return;
@@ -150,7 +148,7 @@ const AdminNotifications = () => {
         user_ids: userIds,
         title,
         message,
-        type: "SYSTEM",
+        type: "SYSTEM" as NotificationType,
         data: { sentBy: "admin", sentAt: new Date().toISOString() },
       });
       

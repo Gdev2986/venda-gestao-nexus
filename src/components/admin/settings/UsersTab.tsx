@@ -40,7 +40,7 @@ interface User {
 
 const UsersTab = () => {
   const [searchTerm, setSearchTerm] = useState("");
-  const [roleFilter, setRoleFilter] = useState<string | UserRole>("all");
+  const [roleFilter, setRoleFilter] = useState<string>("all");
   const [page, setPage] = useState(1);
   const [pageSize] = useState(10);
   const queryClient = useQueryClient();
@@ -63,7 +63,7 @@ const UsersTab = () => {
         .range((page - 1) * pageSize, page * pageSize - 1);
 
       if (roleFilter !== "all") {
-        query = query.eq("role", roleFilter);
+        query = query.eq("role", roleFilter as UserRole);
       }
 
       const { data, error } = await query;
@@ -86,7 +86,7 @@ const UsersTab = () => {
         .ilike("email", `%${searchTerm}%`);
 
       if (roleFilter !== "all") {
-        query = query.eq("role", roleFilter);
+        query = query.eq("role", roleFilter as UserRole);
       }
 
       const { count, error } = await query;
@@ -114,7 +114,7 @@ const UsersTab = () => {
           .range(page * pageSize, (page + 1) * pageSize - 1);
 
         if (roleFilter !== "all") {
-          query = query.eq("role", roleFilter);
+          query = query.eq("role", roleFilter as UserRole);
         }
 
         const { data, error } = await query;
@@ -176,7 +176,7 @@ const UsersTab = () => {
       toast({
         variant: "destructive",
         title: "Erro",
-        description: error.message,
+        description: error.message || "Erro ao atualizar perfil",
       });
     },
   });
@@ -198,7 +198,7 @@ const UsersTab = () => {
           onChange={handleSearchChange}
           className="max-w-xs"
         />
-        <Select value={roleFilter as string} onValueChange={handleRoleFilterChange}>
+        <Select value={roleFilter} onValueChange={handleRoleFilterChange}>
           <SelectTrigger className="w-[180px]">
             <SelectValue placeholder="Filtrar por perfil" />
           </SelectTrigger>

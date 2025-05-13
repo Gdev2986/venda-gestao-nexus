@@ -1,16 +1,19 @@
 
 import { supabase } from "@/integrations/supabase/client";
 
+// Define notification type enum to match database
+export type NotificationType = "PAYMENT" | "BALANCE" | "MACHINE" | "COMMISSION" | "SYSTEM";
+
 // Define notification type
 export type Notification = {
   id: string;
   user_id: string;
   title: string;
   message: string;
-  type: string;
+  type: NotificationType;
   data?: any;
   is_read: boolean;
-  created_at: Date;
+  created_at: string;
   timestamp: Date; // Alias for created_at for backwards compatibility
   read: boolean; // Alias for is_read for backwards compatibility
 };
@@ -38,8 +41,9 @@ export class NotificationService {
 
       return (data || []).map(notification => ({
         ...notification,
-        timestamp: new Date(notification.created_at),
-        read: notification.is_read
+        timestamp: new Date(notification.created_at || new Date()),
+        read: notification.is_read || false,
+        type: notification.type as NotificationType
       })) as Notification[];
     } catch (error: any) {
       console.error('Error in getNotifications:', error);
@@ -180,9 +184,9 @@ export class NotificationService {
     user_id: string;
     title: string;
     message: string;
-    type: string;
+    type: NotificationType;
     data?: any;
-  }): Promise<boolean> {
+  }): Promise<{success: boolean, error?: string}> {
     try {
       const { error } = await supabase
         .from('notifications')
@@ -199,10 +203,10 @@ export class NotificationService {
         throw new Error(`Error creating notification: ${error.message}`);
       }
 
-      return true;
+      return { success: true };
     } catch (error: any) {
       console.error('Error in createNotification:', error);
-      return false;
+      return { success: false, error: error.message };
     }
   }
 
@@ -213,9 +217,9 @@ export class NotificationService {
     user_ids: string[];
     title: string;
     message: string;
-    type: string;
+    type: NotificationType;
     data?: any;
-  }): Promise<boolean> {
+  }): Promise<{success: boolean, error?: string}> {
     try {
       const notificationsToInsert = notifications.user_ids.map(userId => ({
         user_id: userId,
@@ -234,10 +238,10 @@ export class NotificationService {
         throw new Error(`Error creating bulk notifications: ${error.message}`);
       }
 
-      return true;
+      return { success: true };
     } catch (error: any) {
       console.error('Error in createBulkNotifications:', error);
-      return false;
+      return { success: false, error: error.message };
     }
   }
 }
