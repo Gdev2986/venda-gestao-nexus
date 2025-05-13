@@ -31,6 +31,15 @@ export const PATHS = {
     LOGISTICS: "/admin/logistics"
   },
 
+  USER: {
+    DASHBOARD: "/user/dashboard",
+    MACHINES: "/user/machines",
+    PAYMENTS: "/user/payments",
+    SETTINGS: "/user/settings",
+    SUPPORT: "/user/support",
+    HELP: "/user/help"
+  },
+
   CLIENT: {
     DASHBOARD: "/client/dashboard",
     MACHINES: "/client/machines",
@@ -46,7 +55,9 @@ export const PATHS = {
     COMMISSIONS: "/partner/commissions",
     SALES: "/partner/sales",
     REPORTS: "/partner/reports",
-    SETTINGS: "/partner/settings"
+    SETTINGS: "/partner/settings",
+    SUPPORT: "/partner/support",
+    HELP: "/partner/help"
   },
 
   FINANCIAL: {
@@ -67,6 +78,7 @@ export const PATHS = {
     STOCK: "/logistics/stock",
     CLIENT_MACHINES: "/logistics/client-machines",
     SETTINGS: "/logistics/settings",
-    SUPPORT: "/logistics/support"
+    SUPPORT: "/logistics/support",
+    CLIENTS: "/logistics/clients"
   }
 };

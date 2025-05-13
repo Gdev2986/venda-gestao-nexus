@@ -13,12 +13,21 @@ import {
 import { Button } from "@/components/ui/button";
 import { motion, AnimatePresence } from "framer-motion";
 import { Link } from "react-router-dom";
-import { notificationService, Notification } from "@/services/NotificationService";
+import { notificationService } from "@/services/NotificationService";
 import { formatDistanceToNow } from "date-fns";
 import { ptBR } from "date-fns/locale";
 
+// Extend the Notification type
+interface ExtendedNotification {
+  id: string;
+  title: string;
+  message: string;
+  created_at: Date;
+  read: boolean;
+}
+
 const NotificationDropdown = () => {
-  const [notifications, setNotifications] = useState<Notification[]>([]);
+  const [notifications, setNotifications] = useState<ExtendedNotification[]>([]);
   const [isOpen, setIsOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
@@ -27,10 +36,21 @@ const NotificationDropdown = () => {
 
   const fetchNotifications = async () => {
     setIsLoading(true);
-    const data = await notificationService.getUserNotifications();
-    // Show only 5 most recent notifications in dropdown
-    setNotifications(data.slice(0, 5));
-    setIsLoading(false);
+    try {
+      // Using getNotifications instead of getUserNotifications
+      const data = await notificationService.getNotifications();
+      // Map to the extended notification format with read property
+      const extendedData = data.slice(0, 5).map(n => ({
+        ...n,
+        read: n.status === "read",
+        created_at: new Date(n.created_at || Date.now())
+      }));
+      setNotifications(extendedData);
+    } catch (error) {
+      console.error("Error fetching notifications:", error);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   useEffect(() => {
@@ -40,6 +60,7 @@ const NotificationDropdown = () => {
   }, [isOpen]);
 
   const markAsRead = async (id: string) => {
+    // Pass the ID to markAsRead
     await notificationService.markAsRead(id);
     setNotifications((prev) =>
       prev.map((n) => (n.id === id ? { ...n, read: true } : n))
@@ -47,8 +68,13 @@ const NotificationDropdown = () => {
   };
 
   const markAllAsRead = async () => {
-    await notificationService.markAllAsRead();
-    setNotifications((prev) => prev.map((n) => ({ ...n, read: true })));
+    // Note: This should have the proper implementation in notificationService
+    if (notifications.length > 0) {
+      for (const notification of notifications.filter(n => !n.read)) {
+        await notificationService.markAsRead(notification.id);
+      }
+      setNotifications((prev) => prev.map((n) => ({ ...n, read: true })));
+    }
   };
 
   const formatTimestamp = (date: Date) => {
@@ -152,7 +178,7 @@ const NotificationDropdown = () => {
                       <div className="flex w-full justify-between">
                         <span className="font-medium">{notification.title}</span>
                         <span className="text-xs text-muted-foreground">
-                          {formatTimestamp(notification.timestamp)}
+                          {formatTimestamp(notification.created_at)}
                         </span>
                       </div>
                       <span className="text-sm text-muted-foreground">

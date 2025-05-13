@@ -35,18 +35,18 @@ import { Loader2 } from "lucide-react";
 interface User {
   id: string;
   email: string;
-  role: UserRole;
+  role: string;
 }
 
 const UsersTab = () => {
   const [searchTerm, setSearchTerm] = useState("");
-  const [roleFilter, setRoleFilter] = useState<string | UserRole>("all");
+  const [roleFilter, setRoleFilter] = useState<string>("all");
   const [page, setPage] = useState(1);
   const [pageSize] = useState(10);
   const queryClient = useQueryClient();
   const [open, setOpen] = useState(false);
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
-  const [newRole, setNewRole] = useState<UserRole | null>(null);
+  const [newRole, setNewRole] = useState<string | null>(null);
 
   // Fetch users with proper query setup
   const {
@@ -63,7 +63,7 @@ const UsersTab = () => {
         .range((page - 1) * pageSize, page * pageSize - 1);
 
       if (roleFilter !== "all") {
-        query = query.eq("role", roleFilter as UserRole);
+        query = query.eq("role", roleFilter);
       }
 
       const { data, error } = await query;
@@ -86,7 +86,7 @@ const UsersTab = () => {
         .ilike("email", `%${searchTerm}%`);
 
       if (roleFilter !== "all") {
-        query = query.eq("role", roleFilter as UserRole);
+        query = query.eq("role", roleFilter);
       }
 
       const { count, error } = await query;
@@ -114,7 +114,7 @@ const UsersTab = () => {
           .range(page * pageSize, (page + 1) * pageSize - 1);
 
         if (roleFilter !== "all") {
-          query = query.eq("role", roleFilter as UserRole);
+          query = query.eq("role", roleFilter);
         }
 
         const { data, error } = await query;
@@ -134,8 +134,7 @@ const UsersTab = () => {
   };
 
   const handleRoleFilterChange = (value: string) => {
-    const roleValue = value === "all" ? "all" : value as UserRole;
-    setRoleFilter(roleValue);
+    setRoleFilter(value);
     setPage(1);
   };
 
@@ -153,7 +152,7 @@ const UsersTab = () => {
 
   // Update user role mutation
   const updateRoleMutation = useMutation({
-    mutationFn: async ({ userId, newRole }: { userId: string; newRole: UserRole }) => {
+    mutationFn: async ({ userId, newRole }: { userId: string; newRole: string }) => {
       const { data, error } = await supabase
         .from("profiles")
         .update({ role: newRole })
@@ -205,11 +204,11 @@ const UsersTab = () => {
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="all">Todos</SelectItem>
-            <SelectItem value={UserRole.ADMIN}>Administradores</SelectItem>
-            <SelectItem value={UserRole.CLIENT}>Clientes</SelectItem>
-            <SelectItem value={UserRole.PARTNER}>Parceiros</SelectItem>
-            <SelectItem value={UserRole.FINANCIAL}>Financeiro</SelectItem>
-            <SelectItem value={UserRole.LOGISTICS}>Logística</SelectItem>
+            <SelectItem value="ADMIN">Administradores</SelectItem>
+            <SelectItem value="CLIENT">Clientes</SelectItem>
+            <SelectItem value="PARTNER">Parceiros</SelectItem>
+            <SelectItem value="FINANCIAL">Financeiro</SelectItem>
+            <SelectItem value="LOGISTICS">Logística</SelectItem>
           </SelectContent>
         </Select>
       </div>
@@ -313,27 +312,25 @@ const UsersTab = () => {
                 <div className="col-span-3">
                   <Select
                     value={newRole || selectedUser.role}
-                    onValueChange={(value) =>
-                      setNewRole(value as UserRole)
-                    }
+                    onValueChange={(value) => setNewRole(value)}
                   >
                     <SelectTrigger>
                       <SelectValue placeholder="Selecione um perfil" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value={UserRole.ADMIN}>
+                      <SelectItem value="ADMIN">
                         Administrador
                       </SelectItem>
-                      <SelectItem value={UserRole.CLIENT}>
+                      <SelectItem value="CLIENT">
                         Cliente
                       </SelectItem>
-                      <SelectItem value={UserRole.PARTNER}>
+                      <SelectItem value="PARTNER">
                         Parceiro
                       </SelectItem>
-                      <SelectItem value={UserRole.FINANCIAL}>
+                      <SelectItem value="FINANCIAL">
                         Financeiro
                       </SelectItem>
-                      <SelectItem value={UserRole.LOGISTICS}>
+                      <SelectItem value="LOGISTICS">
                         Logística
                       </SelectItem>
                     </SelectContent>

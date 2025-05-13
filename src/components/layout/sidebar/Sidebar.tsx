@@ -2,7 +2,7 @@
 import { useState } from "react";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/contexts/AuthContext";
-import { X, Menu, Settings, Mail, Bell, DollarSign, User } from "lucide-react";
+import { X, Menu } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import SidebarNavigation from "./SidebarNavigation";
 import SidebarUserProfile from "./SidebarUserProfile";
@@ -81,7 +81,7 @@ const Sidebar = ({ className }: SidebarProps) => {
 
         {/* User Profile and Logout at bottom */}
         <div className="mt-auto pt-4">
-          <SidebarUserProfile />
+          <SidebarUserProfile userRole={userRole} />
           <SidebarFooter />
         </div>
       </aside>

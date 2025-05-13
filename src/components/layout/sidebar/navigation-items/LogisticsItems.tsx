@@ -1,8 +1,19 @@
 
-import { LayoutDashboard, Truck, MessageSquare, Box, Building2, Settings } from "lucide-react";
-import { SidebarItem } from "../types";
+import {
+  LayoutDashboard,
+  Settings,
+  Package,
+  Truck,
+  ClipboardList,
+  Calendar,
+  DatabaseIcon,
+  Layers,
+  Users,
+  MessageSquare,
+} from "lucide-react";
 import { UserRole } from "@/types";
 import { PATHS } from "@/routes/paths";
+import { SidebarItem } from "../types";
 
 export const logisticsItems: SidebarItem[] = [
   {
@@ -13,7 +24,7 @@ export const logisticsItems: SidebarItem[] = [
   },
   {
     title: "Máquinas",
-    icon: Box,
+    icon: Package,
     href: PATHS.LOGISTICS.MACHINES,
     roles: [UserRole.LOGISTICS],
   },
@@ -24,15 +35,33 @@ export const logisticsItems: SidebarItem[] = [
     roles: [UserRole.LOGISTICS],
   },
   {
-    title: "Solicitações e Suporte",
-    icon: MessageSquare,
+    title: "Solicitações",
+    icon: ClipboardList,
     href: PATHS.LOGISTICS.REQUESTS,
     roles: [UserRole.LOGISTICS],
   },
   {
+    title: "Agenda",
+    icon: Calendar,
+    href: PATHS.LOGISTICS.CALENDAR,
+    roles: [UserRole.LOGISTICS],
+  },
+  {
+    title: "Estoque",
+    icon: Layers,
+    href: PATHS.LOGISTICS.STOCK,
+    roles: [UserRole.LOGISTICS],
+  },
+  {
     title: "Clientes",
-    icon: Building2,
+    icon: Users,
     href: PATHS.LOGISTICS.CLIENTS,
+    roles: [UserRole.LOGISTICS],
+  },
+  {
+    title: "Suporte",
+    icon: MessageSquare,
+    href: PATHS.LOGISTICS.SUPPORT,
     roles: [UserRole.LOGISTICS],
   },
   {
