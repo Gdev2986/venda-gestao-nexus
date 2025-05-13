@@ -12,6 +12,15 @@ export interface Notification {
   data?: any;
 }
 
+// Interface para criação de notificação
+interface CreateNotificationParams {
+  user_id: string;
+  title: string;
+  message: string;
+  type: "PAYMENT" | "BALANCE" | "MACHINE" | "COMMISSION" | "SYSTEM" | "GENERAL" | "SALE" | "SUPPORT";
+  data?: any;
+}
+
 class NotificationService {
   async getUserNotifications() {
     try {
@@ -123,15 +132,38 @@ class NotificationService {
     }
   }
 
+  async createNotification({ user_id, title, message, type, data }: CreateNotificationParams) {
+    try {
+      const { error } = await supabase
+        .from('notifications')
+        .insert({
+          user_id,
+          title,
+          message,
+          type,
+          data
+        });
+
+      if (error) throw error;
+      return true;
+    } catch (error) {
+      console.error("Error sending notification:", error);
+      return false;
+    }
+  }
+
   async sendNotification(userId: string, title: string, message: string, type: string, data?: any) {
     try {
+      // Convert string type to actual notification type
+      const notificationType = type as "PAYMENT" | "BALANCE" | "MACHINE" | "COMMISSION" | "SYSTEM" | "GENERAL" | "SALE" | "SUPPORT";
+      
       const { error } = await supabase
         .from('notifications')
         .insert({
           user_id: userId,
           title,
           message,
-          type,
+          type: notificationType,
           data
         });
 

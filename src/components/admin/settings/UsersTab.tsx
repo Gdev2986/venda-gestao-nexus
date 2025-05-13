@@ -63,7 +63,7 @@ const UsersTab = () => {
         .range((page - 1) * pageSize, page * pageSize - 1);
 
       if (roleFilter !== "all") {
-        query = query.eq("role", roleFilter);
+        query = query.eq("role", roleFilter as UserRole);
       }
 
       const { data, error } = await query;
@@ -86,7 +86,7 @@ const UsersTab = () => {
         .ilike("email", `%${searchTerm}%`);
 
       if (roleFilter !== "all") {
-        query = query.eq("role", roleFilter);
+        query = query.eq("role", roleFilter as UserRole);
       }
 
       const { count, error } = await query;
@@ -114,7 +114,7 @@ const UsersTab = () => {
           .range(page * pageSize, (page + 1) * pageSize - 1);
 
         if (roleFilter !== "all") {
-          query = query.eq("role", roleFilter);
+          query = query.eq("role", roleFilter as UserRole);
         }
 
         const { data, error } = await query;
@@ -134,8 +134,7 @@ const UsersTab = () => {
   };
 
   const handleRoleFilterChange = (value: string) => {
-    const roleValue = value === "all" ? "all" : value as UserRole;
-    setRoleFilter(roleValue);
+    setRoleFilter(value);
     setPage(1);
   };
 

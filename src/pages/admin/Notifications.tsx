@@ -31,7 +31,7 @@ import { UserRole } from "@/types";
 const AdminNotifications = () => {
   const [title, setTitle] = useState("");
   const [message, setMessage] = useState("");
-  const [target, setTarget] = useState("all");
+  const [target, setTarget] = useState<"all" | UserRole>("all");
   const [isSending, setIsSending] = useState(false);
   const { toast } = useToast();
 
@@ -117,7 +117,12 @@ const AdminNotifications = () => {
   };
 
   const handleTargetChange = (value: string) => {
-    setTarget(value);
+    // Convert string to appropriate type (either "all" or a UserRole)
+    if (value === "all") {
+      setTarget("all");
+    } else {
+      setTarget(value as UserRole);
+    }
   };
 
   return (
@@ -171,11 +176,11 @@ const AdminNotifications = () => {
                         </SelectTrigger>
                         <SelectContent>
                           <SelectItem value="all">Todos os usuários</SelectItem>
-                          <SelectItem value="CLIENT">Apenas clientes</SelectItem>
-                          <SelectItem value="PARTNER">Apenas parceiros</SelectItem>
-                          <SelectItem value="ADMIN">Apenas administradores</SelectItem>
-                          <SelectItem value="FINANCIAL">Apenas financeiro</SelectItem>
-                          <SelectItem value="LOGISTICS">Apenas logística</SelectItem>
+                          <SelectItem value={UserRole.CLIENT}>Apenas clientes</SelectItem>
+                          <SelectItem value={UserRole.PARTNER}>Apenas parceiros</SelectItem>
+                          <SelectItem value={UserRole.ADMIN}>Apenas administradores</SelectItem>
+                          <SelectItem value={UserRole.FINANCIAL}>Apenas financeiro</SelectItem>
+                          <SelectItem value={UserRole.LOGISTICS}>Apenas logística</SelectItem>
                         </SelectContent>
                       </Select>
                     </div>

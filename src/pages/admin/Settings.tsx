@@ -76,8 +76,16 @@ const AdminSettings = () => {
         return;
       }
 
-      // Convert the string role to UserRole type
-      const userRoleTyped = role as UserRole;
+      // Ensure role is a valid UserRole enum value
+      // If the role is a string representation, convert it to the enum value
+      let userRoleTyped: UserRole;
+      
+      if (Object.values(UserRole).includes(role as UserRole)) {
+        userRoleTyped = role as UserRole;
+      } else {
+        // Default to ADMIN if role is not valid
+        userRoleTyped = UserRole.ADMIN;
+      }
 
       // Update user profile
       await updateUserProfile({
