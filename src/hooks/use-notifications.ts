@@ -1,221 +1,212 @@
+import { useState, useEffect, useCallback } from "react";
+import { notificationService } from "@/services/NotificationService";
+import { useAuth } from "@/contexts/AuthContext";
+import { Notification, NotificationType, UserRole } from "@/types";
 
-import { useState, useEffect } from "react";
-import { notificationService, Notification } from "@/services/NotificationService";
-import { useToast } from "@/hooks/use-toast";
-import { supabase } from "@/integrations/supabase/client";
-
-interface UseNotificationsParams {
-  searchTerm?: string;
-  typeFilter?: string;
-  statusFilter?: string;
+interface UseNotificationsOptions {
   page?: number;
   pageSize?: number;
+  typeFilter?: string;
+  statusFilter?: string;
+  searchTerm?: string;
 }
 
-export const useNotifications = (params: UseNotificationsParams = {}) => {
-  const { searchTerm = "", typeFilter = "all", statusFilter = "all", page = 1, pageSize = 50 } = params;
-  
+interface NotificationHook {
+  notifications: Notification[];
+  isLoading: boolean;
+  totalCount?: number;
+  totalPages?: number;
+  markAsRead: (id: string) => Promise<void>;
+  markAsUnread: (id: string) => Promise<void>;
+  markAllAsRead: (userId: string) => Promise<void>;
+  fetchNotifications: () => Promise<void>;
+  refreshNotifications: () => Promise<void>;
+  deleteNotification: (id: string) => Promise<void>;
+  deleteAllNotifications: (userId: string) => Promise<void>;
+  createNotification: (
+    title: string, 
+    message: string, 
+    type: NotificationType,
+    data?: Record<string, any>
+  ) => Promise<void>;
+  sendNotificationToRole: (
+    title: string, 
+    message: string, 
+    type: NotificationType, 
+    role: UserRole, 
+    data?: Record<string, any>
+  ) => Promise<void>;
+}
+
+export const useNotifications = (options: UseNotificationsOptions = {}): NotificationHook => {
+  const { page = 1, pageSize = 10, typeFilter = "all", statusFilter = "all", searchTerm = "" } = options;
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(true);
-  const [totalPages, setTotalPages] = useState<number>(1);
-  const { toast } = useToast();
-  
-  // Subscribe to real-time updates
-  useEffect(() => {
-    const channel = supabase.channel('notifications-changes')
-      .on('postgres_changes', 
-          { event: '*', 
-            schema: 'public', 
-            table: 'notifications' 
-          }, 
-          handleNotificationChange)
-      .subscribe();
-    
-    return () => { 
-      supabase.removeChannel(channel);
-    };
-  }, []);
-  
-  const handleNotificationChange = (payload: any) => {
-    console.log("Notification change detected:", payload);
-    // Refresh notifications when a change is detected
-    fetchNotifications();
-  };
-  
-  useEffect(() => {
-    fetchNotifications();
-  }, [searchTerm, typeFilter, statusFilter, page]);
-  
-  const fetchNotifications = async () => {
-    setIsLoading(true);
-    
+  const [totalCount, setTotalCount] = useState<number>(0);
+  const [totalPages, setTotalPages] = useState<number>(0);
+  const { user } = useAuth();
+
+  const fetchNotifications = useCallback(async () => {
+    if (!user) {
+      setNotifications([]);
+      setIsLoading(false);
+      return;
+    }
+
     try {
-      const allNotifications = await notificationService.getUserNotifications();
-      
-      // Apply filters
-      let filtered = allNotifications;
-      
-      if (searchTerm) {
-        const term = searchTerm.toLowerCase();
-        filtered = filtered.filter(notification => 
-          notification.title.toLowerCase().includes(term) ||
-          notification.message.toLowerCase().includes(term)
-        );
-      }
-      
-      if (typeFilter !== "all") {
-        filtered = filtered.filter(notification => notification.type === typeFilter);
-      }
-      
-      if (statusFilter === "read") {
-        filtered = filtered.filter(notification => notification.read);
-      } else if (statusFilter === "unread") {
-        filtered = filtered.filter(notification => !notification.read);
-      }
-      
-      // Calculate pagination
-      const total = filtered.length;
-      const maxPages = Math.ceil(total / pageSize);
-      setTotalPages(maxPages || 1);
-      
-      // Apply pagination
-      const startIndex = (page - 1) * pageSize;
-      const paginatedNotifications = filtered.slice(startIndex, startIndex + pageSize);
-      
-      setNotifications(paginatedNotifications);
+      setIsLoading(true);
+      const { notifications: notificationsData, totalCount, totalPages } = await notificationService.getNotifications(
+        user.id,
+        page,
+        pageSize,
+        typeFilter,
+        statusFilter,
+        searchTerm
+      );
+
+      setNotifications(notificationsData);
+      setTotalCount(totalCount);
+      setTotalPages(totalPages);
     } catch (error) {
-      console.error("Error fetching notifications:", error);
-      toast({
-        title: "Erro",
-        description: "Falha ao carregar notificações",
-        variant: "destructive",
-      });
+      console.error("Exception fetching notifications:", error);
     } finally {
       setIsLoading(false);
     }
+  }, [user, page, pageSize, typeFilter, statusFilter, searchTerm]);
+
+  useEffect(() => {
+    fetchNotifications();
+  }, [fetchNotifications]);
+
+  const refreshNotifications = async () => {
+    await fetchNotifications();
   };
-  
+
   const markAsRead = async (id: string) => {
     try {
-      const success = await notificationService.markAsRead(id);
-      if (success) {
-        setNotifications(prev =>
-          prev.map(notification =>
-            notification.id === id ? { ...notification, read: true } : notification
-          )
-        );
-      }
+      await notificationService.markNotificationAsRead(id);
+      
+      // Update local state
+      setNotifications((prevNotifications) =>
+        prevNotifications.map((notification) =>
+          notification.id === id ? { ...notification, read: true } : notification
+        )
+      );
     } catch (error) {
-      console.error("Error marking notification as read:", error);
-      toast({
-        title: "Erro",
-        description: "Falha ao marcar notificação como lida",
-        variant: "destructive",
-      });
+      console.error("Exception marking notification as read:", error);
     }
   };
-  
+
   const markAsUnread = async (id: string) => {
     try {
-      const success = await notificationService.markAsUnread(id);
-      if (success) {
-        setNotifications(prev =>
-          prev.map(notification =>
-            notification.id === id ? { ...notification, read: false } : notification
-          )
-        );
-      }
+      // There's no markAsUnread in the service, but we can handle it client-side for now
+      // TODO: Implement this in the NotificationService
+      
+      // Update local state
+      setNotifications((prevNotifications) =>
+        prevNotifications.map((notification) =>
+          notification.id === id ? { ...notification, read: false } : notification
+        )
+      );
     } catch (error) {
-      console.error("Error marking notification as unread:", error);
-      toast({
-        title: "Erro",
-        description: "Falha ao marcar notificação como não lida",
-        variant: "destructive",
-      });
+      console.error("Exception marking notification as unread:", error);
     }
   };
-  
-  const markAllAsRead = async () => {
+
+  const markAllAsRead = async (userId: string) => {
     try {
-      const success = await notificationService.markAllAsRead();
-      if (success) {
-        setNotifications(prev =>
-          prev.map(notification => ({ ...notification, read: true }))
-        );
-      }
+      await notificationService.markAllAsRead(userId);
+      
+      // Update local state
+      setNotifications((prevNotifications) =>
+        prevNotifications.map((notification) => ({ ...notification, read: true }))
+      );
     } catch (error) {
-      console.error("Error marking all notifications as read:", error);
-      toast({
-        title: "Erro",
-        description: "Falha ao marcar todas notificações como lidas",
-        variant: "destructive",
-      });
+      console.error("Exception marking all notifications as read:", error);
     }
   };
-  
+
   const deleteNotification = async (id: string) => {
     try {
-      const success = await notificationService.deleteNotification(id);
-      if (success) {
-        setNotifications(prev =>
-          prev.filter(notification => notification.id !== id)
-        );
-      }
+      await notificationService.deleteNotification(id);
+      
+      // Update local state
+      setNotifications((prevNotifications) =>
+        prevNotifications.filter((notification) => notification.id !== id)
+      );
     } catch (error) {
-      console.error("Error deleting notification:", error);
-      toast({
-        title: "Erro",
-        description: "Falha ao excluir notificação",
-        variant: "destructive",
-      });
+      console.error("Exception deleting notification:", error);
     }
   };
-  
-  const deleteAllNotifications = async () => {
+
+  const deleteAllNotifications = async (userId: string) => {
     try {
-      const success = await notificationService.deleteAllNotifications();
-      if (success) {
-        setNotifications([]);
-      }
+      // We don't have this in the service yet, but we'll prepare the client-side part
+      
+      // Update local state
+      setNotifications([]);
     } catch (error) {
-      console.error("Error deleting all notifications:", error);
-      toast({
-        title: "Erro",
-        description: "Falha ao excluir todas as notificações",
-        variant: "destructive",
-      });
+      console.error("Exception deleting all notifications:", error);
     }
   };
-  
-  const sendNotification = async (userId: string, title: string, message: string, type: string, data?: any) => {
+
+  const createNotification = async (
+    title: string,
+    message: string,
+    type: NotificationType,
+    data?: Record<string, any>
+  ) => {
+    if (!user) return;
+
     try {
-      const success = await notificationService.sendNotification(userId, title, message, type, data);
-      return success;
-    } catch (error) {
-      console.error("Error sending notification:", error);
-      toast({
-        title: "Erro",
-        description: "Falha ao enviar notificação",
-        variant: "destructive",
+      await notificationService.createNotification({
+        title,
+        message,
+        type,
+        user_id: user.id,
+        data
       });
-      return false;
+      
+      // Refresh notifications to show the new one
+      await fetchNotifications();
+    } catch (error) {
+      console.error("Exception creating notification:", error);
     }
   };
-  
-  const refreshNotifications = () => {
-    fetchNotifications();
+
+  const sendNotificationToRole = async (
+    title: string,
+    message: string,
+    type: NotificationType,
+    role: UserRole,
+    data?: Record<string, any>
+  ) => {
+    try {
+      await notificationService.sendNotificationToRole(
+        title,
+        message,
+        type,
+        role,
+        data
+      );
+    } catch (error) {
+      console.error("Exception sending notifications to role:", error);
+    }
   };
-  
+
   return {
     notifications,
     isLoading,
+    totalCount,
+    totalPages,
     markAsRead,
     markAsUnread,
     markAllAsRead,
+    fetchNotifications,
+    refreshNotifications,
     deleteNotification,
     deleteAllNotifications,
-    sendNotification,
-    totalPages,
-    refreshNotifications,
+    createNotification,
+    sendNotificationToRole
   };
 };

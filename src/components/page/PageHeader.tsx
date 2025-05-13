@@ -1,42 +1,45 @@
 
-import { Button } from "@/components/ui/button";
+import React from 'react';
+import { Button } from "../ui/button";
+import { ArrowLeft } from "lucide-react";
 import { Link } from "react-router-dom";
 
-interface PageHeaderProps {
+export interface PageHeaderProps {
   title: string;
   description?: string;
-  actionLabel?: string;
-  actionLink?: string;
-  actionOnClick?: () => void;
   children?: React.ReactNode;
+  backButton?: boolean;
+  backUrl?: string;
 }
 
-export function PageHeader({
+export const PageHeader: React.FC<PageHeaderProps> = ({
   title,
   description,
-  actionLabel,
-  actionLink,
-  actionOnClick,
   children,
-}: PageHeaderProps) {
+  backButton,
+  backUrl,
+}) => {
   return (
-    <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between mb-6">
-      <div>
-        <h2 className="text-2xl font-bold tracking-tight">{title}</h2>
-        {description && (
-          <p className="text-muted-foreground">{description}</p>
-        )}
+    <div className="flex flex-col gap-4 md:gap-6">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+        <div className="flex flex-col gap-1">
+          {backButton && (
+            <div className="mb-2">
+              <Button variant="ghost" size="sm" asChild className="gap-1 pl-0 h-auto">
+                <Link to={backUrl || ".."}>
+                  <ArrowLeft size={16} />
+                  <span>Voltar</span>
+                </Link>
+              </Button>
+            </div>
+          )}
+          <h1 className="text-2xl font-bold tracking-tight">{title}</h1>
+          {description && (
+            <p className="text-sm text-muted-foreground">{description}</p>
+          )}
+        </div>
+        {children && <div>{children}</div>}
       </div>
-      {children}
-      {actionLabel && (actionLink || actionOnClick) && (
-        actionOnClick ? (
-          <Button onClick={actionOnClick}>{actionLabel}</Button>
-        ) : (
-          <Button asChild>
-            <Link to={actionLink!}>{actionLabel}</Link>
-          </Button>
-        )
-      )}
     </div>
   );
-}
+};

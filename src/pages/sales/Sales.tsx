@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import MainLayout from "@/components/layout/MainLayout";
 import { Sale, SalesFilterParams } from "@/types";
@@ -167,6 +166,7 @@ const Sales = () => {
             onDateChange={setDate}
             onClearFilters={clearFilters}
             onExport={handleExport}
+            filters={filters}
             onShowImportDialog={() => setShowImportDialog(true)}
           />
         </Card>

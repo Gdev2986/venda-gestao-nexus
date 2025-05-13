@@ -1,63 +1,14 @@
 
 import { Route } from "react-router-dom";
-import { PATHS } from "./paths";
-import { UserRole } from "@/types";
-
-// Layouts
-import MainLayout from "../layouts/MainLayout";
-
-// Auth Protection Component
-import RequireAuth from "../components/auth/RequireAuth";
+import { lazy } from "react";
 
 // Financial Pages
-import FinancialDashboard from "../pages/financial/Dashboard";
-import FinancialSettings from "../pages/financial/Settings";
+const FinancialDashboard = lazy(() => import("@/pages/financial/Dashboard"));
+const FinancialSettings = lazy(() => import("@/pages/financial/Settings"));
 
-// Reused Admin Pages
-import AdminPayments from "../pages/admin/Payments";
-import Clients from "../pages/clients/Clients";
-import ClientDetails from "../pages/clients/ClientDetails";
-import AdminReports from "../pages/admin/Reports";
-
-export const FinancialRoutes = (
-  <Route element={<RequireAuth allowedRoles={[UserRole.FINANCIAL]} />}>
-    <Route element={<MainLayout />}>
-      {/* Financial-specific pages */}
-      <Route 
-        path={PATHS.FINANCIAL.DASHBOARD} 
-        element={<FinancialDashboard />} 
-      />
-      
-      <Route 
-        path={PATHS.FINANCIAL.SETTINGS} 
-        element={<FinancialSettings />} 
-      />
-      
-      {/* Use admin pages for these routes */}
-      <Route 
-        path={PATHS.ADMIN.PAYMENTS} 
-        element={<AdminPayments />} 
-      />
-      
-      <Route 
-        path={PATHS.ADMIN.PAYMENT_DETAILS()} 
-        element={<AdminPayments />} 
-      />
-      
-      <Route 
-        path={PATHS.ADMIN.CLIENTS} 
-        element={<Clients />} 
-      />
-      
-      <Route 
-        path={PATHS.ADMIN.CLIENT_DETAILS()} 
-        element={<ClientDetails />} 
-      />
-      
-      <Route 
-        path={PATHS.ADMIN.REPORTS} 
-        element={<AdminReports />} 
-      />
-    </Route>
-  </Route>
-);
+// Financial Routes - defined as Route elements
+export const FinancialRoutes = [
+  <Route key="financial-index" index element={<FinancialDashboard />} />,
+  <Route key="financial-dashboard" path="dashboard" element={<FinancialDashboard />} />,
+  <Route key="financial-settings" path="settings" element={<FinancialSettings />} />
+];

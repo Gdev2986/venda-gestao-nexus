@@ -1,120 +1,29 @@
 
 import { PageHeader } from "@/components/page/PageHeader";
 import { PageWrapper } from "@/components/page/PageWrapper";
-import { Button } from "@/components/ui/button";
-import { Textarea } from "@/components/ui/textarea";
-import { Input } from "@/components/ui/input";
-import { 
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { 
-  Table, 
-  TableBody, 
-  TableCell, 
-  TableHead, 
-  TableHeader, 
-  TableRow 
-} from "@/components/ui/table";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { PATHS } from "@/routes/paths";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { NotificationSender } from "@/components/admin/notifications/NotificationSender";
+import { useNotifications } from "@/hooks/use-notifications";
+import NotificationList from "@/components/notifications/NotificationList";
+import { Card, CardContent } from "@/components/ui/card";
+import { Loader2 } from "lucide-react";
 import { useState } from "react";
-import { useToast } from "@/hooks/use-toast";
-import { notificationService } from "@/services/NotificationService";
-import { supabase } from "@/integrations/supabase/client";
 
 const AdminNotifications = () => {
-  const [title, setTitle] = useState("");
-  const [message, setMessage] = useState("");
-  const [target, setTarget] = useState("all");
-  const [isSending, setIsSending] = useState(false);
-  const { toast } = useToast();
-
-  const handleSendNotification = async () => {
-    if (!title || !message) {
-      toast({
-        title: "Campos obrigatórios",
-        description: "Preencha o título e a mensagem da notificação.",
-        variant: "destructive"
-      });
-      return;
-    }
-
-    setIsSending(true);
-
-    try {
-      let success = false;
-
-      if (target === "all") {
-        // Get all users
-        const { data: users } = await supabase
-          .from('profiles')
-          .select('id');
-        
-        if (users && users.length > 0) {
-          // Send notification to each user
-          const promises = users.map(user => 
-            notificationService.sendNotification(
-              user.id, 
-              title, 
-              message, 
-              "SYSTEM"
-            )
-          );
-          
-          await Promise.all(promises);
-          success = true;
-        }
-      } else {
-        // Get users with specific role
-        const { data: users } = await supabase
-          .from('profiles')
-          .select('id')
-          .eq('role', target);
-        
-        if (users && users.length > 0) {
-          // Send notification to each user with the specified role
-          const promises = users.map(user => 
-            notificationService.sendNotification(
-              user.id, 
-              title, 
-              message, 
-              "SYSTEM"
-            )
-          );
-          
-          await Promise.all(promises);
-          success = true;
-        }
-      }
-
-      if (success) {
-        toast({
-          title: "Notificação enviada",
-          description: "A notificação foi enviada com sucesso."
-        });
-        
-        // Reset form
-        setTitle("");
-        setMessage("");
-        setTarget("all");
-      }
-    } catch (error) {
-      console.error("Error sending notification:", error);
-      toast({
-        title: "Erro",
-        description: "Ocorreu um erro ao enviar a notificação.",
-        variant: "destructive"
-      });
-    } finally {
-      setIsSending(false);
-    }
-  };
-
+  const [currentPage, setCurrentPage] = useState(1);
+  
+  const { 
+    notifications, 
+    isLoading, 
+    markAsRead, 
+    markAsUnread, 
+    deleteNotification,
+    totalPages = 1
+  } = useNotifications({
+    page: currentPage,
+    pageSize: 10
+  });
+  
   return (
     <div className="space-y-6">
       <PageHeader 
@@ -122,150 +31,37 @@ const AdminNotifications = () => {
         description="Envie e gerencie notificações do sistema"
       />
       
-      <Tabs defaultValue="new">
+      <Tabs defaultValue="send">
         <TabsList className="mb-6">
-          <TabsTrigger value="new">Nova Notificação</TabsTrigger>
-          <TabsTrigger value="history">Histórico</TabsTrigger>
-          <TabsTrigger value="templates">Templates</TabsTrigger>
+          <TabsTrigger value="send">Enviar Notificação</TabsTrigger>
+          <TabsTrigger value="list">Histórico</TabsTrigger>
         </TabsList>
         
-        <TabsContent value="new">
-          <Card>
-            <CardHeader>
-              <CardTitle>Enviar Nova Notificação</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                <div>
-                  <label className="block text-sm font-medium mb-1" htmlFor="title">
-                    Título
-                  </label>
-                  <Input 
-                    id="title" 
-                    placeholder="Título da notificação"
-                    value={title}
-                    onChange={(e) => setTitle(e.target.value)}
-                  />
-                </div>
-                
-                <div>
-                  <label className="block text-sm font-medium mb-1" htmlFor="target">
-                    Destinatários
-                  </label>
-                  <Select
-                    value={target}
-                    onValueChange={setTarget}
-                  >
-                    <SelectTrigger id="target">
-                      <SelectValue placeholder="Selecione os destinatários" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="all">Todos os usuários</SelectItem>
-                      <SelectItem value="CLIENT">Apenas clientes</SelectItem>
-                      <SelectItem value="PARTNER">Apenas parceiros</SelectItem>
-                      <SelectItem value="ADMIN">Apenas administradores</SelectItem>
-                      <SelectItem value="FINANCIAL">Apenas financeiro</SelectItem>
-                      <SelectItem value="LOGISTICS">Apenas logística</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-                
-                <div>
-                  <label className="block text-sm font-medium mb-1" htmlFor="message">
-                    Mensagem
-                  </label>
-                  <Textarea 
-                    id="message" 
-                    placeholder="Digite a mensagem da notificação..." 
-                    className="min-h-[150px]"
-                    value={message}
-                    onChange={(e) => setMessage(e.target.value)}
-                  />
-                </div>
-                
-                <div className="pt-4">
-                  <Button
-                    onClick={handleSendNotification}
-                    disabled={isSending}
-                    className="mr-2"
-                  >
-                    {isSending ? "Enviando..." : "Enviar Agora"}
-                  </Button>
-                  <Button variant="outline">Salvar Rascunho</Button>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
+        <TabsContent value="send">
+          <NotificationSender />
         </TabsContent>
         
-        <TabsContent value="history">
+        <TabsContent value="list">
           <PageWrapper>
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Título</TableHead>
-                  <TableHead>Destinatários</TableHead>
-                  <TableHead>Data</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead className="w-[100px]">Ações</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {[
-                  { title: "Atualização do Sistema", target: "Todos", date: "10/04/2025", status: "Enviado" },
-                  { title: "Novos Recursos Disponíveis", target: "Clientes", date: "05/04/2025", status: "Enviado" },
-                  { title: "Manutenção Programada", target: "Todos", date: "01/04/2025", status: "Enviado" },
-                  { title: "Promoção para Parceiros", target: "Parceiros", date: "28/03/2025", status: "Enviado" },
-                  { title: "Atualização de Segurança", target: "Todos", date: "15/03/2025", status: "Enviado" },
-                ].map((notification, i) => (
-                  <TableRow key={i}>
-                    <TableCell>{notification.title}</TableCell>
-                    <TableCell>{notification.target}</TableCell>
-                    <TableCell>{notification.date}</TableCell>
-                    <TableCell>
-                      <span className="inline-flex items-center rounded-full px-2 py-1 text-xs font-medium bg-green-50 text-green-700">
-                        {notification.status}
-                      </span>
-                    </TableCell>
-                    <TableCell>
-                      <Button variant="ghost" size="sm">Detalhes</Button>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </PageWrapper>
-        </TabsContent>
-        
-        <TabsContent value="templates">
-          <PageWrapper>
-            <div className="flex justify-between mb-6">
-              <h3 className="text-lg font-medium">Templates de Notificação</h3>
-              <Button>Criar Template</Button>
-            </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {[
-                "Boas-vindas",
-                "Manutenção Programada",
-                "Nova Funcionalidade",
-                "Alerta de Segurança",
-                "Confirmação de Pagamento",
-                "Fatura Disponível"
-              ].map((template, i) => (
-                <Card key={i}>
-                  <CardHeader className="pb-2">
-                    <CardTitle className="text-base">{template}</CardTitle>
-                  </CardHeader>
-                  <CardContent className="pt-0">
-                    <p className="text-sm text-muted-foreground mb-4">Template para {template.toLowerCase()}</p>
-                    <div className="flex justify-end">
-                      <Button variant="outline" size="sm" className="mr-2">Editar</Button>
-                      <Button size="sm">Usar</Button>
-                    </div>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
+            <Card>
+              <CardContent className="p-0">
+                {isLoading ? (
+                  <div className="flex justify-center items-center h-64">
+                    <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+                  </div>
+                ) : (
+                  <NotificationList 
+                    notifications={notifications} 
+                    onMarkAsRead={markAsRead}
+                    onMarkAsUnread={markAsUnread}
+                    onDelete={deleteNotification}
+                    currentPage={currentPage}
+                    totalPages={totalPages}
+                    onPageChange={setCurrentPage}
+                  />
+                )}
+              </CardContent>
+            </Card>
           </PageWrapper>
         </TabsContent>
       </Tabs>

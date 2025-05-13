@@ -3,7 +3,7 @@ import { createContext, useContext, useEffect, useState } from "react";
 import { Session, User } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { PATHS } from "@/routes/paths";
 import { 
   getCurrentSession, 
@@ -14,34 +14,34 @@ import {
 } from "@/services/auth-service";
 import { AuthContextType } from "./auth-types";
 
-// Função para limpar todos os dados relacionados ao Supabase
+// Function to clean up all Supabase-related data
 const cleanupSupabaseState = () => {
   try {
-    // Limpar tokens padrão
+    // Clear standard tokens
     localStorage.removeItem('supabase.auth.token');
     
-    // Remover todas as chaves do Supabase do localStorage
+    // Remove all Supabase keys from localStorage
     Object.keys(localStorage).forEach((key) => {
       if (key.startsWith('supabase.auth.') || key.includes('sb-')) {
         localStorage.removeItem(key);
       }
     });
     
-    // Remover do sessionStorage se estiver em uso
+    // Remove from sessionStorage if in use
     Object.keys(sessionStorage).forEach((key) => {
       if (key.startsWith('supabase.auth.') || key.includes('sb-')) {
         sessionStorage.removeItem(key);
       }
     });
     
-    // Limpar outros dados de autenticação
+    // Clear other auth data
     sessionStorage.removeItem('userRole');
     sessionStorage.removeItem('redirectPath');
     localStorage.removeItem('userRole');
     
-    console.log("Limpeza completa do estado de autenticação");
+    console.log("Complete cleanup of authentication state");
   } catch (error) {
-    console.error("Erro ao limpar estado de autenticação:", error);
+    console.error("Error clearing authentication state:", error);
   }
 };
 
@@ -55,6 +55,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [isLoading, setIsLoading] = useState(true);
   const { toast } = useToast();
   const navigate = useNavigate();
+  const location = useLocation();
 
   console.log("AuthProvider rendering, isLoading:", isLoading, "user:", user?.email);
 
@@ -99,7 +100,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
               description: "You have been successfully signed out.",
             });
             
-            // Força recarregamento da página para limpar completamente o estado
+            // Force page reload to completely clear state
             window.location.href = PATHS.LOGIN;
           }, 0);
         }
@@ -123,7 +124,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         
         if (error) {
           console.error("Error getting session:", error);
-          // Limpar dados em caso de erro
+          // Clear data in case of error
           cleanupSupabaseState();
           throw error;
         }

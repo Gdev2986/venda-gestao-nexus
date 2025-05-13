@@ -1,7 +1,6 @@
 
 import { Outlet } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
-import MainSidebar from "./MainSidebar";
 import { useState, useEffect } from "react";
 import { useUserRole } from "@/hooks/use-user-role";
 import { useIsMobile } from "@/hooks/use-mobile";
@@ -10,6 +9,7 @@ import { Menu } from "lucide-react";
 import NotificationDropdown from "@/components/layout/NotificationDropdown";
 import ThemeToggle from "@/components/theme/theme-toggle";
 import { Toaster } from "@/components/ui/toaster";
+import MainSidebar from "./MainSidebar";
 
 const MainLayout = () => {
   // Use localStorage to persist sidebar state
@@ -59,7 +59,7 @@ const MainLayout = () => {
               variant="ghost" 
               size="icon" 
               onClick={() => setSidebarOpen(!sidebarOpen)}
-              aria-label={sidebarOpen ? "Close menu" : "Open menu"}
+              aria-label={sidebarOpen ? "Fechar menu" : "Abrir menu"}
             >
               <Menu className="h-5 w-5" />
             </Button>

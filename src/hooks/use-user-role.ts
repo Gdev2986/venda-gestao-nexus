@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { UserRole } from "@/types";
 import { useAuth } from "@/contexts/AuthContext";
@@ -14,7 +15,7 @@ const normalizeUserRole = (role: any): UserRole => {
   }
   
   // Convert to uppercase string for comparison
-  const upperRole = role.toString().toUpperCase();
+  const upperRole = typeof role === 'string' ? role.toString().toUpperCase() : '';
   
   // Map to correct UserRole enum value
   switch (upperRole) {
@@ -121,5 +122,6 @@ export const useUserRole = () => {
     setAuthData("userRole", normalizedRole);
   };
 
-  return { userRole, isRoleLoading, updateUserRole };
+  // Renamed isLoading to isRoleLoading for clarity and compatibility
+  return { userRole, isLoading: isRoleLoading, isRoleLoading, updateUserRole };
 };
