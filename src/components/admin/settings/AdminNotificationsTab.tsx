@@ -2,7 +2,6 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
 import {
   Select,
   SelectContent,
@@ -102,7 +101,7 @@ const AdminNotificationsTab = () => {
         <div>
           <Label htmlFor="notification-target">Perfil Padrão para Notificações</Label>
           <Select 
-            value={targetRole} 
+            value={targetRole === "all" ? "all" : targetRole} 
             onValueChange={handleTargetChange}
           >
             <SelectTrigger>
@@ -110,26 +109,17 @@ const AdminNotificationsTab = () => {
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="all">Todos</SelectItem>
-              <SelectItem value={UserRole.ADMIN}>Administradores</SelectItem>
-              <SelectItem value={UserRole.CLIENT}>Clientes</SelectItem>
-              <SelectItem value={UserRole.PARTNER}>Parceiros</SelectItem>
-              <SelectItem value={UserRole.FINANCIAL}>Financeiro</SelectItem>
-              <SelectItem value={UserRole.LOGISTICS}>Logística</SelectItem>
+              <SelectItem value="ADMIN">Administradores</SelectItem>
+              <SelectItem value="CLIENT">Clientes</SelectItem>
+              <SelectItem value="PARTNER">Parceiros</SelectItem>
+              <SelectItem value="FINANCIAL">Financeiro</SelectItem>
+              <SelectItem value="LOGISTICS">Logística</SelectItem>
             </SelectContent>
           </Select>
         </div>
       </div>
 
       <div className="space-y-4">
-        <div>
-          <Label htmlFor="email-template">Template de Email</Label>
-          <Textarea
-            id="email-template"
-            placeholder="Template HTML para emails de notificação"
-            className="min-h-[100px]"
-          />
-        </div>
-
         <div>
           <Label htmlFor="notification-webhook">Webhook URL</Label>
           <Input
