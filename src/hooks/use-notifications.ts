@@ -189,7 +189,13 @@ export const useNotifications = (params: UseNotificationsParams = {}) => {
   
   const sendNotification = async (userId: string, title: string, message: string, type: string, data?: any) => {
     try {
-      const success = await notificationService.sendNotification(userId, title, message, type, data);
+      const success = await notificationService.createNotification({
+        user_id: userId,
+        title,
+        message,
+        type,
+        data
+      });
       return success;
     } catch (error) {
       console.error("Error sending notification:", error);
