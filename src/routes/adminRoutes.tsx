@@ -1,65 +1,46 @@
 
-// Admin Routes
 import { Route } from "react-router-dom";
+import { PATHS } from "./paths";
 
-// Layouts
-import AdminLayout from "../layouts/AdminLayout";
-import { UserRole } from "@/types";
-import RequireAuth from "../components/auth/RequireAuth";
+// Admin layouts
+import AdminLayout from "@/layouts/AdminLayout";
 
-// Client Routes (within Admin module)
-import { clientRoutes } from "./admin/clientRoutes";
+// Admin pages
+import Dashboard from "@/pages/admin/Dashboard";
+import Clients from "@/pages/admin/Clients";
+import ClientDetails from "@/pages/clients/ClientDetails";
+import NewClient from "@/pages/clients/NewClient";
+import Partners from "@/pages/admin/Partners";
+import PartnerDetails from "@/pages/partners/PartnerDetails";
+import NewPartner from "@/pages/partners/NewPartner";
+import Machines from "@/pages/admin/Machines";
+import Payments from "@/pages/admin/Payments";
+import PaymentDetails from "@/pages/admin/PaymentDetails";
+import Sales from "@/pages/admin/Sales";
+import Fees from "@/pages/admin/Fees";
+import Reports from "@/pages/admin/Reports";
+import AdminNotifications from "@/pages/admin/Notifications";
+import Settings from "@/pages/admin/Settings";
+import Support from "@/pages/admin/Support";
 
-// Partner Routes (within Admin module)
-import { partnerRoutes } from "./admin/partnerRoutes";
-
-// Payment Routes (within Admin module)
-import { paymentRoutes } from "./admin/paymentRoutes";
-
-// Sales Routes (within Admin module)
-import { salesRoutes } from "./admin/salesRoutes";
-
-// Logistics Routes (within Admin module)
-import { logisticsRoutes } from "./admin/logisticsRoutes";
-
-// Dashboard Route
-import { dashboardRoute } from "./admin/dashboardRoute";
-
-// Settings Routes
-import { settingsRoutes } from "./admin/settingsRoutes";
-
-// Notification Routes
-import { notificationRoutes } from "./admin/notificationRoutes";
-
-export const adminRoutes = (
-  <Route element={<RequireAuth allowedRoles={[UserRole.ADMIN, UserRole.LOGISTICS, UserRole.FINANCIAL]} />}>
-    <Route element={<AdminLayout />}>
-      {/* Dashboard */}
-      {dashboardRoute}
-      
-      {/* Client Routes */}
-      {clientRoutes}
-      
-      {/* Partner Routes */}
-      {partnerRoutes}
-      
-      {/* Payment Routes */}
-      {paymentRoutes}
-      
-      {/* Sales Routes */}
-      {salesRoutes}
-      
-      {/* Logistics Routes */}
-      {logisticsRoutes}
-      
-      {/* Settings Routes */}
-      {settingsRoutes}
-
-      {/* Notification Routes */}
-      {notificationRoutes}
-    </Route>
+// Export as a named constant to match the import in App.tsx
+export const AdminRoutes = (
+  <Route path="/admin" element={<AdminLayout />}>
+    <Route path={PATHS.ADMIN.DASHBOARD} element={<Dashboard />} />
+    <Route path={PATHS.ADMIN.CLIENTS} element={<Clients />} />
+    <Route path={`${PATHS.ADMIN.CLIENTS}/:id`} element={<ClientDetails />} />
+    <Route path={PATHS.ADMIN.CLIENT_NEW} element={<NewClient />} />
+    <Route path={PATHS.ADMIN.PARTNERS} element={<Partners />} />
+    <Route path={`${PATHS.ADMIN.PARTNERS}/:id`} element={<PartnerDetails />} />
+    <Route path={PATHS.ADMIN.PARTNER_NEW} element={<NewPartner />} />
+    <Route path={PATHS.ADMIN.MACHINES} element={<Machines />} />
+    <Route path={PATHS.ADMIN.PAYMENTS} element={<Payments />} />
+    <Route path={`${PATHS.ADMIN.PAYMENTS}/:id`} element={<PaymentDetails />} />
+    <Route path={PATHS.ADMIN.SALES} element={<Sales />} />
+    <Route path={PATHS.ADMIN.FEES} element={<Fees />} />
+    <Route path={PATHS.ADMIN.REPORTS} element={<Reports />} />
+    <Route path={PATHS.ADMIN.NOTIFICATIONS} element={<AdminNotifications />} />
+    <Route path={PATHS.ADMIN.SETTINGS} element={<Settings />} />
+    <Route path={PATHS.ADMIN.SUPPORT} element={<Support />} />
   </Route>
 );
-
-// Add named export to match the import in App.tsx
-export const AdminRoutes = adminRoutes;
