@@ -7,7 +7,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
 import { useNavigate } from "react-router-dom";
 import { UserRole } from "@/types";
-import AdminProfile from "@/components/admin/settings/AdminProfile";
+import { AdminProfile } from "@/components/admin/settings/AdminProfile";
 import AdminNotificationsTab from "@/components/admin/settings/AdminNotificationsTab";
 import UsersTab from "@/components/admin/settings/UsersTab";
 import { supabase } from "@/integrations/supabase/client";
@@ -36,7 +36,7 @@ const AdminSettings = () => {
   }: {
     name: string;
     email: string;
-    role: string;
+    role: UserRole;
   }) => {
     // Since updateUserProfile doesn't exist in AuthContext, we implement it here
     try {
@@ -76,11 +76,14 @@ const AdminSettings = () => {
         return;
       }
 
+      // Convert the string role to UserRole type
+      const userRoleTyped = role as UserRole;
+
       // Update user profile
       await updateUserProfile({
         name: name,
         email: email,
-        role: role,
+        role: userRoleTyped,
       });
 
       toast({

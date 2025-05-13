@@ -1,124 +1,147 @@
 
 import { supabase } from "@/integrations/supabase/client";
+import { UserRole } from "@/types";
 
 export interface Notification {
   id: string;
   title: string;
   message: string;
-  created_at: string;
-  user_id?: string;
-  status?: 'read' | 'unread';
-  type?: string;
-  link?: string;
+  type: "PAYMENT" | "BALANCE" | "MACHINE" | "COMMISSION" | "SYSTEM" | "GENERAL" | "SALE" | "SUPPORT";
+  read: boolean;
+  timestamp: Date;
+  data?: any;
 }
 
 class NotificationService {
-  async getNotifications(): Promise<Notification[]> {
+  async getUserNotifications() {
     try {
+      const { data: user } = await supabase.auth.getUser();
+      if (!user) throw new Error("User not authenticated");
+
       const { data, error } = await supabase
         .from('notifications')
         .select('*')
+        .eq('user_id', user.user.id)
         .order('created_at', { ascending: false });
 
       if (error) throw error;
-      
-      return data || [];
+
+      return data?.map(notification => ({
+        id: notification.id,
+        title: notification.title,
+        message: notification.message,
+        type: notification.type,
+        read: notification.is_read || false,
+        timestamp: new Date(notification.created_at),
+        data: notification.data
+      })) || [];
+
     } catch (error) {
-      console.error('Error fetching notifications:', error);
+      console.error("Error fetching notifications:", error);
       return [];
     }
   }
 
-  async getUserNotifications(userId?: string): Promise<Notification[]> {
-    try {
-      const { data: session } = await supabase.auth.getSession();
-      const currentUserId = userId || session.session?.user.id;
-      
-      if (!currentUserId) return [];
-      
-      const { data, error } = await supabase
-        .from('notifications')
-        .select('*')
-        .eq('user_id', currentUserId)
-        .order('created_at', { ascending: false });
-      
-      if (error) throw error;
-      
-      return data || [];
-    } catch (error) {
-      console.error('Error fetching user notifications:', error);
-      return [];
-    }
-  }
-
-  async markAsRead(notificationId: string): Promise<void> {
+  async markAsRead(id: string) {
     try {
       const { error } = await supabase
         .from('notifications')
-        .update({ status: 'read' })
-        .eq('id', notificationId);
-      
+        .update({ is_read: true })
+        .eq('id', id);
+
       if (error) throw error;
+      return true;
     } catch (error) {
-      console.error('Error marking notification as read:', error);
+      console.error("Error marking notification as read:", error);
+      return false;
     }
   }
 
-  async markAllAsRead(userId?: string): Promise<void> {
+  async markAsUnread(id: string) {
     try {
-      const { data: session } = await supabase.auth.getSession();
-      const currentUserId = userId || session.session?.user.id;
-      
-      if (!currentUserId) return;
-      
       const { error } = await supabase
         .from('notifications')
-        .update({ status: 'read' })
-        .eq('user_id', currentUserId)
-        .eq('status', 'unread');
-      
+        .update({ is_read: false })
+        .eq('id', id);
+
       if (error) throw error;
+      return true;
     } catch (error) {
-      console.error('Error marking all notifications as read:', error);
+      console.error("Error marking notification as unread:", error);
+      return false;
     }
   }
 
-  async createNotification(notification: Partial<Notification>): Promise<Notification | null> {
+  async markAllAsRead() {
     try {
-      const { data, error } = await supabase
+      const { data: user } = await supabase.auth.getUser();
+      if (!user) throw new Error("User not authenticated");
+
+      const { error } = await supabase
         .from('notifications')
-        .insert([
-          { 
-            ...notification, 
-            status: notification.status || 'unread',
-            created_at: new Date().toISOString()
-          }
-        ])
-        .select()
-        .single();
-      
+        .update({ is_read: true })
+        .eq('user_id', user.user.id);
+
       if (error) throw error;
-      
-      return data;
+      return true;
     } catch (error) {
-      console.error('Error creating notification:', error);
-      return null;
+      console.error("Error marking all notifications as read:", error);
+      return false;
     }
   }
 
-  async deleteNotification(notificationId: string): Promise<void> {
+  async deleteNotification(id: string) {
     try {
       const { error } = await supabase
         .from('notifications')
         .delete()
-        .eq('id', notificationId);
-      
+        .eq('id', id);
+
       if (error) throw error;
+      return true;
     } catch (error) {
-      console.error('Error deleting notification:', error);
+      console.error("Error deleting notification:", error);
+      return false;
+    }
+  }
+
+  async deleteAllNotifications() {
+    try {
+      const { data: user } = await supabase.auth.getUser();
+      if (!user) throw new Error("User not authenticated");
+
+      const { error } = await supabase
+        .from('notifications')
+        .delete()
+        .eq('user_id', user.user.id);
+
+      if (error) throw error;
+      return true;
+    } catch (error) {
+      console.error("Error deleting all notifications:", error);
+      return false;
+    }
+  }
+
+  async sendNotification(userId: string, title: string, message: string, type: string, data?: any) {
+    try {
+      const { error } = await supabase
+        .from('notifications')
+        .insert({
+          user_id: userId,
+          title,
+          message,
+          type,
+          data
+        });
+
+      if (error) throw error;
+      return true;
+    } catch (error) {
+      console.error("Error sending notification:", error);
+      return false;
     }
   }
 }
 
-// Create a singleton instance
 export const notificationService = new NotificationService();

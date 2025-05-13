@@ -1,94 +1,78 @@
 
-import { useState } from "react";
-import { useAuth } from "@/contexts/AuthContext";
-import { Button } from "@/components/ui/button";
+import { useEffect, useState } from "react";
 import { UserRole } from "@/types";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import { LogOut, User, ChevronDown } from "lucide-react";
-import { useNavigate } from "react-router-dom";
-import { PATHS } from "@/routes/paths";
+import { useAuth } from "@/contexts/AuthContext";
+import { supabase } from "@/integrations/supabase/client";
 
 interface SidebarUserProfileProps {
-  userRole?: UserRole;
+  userRole: UserRole;
 }
 
-const SidebarUserProfile = ({ userRole = UserRole.CLIENT }: SidebarUserProfileProps) => {
-  const { user, signOut } = useAuth();
-  const [isOpen, setIsOpen] = useState(false);
-  const navigate = useNavigate();
+const SidebarUserProfile = ({ userRole }: SidebarUserProfileProps) => {
+  const { user } = useAuth();
+  const [profileName, setProfileName] = useState<string>("");
+  const [profileAvatar, setProfileAvatar] = useState<string | null>(null);
 
-  if (!user) return null;
+  useEffect(() => {
+    const fetchUserProfile = async () => {
+      if (!user) return;
 
-  const userEmail = user.email || "";
-  const userName = user.user_metadata?.name || userEmail.split("@")[0];
+      try {
+        const { data, error } = await supabase
+          .from('profiles')
+          .select('name, avatar')
+          .eq('id', user.id)
+          .single();
 
-  const handleLogout = async () => {
-    await signOut();
-    navigate(PATHS.LOGIN);
-  };
+        if (error) {
+          console.error('Erro ao buscar perfil do usuário:', error);
+          return;
+        }
 
-  const handleSettings = () => {
-    let path = PATHS.USER.SETTINGS;
-    
-    switch (userRole) {
-      case UserRole.ADMIN:
-        path = PATHS.ADMIN.SETTINGS;
-        break;
-      case UserRole.FINANCIAL:
-        path = PATHS.FINANCIAL.SETTINGS;
-        break;
-      case UserRole.PARTNER:
-        path = PATHS.PARTNER.SETTINGS;
-        break;
-      case UserRole.LOGISTICS:
-        path = PATHS.LOGISTICS.SETTINGS;
-        break;
-      case UserRole.CLIENT:
-      default:
-        path = PATHS.CLIENT.SETTINGS;
+        if (data) {
+          setProfileName(data.name || "Usuário");
+          setProfileAvatar(data.avatar);
+        }
+      } catch (error) {
+        console.error('Erro ao buscar perfil:', error);
+      }
+    };
+
+    fetchUserProfile();
+  }, [user]);
+
+  // Iniciais do nome para o avatar
+  const getInitials = () => {
+    if (profileName) {
+      return profileName.charAt(0).toUpperCase();
     }
-    
-    navigate(path);
+    return userRole.charAt(0);
   };
 
   return (
-    <div className="border-t border-border p-4">
-      <DropdownMenu open={isOpen} onOpenChange={setIsOpen}>
-        <DropdownMenuTrigger asChild>
-          <Button
-            variant="ghost"
-            className="w-full justify-start text-left font-normal flex items-center"
-          >
-            <div className="mr-2 h-6 w-6 rounded-full bg-primary flex items-center justify-center text-primary-foreground text-xs">
-              {userName[0]?.toUpperCase()}
-            </div>
-            <div className="flex-1 truncate">
-              <p className="truncate">{userName}</p>
-              <p className="text-xs text-muted-foreground truncate">
-                {userEmail}
-              </p>
-            </div>
-            <ChevronDown className="h-4 w-4 opacity-50" />
-          </Button>
-        </DropdownMenuTrigger>
-        <DropdownMenuContent align="end" className="w-56">
-          <DropdownMenuItem onClick={handleSettings}>
-            <User className="mr-2 h-4 w-4" />
-            <span>Perfil</span>
-          </DropdownMenuItem>
-          <DropdownMenuSeparator />
-          <DropdownMenuItem onClick={handleLogout} className="text-destructive">
-            <LogOut className="mr-2 h-4 w-4" />
-            <span>Sair</span>
-          </DropdownMenuItem>
-        </DropdownMenuContent>
-      </DropdownMenu>
+    <div className="p-4 border-t border-sidebar-border">
+      <div className="flex items-center">
+        <div className="w-8 h-8 rounded-full bg-sidebar-accent flex items-center justify-center text-white">
+          {profileAvatar ? (
+            <img 
+              src={profileAvatar} 
+              alt={profileName} 
+              className="w-8 h-8 rounded-full object-cover"
+            />
+          ) : (
+            getInitials()
+          )}
+        </div>
+        <div className="ml-3">
+          <p className="text-sm font-medium truncate">{profileName || `Conta ${userRole}`}</p>
+          <p className="text-xs text-sidebar-foreground/70 truncate">
+            {userRole === UserRole.ADMIN && "Administrador"}
+            {userRole === UserRole.CLIENT && "Cliente"}
+            {userRole === UserRole.FINANCIAL && "Financeiro"}
+            {userRole === UserRole.PARTNER && "Parceiro"}
+          </p>
+        </div>
+      </div>
     </div>
   );
 };

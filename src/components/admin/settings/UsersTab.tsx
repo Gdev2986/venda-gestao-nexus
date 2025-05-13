@@ -35,18 +35,18 @@ import { Loader2 } from "lucide-react";
 interface User {
   id: string;
   email: string;
-  role: string;
+  role: UserRole;
 }
 
 const UsersTab = () => {
   const [searchTerm, setSearchTerm] = useState("");
-  const [roleFilter, setRoleFilter] = useState<string>("all");
+  const [roleFilter, setRoleFilter] = useState<string | UserRole>("all");
   const [page, setPage] = useState(1);
   const [pageSize] = useState(10);
   const queryClient = useQueryClient();
   const [open, setOpen] = useState(false);
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
-  const [newRole, setNewRole] = useState<string | null>(null);
+  const [newRole, setNewRole] = useState<UserRole | null>(null);
 
   // Fetch users with proper query setup
   const {
@@ -134,7 +134,8 @@ const UsersTab = () => {
   };
 
   const handleRoleFilterChange = (value: string) => {
-    setRoleFilter(value);
+    const roleValue = value === "all" ? "all" : value as UserRole;
+    setRoleFilter(roleValue);
     setPage(1);
   };
 
@@ -152,7 +153,7 @@ const UsersTab = () => {
 
   // Update user role mutation
   const updateRoleMutation = useMutation({
-    mutationFn: async ({ userId, newRole }: { userId: string; newRole: string }) => {
+    mutationFn: async ({ userId, newRole }: { userId: string; newRole: UserRole }) => {
       const { data, error } = await supabase
         .from("profiles")
         .update({ role: newRole })
@@ -204,11 +205,11 @@ const UsersTab = () => {
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="all">Todos</SelectItem>
-            <SelectItem value="ADMIN">Administradores</SelectItem>
-            <SelectItem value="CLIENT">Clientes</SelectItem>
-            <SelectItem value="PARTNER">Parceiros</SelectItem>
-            <SelectItem value="FINANCIAL">Financeiro</SelectItem>
-            <SelectItem value="LOGISTICS">Logística</SelectItem>
+            <SelectItem value={UserRole.ADMIN}>Administradores</SelectItem>
+            <SelectItem value={UserRole.CLIENT}>Clientes</SelectItem>
+            <SelectItem value={UserRole.PARTNER}>Parceiros</SelectItem>
+            <SelectItem value={UserRole.FINANCIAL}>Financeiro</SelectItem>
+            <SelectItem value={UserRole.LOGISTICS}>Logística</SelectItem>
           </SelectContent>
         </Select>
       </div>
@@ -312,25 +313,27 @@ const UsersTab = () => {
                 <div className="col-span-3">
                   <Select
                     value={newRole || selectedUser.role}
-                    onValueChange={(value) => setNewRole(value)}
+                    onValueChange={(value) =>
+                      setNewRole(value as UserRole)
+                    }
                   >
                     <SelectTrigger>
                       <SelectValue placeholder="Selecione um perfil" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="ADMIN">
+                      <SelectItem value={UserRole.ADMIN}>
                         Administrador
                       </SelectItem>
-                      <SelectItem value="CLIENT">
+                      <SelectItem value={UserRole.CLIENT}>
                         Cliente
                       </SelectItem>
-                      <SelectItem value="PARTNER">
+                      <SelectItem value={UserRole.PARTNER}>
                         Parceiro
                       </SelectItem>
-                      <SelectItem value="FINANCIAL">
+                      <SelectItem value={UserRole.FINANCIAL}>
                         Financeiro
                       </SelectItem>
-                      <SelectItem value="LOGISTICS">
+                      <SelectItem value={UserRole.LOGISTICS}>
                         Logística
                       </SelectItem>
                     </SelectContent>

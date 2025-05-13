@@ -2,11 +2,10 @@
 import { UserRole } from "@/types";
 
 export type SidebarProps = {
-  className?: string;
-};
-
-export type SidebarUserProfileProps = {
-  userRole?: UserRole;
+  isOpen: boolean;
+  isMobile: boolean;
+  onClose: () => void;
+  userRole: UserRole;
 };
 
 export type SidebarItem = {

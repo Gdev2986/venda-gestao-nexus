@@ -1,4 +1,3 @@
-
 import { PageHeader } from "@/components/page/PageHeader";
 import { PageWrapper } from "@/components/page/PageWrapper";
 import { Button } from "@/components/ui/button";
@@ -75,7 +74,7 @@ const AdminNotifications = () => {
         const { data: users } = await supabase
           .from('profiles')
           .select('id')
-          .eq('role', target as UserRole);
+          .eq('role', target);
         
         if (users && users.length > 0) {
           // Send notification to each user with the specified role
@@ -117,7 +116,8 @@ const AdminNotifications = () => {
   };
 
   const handleTargetChange = (value: string) => {
-    setTarget(value);
+    const roleValue = value === "all" ? "all" : value as UserRole;
+    setTarget(roleValue);
   };
 
   return (

@@ -8,31 +8,31 @@ export const userItems: SidebarItem[] = [
   {
     title: "Dashboard",
     icon: LayoutDashboard,
-    href: PATHS.CLIENT.DASHBOARD,
+    href: PATHS.USER.DASHBOARD,
     roles: [UserRole.CLIENT],
   },
   {
     title: "Meus Pagamentos",
     icon: Wallet,
-    href: PATHS.CLIENT.PAYMENTS,
+    href: PATHS.USER.PAYMENTS,
     roles: [UserRole.CLIENT]
   },
   {
     title: "Suporte",
     icon: MessageSquare,
-    href: PATHS.CLIENT.SUPPORT,
+    href: PATHS.USER.SUPPORT,
     roles: [UserRole.CLIENT],
   },
   {
     title: "Ajuda",
     icon: HelpCircle,
-    href: PATHS.CLIENT.SUPPORT,
+    href: PATHS.USER.HELP,
     roles: [UserRole.CLIENT],
   },
   {
     title: "Configurações",
     icon: Settings,
-    href: PATHS.CLIENT.SETTINGS,
+    href: PATHS.USER.SETTINGS,
     roles: [UserRole.CLIENT],
   },
 ];

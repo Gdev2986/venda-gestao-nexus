@@ -1,17 +1,20 @@
 
-import { Outlet } from "react-router-dom";
-import { useAuth } from "@/contexts/AuthContext";
-import MainSidebar from "./MainSidebar";
 import { useState, useEffect } from "react";
-import { useUserRole } from "@/hooks/use-user-role";
-import { useIsMobile } from "@/hooks/use-mobile";
+import { useLocation } from "react-router-dom";
+import { UserRole } from "@/types";
+import Sidebar from "./sidebar/Sidebar";
 import { Button } from "@/components/ui/button";
 import { Menu } from "lucide-react";
-import NotificationDropdown from "@/components/layout/NotificationDropdown";
-import ThemeToggle from "@/components/theme/theme-toggle";
-import { Toaster } from "@/components/ui/toaster";
+import { useIsMobile } from "@/hooks/use-mobile";
+import NotificationDropdown from "./NotificationDropdown";
+import ThemeToggle from "../theme/theme-toggle";
+import { useUserRole } from "@/hooks/use-user-role";
 
-const MainLayout = () => {
+type MainLayoutProps = {
+  children: React.ReactNode;
+};
+
+const MainLayout = ({ children }: MainLayoutProps) => {
   // Use localStorage to persist sidebar state
   const [sidebarOpen, setSidebarOpen] = useState(() => {
     const saved = localStorage.getItem("sidebar-state");
@@ -19,15 +22,17 @@ const MainLayout = () => {
   });
   
   const isMobile = useIsMobile();
+  const location = useLocation();
+  
+  // Get user role from custom hook
   const { userRole } = useUserRole();
-  const { user } = useAuth();
 
   // Close sidebar on mobile by default
   useEffect(() => {
     if (isMobile) {
       setSidebarOpen(false);
     }
-  }, [isMobile]);
+  }, [isMobile]); // Remove location dependency to prevent closing on navigation
 
   // Save sidebar state to localStorage when it changes
   useEffect(() => {
@@ -39,10 +44,10 @@ const MainLayout = () => {
   return (
     <div className="flex h-screen overflow-hidden bg-background">
       {/* Sidebar component - mounted always but conditionally shown */}
-      <MainSidebar 
-        isOpen={sidebarOpen}
-        isMobile={isMobile}
-        onClose={() => setSidebarOpen(false)}
+      <Sidebar 
+        isOpen={sidebarOpen} 
+        isMobile={isMobile} 
+        onClose={() => setSidebarOpen(false)} 
         userRole={userRole}
       />
       
@@ -59,7 +64,7 @@ const MainLayout = () => {
               variant="ghost" 
               size="icon" 
               onClick={() => setSidebarOpen(!sidebarOpen)}
-              aria-label={sidebarOpen ? "Close menu" : "Open menu"}
+              aria-label={sidebarOpen ? "Fechar menu" : "Abrir menu"}
             >
               <Menu className="h-5 w-5" />
             </Button>
@@ -75,13 +80,10 @@ const MainLayout = () => {
         {/* Main scrollable content */}
         <main className="flex-1 overflow-auto p-4 md:p-6 lg:p-8">
           <div className="mx-auto max-w-7xl">
-            <Outlet />
+            {children}
           </div>
         </main>
       </div>
-      
-      {/* Toast notifications */}
-      <Toaster />
     </div>
   );
 };

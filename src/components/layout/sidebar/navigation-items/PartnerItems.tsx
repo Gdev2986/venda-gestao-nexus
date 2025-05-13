@@ -1,17 +1,8 @@
 
+import { LayoutDashboard, ListOrdered, Building2, BarChart3, MessageSquare, HelpCircle, Settings, DollarSign } from "lucide-react";
 import { SidebarItem } from "../types";
 import { UserRole } from "@/types";
 import { PATHS } from "@/routes/paths";
-import {
-  LayoutDashboard,
-  Users,
-  DollarSign,
-  ShoppingCart,
-  FileText,
-  Settings,
-  MessageSquare,
-  HelpCircle,
-} from "lucide-react";
 
 export const partnerItems: SidebarItem[] = [
   {
@@ -21,8 +12,14 @@ export const partnerItems: SidebarItem[] = [
     roles: [UserRole.PARTNER],
   },
   {
-    title: "Meus Clientes",
-    icon: Users,
+    title: "Vendas",
+    icon: ListOrdered,
+    href: PATHS.PARTNER.SALES,
+    roles: [UserRole.PARTNER],
+  },
+  {
+    title: "Clientes",
+    icon: Building2,
     href: PATHS.PARTNER.CLIENTS,
     roles: [UserRole.PARTNER],
   },
@@ -33,14 +30,8 @@ export const partnerItems: SidebarItem[] = [
     roles: [UserRole.PARTNER],
   },
   {
-    title: "Vendas",
-    icon: ShoppingCart,
-    href: PATHS.PARTNER.SALES,
-    roles: [UserRole.PARTNER],
-  },
-  {
     title: "Relatórios",
-    icon: FileText,
+    icon: BarChart3,
     href: PATHS.PARTNER.REPORTS,
     roles: [UserRole.PARTNER],
   },
@@ -53,7 +44,7 @@ export const partnerItems: SidebarItem[] = [
   {
     title: "Ajuda",
     icon: HelpCircle,
-    href: PATHS.PARTNER.SUPPORT,
+    href: PATHS.PARTNER.HELP,
     roles: [UserRole.PARTNER],
   },
   {
