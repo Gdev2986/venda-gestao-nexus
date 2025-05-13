@@ -90,3 +90,5 @@ export const AdminProfile = ({
     </div>
   );
 };
+
+export default AdminProfile;

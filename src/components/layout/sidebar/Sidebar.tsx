@@ -1,75 +1,92 @@
 
-import { memo, useCallback } from "react";
-import { motion } from "framer-motion";
-import { X } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { useState } from "react";
 import { cn } from "@/lib/utils";
-
+import { useAuth } from "@/contexts/AuthContext";
+import { X, Menu, Settings, Mail, Bell, DollarSign, User } from "lucide-react";
+import { Button } from "@/components/ui/button";
 import SidebarNavigation from "./SidebarNavigation";
-import SidebarFooter from "./SidebarFooter";
 import SidebarUserProfile from "./SidebarUserProfile";
-import { SidebarProps } from "./types";
+import SidebarFooter from "./SidebarFooter";
+import { UserRole } from "@/types";
+import { useUserRole } from "@/hooks/use-user-role";
 
-// Memoize the Sidebar component to prevent unnecessary re-renders
-const Sidebar = memo(({ isOpen, isMobile, onClose, userRole }: SidebarProps) => {
-  // Optimize button animation by memoizing the click handler
-  const handleCloseClick = useCallback(() => {
-    onClose();
-  }, [onClose]);
+type SidebarProps = {
+  className?: string;
+};
+
+const Sidebar = ({ className }: SidebarProps) => {
+  const [isOpen, setIsOpen] = useState(true);
+  const { user } = useAuth();
+  const { userRole } = useUserRole();
+
+  const toggleSidebar = () => {
+    setIsOpen(!isOpen);
+  };
 
   return (
     <>
-      {/* Mobile backdrop with animation */}
-      {isMobile && isOpen && (
-        <motion.div 
-          className="fixed inset-0 bg-black/50 z-30"
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          exit={{ opacity: 0 }}
-          onClick={handleCloseClick}
+      {/* Mobile sidebar toggle button - only visible on mobile */}
+      <Button
+        variant="outline"
+        size="icon"
+        className="fixed left-4 top-4 z-40 md:hidden"
+        onClick={toggleSidebar}
+      >
+        <Menu className="h-5 w-5" />
+      </Button>
+
+      {/* Sidebar backdrop - only on mobile when sidebar is open */}
+      {isOpen && (
+        <div
+          className="fixed inset-0 z-30 bg-background/80 backdrop-blur-sm md:hidden"
+          onClick={toggleSidebar}
         />
       )}
-      
-      {/* Sidebar with fixed position and animation only for position */}
-      <div
-        className={cn(
-          "fixed inset-y-0 left-0 z-50 flex flex-col w-64 text-sidebar-foreground transition-transform duration-200 ease-in-out",
-          isMobile ? "shadow-xl" : "border-r border-sidebar-border",
-          isOpen ? "translate-x-0" : "-translate-x-full"
-        )}
-        style={{ backgroundColor: 'hsl(196, 70%, 20%)' }}
-      >
-        <div className="flex items-center justify-between h-16 px-4 border-b border-sidebar-border">
-          <div className="flex items-center space-x-2">
-            <div className="w-8 h-8 rounded-md bg-primary flex items-center justify-center text-white font-bold">
-              SP
-            </div>
-            <span className="text-lg font-semibold text-white">SigmaPay</span>
-          </div>
 
-          {isMobile && (
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={handleCloseClick}
-              className="text-sidebar-foreground hover:text-white hover:bg-sidebar-accent"
-            >
-              <X className="h-5 w-5" />
-            </Button>
-          )}
+      {/* Sidebar */}
+      <aside
+        className={cn(
+          "fixed inset-y-0 left-0 z-40 flex h-full w-72 flex-col border-r bg-card px-3 pb-3 pt-5 transition-transform duration-300 md:relative md:z-0",
+          isOpen ? "translate-x-0" : "-translate-x-full",
+          "md:translate-x-0", // Always show on md screens
+          className
+        )}
+      >
+        <div className="flex items-center justify-between px-4">
+          <span className="text-xl font-semibold">
+            {userRole === UserRole.ADMIN && "Admin Panel"}
+            {userRole === UserRole.FINANCIAL && "Financeiro"}
+            {userRole === UserRole.LOGISTICS && "Logística"}
+            {userRole === UserRole.PARTNER && "Dashboard Parceiro"}
+            {userRole === UserRole.CLIENT && "Portal do Cliente"}
+          </span>
+          <Button
+            variant="ghost"
+            size="icon"
+            className="md:hidden"
+            onClick={toggleSidebar}
+          >
+            <X className="h-5 w-5" />
+          </Button>
         </div>
 
-        <div className="flex-1 overflow-y-auto py-4 px-3">
-          <SidebarNavigation userRole={userRole} />
+        <div className="mt-5 flex flex-col justify-between overflow-y-auto px-1">
+          {/* Sidebar main content */}
+          <div className="space-y-4">
+            {user && userRole && (
+              <SidebarNavigation userRole={userRole} />
+            )}
+          </div>
+        </div>
+
+        {/* User Profile and Logout at bottom */}
+        <div className="mt-auto pt-4">
+          <SidebarUserProfile />
           <SidebarFooter />
         </div>
-
-        <SidebarUserProfile userRole={userRole} />
-      </div>
+      </aside>
     </>
   );
-});
-
-Sidebar.displayName = "Sidebar";
+};
 
 export default Sidebar;

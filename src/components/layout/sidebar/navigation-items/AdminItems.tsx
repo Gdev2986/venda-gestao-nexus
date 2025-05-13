@@ -1,68 +1,90 @@
 
-import { LayoutDashboard, ListOrdered, Wallet, Settings, Users, BarChart3, MessageSquare, Percent, Building2, Truck } from "lucide-react";
+import { Settings, Users, Store, ShoppingCart, BarChart, Clock, DollarSign, FileText, Package, MessageSquare, Bell, Shield } from "lucide-react";
 import { SidebarItem } from "../types";
-import { UserRole } from "@/types";
 import { PATHS } from "@/routes/paths";
 
 export const adminItems: SidebarItem[] = [
   {
     title: "Dashboard",
-    icon: LayoutDashboard,
     href: PATHS.ADMIN.DASHBOARD,
-    roles: [UserRole.ADMIN],
-  },
-  {
-    title: "Vendas",
-    icon: ListOrdered,
-    href: PATHS.ADMIN.SALES,
-    roles: [UserRole.ADMIN],
-  },
-  {
-    title: "Pagamentos",
-    icon: Wallet,
-    href: PATHS.ADMIN.PAYMENTS,
-    roles: [UserRole.ADMIN, UserRole.FINANCIAL],
+    icon: <BarChart className="h-5 w-5" />,
   },
   {
     title: "Clientes",
-    icon: Building2,
     href: PATHS.ADMIN.CLIENTS,
-    roles: [UserRole.ADMIN],
+    icon: <Users className="h-5 w-5" />,
   },
   {
     title: "Parceiros",
-    icon: Users,
     href: PATHS.ADMIN.PARTNERS,
-    roles: [UserRole.ADMIN],
+    icon: <Store className="h-5 w-5" />,
+  },
+  {
+    title: "Pagamentos",
+    href: PATHS.ADMIN.PAYMENTS,
+    icon: <DollarSign className="h-5 w-5" />,
+  },
+  {
+    title: "Vendas",
+    href: PATHS.ADMIN.SALES,
+    icon: <ShoppingCart className="h-5 w-5" />,
   },
   {
     title: "Logística",
-    icon: Truck,
-    href: PATHS.LOGISTICS.DASHBOARD,
-    roles: [UserRole.ADMIN],
+    href: PATHS.ADMIN.LOGISTICS,
+    icon: <Package className="h-5 w-5" />,
+    submenu: [
+      {
+        title: "Máquinas",
+        href: PATHS.ADMIN.MACHINES
+      },
+      {
+        title: "Operações",
+        href: PATHS.LOGISTICS.OPERATIONS
+      },
+      {
+        title: "Estoque",
+        href: PATHS.LOGISTICS.STOCK
+      }
+    ]
   },
   {
     title: "Relatórios",
-    icon: BarChart3,
     href: PATHS.ADMIN.REPORTS,
-    roles: [UserRole.ADMIN],
+    icon: <FileText className="h-5 w-5" />,
   },
   {
-    title: "Taxas",
-    icon: Percent,
+    title: "Tarifas",
     href: PATHS.ADMIN.FEES,
-    roles: [UserRole.ADMIN],
+    icon: <Clock className="h-5 w-5" />,
   },
   {
     title: "Suporte",
-    icon: MessageSquare,
     href: PATHS.ADMIN.SUPPORT,
-    roles: [UserRole.ADMIN],
+    icon: <MessageSquare className="h-5 w-5" />,
+  },
+  {
+    title: "Notificações",
+    href: PATHS.ADMIN.NOTIFICATIONS,
+    icon: <Bell className="h-5 w-5" />,
   },
   {
     title: "Configurações",
-    icon: Settings,
     href: PATHS.ADMIN.SETTINGS,
-    roles: [UserRole.ADMIN],
+    icon: <Settings className="h-5 w-5" />,
+    submenu: [
+      {
+        title: "Perfil",
+        href: PATHS.ADMIN.SETTINGS,
+      },
+      {
+        title: "Usuários",
+        href: PATHS.ADMIN.USER_MANAGEMENT,
+      },
+      {
+        title: "Segurança",
+        href: `${PATHS.ADMIN.SETTINGS}?tab=security`,
+      },
+    ],
   },
 ];
