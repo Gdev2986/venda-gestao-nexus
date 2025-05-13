@@ -1,46 +1,71 @@
 
 import { Route } from "react-router-dom";
-import { PATHS } from "./paths";
-
-// Admin layouts
 import AdminLayout from "@/layouts/AdminLayout";
-
-// Admin pages
 import Dashboard from "@/pages/admin/Dashboard";
 import Clients from "@/pages/admin/Clients";
-import ClientDetails from "@/pages/clients/ClientDetails";
-import NewClient from "@/pages/clients/NewClient";
 import Partners from "@/pages/admin/Partners";
-import PartnerDetails from "@/pages/partners/PartnerDetails";
-import NewPartner from "@/pages/partners/NewPartner";
-import Machines from "@/pages/admin/Machines";
+import Settings from "@/pages/admin/Settings";
 import Payments from "@/pages/admin/Payments";
 import PaymentDetails from "@/pages/admin/PaymentDetails";
 import Sales from "@/pages/admin/Sales";
-import Fees from "@/pages/admin/Fees";
-import Reports from "@/pages/admin/Reports";
-import AdminNotifications from "@/pages/admin/Notifications";
-import Settings from "@/pages/admin/Settings";
 import Support from "@/pages/admin/Support";
+import Notifications from "@/pages/admin/Notifications";
+import { PATHS } from "./paths";
+import { RequireAuth } from "@/components/auth/RequireAuth";
+import { UserRole } from "@/types";
 
-// Export as a named constant to match the import in App.tsx
-export const AdminRoutes = (
-  <Route path="/admin" element={<AdminLayout />}>
-    <Route path={PATHS.ADMIN.DASHBOARD} element={<Dashboard />} />
-    <Route path={PATHS.ADMIN.CLIENTS} element={<Clients />} />
-    <Route path={`${PATHS.ADMIN.CLIENTS}/:id`} element={<ClientDetails />} />
-    <Route path={PATHS.ADMIN.CLIENT_NEW} element={<NewClient />} />
-    <Route path={PATHS.ADMIN.PARTNERS} element={<Partners />} />
-    <Route path={`${PATHS.ADMIN.PARTNERS}/:id`} element={<PartnerDetails />} />
-    <Route path={PATHS.ADMIN.PARTNER_NEW} element={<NewPartner />} />
-    <Route path={PATHS.ADMIN.MACHINES} element={<Machines />} />
-    <Route path={PATHS.ADMIN.PAYMENTS} element={<Payments />} />
-    <Route path={`${PATHS.ADMIN.PAYMENTS}/:id`} element={<PaymentDetails />} />
-    <Route path={PATHS.ADMIN.SALES} element={<Sales />} />
-    <Route path={PATHS.ADMIN.FEES} element={<Fees />} />
-    <Route path={PATHS.ADMIN.REPORTS} element={<Reports />} />
-    <Route path={PATHS.ADMIN.NOTIFICATIONS} element={<AdminNotifications />} />
-    <Route path={PATHS.ADMIN.SETTINGS} element={<Settings />} />
-    <Route path={PATHS.ADMIN.SUPPORT} element={<Support />} />
+// Client routes
+import { adminClientRoutes } from "./admin/clientRoutes";
+
+// Partner routes
+import { adminPartnerRoutes } from "./admin/partnerRoutes";
+
+// Payment routes
+import { adminPaymentRoutes } from "./admin/paymentRoutes";
+
+// Sales routes
+import { adminSalesRoutes } from "./admin/salesRoutes";
+
+// Settings routes
+import { adminSettingsRoutes } from "./admin/settingsRoutes";
+
+// Logistics routes
+import { adminLogisticsRoutes } from "./admin/logisticsRoutes";
+
+// Notification routes
+import { adminNotificationRoutes } from "./admin/notificationRoutes";
+
+const adminRoutes = (
+  <Route
+    element={
+      <RequireAuth allowedRoles={[UserRole.ADMIN]}>
+        <AdminLayout />
+      </RequireAuth>
+    }
+  >
+    <Route path={PATHS.ADMIN_DASHBOARD} element={<Dashboard />} />
+    <Route path={PATHS.ADMIN_CLIENTS} element={<Clients />} />
+    <Route path={PATHS.ADMIN_PARTNERS} element={<Partners />} />
+    <Route path={PATHS.ADMIN_SETTINGS} element={<Settings />} />
+    <Route path={PATHS.ADMIN_PAYMENTS} element={<Payments />} />
+    <Route path={PATHS.ADMIN_PAYMENT_DETAILS} element={<PaymentDetails />} />
+    <Route path={PATHS.ADMIN_SALES} element={<Sales />} />
+    <Route path={PATHS.ADMIN_SUPPORT} element={<Support />} />
+    <Route path={PATHS.ADMIN_NOTIFICATIONS} element={<Notifications />} />
+
+    {/* Nested routes */}
+    {adminClientRoutes}
+    {adminPartnerRoutes}
+    {adminPaymentRoutes}
+    {adminSalesRoutes}
+    {adminSettingsRoutes}
+    {adminLogisticsRoutes}
+    {adminNotificationRoutes}
   </Route>
 );
+
+// Export the routes
+export default adminRoutes;
+
+// Add named export for compatibility
+export const AdminRoutes = adminRoutes;
