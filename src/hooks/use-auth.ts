@@ -1,3 +1,4 @@
 
-// Re-export the useAuth hook from the AuthContext
+// Direct re-export from the context to avoid circular references
 export { useAuth } from "@/contexts/AuthContext";
+export default useAuth;
