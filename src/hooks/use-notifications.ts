@@ -2,7 +2,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
-import { NotificationService, Notification, NotificationType } from "@/services/NotificationService";
+import { notificationService, NotificationType, Notification } from "@/services/NotificationService";
 import { UserRole } from "@/types";
 
 interface UseNotificationsParams {
@@ -30,7 +30,7 @@ export const useNotifications = (params: UseNotificationsParams = {}) => {
   useEffect(() => {
     if (!user) return;
     
-    const unsubscribe = NotificationService.subscribeToNotifications(
+    const unsubscribe = notificationService.subscribeToNotifications(
       user.id,
       (newNotification) => {
         // Add the new notification to the list and maintain sort order
@@ -59,7 +59,7 @@ export const useNotifications = (params: UseNotificationsParams = {}) => {
     
     try {
       // Fetch notifications from the service
-      const result = await NotificationService.getUserNotifications(user.id, {
+      const result = await notificationService.getUserNotifications(user.id, {
         page,
         limit
       });
@@ -112,7 +112,7 @@ export const useNotifications = (params: UseNotificationsParams = {}) => {
   
   const markAsRead = async (notificationId: string) => {
     try {
-      await NotificationService.markAsRead(notificationId);
+      await notificationService.markAsRead(notificationId);
       
       // Update UI
       setNotifications(prevNotifications =>
@@ -135,7 +135,7 @@ export const useNotifications = (params: UseNotificationsParams = {}) => {
   
   const markAsUnread = async (notificationId: string) => {
     try {
-      await NotificationService.markAsUnread(notificationId);
+      await notificationService.markAsUnread(notificationId);
       
       // Update UI
       setNotifications(prevNotifications =>
@@ -160,7 +160,7 @@ export const useNotifications = (params: UseNotificationsParams = {}) => {
     if (!user) return;
     
     try {
-      await NotificationService.markAllAsRead(user.id);
+      await notificationService.markAllAsRead(user.id);
       
       // Update UI
       setNotifications(prevNotifications =>
@@ -181,7 +181,7 @@ export const useNotifications = (params: UseNotificationsParams = {}) => {
   
   const deleteNotification = async (notificationId: string) => {
     try {
-      await NotificationService.deleteNotification(notificationId);
+      await notificationService.deleteNotification(notificationId);
       
       // Update UI
       const deletedNotification = notifications.find(notification => notification.id === notificationId);
@@ -208,7 +208,7 @@ export const useNotifications = (params: UseNotificationsParams = {}) => {
   
   const sendNotification = async (notification: Omit<Notification, 'id' | 'created_at' | 'updated_at' | 'read'>) => {
     try {
-      const result = await NotificationService.sendNotification(notification);
+      const result = await notificationService.sendNotification(notification);
       return result;
     } catch (err) {
       console.error("Error sending notification:", err);
@@ -226,7 +226,7 @@ export const useNotifications = (params: UseNotificationsParams = {}) => {
     role: UserRole
   ) => {
     try {
-      const result = await NotificationService.sendNotificationToRole(notification, role);
+      const result = await notificationService.sendNotificationToRole(notification, role);
       return result;
     } catch (err) {
       console.error("Error sending notification to role:", err);

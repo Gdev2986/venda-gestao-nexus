@@ -16,7 +16,7 @@ import { Link } from "react-router-dom";
 import { useNotifications } from "@/hooks/use-notifications";
 import { formatDistanceToNow, parseISO } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import { useAuth } from "@/contexts/AuthContext";
+import { useAuth } from "@/hooks/use-auth";
 
 const NotificationDropdown = () => {
   const [isOpen, setIsOpen] = useState(false);
