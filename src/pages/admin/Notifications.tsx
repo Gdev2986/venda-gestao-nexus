@@ -18,10 +18,9 @@ const AdminNotifications = () => {
     markAsRead, 
     markAsUnread, 
     deleteNotification,
-    totalPages = 1
+    totalPages 
   } = useNotifications({
-    page: currentPage,
-    pageSize: 10
+    page: currentPage
   });
   
   return (

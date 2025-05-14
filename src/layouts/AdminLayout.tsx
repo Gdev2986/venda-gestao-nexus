@@ -9,7 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Menu } from "lucide-react";
 import NotificationDropdown from "@/components/layout/NotificationDropdown";
 import ThemeToggle from "@/components/theme/theme-toggle";
-import { Toaster } from "sonner"; // Update to use sonner instead of custom Toaster
+import { Toaster } from "@/components/ui/toaster";
 import { Spinner } from "@/components/ui/spinner";
 
 const AdminLayout = () => {

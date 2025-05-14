@@ -2,13 +2,14 @@
 import { Navigate, Outlet, useLocation } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { Spinner } from "@/components/ui/spinner";
-import { useState, useEffect } from "react";
+import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import { PATHS } from "@/routes/paths";
 import { UserRole } from "@/types";
 import { useUserRole } from "@/hooks/use-user-role";
 import { useToast } from "@/hooks/use-toast";
 import { getDashboardPath } from "@/routes/routeUtils";
+import { refreshSession, cleanupAuthState } from "@/utils/auth-utils";
 
 interface RequireAuthProps {
   allowedRoles?: UserRole[];
@@ -16,27 +17,58 @@ interface RequireAuthProps {
 }
 
 const RequireAuth = ({ allowedRoles = [], redirectTo = PATHS.LOGIN }: RequireAuthProps) => {
-  const { user, isLoading } = useAuth();
+  const { user, isLoading, signOut } = useAuth();
   const { userRole, isRoleLoading } = useUserRole();
   const location = useLocation();
   const { toast } = useToast();
   const [shouldRedirect, setShouldRedirect] = useState(false);
   const [showLoading, setShowLoading] = useState(true);
   
-  // Use effect to prevent immediate redirects that can cause loops
+  // Periodically refresh the session token
   useEffect(() => {
-    // Only determine redirect after loading is complete
-    if (!isLoading && !isRoleLoading && !user) {
-      setShouldRedirect(true);
+    if (user) {
+      // Set up token refresh every 10 minutes
+      const tokenRefreshInterval = setInterval(async () => {
+        console.log("Refreshing auth token...");
+        await refreshSession();
+      }, 10 * 60 * 1000); // 10 minutes
+      
+      return () => clearInterval(tokenRefreshInterval);
     }
-  }, [isLoading, isRoleLoading, user]);
+  }, [user]);
+  
+  useEffect(() => {
+    console.log("RequireAuth effect - isLoading:", isLoading, "isRoleLoading:", isRoleLoading);
+    console.log("Current location:", location.pathname);
+    console.log("Current user role:", userRole);
+    console.log("Allowed roles:", allowedRoles);
+    
+    // Check for possible expired token
+    const tokenExpired = !!user && (userRole === undefined || userRole === null);
+    
+    if (tokenExpired && !isLoading && !isRoleLoading) {
+      console.log("Possibly expired token detected, forcing logout");
+      cleanupAuthState();
+      signOut().catch(err => console.error("Error during logout:", err));
+      return;
+    }
+    
+    // Only determine redirect after loading is complete
+    if (!isLoading && !isRoleLoading) {
+      if (!user) {
+        console.log("Setting shouldRedirect to true - no user");
+        setShouldRedirect(true);
+        return;
+      }
+    }
+  }, [isLoading, isRoleLoading, user, userRole, signOut, location.pathname]);
 
   // Add a slight delay for loading animation
   useEffect(() => {
     if (!isLoading && !isRoleLoading) {
       const timer = setTimeout(() => {
         setShowLoading(false);
-      }, 500);
+      }, 500); // 0.5 second loading time
       
       return () => clearTimeout(timer);
     }
@@ -59,38 +91,36 @@ const RequireAuth = ({ allowedRoles = [], redirectTo = PATHS.LOGIN }: RequireAut
     );
   }
 
+  // If token has expired, redirect to login
+  const tokenExpired = !!user && (userRole === undefined || userRole === null);
+  if (tokenExpired) {
+    console.log("Token possibly expired, redirecting to login");
+    return <Navigate to={PATHS.LOGIN} state={{ from: location.pathname }} replace />;
+  }
+
   // If not authenticated and not loading, redirect to login
   if (shouldRedirect || !user) {
+    console.log("Redirecting to login from", location.pathname);
     // Store the current location using sessionStorage for better security
     sessionStorage.setItem("redirectPath", location.pathname);
     return <Navigate to={PATHS.LOGIN} state={{ from: location.pathname }} replace />;
   }
 
   // Check if user has permission to access this route
-  if (allowedRoles.length > 0 && userRole) {
-    let hasPermission = false;
+  if (allowedRoles.length > 0 && userRole && !allowedRoles.includes(userRole)) {
+    console.log(`User role ${userRole} not allowed to access this route ${location.pathname}`);
+    toast({
+      title: "Acesso não autorizado",
+      description: "Você não tem permissão para acessar esta página",
+      variant: "destructive",
+    });
     
-    // Check if userRole is included in allowedRoles
-    for (const role of allowedRoles) {
-      if (userRole === role) {
-        hasPermission = true;
-        break;
-      }
-    }
-    
-    if (!hasPermission) {
-      toast({
-        title: "Acesso não autorizado",
-        description: "Você não tem permissão para acessar esta página",
-        variant: "destructive",
-      });
-      
-      try {
-        const dashboardPath = getDashboardPath(userRole);
-        return <Navigate to={dashboardPath} replace />;
-      } catch (error) {
-        return <Navigate to={PATHS.LOGIN} replace />;
-      }
+    try {
+      const dashboardPath = getDashboardPath(userRole);
+      return <Navigate to={dashboardPath} replace />;
+    } catch (error) {
+      console.error("Error getting dashboard path:", error);
+      return <Navigate to={PATHS.LOGIN} replace />;
     }
   }
 

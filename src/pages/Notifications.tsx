@@ -31,14 +31,13 @@ const Notifications = () => {
     markAsUnread,
     markAllAsRead,
     deleteNotification,
-    totalPages = 1,
-    fetchNotifications
+    totalPages,
+    refreshNotifications
   } = useNotifications({
-    page: currentPage,
-    pageSize: 10,
+    searchTerm,
     typeFilter,
     statusFilter,
-    searchTerm
+    page: currentPage
   });
   
   const handleSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -48,13 +47,12 @@ const Notifications = () => {
   
   const handleMarkAllAsRead = async () => {
     if (!user) return;
-    
+
     await markAllAsRead();
     toast({
       title: "Sucesso",
       description: "Todas as notificações foram marcadas como lidas",
     });
-    fetchNotifications(currentPage);
   };
 
   const handleGoBack = () => {
@@ -100,7 +98,7 @@ const Notifications = () => {
           <Button 
             variant="outline" 
             onClick={handleMarkAllAsRead}
-            disabled={isLoading || notifications.every(n => n.is_read)}
+            disabled={isLoading || notifications.every(n => n.read)}
           >
             Marcar todas como lidas
           </Button>

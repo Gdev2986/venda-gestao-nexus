@@ -1,5 +1,5 @@
 
-import { Route } from "react-router-dom";
+import { Route, Navigate } from "react-router-dom";
 import { PATHS } from "../paths";
 
 // Logistics pages accessible to admin
@@ -10,57 +10,47 @@ import LogisticsInventory from "../../pages/logistics/Inventory";
 import LogisticsMachines from "../../pages/logistics/Machines";
 import NewMachine from "../../pages/machines/NewMachine";
 import MachineDetails from "../../pages/machines/MachineDetails";
-import Clients from "../../pages/clients/Clients";
 
-// Logistics Routes for Admin Module - for use in the admin section
+// Logistics Routes for Admin Module
 export const logisticsRoutes = [
   <Route
     key="admin-logistics-redirect"
-    path="logistics"
-    element={<LogisticsDashboard />}
+    path={PATHS.ADMIN.LOGISTICS}
+    element={<Navigate to={PATHS.LOGISTICS.DASHBOARD} replace />}
   />,
-];
-
-// Routes for the dedicated logistics section - with proper relative paths
-export const logisticsMainRoutes = [
   <Route 
-    key="logistics-dashboard"
-    index
+    key="logistics-dashboard" 
+    path={PATHS.LOGISTICS.DASHBOARD} 
     element={<LogisticsDashboard />} 
   />,
   <Route 
-    key="logistics-machines"
-    path="machines"
+    key="logistics-machines" 
+    path={PATHS.LOGISTICS.MACHINES} 
     element={<LogisticsMachines />} 
   />,
   <Route 
-    key="logistics-machine-new"
-    path="machines/new"
+    key="logistics-machine-new" 
+    path={PATHS.LOGISTICS.MACHINE_NEW} 
     element={<NewMachine />} 
   />,
   <Route 
-    key="logistics-machine-details"
-    path="machines/:id"
+    key="logistics-machine-details" 
+    path={PATHS.LOGISTICS.MACHINE_DETAILS()} 
     element={<MachineDetails />} 
   />,
   <Route 
-    key="logistics-operations"
-    path="operations"
+    key="logistics-operations" 
+    path={PATHS.LOGISTICS.OPERATIONS} 
     element={<Operations />} 
   />,
   <Route 
-    key="logistics-requests"
-    path="requests"
+    key="logistics-requests" 
+    path={PATHS.LOGISTICS.REQUESTS} 
     element={<LogisticsRequests />} 
   />,
   <Route 
-    key="logistics-inventory"
-    path="inventory"
+    key="logistics-inventory" 
+    path={PATHS.LOGISTICS.INVENTORY} 
     element={<LogisticsInventory />} 
-  />,
-  <Route 
-    key="logistics-clients"
-    path="clients"
-    element={<Clients />} 
   />
 ];

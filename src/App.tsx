@@ -1,150 +1,87 @@
 
-import { Suspense, lazy } from "react";
 import { Routes, Route, Navigate } from "react-router-dom";
-import { Spinner } from "./components/ui/spinner";
-import { Toaster } from "sonner";
-import { AuthProvider } from "@/contexts/AuthContext";
-import RootLayout from "./layouts/RootLayout";
-import MainLayout from "./layouts/MainLayout";
-import AdminLayout from "./layouts/AdminLayout";
-import LogisticsLayout from "./layouts/LogisticsLayout";
-import PartnerLayout from "./layouts/PartnerLayout";
-import RequireAuth from "@/components/auth/RequireAuth";
-import { UserRole } from "@/types";
+import { PATHS } from "./routes/paths";
+import { useEffect } from "react";
+import { useToast } from "@/hooks/use-toast";
+import { useUserRole } from "./hooks/use-user-role";
+import { UserRole } from "./types";
 
-// Route imports
-const Home = lazy(() => import("./pages/Index"));
-const Login = lazy(() => import("./pages/auth/Login"));
-const Register = lazy(() => import("./pages/auth/Register"));
-const ForgotPassword = lazy(() => import("./pages/auth/ForgotPassword"));
-const ResetPassword = lazy(() => import("./pages/auth/ResetPassword"));
-const Profile = lazy(() => import("./pages/Settings"));
-const Clients = lazy(() => import("./pages/Clients"));
-const Sales = lazy(() => import("./pages/Sales"));
-const Partners = lazy(() => import("./pages/Partners"));
-const NotificationsPage = lazy(() => import("./pages/Notifications"));
-const Payments = lazy(() => import("./pages/Payments"));
-const PixKeys = lazy(() => import("./pages/settings/Settings"));
+// Route utils
+import { getDashboardPath } from "./routes/routeUtils";
 
-// Error Pages
-const NotFound = lazy(() => import("./pages/NotFound"));
-const Unauthorized = lazy(() => import("./pages/NotFound"));
-
-// Import admin routes
-import { adminRoutes } from "./routes/admin/adminRoutes";
-// Import logistics routes
-import { logisticsMainRoutes } from "./routes/admin/logisticsRoutes";
-
-// Import client, partner and financial routes
+// Route groups
+import { AuthRoutes } from "./routes/authRoutes";
+import { AdminRoutes } from "./routes/adminRoutes";
 import { ClientRoutes } from "./routes/clientRoutes";
 import { PartnerRoutes } from "./routes/partnerRoutes";
 import { FinancialRoutes } from "./routes/financialRoutes";
+import { LogisticsRoutes } from "./routes/logisticsRoutes";
+
+// Layouts
+import RootLayout from "./layouts/RootLayout";
+
+// Pages
+import NotFound from "./pages/NotFound";
+import Notifications from "./pages/Notifications";
 
 function App() {
+  const { userRole, isRoleLoading } = useUserRole();
+  const { toast } = useToast();
+
+  // Log role changes for debugging
+  useEffect(() => {
+    if (!isRoleLoading) {
+      console.log("App.tsx - Current user role:", userRole);
+      
+      try {
+        const dashPath = getDashboardPath(userRole);
+        console.log("App.tsx - Will redirect to dashboard:", dashPath);
+      } catch (error) {
+        console.error("Error getting dashboard path:", error);
+      }
+    }
+  }, [userRole, isRoleLoading]);
+
+  // Get the dashboard path safely
+  const getDashboardRedirectPath = () => {
+    try {
+      return getDashboardPath(userRole);
+    } catch (error) {
+      console.error("Error in getDashboardRedirectPath:", error);
+      return PATHS.LOGIN;
+    }
+  };
+
   return (
-    <AuthProvider>
-      <Suspense fallback={<Spinner />}>
-        <Routes>
-          <Route path="/" element={<RootLayout />}>
-            {/* Auth routes - public */}
-            <Route path="login" element={<Login />} />
-            <Route path="register" element={<Register />} />
-            <Route path="forgot-password" element={<ForgotPassword />} />
-            <Route path="reset-password" element={<ResetPassword />} />
-            <Route path="unauthorized" element={<Unauthorized />} />
-            
-            {/* Main Layout for regular pages - requires authentication */}
-            <Route element={<RequireAuth />}>
-              <Route element={<MainLayout />}>
-                <Route index element={<Home />} />
-                <Route path="profile" element={<Profile />} />
-                <Route path="clients" element={<Clients />} />
-                <Route path="sales" element={<Sales />} />
-                <Route path="partners" element={<Partners />} />
-                <Route path="notifications" element={<NotificationsPage />} />
-                <Route path="payments" element={<Payments />} />
-                <Route path="pix-keys" element={<PixKeys />} />
-              </Route>
-            </Route>
-            
-            {/* Admin Layout with Admin Routes - requires admin role */}
-            <Route 
-              element={
-                <RequireAuth 
-                  allowedRoles={[UserRole.ADMIN, UserRole.MANAGER]} 
-                  redirectTo="/unauthorized"
-                />
-              }
-            >
-              <Route path="admin" element={<AdminLayout />}>
-                <Route index element={<Navigate to="dashboard" replace />} />
-                {adminRoutes}
-              </Route>
-            </Route>
+    <Routes>
+      {/* Root path handling */}
+      <Route path={PATHS.HOME} element={<RootLayout />} />
+      
+      {/* Generic dashboard route */}
+      <Route 
+        path={PATHS.DASHBOARD} 
+        element={<Navigate to={getDashboardRedirectPath()} replace />} 
+      />
 
-            {/* Client Routes */}
-            <Route
-              element={
-                <RequireAuth
-                  allowedRoles={[UserRole.CLIENT, UserRole.USER]}
-                  redirectTo="/unauthorized"
-                />
-              }
-            >
-              <Route path="user" element={<MainLayout />}>
-                {ClientRoutes}
-              </Route>
-            </Route>
+      {/* Auth Routes */}
+      {AuthRoutes}
 
-            {/* Partner Routes */}
-            <Route
-              element={
-                <RequireAuth
-                  allowedRoles={[UserRole.PARTNER]}
-                  redirectTo="/unauthorized"
-                />
-              }
-            >
-              <Route path="partner" element={<PartnerLayout />}>
-                {PartnerRoutes}
-              </Route>
-            </Route>
+      {/* Protected Routes by Role */}
+      {AdminRoutes}
+      {ClientRoutes}
+      {PartnerRoutes}
+      {FinancialRoutes}
+      {LogisticsRoutes}
 
-            {/* Financial Routes */}
-            <Route
-              element={
-                <RequireAuth
-                  allowedRoles={[UserRole.FINANCIAL, UserRole.FINANCE]}
-                  redirectTo="/unauthorized"
-                />
-              }
-            >
-              <Route path="financial" element={<MainLayout />}>
-                {FinancialRoutes}
-              </Route>
-            </Route>
+      {/* Shared Routes (accessible by all roles) */}
+      <Route path="/notifications" element={<Notifications />} />
 
-            {/* Logistics Layout with Logistics Routes - requires logistics role */}
-            <Route 
-              element={
-                <RequireAuth 
-                  allowedRoles={[UserRole.LOGISTICS, UserRole.ADMIN]} 
-                  redirectTo="/unauthorized"
-                />
-              }
-            >
-              <Route path="logistics" element={<LogisticsLayout />}>
-                {logisticsMainRoutes}
-              </Route>
-            </Route>
-            
-            {/* Catch-all route */}
-            <Route path="*" element={<NotFound />} />
-          </Route>
-        </Routes>
-      </Suspense>
-      <Toaster />
-    </AuthProvider>
+      {/* 404 */}
+      <Route path={PATHS.NOT_FOUND} element={<NotFound />} />
+      
+      {/* Catch-all redirect to the appropriate dashboard */}
+      <Route path="*" element={<Navigate to={PATHS.DASHBOARD} replace />} />
+    </Routes>
   );
 }
 
