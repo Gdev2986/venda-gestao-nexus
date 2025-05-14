@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { Bell, MailCheck, Loader2 } from "lucide-react";
@@ -34,7 +33,7 @@ const NotificationDropdown = () => {
       setIsLoading(true);
       try {
         // Get only 5 latest notifications
-        const { notifications } = await NotificationService.getNotifications(
+        const { notifications } = await notificationService.getUserNotifications(
           user.id, 
           1, 
           5
@@ -42,7 +41,7 @@ const NotificationDropdown = () => {
         setNotifications(notifications);
         
         // Count unread notifications
-        const count = await NotificationService.getUnreadCount(user.id);
+        const count = await notificationService.getUnreadCount(user.id);
         setUnreadCount(count);
       } catch (error) {
         console.error("Error fetching notifications:", error);
@@ -65,7 +64,7 @@ const NotificationDropdown = () => {
     if (!user) return;
     
     try {
-      await NotificationService.markAllAsRead(user.id);
+      await notificationService.markAllAsRead(user.id);
       setNotifications(notifications.map(n => ({ ...n, read: true })));
       setUnreadCount(0);
     } catch (error) {

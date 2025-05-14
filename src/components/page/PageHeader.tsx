@@ -10,6 +10,9 @@ export interface PageHeaderProps {
   children?: React.ReactNode;
   backButton?: boolean;
   backUrl?: string;
+  actionLabel?: string;
+  actionLink?: string;
+  actionOnClick?: () => void;
 }
 
 export const PageHeader: React.FC<PageHeaderProps> = ({
@@ -18,6 +21,9 @@ export const PageHeader: React.FC<PageHeaderProps> = ({
   children,
   backButton,
   backUrl,
+  actionLabel,
+  actionLink,
+  actionOnClick,
 }) => {
   return (
     <div className="flex flex-col gap-4 md:gap-6">
@@ -39,6 +45,19 @@ export const PageHeader: React.FC<PageHeaderProps> = ({
           )}
         </div>
         {children && <div>{children}</div>}
+        
+        {/* Add support for action button */}
+        {actionLabel && (
+          <div>
+            {actionLink ? (
+              <Button asChild>
+                <Link to={actionLink}>{actionLabel}</Link>
+              </Button>
+            ) : actionOnClick ? (
+              <Button onClick={actionOnClick}>{actionLabel}</Button>
+            ) : null}
+          </div>
+        )}
       </div>
     </div>
   );
