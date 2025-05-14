@@ -62,7 +62,7 @@ export default function AdminSettings() {
         
         <TabsContent value="users">
           <Card>
-            <UsersTab onRoleChange={handleOpenRoleModal} />
+            <UsersTab openRoleModal={handleOpenRoleModal} />
           </Card>
         </TabsContent>
         
@@ -79,16 +79,15 @@ export default function AdminSettings() {
         </TabsContent>
       </Tabs>
       
-      {/* Role Change Modal */}
-      <RoleChangeModal
-        isOpen={isRoleModalOpen}
-        onClose={handleCloseRoleModal}
-        userName={selectedUser?.name || ''}
-        currentRole={selectedUser?.role || UserRole.CLIENT}
-        selectedRole={selectedRole}
-        onRoleChange={setSelectedRole}
-        onConfirm={handleRoleChange}
-      />
+      {selectedUser && (
+        <RoleChangeModal
+          user={selectedUser}
+          newRole={selectedRole}
+          setNewRole={setSelectedRole}
+          onClose={handleCloseRoleModal}
+          onSave={handleRoleChange}
+        />
+      )}
     </div>
   );
 }

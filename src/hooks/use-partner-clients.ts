@@ -2,7 +2,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { Client } from "@/types";
 import { supabase } from "@/integrations/supabase/client";
-import { useAuth } from "@/contexts/AuthContext";
+import { useAuth } from "@/hooks/use-auth";
 import { useToast } from "@/hooks/use-toast";
 
 export const usePartnerClients = () => {
@@ -48,7 +48,7 @@ export const usePartnerClients = () => {
 
       if (data) {
         // Fix type casting - explicitly type the data as Client[]
-        const typedClients = data as Client[];
+        const typedClients = data as unknown as Client[];
         setClients(typedClients);
         setFilteredClients(typedClients);
       }

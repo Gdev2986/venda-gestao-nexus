@@ -72,6 +72,7 @@ const PartnerClients = () => {
           ) : (
             <ClientsTable 
               clients={filteredClients} 
+              isLoading={isLoading}
               onViewClient={handleViewClient}
               isPartnerView={true}
             />

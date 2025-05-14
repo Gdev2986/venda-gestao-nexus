@@ -18,18 +18,22 @@ import { Skeleton } from "@/components/ui/skeleton";
 
 interface ClientsTableProps {
   clients: Client[];
-  isLoading: boolean;
-  onView: (client: Client) => void;
-  onEdit: (client: Client) => void;
-  onDelete: (client: Client) => void;
+  isLoading?: boolean;
+  onView?: (client: Client) => void;
+  onEdit?: (client: Client) => void;
+  onDelete?: (client: Client) => void;
+  onViewClient?: (clientId: string) => void;
+  isPartnerView?: boolean;
 }
 
 const ClientsTable = ({
   clients,
-  isLoading,
+  isLoading = false,
   onView,
   onEdit,
   onDelete,
+  onViewClient,
+  isPartnerView = false,
 }: ClientsTableProps) => {
   if (isLoading) {
     return (
@@ -42,6 +46,14 @@ const ClientsTable = ({
       </div>
     );
   }
+
+  const handleViewClient = (client: Client) => {
+    if (onViewClient) {
+      onViewClient(client.id);
+    } else if (onView) {
+      onView(client);
+    }
+  };
 
   return (
     <div className="rounded-md border overflow-hidden">
@@ -73,21 +85,30 @@ const ClientsTable = ({
                 <TableCell className="hidden lg:table-cell">{`${client.city || ''}, ${client.state || ''}`}</TableCell>
                 <TableCell className="text-right">
                   <div className="flex justify-end gap-2">
-                    <Button variant="ghost" size="icon" onClick={() => onView(client)} title="Visualizar">
-                      <EyeIcon className="h-4 w-4" />
-                    </Button>
-                    <Button variant="ghost" size="icon" onClick={() => onEdit(client)} title="Editar">
-                      <PenIcon className="h-4 w-4" />
-                    </Button>
                     <Button 
                       variant="ghost" 
                       size="icon" 
-                      className="text-destructive hover:text-destructive/80"
-                      onClick={() => onDelete(client)}
-                      title="Excluir"
+                      onClick={() => handleViewClient(client)} 
+                      title="Visualizar"
                     >
-                      <Trash2 className="h-4 w-4" />
+                      <EyeIcon className="h-4 w-4" />
                     </Button>
+                    {!isPartnerView && onEdit && (
+                      <Button variant="ghost" size="icon" onClick={() => onEdit(client)} title="Editar">
+                        <PenIcon className="h-4 w-4" />
+                      </Button>
+                    )}
+                    {!isPartnerView && onDelete && (
+                      <Button 
+                        variant="ghost" 
+                        size="icon" 
+                        className="text-destructive hover:text-destructive/80"
+                        onClick={() => onDelete(client)}
+                        title="Excluir"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    )}
                   </div>
                 </TableCell>
               </TableRow>

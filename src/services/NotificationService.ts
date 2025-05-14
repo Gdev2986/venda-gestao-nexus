@@ -20,7 +20,7 @@ export interface Notification {
   title: string;
   message: string;
   type: NotificationType;
-  read: boolean;  // Using "read" consistently throughout the application
+  read: boolean;
   data?: any;
   created_at: string;
   updated_at: string;
@@ -214,11 +214,14 @@ export const NotificationService = {
       // Map our notification type to database notification type
       const dbType = mapToDatabaseType(notification.type);
       
+      // Converting UserRole to string since that's what the DB expects
+      const roleString = role.toString();
+      
       // First get all users with this role
       const { data: users, error: usersError } = await supabase
         .from('profiles')
         .select('id')
-        .eq('role', role);
+        .eq('role', roleString);
         
       if (usersError) {
         console.error("Error fetching users by role:", usersError);
