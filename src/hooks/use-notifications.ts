@@ -57,7 +57,7 @@ export const useNotifications = (options: UseNotificationsOptions = {}): Notific
     try {
       setIsLoading(true);
       // Using the correct method from notification service
-      const { notifications: notificationsData, totalCount, totalPages } = await notificationService.getUserNotifications(
+      const result = await notificationService.getUserNotifications(
         user.id,
         page,
         pageSize,
@@ -66,9 +66,9 @@ export const useNotifications = (options: UseNotificationsOptions = {}): Notific
         searchTerm
       );
 
-      setNotifications(notificationsData);
-      setTotalCount(totalCount);
-      setTotalPages(totalPages);
+      setNotifications(result.notifications);
+      setTotalCount(result.totalCount);
+      setTotalPages(result.totalPages);
     } catch (error) {
       console.error("Exception fetching notifications:", error);
     } finally {
@@ -102,7 +102,6 @@ export const useNotifications = (options: UseNotificationsOptions = {}): Notific
 
   const markAsUnread = async (id: string) => {
     try {
-      // Assume the service doesn't have this method yet
       // Just update local state for now
       setNotifications((prevNotifications) =>
         prevNotifications.map((notification) =>
@@ -185,15 +184,15 @@ export const useNotifications = (options: UseNotificationsOptions = {}): Notific
     data?: Record<string, any>
   ) => {
     try {
-      // For now, just create a stub since the service method might not exist
-      console.log("Sending notification to role", {
-        title,
-        message,
-        type,
+      await notificationService.notifyUsersByRole(
         role,
-        data
-      });
-      // await notificationService.sendNotificationToRole(title, message, type, role, data);
+        {
+          title,
+          message,
+          type,
+          data
+        }
+      );
     } catch (error) {
       console.error("Exception sending notifications to role:", error);
     }

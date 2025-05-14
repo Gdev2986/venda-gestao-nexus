@@ -1,13 +1,28 @@
 
 import { supabase } from "@/integrations/supabase/client";
-import { Notification, DatabaseNotification, NotificationType, UserRole, DatabaseNotificationType } from "@/types";
+import { Notification, NotificationType, UserRole } from "@/types";
 import { getUserId } from "@/utils/auth-utils";
+
+// Define appropriate types based on the database schema
+export type DatabaseNotificationType = NotificationType;
+
+interface DatabaseNotification {
+  id: string;
+  title: string;
+  message: string;
+  type: DatabaseNotificationType;
+  is_read: boolean;
+  created_at: string;
+  user_id: string;
+  data?: Record<string, any>;
+  role?: UserRole;
+}
 
 const mapDatabaseToClientNotification = (dbNotification: DatabaseNotification): Notification => ({
   id: dbNotification.id,
   title: dbNotification.title,
   message: dbNotification.message,
-  type: dbNotification.type as NotificationType,
+  type: dbNotification.type,
   read: dbNotification.is_read,
   created_at: dbNotification.created_at,
   user_id: dbNotification.user_id,
@@ -20,25 +35,59 @@ const mapDatabaseToClientNotification = (dbNotification: DatabaseNotification): 
  */
 class NotificationService {
   /**
-   * Busca notificações para o usuário atual
+   * Busca notificações para o usuário atual com paginação e filtros
    */
-  async getUserNotifications(limit = 10): Promise<Notification[]> {
-    const userId = getUserId();
-    if (!userId) return [];
+  async getUserNotifications(
+    userId: string,
+    page = 1,
+    pageSize = 10,
+    typeFilter = 'all',
+    statusFilter = 'all',
+    searchTerm = ''
+  ): Promise<{ notifications: Notification[], totalCount: number, totalPages: number }> {
+    if (!userId) return { notifications: [], totalCount: 0, totalPages: 0 };
 
     try {
-      const { data, error } = await supabase
+      let query = supabase
         .from('notifications')
-        .select('*')
+        .select('*', { count: 'exact' })
         .eq('user_id', userId)
-        .order('created_at', { ascending: false })
-        .limit(limit);
+        .order('created_at', { ascending: false });
+
+      // Apply type filter if not 'all'
+      if (typeFilter !== 'all') {
+        query = query.eq('type', typeFilter);
+      }
+
+      // Apply read status filter
+      if (statusFilter === 'read') {
+        query = query.eq('is_read', true);
+      } else if (statusFilter === 'unread') {
+        query = query.eq('is_read', false);
+      }
+
+      // Apply search filter if provided
+      if (searchTerm) {
+        query = query.or(`title.ilike.%${searchTerm}%,message.ilike.%${searchTerm}%`);
+      }
+
+      // Apply pagination
+      const from = (page - 1) * pageSize;
+      const to = from + pageSize - 1;
+      query = query.range(from, to);
+
+      const { data, error, count } = await query;
 
       if (error) throw error;
-      return (data as DatabaseNotification[]).map(mapDatabaseToClientNotification);
+      
+      const notifications = (data as DatabaseNotification[]).map(mapDatabaseToClientNotification);
+      const totalCount = count || 0;
+      const totalPages = Math.ceil(totalCount / pageSize);
+      
+      return { notifications, totalCount, totalPages };
     } catch (error) {
       console.error('Error fetching notifications:', error);
-      return [];
+      return { notifications: [], totalCount: 0, totalPages: 0 };
     }
   }
 
@@ -48,24 +97,30 @@ class NotificationService {
   async createNotification(notification: {
     title: string;
     message: string;
-    type: DatabaseNotificationType;
+    type: NotificationType;
     user_id: string;
     data?: Record<string, any>;
   }): Promise<Notification | null> {
     try {
+      const { title, message, type, user_id, data } = notification;
+      
       // Add default is_read = false
-      const { data, error } = await supabase
+      const { data: responseData, error } = await supabase
         .from('notifications')
         .insert({
-          ...notification,
-          is_read: false
+          title,
+          message,
+          type,
+          user_id,
+          is_read: false,
+          data
         })
         .select()
         .single();
 
       if (error) throw error;
       
-      return data ? mapDatabaseToClientNotification(data as DatabaseNotification) : null;
+      return responseData ? mapDatabaseToClientNotification(responseData as DatabaseNotification) : null;
     } catch (error) {
       console.error('Error creating notification:', error);
       return null;
@@ -93,8 +148,7 @@ class NotificationService {
   /**
    * Marca todas as notificações do usuário como lidas
    */
-  async markAllAsRead(): Promise<boolean> {
-    const userId = getUserId();
+  async markAllAsRead(userId: string): Promise<boolean> {
     if (!userId) return false;
 
     try {
@@ -113,10 +167,9 @@ class NotificationService {
   }
 
   /**
-   * Conta notificações não lidas para o usuário atual
+   * Conta notificações não lidas para o usuário
    */
-  async countUnread(): Promise<number> {
-    const userId = getUserId();
+  async getUnreadCount(userId: string): Promise<number> {
     if (!userId) return 0;
 
     try {
@@ -155,7 +208,7 @@ class NotificationService {
   /**
    * Busca notificações filtradas por tipo
    */
-  async getNotificationsByType(type: DatabaseNotificationType, limit = 10): Promise<Notification[]> {
+  async getNotificationsByType(type: NotificationType, limit = 10): Promise<Notification[]> {
     const userId = getUserId();
     if (!userId) return [];
 
@@ -180,11 +233,11 @@ class NotificationService {
    * Envia uma notificação para todos os usuários com um papel específico
    */
   async notifyUsersByRole(
-    userRole: "ADMIN" | "FINANCIAL" | "PARTNER" | "LOGISTICS" | "CLIENT" | "MANAGER" | "FINANCE" | "SUPPORT" | "USER",
+    userRole: UserRole,
     notification: {
       title: string;
       message: string;
-      type: DatabaseNotificationType;
+      type: NotificationType;
       data?: Record<string, any>;
     }
   ): Promise<boolean> {

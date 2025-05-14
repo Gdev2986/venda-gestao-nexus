@@ -40,3 +40,9 @@ export enum NotificationType {
   SALE = "SALE",
   SUPPORT = "SUPPORT"
 }
+
+export enum ClientStatus {
+  ACTIVE = "active",
+  INACTIVE = "inactive",
+  PENDING = "pending"
+}

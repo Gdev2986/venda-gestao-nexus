@@ -1,13 +1,13 @@
 
 import { Badge } from "@/components/ui/badge";
-import { ClientStatus as ClientStatusEnum } from "@/types/index";
+import { ClientStatus as ClientStatusEnum } from "@/types";
 
 interface ClientStatusProps {
   status: string;
 }
 
 export const ClientStatus = ({ status }: ClientStatusProps) => {
-  let statusProps: { variant?: "default" | "secondary" | "destructive" | "outline"; className?: string } = {};
+  let statusProps: { variant?: "default" | "secondary" | "destructive" | "outline" | "blue" | "green" | "yellow" | "purple"; className?: string } = {};
 
   switch (status) {
     case ClientStatusEnum.ACTIVE:

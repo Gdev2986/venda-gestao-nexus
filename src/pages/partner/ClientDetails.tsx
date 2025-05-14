@@ -7,12 +7,31 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Spinner } from "@/components/ui/spinner";
-import { Client, Sale } from "@/types";
+import { Client, Sale, PaymentMethod } from "@/types";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { ArrowLeft, Phone, Mail, MapPin, Calendar, CreditCard, DollarSign } from "lucide-react";
 import SalesTable from "@/components/sales/SalesTable";
 import { format } from "date-fns";
+
+interface DatabaseSale {
+  id: string;
+  code: string;
+  terminal: string;
+  gross_amount: number;
+  net_amount: number;
+  date: string;
+  payment_method: "CREDIT" | "DEBIT" | "PIX" | "BOLETO" | "TRANSFER";
+  client_id: string;
+  created_at: string;
+  updated_at: string;
+  status?: string;
+  processing_status?: "RAW" | "PROCESSED";
+  client_name?: string;
+  amount?: number;
+  machine_id?: string;
+  partner_id?: string;
+}
 
 const ClientDetails = () => {
   const { id } = useParams<{ id: string }>();
@@ -52,20 +71,20 @@ const ClientDetails = () => {
           
         if (salesError) throw salesError;
         
-        const formattedSales: Sale[] = salesData.map(sale => ({
+        const formattedSales: Sale[] = (salesData as DatabaseSale[]).map(sale => ({
           id: sale.id,
           code: sale.code,
           terminal: sale.terminal,
-          client_name: sale.client_name,
+          client_name: sale.client_name || '',
           gross_amount: sale.gross_amount,
           net_amount: sale.net_amount,
-          amount: sale.amount || sale.gross_amount, // Fallback to gross_amount if amount is missing
+          amount: sale.amount || sale.gross_amount,
           date: sale.date,
-          payment_method: sale.payment_method,
+          payment_method: sale.payment_method as PaymentMethod,
           client_id: sale.client_id,
           created_at: sale.created_at,
           updated_at: sale.updated_at,
-          status: sale.status || "completed" // Default status if missing
+          status: sale.status || "completed"
         }));
         
         setSales(formattedSales);

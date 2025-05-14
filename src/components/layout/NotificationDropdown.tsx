@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { Bell, MailCheck, Loader2 } from "lucide-react";
@@ -33,12 +34,12 @@ const NotificationDropdown = () => {
       setIsLoading(true);
       try {
         // Get only 5 latest notifications
-        const { notifications } = await notificationService.getUserNotifications(
+        const result = await notificationService.getUserNotifications(
           user.id, 
           1, 
           5
         );
-        setNotifications(notifications);
+        setNotifications(result.notifications);
         
         // Count unread notifications
         const count = await notificationService.getUnreadCount(user.id);

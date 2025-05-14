@@ -31,7 +31,7 @@ const PartnerClients = () => {
         
         // Fetch partner's profile to get partner ID
         const { data: partnerData, error: partnerError } = await supabase
-          .from('partner_profiles')
+          .from('partners')
           .select('id')
           .eq('user_id', user.id)
           .single();
