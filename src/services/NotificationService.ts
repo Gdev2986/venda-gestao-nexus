@@ -2,18 +2,18 @@
 import { supabase } from "@/integrations/supabase/client";
 import { UserRole } from "@/types";
 
-// Define notification types
+// Define notification types to match what's available in the database
 export type NotificationType = 
-  | "GENERAL" 
   | "PAYMENT" 
-  | "PAYMENT_APPROVED" 
-  | "PAYMENT_REJECTED" 
   | "BALANCE" 
   | "MACHINE" 
   | "COMMISSION" 
-  | "SYSTEM" 
-  | "SALE" 
-  | "SUPPORT";
+  | "SYSTEM"
+  | "PAYMENT_APPROVED" 
+  | "PAYMENT_REJECTED"
+  | "SALE"
+  | "SUPPORT"
+  | "GENERAL";
 
 // Define notification interface
 export interface Notification {
@@ -24,7 +24,7 @@ export interface Notification {
   type: NotificationType;
   data: Record<string, any>;
   created_at: string;
-  read: boolean;  // Using 'read' property instead of 'is_read' for consistency
+  is_read: boolean;
 }
 
 // Define notification creation interface
@@ -53,7 +53,7 @@ export class NotificationServiceClass {
         message: notification.message,
         type: notification.type,
         data: notification.data,
-        read: false, // Using 'read' instead of 'is_read'
+        is_read: false
       });
 
       if (error) throw error;
@@ -75,7 +75,7 @@ export class NotificationServiceClass {
       const { data: users, error: usersError } = await supabase
         .from("profiles")
         .select("id")
-        .eq("role", role as string);
+        .eq("role", role);
 
       if (usersError) throw usersError;
 
@@ -84,21 +84,21 @@ export class NotificationServiceClass {
         return;
       }
 
-      // Create notifications for all users
-      const notifications = users.map((user) => ({
-        user_id: user.id,
-        title: notification.title,
-        message: notification.message,
-        type: notification.type,
-        data: notification.data,
-        read: false, // Using 'read' instead of 'is_read'
-      }));
-
-      const { error } = await supabase
-        .from("notifications")
-        .insert(notifications);
-
-      if (error) throw error;
+      // Create notifications for all users - one by one to avoid type issues
+      for (const user of users) {
+        const { error } = await supabase.from("notifications").insert({
+          user_id: user.id,
+          title: notification.title,
+          message: notification.message,
+          type: notification.type,
+          data: notification.data,
+          is_read: false
+        });
+  
+        if (error) {
+          console.error("Error inserting notification:", error);
+        }
+      }
     } catch (error) {
       console.error("Error sending notifications to role:", error);
       throw error;
@@ -112,7 +112,7 @@ export class NotificationServiceClass {
     try {
       const { error } = await supabase
         .from("notifications")
-        .update({ read: true })
+        .update({ is_read: true })
         .eq("id", notificationId);
 
       if (error) throw error;
@@ -129,7 +129,7 @@ export class NotificationServiceClass {
     try {
       const { error } = await supabase
         .from("notifications")
-        .update({ read: false })
+        .update({ is_read: false })
         .eq("id", notificationId);
 
       if (error) throw error;
@@ -146,7 +146,7 @@ export class NotificationServiceClass {
     try {
       const { error } = await supabase
         .from("notifications")
-        .update({ read: true })
+        .update({ is_read: true })
         .eq("user_id", userId);
 
       if (error) throw error;
@@ -209,9 +209,9 @@ export class NotificationServiceClass {
 
       // Apply status filter if specified
       if (statusFilter === "read") {
-        query = query.eq("read", true);
+        query = query.eq("is_read", true);
       } else if (statusFilter === "unread") {
-        query = query.eq("read", false);
+        query = query.eq("is_read", false);
       }
 
       // Apply search filter if specified
@@ -234,7 +234,6 @@ export class NotificationServiceClass {
       // Transform data to match our interface
       const notifications = (data || []).map((item: any) => ({
         ...item,
-        read: item.read ?? !item.is_read, // Handle both field names, prioritizing 'read'
         data: item.data || {}
       })) as Notification[];
 
@@ -254,7 +253,7 @@ export class NotificationServiceClass {
         .from("notifications")
         .select("*", { count: "exact", head: true })
         .eq("user_id", userId)
-        .eq("read", false);
+        .eq("is_read", false);
 
       if (error) throw error;
 

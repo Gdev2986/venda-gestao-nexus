@@ -3,4 +3,4 @@
 import { useAuth } from "@/contexts/AuthContext";
 
 export { useAuth };
-export default useAuth;
+// Removida exportação default redundante que pode causar problemas de importação

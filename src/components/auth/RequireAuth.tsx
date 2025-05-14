@@ -24,9 +24,15 @@ const RequireAuth = ({ allowedRoles = [], redirectTo = PATHS.LOGIN }: RequireAut
   const [shouldRedirect, setShouldRedirect] = useState(false);
   const [showLoading, setShowLoading] = useState(true);
   
-  // Periodically refresh the session token
+  // Verificar se estamos na página de login para evitar loops de verificação
+  const isAuthPage = location.pathname === PATHS.LOGIN || 
+                    location.pathname === PATHS.REGISTER || 
+                    location.pathname === PATHS.FORGOT_PASSWORD || 
+                    location.pathname === PATHS.RESET_PASSWORD;
+  
+  // Périodique actualisation du token uniquement si nous ne sommes pas sur une page d'authentification
   useEffect(() => {
-    if (user) {
+    if (user && !isAuthPage) {
       // Set up token refresh every 10 minutes
       const tokenRefreshInterval = setInterval(async () => {
         console.log("Refreshing auth token...");
@@ -35,9 +41,15 @@ const RequireAuth = ({ allowedRoles = [], redirectTo = PATHS.LOGIN }: RequireAut
       
       return () => clearInterval(tokenRefreshInterval);
     }
-  }, [user]);
+  }, [user, isAuthPage]);
   
   useEffect(() => {
+    // Não executar verificações de role se estivermos em páginas de autenticação
+    if (isAuthPage) {
+      setShowLoading(false);
+      return;
+    }
+    
     console.log("RequireAuth effect - isLoading:", isLoading, "isRoleLoading:", isRoleLoading);
     console.log("Current location:", location.pathname);
     console.log("Current user role:", userRole);
@@ -61,7 +73,7 @@ const RequireAuth = ({ allowedRoles = [], redirectTo = PATHS.LOGIN }: RequireAut
         return;
       }
     }
-  }, [isLoading, isRoleLoading, user, userRole, signOut, location.pathname]);
+  }, [isLoading, isRoleLoading, user, userRole, signOut, location.pathname, isAuthPage, allowedRoles]);
 
   // Add a slight delay for loading animation
   useEffect(() => {
@@ -73,6 +85,11 @@ const RequireAuth = ({ allowedRoles = [], redirectTo = PATHS.LOGIN }: RequireAut
       return () => clearTimeout(timer);
     }
   }, [isLoading, isRoleLoading]);
+
+  // Se estamos em páginas de autenticação, apenas renderizar os filhos sem verificações
+  if (isAuthPage) {
+    return <Outlet />;
+  }
 
   // If still loading or showing loading animation, show a spinner
   if (isLoading || isRoleLoading || showLoading) {

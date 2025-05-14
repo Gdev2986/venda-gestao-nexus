@@ -1,145 +1,145 @@
 
-import { useState, useEffect, useCallback } from "react";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
-import { NotificationService, Notification, NotificationType, CreateNotificationDto } from "@/services/NotificationService";
-import { useAuth } from "@/hooks/use-auth";
-import { UserRole } from "@/types";
+import { useEffect, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
+import { useAuth } from "@/contexts/AuthContext";
+import { NotificationService, Notification } from "@/services/NotificationService";
 
 interface UseNotificationsOptions {
+  statusFilter?: string;
+  typeFilter?: string;
+  searchTerm?: string;
   page?: number;
   pageSize?: number;
-  typeFilter?: string;
-  statusFilter?: string;
-  searchTerm?: string;
 }
 
-/**
- * Hook for managing notifications
- */
-export function useNotifications(options: UseNotificationsOptions = {}) {
+export const useNotifications = (options: UseNotificationsOptions = {}) => {
   const { user } = useAuth();
-  const userId = user?.id || "";
-  const queryClient = useQueryClient();
-  const [totalPages, setTotalPages] = useState(1);
+  const [unreadCount, setUnreadCount] = useState(0);
 
-  const {
-    page = 1,
-    pageSize = 10,
-    typeFilter = "all",
-    statusFilter = "all",
-    searchTerm = "",
-  } = options;
+  // Format options
+  const formattedOptions = {
+    page: options.page || 1,
+    pageSize: options.pageSize || 10,
+    statusFilter: options.statusFilter || "all",
+    typeFilter: options.typeFilter || "all",
+    searchTerm: options.searchTerm || "",
+  };
 
-  // Fetch notifications
+  // Fetch notifications with React Query
   const {
     data,
     isLoading,
-    refetch: refresh
+    error,
+    refetch,
   } = useQuery({
-    queryKey: ["notifications", userId, page, pageSize, typeFilter, statusFilter, searchTerm],
+    queryKey: [
+      "notifications",
+      user?.id,
+      formattedOptions.page,
+      formattedOptions.pageSize,
+      formattedOptions.statusFilter,
+      formattedOptions.typeFilter,
+      formattedOptions.searchTerm,
+    ],
     queryFn: async () => {
-      if (!userId) {
+      if (!user) {
         return { notifications: [], count: 0 };
       }
-      
-      const result = await NotificationService.getUserNotifications(userId, {
-        page,
-        pageSize,
-        typeFilter,
-        statusFilter,
-        searchTerm,
-      });
-      
-      // Calculate total pages
-      setTotalPages(Math.ceil(result.count / pageSize) || 1);
-      
+
+      const result = await NotificationService.getUserNotifications(
+        user.id,
+        formattedOptions
+      );
       return result;
     },
-    enabled: !!userId,
+    enabled: !!user,
   });
 
-  // Get unread count
-  const { data: unreadData } = useQuery({
-    queryKey: ["notifications-unread", userId],
-    queryFn: async () => {
-      if (!userId) return 0;
-      return await NotificationService.getUnreadCount(userId);
-    },
-    enabled: !!userId,
-  });
-
-  // Mark notification as read
-  const markAsRead = useCallback(async (notificationId: string) => {
-    await NotificationService.markAsRead(notificationId);
-    queryClient.invalidateQueries({ queryKey: ["notifications"] });
-    queryClient.invalidateQueries({ queryKey: ["notifications-unread"] });
-  }, [queryClient]);
-
-  // Mark notification as unread
-  const markAsUnread = useCallback(async (notificationId: string) => {
-    await NotificationService.markAsUnread(notificationId);
-    queryClient.invalidateQueries({ queryKey: ["notifications"] });
-    queryClient.invalidateQueries({ queryKey: ["notifications-unread"] });
-  }, [queryClient]);
-
-  // Mark all notifications as read
-  const markAllAsRead = useCallback(async () => {
-    if (!userId) return;
-    await NotificationService.markAllAsRead(userId);
-    queryClient.invalidateQueries({ queryKey: ["notifications"] });
-    queryClient.invalidateQueries({ queryKey: ["notifications-unread"] });
-  }, [queryClient, userId]);
-
-  // Delete notification
-  const deleteNotification = useCallback(async (notificationId: string) => {
-    await NotificationService.deleteNotification(notificationId);
-    queryClient.invalidateQueries({ queryKey: ["notifications"] });
-    queryClient.invalidateQueries({ queryKey: ["notifications-unread"] });
-  }, [queryClient]);
-
-  // Send notification to role
-  const sendNotificationToRole = useCallback(async (
-    notification: CreateNotificationDto,
-    role: UserRole
-  ) => {
-    await NotificationService.sendNotificationToRole(notification, role);
-    queryClient.invalidateQueries({ queryKey: ["notifications"] });
-  }, [queryClient]);
-
-  // Setup real-time subscription
+  // Fetch unread count separately
   useEffect(() => {
-    if (!userId) return;
+    const fetchUnreadCount = async () => {
+      if (!user) {
+        setUnreadCount(0);
+        return;
+      }
 
-    const channel = supabase
-      .channel('public:notifications')
-      .on('postgres_changes', {
-        event: '*',
-        schema: 'public',
-        table: 'notifications',
-        filter: `user_id=eq.${userId}`
-      }, () => {
-        // Invalidate queries to refresh data
-        queryClient.invalidateQueries({ queryKey: ["notifications"] });
-        queryClient.invalidateQueries({ queryKey: ["notifications-unread"] });
-      })
-      .subscribe();
-
-    return () => {
-      supabase.removeChannel(channel);
+      try {
+        const count = await NotificationService.getUnreadCount(user.id);
+        setUnreadCount(count);
+      } catch (error) {
+        console.error("Error getting unread count:", error);
+      }
     };
-  }, [userId, queryClient]);
+
+    fetchUnreadCount();
+    
+    // Optional: Set up real-time subscription for notifications
+    if (user) {
+      const channel = supabase
+        .channel('notifications-changes')
+        .on(
+          'postgres_changes',
+          {
+            event: '*',
+            schema: 'public',
+            table: 'notifications',
+            filter: `user_id=eq.${user.id}`,
+          },
+          () => {
+            fetchUnreadCount();
+            refetch();
+          }
+        )
+        .subscribe();
+
+      return () => {
+        channel.unsubscribe();
+      };
+    }
+  }, [user, refetch]);
+
+  // Methods for notification management
+  const markAsRead = async (notificationId: string) => {
+    if (!user) return;
+    await NotificationService.markAsRead(notificationId);
+    // Atualizar a contagem de não lidas
+    setUnreadCount(prev => Math.max(0, prev - 1));
+  };
+
+  const markAsUnread = async (notificationId: string) => {
+    if (!user) return;
+    await NotificationService.markAsUnread(notificationId);
+    // Atualizar a contagem de não lidas
+    setUnreadCount(prev => prev + 1);
+  };
+
+  const markAllAsRead = async () => {
+    if (!user) return;
+    await NotificationService.markAllAsRead(user.id);
+    // Todas as notificações foram lidas
+    setUnreadCount(0);
+  };
+
+  const deleteNotification = async (notificationId: string) => {
+    if (!user) return;
+    await NotificationService.deleteNotification(notificationId);
+    // Refetching needed to update the count properly
+  };
+
+  const refresh = refetch;
 
   return {
     notifications: data?.notifications || [],
-    unreadCount: unreadData || 0,
+    unreadCount,
     isLoading,
+    error,
     markAsRead,
     markAsUnread,
     markAllAsRead,
     deleteNotification,
-    sendNotificationToRole,
-    totalPages,
-    refresh
+    refresh,
   };
-}
+};
+
+// Importe o cliente Supabase para uso nas inscrições em tempo real
+import { supabase } from "@/integrations/supabase/client";

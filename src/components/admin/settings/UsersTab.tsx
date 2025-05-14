@@ -9,7 +9,7 @@ interface ProfileData {
   id: string;
   name: string;
   email: string;
-  role: UserRole;
+  role: UserRole; // Usando o tipo UserRole diretamente
   created_at: string;
 }
 
@@ -35,7 +35,13 @@ export function UsersTab({ openRoleModal }: UsersTabProps) {
         
         if (error) throw error;
         
-        setUsers(data || []);
+        // Garantindo que os dados têm o formato correto
+        const typedData = data ? data.map(user => ({
+          ...user,
+          role: user.role as UserRole // Forçando o tipo
+        })) : [];
+        
+        setUsers(typedData);
       } catch (err: any) {
         console.error("Error fetching users:", err);
         setError(err.message || "Failed to fetch users");
