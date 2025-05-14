@@ -28,11 +28,7 @@ const NotificationDropdown = () => {
     unreadCount, 
     markAsRead, 
     markAllAsRead
-  } = useNotifications({
-    page: 1,
-    pageSize: 10,
-    statusFilter: "all"
-  });
+  } = useNotifications();
 
   const formatTimestamp = (date: string) => {
     try {

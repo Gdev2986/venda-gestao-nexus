@@ -1,106 +1,145 @@
 
-import { useEffect, useState } from "react";
-import { notificationService, Notification } from "@/services/NotificationService";
-import { useAuth } from "@/contexts/AuthContext";
-import { toast } from "./use-toast";
+import { useState, useEffect, useCallback } from "react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { NotificationService, Notification, NotificationType, CreateNotificationDto } from "@/services/NotificationService";
+import { useAuth } from "@/hooks/use-auth";
+import { UserRole } from "@/types";
 
-export const useNotifications = () => {
-  const [notifications, setNotifications] = useState<Notification[]>([]);
-  const [unreadCount, setUnreadCount] = useState(0);
-  const [isLoading, setIsLoading] = useState(true);
+interface UseNotificationsOptions {
+  page?: number;
+  pageSize?: number;
+  typeFilter?: string;
+  statusFilter?: string;
+  searchTerm?: string;
+}
+
+/**
+ * Hook for managing notifications
+ */
+export function useNotifications(options: UseNotificationsOptions = {}) {
   const { user } = useAuth();
+  const userId = user?.id || "";
+  const queryClient = useQueryClient();
+  const [totalPages, setTotalPages] = useState(1);
+
+  const {
+    page = 1,
+    pageSize = 10,
+    typeFilter = "all",
+    statusFilter = "all",
+    searchTerm = "",
+  } = options;
 
   // Fetch notifications
-  const fetchNotifications = async () => {
-    if (!user) {
-      setNotifications([]);
-      setUnreadCount(0);
-      setIsLoading(false);
-      return;
-    }
-
-    setIsLoading(true);
-    try {
-      const { data } = await notificationService.getForUser(user.id);
-      setNotifications(data || []);
+  const {
+    data,
+    isLoading,
+    refetch: refresh
+  } = useQuery({
+    queryKey: ["notifications", userId, page, pageSize, typeFilter, statusFilter, searchTerm],
+    queryFn: async () => {
+      if (!userId) {
+        return { notifications: [], count: 0 };
+      }
       
-      const { count } = await notificationService.getUnreadCount(user.id);
-      setUnreadCount(count);
-    } catch (error) {
-      console.error("Error fetching notifications:", error);
-    } finally {
-      setIsLoading(false);
-    }
-  };
+      const result = await NotificationService.getUserNotifications(userId, {
+        page,
+        pageSize,
+        typeFilter,
+        statusFilter,
+        searchTerm,
+      });
+      
+      // Calculate total pages
+      setTotalPages(Math.ceil(result.count / pageSize) || 1);
+      
+      return result;
+    },
+    enabled: !!userId,
+  });
 
-  // Setup realtime subscription
+  // Get unread count
+  const { data: unreadData } = useQuery({
+    queryKey: ["notifications-unread", userId],
+    queryFn: async () => {
+      if (!userId) return 0;
+      return await NotificationService.getUnreadCount(userId);
+    },
+    enabled: !!userId,
+  });
+
+  // Mark notification as read
+  const markAsRead = useCallback(async (notificationId: string) => {
+    await NotificationService.markAsRead(notificationId);
+    queryClient.invalidateQueries({ queryKey: ["notifications"] });
+    queryClient.invalidateQueries({ queryKey: ["notifications-unread"] });
+  }, [queryClient]);
+
+  // Mark notification as unread
+  const markAsUnread = useCallback(async (notificationId: string) => {
+    await NotificationService.markAsUnread(notificationId);
+    queryClient.invalidateQueries({ queryKey: ["notifications"] });
+    queryClient.invalidateQueries({ queryKey: ["notifications-unread"] });
+  }, [queryClient]);
+
+  // Mark all notifications as read
+  const markAllAsRead = useCallback(async () => {
+    if (!userId) return;
+    await NotificationService.markAllAsRead(userId);
+    queryClient.invalidateQueries({ queryKey: ["notifications"] });
+    queryClient.invalidateQueries({ queryKey: ["notifications-unread"] });
+  }, [queryClient, userId]);
+
+  // Delete notification
+  const deleteNotification = useCallback(async (notificationId: string) => {
+    await NotificationService.deleteNotification(notificationId);
+    queryClient.invalidateQueries({ queryKey: ["notifications"] });
+    queryClient.invalidateQueries({ queryKey: ["notifications-unread"] });
+  }, [queryClient]);
+
+  // Send notification to role
+  const sendNotificationToRole = useCallback(async (
+    notification: CreateNotificationDto,
+    role: UserRole
+  ) => {
+    await NotificationService.sendNotificationToRole(notification, role);
+    queryClient.invalidateQueries({ queryKey: ["notifications"] });
+  }, [queryClient]);
+
+  // Setup real-time subscription
   useEffect(() => {
-    if (!user) return;
+    if (!userId) return;
 
-    fetchNotifications();
-
-    // Set up subscription
     const channel = supabase
-      .channel('notifications_channel')
-      .on(
-        'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'notifications', 
-          filter: `user_id=eq.${user.id}`
-        },
-        () => {
-          console.log('Notification change detected, refreshing...');
-          fetchNotifications();
-        }
-      )
+      .channel('public:notifications')
+      .on('postgres_changes', {
+        event: '*',
+        schema: 'public',
+        table: 'notifications',
+        filter: `user_id=eq.${userId}`
+      }, () => {
+        // Invalidate queries to refresh data
+        queryClient.invalidateQueries({ queryKey: ["notifications"] });
+        queryClient.invalidateQueries({ queryKey: ["notifications-unread"] });
+      })
       .subscribe();
 
-    // Cleanup
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [user]);
-
-  // Mark notification as read
-  const markAsRead = async (notificationId: string) => {
-    const { success } = await notificationService.markAsRead(notificationId);
-    if (success) {
-      setNotifications((prev) =>
-        prev.map((n) =>
-          n.id === notificationId ? { ...n, is_read: true } : n
-        )
-      );
-      setUnreadCount((prev) => Math.max(0, prev - 1));
-    }
-  };
-
-  // Mark all as read
-  const markAllAsRead = async () => {
-    if (!user) return;
-    
-    const { success } = await notificationService.markAllAsRead(user.id);
-    if (success) {
-      setNotifications((prev) =>
-        prev.map((n) => ({ ...n, is_read: true }))
-      );
-      setUnreadCount(0);
-      
-      toast({
-        title: "All notifications marked as read",
-        description: "Your notifications have been updated",
-      });
-    }
-  };
+  }, [userId, queryClient]);
 
   return {
-    notifications,
-    unreadCount,
+    notifications: data?.notifications || [],
+    unreadCount: unreadData || 0,
     isLoading,
     markAsRead,
+    markAsUnread,
     markAllAsRead,
-    refresh: fetchNotifications,
+    deleteNotification,
+    sendNotificationToRole,
+    totalPages,
+    refresh
   };
-};
+}

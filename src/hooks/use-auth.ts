@@ -1,4 +1,6 @@
 
 // Direct re-export from the context to avoid circular references
-export { useAuth } from "@/contexts/AuthContext";
+import { useAuth } from "@/contexts/AuthContext";
+
+export { useAuth };
 export default useAuth;
