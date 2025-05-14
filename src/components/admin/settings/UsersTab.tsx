@@ -1,35 +1,36 @@
-
 import { useState, useEffect } from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { useToast } from "@/hooks/use-toast";
-import { supabase } from "@/integrations/supabase/client";
-import { 
-  Table, 
-  TableBody, 
-  TableCell, 
-  TableHead, 
-  TableHeader, 
-  TableRow 
-} from "@/components/ui/table";
-import { 
+import { CardContent } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Button } from "@/components/ui/button";
+import { useToast } from "@/hooks/use-toast";
+import { supabase } from "@/integrations/supabase/client";
 import { UserRole } from "@/types";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import { Badge } from "@/components/ui/badge";
+import { formatDistanceToNow } from "date-fns";
+import { ptBR } from "date-fns/locale";
+import { Loader2 } from "lucide-react";
 
 interface ProfileData {
   id: string;
   name: string;
   email: string;
-  avatar: string;
-  phone: string;
   role: UserRole;
   created_at: string;
-  updated_at: string;
 }
 
 interface UsersTabProps {
@@ -37,183 +38,176 @@ interface UsersTabProps {
 }
 
 export const UsersTab = ({ openRoleModal }: UsersTabProps) => {
-  const [selectedRole, setSelectedRole] = useState<string>("all");
   const [users, setUsers] = useState<ProfileData[]>([]);
-  const [loading, setLoading] = useState(false);
-  const [currentPage, setCurrentPage] = useState(1);
-  const [totalPages, setTotalPages] = useState(1);
-  const [availableRoles, setAvailableRoles] = useState<UserRole[]>([]);
-
+  const [filteredUsers, setFilteredUsers] = useState<ProfileData[]>([]);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [selectedRole, setSelectedRole] = useState("all");
+  const [isLoading, setIsLoading] = useState(true);
   const { toast } = useToast();
-  const itemsPerPage = 10;
 
-  // Fetch available roles from the profiles table
   useEffect(() => {
-    const fetchRoles = async () => {
+    const fetchUsers = async () => {
+      setIsLoading(true);
       try {
-        const { data, error } = await supabase
-          .from('profiles')
-          .select('role')
-          .not('role', 'is', null);
+        let query = supabase
+          .from("profiles")
+          .select("id, name, email, role, created_at")
+          .order("created_at", { ascending: false });
 
-        if (error) throw error;
-
-        // Extract unique roles and convert them to UserRole enum values
-        const uniqueRolesSet = new Set(data.map(item => item.role));
-        // Convert the set to an array of UserRole values
-        const uniqueRoles: UserRole[] = [];
-        
-        // Safely adding known UserRole values that exist in the data
-        for (const role of uniqueRolesSet) {
-          // Check if the role is a valid UserRole
-          if (Object.values(UserRole).includes(role as UserRole)) {
-            uniqueRoles.push(role as UserRole);
-          }
+        if (selectedRole !== "all") {
+          // Convert the role string to a format suitable for the database query
+          query = query.eq("role", String(selectedRole));
         }
-        
-        setAvailableRoles(uniqueRoles);
+
+        const { data, error } = await query;
+
+        if (error) {
+          throw error;
+        }
+
+        if (data) {
+          setUsers(data as ProfileData[]);
+          setFilteredUsers(data as ProfileData[]);
+        }
       } catch (error) {
-        console.error("Error fetching roles:", error);
+        console.error("Error fetching users:", error);
+        toast({
+          variant: "destructive",
+          title: "Error",
+          description: "Failed to load users",
+        });
+      } finally {
+        setIsLoading(false);
       }
     };
 
-    fetchRoles();
-  }, []);
-
-  // Fetch users from Supabase
-  useEffect(() => {
     fetchUsers();
-  }, [currentPage, selectedRole]);
+  }, [selectedRole, toast]);
 
-  const fetchUsers = async () => {
-    setLoading(true);
+  useEffect(() => {
+    if (searchTerm) {
+      const filtered = users.filter(
+        (user) =>
+          user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          user.email.toLowerCase().includes(searchTerm.toLowerCase())
+      );
+      setFilteredUsers(filtered);
+    } else {
+      setFilteredUsers(users);
+    }
+  }, [searchTerm, users]);
+
+  const getRoleBadgeColor = (role: UserRole) => {
+    switch (role) {
+      case UserRole.ADMIN:
+        return "bg-red-100 text-red-800";
+      case UserRole.CLIENT:
+        return "bg-blue-100 text-blue-800";
+      case UserRole.PARTNER:
+        return "bg-green-100 text-green-800";
+      case UserRole.FINANCIAL:
+        return "bg-purple-100 text-purple-800";
+      case UserRole.LOGISTICS:
+        return "bg-amber-100 text-amber-800";
+      default:
+        return "bg-gray-100 text-gray-800";
+    }
+  };
+
+  const formatDate = (dateString: string) => {
     try {
-      let query = supabase
-        .from('profiles')
-        .select('*', { count: 'exact' });
-      
-      if (selectedRole !== 'all') {
-        // Fix: Use selectedRole directly as a string when querying the database
-        // This fixes the type error since we're not trying to cast it to UserRole
-        query = query.eq('role', selectedRole);
-      }
-      
-      // Apply pagination
-      const startRange = (currentPage - 1) * itemsPerPage;
-      const endRange = startRange + itemsPerPage - 1;
-      
-      const { data, error, count } = await query
-        .range(startRange, endRange);
-      
-      if (error) throw error;
-      
-      // Calculate total pages
-      const total = count ? Math.ceil(count / itemsPerPage) : 0;
-      setTotalPages(total);
-      
-      // Ensure the role is properly typed
-      const typedUsers = (data || []).map(user => ({
-        ...user,
-        role: user.role as UserRole
-      })) as ProfileData[];
-      
-      setUsers(typedUsers);
-    } catch (error) {
-      console.error("Error fetching users:", error);
-      toast({
-        variant: "destructive",
-        title: "Erro ao carregar usuários",
-        description: "Não foi possível carregar a lista de usuários."
+      return formatDistanceToNow(new Date(dateString), {
+        addSuffix: true,
+        locale: ptBR,
       });
-    } finally {
-      setLoading(false);
+    } catch (error) {
+      return dateString;
     }
   };
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>Gerenciar Usuários</CardTitle>
-      </CardHeader>
-      <CardContent>
-        <div className="mb-4">
+    <CardContent>
+      <div className="flex flex-col md:flex-row gap-4 mb-6">
+        <div className="flex-1">
+          <Input
+            placeholder="Buscar por nome ou email..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+          />
+        </div>
+        <div className="w-full md:w-[200px]">
           <Select
             value={selectedRole}
-            onValueChange={(value: string) => {
-              setSelectedRole(value);
-              setCurrentPage(1); // Reset to first page when role changes
-            }}
+            onValueChange={setSelectedRole}
           >
-            <SelectTrigger className="w-[200px]">
+            <SelectTrigger>
               <SelectValue placeholder="Filtrar por função" />
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="all">Todas as funções</SelectItem>
-              {availableRoles.map((role) => (
-                <SelectItem key={role} value={role}>{role}</SelectItem>
-              ))}
+              <SelectItem value={UserRole.ADMIN}>Administradores</SelectItem>
+              <SelectItem value={UserRole.CLIENT}>Clientes</SelectItem>
+              <SelectItem value={UserRole.PARTNER}>Parceiros</SelectItem>
+              <SelectItem value={UserRole.FINANCIAL}>Financeiro</SelectItem>
+              <SelectItem value={UserRole.LOGISTICS}>Logística</SelectItem>
             </SelectContent>
           </Select>
         </div>
-        
-        {loading ? (
-          <p>Carregando usuários...</p>
-        ) : (
-          <div className="border rounded-md overflow-hidden">
-            <Table>
-              <TableHeader>
+        <div>
+          <Button variant="outline">Exportar</Button>
+        </div>
+      </div>
+
+      {isLoading ? (
+        <div className="flex justify-center items-center h-64">
+          <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+        </div>
+      ) : (
+        <div className="rounded-md border">
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Nome</TableHead>
+                <TableHead>Email</TableHead>
+                <TableHead>Função</TableHead>
+                <TableHead>Criado em</TableHead>
+                <TableHead>Ações</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {filteredUsers.length === 0 ? (
                 <TableRow>
-                  <TableHead>Nome</TableHead>
-                  <TableHead>E-mail</TableHead>
-                  <TableHead>Função</TableHead>
-                  <TableHead>Data de criação</TableHead>
-                  <TableHead>Ações</TableHead>
+                  <TableCell colSpan={5} className="text-center py-8">
+                    Nenhum usuário encontrado
+                  </TableCell>
                 </TableRow>
-              </TableHeader>
-              <TableBody>
-                {users.map((user) => (
+              ) : (
+                filteredUsers.map((user) => (
                   <TableRow key={user.id}>
                     <TableCell className="font-medium">{user.name}</TableCell>
                     <TableCell>{user.email}</TableCell>
-                    <TableCell>{user.role}</TableCell>
-                    <TableCell>{new Date(user.created_at).toLocaleDateString('pt-BR')}</TableCell>
                     <TableCell>
-                      <Button 
-                        variant="outline" 
+                      <Badge className={getRoleBadgeColor(user.role)}>
+                        {user.role}
+                      </Badge>
+                    </TableCell>
+                    <TableCell>{formatDate(user.created_at)}</TableCell>
+                    <TableCell>
+                      <Button
+                        variant="ghost"
                         size="sm"
                         onClick={() => openRoleModal(user)}
                       >
-                        Alterar Função
+                        Alterar função
                       </Button>
                     </TableCell>
                   </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </div>
-        )}
-        
-        {/* Pagination Controls */}
-        <div className="flex justify-between items-center mt-4">
-          <Button
-            variant="outline"
-            onClick={() => setCurrentPage(currentPage - 1)}
-            disabled={currentPage === 1}
-          >
-            Anterior
-          </Button>
-          <span>Página {currentPage} de {totalPages}</span>
-          <Button
-            variant="outline"
-            onClick={() => setCurrentPage(currentPage + 1)}
-            disabled={currentPage === totalPages}
-          >
-            Próximo
-          </Button>
+                ))
+              )}
+            </TableBody>
+          </Table>
         </div>
-      </CardContent>
-    </Card>
+      )}
+    </CardContent>
   );
 };
-
-export default UsersTab;

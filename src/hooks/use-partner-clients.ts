@@ -1,153 +1,83 @@
-
 import { useState, useEffect, useCallback } from "react";
-import { Client } from "@/types";
 import { supabase } from "@/integrations/supabase/client";
-import { useAuth } from "@/hooks/use-auth";
+import { Client } from "@/types";
 import { useToast } from "@/hooks/use-toast";
 
-export const usePartnerClients = () => {
+export const usePartnerClients = (partnerId: string) => {
   const [clients, setClients] = useState<Client[]>([]);
   const [filteredClients, setFilteredClients] = useState<Client[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState("");
-  const { user } = useAuth();
+  const [error, setError] = useState<string | null>(null);
   const { toast } = useToast();
 
-  const fetchClients = useCallback(async () => {
-    if (!user) {
+  // Define the fetchClients function with explicit return type to avoid type recursion
+  const fetchClients = useCallback(async (): Promise<void> => {
+    if (!partnerId) {
+      setClients([]);
+      setFilteredClients([]);
       setIsLoading(false);
       return;
     }
 
     setIsLoading(true);
-    setError("");
+    setError(null);
 
     try {
-      // First, get the partner ID for this user
-      const { data: partnerData, error: partnerError } = await supabase
-        .from('partners')
-        .select('id')
-        .eq('user_id', user.id)
-        .single();
-
-      if (partnerError) throw new Error("Não foi possível encontrar sua conta de parceiro");
-
-      const partnerId = partnerData?.id;
-      if (!partnerId) {
-        setIsLoading(false);
-        return;
-      }
-
-      // Then fetch clients linked to this partner
+      // Query clients by partner_id
       const { data, error } = await supabase
         .from('clients')
         .select('*')
-        .eq('partner_id', partnerId);
+        .eq('partner_id', partnerId)
+        .order('business_name', { ascending: true });
 
       if (error) throw error;
 
       if (data) {
-        // Fix: Explicitly cast to Client[] without using unknown as an intermediary type
-        // This helps avoid the excessive type instantiation depth
-        setClients(data as Client[]);
-        setFilteredClients(data as Client[]);
+        // Fix: Use direct casting without chained types to avoid recursive type issues
+        const clientData = data as Client[];
+        setClients(clientData);
+        setFilteredClients(clientData);
       }
     } catch (err: any) {
       console.error("Error fetching clients:", err);
-      setError(err.message || "Falha ao carregar clientes");
-      
-      // Use mock data in case of error for demonstration
-      const mockClients: Client[] = [
-        {
-          id: "1",
-          business_name: "Restaurante Bom Sabor",
-          contact_name: "Antonio Oliveira",
-          email: "contato@bomsabor.com",
-          phone: "(11) 98765-4321",
-          status: "active",
-          balance: 2500.50,
-          address: "Rua das Flores, 123",
-          city: "São Paulo",
-          state: "SP",
-          created_at: new Date().toISOString(),
-          partner_id: "1"
-        },
-        {
-          id: "2",
-          business_name: "Loja Tech Mais",
-          contact_name: "Roberta Silva",
-          email: "contato@techmais.com",
-          phone: "(11) 91234-5678",
-          status: "active",
-          balance: 1800.00,
-          address: "Av. Paulista, 500",
-          city: "São Paulo",
-          state: "SP",
-          created_at: new Date().toISOString(),
-          partner_id: "1"
-        }
-      ];
-      
-      setClients(mockClients);
-      setFilteredClients(mockClients);
+      setError(err.message || "Failed to load clients");
+      toast({
+        title: "Error",
+        description: "Failed to load clients",
+        variant: "destructive",
+      });
     } finally {
       setIsLoading(false);
     }
-  }, [user, toast]);
+  }, [partnerId, toast]);
 
+  // Rest of the hook implementation
   useEffect(() => {
     fetchClients();
   }, [fetchClients]);
 
-  // Define filterClients function separately to avoid recursion issues
-  const filterClientsFunc = useCallback((searchTerm = "", status = "") => {
-    let filtered = [...clients];
-
-    if (searchTerm) {
-      const term = searchTerm.toLowerCase();
-      filtered = filtered.filter(client =>
-        client.business_name.toLowerCase().includes(term) ||
-        (client.contact_name && client.contact_name.toLowerCase().includes(term)) ||
-        (client.email && client.email.toLowerCase().includes(term)) ||
-        (client.phone && client.phone.includes(term))
-      );
+  const filterClients = useCallback((searchTerm: string) => {
+    if (!searchTerm) {
+      setFilteredClients(clients);
+      return;
     }
 
-    if (status && status !== "all") {
-      filtered = filtered.filter(client => client.status === status);
-    }
-
+    const lowercaseSearch = searchTerm.toLowerCase();
+    const filtered = clients.filter((client) =>
+      (client.business_name?.toLowerCase().includes(lowercaseSearch) ||
+      client.contact_name?.toLowerCase().includes(lowercaseSearch) ||
+      client.email?.toLowerCase().includes(lowercaseSearch))
+    );
+    
     setFilteredClients(filtered);
   }, [clients]);
 
-  const getClientSales = async (clientId: string) => {
-    try {
-      const { data, error } = await supabase
-        .from('sales')
-        .select('*')
-        .eq('client_id', clientId);
-
-      if (error) throw error;
-
-      return data || [];
-    } catch (err) {
-      console.error("Error fetching client sales:", err);
-      toast({
-        variant: "destructive",
-        title: "Erro",
-        description: "Não foi possível carregar as vendas deste cliente.",
-      });
-      return [];
-    }
-  };
-
   return {
-    clients: filteredClients,
-    allClients: clients,
+    clients,
+    filteredClients,
     isLoading,
     error,
-    refreshClients: fetchClients,
-    filterClients: filterClientsFunc,
-    getClientSales
+    filterClients,
+    refreshClients: fetchClients
   };
 };
