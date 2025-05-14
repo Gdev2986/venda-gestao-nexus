@@ -55,8 +55,8 @@ export const UsersTab = ({ openRoleModal }: UsersTabProps) => {
           .order("created_at", { ascending: false });
 
         if (selectedRole !== "all") {
-          // Convert the role string to a format suitable for the database query
-          query = query.eq("role", String(selectedRole));
+          // Convert string to enum to match the database format
+          query = query.eq("role", selectedRole);
         }
 
         const { data, error } = await query;
