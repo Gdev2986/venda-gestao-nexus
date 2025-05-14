@@ -8,6 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { useToast } from "@/hooks/use-toast";
 import { NotificationType, UserRole } from "@/types";
 import { useNotifications } from "@/hooks/use-notifications";
+import notificationService from "@/services/NotificationService";
 
 export function AdminNotificationsTab() {
   const [title, setTitle] = useState("");
@@ -15,7 +16,7 @@ export function AdminNotificationsTab() {
   const [type, setType] = useState<NotificationType>(NotificationType.SYSTEM);
   const [selectedRole, setSelectedRole] = useState<UserRole>(UserRole.CLIENT);
   const { toast } = useToast();
-  const { createNotification, sendNotificationToRole } = useNotifications();
+  const { refreshNotifications } = useNotifications();
 
   const handleSendNotification = async () => {
     if (!title || !message || !type || !selectedRole) {
@@ -28,7 +29,7 @@ export function AdminNotificationsTab() {
     }
 
     try {
-      await sendNotificationToRole(title, message, type, selectedRole);
+      await notificationService.sendToRole(selectedRole, title, message, type);
       
       toast({
         title: "Notificação enviada",
@@ -40,6 +41,7 @@ export function AdminNotificationsTab() {
       setMessage("");
       setType(NotificationType.SYSTEM);
       setSelectedRole(UserRole.CLIENT);
+      refreshNotifications?.();
     } catch (error) {
       console.error("Error sending notification:", error);
       toast({
@@ -52,7 +54,7 @@ export function AdminNotificationsTab() {
 
   const handleSendTestNotification = async () => {
     try {
-      await createNotification(
+      await notificationService.createNotification(
         "Notificação de teste",
         "Esta é uma notificação de teste enviada pelo administrador.",
         NotificationType.SYSTEM
@@ -62,6 +64,7 @@ export function AdminNotificationsTab() {
         title: "Notificação de teste enviada",
         description: "A notificação de teste foi enviada com sucesso.",
       });
+      refreshNotifications?.();
     } catch (error) {
       console.error("Error sending test notification:", error);
       toast({
@@ -174,8 +177,6 @@ export function AdminNotificationsTab() {
             <p className="text-muted-foreground">
               Configure como e quando as notificações são enviadas para os usuários do sistema.
             </p>
-            
-            {/* Aqui você pode adicionar mais configurações de notificações no futuro */}
           </div>
         </CardContent>
       </Card>

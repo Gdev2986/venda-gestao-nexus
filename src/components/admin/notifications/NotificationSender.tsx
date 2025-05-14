@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -10,7 +11,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Textarea } from "@/components/ui/textarea";
 import { Loader2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import { notificationService } from "@/services/NotificationService";
+import notificationService from "@/services/NotificationService";
 import { NotificationType, UserRole } from "@/types";
 
 const formSchema = z.object({
@@ -40,13 +41,13 @@ export function NotificationSender() {
     setIsLoading(true);
     
     try {
-      await notificationService.createNotification({
-        title: values.title,
-        message: values.message,
-        type: values.type as any,
-        user_id: "", // This will be determined by the role
-        data: {},
-      });
+      await notificationService.createNotification(
+        values.title,
+        values.message,
+        values.type as NotificationType,
+        "",
+        {}
+      );
       
       toast({
         title: "Notificação enviada",

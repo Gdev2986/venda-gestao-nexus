@@ -12,7 +12,7 @@ import { Badge } from "@/components/ui/badge";
 import { useNotifications } from "@/hooks/use-notifications";
 import { useNavigate } from "react-router-dom";
 import { PATHS } from "@/routes/paths";
-import NotificationService from "@/services/NotificationService";
+import notificationService from "@/services/NotificationService";
 
 const formatDate = (dateString: string) => {
   const date = new Date(dateString);
@@ -25,7 +25,10 @@ const formatDate = (dateString: string) => {
 };
 
 const NotificationDropdown = () => {
-  const { notifications, unreadCount, markAllAsRead, fetchNotifications } = useNotifications();
+  const { notifications, unreadCount, markAsRead, fetchNotifications } = useNotifications({
+    pageSize: 5,
+    page: 1
+  });
   const [open, setOpen] = useState(false);
   const navigate = useNavigate();
 
@@ -41,12 +44,12 @@ const NotificationDropdown = () => {
   };
 
   const handleMarkAllAsRead = async () => {
-    await markAllAsRead();
+    const { user } = await notificationService.markAllAsRead();
+    fetchNotifications();
   };
 
   const handleClickNotification = async (id: string) => {
-    await NotificationService.markAsRead(id);
-    fetchNotifications();
+    await markAsRead(id);
     setOpen(false);
   };
 

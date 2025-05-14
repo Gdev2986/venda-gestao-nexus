@@ -6,7 +6,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { PATHS } from "@/routes/paths";
 import { useAuth } from "@/hooks/use-auth";
 import { Spinner } from "@/components/ui/spinner";
-import { ClientsTable } from "@/components/clients/ClientsTable";
+import ClientsTable from "@/components/clients/ClientsTable";
 
 // Define simplified client type
 interface PartnerClient {

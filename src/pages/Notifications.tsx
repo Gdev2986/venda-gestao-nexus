@@ -32,7 +32,7 @@ const Notifications = () => {
     markAllAsRead,
     deleteNotification,
     totalPages = 1,
-    refreshNotifications
+    fetchNotifications
   } = useNotifications({
     page: currentPage,
     pageSize: 10,
@@ -49,12 +49,12 @@ const Notifications = () => {
   const handleMarkAllAsRead = async () => {
     if (!user) return;
     
-    await markAllAsRead(user.id);
+    await markAllAsRead();
     toast({
       title: "Sucesso",
       description: "Todas as notificações foram marcadas como lidas",
     });
-    refreshNotifications();
+    fetchNotifications(currentPage);
   };
 
   const handleGoBack = () => {
@@ -100,7 +100,7 @@ const Notifications = () => {
           <Button 
             variant="outline" 
             onClick={handleMarkAllAsRead}
-            disabled={isLoading || notifications.every(n => n.read)}
+            disabled={isLoading || notifications.every(n => n.is_read)}
           >
             Marcar todas como lidas
           </Button>

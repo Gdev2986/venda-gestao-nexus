@@ -1,62 +1,16 @@
 
 import { supabase } from '@/integrations/supabase/client';
-import { NotificationType, UserRole } from '@/types';
-
-// Database notification types should match the ones in the database
-type DatabaseNotificationType = "PAYMENT" | "BALANCE" | "MACHINE" | "COMMISSION" | "SYSTEM" | "SALE" | "SUPPORT";
-type DatabaseUserRole = "ADMIN" | "FINANCIAL" | "PARTNER" | "LOGISTICS" | "CLIENT";
+import { NotificationType, UserRole, Notification, DatabaseNotification } from '@/types';
 
 // Helper function to safely cast types
-const safeCastNotificationType = (type: NotificationType): DatabaseNotificationType => {
-  // Map NotificationType enum to database string literals
-  const mapping: Record<NotificationType, DatabaseNotificationType> = {
-    [NotificationType.PAYMENT]: "PAYMENT",
-    [NotificationType.BALANCE]: "BALANCE",
-    [NotificationType.MACHINE]: "MACHINE", 
-    [NotificationType.COMMISSION]: "COMMISSION",
-    [NotificationType.SYSTEM]: "SYSTEM",
-    [NotificationType.SALE]: "SALE",
-    [NotificationType.SUPPORT]: "SYSTEM" // Map SUPPORT to SYSTEM as fallback
-  };
-  
-  return mapping[type] || "SYSTEM";
+const safeCastNotificationType = (type: NotificationType): string => {
+  return type.toString();
 };
 
 // Helper function to safely cast user roles
-const safeCastUserRole = (role: UserRole): DatabaseUserRole => {
-  // Map UserRole enum to database string literals
-  const mapping: Record<UserRole, DatabaseUserRole> = {
-    [UserRole.ADMIN]: "ADMIN",
-    [UserRole.FINANCIAL]: "FINANCIAL",
-    [UserRole.PARTNER]: "PARTNER",
-    [UserRole.LOGISTICS]: "LOGISTICS",
-    [UserRole.CLIENT]: "CLIENT",
-    [UserRole.MANAGER]: "ADMIN", // Map MANAGER to ADMIN
-    [UserRole.FINANCE]: "FINANCIAL", // Map FINANCE to FINANCIAL
-    [UserRole.SUPPORT]: "ADMIN", // Map SUPPORT to ADMIN
-    [UserRole.USER]: "CLIENT" // Map USER to CLIENT
-  };
-  
-  return mapping[role] || "CLIENT";
+const safeCastUserRole = (role: UserRole): string => {
+  return role.toString();
 };
-
-// Notification interface to match the database structure
-interface Notification {
-  id: string;
-  user_id: string; 
-  type: DatabaseNotificationType;
-  data?: Record<string, any>;
-  is_read: boolean;
-  created_at: string;
-  title: string;
-  message: string;
-}
-
-interface NotificationResponse {
-  notifications: Notification[];
-  totalCount: number;
-  totalPages: number;
-}
 
 // Singleton pattern for notification service
 class NotificationService {
@@ -101,6 +55,36 @@ class NotificationService {
     }
   }
 
+  // Create a notification
+  public async createNotification(
+    title: string,
+    message: string,
+    type: NotificationType,
+    userId: string = '',
+    data: Record<string, any> = {}
+  ): Promise<boolean> {
+    try {
+      const { error } = await supabase.from('notifications').insert({
+        user_id: userId,
+        title,
+        message,
+        type: safeCastNotificationType(type),
+        is_read: false,
+        data
+      });
+
+      if (error) {
+        console.error('Error creating notification:', error);
+        return false;
+      }
+      
+      return true;
+    } catch (error) {
+      console.error('Error creating notification:', error);
+      return false;
+    }
+  }
+
   // Send notification to all users
   public async sendToAll(
     title: string,
@@ -129,14 +113,15 @@ class NotificationService {
         data: data || {}
       }));
 
-      // Insert all notifications
-      const { error } = await supabase
-        .from('notifications')
-        .insert(notifications);
-
-      if (error) {
-        console.error('Error sending notifications to all users:', error);
-        return false;
+      // Insert notifications one by one to avoid type issues
+      for (const notification of notifications) {
+        const { error } = await supabase
+          .from('notifications')
+          .insert(notification);
+        
+        if (error) {
+          console.error('Error sending notification:', error);
+        }
       }
 
       return true;
@@ -172,24 +157,22 @@ class NotificationService {
         return true;
       }
 
-      // Create notification objects for each user
-      const notifications = users.map(user => ({
-        user_id: user.id,
-        title,
-        message,
-        type: safeCastNotificationType(type),
-        is_read: false,
-        data: data || {}
-      }));
-
-      // Insert all notifications
-      const { error } = await supabase
-        .from('notifications')
-        .insert(notifications);
-
-      if (error) {
-        console.error(`Error sending notifications to users with role ${role}:`, error);
-        return false;
+      // Insert notifications one by one to avoid type issues
+      for (const user of users) {
+        const { error } = await supabase
+          .from('notifications')
+          .insert({
+            user_id: user.id,
+            title,
+            message,
+            type: safeCastNotificationType(type),
+            is_read: false,
+            data: data || {}
+          });
+        
+        if (error) {
+          console.error('Error sending notification:', error);
+        }
       }
 
       return true;
@@ -215,6 +198,46 @@ class NotificationService {
       return true;
     } catch (error) {
       console.error('Error marking notification as read:', error);
+      return false;
+    }
+  }
+
+  // Mark notification as unread
+  public async markAsUnread(notificationId: string): Promise<boolean> {
+    try {
+      const { error } = await supabase
+        .from('notifications')
+        .update({ is_read: false })
+        .eq('id', notificationId);
+
+      if (error) {
+        console.error('Error marking notification as unread:', error);
+        return false;
+      }
+
+      return true;
+    } catch (error) {
+      console.error('Error marking notification as unread:', error);
+      return false;
+    }
+  }
+
+  // Delete notification
+  public async deleteNotification(notificationId: string): Promise<boolean> {
+    try {
+      const { error } = await supabase
+        .from('notifications')
+        .delete()
+        .eq('id', notificationId);
+
+      if (error) {
+        console.error('Error deleting notification:', error);
+        return false;
+      }
+
+      return true;
+    } catch (error) {
+      console.error('Error deleting notification:', error);
       return false;
     }
   }
@@ -245,17 +268,38 @@ class NotificationService {
     userId: string,
     page = 1,
     limit = 10,
-    unreadOnly = false
-  ): Promise<NotificationResponse> {
+    filters: {
+      typeFilter?: string,
+      statusFilter?: string,
+      searchTerm?: string,
+      unreadOnly?: boolean
+    } = {}
+  ): Promise<{
+    notifications: Notification[];
+    totalCount: number;
+    totalPages: number;
+  }> {
     try {
+      const { typeFilter, statusFilter, searchTerm, unreadOnly } = filters;
+      
       // Count total notifications
       let countQuery = supabase
         .from('notifications')
         .select('id', { count: 'exact' })
         .eq('user_id', userId);
         
-      if (unreadOnly) {
+      if (unreadOnly || statusFilter === 'unread') {
         countQuery = countQuery.eq('is_read', false);
+      } else if (statusFilter === 'read') {
+        countQuery = countQuery.eq('is_read', true);
+      }
+
+      if (typeFilter && typeFilter !== 'all') {
+        countQuery = countQuery.eq('type', typeFilter);
+      }
+
+      if (searchTerm) {
+        countQuery = countQuery.or(`title.ilike.%${searchTerm}%,message.ilike.%${searchTerm}%`);
       }
       
       const { count, error: countError } = await countQuery;
@@ -278,8 +322,18 @@ class NotificationService {
         .order('created_at', { ascending: false })
         .range(offset, offset + limit - 1);
         
-      if (unreadOnly) {
+      if (unreadOnly || statusFilter === 'unread') {
         query = query.eq('is_read', false);
+      } else if (statusFilter === 'read') {
+        query = query.eq('is_read', true);
+      }
+
+      if (typeFilter && typeFilter !== 'all') {
+        query = query.eq('type', typeFilter);
+      }
+
+      if (searchTerm) {
+        query = query.or(`title.ilike.%${searchTerm}%,message.ilike.%${searchTerm}%`);
       }
       
       const { data, error } = await query;
@@ -289,8 +343,20 @@ class NotificationService {
         return { notifications: [], totalCount, totalPages };
       }
       
+      // Map database objects to front-end model
+      const notifications: Notification[] = (data || []).map(item => ({
+        id: item.id,
+        title: item.title,
+        message: item.message,
+        type: item.type as NotificationType,
+        is_read: item.is_read,
+        created_at: item.created_at,
+        user_id: item.user_id,
+        data: item.data
+      }));
+      
       return {
-        notifications: data || [],
+        notifications,
         totalCount,
         totalPages
       };
@@ -323,24 +389,10 @@ class NotificationService {
   
   // Delete a notification
   public async delete(notificationId: string): Promise<boolean> {
-    try {
-      const { error } = await supabase
-        .from('notifications')
-        .delete()
-        .eq('id', notificationId);
-        
-      if (error) {
-        console.error('Error deleting notification:', error);
-        return false;
-      }
-      
-      return true;
-    } catch (error) {
-      console.error('Error deleting notification:', error);
-      return false;
-    }
+    return this.deleteNotification(notificationId);
   }
 }
 
 // Export singleton instance
-export default NotificationService.getInstance();
+const notificationService = NotificationService.getInstance();
+export default notificationService;
