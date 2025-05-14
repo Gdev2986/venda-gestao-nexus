@@ -2,7 +2,6 @@
 // Re-export all types from the types directory
 export * from "./client";
 export * from "./payment.types";
-// Remove circular import: export * from "../types";
 
 // Add the commonly used types directly here
 export enum UserRole {

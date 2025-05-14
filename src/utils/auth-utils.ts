@@ -14,7 +14,6 @@ export const checkSession = async () => {
     const { data, error } = await supabase.auth.getSession();
     
     if (error) {
-      console.error("Error checking session:", error);
       return { user: null, session: null, error };
     }
     
@@ -24,7 +23,6 @@ export const checkSession = async () => {
       error: null
     };
   } catch (error) {
-    console.error("Exception checking session:", error);
     return { user: null, session: null, error };
   }
 };
@@ -45,7 +43,6 @@ export const getUserId = (): string | null => {
     const user = supabase.auth.getUser();
     return user?.data?.user?.id || null;
   } catch (error) {
-    console.error("Error getting user ID:", error);
     return null;
   }
 };
@@ -59,7 +56,7 @@ export const setAuthData = (key: string, value: any) => {
       localStorage.setItem(key, JSON.stringify(value));
     }
   } catch (error) {
-    console.error(`Error setting ${key} in localStorage:`, error);
+    // Silent error
   }
 };
 
@@ -74,7 +71,6 @@ export const getAuthData = (key: string) => {
     }
     return null;
   } catch (error) {
-    console.error(`Error getting ${key} from localStorage:`, error);
     return null;
   }
 };
@@ -91,13 +87,11 @@ export const fetchUserRole = async (userId: string): Promise<UserRole | null> =>
       .single();
     
     if (error) {
-      console.error('Error fetching user role:', error);
       return null;
     }
     
     return data?.role as UserRole || null;
   } catch (error) {
-    console.error('Exception fetching user role:', error);
     return null;
   }
 };
@@ -132,10 +126,8 @@ export const cleanupAuthState = () => {
     localStorage.removeItem('userRole');
     sessionStorage.removeItem('userRole');
     sessionStorage.removeItem('redirectPath');
-    
-    console.log('Auth state cleaned up');
   } catch (error) {
-    console.error('Error cleaning up auth state:', error);
+    // Silent error
   }
 };
 
@@ -151,7 +143,7 @@ export const secureSignOut = async () => {
     try {
       await supabase.auth.signOut({ scope: 'global' });
     } catch (err) {
-      console.error('Error during sign out:', err);
+      // Silent error
     }
     
     // Force page reload for a clean state
@@ -159,7 +151,6 @@ export const secureSignOut = async () => {
     
     return true;
   } catch (error) {
-    console.error('Exception during secure sign out:', error);
     return false;
   }
 };
@@ -172,13 +163,11 @@ export const refreshSession = async () => {
     const { data, error } = await supabase.auth.refreshSession();
     
     if (error) {
-      console.error('Error refreshing session:', error);
       return null;
     }
     
     return data.session;
   } catch (error) {
-    console.error('Exception refreshing session:', error);
     return null;
   }
 };

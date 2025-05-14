@@ -33,7 +33,7 @@ export function toast({ title, description, action, variant = "default" }: Toast
 export const useToast = () => {
   return {
     toast,
-    toasts: [], // Empty array to prevent mapping errors
+    toasts: [], // Always provide an empty array to prevent mapping errors
     dismiss: (id: string) => sonnerToast.dismiss(id),
   };
 };

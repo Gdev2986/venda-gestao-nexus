@@ -2,7 +2,7 @@
 import { Suspense, lazy } from "react";
 import { Routes, Route, Navigate } from "react-router-dom";
 import { Spinner } from "./components/ui/spinner";
-import { Toaster } from "./components/ui/sonner";
+import { Toaster } from "sonner";
 import { AuthProvider } from "@/contexts/AuthContext";
 import RootLayout from "./layouts/RootLayout";
 import MainLayout from "./layouts/MainLayout";
@@ -148,4 +148,4 @@ function App() {
   );
 }
 
-export default ;
+export default App;

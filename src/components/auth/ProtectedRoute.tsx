@@ -17,11 +17,8 @@ const ProtectedRoute = ({ children }: ProtectedRouteProps) => {
   
   // Use effect to prevent immediate redirects that can cause loops
   useEffect(() => {
-    console.log("ProtectedRoute effect - isLoading:", isLoading, "user:", !!user);
-    
     // Only determine redirect after loading is complete
     if (!isLoading && !user) {
-      console.log("Setting shouldRedirect to true");
       setShouldRedirect(true);
     }
   }, [isLoading, user]);
@@ -31,13 +28,11 @@ const ProtectedRoute = ({ children }: ProtectedRouteProps) => {
     if (!isLoading) {
       const timer = setTimeout(() => {
         setShowLoading(false);
-      }, 500); // 0.5 second loading time
+      }, 500);
       
       return () => clearTimeout(timer);
     }
   }, [isLoading]);
-
-  console.log("ProtectedRoute render - isLoading:", isLoading, "shouldRedirect:", shouldRedirect);
 
   // Se estiver carregando ou mostrando animação, mostre um spinner
   if (isLoading || showLoading) {
@@ -58,7 +53,6 @@ const ProtectedRoute = ({ children }: ProtectedRouteProps) => {
 
   // Se não houver usuário autenticado e não estiver carregando, redirecione
   if (shouldRedirect) {
-    console.log("Redirecting to / from", location.pathname);
     // Store the current location using sessionStorage for better security
     sessionStorage.setItem("redirectPath", location.pathname);
     return <Navigate to="/" state={{ from: location.pathname }} replace />;
