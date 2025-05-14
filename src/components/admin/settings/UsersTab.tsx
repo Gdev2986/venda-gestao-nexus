@@ -93,10 +93,9 @@ export const UsersTab = ({ openRoleModal }: UsersTabProps) => {
         .select('*', { count: 'exact' });
       
       if (selectedRole !== 'all') {
-        // Fix: Cast selectedRole to UserRole when it's a valid UserRole value
-        // This ensures we're comparing with the correct type
-        const roleValue = selectedRole as UserRole;
-        query = query.eq('role', roleValue);
+        // Fix: Use selectedRole directly as a string when querying the database
+        // This fixes the type error since we're not trying to cast it to UserRole
+        query = query.eq('role', selectedRole);
       }
       
       // Apply pagination

@@ -47,10 +47,10 @@ export const usePartnerClients = () => {
       if (error) throw error;
 
       if (data) {
-        // Fix type casting - explicitly type the data as Client[]
-        const typedClients = data as unknown as Client[];
-        setClients(typedClients);
-        setFilteredClients(typedClients);
+        // Fix: Explicitly cast to Client[] without using unknown as an intermediary type
+        // This helps avoid the excessive type instantiation depth
+        setClients(data as Client[]);
+        setFilteredClients(data as Client[]);
       }
     } catch (err: any) {
       console.error("Error fetching clients:", err);
