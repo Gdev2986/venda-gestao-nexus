@@ -9,11 +9,13 @@ import { usePartnerClients } from '@/hooks/use-partner-clients';
 import { Loader2 } from 'lucide-react';
 import ClientsTable from "@/components/clients/ClientsTable";
 import { Client } from '@/types';
+import { useAuth } from '@/hooks/use-auth';
 
 const PartnerClients = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const navigate = useNavigate();
-  const { clients, isLoading, error } = usePartnerClients();
+  const { user } = useAuth();
+  const { clients, isLoading, error } = usePartnerClients(user?.id || '');
   const [filteredClients, setFilteredClients] = useState<Client[]>([]);
   
   // Filter clients based on search term

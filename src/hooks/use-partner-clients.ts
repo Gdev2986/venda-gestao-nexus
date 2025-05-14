@@ -1,3 +1,4 @@
+
 import { useState, useEffect, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Client } from "@/types";
@@ -10,8 +11,8 @@ export const usePartnerClients = (partnerId: string) => {
   const [error, setError] = useState<string | null>(null);
   const { toast } = useToast();
 
-  // Define the fetchClients function with explicit return type to avoid type recursion
-  const fetchClients = useCallback(async (): Promise<void> => {
+  // Define the fetchClients function with explicit return type
+  const fetchClients = useCallback(async () => {
     if (!partnerId) {
       setClients([]);
       setFilteredClients([]);
@@ -33,8 +34,8 @@ export const usePartnerClients = (partnerId: string) => {
       if (error) throw error;
 
       if (data) {
-        // Fix: Use direct casting without chained types to avoid recursive type issues
-        const clientData = data as Client[];
+        // Use a simple type assertion without chaining
+        const clientData = data as unknown as Client[];
         setClients(clientData);
         setFilteredClients(clientData);
       }
@@ -51,11 +52,12 @@ export const usePartnerClients = (partnerId: string) => {
     }
   }, [partnerId, toast]);
 
-  // Rest of the hook implementation
+  // Execute the fetchClients function when the partnerId changes
   useEffect(() => {
     fetchClients();
   }, [fetchClients]);
 
+  // Filter clients based on a search term
   const filterClients = useCallback((searchTerm: string) => {
     if (!searchTerm) {
       setFilteredClients(clients);
