@@ -41,7 +41,7 @@ export function AdminNotificationsTab() {
       setMessage("");
       setType(NotificationType.SYSTEM);
       setSelectedRole(UserRole.CLIENT);
-      refreshNotifications?.();
+      refreshNotifications();
     } catch (error) {
       console.error("Error sending notification:", error);
       toast({
@@ -64,7 +64,7 @@ export function AdminNotificationsTab() {
         title: "Notificação de teste enviada",
         description: "A notificação de teste foi enviada com sucesso.",
       });
-      refreshNotifications?.();
+      refreshNotifications();
     } catch (error) {
       console.error("Error sending test notification:", error);
       toast({

@@ -3,7 +3,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { useAuth } from './use-auth';
 import notificationService from '@/services/NotificationService';
 import { toast } from '@/hooks/use-toast';
-import { NotificationType, Notification } from '@/types';
+import { NotificationType, UserRole, Notification } from '@/types';
 
 interface UseNotificationsOptions {
   page?: number;
@@ -139,15 +139,15 @@ export const useNotifications = (options: UseNotificationsOptions = {}) => {
     if (!user) return false;
     
     try {
-      const success = await notificationService.markAllAsRead(user.id);
+      const result = await notificationService.markAllAsRead(user.id);
       
-      if (success) {
+      if (result.success) {
         // Update local state
         setNotifications(prev => prev.map(n => ({ ...n, is_read: true })));
         setUnreadCount(0);
       }
       
-      return success;
+      return result.success;
     } catch (err) {
       console.error('Error marking all notifications as read:', err);
       return false;

@@ -1,3 +1,4 @@
+
 // Re-export all types from the types directory
 export * from "./client";
 export * from "./payment.types";
@@ -46,7 +47,7 @@ export enum ClientStatus {
   PENDING = "pending"
 }
 
-// Database notification type - matches what's in the database
+// Database notification type - ensure it matches what's in the database
 export type DatabaseNotificationType = "PAYMENT" | "BALANCE" | "MACHINE" | "COMMISSION" | "SYSTEM" | "SALE" | "SUPPORT";
 
 export interface Notification {
@@ -54,7 +55,7 @@ export interface Notification {
   title: string;
   message: string;
   type: NotificationType;
-  is_read: boolean;
+  is_read: boolean; // Changed from read to is_read to match the database
   created_at: string;
   user_id: string;
   data?: Record<string, any>;

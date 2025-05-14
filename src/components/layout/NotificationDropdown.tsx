@@ -44,8 +44,10 @@ const NotificationDropdown = () => {
   };
 
   const handleMarkAllAsRead = async () => {
-    const { user } = await notificationService.markAllAsRead();
-    fetchNotifications();
+    const result = await notificationService.markAllAsRead();
+    if (result.success) {
+      fetchNotifications(1, 5);
+    }
   };
 
   const handleClickNotification = async (id: string) => {

@@ -1,101 +1,77 @@
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { PageHeader } from "@/components/page/PageHeader";
+import { PageWrapper } from "@/components/page/PageWrapper";
+import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
-import { supabase } from "@/integrations/supabase/client";
-import { PATHS } from "@/routes/paths";
-import { useAuth } from "@/hooks/use-auth";
-import { Spinner } from "@/components/ui/spinner";
+import { usePartnerClients } from "@/hooks/use-partner-clients";
+import { PlusCircle } from "lucide-react";
 import ClientsTable from "@/components/clients/ClientsTable";
-
-// Define simplified client type
-interface PartnerClient {
-  id: string;
-  business_name: string;
-  contact_name: string;
-  email: string;
-  phone: string;
-  status: string;
-  created_at: string;
-}
+import { Card, CardContent } from "@/components/ui/card";
 
 const PartnerClients = () => {
-  const [clients, setClients] = useState<PartnerClient[]>([]);
-  const [loading, setLoading] = useState<boolean>(true);
-  const { user } = useAuth();
+  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+  const { clients, isLoading, error } = usePartnerClients();
   const navigate = useNavigate();
   const { toast } = useToast();
 
-  useEffect(() => {
-    const fetchPartnerClients = async () => {
-      try {
-        setLoading(true);
-        
-        // First, get the partner profile
-        const { data: partnerData, error: partnerError } = await supabase
-          .from('partners')
-          .select('id')
-          .eq('id', user?.id)
-          .single();
-        
-        if (partnerError || !partnerData) {
-          throw new Error('Partner profile not found');
-        }
-        
-        // Then fetch clients associated with this partner
-        const { data, error } = await supabase
-          .from('clients')
-          .select('*')
-          .eq('partner_id', partnerData.id);
-        
-        if (error) throw error;
-        
-        setClients(data || []);
-      } catch (error) {
-        console.error('Error fetching partner clients:', error);
-        toast({
-          variant: "destructive",
-          title: "Erro ao carregar clientes",
-          description: "Não foi possível carregar seus clientes. Tente novamente mais tarde."
-        });
-      } finally {
-        setLoading(false);
-      }
-    };
-    
-    if (user) {
-      fetchPartnerClients();
-    }
-  }, [user, toast]);
-  
   const handleViewClient = (id: string) => {
-    navigate(PATHS.PARTNER.CLIENT_DETAILS(id));
+    navigate(`/partner/clients/${id}`);
   };
-  
-  if (loading) {
-    return (
-      <div className="flex justify-center items-center h-[80vh]">
-        <Spinner size="lg" />
-      </div>
-    );
-  }
-  
+
+  const handleCreateClient = () => {
+    setIsCreateModalOpen(true);
+  };
+
+  const handleCreateClientSuccess = () => {
+    setIsCreateModalOpen(false);
+    toast({
+      title: "Cliente criado",
+      description: "O cliente foi criado com sucesso.",
+    });
+  };
+
   return (
-    <div className="container mx-auto py-6">
-      <h1 className="text-2xl font-bold mb-6">Meus Clientes</h1>
-      
-      <ClientsTable 
-        clients={clients}
-        onViewClient={handleViewClient}
-        isPartnerView
-      />
-      
-      {clients.length === 0 && (
-        <div className="text-center py-10">
-          <p className="text-muted-foreground">Você ainda não possui clientes cadastrados.</p>
-        </div>
-      )}
-    </div>
+    <PageWrapper>
+      <div className="flex justify-between items-center mb-6">
+        <PageHeader
+          title="Clientes"
+          description="Gerencie os clientes vinculados à sua parceria"
+        />
+        <Button onClick={handleCreateClient}>
+          <PlusCircle className="mr-2 h-4 w-4" />
+          Novo Cliente
+        </Button>
+      </div>
+
+      <Card>
+        <CardContent className="p-0">
+          {isLoading ? (
+            <div className="flex justify-center items-center p-8">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+            </div>
+          ) : error ? (
+            <div className="p-8 text-center text-destructive">
+              <p>Erro ao carregar clientes: {error}</p>
+            </div>
+          ) : (
+            <ClientsTable 
+              clients={clients} 
+              isPartnerView={true} 
+            />
+          )}
+        </CardContent>
+      </Card>
+
+      {/* {isCreateModalOpen && (
+        <CreateClientModal
+          onClose={() => setIsCreateModalOpen(false)}
+          onSuccess={handleCreateClientSuccess}
+          isPartnerMode={true}
+        />
+      )} */}
+    </PageWrapper>
   );
 };
 

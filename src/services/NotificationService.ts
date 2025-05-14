@@ -2,12 +2,12 @@
 import { supabase } from '@/integrations/supabase/client';
 import { NotificationType, UserRole, Notification, DatabaseNotification } from '@/types';
 
-// Helper function to safely cast types
+// Helper to cast notification types to database compatible strings
 const safeCastNotificationType = (type: NotificationType): string => {
   return type.toString();
 };
 
-// Helper function to safely cast user roles
+// Helper to cast user roles to database compatible strings
 const safeCastUserRole = (role: UserRole): string => {
   return role.toString();
 };
@@ -103,21 +103,18 @@ class NotificationService {
         return false;
       }
 
-      // Create notification objects for each user
-      const notifications = users.map(user => ({
-        user_id: user.id,
-        title,
-        message,
-        type: safeCastNotificationType(type),
-        is_read: false,
-        data: data || {}
-      }));
-
-      // Insert notifications one by one to avoid type issues
-      for (const notification of notifications) {
+      // Insert notifications one by one
+      for (const user of users) {
         const { error } = await supabase
           .from('notifications')
-          .insert(notification);
+          .insert({
+            user_id: user.id,
+            title,
+            message,
+            type: safeCastNotificationType(type),
+            is_read: false,
+            data: data || {}
+          });
         
         if (error) {
           console.error('Error sending notification:', error);
@@ -157,7 +154,7 @@ class NotificationService {
         return true;
       }
 
-      // Insert notifications one by one to avoid type issues
+      // Insert notifications one by one
       for (const user of users) {
         const { error } = await supabase
           .from('notifications')
@@ -243,8 +240,14 @@ class NotificationService {
   }
 
   // Mark all notifications as read for a user
-  public async markAllAsRead(userId: string): Promise<boolean> {
+  public async markAllAsRead(userId?: string): Promise<{ success: boolean, user?: any }> {
     try {
+      if (!userId) {
+        const { data: userData } = await supabase.auth.getUser();
+        if (!userData?.user) return { success: false };
+        userId = userData.user.id;
+      }
+
       const { error } = await supabase
         .from('notifications')
         .update({ is_read: true })
@@ -253,13 +256,13 @@ class NotificationService {
 
       if (error) {
         console.error('Error marking all notifications as read:', error);
-        return false;
+        return { success: false };
       }
 
-      return true;
+      return { success: true, user: { id: userId } };
     } catch (error) {
       console.error('Error marking all notifications as read:', error);
-      return false;
+      return { success: false };
     }
   }
 
