@@ -64,6 +64,13 @@ const NotificationDropdown = () => {
       document.removeEventListener("mousedown", handleClickOutside);
     };
   }, []);
+  
+  // Handle mark all as read
+  const handleMarkAllAsRead = () => {
+    if (user && markAllAsRead) {
+      markAllAsRead();
+    }
+  };
 
   return (
     <div ref={dropdownRef}>
@@ -109,7 +116,7 @@ const NotificationDropdown = () => {
                 variant="ghost"
                 size="sm"
                 className="h-auto px-2 py-1 text-xs"
-                onClick={() => user && markAllAsRead()}
+                onClick={handleMarkAllAsRead}
               >
                 Marcar todas como lidas
               </Button>
@@ -136,7 +143,7 @@ const NotificationDropdown = () => {
                         "flex flex-col items-start gap-1 p-4 focus:bg-accent/50",
                         notification.read ? "opacity-70" : ""
                       )}
-                      onClick={() => markAsRead(notification.id)}
+                      onClick={() => notification.id && markAsRead(notification.id)}
                     >
                       <div className="flex w-full justify-between">
                         <span className="font-medium">{notification.title}</span>

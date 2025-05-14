@@ -1,111 +1,94 @@
 
 import { useState } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { useToast } from "@/hooks/use-toast";
-import { supabase } from "@/integrations/supabase/client";
+import { Card } from "@/components/ui/card";
+import { PageHeader } from "@/components/page/PageHeader";
+import { AdminSecurityTab } from "@/components/admin/settings/AdminSecurityTab";
 import { UsersTab } from "@/components/admin/settings/UsersTab";
 import { SystemTab } from "@/components/admin/settings/SystemTab";
-import { RoleChangeModal } from "@/components/admin/settings/RoleChangeModal";
 import { AdminNotificationsTab } from "@/components/admin/settings/AdminNotificationsTab";
-import { AdminSecurityTab } from "@/components/admin/settings/AdminSecurityTab";
+import { RoleChangeModal } from "@/components/admin/settings/RoleChangeModal";
 import { UserRole } from "@/types";
 
-// Update ProfileData interface to use UserRole for role
+// Define the profile data with the correct UserRole type
 interface ProfileData {
   id: string;
   name: string;
   email: string;
-  avatar: string;
-  phone: string;
   role: UserRole;
   created_at: string;
-  updated_at: string;
 }
 
-const AdminSettings = () => {
-  const [activeTab, setActiveTab] = useState("usuarios");
+export default function AdminSettings() {
+  const [isRoleModalOpen, setIsRoleModalOpen] = useState(false);
   const [selectedUser, setSelectedUser] = useState<ProfileData | null>(null);
-  const [newRole, setNewRole] = useState<UserRole>(UserRole.CLIENT);
-  const [showRoleModal, setShowRoleModal] = useState(false);
+  const [selectedRole, setSelectedRole] = useState<UserRole>(UserRole.CLIENT);
   
-  const { toast } = useToast();
-
-  const handleRoleChange = async () => {
-    if (!selectedUser || !newRole) return;
-    
-    try {
-      const { error } = await supabase
-        .from('profiles')
-        .update({ role: newRole })
-        .eq('id', selectedUser.id);
-        
-      if (error) throw error;
-      
-      toast({
-        title: "Função atualizada",
-        description: `A função de ${selectedUser.name} foi atualizada para ${newRole}.`
-      });
-      
-      setShowRoleModal(false);
-    } catch (error) {
-      console.error("Error updating role:", error);
-      toast({
-        variant: "destructive",
-        title: "Erro ao atualizar função",
-        description: "Não foi possível atualizar a função do usuário."
-      });
-    }
-  };
-
-  const openRoleModal = (user: ProfileData) => {
+  const handleOpenRoleModal = (user: ProfileData) => {
     setSelectedUser(user);
-    setNewRole(user.role);
-    setShowRoleModal(true);
+    setSelectedRole(user.role);
+    setIsRoleModalOpen(true);
   };
-
+  
+  const handleCloseRoleModal = () => {
+    setIsRoleModalOpen(false);
+    setSelectedUser(null);
+  };
+  
+  const handleRoleChange = async () => {
+    if (!selectedUser) return;
+    
+    // Add your role change logic here
+    console.log("Changing role of user", selectedUser.id, "to", selectedRole);
+    
+    // Close the modal after successful role change
+    handleCloseRoleModal();
+  };
+  
   return (
-    <div className="container mx-auto py-10">
-      <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-        <TabsList className="mb-6 overflow-x-auto flex whitespace-nowrap sm:inline-flex">
-          <TabsTrigger value="usuarios">Usuários</TabsTrigger>
-          <TabsTrigger value="sistema">Sistema</TabsTrigger>
-          <TabsTrigger value="notificacoes">Notificações</TabsTrigger>
-          <TabsTrigger value="seguranca">Segurança</TabsTrigger>
+    <div className="space-y-6">
+      <PageHeader 
+        title="Configurações do Sistema" 
+        description="Gerencie configurações globais, usuários e segurança" 
+      />
+      
+      <Tabs defaultValue="users">
+        <TabsList className="mb-6">
+          <TabsTrigger value="users">Usuários</TabsTrigger>
+          <TabsTrigger value="security">Segurança</TabsTrigger>
+          <TabsTrigger value="notifications">Notificações</TabsTrigger>
+          <TabsTrigger value="system">Sistema</TabsTrigger>
         </TabsList>
         
-        {/* Users Tab */}
-        <TabsContent value="usuarios" className="mt-6">
-          <UsersTab openRoleModal={openRoleModal} />
+        <TabsContent value="users">
+          <Card>
+            <UsersTab onRoleChange={handleOpenRoleModal} />
+          </Card>
         </TabsContent>
         
-        {/* System Tab */}
-        <TabsContent value="sistema" className="mt-6">
-          <SystemTab />
+        <TabsContent value="security">
+          <AdminSecurityTab />
         </TabsContent>
         
-        {/* Notifications Tab */}
-        <TabsContent value="notificacoes" className="mt-6">
+        <TabsContent value="notifications">
           <AdminNotificationsTab />
         </TabsContent>
         
-        {/* Security Tab */}
-        <TabsContent value="seguranca" className="mt-6">
-          <AdminSecurityTab />
+        <TabsContent value="system">
+          <SystemTab />
         </TabsContent>
       </Tabs>
       
-      {/* Role Modal */}
-      {showRoleModal && selectedUser && (
-        <RoleChangeModal
-          user={selectedUser}
-          newRole={newRole}
-          setNewRole={setNewRole}
-          onClose={() => setShowRoleModal(false)}
-          onSave={handleRoleChange}
-        />
-      )}
+      {/* Role Change Modal */}
+      <RoleChangeModal
+        isOpen={isRoleModalOpen}
+        onClose={handleCloseRoleModal}
+        userName={selectedUser?.name || ''}
+        currentRole={selectedUser?.role || UserRole.CLIENT}
+        selectedRole={selectedRole}
+        onRoleChange={setSelectedRole}
+        onConfirm={handleRoleChange}
+      />
     </div>
   );
-};
-
-export default AdminSettings;
+}

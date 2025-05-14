@@ -17,6 +17,7 @@ const AdminNotifications = () => {
     isLoading, 
     markAsRead, 
     markAsUnread, 
+    markAllAsRead,
     deleteNotification,
     totalPages 
   } = useNotifications({
