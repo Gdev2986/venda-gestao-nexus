@@ -55,6 +55,9 @@ export const useNotifications = (options: UseNotificationsOptions = {}) => {
     enabled: !!user,
   });
 
+  // Calculate total pages
+  const totalPages = Math.ceil((data?.count || 0) / formattedOptions.pageSize);
+
   // Fetch unread count separately
   useEffect(() => {
     const fetchUnreadCount = async () => {
@@ -138,6 +141,7 @@ export const useNotifications = (options: UseNotificationsOptions = {}) => {
     markAllAsRead,
     deleteNotification,
     refresh,
+    totalPages,
   };
 };
 

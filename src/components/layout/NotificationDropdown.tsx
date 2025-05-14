@@ -137,7 +137,7 @@ const NotificationDropdown = () => {
                     <DropdownMenuItem
                       className={cn(
                         "flex flex-col items-start gap-1 p-4 focus:bg-accent/50",
-                        notification.read ? "opacity-70" : ""
+                        notification.is_read ? "opacity-70" : ""
                       )}
                       onClick={() => notification.id && markAsRead(notification.id)}
                     >
@@ -150,7 +150,7 @@ const NotificationDropdown = () => {
                       <span className="text-sm text-muted-foreground">
                         {notification.message}
                       </span>
-                      {!notification.read && (
+                      {!notification.is_read && (
                         <div className="mt-1 h-2 w-2 rounded-full bg-primary" />
                       )}
                     </DropdownMenuItem>

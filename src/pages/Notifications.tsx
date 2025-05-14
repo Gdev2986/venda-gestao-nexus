@@ -3,8 +3,8 @@ import { useState } from "react";
 import { PageHeader } from "@/components/page/PageHeader";
 import { Card } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { NotificationList } from "@/components/notifications/NotificationList";
-import { NotificationFilters } from "@/components/notifications/NotificationFilters";
+import NotificationList from "@/components/notifications/NotificationList";
+import NotificationFilters from "@/components/notifications/NotificationFilters";
 import { useNotifications } from "@/hooks/use-notifications";
 
 // Tipos de filtro
@@ -25,7 +25,7 @@ const Notifications = () => {
     markAsUnread, 
     markAllAsRead, 
     deleteNotification,
-    refresh // Uso da função refresh em vez de refreshNotifications
+    refresh
   } = useNotifications({
     statusFilter,
     typeFilter,
@@ -34,22 +34,22 @@ const Notifications = () => {
 
   const handleMarkAsRead = async (id: string) => {
     await markAsRead(id);
-    refresh(); // Usar refresh em vez de refreshNotifications
+    refresh();
   };
 
   const handleMarkAsUnread = async (id: string) => {
     await markAsUnread(id);
-    refresh(); // Usar refresh em vez de refreshNotifications
+    refresh();
   };
 
   const handleMarkAllAsRead = async () => {
     await markAllAsRead();
-    refresh(); // Usar refresh em vez de refreshNotifications
+    refresh();
   };
 
   const handleDelete = async (id: string) => {
     await deleteNotification(id);
-    refresh(); // Usar refresh em vez de refreshNotifications
+    refresh();
   };
 
   // Funções de filtro
@@ -88,9 +88,10 @@ const Notifications = () => {
             </TabsList>
             
             <NotificationFilters 
-              onSearch={handleSearch}
+              typeFilter={typeFilter}
+              statusFilter={statusFilter}
               onTypeChange={handleTypeChange}
-              onMarkAllAsRead={handleMarkAllAsRead}
+              onStatusChange={handleStatusChange}
             />
           </div>
           
@@ -101,6 +102,9 @@ const Notifications = () => {
               onMarkAsRead={handleMarkAsRead}
               onMarkAsUnread={handleMarkAsUnread}
               onDelete={handleDelete}
+              currentPage={1}
+              totalPages={1}
+              onPageChange={() => {}}
             />
           </TabsContent>
           
@@ -111,6 +115,9 @@ const Notifications = () => {
               onMarkAsRead={handleMarkAsRead}
               onMarkAsUnread={handleMarkAsUnread}
               onDelete={handleDelete}
+              currentPage={1}
+              totalPages={1}
+              onPageChange={() => {}}
             />
           </TabsContent>
           
@@ -121,6 +128,9 @@ const Notifications = () => {
               onMarkAsRead={handleMarkAsRead}
               onMarkAsUnread={handleMarkAsUnread}
               onDelete={handleDelete}
+              currentPage={1}
+              totalPages={1}
+              onPageChange={() => {}}
             />
           </TabsContent>
         </Tabs>
