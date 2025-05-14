@@ -1,163 +1,121 @@
+
 import { useState, useEffect } from "react";
-import { Link } from "react-router-dom";
-import { Bell, MailCheck, Loader2 } from "lucide-react";
-import { formatDistanceToNow, parseISO } from "date-fns";
-import { ptBR } from "date-fns/locale";
-import { notificationService } from "@/services/NotificationService";
+import { Bell } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { useAuth } from "@/hooks/use-auth";
-import { useUserRole } from "@/hooks/use-user-role";
-import { UserRole, Notification } from "@/types";
 import {
   DropdownMenu,
   DropdownMenuContent,
-  DropdownMenuGroup,
   DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { Badge } from "@/components/ui/badge";
+import { useNotifications } from "@/hooks/use-notifications";
+import { useNavigate } from "react-router-dom";
+import { PATHS } from "@/routes/paths";
+import NotificationService from "@/services/NotificationService";
+
+const formatDate = (dateString: string) => {
+  const date = new Date(dateString);
+  return new Intl.DateTimeFormat("pt-BR", {
+    day: "numeric",
+    month: "short",
+    hour: "numeric",
+    minute: "numeric",
+  }).format(date);
+};
 
 const NotificationDropdown = () => {
-  const [isOpen, setIsOpen] = useState(false);
-  const [unreadCount, setUnreadCount] = useState(0);
-  const [isLoading, setIsLoading] = useState(true);
-  const [notifications, setNotifications] = useState<Notification[]>([]);
-  const { user } = useAuth();
-  const { userRole } = useUserRole();
+  const { notifications, unreadCount, markAllAsRead, fetchNotifications } = useNotifications();
+  const [open, setOpen] = useState(false);
+  const navigate = useNavigate();
 
   useEffect(() => {
-    if (!user) return;
-    
-    const fetchNotifications = async () => {
-      setIsLoading(true);
-      try {
-        // Get only 5 latest notifications
-        const result = await notificationService.getUserNotifications(
-          user.id, 
-          1, 
-          5
-        );
-        setNotifications(result.notifications);
-        
-        // Count unread notifications
-        const unreadNotifications = result.notifications.filter(n => !n.read).length;
-        setUnreadCount(unreadNotifications);
-      } catch (error) {
-        console.error("Error fetching notifications:", error);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-    
-    fetchNotifications();
-    
-    // Setup polling for notifications every 30 seconds
-    const interval = setInterval(fetchNotifications, 30000);
-    
-    return () => {
-      clearInterval(interval);
-    };
-  }, [user]);
-  
+    if (open) {
+      fetchNotifications(1, 5);
+    }
+  }, [open, fetchNotifications]);
+
+  const handleViewAll = () => {
+    navigate(PATHS.NOTIFICATIONS);
+    setOpen(false);
+  };
+
   const handleMarkAllAsRead = async () => {
-    if (!user) return;
-    
-    try {
-      await notificationService.markAllAsRead(user.id);
-      setNotifications(notifications.map(n => ({ ...n, read: true })));
-      setUnreadCount(0);
-    } catch (error) {
-      console.error("Error marking all as read:", error);
-    }
+    await markAllAsRead();
   };
-  
-  const formatDate = (dateStr: string) => {
-    try {
-      const date = parseISO(dateStr);
-      return formatDistanceToNow(date, { addSuffix: true, locale: ptBR });
-    } catch (error) {
-      return dateStr;
-    }
+
+  const handleClickNotification = async (id: string) => {
+    await NotificationService.markAsRead(id);
+    fetchNotifications();
+    setOpen(false);
   };
-  
-  const getNotificationLink = () => {
-    if (userRole === UserRole.ADMIN) {
-      return "/admin/notifications";
-    }
-    return "/notifications";
-  };
-  
+
   return (
-    <DropdownMenu open={isOpen} onOpenChange={setIsOpen}>
+    <DropdownMenu open={open} onOpenChange={setOpen}>
       <DropdownMenuTrigger asChild>
         <Button variant="ghost" size="icon" className="relative">
           <Bell className="h-5 w-5" />
           {unreadCount > 0 && (
-            <span className="absolute top-0 right-0 h-4 w-4 rounded-full bg-red-500 text-[10px] flex items-center justify-center text-white font-medium">
-              {unreadCount > 9 ? '9+' : unreadCount}
-            </span>
+            <Badge
+              variant="destructive"
+              className="absolute -top-1 -right-1 px-1 min-w-[18px] h-[18px] flex items-center justify-center text-[10px]"
+            >
+              {unreadCount > 99 ? "99+" : unreadCount}
+            </Badge>
           )}
         </Button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent className="w-80" align="end">
-        <DropdownMenuLabel className="flex justify-between items-center">
-          <span>Notificações</span>
-          {unreadCount > 0 && (
-            <Button 
-              variant="ghost" 
-              size="sm" 
-              className="h-8 text-xs"
-              onClick={handleMarkAllAsRead}
-            >
-              <MailCheck className="mr-1 h-3 w-3" />
-              Marcar todas como lidas
-            </Button>
-          )}
-        </DropdownMenuLabel>
-        <DropdownMenuSeparator />
+      <DropdownMenuContent align="end" className="w-80">
+        <div className="flex items-center justify-between px-4 py-2 border-b">
+          <h3 className="font-medium">Notificações</h3>
+          <Button
+            variant="ghost"
+            size="sm"
+            className="text-xs"
+            onClick={handleMarkAllAsRead}
+          >
+            Marcar todas como lidas
+          </Button>
+        </div>
         
-        {isLoading ? (
-          <div className="flex justify-center p-4">
-            <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
-          </div>
-        ) : notifications.length > 0 ? (
-          <>
-            <DropdownMenuGroup>
-              {notifications.map((notification) => (
-                <DropdownMenuItem key={notification.id} className={`${!notification.read ? 'bg-muted/50' : ''} cursor-default`}>
-                  <div className="flex flex-col w-full gap-1 py-1">
-                    <div className="flex justify-between items-start">
-                      <span className={`text-sm font-medium ${!notification.read ? 'text-foreground' : 'text-muted-foreground'}`}>
-                        {notification.title}
-                      </span>
-                      <span className="text-[10px] text-muted-foreground">
-                        {formatDate(notification.created_at)}
-                      </span>
-                    </div>
-                    <p className="text-xs text-muted-foreground line-clamp-2 mb-1">
-                      {notification.message}
-                    </p>
-                    {!notification.read && (
-                      <div className="h-2 w-2 rounded-full bg-primary ml-auto" />
-                    )}
-                  </div>
-                </DropdownMenuItem>
-              ))}
-            </DropdownMenuGroup>
-            
-            <DropdownMenuSeparator />
-            <DropdownMenuItem className="cursor-default" asChild>
-              <Link to={getNotificationLink()} className="w-full text-center text-sm text-primary">
-                Ver todas as notificações
-              </Link>
-            </DropdownMenuItem>
-          </>
-        ) : (
-          <div className="py-4 px-2 text-center text-sm text-muted-foreground">
-            Nenhuma notificação encontrada.
-          </div>
-        )}
+        <div className="max-h-[300px] overflow-y-auto">
+          {notifications.length === 0 ? (
+            <div className="px-4 py-6 text-center text-muted-foreground">
+              Nenhuma notificação
+            </div>
+          ) : (
+            notifications.map((notification) => (
+              <DropdownMenuItem
+                key={notification.id}
+                className={`px-4 py-3 cursor-pointer flex flex-col items-start ${
+                  !notification.is_read ? "bg-muted/50" : ""
+                }`}
+                onClick={() => handleClickNotification(notification.id)}
+              >
+                <div className="flex justify-between w-full">
+                  <span className="font-medium">{notification.title}</span>
+                  <span className="text-xs text-muted-foreground">
+                    {formatDate(notification.created_at)}
+                  </span>
+                </div>
+                <p className="text-sm text-muted-foreground line-clamp-2 mt-1">
+                  {notification.message}
+                </p>
+              </DropdownMenuItem>
+            ))
+          )}
+        </div>
+        
+        <div className="p-2 border-t">
+          <Button
+            variant="outline"
+            size="sm"
+            className="w-full"
+            onClick={handleViewAll}
+          >
+            Ver todas
+          </Button>
+        </div>
       </DropdownMenuContent>
     </DropdownMenu>
   );

@@ -1,169 +1,100 @@
 
-import { useState, useEffect } from "react";
-import { PageHeader } from "@/components/page/PageHeader";
-import { PageWrapper } from "@/components/page/PageWrapper";
-import { Button } from "@/components/ui/button";
-import { Spinner } from "@/components/ui/spinner";
-import { Input } from "@/components/ui/input";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Client } from "@/types";
-import { supabase } from "@/integrations/supabase/client";
-import { useAuth } from "@/hooks/use-auth";
-import { Search, Plus, AlertCircle } from "lucide-react";
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { useToast } from "@/hooks/use-toast";
+import { supabase } from "@/integrations/supabase/client";
 import { PATHS } from "@/routes/paths";
+import { useAuth } from "@/hooks/use-auth";
+import { Spinner } from "@/components/ui/spinner";
+import { ClientsTable } from "@/components/clients/ClientsTable";
+
+// Define simplified client type
+interface PartnerClient {
+  id: string;
+  business_name: string;
+  contact_name: string;
+  email: string;
+  phone: string;
+  status: string;
+  created_at: string;
+}
 
 const PartnerClients = () => {
-  const [clients, setClients] = useState<Client[]>([]);
-  const [searchTerm, setSearchTerm] = useState("");
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const [clients, setClients] = useState<PartnerClient[]>([]);
+  const [loading, setLoading] = useState<boolean>(true);
   const { user } = useAuth();
   const navigate = useNavigate();
+  const { toast } = useToast();
 
   useEffect(() => {
-    const fetchClients = async () => {
-      if (!user) return;
-      
+    const fetchPartnerClients = async () => {
       try {
-        setIsLoading(true);
-        setError(null);
+        setLoading(true);
         
-        // Fetch partner's profile to get partner ID
+        // First, get the partner profile
         const { data: partnerData, error: partnerError } = await supabase
           .from('partners')
           .select('id')
-          .eq('user_id', user.id)
+          .eq('id', user?.id)
           .single();
-          
-        if (partnerError) {
-          throw new Error("Não foi possível recuperar suas informações de parceiro");
+        
+        if (partnerError || !partnerData) {
+          throw new Error('Partner profile not found');
         }
         
-        const partnerId = partnerData?.id;
-        
-        if (!partnerId) {
-          throw new Error("ID de parceiro não encontrado");
-        }
-        
-        // Fetch clients for this partner
-        const { data: clientData, error: clientsError } = await supabase
+        // Then fetch clients associated with this partner
+        const { data, error } = await supabase
           .from('clients')
           .select('*')
-          .eq('partner_id', partnerId);
-          
-        if (clientsError) {
-          throw new Error("Erro ao buscar clientes");
-        }
+          .eq('partner_id', partnerData.id);
         
-        setClients(clientData || []);
-      } catch (err: any) {
-        console.error('Error fetching clients:', err);
-        setError(err.message || "Ocorreu um erro ao carregar os clientes");
+        if (error) throw error;
+        
+        setClients(data || []);
+      } catch (error) {
+        console.error('Error fetching partner clients:', error);
+        toast({
+          variant: "destructive",
+          title: "Erro ao carregar clientes",
+          description: "Não foi possível carregar seus clientes. Tente novamente mais tarde."
+        });
       } finally {
-        setIsLoading(false);
+        setLoading(false);
       }
     };
-
-    fetchClients();
-  }, [user]);
-
-  const filteredClients = clients.filter(client => 
-    client.business_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    client.contact_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    client.email?.toLowerCase().includes(searchTerm.toLowerCase())
-  );
-
-  const handleViewClient = (clientId: string) => {
-    navigate(PATHS.PARTNER.CLIENT_DETAILS(clientId));
+    
+    if (user) {
+      fetchPartnerClients();
+    }
+  }, [user, toast]);
+  
+  const handleViewClient = (id: string) => {
+    navigate(PATHS.PARTNER.CLIENT_DETAILS(id));
   };
-
+  
+  if (loading) {
+    return (
+      <div className="flex justify-center items-center h-[80vh]">
+        <Spinner size="lg" />
+      </div>
+    );
+  }
+  
   return (
-    <div>
-      <PageHeader 
-        title="Meus Clientes" 
-        description="Gerencie os clientes associados à sua conta de parceiro"
-      >
-        <Button onClick={() => navigate("/partner/clients/new")} className="gap-2">
-          <Plus className="h-4 w-4" />
-          Novo Cliente
-        </Button>
-      </PageHeader>
+    <div className="container mx-auto py-6">
+      <h1 className="text-2xl font-bold mb-6">Meus Clientes</h1>
       
-      <PageWrapper>
-        <div className="space-y-6">
-          {/* Search and filters */}
-          <div className="flex flex-wrap gap-4">
-            <div className="relative flex-1 min-w-[200px]">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-              <Input
-                placeholder="Buscar clientes..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-9"
-              />
-            </div>
-          </div>
-          
-          {/* Clients list */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-lg">Lista de Clientes</CardTitle>
-            </CardHeader>
-            <CardContent>
-              {isLoading ? (
-                <div className="flex justify-center py-8">
-                  <Spinner size="lg" />
-                </div>
-              ) : error ? (
-                <div className="flex flex-col items-center justify-center py-8 text-center">
-                  <div className="rounded-full bg-destructive/10 p-3 text-destructive">
-                    <AlertCircle className="h-6 w-6" />
-                  </div>
-                  <h3 className="mt-4 font-medium text-destructive">{error}</h3>
-                  <p className="mt-2 text-sm text-muted-foreground">
-                    Tente novamente mais tarde ou contate o suporte
-                  </p>
-                </div>
-              ) : filteredClients.length === 0 ? (
-                <div className="text-center py-8 text-muted-foreground">
-                  {searchTerm ? "Nenhum cliente encontrado para esta busca" : "Nenhum cliente registrado ainda"}
-                </div>
-              ) : (
-                <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-                  {filteredClients.map((client) => (
-                    <Card 
-                      key={client.id} 
-                      className="cursor-pointer hover:bg-accent/5 transition-colors"
-                      onClick={() => handleViewClient(client.id)}
-                    >
-                      <CardContent className="p-4">
-                        <h3 className="font-medium truncate">{client.business_name}</h3>
-                        {client.contact_name && (
-                          <p className="text-sm text-muted-foreground mt-1">
-                            Contato: {client.contact_name}
-                          </p>
-                        )}
-                        {client.email && (
-                          <p className="text-sm text-muted-foreground truncate mt-0.5">
-                            {client.email}
-                          </p>
-                        )}
-                        <div className="mt-2 flex justify-between items-center">
-                          <div className="text-xs px-2 py-1 rounded-full bg-primary/10 text-primary">
-                            {client.status === 'active' ? 'Ativo' : 
-                             client.status === 'pending' ? 'Pendente' : 'Inativo'}
-                          </div>
-                        </div>
-                      </CardContent>
-                    </Card>
-                  ))}
-                </div>
-              )}
-            </CardContent>
-          </Card>
+      <ClientsTable 
+        clients={clients}
+        onViewClient={handleViewClient}
+        isPartnerView
+      />
+      
+      {clients.length === 0 && (
+        <div className="text-center py-10">
+          <p className="text-muted-foreground">Você ainda não possui clientes cadastrados.</p>
         </div>
-      </PageWrapper>
+      )}
     </div>
   );
 };

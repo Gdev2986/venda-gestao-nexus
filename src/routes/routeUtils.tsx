@@ -6,27 +6,27 @@ import { UserRole } from "@/types";
  * Returns the appropriate dashboard path based on user role
  * Handles case sensitivity and string/enum conversions
  */
-export const getDashboardPath = (userRole: UserRole): string => {
+export const getDashboardPath = (userRole: UserRole | string): string => {
   console.log("getDashboardPath - userRole:", userRole);
   
   // Normalize role to uppercase string for consistent comparison
   const normalizedRole = userRole?.toString().toUpperCase();
   
   switch (normalizedRole) {
-    case "ADMIN":
-    case "MANAGER":
+    case UserRole.ADMIN.toString():
+    case UserRole.MANAGER.toString():
       return PATHS.ADMIN.DASHBOARD;
-    case "CLIENT":
-    case "USER":
+    case UserRole.CLIENT.toString():
+    case UserRole.USER.toString():
       return PATHS.USER.DASHBOARD;
-    case "PARTNER":
+    case UserRole.PARTNER.toString():
       return PATHS.PARTNER.DASHBOARD;
-    case "FINANCIAL":
-    case "FINANCE":
+    case UserRole.FINANCIAL.toString():
+    case UserRole.FINANCE.toString():
       return PATHS.FINANCIAL.DASHBOARD;
-    case "LOGISTICS":
+    case UserRole.LOGISTICS.toString():
       return PATHS.LOGISTICS.DASHBOARD;
-    case "SUPPORT":
+    case UserRole.SUPPORT.toString():
       return PATHS.USER.DASHBOARD;
     default:
       console.log("Role não reconhecido:", userRole);
@@ -38,6 +38,6 @@ export const getDashboardPath = (userRole: UserRole): string => {
 /**
  * Returns the appropriate dashboard redirect path based on user role
  */
-export const getDashboardRedirect = (userRole: UserRole): string => {
+export const getDashboardRedirect = (userRole: UserRole | string): string => {
   return getDashboardPath(userRole);
 };

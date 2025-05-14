@@ -4,22 +4,29 @@ import { useNavigate } from "react-router-dom";
 import { PATHS } from "@/routes/paths";
 import { useUserRole } from "@/hooks/use-user-role";
 import { UserRole } from "@/types";
+import { Spinner } from "@/components/ui/spinner";
 
 const Machines = () => {
   const navigate = useNavigate();
-  const { userRole } = useUserRole();
+  const { userRole, isRoleLoading } = useUserRole();
   
   useEffect(() => {
-    if (userRole === UserRole.LOGISTICS) {
-      // Redirect to logistics machines page
-      navigate(PATHS.LOGISTICS.MACHINES);
-    } else {
-      // Redirect to user machines page for other roles
-      navigate(PATHS.USER.MACHINES);
+    if (!isRoleLoading) {
+      if (userRole === UserRole.LOGISTICS || userRole === UserRole.ADMIN) {
+        // Redirect to logistics machines page
+        navigate(PATHS.LOGISTICS.MACHINES);
+      } else {
+        // Redirect to user machines page for other roles
+        navigate(PATHS.USER.MACHINES);
+      }
     }
-  }, [navigate, userRole]);
+  }, [navigate, userRole, isRoleLoading]);
   
-  return null; // Component will redirect, no need to render anything
+  return (
+    <div className="flex justify-center items-center h-[80vh]">
+      <Spinner size="lg" />
+    </div>
+  );
 };
 
 export default Machines;

@@ -1,305 +1,298 @@
 
-import React, { useState, useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { PageHeader } from "@/components/page/PageHeader";
-import { PageWrapper } from "@/components/page/PageWrapper";
+import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Spinner } from "@/components/ui/spinner";
-import { Client, Sale, PaymentMethod } from "@/types";
 import { useToast } from "@/hooks/use-toast";
-import { supabase } from "@/integrations/supabase/client";
-import { ArrowLeft, Phone, Mail, MapPin, Calendar, CreditCard, DollarSign } from "lucide-react";
-import SalesTable from "@/components/sales/SalesTable";
-import { format } from "date-fns";
+import { ArrowLeft, BarChart, Building, Calendar, DollarSign, Users } from "lucide-react";
+import { PATHS } from "@/routes/paths";
+import { PaymentMethod } from "@/types";
 
-interface DatabaseSale {
+interface Client {
+  id: string;
+  business_name: string;
+  document: string;
+  contact_name: string;
+  email: string;
+  phone: string;
+  address: string;
+  city: string;
+  state: string;
+  zip: string;
+  created_at: string;
+  status: string;
+}
+
+interface Sale {
   id: string;
   code: string;
   terminal: string;
   gross_amount: number;
   net_amount: number;
   date: string;
-  payment_method: "CREDIT" | "DEBIT" | "PIX" | "BOLETO" | "TRANSFER";
+  payment_method: PaymentMethod;
   client_id: string;
   created_at: string;
   updated_at: string;
-  status?: string;
-  processing_status?: "RAW" | "PROCESSED";
-  client_name?: string;
-  amount?: number;
-  machine_id?: string;
-  partner_id?: string;
+  processing_status: string;
 }
 
 const ClientDetails = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const { toast } = useToast();
   const [client, setClient] = useState<Client | null>(null);
-  const [sales, setSales] = useState<Sale[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState("overview");
-  const [salesLoading, setSalesLoading] = useState(true);
+  const [recentSales, setRecentSales] = useState<Sale[]>([]);
+  const [loading, setLoading] = useState(true);
+  const { toast } = useToast();
 
   useEffect(() => {
-    const fetchClientData = async () => {
-      if (!id) return;
-      
+    const fetchClientDetails = async () => {
       try {
-        setIsLoading(true);
+        setLoading(true);
+        
+        if (!id) {
+          toast({
+            variant: "destructive",
+            title: "Erro",
+            description: "ID do cliente não fornecido"
+          });
+          navigate(PATHS.PARTNER.CLIENTS);
+          return;
+        }
         
         // Fetch client details
         const { data: clientData, error: clientError } = await supabase
-          .from('clients')
-          .select('*')
-          .eq('id', id)
+          .from("clients")
+          .select("*")
+          .eq("id", id)
           .single();
-          
-        if (clientError) throw clientError;
+        
+        if (clientError || !clientData) {
+          toast({
+            variant: "destructive",
+            title: "Erro",
+            description: "Cliente não encontrado"
+          });
+          navigate(PATHS.PARTNER.CLIENTS);
+          return;
+        }
         
         setClient(clientData);
         
-        // Fetch sales for this client
-        setSalesLoading(true);
+        // Fetch recent sales
         const { data: salesData, error: salesError } = await supabase
-          .from('sales')
-          .select('*')
-          .eq('client_id', id)
-          .order('created_at', { ascending: false });
+          .from("sales")
+          .select("*")
+          .eq("client_id", id)
+          .order("date", { ascending: false })
+          .limit(5);
+        
+        if (!salesError && salesData) {
+          // Map and convert data to ensure it matches the Sale interface
+          const formattedSales: Sale[] = salesData.map(sale => ({
+            id: sale.id,
+            code: sale.code,
+            terminal: sale.terminal,
+            gross_amount: sale.gross_amount,
+            net_amount: sale.net_amount,
+            date: sale.date,
+            payment_method: sale.payment_method as PaymentMethod,
+            client_id: sale.client_id,
+            created_at: sale.created_at,
+            updated_at: sale.updated_at,
+            processing_status: sale.processing_status
+          }));
           
-        if (salesError) throw salesError;
-        
-        const formattedSales: Sale[] = (salesData as DatabaseSale[]).map(sale => ({
-          id: sale.id,
-          code: sale.code,
-          terminal: sale.terminal,
-          client_name: sale.client_name || '',
-          gross_amount: sale.gross_amount,
-          net_amount: sale.net_amount,
-          amount: sale.amount || sale.gross_amount,
-          date: sale.date,
-          payment_method: sale.payment_method as PaymentMethod,
-          client_id: sale.client_id,
-          created_at: sale.created_at,
-          updated_at: sale.updated_at,
-          status: sale.status || "completed"
-        }));
-        
-        setSales(formattedSales);
-        setSalesLoading(false);
-      } catch (error: any) {
-        console.error('Error fetching client details:', error);
+          setRecentSales(formattedSales);
+        }
+      } catch (error) {
+        console.error("Error fetching client details:", error);
         toast({
-          variant: "destructive",
-          title: "Erro ao carregar dados",
-          description: error.message || "Não foi possível carregar as informações do cliente"
+          variant: "destructive", 
+          title: "Erro",
+          description: "Erro ao carregar detalhes do cliente"
         });
       } finally {
-        setIsLoading(false);
+        setLoading(false);
       }
     };
-
-    fetchClientData();
-  }, [id, toast]);
-
-  if (isLoading) {
+    
+    fetchClientDetails();
+  }, [id, navigate, toast]);
+  
+  const formatCurrency = (value: number) => {
+    return new Intl.NumberFormat('pt-BR', { 
+      style: 'currency', 
+      currency: 'BRL' 
+    }).format(value);
+  };
+  
+  const formatDate = (dateString: string) => {
+    return new Date(dateString).toLocaleDateString('pt-BR');
+  };
+  
+  if (loading) {
     return (
-      <div className="flex justify-center items-center h-full py-20">
+      <div className="flex justify-center items-center h-[80vh]">
         <Spinner size="lg" />
       </div>
     );
   }
-
+  
   if (!client) {
-    return (
-      <div className="text-center py-20">
-        <h2 className="text-xl font-semibold">Cliente não encontrado</h2>
-        <p className="text-muted-foreground mt-2">
-          O cliente que você está procurando não existe ou foi removido.
-        </p>
-        <Button className="mt-4" onClick={() => navigate(-1)}>
-          Voltar
-        </Button>
-      </div>
-    );
+    return null;
   }
-
+  
   return (
-    <div>
-      <PageHeader
-        title={client.business_name}
-        description={`Detalhes do cliente e suas atividades`}
-        backButton
-      >
-        <Button variant="outline" onClick={() => navigate(-1)} className="gap-2">
-          <ArrowLeft className="h-4 w-4" />
+    <div className="container mx-auto py-6">
+      <div className="flex items-center mb-6">
+        <Button variant="ghost" onClick={() => navigate(PATHS.PARTNER.CLIENTS)} className="mr-2">
+          <ArrowLeft className="h-4 w-4 mr-2" />
           Voltar
         </Button>
-      </PageHeader>
+        <h1 className="text-2xl font-bold">{client.business_name}</h1>
+      </div>
       
-      <PageWrapper>
-        <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-          <TabsList>
-            <TabsTrigger value="overview">Visão Geral</TabsTrigger>
-            <TabsTrigger value="sales">Vendas</TabsTrigger>
-          </TabsList>
-          
-          <TabsContent value="overview" className="space-y-6">
-            {/* Client Information */}
-            <div className="grid gap-6 md:grid-cols-2">
-              <Card>
-                <CardHeader>
-                  <CardTitle className="text-lg">Informações do Cliente</CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <div className="grid grid-cols-1 gap-4">
-                    {client.contact_name && (
-                      <div>
-                        <h4 className="text-sm font-medium text-muted-foreground">Nome do Contato</h4>
-                        <p>{client.contact_name}</p>
-                      </div>
-                    )}
-                    
-                    {client.email && (
-                      <div className="flex items-center gap-2">
-                        <Mail className="h-4 w-4 text-muted-foreground" />
-                        <a href={`mailto:${client.email}`} className="hover:underline">
-                          {client.email}
-                        </a>
-                      </div>
-                    )}
-                    
-                    {client.phone && (
-                      <div className="flex items-center gap-2">
-                        <Phone className="h-4 w-4 text-muted-foreground" />
-                        <span>{client.phone}</span>
-                      </div>
-                    )}
-                    
-                    {(client.address || client.city || client.state) && (
-                      <div className="flex items-start gap-2">
-                        <MapPin className="h-4 w-4 text-muted-foreground mt-0.5" />
-                        <span>
-                          {client.address && <>{client.address}<br /></>}
-                          {client.city && client.state && `${client.city}, ${client.state}`}
-                          {client.zip && ` - ${client.zip}`}
-                        </span>
-                      </div>
-                    )}
-                    
-                    {client.created_at && (
-                      <div className="flex items-center gap-2">
-                        <Calendar className="h-4 w-4 text-muted-foreground" />
-                        <span>Cliente desde {format(new Date(client.created_at), 'dd/MM/yyyy')}</span>
-                      </div>
-                    )}
-                  </div>
-                </CardContent>
-              </Card>
-              
-              <Card>
-                <CardHeader>
-                  <CardTitle className="text-lg">Informações Financeiras</CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <div className="grid grid-cols-1 gap-4">
-                    <div className="flex items-center justify-between p-4 rounded-lg bg-primary/5">
-                      <div className="flex items-center gap-3">
-                        <div className="p-2 rounded-full bg-primary/10">
-                          <DollarSign className="h-5 w-5 text-primary" />
-                        </div>
-                        <div>
-                          <p className="text-sm font-medium">Saldo Atual</p>
-                          <p className="text-2xl font-semibold">
-                            {typeof client.balance === 'number' 
-                              ? new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(client.balance)
-                              : 'R$ 0,00'
-                            }
-                          </p>
-                        </div>
-                      </div>
-                    </div>
-                    
-                    <div className="border rounded-lg p-4">
-                      <div className="flex items-center gap-3 mb-4">
-                        <CreditCard className="h-4 w-4 text-muted-foreground" />
-                        <h3 className="font-medium">Totais de Vendas</h3>
-                      </div>
-                      <div className="grid grid-cols-2 gap-4">
-                        <div>
-                          <p className="text-sm text-muted-foreground">Total de Vendas</p>
-                          <p className="text-lg font-medium">{sales.length}</p>
-                        </div>
-                        <div>
-                          <p className="text-sm text-muted-foreground">Volume Total</p>
-                          <p className="text-lg font-medium">
-                            {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' })
-                              .format(sales.reduce((acc, sale) => acc + sale.gross_amount, 0))}
-                          </p>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm font-medium flex items-center">
+              <Building className="h-4 w-4 mr-2 text-primary" />
+              Informações do Cliente
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-2">
+              <div>
+                <span className="text-sm text-muted-foreground">CNPJ:</span>
+                <p>{client.document || "Não informado"}</p>
+              </div>
+              <div>
+                <span className="text-sm text-muted-foreground">Contato:</span>
+                <p>{client.contact_name || "Não informado"}</p>
+              </div>
+              <div>
+                <span className="text-sm text-muted-foreground">Status:</span>
+                <p className="capitalize">{client.status || "Ativo"}</p>
+              </div>
+              <div>
+                <span className="text-sm text-muted-foreground">Cliente desde:</span>
+                <p>{formatDate(client.created_at)}</p>
+              </div>
             </div>
-            
-            {/* Recent Sales */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-lg">Vendas Recentes</CardTitle>
-              </CardHeader>
-              <CardContent>
-                {salesLoading ? (
-                  <div className="flex justify-center py-10">
-                    <Spinner />
-                  </div>
-                ) : sales.length > 0 ? (
-                  <SalesTable sales={sales.slice(0, 5)} isLoading={false} />
-                ) : (
-                  <div className="text-center py-10 text-muted-foreground">
-                    Este cliente ainda não possui vendas registradas
-                  </div>
-                )}
-                
-                {sales.length > 5 && (
-                  <div className="mt-4 text-center">
-                    <Button 
-                      variant="outline" 
-                      onClick={() => setActiveTab("sales")}
-                    >
-                      Ver todas as vendas
-                    </Button>
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-          </TabsContent>
+          </CardContent>
+        </Card>
+        
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm font-medium flex items-center">
+              <Users className="h-4 w-4 mr-2 text-primary" />
+              Contato
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-2">
+              <div>
+                <span className="text-sm text-muted-foreground">Email:</span>
+                <p>{client.email || "Não informado"}</p>
+              </div>
+              <div>
+                <span className="text-sm text-muted-foreground">Telefone:</span>
+                <p>{client.phone || "Não informado"}</p>
+              </div>
+              <div>
+                <span className="text-sm text-muted-foreground">Endereço:</span>
+                <p>{client.address || "Não informado"}</p>
+              </div>
+              <div>
+                <span className="text-sm text-muted-foreground">Cidade/Estado:</span>
+                <p>
+                  {client.city || "Não informado"}
+                  {client.state ? `, ${client.state}` : ""}
+                </p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+        
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm font-medium flex items-center">
+              <BarChart className="h-4 w-4 mr-2 text-primary" />
+              Estatísticas
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-2">
+              <div>
+                <span className="text-sm text-muted-foreground">Total de Vendas:</span>
+                <p>{recentSales.length} recentes</p>
+              </div>
+              <div>
+                <span className="text-sm text-muted-foreground">Última Venda:</span>
+                <p>
+                  {recentSales.length > 0 
+                    ? formatDate(recentSales[0].date) 
+                    : "Nenhuma venda recente"}
+                </p>
+              </div>
+              {/* Add more stats here */}
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+      
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center">
+            <Calendar className="h-4 w-4 mr-2 text-primary" />
+            Vendas Recentes
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          {recentSales.length === 0 ? (
+            <p className="text-center py-6 text-muted-foreground">
+              Nenhuma venda recente encontrada para este cliente.
+            </p>
+          ) : (
+            <div className="overflow-x-auto">
+              <table className="w-full border-collapse">
+                <thead>
+                  <tr className="border-b">
+                    <th className="py-2 px-4 text-left font-medium">Data</th>
+                    <th className="py-2 px-4 text-left font-medium">Código</th>
+                    <th className="py-2 px-4 text-left font-medium">Terminal</th>
+                    <th className="py-2 px-4 text-left font-medium">Método</th>
+                    <th className="py-2 px-4 text-right font-medium">Valor Bruto</th>
+                    <th className="py-2 px-4 text-right font-medium">Valor Líquido</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {recentSales.map((sale) => (
+                    <tr key={sale.id} className="border-b hover:bg-muted/50">
+                      <td className="py-2 px-4">{formatDate(sale.date)}</td>
+                      <td className="py-2 px-4">{sale.code}</td>
+                      <td className="py-2 px-4">{sale.terminal}</td>
+                      <td className="py-2 px-4">{sale.payment_method}</td>
+                      <td className="py-2 px-4 text-right">{formatCurrency(sale.gross_amount)}</td>
+                      <td className="py-2 px-4 text-right">{formatCurrency(sale.net_amount)}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
           
-          <TabsContent value="sales">
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-lg">Histórico de Vendas</CardTitle>
-              </CardHeader>
-              <CardContent>
-                {salesLoading ? (
-                  <div className="flex justify-center py-10">
-                    <Spinner />
-                  </div>
-                ) : sales.length > 0 ? (
-                  <SalesTable sales={sales} isLoading={false} />
-                ) : (
-                  <div className="text-center py-10 text-muted-foreground">
-                    Este cliente ainda não possui vendas registradas
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-          </TabsContent>
-        </Tabs>
-      </PageWrapper>
+          <div className="mt-4 flex justify-end">
+            <Button variant="outline" onClick={() => navigate(`/partner/sales?client=${client.id}`)}>
+              <DollarSign className="h-4 w-4 mr-2" />
+              Ver Todas as Vendas
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
     </div>
   );
 };
