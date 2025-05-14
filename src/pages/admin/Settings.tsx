@@ -25,7 +25,7 @@ interface ProfileData {
 const AdminSettings = () => {
   const [activeTab, setActiveTab] = useState("usuarios");
   const [selectedUser, setSelectedUser] = useState<ProfileData | null>(null);
-  const [newRole, setNewRole] = useState<UserRole>(UserRole.CLIENT);
+  const [newRole, setNewRole] = useState<string>(UserRole.CLIENT); // Cast to string to fix type error
   const [showRoleModal, setShowRoleModal] = useState(false);
   
   const { toast } = useToast();
@@ -98,8 +98,8 @@ const AdminSettings = () => {
       {showRoleModal && selectedUser && (
         <RoleChangeModal
           user={selectedUser}
-          newRole={newRole}
-          setNewRole={setNewRole}
+          newRole={newRole as UserRole}
+          setNewRole={(role) => setNewRole(role as string)}
           onClose={() => setShowRoleModal(false)}
           onSave={handleRoleChange}
         />

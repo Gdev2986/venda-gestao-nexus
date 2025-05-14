@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { Bell, MailCheck, Loader2 } from "lucide-react";
@@ -6,9 +5,9 @@ import { formatDistanceToNow, parseISO } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { notificationService } from "@/services/NotificationService";
 import { Button } from "@/components/ui/button";
-import { useAuth } from "@/contexts/AuthContext";
+import { useAuth } from "@/hooks/use-auth";
 import { useUserRole } from "@/hooks/use-user-role";
-import { UserRole } from "@/types";
+import { UserRole, Notification } from "@/types";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -23,7 +22,7 @@ const NotificationDropdown = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [unreadCount, setUnreadCount] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
-  const [notifications, setNotifications] = useState<any[]>([]);
+  const [notifications, setNotifications] = useState<Notification[]>([]);
   const { user } = useAuth();
   const { userRole } = useUserRole();
 
@@ -42,8 +41,8 @@ const NotificationDropdown = () => {
         setNotifications(result.notifications);
         
         // Count unread notifications
-        const count = await notificationService.getUnreadCount(user.id);
-        setUnreadCount(count);
+        const unreadNotifications = result.notifications.filter(n => !n.read).length;
+        setUnreadCount(unreadNotifications);
       } catch (error) {
         console.error("Error fetching notifications:", error);
       } finally {

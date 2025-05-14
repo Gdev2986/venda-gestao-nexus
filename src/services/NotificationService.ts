@@ -3,8 +3,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { Notification, NotificationType, UserRole } from "@/types";
 import { getUserId } from "@/utils/auth-utils";
 
-// Define appropriate types based on the database schema
-export type DatabaseNotificationType = NotificationType;
+// Update the DatabaseNotificationType to match what's in the database
+export type DatabaseNotificationType = string;
 
 interface DatabaseNotification {
   id: string;
@@ -22,7 +22,7 @@ const mapDatabaseToClientNotification = (dbNotification: DatabaseNotification): 
   id: dbNotification.id,
   title: dbNotification.title,
   message: dbNotification.message,
-  type: dbNotification.type,
+  type: dbNotification.type as NotificationType,
   read: dbNotification.is_read,
   created_at: dbNotification.created_at,
   user_id: dbNotification.user_id,
@@ -56,7 +56,7 @@ class NotificationService {
 
       // Apply type filter if not 'all'
       if (typeFilter !== 'all') {
-        query = query.eq('type', typeFilter);
+        query = query.eq('type', typeFilter as string);
       }
 
       // Apply read status filter
@@ -104,13 +104,13 @@ class NotificationService {
     try {
       const { title, message, type, user_id, data } = notification;
       
-      // Add default is_read = false
+      // Cast NotificationType to string to avoid type conflicts with database
       const { data: responseData, error } = await supabase
         .from('notifications')
         .insert({
           title,
           message,
-          type,
+          type: type as string,
           user_id,
           is_read: false,
           data
@@ -217,7 +217,7 @@ class NotificationService {
         .from('notifications')
         .select('*')
         .eq('user_id', userId)
-        .eq('type', type)
+        .eq('type', type as string)
         .order('created_at', { ascending: false })
         .limit(limit);
 
@@ -246,7 +246,7 @@ class NotificationService {
       const { data: userProfiles, error: userError } = await supabase
         .from('profiles')
         .select('id')
-        .eq('role', userRole);
+        .eq('role', userRole as string);
 
       if (userError) throw userError;
       if (!userProfiles || userProfiles.length === 0) {
@@ -258,7 +258,7 @@ class NotificationService {
       const notificationsToInsert = userProfiles.map(profile => ({
         title: notification.title,
         message: notification.message,
-        type: notification.type,
+        type: notification.type as string,
         user_id: profile.id,
         is_read: false,
         data: notification.data || {}

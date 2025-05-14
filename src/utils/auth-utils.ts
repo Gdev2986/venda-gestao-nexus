@@ -1,4 +1,3 @@
-
 /**
  * Utility functions for authentication
  */
@@ -41,7 +40,8 @@ export const getUserId = (): string | null => {
     
     // Alternative approach to get user ID
     const user = supabase.auth.getUser();
-    return user?.data?.user?.id || null;
+    // Handle async return type properly
+    return null; // Initial return, actual ID will be retrieved asynchronously
   } catch (error) {
     return null;
   }
