@@ -1,21 +1,25 @@
 
-import { AlertCircle } from "lucide-react";
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import React from 'react';
 import { Button } from "@/components/ui/button";
+import { AlertCircle } from "lucide-react";
 
 interface ErrorStateProps {
   errorMessage: string;
-  onRetry: () => void;
+  onRetry?: () => void;
 }
 
-const ErrorState = ({ errorMessage, onRetry }: ErrorStateProps) => {
+const ErrorState: React.FC<ErrorStateProps> = ({ errorMessage, onRetry }) => {
   return (
-    <Alert variant="destructive" className="mb-4">
-      <AlertCircle className="h-4 w-4" />
-      <AlertTitle>Erro</AlertTitle>
-      <AlertDescription>{errorMessage}</AlertDescription>
-      <Button onClick={onRetry} variant="outline" className="mt-2">Tentar novamente</Button>
-    </Alert>
+    <div className="flex flex-col items-center justify-center p-8 text-center">
+      <AlertCircle className="w-12 h-12 text-destructive mb-4" />
+      <h3 className="text-lg font-medium mb-2">Error Occurred</h3>
+      <p className="text-muted-foreground mb-4">{errorMessage}</p>
+      {onRetry && (
+        <Button onClick={onRetry} variant="outline">
+          Try Again
+        </Button>
+      )}
+    </div>
   );
 };
 

@@ -11,27 +11,34 @@ import UserPagination from "@/components/user-management/UserPagination";
 import { UserFilters as UserFiltersType } from "@/components/user-management/UserFilters";
 import LoadingState from "@/components/user-management/LoadingState";
 import ErrorState from "@/components/user-management/ErrorState";
-import RoleChangeDialog from "@/components/user-management/RoleChangeDialog";
+import { RoleChangeDialog } from "@/components/user-management/RoleChangeDialog";
 import { UserRole } from "@/types";
 import { toDBRole } from "@/types/user-role";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+
+interface UserPaginationProps {
+  currentPage: number;
+  onPageChange: (page: number) => void;
+  totalPages: number;
+}
 
 interface User {
   id: string;
   email: string;
   role: UserRole;
   created_at: string;
+  name?: string;
 }
 
-const UsersTab = () => {
+const UsersTab = ({ openRoleModal }: { openRoleModal: (user: any) => void }) => {
   const [users, setUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [searchTerm, setSearchTerm] = useState("");
-  const [roleFilter, setRoleFilter] = useState<UserRole | "ALL">("ALL");
+  const [roleFilter, setRoleFilter] = useState<"ALL" | string>("ALL");
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
   const { toast } = useToast();
@@ -137,6 +144,10 @@ const UsersTab = () => {
   // Ensure selectedRole is properly typed as UserRole
   const [selectedRole, setSelectedRole] = useState<UserRole>(UserRole.CLIENT);
 
+  const handlePageChange = (page: number) => {
+    setCurrentPage(page);
+  };
+
   return (
     <div className="space-y-6">
       <Card>
@@ -154,7 +165,7 @@ const UsersTab = () => {
             {/* Create a simple filter since UserFilters is just a type */}
             <Select 
               value={roleFilter} 
-              onValueChange={(value) => setRoleFilter(value as UserRole | "ALL")}
+              onValueChange={(value) => setRoleFilter(value)}
             >
               <SelectTrigger>
                 <SelectValue placeholder="Filter by role" />
@@ -193,7 +204,7 @@ const UsersTab = () => {
                         <Button
                           variant="outline"
                           size="sm"
-                          onClick={() => handleOpenRoleChangeDialog(user)}
+                          onClick={() => openRoleModal(user)}
                         >
                           Alterar Role
                         </Button>
@@ -203,20 +214,26 @@ const UsersTab = () => {
                 </TableBody>
               </Table>
 
-              <UserPagination
-                currentPage={currentPage}
-                setCurrentPage={setCurrentPage}
-                totalPages={totalPages}
-              />
+              <div className="mt-4 flex justify-end">
+                <UserPagination
+                  currentPage={currentPage}
+                  onPageChange={handlePageChange}
+                  totalPages={totalPages}
+                />
+              </div>
             </div>
           )}
 
-          <RoleChangeDialog
-            isOpen={isDialogOpen}
-            onClose={handleCloseRoleChangeDialog}
-            user={selectedUser}
-            onRoleChange={handleRoleChange}
-          />
+          {selectedUser && (
+            <RoleChangeDialog
+              isOpen={isDialogOpen}
+              onClose={handleCloseRoleChangeDialog}
+              userName={selectedUser.name || selectedUser.email}
+              currentRole={selectedUser.role}
+              newRole={selectedRole}
+              onConfirm={(notes: string) => handleRoleChange(selectedUser.id, selectedRole)}
+            />
+          )}
         </CardContent>
       </Card>
     </div>

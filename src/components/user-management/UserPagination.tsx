@@ -1,109 +1,97 @@
 
+import React from "react";
+import { Button } from "@/components/ui/button";
 import {
-  Pagination,
-  PaginationContent,
-  PaginationEllipsis,
-  PaginationItem,
-  PaginationLink,
-  PaginationNext,
-  PaginationPrevious,
-} from "@/components/ui/pagination";
+  ChevronLeft,
+  ChevronRight,
+  ChevronsLeft,
+  ChevronsRight,
+} from "lucide-react";
 
 interface UserPaginationProps {
   currentPage: number;
-  totalPages: number;
   onPageChange: (page: number) => void;
+  totalPages: number;
 }
 
-const UserPagination = ({ currentPage, totalPages, onPageChange }: UserPaginationProps) => {
-  // Não mostrar paginação se houver apenas uma página
-  if (totalPages <= 1) return null;
-
-  // Criar um array de páginas para exibir
-  const getPageNumbers = () => {
-    const pages = [];
-    const maxPagesToShow = 5;
-    
-    if (totalPages <= maxPagesToShow) {
-      // Se o número total de páginas for menor que o máximo, mostrar todas
-      for (let i = 1; i <= totalPages; i++) {
-        pages.push(i);
-      }
-    } else {
-      // Sempre mostrar a primeira página
-      pages.push(1);
-      
-      // Calcular páginas do meio
-      let startPage = Math.max(2, currentPage - 1);
-      let endPage = Math.min(totalPages - 1, currentPage + 1);
-      
-      // Ajustar para sempre mostrar 3 páginas do meio, se possível
-      if (currentPage <= 3) {
-        endPage = Math.min(totalPages - 1, 4);
-      } else if (currentPage >= totalPages - 2) {
-        startPage = Math.max(2, totalPages - 3);
-      }
-      
-      // Adicionar elipse antes, se necessário
-      if (startPage > 2) {
-        pages.push("ellipsis-start");
-      }
-      
-      // Adicionar páginas do meio
-      for (let i = startPage; i <= endPage; i++) {
-        pages.push(i);
-      }
-      
-      // Adicionar elipse depois, se necessário
-      if (endPage < totalPages - 1) {
-        pages.push("ellipsis-end");
-      }
-      
-      // Sempre mostrar a última página
-      pages.push(totalPages);
+const UserPagination: React.FC<UserPaginationProps> = ({
+  currentPage,
+  onPageChange,
+  totalPages,
+}) => {
+  const goToPage = (page: number) => {
+    if (page >= 1 && page <= totalPages) {
+      onPageChange(page);
     }
-    
-    return pages;
   };
 
-  const pageNumbers = getPageNumbers();
+  const renderPageButtons = () => {
+    const buttons = [];
+    let startPage = Math.max(1, currentPage - 2);
+    let endPage = Math.min(totalPages, currentPage + 2);
+
+    // Always show at least 5 pages if available
+    if (endPage - startPage < 4 && totalPages > 5) {
+      if (currentPage < 3) {
+        endPage = Math.min(totalPages, 5);
+      } else if (currentPage > totalPages - 2) {
+        startPage = Math.max(1, totalPages - 4);
+      }
+    }
+
+    for (let i = startPage; i <= endPage; i++) {
+      buttons.push(
+        <Button
+          key={i}
+          variant={i === currentPage ? "default" : "outline"}
+          className="w-10 h-10 p-0"
+          onClick={() => goToPage(i)}
+        >
+          {i}
+        </Button>
+      );
+    }
+    return buttons;
+  };
+
+  if (totalPages <= 1) return null;
 
   return (
-    <Pagination className="mt-4">
-      <PaginationContent>
-        <PaginationItem>
-          <PaginationPrevious 
-            onClick={() => currentPage > 1 && onPageChange(currentPage - 1)}
-            className={currentPage === 1 ? "pointer-events-none opacity-50" : "cursor-pointer"}
-          />
-        </PaginationItem>
-        
-        {pageNumbers.map((page, index) => (
-          page === "ellipsis-start" || page === "ellipsis-end" ? (
-            <PaginationItem key={`ellipsis-${index}`}>
-              <PaginationEllipsis />
-            </PaginationItem>
-          ) : (
-            <PaginationItem key={index}>
-              <PaginationLink 
-                isActive={page === currentPage}
-                onClick={() => typeof page === "number" && onPageChange(page)}
-                className="cursor-pointer"
-              >
-                {page}
-              </PaginationLink>
-            </PaginationItem>
-          )
-        ))}
-        
-        <PaginationItem>
-          <PaginationNext 
-            onClick={() => currentPage < totalPages && onPageChange(currentPage + 1)}
-            className={currentPage === totalPages ? "pointer-events-none opacity-50" : "cursor-pointer"}
-          />
-        </PaginationItem>
-      </PaginationContent>
-    </Pagination>
+    <div className="flex items-center gap-2 justify-end mt-4">
+      <Button
+        variant="outline"
+        size="icon"
+        onClick={() => goToPage(1)}
+        disabled={currentPage === 1}
+      >
+        <ChevronsLeft className="w-4 h-4" />
+      </Button>
+      <Button
+        variant="outline"
+        size="icon"
+        onClick={() => goToPage(currentPage - 1)}
+        disabled={currentPage === 1}
+      >
+        <ChevronLeft className="w-4 h-4" />
+      </Button>
+      <div className="flex gap-1">{renderPageButtons()}</div>
+      <Button
+        variant="outline"
+        size="icon"
+        onClick={() => goToPage(currentPage + 1)}
+        disabled={currentPage === totalPages}
+      >
+        <ChevronRight className="w-4 h-4" />
+      </Button>
+      <Button
+        variant="outline"
+        size="icon"
+        onClick={() => goToPage(totalPages)}
+        disabled={currentPage === totalPages}
+      >
+        <ChevronsRight className="w-4 h-4" />
+      </Button>
+    </div>
   );
 };
 

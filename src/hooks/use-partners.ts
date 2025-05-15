@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { Partner, UserRole } from '@/types';
@@ -46,12 +47,11 @@ export const usePartners = () => {
   const createPartner = async (partner: Omit<Partner, 'id'>) => {
     setLoading(true);
     try {
-      // Create a partner object with required fields, making sure id field is not included
+      // Create a partner object with required fields, making sure it matches the table structure
       const partnerData = {
-        company_name: partner.company_name,
+        company_name: partner.company_name || "New Partner",
         commission_rate: partner.commission_rate || 0,
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString()
+        // Don't include id, let Supabase generate it
       };
       
       const { data, error } = await supabase
@@ -63,13 +63,15 @@ export const usePartners = () => {
         throw new Error(error.message);
       }
 
-      setPartners(prevPartners => [...prevPartners, data[0]]);
-      toast({
-        title: "Partner created",
-        description: "Partner created successfully.",
-      });
-      
-      return true; // Return a boolean to indicate success
+      if (data && data[0]) {
+        setPartners(prevPartners => [...prevPartners, data[0]]);
+        toast({
+          title: "Partner created",
+          description: "Partner created successfully.",
+        });
+        return true;
+      }
+      return false;
     } catch (error: any) {
       setError(error.message);
       toast({
