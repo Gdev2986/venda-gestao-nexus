@@ -816,9 +816,9 @@ const Fees = () => {
                       } hover:border-primary transition-colors`}
                       onClick={() => setSelectedBlock(block.id)}
                     >
-                      <div className="flex items-center">
-                        <div className={`w-3 h-3 rounded-full mr-3 ${getBlockColor(block.color)}`} />
-                        <div className="max-w-[150px]">
+                      <div className="flex items-center min-w-0">
+                        <div className={`w-3 h-3 rounded-full mr-3 flex-shrink-0 ${getBlockColor(block.color)}`} />
+                        <div className="max-w-[120px] min-w-0">
                           <p className="font-medium truncate">{block.name}</p>
                           <p className="text-xs text-muted-foreground truncate">
                             {block.clients.length > 0 
@@ -827,11 +827,11 @@ const Fees = () => {
                           </p>
                         </div>
                       </div>
-                      <div className="flex space-x-1 shrink-0 ml-1">
+                      <div className="flex items-center space-x-1 flex-shrink-0">
                         <TooltipProvider>
                           <Tooltip>
                             <TooltipTrigger asChild>
-                              <Button variant="ghost" size="sm" onClick={(e) => {
+                              <Button variant="ghost" size="icon" className="h-7 w-7" onClick={(e) => {
                                 e.stopPropagation();
                                 openHistoryDialog(block.id);
                               }}>
@@ -839,7 +839,7 @@ const Fees = () => {
                               </Button>
                             </TooltipTrigger>
                             <TooltipContent>
-                              <p>Ver histórico de alterações</p>
+                              <p>Ver histórico</p>
                             </TooltipContent>
                           </Tooltip>
                         </TooltipProvider>
@@ -849,7 +849,7 @@ const Fees = () => {
                             <TooltipProvider>
                               <Tooltip>
                                 <TooltipTrigger asChild>
-                                  <Button variant="ghost" size="sm" onClick={(e) => {
+                                  <Button variant="ghost" size="icon" className="h-7 w-7" onClick={(e) => {
                                     e.stopPropagation();
                                     handleDuplicateBlock(block.id);
                                   }}>
@@ -857,7 +857,7 @@ const Fees = () => {
                                   </Button>
                                 </TooltipTrigger>
                                 <TooltipContent>
-                                  <p>Duplicar bloco</p>
+                                  <p>Duplicar</p>
                                 </TooltipContent>
                               </Tooltip>
                             </TooltipProvider>
@@ -865,7 +865,7 @@ const Fees = () => {
                             <TooltipProvider>
                               <Tooltip>
                                 <TooltipTrigger asChild>
-                                  <Button variant="ghost" size="sm" onClick={(e) => {
+                                  <Button variant="ghost" size="icon" className="h-7 w-7" onClick={(e) => {
                                     e.stopPropagation();
                                     handleEditBlock(block);
                                   }}>
@@ -873,7 +873,7 @@ const Fees = () => {
                                   </Button>
                                 </TooltipTrigger>
                                 <TooltipContent>
-                                  <p>Editar bloco</p>
+                                  <p>Editar</p>
                                 </TooltipContent>
                               </Tooltip>
                             </TooltipProvider>
@@ -881,7 +881,7 @@ const Fees = () => {
                             <TooltipProvider>
                               <Tooltip>
                                 <TooltipTrigger asChild>
-                                  <Button variant="ghost" size="sm" onClick={(e) => {
+                                  <Button variant="ghost" size="icon" className="h-7 w-7" onClick={(e) => {
                                     e.stopPropagation();
                                     handleDeleteBlockInitiate(block.id);
                                   }}>
@@ -889,7 +889,7 @@ const Fees = () => {
                                   </Button>
                                 </TooltipTrigger>
                                 <TooltipContent>
-                                  <p>Excluir bloco</p>
+                                  <p>Excluir</p>
                                 </TooltipContent>
                               </Tooltip>
                             </TooltipProvider>
