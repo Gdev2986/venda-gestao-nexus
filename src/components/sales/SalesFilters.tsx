@@ -62,20 +62,20 @@ const SalesFilters = ({
   };
 
   return (
-    <div className="space-y-3">
-      <div className="flex flex-col sm:flex-row gap-2">
+    <div className="space-y-4">
+      <div className="flex flex-col sm:flex-row gap-4">
         {/* Search Bar */}
         <form 
           className="flex-1" 
           onSubmit={handleSearchSubmit}
         >
           <div className="relative">
-            <Search className="absolute left-2 top-1/2 h-3 w-3 -translate-y-1/2 text-muted-foreground" />
+            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
             <Input
               placeholder="Buscar por código ou terminal..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="pl-7 h-8 text-sm"
+              className="pl-10"
             />
           </div>
         </form>
@@ -85,13 +85,12 @@ const SalesFilters = ({
           <PopoverTrigger asChild>
             <Button
               variant={"outline"}
-              size="sm"
               className={cn(
-                "sm:w-[200px] justify-start text-left font-normal h-8",
+                "sm:w-[240px] justify-start text-left font-normal",
                 !date && "text-muted-foreground"
               )}
             >
-              <CalendarIcon className="mr-1 h-3 w-3" />
+              <CalendarIcon className="mr-2 h-4 w-4" />
               {date?.from ? (
                 date.to ? (
                   <>
@@ -102,7 +101,7 @@ const SalesFilters = ({
                   format(date.from, "dd/MM/yyyy")
                 )
               ) : (
-                <span className="text-xs">Filtrar por data</span>
+                <span>Filtrar por data</span>
               )}
             </Button>
           </PopoverTrigger>
@@ -113,43 +112,41 @@ const SalesFilters = ({
               defaultMonth={date?.from}
               selected={date}
               onSelect={onDateChange}
-              numberOfMonths={1}
+              numberOfMonths={2}
               className="pointer-events-auto"
             />
           </PopoverContent>
         </Popover>
         
         {/* Actions */}
-        <div className="flex gap-1">
+        <div className="flex gap-2">
           <Button 
-            variant="outline"
-            size="sm"
-            className="h-8 px-2"
+            variant="outline" 
+            className="flex items-center gap-1"
             onClick={onShowImportDialog}
           >
-            <Upload className="h-3 w-3 mr-1" />
-            <span className="text-xs">Importar</span>
+            <Upload className="h-4 w-4" />
+            <span className="hidden sm:inline">Importar</span>
           </Button>
           <Button 
-            variant="outline"
-            size="sm"
-            className="h-8 px-2"
+            variant="outline" 
+            className="flex items-center gap-1"
             onClick={onExport}
           >
-            <Download className="h-3 w-3 mr-1" />
-            <span className="text-xs">Exportar</span>
+            <Download className="h-4 w-4" />
+            <span className="hidden sm:inline">Exportar</span>
           </Button>
         </div>
       </div>
       
-      <div className="flex flex-col sm:flex-row gap-2">
+      <div className="flex flex-col sm:flex-row gap-4">
         {/* Payment Method Filter */}
         <div className="flex-1">
           <Select
             value={filters.paymentMethod || "all"}
             onValueChange={(value) => onFilterChange("paymentMethod", value === "all" ? undefined : value)}
           >
-            <SelectTrigger className="h-8 text-sm">
+            <SelectTrigger>
               <SelectValue placeholder="Forma de Pagamento" />
             </SelectTrigger>
             <SelectContent>
@@ -169,7 +166,7 @@ const SalesFilters = ({
             value={filters.terminal || "all"}
             onValueChange={(value) => onFilterChange("terminal", value === "all" ? undefined : value)}
           >
-            <SelectTrigger className="h-8 text-sm">
+            <SelectTrigger>
               <SelectValue placeholder="Terminal" />
             </SelectTrigger>
             <SelectContent>
@@ -186,9 +183,8 @@ const SalesFilters = ({
         {/* Clear Filters Button */}
         <Button 
           variant="ghost" 
-          size="sm"
           onClick={onClearFilters} 
-          className="sm:self-center h-8 text-xs"
+          className="sm:self-center"
         >
           Limpar filtros
         </Button>

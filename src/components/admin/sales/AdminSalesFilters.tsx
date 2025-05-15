@@ -8,7 +8,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { CalendarIcon, Search } from "lucide-react";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { SalesFilterParams } from "@/types";
 import { TimeRangePicker } from "../../../components/sales/filters";
 
@@ -107,38 +107,31 @@ const AdminSalesFilters = ({
   };
   
   return (
-    <CardContent className="p-2 sm:p-3">
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-2 sm:gap-3">
+    <CardContent className="p-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         {/* Left column with search and payment method */}
-        <div className="space-y-2">
+        <div className="space-y-3">
           {/* Search Filter with Clear Filters Button */}
           <div className="flex gap-2">
             <form onSubmit={handleSearchSubmit} className="flex-1">
               <div className="relative">
-                <Search className="absolute left-2 top-2 h-3 w-3 text-muted-foreground" />
-                <Input 
-                  placeholder="Buscar vendas..." 
-                  className="pl-7 h-8 text-sm" 
-                  value={searchValue} 
-                  onChange={e => setSearchValue(e.target.value)} 
-                />
+                <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
+                <Input placeholder="Buscar vendas..." className="pl-8" value={searchValue} onChange={e => setSearchValue(e.target.value)} />
               </div>
             </form>
             <Button 
               variant="outline" 
-              size="sm"
-              className="h-8 text-xs"
               onClick={() => {
                 if (onClearFilters) onClearFilters();
               }}
             >
-              Limpar
+              Limpar Filtros
             </Button>
           </div>
 
           {/* Payment Method Filter */}
           <div>
-            <label className="text-xs font-medium mb-1 block">Forma de Pagamento</label>
+            <label className="text-sm font-medium mb-1 block">Forma de Pagamento</label>
             <Select 
               value={filters.paymentMethod || "all"} 
               onValueChange={value => {
@@ -150,7 +143,7 @@ const AdminSalesFilters = ({
                 }
               }}
             >
-              <SelectTrigger className="h-8 text-sm">
+              <SelectTrigger>
                 <SelectValue placeholder="Selecione..." />
               </SelectTrigger>
               <SelectContent>
@@ -166,35 +159,23 @@ const AdminSalesFilters = ({
 
           {/* Amount Filter (specific value input) */}
           <div>
-            <label className="text-xs font-medium mb-1 block">Valor (R$)</label>
+            <label className="text-sm font-medium mb-1 block">Valor (R$)</label>
             <div className="relative">
-              <span className="absolute left-2 top-2 text-xs text-muted-foreground">R$</span>
-              <Input 
-                value={amountValue} 
-                onChange={handleAmountChange} 
-                onBlur={handleAmountBlur} 
-                className="pl-7 h-8 text-sm" 
-              />
+              <span className="absolute left-3 top-2.5 text-muted-foreground">R$</span>
+              <Input value={amountValue} onChange={handleAmountChange} onBlur={handleAmountBlur} className="pl-10" />
             </div>
           </div>
         </div>
 
         {/* Right column with date and time */}
-        <div className="space-y-2 py-0 sm:py-[27px]">
+        <div className="space-y-3 py-[41px]">
           {/* Date Range Filter */}
-          <div className="px-0 py-0 my-0 sm:my-[9px]">
-            <label className="text-xs font-medium mb-1 block">Período</label>
+          <div className="px-0 py-0 my-[9px]">
+            <label className="text-sm font-medium mb-1 block">Período</label>
             <Popover>
               <PopoverTrigger asChild>
-                <Button 
-                  variant="outline" 
-                  size="sm" 
-                  className={cn(
-                    "w-full justify-start text-left font-normal h-8 text-xs", 
-                    !dateRange && "text-muted-foreground"
-                  )}
-                >
-                  <CalendarIcon className="mr-1 h-3 w-3" />
+                <Button variant="outline" className={cn("w-full justify-start text-left font-normal", !dateRange && "text-muted-foreground")}>
+                  <CalendarIcon className="mr-2 h-4 w-4" />
                   {dateRange?.from ? dateRange.to ? <>
                         {format(dateRange.from, "dd/MM/yyyy")} -{" "}
                         {format(dateRange.to, "dd/MM/yyyy")}
@@ -210,7 +191,7 @@ const AdminSalesFilters = ({
                   onSelect={value => {
                     if (onDateRangeChange) onDateRangeChange(value);
                   }} 
-                  numberOfMonths={1} 
+                  numberOfMonths={2} 
                   className="pointer-events-auto" 
                 />
               </PopoverContent>
@@ -219,8 +200,8 @@ const AdminSalesFilters = ({
 
           {/* Time Range Filter */}
           <div>
-            <label className="text-xs font-medium mb-1 block">Horário</label>
-            <TimeRangePicker value={timeRange} onChange={handleTimeRangeChange} className="w-full h-8" />
+            <label className="text-sm font-medium mb-1 block">Horário</label>
+            <TimeRangePicker value={timeRange} onChange={handleTimeRangeChange} className="w-full" />
           </div>
         </div>
       </div>

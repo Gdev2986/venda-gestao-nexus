@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { PageHeader } from "@/components/page/PageHeader";
 import { PageWrapper } from "@/components/page/PageWrapper";
@@ -28,7 +27,6 @@ import PaymentMethodsChart from "@/components/dashboard/admin/PaymentMethodsChar
 import TopPartnersChart from "@/components/dashboard/admin/TopPartnersChart";
 import ClientGrowthChart from "@/components/dashboard/admin/ClientGrowthChart";
 import { useToast } from "@/hooks/use-toast";
-import { useBreakpoint } from "@/hooks/use-mobile";
 
 // Dashboard date filter presets
 const DATE_FILTER_PRESETS = {
@@ -91,8 +89,6 @@ const AdminDashboard = () => {
     to: new Date()
   });
   const { toast } = useToast();
-  const breakpoint = useBreakpoint();
-  const isMobile = ['xs', 'sm'].includes(breakpoint);
   
   // Function to simulate data refresh
   const handleRefresh = () => {
@@ -151,12 +147,12 @@ const AdminDashboard = () => {
     ];
 
     return (
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-2 sm:gap-4">
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         {links.map((link) => (
           <Card key={link.name} className="hover:shadow-md transition-shadow">
             <Button 
               variant="ghost" 
-              className="h-full w-full flex flex-col items-center justify-center py-3 sm:py-6"
+              className="h-full w-full flex flex-col items-center justify-center py-6"
               onClick={() => {
                 toast({
                   title: `Navegando para ${link.name}`,
@@ -166,11 +162,11 @@ const AdminDashboard = () => {
                 window.location.href = link.path;
               }}
             >
-              <div className={cn("rounded-full p-2 sm:p-3 mb-1 sm:mb-2", link.color)}>
-                <link.icon size={isMobile ? 18 : 24} />
+              <div className={cn("rounded-full p-3 mb-2", link.color)}>
+                <link.icon size={24} />
               </div>
-              <span className="text-sm sm:text-base">{link.name}</span>
-              <ArrowRight size={isMobile ? 12 : 16} className="mt-1 sm:mt-2 opacity-50" />
+              <span>{link.name}</span>
+              <ArrowRight size={16} className="mt-2 opacity-50" />
             </Button>
           </Card>
         ))}
@@ -179,18 +175,18 @@ const AdminDashboard = () => {
   };
 
   return (
-    <div className="space-y-4 sm:space-y-6">
+    <div className="space-y-6">
       <PageHeader
         title="Dashboard Administrativo"
         description="Visão geral da operação e principais métricas"
       >
-        <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 sm:gap-3 mt-2 sm:mt-0">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 mt-3 sm:mt-0">
           {/* Date filter */}
           <div className="flex shadow-sm rounded-md w-full sm:w-auto overflow-x-auto">
             <Button 
               variant={activeFilter === DATE_FILTER_PRESETS.LAST_7_DAYS ? "default" : "outline"}
               onClick={() => handleFilterChange(DATE_FILTER_PRESETS.LAST_7_DAYS)}
-              className="rounded-r-none text-xs sm:text-sm px-2 sm:px-3 h-8 sm:h-9"
+              className="rounded-r-none"
               size="sm"
             >
               7 dias
@@ -198,7 +194,7 @@ const AdminDashboard = () => {
             <Button 
               variant={activeFilter === DATE_FILTER_PRESETS.LAST_30_DAYS ? "default" : "outline"}
               onClick={() => handleFilterChange(DATE_FILTER_PRESETS.LAST_30_DAYS)}
-              className="rounded-none border-l-0 border-r-0 text-xs sm:text-sm px-2 sm:px-3 h-8 sm:h-9"
+              className="rounded-none border-l-0 border-r-0"
               size="sm"
             >
               30 dias
@@ -206,7 +202,7 @@ const AdminDashboard = () => {
             <Button 
               variant={activeFilter === DATE_FILTER_PRESETS.CURRENT_MONTH ? "default" : "outline"}
               onClick={() => handleFilterChange(DATE_FILTER_PRESETS.CURRENT_MONTH)}
-              className="rounded-none border-r-0 text-xs sm:text-sm px-2 sm:px-3 h-8 sm:h-9"
+              className="rounded-none border-r-0"
               size="sm"
             >
               Mês atual
@@ -214,19 +210,19 @@ const AdminDashboard = () => {
             <Button 
               variant={activeFilter === DATE_FILTER_PRESETS.QUARTER ? "default" : "outline"}
               onClick={() => handleFilterChange(DATE_FILTER_PRESETS.QUARTER)}
-              className="rounded-l-none text-xs sm:text-sm px-2 sm:px-3 h-8 sm:h-9"
+              className="rounded-l-none"
               size="sm"
             >
               Trimestre
             </Button>
           </div>
           
-          <div className="flex items-center gap-2 w-full sm:w-auto mt-2 sm:mt-0">
+          <div className="flex items-center gap-2 w-full sm:w-auto mt-3 sm:mt-0">
             {/* Calendar picker */}
             <Popover>
               <PopoverTrigger asChild>
-                <Button variant="outline" size="sm" className="flex items-center gap-1 sm:gap-2 w-full sm:w-auto h-8 sm:h-9 text-xs sm:text-sm">
-                  <CalendarIcon size={isMobile ? 14 : 16} />
+                <Button variant="outline" size="sm" className="flex items-center gap-2 w-full sm:w-auto">
+                  <CalendarIcon size={16} />
                   <span className="truncate">
                     {dateRange.from && dateRange.to ? (
                       <>
@@ -250,7 +246,7 @@ const AdminDashboard = () => {
                       setActiveFilter(DATE_FILTER_PRESETS.CUSTOM);
                     }
                   }}
-                  numberOfMonths={isMobile ? 1 : 2}
+                  numberOfMonths={2}
                   className={cn("p-3 pointer-events-auto")}
                 />
               </PopoverContent>
@@ -261,28 +257,28 @@ const AdminDashboard = () => {
               onClick={handleRefresh} 
               disabled={isLoading}
               size="sm"
-              className="flex items-center gap-1 sm:gap-2 h-8 sm:h-9"
+              className="flex items-center gap-2"
             >
-              <RefreshCw className={`h-3 w-3 sm:h-4 sm:w-4 ${isLoading ? 'animate-spin' : ''}`} />
-              <span className="hidden sm:inline text-xs sm:text-sm">Atualizar</span>
+              <RefreshCw className={`h-4 w-4 ${isLoading ? 'animate-spin' : ''}`} />
+              <span className="hidden sm:inline">Atualizar</span>
             </Button>
           </div>
         </div>
       </PageHeader>
 
       <PageWrapper>
-        <div className="space-y-4 sm:space-y-6">
+        <div className="space-y-6">
           {/* Stats Cards */}
           <StatCards stats={MOCK_DATA.stats} isLoading={isLoading} />
           
           {/* Quick Links */}
-          <div className="mb-4 sm:mb-8">
-            <h3 className="text-base sm:text-lg font-medium mb-2 sm:mb-4">Atalhos Rápidos</h3>
+          <div className="mb-8">
+            <h3 className="text-lg font-medium mb-4">Atalhos Rápidos</h3>
             {renderQuickLinks()}
           </div>
           
           {/* Charts Grid */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             {/* Sales Chart */}
             <SalesChart data={MOCK_DATA.dailySales} isLoading={isLoading} />
             

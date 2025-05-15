@@ -53,28 +53,27 @@ const MainLayout = () => {
         }`}
       >
         {/* Header */}
-        <header className="h-14 sm:h-16 border-b border-border flex items-center justify-between px-3 sm:px-4 bg-background sticky top-0 z-10">
-          <div className="flex items-center gap-2 sm:gap-4">
+        <header className="h-16 border-b border-border flex items-center justify-between px-4 bg-background sticky top-0 z-10">
+          <div className="flex items-center space-x-4">
             <Button 
               variant="ghost" 
               size="icon" 
-              className="h-8 w-8 sm:h-9 sm:w-9"
               onClick={() => setSidebarOpen(!sidebarOpen)}
               aria-label={sidebarOpen ? "Close menu" : "Open menu"}
             >
-              <Menu className="h-4 w-4 sm:h-5 sm:w-5" />
+              <Menu className="h-5 w-5" />
             </Button>
-            <h1 className="text-lg sm:text-xl font-semibold">SigmaPay</h1>
+            <h1 className="text-xl font-semibold">SigmaPay</h1>
           </div>
           
-          <div className="flex items-center gap-2 sm:gap-4">
+          <div className="flex items-center space-x-4">
             <ThemeToggle />
             <NotificationDropdown />
           </div>
         </header>
         
         {/* Main scrollable content */}
-        <main className="flex-1 overflow-auto p-3 sm:p-4 md:p-6 lg:p-8">
+        <main className="flex-1 overflow-auto p-4 md:p-6 lg:p-8">
           <div className="mx-auto max-w-7xl">
             <Outlet />
           </div>

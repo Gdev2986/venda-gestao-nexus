@@ -32,7 +32,7 @@ const MainLayout = ({ children }: MainLayoutProps) => {
     if (isMobile) {
       setSidebarOpen(false);
     }
-  }, [isMobile]); 
+  }, [isMobile]); // Remove location dependency to prevent closing on navigation
 
   // Save sidebar state to localStorage when it changes
   useEffect(() => {
@@ -78,7 +78,7 @@ const MainLayout = ({ children }: MainLayoutProps) => {
         </header>
         
         {/* Main scrollable content */}
-        <main className="flex-1 overflow-auto">
+        <main className="flex-1 overflow-auto p-4 md:p-6 lg:p-8">
           <div className="mx-auto max-w-7xl">
             {children}
           </div>

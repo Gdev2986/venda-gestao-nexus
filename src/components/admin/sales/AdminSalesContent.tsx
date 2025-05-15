@@ -1,6 +1,6 @@
 
-import { useState, useEffect, useCallback } from "react";
-import { Sale, SalesFilterParams, PaymentMethod } from "@/types";
+import { useState, useEffect } from "react";
+import { Sale, SalesFilterParams } from "@/types";
 import { calculateSalesTotals } from "@/utils/sales-utils";
 import SalesDataTable from "@/components/sales/SalesDataTable";
 
@@ -29,17 +29,15 @@ const AdminSalesContent = ({
   isLoading
 }: AdminSalesContentProps) => {
   const [filteredSales, setFilteredSales] = useState<Sale[]>([]);
-  
-  // Use useCallback para evitar recriação excessiva da função de filtro
-  const applyFilters = useCallback(() => {
-    if (isLoading) return;
 
+  // Apply filters when they change
+  useEffect(() => {
     let result = [...sales];
     
     // Filter by payment method
     if (filters.paymentMethod) {
       result = result.filter(sale => 
-        sale.payment_method === filters.paymentMethod as PaymentMethod
+        sale.payment_method === filters.paymentMethod
       );
     }
     
@@ -90,12 +88,7 @@ const AdminSalesContent = ({
     }
     
     setFilteredSales(result);
-  }, [sales, filters, dateRange, isLoading]);
-
-  // Apply filters when they change
-  useEffect(() => {
-    applyFilters();
-  }, [applyFilters]);
+  }, [sales, filters, dateRange]);
 
   // Calculate pagination
   const totalPages = Math.ceil(filteredSales.length / itemsPerPage);
@@ -103,10 +96,7 @@ const AdminSalesContent = ({
   const paginatedSales = filteredSales.slice(startIndex, startIndex + itemsPerPage);
   
   // Calculate totals
-  const totals = {
-    ...calculateSalesTotals(filteredSales),
-    count: filteredSales.length
-  };
+  const totals = calculateSalesTotals(filteredSales);
 
   return (
     <div className="lg:col-span-3">

@@ -1,3 +1,4 @@
+
 export enum UserRole {
   ADMIN = "ADMIN",
   CLIENT = "CLIENT", 
@@ -48,19 +49,18 @@ export enum NotificationType {
   SUPPORT = "SUPPORT"
 }
 
-// Updated interface to support both string and enum types for payment methods and status
 export interface Payment {
   id: string;
   created_at: string;
   updated_at: string;
   amount: number;
-  status: PaymentStatus | string;
+  status: PaymentStatus;
   client_id: string;
   approved_at?: string; 
   receipt_url?: string;
   client_name?: string;
   rejection_reason: string | null;
-  payment_type?: PaymentType | string;
+  payment_type?: PaymentType;
   bank_info?: {
     bank_name?: string;
     account_number?: string;
@@ -75,12 +75,9 @@ export interface Payment {
     type: string;
     owner_name: string;
   };
-  // Add missing properties being used in code
-  client?: any;
-  description?: string;
 }
 
-// Types for partners - adding missing fields
+// Types for partners
 export interface Partner {
   id: string;
   company_name: string;
@@ -94,9 +91,6 @@ export interface Partner {
   email?: string; // Added for consistency with filtering
   phone?: string; // Added for consistency with filtering
   address?: string; // Added for completeness
-  // Add missing properties
-  total_sales?: number;
-  total_commission?: number;
 }
 
 // Added Client interface to ensure type safety
@@ -128,8 +122,6 @@ export interface FilterValues {
     from: Date;
     to?: Date;
   };
-  searchTerm?: string; // Add searchTerm to fix errors
-  commissionRange?: [number, number]; // Add property for partner filtering
 }
 
 export interface PixKey {
@@ -142,9 +134,6 @@ export interface PixKey {
   user_id?: string;
   created_at?: string;
   updated_at?: string;
-  bank_name?: string;
-  key_type?: string;
-  is_active?: boolean;
 }
 
 export interface Sale {
@@ -155,15 +144,10 @@ export interface Sale {
   gross_amount: number;
   net_amount: number;
   date: string;
-  payment_method: PaymentMethod | string;
+  payment_method: PaymentMethod;
   client_id: string;
   created_at: string;
   updated_at: string;
-  amount?: number;
-  status?: string;
-  partner_id?: string;
-  machine_id?: string;
-  processing_status?: string;
 }
 
 export interface SalesFilterParams {
@@ -181,7 +165,7 @@ export interface UserData {
   id: string;
   name: string;
   email: string;
-  role: UserRole | string; // Allow string role from database
+  role: UserRole;
   created_at: string;
   status: string;
 }
@@ -189,20 +173,6 @@ export interface UserData {
 export interface SalesChartData {
   name: string;
   value: number;
-}
-
-// Add Machine interface to fix missing type errors
-export interface Machine {
-  id: string;
-  serial_number: string;
-  model: string;
-  status: string;
-  client_id?: string;
-  created_at?: string;
-  updated_at?: string;
-  name?: string;
-  client_name?: string;
-  serialNumber?: string;
 }
 
 // Add a Notification interface

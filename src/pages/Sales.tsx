@@ -1,7 +1,7 @@
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect } from "react";
 import MainLayout from "@/components/layout/MainLayout";
-import { Sale, SalesFilterParams, PaymentMethod } from "@/types";
+import { Sale, SalesFilterParams } from "@/types";
 import { useToast } from "@/hooks/use-toast";
 import SalesFilters from "@/components/sales/SalesFilters";
 import SalesTable from "@/components/sales/SalesTable";
@@ -28,8 +28,12 @@ const Sales = () => {
   const [isRefreshing, setIsRefreshing] = useState(false);
   const { toast } = useToast();
   
-  // Use useCallback to avoid recreating function on every render
-  const fetchSales = useCallback(() => {
+  // Load initial data
+  useEffect(() => {
+    fetchSales();
+  }, []);
+  
+  const fetchSales = () => {
     setIsLoading(true);
     
     // Simulate API call
@@ -39,12 +43,7 @@ const Sales = () => {
       setFilteredSales(mockSales);
       setIsLoading(false);
     }, 1000);
-  }, []);
-  
-  // Load initial data
-  useEffect(() => {
-    fetchSales();
-  }, [fetchSales]);
+  };
   
   const handleRefresh = () => {
     setIsRefreshing(true);
@@ -59,13 +58,13 @@ const Sales = () => {
     }, 1500);
   };
   
-  // Apply filters when they change - using useCallback for performance
-  const applyFilters = useCallback(() => {
+  // Apply filters when they change
+  useEffect(() => {
     let result = [...sales];
     
     if (filters.paymentMethod) {
       result = result.filter(
-        (sale) => sale.payment_method === filters.paymentMethod as PaymentMethod
+        (sale) => sale.payment_method === filters.paymentMethod
       );
     }
     
@@ -99,10 +98,6 @@ const Sales = () => {
     setFilteredSales(result);
     setPage(1); // Reset to first page when filters change
   }, [filters, date, sales]);
-
-  useEffect(() => {
-    applyFilters();
-  }, [applyFilters]);
   
   // Calculate pagination
   const totalPages = Math.ceil(filteredSales.length / itemsPerPage);
@@ -133,27 +128,27 @@ const Sales = () => {
 
   return (
     <MainLayout>
-      <div className="mb-4 flex flex-col sm:flex-row justify-between items-start sm:items-center">
+      <div className="mb-6 flex flex-col sm:flex-row justify-between items-start sm:items-center">
         <div>
-          <h1 className="text-xl font-bold tracking-tight">Vendas</h1>
-          <p className="text-muted-foreground text-sm">
+          <h1 className="text-2xl font-bold tracking-tight">Vendas</h1>
+          <p className="text-muted-foreground">
             Gerencie e visualize todas as suas vendas
           </p>
         </div>
         <Button 
           variant="outline" 
           size="sm" 
-          className="mt-2 sm:mt-0 flex items-center gap-1 h-8 text-xs"
+          className="mt-2 sm:mt-0 flex items-center gap-1"
           onClick={handleRefresh}
           disabled={isRefreshing || isLoading}
         >
-          <RefreshCw className={`h-3 w-3 ${isRefreshing ? 'animate-spin' : ''}`} />
+          <RefreshCw className={`h-4 w-4 ${isRefreshing ? 'animate-spin' : ''}`} />
           {isRefreshing ? "Atualizando..." : "Atualizar dados"}
         </Button>
       </div>
       
-      <div className="space-y-3">
-        <Card className="p-2 sm:p-3">
+      <div className="space-y-4">
+        <Card className="p-4">
           <SalesFilters 
             filters={filters}
             onFilterChange={handleFilterChange}

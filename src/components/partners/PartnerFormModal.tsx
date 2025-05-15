@@ -11,7 +11,7 @@ export interface PartnerFormModalProps {
   onClose: () => void;
   title?: string;
   initialData?: Partner;
-  onSubmit?: (data: PartnerFormValues) => Promise<boolean> | void;
+  onSubmit?: (data: PartnerFormValues) => Promise<boolean>;
 }
 
 const PartnerFormModal = ({
@@ -29,8 +29,8 @@ const PartnerFormModal = ({
     setIsSubmitting(true);
     try {
       if (onSubmit) {
-        const result = await onSubmit(data);
-        if (result !== false) {
+        const success = await onSubmit(data);
+        if (success) {
           onClose();
         }
       } else {
@@ -42,16 +42,13 @@ const PartnerFormModal = ({
         if (success) {
           onClose();
         }
-        return success;
       }
-      return true;
     } catch (error) {
       toast({
         variant: "destructive",
         title: "Erro",
         description: "Ocorreu um erro ao salvar o parceiro.",
       });
-      return false;
     } finally {
       setIsSubmitting(false);
     }

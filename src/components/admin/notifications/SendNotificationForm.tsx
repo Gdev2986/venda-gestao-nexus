@@ -17,7 +17,7 @@ import {
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { Loader2 } from "lucide-react";
-import { NotificationType } from "@/types";
+import { NotificationType, UserRole } from "@/types";
 
 const formSchema = z.object({
   title: z.string().min(3, "O título deve ter pelo menos 3 caracteres").max(100, "O título não pode exceder 100 caracteres"),
@@ -58,11 +58,11 @@ const SendNotificationForm = () => {
         userIds = users.map(user => user.id);
         
       } else {
-        // Filtrar por tipo específico de usuário - fix the TypeScript error by using 'eq' with string
+        // Filtrar por tipo específico de usuário
         const { data: users, error } = await supabase
           .from('profiles')
           .select('id')
-          .eq('role', data.target as string); // Cast to string to fix the type error
+          .eq('role', data.target);
         
         if (error) throw error;
         userIds = users.map(user => user.id);
@@ -137,11 +137,11 @@ const SendNotificationForm = () => {
                   </FormControl>
                   <SelectContent>
                     <SelectItem value="all">Todos os usuários</SelectItem>
-                    <SelectItem value="ADMIN">Apenas administradores</SelectItem>
-                    <SelectItem value="CLIENT">Apenas clientes</SelectItem>
-                    <SelectItem value="PARTNER">Apenas parceiros</SelectItem>
-                    <SelectItem value="FINANCIAL">Apenas financeiro</SelectItem>
-                    <SelectItem value="LOGISTICS">Apenas logística</SelectItem>
+                    <SelectItem value={UserRole.CLIENT}>Apenas clientes</SelectItem>
+                    <SelectItem value={UserRole.PARTNER}>Apenas parceiros</SelectItem>
+                    <SelectItem value={UserRole.ADMIN}>Apenas administradores</SelectItem>
+                    <SelectItem value={UserRole.FINANCIAL}>Apenas financeiro</SelectItem>
+                    <SelectItem value={UserRole.LOGISTICS}>Apenas logística</SelectItem>
                   </SelectContent>
                 </Select>
                 <FormMessage />

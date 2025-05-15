@@ -81,7 +81,7 @@ export const UsersTab = ({ openRoleModal }: UsersTabProps) => {
         .select('*', { count: 'exact' });
       
       if (selectedRole !== 'all') {
-        query = query.eq('role', selectedRole as string); // Cast as string to fix the TS error
+        query = query.eq('role', selectedRole);
       }
       
       // Apply pagination

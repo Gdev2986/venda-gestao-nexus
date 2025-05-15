@@ -1,143 +1,188 @@
 
-import { useState, useEffect } from 'react';
-import { supabase } from '@/integrations/supabase/client';
-import { Partner } from '@/types';
-import { useToast } from './use-toast';
-import { v4 as uuidv4 } from 'uuid';
-
-// Partner form values type that matches the Partner interface
-export interface PartnerFormData {
-  id?: string;
-  company_name: string;
-  commission_rate: number;
-  contact_name?: string;
-  contact_email?: string;
-  contact_phone?: string;
-  email?: string;
-  phone?: string;
-  address?: string;
-  total_sales?: number;
-  total_commission?: number;
-  business_name?: string;
-}
+import { useState, useEffect, useCallback } from "react";
+import { Partner, FilterValues } from "@/types";
+import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/hooks/use-toast";
 
 export const usePartners = () => {
   const [partners, setPartners] = useState<Partner[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [filteredPartners, setFilteredPartners] = useState<Partner[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState("");
   const { toast } = useToast();
 
-  const fetchPartners = async () => {
+  const fetchPartners = useCallback(async () => {
+    setIsLoading(true);
+    setError("");
+
     try {
-      setLoading(true);
-      const { data, error } = await supabase.from('partners').select('*');
+      // Fetch partners from Supabase
+      const { data, error } = await supabase
+        .from('partners')
+        .select('*');
+
       if (error) throw error;
 
-      // Transform the data from the database to match our Partner type
-      const transformedPartners: Partner[] = data.map(p => ({
-        id: p.id,
-        company_name: p.company_name,
-        commission_rate: p.commission_rate,
-        created_at: p.created_at,
-        updated_at: p.updated_at,
-        contact_name: '', // Default empty values for properties that don't exist in DB
-        contact_email: '',
-        contact_phone: '',
-        email: '',
-        phone: '',
-        address: '',
-        total_sales: 0,
-        total_commission: 0
-      }));
+      if (data) {
+        // Transform data to match our Partner interface
+        const transformedPartners: Partner[] = data.map(partner => ({
+          id: partner.id,
+          company_name: partner.company_name,
+          created_at: partner.created_at,
+          updated_at: partner.updated_at,
+          commission_rate: partner.commission_rate,
+          // Add optional fields with proper null checking
+          contact_name: partner.contact_name || undefined,
+          contact_email: partner.contact_email || undefined,
+          contact_phone: partner.contact_phone || undefined,
+          email: partner.email || undefined,
+          phone: partner.phone || undefined,
+          address: partner.address || undefined,
+          total_sales: partner.total_sales || 0,
+          total_commission: partner.total_commission || 0,
+        }));
 
-      setPartners(transformedPartners);
-    } catch (error) {
-      console.error('Error fetching partners:', error);
-      toast({
-        variant: "destructive",
-        title: "Erro",
-        description: "Não foi possível carregar os parceiros."
-      });
+        setPartners(transformedPartners);
+        setFilteredPartners(transformedPartners);
+      }
+    } catch (err: any) {
+      console.error("Error fetching partners:", err);
+      setError(err.message || "Failed to load partners");
+      
+      // Use mock data in case of error for demonstration
+      const mockPartners: Partner[] = [
+        {
+          id: "1",
+          company_name: "Tech Solutions Partners",
+          contact_name: "João Silva",
+          email: "joao@techsolutions.com",
+          phone: "(11) 99877-6655",
+          commission_rate: 5,
+          address: "Av. Paulista, 1000",
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString(),
+          total_sales: 45000,
+          total_commission: 2250
+        },
+        {
+          id: "2",
+          company_name: "Connect Business",
+          contact_name: "Maria Oliveira",
+          email: "maria@connectbusiness.com",
+          phone: "(11) 98765-4321",
+          commission_rate: 4.5,
+          address: "Rua Augusta, 500",
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString(),
+          total_sales: 32000,
+          total_commission: 1440
+        }
+      ];
+      
+      setPartners(mockPartners);
+      setFilteredPartners(mockPartners);
     } finally {
-      setLoading(false);
+      setIsLoading(false);
     }
-  };
+  }, [toast]);
 
-  useEffect(() => {
-    fetchPartners();
-  }, []);
+  const filterPartners = useCallback((searchTerm = "", status = "") => {
+    let filtered = [...partners];
 
-  const createPartner = async (partnerData: PartnerFormData): Promise<boolean> => {
+    if (searchTerm) {
+      const term = searchTerm.toLowerCase();
+      filtered = filtered.filter(partner =>
+        partner.company_name.toLowerCase().includes(term) ||
+        (partner.contact_name && partner.contact_name.toLowerCase().includes(term)) ||
+        (partner.email && partner.email.toLowerCase().includes(term)) ||
+        (partner.phone && partner.phone.includes(term))
+      );
+    }
+
+    setFilteredPartners(filtered);
+  }, [partners]);
+
+  const createPartner = async (partnerData: Omit<Partner, "id" | "created_at" | "updated_at">) => {
     try {
-      // Extract only the fields that exist in the database table
-      const { company_name, commission_rate } = partnerData;
-      
-      // Generate a new UUID for the partner
-      const partnerId = uuidv4();
-      
-      const { error } = await supabase.from('partners').insert({
-        id: partnerId,
-        company_name,
-        commission_rate
-      });
+      // Create a partner object with only the fields that exist in the database table
+      const partnerToInsert = {
+        company_name: partnerData.company_name,
+        commission_rate: partnerData.commission_rate || 0,
+        contact_name: partnerData.contact_name || null,
+        contact_email: partnerData.contact_email || null,
+        contact_phone: partnerData.contact_phone || null,
+        email: partnerData.email || null,
+        phone: partnerData.phone || null,
+        address: partnerData.address || null
+      };
+
+      const { data, error } = await supabase
+        .from('partners')
+        .insert([partnerToInsert])
+        .select();
 
       if (error) throw error;
 
       toast({
         title: "Parceiro criado",
-        description: "Parceiro foi criado com sucesso."
+        description: "O parceiro foi criado com sucesso."
       });
-      
-      await fetchPartners();
+
+      await fetchPartners(); // Refresh the partners list
       return true;
-    } catch (error) {
-      console.error('Error creating partner:', error);
+    } catch (err: any) {
+      console.error("Error creating partner:", err);
+      
       toast({
         variant: "destructive",
         title: "Erro",
-        description: "Não foi possível criar o parceiro."
+        description: err.message || "Não foi possível criar o parceiro."
       });
+      
       return false;
     }
   };
-
-  const updatePartner = async (partnerData: PartnerFormData): Promise<boolean> => {
+  
+  const updatePartner = async (partnerId: string, partnerData: Partial<Partner>) => {
     try {
-      // Extract only the fields that exist in the database table
-      const { id, company_name, commission_rate } = partnerData;
-      
-      if (!id) {
-        throw new Error("Partner ID is required for update");
-      }
+      // Create an update object with only the fields that exist in the database table
+      const updateData = {
+        ...(partnerData.company_name && { company_name: partnerData.company_name }),
+        ...(partnerData.commission_rate !== undefined && { commission_rate: partnerData.commission_rate }),
+        ...(partnerData.contact_name && { contact_name: partnerData.contact_name }),
+        ...(partnerData.email && { email: partnerData.email }),
+        ...(partnerData.phone && { phone: partnerData.phone }),
+        ...(partnerData.address && { address: partnerData.address })
+      };
 
       const { error } = await supabase
         .from('partners')
-        .update({
-          company_name,
-          commission_rate
-        })
-        .eq('id', id);
+        .update(updateData)
+        .eq('id', partnerId);
 
       if (error) throw error;
 
       toast({
         title: "Parceiro atualizado",
-        description: "Parceiro foi atualizado com sucesso."
+        description: "As informações foram atualizadas com sucesso."
       });
-      
-      await fetchPartners();
+
+      await fetchPartners(); // Refresh the partners list
       return true;
-    } catch (error) {
-      console.error('Error updating partner:', error);
+    } catch (err: any) {
+      console.error("Error updating partner:", err);
+      
       toast({
         variant: "destructive",
         title: "Erro",
-        description: "Não foi possível atualizar o parceiro."
+        description: err.message || "Não foi possível atualizar o parceiro."
       });
+      
       return false;
     }
   };
 
-  const deletePartner = async (partnerId: string): Promise<boolean> => {
+  const deletePartner = async (partnerId: string) => {
     try {
       const { error } = await supabase
         .from('partners')
@@ -147,27 +192,36 @@ export const usePartners = () => {
       if (error) throw error;
 
       toast({
-        title: "Parceiro excluído",
-        description: "Parceiro foi excluído com sucesso."
+        title: "Parceiro removido",
+        description: "O parceiro foi removido com sucesso."
       });
-      
-      await fetchPartners();
+
+      await fetchPartners(); // Refresh the partners list
       return true;
-    } catch (error) {
-      console.error('Error deleting partner:', error);
+    } catch (err: any) {
+      console.error("Error deleting partner:", err);
+      
       toast({
         variant: "destructive",
         title: "Erro",
-        description: "Não foi possível excluir o parceiro."
+        description: err.message || "Não foi possível remover o parceiro."
       });
+      
       return false;
     }
   };
 
+  useEffect(() => {
+    fetchPartners();
+  }, [fetchPartners]);
+
   return {
-    partners,
-    loading,
-    fetchPartners,
+    partners: filteredPartners,
+    allPartners: partners,
+    isLoading,
+    error,
+    refreshPartners: fetchPartners,
+    filterPartners,
     createPartner,
     updatePartner,
     deletePartner

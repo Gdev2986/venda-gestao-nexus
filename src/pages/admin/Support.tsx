@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { PageHeader } from "@/components/page/PageHeader";
@@ -747,13 +748,11 @@ const AdminSupport = () => {
 
       {/* Tickets Table */}
       <PageWrapper>
-        <div className="overflow-x-auto -mx-4 sm:mx-0 px-4 sm:px-0">
-          <DataTable
-            columns={columns}
-            data={filteredTickets}
-            isLoading={false}
-          />
-        </div>
+        <DataTable
+          columns={columns}
+          data={filteredTickets}
+          isLoading={false}
+        />
       </PageWrapper>
 
       {/* Ticket Details Dialog */}
