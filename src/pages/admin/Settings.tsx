@@ -36,7 +36,7 @@ const AdminSettings = () => {
     try {
       const { error } = await supabase
         .from('profiles')
-        .update({ role: newRole })
+        .update({ role: newRole as string }) // Cast to string to fix the TS error
         .eq('id', selectedUser.id);
         
       if (error) throw error;

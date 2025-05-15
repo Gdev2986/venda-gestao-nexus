@@ -1,150 +1,64 @@
 
 import { useState, useEffect, useCallback } from "react";
-import { Client } from "@/types";
 import { supabase } from "@/integrations/supabase/client";
-import { useAuth } from "@/hooks/use-auth";
-import { useToast } from "@/hooks/use-toast";
+import { Client } from "@/types";
+import { useToast } from "./use-toast";
 
-export const usePartnerClients = () => {
+export const usePartnerClients = (partnerId: string | null) => {
   const [clients, setClients] = useState<Client[]>([]);
-  const [filteredClients, setFilteredClients] = useState<Client[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState("");
-  const { user } = useAuth();
+  const [loading, setLoading] = useState(true);
   const { toast } = useToast();
 
   const fetchClients = useCallback(async () => {
-    if (!user) {
-      setIsLoading(false);
-      return;
-    }
-
-    setIsLoading(true);
-    setError("");
+    if (!partnerId) return;
 
     try {
-      // First, get the partner ID for this user
-      const { data: partnerData, error: partnerError } = await supabase
-        .from('partners')
-        .select('id')
-        .eq('user_id', user.id)
-        .single();
-
-      if (partnerError) throw new Error("Não foi possível encontrar sua conta de parceiro");
-
-      const partnerId = partnerData?.id;
-      if (!partnerId) {
-        setIsLoading(false);
-        return;
-      }
-
-      // Then fetch clients linked to this partner
+      setLoading(true);
+      // Break infinite loop by limiting the depth of the select
       const { data, error } = await supabase
         .from('clients')
-        .select('*')
+        .select(`
+          id, 
+          business_name, 
+          email, 
+          phone, 
+          status, 
+          balance, 
+          created_at, 
+          updated_at, 
+          contact_name, 
+          address, 
+          city, 
+          state, 
+          zip, 
+          document
+        `)
         .eq('partner_id', partnerId);
 
       if (error) throw error;
-
-      if (data) {
-        setClients(data);
-        setFilteredClients(data);
-      }
-    } catch (err: any) {
-      console.error("Error fetching clients:", err);
-      setError(err.message || "Falha ao carregar clientes");
       
-      // Use mock data in case of error for demonstration
-      const mockClients: Client[] = [
-        {
-          id: "1",
-          business_name: "Restaurante Bom Sabor",
-          contact_name: "Antonio Oliveira",
-          email: "contato@bomsabor.com",
-          phone: "(11) 98765-4321",
-          status: "active",
-          balance: 2500.50,
-          address: "Rua das Flores, 123",
-          city: "São Paulo",
-          state: "SP",
-          created_at: new Date().toISOString(),
-          partner_id: "1"
-        },
-        {
-          id: "2",
-          business_name: "Loja Tech Mais",
-          contact_name: "Roberta Silva",
-          email: "contato@techmais.com",
-          phone: "(11) 91234-5678",
-          status: "active",
-          balance: 1800.00,
-          address: "Av. Paulista, 500",
-          city: "São Paulo",
-          state: "SP",
-          created_at: new Date().toISOString(),
-          partner_id: "1"
-        }
-      ];
-      
-      setClients(mockClients);
-      setFilteredClients(mockClients);
-    } finally {
-      setIsLoading(false);
-    }
-  }, [user, toast]);
-
-  const filterClients = useCallback((searchTerm = "", status = "") => {
-    let filtered = [...clients];
-
-    if (searchTerm) {
-      const term = searchTerm.toLowerCase();
-      filtered = filtered.filter(client =>
-        client.business_name.toLowerCase().includes(term) ||
-        (client.contact_name && client.contact_name.toLowerCase().includes(term)) ||
-        (client.email && client.email.toLowerCase().includes(term)) ||
-        (client.phone && client.phone.includes(term))
-      );
-    }
-
-    if (status && status !== "all") {
-      filtered = filtered.filter(client => client.status === status);
-    }
-
-    setFilteredClients(filtered);
-  }, [clients]);
-
-  const getClientSales = async (clientId: string) => {
-    try {
-      const { data, error } = await supabase
-        .from('sales')
-        .select('*')
-        .eq('client_id', clientId);
-
-      if (error) throw error;
-
-      return data || [];
-    } catch (err) {
-      console.error("Error fetching client sales:", err);
+      setClients(data);
+    } catch (error) {
+      console.error('Error fetching partner clients:', error);
       toast({
         variant: "destructive",
-        title: "Erro",
-        description: "Não foi possível carregar as vendas deste cliente.",
+        title: "Erro ao carregar clientes",
+        description: "Não foi possível carregar os clientes do parceiro."
       });
-      return [];
+    } finally {
+      setLoading(false);
     }
-  };
+  }, [partnerId, toast]);
 
   useEffect(() => {
     fetchClients();
   }, [fetchClients]);
 
   return {
-    clients: filteredClients,
-    allClients: clients,
-    isLoading,
-    error,
-    refreshClients: fetchClients,
-    filterClients,
-    getClientSales
+    clients,
+    loading,
+    refreshClients: fetchClients
   };
 };
+
+export default usePartnerClients;

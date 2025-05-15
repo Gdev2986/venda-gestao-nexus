@@ -42,13 +42,16 @@ const PartnerFormModal = ({
         if (success) {
           onClose();
         }
+        return success;
       }
+      return true;
     } catch (error) {
       toast({
         variant: "destructive",
         title: "Erro",
         description: "Ocorreu um erro ao salvar o parceiro.",
       });
+      return false;
     } finally {
       setIsSubmitting(false);
     }

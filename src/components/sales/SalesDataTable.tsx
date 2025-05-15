@@ -1,4 +1,3 @@
-
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { ChevronLeft, ChevronRight } from "lucide-react";
@@ -34,16 +33,22 @@ interface SalesDataTableProps {
   };
 }
 
-const getPaymentMethodLabel = (method: PaymentMethod) => {
+const getPaymentMethodLabel = (method: PaymentMethod | string) => {
   switch (method) {
     case PaymentMethod.CREDIT:
+    case "CREDIT":
+    case "credit":
       return <Badge variant="outline" className="text-xs py-0 px-1">Crédito</Badge>;
     case PaymentMethod.DEBIT:
+    case "DEBIT":
+    case "debit":
       return <Badge variant="outline" className="border-green-600 text-green-600 text-xs py-0 px-1">Débito</Badge>;
     case PaymentMethod.PIX:
+    case "PIX":
+    case "pix":
       return <Badge variant="outline" className="border-yellow-600 text-yellow-600 text-xs py-0 px-1">Pix</Badge>;
     default:
-      return null;
+      return <Badge variant="outline" className="text-xs py-0 px-1">{method}</Badge>;
   }
 };
 
@@ -66,6 +71,7 @@ const SalesDataTable = ({
   onPageChange,
   totals
 }: SalesDataTableProps) => {
+  
   return (
     <Card className="shadow-sm">
       <CardHeader className="p-3">

@@ -58,11 +58,11 @@ const SendNotificationForm = () => {
         userIds = users.map(user => user.id);
         
       } else {
-        // Filtrar por tipo específico de usuário
+        // Filtrar por tipo específico de usuário - fix the TypeScript error by using 'eq' with string
         const { data: users, error } = await supabase
           .from('profiles')
           .select('id')
-          .eq('role', data.target);
+          .eq('role', data.target as string); // Cast to string to fix the type error
         
         if (error) throw error;
         userIds = users.map(user => user.id);
