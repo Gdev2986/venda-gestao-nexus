@@ -1,149 +1,217 @@
 
 import { useState, useEffect } from "react";
-import { supabase } from "@/integrations/supabase/client";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Spinner } from "@/components/ui/spinner";
+import { useToast } from "@/hooks/use-toast";
+import { supabase } from "@/integrations/supabase/client";
+import { 
+  Table, 
+  TableBody, 
+  TableCell, 
+  TableHead, 
+  TableHeader, 
+  TableRow 
+} from "@/components/ui/table";
+import { 
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { UserRole } from "@/types";
 
 interface ProfileData {
   id: string;
   name: string;
   email: string;
-  role: UserRole; // Usando o tipo UserRole diretamente
+  avatar: string;
+  phone: string;
+  role: UserRole;
   created_at: string;
+  updated_at: string;
 }
 
 interface UsersTabProps {
   openRoleModal: (user: ProfileData) => void;
 }
 
-export function UsersTab({ openRoleModal }: UsersTabProps) {
+export const UsersTab = ({ openRoleModal }: UsersTabProps) => {
+  const [selectedRole, setSelectedRole] = useState<string>("all");
   const [users, setUsers] = useState<ProfileData[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [availableRoles, setAvailableRoles] = useState<UserRole[]>([]);
 
+  const { toast } = useToast();
+  const itemsPerPage = 10;
+
+  // Fetch available roles from the profiles table
   useEffect(() => {
-    const fetchUsers = async () => {
+    const fetchRoles = async () => {
       try {
-        setLoading(true);
-        setError(null);
-        
         const { data, error } = await supabase
-          .from("profiles")
-          .select("id, name, email, role, created_at")
-          .order("created_at", { ascending: false });
-        
+          .from('profiles')
+          .select('role')
+          .not('role', 'is', null);
+
         if (error) throw error;
+
+        // Extract unique roles and convert them to UserRole enum values
+        const uniqueRolesSet = new Set(data.map(item => item.role));
+        // Convert the set to an array of UserRole values
+        const uniqueRoles: UserRole[] = [];
         
-        // Garantindo que os dados têm o formato correto
-        const typedData = data ? data.map(user => ({
-          ...user,
-          role: user.role as UserRole // Forçando o tipo
-        })) : [];
+        // Safely adding known UserRole values that exist in the data
+        for (const role of uniqueRolesSet) {
+          // Check if the role is a valid UserRole
+          if (Object.values(UserRole).includes(role as UserRole)) {
+            uniqueRoles.push(role as UserRole);
+          }
+        }
         
-        setUsers(typedData);
-      } catch (err: any) {
-        console.error("Error fetching users:", err);
-        setError(err.message || "Failed to fetch users");
-      } finally {
-        setLoading(false);
+        setAvailableRoles(uniqueRoles);
+      } catch (error) {
+        console.error("Error fetching roles:", error);
       }
     };
-    
-    fetchUsers();
+
+    fetchRoles();
   }, []);
 
-  const getRoleClass = (role: UserRole) => {
-    switch (role) {
-      case UserRole.ADMIN:
-        return "bg-red-100 text-red-800";
-      case UserRole.FINANCIAL:
-        return "bg-green-100 text-green-800";
-      case UserRole.LOGISTICS:
-        return "bg-blue-100 text-blue-800";
-      case UserRole.PARTNER:
-        return "bg-purple-100 text-purple-800";
-      default:
-        return "bg-gray-100 text-gray-800";
+  // Fetch users from Supabase
+  useEffect(() => {
+    fetchUsers();
+  }, [currentPage, selectedRole]);
+
+  const fetchUsers = async () => {
+    setLoading(true);
+    try {
+      let query = supabase
+        .from('profiles')
+        .select('*', { count: 'exact' });
+      
+      if (selectedRole !== 'all') {
+        query = query.eq('role', selectedRole);
+      }
+      
+      // Apply pagination
+      const startRange = (currentPage - 1) * itemsPerPage;
+      const endRange = startRange + itemsPerPage - 1;
+      
+      const { data, error, count } = await query
+        .range(startRange, endRange);
+      
+      if (error) throw error;
+      
+      // Calculate total pages
+      const total = count ? Math.ceil(count / itemsPerPage) : 0;
+      setTotalPages(total);
+      
+      // Ensure the role is properly typed
+      const typedUsers = (data || []).map(user => ({
+        ...user,
+        role: user.role as UserRole
+      })) as ProfileData[];
+      
+      setUsers(typedUsers);
+    } catch (error) {
+      console.error("Error fetching users:", error);
+      toast({
+        variant: "destructive",
+        title: "Erro ao carregar usuários",
+        description: "Não foi possível carregar a lista de usuários."
+      });
+    } finally {
+      setLoading(false);
     }
   };
 
-  if (loading) {
-    return (
-      <div className="p-6 flex justify-center">
-        <Spinner size="lg" />
-      </div>
-    );
-  }
-
-  if (error) {
-    return (
-      <div className="p-6 text-center text-red-500">
-        <p>Error: {error}</p>
-        <Button 
-          variant="outline" 
-          onClick={() => window.location.reload()}
-          className="mt-2"
-        >
-          Try Again
-        </Button>
-      </div>
-    );
-  }
-
   return (
-    <div className="p-6">
-      <div className="rounded-md border">
-        <div className="relative w-full overflow-auto">
-          <table className="w-full caption-bottom text-sm">
-            <thead>
-              <tr className="border-b transition-colors hover:bg-muted/50">
-                <th className="h-12 px-4 text-left align-middle font-medium">Nome</th>
-                <th className="h-12 px-4 text-left align-middle font-medium">Email</th>
-                <th className="h-12 px-4 text-left align-middle font-medium">Função</th>
-                <th className="h-12 px-4 text-left align-middle font-medium">Data de Criação</th>
-                <th className="h-12 px-4 text-right align-middle font-medium">Ações</th>
-              </tr>
-            </thead>
-            <tbody>
-              {users.length === 0 ? (
-                <tr>
-                  <td colSpan={5} className="p-4 text-center text-muted-foreground">
-                    Nenhum usuário encontrado
-                  </td>
-                </tr>
-              ) : (
-                users.map((user) => (
-                  <tr 
-                    key={user.id} 
-                    className="border-b transition-colors hover:bg-muted/50"
-                  >
-                    <td className="p-4 align-middle">{user.name || "N/A"}</td>
-                    <td className="p-4 align-middle">{user.email}</td>
-                    <td className="p-4 align-middle">
-                      <span className={`px-2 py-1 rounded-full text-xs ${getRoleClass(user.role)}`}>
-                        {user.role}
-                      </span>
-                    </td>
-                    <td className="p-4 align-middle">
-                      {new Date(user.created_at).toLocaleDateString()}
-                    </td>
-                    <td className="p-4 align-middle text-right">
+    <Card>
+      <CardHeader>
+        <CardTitle>Gerenciar Usuários</CardTitle>
+      </CardHeader>
+      <CardContent>
+        <div className="mb-4">
+          <Select
+            value={selectedRole}
+            onValueChange={(value: string) => {
+              setSelectedRole(value);
+              setCurrentPage(1); // Reset to first page when role changes
+            }}
+          >
+            <SelectTrigger className="w-[200px]">
+              <SelectValue placeholder="Filtrar por função" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Todas as funções</SelectItem>
+              {availableRoles.map((role) => (
+                <SelectItem key={role} value={role}>{role}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+        
+        {loading ? (
+          <p>Carregando usuários...</p>
+        ) : (
+          <div className="border rounded-md overflow-hidden">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Nome</TableHead>
+                  <TableHead>E-mail</TableHead>
+                  <TableHead>Função</TableHead>
+                  <TableHead>Data de criação</TableHead>
+                  <TableHead>Ações</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {users.map((user) => (
+                  <TableRow key={user.id}>
+                    <TableCell className="font-medium">{user.name}</TableCell>
+                    <TableCell>{user.email}</TableCell>
+                    <TableCell>{user.role}</TableCell>
+                    <TableCell>{new Date(user.created_at).toLocaleDateString('pt-BR')}</TableCell>
+                    <TableCell>
                       <Button 
                         variant="outline" 
-                        size="sm" 
+                        size="sm"
                         onClick={() => openRoleModal(user)}
                       >
                         Alterar Função
                       </Button>
-                    </td>
-                  </tr>
-                ))
-              )}
-            </tbody>
-          </table>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </div>
+        )}
+        
+        {/* Pagination Controls */}
+        <div className="flex justify-between items-center mt-4">
+          <Button
+            variant="outline"
+            onClick={() => setCurrentPage(currentPage - 1)}
+            disabled={currentPage === 1}
+          >
+            Anterior
+          </Button>
+          <span>Página {currentPage} de {totalPages}</span>
+          <Button
+            variant="outline"
+            onClick={() => setCurrentPage(currentPage + 1)}
+            disabled={currentPage === totalPages}
+          >
+            Próximo
+          </Button>
         </div>
-      </div>
-    </div>
+      </CardContent>
+    </Card>
   );
-}
+};
+
+export default UsersTab;

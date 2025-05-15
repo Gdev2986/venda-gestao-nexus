@@ -15,20 +15,8 @@ const RootLayout = () => {
   const [showLoading, setShowLoading] = useState(true);
   const [errorState, setErrorState] = useState(false);
   
-  // Verificar se estamos em uma página de autenticação para evitar loops
-  const isAuthPage = location.pathname === PATHS.LOGIN || 
-                    location.pathname === PATHS.REGISTER || 
-                    location.pathname === PATHS.FORGOT_PASSWORD || 
-                    location.pathname === PATHS.RESET_PASSWORD;
-
   // Debug logging
   useEffect(() => {
-    if (isAuthPage) {
-      // Se estiver na página de login, não tentamos redirecionar
-      setShowLoading(false);
-      return;
-    }
-    
     console.log("RootLayout - isLoading:", isLoading, "isRoleLoading:", isRoleLoading, "user:", !!user);
     
     // Detect possible infinite loop with expired token
@@ -50,27 +38,16 @@ const RootLayout = () => {
         console.error("Error getting dashboard path:", error);
       }
     }
-  }, [isLoading, isRoleLoading, user, userRole, signOut, isAuthPage]);
+  }, [isLoading, isRoleLoading, user, userRole, signOut]);
   
   // Add a slight delay for loading animation
   useEffect(() => {
-    if (isAuthPage) {
-      // Se estiver na página de login, não mostramos o loading
-      setShowLoading(false);
-      return;
-    }
-    
     const timer = setTimeout(() => {
       setShowLoading(false);
     }, 500); // 0.5 second loading time
     
     return () => clearTimeout(timer);
-  }, [isAuthPage]);
-  
-  // Se estamos em uma página de autenticação, não redirecionamos
-  if (isAuthPage) {
-    return null; // Retornamos null para permitir que a página de login seja renderizada
-  }
+  }, []);
   
   // If still loading or showing loading animation, show a spinner
   if ((isLoading || isRoleLoading || showLoading) && !errorState) {

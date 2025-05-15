@@ -16,11 +16,11 @@ interface ProfileData {
   id: string;
   name: string;
   email: string;
-  avatar?: string;
-  phone?: string;
+  avatar: string;
+  phone: string;
   role: UserRole;
   created_at: string;
-  updated_at?: string;
+  updated_at: string;
 }
 
 interface RoleChangeModalProps {

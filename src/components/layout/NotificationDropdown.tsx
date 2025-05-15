@@ -16,7 +16,7 @@ import { Link } from "react-router-dom";
 import { useNotifications } from "@/hooks/use-notifications";
 import { formatDistanceToNow, parseISO } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import { useAuth } from "@/hooks/use-auth";
+import { useAuth } from "@/contexts/AuthContext";
 
 const NotificationDropdown = () => {
   const [isOpen, setIsOpen] = useState(false);
@@ -28,7 +28,11 @@ const NotificationDropdown = () => {
     unreadCount, 
     markAsRead, 
     markAllAsRead
-  } = useNotifications();
+  } = useNotifications({
+    page: 1,
+    pageSize: 10,
+    statusFilter: "all"
+  });
 
   const formatTimestamp = (date: string) => {
     try {
@@ -137,7 +141,7 @@ const NotificationDropdown = () => {
                     <DropdownMenuItem
                       className={cn(
                         "flex flex-col items-start gap-1 p-4 focus:bg-accent/50",
-                        notification.is_read ? "opacity-70" : ""
+                        notification.read ? "opacity-70" : ""
                       )}
                       onClick={() => notification.id && markAsRead(notification.id)}
                     >
@@ -150,7 +154,7 @@ const NotificationDropdown = () => {
                       <span className="text-sm text-muted-foreground">
                         {notification.message}
                       </span>
-                      {!notification.is_read && (
+                      {!notification.read && (
                         <div className="mt-1 h-2 w-2 rounded-full bg-primary" />
                       )}
                     </DropdownMenuItem>

@@ -56,7 +56,7 @@ const AdminNotifications = () => {
                     onMarkAsUnread={markAsUnread}
                     onDelete={deleteNotification}
                     currentPage={currentPage}
-                    totalPages={totalPages || 1}
+                    totalPages={totalPages}
                     onPageChange={setCurrentPage}
                   />
                 )}
