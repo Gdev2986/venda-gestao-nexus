@@ -1,6 +1,6 @@
 
 import { useState, useEffect, useCallback } from "react";
-import { Sale, SalesFilterParams } from "@/types";
+import { Sale, SalesFilterParams, PaymentMethod } from "@/types";
 import { calculateSalesTotals } from "@/utils/sales-utils";
 import SalesDataTable from "@/components/sales/SalesDataTable";
 
@@ -39,7 +39,7 @@ const AdminSalesContent = ({
     // Filter by payment method
     if (filters.paymentMethod) {
       result = result.filter(sale => 
-        sale.payment_method === filters.paymentMethod
+        sale.payment_method === filters.paymentMethod as PaymentMethod
       );
     }
     

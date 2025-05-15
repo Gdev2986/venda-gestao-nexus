@@ -1,5 +1,4 @@
 
-import { useState } from "react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { ChevronLeft, ChevronRight } from "lucide-react";
@@ -38,11 +37,11 @@ interface SalesDataTableProps {
 const getPaymentMethodLabel = (method: PaymentMethod) => {
   switch (method) {
     case PaymentMethod.CREDIT:
-      return <Badge variant="outline">Crédito</Badge>;
+      return <Badge variant="outline" className="text-xs py-0 px-1">Crédito</Badge>;
     case PaymentMethod.DEBIT:
-      return <Badge variant="outline" className="border-green-600 text-green-600">Débito</Badge>;
+      return <Badge variant="outline" className="border-green-600 text-green-600 text-xs py-0 px-1">Débito</Badge>;
     case PaymentMethod.PIX:
-      return <Badge variant="outline" className="border-yellow-600 text-yellow-600">Pix</Badge>;
+      return <Badge variant="outline" className="border-yellow-600 text-yellow-600 text-xs py-0 px-1">Pix</Badge>;
     default:
       return null;
   }
@@ -68,19 +67,19 @@ const SalesDataTable = ({
   totals
 }: SalesDataTableProps) => {
   return (
-    <Card>
-      <CardHeader>
-        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+    <Card className="shadow-sm">
+      <CardHeader className="p-3">
+        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-2">
           <div>
-            <CardTitle>Vendas</CardTitle>
-            <CardDescription>
+            <CardTitle className="text-base">Vendas</CardTitle>
+            <CardDescription className="text-xs">
               {isLoading 
                 ? "Carregando..." 
                 : `${totals.count} ${totals.count === 1 ? 'venda encontrada' : 'vendas encontradas'}`}
             </CardDescription>
           </div>
           
-          <div className="flex flex-col sm:flex-row gap-4 text-sm text-muted-foreground">
+          <div className="flex flex-col sm:flex-row gap-3 text-xs text-muted-foreground">
             <div className="flex flex-col sm:items-center">
               <span className="font-medium">Total Bruto:</span>
               <span className="text-foreground font-bold">
@@ -103,11 +102,11 @@ const SalesDataTable = ({
           </div>
         </div>
       </CardHeader>
-      <CardContent>
+      <CardContent className="p-0 sm:p-2">
         {isLoading ? (
-          <div className="space-y-4">
+          <div className="space-y-2 p-3">
             {Array.from({ length: 5 }).map((_, i) => (
-              <div key={i} className="h-12 bg-muted animate-pulse rounded" />
+              <div key={i} className="h-8 bg-muted animate-pulse rounded" />
             ))}
           </div>
         ) : (
@@ -116,7 +115,7 @@ const SalesDataTable = ({
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead className="w-[100px]">Código</TableHead>
+                    <TableHead className="w-[80px]">Código</TableHead>
                     <TableHead>Data/Hora</TableHead>
                     <TableHead>Terminal</TableHead>
                     <TableHead>Cliente</TableHead>
@@ -130,31 +129,31 @@ const SalesDataTable = ({
                   {sales.length > 0 ? (
                     sales.map((sale) => (
                       <TableRow key={sale.id} className="cursor-pointer hover:bg-muted/80">
-                        <TableCell className="font-medium">{sale.code}</TableCell>
-                        <TableCell>
-                          {format(new Date(sale.date), "dd/MM/yyyy HH:mm", { locale: ptBR })}
+                        <TableCell className="font-medium text-xs py-1">{sale.code}</TableCell>
+                        <TableCell className="text-xs py-1">
+                          {format(new Date(sale.date), "dd/MM HH:mm", { locale: ptBR })}
                         </TableCell>
-                        <TableCell>{sale.terminal}</TableCell>
-                        <TableCell>{sale.client_name}</TableCell>
-                        <TableCell className="text-right">
+                        <TableCell className="text-xs py-1">{sale.terminal}</TableCell>
+                        <TableCell className="text-xs py-1">{sale.client_name}</TableCell>
+                        <TableCell className="text-right text-xs py-1">
                           {new Intl.NumberFormat("pt-BR", {
                             style: "currency",
                             currency: "BRL",
                           }).format(sale.gross_amount)}
                         </TableCell>
-                        <TableCell className="text-right">
+                        <TableCell className="text-right text-xs py-1">
                           {new Intl.NumberFormat("pt-BR", {
                             style: "currency",
                             currency: "BRL",
                           }).format(sale.net_amount)}
                         </TableCell>
-                        <TableCell>{getPaymentMethodLabel(sale.payment_method)}</TableCell>
-                        <TableCell>{getInstallments(sale)}</TableCell>
+                        <TableCell className="text-xs py-1">{getPaymentMethodLabel(sale.payment_method)}</TableCell>
+                        <TableCell className="text-xs py-1">{getInstallments(sale)}</TableCell>
                       </TableRow>
                     ))
                   ) : (
                     <TableRow>
-                      <TableCell colSpan={8} className="text-center py-8 text-muted-foreground">
+                      <TableCell colSpan={8} className="text-center py-4 text-muted-foreground text-sm">
                         Nenhuma venda encontrada. Tente outros filtros.
                       </TableCell>
                     </TableRow>
@@ -164,32 +163,33 @@ const SalesDataTable = ({
             </div>
             
             {sales.length > 0 && totalPages > 1 && (
-              <div className="flex items-center justify-between mt-4 py-2">
-                <div className="text-sm text-muted-foreground">
+              <div className="flex items-center justify-between mt-2 py-1 px-2">
+                <div className="text-xs text-muted-foreground">
                   Página {currentPage} de {totalPages}
                 </div>
-                <div className="flex items-center space-x-2">
+                <div className="flex items-center space-x-1">
                   <Button
                     variant="outline"
                     size="sm"
+                    className="h-6 w-6 p-0"
                     onClick={() => onPageChange(currentPage - 1)}
                     disabled={currentPage <= 1}
                   >
-                    <ChevronLeft className="h-4 w-4" />
+                    <ChevronLeft className="h-3 w-3" />
                     <span className="sr-only">Página anterior</span>
                   </Button>
                   <div className="flex items-center space-x-1">
-                    {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+                    {Array.from({ length: Math.min(3, totalPages) }, (_, i) => {
                       let pageNumber;
                       
-                      if (totalPages <= 5) {
+                      if (totalPages <= 3) {
                         pageNumber = i + 1;
-                      } else if (currentPage <= 3) {
+                      } else if (currentPage <= 2) {
                         pageNumber = i + 1;
-                      } else if (currentPage >= totalPages - 2) {
-                        pageNumber = totalPages - 4 + i;
+                      } else if (currentPage >= totalPages - 1) {
+                        pageNumber = totalPages - 2 + i;
                       } else {
-                        pageNumber = currentPage - 2 + i;
+                        pageNumber = currentPage - 1 + i;
                       }
                       
                       return (
@@ -198,7 +198,7 @@ const SalesDataTable = ({
                           variant={pageNumber === currentPage ? "default" : "outline"}
                           size="sm"
                           onClick={() => onPageChange(pageNumber)}
-                          className="w-9 h-9"
+                          className="h-6 w-6 p-0 text-xs"
                         >
                           {pageNumber}
                         </Button>
@@ -208,10 +208,11 @@ const SalesDataTable = ({
                   <Button
                     variant="outline"
                     size="sm"
+                    className="h-6 w-6 p-0"
                     onClick={() => onPageChange(currentPage + 1)}
                     disabled={currentPage >= totalPages}
                   >
-                    <ChevronRight className="h-4 w-4" />
+                    <ChevronRight className="h-3 w-3" />
                     <span className="sr-only">Próxima página</span>
                   </Button>
                 </div>
