@@ -1,6 +1,6 @@
 
 import { Payment } from "@/types";
-import { PaymentRequest, PaymentData } from "@/hooks/payments/payment.types";
+import { PaymentData } from "@/hooks/payments/payment.types";
 import { toPaymentStatus } from "@/lib/type-utils";
 
 /**
@@ -25,9 +25,9 @@ export function convertToPaymentRequest(payment: Payment): PaymentData {
 }
 
 /**
- * Type guard to check if an object is a PaymentRequest
+ * Type guard to check if an object is a PaymentData
  */
-export function isPaymentRequest(payment: any): payment is PaymentRequest {
+export function isPaymentRequest(payment: any): payment is PaymentData {
   return payment && 
     typeof payment.id === 'string' &&
     typeof payment.client_id === 'string' &&

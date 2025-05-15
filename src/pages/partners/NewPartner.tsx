@@ -10,7 +10,16 @@ import { PATHS } from "@/routes/paths";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Search, Plus, FileText, Download } from "lucide-react";
-import { Partner } from "@/types";
+
+// Define interface for form values to match the PartnerForm component
+interface PartnerFormValues {
+  company_name: string;
+  business_name?: string;
+  contact_name?: string;
+  email?: string;
+  phone?: string;
+  commission_rate?: number;
+}
 
 const NewPartner = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -25,15 +34,16 @@ const NewPartner = () => {
     filterPartners(e.target.value, undefined);
   };
 
-  const handleSubmit = async (data: any) => {
+  const handleSubmit = async (data: PartnerFormValues) => {
     setIsSubmitting(true);
     try {
-      const success = await createPartner({
-        ...data,
+      // Call createPartner with the correct parameter structure
+      const partner = await createPartner({
+        company_name: data.company_name,
         commission_rate: data.commission_rate || 0
       });
-
-      if (success) {
+      
+      if (partner) {
         toast({
           title: "Sucesso",
           description: "Parceiro criado com sucesso."

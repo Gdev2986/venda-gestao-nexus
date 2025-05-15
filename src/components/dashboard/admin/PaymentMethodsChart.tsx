@@ -14,10 +14,11 @@ interface PaymentMethodsChartProps {
 }
 
 const PaymentMethodsChart = ({ data, isLoading = false }: PaymentMethodsChartProps) => {
-  // Format data for the chart
+  // Format data for the chart, ensuring the color property is included
   const chartData = data.map(item => ({
     name: item.name,
     value: item.value,
+    color: item.color, // Ensure color is passed
   }));
 
   return (

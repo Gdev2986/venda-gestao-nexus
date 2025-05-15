@@ -4,8 +4,15 @@ import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/com
 import { PieChart } from "@/components/charts";
 import { Select, SelectContent, SelectGroup, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
+// Define the proper data type expected by this component
+interface MachineStatusData {
+  name: string;
+  value: number;
+  color: string; // Add required color property
+}
+
 interface MachineStatusChartProps {
-  data: Array<{ name: string; value: number }>;
+  data: MachineStatusData[];
 }
 
 const MachineStatusChart: React.FC<MachineStatusChartProps> = ({ data }) => {
@@ -14,6 +21,13 @@ const MachineStatusChart: React.FC<MachineStatusChartProps> = ({ data }) => {
   const filteredData = selectedStatus === "all" 
     ? data 
     : data.filter(item => item.name.toLowerCase() === selectedStatus.toLowerCase());
+
+  // Make sure we include the color in the data passed to the PieChart component
+  const chartData = filteredData.map(item => ({
+    name: item.name,
+    value: item.value,
+    color: item.color
+  }));
 
   return (
     <Card>
@@ -39,7 +53,7 @@ const MachineStatusChart: React.FC<MachineStatusChartProps> = ({ data }) => {
         <CardDescription>Distribuição por status atual</CardDescription>
       </CardHeader>
       <CardContent className="h-80">
-        <PieChart data={filteredData} dataKey="value" />
+        <PieChart data={chartData} dataKey="value" />
       </CardContent>
     </Card>
   );

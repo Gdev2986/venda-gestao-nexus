@@ -4,7 +4,11 @@ import { ResponsiveContainer, PieChart as RechartsPieChart, Pie, Cell, Tooltip, 
 const COLORS = ["#0088FE", "#00C49F", "#FFBB28", "#FF8042", "#8884D8", "#82CA9D"];
 
 interface PieChartProps {
-  data: any[];
+  data: {
+    name: string;
+    value: number;
+    color?: string; // Make color optional, we'll use default colors if not provided
+  }[];
   dataKey: string;
   nameKey?: string;
   height?: number;
@@ -47,7 +51,10 @@ export const PieChart = ({
           nameKey={nameKey}
         >
           {data.map((entry, index) => (
-            <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+            <Cell 
+              key={`cell-${index}`} 
+              fill={entry.color || COLORS[index % COLORS.length]} 
+            />
           ))}
         </Pie>
         <Tooltip

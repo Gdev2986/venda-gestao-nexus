@@ -1,30 +1,61 @@
 
-import { PaymentStatus } from "@/types";
+export type PaymentRequestStatus = 'PENDING' | 'APPROVED' | 'REJECTED' | 'PAID';
 
-// Define the PaymentRequest type
 export interface PaymentRequest {
   id: string;
   client_id: string;
   amount: number;
-  status: string | PaymentStatus;
+  description: string;
+  status: PaymentRequestStatus;
+  pix_key_id?: string;
   created_at: string;
   updated_at: string;
-  approved_by?: string;
-  approved_at?: string;
-  receipt_url?: string;
-  description?: string;
-  rejection_reason: string | null; // Changed from optional to required but nullable
+  approved_at: string | null;
+  approved_by: string | null;
+  receipt_url: string | null;
+  rejection_reason: string | null;
+  pix_key?: PixKey;
+  client?: Client;
+  payment_type?: string;
+  due_date?: string;
 }
 
-// Define the PaymentRequestStatus enum type
-export type PaymentRequestStatus = PaymentStatus | string;
-
-// Options for the usePayments hook
-export interface UsePaymentsOptions {
-  statusFilter?: PaymentRequestStatus | "ALL";
-  searchTerm?: string;
-  fetchOnMount?: boolean;
+export interface PixKey {
+  id: string;
+  key: string;
+  key_type: PixKeyType;
+  type?: string;
+  client_id?: string;
+  user_id?: string;
+  created_at?: string;
+  updated_at?: string;
+  name?: string;
+  owner_name?: string;
+  isDefault?: boolean;
+  is_active?: boolean;
+  bank_name?: string;
 }
 
-// Export the PaymentData type explicitly 
+export type PixKeyType = 'CPF' | 'CNPJ' | 'EMAIL' | 'PHONE' | 'EVP';
+
+export interface Client {
+  id: string;
+  business_name: string;
+  document?: string;
+  email?: string;
+  phone?: string;
+  status?: string;
+  balance?: number;
+  partner_id?: string;
+  created_at?: string;
+  updated_at?: string;
+  contact_name?: string;
+  address?: string;
+  city?: string;
+  state?: string;
+  zip?: string;
+  fee_plan_id?: string;
+}
+
+// Add PaymentData export to match the type used in PaymentConverter
 export type PaymentData = PaymentRequest;
