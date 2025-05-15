@@ -1,17 +1,26 @@
 
-import { Card, CardContent } from "@/components/ui/card";
-import { ReactNode } from "react";
+import { cn } from "@/lib/utils";
 
 interface PageWrapperProps {
-  children: ReactNode;
+  children: React.ReactNode;
+  className?: string;
+  noPadding?: boolean;
 }
 
-export function PageWrapper({ children }: PageWrapperProps) {
+export const PageWrapper = ({
+  children,
+  className,
+  noPadding = false,
+}: PageWrapperProps) => {
   return (
-    <Card className="overflow-hidden">
-      <CardContent className="p-6">
-        {children}
-      </CardContent>
-    </Card>
+    <div
+      className={cn(
+        "w-full",
+        !noPadding && "p-4 sm:p-6 pt-0 sm:pt-0",
+        className
+      )}
+    >
+      {children}
+    </div>
   );
-}
+};

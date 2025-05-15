@@ -30,533 +30,694 @@ import {
   TooltipTrigger, 
 } from "@/components/ui/tooltip";
 
-// Define fee types for different payment methods
-const PAYMENT_TYPES = ["PIX", "DÉBITO", "CRÉDITO"];
-const INSTALLMENT_OPTIONS = Array.from({ length: 21 }, (_, i) => i + 1); // 1 to 21
+// Fee types
+const PAYMENT_TYPES = ["PIX", "DÉBITO", "CRÉDITO"] as const;
+type PaymentType = typeof PAYMENT_TYPES[number];
 
+// Interfaces
 interface FeeBlock {
   id: string;
   name: string;
   color: string;
-  fees: Fee[];
   clients: string[];
+  created_at: string;
+  updated_at: string;
 }
 
 interface Fee {
   id: string;
-  paymentMethod: string;
-  installments: number;
+  blockId: string;
+  paymentMethod: PaymentType;
+  installments: number | null;
   baseRate: number;
   partnerRate: number;
   finalRate: number;
+  created_at: string;
+  updated_at: string;
+}
+
+interface BlockHistory {
+  id: string;
+  blockId: string;
+  action: string;
+  details: string;
+  created_at: string;
+  user: string;
 }
 
 interface Client {
   id: string;
-  business_name: string;
+  name: string;
+  document: string;
+  feeBlockId: string | null;
 }
 
-interface ChangeLog {
-  id: string;
-  userId: string;
-  userName: string;
-  blockId: string;
-  feeId: string | null;
-  changeType: 'CREATE' | 'UPDATE' | 'DELETE';
-  previousValue: any;
-  newValue: any;
-  timestamp: string;
-}
-
-const FEE_BLOCK_COLORS = [
-  { name: "Padrão", value: "blue" },
-  { name: "Verde", value: "green" },
-  { name: "Vermelho", value: "red" },
-  { name: "Amarelo", value: "yellow" },
-  { name: "Roxo", value: "purple" },
+// Color options for fee blocks
+const BLOCK_COLORS = [
+  { name: "blue", class: "bg-blue-500" },
+  { name: "green", class: "bg-green-500" },
+  { name: "red", class: "bg-red-500" },
+  { name: "yellow", class: "bg-yellow-500" },
+  { name: "purple", class: "bg-purple-500" },
+  { name: "pink", class: "bg-pink-500" },
+  { name: "indigo", class: "bg-indigo-500" },
+  { name: "teal", class: "bg-teal-500" },
 ];
 
 const Fees = () => {
-  const [feeBlocks, setFeeBlocks] = useState<FeeBlock[]>([]);
-  const [clients, setClients] = useState<Client[]>([]);
+  const { toast } = useToast();
+  const [isAdmin, setIsAdmin] = useState(true);
   const [isLoading, setIsLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState("PIX");
-  const [selectedBlock, setSelectedBlock] = useState<string | null>(null);
-  const [showAddFeeDialog, setShowAddFeeDialog] = useState(false);
-  const [showBlockDialog, setShowBlockDialog] = useState(false);
-  const [showAssignClientsDialog, setShowAssignClientsDialog] = useState(false);
-  const [showHistoryDialog, setShowHistoryDialog] = useState(false);
-  const [showDeleteConfirmDialog, setShowDeleteConfirmDialog] = useState(false);
-  const [editingFee, setEditingFee] = useState<Fee | null>(null);
-  const [editingBlock, setEditingBlock] = useState<FeeBlock | null>(null);
-  const [search, setSearch] = useState("");
   const [isExporting, setIsExporting] = useState(false);
-  const [confirmDeleteText, setConfirmDeleteText] = useState("");
-  const [blockToDelete, setBlockToDelete] = useState<string | null>(null);
-  const [changeHistory, setChangeHistory] = useState<ChangeLog[]>([]);
-  const [isAdmin, setIsAdmin] = useState(true); // Simulating admin role
   
-  const [newFee, setNewFee] = useState({
+  // Fee blocks state
+  const [feeBlocks, setFeeBlocks] = useState<FeeBlock[]>([]);
+  const [selectedBlock, setSelectedBlock] = useState<string | null>(null);
+  const [showBlockDialog, setShowBlockDialog] = useState(false);
+  const [newBlock, setNewBlock] = useState<{ name: string; color: string }>({
+    name: "",
+    color: "blue",
+  });
+  const [editingBlock, setEditingBlock] = useState<FeeBlock | null>(null);
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+  const [blockToDelete, setBlockToDelete] = useState<string | null>(null);
+  
+  // Fees state
+  const [fees, setFees] = useState<Fee[]>([]);
+  const [showAddFeeDialog, setShowAddFeeDialog] = useState(false);
+  const [newFee, setNewFee] = useState<Omit<Fee, "id" | "blockId" | "created_at" | "updated_at">>({
     paymentMethod: "PIX",
-    installments: 1,
+    installments: null,
     baseRate: 0,
     partnerRate: 0,
     finalRate: 0,
   });
-
-  const [newBlock, setNewBlock] = useState({
-    name: "",
-    color: "blue",
-  });
-
+  const [editingFee, setEditingFee] = useState<Fee | null>(null);
+  const [activeTab, setActiveTab] = useState<PaymentType>("PIX");
+  
+  // Clients state
+  const [clients, setClients] = useState<Client[]>([]);
+  const [showAssignClientsDialog, setShowAssignClientsDialog] = useState(false);
   const [selectedClients, setSelectedClients] = useState<string[]>([]);
+  const [clientSearch, setClientSearch] = useState("");
+  
+  // History state
+  const [blockHistory, setBlockHistory] = useState<BlockHistory[]>([]);
+  const [showHistoryDialog, setShowHistoryDialog] = useState(false);
+  const [selectedBlockHistory, setSelectedBlockHistory] = useState<string | null>(null);
+  
+  // Search and filter
+  const [search, setSearch] = useState("");
+  
+  // Stats
   const [totalBlocks, setTotalBlocks] = useState(0);
   const [avgFeeRate, setAvgFeeRate] = useState(0);
   const [totalLinkedClients, setTotalLinkedClients] = useState(0);
   
-  const { toast } = useToast();
-
+  // Load data on component mount
   useEffect(() => {
     fetchFeeBlocks();
+    fetchFees();
     fetchClients();
   }, []);
-
+  
+  // Update stats when data changes
   useEffect(() => {
-    if (feeBlocks.length > 0) {
-      calculateKPIs();
-    }
-  }, [feeBlocks]);
-
-  const calculateKPIs = () => {
-    // Total blocks
     setTotalBlocks(feeBlocks.length);
     
-    // Average fee rate
-    let totalRates = 0;
-    let totalFees = 0;
-    
-    feeBlocks.forEach(block => {
-      block.fees.forEach(fee => {
-        totalRates += fee.finalRate;
-        totalFees++;
-      });
-    });
-    
-    setAvgFeeRate(totalFees > 0 ? totalRates / totalFees : 0);
-    
-    // Total linked clients (unique)
-    const uniqueClients = new Set<string>();
-    feeBlocks.forEach(block => {
-      block.clients.forEach(clientId => {
-        uniqueClients.add(clientId);
-      });
-    });
-    
-    setTotalLinkedClients(uniqueClients.size);
-  };
-
-  const fetchClients = async () => {
-    try {
-      // Mock clients data
-      setClients([
-        { id: "1", business_name: "Empresa A" },
-        { id: "2", business_name: "Empresa B" },
-        { id: "3", business_name: "Empresa C" },
-        { id: "4", business_name: "Empresa D" },
-      ]);
-    } catch (error) {
-      console.error("Erro ao carregar clientes:", error);
+    // Calculate average fee rate
+    if (fees.length > 0) {
+      const avgRate = fees.reduce((sum, fee) => sum + fee.finalRate, 0) / fees.length;
+      setAvgFeeRate(avgRate);
+    } else {
+      setAvgFeeRate(0);
     }
-  };
-
+    
+    // Calculate total linked clients
+    const linkedClients = clients.filter(client => client.feeBlockId !== null).length;
+    setTotalLinkedClients(linkedClients);
+  }, [feeBlocks, fees, clients]);
+  
+  // Fetch fee blocks from API
   const fetchFeeBlocks = async () => {
     setIsLoading(true);
-    
     try {
-      // This is mock data since we don't have the actual table yet
-      const mockFeeBlocks: FeeBlock[] = [
-        {
-          id: "1",
-          name: "Padrão",
-          color: "blue",
-          clients: ["1", "4"],
-          fees: [
-            { id: "1", paymentMethod: "PIX", installments: 1, baseRate: 0.99, partnerRate: 1.5, finalRate: 1.99 },
-            { id: "2", paymentMethod: "DÉBITO", installments: 1, baseRate: 1.5, partnerRate: 2.0, finalRate: 2.5 },
-            { id: "3", paymentMethod: "CRÉDITO", installments: 1, baseRate: 2.0, partnerRate: 2.8, finalRate: 3.5 },
-            { id: "4", paymentMethod: "CRÉDITO", installments: 2, baseRate: 3.0, partnerRate: 4.0, finalRate: 5.0 },
-          ]
-        },
-        {
-          id: "2",
-          name: "Premium",
-          color: "green",
-          clients: ["2"],
-          fees: [
-            { id: "5", paymentMethod: "PIX", installments: 1, baseRate: 0.8, partnerRate: 1.2, finalRate: 1.5 },
-            { id: "6", paymentMethod: "DÉBITO", installments: 1, baseRate: 1.2, partnerRate: 1.7, finalRate: 2.0 },
-            { id: "7", paymentMethod: "CRÉDITO", installments: 1, baseRate: 1.8, partnerRate: 2.5, finalRate: 3.0 },
-            { id: "8", paymentMethod: "CRÉDITO", installments: 2, baseRate: 2.5, partnerRate: 3.5, finalRate: 4.0 },
-          ]
-        },
-        {
-          id: "3",
-          name: "Especial",
-          color: "purple",
-          clients: ["3"],
-          fees: [
-            { id: "9", paymentMethod: "PIX", installments: 1, baseRate: 0.9, partnerRate: 1.3, finalRate: 1.8 },
-            { id: "10", paymentMethod: "DÉBITO", installments: 1, baseRate: 1.3, partnerRate: 1.8, finalRate: 2.2 },
-          ]
+      // Simulated API call
+      setTimeout(() => {
+        const mockBlocks: FeeBlock[] = [
+          {
+            id: "block-1",
+            name: "Bloco Padrão",
+            color: "blue",
+            clients: ["client-1", "client-2"],
+            created_at: new Date().toISOString(),
+            updated_at: new Date().toISOString(),
+          },
+          {
+            id: "block-2",
+            name: "Bloco Premium",
+            color: "green",
+            clients: ["client-3"],
+            created_at: new Date().toISOString(),
+            updated_at: new Date().toISOString(),
+          },
+          {
+            id: "block-3",
+            name: "Bloco Parceiros",
+            color: "purple",
+            clients: [],
+            created_at: new Date().toISOString(),
+            updated_at: new Date().toISOString(),
+          },
+        ];
+        
+        setFeeBlocks(mockBlocks);
+        if (mockBlocks.length > 0 && !selectedBlock) {
+          setSelectedBlock(mockBlocks[0].id);
         }
-      ];
-      
-      setFeeBlocks(mockFeeBlocks);
-      if (mockFeeBlocks.length > 0) {
-        setSelectedBlock(mockFeeBlocks[0].id);
-      }
+        setIsLoading(false);
+      }, 1000);
     } catch (error) {
-      console.error("Erro ao carregar taxas:", error);
+      console.error("Error fetching fee blocks:", error);
       toast({
+        title: "Erro",
+        description: "Não foi possível carregar os blocos de taxas.",
         variant: "destructive",
-        title: "Erro ao carregar taxas",
-        description: "Não foi possível carregar as taxas de pagamento.",
       });
-    } finally {
       setIsLoading(false);
     }
   };
-
-  const fetchChangeHistory = () => {
-    // Mock change history data
-    const mockHistory: ChangeLog[] = [
-      {
-        id: "1",
-        userId: "admin1",
-        userName: "Admin User",
-        blockId: "1",
-        feeId: "1",
-        changeType: "UPDATE",
-        previousValue: { baseRate: 0.8, partnerRate: 1.3, finalRate: 1.8 },
-        newValue: { baseRate: 0.99, partnerRate: 1.5, finalRate: 1.99 },
-        timestamp: new Date(Date.now() - 86400000).toISOString() // 1 day ago
-      },
-      {
-        id: "2",
-        userId: "admin1",
-        userName: "Admin User",
-        blockId: "2",
-        feeId: null,
-        changeType: "CREATE",
-        previousValue: null,
-        newValue: { name: "Premium", color: "green" },
-        timestamp: new Date(Date.now() - 172800000).toISOString() // 2 days ago
-      },
-      {
-        id: "3",
-        userId: "admin2",
-        userName: "Super Admin",
-        blockId: "1",
-        feeId: "3",
-        changeType: "UPDATE",
-        previousValue: { installments: 1, baseRate: 1.8, partnerRate: 2.5, finalRate: 3.0 },
-        newValue: { installments: 1, baseRate: 2.0, partnerRate: 2.8, finalRate: 3.5 },
-        timestamp: new Date(Date.now() - 259200000).toISOString() // 3 days ago
-      }
-    ];
-    
-    setChangeHistory(mockHistory);
-  };
-
-  const logChange = (blockId: string, changeType: 'CREATE' | 'UPDATE' | 'DELETE', previousValue: any, newValue: any, feeId: string | null = null) => {
-    // In a real application, this would save to the database
-    console.log('Change logged:', {
-      blockId,
-      feeId,
-      changeType,
-      previousValue,
-      newValue,
-      timestamp: new Date().toISOString()
-    });
-    
-    // For this demo, we're just adding to the local state
-    const newLog: ChangeLog = {
-      id: Math.random().toString(),
-      userId: 'current-user-id',
-      userName: 'Current User',
-      blockId,
-      feeId,
-      changeType,
-      previousValue,
-      newValue,
-      timestamp: new Date().toISOString()
-    };
-    
-    setChangeHistory(prev => [newLog, ...prev]);
-  };
-
-  const handleAddFee = () => {
-    if (!selectedBlock) {
+  
+  // Fetch fees from API
+  const fetchFees = async () => {
+    try {
+      // Simulated API call
+      setTimeout(() => {
+        const mockFees: Fee[] = [
+          {
+            id: "fee-1",
+            blockId: "block-1",
+            paymentMethod: "PIX",
+            installments: null,
+            baseRate: 1.5,
+            partnerRate: 0.5,
+            finalRate: 2.0,
+            created_at: new Date().toISOString(),
+            updated_at: new Date().toISOString(),
+          },
+          {
+            id: "fee-2",
+            blockId: "block-1",
+            paymentMethod: "DÉBITO",
+            installments: null,
+            baseRate: 2.0,
+            partnerRate: 0.7,
+            finalRate: 2.7,
+            created_at: new Date().toISOString(),
+            updated_at: new Date().toISOString(),
+          },
+          {
+            id: "fee-3",
+            blockId: "block-1",
+            paymentMethod: "CRÉDITO",
+            installments: 1,
+            baseRate: 2.5,
+            partnerRate: 1.0,
+            finalRate: 3.5,
+            created_at: new Date().toISOString(),
+            updated_at: new Date().toISOString(),
+          },
+          {
+            id: "fee-4",
+            blockId: "block-1",
+            paymentMethod: "CRÉDITO",
+            installments: 2,
+            baseRate: 3.5,
+            partnerRate: 1.5,
+            finalRate: 5.0,
+            created_at: new Date().toISOString(),
+            updated_at: new Date().toISOString(),
+          },
+          {
+            id: "fee-5",
+            blockId: "block-2",
+            paymentMethod: "PIX",
+            installments: null,
+            baseRate: 1.0,
+            partnerRate: 0.3,
+            finalRate: 1.3,
+            created_at: new Date().toISOString(),
+            updated_at: new Date().toISOString(),
+          },
+        ];
+        
+        setFees(mockFees);
+      }, 1000);
+    } catch (error) {
+      console.error("Error fetching fees:", error);
       toast({
+        title: "Erro",
+        description: "Não foi possível carregar as taxas.",
         variant: "destructive",
-        title: "Erro ao adicionar taxa",
-        description: "Selecione um bloco de taxas primeiro.",
-      });
-      return;
-    }
-
-    // Validate inputs
-    if (newFee.baseRate < 0 || newFee.partnerRate < 0 || newFee.finalRate < 0) {
-      toast({
-        variant: "destructive",
-        title: "Valores inválidos",
-        description: "As taxas não podem ser negativas.",
-      });
-      return;
-    }
-
-    if (newFee.baseRate > 100 || newFee.partnerRate > 100 || newFee.finalRate > 100) {
-      toast({
-        variant: "destructive",
-        title: "Valores inválidos",
-        description: "As taxas não podem ser maiores que 100%.",
-      });
-      return;
-    }
-
-    const blockToUpdate = feeBlocks.find(block => block.id === selectedBlock);
-    if (!blockToUpdate) return;
-
-    if (editingFee) {
-      // Keep previous values for change log
-      const previousFee = blockToUpdate.fees.find(f => f.id === editingFee.id);
-      
-      // Update existing fee
-      const updatedBlocks = feeBlocks.map(block => {
-        if (block.id === selectedBlock) {
-          return {
-            ...block,
-            fees: block.fees.map(f => f.id === editingFee.id ? { ...newFee, id: editingFee.id } : f)
-          };
-        }
-        return block;
-      });
-      
-      setFeeBlocks(updatedBlocks);
-      
-      // Log the change
-      if (previousFee) {
-        logChange(selectedBlock, 'UPDATE', previousFee, { ...newFee, id: editingFee.id }, editingFee.id);
-      }
-      
-      toast({
-        title: "Taxa atualizada",
-        description: "A taxa foi atualizada com sucesso.",
-      });
-    } else {
-      // Add new fee
-      const newId = Math.random().toString();
-      const newFeeWithId = { ...newFee, id: newId };
-      
-      const updatedBlocks = feeBlocks.map(block => {
-        if (block.id === selectedBlock) {
-          return {
-            ...block,
-            fees: [...block.fees, newFeeWithId]
-          };
-        }
-        return block;
-      });
-      
-      setFeeBlocks(updatedBlocks);
-      
-      // Log the change
-      logChange(selectedBlock, 'CREATE', null, newFeeWithId, newId);
-      
-      toast({
-        title: "Taxa adicionada",
-        description: "A nova taxa foi adicionada com sucesso.",
       });
     }
-    
-    setShowAddFeeDialog(false);
-    setEditingFee(null);
-    resetNewFee();
   };
-
-  const handleAddBlock = () => {
+  
+  // Fetch clients from API
+  const fetchClients = async () => {
+    try {
+      // Simulated API call
+      setTimeout(() => {
+        const mockClients: Client[] = [
+          {
+            id: "client-1",
+            name: "Empresa ABC",
+            document: "12.345.678/0001-90",
+            feeBlockId: "block-1",
+          },
+          {
+            id: "client-2",
+            name: "Loja XYZ",
+            document: "98.765.432/0001-10",
+            feeBlockId: "block-1",
+          },
+          {
+            id: "client-3",
+            name: "Restaurante DEF",
+            document: "45.678.901/0001-23",
+            feeBlockId: "block-2",
+          },
+          {
+            id: "client-4",
+            name: "Consultoria GHI",
+            document: "34.567.890/0001-45",
+            feeBlockId: null,
+          },
+          {
+            id: "client-5",
+            name: "Farmácia JKL",
+            document: "56.789.012/0001-67",
+            feeBlockId: null,
+          },
+        ];
+        
+        setClients(mockClients);
+      }, 1000);
+    } catch (error) {
+      console.error("Error fetching clients:", error);
+      toast({
+        title: "Erro",
+        description: "Não foi possível carregar os clientes.",
+        variant: "destructive",
+      });
+    }
+  };
+  
+  // Handle creating a new fee block
+  const handleCreateBlock = async () => {
     if (!newBlock.name.trim()) {
       toast({
+        title: "Erro",
+        description: "O nome do bloco é obrigatório.",
         variant: "destructive",
-        title: "Nome inválido",
-        description: "O bloco de taxas precisa ter um nome.",
       });
       return;
     }
-
-    if (editingBlock) {
-      // Keep previous values for change log
-      const previousBlock = feeBlocks.find(b => b.id === editingBlock.id);
-      
-      // Update existing block
-      const updatedBlocks = feeBlocks.map(block => 
-        block.id === editingBlock.id ? { 
-          ...block, 
-          name: newBlock.name, 
-          color: newBlock.color 
-        } : block
-      );
-      
-      setFeeBlocks(updatedBlocks);
-      
-      // Log the change
-      if (previousBlock) {
-        logChange(editingBlock.id, 'UPDATE', 
-          { name: previousBlock.name, color: previousBlock.color }, 
-          { name: newBlock.name, color: newBlock.color }
-        );
-      }
-      
-      toast({
-        title: "Bloco atualizado",
-        description: "O bloco de taxas foi atualizado com sucesso.",
-      });
-    } else {
-      // Add new block
-      const newId = Math.random().toString();
-      const newBlockData = {
-        id: newId,
+    
+    try {
+      // Simulated API call
+      const newBlockData: FeeBlock = {
+        id: `block-${Date.now()}`,
         name: newBlock.name,
         color: newBlock.color,
-        fees: [],
-        clients: []
+        clients: [],
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
       };
       
       setFeeBlocks([...feeBlocks, newBlockData]);
-      setSelectedBlock(newId);
-      
-      // Log the change
-      logChange(newId, 'CREATE', null, { name: newBlock.name, color: newBlock.color });
+      setShowBlockDialog(false);
+      setNewBlock({ name: "", color: "blue" });
       
       toast({
-        title: "Bloco adicionado",
-        description: "O novo bloco de taxas foi adicionado com sucesso.",
+        title: "Sucesso",
+        description: "Bloco de taxas criado com sucesso.",
+      });
+    } catch (error) {
+      console.error("Error creating fee block:", error);
+      toast({
+        title: "Erro",
+        description: "Não foi possível criar o bloco de taxas.",
+        variant: "destructive",
       });
     }
-    
-    setShowBlockDialog(false);
-    setEditingBlock(null);
-    setNewBlock({ name: "", color: "blue" });
   };
-
-  const handleDuplicateBlock = (blockId: string) => {
-    const blockToDuplicate = feeBlocks.find(block => block.id === blockId);
-    if (!blockToDuplicate) return;
-    
-    const newId = Math.random().toString();
-    const newBlockData: FeeBlock = {
-      id: newId,
-      name: `${blockToDuplicate.name} (Cópia)`,
-      color: blockToDuplicate.color,
-      clients: [],
-      fees: blockToDuplicate.fees.map(fee => ({
-        ...fee,
-        id: Math.random().toString()
-      }))
-    };
-    
-    setFeeBlocks([...feeBlocks, newBlockData]);
-    setSelectedBlock(newId);
-    
-    // Log the change
-    logChange(newId, 'CREATE', null, {
-      name: newBlockData.name,
-      color: newBlockData.color,
-      fees: newBlockData.fees.length
-    });
-    
-    toast({
-      title: "Bloco duplicado",
-      description: "O bloco de taxas foi duplicado com sucesso.",
-    });
-  };
-
-  const handleAssignClients = () => {
-    if (!selectedBlock) return;
-    
-    // Keep previous values for change log
-    const blockToUpdate = feeBlocks.find(block => block.id === selectedBlock);
-    const previousClients = blockToUpdate ? [...blockToUpdate.clients] : [];
-    
-    const updatedBlocks = feeBlocks.map(block => {
-      if (block.id === selectedBlock) {
-        return { ...block, clients: selectedClients };
-      }
-      return block;
-    });
-    
-    setFeeBlocks(updatedBlocks);
-    
-    // Log the change
-    logChange(selectedBlock, 'UPDATE', 
-      { clients: previousClients }, 
-      { clients: selectedClients }
-    );
-    
-    setShowAssignClientsDialog(false);
-    
-    toast({
-      title: "Clientes associados",
-      description: "Os clientes foram associados ao bloco com sucesso.",
-    });
-  };
-
-  const handleDeleteBlockInitiate = (blockId: string) => {
-    const block = feeBlocks.find(b => b.id === blockId);
-    if (!block) return;
-    
-    setBlockToDelete(blockId);
-    setConfirmDeleteText("");
-    setShowDeleteConfirmDialog(true);
-  };
-
-  const handleDeleteBlockConfirm = () => {
-    if (!blockToDelete) return;
-    
-    const blockToRemove = feeBlocks.find(block => block.id === blockToDelete);
-    if (!blockToRemove) return;
-    
-    // Check if confirmation text matches the block name
-    if (confirmDeleteText !== blockToRemove.name) {
+  
+  // Handle updating a fee block
+  const handleUpdateBlock = async () => {
+    if (!editingBlock || !newBlock.name.trim()) {
       toast({
+        title: "Erro",
+        description: "O nome do bloco é obrigatório.",
         variant: "destructive",
-        title: "Confirmação inválida",
-        description: "O nome do bloco não coincide. Exclusão cancelada.",
       });
       return;
     }
     
-    // Log the change before deletion
-    logChange(blockToDelete, 'DELETE', blockToRemove, null);
+    try {
+      // Simulated API call
+      const updatedBlocks = feeBlocks.map(block => {
+        if (block.id === editingBlock.id) {
+          return {
+            ...block,
+            name: newBlock.name,
+            color: newBlock.color,
+            updated_at: new Date().toISOString(),
+          };
+        }
+        return block;
+      });
+      
+      setFeeBlocks(updatedBlocks);
+      setShowBlockDialog(false);
+      setEditingBlock(null);
+      setNewBlock({ name: "", color: "blue" });
+      
+      toast({
+        title: "Sucesso",
+        description: "Bloco de taxas atualizado com sucesso.",
+      });
+    } catch (error) {
+      console.error("Error updating fee block:", error);
+      toast({
+        title: "Erro",
+        description: "Não foi possível atualizar o bloco de taxas.",
+        variant: "destructive",
+      });
+    }
+  };
+  
+  // Handle deleting a fee block
+  const handleDeleteBlock = async () => {
+    if (!blockToDelete) return;
     
-    const updatedBlocks = feeBlocks.filter(block => block.id !== blockToDelete);
-    setFeeBlocks(updatedBlocks);
+    try {
+      // Check if block has clients
+      const blockToDeleteData = feeBlocks.find(block => block.id === blockToDelete);
+      if (blockToDeleteData && blockToDeleteData.clients.length > 0) {
+        toast({
+          title: "Erro",
+          description: "Não é possível excluir um bloco com clientes associados.",
+          variant: "destructive",
+        });
+        setShowDeleteDialog(false);
+        setBlockToDelete(null);
+        return;
+      }
+      
+      // Simulated API call
+      const updatedBlocks = feeBlocks.filter(block => block.id !== blockToDelete);
+      
+      // Also remove fees associated with this block
+      const updatedFees = fees.filter(fee => fee.blockId !== blockToDelete);
+      
+      setFeeBlocks(updatedBlocks);
+      setFees(updatedFees);
+      
+      if (selectedBlock === blockToDelete) {
+        setSelectedBlock(updatedBlocks.length > 0 ? updatedBlocks[0].id : null);
+      }
+      
+      setShowDeleteDialog(false);
+      setBlockToDelete(null);
+      
+      toast({
+        title: "Sucesso",
+        description: "Bloco de taxas excluído com sucesso.",
+      });
+    } catch (error) {
+      console.error("Error deleting fee block:", error);
+      toast({
+        title: "Erro",
+        description: "Não foi possível excluir o bloco de taxas.",
+        variant: "destructive",
+      });
+    }
+  };
+  
+  // Handle creating a new fee
+  const handleCreateFee = async () => {
+    if (!selectedBlock) return;
     
-    if (updatedBlocks.length > 0) {
-      setSelectedBlock(updatedBlocks[0].id);
-    } else {
-      setSelectedBlock(null);
+    // Validate fee data
+    if (newFee.baseRate < 0 || newFee.partnerRate < 0 || newFee.finalRate < 0) {
+      toast({
+        title: "Erro",
+        description: "As taxas não podem ser negativas.",
+        variant: "destructive",
+      });
+      return;
     }
     
-    setShowDeleteConfirmDialog(false);
-    setBlockToDelete(null);
+    // For credit, installments are required
+    if (newFee.paymentMethod === "CRÉDITO" && (!newFee.installments || newFee.installments < 1)) {
+      toast({
+        title: "Erro",
+        description: "O número de parcelas é obrigatório para pagamentos em crédito.",
+        variant: "destructive",
+      });
+      return;
+    }
     
-    toast({
-      title: "Bloco removido",
-      description: "O bloco de taxas foi removido com sucesso.",
-    });
+    try {
+      // Check if fee already exists
+      const existingFee = fees.find(
+        fee => 
+          fee.blockId === selectedBlock && 
+          fee.paymentMethod === newFee.paymentMethod && 
+          fee.installments === newFee.installments
+      );
+      
+      if (existingFee && !editingFee) {
+        toast({
+          title: "Erro",
+          description: "Já existe uma taxa com essas configurações.",
+          variant: "destructive",
+        });
+        return;
+      }
+      
+      if (editingFee) {
+        // Update existing fee
+        const updatedFees = fees.map(fee => {
+          if (fee.id === editingFee.id) {
+            return {
+              ...fee,
+              paymentMethod: newFee.paymentMethod,
+              installments: newFee.installments,
+              baseRate: newFee.baseRate,
+              partnerRate: newFee.partnerRate,
+              finalRate: newFee.finalRate,
+              updated_at: new Date().toISOString(),
+            };
+          }
+          return fee;
+        });
+        
+        setFees(updatedFees);
+        toast({
+          title: "Sucesso",
+          description: "Taxa atualizada com sucesso.",
+        });
+      } else {
+        // Create new fee
+        const newFeeData: Fee = {
+          id: `fee-${Date.now()}`,
+          blockId: selectedBlock,
+          paymentMethod: newFee.paymentMethod,
+          installments: newFee.installments,
+          baseRate: newFee.baseRate,
+          partnerRate: newFee.partnerRate,
+          finalRate: newFee.finalRate,
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString(),
+        };
+        
+        setFees([...fees, newFeeData]);
+        toast({
+          title: "Sucesso",
+          description: "Taxa criada com sucesso.",
+        });
+      }
+      
+      setShowAddFeeDialog(false);
+      resetNewFee();
+      setEditingFee(null);
+    } catch (error) {
+      console.error("Error creating/updating fee:", error);
+      toast({
+        title: "Erro",
+        description: "Não foi possível salvar a taxa.",
+        variant: "destructive",
+      });
+    }
   };
-
+  
+  // Handle removing a fee
+  const handleRemoveFee = async (feeId: string) => {
+    try {
+      // Simulated API call
+      const updatedFees = fees.filter(fee => fee.id !== feeId);
+      setFees(updatedFees);
+      
+      toast({
+        title: "Sucesso",
+        description: "Taxa removida com sucesso.",
+      });
+    } catch (error) {
+      console.error("Error removing fee:", error);
+      toast({
+        title: "Erro",
+        description: "Não foi possível remover a taxa.",
+        variant: "destructive",
+      });
+    }
+  };
+  
+  // Handle assigning clients to a fee block
+  const handleAssignClients = async () => {
+    if (!selectedBlock) return;
+    
+    try {
+      // Simulated API call
+      // Update clients
+      const updatedClients = clients.map(client => {
+        if (selectedClients.includes(client.id)) {
+          return {
+            ...client,
+            feeBlockId: selectedBlock,
+          };
+        }
+        return client;
+      });
+      
+      // Update fee blocks
+      const updatedBlocks = feeBlocks.map(block => {
+        if (block.id === selectedBlock) {
+          return {
+            ...block,
+            clients: selectedClients,
+            updated_at: new Date().toISOString(),
+          };
+        }
+        // Remove these clients from other blocks
+        if (block.id !== selectedBlock) {
+          return {
+            ...block,
+            clients: block.clients.filter(clientId => !selectedClients.includes(clientId)),
+            updated_at: new Date().toISOString(),
+          };
+        }
+        return block;
+      });
+      
+      setClients(updatedClients);
+      setFeeBlocks(updatedBlocks);
+      setShowAssignClientsDialog(false);
+      setSelectedClients([]);
+      
+      toast({
+        title: "Sucesso",
+        description: "Clientes associados com sucesso.",
+      });
+    } catch (error) {
+      console.error("Error assigning clients:", error);
+      toast({
+        title: "Erro",
+        description: "Não foi possível associar os clientes.",
+        variant: "destructive",
+      });
+    }
+  };
+  
+  // Handle duplicating a fee block
+  const handleDuplicateBlock = async (blockId: string) => {
+    try {
+      const blockToDuplicate = feeBlocks.find(block => block.id === blockId);
+      if (!blockToDuplicate) return;
+      
+      // Create new block
+      const newBlockData: FeeBlock = {
+        id: `block-${Date.now()}`,
+        name: `${blockToDuplicate.name} (Cópia)`,
+        color: blockToDuplicate.color,
+        clients: [],
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+      };
+      
+      // Duplicate fees
+      const feesToDuplicate = fees.filter(fee => fee.blockId === blockId);
+      const newFees = feesToDuplicate.map(fee => ({
+        ...fee,
+        id: `fee-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+        blockId: newBlockData.id,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+      }));
+      
+      setFeeBlocks([...feeBlocks, newBlockData]);
+      setFees([...fees, ...newFees]);
+      
+      toast({
+        title: "Sucesso",
+        description: "Bloco de taxas duplicado com sucesso.",
+      });
+    } catch (error) {
+      console.error("Error duplicating fee block:", error);
+      toast({
+        title: "Erro",
+        description: "Não foi possível duplicar o bloco de taxas.",
+        variant: "destructive",
+      });
+    }
+  };
+  
+  // Handle exporting fee data
+  const handleExport = async (format: 'csv' | 'pdf') => {
+    setIsExporting(true);
+    
+    try {
+      // Simulated export
+      setTimeout(() => {
+        toast({
+          title: "Sucesso",
+          description: `Dados exportados em formato ${format.toUpperCase()}.`,
+        });
+        setIsExporting(false);
+      }, 2000);
+    } catch (error) {
+      console.error("Error exporting data:", error);
+      toast({
+        title: "Erro",
+        description: "Não foi possível exportar os dados.",
+        variant: "destructive",
+      });
+      setIsExporting(false);
+    }
+  };
+  
+  // Handle editing a fee block
+  const handleEditBlock = (block: FeeBlock) => {
+    setEditingBlock(block);
+    setNewBlock({
+      name: block.name,
+      color: block.color,
+    });
+    setShowBlockDialog(true);
+  };
+  
+  // Handle editing a fee
   const handleEditFee = (fee: Fee) => {
     setEditingFee(fee);
     setNewFee({
@@ -568,153 +729,141 @@ const Fees = () => {
     });
     setShowAddFeeDialog(true);
   };
-
-  const handleEditBlock = (block: FeeBlock) => {
-    setEditingBlock(block);
-    setNewBlock({
-      name: block.name,
-      color: block.color,
+  
+  // Handle initiating block deletion
+  const handleDeleteBlockInitiate = (blockId: string) => {
+    setBlockToDelete(blockId);
+    setShowDeleteDialog(true);
+  };
+  
+  // Reset new fee form
+  const resetNewFee = () => {
+    setNewFee({
+      paymentMethod: activeTab,
+      installments: activeTab === "CRÉDITO" ? 1 : null,
+      baseRate: 0,
+      partnerRate: 0,
+      finalRate: 0,
     });
-    setShowBlockDialog(true);
   };
-
-  const handleRemoveFee = (feeId: string) => {
-    if (!selectedBlock) return;
-    
-    const blockToUpdate = feeBlocks.find(block => block.id === selectedBlock);
-    if (!blockToUpdate) return;
-    
-    // Find the fee to remove for the change log
-    const feeToRemove = blockToUpdate.fees.find(fee => fee.id === feeId);
-    
-    // Confirm deletion
-    if (window.confirm("Tem certeza que deseja excluir esta taxa?")) {
-      const updatedBlocks = feeBlocks.map(block => {
-        if (block.id === selectedBlock) {
-          return {
-            ...block,
-            fees: block.fees.filter(fee => fee.id !== feeId)
-          };
-        }
-        return block;
-      });
-      
-      setFeeBlocks(updatedBlocks);
-      
-      // Log the change
-      if (feeToRemove) {
-        logChange(selectedBlock, 'DELETE', feeToRemove, null, feeId);
-      }
-      
-      toast({
-        title: "Taxa removida",
-        description: "A taxa foi removida com sucesso.",
-      });
-    }
-  };
-
+  
+  // Open assign clients dialog
   const openAssignClientsDialog = () => {
     if (!selectedBlock) return;
     
-    const currentBlock = feeBlocks.find(block => block.id === selectedBlock);
-    if (currentBlock) {
-      setSelectedClients([...currentBlock.clients]);
+    const block = feeBlocks.find(b => b.id === selectedBlock);
+    if (block) {
+      setSelectedClients(block.clients);
     } else {
       setSelectedClients([]);
     }
     
     setShowAssignClientsDialog(true);
   };
-
+  
+  // Open history dialog
   const openHistoryDialog = (blockId: string) => {
-    setSelectedBlock(blockId);
-    fetchChangeHistory();
-    setShowHistoryDialog(true);
-  };
-
-  const toggleClient = (clientId: string) => {
-    if (selectedClients.includes(clientId)) {
-      setSelectedClients(selectedClients.filter(id => id !== clientId));
-    } else {
-      setSelectedClients([...selectedClients, clientId]);
-    }
-  };
-
-  const resetNewFee = () => {
-    setNewFee({
-      paymentMethod: activeTab,
-      installments: activeTab === "CRÉDITO" ? 1 : 1,
-      baseRate: 0,
-      partnerRate: 0,
-      finalRate: 0,
-    });
-  };
-
-  const handleExport = (format: 'csv' | 'pdf') => {
-    setIsExporting(true);
+    setSelectedBlockHistory(blockId);
     
-    // Simulating export process
+    // Simulated API call to fetch history
     setTimeout(() => {
-      setIsExporting(false);
+      const mockHistory: BlockHistory[] = [
+        {
+          id: "history-1",
+          blockId,
+          action: "Criação",
+          details: "Bloco de taxas criado",
+          created_at: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString(),
+          user: "Admin",
+        },
+        {
+          id: "history-2",
+          blockId,
+          action: "Atualização",
+          details: "Taxa de PIX alterada de 1.0% para 1.5%",
+          created_at: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000).toISOString(),
+          user: "Admin",
+        },
+        {
+          id: "history-3",
+          blockId,
+          action: "Associação",
+          details: "Cliente 'Empresa ABC' associado ao bloco",
+          created_at: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString(),
+          user: "Admin",
+        },
+        {
+          id: "history-4",
+          blockId,
+          action: "Atualização",
+          details: "Taxa de Débito alterada de 2.5% para 2.0%",
+          created_at: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000).toISOString(),
+          user: "Admin",
+        },
+      ];
       
-      toast({
-        title: "Exportação concluída",
-        description: `As taxas foram exportadas em formato ${format.toUpperCase()} com sucesso.`,
-      });
-    }, 1500);
+      setBlockHistory(mockHistory);
+      setShowHistoryDialog(true);
+    }, 500);
   };
-
-  const getSelectedBlockFees = () => {
-    if (!selectedBlock) return [];
-    
-    const block = feeBlocks.find(b => b.id === selectedBlock);
-    if (!block) return [];
-    
-    return block.fees.filter(fee => fee.paymentMethod === activeTab);
-  };
-
-  const getBlockColor = (color: string) => {
-    const colors = {
-      blue: "bg-blue-100 text-blue-800 border-blue-300",
-      green: "bg-green-100 text-green-800 border-green-300",
-      red: "bg-red-100 text-red-800 border-red-300",
-      yellow: "bg-yellow-100 text-yellow-800 border-yellow-300",
-      purple: "bg-purple-100 text-purple-800 border-purple-300",
-    };
-    
-    return colors[color] || colors.blue;
-  };
-
-  const getAssociatedClientNames = (clientIds: string[]) => {
-    return clients
-      .filter(client => clientIds.includes(client.id))
-      .map(client => client.business_name)
-      .join(", ");
-  };
-
+  
+  // Filter blocks based on search term
   const getFilteredBlocks = () => {
-    if (!search.trim()) return feeBlocks;
+    if (!search) return feeBlocks;
     
     return feeBlocks.filter(block => 
       block.name.toLowerCase().includes(search.toLowerCase()) ||
       block.clients.length.toString().includes(search)
     );
   };
-
+  
+  // Get fees for the selected block and payment method
+  const getSelectedBlockFees = () => {
+    if (!selectedBlock) return [];
+    
+    return fees
+      .filter(fee => fee.blockId === selectedBlock && fee.paymentMethod === activeTab)
+      .sort((a, b) => {
+        // Sort by installments for credit
+        if (a.paymentMethod === "CRÉDITO" && b.paymentMethod === "CRÉDITO") {
+          return (a.installments || 0) - (b.installments || 0);
+        }
+        return 0;
+      });
+  };
+  
+  // Get filtered clients for assignment
+  const getFilteredClients = () => {
+    if (!clientSearch) return clients;
+    
+    return clients.filter(client => 
+      client.name.toLowerCase().includes(clientSearch.toLowerCase()) ||
+      client.document.includes(clientSearch)
+    );
+  };
+  
+  // Get block color class
+  const getBlockColor = (color: string) => {
+    const colorObj = BLOCK_COLORS.find(c => c.name === color);
+    return colorObj ? colorObj.class : "bg-gray-500";
+  };
+  
+  // Format date for display
   const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleString('pt-BR', {
+    const date = new Date(dateString);
+    return date.toLocaleDateString('pt-BR', {
       day: '2-digit',
       month: '2-digit',
       year: 'numeric',
       hour: '2-digit',
-      minute: '2-digit'
+      minute: '2-digit',
     });
   };
 
   return (
     <div className="space-y-4">
-      <div className="flex justify-between items-center">
-        <h2 className="text-3xl font-bold tracking-tight">Taxas</h2>
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
+        <h2 className="text-2xl sm:text-3xl font-bold tracking-tight">Taxas</h2>
         {isAdmin && (
           <Button onClick={() => {
             setEditingBlock(null);
@@ -722,18 +871,18 @@ const Fees = () => {
             setShowBlockDialog(true);
           }}>
             <PlusIcon className="mr-2 h-4 w-4" />
-            Novo Bloco de Taxas
+            <span className="whitespace-nowrap">Novo Bloco de Taxas</span>
           </Button>
         )}
       </div>
 
       {/* KPI Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3 md:gap-4 mb-4">
         <Card>
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-medium text-muted-foreground">Total de Blocos</CardTitle>
           </CardHeader>
-          <CardContent>
+          <CardContent className="pt-0">
             <div className="text-2xl font-bold">{totalBlocks}</div>
           </CardContent>
         </Card>
@@ -742,48 +891,50 @@ const Fees = () => {
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-medium text-muted-foreground">Taxa Média</CardTitle>
           </CardHeader>
-          <CardContent>
+          <CardContent className="pt-0">
             <div className="text-2xl font-bold">{avgFeeRate.toFixed(2)}%</div>
           </CardContent>
         </Card>
         
-        <Card>
+        <Card className="sm:col-span-2 md:col-span-1">
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-medium text-muted-foreground">Clientes Vinculados</CardTitle>
           </CardHeader>
-          <CardContent>
+          <CardContent className="pt-0">
             <div className="text-2xl font-bold">{totalLinkedClients}</div>
           </CardContent>
         </Card>
       </div>
 
-      <div className="flex flex-col md:flex-row gap-4 items-start md:items-center mb-4 justify-between">
-        <div className="flex items-center gap-2 w-full md:w-auto">
+      <div className="flex flex-col sm:flex-row gap-4 items-start justify-between">
+        <div className="flex items-center gap-2 w-full sm:w-auto">
           <Input 
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             placeholder="Buscar por nome ou nº de clientes" 
-            className="max-w-[300px]"
+            className="max-w-full sm:max-w-[300px]"
           />
-          <Button variant="outline" size="icon">
+          <Button variant="outline" size="icon" className="h-10 w-10 flex-shrink-0">
             <FilterIcon className="h-4 w-4" />
           </Button>
         </div>
         
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 w-full sm:w-auto justify-end">
           <Button 
             variant="outline" 
             onClick={() => handleExport('pdf')}
             disabled={isExporting}
+            className="w-full sm:w-auto"
           >
-            Exportar PDF
+            <span className="whitespace-nowrap">Exportar PDF</span>
           </Button>
           <Button 
             variant="outline"
             onClick={() => handleExport('csv')}
             disabled={isExporting}
+            className="w-full sm:w-auto"
           >
-            Exportar CSV
+            <span className="whitespace-nowrap">Exportar CSV</span>
           </Button>
         </div>
       </div>
@@ -816,7 +967,7 @@ const Fees = () => {
                       } hover:border-primary transition-colors`}
                       onClick={() => setSelectedBlock(block.id)}
                     >
-                      <div className="flex items-center space-x-2 min-w-0 overflow-hidden mr-1">
+                      <div className="flex items-center space-x-2 min-w-0 overflow-hidden">
                         <div className={`w-3 h-3 rounded-full flex-shrink-0 ${getBlockColor(block.color)}`} />
                         <div className="min-w-0 overflow-hidden">
                           <p className="font-medium truncate">{block.name}</p>
@@ -831,7 +982,7 @@ const Fees = () => {
                         <TooltipProvider>
                           <Tooltip>
                             <TooltipTrigger asChild>
-                              <Button variant="ghost" size="sm" className="h-6 w-6 p-0" onClick={(e) => {
+                              <Button variant="ghost" size="sm" className="h-6 w-6 p-0 flex-shrink-0" onClick={(e) => {
                                 e.stopPropagation();
                                 openHistoryDialog(block.id);
                               }}>
@@ -849,7 +1000,7 @@ const Fees = () => {
                             <TooltipProvider>
                               <Tooltip>
                                 <TooltipTrigger asChild>
-                                  <Button variant="ghost" size="sm" className="h-6 w-6 p-0" onClick={(e) => {
+                                  <Button variant="ghost" size="sm" className="h-6 w-6 p-0 flex-shrink-0" onClick={(e) => {
                                     e.stopPropagation();
                                     handleDuplicateBlock(block.id);
                                   }}>
@@ -865,7 +1016,7 @@ const Fees = () => {
                             <TooltipProvider>
                               <Tooltip>
                                 <TooltipTrigger asChild>
-                                  <Button variant="ghost" size="sm" className="h-6 w-6 p-0" onClick={(e) => {
+                                  <Button variant="ghost" size="sm" className="h-6 w-6 p-0 flex-shrink-0" onClick={(e) => {
                                     e.stopPropagation();
                                     handleEditBlock(block);
                                   }}>
@@ -881,7 +1032,7 @@ const Fees = () => {
                             <TooltipProvider>
                               <Tooltip>
                                 <TooltipTrigger asChild>
-                                  <Button variant="ghost" size="sm" className="h-6 w-6 p-0" onClick={(e) => {
+                                  <Button variant="ghost" size="sm" className="h-6 w-6 p-0 flex-shrink-0" onClick={(e) => {
                                     e.stopPropagation();
                                     handleDeleteBlockInitiate(block.id);
                                   }}>
@@ -905,7 +1056,7 @@ const Fees = () => {
         </Card>
 
         <Card className="lg:col-span-3">
-          <CardHeader className="flex flex-row items-center justify-between">
+          <CardHeader className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
             <div>
               <CardTitle>Gerenciar Taxas</CardTitle>
               {selectedBlock && (
@@ -915,150 +1066,157 @@ const Fees = () => {
               )}
             </div>
             {selectedBlock && (
-              <div className="flex space-x-2">
-                <Button variant="outline" onClick={openAssignClientsDialog}>
-                  Associar Clientes
+              <div className="flex flex-wrap gap-2 w-full sm:w-auto justify-end">
+                <Button 
+                  variant="outline" 
+                  onClick={openAssignClientsDialog}
+                  className="w-full sm:w-auto"
+                >
+                  <span className="whitespace-nowrap">Associar Clientes</span>
                 </Button>
                 {isAdmin && (
-                  <Button onClick={() => {
-                    resetNewFee();
-                    setEditingFee(null);
-                    setNewFee(prev => ({ ...prev, paymentMethod: activeTab }));
-                    setShowAddFeeDialog(true);
-                  }}>
-                    Adicionar Taxa
+                  <Button 
+                    onClick={() => {
+                      resetNewFee();
+                      setEditingFee(null);
+                      setNewFee(prev => ({ ...prev, paymentMethod: activeTab }));
+                      setShowAddFeeDialog(true);
+                    }}
+                    className="w-full sm:w-auto"
+                  >
+                    <span className="whitespace-nowrap">Adicionar Taxa</span>
                   </Button>
                 )}
               </div>
             )}
           </CardHeader>
-          <CardContent>
+          <CardContent className="p-0 md:p-1">
             {!selectedBlock ? (
-              <div className="text-center py-8 text-muted-foreground">
+              <div className="text-center py-8 text-muted-foreground p-4">
                 Selecione um bloco de taxas para gerenciar suas taxas
               </div>
             ) : (
               <Tabs defaultValue="PIX" value={activeTab} onValueChange={setActiveTab}>
-                <TabsList className="grid grid-cols-3 mb-4">
-                  {PAYMENT_TYPES.map(type => (
-                    <TabsTrigger key={type} value={type}>{type}</TabsTrigger>
-                  ))}
-                </TabsList>
+                <div className="px-4">
+                  <TabsList className="grid grid-cols-3 mb-4">
+                    {PAYMENT_TYPES.map(type => (
+                      <TabsTrigger key={type} value={type}>{type}</TabsTrigger>
+                    ))}
+                  </TabsList>
+                </div>
 
                 {PAYMENT_TYPES.map(type => (
                   <TabsContent key={type} value={type} className="mt-0">
-                    <Table>
-                      <TableHeader>
-                        <TableRow>
-                          {type === "CRÉDITO" && (
-                            <TableHead>
+                    <div className="overflow-x-auto">
+                      <Table>
+                        <TableHeader>
+                          <TableRow>
+                            {type === "CRÉDITO" && (
+                              <TableHead className="w-[90px]">
+                                <div className="flex items-center">
+                                  Parcelas
+                                  <TooltipProvider>
+                                    <Tooltip>
+                                      <TooltipTrigger asChild>
+                                        <HelpCircleIcon className="h-4 w-4 ml-1 text-muted-foreground" />
+                                      </TooltipTrigger>
+                                      <TooltipContent>
+                                        <p>Número de parcelas para pagamento em crédito</p>
+                                      </TooltipContent>
+                                    </Tooltip>
+                                  </TooltipProvider>
+                                </div>
+                              </TableHead>
+                            )}
+                            <TableHead className="w-[120px]">
                               <div className="flex items-center">
-                                Parcelas
+                                Taxa Base (%)
                                 <TooltipProvider>
                                   <Tooltip>
                                     <TooltipTrigger asChild>
                                       <HelpCircleIcon className="h-4 w-4 ml-1 text-muted-foreground" />
                                     </TooltipTrigger>
                                     <TooltipContent>
-                                      <p>Número de parcelas para pagamento em crédito</p>
+                                      <p>Taxa básica sem adicionais</p>
                                     </TooltipContent>
                                   </Tooltip>
                                 </TooltipProvider>
                               </div>
                             </TableHead>
-                          )}
-                          <TableHead>
-                            <div className="flex items-center">
-                              Taxa Base (%)
-                              <TooltipProvider>
-                                <Tooltip>
-                                  <TooltipTrigger asChild>
-                                    <HelpCircleIcon className="h-4 w-4 ml-1 text-muted-foreground" />
-                                  </TooltipTrigger>
-                                  <TooltipContent>
-                                    <p>Taxa básica sem adicionais</p>
-                                  </TooltipContent>
-                                </Tooltip>
-                              </TooltipProvider>
-                            </div>
-                          </TableHead>
-                          <TableHead>
-                            <div className="flex items-center">
-                              Taxa Parceiro (%)
-                              <TooltipProvider>
-                                <Tooltip>
-                                  <TooltipTrigger asChild>
-                                    <HelpCircleIcon className="h-4 w-4 ml-1 text-muted-foreground" />
-                                  </TooltipTrigger>
-                                  <TooltipContent>
-                                    <p>Taxa repassada aos parceiros</p>
-                                  </TooltipContent>
-                                </Tooltip>
-                              </TooltipProvider>
-                            </div>
-                          </TableHead>
-                          <TableHead>
-                            <div className="flex items-center">
-                              Taxa Final (%)
-                              <TooltipProvider>
-                                <Tooltip>
-                                  <TooltipTrigger asChild>
-                                    <HelpCircleIcon className="h-4 w-4 ml-1 text-muted-foreground" />
-                                  </TooltipTrigger>
-                                  <TooltipContent>
-                                    <p>Taxa total cobrada do cliente</p>
-                                  </TooltipContent>
-                                </Tooltip>
-                              </TooltipProvider>
-                            </div>
-                          </TableHead>
-                          <TableHead className="text-right">Ações</TableHead>
-                        </TableRow>
-                      </TableHeader>
-                      <TableBody>
-                        {getSelectedBlockFees().length === 0 ? (
-                          <TableRow>
-                            <TableCell colSpan={type === "CRÉDITO" ? 5 : 4} className="text-center py-10">
-                              Nenhuma taxa cadastrada para {type.toLowerCase()}.
-                            </TableCell>
+                            <TableHead className="w-[140px]">
+                              <div className="flex items-center">
+                                Taxa Parceiro (%)
+                                <TooltipProvider>
+                                  <Tooltip>
+                                    <TooltipTrigger asChild>
+                                      <HelpCircleIcon className="h-4 w-4 ml-1 text-muted-foreground" />
+                                    </TooltipTrigger>
+                                    <TooltipContent>
+                                      <p>Taxa repassada aos parceiros</p>
+                                    </TooltipContent>
+                                  </Tooltip>
+                                </TooltipProvider>
+                              </div>
+                            </TableHead>
+                            <TableHead className="w-[120px]">
+                              <div className="flex items-center">
+                                Taxa Final (%)
+                                <TooltipProvider>
+                                  <Tooltip>
+                                    <TooltipTrigger asChild>
+                                      <HelpCircleIcon className="h-4 w-4 ml-1 text-muted-foreground" />
+                                    </TooltipTrigger>
+                                    <TooltipContent>
+                                      <p>Taxa total cobrada do cliente</p>
+                                    </TooltipContent>
+                                  </Tooltip>
+                                </TooltipProvider>
+                              </div>
+                            </TableHead>
+                            <TableHead className="text-right w-[170px]">Ações</TableHead>
                           </TableRow>
-                        ) : (
-                          getSelectedBlockFees().map((fee) => (
-                            <TableRow key={fee.id}>
-                              {type === "CRÉDITO" && <TableCell>{fee.installments}x</TableCell>}
-                              <TableCell>{fee.baseRate.toFixed(2)}%</TableCell>
-                              <TableCell>{fee.partnerRate.toFixed(2)}%</TableCell>
-                              <TableCell>{fee.finalRate.toFixed(2)}%</TableCell>
-                              <TableCell className="text-right">
-                                <div className="flex justify-end gap-2">
-                                  {isAdmin ? (
-                                    <>
-                                      <Button 
-                                        variant="outline" 
-                                        size="sm"
-                                        onClick={() => handleEditFee(fee)}
-                                      >
-                                        Editar
-                                      </Button>
-                                      <Button 
-                                        variant="outline" 
-                                        size="sm"
-                                        className="text-destructive hover:text-destructive"
-                                        onClick={() => handleRemoveFee(fee.id)}
-                                      >
-                                        Remover
-                                      </Button>
-                                    </>
-                                  ) : (
-                                    <Badge variant="outline">Somente Visualização</Badge>
-                                  )}
-                                </div>
+                        </TableHeader>
+                        <TableBody>
+                          {getSelectedBlockFees().length === 0 ? (
+                            <TableRow>
+                              <TableCell colSpan={type === "CRÉDITO" ? 5 : 4} className="text-center py-10">
+                                Nenhuma taxa cadastrada para {type.toLowerCase()}.
                               </TableCell>
                             </TableRow>
-                          ))
-                        )}
-                      </TableBody>
-                    </Table>
+                          ) : (
+                            getSelectedBlockFees().map((fee) => (
+                              <TableRow key={fee.id}>
+                                {type === "CRÉDITO" && <TableCell>{fee.installments}x</TableCell>}
+                                <TableCell>{fee.baseRate.toFixed(2)}%</TableCell>
+                                <TableCell>{fee.partnerRate.toFixed(2)}%</TableCell>
+                                <TableCell>{fee.finalRate.toFixed(2)}%</TableCell>
+                                <TableCell className="text-right">
+                                  <div className="flex justify-end gap-2">
+                                    {isAdmin ? (
+                                      <>
+                                        <Button variant="outline" size="sm" onClick={() => handleEditFee(fee)}>
+                                          Editar
+                                        </Button>
+                                        <Button 
+                                          variant="outline" 
+                                          size="sm"
+                                          className="text-destructive hover:text-destructive"
+                                          onClick={() => handleRemoveFee(fee.id)}
+                                        >
+                                          Remover
+                                        </Button>
+                                      </>
+                                    ) : (
+                                      <Badge variant="outline">Somente Visualização</Badge>
+                                    )}
+                                  </div>
+                                </TableCell>
+                              </TableRow>
+                            ))
+                          )}
+                        </TableBody>
+                      </Table>
+                    </div>
                   </TabsContent>
                 ))}
               </Tabs>
@@ -1067,221 +1225,319 @@ const Fees = () => {
         </Card>
       </div>
 
+      {/* Add/Edit Fee Block Dialog */}
+      <Dialog open={showBlockDialog} onOpenChange={setShowBlockDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>
+              {editingBlock ? "Editar Bloco de Taxas" : "Novo Bloco de Taxas"}
+            </DialogTitle>
+            <DialogDescription>
+              {editingBlock 
+                ? "Edite as informações do bloco de taxas" 
+                : "Crie um novo bloco para agrupar taxas"}
+            </DialogDescription>
+          </DialogHeader>
+          
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <Label htmlFor="block-name">Nome do Bloco</Label>
+              <Input
+                id="block-name"
+                placeholder="Ex: Bloco Padrão"
+                value={newBlock.name}
+                onChange={(e) => setNewBlock({ ...newBlock, name: e.target.value })}
+              />
+            </div>
+            
+            <div className="space-y-2">
+              <Label>Cor</Label>
+              <div className="flex flex-wrap gap-2">
+                {BLOCK_COLORS.map((color) => (
+                  <div
+                    key={color.name}
+                    className={`w-8 h-8 rounded-full cursor-pointer ${color.class} ${
+                      newBlock.color === color.name
+                        ? "ring-2 ring-offset-2 ring-primary"
+                        : ""
+                    }`}
+                    onClick={() => setNewBlock({ ...newBlock, color: color.name })}
+                  />
+                ))}
+              </div>
+            </div>
+          </div>
+          
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowBlockDialog(false)}>
+              Cancelar
+            </Button>
+            <Button onClick={editingBlock ? handleUpdateBlock : handleCreateBlock}>
+              {editingBlock ? "Salvar Alterações" : "Criar Bloco"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+      
+      {/* Delete Block Confirmation Dialog */}
+      <Dialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Confirmar Exclusão</DialogTitle>
+            <DialogDescription>
+              Tem certeza que deseja excluir este bloco de taxas? Esta ação não pode ser desfeita.
+            </DialogDescription>
+          </DialogHeader>
+          
+          <div className="py-4">
+            <p className="text-destructive font-medium">
+              Atenção: Todas as taxas associadas a este bloco também serão excluídas.
+            </p>
+          </div>
+          
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowDeleteDialog(false)}>
+              Cancelar
+            </Button>
+            <Button variant="destructive" onClick={handleDeleteBlock}>
+              Excluir
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+      
       {/* Add/Edit Fee Dialog */}
       <Dialog open={showAddFeeDialog} onOpenChange={setShowAddFeeDialog}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>{editingFee ? "Editar Taxa" : "Adicionar Nova Taxa"}</DialogTitle>
-          </DialogHeader>
-          
-          <div className="space-y-4 pt-4">
-            <div className="grid gap-4">
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <Label htmlFor="paymentMethod">Método de Pagamento</Label>
-                  <select 
-                    id="paymentMethod"
-                    className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
-                    value={newFee.paymentMethod}
-                    onChange={(e) => setNewFee({...newFee, paymentMethod: e.target.value})}
-                  >
-                    {PAYMENT_TYPES.map(type => (
-                      <option key={type} value={type}>{type}</option>
-                    ))}
-                  </select>
-                </div>
-                
-                {newFee.paymentMethod === "CRÉDITO" && (
-                  <div>
-                    <Label htmlFor="installments">Parcelas</Label>
-                    <select 
-                      id="installments"
-                      className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
-                      value={newFee.installments}
-                      onChange={(e) => setNewFee({...newFee, installments: parseInt(e.target.value)})}
-                    >
-                      {INSTALLMENT_OPTIONS.map(num => (
-                        <option key={num} value={num}>{num}x</option>
-                      ))}
-                    </select>
-                  </div>
-                )}
-              </div>
-              
-              <div>
-                <div className="flex justify-between">
-                  <Label htmlFor="baseRate">Taxa Base (%)</Label>
-                  <TooltipProvider>
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <InfoIcon className="h-4 w-4 text-muted-foreground" />
-                      </TooltipTrigger>
-                      <TooltipContent>
-                        <p>Taxa básica sem adicionais (0-100%)</p>
-                      </TooltipContent>
-                    </Tooltip>
-                  </TooltipProvider>
-                </div>
-                <Input 
-                  id="baseRate"
-                  type="number"
-                  step="0.01"
-                  min="0"
-                  max="100"
-                  value={newFee.baseRate}
-                  onChange={(e) => setNewFee({...newFee, baseRate: parseFloat(e.target.value)})}
-                />
-              </div>
-              
-              <div>
-                <div className="flex justify-between">
-                  <Label htmlFor="partnerRate">Taxa Parceiro (%)</Label>
-                  <TooltipProvider>
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <InfoIcon className="h-4 w-4 text-muted-foreground" />
-                      </TooltipTrigger>
-                      <TooltipContent>
-                        <p>Taxa repassada aos parceiros (0-100%)</p>
-                      </TooltipContent>
-                    </Tooltip>
-                  </TooltipProvider>
-                </div>
-                <Input 
-                  id="partnerRate"
-                  type="number"
-                  step="0.01"
-                  min="0"
-                  max="100"
-                  value={newFee.partnerRate}
-                  onChange={(e) => setNewFee({...newFee, partnerRate: parseFloat(e.target.value)})}
-                />
-              </div>
-              
-              <div>
-                <div className="flex justify-between">
-                  <Label htmlFor="finalRate">Taxa Final (%)</Label>
-                  <TooltipProvider>
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <InfoIcon className="h-4 w-4 text-muted-foreground" />
-                      </TooltipTrigger>
-                      <TooltipContent>
-                        <p>Taxa total cobrada do cliente (0-100%)</p>
-                      </TooltipContent>
-                    </Tooltip>
-                  </TooltipProvider>
-                </div>
-                <Input 
-                  id="finalRate"
-                  type="number"
-                  step="0.01"
-                  min="0"
-                  max="100"
-                  value={newFee.finalRate}
-                  onChange={(e) => setNewFee({...newFee, finalRate: parseFloat(e.target.value)})}
-                />
-              </div>
-            </div>
-          </div>
-          
-          <DialogFooter>
-            <Button variant="outline" onClick={() => {
-              setShowAddFeeDialog(false);
-              setEditingFee(null);
-            }}>Cancelar</Button>
-            <Button onClick={handleAddFee}>{editingFee ? "Salvar" : "Adicionar"}</Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-
-      {/* Add/Edit Block Dialog */}
-      <Dialog open={showBlockDialog} onOpenChange={setShowBlockDialog}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>{editingBlock ? "Editar Bloco" : "Novo Bloco de Taxas"}</DialogTitle>
+            <DialogTitle>
+              {editingFee ? "Editar Taxa" : "Adicionar Nova Taxa"}
+            </DialogTitle>
             <DialogDescription>
-              Configure o nome e a cor do bloco de taxas
+              {editingFee 
+                ? "Edite as informações da taxa" 
+                : "Configure uma nova taxa para este bloco"}
             </DialogDescription>
           </DialogHeader>
           
-          <div className="space-y-4 pt-4">
-            <div className="grid gap-4">
-              <div>
-                <Label htmlFor="blockName">Nome do Bloco</Label>
-                <Input 
-                  id="blockName"
-                  value={newBlock.name}
-                  onChange={(e) => setNewBlock({...newBlock, name: e.target.value})}
-                  placeholder="Ex: Premium, Padrão, Especial"
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <Label htmlFor="payment-method">Método de Pagamento</Label>
+              <Select
+                value={newFee.paymentMethod}
+                onValueChange={(value: PaymentType) => {
+                  setNewFee({
+                    ...newFee,
+                    paymentMethod: value,
+                    installments: value === "CRÉDITO" ? 1 : null,
+                  });
+                }}
+              >
+                <SelectTrigger id="payment-method">
+                  <SelectValue placeholder="Selecione o método" />
+                </SelectTrigger>
+                <SelectContent>
+                  {PAYMENT_TYPES.map((type) => (
+                    <SelectItem key={type} value={type}>
+                      {type}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            
+            {newFee.paymentMethod === "CRÉDITO" && (
+              <div className="space-y-2">
+                <Label htmlFor="installments">Parcelas</Label>
+                <Input
+                  id="installments"
+                  type="number"
+                  min="1"
+                  max="12"
+                  placeholder="Número de parcelas"
+                  value={newFee.installments || ""}
+                  onChange={(e) => {
+                    const value = parseInt(e.target.value);
+                    setNewFee({
+                      ...newFee,
+                      installments: isNaN(value) ? null : value,
+                    });
+                  }}
                 />
               </div>
-              
-              <div>
-                <Label>Cor</Label>
-                <div className="grid grid-cols-5 gap-2 mt-2">
-                  {FEE_BLOCK_COLORS.map(color => (
-                    <div 
-                      key={color.value}
-                      className={`flex items-center justify-center p-2 border rounded-md cursor-pointer ${
-                        newBlock.color === color.value ? 'border-primary ring-2 ring-primary ring-opacity-50' : 'border-border'
-                      } ${getBlockColor(color.value)}`}
-                      onClick={() => setNewBlock({...newBlock, color: color.value})}
-                    >
-                      {color.name}
-                    </div>
-                  ))}
-                </div>
-              </div>
+            )}
+            
+            <div className="space-y-2">
+              <Label htmlFor="base-rate">Taxa Base (%)</Label>
+              <Input
+                id="base-rate"
+                type="number"
+                step="0.01"
+                min="0"
+                placeholder="Ex: 2.5"
+                value={newFee.baseRate}
+                onChange={(e) => {
+                  const value = parseFloat(e.target.value);
+                  setNewFee({
+                    ...newFee,
+                    baseRate: isNaN(value) ? 0 : value,
+                    finalRate: isNaN(value) ? newFee.partnerRate : value + newFee.partnerRate,
+                  });
+                }}
+              />
+            </div>
+            
+            <div className="space-y-2">
+              <Label htmlFor="partner-rate">Taxa Parceiro (%)</Label>
+              <Input
+                id="partner-rate"
+                type="number"
+                step="0.01"
+                min="0"
+                placeholder="Ex: 0.5"
+                value={newFee.partnerRate}
+                onChange={(e) => {
+                  const value = parseFloat(e.target.value);
+                  setNewFee({
+                    ...newFee,
+                    partnerRate: isNaN(value) ? 0 : value,
+                    finalRate: isNaN(value) ? newFee.baseRate : newFee.baseRate + value,
+                  });
+                }}
+              />
+            </div>
+            
+            <div className="space-y-2">
+              <Label htmlFor="final-rate">Taxa Final (%)</Label>
+              <Input
+                id="final-rate"
+                type="number"
+                step="0.01"
+                min="0"
+                placeholder="Ex: 3.0"
+                value={newFee.finalRate}
+                onChange={(e) => {
+                  const value = parseFloat(e.target.value);
+                  setNewFee({
+                    ...newFee,
+                    finalRate: isNaN(value) ? 0 : value,
+                  });
+                }}
+              />
+              <p className="text-xs text-muted-foreground">
+                A taxa final é calculada automaticamente como a soma da taxa base e da taxa do parceiro,
+                mas pode ser ajustada manualmente se necessário.
+              </p>
             </div>
           </div>
           
           <DialogFooter>
-            <Button variant="outline" onClick={() => {
-              setShowBlockDialog(false);
-              setEditingBlock(null);
-            }}>Cancelar</Button>
-            <Button onClick={handleAddBlock}>{editingBlock ? "Salvar" : "Criar Bloco"}</Button>
+            <Button variant="outline" onClick={() => setShowAddFeeDialog(false)}>
+              Cancelar
+            </Button>
+            <Button onClick={handleCreateFee}>
+              {editingFee ? "Salvar Alterações" : "Adicionar Taxa"}
+            </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
-
+      
       {/* Assign Clients Dialog */}
       <Dialog open={showAssignClientsDialog} onOpenChange={setShowAssignClientsDialog}>
-        <DialogContent className="sm:max-w-md">
+        <DialogContent className="max-w-3xl">
           <DialogHeader>
             <DialogTitle>Associar Clientes</DialogTitle>
             <DialogDescription>
-              Selecione os clientes que utilizarão este bloco de taxas
+              Selecione os clientes que deseja associar a este bloco de taxas
             </DialogDescription>
           </DialogHeader>
           
-          <div className="py-4 max-h-[300px] overflow-y-auto">
-            {clients.length === 0 ? (
-              <p className="text-center text-muted-foreground py-4">
-                Nenhum cliente encontrado.
-              </p>
-            ) : (
-              <div className="space-y-2">
-                {clients.map(client => (
-                  <div 
-                    key={client.id} 
-                    className={`flex items-center p-2 rounded-md ${
-                      selectedClients.includes(client.id) ? 'bg-primary/10' : ''
-                    } hover:bg-secondary/50 cursor-pointer`}
-                    onClick={() => toggleClient(client.id)}
-                  >
-                    <input 
-                      type="checkbox" 
-                      checked={selectedClients.includes(client.id)}
-                      onChange={() => toggleClient(client.id)}
-                      className="mr-3"
-                    />
-                    <span>{client.business_name}</span>
-                  </div>
-                ))}
-              </div>
-            )}
+          <div className="py-4">
+            <div className="mb-4">
+              <Input
+                placeholder="Buscar clientes..."
+                value={clientSearch}
+                onChange={(e) => setClientSearch(e.target.value)}
+              />
+            </div>
+            
+            <div className="border rounded-md max-h-[300px] overflow-y-auto">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead className="w-[50px]">
+                      <div className="flex items-center justify-center">
+                        <input
+                          type="checkbox"
+                          className="rounded border-gray-300"
+                          checked={
+                            getFilteredClients().length > 0 &&
+                            getFilteredClients().every(client => selectedClients.includes(client.id))
+                          }
+                          onChange={(e) => {
+                            if (e.target.checked) {
+                              setSelectedClients(getFilteredClients().map(client => client.id));
+                            } else {
+                              setSelectedClients([]);
+                            }
+                          }}
+                        />
+                      </div>
+                    </TableHead>
+                    <TableHead>Nome</TableHead>
+                    <TableHead>Documento</TableHead>
+                    <TableHead>Bloco Atual</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {getFilteredClients().length === 0 ? (
+                    <TableRow>
+                      <TableCell colSpan={4} className="text-center py-4">
+                        Nenhum cliente encontrado.
+                      </TableCell>
+                    </TableRow>
+                  ) : (
+                    getFilteredClients().map((client) => (
+                      <TableRow key={client.id}>
+                        <TableCell>
+                          <div className="flex items-center justify-center">
+                            <input
+                              type="checkbox"
+                              className="rounded border-gray-300"
+                              checked={selectedClients.includes(client.id)}
+                              onChange={(e) => {
+                                if (e.target.checked) {
+                                  setSelectedClients([...selectedClients, client.id]);
+                                } else {
+                                  setSelectedClients(selectedClients.filter(id => id !== client.id));
+                                }
+                              }}
+                            />
+                          </div>
+                        </TableCell>
+                        <TableCell>{client.name}</TableCell>
+                        <TableCell>{client.document}</TableCell>
+                        <TableCell>
+                          {client.feeBlockId ? (
+                            <Badge variant="outline">
+                              {feeBlocks.find(b => b.id === client.feeBlockId)?.name || "Desconhecido"}
+                            </Badge>
+                          ) : (
+                            <Badge variant="outline" className="bg-gray-100">
+                              Nenhum
+                            </Badge>
+                          )}
+                        </TableCell>
+                      </TableRow>
+                    ))
+                  )}
+                </TableBody>
+              </Table>
+            </div>
+            
+            <div className="mt-4 text-sm text-muted-foreground">
+              {selectedClients.length} cliente(s) selecionado(s)
+            </div>
           </div>
           
           <DialogFooter>
@@ -1289,86 +1545,43 @@ const Fees = () => {
               Cancelar
             </Button>
             <Button onClick={handleAssignClients}>
-              Salvar
+              Associar Clientes
             </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
-
+      
       {/* History Dialog */}
       <Dialog open={showHistoryDialog} onOpenChange={setShowHistoryDialog}>
-        <DialogContent className="sm:max-w-3xl">
+        <DialogContent>
           <DialogHeader>
             <DialogTitle>Histórico de Alterações</DialogTitle>
             <DialogDescription>
-              Veja todas as mudanças feitas neste bloco de taxas
+              Veja o histórico de alterações deste bloco de taxas
             </DialogDescription>
           </DialogHeader>
           
           <div className="py-4 max-h-[400px] overflow-y-auto">
-            {changeHistory.length === 0 ? (
+            {blockHistory.length === 0 ? (
               <p className="text-center text-muted-foreground py-4">
-                Nenhuma alteração registrada para este bloco.
+                Nenhum histórico encontrado.
               </p>
             ) : (
               <div className="space-y-4">
-                {changeHistory.map(log => (
-                  <div 
-                    key={log.id} 
-                    className="p-4 border rounded-md"
-                  >
-                    <div className="flex justify-between items-start mb-2">
+                {blockHistory.map((history) => (
+                  <div key={history.id} className="border rounded-md p-3">
+                    <div className="flex justify-between items-start">
                       <div>
-                        <Badge 
-                          className={
-                            log.changeType === 'CREATE' ? 'bg-green-100 text-green-800 hover:bg-green-100' : 
-                            log.changeType === 'UPDATE' ? 'bg-blue-100 text-blue-800 hover:bg-blue-100' : 
-                            'bg-red-100 text-red-800 hover:bg-red-100'
-                          }
-                        >
-                          {log.changeType === 'CREATE' ? 'Criação' : 
-                           log.changeType === 'UPDATE' ? 'Atualização' : 
-                           'Exclusão'}
-                        </Badge>
-                        <span className="ml-2 text-sm text-muted-foreground">
-                          por <strong>{log.userName}</strong>
-                        </span>
+                        <p className="font-medium">{history.action}</p>
+                        <p className="text-sm text-muted-foreground">{history.details}</p>
                       </div>
-                      <span className="text-sm text-muted-foreground">
-                        {formatDate(log.timestamp)}
-                      </span>
+                      <div className="text-xs text-muted-foreground">
+                        {formatDate(history.created_at)}
+                      </div>
                     </div>
-                    
-                    <div className="mt-2">
-                      {log.changeType === 'CREATE' && (
-                        <p>Novo registro criado</p>
-                      )}
-                      
-                      {log.changeType === 'UPDATE' && log.previousValue && log.newValue && (
-                        <div className="grid grid-cols-2 gap-4">
-                          <div>
-                            <p className="font-medium mb-1">Antes:</p>
-                            <pre className="bg-muted p-2 rounded text-xs overflow-auto">
-                              {JSON.stringify(log.previousValue, null, 2)}
-                            </pre>
-                          </div>
-                          <div>
-                            <p className="font-medium mb-1">Depois:</p>
-                            <pre className="bg-muted p-2 rounded text-xs overflow-auto">
-                              {JSON.stringify(log.newValue, null, 2)}
-                            </pre>
-                          </div>
-                        </div>
-                      )}
-                      
-                      {log.changeType === 'DELETE' && log.previousValue && (
-                        <div>
-                          <p className="font-medium mb-1">Registro excluído:</p>
-                          <pre className="bg-muted p-2 rounded text-xs overflow-auto">
-                            {JSON.stringify(log.previousValue, null, 2)}
-                          </pre>
-                        </div>
-                      )}
+                    <div className="mt-2 text-xs">
+                      <span className="text-muted-foreground">Por: </span>
+                      <span>{history.user}</span>
                     </div>
                   </div>
                 ))}
@@ -1379,52 +1592,6 @@ const Fees = () => {
           <DialogFooter>
             <Button onClick={() => setShowHistoryDialog(false)}>
               Fechar
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-
-      {/* Delete Confirmation Dialog */}
-      <Dialog open={showDeleteConfirmDialog} onOpenChange={setShowDeleteConfirmDialog}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle className="text-destructive">Confirmar Exclusão</DialogTitle>
-            <DialogDescription>
-              Esta ação é irreversível. Para confirmar, digite o nome do bloco abaixo.
-            </DialogDescription>
-          </DialogHeader>
-          
-          <div className="py-4">
-            {blockToDelete && (
-              <div className="space-y-4">
-                <p>
-                  Para excluir o bloco <strong>{feeBlocks.find(b => b.id === blockToDelete)?.name}</strong>, 
-                  digite o nome exato abaixo:
-                </p>
-                
-                <Input 
-                  value={confirmDeleteText}
-                  onChange={(e) => setConfirmDeleteText(e.target.value)}
-                  placeholder="Nome do bloco para confirmar"
-                  className="border-destructive"
-                />
-              </div>
-            )}
-          </div>
-          
-          <DialogFooter>
-            <Button variant="outline" onClick={() => {
-              setShowDeleteConfirmDialog(false);
-              setBlockToDelete(null);
-            }}>
-              Cancelar
-            </Button>
-            <Button 
-              variant="destructive"
-              onClick={handleDeleteBlockConfirm}
-              disabled={!blockToDelete || confirmDeleteText !== feeBlocks.find(b => b.id === blockToDelete)?.name}
-            >
-              Excluir Permanentemente
             </Button>
           </DialogFooter>
         </DialogContent>

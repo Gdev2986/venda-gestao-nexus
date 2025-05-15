@@ -10,6 +10,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import TablePagination from "./table-pagination";
+import { cn } from "@/lib/utils";
 
 // Updated interface to use ColumnDef
 interface DataTableProps<TData> {
@@ -19,6 +20,7 @@ interface DataTableProps<TData> {
   totalPages?: number;
   onPageChange?: (page: number) => void;
   isLoading?: boolean;
+  className?: string;
 }
 
 export function DataTable<TData extends object>({ 
@@ -27,10 +29,11 @@ export function DataTable<TData extends object>({
   currentPage, 
   totalPages, 
   onPageChange, 
-  isLoading 
+  isLoading,
+  className
 }: DataTableProps<TData>) {
   return (
-    <div className="rounded-md border">
+    <div className={cn("rounded-md border overflow-x-auto", className)}>
       <Table>
         <TableHeader>
           <TableRow>
@@ -62,7 +65,7 @@ export function DataTable<TData extends object>({
                   const columnId = String(column.id);
                   
                   return (
-                    <TableCell key={`${rowIndex}-${columnId}`}>
+                    <TableCell key={`${rowIndex}-${columnId}`} className="py-3">
                       {column.cell 
                         ? typeof column.cell === 'function'
                           ? column.cell({ row: { original: row } } as any)
