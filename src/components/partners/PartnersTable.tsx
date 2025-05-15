@@ -59,7 +59,7 @@ const PartnersTable = ({
   }
 
   return (
-    <div className="space-y-4 max-w-full">
+    <div className="space-y-4 w-full">
       <div className="rounded-md border overflow-hidden">
         <div className="overflow-x-auto">
           <Table>
@@ -81,8 +81,8 @@ const PartnersTable = ({
                       {partner.contact_name && (
                         <div className="space-y-1">
                           <div>{partner.contact_name}</div>
-                          {partner.email && <div className="text-sm text-muted-foreground">{partner.email}</div>}
-                          {partner.phone && <div className="text-sm text-muted-foreground">{partner.phone}</div>}
+                          {partner.email && <div className="text-xs sm:text-sm text-muted-foreground">{partner.email}</div>}
+                          {partner.phone && <div className="text-xs sm:text-sm text-muted-foreground">{partner.phone}</div>}
                         </div>
                       )}
                     </TableCell>
@@ -91,9 +91,9 @@ const PartnersTable = ({
                     <TableCell className="text-right">
                       <DropdownMenu>
                         <DropdownMenuTrigger asChild>
-                          <Button variant="ghost" size="icon">
-                            <MoreHorizontal className="h-4 w-4" />
+                          <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
                             <span className="sr-only">Abrir menu</span>
+                            <MoreHorizontal className="h-4 w-4" />
                           </Button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end">
@@ -142,10 +142,11 @@ const PartnersTable = ({
             size="sm"
             onClick={() => setPage(page - 1)}
             disabled={page === 1}
+            className="text-xs"
           >
             Anterior
           </Button>
-          <div className="text-sm text-muted-foreground">
+          <div className="text-xs sm:text-sm text-muted-foreground">
             Página {page} de {totalPages}
           </div>
           <Button
@@ -153,6 +154,7 @@ const PartnersTable = ({
             size="sm"
             onClick={() => setPage(page + 1)}
             disabled={page === totalPages}
+            className="text-xs"
           >
             Próximo
           </Button>

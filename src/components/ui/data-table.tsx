@@ -30,7 +30,7 @@ export function DataTable<TData extends object>({
   isLoading 
 }: DataTableProps<TData>) {
   return (
-    <div className="rounded-md border max-w-full">
+    <div className="rounded-md border w-full">
       <div className="overflow-x-auto">
         <Table>
           <TableHeader>
@@ -53,7 +53,10 @@ export function DataTable<TData extends object>({
             {isLoading ? (
               <TableRow>
                 <TableCell colSpan={columns.length} className="h-24 text-center">
-                  Carregando...
+                  <div className="flex justify-center items-center">
+                    <div className="w-6 h-6 border-2 border-primary border-t-transparent rounded-full animate-spin"></div>
+                    <span className="ml-2">Carregando...</span>
+                  </div>
                 </TableCell>
               </TableRow>
             ) : data.length > 0 ? (
@@ -86,7 +89,7 @@ export function DataTable<TData extends object>({
       </div>
       
       {totalPages && totalPages > 1 && currentPage && onPageChange && (
-        <div className="px-4 py-2 flex justify-center">
+        <div className="px-2 py-2 sm:px-4 sm:py-2 flex justify-center">
           <TablePagination 
             currentPage={currentPage} 
             totalPages={totalPages} 

@@ -3,7 +3,6 @@ import { UserRole } from "@/types";
 import LogisticsLayout from "./LogisticsLayout";
 import MainLayout from "./MainLayout";
 import { useUserRole } from "@/hooks/use-user-role";
-import { Fragment } from "react";
 
 // Custom layout selector based on user role
 const AdminLayoutSelector = () => {

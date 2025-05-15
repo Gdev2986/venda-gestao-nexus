@@ -40,27 +40,27 @@ const MainSidebar = memo(({ isOpen, isMobile, onClose, userRole }: MainSidebarPr
         )}
         style={{ backgroundColor: 'hsl(196, 70%, 20%)' }}
       >
-        <div className="flex items-center justify-between h-16 px-4 border-b border-sidebar-border">
+        <div className="flex items-center justify-between h-14 md:h-16 px-4 border-b border-sidebar-border">
           <div className="flex items-center space-x-2">
-            <div className="w-8 h-8 rounded-md bg-primary flex items-center justify-center text-white font-bold">
+            <div className="w-6 h-6 md:w-8 md:h-8 rounded-md bg-primary flex items-center justify-center text-white font-bold text-xs md:text-base">
               SP
             </div>
-            <span className="text-lg font-semibold text-white">SigmaPay</span>
+            <span className="text-base md:text-lg font-semibold text-white">SigmaPay</span>
           </div>
 
           {isMobile && (
             <Button
               variant="ghost"
-              size="icon"
+              size="sm"
               onClick={onClose}
-              className="text-sidebar-foreground hover:text-white hover:bg-sidebar-accent"
+              className="text-sidebar-foreground hover:text-white hover:bg-sidebar-accent p-1"
             >
-              <X className="h-5 w-5" />
+              <X className="h-4 w-4 md:h-5 md:w-5" />
             </Button>
           )}
         </div>
 
-        <div className="flex-1 overflow-y-auto py-4 px-3">
+        <div className="flex-1 overflow-y-auto py-2 md:py-4 px-2 md:px-3">
           <SidebarNavigation userRole={userRole} />
           <SidebarFooter />
         </div>
