@@ -20,8 +20,8 @@ const AdminSalesLayout = ({
 }: AdminSalesLayoutProps) => {
   return (
     <>
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-2 md:gap-4 mb-4 md:mb-8">
-        <div>
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-2 md:gap-4 mb-4 md:mb-8 w-full">
+        <div className="w-full md:w-auto">
           <h1 className="text-xl md:text-2xl font-bold">Gestão de Vendas</h1>
           <p className="text-muted-foreground text-sm md:text-base">
             Visualize, filtre e gerencie todas as vendas realizadas
@@ -62,7 +62,9 @@ const AdminSalesLayout = ({
         </div>
       </div>
       
-      {children}
+      <div className="w-full overflow-x-auto">
+        {children}
+      </div>
     </>
   );
 };
