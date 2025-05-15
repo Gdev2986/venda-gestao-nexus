@@ -19,7 +19,7 @@ export const clientRoutes = (
   <Route path={PATHS.USER.DASHBOARD} element={<ClientLayout />}>
     <Route index element={<ClientDashboard />} />
     <Route path="payments" element={<ClientNew />} />
-    <Route path={`clients/:id`} element={<ClientDetail />} />
+    <Route path="clients/:id" element={<ClientDetail />} />
   </Route>
 );
 

@@ -1,11 +1,30 @@
 
-import { formatCurrency, formatDate } from "@/lib/formatters";
+import { formatCurrency } from "@/lib/utils";
 import { PaymentData } from "@/hooks/payments/payment.types";
 import { Badge } from "@/components/ui/badge";
 
 interface PaymentDetailViewProps {
   payment: PaymentData;
 }
+
+// Simple date formatter function that accepts strings or Date objects
+const formatDate = (date: string | Date | undefined): string => {
+  if (!date) return 'N/A';
+  
+  try {
+    const dateObj = typeof date === 'string' ? new Date(date) : date;
+    return new Intl.DateTimeFormat('pt-BR', {
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit'
+    }).format(dateObj);
+  } catch (error) {
+    console.error('Error formatting date:', error);
+    return String(date);
+  }
+};
 
 export function PaymentDetailView({ payment }: PaymentDetailViewProps) {
   return (

@@ -20,8 +20,8 @@ const PartnerLayout = () => {
 export const partnerRoutes = (
   <Route path={PATHS.PARTNER.DASHBOARD} element={<PartnerLayout />}>
     <Route index element={<Dashboard />} />
-    <Route path={PATHS.PARTNER.CLIENTS} element={<Clients />} />
-    <Route path={PATHS.PARTNER.SETTINGS} element={<Settings />} />
+    <Route path="clients" element={<Clients />} />
+    <Route path="settings" element={<Settings />} />
   </Route>
 );
 

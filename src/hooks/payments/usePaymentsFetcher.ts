@@ -1,96 +1,90 @@
 
-import { useState, useEffect } from "react";
-import { supabase } from "@/integrations/supabase/client";
-import { PaymentRequest, PaymentRequestStatus } from "@/types/payment.types";
-import { useToast } from "@/hooks/use-toast";
-import { UsePaymentsOptions, PaymentData } from "./payment.types";
+import { useState, useEffect, useCallback } from 'react';
+import { PaymentRequest, PaymentRequestStatus } from './payment.types';
+import { useToast } from '@/hooks/use-toast';
 
-export const usePaymentsFetcher = (options: UsePaymentsOptions = {}) => {
-  const [paymentRequests, setPaymentRequests] = useState<PaymentRequest[]>([]);
+// Mock payment data - simulating what would come from the API
+const mockPaymentRequests: PaymentRequest[] = [
+  {
+    id: '1',
+    client_id: 'client1',
+    amount: 1000,
+    status: 'PENDING',
+    created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString(),
+    rejection_reason: null
+  },
+  {
+    id: '2',
+    client_id: 'client2',
+    amount: 2500,
+    status: 'APPROVED',
+    created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString(),
+    rejection_reason: null
+  }
+];
+
+export const usePaymentsFetcher = (clientId?: string, statusFilter: PaymentRequestStatus | 'ALL' = 'ALL') => {
+  const [payments, setPayments] = useState<PaymentRequest[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [currentPage, setCurrentPage] = useState(1);
-  const [totalPages, setTotalPages] = useState(1);
   const { toast } = useToast();
-  const { statusFilter = "ALL", searchTerm = "", fetchOnMount = true } = options;
+  
+  // Convert string status to the proper type
+  const normalizeStatus = (status: string): PaymentRequestStatus => {
+    const upperStatus = status.toUpperCase();
+    if (['PENDING', 'APPROVED', 'PAID', 'REJECTED'].includes(upperStatus)) {
+      return upperStatus as PaymentRequestStatus;
+    }
+    return 'PENDING';
+  };
 
-  const fetchPaymentRequests = async () => {
+  const fetchPayments = useCallback(async () => {
     setIsLoading(true);
+    setError(null);
+
     try {
-      let query = supabase
-        .from("payment_requests")
-        .select(`
-          *,
-          client:clients(id, business_name, email)
-        `);
-
-      // Apply status filter if not ALL
-      if (statusFilter !== "ALL") {
-        // Cast to string to ensure type safety
-        query = query.eq("status", String(statusFilter));
+      // In a real app, this would be an API call
+      // For now, we'll just use the mock data
+      let filteredPayments = [...mockPaymentRequests];
+      
+      // Filter by client if provided
+      if (clientId) {
+        filteredPayments = filteredPayments.filter(p => p.client_id === clientId);
       }
-
-      // Apply search filter if provided
-      if (searchTerm) {
-        query = query.or(`client.business_name.ilike.%${searchTerm}%,description.ilike.%${searchTerm}%`);
+      
+      // Filter by status if not 'ALL'
+      if (statusFilter !== 'ALL') {
+        const normalizedStatus = normalizeStatus(statusFilter as string);
+        filteredPayments = filteredPayments.filter(
+          p => p.status.toUpperCase() === normalizedStatus
+        );
       }
-
-      const { data, error } = await query.order("created_at", { ascending: false });
-
-      if (error) {
-        throw error;
-      }
-
-      if (data) {
-        // Transform the data to match the PaymentRequest interface
-        const formattedRequests: PaymentRequest[] = data.map((request: any) => ({
-          id: request.id,
-          client_id: request.client_id,
-          client_name: request.client?.business_name || 'Unknown Client',
-          amount: request.amount,
-          description: request.description || '',
-          status: request.status as PaymentRequestStatus,
-          created_at: request.created_at,
-          updated_at: request.updated_at,
-          receipt_url: request.receipt_url || null,
-          pix_key_id: request.pix_key_id,
-          approved_at: request.approved_at || null,
-          approved_by: request.approved_by || null,
-          rejection_reason: request.rejection_reason || null,
-          client: request.client
-        }));
-
-        setPaymentRequests(formattedRequests);
-        
-        // Mock pagination for now
-        setTotalPages(Math.ceil(formattedRequests.length / 10));
-      }
-    } catch (error: any) {
-      setError(error.message);
+      
+      setPayments(filteredPayments);
+    } catch (err: any) {
+      console.error('Error fetching payment requests:', err);
+      setError(err.message || 'An error occurred while fetching payment requests');
+      
       toast({
-        title: "Error fetching payment requests",
-        description: error.message,
-        variant: "destructive",
+        title: 'Error',
+        description: 'Failed to load payment requests',
+        variant: 'destructive',
       });
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [clientId, statusFilter, toast]);
 
   useEffect(() => {
-    if (fetchOnMount) {
-      fetchPaymentRequests();
-    }
-  }, [statusFilter, searchTerm, fetchOnMount]);
+    fetchPayments();
+  }, [fetchPayments]);
 
   return {
-    paymentRequests,
-    setPaymentRequests,
+    payments,
     isLoading,
     error,
-    currentPage,
-    totalPages,
-    setCurrentPage,
-    fetchPaymentRequests
+    refetch: fetchPayments
   };
 };
