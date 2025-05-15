@@ -1,35 +1,31 @@
-
 import { Payment } from "@/types";
-import { PaymentRequest, PaymentData } from "@/hooks/payments/payment.types";
-import { toPaymentStatus } from "@/lib/type-utils";
+import { formatCurrency } from "@/utils/currency-utils";
+import { formatDateTime } from "@/utils/date-utils";
 
-/**
- * Converts a Payment to a PaymentRequest
- */
-export function convertToPaymentRequest(payment: Payment): PaymentData {
+export interface PaymentViewModel {
+  id: string;
+  amount: string;
+  rawAmount: number;
+  status: string;
+  clientName: string;
+  date: string;
+  approvedAt?: string;
+  rejectionReason?: string;
+}
+
+const convertPayment = (paymentData: Payment): PaymentViewModel => {
   return {
-    id: payment.id,
-    client_id: payment.client_id,
-    amount: payment.amount,
-    status: payment.status,
-    created_at: payment.created_at,
-    updated_at: payment.updated_at,
-    approved_by: payment.approved_by || undefined,
-    approved_at: payment.approved_at || undefined,
-    receipt_url: payment.receipt_url || undefined,
-    description: payment.description || undefined,
-    rejection_reason: payment.rejection_reason || null,
-    ...(payment.client ? { client: payment.client } : {}),
-    ...(payment.pix_key ? { pix_key: payment.pix_key } : {})
+    id: paymentData.id,
+    amount: formatCurrency(paymentData.amount),
+    rawAmount: paymentData.amount,
+    status: paymentData.status,
+    clientName: paymentData.client_name || 'Unknown Client',
+    date: formatDateTime(paymentData.created_at),
+    approvedAt: paymentData.approved_at ? formatDateTime(paymentData.approved_at) : undefined,
+    rejectionReason: paymentData.rejection_reason || undefined,
   };
-}
+};
 
-/**
- * Type guard to check if an object is a PaymentRequest
- */
-export function isPaymentRequest(payment: any): payment is PaymentRequest {
-  return payment && 
-    typeof payment.id === 'string' &&
-    typeof payment.client_id === 'string' &&
-    typeof payment.amount === 'number';
-}
+export const PaymentConverter = {
+  convertPayment,
+};

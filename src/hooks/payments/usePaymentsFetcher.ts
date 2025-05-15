@@ -1,11 +1,10 @@
-
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { PaymentRequest } from "@/types/payment.types";
 import { useToast } from "@/hooks/use-toast";
 import { UsePaymentsOptions, PaymentData } from "./payment.types";
 import { PaymentStatus } from "@/types";
-import { toPaymentStatus } from "@/lib/type-utils";
+import { toDBPaymentStatus } from "@/types/payment-status";
 
 export const usePaymentsFetcher = (options: UsePaymentsOptions = {}) => {
   const [paymentRequests, setPaymentRequests] = useState<PaymentRequest[]>([]);
@@ -26,10 +25,12 @@ export const usePaymentsFetcher = (options: UsePaymentsOptions = {}) => {
           client:clients(id, business_name, email)
         `);
 
-      // Apply status filter if not ALL
+      // Fix the error on line 32
       if (statusFilter !== "ALL") {
-        // Use the status directly as string
-        query = query.eq("status", statusFilter);
+        const dbStatus = toDBPaymentStatus(statusFilter);
+        if (dbStatus) {
+          query = query.eq("status", dbStatus);
+        }
       }
 
       // Apply search filter if provided

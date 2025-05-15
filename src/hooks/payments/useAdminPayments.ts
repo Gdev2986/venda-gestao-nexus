@@ -1,11 +1,10 @@
-
 import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { Payment, PaymentStatus } from '@/types';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { PaymentAction } from '@/components/payments/PaymentTableColumns';
-import { toPaymentStatus } from '@/lib/type-utils';
+import { toDBPaymentStatus } from "@/types/payment-status";
 
 interface UseAdminPaymentsProps {
   searchTerm: string;
@@ -31,8 +30,10 @@ export const useAdminPayments = ({ searchTerm, statusFilter, page }: UseAdminPay
     }
 
     if (statusFilter !== 'ALL') {
-      // Use the status directly as string for database query
-      query = query.eq('status', statusFilter);
+      const dbStatus = toDBPaymentStatus(statusFilter);
+      if (dbStatus) {
+        query = query.eq('status', dbStatus);
+      }
     }
 
     const { data, error, count } = await query;

@@ -1,71 +1,59 @@
-
-import { ResponsiveContainer, PieChart as RechartsPieChart, Pie, Cell, Tooltip, Legend } from "recharts";
-
-const COLORS = ["#0088FE", "#00C49F", "#FFBB28", "#FF8042", "#8884D8", "#82CA9D"];
+import React from 'react';
+import { PieChart, Pie, Cell, ResponsiveContainer } from 'recharts';
 
 interface PieChartProps {
-  data: any[];
-  dataKey: string;
-  nameKey?: string;
-  height?: number;
-  formatter?: (value: number) => string;
-  innerRadius?: number;
-  outerRadius?: number;
-  paddingAngle?: number;
+  data: { name: string; value: number; color: string }[];
 }
 
-export const PieChart = ({
-  data,
-  dataKey,
-  nameKey = "name",
-  height = 300,
-  formatter,
-  innerRadius = 0,
-  outerRadius = 80,
-  paddingAngle = 0
-}: PieChartProps) => {
-  // Calculate a responsive outerRadius based on container size
-  // This is a fallback - we'll use CSS for most of the responsiveness
-  const responsiveOuterRadius = (width: number) => {
-    const baseSize = Math.min(width * 0.35, outerRadius);
-    return baseSize;
+const CustomPieChart: React.FC<PieChartProps> = ({ data }) => {
+  // Function to calculate the total value
+  const totalValue = data.reduce((sum, entry) => sum + entry.value, 0);
+
+  // Function to format the label with percentage
+  const renderCustomizedLabel = ({ cx, cy, midAngle, innerRadius, outerRadius, percent }: any) => {
+    const radius = outerRadius + 20;
+    const x = cx + radius * Math.cos(-midAngle * Math.PI / 180);
+    const y = cy + radius * Math.sin(-midAngle * Math.PI / 180);
+
+    return (
+      <text
+        x={x}
+        y={y}
+        fill="black"
+        textAnchor={x > cx ? 'start' : 'end'}
+        dominantBaseline="central"
+      >
+        {`${(percent * 100).toFixed(0)}%`}
+      </text>
+    );
   };
 
+  // Replace the function that returns a number with an actual number
+  const innerRadius = 60; // or another static number that makes sense
+
   return (
-    <ResponsiveContainer width="100%" height={height}>
-      <RechartsPieChart margin={{ top: 10, right: 10, left: 10, bottom: 10 }}>
+    <ResponsiveContainer width="100%" height={300}>
+      <PieChart>
         <Pie
           data={data}
           cx="50%"
           cy="50%"
-          labelLine={false} // Remove label lines for mobile
-          label={({ name, percent }) => percent > 0.05 ? `${(percent * 100).toFixed(0)}%` : ''} // Only show labels for segments > 5%
-          outerRadius={({ width }) => responsiveOuterRadius(width)}
+          labelLine={false}
+          label={renderCustomizedLabel}
+          outerRadius={80}
+          fill="#8884d8"
+          dataKey="value"
           innerRadius={innerRadius}
-          paddingAngle={paddingAngle}
-          dataKey={dataKey}
-          nameKey={nameKey}
         >
-          {data.map((entry, index) => (
-            <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-          ))}
-        </Pie>
-        <Tooltip
-          formatter={(value: any) => formatter ? formatter(value) : 
-            new Intl.NumberFormat("pt-BR", {
-              style: "currency",
-              currency: "BRL",
-            }).format(value)
+          {
+            data.map((entry, index) => (
+              <Cell key={`cell-${index}`} fill={entry.color} />
+            ))
           }
-          contentStyle={{ fontSize: '12px' }} // Smaller font for mobile
-        />
-        <Legend 
-          layout="horizontal"
-          verticalAlign="bottom"
-          align="center"
-          wrapperStyle={{ fontSize: '10px', paddingTop: '10px' }} // Smaller font for mobile
-        />
-      </RechartsPieChart>
+        </Pie>
+      </PieChart>
     </ResponsiveContainer>
   );
 };
+
+export default CustomPieChart;

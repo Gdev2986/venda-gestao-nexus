@@ -1,4 +1,5 @@
 
+// Fix multiple issues in this file
 import { useState, useEffect, useCallback } from "react";
 import {
   Card,
@@ -36,12 +37,14 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import * as z from "zod";
-import { UserRole, UserData } from "@/types";
-import { useToast } from "@/hooks/use-toast";
-import { supabase } from "@/integrations/supabase/client";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+} from "@/components/ui/dialog";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -52,6 +55,13 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import * as z from "zod";
+import { UserRole, UserData } from "@/types";
+import { useToast } from "@/hooks/use-toast";
+import { supabase } from "@/integrations/supabase/client";
+import { toDBRole, DBUserRole } from "@/types/user-role";
 import { toUserRole } from "@/lib/type-utils";
 
 const formSchema = z.object({
@@ -124,13 +134,17 @@ const UserManagement = () => {
   const createUser = async (values: z.infer<typeof formSchema>) => {
     setIsCreating(true);
     try {
+      // Convert the role to a valid database role
+      const dbRole = toDBRole(values.role);
+      if (!dbRole) throw new Error("Invalid role selected");
+      
       const { data: authData, error: authError } = await supabase.auth.signUp({
         email: values.email,
         password: "defaultpassword", // Implement a secure password flow later
         options: {
           data: {
             name: values.name,
-            role: values.role,
+            role: dbRole,
             status: values.status,
           },
         },
@@ -147,7 +161,7 @@ const UserManagement = () => {
             id: newUserId,
             name: values.name,
             email: values.email,
-            role: values.role,
+            role: dbRole,
             // status is not stored in profiles table
           });
 
@@ -177,12 +191,16 @@ const UserManagement = () => {
   ) => {
     setIsUpdating(true);
     try {
+      // Convert the role to a valid database role
+      const dbRole = toDBRole(values.role);
+      if (!dbRole) throw new Error("Invalid role selected");
+      
       const { error } = await supabase
         .from("profiles")
         .update({
           name: values.name,
           email: values.email,
-          role: values.role,
+          role: dbRole,
           // status is not stored in profiles table
         })
         .eq("id", id);
@@ -233,7 +251,15 @@ const UserManagement = () => {
 
   const handleEdit = (user: UserData) => {
     setSelectedUser(user);
-    form.reset(user);
+    
+    // We need to convert from string to UserRole enum for the form
+    const userRoleEnum = toUserRole(user.role);
+    
+    form.reset({
+      ...user,
+      role: userRoleEnum,
+    });
+    
     setShowEditModal(true);
   };
 
@@ -248,11 +274,7 @@ const UserManagement = () => {
     }
   };
 
-  const handleRoleChange = (userId: string, role: string) => {
-    updateUserRole(userId, toUserRole(role));
-  };
-
-  const updateUserRole = async (userId: string, role: UserRole) => {
+  const updateUserRole = async (userId: string, role: DBUserRole) => {
     setIsUpdating(true);
     try {
       const { error } = await supabase
@@ -280,8 +302,11 @@ const UserManagement = () => {
     }
   };
 
-  const handleRoleChange = (userId: string, role: string) => {
-    updateUserRole(userId, toUserRole(role));
+  const handleUserRoleChange = (userId: string, role: string) => {
+    const dbRole = toDBRole(role);
+    if (dbRole) {
+      updateUserRole(userId, dbRole);
+    }
   };
 
   return (
@@ -318,17 +343,17 @@ const UserManagement = () => {
                     <TableCell>
                       <Select
                         defaultValue={user.role}
-                        onValueChange={(role) => handleRoleChange(user.id, role)}
+                        onValueChange={(role) => handleUserRoleChange(user.id, role)}
                       >
                         <SelectTrigger className="w-[180px]">
                           <SelectValue placeholder={user.role} />
                         </SelectTrigger>
                         <SelectContent>
-                          <SelectItem value={UserRole.ADMIN}>Admin</SelectItem>
-                          <SelectItem value={UserRole.CLIENT}>Cliente</SelectItem>
-                          <SelectItem value={UserRole.FINANCIAL}>Financeiro</SelectItem>
-                          <SelectItem value={UserRole.PARTNER}>Parceiro</SelectItem>
-                          <SelectItem value={UserRole.LOGISTICS}>Logística</SelectItem>
+                          <SelectItem value="ADMIN">Admin</SelectItem>
+                          <SelectItem value="CLIENT">Cliente</SelectItem>
+                          <SelectItem value="FINANCIAL">Financeiro</SelectItem>
+                          <SelectItem value="PARTNER">Parceiro</SelectItem>
+                          <SelectItem value="LOGISTICS">Logística</SelectItem>
                         </SelectContent>
                       </Select>
                     </TableCell>

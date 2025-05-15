@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -20,6 +19,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { UserRole } from "@/types";
+import { toDBRole } from "@/types/user-role";
 import { toUserRole } from "@/lib/type-utils";
 
 interface ProfileData {
@@ -110,6 +110,39 @@ export const UsersTab = ({ openRoleModal }: UsersTabProps) => {
       });
     } finally {
       setLoading(false);
+    }
+  };
+
+  // Fix the type error on line 87
+  const handleRoleChange = async (userId: string, role: string) => {
+    const dbRole = toDBRole(role);
+    if (!dbRole) return;
+    
+    updateUserRole(userId, dbRole);
+  };
+
+  const updateUserRole = async (userId: string, role: string) => {
+    try {
+      const { error } = await supabase
+        .from("profiles")
+        .update({ role })
+        .eq("id", userId);
+
+      if (error) {
+        throw new Error(`Failed to update user role: ${error.message}`);
+      }
+
+      toast({
+        title: "Sucesso",
+        description: "Função do usuário atualizada com sucesso.",
+      });
+      fetchUsers();
+    } catch (error: any) {
+      toast({
+        variant: "destructive",
+        title: "Erro",
+        description: `Falha ao atualizar função do usuário: ${error.message}`,
+      });
     }
   };
 

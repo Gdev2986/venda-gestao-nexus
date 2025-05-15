@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
@@ -10,6 +9,7 @@ import { AdminNotificationsTab } from "@/components/admin/settings/AdminNotifica
 import { AdminSecurityTab } from "@/components/admin/settings/AdminSecurityTab";
 import { UserRole } from "@/types";
 import { toUserRole } from "@/lib/type-utils";
+import { toDBRole } from "@/types/user-role";
 
 // Update ProfileData interface to accept string for role
 interface ProfileData {
@@ -31,23 +31,27 @@ const AdminSettings = () => {
   
   const { toast } = useToast();
 
+  // Modify the handleRoleChange function to use the toDBRole utility
   const handleRoleChange = async () => {
     if (!selectedUser || !newRole) return;
     
     try {
-      // Convert to UserRole enum for type safety
-      const userRole = toUserRole(newRole);
+      // Convert to a valid DB role
+      const dbRole = toDBRole(newRole);
+      if (!dbRole) {
+        throw new Error("Invalid role selected");
+      }
       
       const { error } = await supabase
         .from('profiles')
-        .update({ role: userRole })
+        .update({ role: dbRole })
         .eq('id', selectedUser.id);
-        
+      
       if (error) throw error;
       
       toast({
         title: "Função atualizada",
-        description: `A função de ${selectedUser.name} foi atualizada para ${userRole}.`
+        description: `A função de ${selectedUser.name} foi atualizada para ${dbRole}.`
       });
       
       setShowRoleModal(false);
