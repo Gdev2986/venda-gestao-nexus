@@ -60,7 +60,7 @@ const Partners = () => {
   };
 
   // Use appropriate path
-  const newPartnerPath = PATHS.PARTNER?.NEW || PATHS.DASHBOARD;
+  const newPartnerPath = PATHS.ADMIN.PARTNER_NEW || PATHS.DASHBOARD;
 
   return (
     <>

@@ -19,8 +19,8 @@ const Partners = () => {
     setSearchTerm(values.search || "");
   };
 
-  // Check PATHS.PARTNER.NEW exists and fallback to dashboard if not
-  const newPartnerLink = PATHS.PARTNER?.NEW || PATHS.DASHBOARD;
+  // For partner paths, use the admin paths instead
+  const newPartnerLink = PATHS.ADMIN.PARTNER_NEW || PATHS.DASHBOARD;
 
   return (
     <>

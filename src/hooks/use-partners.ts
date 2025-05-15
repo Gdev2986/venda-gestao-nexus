@@ -2,14 +2,14 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { Partner, UserRole } from '@/types';
-import { useAuth } from '@/hooks/use-auth'; // Changed from useUser
+import { useAuth } from '@/hooks/use-auth'; // Using correct import
 import { useToast } from '@/hooks/use-toast';
 
 export const usePartners = () => {
   const [partners, setPartners] = useState<Partner[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const { user, session } = useAuth(); // Changed from useUser to useAuth
+  const { user, session } = useAuth(); // Using the correct hook
   const { toast } = useToast();
 
   useEffect(() => {
@@ -47,9 +47,10 @@ export const usePartners = () => {
   const createPartner = async (partner: Omit<Partner, 'id'>) => {
     setLoading(true);
     try {
+      // Fix: Properly insert a single partner object, not an array
       const { data, error } = await supabase
         .from('partners')
-        .insert([partner]) // Changed to pass an array with the partner object
+        .insert(partner) // Send just the object
         .select();
 
       if (error) {

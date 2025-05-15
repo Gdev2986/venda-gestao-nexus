@@ -1,9 +1,10 @@
+
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { PageHeader } from "@/components/page/PageHeader";
 import { PageWrapper } from "@/components/page/PageWrapper";
 import { Card, CardContent } from "@/components/ui/card";
-import { PartnerForm } from "@/components/partners/PartnerForm";
+import PartnerForm from "@/components/partners/PartnerForm";
 import { usePartners } from "@/hooks/use-partners";
 import { PATHS } from "@/routes/paths";
 import { useToast } from "@/hooks/use-toast";
@@ -47,7 +48,12 @@ const NewPartner = () => {
       <PageWrapper>
         <Card>
           <CardContent className="p-8">
-            <PartnerForm onSubmit={handleSubmit} isSubmitting={isSubmitting} />
+            <PartnerForm 
+              onSubmit={handleSubmit} 
+              isSubmitting={isSubmitting} 
+              isOpen={true}
+              onClose={() => navigate(PATHS.ADMIN.PARTNERS)}
+            />
           </CardContent>
         </Card>
       </PageWrapper>
