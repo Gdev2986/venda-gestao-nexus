@@ -183,5 +183,9 @@ export const PaymentRequestTable = ({ payments, isLoading }: PaymentRequestTable
     );
   }
 
-  return <DataTable columns={columns} data={payments} />;
+  return (
+    <div className="max-w-full">
+      <DataTable columns={columns} data={payments} />
+    </div>
+  );
 };

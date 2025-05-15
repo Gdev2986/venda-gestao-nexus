@@ -78,7 +78,7 @@ const AdminLayout = () => {
       <div 
         className={`flex-1 flex flex-col transition-all duration-300 ease-in-out ${
           sidebarOpen && !isMobile ? 'ml-64' : 'ml-0'
-        }`}
+        } max-w-full`}
       >
         {/* Header */}
         <header className="h-16 border-b border-border flex items-center justify-between px-4 bg-background sticky top-0 z-10">
@@ -101,8 +101,8 @@ const AdminLayout = () => {
         </header>
         
         {/* Main scrollable content */}
-        <main className="flex-1 overflow-auto p-4 md:p-6 lg:p-8">
-          <div className="mx-auto max-w-7xl">
+        <main className="flex-1 overflow-y-auto overflow-x-hidden p-4 md:p-6 lg:p-8">
+          <div className="mx-auto w-full max-w-[100vw] sm:max-w-full">
             <Outlet />
           </div>
         </main>
