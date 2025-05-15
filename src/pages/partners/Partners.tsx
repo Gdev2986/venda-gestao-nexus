@@ -1,49 +1,51 @@
 
-import React, { useState } from "react";
+import { useState } from "react";
+import { usePartners } from "@/hooks/use-partners";
 import { PageHeader } from "@/components/page/PageHeader";
 import { PageWrapper } from "@/components/page/PageWrapper";
-import { PartnersFilterCard } from "@/components/partners/PartnersFilterCard";
-import { PartnersTableCard } from "@/components/partners/PartnersTableCard";
-import { PATHS } from "@/routes/paths";
-import { usePartners } from "@/hooks/use-partners";
-import { FilterValues } from "@/types";
+import { Card } from "@/components/ui/card";
+import PartnersTable from "@/components/partners/PartnersTable";
+import PartnersFilterCard from "@/components/partners/PartnersFilterCard";
 
 const Partners = () => {
-  const { partners, loading, error, filterPartners } = usePartners();
+  const {
+    partners,
+    isLoading,
+    filterPartners,
+  } = usePartners();
+  
   const [searchTerm, setSearchTerm] = useState("");
-
-  // Use the filterPartners function correctly
-  const filteredPartners = filterPartners({ name: searchTerm });
-
-  const handleFilter = (values: FilterValues) => {
-    setSearchTerm(values.search || "");
+  
+  const handleSearch = (search: string) => {
+    setSearchTerm(search);
+    filterPartners(search);
   };
-
-  // For partner paths, use the admin paths instead
-  const newPartnerLink = PATHS.ADMIN.PARTNER_NEW || PATHS.DASHBOARD;
-
+  
   return (
-    <>
+    <div>
       <PageHeader
         title="Parceiros"
-        description="Gerenciar parceiros"
+        description="Gerencie todos os parceiros do sistema"
         actionLabel="Novo Parceiro"
-        actionLink={newPartnerLink}
+        actionOnClick={() => {}}
       />
-
-      <PartnersFilterCard
-        onFilter={handleFilter}
-        isLoading={loading}
-      />
-
+      
       <PageWrapper>
-        <PartnersTableCard
-          partners={filteredPartners}
-          loading={loading}
-          error={error}
-        />
+        <div className="space-y-6">
+          <PartnersFilterCard
+            onFilter={(values) => filterPartners(values.search || "")}
+            isLoading={isLoading}
+          />
+          
+          <Card>
+            <PartnersTable 
+              partners={partners}
+              isLoading={isLoading}
+            />
+          </Card>
+        </div>
       </PageWrapper>
-    </>
+    </div>
   );
 };
 

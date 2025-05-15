@@ -1,12 +1,18 @@
 
-import React from 'react';
-import { Loader2 } from "lucide-react";
+import { Skeleton } from "@/components/ui/skeleton";
 
 const LoadingState = () => {
   return (
-    <div className="flex flex-col items-center justify-center p-8">
-      <Loader2 className="w-12 h-12 text-primary animate-spin mb-4" />
-      <p className="text-muted-foreground">Loading data...</p>
+    <div className="space-y-2">
+      {Array.from({ length: 5 }).map((_, index) => (
+        <div key={index} className="flex items-center space-x-4">
+          <Skeleton className="h-12 w-12 rounded-full" />
+          <div className="space-y-2">
+            <Skeleton className="h-4 w-[250px]" />
+            <Skeleton className="h-4 w-[200px]" />
+          </div>
+        </div>
+      ))}
     </div>
   );
 };

@@ -35,14 +35,11 @@ const PartnerFormModal = ({
         }
         return success;
       } else {
-        const partnerData: Omit<Partner, 'id'> = {
+        const success = await createPartner({
+          ...data,
           company_name: data.company_name,
           commission_rate: data.commission_rate || 0,
-          created_at: new Date().toISOString(),
-          updated_at: new Date().toISOString()
-        };
-        
-        const success = await createPartner(partnerData);
+        });
         if (success) {
           onClose();
         }

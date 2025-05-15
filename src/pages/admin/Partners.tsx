@@ -1,91 +1,124 @@
 
-import React, { useState } from "react";
+import { useState } from "react";
+import { Plus } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Partner } from "@/types";
+import { usePartners } from "@/hooks/use-partners";
+import { useToast } from "@/hooks/use-toast";
 import { PageHeader } from "@/components/page/PageHeader";
 import { PageWrapper } from "@/components/page/PageWrapper";
-import { PartnersFilterCard } from "@/components/partners/PartnersFilterCard";
-import { PartnersTableCard } from "@/components/partners/PartnersTableCard";
-import { usePartners } from "@/hooks/use-partners";
-import { PATHS } from "@/routes/paths";
+import PartnersTable from "@/components/partners/PartnersTable";
+import PartnersFilterCard from "@/components/partners/PartnersFilterCard";
+import PartnerFormModal from "@/components/partners/PartnerFormModal";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 
-const Partners = () => {
-  const { partners, loading, error, filterPartners, createPartner, updatePartner, deletePartner } = usePartners();
-  const [searchTerm, setSearchTerm] = useState("");
+const PartnersPage = () => {
+  const { partners, isLoading, error, filterPartners, deletePartner, updatePartner } = usePartners();
+  const [showCreateModal, setShowCreateModal] = useState(false);
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+  const [selectedPartner, setSelectedPartner] = useState<Partner | null>(null);
+  const { toast } = useToast();
 
-  const filteredPartners = filterPartners({ name: searchTerm });
-
-  const [isDialogOpen, setIsDialogOpen] = useState(false);
-  const [selectedPartner, setSelectedPartner] = useState(null);
-
-  const handleOpenDialog = (partner) => {
+  const handleEdit = (partner: Partner) => {
     setSelectedPartner(partner);
-    setIsDialogOpen(true);
+    setShowEditModal(true);
   };
 
-  const handleCloseDialog = () => {
-    setSelectedPartner(null);
-    setIsDialogOpen(false);
+  const handleDelete = (partner: Partner) => {
+    setSelectedPartner(partner);
+    setShowDeleteDialog(true);
   };
 
-  const handleSubmitPartner = async (partnerData: any) => {
-    try {
-      // Ensure we have the required fields for a Partner
-      const validPartnerData = {
-        id: partnerData.id,
-        company_name: partnerData.company_name || "New Partner",
-        commission_rate: partnerData.commission_rate || 0,
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString()
-      };
-      
-      if (partnerData.id) {
-        await updatePartner(partnerData.id, validPartnerData);
-      } else {
-        await createPartner(validPartnerData);
+  const confirmDelete = async () => {
+    if (selectedPartner) {
+      const success = await deletePartner(selectedPartner.id);
+      if (success) {
+        toast({
+          title: "Parceiro excluído",
+          description: "O parceiro foi removido com sucesso.",
+        });
       }
-      
-      handleCloseDialog();
-    } catch (err) {
-      console.error("Failed to save partner:", err);
+      setShowDeleteDialog(false);
     }
   };
-
-  const handleDeletePartner = async (partnerId: string) => {
-    try {
-      const success = await deletePartner(partnerId);
-      return success;
-    } catch (err) {
-      console.error("Failed to delete partner:", err);
-      return false;
-    }
-  };
-
-  // Use appropriate path
-  const newPartnerPath = PATHS.ADMIN.PARTNER_NEW || PATHS.DASHBOARD;
 
   return (
     <>
       <PageHeader
         title="Parceiros"
-        description="Gerenciar parceiros"
-        actionLabel="Novo Parceiro"
-        actionLink={newPartnerPath}
-      />
-
-      <PartnersFilterCard
-        onFilter={(values) => setSearchTerm(values.search || "")}
-      />
+        description="Gerencie os parceiros do sistema"
+      >
+        <Button onClick={() => setShowCreateModal(true)}>
+          <Plus className="mr-2 h-4 w-4" /> Novo Parceiro
+        </Button>
+      </PageHeader>
 
       <PageWrapper>
-        <PartnersTableCard
-          partners={filteredPartners}
-          loading={loading}
-          error={error}
-          onEdit={handleOpenDialog}
-          onDelete={handleDeletePartner}
-        />
+        <div className="space-y-6">
+          <PartnersFilterCard
+            onFilter={(values) => filterPartners(values.search || "")}
+            isLoading={isLoading}
+          />
+
+          {error ? (
+            <div className="p-4 border rounded-md bg-red-50 text-red-800">
+              <p className="font-semibold">Erro ao carregar parceiros</p>
+              <p>{error}</p>
+            </div>
+          ) : (
+            <PartnersTable
+              partners={partners}
+              isLoading={isLoading}
+              onEdit={handleEdit}
+              onDelete={handleDelete}
+            />
+          )}
+        </div>
       </PageWrapper>
+
+      {/* Create Partner Modal */}
+      <PartnerFormModal
+        isOpen={showCreateModal}
+        onClose={() => setShowCreateModal(false)}
+        title="Novo Parceiro"
+      />
+
+      {/* Edit Partner Modal */}
+      {selectedPartner && (
+        <PartnerFormModal
+          isOpen={showEditModal}
+          onClose={() => setShowEditModal(false)}
+          title={`Editar ${selectedPartner.company_name}`}
+          initialData={selectedPartner}
+          onSubmit={async (data) => {
+            const success = await updatePartner(selectedPartner.id, data);
+            return success;
+          }}
+        />
+      )}
+
+      {/* Delete Confirmation Dialog */}
+      <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Confirmar exclusão</AlertDialogTitle>
+            <AlertDialogDescription>
+              Tem certeza que deseja excluir o parceiro 
+              <strong> {selectedPartner?.company_name}</strong>? 
+              Esta ação não pode ser desfeita.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction onClick={confirmDelete} className="bg-destructive text-destructive-foreground">
+              Excluir
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </>
   );
 };
 
-export default Partners;
+export default PartnersPage;

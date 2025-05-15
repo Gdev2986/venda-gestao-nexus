@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { Payment, PaymentStatus } from '@/types';
@@ -31,7 +30,7 @@ export const useAdminPayments = ({ searchTerm, statusFilter, page }: UseAdminPay
     }
 
     if (statusFilter !== 'ALL') {
-      const dbStatus = toDBPaymentStatus(statusFilter as PaymentStatus);
+      const dbStatus = toDBPaymentStatus(statusFilter);
       if (dbStatus) {
         query = query.eq('status', dbStatus);
       }

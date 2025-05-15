@@ -38,8 +38,8 @@ interface RoleChangeDialogProps {
   onClose: () => void;
   onConfirm: (notes: string) => void;
   userName: string;
-  currentRole: UserRole | string;
-  newRole: UserRole | string;
+  currentRole: UserRole;
+  newRole: UserRole;
 }
 
 export function RoleChangeDialog({

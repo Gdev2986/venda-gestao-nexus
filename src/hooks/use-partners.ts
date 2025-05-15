@@ -1,163 +1,162 @@
-
 import { useState, useEffect } from 'react';
+import { Partner } from '@/types';
 import { supabase } from '@/integrations/supabase/client';
-import { Partner, UserRole } from '@/types';
-import { useAuth } from '@/hooks/use-auth'; // Using correct import
 import { useToast } from '@/hooks/use-toast';
+import { useAuth } from '@/contexts/AuthContext';
 
 export const usePartners = () => {
   const [partners, setPartners] = useState<Partner[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const { user, session } = useAuth(); // Using the correct hook
-  const { toast } = useToast();
+  const { user } = useAuth();
 
   useEffect(() => {
-    const fetchPartners = async () => {
-      setLoading(true);
-      try {
-        const { data, error } = await supabase
-          .from('partners')
-          .select('*');
-
-        if (error) {
-          throw new Error(error.message);
-        }
-
-        setPartners(data || []);
-      } catch (error: any) {
-        setError(error.message);
-        toast({
-          title: "Error fetching partners",
-          description: error.message,
-          variant: "destructive",
-        });
-      } finally {
-        setLoading(false);
-      }
-    };
-
     fetchPartners();
   }, []);
 
-  const getUserRole = (): UserRole | undefined => {
-    return user?.user_metadata?.role;
-  };
-
-  const createPartner = async (partner: Omit<Partner, 'id'>) => {
+  const fetchPartners = async () => {
     setLoading(true);
     try {
-      // Create a partner object with required fields, making sure it matches the table structure
-      const partnerData = {
-        company_name: partner.company_name || "New Partner",
-        commission_rate: partner.commission_rate || 0,
-        // Don't include id, let Supabase generate it
-      };
-      
       const { data, error } = await supabase
         .from('partners')
-        .insert(partnerData) 
-        .select();
+        .select('*');
 
       if (error) {
-        throw new Error(error.message);
+        setError(error.message);
+      } else {
+        setPartners(data || []);
       }
-
-      if (data && data[0]) {
-        setPartners(prevPartners => [...prevPartners, data[0]]);
-        toast({
-          title: "Partner created",
-          description: "Partner created successfully.",
-        });
-        return true;
-      }
-      return false;
     } catch (error: any) {
       setError(error.message);
-      toast({
-        title: "Error creating partner",
-        description: error.message,
-        variant: "destructive",
-      });
-      return false; // Return a boolean to indicate failure
     } finally {
       setLoading(false);
     }
   };
 
-  const updatePartner = async (id: string, updates: Partial<Partner>) => {
-    setLoading(true);
-    try {
-      const { data, error } = await supabase
-        .from('partners')
-        .update(updates)
-        .eq('id', id)
-        .select()
+  const [isLoading, setIsLoading] = useState(false);
+  const { toast } = useToast();
 
-      if (error) {
-        throw new Error(error.message);
+  const getUserRole = async (userId: string) => {
+    if (!user) {
+      console.error("No user found");
+      return null;
+    }
+
+    try {
+      setIsLoading(true);
+      
+      // Replace with the correct function name
+      const result = await supabase.rpc('get_user_role', { 
+        user_id: user.id 
+      });
+
+      if (result.error) {
+        throw result.error;
       }
 
-      setPartners(prevPartners =>
-        prevPartners.map(partner => (partner.id === id ? { ...partner, ...data[0] } : partner))
-      );
-      toast({
-        title: "Partner updated",
-        description: "Partner updated successfully.",
-      });
-      
-      return true; // Return a boolean to indicate success
+      return result.data;
     } catch (error: any) {
-      setError(error.message);
+      console.error("Error fetching user role:", error);
       toast({
-        title: "Error updating partner",
+        title: "Error",
         description: error.message,
-        variant: "destructive",
+        variant: "destructive"
       });
-      return false; // Return a boolean to indicate failure
+      return null;
     } finally {
-      setLoading(false);
+      setIsLoading(false);
+    }
+  };
+
+  const createPartner = async (partnerData: Omit<Partner, 'id' | 'created_at' | 'updated_at'>) => {
+    try {
+      setIsLoading(true);
+      
+      // Use the upsert method with a random uuid for the id
+      const { error } = await supabase
+        .from('partners')
+        .insert({
+          ...partnerData,
+          id: crypto.randomUUID() // Generate a UUID for the new partner
+        });
+
+      if (error) throw error;
+      
+      await fetchPartners();
+      toast({
+        title: "Success",
+        description: "Partner created successfully"
+      });
+      return true;
+    } catch (error: any) {
+      console.error("Error creating partner:", error);
+      toast({
+        title: "Error",
+        description: error.message,
+        variant: "destructive"
+      });
+      return false;
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const updatePartner = async (id: string, partnerData: Partner) => {
+    try {
+      setIsLoading(true);
+      const { error } = await supabase
+        .from('partners')
+        .update(partnerData)
+        .eq('id', id);
+
+      if (error) throw error;
+      
+      await fetchPartners();
+      toast({
+        title: "Success",
+        description: "Partner updated successfully"
+      });
+      return true;
+    } catch (error: any) {
+      console.error("Error updating partner:", error);
+      toast({
+        title: "Error",
+        description: error.message,
+        variant: "destructive"
+      });
+      return false;
+    } finally {
+      setIsLoading(false);
     }
   };
 
   const deletePartner = async (id: string) => {
-    setLoading(true);
     try {
+      setIsLoading(true);
       const { error } = await supabase
         .from('partners')
         .delete()
         .eq('id', id);
 
-      if (error) {
-        throw new Error(error.message);
-      }
+      if (error) throw error;
 
-      setPartners(prevPartners => prevPartners.filter(partner => partner.id !== id));
+      await fetchPartners();
       toast({
-        title: "Partner deleted",
-        description: "Partner deleted successfully.",
+        title: "Success",
+        description: "Partner deleted successfully"
       });
-      
-      return true; // Return a boolean to indicate success
+      return true;
     } catch (error: any) {
-      setError(error.message);
+      console.error("Error deleting partner:", error);
       toast({
-        title: "Error deleting partner",
+        title: "Error",
         description: error.message,
-        variant: "destructive",
+        variant: "destructive"
       });
-      return false; // Return a boolean to indicate failure
+      return false;
     } finally {
-      setLoading(false);
+      setIsLoading(false);
     }
-  };
-
-  const isAdmin = (): boolean => {
-    return user?.user_metadata?.role === UserRole.ADMIN;
-  };
-
-  const isFinancial = (): boolean => {
-    return user?.user_metadata?.role === UserRole.FINANCIAL;
   };
 
   return {
@@ -168,25 +167,6 @@ export const usePartners = () => {
     createPartner,
     updatePartner,
     deletePartner,
-    isAdmin,
-    isFinancial,
-    filterPartners: (filters: any) => {
-      // Implement filtering logic here
-      if (!filters || Object.keys(filters).length === 0) {
-        return partners;
-      }
-      
-      return partners.filter(partner => {
-        let match = true;
-        
-        if (filters.name && partner.company_name) {
-          match = match && partner.company_name.toLowerCase().includes(filters.name.toLowerCase());
-        }
-        
-        // Add more filter conditions as needed
-        
-        return match;
-      });
-    }
+    isLoading
   };
 };
