@@ -33,7 +33,7 @@ interface StatCardsProps {
 
 const StatCards = ({ stats, isLoading = false }: StatCardsProps) => {
   return (
-    <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2 md:gap-4">
+    <div className="grid grid-cols-2 md:grid-cols-4 gap-2 md:gap-4">
       {/* Total Sales Card */}
       <Card className="overflow-hidden">
         <CardHeader className="flex flex-row items-center justify-between p-3 md:p-6 pb-1 md:pb-2 space-y-0">

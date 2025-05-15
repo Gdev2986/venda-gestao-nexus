@@ -56,10 +56,10 @@ const LogisticsDashboard = () => {
         {/* Stats Cards */}
         <StatsCardsGroup />
         
-        {/* Main content */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* Main dashboard area - 2/3 width */}
-          <div className="lg:col-span-2 space-y-6 order-2 lg:order-1">
+        {/* Main content - modificado para colocar tudo em coluna no mobile */}
+        <div className="grid grid-cols-1 gap-6">
+          {/* Main dashboard area */}
+          <div className="space-y-6">
             <DashboardTabs 
               machineStatusData={machineStatusData}
               requestsMonthlyData={requestsMonthlyData}
@@ -67,8 +67,8 @@ const LogisticsDashboard = () => {
             />
           </div>
           
-          {/* Sidebar content - 1/3 width */}
-          <div className="space-y-6 order-1 lg:order-2">
+          {/* Sidebar content */}
+          <div className="space-y-6">
             <AppointmentsCard appointments={upcomingAppointments} />
             <RecentActivitiesCard activities={recentActivities} />
           </div>

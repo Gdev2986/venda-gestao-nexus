@@ -280,8 +280,8 @@ const AdminDashboard = () => {
             {renderQuickLinks()}
           </div>
           
-          {/* Charts Grid */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-6">
+          {/* Charts Grid - Modificado para coluna única em mobile */}
+          <div className="grid grid-cols-1 gap-3 md:gap-6">
             {/* Sales Chart */}
             <SalesChart data={MOCK_DATA.dailySales} isLoading={isLoading} />
             

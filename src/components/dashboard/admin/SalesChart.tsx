@@ -40,7 +40,7 @@ const CustomTooltip = ({ active, payload, label }: any) => {
 
 const SalesChart = ({ data, isLoading = false }: SalesChartProps) => {
   return (
-    <Card className="col-span-4">
+    <Card className="w-full">
       <CardHeader>
         <CardTitle>Vendas (Últimos 7 dias)</CardTitle>
       </CardHeader>
@@ -50,20 +50,22 @@ const SalesChart = ({ data, isLoading = false }: SalesChartProps) => {
             <p className="text-muted-foreground">Carregando dados...</p>
           </div>
         ) : (
-          <ResponsiveContainer width="100%" height={350}>
-            <BarChart data={data} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
-              <CartesianGrid strokeDasharray="3 3" opacity={0.3} />
-              <XAxis dataKey="name" />
-              <YAxis
-                tickFormatter={(value) => `R$ ${value}`} 
-                width={80}
-              />
-              <Tooltip content={<CustomTooltip />} />
-              <Legend />
-              <Bar name="Valor Bruto" dataKey="gross" fill="#22c55e" radius={[4, 4, 0, 0]} />
-              <Bar name="Valor Líquido" dataKey="net" fill="#3b82f6" radius={[4, 4, 0, 0]} />
-            </BarChart>
-          </ResponsiveContainer>
+          <div className="h-[350px]">
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart data={data} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
+                <CartesianGrid strokeDasharray="3 3" opacity={0.3} />
+                <XAxis dataKey="name" />
+                <YAxis
+                  tickFormatter={(value) => `R$ ${value}`} 
+                  width={80}
+                />
+                <Tooltip content={<CustomTooltip />} />
+                <Legend />
+                <Bar name="Valor Bruto" dataKey="gross" fill="#22c55e" radius={[4, 4, 0, 0]} />
+                <Bar name="Valor Líquido" dataKey="net" fill="#3b82f6" radius={[4, 4, 0, 0]} />
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
         )}
       </CardContent>
     </Card>

@@ -34,7 +34,7 @@ const PartnerDashboard = () => {
         description="Acompanhe suas vendas, comissões e clientes"
       />
       
-      {/* KPIs */}
+      {/* KPIs - modificado para coluna única no mobile */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         <Card>
           <CardHeader className="pb-2">
@@ -120,7 +120,7 @@ const PartnerDashboard = () => {
         </CardContent>
       </PageWrapper>
       
-      {/* Quick actions */}
+      {/* Quick actions - modificado para coluna única no mobile */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         <Card>
           <CardHeader>
