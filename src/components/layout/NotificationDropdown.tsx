@@ -13,7 +13,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { motion, AnimatePresence } from "framer-motion";
 import { Link } from "react-router-dom";
-import { useNotifications } from "@/contexts/NotificationsContext";
+import { useNotifications } from "@/hooks/use-notifications";
 import { formatDistanceToNow } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { ShoppingCart, CreditCard, Wrench, LifeBuoy } from "lucide-react";
