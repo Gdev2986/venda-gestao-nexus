@@ -3,7 +3,7 @@ import { useEffect } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import LoginForm from "@/components/auth/LoginForm";
 import { LayoutDashboard, CreditCard, FileText, Monitor } from "lucide-react";
-import { useAuth } from "@/contexts/AuthContext";
+import { useAuth } from "@/hooks/use-auth";
 
 const Index = () => {
   const navigate = useNavigate();
@@ -12,7 +12,7 @@ const Index = () => {
   useEffect(() => {
     // If authenticated and finished loading, redirect to dashboard
     if (user && !isLoading) {
-      console.log("Index: User authenticated, redirecting to dashboard");
+      console.error("Index: User authenticated, redirecting to dashboard");
       navigate("/dashboard");
     }
   }, [user, isLoading, navigate]);
@@ -66,7 +66,7 @@ const Index = () => {
               <div className="bg-primary-100 p-2 rounded-full mb-2">
                 <Monitor className="h-6 w-6 text-primary" />
               </div>
-              <h3 className="text-lg font-semibold">Multiplaforma</h3>
+              <h3 className="text-lg font-semibold">Multiplataforma</h3>
               <p className="text-gray-500 text-sm">Acesse de qualquer dispositivo, em qualquer lugar.</p>
             </div>
           </div>

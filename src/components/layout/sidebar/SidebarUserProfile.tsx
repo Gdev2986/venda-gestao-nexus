@@ -1,7 +1,7 @@
 
 import { useEffect, useState } from "react";
 import { UserRole } from "@/types";
-import { useAuth } from "@/contexts/AuthContext";
+import { useAuth } from "@/hooks/use-auth";
 import { supabase } from "@/integrations/supabase/client";
 
 interface SidebarUserProfileProps {

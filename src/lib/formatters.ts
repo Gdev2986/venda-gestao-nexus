@@ -1,13 +1,13 @@
 
 /**
- * Format a date to a localized string
+ * Formata uma data em string localizada
  */
 export const formatDate = (date: Date): string => {
   return new Intl.DateTimeFormat('pt-BR').format(date);
 };
 
 /**
- * Format a number as currency (BRL)
+ * Formata um número como moeda (BRL)
  */
 export const formatCurrency = (value: number): string => {
   return new Intl.NumberFormat('pt-BR', {
@@ -17,7 +17,7 @@ export const formatCurrency = (value: number): string => {
 };
 
 /**
- * Format a percentage value
+ * Formata um valor percentual
  */
 export const formatPercent = (value: number): string => {
   return new Intl.NumberFormat('pt-BR', {
@@ -28,13 +28,13 @@ export const formatPercent = (value: number): string => {
 };
 
 /**
- * Format a document number (CPF/CNPJ)
+ * Formata um número de documento (CPF/CNPJ)
  */
 export const formatDocument = (doc: string): string => {
-  // Remove non-numeric characters
+  // Remove caracteres não numéricos
   const numbers = doc.replace(/\D/g, '');
   
-  // Format as CPF or CNPJ based on length
+  // Formata como CPF ou CNPJ baseado no comprimento
   if (numbers.length === 11) {
     // CPF: 000.000.000-00
     return numbers.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, '$1.$2.$3-$4');
@@ -43,32 +43,32 @@ export const formatDocument = (doc: string): string => {
     return numbers.replace(/(\d{2})(\d{3})(\d{3})(\d{4})(\d{2})/, '$1.$2.$3/$4-$5');
   }
   
-  // If doesn't match expected lengths, return original
+  // Se não corresponder aos comprimentos esperados, retorna o original
   return doc;
 };
 
 /**
- * Format a phone number
+ * Formata um número de telefone
  */
 export const formatPhone = (phone: string): string => {
-  // Remove non-numeric characters
+  // Remove caracteres não numéricos
   const numbers = phone.replace(/\D/g, '');
   
-  // Format based on length
+  // Formata baseado no comprimento
   if (numbers.length === 11) {
-    // Mobile: (00) 00000-0000
+    // Celular: (00) 00000-0000
     return numbers.replace(/(\d{2})(\d{5})(\d{4})/, '($1) $2-$3');
   } else if (numbers.length === 10) {
-    // Landline: (00) 0000-0000
+    // Telefone fixo: (00) 0000-0000
     return numbers.replace(/(\d{2})(\d{4})(\d{4})/, '($1) $2-$3');
   }
   
-  // If doesn't match expected lengths, return original
+  // Se não corresponder aos comprimentos esperados, retorna o original
   return phone;
 };
 
 /**
- * Truncate text with ellipsis
+ * Trunca texto com reticências
  */
 export const truncateText = (text: string, maxLength: number): string => {
   if (text.length <= maxLength) return text;

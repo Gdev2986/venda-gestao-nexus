@@ -14,7 +14,7 @@ interface StatsCardsProps {
     totalSales: number;
     pendingPayments: number;
     completedPayments: number;
-    clientBalance: number; // Changed from averageTicket to clientBalance
+    clientBalance: number;
   };
   loading: boolean;
 }

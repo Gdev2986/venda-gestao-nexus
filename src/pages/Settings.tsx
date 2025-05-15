@@ -27,7 +27,7 @@ const Settings = () => {
             .eq('user_id', user.id);
 
           if (error) {
-            console.error("Error fetching pix keys:", error);
+            console.error("Erro ao carregar chaves PIX:", error);
             toast({
               title: "Erro ao carregar chaves PIX",
               description: "Não foi possível carregar suas chaves PIX. Tente novamente mais tarde.",
@@ -53,7 +53,7 @@ const Settings = () => {
           }
         }
       } catch (error) {
-        console.error("Error fetching pix keys:", error);
+        console.error("Erro ao carregar chaves PIX:", error);
         toast({
           title: "Erro ao carregar chaves PIX",
           description: "Ocorreu um erro ao carregar suas chaves PIX. Tente novamente mais tarde.",

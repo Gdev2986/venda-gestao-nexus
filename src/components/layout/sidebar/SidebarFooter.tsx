@@ -2,7 +2,7 @@
 import { HelpCircle, LogOut } from "lucide-react";
 import { Separator } from "@/components/ui/separator";
 import { useToast } from "@/hooks/use-toast";
-import { useAuth } from "@/contexts/AuthContext";
+import { useAuth } from "@/hooks/use-auth";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -55,8 +55,6 @@ const SidebarFooter = () => {
       )}
 
       <div className="space-y-1">
-
-
         <button
           onClick={handleLogout}
           className="flex items-center w-full px-3 py-2 text-sm rounded-md text-sidebar-foreground hover:bg-sidebar-accent/70 hover:text-white transition-colors"

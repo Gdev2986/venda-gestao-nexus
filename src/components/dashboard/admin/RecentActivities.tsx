@@ -76,7 +76,11 @@ const RecentActivities = ({ activities, isLoading = false }: RecentActivitiesPro
                   <h4 className="font-medium">{activity.title}</h4>
                   {activity.type && (
                     <Badge variant="outline" className={getBadgeVariant(activity.type)}>
-                      {activity.type}
+                      {activity.type === 'payment' && 'pagamento'}
+                      {activity.type === 'client' && 'cliente'}
+                      {activity.type === 'sale' && 'venda'}
+                      {activity.type === 'partner' && 'parceiro'}
+                      {activity.type === 'system' && 'sistema'}
                     </Badge>
                   )}
                 </div>
