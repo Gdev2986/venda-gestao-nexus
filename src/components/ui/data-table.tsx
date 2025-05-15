@@ -1,4 +1,5 @@
 
+
 import React from "react";
 import { ColumnDef } from "@tanstack/react-table";
 import {
@@ -33,58 +34,60 @@ export function DataTable<TData extends object>({
   className
 }: DataTableProps<TData>) {
   return (
-    <div className={cn("rounded-md border overflow-x-auto", className)}>
-      <Table>
-        <TableHeader>
-          <TableRow>
-            {columns.map((column) => {
-              // Safely access column header
-              const headerValue = column.header 
-                ? typeof column.header === 'function' 
-                  ? column.header({} as any)
-                  : column.header
-                : '';
-              
-              return (
-                <TableHead key={String(column.id)}>{String(headerValue)}</TableHead>
-              );
-            })}
-          </TableRow>
-        </TableHeader>
-        <TableBody>
-          {isLoading ? (
+    <div className={cn("rounded-md border", className)}>
+      <div className="overflow-x-auto">
+        <Table>
+          <TableHeader>
             <TableRow>
-              <TableCell colSpan={columns.length} className="h-24 text-center">
-                Carregando...
-              </TableCell>
+              {columns.map((column) => {
+                // Safely access column header
+                const headerValue = column.header 
+                  ? typeof column.header === 'function' 
+                    ? column.header({} as any)
+                    : column.header
+                  : '';
+                
+                return (
+                  <TableHead key={String(column.id)}>{String(headerValue)}</TableHead>
+                );
+              })}
             </TableRow>
-          ) : data.length > 0 ? (
-            data.map((row, rowIndex) => (
-              <TableRow key={rowIndex}>
-                {columns.map((column) => {
-                  const columnId = String(column.id);
-                  
-                  return (
-                    <TableCell key={`${rowIndex}-${columnId}`} className="py-3">
-                      {column.cell 
-                        ? typeof column.cell === 'function'
-                          ? column.cell({ row: { original: row } } as any)
-                          : null
-                        : null}
-                    </TableCell>
-                  );
-                })}
+          </TableHeader>
+          <TableBody>
+            {isLoading ? (
+              <TableRow>
+                <TableCell colSpan={columns.length} className="h-24 text-center">
+                  Carregando...
+                </TableCell>
               </TableRow>
-            ))
-          ) : (
-            <TableRow>
-              <TableCell colSpan={columns.length} className="h-24 text-center">
-                Nenhum dado encontrado
-              </TableCell>
-            </TableRow>
-          )}
-        </TableBody>
-      </Table>
+            ) : data.length > 0 ? (
+              data.map((row, rowIndex) => (
+                <TableRow key={rowIndex}>
+                  {columns.map((column) => {
+                    const columnId = String(column.id);
+                    
+                    return (
+                      <TableCell key={`${rowIndex}-${columnId}`} className="py-3">
+                        {column.cell 
+                          ? typeof column.cell === 'function'
+                            ? column.cell({ row: { original: row } } as any)
+                            : null
+                          : null}
+                      </TableCell>
+                    );
+                  })}
+                </TableRow>
+              ))
+            ) : (
+              <TableRow>
+                <TableCell colSpan={columns.length} className="h-24 text-center">
+                  Nenhum dado encontrado
+                </TableCell>
+              </TableRow>
+            )}
+          </TableBody>
+        </Table>
+      </div>
       
       {totalPages && totalPages > 1 && currentPage && onPageChange && (
         <div className="px-4 py-2 flex justify-center">
