@@ -1,14 +1,13 @@
 
 import { useState, useEffect } from "react";
-import { useLocation } from "react-router-dom";
 import { UserRole } from "@/types";
-import Sidebar from "./sidebar/Sidebar";
 import { Button } from "@/components/ui/button";
 import { Menu } from "lucide-react";
 import { useIsMobile } from "@/hooks/use-mobile";
-import NotificationDropdown from "./NotificationDropdown";
-import ThemeToggle from "../theme/theme-toggle";
+import NotificationDropdown from "@/components/layout/NotificationDropdown";
+import ThemeToggle from "@/components/theme/theme-toggle";
 import { useUserRole } from "@/hooks/use-user-role";
+import MainSidebar from "./MainSidebar";
 
 type MainLayoutProps = {
   children: React.ReactNode;
@@ -43,7 +42,7 @@ const MainLayout = ({ children }: MainLayoutProps) => {
   return (
     <div className="flex h-screen overflow-hidden bg-background">
       {/* Sidebar component - mounted always but conditionally shown */}
-      <Sidebar 
+      <MainSidebar 
         isOpen={sidebarOpen} 
         isMobile={isMobile} 
         onClose={() => setSidebarOpen(false)} 
