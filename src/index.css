@@ -235,7 +235,7 @@ img {
 
 /* Spinner animation */
 .spinner {
-  @apply h-6 w-6 sm:h-8 sm:w-8 rounded-full border-3 sm:border-4 border-muted border-t-primary animate-spin;
+  @apply h-6 w-6 sm:h-8 sm:w-8 rounded-full border-2 sm:border-4 border-muted border-t-primary animate-spin;
 }
 
 /* Mobile-first adjustments */

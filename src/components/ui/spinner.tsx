@@ -17,7 +17,7 @@ export function Spinner({ size = "md", className }: SpinnerProps) {
     <div className="flex justify-center" aria-label="Carregando">
       <div
         className={cn(
-          "animate-spin rounded-full border-4 border-solid border-t-transparent",
+          "animate-spin rounded-full border-2 border-solid border-t-transparent",
           sizeClasses[size],
           className
         )}
