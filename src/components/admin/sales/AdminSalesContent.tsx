@@ -72,10 +72,11 @@ const AdminSalesContent = ({
       });
     }
     
-    // Filter by specific amount (if specified)
-    if (filters.minAmount !== undefined) {
+    // Filter by amount range
+    if (filters.minAmount !== undefined && filters.maxAmount !== undefined) {
       result = result.filter(sale => 
-        Math.abs(sale.gross_amount - filters.minAmount!) < 0.01 // Using a small epsilon for floating-point comparison
+        sale.gross_amount >= filters.minAmount! && 
+        sale.gross_amount <= filters.maxAmount!
       );
     }
     
@@ -99,7 +100,7 @@ const AdminSalesContent = ({
   const totals = calculateSalesTotals(filteredSales);
 
   return (
-    <div className="lg:col-span-3">
+    <div className="w-full lg:col-span-3">
       <SalesDataTable 
         sales={paginatedSales}
         currentPage={page}

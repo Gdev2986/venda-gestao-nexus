@@ -42,8 +42,6 @@ const getPaymentMethodIcon = (method: string | PaymentMethod) => {
   const paymentMethodStr = String(method);
   
   // Check if it's a valid PaymentMethod enum value
-  const isValidPaymentMethod = Object.values(PaymentMethod).includes(paymentMethodStr as PaymentMethod);
-  
   switch (paymentMethodStr) {
     case PaymentMethod.CREDIT:
       return <Badge variant="outline">Crédito</Badge>;
@@ -72,13 +70,13 @@ const SalesTable = ({ sales, isLoading = false }: SalesTableProps) => {
   };
 
   return (
-    <Card className="col-span-1 lg:col-span-full">
-      <CardHeader className="flex flex-col sm:flex-row sm:items-center sm:justify-between space-y-2 sm:space-y-0">
+    <Card className="col-span-1 lg:col-span-full w-full">
+      <CardHeader className="flex flex-col sm:flex-row sm:items-center sm:justify-between space-y-2 sm:space-y-0 p-4 sm:p-6">
         <div>
           <CardTitle className="text-lg">Histórico de Vendas</CardTitle>
           <CardDescription>Visualize suas vendas recentes</CardDescription>
         </div>
-        <div className="relative">
+        <div className="relative w-full sm:w-auto">
           <SearchIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
           <Input
             placeholder="Buscar por código..."
@@ -88,8 +86,8 @@ const SalesTable = ({ sales, isLoading = false }: SalesTableProps) => {
           />
         </div>
       </CardHeader>
-      <CardContent>
-        <div className="rounded-md border overflow-hidden">
+      <CardContent className="p-0">
+        <div className="w-full overflow-auto">
           {isLoading ? (
             <div className="space-y-4 p-4">
               {Array.from({ length: 5 }).map((_, i) => (
@@ -100,69 +98,71 @@ const SalesTable = ({ sales, isLoading = false }: SalesTableProps) => {
               ))}
             </div>
           ) : (
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Código</TableHead>
-                  <TableHead>Data</TableHead>
-                  <TableHead>Terminal</TableHead>
-                  <TableHead className="text-right">Valor Bruto</TableHead>
-                  <TableHead className="text-right">Valor Líquido</TableHead>
-                  <TableHead>Pagamento</TableHead>
-                  <TableHead className="w-[60px]"></TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {filteredSales.length > 0 ? (
-                  filteredSales.map((sale) => (
-                    <TableRow key={sale.id}>
-                      <TableCell className="font-medium">{sale.code}</TableCell>
-                      <TableCell>
-                        {format(new Date(sale.date), "dd/MM/yyyy", { locale: ptBR })}
-                      </TableCell>
-                      <TableCell>{sale.terminal}</TableCell>
-                      <TableCell className="text-right">
-                        {new Intl.NumberFormat("pt-BR", {
-                          style: "currency",
-                          currency: "BRL",
-                        }).format(sale.gross_amount)}
-                      </TableCell>
-                      <TableCell className="text-right">
-                        {new Intl.NumberFormat("pt-BR", {
-                          style: "currency",
-                          currency: "BRL",
-                        }).format(sale.net_amount)}
-                      </TableCell>
-                      <TableCell>{getPaymentMethodIcon(sale.payment_method)}</TableCell>
-                      <TableCell>
-                        <DropdownMenu>
-                          <DropdownMenuTrigger asChild>
-                            <Button variant="ghost" size="icon">
-                              <MoreHorizontalIcon className="h-4 w-4" />
-                            </Button>
-                          </DropdownMenuTrigger>
-                          <DropdownMenuContent align="end">
-                            <DropdownMenuLabel>Ações</DropdownMenuLabel>
-                            <DropdownMenuSeparator />
-                            <DropdownMenuItem onClick={() => viewSaleDetails(sale.id)}>
-                              <EyeIcon className="h-4 w-4 mr-2" />
-                              Ver detalhes
-                            </DropdownMenuItem>
-                          </DropdownMenuContent>
-                        </DropdownMenu>
+            <div className="overflow-x-auto">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead className="w-[80px]">Código</TableHead>
+                    <TableHead className="w-[100px]">Data</TableHead>
+                    <TableHead className="w-[90px]">Terminal</TableHead>
+                    <TableHead className="text-right w-[110px]">Valor Bruto</TableHead>
+                    <TableHead className="text-right w-[110px]">Valor Líq.</TableHead>
+                    <TableHead className="w-[90px]">Pagamento</TableHead>
+                    <TableHead className="w-[60px]"></TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {filteredSales.length > 0 ? (
+                    filteredSales.map((sale) => (
+                      <TableRow key={sale.id}>
+                        <TableCell className="font-medium">{sale.code}</TableCell>
+                        <TableCell>
+                          {format(new Date(sale.date), "dd/MM/yy", { locale: ptBR })}
+                        </TableCell>
+                        <TableCell>{sale.terminal}</TableCell>
+                        <TableCell className="text-right">
+                          {new Intl.NumberFormat("pt-BR", {
+                            style: "currency",
+                            currency: "BRL",
+                          }).format(sale.gross_amount)}
+                        </TableCell>
+                        <TableCell className="text-right">
+                          {new Intl.NumberFormat("pt-BR", {
+                            style: "currency",
+                            currency: "BRL",
+                          }).format(sale.net_amount)}
+                        </TableCell>
+                        <TableCell>{getPaymentMethodIcon(sale.payment_method)}</TableCell>
+                        <TableCell>
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                              <Button variant="ghost" size="icon" className="h-8 w-8">
+                                <MoreHorizontalIcon className="h-4 w-4" />
+                              </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end">
+                              <DropdownMenuLabel>Ações</DropdownMenuLabel>
+                              <DropdownMenuSeparator />
+                              <DropdownMenuItem onClick={() => viewSaleDetails(sale.id)}>
+                                <EyeIcon className="h-4 w-4 mr-2" />
+                                Ver detalhes
+                              </DropdownMenuItem>
+                            </DropdownMenuContent>
+                          </DropdownMenu>
+                        </TableCell>
+                      </TableRow>
+                    ))
+                  ) : (
+                    <TableRow>
+                      <TableCell colSpan={7} className="text-center py-6 text-muted-foreground">
+                        Nenhuma venda encontrada. 
+                        {searchTerm && " Tente uma busca diferente."}
                       </TableCell>
                     </TableRow>
-                  ))
-                ) : (
-                  <TableRow>
-                    <TableCell colSpan={7} className="text-center py-6 text-muted-foreground">
-                      Nenhuma venda encontrada. 
-                      {searchTerm && " Tente uma busca diferente."}
-                    </TableCell>
-                  </TableRow>
-                )}
-              </TableBody>
-            </Table>
+                  )}
+                </TableBody>
+              </Table>
+            </div>
           )}
         </div>
       </CardContent>

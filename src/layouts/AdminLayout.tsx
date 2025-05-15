@@ -43,7 +43,7 @@ const AdminLayout = () => {
     setIsLoading(true);
     const timer = setTimeout(() => {
       setIsLoading(false);
-    }, 500); // 0.5 second loading time
+    }, 300); // 0.3 second loading time - reduced to improve mobile experience
     
     return () => clearTimeout(timer);
   }, []);
@@ -54,7 +54,7 @@ const AdminLayout = () => {
         <motion.div
           initial={{ opacity: 0, scale: 0.8 }}
           animate={{ opacity: 1, scale: 1 }}
-          transition={{ duration: 0.5 }}
+          transition={{ duration: 0.3 }}
           className="flex flex-col items-center"
         >
           <Spinner size="lg" className="border-white border-t-transparent" />
@@ -101,8 +101,8 @@ const AdminLayout = () => {
           </div>
         </header>
         
-        {/* Main scrollable content */}
-        <main className="flex-1 overflow-y-auto p-2 sm:p-4 md:p-6 lg:p-8">
+        {/* Main scrollable content - key changes for mobile */}
+        <main className="flex-1 w-full overflow-y-auto overflow-x-hidden p-2 sm:p-4 md:p-6 lg:p-8">
           <div className="mx-auto w-full">
             <Outlet />
           </div>

@@ -20,44 +20,44 @@ const AdminSalesLayout = ({
 }: AdminSalesLayoutProps) => {
   return (
     <>
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-8">
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-2 md:gap-4 mb-4 md:mb-8">
         <div>
-          <h1 className="text-2xl font-bold">Gestão de Vendas</h1>
-          <p className="text-muted-foreground">
+          <h1 className="text-xl md:text-2xl font-bold">Gestão de Vendas</h1>
+          <p className="text-muted-foreground text-sm md:text-base">
             Visualize, filtre e gerencie todas as vendas realizadas
           </p>
         </div>
         
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-1 md:gap-2 w-full md:w-auto mt-2 md:mt-0">
           <Button 
             variant="outline" 
             size="sm"
-            className="flex items-center gap-1"
+            className="flex items-center gap-1 flex-1 md:flex-auto justify-center"
             onClick={onRefresh}
             disabled={isRefreshing}
           >
-            <RefreshCw className={`h-4 w-4 ${isRefreshing ? 'animate-spin' : ''}`} />
-            {isRefreshing ? "Atualizando..." : "Atualizar"}
+            <RefreshCw className={`h-3 w-3 md:h-4 md:w-4 ${isRefreshing ? 'animate-spin' : ''}`} />
+            <span className="text-xs md:text-sm">{isRefreshing ? "Atualizando..." : "Atualizar"}</span>
           </Button>
           
           <Button 
             variant="outline"
             size="sm"
-            className="flex items-center gap-1"
+            className="flex items-center gap-1 flex-1 md:flex-auto justify-center"
             onClick={onImport}
           >
-            <Upload className="h-4 w-4" />
-            Importar
+            <Upload className="h-3 w-3 md:h-4 md:w-4" />
+            <span className="text-xs md:text-sm">Importar</span>
           </Button>
           
           <Button 
             variant="outline"
             size="sm"
-            className="flex items-center gap-1"
+            className="flex items-center gap-1 flex-1 md:flex-auto justify-center"
             onClick={onExport}
           >
-            <Download className="h-4 w-4" />
-            Exportar
+            <Download className="h-3 w-3 md:h-4 md:w-4" />
+            <span className="text-xs md:text-sm">Exportar</span>
           </Button>
         </div>
       </div>
