@@ -16,16 +16,16 @@ const FinancialDashboard = () => {
       />
       
       {/* KPIs */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <Card>
           <CardHeader className="pb-2">
             <CardDescription>Total de pagamentos em aberto</CardDescription>
-            <CardTitle className="text-3xl font-bold">R$ 145.730,00</CardTitle>
+            <CardTitle className="text-xl sm:text-2xl md:text-3xl font-bold">R$ 145.730,00</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="flex items-center justify-between text-sm">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between text-sm gap-1">
               <div className="flex items-center text-green-600">
-                <ArrowUp className="h-4 w-4 mr-1" />
+                <ArrowUp className="h-4 w-4 mr-1 flex-shrink-0" />
                 <span>12% desde o mês anterior</span>
               </div>
               <span className="text-gray-500">42 solicitações</span>
@@ -36,12 +36,12 @@ const FinancialDashboard = () => {
         <Card>
           <CardHeader className="pb-2">
             <CardDescription>Pagamentos realizados (mês)</CardDescription>
-            <CardTitle className="text-3xl font-bold">R$ 89.450,00</CardTitle>
+            <CardTitle className="text-xl sm:text-2xl md:text-3xl font-bold">R$ 89.450,00</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="flex items-center justify-between text-sm">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between text-sm gap-1">
               <div className="flex items-center text-red-600">
-                <ArrowDown className="h-4 w-4 mr-1" />
+                <ArrowDown className="h-4 w-4 mr-1 flex-shrink-0" />
                 <span>3% desde o mês anterior</span>
               </div>
               <span className="text-gray-500">35 transações</span>
@@ -52,12 +52,12 @@ const FinancialDashboard = () => {
         <Card>
           <CardHeader className="pb-2">
             <CardDescription>Taxas geradas (mês)</CardDescription>
-            <CardTitle className="text-3xl font-bold">R$ 12.380,00</CardTitle>
+            <CardTitle className="text-xl sm:text-2xl md:text-3xl font-bold">R$ 12.380,00</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="flex items-center justify-between text-sm">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between text-sm gap-1">
               <div className="flex items-center text-green-600">
-                <ArrowUp className="h-4 w-4 mr-1" />
+                <ArrowUp className="h-4 w-4 mr-1 flex-shrink-0" />
                 <span>5% desde o mês anterior</span>
               </div>
               <span className="text-gray-500">240 transações</span>
@@ -68,12 +68,12 @@ const FinancialDashboard = () => {
         <Card>
           <CardHeader className="pb-2">
             <CardDescription>Solicitações pendentes</CardDescription>
-            <CardTitle className="text-3xl font-bold">18</CardTitle>
+            <CardTitle className="text-xl sm:text-2xl md:text-3xl font-bold">18</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="flex items-center justify-between text-sm">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between text-sm gap-1">
               <div className="flex items-center text-amber-600">
-                <Clock className="h-4 w-4 mr-1" />
+                <Clock className="h-4 w-4 mr-1 flex-shrink-0" />
                 <span>Tempo médio: 2.3 dias</span>
               </div>
               <span className="text-gray-500">Prioridade alta: 5</span>
@@ -83,12 +83,12 @@ const FinancialDashboard = () => {
       </div>
       
       {/* Quick actions */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
         <Card>
           <CardHeader>
-            <CardTitle className="flex items-center text-lg">
-              <CircleDollarSign className="h-5 w-5 mr-2" /> 
-              Solicitações de Pagamento
+            <CardTitle className="flex items-center text-base sm:text-lg">
+              <CircleDollarSign className="h-5 w-5 mr-2 flex-shrink-0" /> 
+              <span className="truncate">Solicitações de Pagamento</span>
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
@@ -97,7 +97,7 @@ const FinancialDashboard = () => {
             </p>
             <Button className="w-full" asChild>
               <Link to={PATHS.FINANCIAL.REQUESTS}>
-                Ver Solicitações <ArrowRight className="ml-2 h-4 w-4" />
+                Ver Solicitações <ArrowRight className="ml-2 h-4 w-4 flex-shrink-0" />
               </Link>
             </Button>
           </CardContent>
@@ -105,20 +105,20 @@ const FinancialDashboard = () => {
         
         <Card>
           <CardHeader>
-            <CardTitle className="flex items-center text-lg">
-              <Users className="h-5 w-5 mr-2" /> 
-              Clientes e Relatórios
+            <CardTitle className="flex items-center text-base sm:text-lg">
+              <Users className="h-5 w-5 mr-2 flex-shrink-0" /> 
+              <span className="truncate">Clientes e Relatórios</span>
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
             <p className="text-sm text-muted-foreground">
               Acesse a lista de clientes e gere relatórios financeiros.
             </p>
-            <div className="grid grid-cols-2 gap-4">
-              <Button variant="outline" className="w-full" asChild>
+            <div className="grid grid-cols-2 gap-2">
+              <Button variant="outline" className="w-full text-xs sm:text-sm px-2" asChild>
                 <Link to={PATHS.FINANCIAL.CLIENTS}>Clientes</Link>
               </Button>
-              <Button variant="outline" className="w-full" asChild>
+              <Button variant="outline" className="w-full text-xs sm:text-sm px-2" asChild>
                 <Link to={PATHS.FINANCIAL.REPORTS}>Relatórios</Link>
               </Button>
             </div>
@@ -127,9 +127,9 @@ const FinancialDashboard = () => {
         
         <Card>
           <CardHeader>
-            <CardTitle className="flex items-center text-lg">
-              <FileText className="h-5 w-5 mr-2" /> 
-              Relatórios Financeiros
+            <CardTitle className="flex items-center text-base sm:text-lg">
+              <FileText className="h-5 w-5 mr-2 flex-shrink-0" /> 
+              <span className="truncate">Relatórios Financeiros</span>
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
@@ -138,7 +138,7 @@ const FinancialDashboard = () => {
             </p>
             <Button className="w-full" asChild>
               <Link to={PATHS.FINANCIAL.REPORTS}>
-                Acessar Relatórios <ArrowRight className="ml-2 h-4 w-4" />
+                Acessar Relatórios <ArrowRight className="ml-2 h-4 w-4 flex-shrink-0" />
               </Link>
             </Button>
           </CardContent>
@@ -157,13 +157,13 @@ const FinancialDashboard = () => {
               { date: "09/04/2025", description: "Pagamento rejeitado", client: "Smart Services", value: 1240.00 },
               { date: "08/04/2025", description: "Comissão processada", client: "Partner Solutions", value: 780.25 }
             ].map((activity, index) => (
-              <div key={index} className="flex items-center justify-between p-3 rounded-lg border hover:bg-muted/50 transition-colors">
+              <div key={index} className="flex flex-col sm:flex-row sm:items-center justify-between p-3 rounded-lg border hover:bg-muted/50 transition-colors">
                 <div className="flex flex-col">
                   <span className="text-sm text-muted-foreground">{activity.date}</span>
                   <span className="font-medium">{activity.description}</span>
-                  <span className="text-sm">{activity.client}</span>
+                  <span className="text-sm truncate max-w-[200px] sm:max-w-none">{activity.client}</span>
                 </div>
-                <div className="text-right">
+                <div className="text-left sm:text-right mt-2 sm:mt-0">
                   <span className="font-semibold">R$ {activity.value.toFixed(2)}</span>
                 </div>
               </div>

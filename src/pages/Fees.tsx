@@ -816,9 +816,9 @@ const Fees = () => {
                       } hover:border-primary transition-colors`}
                       onClick={() => setSelectedBlock(block.id)}
                     >
-                      <div className="flex items-center min-w-0">
-                        <div className={`w-3 h-3 rounded-full mr-3 flex-shrink-0 ${getBlockColor(block.color)}`} />
-                        <div className="max-w-[120px] min-w-0">
+                      <div className="flex items-center space-x-2 min-w-0 overflow-hidden mr-1">
+                        <div className={`w-3 h-3 rounded-full flex-shrink-0 ${getBlockColor(block.color)}`} />
+                        <div className="min-w-0 overflow-hidden">
                           <p className="font-medium truncate">{block.name}</p>
                           <p className="text-xs text-muted-foreground truncate">
                             {block.clients.length > 0 
@@ -827,15 +827,15 @@ const Fees = () => {
                           </p>
                         </div>
                       </div>
-                      <div className="flex items-center space-x-1 flex-shrink-0">
+                      <div className="flex items-center gap-1 flex-shrink-0">
                         <TooltipProvider>
                           <Tooltip>
                             <TooltipTrigger asChild>
-                              <Button variant="ghost" size="icon" className="h-7 w-7" onClick={(e) => {
+                              <Button variant="ghost" size="sm" className="h-6 w-6 p-0" onClick={(e) => {
                                 e.stopPropagation();
                                 openHistoryDialog(block.id);
                               }}>
-                                <HistoryIcon className="h-4 w-4" />
+                                <HistoryIcon className="h-3.5 w-3.5" />
                               </Button>
                             </TooltipTrigger>
                             <TooltipContent>
@@ -849,11 +849,11 @@ const Fees = () => {
                             <TooltipProvider>
                               <Tooltip>
                                 <TooltipTrigger asChild>
-                                  <Button variant="ghost" size="icon" className="h-7 w-7" onClick={(e) => {
+                                  <Button variant="ghost" size="sm" className="h-6 w-6 p-0" onClick={(e) => {
                                     e.stopPropagation();
                                     handleDuplicateBlock(block.id);
                                   }}>
-                                    <CopyIcon className="h-4 w-4" />
+                                    <CopyIcon className="h-3.5 w-3.5" />
                                   </Button>
                                 </TooltipTrigger>
                                 <TooltipContent>
@@ -865,11 +865,11 @@ const Fees = () => {
                             <TooltipProvider>
                               <Tooltip>
                                 <TooltipTrigger asChild>
-                                  <Button variant="ghost" size="icon" className="h-7 w-7" onClick={(e) => {
+                                  <Button variant="ghost" size="sm" className="h-6 w-6 p-0" onClick={(e) => {
                                     e.stopPropagation();
                                     handleEditBlock(block);
                                   }}>
-                                    <Settings2Icon className="h-4 w-4" />
+                                    <Settings2Icon className="h-3.5 w-3.5" />
                                   </Button>
                                 </TooltipTrigger>
                                 <TooltipContent>
@@ -881,11 +881,11 @@ const Fees = () => {
                             <TooltipProvider>
                               <Tooltip>
                                 <TooltipTrigger asChild>
-                                  <Button variant="ghost" size="icon" className="h-7 w-7" onClick={(e) => {
+                                  <Button variant="ghost" size="sm" className="h-6 w-6 p-0" onClick={(e) => {
                                     e.stopPropagation();
                                     handleDeleteBlockInitiate(block.id);
                                   }}>
-                                    <Trash2Icon className="h-4 w-4 text-destructive" />
+                                    <Trash2Icon className="h-3.5 w-3.5 text-destructive" />
                                   </Button>
                                 </TooltipTrigger>
                                 <TooltipContent>

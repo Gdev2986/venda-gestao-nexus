@@ -180,9 +180,9 @@ const AdminDashboard = () => {
         title="Dashboard Administrativo"
         description="Visão geral da operação e principais métricas"
       >
-        <div className="flex items-center gap-3">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 mt-3 sm:mt-0">
           {/* Date filter */}
-          <div className="flex shadow-sm rounded-md">
+          <div className="flex shadow-sm rounded-md w-full sm:w-auto overflow-x-auto">
             <Button 
               variant={activeFilter === DATE_FILTER_PRESETS.LAST_7_DAYS ? "default" : "outline"}
               onClick={() => handleFilterChange(DATE_FILTER_PRESETS.LAST_7_DAYS)}
@@ -217,48 +217,52 @@ const AdminDashboard = () => {
             </Button>
           </div>
           
-          {/* Calendar picker */}
-          <Popover>
-            <PopoverTrigger asChild>
-              <Button variant="outline" size="sm" className="flex items-center gap-2">
-                <CalendarIcon size={16} />
-                {dateRange.from && dateRange.to ? (
-                  <>
-                    {format(dateRange.from, "dd/MM/yyyy")} - {format(dateRange.to, "dd/MM/yyyy")}
-                  </>
-                ) : (
-                  "Selecionar período"
-                )}
-              </Button>
-            </PopoverTrigger>
-            <PopoverContent className="w-auto p-0" align="start">
-              <Calendar
-                locale={pt}
-                mode="range"
-                defaultMonth={dateRange.from}
-                selected={dateRange}
-                onSelect={(range) => {
-                  if (range?.from) {
-                    setDateRange(range);
-                    setActiveFilter(DATE_FILTER_PRESETS.CUSTOM);
-                  }
-                }}
-                numberOfMonths={2}
-                className={cn("p-3 pointer-events-auto")}
-              />
-            </PopoverContent>
-          </Popover>
+          <div className="flex items-center gap-2 w-full sm:w-auto mt-3 sm:mt-0">
+            {/* Calendar picker */}
+            <Popover>
+              <PopoverTrigger asChild>
+                <Button variant="outline" size="sm" className="flex items-center gap-2 w-full sm:w-auto">
+                  <CalendarIcon size={16} />
+                  <span className="truncate">
+                    {dateRange.from && dateRange.to ? (
+                      <>
+                        {format(dateRange.from, "dd/MM/yyyy")} - {format(dateRange.to, "dd/MM/yyyy")}
+                      </>
+                    ) : (
+                      "Selecionar período"
+                    )}
+                  </span>
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-auto p-0" align="start">
+                <Calendar
+                  locale={pt}
+                  mode="range"
+                  defaultMonth={dateRange.from}
+                  selected={dateRange}
+                  onSelect={(range) => {
+                    if (range?.from) {
+                      setDateRange(range);
+                      setActiveFilter(DATE_FILTER_PRESETS.CUSTOM);
+                    }
+                  }}
+                  numberOfMonths={2}
+                  className={cn("p-3 pointer-events-auto")}
+                />
+              </PopoverContent>
+            </Popover>
 
-          <Button 
-            variant="outline" 
-            onClick={handleRefresh} 
-            disabled={isLoading}
-            size="sm"
-            className="flex items-center gap-2"
-          >
-            <RefreshCw className={`h-4 w-4 ${isLoading ? 'animate-spin' : ''}`} />
-            Atualizar
-          </Button>
+            <Button 
+              variant="outline" 
+              onClick={handleRefresh} 
+              disabled={isLoading}
+              size="sm"
+              className="flex items-center gap-2"
+            >
+              <RefreshCw className={`h-4 w-4 ${isLoading ? 'animate-spin' : ''}`} />
+              <span className="hidden sm:inline">Atualizar</span>
+            </Button>
+          </div>
         </div>
       </PageHeader>
 

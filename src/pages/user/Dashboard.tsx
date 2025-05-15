@@ -98,15 +98,15 @@ const UserDashboard = () => {
         <CardContent>
           <div className="space-y-4">
             {mockData.machines.map((machine) => (
-              <div key={machine.id} className="p-3 border rounded-md flex items-center justify-between hover:bg-accent/50 cursor-pointer transition-colors">
-                <div>
+              <div key={machine.id} className="p-3 border rounded-md flex flex-col sm:flex-row sm:items-center justify-between hover:bg-accent/50 cursor-pointer transition-colors gap-2">
+                <div className="min-w-0 overflow-hidden">
                   <div className="flex items-center">
-                    <CreditCard className="h-4 w-4 mr-2 text-muted-foreground" />
-                    <span className="font-medium">{machine.name}</span>
+                    <CreditCard className="h-4 w-4 mr-2 text-muted-foreground flex-shrink-0" />
+                    <span className="font-medium truncate">{machine.name}</span>
                   </div>
                   <div className="text-xs text-muted-foreground mt-1">
-                    <p>S/N: {machine.serial_number}</p>
-                    <p>Modelo: {machine.model}</p>
+                    <p className="truncate">S/N: {machine.serial_number}</p>
+                    <p className="truncate">Modelo: {machine.model}</p>
                   </div>
                 </div>
                 <div>
@@ -119,7 +119,7 @@ const UserDashboard = () => {
           <div className="mt-6">
             <Button variant="outline" className="w-full" asChild>
               <Link to={PATHS.USER.MACHINES}>
-                Ver todas as máquinas <ArrowRight className="ml-2 h-4 w-4" />
+                Ver todas as máquinas <ArrowRight className="ml-2 h-4 w-4 flex-shrink-0" />
               </Link>
             </Button>
           </div>

@@ -1,4 +1,3 @@
-
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
 
 @tailwind base;
@@ -162,6 +161,26 @@
   /* Responsive alignment */
   .responsive-center {
     @apply flex flex-col sm:flex-row items-center justify-center;
+  }
+  
+  /* Responsive truncate */
+  .responsive-truncate {
+    @apply truncate max-w-full;
+  }
+  
+  /* Responsive flex */
+  .responsive-flex {
+    @apply flex flex-col sm:flex-row gap-2;
+  }
+  
+  /* Responsive icons */
+  .responsive-icon-container {
+    @apply flex flex-wrap gap-1;
+  }
+  
+  /* Responsive card */
+  .responsive-card {
+    @apply flex flex-col sm:flex-row sm:items-center gap-3 p-3;
   }
 }
 

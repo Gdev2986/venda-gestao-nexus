@@ -59,7 +59,7 @@ const LogisticsDashboard = () => {
         {/* Main content */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* Main dashboard area - 2/3 width */}
-          <div className="lg:col-span-2 space-y-6">
+          <div className="lg:col-span-2 space-y-6 order-2 lg:order-1">
             <DashboardTabs 
               machineStatusData={machineStatusData}
               requestsMonthlyData={requestsMonthlyData}
@@ -68,7 +68,7 @@ const LogisticsDashboard = () => {
           </div>
           
           {/* Sidebar content - 1/3 width */}
-          <div className="space-y-6">
+          <div className="space-y-6 order-1 lg:order-2">
             <AppointmentsCard appointments={upcomingAppointments} />
             <RecentActivitiesCard activities={recentActivities} />
           </div>
