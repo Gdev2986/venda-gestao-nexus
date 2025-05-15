@@ -4,11 +4,12 @@ import { ReactNode } from "react";
 
 interface PageWrapperProps {
   children: ReactNode;
+  className?: string; // Add className prop
 }
 
-export function PageWrapper({ children }: PageWrapperProps) {
+export function PageWrapper({ children, className = "" }: PageWrapperProps) {
   return (
-    <Card className="overflow-hidden">
+    <Card className={`overflow-hidden ${className}`}>
       <CardContent className="p-6">
         {children}
       </CardContent>

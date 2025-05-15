@@ -52,10 +52,9 @@ const MainLayout = ({ children }: MainLayoutProps) => {
       
       {/* Main content */}
       <div 
-        className={cn(
-          "flex-1 flex flex-col transition-all duration-300 ease-in-out max-w-full",
+        className={`flex-1 flex flex-col transition-all duration-300 ease-in-out max-w-full ${
           sidebarOpen && !isMobile ? 'ml-64' : 'ml-0'
-        )}
+        }`}
       >
         {/* Header */}
         <header className="h-14 md:h-16 border-b border-border flex items-center justify-between px-2 sm:px-4 bg-background sticky top-0 z-10">

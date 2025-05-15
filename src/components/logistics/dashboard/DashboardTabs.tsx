@@ -26,8 +26,8 @@ const DashboardTabs: React.FC<DashboardTabsProps> = ({ machineStatusData, reques
       
       {/* Overview Tab */}
       <TabsContent value="overview" className="space-y-4 sm:space-y-6">
-        {/* Status charts */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        {/* Status charts - stacked on mobile, side by side on lg screens */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
           <MachineStatusChart data={machineStatusData} />
           <RequestsChart data={requestsMonthlyData} />
         </div>

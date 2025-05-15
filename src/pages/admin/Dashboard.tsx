@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { PageHeader } from "@/components/page/PageHeader";
 import { PageWrapper } from "@/components/page/PageWrapper";
@@ -265,7 +266,7 @@ const AdminDashboard = () => {
         </div>
       </PageHeader>
 
-      <PageWrapper className="space-y-4 md:space-y-6">
+      <div className="space-y-4 md:space-y-6">
         {/* Stats Cards */}
         <StatCards stats={MOCK_DATA.stats} isLoading={isLoading} />
         
@@ -275,21 +276,24 @@ const AdminDashboard = () => {
           {renderQuickLinks()}
         </div>
         
-        {/* Charts Grid */}
-        <div className="grid grid-cols-1 gap-4 md:grid-cols-2 md:gap-6 mt-4 md:mt-6">
+        {/* Charts Grid - Stack vertically on mobile */}
+        <div className="grid grid-cols-1 gap-4 md:gap-6 mt-4 md:mt-6">
           {/* Sales Chart */}
           <SalesChart data={MOCK_DATA.dailySales} isLoading={isLoading} />
           
           {/* Payment Methods Chart */}
           <PaymentMethodsChart data={MOCK_DATA.paymentMethods} isLoading={isLoading} />
           
-          {/* Top Partners Chart */}
-          <TopPartnersChart data={MOCK_DATA.topPartners} isLoading={isLoading} />
-          
-          {/* Client Growth Chart */}
-          <ClientGrowthChart data={MOCK_DATA.clientGrowth} isLoading={isLoading} />
+          {/* Partners and Growth Charts - Stack on mobile, side by side on larger screens */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 md:gap-6">
+            {/* Top Partners Chart */}
+            <TopPartnersChart data={MOCK_DATA.topPartners} isLoading={isLoading} />
+            
+            {/* Client Growth Chart */}
+            <ClientGrowthChart data={MOCK_DATA.clientGrowth} isLoading={isLoading} />
+          </div>
         </div>
-      </PageWrapper>
+      </div>
     </div>
   );
 };
