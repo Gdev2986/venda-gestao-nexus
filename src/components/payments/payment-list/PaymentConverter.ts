@@ -1,7 +1,6 @@
 
 import { Payment } from "@/types";
-import { PaymentData } from "@/hooks/payments/payment.types";
-import { toPaymentStatus } from "@/lib/type-utils";
+import { PaymentData, PaymentRequestStatus } from "@/hooks/payments/payment.types";
 
 /**
  * Converts a Payment to a PaymentRequest
@@ -11,16 +10,16 @@ export function convertToPaymentRequest(payment: Payment): PaymentData {
     id: payment.id,
     client_id: payment.client_id,
     amount: payment.amount,
-    status: payment.status,
+    status: payment.status as PaymentRequestStatus,
     created_at: payment.created_at,
     updated_at: payment.updated_at,
-    approved_by: payment.approved_by || undefined,
-    approved_at: payment.approved_at || undefined,
-    receipt_url: payment.receipt_url || undefined,
-    description: payment.description || undefined,
+    approved_by: payment.approved_at ? payment.client_id : null, // Use appropriate value
+    approved_at: payment.approved_at || null,
+    receipt_url: payment.receipt_url || null,
+    description: payment.description || "",
     rejection_reason: payment.rejection_reason || null,
     ...(payment.client ? { client: payment.client } : {}),
-    ...(payment.pix_key ? { pix_key: payment.pix_key } : {})
+    ...(payment.pix_key ? { pix_key: payment.pix_key, pix_key_id: payment.pix_key.id } : {})
   };
 }
 

@@ -36,7 +36,6 @@ const PartnerFormModal = ({
         return success;
       } else {
         const success = await createPartner({
-          ...data,
           company_name: data.company_name,
           commission_rate: data.commission_rate || 0,
         });

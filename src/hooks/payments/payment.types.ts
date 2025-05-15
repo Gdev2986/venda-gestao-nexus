@@ -1,5 +1,16 @@
 
+import { PixKey, Client } from "@/types";
+import { PaymentStatus } from "@/types/enums";
+
 export type PaymentRequestStatus = 'PENDING' | 'APPROVED' | 'REJECTED' | 'PAID';
+
+export interface UsePaymentsOptions {
+  statusFilter?: string;
+  searchTerm?: string;
+  fetchOnMount?: boolean;
+  page?: number;
+  pageSize?: number;
+}
 
 export interface PaymentRequest {
   id: string;
@@ -57,5 +68,5 @@ export interface Client {
   fee_plan_id?: string;
 }
 
-// Add PaymentData export to match the type used in PaymentConverter
+// Make PaymentData type compatible with both systems
 export type PaymentData = PaymentRequest;

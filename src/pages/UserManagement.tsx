@@ -1,12 +1,5 @@
-
-import { useState, useEffect, useCallback } from "react";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { useState, useEffect } from "react";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import {
   Form,
@@ -39,7 +32,8 @@ import {
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
-import { UserRole, UserData } from "@/types";
+import { UserRole } from "@/types/enums";
+import { UserData } from "@/types";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import {
@@ -54,6 +48,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { toUserRole } from "@/lib/type-utils";
 
+// Create a more specific schema that matches the database
 const formSchema = z.object({
   name: z.string().min(2, {
     message: "Username must be at least 2 characters.",
@@ -61,8 +56,8 @@ const formSchema = z.object({
   email: z.string().email({
     message: "Please enter a valid email address.",
   }),
-  role: z.nativeEnum(UserRole, {
-    invalid_type_error: "Please select a valid role.",
+  role: z.string({
+    required_error: "Please select a role.",
   }),
   status: z.string().optional(),
 });
@@ -84,7 +79,7 @@ const UserManagement = () => {
     defaultValues: {
       name: "",
       email: "",
-      role: UserRole.CLIENT,
+      role: "CLIENT",
       status: "active",
     },
   });
@@ -124,26 +119,14 @@ const UserManagement = () => {
   const createUser = async (values: z.infer<typeof formSchema>) => {
     setIsCreating(true);
     try {
-      const { data: authData, error: authError } = await supabase.auth.signUp({
-        email: values.email,
-        password: "defaultpassword", // Implement a secure password flow later
-        options: {
-          data: {
-            name: values.name,
-            role: values.role,
-            status: values.status,
-          },
-        },
-      });
-
-      if (authError) throw authError;
-
-      const newUserId = authData.user?.id;
-
+      // Generate a UUID for the user
+      const { data: userData } = await supabase.rpc('generate_uuid');
+      const newUserId = userData;
+      
       if (newUserId) {
         const { error: profileError } = await supabase
           .from("profiles")
-          .upsert({
+          .insert({
             id: newUserId,
             name: values.name,
             email: values.email,
@@ -233,7 +216,12 @@ const UserManagement = () => {
 
   const handleEdit = (user: UserData) => {
     setSelectedUser(user);
-    form.reset(user);
+    form.reset({
+      name: user.name,
+      email: user.email,
+      role: user.role,
+      status: user.status
+    });
     setShowEditModal(true);
   };
 
@@ -248,11 +236,7 @@ const UserManagement = () => {
     }
   };
 
-  const handleRoleChange = (userId: string, role: string) => {
-    updateUserRole(userId, toUserRole(role));
-  };
-
-  const updateUserRole = async (userId: string, role: UserRole) => {
+  const updateUserRole = async (userId: string, role: string) => {
     setIsUpdating(true);
     try {
       const { error } = await supabase
@@ -281,7 +265,7 @@ const UserManagement = () => {
   };
 
   const handleRoleChange = (userId: string, role: string) => {
-    updateUserRole(userId, toUserRole(role));
+    updateUserRole(userId, role);
   };
 
   return (

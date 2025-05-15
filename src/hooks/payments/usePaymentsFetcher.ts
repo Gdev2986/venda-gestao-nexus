@@ -4,8 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { PaymentRequest } from "@/types/payment.types";
 import { useToast } from "@/hooks/use-toast";
 import { UsePaymentsOptions, PaymentData } from "./payment.types";
-import { PaymentStatus } from "@/types";
-import { toPaymentStatus } from "@/lib/type-utils";
+import { PaymentStatus } from "@/types/enums";
 
 export const usePaymentsFetcher = (options: UsePaymentsOptions = {}) => {
   const [paymentRequests, setPaymentRequests] = useState<PaymentRequest[]>([]);
@@ -55,7 +54,7 @@ export const usePaymentsFetcher = (options: UsePaymentsOptions = {}) => {
           created_at: request.created_at,
           updated_at: request.updated_at,
           receipt_url: request.receipt_url || null,
-          pix_key_id: request.pix_key_id,
+          pix_key_id: request.pix_key_id || undefined,
           approved_at: request.approved_at || null,
           approved_by: request.approved_by || null,
           rejection_reason: request.rejection_reason || null,

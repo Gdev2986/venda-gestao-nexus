@@ -1,32 +1,34 @@
 
-import { UserRole, PaymentStatus } from "@/types";
+import { PaymentStatus, UserRole } from "@/types/enums";
 
 /**
- * Safely converts a string to a UserRole enum value
- * If the string is not a valid UserRole, it returns a default value
+ * Converts a string to a PaymentStatus enum value
  */
-export function toUserRole(role: string | null | undefined, defaultRole: UserRole = UserRole.CLIENT): UserRole {
-  if (!role) return defaultRole;
-  
-  // Check if the provided role is a valid UserRole
-  if (Object.values(UserRole).includes(role as UserRole)) {
-    return role as UserRole;
+export function toPaymentStatus(status: string | PaymentStatus): PaymentStatus {
+  if (typeof status === 'string') {
+    switch (status.toUpperCase()) {
+      case 'PENDING': return PaymentStatus.PENDING;
+      case 'APPROVED': return PaymentStatus.APPROVED;
+      case 'REJECTED': return PaymentStatus.REJECTED;
+      case 'PAID': return PaymentStatus.PAID;
+      default: return PaymentStatus.PENDING;
+    }
   }
-  
-  return defaultRole;
+  return status;
 }
 
 /**
- * Safely converts a string to a PaymentStatus enum value
- * If the string is not a valid PaymentStatus, it returns a default value
+ * Converts a string to a UserRole enum value
  */
-export function toPaymentStatus(status: string | null | undefined, defaultStatus: PaymentStatus = PaymentStatus.PENDING): PaymentStatus {
-  if (!status) return defaultStatus;
-  
-  // Check if the provided status is a valid PaymentStatus
-  if (Object.values(PaymentStatus).includes(status as PaymentStatus)) {
-    return status as PaymentStatus;
+export function toUserRole(role: string | UserRole): UserRole {
+  if (typeof role === 'string') {
+    const upperRole = role.toUpperCase();
+    // Check if the role exists in the UserRole enum
+    if (Object.values(UserRole).includes(upperRole as UserRole)) {
+      return upperRole as UserRole;
+    }
+    // Default to USER role if not found
+    return UserRole.USER;
   }
-  
-  return defaultStatus;
+  return role;
 }

@@ -1,11 +1,10 @@
 
 import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { Payment, PaymentStatus } from '@/types';
+import { Payment, PaymentStatus } from '@/types/enums';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { PaymentAction } from '@/components/payments/PaymentTableColumns';
-import { toPaymentStatus } from '@/lib/type-utils';
 
 interface UseAdminPaymentsProps {
   searchTerm: string;
@@ -45,8 +44,8 @@ export const useAdminPayments = ({ searchTerm, statusFilter, page }: UseAdminPay
     // Convert data with type assertion to ensure compatibility
     const typedData = data?.map(item => ({
       ...item,
-      status: item.status || PaymentStatus.PENDING
-    })) as Payment[];
+      status: item.status || "PENDING"
+    })) as any[];
 
     return {
       data: typedData || [],

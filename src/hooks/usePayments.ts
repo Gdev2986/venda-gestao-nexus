@@ -1,13 +1,10 @@
 
+import { useState, useEffect } from "react";
 import { UsePaymentsOptions } from "./payments/payment.types";
 import { usePaymentsFetcher } from "./payments/usePaymentsFetcher";
 import { usePaymentActions } from "./payments/usePaymentActions";
-import { usePaymentRealtimeSubscription } from "./payments/usePaymentRealtimeSubscription";
 
-// Use 'export type' for re-exporting types when isolatedModules is enabled
-export type { PaymentData } from "./payments/payment.types";
-
-export function usePayments(options: UsePaymentsOptions = {}) {
+export const usePayments = (options: UsePaymentsOptions = {}) => {
   const {
     paymentRequests,
     setPaymentRequests,
@@ -16,7 +13,7 @@ export function usePayments(options: UsePaymentsOptions = {}) {
     currentPage,
     totalPages,
     setCurrentPage,
-    fetchPaymentRequests
+    fetchPaymentRequests,
   } = usePaymentsFetcher(options);
 
   const { approvePayment, rejectPayment } = usePaymentActions(
@@ -24,18 +21,15 @@ export function usePayments(options: UsePaymentsOptions = {}) {
     setPaymentRequests
   );
 
-  // Set up real-time subscription - for admin view (no client filtering)
-  usePaymentRealtimeSubscription(fetchPaymentRequests);
-
   return {
     paymentRequests,
     isLoading,
     error,
-    approvePayment,
-    rejectPayment,
-    refreshPayments: fetchPaymentRequests,
     currentPage,
     totalPages,
-    setCurrentPage
+    setCurrentPage,
+    fetchPaymentRequests,
+    approvePayment,
+    rejectPayment,
   };
-}
+};

@@ -15,8 +15,6 @@ import { PaymentDetailView } from "./PaymentDetailView";
 import { PaymentData } from "@/hooks/payments/payment.types";
 import { formatCurrency } from "@/lib/formatters";
 import { Loader2 } from "lucide-react";
-import { Payment } from "@/types";
-import { convertToPaymentRequest } from "./payment-list/PaymentConverter";
 
 // Create a simplified PaymentReceiptUploader component
 export function PaymentReceiptUploader({ 

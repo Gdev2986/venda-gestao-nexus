@@ -8,7 +8,7 @@ import { Select, SelectContent, SelectGroup, SelectItem, SelectTrigger, SelectVa
 interface MachineStatusData {
   name: string;
   value: number;
-  color: string; // Add required color property
+  color: string; // Required color property
 }
 
 interface MachineStatusChartProps {
