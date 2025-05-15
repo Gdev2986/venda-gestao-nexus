@@ -1,25 +1,8 @@
 
 import { useState, useEffect, useCallback } from "react";
-import { Partner } from "@/types";
+import { Partner, FilterValues } from "@/types";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-
-// Create a type that matches what's in the database
-interface PartnerRecord {
-  id: string;
-  company_name: string;
-  commission_rate: number;
-  created_at: string;
-  updated_at: string;
-  // Optional fields that may or may not be in the database
-  contact_name?: string;
-  email?: string;
-  phone?: string;
-  address?: string;
-  total_sales?: number;
-  total_commission?: number;
-  user_id?: string;
-}
 
 export const usePartners = () => {
   const [partners, setPartners] = useState<Partner[]>([]);
@@ -42,25 +25,22 @@ export const usePartners = () => {
 
       if (data) {
         // Transform data to match our Partner interface
-        const transformedPartners: Partner[] = data.map((partner: PartnerRecord) => {
-          // Create a properly typed partner object with available fields
-          const typedPartner: Partner = {
-            id: partner.id,
-            company_name: partner.company_name,
-            created_at: partner.created_at,
-            updated_at: partner.updated_at,
-            commission_rate: partner.commission_rate || 0,
-            // Only include fields that are defined in the data object
-            ...(partner.contact_name && { contact_name: partner.contact_name }),
-            ...(partner.email && { email: partner.email }),
-            ...(partner.phone && { phone: partner.phone }),
-            ...(partner.address && { address: partner.address }),
-            ...(partner.total_sales !== undefined && { total_sales: partner.total_sales }),
-            ...(partner.total_commission !== undefined && { total_commission: partner.total_commission }),
-            ...(partner.user_id && { user_id: partner.user_id }),
-          };
-          return typedPartner;
-        });
+        const transformedPartners: Partner[] = data.map(partner => ({
+          id: partner.id,
+          company_name: partner.company_name,
+          created_at: partner.created_at,
+          updated_at: partner.updated_at,
+          commission_rate: partner.commission_rate,
+          // Add optional fields with proper null checking
+          contact_name: partner.contact_name || undefined,
+          contact_email: partner.contact_email || undefined,
+          contact_phone: partner.contact_phone || undefined,
+          email: partner.email || undefined,
+          phone: partner.phone || undefined,
+          address: partner.address || undefined,
+          total_sales: partner.total_sales || 0,
+          total_commission: partner.total_commission || 0,
+        }));
 
         setPartners(transformedPartners);
         setFilteredPartners(transformedPartners);
@@ -128,23 +108,17 @@ export const usePartners = () => {
       const partnerToInsert = {
         company_name: partnerData.company_name,
         commission_rate: partnerData.commission_rate || 0,
-        // Include optional fields if they exist in the data
-        ...(partnerData.contact_name && { contact_name: partnerData.contact_name }),
-        ...(partnerData.email && { email: partnerData.email }),
-        ...(partnerData.phone && { phone: partnerData.phone }),
-        ...(partnerData.address && { address: partnerData.address }),
-        ...(partnerData.user_id && { user_id: partnerData.user_id }),
+        contact_name: partnerData.contact_name || null,
+        contact_email: partnerData.contact_email || null,
+        contact_phone: partnerData.contact_phone || null,
+        email: partnerData.email || null,
+        phone: partnerData.phone || null,
+        address: partnerData.address || null
       };
 
-      // Generate a UUID for the partner
-      const id = crypto.randomUUID();
-      
       const { data, error } = await supabase
         .from('partners')
-        .insert({
-          id,
-          ...partnerToInsert
-        })
+        .insert([partnerToInsert])
         .select();
 
       if (error) throw error;
@@ -172,14 +146,14 @@ export const usePartners = () => {
   const updatePartner = async (partnerId: string, partnerData: Partial<Partner>) => {
     try {
       // Create an update object with only the fields that exist in the database table
-      const updateData: any = {};
-      
-      if (partnerData.company_name) updateData.company_name = partnerData.company_name;
-      if (partnerData.commission_rate !== undefined) updateData.commission_rate = partnerData.commission_rate;
-      if (partnerData.contact_name) updateData.contact_name = partnerData.contact_name;
-      if (partnerData.email) updateData.email = partnerData.email;
-      if (partnerData.phone) updateData.phone = partnerData.phone;
-      if (partnerData.address) updateData.address = partnerData.address;
+      const updateData = {
+        ...(partnerData.company_name && { company_name: partnerData.company_name }),
+        ...(partnerData.commission_rate !== undefined && { commission_rate: partnerData.commission_rate }),
+        ...(partnerData.contact_name && { contact_name: partnerData.contact_name }),
+        ...(partnerData.email && { email: partnerData.email }),
+        ...(partnerData.phone && { phone: partnerData.phone }),
+        ...(partnerData.address && { address: partnerData.address })
+      };
 
       const { error } = await supabase
         .from('partners')

@@ -1,10 +1,18 @@
 
-import { formatDistanceToNow, parseISO } from "date-fns";
+import { formatDistanceToNow } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { Bell, ShoppingCart, CreditCard, Wrench, LifeBuoy } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import TablePagination from "@/components/ui/table-pagination";
-import { Notification } from "@/types";
+
+interface Notification {
+  id: string;
+  title: string;
+  message: string;
+  type: string;
+  read: boolean;
+  timestamp: Date;
+}
 
 interface NotificationListProps {
   notifications: Notification[];
@@ -43,20 +51,6 @@ const NotificationList = ({
     }
   };
 
-  const formatDate = (dateStr: string) => {
-    try {
-      // Parse the ISO string to a Date object
-      const date = parseISO(dateStr);
-      return formatDistanceToNow(date, { 
-        addSuffix: true,
-        locale: ptBR
-      });
-    } catch (error) {
-      console.error("Error parsing date:", error);
-      return dateStr; // Return original string if parsing fails
-    }
-  };
-
   if (notifications.length === 0) {
     return (
       <div className="p-8 text-center">
@@ -71,7 +65,7 @@ const NotificationList = ({
         {notifications.map((notification) => (
           <div 
             key={notification.id} 
-            className={`p-4 flex items-start hover:bg-muted/50 transition-colors ${notification.is_read ? 'opacity-70' : ''}`}
+            className={`p-4 flex items-start hover:bg-muted/50 transition-colors ${notification.read ? 'opacity-70' : ''}`}
           >
             <div className="mr-4 mt-1">{getIcon(notification.type)}</div>
             
@@ -79,14 +73,17 @@ const NotificationList = ({
               <div className="flex items-center">
                 <h4 className="text-sm font-medium flex-1">{notification.title}</h4>
                 <span className="text-xs text-muted-foreground">
-                  {formatDate(notification.created_at)}
+                  {formatDistanceToNow(new Date(notification.timestamp), { 
+                    addSuffix: true,
+                    locale: ptBR
+                  })}
                 </span>
               </div>
               
               <p className="mt-1 text-sm text-muted-foreground">{notification.message}</p>
               
               <div className="mt-2 flex items-center gap-2">
-                {notification.is_read ? (
+                {notification.read ? (
                   <Button 
                     variant="ghost" 
                     size="sm" 
@@ -117,7 +114,7 @@ const NotificationList = ({
               </div>
             </div>
             
-            {!notification.is_read && (
+            {!notification.read && (
               <div className="mt-1 h-2 w-2 rounded-full bg-primary" />
             )}
           </div>

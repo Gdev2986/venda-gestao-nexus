@@ -1,7 +1,7 @@
 
 export enum UserRole {
   ADMIN = "ADMIN",
-  CLIENT = "CLIENT",
+  CLIENT = "CLIENT", 
   FINANCIAL = "FINANCIAL",
   PARTNER = "PARTNER",
   LOGISTICS = "LOGISTICS",
@@ -18,62 +18,23 @@ export enum PaymentStatus {
   PAID = "PAID"
 }
 
-export enum PaymentMethod {
-  CREDIT = "CREDIT",
-  DEBIT = "DEBIT",
+export enum PaymentType {
   PIX = "PIX",
-  BOLETO = "BOLETO",
-  TRANSFER = "TRANSFER"
+  TED = "TED",
+  BOLETO = "BOLETO"
 }
 
-export enum NotificationType {
-  PAYMENT = "PAYMENT",
-  BALANCE = "BALANCE",
-  MACHINE = "MACHINE",
-  COMMISSION = "COMMISSION",
-  SYSTEM = "SYSTEM",
-  SALE = "SALE",
-  SUPPORT = "SUPPORT"
-}
-
-// Database notification type - matches what's in the database
-export type DatabaseNotificationType = "PAYMENT" | "BALANCE" | "MACHINE" | "COMMISSION" | "SYSTEM" | "SALE" | "SUPPORT";
-
-export interface Notification {
-  id: string;
-  title: string;
-  message: string;
-  type: NotificationType;
-  read: boolean;
-  created_at: string;
-  user_id: string;
-  data?: Record<string, any>;
-  role?: UserRole;
-}
-
-// Database notification model
-export interface DatabaseNotification {
-  id: string;
-  title: string;
-  message: string;
-  type: DatabaseNotificationType;
-  is_read: boolean;
-  created_at: string;
-  user_id: string;
-  data?: Record<string, any>;
-  role?: UserRole;
-}
-
+// Added ClientStatus enum for the ClientStatus component
 export enum ClientStatus {
   ACTIVE = "active",
   INACTIVE = "inactive",
   PENDING = "pending"
 }
 
-export enum PaymentType {
-  PIX = "PIX",
-  TED = "TED",
-  BOLETO = "BOLETO"
+export enum PaymentMethod {
+  CREDIT = "credit",
+  DEBIT = "debit",
+  PIX = "pix"
 }
 
 export interface Payment {
@@ -81,7 +42,7 @@ export interface Payment {
   created_at: string;
   updated_at: string;
   amount: number;
-  status: PaymentStatus;
+  status: PaymentStatus | string;
   client_id: string;
   approved_at?: string; 
   receipt_url?: string;
@@ -102,42 +63,34 @@ export interface Payment {
     type: string;
     owner_name: string;
   };
+  // Add missing properties being used in code
+  client?: any;
   description?: string;
-  client?: {
-    id: string;
-    business_name: string;
-    document?: string;
-    email?: string;
-    phone?: string;
-    address?: string;
-    city?: string;
-    state?: string;
-    zip?: string;
-    created_at?: string;
-    updated_at?: string;
-    status?: string;
-  };
 }
 
-export interface PixKey {
+// Types for partners
+export interface Partner {
   id: string;
-  user_id: string;
-  type: string;
-  key_type?: string;
-  key: string;
-  owner_name?: string;
-  name?: string;
-  is_default: boolean;
-  bank_name?: string;
+  company_name: string;
   created_at: string;
   updated_at: string;
-  is_active?: boolean;
+  commission_rate: number;
+  contact_name?: string;
+  contact_email?: string;
+  contact_phone?: string;
+  business_name?: string; // For backward compatibility
+  email?: string; // Added for consistency with filtering
+  phone?: string; // Added for consistency with filtering
+  address?: string; // Added for completeness
+  // Add missing properties
+  total_sales?: number;
+  total_commission?: number;
 }
 
+// Added Client interface to ensure type safety
 export interface Client {
   id: string;
   business_name: string;
-  document?: string;
   email?: string;
   phone?: string;
   status?: string;
@@ -150,42 +103,9 @@ export interface Client {
   city?: string;
   state?: string;
   zip?: string;
+  document?: string;
   fee_plan_id?: string;
   company_name?: string;
-}
-
-export interface Sale {
-  id: string;
-  code: string;
-  terminal: string;
-  client_name: string;
-  gross_amount: number;
-  net_amount: number;
-  amount: number;
-  date: string;
-  payment_method: PaymentMethod;
-  client_id: string;
-  created_at: string;
-  updated_at: string;
-  status: string;
-}
-
-export interface Partner {
-  id: string;
-  company_name: string;
-  created_at: string;
-  updated_at: string;
-  commission_rate: number;
-  contact_name?: string;
-  contact_email?: string;
-  contact_phone?: string;
-  business_name?: string;
-  email?: string;
-  phone?: string;
-  address?: string;
-  user_id?: string;
-  total_commission?: number;
-  total_sales?: number;
 }
 
 export interface FilterValues {
@@ -196,7 +116,42 @@ export interface FilterValues {
     from: Date;
     to?: Date;
   };
-  commissionRange?: [number, number];
+  searchTerm?: string; // Add searchTerm to fix errors
+  commissionRange?: [number, number]; // Add property for partner filtering
+}
+
+export interface PixKey {
+  id: string;
+  key: string;
+  type: string;
+  name: string;
+  owner_name?: string;
+  is_default?: boolean;
+  user_id?: string;
+  created_at?: string;
+  updated_at?: string;
+  bank_name?: string;
+  key_type?: string;
+  is_active?: boolean;
+}
+
+export interface Sale {
+  id: string;
+  code: string;
+  terminal: string;
+  client_name: string;
+  gross_amount: number;
+  net_amount: number;
+  date: string;
+  payment_method: PaymentMethod | string;
+  client_id: string;
+  created_at: string;
+  updated_at: string;
+  amount?: number;
+  status?: string;
+  partner_id?: string;
+  machine_id?: string;
+  processing_status?: string;
 }
 
 export interface SalesFilterParams {
@@ -214,7 +169,7 @@ export interface UserData {
   id: string;
   name: string;
   email: string;
-  role: UserRole;
+  role: UserRole | string; // Allow string role from database
   created_at: string;
   status: string;
 }
@@ -224,15 +179,16 @@ export interface SalesChartData {
   value: number;
 }
 
+// Add Machine interface to fix missing type errors
 export interface Machine {
   id: string;
-  model: string;
   serial_number: string;
+  model: string;
   status: string;
   client_id?: string;
-  location?: string;
-  created_at: string;
+  created_at?: string;
   updated_at?: string;
   name?: string;
   client_name?: string;
+  serialNumber?: string;
 }

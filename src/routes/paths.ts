@@ -41,7 +41,7 @@ export const PATHS = {
   USER: {
     DASHBOARD: "/user/dashboard",
     PAYMENTS: "/user/payments",
-    MACHINES: "/user/machines",
+    MACHINES: "/user/machines", // Add machines path
     SUPPORT: "/user/support",
     HELP: "/user/help",
     SETTINGS: "/user/settings",
@@ -50,19 +50,19 @@ export const PATHS = {
     DASHBOARD: "/partner/dashboard",
     SALES: "/partner/sales",
     CLIENTS: "/partner/clients",
-    CLIENT_DETAILS: (id: string = ":id") => `/partner/clients/${id}`,
+    CLIENT_DETAILS: (id: string = ":id") => `/partner/clients/${id}`, // Add client details path
     REPORTS: "/partner/reports",
     SUPPORT: "/partner/support",
     HELP: "/partner/help",
     SETTINGS: "/partner/settings",
-    COMMISSIONS: "/partner/commissions",
+    COMMISSIONS: "/partner/commissions", // Add commissions path
   },
   FINANCIAL: {
     DASHBOARD: "/financial/dashboard",
     SALES: "/financial/sales",
     CLIENTS: "/financial/clients",
     CLIENT_DETAILS: (id: string = ":id") => `/financial/clients/${id}`,
-    PAYMENTS: "/financial/payments",
+    PAYMENTS: "/admin/payments", // Use the same admin payments route
     PARTNERS: "/financial/partners",
     REPORTS: "/financial/reports",
     FEES: "/financial/fees",
@@ -75,12 +75,22 @@ export const PATHS = {
     DASHBOARD: "/logistics/dashboard",
     CLIENTS: "/logistics/clients",
     MACHINES: "/logistics/machines",
-    MACHINE_DETAILS: (id: string = ":id") => `/logistics/machines/${id}`,
     MACHINE_NEW: "/logistics/machines/new",
+    MACHINE_DETAILS: (id: string = ":id") => `/logistics/machines/${id}`,
+    STOCK: "/logistics/stock", // Add stock path
+    CLIENT_MACHINES: "/logistics/client-machines", // Add client machines path
     OPERATIONS: "/logistics/operations",
     REQUESTS: "/logistics/requests",
+    SERVICE_REQUESTS: "/logistics/service-requests", // Add service requests path
+    MAINTENANCE_REQUESTS: "/logistics/maintenance-requests", // Add maintenance requests path
+    PAPER_REQUESTS: "/logistics/paper-requests", // Add paper requests path
+    INSTALLATION_REQUESTS: "/logistics/installation-requests", // Add installation requests path
+    CALENDAR: "/logistics/calendar",
     INVENTORY: "/logistics/inventory",
+    SALES: "/logistics/sales",
+    LOGISTICS_MODULE: "/logistics/module",
+    SUPPORT: "/logistics/support",
+    HELP: "/logistics/help",
     SETTINGS: "/logistics/settings",
-    CALENDAR: "/logistics/calendar"
   }
 };

@@ -1,8 +1,55 @@
+
 import { useState, useEffect } from "react";
 import { UserRole } from "@/types";
-import { useAuth } from "@/hooks/use-auth";
+import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
-import { cleanupAuthState, getAuthData, setAuthData } from "@/utils/auth-utils";
+
+// Helper to clean up all auth data from storage
+const clearAllAuthData = () => {
+  try {
+    // Clear sessionStorage
+    sessionStorage.removeItem("userRole");
+    sessionStorage.removeItem("redirectPath");
+    
+    // Clear localStorage
+    localStorage.removeItem("userRole");
+    
+    // Clear all items related to Supabase
+    Object.keys(localStorage).forEach((key) => {
+      if (key.startsWith('supabase.auth.') || key.includes('sb-')) {
+        localStorage.removeItem(key);
+      }
+    });
+    
+    Object.keys(sessionStorage).forEach((key) => {
+      if (key.startsWith('supabase.auth.') || key.includes('sb-')) {
+        sessionStorage.removeItem(key);
+      }
+    });
+  } catch (error) {
+    console.error("Error clearing auth data:", error);
+  }
+};
+
+// Helper to store and retrieve auth data safely
+const getAuthData = (key: string) => {
+  try {
+    const item = sessionStorage.getItem(key);
+    return item ? JSON.parse(item) : null;
+  } catch (error) {
+    console.error(`Error getting ${key} from storage:`, error);
+    return null;
+  }
+};
+
+const setAuthData = (key: string, value: any) => {
+  try {
+    // Use sessionStorage for auth data for better security
+    sessionStorage.setItem(key, JSON.stringify(value));
+  } catch (error) {
+    console.error(`Error setting ${key} in storage:`, error);
+  }
+};
 
 // Function to normalize role values 
 const normalizeUserRole = (role: any): UserRole => {
@@ -14,7 +61,7 @@ const normalizeUserRole = (role: any): UserRole => {
   }
   
   // Convert to uppercase string for comparison
-  const upperRole = typeof role === 'string' ? role.toString().toUpperCase() : '';
+  const upperRole = role.toString().toUpperCase();
   
   // Map to correct UserRole enum value
   switch (upperRole) {
@@ -27,7 +74,9 @@ const normalizeUserRole = (role: any): UserRole => {
     case "FINANCE": return UserRole.FINANCE;
     case "SUPPORT": return UserRole.SUPPORT;
     case "USER": return UserRole.USER;
-    default: return UserRole.CLIENT;
+    default: 
+      console.warn(`Unknown role value: ${role}, defaulting to CLIENT`);
+      return UserRole.CLIENT;
   }
 };
 
@@ -43,6 +92,7 @@ export const useUserRole = () => {
       
       // If there's no user, don't fetch profile
       if (!user) {
+        console.log("useUserRole - No user, defaulting to CLIENT");
         setUserRole(UserRole.CLIENT); // Default to client when not logged in
         setIsRoleLoading(false);
         return;
@@ -53,11 +103,15 @@ export const useUserRole = () => {
         const cachedRole = getAuthData("userRole");
         
         if (cachedRole && Object.values(UserRole).includes(cachedRole as UserRole)) {
+          console.log("useUserRole - Using cached role:", cachedRole);
           setUserRole(normalizeUserRole(cachedRole));
           setIsRoleLoading(false);
+        } else {
+          console.log("useUserRole - No valid cached role found, fetching from database");
         }
         
         // Always verify with database to ensure role is current
+        console.log("useUserRole - Fetching user role from database for user ID:", user.id);
         const { data, error } = await supabase
           .from('profiles')
           .select('role')
@@ -65,32 +119,39 @@ export const useUserRole = () => {
           .single();
 
         if (error) {
+          console.error('Error fetching user profile:', error);
+          
           // If it's an authentication error or not found, log out
           if (error.code === 'PGRST116' || error.code === '404') {
-            cleanupAuthState();
+            console.log("Token expired or user not found, logging out");
+            clearAllAuthData();
             await signOut();
             return;
           }
           
           // If there's an error but we have a cached role, keep using it
           if (!cachedRole) {
+            console.log("useUserRole - Error fetching role and no cache, using default CLIENT");
             setUserRole(UserRole.CLIENT);
           }
         } else if (data && data.role) {
           // Normalize the role to ensure it matches our enum
           const normalizedRole = normalizeUserRole(data.role);
+          console.log("useUserRole - Database role:", data.role, "Normalized role:", normalizedRole);
           setUserRole(normalizedRole);
           
           // Store in sessionStorage for persistence
           setAuthData("userRole", normalizedRole);
         } else {
+          console.log("useUserRole - No role found in database, using default or cached role");
           if (!cachedRole) {
             setUserRole(UserRole.CLIENT);
           }
         }
       } catch (error) {
+        console.error('Error fetching profile:', error);
         // In case of error, try to log out to clear state
-        cleanupAuthState();
+        clearAllAuthData();
       } finally {
         setIsRoleLoading(false);
       }
@@ -102,10 +163,10 @@ export const useUserRole = () => {
 
   const updateUserRole = (role: UserRole) => {
     const normalizedRole = normalizeUserRole(role);
+    console.log("useUserRole - Updating role to:", normalizedRole);
     setUserRole(normalizedRole);
     setAuthData("userRole", normalizedRole);
   };
 
-  // Renamed isLoading to isRoleLoading for clarity and compatibility
-  return { userRole, isLoading: isRoleLoading, isRoleLoading, updateUserRole };
+  return { userRole, isRoleLoading, updateUserRole };
 };

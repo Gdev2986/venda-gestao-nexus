@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import MainLayout from "@/components/layout/MainLayout";
 import { Sale, SalesFilterParams } from "@/types";
@@ -161,20 +162,20 @@ const Sales = () => {
       <div className="space-y-4">
         <Card className="p-4">
           <SalesFilters 
+            filters={filters}
             onFilterChange={handleFilterChange}
             date={date}
             onDateChange={setDate}
             onClearFilters={clearFilters}
             onExport={handleExport}
-            filters={filters}
             onShowImportDialog={() => setShowImportDialog(true)}
           />
         </Card>
         
         <SalesTable 
           sales={paginatedSales}
-          currentPage={page}
-          onPageChange={setPage}
+          page={page}
+          setPage={setPage}
           totalPages={totalPages}
           isLoading={isLoading}
           totals={totals}

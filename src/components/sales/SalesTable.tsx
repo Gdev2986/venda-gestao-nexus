@@ -8,168 +8,186 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Sale, PaymentMethod } from "@/types";
-import { Button } from "@/components/ui/button";
-import { ChevronLeft, ChevronRight } from "lucide-react";
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { format } from "date-fns";
+import { ptBR } from "date-fns/locale";
+import { Badge } from "@/components/ui/badge";
+import { PaymentMethod, Sale } from "@/types";
+import {
+  Pagination,
+  PaginationContent,
+  PaginationEllipsis,
+  PaginationItem,
+  PaginationLink,
+  PaginationNext,
+  PaginationPrevious,
+} from "@/components/ui/pagination";
 
 interface SalesTableProps {
   sales: Sale[];
-  isLoading?: boolean;
-  currentPage?: number;
-  onPageChange?: (page: number) => void;
-  totalPages?: number;
-  totals?: {
+  page: number;
+  setPage: (page: number) => void;
+  totalPages: number;
+  isLoading: boolean;
+  totals: {
     grossAmount: number;
     netAmount: number;
-    count: number;
   };
 }
 
-const SalesTable = ({
-  sales,
-  isLoading = false,
-  currentPage = 1,
-  onPageChange,
-  totalPages = 1,
-  totals,
-}: SalesTableProps) => {
-  const getPaymentMethodLabel = (method: PaymentMethod) => {
-    switch (method) {
-      case PaymentMethod.CREDIT:
-        return "Crédito";
-      case PaymentMethod.DEBIT:
-        return "Débito";
-      case PaymentMethod.PIX:
-        return "PIX";
-      default:
-        return method;
-    }
-  };
-
-  if (isLoading) {
-    return (
-      <div className="p-8 flex justify-center items-center">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
-      </div>
-    );
+const getPaymentMethodLabel = (method: PaymentMethod) => {
+  switch (method) {
+    case PaymentMethod.CREDIT:
+      return <Badge variant="outline">Crédito</Badge>;
+    case PaymentMethod.DEBIT:
+      return <Badge variant="outline" className="border-success text-success">Débito</Badge>;
+    case PaymentMethod.PIX:
+      return <Badge variant="outline" className="border-warning text-warning">Pix</Badge>;
+    default:
+      return null;
   }
+};
 
-  if (sales.length === 0) {
-    return (
-      <div className="p-8 text-center">
-        <p className="text-muted-foreground">Nenhuma venda encontrada.</p>
-      </div>
-    );
-  }
-
+const SalesTable = ({ sales, page, setPage, totalPages, isLoading, totals }: SalesTableProps) => {
   return (
-    <div className="space-y-4">
-      <div className="overflow-x-auto rounded-md border">
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>Código</TableHead>
-              <TableHead className="hidden md:table-cell">Data</TableHead>
-              <TableHead className="hidden sm:table-cell">Terminal</TableHead>
-              <TableHead>Cliente</TableHead>
-              <TableHead>Valor Bruto</TableHead>
-              <TableHead className="hidden lg:table-cell">Valor Líquido</TableHead>
-              <TableHead className="hidden sm:table-cell">Método</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {sales.map((sale) => (
-              <TableRow key={sale.id}>
-                <TableCell className="font-medium">{sale.code}</TableCell>
-                <TableCell className="hidden md:table-cell">
-                  {new Date(sale.date).toLocaleDateString("pt-BR")}
-                </TableCell>
-                <TableCell className="hidden sm:table-cell">{sale.terminal}</TableCell>
-                <TableCell>{sale.client_name}</TableCell>
-                <TableCell>R$ {sale.gross_amount.toFixed(2)}</TableCell>
-                <TableCell className="hidden lg:table-cell">
-                  R$ {sale.net_amount.toFixed(2)}
-                </TableCell>
-                <TableCell className="hidden sm:table-cell">
-                  {getPaymentMethodLabel(sale.payment_method)}
-                </TableCell>
-              </TableRow>
+    <Card>
+      <CardHeader>
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+          <CardTitle>Lista de Vendas</CardTitle>
+          <div className="text-sm text-muted-foreground space-x-4">
+            <span>Total Bruto: {new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(totals.grossAmount)}</span>
+            <span>Total Líquido: {new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(totals.netAmount)}</span>
+          </div>
+        </div>
+      </CardHeader>
+      <CardContent>
+        {isLoading ? (
+          <div className="space-y-4">
+            {Array.from({ length: 5 }).map((_, i) => (
+              <div key={i} className="h-12 bg-muted animate-pulse rounded" />
             ))}
-          </TableBody>
-        </Table>
-      </div>
-
-      {/* Mobile view for each sale record */}
-      <div className="sm:hidden space-y-4">
-        {sales.map((sale) => (
-          <div key={sale.id} className="border rounded-md p-4 space-y-2">
-            <div className="flex justify-between">
-              <span className="font-medium">{sale.code}</span>
-              <span className="text-sm text-muted-foreground">
-                {new Date(sale.date).toLocaleDateString("pt-BR")}
-              </span>
-            </div>
-            <div className="text-sm">{sale.client_name}</div>
-            <div className="flex justify-between mt-2">
-              <span className="text-sm text-muted-foreground">
-                {getPaymentMethodLabel(sale.payment_method)}
-              </span>
-              <span className="font-medium">R$ {sale.gross_amount.toFixed(2)}</span>
-            </div>
-            <div className="text-xs text-right text-muted-foreground">
-              Líquido: R$ {sale.net_amount.toFixed(2)}
-            </div>
           </div>
-        ))}
-      </div>
-
-      {onPageChange && totalPages > 1 && (
-        <div className="flex justify-between items-center mt-4">
-          <div className="text-sm text-muted-foreground">
-            Página {currentPage} de {totalPages}
-          </div>
-          <div className="flex items-center space-x-2">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => onPageChange(currentPage - 1)}
-              disabled={currentPage === 1}
-            >
-              <ChevronLeft className="h-4 w-4" />
-              <span className="sr-only">Página anterior</span>
-            </Button>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => onPageChange(currentPage + 1)}
-              disabled={currentPage === totalPages}
-            >
-              <ChevronRight className="h-4 w-4" />
-              <span className="sr-only">Próxima página</span>
-            </Button>
-          </div>
-        </div>
-      )}
-
-      {totals && (
-        <div className="border-t pt-4 mt-4">
-          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center text-sm">
-            <div className="mb-2 sm:mb-0">
-              Total: <span className="font-bold">{totals.count} vendas</span>
+        ) : (
+          <>
+            <div className="rounded-md border overflow-x-auto">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Código</TableHead>
+                    <TableHead>Data</TableHead>
+                    <TableHead>Terminal</TableHead>
+                    <TableHead className="text-right">Valor Bruto</TableHead>
+                    <TableHead className="text-right">Valor Líquido</TableHead>
+                    <TableHead>Pagamento</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {sales.length > 0 ? (
+                    sales.map((sale) => (
+                      <TableRow key={sale.id}>
+                        <TableCell className="font-medium">{sale.code}</TableCell>
+                        <TableCell>
+                          {format(new Date(sale.date), "dd/MM/yyyy", { locale: ptBR })}
+                        </TableCell>
+                        <TableCell>{sale.terminal}</TableCell>
+                        <TableCell className="text-right">
+                          {new Intl.NumberFormat("pt-BR", {
+                            style: "currency",
+                            currency: "BRL",
+                          }).format(sale.gross_amount)}
+                        </TableCell>
+                        <TableCell className="text-right">
+                          {new Intl.NumberFormat("pt-BR", {
+                            style: "currency",
+                            currency: "BRL",
+                          }).format(sale.net_amount)}
+                        </TableCell>
+                        <TableCell>{getPaymentMethodLabel(sale.payment_method)}</TableCell>
+                      </TableRow>
+                    ))
+                  ) : (
+                    <TableRow>
+                      <TableCell colSpan={6} className="text-center py-8 text-muted-foreground">
+                        Nenhuma venda encontrada. 
+                        {" Tente outros filtros."}
+                      </TableCell>
+                    </TableRow>
+                  )}
+                </TableBody>
+              </Table>
             </div>
-            <div className="flex flex-col sm:flex-row sm:gap-4">
-              <div>
-                Valor Bruto: <span className="font-bold">R$ {totals.grossAmount.toFixed(2)}</span>
+            
+            {sales.length > 0 && (
+              <div className="mt-4">
+                <Pagination>
+                  <PaginationContent>
+                    <PaginationItem>
+                      <PaginationPrevious
+                        href="#"
+                        onClick={(e) => {
+                          e.preventDefault();
+                          if (page > 1) setPage(page - 1);
+                        }}
+                      />
+                    </PaginationItem>
+                    
+                    {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+                      let pageNumber;
+                      
+                      if (totalPages <= 5) {
+                        pageNumber = i + 1;
+                      } else if (page <= 3) {
+                        pageNumber = i + 1;
+                      } else if (page >= totalPages - 2) {
+                        pageNumber = totalPages - 4 + i;
+                      } else {
+                        pageNumber = page - 2 + i;
+                      }
+                      
+                      return (
+                        <PaginationItem key={pageNumber}>
+                          <PaginationLink
+                            href="#"
+                            isActive={pageNumber === page}
+                            onClick={(e) => {
+                              e.preventDefault();
+                              setPage(pageNumber);
+                            }}
+                          >
+                            {pageNumber}
+                          </PaginationLink>
+                        </PaginationItem>
+                      );
+                    })}
+                    
+                    {totalPages > 5 && page < totalPages - 2 && (
+                      <PaginationItem>
+                        <PaginationEllipsis />
+                      </PaginationItem>
+                    )}
+                    
+                    <PaginationItem>
+                      <PaginationNext
+                        href="#"
+                        onClick={(e) => {
+                          e.preventDefault();
+                          if (page < totalPages) setPage(page + 1);
+                        }}
+                      />
+                    </PaginationItem>
+                  </PaginationContent>
+                </Pagination>
               </div>
-              <div>
-                Valor Líquido:{" "}
-                <span className="font-bold">R$ {totals.netAmount.toFixed(2)}</span>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
-    </div>
+            )}
+          </>
+        )}
+      </CardContent>
+    </Card>
   );
 };
 

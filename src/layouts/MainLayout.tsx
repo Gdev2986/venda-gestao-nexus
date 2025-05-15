@@ -1,5 +1,7 @@
+
 import { Outlet } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
+import MainSidebar from "./MainSidebar";
 import { useState, useEffect } from "react";
 import { useUserRole } from "@/hooks/use-user-role";
 import { useIsMobile } from "@/hooks/use-mobile";
@@ -7,8 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Menu } from "lucide-react";
 import NotificationDropdown from "@/components/layout/NotificationDropdown";
 import ThemeToggle from "@/components/theme/theme-toggle";
-import { Toaster } from "sonner"; // Update to use sonner instead of custom Toaster
-import MainSidebar from "./MainSidebar";
+import { Toaster } from "@/components/ui/toaster";
 
 const MainLayout = () => {
   // Use localStorage to persist sidebar state
@@ -58,7 +59,7 @@ const MainLayout = () => {
               variant="ghost" 
               size="icon" 
               onClick={() => setSidebarOpen(!sidebarOpen)}
-              aria-label={sidebarOpen ? "Fechar menu" : "Abrir menu"}
+              aria-label={sidebarOpen ? "Close menu" : "Open menu"}
             >
               <Menu className="h-5 w-5" />
             </Button>

@@ -24,7 +24,10 @@ export const clientRoutes = [
     key="admin-client-new" 
     path={PATHS.ADMIN.CLIENT_NEW} 
     element={<NewClient />} 
+  />,
+  <Route 
+    key="logistics-clients" 
+    path={PATHS.LOGISTICS.CLIENTS} 
+    element={<Clients />} 
   />
-  // Remove the logistics client route from here as it's not valid under admin routes
 ];
-

@@ -1,114 +1,194 @@
 
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Calendar } from "lucide-react";
-import { format } from "date-fns";
-import { ptBR } from "date-fns/locale";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { Calendar as CalendarComponent } from "@/components/ui/calendar";
-import { cn } from "@/lib/utils";
-import BasicFilters from "./filters/BasicFilters";
+import { Input } from "@/components/ui/input";
+import { 
+  Select, 
+  SelectContent, 
+  SelectItem, 
+  SelectTrigger, 
+  SelectValue 
+} from "@/components/ui/select";
 import { SalesFilterParams } from "@/types";
+import { Calendar } from "@/components/ui/calendar";
+import { 
+  Popover, 
+  PopoverContent, 
+  PopoverTrigger 
+} from "@/components/ui/popover";
+import { CalendarIcon, Download, Search, Upload } from "lucide-react";
+import { format } from "date-fns";
+import { cn } from "@/lib/utils";
 
-export interface SalesFiltersProps {
-  date?: { from: Date; to?: Date } | undefined;
-  filters: SalesFilterParams;
-  onDateChange: (date: { from: Date; to?: Date } | undefined) => void;
-  onFilterChange: (key: keyof SalesFilterParams, value: any) => void;
-  onClearFilters: () => void;
-  onExport?: () => void;
-  onShowImportDialog?: () => void; // Make this optional to support both components
-  onFilter?: (filters: any) => void; // Add this prop to support the Sales.tsx component
+interface DateRange {
+  from: Date;
+  to?: Date;
 }
 
+interface SalesFiltersProps {
+  filters: SalesFilterParams;
+  date?: DateRange;
+  onFilterChange: (key: keyof SalesFilterParams, value: any) => void;
+  onDateChange: (date: DateRange | undefined) => void;
+  onClearFilters: () => void;
+  onExport: () => void;
+  onShowImportDialog: () => void;
+}
+
+const PAYMENT_METHODS = [
+  { value: "credit", label: "Crédito" },
+  { value: "debit", label: "Débito" },
+  { value: "pix", label: "Pix" }
+];
+
+const TERMINALS = [
+  "T100", "T101", "T102", "T103", "T104", "T105"
+];
+
 const SalesFilters = ({
-  date,
   filters,
-  onDateChange,
+  date,
   onFilterChange,
+  onDateChange,
   onClearFilters,
   onExport,
-  onShowImportDialog,
-  onFilter
+  onShowImportDialog
 }: SalesFiltersProps) => {
-  // Format date range for display
-  const formatDateRange = () => {
-    if (!date?.from) return "Selecionar período";
-    
-    if (date.to) {
-      return `${format(date.from, 'PP', { locale: ptBR })} - ${format(date.to, 'PP', { locale: ptBR })}`;
-    }
-    
-    return format(date.from, 'PP', { locale: ptBR });
+  const [searchTerm, setSearchTerm] = useState(filters.search || "");
+
+  const handleSearchSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    onFilterChange("search", searchTerm);
   };
-  
-  // Add a handler for the Apply button
-  const handleApply = () => {
-    if (onFilter) {
-      onFilter(filters);
-    }
-  };
-  
+
   return (
-    <div className="flex flex-wrap items-center gap-2">
-      <Popover>
-        <PopoverTrigger asChild>
-          <Button variant="outline" className="gap-2">
-            <Calendar className="h-4 w-4" />
-            <span className="hidden sm:inline">{formatDateRange()}</span>
-            <span className="sm:hidden">Período</span>
-          </Button>
-        </PopoverTrigger>
-        <PopoverContent className="w-auto p-0" align="end">
-          <CalendarComponent
-            initialFocus
-            mode="range"
-            defaultMonth={date?.from}
-            selected={date}
-            onSelect={onDateChange}
-            numberOfMonths={1}
-          />
-        </PopoverContent>
-      </Popover>
-      
-      <Popover>
-        <PopoverTrigger asChild>
-          <Button variant="outline">Filtros</Button>
-        </PopoverTrigger>
-        <PopoverContent className="w-[300px] sm:w-[400px]" align="end">
-          <div className="space-y-4">
-            <h4 className="font-medium text-sm">Filtros de Vendas</h4>
-            <BasicFilters filters={filters} onFilterChange={onFilterChange} />
-            
-            <div className="flex items-center justify-between pt-4">
-              <Button 
-                variant="ghost" 
-                size="sm" 
-                onClick={onClearFilters}
-              >
-                Limpar filtros
-              </Button>
-              <Button 
-                size="sm"
-                onClick={handleApply}
-              >
-                Aplicar
-              </Button>
-            </div>
+    <div className="space-y-4">
+      <div className="flex flex-col sm:flex-row gap-4">
+        {/* Search Bar */}
+        <form 
+          className="flex-1" 
+          onSubmit={handleSearchSubmit}
+        >
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+            <Input
+              placeholder="Buscar por código ou terminal..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="pl-10"
+            />
           </div>
-        </PopoverContent>
-      </Popover>
+        </form>
+        
+        {/* Date Range Picker */}
+        <Popover>
+          <PopoverTrigger asChild>
+            <Button
+              variant={"outline"}
+              className={cn(
+                "sm:w-[240px] justify-start text-left font-normal",
+                !date && "text-muted-foreground"
+              )}
+            >
+              <CalendarIcon className="mr-2 h-4 w-4" />
+              {date?.from ? (
+                date.to ? (
+                  <>
+                    {format(date.from, "dd/MM/yyyy")} -{" "}
+                    {format(date.to, "dd/MM/yyyy")}
+                  </>
+                ) : (
+                  format(date.from, "dd/MM/yyyy")
+                )
+              ) : (
+                <span>Filtrar por data</span>
+              )}
+            </Button>
+          </PopoverTrigger>
+          <PopoverContent className="w-auto p-0" align="start">
+            <Calendar
+              initialFocus
+              mode="range"
+              defaultMonth={date?.from}
+              selected={date}
+              onSelect={onDateChange}
+              numberOfMonths={2}
+              className="pointer-events-auto"
+            />
+          </PopoverContent>
+        </Popover>
+        
+        {/* Actions */}
+        <div className="flex gap-2">
+          <Button 
+            variant="outline" 
+            className="flex items-center gap-1"
+            onClick={onShowImportDialog}
+          >
+            <Upload className="h-4 w-4" />
+            <span className="hidden sm:inline">Importar</span>
+          </Button>
+          <Button 
+            variant="outline" 
+            className="flex items-center gap-1"
+            onClick={onExport}
+          >
+            <Download className="h-4 w-4" />
+            <span className="hidden sm:inline">Exportar</span>
+          </Button>
+        </div>
+      </div>
       
-      {onExport && (
-        <Button variant="outline" onClick={onExport}>
-          Exportar
+      <div className="flex flex-col sm:flex-row gap-4">
+        {/* Payment Method Filter */}
+        <div className="flex-1">
+          <Select
+            value={filters.paymentMethod || "all"}
+            onValueChange={(value) => onFilterChange("paymentMethod", value === "all" ? undefined : value)}
+          >
+            <SelectTrigger>
+              <SelectValue placeholder="Forma de Pagamento" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Todas as formas</SelectItem>
+              {PAYMENT_METHODS.map((method) => (
+                <SelectItem key={method.value} value={method.value}>
+                  {method.label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+        
+        {/* Terminal Filter */}
+        <div className="flex-1">
+          <Select
+            value={filters.terminal || "all"}
+            onValueChange={(value) => onFilterChange("terminal", value === "all" ? undefined : value)}
+          >
+            <SelectTrigger>
+              <SelectValue placeholder="Terminal" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Todos os terminais</SelectItem>
+              {TERMINALS.map((terminal) => (
+                <SelectItem key={terminal} value={terminal}>
+                  {terminal}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+        
+        {/* Clear Filters Button */}
+        <Button 
+          variant="ghost" 
+          onClick={onClearFilters} 
+          className="sm:self-center"
+        >
+          Limpar filtros
         </Button>
-      )}
-      
-      {onShowImportDialog && (
-        <Button variant="outline" onClick={onShowImportDialog}>
-          Importar
-        </Button>
-      )}
+      </div>
     </div>
   );
 };

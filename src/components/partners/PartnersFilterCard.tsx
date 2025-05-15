@@ -25,35 +25,25 @@ const PartnersFilterCard = ({ onFilter, isLoading }: PartnersFilterCardProps) =>
   };
 
   return (
-    <Card className="w-full shadow-sm">
+    <Card>
       <CardContent className="pt-6">
-        <form onSubmit={handleSubmit} className="w-full">
+        <form onSubmit={handleSubmit}>
           <div className="flex flex-col sm:flex-row gap-3">
             <div className="relative flex-1">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
               <Input 
-                className="pl-9 w-full"
+                className="pl-9"
                 placeholder="Buscar por nome, email ou telefone" 
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 disabled={isLoading}
               />
             </div>
-            <div className="flex gap-2 w-full sm:w-auto">
-              <Button 
-                type="submit" 
-                disabled={isLoading} 
-                className="flex-1 sm:flex-none whitespace-nowrap"
-              >
+            <div className="flex gap-2">
+              <Button type="submit" disabled={isLoading}>
                 Filtrar
               </Button>
-              <Button 
-                type="button" 
-                variant="outline" 
-                onClick={handleClearFilters} 
-                disabled={isLoading}
-                className="flex-1 sm:flex-none whitespace-nowrap"
-              >
+              <Button type="button" variant="outline" onClick={handleClearFilters} disabled={isLoading}>
                 Limpar
               </Button>
             </div>

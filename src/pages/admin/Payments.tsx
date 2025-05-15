@@ -7,9 +7,7 @@ import { PageWrapper } from "@/components/page/PageWrapper";
 import AdminPaymentsList from "@/components/payments/AdminPaymentsList";
 import { useAdminPayments } from "@/hooks/payments/useAdminPayments";
 import { PaymentStatus } from "@/types";
-
-// Define the compatible PaymentAction type to resolve the conflict
-type PaymentAction = 'approve' | 'reject' | 'view' | 'delete';
+import { PaymentAction } from "@/components/payments/PaymentTableColumns";
 
 const AdminPayments = () => {
   const [searchTerm, setSearchTerm] = useState('');
@@ -35,8 +33,7 @@ const AdminPayments = () => {
   };
 
   const handlePaymentAction = (paymentId: string, action: PaymentAction) => {
-    // Type assertion to resolve compatibility issue
-    performPaymentAction(paymentId, action as any);
+    performPaymentAction(paymentId, action);
   };
 
   return (

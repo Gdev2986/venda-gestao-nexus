@@ -9,17 +9,15 @@ import {
 } from "@/components/ui/dialog";
 import PartnerForm, { PartnerFormValues } from "./PartnerForm";
 import { usePartners } from "@/hooks/use-partners";
-import { Partner } from "@/types";
 
 export interface PartnerFormModalProps {
   isOpen: boolean;
   onClose: () => void;
   onSubmit?: (data: PartnerFormValues) => Promise<boolean>;
   title?: string;
-  initialData?: Partner;
 }
 
-const PartnerFormModal = ({ isOpen, onClose, onSubmit, title = "Novo Parceiro", initialData }: PartnerFormModalProps) => {
+const PartnerFormModal = ({ isOpen, onClose, onSubmit, title = "Novo Parceiro" }: PartnerFormModalProps) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { createPartner } = usePartners();
   const { toast } = useToast();
@@ -83,7 +81,6 @@ const PartnerFormModal = ({ isOpen, onClose, onSubmit, title = "Novo Parceiro", 
           onClose={onClose}
           onSubmit={handleCreatePartner}
           isSubmitting={isSubmitting}
-          initialData={initialData}
           title={title}
         />
       </DialogContent>

@@ -14,6 +14,7 @@ export const checkSession = async () => {
     const { data, error } = await supabase.auth.getSession();
     
     if (error) {
+      console.error("Error checking session:", error);
       return { user: null, session: null, error };
     }
     
@@ -23,27 +24,8 @@ export const checkSession = async () => {
       error: null
     };
   } catch (error) {
+    console.error("Exception checking session:", error);
     return { user: null, session: null, error };
-  }
-};
-
-/**
- * Gets the current user ID from the session
- */
-export const getUserId = (): string | null => {
-  try {
-    // Get user from localStorage if available
-    const userSession = localStorage.getItem('supabase.auth.token');
-    if (userSession) {
-      const parsedSession = JSON.parse(userSession);
-      return parsedSession?.currentSession?.user?.id || null;
-    }
-    
-    // Alternative approach to get user ID
-    const currentUser = supabase.auth.getUser();
-    return null; // Initial return, actual ID will be retrieved asynchronously
-  } catch (error) {
-    return null;
   }
 };
 
@@ -56,7 +38,7 @@ export const setAuthData = (key: string, value: any) => {
       localStorage.setItem(key, JSON.stringify(value));
     }
   } catch (error) {
-    // Silent error
+    console.error(`Error setting ${key} in localStorage:`, error);
   }
 };
 
@@ -71,6 +53,7 @@ export const getAuthData = (key: string) => {
     }
     return null;
   } catch (error) {
+    console.error(`Error getting ${key} from localStorage:`, error);
     return null;
   }
 };
@@ -87,11 +70,13 @@ export const fetchUserRole = async (userId: string): Promise<UserRole | null> =>
       .single();
     
     if (error) {
+      console.error('Error fetching user role:', error);
       return null;
     }
     
     return data?.role as UserRole || null;
   } catch (error) {
+    console.error('Exception fetching user role:', error);
     return null;
   }
 };
@@ -101,73 +86,4 @@ export const fetchUserRole = async (userId: string): Promise<UserRole | null> =>
  */
 export const hasRole = (userRole: UserRole, allowedRoles: UserRole[]): boolean => {
   return allowedRoles.includes(userRole);
-};
-
-/**
- * Thorough cleanup of auth state to prevent auth limbo states
- */
-export const cleanupAuthState = () => {
-  try {
-    // Clear all auth-related tokens from localStorage
-    Object.keys(localStorage).forEach((key) => {
-      if (key.startsWith('supabase.auth.') || key.includes('sb-')) {
-        localStorage.removeItem(key);
-      }
-    });
-    
-    // Also clear from sessionStorage if being used
-    Object.keys(sessionStorage || {}).forEach((key) => {
-      if (key.startsWith('supabase.auth.') || key.includes('sb-')) {
-        sessionStorage.removeItem(key);
-      }
-    });
-    
-    // Clear application specific role/auth data
-    localStorage.removeItem('userRole');
-    sessionStorage.removeItem('userRole');
-    sessionStorage.removeItem('redirectPath');
-  } catch (error) {
-    // Silent error
-  }
-};
-
-/**
- * Secure sign-out with cleanup
- */
-export const secureSignOut = async () => {
-  try {
-    // Clean up first
-    cleanupAuthState();
-    
-    // Attempt global sign-out - ignore errors
-    try {
-      await supabase.auth.signOut({ scope: 'global' });
-    } catch (err) {
-      // Silent error
-    }
-    
-    // Force page reload for a clean state
-    window.location.href = '/';
-    
-    return true;
-  } catch (error) {
-    return false;
-  }
-};
-
-/**
- * Safely refresh session token
- */
-export const refreshSession = async () => {
-  try {
-    const { data, error } = await supabase.auth.refreshSession();
-    
-    if (error) {
-      return null;
-    }
-    
-    return data.session;
-  } catch (error) {
-    return null;
-  }
 };

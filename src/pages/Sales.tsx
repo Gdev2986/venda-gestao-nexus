@@ -162,8 +162,8 @@ const Sales = () => {
         
         <SalesTable 
           sales={paginatedSales}
-          currentPage={page}
-          onPageChange={setPage}
+          page={page}
+          setPage={setPage}
           totalPages={totalPages}
           isLoading={isLoading}
           totals={totals}

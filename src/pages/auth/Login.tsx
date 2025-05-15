@@ -3,34 +3,31 @@ import { useState, useEffect } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import LoginForm from "@/components/auth/LoginForm";
 import { LayoutDashboard, CreditCard, FileText, Monitor } from "lucide-react";
-import { useAuth } from "@/hooks/use-auth";
+import { useAuth } from "@/contexts/AuthContext";
 import { PATHS } from "@/routes/paths";
 import { Spinner } from "@/components/ui/spinner";
-import { getDashboardRedirect } from "@/routes/routeUtils";
-import { useUserRole } from "@/hooks/use-user-role";
 
 const Login = () => {
   const navigate = useNavigate();
   const { user, isLoading } = useAuth();
-  const { userRole, isRoleLoading } = useUserRole();
   const [redirecting, setRedirecting] = useState(false);
 
   useEffect(() => {
-    // If authenticated and finished loading, redirect to appropriate dashboard
-    if (user && !isLoading && userRole && !isRoleLoading) {
+    // If authenticated and finished loading, redirect to dashboard
+    if (user && !isLoading) {
+      console.log("Login: User authenticated, redirecting to dashboard");
       setRedirecting(true);
-      const redirectPath = getDashboardRedirect(userRole);
-      navigate(redirectPath, { replace: true });
+      navigate(PATHS.DASHBOARD); // This will be handled by the RootLayout component
     }
-  }, [user, isLoading, navigate, userRole, isRoleLoading]);
+  }, [user, isLoading, navigate]);
 
   // If redirecting or loading, show a spinner
-  if (isLoading || isRoleLoading || redirecting) {
+  if (isLoading || redirecting) {
     return (
       <div className="flex flex-col items-center justify-center h-screen bg-background">
         <Spinner size="lg" />
         <p className="mt-4 text-muted-foreground">
-          {redirecting ? "Redirecionando para o dashboard..." : "Carregando..."}
+          {redirecting ? "Redirecting to dashboard..." : "Loading..."}
         </p>
       </div>
     );

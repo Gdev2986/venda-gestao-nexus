@@ -1,128 +1,206 @@
 
-import { useState, useEffect } from "react";
+import { useState, useRef, useEffect } from "react";
+import { cn } from "@/lib/utils";
 import { Bell } from "lucide-react";
-import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Badge } from "@/components/ui/badge";
-import { useNotifications } from "@/hooks/use-notifications";
-import { useNavigate } from "react-router-dom";
-import { PATHS } from "@/routes/paths";
-import notificationService from "@/services/NotificationService";
+import { Button } from "@/components/ui/button";
+import { motion, AnimatePresence } from "framer-motion";
+import { Link } from "react-router-dom";
 
-const formatDate = (dateString: string) => {
-  const date = new Date(dateString);
-  return new Intl.DateTimeFormat("pt-BR", {
-    day: "numeric",
-    month: "short",
-    hour: "numeric",
-    minute: "numeric",
-  }).format(date);
+type Notification = {
+  id: string;
+  title: string;
+  description: string;
+  timestamp: Date;
+  read: boolean;
 };
 
 const NotificationDropdown = () => {
-  const { notifications, unreadCount, markAsRead, fetchNotifications } = useNotifications({
-    pageSize: 5,
-    page: 1
-  });
-  const [open, setOpen] = useState(false);
-  const navigate = useNavigate();
+  // Fake notifications data
+  const [notifications, setNotifications] = useState<Notification[]>([
+    {
+      id: "1",
+      title: "Nova venda registrada",
+      description: "Uma nova venda foi registrada no sistema.",
+      timestamp: new Date(Date.now() - 1000 * 60 * 30),
+      read: false,
+    },
+    {
+      id: "2",
+      title: "Pagamento recebido",
+      description: "Um novo pagamento foi recebido com sucesso.",
+      timestamp: new Date(Date.now() - 1000 * 60 * 60 * 2),
+      read: false,
+    },
+    {
+      id: "3",
+      title: "Máquina registrada",
+      description: "Uma nova máquina foi adicionada ao sistema.",
+      timestamp: new Date(Date.now() - 1000 * 60 * 60 * 24),
+      read: true,
+    },
+  ]);
 
+  const [isOpen, setIsOpen] = useState(false);
+  const dropdownRef = useRef<HTMLDivElement>(null);
+
+  const unreadCount = notifications.filter((n) => !n.read).length;
+
+  const markAsRead = (id: string) => {
+    setNotifications((prev) =>
+      prev.map((n) => (n.id === id ? { ...n, read: true } : n))
+    );
+  };
+
+  const markAllAsRead = () => {
+    setNotifications((prev) => prev.map((n) => ({ ...n, read: true })));
+  };
+
+  const formatTimestamp = (date: Date) => {
+    const now = new Date();
+    const diffMs = now.getTime() - date.getTime();
+    const diffMins = Math.floor(diffMs / (1000 * 60));
+    const diffHrs = Math.floor(diffMs / (1000 * 60 * 60));
+    const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+
+    if (diffMins < 60) {
+      return `${diffMins}m atrás`;
+    } else if (diffHrs < 24) {
+      return `${diffHrs}h atrás`;
+    } else {
+      return `${diffDays}d atrás`;
+    }
+  };
+
+  // Close dropdown when clicking outside
   useEffect(() => {
-    if (open) {
-      fetchNotifications(1, 5);
-    }
-  }, [open, fetchNotifications]);
+    const handleClickOutside = (event: MouseEvent) => {
+      if (
+        dropdownRef.current &&
+        !dropdownRef.current.contains(event.target as Node)
+      ) {
+        setIsOpen(false);
+      }
+    };
 
-  const handleViewAll = () => {
-    navigate(PATHS.NOTIFICATIONS);
-    setOpen(false);
-  };
-
-  const handleMarkAllAsRead = async () => {
-    const result = await notificationService.markAllAsRead();
-    if (result.success) {
-      fetchNotifications(1, 5);
-    }
-  };
-
-  const handleClickNotification = async (id: string) => {
-    await markAsRead(id);
-    setOpen(false);
-  };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, []);
 
   return (
-    <DropdownMenu open={open} onOpenChange={setOpen}>
-      <DropdownMenuTrigger asChild>
-        <Button variant="ghost" size="icon" className="relative">
-          <Bell className="h-5 w-5" />
-          {unreadCount > 0 && (
-            <Badge
-              variant="destructive"
-              className="absolute -top-1 -right-1 px-1 min-w-[18px] h-[18px] flex items-center justify-center text-[10px]"
-            >
-              {unreadCount > 99 ? "99+" : unreadCount}
-            </Badge>
-          )}
-        </Button>
-      </DropdownMenuTrigger>
-      <DropdownMenuContent align="end" className="w-80">
-        <div className="flex items-center justify-between px-4 py-2 border-b">
-          <h3 className="font-medium">Notificações</h3>
+    <div ref={dropdownRef}>
+      <DropdownMenu open={isOpen} onOpenChange={setIsOpen}>
+        <DropdownMenuTrigger asChild>
           <Button
             variant="ghost"
-            size="sm"
-            className="text-xs"
-            onClick={handleMarkAllAsRead}
+            size="icon"
+            className="relative"
+            aria-label="Notificações"
           >
-            Marcar todas como lidas
+            <Bell className="h-5 w-5" />
+            <AnimatePresence>
+              {unreadCount > 0 && (
+                <motion.span
+                  initial={{ scale: 0 }}
+                  animate={{ scale: 1 }}
+                  exit={{ scale: 0 }}
+                  transition={{
+                    type: "spring",
+                    stiffness: 500,
+                    damping: 25,
+                  }}
+                  className="absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-destructive text-[10px] font-medium text-destructive-foreground"
+                >
+                  {unreadCount}
+                </motion.span>
+              )}
+            </AnimatePresence>
           </Button>
-        </div>
-        
-        <div className="max-h-[300px] overflow-y-auto">
-          {notifications.length === 0 ? (
-            <div className="px-4 py-6 text-center text-muted-foreground">
-              Nenhuma notificação
-            </div>
-          ) : (
-            notifications.map((notification) => (
-              <DropdownMenuItem
-                key={notification.id}
-                className={`px-4 py-3 cursor-pointer flex flex-col items-start ${
-                  !notification.is_read ? "bg-muted/50" : ""
-                }`}
-                onClick={() => handleClickNotification(notification.id)}
+        </DropdownMenuTrigger>
+        <DropdownMenuContent
+          align="end"
+          className="w-80"
+          sideOffset={5}
+        >
+          <div className="flex items-center justify-between p-4">
+            <DropdownMenuLabel className="font-normal">
+              Notificações
+            </DropdownMenuLabel>
+            {unreadCount > 0 && (
+              <Button
+                variant="ghost"
+                size="sm"
+                className="h-auto px-2 py-1 text-xs"
+                onClick={markAllAsRead}
               >
-                <div className="flex justify-between w-full">
-                  <span className="font-medium">{notification.title}</span>
-                  <span className="text-xs text-muted-foreground">
-                    {formatDate(notification.created_at)}
-                  </span>
+                Marcar todas como lidas
+              </Button>
+            )}
+          </div>
+          <DropdownMenuSeparator />
+          <div className="max-h-80 overflow-y-auto">
+            <AnimatePresence>
+              {notifications.length === 0 ? (
+                <div className="p-4 text-center text-muted-foreground">
+                  Nenhuma notificação
                 </div>
-                <p className="text-sm text-muted-foreground line-clamp-2 mt-1">
-                  {notification.message}
-                </p>
-              </DropdownMenuItem>
-            ))
-          )}
-        </div>
-        
-        <div className="p-2 border-t">
-          <Button
-            variant="outline"
-            size="sm"
-            className="w-full"
-            onClick={handleViewAll}
-          >
-            Ver todas
-          </Button>
-        </div>
-      </DropdownMenuContent>
-    </DropdownMenu>
+              ) : (
+                notifications.map((notification) => (
+                  <motion.div
+                    key={notification.id}
+                    initial={{ opacity: 0, y: -10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, height: 0 }}
+                    transition={{ duration: 0.2 }}
+                  >
+                    <DropdownMenuItem
+                      className={cn(
+                        "flex flex-col items-start gap-1 p-4 focus:bg-accent/50",
+                        notification.read ? "opacity-70" : ""
+                      )}
+                      onClick={() => markAsRead(notification.id)}
+                    >
+                      <div className="flex w-full justify-between">
+                        <span className="font-medium">{notification.title}</span>
+                        <span className="text-xs text-muted-foreground">
+                          {formatTimestamp(notification.timestamp)}
+                        </span>
+                      </div>
+                      <span className="text-sm text-muted-foreground">
+                        {notification.description}
+                      </span>
+                      {!notification.read && (
+                        <div className="mt-1 h-2 w-2 rounded-full bg-primary" />
+                      )}
+                    </DropdownMenuItem>
+                    <DropdownMenuSeparator />
+                  </motion.div>
+                ))
+              )}
+            </AnimatePresence>
+          </div>
+          <div className="p-2">
+            <Button 
+              variant="outline" 
+              size="sm" 
+              className="w-full"
+              asChild
+            >
+              <Link to="/notifications">Ver todas notificações</Link>
+            </Button>
+          </div>
+        </DropdownMenuContent>
+      </DropdownMenu>
+    </div>
   );
 };
 
