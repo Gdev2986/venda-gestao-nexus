@@ -5,7 +5,7 @@ import { PaymentRequest } from "@/types/payment.types";
 import { useToast } from "@/hooks/use-toast";
 import { UsePaymentsOptions, PaymentData } from "./payment.types";
 import { PaymentStatus } from "@/types";
-import { toDBPaymentStatus } from "@/types/payment-status";
+import { toPaymentStatus } from "@/lib/type-utils";
 
 export const usePaymentsFetcher = (options: UsePaymentsOptions = {}) => {
   const [paymentRequests, setPaymentRequests] = useState<PaymentRequest[]>([]);
@@ -26,11 +26,10 @@ export const usePaymentsFetcher = (options: UsePaymentsOptions = {}) => {
           client:clients(id, business_name, email)
         `);
 
+      // Apply status filter if not ALL
       if (statusFilter !== "ALL") {
-        const dbStatus = toDBPaymentStatus(statusFilter as PaymentStatus);
-        if (dbStatus) {
-          query = query.eq("status", dbStatus);
-        }
+        // Use the status directly as string
+        query = query.eq("status", statusFilter);
       }
 
       // Apply search filter if provided

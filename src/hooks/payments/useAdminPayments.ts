@@ -5,7 +5,7 @@ import { Payment, PaymentStatus } from '@/types';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { PaymentAction } from '@/components/payments/PaymentTableColumns';
-import { toDBPaymentStatus } from "@/types/payment-status";
+import { toPaymentStatus } from '@/lib/type-utils';
 
 interface UseAdminPaymentsProps {
   searchTerm: string;
@@ -31,10 +31,8 @@ export const useAdminPayments = ({ searchTerm, statusFilter, page }: UseAdminPay
     }
 
     if (statusFilter !== 'ALL') {
-      const dbStatus = toDBPaymentStatus(statusFilter as PaymentStatus);
-      if (dbStatus) {
-        query = query.eq('status', dbStatus);
-      }
+      // Use the status directly as string for database query
+      query = query.eq('status', statusFilter);
     }
 
     const { data, error, count } = await query;
