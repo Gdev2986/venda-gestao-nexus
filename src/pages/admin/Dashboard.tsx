@@ -1,43 +1,12 @@
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { PageHeader } from "@/components/page/PageHeader";
-import { PageWrapper } from "@/components/page/PageWrapper";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Calendar } from "@/components/ui/calendar";
-import { 
-  Popover,
-  PopoverContent,
-  PopoverTrigger, 
-} from "@/components/ui/popover";
-import { 
-  ChartPie,
-  BarChart,
-  TrendingUp,
-  Users,
-  Calendar as CalendarIcon,
-  ArrowRight,
-  RefreshCw
-} from "lucide-react";
-import { cn, formatCurrency } from "@/lib/utils";
-import { format, subDays, startOfMonth, endOfMonth, startOfQuarter, endOfQuarter } from "date-fns";
-import { pt } from "date-fns/locale";
-import StatCards from "@/components/dashboard/admin/StatCards";
-import SalesChart from "@/components/dashboard/admin/SalesChart";
-import PaymentMethodsChart from "@/components/dashboard/admin/PaymentMethodsChart";
-import TopPartnersChart from "@/components/dashboard/admin/TopPartnersChart";
-import ClientGrowthChart from "@/components/dashboard/admin/ClientGrowthChart";
 import { useToast } from "@/hooks/use-toast";
-import { useMediaQuery } from "@/hooks/use-media-query";
-
-// Dashboard date filter presets
-const DATE_FILTER_PRESETS = {
-  LAST_7_DAYS: "last_7_days",
-  LAST_30_DAYS: "last_30_days",
-  CURRENT_MONTH: "current_month",
-  QUARTER: "quarter",
-  CUSTOM: "custom"
-};
+import { DATE_FILTER_PRESETS, DateRangeFilters } from "@/components/dashboard/admin/DateRangeFilters";
+import { QuickLinks } from "@/components/dashboard/admin/QuickLinks";
+import { ChartsSection } from "@/components/dashboard/admin/ChartsSection";
+import StatCards from "@/components/dashboard/admin/StatCards";
+import { subDays } from "date-fns";
 
 // Dashboard mock data
 const MOCK_DATA = {
@@ -92,9 +61,6 @@ const AdminDashboard = () => {
   });
   const { toast } = useToast();
   
-  // Check if screen is mobile
-  const isMobile = useMediaQuery("(max-width: 767px)");
-  
   // Function to simulate data refresh
   const handleRefresh = () => {
     setIsLoading(true);
@@ -108,166 +74,20 @@ const AdminDashboard = () => {
     }, 1500);
   };
 
-  // Function to handle filter changes
-  const handleFilterChange = (filter: string) => {
-    setActiveFilter(filter);
-    
-    const now = new Date();
-    switch(filter) {
-      case DATE_FILTER_PRESETS.LAST_7_DAYS:
-        setDateRange({
-          from: subDays(now, 7),
-          to: now
-        });
-        break;
-      case DATE_FILTER_PRESETS.LAST_30_DAYS:
-        setDateRange({
-          from: subDays(now, 30),
-          to: now
-        });
-        break;
-      case DATE_FILTER_PRESETS.CURRENT_MONTH:
-        setDateRange({
-          from: startOfMonth(now),
-          to: endOfMonth(now)
-        });
-        break;
-      case DATE_FILTER_PRESETS.QUARTER:
-        setDateRange({
-          from: startOfQuarter(now),
-          to: endOfQuarter(now)
-        });
-        break;
-      // Custom remains unchanged as it's set directly by the calendar
-    }
-  };
-
-  // Function to generate quick links
-  const renderQuickLinks = () => {
-    const links = [
-      { name: "Vendas", icon: BarChart, path: "/admin/sales", color: "bg-blue-100 dark:bg-blue-900" },
-      { name: "Pagamentos", icon: TrendingUp, path: "/admin/payments", color: "bg-green-100 dark:bg-green-900" },
-      { name: "Relatórios", icon: ChartPie, path: "/admin/reports", color: "bg-yellow-100 dark:bg-yellow-900" },
-      { name: "Parceiros", icon: Users, path: "/admin/partners", color: "bg-purple-100 dark:bg-purple-900" }
-    ];
-
-    return (
-      <div className="grid grid-cols-2 gap-3 md:grid-cols-4 md:gap-4">
-        {links.map((link) => (
-          <Card key={link.name} className="hover:shadow-md transition-shadow">
-            <Button 
-              variant="ghost" 
-              className="h-full w-full flex flex-col items-center justify-center py-4 md:py-6"
-              onClick={() => {
-                toast({
-                  title: `Navegando para ${link.name}`,
-                  description: `Redirecionando para a área de ${link.name.toLowerCase()}.`
-                });
-                // In a real app, this would use router navigation
-                window.location.href = link.path;
-              }}
-            >
-              <div className={cn("rounded-full p-2 md:p-3 mb-2", link.color)}>
-                <link.icon className="h-4 w-4 md:h-5 md:w-5" />
-              </div>
-              <span className="text-sm md:text-base">{link.name}</span>
-              <ArrowRight size={14} className="mt-1 opacity-50" />
-            </Button>
-          </Card>
-        ))}
-      </div>
-    );
-  };
-
   return (
     <div className="space-y-4 md:space-y-6">
       <PageHeader
         title="Dashboard"
         description="Visão geral da operação e principais métricas"
       >
-        <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 mt-3 sm:mt-0">
-          {/* Date filter - scrollable on mobile */}
-          <div className="flex flex-nowrap overflow-x-auto w-full pb-1 sm:pb-0 sm:w-auto gap-0 shadow-sm rounded-md">
-            <Button 
-              variant={activeFilter === DATE_FILTER_PRESETS.LAST_7_DAYS ? "default" : "outline"}
-              onClick={() => handleFilterChange(DATE_FILTER_PRESETS.LAST_7_DAYS)}
-              className="rounded-r-none flex-shrink-0"
-              size="sm"
-            >
-              7 dias
-            </Button>
-            <Button 
-              variant={activeFilter === DATE_FILTER_PRESETS.LAST_30_DAYS ? "default" : "outline"}
-              onClick={() => handleFilterChange(DATE_FILTER_PRESETS.LAST_30_DAYS)}
-              className="rounded-none border-l-0 border-r-0 flex-shrink-0"
-              size="sm"
-            >
-              30 dias
-            </Button>
-            <Button 
-              variant={activeFilter === DATE_FILTER_PRESETS.CURRENT_MONTH ? "default" : "outline"}
-              onClick={() => handleFilterChange(DATE_FILTER_PRESETS.CURRENT_MONTH)}
-              className="rounded-none border-r-0 flex-shrink-0"
-              size="sm"
-            >
-              Mês
-            </Button>
-            <Button 
-              variant={activeFilter === DATE_FILTER_PRESETS.QUARTER ? "default" : "outline"}
-              onClick={() => handleFilterChange(DATE_FILTER_PRESETS.QUARTER)}
-              className="rounded-l-none flex-shrink-0"
-              size="sm"
-            >
-              Trimestre
-            </Button>
-          </div>
-          
-          <div className="flex items-center gap-2 w-full sm:w-auto mt-3 sm:mt-0">
-            {/* Calendar picker */}
-            <Popover>
-              <PopoverTrigger asChild>
-                <Button variant="outline" size="sm" className="flex items-center gap-2 w-full sm:w-auto">
-                  <CalendarIcon size={16} />
-                  <span className="truncate text-xs sm:text-sm">
-                    {dateRange.from && dateRange.to ? (
-                      <>
-                        {format(dateRange.from, "dd/MM/yy")} - {format(dateRange.to, "dd/MM/yy")}
-                      </>
-                    ) : (
-                      "Período"
-                    )}
-                  </span>
-                </Button>
-              </PopoverTrigger>
-              <PopoverContent className="w-auto p-0" align="start">
-                <Calendar
-                  locale={pt}
-                  mode="range"
-                  defaultMonth={dateRange.from}
-                  selected={dateRange}
-                  onSelect={(range) => {
-                    if (range?.from) {
-                      setDateRange(range);
-                      setActiveFilter(DATE_FILTER_PRESETS.CUSTOM);
-                    }
-                  }}
-                  numberOfMonths={1}
-                  className={cn("p-3 pointer-events-auto")}
-                />
-              </PopoverContent>
-            </Popover>
-
-            <Button 
-              variant="outline" 
-              onClick={handleRefresh} 
-              disabled={isLoading}
-              size="icon"
-              className="h-8 w-8 p-0"
-            >
-              <RefreshCw className={`h-4 w-4 ${isLoading ? 'animate-spin' : ''}`} />
-            </Button>
-          </div>
-        </div>
+        <DateRangeFilters 
+          dateRange={dateRange}
+          setDateRange={setDateRange}
+          activeFilter={activeFilter}
+          setActiveFilter={setActiveFilter}
+          isLoading={isLoading}
+          onRefresh={handleRefresh}
+        />
       </PageHeader>
 
       <div className="space-y-4 md:space-y-6">
@@ -276,32 +96,17 @@ const AdminDashboard = () => {
         
         {/* Quick Links */}
         <div className="mt-4 md:mt-6">
-          <h3 className="text-base md:text-lg font-medium mb-3 md:mb-4">Atalhos Rápidos</h3>
-          {renderQuickLinks()}
+          <QuickLinks />
         </div>
         
-        {/* Charts Grid - Only show Sales Chart on mobile */}
-        <div className="grid grid-cols-1 gap-4 md:gap-6 mt-4 md:mt-6">
-          {/* Sales Chart - Always visible */}
-          <SalesChart data={MOCK_DATA.dailySales} isLoading={isLoading} />
-          
-          {/* Hidden on mobile, visible on larger screens */}
-          {!isMobile && (
-            <>
-              {/* Payment Methods Chart */}
-              <PaymentMethodsChart data={MOCK_DATA.paymentMethods} isLoading={isLoading} />
-              
-              {/* Partners and Growth Charts - Stack on all screens, side by side on larger screens */}
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 md:gap-6">
-                {/* Top Partners Chart */}
-                <TopPartnersChart data={MOCK_DATA.topPartners} isLoading={isLoading} />
-                
-                {/* Client Growth Chart */}
-                <ClientGrowthChart data={MOCK_DATA.clientGrowth} isLoading={isLoading} />
-              </div>
-            </>
-          )}
-        </div>
+        {/* Charts Grid */}
+        <ChartsSection 
+          salesData={MOCK_DATA.dailySales}
+          paymentMethodsData={MOCK_DATA.paymentMethods}
+          topPartnersData={MOCK_DATA.topPartners}
+          clientGrowthData={MOCK_DATA.clientGrowth}
+          isLoading={isLoading}
+        />
       </div>
     </div>
   );
