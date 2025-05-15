@@ -13,73 +13,26 @@ import {
 import { Button } from "@/components/ui/button";
 import { motion, AnimatePresence } from "framer-motion";
 import { Link } from "react-router-dom";
-
-type Notification = {
-  id: string;
-  title: string;
-  description: string;
-  timestamp: Date;
-  read: boolean;
-};
+import { useNotifications } from "@/contexts/NotificationsContext";
+import { formatDistanceToNow } from "date-fns";
+import { ptBR } from "date-fns/locale";
+import { ShoppingCart, CreditCard, Wrench, LifeBuoy } from "lucide-react";
 
 const NotificationDropdown = () => {
-  // Fake notifications data
-  const [notifications, setNotifications] = useState<Notification[]>([
-    {
-      id: "1",
-      title: "Nova venda registrada",
-      description: "Uma nova venda foi registrada no sistema.",
-      timestamp: new Date(Date.now() - 1000 * 60 * 30),
-      read: false,
-    },
-    {
-      id: "2",
-      title: "Pagamento recebido",
-      description: "Um novo pagamento foi recebido com sucesso.",
-      timestamp: new Date(Date.now() - 1000 * 60 * 60 * 2),
-      read: false,
-    },
-    {
-      id: "3",
-      title: "Máquina registrada",
-      description: "Uma nova máquina foi adicionada ao sistema.",
-      timestamp: new Date(Date.now() - 1000 * 60 * 60 * 24),
-      read: true,
-    },
-  ]);
-
   const [isOpen, setIsOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
+  
+  const {
+    notifications,
+    unreadCount,
+    markAsRead,
+    markAllAsRead
+  } = useNotifications();
 
-  const unreadCount = notifications.filter((n) => !n.read).length;
+  // Pega apenas as 5 notificações mais recentes para exibir no dropdown
+  const recentNotifications = notifications.slice(0, 5);
 
-  const markAsRead = (id: string) => {
-    setNotifications((prev) =>
-      prev.map((n) => (n.id === id ? { ...n, read: true } : n))
-    );
-  };
-
-  const markAllAsRead = () => {
-    setNotifications((prev) => prev.map((n) => ({ ...n, read: true })));
-  };
-
-  const formatTimestamp = (date: Date) => {
-    const now = new Date();
-    const diffMs = now.getTime() - date.getTime();
-    const diffMins = Math.floor(diffMs / (1000 * 60));
-    const diffHrs = Math.floor(diffMs / (1000 * 60 * 60));
-    const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
-
-    if (diffMins < 60) {
-      return `${diffMins}m atrás`;
-    } else if (diffHrs < 24) {
-      return `${diffHrs}h atrás`;
-    } else {
-      return `${diffDays}d atrás`;
-    }
-  };
-
-  // Close dropdown when clicking outside
+  // Fechar dropdown quando clicar fora
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (
@@ -95,6 +48,24 @@ const NotificationDropdown = () => {
       document.removeEventListener("mousedown", handleClickOutside);
     };
   }, []);
+
+  const getIcon = (type: string) => {
+    switch (type) {
+      case "SALE":
+        return <ShoppingCart className="h-4 w-4 text-primary" />;
+      case "PAYMENT":
+      case "PAYMENT_APPROVED":
+      case "PAYMENT_REJECTED":
+      case "PAYMENT_REQUEST":
+        return <CreditCard className="h-4 w-4 text-primary" />;
+      case "MACHINE":
+        return <Wrench className="h-4 w-4 text-primary" />;
+      case "SUPPORT":
+        return <LifeBuoy className="h-4 w-4 text-primary" />;
+      default:
+        return <Bell className="h-4 w-4 text-primary" />;
+    }
+  };
 
   return (
     <div ref={dropdownRef}>
@@ -149,12 +120,12 @@ const NotificationDropdown = () => {
           <DropdownMenuSeparator />
           <div className="max-h-80 overflow-y-auto">
             <AnimatePresence>
-              {notifications.length === 0 ? (
+              {recentNotifications.length === 0 ? (
                 <div className="p-4 text-center text-muted-foreground">
                   Nenhuma notificação
                 </div>
               ) : (
-                notifications.map((notification) => (
+                recentNotifications.map((notification) => (
                   <motion.div
                     key={notification.id}
                     initial={{ opacity: 0, y: -10 }}
@@ -170,13 +141,19 @@ const NotificationDropdown = () => {
                       onClick={() => markAsRead(notification.id)}
                     >
                       <div className="flex w-full justify-between">
-                        <span className="font-medium">{notification.title}</span>
+                        <div className="flex items-center">
+                          {getIcon(notification.type)}
+                          <span className="ml-2 font-medium">{notification.title}</span>
+                        </div>
                         <span className="text-xs text-muted-foreground">
-                          {formatTimestamp(notification.timestamp)}
+                          {formatDistanceToNow(notification.timestamp, {
+                            addSuffix: true,
+                            locale: ptBR
+                          })}
                         </span>
                       </div>
                       <span className="text-sm text-muted-foreground">
-                        {notification.description}
+                        {notification.message}
                       </span>
                       {!notification.read && (
                         <div className="mt-1 h-2 w-2 rounded-full bg-primary" />

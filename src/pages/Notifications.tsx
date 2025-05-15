@@ -19,29 +19,60 @@ const Notifications = () => {
   const [typeFilter, setTypeFilter] = useState("all");
   const [statusFilter, setStatusFilter] = useState("all");
   const [currentPage, setCurrentPage] = useState(1);
+  const [filteredNotifications, setFilteredNotifications] = useState<any[]>([]);
+  const [totalPages, setTotalPages] = useState(1);
   const { toast } = useToast();
   const navigate = useNavigate();
 
   const { 
     notifications, 
-    isLoading, 
+    loading, 
     markAsRead, 
     markAsUnread,
     markAllAsRead,
     deleteNotification,
-    deleteAllNotifications,
-    totalPages,
     refreshNotifications
-  } = useNotifications({
-    searchTerm,
-    typeFilter,
-    statusFilter,
-    page: currentPage
-  });
+  } = useNotifications();
+
+  // Aplicar filtros e paginação
+  useEffect(() => {
+    // Filtrar notificações
+    let filtered = [...notifications];
+    
+    if (searchTerm) {
+      const term = searchTerm.toLowerCase();
+      filtered = filtered.filter(notification => 
+        notification.title.toLowerCase().includes(term) ||
+        notification.message.toLowerCase().includes(term)
+      );
+    }
+    
+    if (typeFilter !== "all") {
+      filtered = filtered.filter(notification => notification.type === typeFilter);
+    }
+    
+    if (statusFilter === "read") {
+      filtered = filtered.filter(notification => notification.read);
+    } else if (statusFilter === "unread") {
+      filtered = filtered.filter(notification => !notification.read);
+    }
+    
+    // Calcular paginação
+    const pageSize = 10;
+    const total = filtered.length;
+    const maxPages = Math.ceil(total / pageSize);
+    setTotalPages(maxPages || 1);
+    
+    // Aplicar paginação
+    const startIndex = (currentPage - 1) * pageSize;
+    const paginatedNotifications = filtered.slice(startIndex, startIndex + pageSize);
+    
+    setFilteredNotifications(paginatedNotifications);
+  }, [notifications, searchTerm, typeFilter, statusFilter, currentPage]);
   
   const handleSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
     setSearchTerm(e.target.value);
-    setCurrentPage(1); // Reset to first page when searching
+    setCurrentPage(1); // Reset para primeira página ao pesquisar
   };
   
   const handleMarkAllAsRead = async () => {
@@ -54,7 +85,10 @@ const Notifications = () => {
   
   const handleDeleteAll = async () => {
     if (confirm("Tem certeza que deseja excluir todas as notificações?")) {
-      await deleteAllNotifications();
+      // Como o contexto não tem método para excluir todas, fazemos uma por uma
+      const promises = notifications.map(n => deleteNotification(n.id));
+      await Promise.all(promises);
+      
       toast({
         title: "Sucesso",
         description: "Todas as notificações foram excluídas",
@@ -105,7 +139,7 @@ const Notifications = () => {
           <Button 
             variant="outline" 
             onClick={handleMarkAllAsRead}
-            disabled={isLoading || notifications.every(n => n.read)}
+            disabled={loading || notifications.every(n => n.read)}
           >
             Marcar todas como lidas
           </Button>
@@ -113,7 +147,7 @@ const Notifications = () => {
             variant="outline" 
             className="text-destructive hover:text-destructive" 
             onClick={handleDeleteAll}
-            disabled={isLoading || notifications.length === 0}
+            disabled={loading || notifications.length === 0}
           >
             Excluir todas
           </Button>
@@ -122,13 +156,13 @@ const Notifications = () => {
       
       <Card>
         <CardContent className="p-0">
-          {isLoading ? (
+          {loading ? (
             <div className="flex justify-center items-center h-64">
               <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
             </div>
           ) : (
             <NotificationList 
-              notifications={notifications} 
+              notifications={filteredNotifications} 
               onMarkAsRead={markAsRead}
               onMarkAsUnread={markAsUnread}
               onDelete={deleteNotification}
