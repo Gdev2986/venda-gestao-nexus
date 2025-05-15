@@ -53,10 +53,12 @@ function App() {
             <Route path="reset-password" element={<ResetPassword />} />
             <Route path="unauthorized" element={<Unauthorized />} />
             
+            {/* Root index route for redirection */}
+            <Route index element={<Home />} />
+            
             {/* Main Layout for regular pages - requires authentication */}
             <Route element={<RequireAuth />}>
               <Route element={<MainLayout />}>
-                <Route index element={<Home />} />
                 <Route path="profile" element={<Profile />} />
                 <Route path="clients" element={<Clients />} />
                 <Route path="sales" element={<Sales />} />

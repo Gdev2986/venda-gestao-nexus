@@ -1,4 +1,3 @@
-
 import { createContext, useContext, useEffect, useState } from "react";
 import { Session, User } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
@@ -13,6 +12,8 @@ import {
   clearAuthData 
 } from "@/services/auth-service";
 import { AuthContextType } from "./auth-types";
+import { getDashboardRedirect } from "@/routes/routeUtils";
+import { UserRole } from "@/types";
 
 // Function to clean up all Supabase-related data
 const cleanupSupabaseState = () => {
@@ -170,7 +171,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
       if (error) {
         toast({
-          title: "Login error",
+          title: "Erro de login",
           description: error.message,
           variant: "destructive",
         });
@@ -178,15 +179,28 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       }
       
       if (signedInUser) {
-        console.log("Sign in successful, navigating to dashboard");
+        console.log("Sign in successful");
+        
+        // Fetch user role from profiles table after sign in
+        const { data: profileData } = await supabase
+          .from('profiles')
+          .select('role')
+          .eq('id', signedInUser.id)
+          .single();
+        
         // Use setTimeout to avoid race conditions with onAuthStateChange
         setTimeout(() => {
           const redirectPath = sessionStorage.getItem('redirectPath');
+          
           if (redirectPath) {
             sessionStorage.removeItem('redirectPath');
             navigate(redirectPath);
           } else {
-            navigate(PATHS.DASHBOARD); // Will be handled by RootLayout
+            // Use the user's role to determine where to redirect
+            const userRole = profileData?.role || UserRole.CLIENT;
+            const dashboardPath = getDashboardRedirect(userRole);
+            console.log("Redirecting to dashboard path:", dashboardPath);
+            navigate(dashboardPath, { replace: true });
           }
         }, 0);
       }
