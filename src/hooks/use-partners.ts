@@ -4,6 +4,17 @@ import { Partner, FilterValues } from "@/types";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 
+interface PartnerCreate {
+  company_name: string;
+  commission_rate: number;
+  contact_name?: string;
+  contact_email?: string;
+  contact_phone?: string;
+  email?: string;
+  phone?: string;
+  address?: string;
+}
+
 export const usePartners = () => {
   const [partners, setPartners] = useState<Partner[]>([]);
   const [filteredPartners, setFilteredPartners] = useState<Partner[]>([]);
@@ -102,7 +113,7 @@ export const usePartners = () => {
     setFilteredPartners(filtered);
   }, [partners]);
 
-  const createPartner = async (partnerData: Omit<Partner, "id" | "created_at" | "updated_at">) => {
+  const createPartner = async (partnerData: PartnerCreate): Promise<boolean> => {
     try {
       // Create a partner object with only the fields that exist in the database table
       const partnerToInsert = {
@@ -118,8 +129,7 @@ export const usePartners = () => {
 
       const { data, error } = await supabase
         .from('partners')
-        .insert([partnerToInsert])
-        .select();
+        .insert([partnerToInsert]);
 
       if (error) throw error;
 
@@ -143,7 +153,7 @@ export const usePartners = () => {
     }
   };
   
-  const updatePartner = async (partnerId: string, partnerData: Partial<Partner>) => {
+  const updatePartner = async (partnerId: string, partnerData: Partial<Partner>): Promise<boolean> => {
     try {
       // Create an update object with only the fields that exist in the database table
       const updateData = {
@@ -182,7 +192,7 @@ export const usePartners = () => {
     }
   };
 
-  const deletePartner = async (partnerId: string) => {
+  const deletePartner = async (partnerId: string): Promise<boolean> => {
     try {
       const { error } = await supabase
         .from('partners')

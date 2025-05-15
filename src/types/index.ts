@@ -1,4 +1,3 @@
-
 export enum UserRole {
   ADMIN = "ADMIN",
   CLIENT = "CLIENT", 
@@ -91,6 +90,8 @@ export interface Partner {
   email?: string; // Added for consistency with filtering
   phone?: string; // Added for consistency with filtering
   address?: string; // Added for completeness
+  total_sales?: number;
+  total_commission?: number;
 }
 
 // Added Client interface to ensure type safety

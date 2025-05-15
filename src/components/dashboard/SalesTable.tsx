@@ -37,8 +37,13 @@ interface SalesTableProps {
   isLoading?: boolean;
 }
 
-const getPaymentMethodIcon = (method: PaymentMethod) => {
-  switch (method) {
+const getPaymentMethodIcon = (method: string) => {
+  // Ensure method is a valid PaymentMethod enum value or use a default
+  const paymentMethod = Object.values(PaymentMethod).includes(method as PaymentMethod) 
+    ? method as PaymentMethod
+    : PaymentMethod.CREDIT;
+
+  switch (paymentMethod) {
     case PaymentMethod.CREDIT:
       return <Badge variant="outline">Crédito</Badge>;
     case PaymentMethod.DEBIT:
@@ -46,7 +51,7 @@ const getPaymentMethodIcon = (method: PaymentMethod) => {
     case PaymentMethod.PIX:
       return <Badge variant="outline" className="border-warning text-warning">Pix</Badge>;
     default:
-      return null;
+      return <Badge variant="outline">{method}</Badge>;
   }
 };
 

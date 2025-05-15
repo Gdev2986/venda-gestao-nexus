@@ -19,6 +19,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { UserRole } from "@/types";
 
 interface ProfileData {
   id: string;

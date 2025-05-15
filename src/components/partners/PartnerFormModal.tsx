@@ -33,6 +33,7 @@ const PartnerFormModal = ({
         if (success) {
           onClose();
         }
+        return success;
       } else {
         const success = await createPartner({
           ...data,
@@ -42,6 +43,7 @@ const PartnerFormModal = ({
         if (success) {
           onClose();
         }
+        return success;
       }
     } catch (error) {
       toast({
@@ -49,6 +51,7 @@ const PartnerFormModal = ({
         title: "Erro",
         description: "Ocorreu um erro ao salvar o parceiro.",
       });
+      return false;
     } finally {
       setIsSubmitting(false);
     }
