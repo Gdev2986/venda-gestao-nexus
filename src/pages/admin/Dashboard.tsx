@@ -28,6 +28,7 @@ import PaymentMethodsChart from "@/components/dashboard/admin/PaymentMethodsChar
 import TopPartnersChart from "@/components/dashboard/admin/TopPartnersChart";
 import ClientGrowthChart from "@/components/dashboard/admin/ClientGrowthChart";
 import { useToast } from "@/hooks/use-toast";
+import { useMediaQuery } from "@/hooks/use-media-query";
 
 // Dashboard date filter presets
 const DATE_FILTER_PRESETS = {
@@ -90,6 +91,9 @@ const AdminDashboard = () => {
     to: new Date()
   });
   const { toast } = useToast();
+  
+  // Check if screen is mobile
+  const isMobile = useMediaQuery("(max-width: 767px)");
   
   // Function to simulate data refresh
   const handleRefresh = () => {
@@ -276,22 +280,27 @@ const AdminDashboard = () => {
           {renderQuickLinks()}
         </div>
         
-        {/* Charts Grid - Stack vertically on mobile */}
+        {/* Charts Grid - Only show Sales Chart on mobile */}
         <div className="grid grid-cols-1 gap-4 md:gap-6 mt-4 md:mt-6">
-          {/* Sales Chart */}
+          {/* Sales Chart - Always visible */}
           <SalesChart data={MOCK_DATA.dailySales} isLoading={isLoading} />
           
-          {/* Payment Methods Chart */}
-          <PaymentMethodsChart data={MOCK_DATA.paymentMethods} isLoading={isLoading} />
-          
-          {/* Partners and Growth Charts - Stack on all screens, side by side on larger screens */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 md:gap-6">
-            {/* Top Partners Chart */}
-            <TopPartnersChart data={MOCK_DATA.topPartners} isLoading={isLoading} />
-            
-            {/* Client Growth Chart */}
-            <ClientGrowthChart data={MOCK_DATA.clientGrowth} isLoading={isLoading} />
-          </div>
+          {/* Hidden on mobile, visible on larger screens */}
+          {!isMobile && (
+            <>
+              {/* Payment Methods Chart */}
+              <PaymentMethodsChart data={MOCK_DATA.paymentMethods} isLoading={isLoading} />
+              
+              {/* Partners and Growth Charts - Stack on all screens, side by side on larger screens */}
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 md:gap-6">
+                {/* Top Partners Chart */}
+                <TopPartnersChart data={MOCK_DATA.topPartners} isLoading={isLoading} />
+                
+                {/* Client Growth Chart */}
+                <ClientGrowthChart data={MOCK_DATA.clientGrowth} isLoading={isLoading} />
+              </div>
+            </>
+          )}
         </div>
       </div>
     </div>
