@@ -11,7 +11,7 @@ export interface PartnerFormModalProps {
   onClose: () => void;
   title?: string;
   initialData?: Partner;
-  onSubmit?: (data: PartnerFormValues) => Promise<boolean>;
+  onSubmit?: (data: PartnerFormValues) => Promise<boolean> | void;
 }
 
 const PartnerFormModal = ({
@@ -29,8 +29,8 @@ const PartnerFormModal = ({
     setIsSubmitting(true);
     try {
       if (onSubmit) {
-        const success = await onSubmit(data);
-        if (success) {
+        const result = await onSubmit(data);
+        if (result !== false) {
           onClose();
         }
       } else {

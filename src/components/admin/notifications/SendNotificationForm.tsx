@@ -17,7 +17,7 @@ import {
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { Loader2 } from "lucide-react";
-import { NotificationType, UserRole } from "@/types";
+import { NotificationType } from "@/types";
 
 const formSchema = z.object({
   title: z.string().min(3, "O título deve ter pelo menos 3 caracteres").max(100, "O título não pode exceder 100 caracteres"),
@@ -137,11 +137,11 @@ const SendNotificationForm = () => {
                   </FormControl>
                   <SelectContent>
                     <SelectItem value="all">Todos os usuários</SelectItem>
-                    <SelectItem value={UserRole.CLIENT}>Apenas clientes</SelectItem>
-                    <SelectItem value={UserRole.PARTNER}>Apenas parceiros</SelectItem>
-                    <SelectItem value={UserRole.ADMIN}>Apenas administradores</SelectItem>
-                    <SelectItem value={UserRole.FINANCIAL}>Apenas financeiro</SelectItem>
-                    <SelectItem value={UserRole.LOGISTICS}>Apenas logística</SelectItem>
+                    <SelectItem value="ADMIN">Apenas administradores</SelectItem>
+                    <SelectItem value="CLIENT">Apenas clientes</SelectItem>
+                    <SelectItem value="PARTNER">Apenas parceiros</SelectItem>
+                    <SelectItem value="FINANCIAL">Apenas financeiro</SelectItem>
+                    <SelectItem value="LOGISTICS">Apenas logística</SelectItem>
                   </SelectContent>
                 </Select>
                 <FormMessage />

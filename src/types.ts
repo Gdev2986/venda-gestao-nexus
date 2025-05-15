@@ -1,4 +1,3 @@
-
 export enum UserRole {
   ADMIN = "ADMIN",
   CLIENT = "CLIENT", 
@@ -49,6 +48,7 @@ export enum NotificationType {
   SUPPORT = "SUPPORT"
 }
 
+// Updated interface to support both string and enum types for payment methods and status
 export interface Payment {
   id: string;
   created_at: string;
@@ -80,7 +80,7 @@ export interface Payment {
   description?: string;
 }
 
-// Types for partners
+// Types for partners - adding missing fields
 export interface Partner {
   id: string;
   company_name: string;

@@ -1,3 +1,4 @@
+
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
 
 @tailwind base;
@@ -100,8 +101,8 @@
 
   /* Custom scrollbar */
   ::-webkit-scrollbar {
-    width: 5px;
-    height: 5px;
+    width: 6px;
+    height: 6px;
   }
 
   ::-webkit-scrollbar-track {
@@ -124,7 +125,7 @@
 
   /* Responsiveness utilities */
   .responsive-container {
-    @apply w-full px-2 sm:px-3 md:px-4 lg:px-6 mx-auto;
+    @apply w-full px-3 sm:px-4 md:px-6 lg:px-8 mx-auto;
     max-width: 1400px;
   }
 
@@ -135,27 +136,27 @@
 
   /* Card grids */
   .card-grid {
-    @apply grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-2 sm:gap-3;
+    @apply grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-4;
   }
 
   /* Form layouts */
   .form-grid {
-    @apply grid gap-2 sm:gap-3 sm:grid-cols-2;
+    @apply grid gap-3 sm:gap-4 sm:grid-cols-2;
   }
 
   /* Responsive spacing */
   .responsive-padding {
-    @apply px-2 sm:px-3 md:px-4 lg:px-6 py-2 sm:py-3 md:py-4;
+    @apply px-3 sm:px-4 md:px-6 lg:px-8 py-3 sm:py-4 md:py-6;
   }
 
   /* Responsive typography */
   .responsive-heading {
-    @apply text-base sm:text-lg md:text-xl lg:text-2xl font-bold;
+    @apply text-lg sm:text-xl md:text-2xl lg:text-3xl font-bold;
   }
 
   /* Responsive stack */
   .responsive-stack {
-    @apply flex flex-col sm:flex-row gap-2 sm:gap-3;
+    @apply flex flex-col sm:flex-row gap-3 sm:gap-4;
   }
 
   /* Responsive alignment */
@@ -180,7 +181,7 @@
   
   /* Responsive card */
   .responsive-card {
-    @apply flex flex-col sm:flex-row sm:items-center gap-2 p-2 sm:p-3;
+    @apply flex flex-col sm:flex-row sm:items-center gap-3 p-3;
   }
 }
 
@@ -197,7 +198,7 @@
 }
 
 .skeleton-text {
-  @apply skeleton h-3 w-full mb-2;
+  @apply skeleton h-4 w-full mb-2;
 }
 
 .skeleton-circle {
@@ -235,17 +236,17 @@ img {
 
 /* Spinner animation */
 .spinner {
-  @apply h-5 w-5 sm:h-6 sm:w-6 rounded-full border-2 border-muted border-t-primary animate-spin;
+  @apply h-6 w-6 sm:h-8 sm:w-8 rounded-full border-2 sm:border-4 border-muted border-t-primary animate-spin;
 }
 
 /* Mobile-first adjustments */
 @media (max-width: 640px) {
   .card-header-stack {
-    @apply flex-col items-start space-y-1;
+    @apply flex-col items-start space-y-2;
   }
   
   .btn-stack {
-    @apply flex-col w-full space-y-1;
+    @apply flex-col w-full space-y-2;
   }
   
   .btn-stack > button {
@@ -254,48 +255,25 @@ img {
   
   /* Mobile-specific text adjustments */
   h1, h2, h3, h4, h5, h6, p, span, a, button, input, select, textarea {
-    @apply text-[90%];
+    @apply text-[95%];
   }
   
   /* Make small adjustments to card padding */
   .card-content {
-    @apply p-2;
-  }
-  
-  .card {
-    @apply rounded-md overflow-hidden;
+    @apply p-3;
   }
   
   /* Ensure tables don't break layout by allowing horizontal scroll */
   table {
     @apply min-w-max;
   }
-  
-  /* Card header adjustments */
-  .card-header {
-    @apply p-2 space-y-1;
-  }
-  
-  .card-title {
-    @apply text-base;
-  }
-  
-  /* Input fields */
-  .input, .select, .button {
-    @apply h-8 text-sm;
-  }
-  
-  /* Fix badge size */
-  .badge {
-    @apply text-xs py-0;
-  }
 }
 
 /* Responsive grid fixes */
 .auto-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-  gap: 0.75rem;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 1rem;
 }
 
 /* Dark mode improvements */
@@ -305,7 +283,7 @@ img {
 
 /* Better responsiveness for calendar popups */
 .rdp {
-  --rdp-cell-size: 32px;
+  --rdp-cell-size: 36px;
   --rdp-accent-color: hsl(var(--primary));
   --rdp-background-color: hsl(var(--primary) / 0.1);
   margin: 0;
@@ -313,7 +291,7 @@ img {
 
 @media (max-width: 640px) {
   .rdp {
-    --rdp-cell-size: 28px;
+    --rdp-cell-size: 32px;
   }
   
   /* Optimize mobile tables */
@@ -322,19 +300,11 @@ img {
   }
   
   th, td {
-    @apply px-1 py-1 text-xs;
+    @apply px-2 py-2 text-xs;
   }
   
   /* Optimize form elements for touch */
   input, select, button {
-    @apply min-h-[32px] text-sm;
-  }
-  
-  .btn-sm {
-    @apply h-7 px-2 text-xs;
-  }
-  
-  .card {
-    @apply shadow-sm;
+    @apply min-h-[36px];
   }
 }

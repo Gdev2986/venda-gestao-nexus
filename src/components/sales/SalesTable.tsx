@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import {
   Table,
@@ -41,16 +40,22 @@ interface SalesTableProps {
   };
 }
 
-const getPaymentMethodLabel = (method: PaymentMethod) => {
+const getPaymentMethodLabel = (method: PaymentMethod | string) => {
   switch (method) {
     case PaymentMethod.CREDIT:
+    case "CREDIT":
+    case "credit":
       return <Badge variant="outline">Crédito</Badge>;
     case PaymentMethod.DEBIT:
+    case "DEBIT":
+    case "debit":
       return <Badge variant="outline" className="border-success text-success">Débito</Badge>;
     case PaymentMethod.PIX:
+    case "PIX":
+    case "pix":
       return <Badge variant="outline" className="border-warning text-warning">Pix</Badge>;
     default:
-      return null;
+      return <Badge variant="outline">{method}</Badge>;
   }
 };
 
