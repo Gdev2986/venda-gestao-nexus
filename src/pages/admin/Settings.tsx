@@ -9,6 +9,7 @@ import { RoleChangeModal } from "@/components/admin/settings/RoleChangeModal";
 import { AdminNotificationsTab } from "@/components/admin/settings/AdminNotificationsTab";
 import { AdminSecurityTab } from "@/components/admin/settings/AdminSecurityTab";
 import { UserRole } from "@/types";
+import { toUserRole } from "@/lib/type-utils";
 
 // Update ProfileData interface to accept string for role
 interface ProfileData {
@@ -25,7 +26,7 @@ interface ProfileData {
 const AdminSettings = () => {
   const [activeTab, setActiveTab] = useState("usuarios");
   const [selectedUser, setSelectedUser] = useState<ProfileData | null>(null);
-  const [newRole, setNewRole] = useState<string>(UserRole.CLIENT);
+  const [newRole, setNewRole] = useState<UserRole>(UserRole.CLIENT);
   const [showRoleModal, setShowRoleModal] = useState(false);
   
   const { toast } = useToast();
@@ -59,7 +60,7 @@ const AdminSettings = () => {
 
   const openRoleModal = (user: ProfileData) => {
     setSelectedUser(user);
-    setNewRole(user.role);
+    setNewRole(toUserRole(user.role));
     setShowRoleModal(true);
   };
 

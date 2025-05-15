@@ -15,6 +15,23 @@ interface PartnerCreate {
   address?: string;
 }
 
+// Define a type representing the actual Supabase Partners table structure
+interface SupabasePartner {
+  id: string;
+  commission_rate: number;
+  created_at: string;
+  updated_at: string;
+  company_name: string;
+  contact_name?: string;
+  contact_email?: string;
+  contact_phone?: string;
+  email?: string;
+  phone?: string;
+  address?: string;
+  total_sales?: number;
+  total_commission?: number;
+}
+
 export const usePartners = () => {
   const [partners, setPartners] = useState<Partner[]>([]);
   const [filteredPartners, setFilteredPartners] = useState<Partner[]>([]);
@@ -35,8 +52,8 @@ export const usePartners = () => {
       if (error) throw error;
 
       if (data) {
-        // Transform data to match our Partner interface
-        const transformedPartners: Partner[] = data.map(partner => ({
+        // Transform data to match our Partner interface with proper type checking
+        const transformedPartners: Partner[] = data.map((partner: SupabasePartner) => ({
           id: partner.id,
           company_name: partner.company_name,
           created_at: partner.created_at,
@@ -129,7 +146,8 @@ export const usePartners = () => {
 
       const { data, error } = await supabase
         .from('partners')
-        .insert(partnerToInsert);
+        .insert(partnerToInsert)
+        .select();
 
       if (error) throw error;
 

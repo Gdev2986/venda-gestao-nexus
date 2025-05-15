@@ -5,6 +5,7 @@ import { Payment, PaymentStatus } from '@/types';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { PaymentAction } from '@/components/payments/PaymentTableColumns';
+import { toPaymentStatus } from '@/lib/type-utils';
 
 interface UseAdminPaymentsProps {
   searchTerm: string;
@@ -30,8 +31,10 @@ export const useAdminPayments = ({ searchTerm, statusFilter, page }: UseAdminPay
     }
 
     if (statusFilter !== 'ALL') {
-      // Convert enum status to lowercase for database compatibility
-      const dbStatus = typeof statusFilter === 'string' ? statusFilter.toLowerCase() : 'pending';
+      // Convert the string status to lowercase for database compatibility
+      const dbStatus = typeof statusFilter === 'string' 
+        ? statusFilter.toLowerCase() 
+        : 'pending';
       query = query.eq('status', dbStatus);
     }
 
@@ -46,7 +49,7 @@ export const useAdminPayments = ({ searchTerm, statusFilter, page }: UseAdminPay
     // Convert the database status (lowercase) back to the enum format (uppercase)
     const typedData = data?.map(item => ({
       ...item,
-      status: item.status ? (item.status.toUpperCase() as PaymentStatus) : PaymentStatus.PENDING
+      status: item.status ? toPaymentStatus(item.status.toUpperCase()) : PaymentStatus.PENDING
     })) as Payment[];
 
     return {

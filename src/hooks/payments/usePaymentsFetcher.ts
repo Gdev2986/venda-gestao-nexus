@@ -1,9 +1,10 @@
-
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { PaymentRequest, PaymentRequestStatus } from "@/types/payment.types";
 import { useToast } from "@/hooks/use-toast";
 import { UsePaymentsOptions, PaymentData } from "./payment.types";
+import { PaymentStatus } from "@/types";
+import { toPaymentStatus } from "@/lib/type-utils";
 
 export const usePaymentsFetcher = (options: UsePaymentsOptions = {}) => {
   const [paymentRequests, setPaymentRequests] = useState<PaymentRequest[]>([]);
@@ -26,7 +27,12 @@ export const usePaymentsFetcher = (options: UsePaymentsOptions = {}) => {
 
       // Apply status filter if not ALL
       if (statusFilter !== "ALL") {
-        query = query.eq("status", statusFilter);
+        // Convert to PaymentStatus enum for type safety
+        const typedStatus = typeof statusFilter === 'string' 
+          ? statusFilter 
+          : statusFilter.toString();
+        
+        query = query.eq("status", typedStatus);
       }
 
       // Apply search filter if provided

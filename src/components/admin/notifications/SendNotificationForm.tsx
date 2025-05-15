@@ -1,213 +1,182 @@
-
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form";
+import { Input } from "@/components/ui/input";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
-import { Loader2 } from "lucide-react";
-import { NotificationType, UserRole } from "@/types";
+import { UserRole, NotificationType } from "@/types";
+import { toUserRole } from "@/lib/type-utils";
 
 const formSchema = z.object({
-  title: z.string().min(3, "O título deve ter pelo menos 3 caracteres").max(100, "O título não pode exceder 100 caracteres"),
-  target: z.string(),
-  message: z.string().min(5, "A mensagem deve ter pelo menos 5 caracteres").max(500, "A mensagem não pode exceder 500 caracteres"),
+  title: z.string().min(2, {
+    message: "O título deve ter pelo menos 2 caracteres.",
+  }),
+  message: z.string().min(10, {
+    message: "A mensagem deve ter pelo menos 10 caracteres.",
+  }),
   type: z.nativeEnum(NotificationType),
+  role: z.enum([UserRole.ADMIN, UserRole.FINANCIAL, UserRole.PARTNER, UserRole.LOGISTICS, UserRole.CLIENT]),
 });
 
-type FormValues = z.infer<typeof formSchema>;
+interface SendNotificationFormProps {
+  onClose: () => void;
+}
 
-const SendNotificationForm = () => {
+const SendNotificationForm = ({ onClose }: SendNotificationFormProps) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { toast } = useToast();
 
-  const form = useForm<FormValues>({
+  const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
       title: "",
-      target: "all",
       message: "",
       type: NotificationType.GENERAL,
+      role: UserRole.CLIENT,
     },
   });
 
-  const onSubmit = async (data: FormValues) => {
+  async function onSubmit(values: z.infer<typeof formSchema>) {
     setIsSubmitting(true);
-    
     try {
-      // Buscar os usuários alvo com base na seleção
-      let userIds: string[] = [];
-      
-      if (data.target === "all") {
-        const { data: users, error } = await supabase
-          .from('profiles')
-          .select('id');
-        
-        if (error) throw error;
-        userIds = users.map(user => user.id);
-        
-      } else {
-        // Filtrar por tipo específico de usuário
-        const targetRole = data.target;
-        
-        const { data: users, error } = await supabase
-          .from('profiles')
-          .select('id')
-          .eq('role', targetRole);
-        
-        if (error) throw error;
-        userIds = users.map(user => user.id);
+      // Convert the string role to a proper UserRole enum
+      const userRole = toUserRole(values.role);
+
+      const { data, error } = await supabase
+        .from("notifications")
+        .insert([
+          {
+            title: values.title,
+            message: values.message,
+            type: values.type,
+            role: userRole,
+          },
+        ]);
+
+      if (error) {
+        throw new Error(error.message);
       }
-      
-      // Preparar as notificações para todos os usuários alvo
-      const notifications = userIds.map(userId => ({
-        user_id: userId,
-        title: data.title,
-        message: data.message,
-        type: data.type,
-        is_read: false,
-      }));
-      
-      // Enviar as notificações em lotes para evitar problemas de tamanho de payload
-      const batchSize = 50;
-      for (let i = 0; i < notifications.length; i += batchSize) {
-        const batch = notifications.slice(i, i + batchSize);
-        const { error } = await supabase.from('notifications').insert(batch);
-        if (error) throw error;
-      }
-      
+
       toast({
         title: "Notificação enviada",
-        description: `Notificação enviada com sucesso para ${userIds.length} usuários.`,
+        description: "A notificação foi enviada com sucesso.",
       });
-      
-      // Limpar o formulário
-      form.reset();
-      
-    } catch (error) {
-      console.error('Erro ao enviar notificação:', error);
+      onClose();
+    } catch (error: any) {
       toast({
-        title: "Erro",
-        description: "Não foi possível enviar a notificação. Tente novamente.",
         variant: "destructive",
+        title: "Erro",
+        description: error.message,
       });
     } finally {
       setIsSubmitting(false);
     }
-  };
+  }
 
   return (
-    <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-        <FormField
-          control={form.control}
-          name="title"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Título</FormLabel>
-              <FormControl>
-                <Input placeholder="Título da notificação" {...field} />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-        
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <FormField
-            control={form.control}
-            name="target"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Destinatários</FormLabel>
-                <Select onValueChange={field.onChange} defaultValue={field.value}>
+    <Card>
+      <CardHeader>
+        <CardTitle>Enviar Notificação</CardTitle>
+      </CardHeader>
+      <CardContent>
+        <Form {...form}>
+          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+            <FormField
+              control={form.control}
+              name="title"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Título</FormLabel>
                   <FormControl>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Selecione os destinatários" />
-                    </SelectTrigger>
+                    <Input placeholder="Título da notificação" {...field} />
                   </FormControl>
-                  <SelectContent>
-                    <SelectItem value="all">Todos os usuários</SelectItem>
-                    <SelectItem value={UserRole.CLIENT}>Apenas clientes</SelectItem>
-                    <SelectItem value={UserRole.PARTNER}>Apenas parceiros</SelectItem>
-                    <SelectItem value={UserRole.ADMIN}>Apenas administradores</SelectItem>
-                    <SelectItem value={UserRole.FINANCIAL}>Apenas financeiro</SelectItem>
-                    <SelectItem value={UserRole.LOGISTICS}>Apenas logística</SelectItem>
-                  </SelectContent>
-                </Select>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-        
-          <FormField
-            control={form.control}
-            name="type"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Tipo</FormLabel>
-                <Select onValueChange={field.onChange} defaultValue={field.value}>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="message"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Mensagem</FormLabel>
                   <FormControl>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Selecione o tipo" />
-                    </SelectTrigger>
+                    <Textarea
+                      placeholder="Mensagem da notificação"
+                      className="resize-none"
+                      {...field}
+                    />
                   </FormControl>
-                  <SelectContent>
-                    <SelectItem value={NotificationType.GENERAL}>Geral</SelectItem>
-                    <SelectItem value={NotificationType.PAYMENT}>Pagamento</SelectItem>
-                    <SelectItem value={NotificationType.SALE}>Venda</SelectItem>
-                    <SelectItem value={NotificationType.MACHINE}>Máquina</SelectItem>
-                    <SelectItem value={NotificationType.SUPPORT}>Suporte</SelectItem>
-                    <SelectItem value={NotificationType.SYSTEM}>Sistema</SelectItem>
-                  </SelectContent>
-                </Select>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-        </div>
-        
-        <FormField
-          control={form.control}
-          name="message"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Mensagem</FormLabel>
-              <FormControl>
-                <Textarea 
-                  placeholder="Digite a mensagem da notificação..." 
-                  className="min-h-[150px]"
-                  {...field}
-                />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-        
-        <Button type="submit" disabled={isSubmitting}>
-          {isSubmitting ? (
-            <>
-              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-              Enviando...
-            </>
-          ) : (
-            "Enviar Notificação"
-          )}
-        </Button>
-      </form>
-    </Form>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="type"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Tipo</FormLabel>
+                  <Select onValueChange={field.onChange} defaultValue={field.value}>
+                    <FormControl>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Selecione o tipo" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      {Object.values(NotificationType).map((type) => (
+                        <SelectItem key={type} value={type}>{type}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="role"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Função</FormLabel>
+                  <Select onValueChange={field.onChange} defaultValue={field.value}>
+                    <FormControl>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Selecione a função" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      {Object.values(UserRole).map((role) => (
+                        <SelectItem key={role} value={role}>{role}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <div className="flex justify-end">
+              <Button type="submit" disabled={isSubmitting}>
+                {isSubmitting ? "Enviando..." : "Enviar Notificação"}
+              </Button>
+            </div>
+          </form>
+        </Form>
+      </CardContent>
+    </Card>
   );
 };
 

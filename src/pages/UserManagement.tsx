@@ -1,9 +1,23 @@
-
-import { useState, useEffect } from "react";
-import { UserData, UserRole } from "@/types";
-import { useToast } from "@/hooks/use-toast";
+import { useState, useEffect, useCallback } from "react";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import {
+  Form,
+  FormControl,
+  FormDescription,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import {
   Select,
   SelectContent,
@@ -12,383 +26,487 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-  CardDescription,
-} from "@/components/ui/card";
+  Table,
+  TableBody,
+  TableCell,
+  TableCaption,
+  TableFooter,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import * as z from "zod";
+import { UserRole, UserData } from "@/types";
+import { useToast } from "@/hooks/use-toast";
+import { supabase } from "@/integrations/supabase/client";
 import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-  DialogClose,
-  DialogFooter,
-  DialogDescription,
-} from "@/components/ui/dialog";
-import { MoreVertical, Edit, Trash2, Plus } from "lucide-react";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import { Label } from "@/components/ui/label";
-import UserTable from "@/components/user-management/UserTable";
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { toUserRole } from "@/lib/type-utils";
+
+const formSchema = z.object({
+  name: z.string().min(2, {
+    message: "Username must be at least 2 characters.",
+  }),
+  email: z.string().email({
+    message: "Please enter a valid email address.",
+  }),
+  role: z.nativeEnum(UserRole, {
+    invalid_type_error: "Please select a valid role.",
+  }),
+  status: z.string().optional(),
+});
 
 const UserManagement = () => {
   const [users, setUsers] = useState<UserData[]>([]);
-  const [totalPages, setTotalPages] = useState(1);
-  const [currentPage, setCurrentPage] = useState(1);
-  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
-  const [userToDelete, setUserToDelete] = useState<string | null>(null);
-  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
-  const [userToEdit, setUserToEdit] = useState<UserData | null>(null);
-  const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isCreating, setIsCreating] = useState(false);
+  const [isUpdating, setIsUpdating] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [showCreateModal, setShowCreateModal] = useState(false);
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+  const [selectedUser, setSelectedUser] = useState<UserData | null>(null);
   const { toast } = useToast();
 
-  const handlePageChange = (page: number) => {
-    setCurrentPage(page);
-  };
+  const form = useForm<z.infer<typeof formSchema>>({
+    resolver: zodResolver(formSchema),
+    defaultValues: {
+      name: "",
+      email: "",
+      role: UserRole.CLIENT,
+      status: "active",
+    },
+  });
 
   useEffect(() => {
-    const mockUsers: UserData[] = [
-      {
-        id: '1',
-        name: 'Admin User',
-        email: 'admin@example.com',
-        role: UserRole.ADMIN,
-        created_at: '2023-01-15T10:30:00Z',
-        status: 'active'
-      },
-      {
-        id: '2',
-        name: 'Client User',
-        email: 'client@example.com',
-        role: UserRole.CLIENT,
-        created_at: '2023-02-20T14:45:00Z',
-        status: 'inactive'
-      },
-      {
-        id: '3',
-        name: 'Financial User',
-        email: 'financial@example.com',
-        role: UserRole.FINANCIAL,
-        created_at: '2023-03-10T09:00:00Z',
-        status: 'active'
-      },
-      {
-        id: '4',
-        name: 'Partner User',
-        email: 'partner@example.com',
-        role: UserRole.PARTNER,
-        created_at: '2023-04-05T16:20:00Z',
-        status: 'pending'
-      },
-      {
-        id: '5',
-        name: 'Logistics User',
-        email: 'logistics@example.com',
-        role: UserRole.LOGISTICS,
-        created_at: '2023-05-01T11:15:00Z',
-        status: 'active'
-      }
-    ];
-
-    setUsers(mockUsers);
-    setTotalPages(1);
+    fetchUsers();
   }, []);
 
-  const handleDeleteClick = (userId: string) => {
-    setUserToDelete(userId);
-    setIsDeleteDialogOpen(true);
-  };
-
-  const confirmDeleteUser = () => {
-    if (userToDelete) {
-      setUsers(users.filter(user => user.id !== userToDelete));
-      setIsDeleteDialogOpen(false);
-      setUserToDelete(null);
+  const fetchUsers = async () => {
+    setIsLoading(true);
+    try {
+      const { data, error } = await supabase.from("profiles").select("*");
+      if (error) throw error;
+      setUsers(data as UserData[]);
+    } catch (error: any) {
       toast({
-        title: "Usuário excluído",
-        description: "O usuário foi removido com sucesso."
+        variant: "destructive",
+        title: "Erro",
+        description: error.message,
       });
+    } finally {
+      setIsLoading(false);
     }
   };
 
-  const handleEditClick = (user: UserData) => {
-    setUserToEdit(user);
-    setIsEditDialogOpen(true);
+  const createUser = async (values: z.infer<typeof formSchema>) => {
+    setIsCreating(true);
+    try {
+      const { data: authData, error: authError } = await supabase.auth.signUp({
+        email: values.email,
+        password: "defaultpassword", // Implement a secure password flow later
+        options: {
+          data: {
+            name: values.name,
+            role: values.role,
+            status: values.status,
+          },
+        },
+      });
+
+      if (authError) throw authError;
+
+      const newUserId = authData.user?.id;
+
+      const { error: profileError } = await supabase
+        .from("profiles")
+        .insert([
+          {
+            id: newUserId,
+            name: values.name,
+            email: values.email,
+            role: values.role,
+            status: values.status,
+          },
+        ]);
+
+      if (profileError) throw profileError;
+
+      toast({
+        title: "Sucesso",
+        description: "Usuário criado com sucesso.",
+      });
+      fetchUsers();
+      setShowCreateModal(false);
+    } catch (error: any) {
+      toast({
+        variant: "destructive",
+        title: "Erro",
+        description: error.message,
+      });
+    } finally {
+      setIsCreating(false);
+    }
   };
 
-  const handleUpdateUser = (updatedUser: UserData) => {
-    setUsers(users.map(user => user.id === updatedUser.id ? updatedUser : user));
-    setIsEditDialogOpen(false);
-    setUserToEdit(null);
-    toast({
-      title: "Usuário atualizado",
-      description: "As informações do usuário foram atualizadas."
-    });
+  const updateUser = async (
+    id: string,
+    values: z.infer<typeof formSchema>
+  ) => {
+    setIsUpdating(true);
+    try {
+      const { error } = await supabase
+        .from("profiles")
+        .update({
+          name: values.name,
+          email: values.email,
+          role: values.role,
+          status: values.status,
+        })
+        .eq("id", id);
+
+      if (error) throw error;
+
+      toast({
+        title: "Sucesso",
+        description: "Usuário atualizado com sucesso.",
+      });
+      fetchUsers();
+      setShowEditModal(false);
+    } catch (error: any) {
+      toast({
+        variant: "destructive",
+        title: "Erro",
+        description: error.message,
+      });
+    } finally {
+      setIsUpdating(false);
+    }
   };
 
-  const handleCreateClick = () => {
-    setIsCreateDialogOpen(true);
+  const deleteUser = async (id: string) => {
+    setIsDeleting(true);
+    try {
+      const { error } = await supabase.from("profiles").delete().eq("id", id);
+      if (error) throw error;
+
+      // Also delete the user from auth.users
+      const { error: authError } = await supabase.auth.admin.deleteUser(id);
+      if (authError) throw authError;
+
+      toast({
+        title: "Sucesso",
+        description: "Usuário excluído com sucesso.",
+      });
+      fetchUsers();
+      setShowDeleteDialog(false);
+    } catch (error: any) {
+      toast({
+        variant: "destructive",
+        title: "Erro",
+        description: error.message,
+      });
+    } finally {
+      setIsDeleting(false);
+    }
   };
 
-  const handleCreateUser = (newUser: UserData) => {
-    setUsers([...users, newUser]);
-    setIsCreateDialogOpen(false);
-    toast({
-      title: "Usuário criado",
-      description: "Um novo usuário foi adicionado com sucesso."
-    });
+  const handleEdit = (user: UserData) => {
+    setSelectedUser(user);
+    form.reset(user);
+    setShowEditModal(true);
+  };
+
+  const handleDelete = (user: UserData) => {
+    setSelectedUser(user);
+    setShowDeleteDialog(true);
+  };
+
+  const confirmDelete = async () => {
+    if (selectedUser) {
+      await deleteUser(selectedUser.id);
+    }
+  };
+
+  const updateUserRole = async (userId: string, role: UserRole) => {
+    setIsUpdating(true);
+    try {
+      const { error } = await supabase
+        .from("profiles")
+        .update({ role: role })
+        .eq("id", userId);
+
+      if (error) {
+        throw new Error(`Failed to update user role: ${error.message}`);
+      }
+
+      toast({
+        title: "Sucesso",
+        description: "Função do usuário atualizada com sucesso.",
+      });
+      fetchUsers();
+    } catch (error: any) {
+      toast({
+        variant: "destructive",
+        title: "Erro",
+        description: `Falha ao atualizar função do usuário: ${error.message}`,
+      });
+    } finally {
+      setIsUpdating(false);
+    }
+  };
+
+  const handleRoleChange = (userId: string, role: string) => {
+    updateUserRole(userId, toUserRole(role));
   };
 
   return (
     <div className="container mx-auto py-10">
-      <div className="mb-6 flex justify-between items-center">
-        <div>
-          <h1 className="text-2xl font-bold tracking-tight">Gerenciamento de Usuários</h1>
-          <p className="text-muted-foreground">
-            Visualize, edite e gerencie os usuários do sistema
-          </p>
-        </div>
-        <Button onClick={handleCreateClick}>
-          <Plus className="mr-2 h-4 w-4" />
-          Adicionar Usuário
-        </Button>
-      </div>
+      <Card>
+        <CardHeader>
+          <CardTitle>Gerenciar Usuários</CardTitle>
+          <CardDescription>
+            Adicione, edite e exclua usuários do sistema.
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="mb-4">
+            <Button onClick={() => setShowCreateModal(true)}>Adicionar Usuário</Button>
+          </div>
+          {isLoading ? (
+            <p>Carregando usuários...</p>
+          ) : (
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Nome</TableHead>
+                  <TableHead>Email</TableHead>
+                  <TableHead>Função</TableHead>
+                  <TableHead>Status</TableHead>
+                  <TableHead>Ações</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {users.map((user) => (
+                  <TableRow key={user.id}>
+                    <TableCell>{user.name}</TableCell>
+                    <TableCell>{user.email}</TableCell>
+                    <TableCell>
+                      <Select
+                        defaultValue={user.role}
+                        onValueChange={(role) => handleRoleChange(user.id, role)}
+                      >
+                        <SelectTrigger className="w-[180px]">
+                          <SelectValue placeholder={user.role} />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value={UserRole.ADMIN}>Admin</SelectItem>
+                          <SelectItem value={UserRole.CLIENT}>Cliente</SelectItem>
+                          <SelectItem value={UserRole.FINANCIAL}>Financeiro</SelectItem>
+                          <SelectItem value={UserRole.PARTNER}>Parceiro</SelectItem>
+                          <SelectItem value={UserRole.LOGISTICS}>Logística</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </TableCell>
+                    <TableCell>{user.status}</TableCell>
+                    <TableCell>
+                      <Button
+                        variant="secondary"
+                        size="sm"
+                        onClick={() => handleEdit(user)}
+                      >
+                        Editar
+                      </Button>{" "}
+                      <Button
+                        variant="destructive"
+                        size="sm"
+                        onClick={() => handleDelete(user)}
+                      >
+                        Excluir
+                      </Button>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          )}
+        </CardContent>
+      </Card>
 
-      <UserTable 
-        users={users}
-        totalPages={totalPages}
-        currentPage={currentPage}
-        onPageChange={handlePageChange}
-      />
-
-      {/* Delete Confirmation Dialog */}
-      <Dialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
-        <DialogContent className="sm:max-w-[400px]">
+      {/* Create User Modal */}
+      <Dialog open={showCreateModal} onOpenChange={setShowCreateModal}>
+        <DialogContent className="sm:max-w-[425px]">
           <DialogHeader>
-            <DialogTitle>Excluir Usuário</DialogTitle>
+            <DialogTitle>Criar Usuário</DialogTitle>
             <DialogDescription>
-              Tem certeza de que deseja excluir este usuário? Esta ação não pode ser desfeita.
+              Crie um novo usuário para acessar o sistema.
             </DialogDescription>
           </DialogHeader>
-          <DialogFooter>
-            <Button variant="secondary" onClick={() => setIsDeleteDialogOpen(false)}>
-              Cancelar
-            </Button>
-            <Button variant="destructive" onClick={confirmDeleteUser}>
-              Excluir
-            </Button>
-          </DialogFooter>
+          <Form {...form}>
+            <form onSubmit={form.handleSubmit(createUser)} className="space-y-4">
+              <FormField
+                control={form.control}
+                name="name"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Nome</FormLabel>
+                    <FormControl>
+                      <Input placeholder="Nome" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="email"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Email</FormLabel>
+                    <FormControl>
+                      <Input placeholder="email@example.com" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="role"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Função</FormLabel>
+                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Selecione uma função" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        <SelectItem value={UserRole.ADMIN}>Admin</SelectItem>
+                        <SelectItem value={UserRole.CLIENT}>Cliente</SelectItem>
+                        <SelectItem value={UserRole.FINANCIAL}>Financeiro</SelectItem>
+                        <SelectItem value={UserRole.PARTNER}>Parceiro</SelectItem>
+                        <SelectItem value={UserRole.LOGISTICS}>Logística</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <Button type="submit" disabled={isCreating}>
+                {isCreating ? "Criando..." : "Criar"}
+              </Button>
+            </form>
+          </Form>
         </DialogContent>
       </Dialog>
 
-      {/* Edit User Dialog */}
-      <Dialog open={isEditDialogOpen} onOpenChange={() => setIsEditDialogOpen(false)}>
+      {/* Edit User Modal */}
+      <Dialog open={showEditModal} onOpenChange={setShowEditModal}>
         <DialogContent className="sm:max-w-[425px]">
           <DialogHeader>
             <DialogTitle>Editar Usuário</DialogTitle>
             <DialogDescription>
-              Atualize as informações do usuário.
+              Edite as informações do usuário selecionado.
             </DialogDescription>
           </DialogHeader>
-          <EditUserForm 
-            user={userToEdit} 
-            onUpdate={handleUpdateUser} 
-            onCancel={() => setIsEditDialogOpen(false)} 
-          />
+          {selectedUser && (
+            <Form {...form}>
+              <form
+                onSubmit={form.handleSubmit((values) =>
+                  updateUser(selectedUser.id, values)
+                )}
+                className="space-y-4"
+              >
+                <FormField
+                  control={form.control}
+                  name="name"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Nome</FormLabel>
+                      <FormControl>
+                        <Input placeholder="Nome" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="email"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Email</FormLabel>
+                      <FormControl>
+                        <Input placeholder="email@example.com" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="role"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Função</FormLabel>
+                      <Select onValueChange={field.onChange} defaultValue={field.value}>
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Selecione uma função" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          <SelectItem value={UserRole.ADMIN}>Admin</SelectItem>
+                          <SelectItem value={UserRole.CLIENT}>Cliente</SelectItem>
+                          <SelectItem value={UserRole.FINANCIAL}>Financeiro</SelectItem>
+                          <SelectItem value={UserRole.PARTNER}>Parceiro</SelectItem>
+                          <SelectItem value={UserRole.LOGISTICS}>Logística</SelectItem>
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <Button type="submit" disabled={isUpdating}>
+                  {isUpdating ? "Atualizando..." : "Atualizar"}
+                </Button>
+              </form>
+            </Form>
+          )}
         </DialogContent>
       </Dialog>
 
-      {/* Create User Dialog */}
-      <Dialog open={isCreateDialogOpen} onOpenChange={() => setIsCreateDialogOpen(false)}>
-        <DialogContent className="sm:max-w-[425px]">
-          <DialogHeader>
-            <DialogTitle>Criar Novo Usuário</DialogTitle>
-            <DialogDescription>
-              Adicione um novo usuário ao sistema.
-            </DialogDescription>
-          </DialogHeader>
-          <CreateUserForm onCreate={handleCreateUser} onCancel={() => setIsCreateDialogOpen(false)} />
-        </DialogContent>
-      </Dialog>
+      {/* Delete User Confirmation */}
+      <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Confirmar Exclusão</AlertDialogTitle>
+            <AlertDialogDescription>
+              Tem certeza de que deseja excluir este usuário? Esta ação não pode
+              ser desfeita.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction onClick={confirmDelete} disabled={isDeleting}>
+              {isDeleting ? "Excluindo..." : "Excluir"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
-  );
-};
-
-interface EditUserFormProps {
-  user: UserData | null;
-  onUpdate: (user: UserData) => void;
-  onCancel: () => void;
-}
-
-const EditUserForm = ({ user, onUpdate, onCancel }: EditUserFormProps) => {
-  const [name, setName] = useState(user?.name || "");
-  const [email, setEmail] = useState(user?.email || "");
-  const [role, setRole] = useState<UserRole>(user?.role || UserRole.CLIENT);
-  const [status, setStatus] = useState<"active" | "inactive" | "pending">(user?.status as "active" | "inactive" | "pending" || "active");
-
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!user) return;
-
-    const updatedUser: UserData = {
-      ...user,
-      name,
-      email,
-      role,
-      status
-    };
-    onUpdate(updatedUser);
-  };
-
-  return (
-    <form onSubmit={handleSubmit} className="grid gap-4 py-4">
-      <div className="grid gap-2">
-        <Label htmlFor="name">Nome</Label>
-        <Input
-          id="name"
-          value={name}
-          onChange={(e) => setName(e.target.value)}
-        />
-      </div>
-      <div className="grid gap-2">
-        <Label htmlFor="email">Email</Label>
-        <Input
-          id="email"
-          type="email"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-        />
-      </div>
-      <div className="grid gap-2">
-        <Label htmlFor="role">Role</Label>
-        <Select 
-          value={role} 
-          onValueChange={(value: any) => setRole(value as UserRole)}
-        >
-          <SelectTrigger id="role">
-            <SelectValue placeholder="Selecione um role" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value={UserRole.ADMIN}>Admin</SelectItem>
-            <SelectItem value={UserRole.CLIENT}>Client</SelectItem>
-            <SelectItem value={UserRole.FINANCIAL}>Financial</SelectItem>
-            <SelectItem value={UserRole.PARTNER}>Partner</SelectItem>
-            <SelectItem value={UserRole.LOGISTICS}>Logistics</SelectItem>
-          </SelectContent>
-        </Select>
-      </div>
-      <div className="grid gap-2">
-        <Label htmlFor="status">Status</Label>
-        <Select 
-          value={status} 
-          onValueChange={(value: any) => setStatus(value as "active" | "inactive" | "pending")}
-        >
-          <SelectTrigger id="status">
-            <SelectValue placeholder="Selecione um status" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="active">Ativo</SelectItem>
-            <SelectItem value="inactive">Inativo</SelectItem>
-            <SelectItem value="pending">Pendente</SelectItem>
-          </SelectContent>
-        </Select>
-      </div>
-      <DialogFooter>
-        <Button type="button" variant="secondary" onClick={onCancel}>
-          Cancelar
-        </Button>
-        <Button type="submit">Atualizar</Button>
-      </DialogFooter>
-    </form>
-  );
-};
-
-interface CreateUserFormProps {
-  onCreate: (user: UserData) => void;
-  onCancel: () => void;
-}
-
-const CreateUserForm = ({ onCreate, onCancel }: CreateUserFormProps) => {
-  const [name, setName] = useState("");
-  const [email, setEmail] = useState("");
-  const [role, setRole] = useState<UserRole>(UserRole.CLIENT);
-  const [status, setStatus] = useState<"active" | "inactive" | "pending">("active");
-
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-
-    const newUser: UserData = {
-      id: Math.random().toString(36).substring(7),
-      name,
-      email,
-      role,
-      created_at: new Date().toISOString(),
-      status: status
-    };
-    onCreate(newUser);
-  };
-
-  return (
-    <form onSubmit={handleSubmit} className="grid gap-4 py-4">
-      <div className="grid gap-2">
-        <Label htmlFor="name">Nome</Label>
-        <Input
-          id="name"
-          value={name}
-          onChange={(e) => setName(e.target.value)}
-        />
-      </div>
-      <div className="grid gap-2">
-        <Label htmlFor="email">Email</Label>
-        <Input
-          id="email"
-          type="email"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-        />
-      </div>
-      <div className="grid gap-2">
-        <Label htmlFor="role">Role</Label>
-        <Select value={role} onValueChange={(value: any) => setRole(value as UserRole)}>
-          <SelectTrigger id="role">
-            <SelectValue placeholder="Selecione um role" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value={UserRole.ADMIN}>Admin</SelectItem>
-            <SelectItem value={UserRole.CLIENT}>Client</SelectItem>
-            <SelectItem value={UserRole.FINANCIAL}>Financial</SelectItem>
-            <SelectItem value={UserRole.PARTNER}>Partner</SelectItem>
-            <SelectItem value={UserRole.LOGISTICS}>Logistics</SelectItem>
-          </SelectContent>
-        </Select>
-      </div>
-      <div className="grid gap-2">
-        <Label htmlFor="status">Status</Label>
-        <Select value={status} onValueChange={(value: any) => setStatus(value as "active" | "inactive" | "pending")}>
-          <SelectTrigger id="status">
-            <SelectValue placeholder="Selecione um status" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="active">Ativo</SelectItem>
-            <SelectItem value="inactive">Inativo</SelectItem>
-            <SelectItem value="pending">Pendente</SelectItem>
-          </SelectContent>
-        </Select>
-      </div>
-      <DialogFooter>
-        <Button type="button" variant="secondary" onClick={onCancel}>
-          Cancelar
-        </Button>
-        <Button type="submit">Criar</Button>
-      </DialogFooter>
-    </form>
   );
 };
 

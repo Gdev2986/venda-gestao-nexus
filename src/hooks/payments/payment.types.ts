@@ -13,7 +13,7 @@ export interface PaymentRequest {
   approved_at?: string;
   receipt_url?: string;
   description?: string;
-  rejection_reason?: string;
+  rejection_reason: string | null; // Changed from optional to required but nullable
 }
 
 // Define the PaymentRequestStatus enum type

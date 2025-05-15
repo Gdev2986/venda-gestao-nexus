@@ -20,6 +20,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { UserRole } from "@/types";
+import { toUserRole } from "@/lib/type-utils";
 
 interface ProfileData {
   id: string;
@@ -82,6 +83,7 @@ export const UsersTab = ({ openRoleModal }: UsersTabProps) => {
         .select('*', { count: 'exact' });
       
       if (selectedRole !== 'all') {
+        // Use the role as a string directly for the database query
         query = query.eq('role', selectedRole);
       }
       
