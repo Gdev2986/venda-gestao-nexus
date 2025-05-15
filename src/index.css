@@ -100,8 +100,8 @@
 
   /* Custom scrollbar */
   ::-webkit-scrollbar {
-    width: 8px;
-    height: 8px;
+    width: 6px;
+    height: 6px;
   }
 
   ::-webkit-scrollbar-track {
@@ -124,7 +124,7 @@
 
   /* Responsiveness utilities */
   .responsive-container {
-    @apply w-full px-4 md:px-6 lg:px-8 mx-auto;
+    @apply w-full px-3 sm:px-4 md:px-6 lg:px-8 mx-auto;
     max-width: 1400px;
   }
 
@@ -135,27 +135,27 @@
 
   /* Card grids */
   .card-grid {
-    @apply grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4;
+    @apply grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-4;
   }
 
   /* Form layouts */
   .form-grid {
-    @apply grid gap-4 sm:grid-cols-2;
+    @apply grid gap-3 sm:gap-4 sm:grid-cols-2;
   }
 
   /* Responsive spacing */
   .responsive-padding {
-    @apply px-4 md:px-6 lg:px-8 py-4 md:py-6;
+    @apply px-3 sm:px-4 md:px-6 lg:px-8 py-3 sm:py-4 md:py-6;
   }
 
   /* Responsive typography */
   .responsive-heading {
-    @apply text-xl md:text-2xl lg:text-3xl font-bold;
+    @apply text-lg sm:text-xl md:text-2xl lg:text-3xl font-bold;
   }
 
   /* Responsive stack */
   .responsive-stack {
-    @apply flex flex-col sm:flex-row gap-4;
+    @apply flex flex-col sm:flex-row gap-3 sm:gap-4;
   }
 
   /* Responsive alignment */
@@ -235,7 +235,7 @@ img {
 
 /* Spinner animation */
 .spinner {
-  @apply h-8 w-8 rounded-full border-4 border-muted border-t-primary animate-spin;
+  @apply h-6 w-6 sm:h-8 sm:w-8 rounded-full border-3 sm:border-4 border-muted border-t-primary animate-spin;
 }
 
 /* Mobile-first adjustments */
@@ -251,12 +251,27 @@ img {
   .btn-stack > button {
     @apply w-full;
   }
+  
+  /* Mobile-specific text adjustments */
+  h1, h2, h3, h4, h5, h6, p, span, a, button, input, select, textarea {
+    @apply text-[95%];
+  }
+  
+  /* Make small adjustments to card padding */
+  .card-content {
+    @apply p-3;
+  }
+  
+  /* Ensure tables don't break layout by allowing horizontal scroll */
+  table {
+    @apply min-w-max;
+  }
 }
 
 /* Responsive grid fixes */
 .auto-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
   gap: 1rem;
 }
 
@@ -267,7 +282,7 @@ img {
 
 /* Better responsiveness for calendar popups */
 .rdp {
-  --rdp-cell-size: 40px;
+  --rdp-cell-size: 36px;
   --rdp-accent-color: hsl(var(--primary));
   --rdp-background-color: hsl(var(--primary) / 0.1);
   margin: 0;
@@ -275,6 +290,20 @@ img {
 
 @media (max-width: 640px) {
   .rdp {
-    --rdp-cell-size: 35px;
+    --rdp-cell-size: 32px;
+  }
+  
+  /* Optimize mobile tables */
+  table {
+    @apply border-collapse;
+  }
+  
+  th, td {
+    @apply px-2 py-2 text-xs;
+  }
+  
+  /* Optimize form elements for touch */
+  input, select, button {
+    @apply min-h-[36px];
   }
 }

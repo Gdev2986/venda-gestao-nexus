@@ -24,7 +24,7 @@ export const useIsMobile = () => {
 
 /**
  * Custom hook that returns the current breakpoint based on the screen width
- * Breakpoints: xs (<640px), sm (>=640px), md (>=768px), lg (>=1024px), xl (>=1280px), 2xl (>=1536px)
+ * Breakpoints: xs (<375px), sm (375-425px), md (426-767px), lg (768-1023px), xl (1024-1439px), 2xl (>=1440px)
  */
 export const useBreakpoint = () => {
   const [breakpoint, setBreakpoint] = useState("xs");
@@ -32,11 +32,11 @@ export const useBreakpoint = () => {
   useEffect(() => {
     const getBreakpoint = () => {
       const width = window.innerWidth;
-      if (width < 640) return "xs";
-      if (width < 768) return "sm";
-      if (width < 1024) return "md";
-      if (width < 1280) return "lg";
-      if (width < 1536) return "xl";
+      if (width < 375) return "xs";
+      if (width < 426) return "sm";
+      if (width < 768) return "md";
+      if (width < 1024) return "lg";
+      if (width < 1440) return "xl";
       return "2xl";
     };
 
