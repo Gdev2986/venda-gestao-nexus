@@ -6,6 +6,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { NotificationType } from "@/types";
 
 interface NotificationFiltersProps {
   typeFilter: string;
@@ -28,11 +29,12 @@ const NotificationFilters = ({
         </SelectTrigger>
         <SelectContent>
           <SelectItem value="all">Todos os tipos</SelectItem>
-          <SelectItem value="GENERAL">Geral</SelectItem>
-          <SelectItem value="SALE">Vendas</SelectItem>
-          <SelectItem value="PAYMENT">Pagamentos</SelectItem>
-          <SelectItem value="MACHINE">Máquinas</SelectItem>
-          <SelectItem value="SUPPORT">Suporte</SelectItem>
+          <SelectItem value={NotificationType.GENERAL}>Geral</SelectItem>
+          <SelectItem value={NotificationType.SALE}>Vendas</SelectItem>
+          <SelectItem value={NotificationType.PAYMENT}>Pagamentos</SelectItem>
+          <SelectItem value={NotificationType.MACHINE}>Máquinas</SelectItem>
+          <SelectItem value={NotificationType.SUPPORT}>Suporte</SelectItem>
+          <SelectItem value={NotificationType.SYSTEM}>Sistema</SelectItem>
         </SelectContent>
       </Select>
       

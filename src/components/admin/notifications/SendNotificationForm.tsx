@@ -17,12 +17,13 @@ import {
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { Loader2 } from "lucide-react";
+import { NotificationType, UserRole } from "@/types";
 
 const formSchema = z.object({
   title: z.string().min(3, "O título deve ter pelo menos 3 caracteres").max(100, "O título não pode exceder 100 caracteres"),
   target: z.string(),
   message: z.string().min(5, "A mensagem deve ter pelo menos 5 caracteres").max(500, "A mensagem não pode exceder 500 caracteres"),
-  type: z.string(),
+  type: z.nativeEnum(NotificationType),
 });
 
 type FormValues = z.infer<typeof formSchema>;
@@ -37,7 +38,7 @@ const SendNotificationForm = () => {
       title: "",
       target: "all",
       message: "",
-      type: "GENERAL",
+      type: NotificationType.GENERAL,
     },
   });
 
@@ -136,11 +137,11 @@ const SendNotificationForm = () => {
                   </FormControl>
                   <SelectContent>
                     <SelectItem value="all">Todos os usuários</SelectItem>
-                    <SelectItem value="CLIENT">Apenas clientes</SelectItem>
-                    <SelectItem value="PARTNER">Apenas parceiros</SelectItem>
-                    <SelectItem value="ADMIN">Apenas administradores</SelectItem>
-                    <SelectItem value="FINANCIAL">Apenas financeiro</SelectItem>
-                    <SelectItem value="LOGISTICS">Apenas logística</SelectItem>
+                    <SelectItem value={UserRole.CLIENT}>Apenas clientes</SelectItem>
+                    <SelectItem value={UserRole.PARTNER}>Apenas parceiros</SelectItem>
+                    <SelectItem value={UserRole.ADMIN}>Apenas administradores</SelectItem>
+                    <SelectItem value={UserRole.FINANCIAL}>Apenas financeiro</SelectItem>
+                    <SelectItem value={UserRole.LOGISTICS}>Apenas logística</SelectItem>
                   </SelectContent>
                 </Select>
                 <FormMessage />
@@ -161,12 +162,12 @@ const SendNotificationForm = () => {
                     </SelectTrigger>
                   </FormControl>
                   <SelectContent>
-                    <SelectItem value="GENERAL">Geral</SelectItem>
-                    <SelectItem value="PAYMENT">Pagamento</SelectItem>
-                    <SelectItem value="SALE">Venda</SelectItem>
-                    <SelectItem value="MACHINE">Máquina</SelectItem>
-                    <SelectItem value="SUPPORT">Suporte</SelectItem>
-                    <SelectItem value="SYSTEM">Sistema</SelectItem>
+                    <SelectItem value={NotificationType.GENERAL}>Geral</SelectItem>
+                    <SelectItem value={NotificationType.PAYMENT}>Pagamento</SelectItem>
+                    <SelectItem value={NotificationType.SALE}>Venda</SelectItem>
+                    <SelectItem value={NotificationType.MACHINE}>Máquina</SelectItem>
+                    <SelectItem value={NotificationType.SUPPORT}>Suporte</SelectItem>
+                    <SelectItem value={NotificationType.SYSTEM}>Sistema</SelectItem>
                   </SelectContent>
                 </Select>
                 <FormMessage />

@@ -3,16 +3,7 @@ import React, { createContext, useContext, useState, useEffect, ReactNode } from
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/hooks/use-auth';
-
-export interface Notification {
-  id: string;
-  title: string;
-  message: string;
-  type: string;
-  read: boolean;
-  timestamp: Date;
-  data?: any;
-}
+import { Notification, NotificationType } from '@/types';
 
 interface NotificationsContextType {
   notifications: Notification[];
@@ -22,7 +13,7 @@ interface NotificationsContextType {
   markAsUnread: (id: string) => Promise<void>;
   markAllAsRead: () => Promise<void>;
   deleteNotification: (id: string) => Promise<void>;
-  sendNotification: (userId: string, title: string, message: string, type: string, data?: any) => Promise<void>;
+  sendNotification: (userId: string, title: string, message: string, type: NotificationType, data?: any) => Promise<void>;
   refreshNotifications: () => Promise<void>;
 }
 
@@ -54,7 +45,7 @@ export const NotificationsProvider: React.FC<{ children: ReactNode }> = ({ child
           id: item.id,
           title: item.title,
           message: item.message,
-          type: item.type,
+          type: item.type as NotificationType,
           read: item.is_read,
           timestamp: new Date(item.created_at),
           data: item.data
@@ -100,7 +91,7 @@ export const NotificationsProvider: React.FC<{ children: ReactNode }> = ({ child
           id: payload.new.id,
           title: payload.new.title,
           message: payload.new.message,
-          type: payload.new.type,
+          type: payload.new.type as NotificationType,
           read: payload.new.is_read,
           timestamp: new Date(payload.new.created_at),
           data: payload.new.data
@@ -276,7 +267,7 @@ export const NotificationsProvider: React.FC<{ children: ReactNode }> = ({ child
   };
   
   // Enviar uma nova notificação
-  const sendNotification = async (userId: string, title: string, message: string, type: string, data?: any) => {
+  const sendNotification = async (userId: string, title: string, message: string, type: NotificationType, data?: any) => {
     if (!user) return;
     
     try {

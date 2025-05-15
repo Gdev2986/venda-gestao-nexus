@@ -37,6 +37,18 @@ export enum PaymentMethod {
   PIX = "pix"
 }
 
+// Updated to match database notification_type enum
+export enum NotificationType {
+  PAYMENT = "PAYMENT",
+  BALANCE = "BALANCE", 
+  MACHINE = "MACHINE",
+  COMMISSION = "COMMISSION",
+  SYSTEM = "SYSTEM",
+  GENERAL = "GENERAL",
+  SALE = "SALE",
+  SUPPORT = "SUPPORT"
+}
+
 export interface Payment {
   id: string;
   created_at: string;
@@ -191,4 +203,15 @@ export interface Machine {
   name?: string;
   client_name?: string;
   serialNumber?: string;
+}
+
+// Add a Notification interface
+export interface Notification {
+  id: string;
+  title: string;
+  message: string;
+  type: NotificationType;
+  read: boolean;
+  timestamp: Date;
+  data?: any;
 }

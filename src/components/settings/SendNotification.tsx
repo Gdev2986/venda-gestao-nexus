@@ -10,6 +10,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
+import { NotificationType } from "@/types";
 
 const notificationFormSchema = z.object({
   title: z.string().min(3, {
@@ -20,6 +21,7 @@ const notificationFormSchema = z.object({
   }),
   targetType: z.enum(["all", "specific"]),
   targetId: z.string().optional(),
+  type: z.nativeEnum(NotificationType)
 });
 
 type NotificationFormValues = z.infer<typeof notificationFormSchema>;
@@ -65,6 +67,7 @@ export function SendNotification() {
       message: "",
       targetType: "all",
       targetId: "",
+      type: NotificationType.SYSTEM
     },
   });
 
@@ -86,7 +89,7 @@ export function SendNotification() {
           .insert({
             title: data.title,
             message: data.message,
-            type: 'SYSTEM', // Using SYSTEM as notification type
+            type: data.type,
             user_id: 'ALL', // We'll handle this value in a database trigger or create a separate endpoint
           });
         
@@ -108,7 +111,7 @@ export function SendNotification() {
           .insert({
             title: data.title,
             message: data.message,
-            type: 'SYSTEM',
+            type: data.type,
             user_id: clientData.id,
           });
         
@@ -147,6 +150,31 @@ export function SendNotification() {
               <FormControl>
                 <Input placeholder="Título da notificação" {...field} />
               </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+        
+        <FormField
+          control={form.control}
+          name="type"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Tipo de Notificação</FormLabel>
+              <Select onValueChange={field.onChange} defaultValue={field.value}>
+                <FormControl>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Selecione o tipo" />
+                  </SelectTrigger>
+                </FormControl>
+                <SelectContent>
+                  <SelectItem value={NotificationType.SYSTEM}>Sistema</SelectItem>
+                  <SelectItem value={NotificationType.GENERAL}>Geral</SelectItem>
+                  <SelectItem value={NotificationType.PAYMENT}>Pagamento</SelectItem>
+                  <SelectItem value={NotificationType.SALE}>Venda</SelectItem>
+                  <SelectItem value={NotificationType.SUPPORT}>Suporte</SelectItem>
+                </SelectContent>
+              </Select>
               <FormMessage />
             </FormItem>
           )}

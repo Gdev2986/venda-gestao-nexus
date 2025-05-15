@@ -760,6 +760,9 @@ export type Database = {
         | "MACHINE"
         | "COMMISSION"
         | "SYSTEM"
+        | "GENERAL"
+        | "SALE"
+        | "SUPPORT"
       payment_method: "CREDIT" | "DEBIT" | "PIX"
       payment_request_status: "PENDING" | "APPROVED" | "PAID" | "REJECTED"
       payment_status: "PENDING" | "APPROVED" | "REJECTED"
@@ -888,6 +891,9 @@ export const Constants = {
         "MACHINE",
         "COMMISSION",
         "SYSTEM",
+        "GENERAL",
+        "SALE",
+        "SUPPORT",
       ],
       payment_method: ["CREDIT", "DEBIT", "PIX"],
       payment_request_status: ["PENDING", "APPROVED", "PAID", "REJECTED"],

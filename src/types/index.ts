@@ -1,3 +1,4 @@
+
 export enum UserRole {
   ADMIN = "ADMIN",
   CLIENT = "CLIENT", 
@@ -34,6 +35,18 @@ export enum PaymentMethod {
   CREDIT = "credit",
   DEBIT = "debit",
   PIX = "pix"
+}
+
+// Updated to match database notification_type enum
+export enum NotificationType {
+  PAYMENT = "PAYMENT",
+  BALANCE = "BALANCE", 
+  MACHINE = "MACHINE",
+  COMMISSION = "COMMISSION",
+  SYSTEM = "SYSTEM",
+  GENERAL = "GENERAL",
+  SALE = "SALE",
+  SUPPORT = "SUPPORT"
 }
 
 export interface Payment {
@@ -160,4 +173,15 @@ export interface UserData {
 export interface SalesChartData {
   name: string;
   value: number;
+}
+
+// Add a Notification interface
+export interface Notification {
+  id: string;
+  title: string;
+  message: string;
+  type: NotificationType;
+  read: boolean;
+  timestamp: Date;
+  data?: any;
 }
