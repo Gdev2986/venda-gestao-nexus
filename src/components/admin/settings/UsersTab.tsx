@@ -1,3 +1,4 @@
+
 // Just update the type conversion parts
 import React, { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
@@ -6,11 +7,11 @@ import { Input } from "@/components/ui/input";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { UserPagination } from "@/components/user-management/UserPagination";
-import { UserFilters } from "@/components/user-management/UserFilters";
-import { LoadingState } from "@/components/user-management/LoadingState";
-import { ErrorState } from "@/components/user-management/ErrorState";
-import { RoleChangeDialog } from "@/components/user-management/RoleChangeDialog";
+import UserPagination from "@/components/user-management/UserPagination";
+import { UserFilters as UserFiltersType } from "@/components/user-management/UserFilters";
+import LoadingState from "@/components/user-management/LoadingState";
+import ErrorState from "@/components/user-management/ErrorState";
+import RoleChangeDialog from "@/components/user-management/RoleChangeDialog";
 import { UserRole } from "@/types";
 import { toDBRole } from "@/types/user-role";
 import { supabase } from "@/integrations/supabase/client";
@@ -39,7 +40,7 @@ const UsersTab = () => {
     setLoading(true);
     try {
       let query = supabase
-        .from("users")
+        .from("profiles")
         .select("*", { count: "exact" })
         .order("created_at", { ascending: false });
 
@@ -92,7 +93,7 @@ const UsersTab = () => {
     
     try {
       const { error } = await supabase
-        .from("users")
+        .from("profiles")
         .update({ role: dbRole })
         .eq("id", userId);
 
@@ -150,13 +151,29 @@ const UsersTab = () => {
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
             />
-            <UserFilters roleFilter={roleFilter} setRoleFilter={setRoleFilter} />
+            {/* Create a simple filter since UserFilters is just a type */}
+            <Select 
+              value={roleFilter} 
+              onValueChange={(value) => setRoleFilter(value as UserRole | "ALL")}
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="Filter by role" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="ALL">All Roles</SelectItem>
+                <SelectItem value={UserRole.ADMIN}>Admin</SelectItem>
+                <SelectItem value={UserRole.CLIENT}>Client</SelectItem>
+                <SelectItem value={UserRole.FINANCIAL}>Financial</SelectItem>
+                <SelectItem value={UserRole.PARTNER}>Partner</SelectItem>
+                <SelectItem value={UserRole.LOGISTICS}>Logistics</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
 
           {loading ? (
             <LoadingState />
           ) : error ? (
-            <ErrorState message={error} />
+            <ErrorState errorMessage={error} onRetry={fetchUsers} />
           ) : (
             <div className="mt-4">
               <Table>
@@ -195,8 +212,8 @@ const UsersTab = () => {
           )}
 
           <RoleChangeDialog
-            open={isDialogOpen}
-            onOpenChange={setIsDialogOpen}
+            isOpen={isDialogOpen}
+            onClose={handleCloseRoleChangeDialog}
             user={selectedUser}
             onRoleChange={handleRoleChange}
           />

@@ -18,14 +18,23 @@ const NewPartner = () => {
   const handleSubmit = async (data: any) => {
     setIsSubmitting(true);
     try {
-      await createPartner(data);
-      toast({
-        title: "Parceiro criado com sucesso!",
-        description: "Redirecionando para a lista de parceiros...",
-      });
-      setTimeout(() => {
-        navigate(PATHS.ADMIN.PARTNERS);
-      }, 1500);
+      // Ensure all required fields are present
+      const partnerData = {
+        company_name: data.company_name || "New Partner",
+        commission_rate: data.commission_rate || 0,
+      };
+      
+      const success = await createPartner(partnerData);
+      
+      if (success) {
+        toast({
+          title: "Parceiro criado com sucesso!",
+          description: "Redirecionando para a lista de parceiros...",
+        });
+        setTimeout(() => {
+          navigate(PATHS.ADMIN.PARTNERS);
+        }, 1500);
+      }
     } catch (error: any) {
       toast({
         variant: "destructive",

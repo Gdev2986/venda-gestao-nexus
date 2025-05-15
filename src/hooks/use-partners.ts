@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { Partner, UserRole } from '@/types';
@@ -47,10 +46,17 @@ export const usePartners = () => {
   const createPartner = async (partner: Omit<Partner, 'id'>) => {
     setLoading(true);
     try {
-      // Fix: Properly insert a single partner object, not an array
+      // Create a partner object with required fields, making sure id field is not included
+      const partnerData = {
+        company_name: partner.company_name,
+        commission_rate: partner.commission_rate || 0,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString()
+      };
+      
       const { data, error } = await supabase
         .from('partners')
-        .insert(partner) // Send just the object
+        .insert(partnerData) 
         .select();
 
       if (error) {
