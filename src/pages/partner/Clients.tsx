@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { PageHeader } from "@/components/page/PageHeader";
@@ -15,8 +16,7 @@ import { PATHS } from "@/routes/paths";
 
 const PartnerClients = () => {
   const [searchTerm, setSearchTerm] = useState("");
-  // Using a mock partner ID for demonstration - in a real app this would come from auth context
-  const { clients, isLoading, error } = usePartnerClients("partner-1");
+  const { clients, isLoading, error } = usePartnerClients();
   const navigate = useNavigate();
 
   // Handle client detail view

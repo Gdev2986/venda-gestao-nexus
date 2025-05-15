@@ -32,7 +32,7 @@ export const financialItems: SidebarItem[] = [
   {
     title: "Configurações",
     icon: Settings,
-    href: `${PATHS.FINANCIAL.DASHBOARD}/settings`, // Use concatenated path
+    href: PATHS.FINANCIAL.SETTINGS,
     roles: [UserRole.FINANCIAL],
   }
 ];

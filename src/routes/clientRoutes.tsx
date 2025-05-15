@@ -1,26 +1,41 @@
 
 import { Route } from "react-router-dom";
 import { PATHS } from "./paths";
-import ClientDashboard from "@/pages/ClientDashboard";
-import ClientDetail from "@/pages/ClientDetail";
-import ClientNew from "@/pages/ClientNew";
-import MainLayout from "@/layouts/MainLayout";
-import { Outlet } from "react-router-dom";
+import { UserRole } from "@/types";
 
-const ClientLayout = () => {
-  return (
-    <MainLayout>
-      <Outlet />
-    </MainLayout>
-  );
-};
+// Layouts
+import MainLayout from "../layouts/MainLayout";
 
-export const clientRoutes = (
-  <Route path={PATHS.USER.DASHBOARD} element={<ClientLayout />}>
-    <Route index element={<ClientDashboard />} />
-    <Route path="payments" element={<ClientNew />} />
-    <Route path="clients/:id" element={<ClientDetail />} />
+// Auth Protection Component
+import RequireAuth from "../components/auth/RequireAuth";
+
+// Dashboard
+import ClientDashboard from "../pages/ClientDashboard";
+
+// Pages
+import UserPayments from "../pages/UserPayments";
+import Machines from "../pages/machines/Machines";
+import Support from "../pages/Support";
+import Settings from "../pages/settings/Settings";
+import Help from "../pages/Help";
+
+export const ClientRoutes = (
+  <Route element={<RequireAuth allowedRoles={[UserRole.CLIENT]} />}>
+    <Route element={<MainLayout />}>
+      <Route 
+        path={PATHS.USER.DASHBOARD} 
+        element={<ClientDashboard />} 
+      />
+      
+      <Route path={PATHS.USER.PAYMENTS} element={<UserPayments />} />
+      
+      <Route path={PATHS.USER.MACHINES} element={<Machines />} />
+      
+      <Route path={PATHS.USER.SUPPORT} element={<Support />} />
+      
+      <Route path={PATHS.USER.SETTINGS} element={<Settings />} />
+      
+      <Route path={PATHS.USER.HELP} element={<Help />} />
+    </Route>
   </Route>
 );
-
-export default clientRoutes;

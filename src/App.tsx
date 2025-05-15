@@ -12,9 +12,9 @@ import { getDashboardPath } from "./routes/routeUtils";
 // Route groups
 import { AuthRoutes } from "./routes/authRoutes";
 import { AdminRoutes } from "./routes/adminRoutes";
-import { clientRoutes } from "./routes/clientRoutes";
-import { partnerRoutes } from "./routes/partnerRoutes";
-import { financialRoutes } from "./routes/financialRoutes";
+import { ClientRoutes } from "./routes/clientRoutes";
+import { PartnerRoutes } from "./routes/partnerRoutes";
+import { FinancialRoutes } from "./routes/financialRoutes";
 import { LogisticsRoutes } from "./routes/logisticsRoutes";
 
 // Layouts
@@ -68,9 +68,9 @@ function App() {
 
       {/* Protected Routes by Role */}
       {AdminRoutes}
-      {clientRoutes}
-      {partnerRoutes}
-      {financialRoutes}
+      {ClientRoutes}
+      {PartnerRoutes}
+      {FinancialRoutes}
       {LogisticsRoutes}
 
       {/* Shared Routes (accessible by all roles) */}

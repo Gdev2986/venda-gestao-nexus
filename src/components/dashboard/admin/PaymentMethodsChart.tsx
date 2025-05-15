@@ -8,7 +8,6 @@ interface PaymentMethodsChartProps {
     name: string;
     value: number;
     color: string;
-    percent: number;
   }>;
   isLoading?: boolean;
 }
@@ -34,7 +33,7 @@ const CustomTooltip = ({ active, payload }: any) => {
 
 const PaymentMethodsChart = ({ data, isLoading = false }: PaymentMethodsChartProps) => {
   return (
-    <Card className="w-full">
+    <Card className="col-span-2">
       <CardHeader>
         <CardTitle>Métodos de Pagamento</CardTitle>
       </CardHeader>
@@ -44,27 +43,25 @@ const PaymentMethodsChart = ({ data, isLoading = false }: PaymentMethodsChartPro
             <p className="text-muted-foreground">Carregando dados...</p>
           </div>
         ) : (
-          <div className="h-[300px]">
-            <ResponsiveContainer width="100%" height="100%">
-              <PieChart>
-                <Pie
-                  data={data}
-                  cx="50%"
-                  cy="50%"
-                  labelLine={false}
-                  outerRadius={100}
-                  fill="#8884d8"
-                  dataKey="value"
-                >
-                  {data.map((entry, index) => (
-                    <Cell key={`cell-${index}`} fill={entry.color || COLORS[index % COLORS.length]} />
-                  ))}
-                </Pie>
-                <Tooltip content={<CustomTooltip />} />
-                <Legend />
-              </PieChart>
-            </ResponsiveContainer>
-          </div>
+          <ResponsiveContainer width="100%" height={300}>
+            <PieChart>
+              <Pie
+                data={data}
+                cx="50%"
+                cy="50%"
+                labelLine={false}
+                outerRadius={100}
+                fill="#8884d8"
+                dataKey="value"
+              >
+                {data.map((entry, index) => (
+                  <Cell key={`cell-${index}`} fill={entry.color || COLORS[index % COLORS.length]} />
+                ))}
+              </Pie>
+              <Tooltip content={<CustomTooltip />} />
+              <Legend />
+            </PieChart>
+          </ResponsiveContainer>
         )}
       </CardContent>
     </Card>

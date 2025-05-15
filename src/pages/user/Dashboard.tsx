@@ -65,10 +65,8 @@ const UserDashboard = () => {
       
       <StatsCards stats={mockData.stats} loading={false} />
       
-      {/* Grid modificado para coluna única no mobile */}
-      <div className="grid grid-cols-1 gap-6">
-        {/* Conteúdo principal */}
-        <div>
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div className="lg:col-span-2">
           <MainOverviewTabs 
             salesData={mockData.salesData}
             paymentMethodsData={mockData.paymentMethodsData}
@@ -88,8 +86,7 @@ const UserDashboard = () => {
           />
         </div>
         
-        {/* Conteúdo da barra lateral */}
-        <div>
+        <div className="space-y-6">
           <SidebarContent loading={false} />
         </div>
       </div>

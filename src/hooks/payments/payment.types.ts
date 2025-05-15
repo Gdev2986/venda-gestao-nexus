@@ -13,12 +13,7 @@ export interface PaymentRequest {
   approved_at?: string;
   receipt_url?: string;
   description?: string;
-  rejection_reason: string | null; // Changed from optional to ensure compatibility
-  pix_key_id?: string;
-  client?: {
-    business_name?: string;
-    id?: string;
-  };
+  rejection_reason?: string;
 }
 
 // Define the PaymentRequestStatus enum type

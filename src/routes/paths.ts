@@ -1,3 +1,4 @@
+
 export const PATHS = {
   HOME: "/",
   LOGIN: "/login",
@@ -67,7 +68,7 @@ export const PATHS = {
     FEES: "/financial/fees",
     SUPPORT: "/financial/support",
     HELP: "/financial/help",
-    SETTINGS: "settings", // Change this to a relative path
+    SETTINGS: "/financial/settings",
     REQUESTS: "/financial/requests",
   },
   LOGISTICS: {

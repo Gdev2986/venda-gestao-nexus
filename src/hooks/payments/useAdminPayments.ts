@@ -1,91 +1,120 @@
 
-import { useState, useCallback, useEffect } from 'react';
+import { useState } from 'react';
+import { useQuery } from '@tanstack/react-query';
+import { Payment, PaymentStatus } from '@/types';
+import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
-import { PaymentRequest, PaymentRequestStatus } from './payment.types';
+import { PaymentAction } from '@/components/payments/PaymentTableColumns';
 
-// Mock payments data
-const MOCK_PAYMENTS: PaymentRequest[] = [
-  {
-    id: '1',
-    client_id: 'client-1',
-    amount: 150000,
-    status: 'PENDING',
-    created_at: new Date().toISOString(),
-    updated_at: new Date().toISOString(),
-    rejection_reason: null,
-    client: {
-      business_name: 'Comércio ABC',
-      id: 'client-1'
-    }
-  },
-  {
-    id: '2',
-    client_id: 'client-2',
-    amount: 75000,
-    status: 'APPROVED',
-    created_at: new Date(Date.now() - 86400000).toISOString(), // 1 day ago
-    updated_at: new Date(Date.now() - 86400000).toISOString(),
-    rejection_reason: null,
-    client: {
-      business_name: 'Loja XYZ',
-      id: 'client-2'
-    }
-  }
-];
+interface UseAdminPaymentsProps {
+  searchTerm: string;
+  statusFilter: PaymentStatus | string;
+  page: number;
+}
 
-export function useAdminPayments(statusFilter: PaymentRequestStatus | 'ALL' = 'ALL') {
-  const [payments, setPayments] = useState<PaymentRequest[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+const PAGE_SIZE = 10;
+
+export const useAdminPayments = ({ searchTerm, statusFilter, page }: UseAdminPaymentsProps) => {
+  const [actionLoading, setActionLoading] = useState<string | null>(null);
   const { toast } = useToast();
 
-  // Convert string status to the proper type
-  const normalizeStatus = (status: string): PaymentRequestStatus => {
-    const upperStatus = status.toUpperCase();
-    if (['PENDING', 'APPROVED', 'PAID', 'REJECTED'].includes(upperStatus)) {
-      return upperStatus as PaymentRequestStatus;
+  const fetchPayments = async () => {
+    let query = supabase
+      .from('payment_requests')
+      .select('*, client:clients(*)')
+      .order('created_at', { ascending: false })
+      .range((page - 1) * PAGE_SIZE, page * PAGE_SIZE - 1);
+
+    if (searchTerm) {
+      query = query.ilike('id', `%${searchTerm}%`);
     }
-    return 'PENDING';
+
+    if (statusFilter !== 'ALL') {
+      // Convert enum status to lowercase for database compatibility
+      const dbStatus = typeof statusFilter === 'string' ? statusFilter.toLowerCase() : 'pending';
+      query = query.eq('status', dbStatus);
+    }
+
+    const { data, error, count } = await query;
+
+    if (error) {
+      console.error("Error fetching payments:", error);
+      throw new Error(error.message);
+    }
+
+    // Convert data with type assertion to ensure compatibility
+    // Convert the database status (lowercase) back to the enum format (uppercase)
+    const typedData = data?.map(item => ({
+      ...item,
+      status: item.status ? (item.status.toUpperCase() as PaymentStatus) : PaymentStatus.PENDING
+    })) as Payment[];
+
+    return {
+      data: typedData || [],
+      totalCount: count || 0,
+    };
   };
 
-  const fetchPayments = useCallback(async () => {
-    setIsLoading(true);
-    setError(null);
-    
-    try {
-      // In a real app, this would be an API call
-      // For now we'll just filter the mock data
-      let filteredPayments = [...MOCK_PAYMENTS];
-      
-      if (statusFilter !== 'ALL') {
-        const normalizedStatus = normalizeStatus(statusFilter as string);
-        filteredPayments = filteredPayments.filter(
-          payment => payment.status.toUpperCase() === normalizedStatus
-        );
-      }
-      
-      setPayments(filteredPayments);
-    } catch (err: any) {
-      const errorMessage = err.message || 'Failed to load payments';
-      setError(errorMessage);
-      toast({
-        title: 'Error',
-        description: errorMessage,
-        variant: 'destructive',
-      });
-    } finally {
-      setIsLoading(false);
-    }
-  }, [statusFilter, toast]);
-
-  useEffect(() => {
-    fetchPayments();
-  }, [fetchPayments]);
-
-  return {
-    payments,
+  const {
+    data,
     isLoading,
     error,
-    refetch: fetchPayments
+    refetch,
+  } = useQuery({
+    queryKey: ['adminPayments', searchTerm, statusFilter, page],
+    queryFn: fetchPayments
+  });
+
+  const totalPages = Math.ceil((data?.totalCount || 0) / PAGE_SIZE);
+
+  const performPaymentAction = async (paymentId: string, action: PaymentAction, newStatus?: PaymentStatus | string) => {
+    setActionLoading(paymentId);
+    try {
+      let updateData: any = {};
+
+      if (action === PaymentAction.APPROVE) {
+        updateData = { status: 'approved' };
+      } else if (action === PaymentAction.REJECT) {
+        updateData = { status: 'rejected' };
+      } else if (newStatus) {
+        // Convert to lowercase for database compatibility
+        updateData = { status: typeof newStatus === 'string' ? newStatus.toLowerCase() : newStatus };
+      }
+
+      const { error } = await supabase
+        .from('payment_requests')
+        .update(updateData)
+        .eq('id', paymentId);
+
+      if (error) {
+        throw new Error(`Failed to ${action} payment: ${error.message}`);
+      }
+
+      toast({
+        title: "Sucesso",
+        description: `Pagamento ${action} com sucesso.`,
+      });
+      refetch();
+    } catch (err: any) {
+      console.error(`Error performing action ${action}:`, err);
+      toast({
+        variant: "destructive",
+        title: "Erro",
+        description: `Falha ao ${action} pagamento: ${err.message}`,
+      });
+    } finally {
+      setActionLoading(null);
+    }
   };
-}
+
+  return {
+    payments: data?.data || [],
+    isLoading,
+    error,
+    totalCount: data?.totalCount || 0,
+    totalPages,
+    refetch,
+    actionLoading,
+    performPaymentAction,
+  };
+};

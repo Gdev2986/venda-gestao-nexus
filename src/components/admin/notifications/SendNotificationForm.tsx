@@ -1,16 +1,10 @@
+
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Button } from "@/components/ui/button";
-import {
-  Form,
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import {
@@ -21,76 +15,95 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
-import { UserRole, NotificationType } from "@/types";
 import { supabase } from "@/integrations/supabase/client";
+import { Loader2 } from "lucide-react";
+import { NotificationType, UserRole } from "@/types";
 
 const formSchema = z.object({
-  title: z.string().min(2, {
-    message: "Title must be at least 2 characters.",
-  }),
-  message: z.string().min(5, {
-    message: "Message must be at least 5 characters.",
-  }),
-  type: z.enum(["PAYMENT", "BALANCE", "MACHINE", "COMMISSION", "SYSTEM", "GENERAL"]),
-  userRole: z.enum(["ADMIN", "CLIENT", "FINANCIAL", "PARTNER", "LOGISTICS"]),
+  title: z.string().min(3, "O título deve ter pelo menos 3 caracteres").max(100, "O título não pode exceder 100 caracteres"),
+  target: z.string(),
+  message: z.string().min(5, "A mensagem deve ter pelo menos 5 caracteres").max(500, "A mensagem não pode exceder 500 caracteres"),
+  type: z.nativeEnum(NotificationType),
 });
 
+type FormValues = z.infer<typeof formSchema>;
+
 const SendNotificationForm = () => {
-  const [isSending, setIsSending] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const { toast } = useToast();
 
-  const form = useForm<z.infer<typeof formSchema>>({
+  const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: {
       title: "",
+      target: "all",
       message: "",
-      type: "GENERAL",
-      userRole: "CLIENT",
+      type: NotificationType.GENERAL,
     },
   });
 
-  const onSubmit = async (values: z.infer<typeof formSchema>) => {
-    setIsSending(true);
-
+  const onSubmit = async (data: FormValues) => {
+    setIsSubmitting(true);
+    
     try {
-      // Get user IDs matching the selected role
-      const { data: users, error: usersError } = await supabase
-        .from("profiles")
-        .select("id")
-        .eq("role", values.userRole as UserRole);
-
-      if (usersError) throw usersError;
-      if (!users || users.length === 0) throw new Error("No users found with this role");
-
-      // Insert notifications for each user
-      const notifications = users.map((user) => ({
-        user_id: user.id,
-        title: values.title,
-        message: values.message,
-        type: values.type as NotificationType,
+      // Buscar os usuários alvo com base na seleção
+      let userIds: string[] = [];
+      
+      if (data.target === "all") {
+        const { data: users, error } = await supabase
+          .from('profiles')
+          .select('id');
+        
+        if (error) throw error;
+        userIds = users.map(user => user.id);
+        
+      } else {
+        // Filtrar por tipo específico de usuário
+        const targetRole = data.target;
+        
+        const { data: users, error } = await supabase
+          .from('profiles')
+          .select('id')
+          .eq('role', targetRole);
+        
+        if (error) throw error;
+        userIds = users.map(user => user.id);
+      }
+      
+      // Preparar as notificações para todos os usuários alvo
+      const notifications = userIds.map(userId => ({
+        user_id: userId,
+        title: data.title,
+        message: data.message,
+        type: data.type,
         is_read: false,
       }));
-
-      const { error: notificationsError } = await supabase
-        .from("notifications")
-        .insert(notifications);
-
-      if (notificationsError) throw notificationsError;
-
+      
+      // Enviar as notificações em lotes para evitar problemas de tamanho de payload
+      const batchSize = 50;
+      for (let i = 0; i < notifications.length; i += batchSize) {
+        const batch = notifications.slice(i, i + batchSize);
+        const { error } = await supabase.from('notifications').insert(batch);
+        if (error) throw error;
+      }
+      
       toast({
-        title: "Success",
-        description: `${users.length} notifications sent successfully.`,
+        title: "Notificação enviada",
+        description: `Notificação enviada com sucesso para ${userIds.length} usuários.`,
       });
-
+      
+      // Limpar o formulário
       form.reset();
-    } catch (error: any) {
+      
+    } catch (error) {
+      console.error('Erro ao enviar notificação:', error);
       toast({
-        title: "Error sending notifications",
-        description: error.message,
+        title: "Erro",
+        description: "Não foi possível enviar a notificação. Tente novamente.",
         variant: "destructive",
       });
     } finally {
-      setIsSending(false);
+      setIsSubmitting(false);
     }
   };
 
@@ -102,24 +115,79 @@ const SendNotificationForm = () => {
           name="title"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Title</FormLabel>
+              <FormLabel>Título</FormLabel>
               <FormControl>
-                <Input placeholder="Notification Title" {...field} />
+                <Input placeholder="Título da notificação" {...field} />
               </FormControl>
               <FormMessage />
             </FormItem>
           )}
         />
+        
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <FormField
+            control={form.control}
+            name="target"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Destinatários</FormLabel>
+                <Select onValueChange={field.onChange} defaultValue={field.value}>
+                  <FormControl>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Selecione os destinatários" />
+                    </SelectTrigger>
+                  </FormControl>
+                  <SelectContent>
+                    <SelectItem value="all">Todos os usuários</SelectItem>
+                    <SelectItem value={UserRole.CLIENT}>Apenas clientes</SelectItem>
+                    <SelectItem value={UserRole.PARTNER}>Apenas parceiros</SelectItem>
+                    <SelectItem value={UserRole.ADMIN}>Apenas administradores</SelectItem>
+                    <SelectItem value={UserRole.FINANCIAL}>Apenas financeiro</SelectItem>
+                    <SelectItem value={UserRole.LOGISTICS}>Apenas logística</SelectItem>
+                  </SelectContent>
+                </Select>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        
+          <FormField
+            control={form.control}
+            name="type"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Tipo</FormLabel>
+                <Select onValueChange={field.onChange} defaultValue={field.value}>
+                  <FormControl>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Selecione o tipo" />
+                    </SelectTrigger>
+                  </FormControl>
+                  <SelectContent>
+                    <SelectItem value={NotificationType.GENERAL}>Geral</SelectItem>
+                    <SelectItem value={NotificationType.PAYMENT}>Pagamento</SelectItem>
+                    <SelectItem value={NotificationType.SALE}>Venda</SelectItem>
+                    <SelectItem value={NotificationType.MACHINE}>Máquina</SelectItem>
+                    <SelectItem value={NotificationType.SUPPORT}>Suporte</SelectItem>
+                    <SelectItem value={NotificationType.SYSTEM}>Sistema</SelectItem>
+                  </SelectContent>
+                </Select>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        </div>
+        
         <FormField
           control={form.control}
           name="message"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Message</FormLabel>
+              <FormLabel>Mensagem</FormLabel>
               <FormControl>
-                <Textarea
-                  placeholder="Enter your notification message here."
-                  className="resize-none"
+                <Textarea 
+                  placeholder="Digite a mensagem da notificação..." 
+                  className="min-h-[150px]"
                   {...field}
                 />
               </FormControl>
@@ -127,57 +195,16 @@ const SendNotificationForm = () => {
             </FormItem>
           )}
         />
-        <FormField
-          control={form.control}
-          name="type"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Type</FormLabel>
-              <Select onValueChange={field.onChange} defaultValue={field.value}>
-                <FormControl>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select a type" />
-                  </SelectTrigger>
-                </FormControl>
-                <SelectContent>
-                  <SelectItem value="PAYMENT">Payment</SelectItem>
-                  <SelectItem value="BALANCE">Balance</SelectItem>
-                  <SelectItem value="MACHINE">Machine</SelectItem>
-                  <SelectItem value="COMMISSION">Commission</SelectItem>
-                  <SelectItem value="SYSTEM">System</SelectItem>
-                  <SelectItem value="GENERAL">General</SelectItem>
-                </SelectContent>
-              </Select>
-              <FormMessage />
-            </FormItem>
+        
+        <Button type="submit" disabled={isSubmitting}>
+          {isSubmitting ? (
+            <>
+              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              Enviando...
+            </>
+          ) : (
+            "Enviar Notificação"
           )}
-        />
-        <FormField
-          control={form.control}
-          name="userRole"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>User Role</FormLabel>
-              <Select onValueChange={field.onChange} defaultValue={field.value}>
-                <FormControl>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select a user role" />
-                  </SelectTrigger>
-                </FormControl>
-                <SelectContent>
-                  <SelectItem value="ADMIN">Admin</SelectItem>
-                  <SelectItem value="CLIENT">Client</SelectItem>
-                  <SelectItem value="FINANCIAL">Financial</SelectItem>
-                  <SelectItem value="PARTNER">Partner</SelectItem>
-                  <SelectItem value="LOGISTICS">Logistics</SelectItem>
-                </SelectContent>
-              </Select>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-        <Button type="submit" disabled={isSending}>
-          {isSending ? "Sending..." : "Send Notification"}
         </Button>
       </form>
     </Form>

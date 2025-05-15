@@ -1,75 +1,150 @@
 
-import { useState, useEffect } from 'react';
-import { useToast } from '@/hooks/use-toast';
-import { supabase } from '@/integrations/supabase/client';
-import { Client } from '@/types';
+import { useState, useEffect, useCallback } from "react";
+import { Client } from "@/types";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/hooks/use-auth";
+import { useToast } from "@/hooks/use-toast";
 
-export const usePartnerClients = (partnerId?: string) => {
+export const usePartnerClients = () => {
   const [clients, setClients] = useState<Client[]>([]);
-  const [isLoading, setIsLoading] = useState<boolean>(true);
-  const [error, setError] = useState<string | null>(null);
+  const [filteredClients, setFilteredClients] = useState<Client[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState("");
+  const { user } = useAuth();
   const { toast } = useToast();
 
-  useEffect(() => {
-    const fetchClients = async () => {
+  const fetchClients = useCallback(async () => {
+    if (!user) {
+      setIsLoading(false);
+      return;
+    }
+
+    setIsLoading(true);
+    setError("");
+
+    try {
+      // First, get the partner ID for this user
+      const { data: partnerData, error: partnerError } = await supabase
+        .from('partners')
+        .select('id')
+        .eq('user_id', user.id)
+        .single();
+
+      if (partnerError) throw new Error("Não foi possível encontrar sua conta de parceiro");
+
+      const partnerId = partnerData?.id;
       if (!partnerId) {
-        // For demo purposes, use mock data if no partnerId is provided
-        setClients([
-          {
-            id: "1",
-            business_name: "Empresa Modelo",
-            contact_name: "João Silva",
-            email: "joao@empresa.com",
-            phone: "(11) 99999-8888",
-            status: "active",
-            balance: 1500,
-            partner_id: "1"
-          },
-          {
-            id: "2",
-            business_name: "Comércio ABC",
-            contact_name: "Maria Souza",
-            email: "maria@comercioabc.com",
-            phone: "(11) 97777-6666",
-            status: "pending",
-            balance: 800,
-            partner_id: "1"
-          }
-        ]);
         setIsLoading(false);
         return;
       }
 
-      setIsLoading(true);
-      setError(null);
+      // Then fetch clients linked to this partner
+      const { data, error } = await supabase
+        .from('clients')
+        .select('*')
+        .eq('partner_id', partnerId);
 
-      try {
-        const { data, error } = await supabase
-          .from('clients')
-          .select('*')
-          .eq('partner_id', partnerId);
+      if (error) throw error;
 
-        if (error) throw error;
-
-        setClients(data || []);
-      } catch (err: any) {
-        console.error('Error fetching partner clients:', err);
-        setError(err.message);
-        toast({
-          title: 'Error',
-          description: `Failed to load clients: ${err.message}`,
-          variant: 'destructive',
-        });
-
-        // Use mock data for demonstration if needed
-        setClients([]);
-      } finally {
-        setIsLoading(false);
+      if (data) {
+        setClients(data);
+        setFilteredClients(data);
       }
-    };
+    } catch (err: any) {
+      console.error("Error fetching clients:", err);
+      setError(err.message || "Falha ao carregar clientes");
+      
+      // Use mock data in case of error for demonstration
+      const mockClients: Client[] = [
+        {
+          id: "1",
+          business_name: "Restaurante Bom Sabor",
+          contact_name: "Antonio Oliveira",
+          email: "contato@bomsabor.com",
+          phone: "(11) 98765-4321",
+          status: "active",
+          balance: 2500.50,
+          address: "Rua das Flores, 123",
+          city: "São Paulo",
+          state: "SP",
+          created_at: new Date().toISOString(),
+          partner_id: "1"
+        },
+        {
+          id: "2",
+          business_name: "Loja Tech Mais",
+          contact_name: "Roberta Silva",
+          email: "contato@techmais.com",
+          phone: "(11) 91234-5678",
+          status: "active",
+          balance: 1800.00,
+          address: "Av. Paulista, 500",
+          city: "São Paulo",
+          state: "SP",
+          created_at: new Date().toISOString(),
+          partner_id: "1"
+        }
+      ];
+      
+      setClients(mockClients);
+      setFilteredClients(mockClients);
+    } finally {
+      setIsLoading(false);
+    }
+  }, [user, toast]);
 
+  const filterClients = useCallback((searchTerm = "", status = "") => {
+    let filtered = [...clients];
+
+    if (searchTerm) {
+      const term = searchTerm.toLowerCase();
+      filtered = filtered.filter(client =>
+        client.business_name.toLowerCase().includes(term) ||
+        (client.contact_name && client.contact_name.toLowerCase().includes(term)) ||
+        (client.email && client.email.toLowerCase().includes(term)) ||
+        (client.phone && client.phone.includes(term))
+      );
+    }
+
+    if (status && status !== "all") {
+      filtered = filtered.filter(client => client.status === status);
+    }
+
+    setFilteredClients(filtered);
+  }, [clients]);
+
+  const getClientSales = async (clientId: string) => {
+    try {
+      const { data, error } = await supabase
+        .from('sales')
+        .select('*')
+        .eq('client_id', clientId);
+
+      if (error) throw error;
+
+      return data || [];
+    } catch (err) {
+      console.error("Error fetching client sales:", err);
+      toast({
+        variant: "destructive",
+        title: "Erro",
+        description: "Não foi possível carregar as vendas deste cliente.",
+      });
+      return [];
+    }
+  };
+
+  useEffect(() => {
     fetchClients();
-  }, [partnerId, toast]);
+  }, [fetchClients]);
 
-  return { clients, isLoading, error };
+  return {
+    clients: filteredClients,
+    allClients: clients,
+    isLoading,
+    error,
+    refreshClients: fetchClients,
+    filterClients,
+    getClientSales
+  };
 };
