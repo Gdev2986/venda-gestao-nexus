@@ -17,7 +17,7 @@ const FinancialLayout = () => {
 };
 
 export const financialRoutes = (
-  <Route path={PATHS.FINANCIAL.ROOT} element={<FinancialLayout />}>
+  <Route path={PATHS.FINANCIAL.DASHBOARD} element={<FinancialLayout />}>
     <Route index element={<Dashboard />} />
     <Route path={PATHS.FINANCIAL.SETTINGS} element={<Settings />} />
   </Route>
