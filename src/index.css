@@ -1,3 +1,4 @@
+
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
 
 @tailwind base;
@@ -126,6 +127,11 @@
   .responsive-container {
     @apply w-full px-4 md:px-6 lg:px-8 mx-auto;
     max-width: 1400px;
+  }
+
+  /* Mobile spacing - updated */
+  .mobile-container {
+    @apply px-4;
   }
 
   /* Responsive tables */

@@ -1,16 +1,16 @@
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { formatCurrency } from "@/lib/utils";
 import {
-  Bar,
   BarChart,
-  ResponsiveContainer,
+  Bar,
   XAxis,
   YAxis,
   CartesianGrid,
   Tooltip,
   Legend,
+  ResponsiveContainer,
 } from "recharts";
-import { formatCurrency } from "@/lib/utils";
 
 interface SalesChartProps {
   data: Array<{
@@ -21,49 +21,79 @@ interface SalesChartProps {
   isLoading?: boolean;
 }
 
-const CustomTooltip = ({ active, payload, label }: any) => {
-  if (active && payload && payload.length) {
-    return (
-      <div className="bg-background p-3 border rounded-md shadow-sm">
-        <p className="font-medium">{label}</p>
-        <p className="text-sm text-muted-foreground">
-          Bruto: {formatCurrency(payload[0].value)}
-        </p>
-        <p className="text-sm text-muted-foreground">
-          Líquido: {formatCurrency(payload[1].value)}
-        </p>
-      </div>
-    );
-  }
-  return null;
-};
-
 const SalesChart = ({ data, isLoading = false }: SalesChartProps) => {
+  const CustomTooltip = ({ active, payload, label }: any) => {
+    if (active && payload && payload.length) {
+      return (
+        <div className="bg-background border border-border rounded p-3 shadow-md">
+          <p className="font-medium text-sm">{label}</p>
+          <p className="text-xs text-primary">
+            <span className="font-medium">Bruto:</span> {formatCurrency(payload[0].value)}
+          </p>
+          <p className="text-xs text-accent-foreground">
+            <span className="font-medium">Líquido:</span> {formatCurrency(payload[1].value)}
+          </p>
+        </div>
+      );
+    }
+    return null;
+  };
+
   return (
-    <Card className="col-span-4">
+    <Card>
       <CardHeader>
-        <CardTitle>Vendas (Últimos 7 dias)</CardTitle>
+        <CardTitle className="text-base sm:text-lg">Vendas Diárias</CardTitle>
       </CardHeader>
       <CardContent>
         {isLoading ? (
-          <div className="h-80 bg-muted animate-pulse rounded flex items-center justify-center">
-            <p className="text-muted-foreground">Carregando dados...</p>
-          </div>
+          <div className="h-72 bg-muted animate-pulse rounded" />
         ) : (
-          <ResponsiveContainer width="100%" height={350}>
-            <BarChart data={data} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
-              <CartesianGrid strokeDasharray="3 3" opacity={0.3} />
-              <XAxis dataKey="name" />
-              <YAxis
-                tickFormatter={(value) => `R$ ${value}`} 
-                width={80}
-              />
-              <Tooltip content={<CustomTooltip />} />
-              <Legend />
-              <Bar name="Valor Bruto" dataKey="gross" fill="#22c55e" radius={[4, 4, 0, 0]} />
-              <Bar name="Valor Líquido" dataKey="net" fill="#3b82f6" radius={[4, 4, 0, 0]} />
-            </BarChart>
-          </ResponsiveContainer>
+          <div className="h-72">
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart
+                data={data}
+                margin={{ top: 5, right: 5, left: 5, bottom: 5 }}
+              >
+                <CartesianGrid strokeDasharray="3 3" vertical={false} />
+                <XAxis
+                  dataKey="name"
+                  tick={{ fontSize: 12 }}
+                  tickMargin={8}
+                />
+                <YAxis
+                  tickFormatter={(value) =>
+                    new Intl.NumberFormat("pt-BR", {
+                      notation: "compact",
+                      compactDisplay: "short",
+                    }).format(value)
+                  }
+                  tick={{ fontSize: 12 }}
+                  width={45}
+                />
+                <Tooltip content={<CustomTooltip />} />
+                <Legend
+                  align="right"
+                  verticalAlign="top"
+                  iconSize={10}
+                  wrapperStyle={{ fontSize: '12px', paddingBottom: '10px' }}
+                />
+                <Bar
+                  dataKey="gross"
+                  name="Bruto"
+                  fill="hsl(var(--primary))"
+                  radius={[2, 2, 0, 0]}
+                  barSize={12}
+                />
+                <Bar
+                  dataKey="net"
+                  name="Líquido"
+                  fill="hsl(var(--accent))"
+                  radius={[2, 2, 0, 0]}
+                  barSize={12}
+                />
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
         )}
       </CardContent>
     </Card>

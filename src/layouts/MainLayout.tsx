@@ -53,7 +53,7 @@ const MainLayout = () => {
         } max-w-full`}
       >
         {/* Header */}
-        <header className="h-14 md:h-16 border-b border-border flex items-center justify-between px-2 sm:px-4 bg-background sticky top-0 z-10">
+        <header className="h-14 md:h-16 border-b border-border flex items-center justify-between px-4 bg-background sticky top-0 z-10">
           <div className="flex items-center space-x-2 md:space-x-4">
             <Button 
               variant="ghost" 
@@ -73,8 +73,8 @@ const MainLayout = () => {
           </div>
         </header>
         
-        {/* Main scrollable content - updated for mobile */}
-        <main className="flex-1 w-full overflow-y-auto overflow-x-hidden p-2 sm:p-4 md:p-6 lg:p-8">
+        {/* Main scrollable content - updated for mobile spacing */}
+        <main className="flex-1 w-full overflow-y-auto overflow-x-hidden p-4 md:p-6 lg:p-8">
           <div className="mx-auto w-full">
             <Outlet />
           </div>
