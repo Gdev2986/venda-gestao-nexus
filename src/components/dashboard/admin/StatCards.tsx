@@ -33,27 +33,27 @@ interface StatCardsProps {
 
 const StatCards = ({ stats, isLoading = false }: StatCardsProps) => {
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+    <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2 md:gap-4">
       {/* Total Sales Card */}
-      <Card>
-        <CardHeader className="flex flex-row items-center justify-between pb-2 space-y-0">
-          <CardTitle className="text-sm font-medium">Vendas Totais</CardTitle>
-          <ShoppingCart className="h-4 w-4 text-muted-foreground" />
+      <Card className="overflow-hidden">
+        <CardHeader className="flex flex-row items-center justify-between p-3 md:p-6 pb-1 md:pb-2 space-y-0">
+          <CardTitle className="text-xs sm:text-sm font-medium">Vendas Totais</CardTitle>
+          <ShoppingCart className="h-3 w-3 md:h-4 md:w-4 text-muted-foreground" />
         </CardHeader>
-        <CardContent>
+        <CardContent className="p-3 md:p-6 pt-1 md:pt-0">
           {isLoading ? (
-            <div className="h-8 bg-muted animate-pulse rounded" />
+            <div className="h-6 md:h-8 bg-muted animate-pulse rounded" />
           ) : (
             <>
-              <div className="text-2xl font-bold">
+              <div className="text-base md:text-2xl font-bold">
                 {formatCurrency(stats.totalSales)}
               </div>
-              <p className="text-xs text-muted-foreground mt-1">
+              <p className="text-[10px] md:text-xs text-muted-foreground mt-1">
                 <span className="flex items-center">
                   {stats.isGrowthPositive ? (
-                    <TrendingUp className="h-3 w-3 text-green-600 mr-1" />
+                    <TrendingUp className="h-2 w-2 md:h-3 md:w-3 text-green-600 mr-1" />
                   ) : (
-                    <TrendingDown className="h-3 w-3 text-red-600 mr-1" />
+                    <TrendingDown className="h-2 w-2 md:h-3 md:w-3 text-red-600 mr-1" />
                   )}
                   {stats.salesGrowth}% em relação ao mês anterior
                 </span>
@@ -64,20 +64,20 @@ const StatCards = ({ stats, isLoading = false }: StatCardsProps) => {
       </Card>
 
       {/* Gross Sales Card */}
-      <Card>
-        <CardHeader className="flex flex-row items-center justify-between pb-2 space-y-0">
-          <CardTitle className="text-sm font-medium">Valor Bruto</CardTitle>
-          <DollarSign className="h-4 w-4 text-muted-foreground" />
+      <Card className="overflow-hidden">
+        <CardHeader className="flex flex-row items-center justify-between p-3 md:p-6 pb-1 md:pb-2 space-y-0">
+          <CardTitle className="text-xs sm:text-sm font-medium">Valor Bruto</CardTitle>
+          <DollarSign className="h-3 w-3 md:h-4 md:w-4 text-muted-foreground" />
         </CardHeader>
-        <CardContent>
+        <CardContent className="p-3 md:p-6 pt-1 md:pt-0">
           {isLoading ? (
-            <div className="h-8 bg-muted animate-pulse rounded" />
+            <div className="h-6 md:h-8 bg-muted animate-pulse rounded" />
           ) : (
             <>
-              <div className="text-2xl font-bold">
+              <div className="text-base md:text-2xl font-bold">
                 {formatCurrency(stats.grossSales)}
               </div>
-              <p className="text-xs text-muted-foreground mt-1">
+              <p className="text-[10px] md:text-xs text-muted-foreground mt-1">
                 Valor total bruto
               </p>
             </>
@@ -86,20 +86,20 @@ const StatCards = ({ stats, isLoading = false }: StatCardsProps) => {
       </Card>
 
       {/* Net Sales Card */}
-      <Card>
-        <CardHeader className="flex flex-row items-center justify-between pb-2 space-y-0">
-          <CardTitle className="text-sm font-medium">Valor Líquido</CardTitle>
-          <DollarSign className="h-4 w-4 text-muted-foreground" />
+      <Card className="overflow-hidden">
+        <CardHeader className="flex flex-row items-center justify-between p-3 md:p-6 pb-1 md:pb-2 space-y-0">
+          <CardTitle className="text-xs sm:text-sm font-medium">Valor Líquido</CardTitle>
+          <DollarSign className="h-3 w-3 md:h-4 md:w-4 text-muted-foreground" />
         </CardHeader>
-        <CardContent>
+        <CardContent className="p-3 md:p-6 pt-1 md:pt-0">
           {isLoading ? (
-            <div className="h-8 bg-muted animate-pulse rounded" />
+            <div className="h-6 md:h-8 bg-muted animate-pulse rounded" />
           ) : (
             <>
-              <div className="text-2xl font-bold">
+              <div className="text-base md:text-2xl font-bold">
                 {formatCurrency(stats.netSales)}
               </div>
-              <p className="text-xs text-muted-foreground mt-1">
+              <p className="text-[10px] md:text-xs text-muted-foreground mt-1">
                 Margem de {((stats.netSales / stats.grossSales) * 100).toFixed(1)}%
               </p>
             </>
@@ -108,20 +108,20 @@ const StatCards = ({ stats, isLoading = false }: StatCardsProps) => {
       </Card>
 
       {/* Pending Requests Card */}
-      <Card>
-        <CardHeader className="flex flex-row items-center justify-between pb-2 space-y-0">
-          <CardTitle className="text-sm font-medium">Solicitações Pendentes</CardTitle>
-          <FileText className="h-4 w-4 text-muted-foreground" />
+      <Card className="overflow-hidden">
+        <CardHeader className="flex flex-row items-center justify-between p-3 md:p-6 pb-1 md:pb-2 space-y-0">
+          <CardTitle className="text-xs sm:text-sm font-medium">Solicitações</CardTitle>
+          <FileText className="h-3 w-3 md:h-4 md:w-4 text-muted-foreground" />
         </CardHeader>
-        <CardContent>
+        <CardContent className="p-3 md:p-6 pt-1 md:pt-0">
           {isLoading ? (
-            <div className="h-8 bg-muted animate-pulse rounded" />
+            <div className="h-6 md:h-8 bg-muted animate-pulse rounded" />
           ) : (
             <>
-              <div className="text-2xl font-bold">
+              <div className="text-base md:text-2xl font-bold">
                 {stats.pendingRequests}
               </div>
-              <p className="text-xs text-muted-foreground mt-1">
+              <p className="text-[10px] md:text-xs text-muted-foreground mt-1">
                 Aguardando aprovação
               </p>
             </>
@@ -130,20 +130,20 @@ const StatCards = ({ stats, isLoading = false }: StatCardsProps) => {
       </Card>
 
       {/* Expenses Card */}
-      <Card>
-        <CardHeader className="flex flex-row items-center justify-between pb-2 space-y-0">
-          <CardTitle className="text-sm font-medium">Despesas</CardTitle>
-          <CreditCard className="h-4 w-4 text-muted-foreground" />
+      <Card className="overflow-hidden">
+        <CardHeader className="flex flex-row items-center justify-between p-3 md:p-6 pb-1 md:pb-2 space-y-0">
+          <CardTitle className="text-xs sm:text-sm font-medium">Despesas</CardTitle>
+          <CreditCard className="h-3 w-3 md:h-4 md:w-4 text-muted-foreground" />
         </CardHeader>
-        <CardContent>
+        <CardContent className="p-3 md:p-6 pt-1 md:pt-0">
           {isLoading ? (
-            <div className="h-8 bg-muted animate-pulse rounded" />
+            <div className="h-6 md:h-8 bg-muted animate-pulse rounded" />
           ) : (
             <>
-              <div className="text-2xl font-bold">
+              <div className="text-base md:text-2xl font-bold">
                 {formatCurrency(stats.expenses)}
               </div>
-              <p className="text-xs text-muted-foreground mt-1">
+              <p className="text-[10px] md:text-xs text-muted-foreground mt-1">
                 No período
               </p>
             </>
@@ -152,20 +152,20 @@ const StatCards = ({ stats, isLoading = false }: StatCardsProps) => {
       </Card>
 
       {/* Commissions Card */}
-      <Card>
-        <CardHeader className="flex flex-row items-center justify-between pb-2 space-y-0">
-          <CardTitle className="text-sm font-medium">Comissões</CardTitle>
-          <PieChart className="h-4 w-4 text-muted-foreground" />
+      <Card className="overflow-hidden">
+        <CardHeader className="flex flex-row items-center justify-between p-3 md:p-6 pb-1 md:pb-2 space-y-0">
+          <CardTitle className="text-xs sm:text-sm font-medium">Comissões</CardTitle>
+          <PieChart className="h-3 w-3 md:h-4 md:w-4 text-muted-foreground" />
         </CardHeader>
-        <CardContent>
+        <CardContent className="p-3 md:p-6 pt-1 md:pt-0">
           {isLoading ? (
-            <div className="h-8 bg-muted animate-pulse rounded" />
+            <div className="h-6 md:h-8 bg-muted animate-pulse rounded" />
           ) : (
             <>
-              <div className="text-2xl font-bold">
+              <div className="text-base md:text-2xl font-bold">
                 {formatCurrency(stats.totalCommissions)}
               </div>
-              <p className="text-xs text-muted-foreground mt-1">
+              <p className="text-[10px] md:text-xs text-muted-foreground mt-1">
                 Parceiros + empresa
               </p>
             </>
@@ -174,20 +174,20 @@ const StatCards = ({ stats, isLoading = false }: StatCardsProps) => {
       </Card>
 
       {/* Current Balance Card */}
-      <Card>
-        <CardHeader className="flex flex-row items-center justify-between pb-2 space-y-0">
-          <CardTitle className="text-sm font-medium">Caixa Atual</CardTitle>
-          <Wallet className="h-4 w-4 text-muted-foreground" />
+      <Card className="overflow-hidden">
+        <CardHeader className="flex flex-row items-center justify-between p-3 md:p-6 pb-1 md:pb-2 space-y-0">
+          <CardTitle className="text-xs sm:text-sm font-medium">Caixa Atual</CardTitle>
+          <Wallet className="h-3 w-3 md:h-4 md:w-4 text-muted-foreground" />
         </CardHeader>
-        <CardContent>
+        <CardContent className="p-3 md:p-6 pt-1 md:pt-0">
           {isLoading ? (
-            <div className="h-8 bg-muted animate-pulse rounded" />
+            <div className="h-6 md:h-8 bg-muted animate-pulse rounded" />
           ) : (
             <>
-              <div className="text-2xl font-bold">
+              <div className="text-base md:text-2xl font-bold">
                 {formatCurrency(stats.currentBalance)}
               </div>
-              <p className="text-xs text-muted-foreground mt-1">
+              <p className="text-[10px] md:text-xs text-muted-foreground mt-1">
                 Total disponível
               </p>
             </>

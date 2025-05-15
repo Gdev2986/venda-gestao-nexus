@@ -1,17 +1,20 @@
 
-import { Outlet } from "react-router-dom";
-import { useAuth } from "@/contexts/AuthContext";
-import MainSidebar from "./MainSidebar";
 import { useState, useEffect } from "react";
-import { useUserRole } from "@/hooks/use-user-role";
-import { useIsMobile } from "@/hooks/use-mobile";
+import { useLocation } from "react-router-dom";
+import { UserRole } from "@/types";
+import Sidebar from "./sidebar/Sidebar";
 import { Button } from "@/components/ui/button";
 import { Menu } from "lucide-react";
-import NotificationDropdown from "@/components/layout/NotificationDropdown";
-import ThemeToggle from "@/components/theme/theme-toggle";
-import { Toaster } from "@/components/ui/toaster";
+import { useIsMobile } from "@/hooks/use-mobile";
+import NotificationDropdown from "./NotificationDropdown";
+import ThemeToggle from "../theme/theme-toggle";
+import { useUserRole } from "@/hooks/use-user-role";
 
-const MainLayout = () => {
+type MainLayoutProps = {
+  children: React.ReactNode;
+};
+
+const MainLayout = ({ children }: MainLayoutProps) => {
   // Use localStorage to persist sidebar state
   const [sidebarOpen, setSidebarOpen] = useState(() => {
     const saved = localStorage.getItem("sidebar-state");
@@ -19,8 +22,9 @@ const MainLayout = () => {
   });
   
   const isMobile = useIsMobile();
+  
+  // Get user role from custom hook
   const { userRole } = useUserRole();
-  const { user } = useAuth();
 
   // Close sidebar on mobile by default
   useEffect(() => {
@@ -39,7 +43,7 @@ const MainLayout = () => {
   return (
     <div className="flex h-screen overflow-hidden bg-background">
       {/* Sidebar component - mounted always but conditionally shown */}
-      <MainSidebar 
+      <Sidebar 
         isOpen={sidebarOpen} 
         isMobile={isMobile} 
         onClose={() => setSidebarOpen(false)} 
@@ -52,37 +56,34 @@ const MainLayout = () => {
           sidebarOpen && !isMobile ? 'ml-64' : 'ml-0'
         } max-w-full`}
       >
-        {/* Header */}
-        <header className="h-14 md:h-16 border-b border-border flex items-center justify-between px-2 sm:px-4 bg-background sticky top-0 z-10">
+        {/* Header - optimized for mobile */}
+        <header className="h-12 md:h-16 border-b border-border flex items-center justify-between px-2 sm:px-4 bg-background sticky top-0 z-10">
           <div className="flex items-center space-x-2 md:space-x-4">
             <Button 
               variant="ghost" 
               size="sm" 
               onClick={() => setSidebarOpen(!sidebarOpen)}
               aria-label={sidebarOpen ? "Fechar menu" : "Abrir menu"}
-              className="p-1"
+              className="p-0.5 md:p-1"
             >
               <Menu className="h-4 w-4 md:h-5 md:w-5" />
             </Button>
             <h1 className="text-base md:text-xl font-semibold truncate">SigmaPay</h1>
           </div>
           
-          <div className="flex items-center space-x-2 md:space-x-4">
+          <div className="flex items-center space-x-1 md:space-x-4">
             <ThemeToggle />
             <NotificationDropdown />
           </div>
         </header>
         
-        {/* Main scrollable content - updated for mobile */}
+        {/* Main scrollable content - fixes mobile width issues */}
         <main className="flex-1 w-full overflow-y-auto overflow-x-hidden p-2 sm:p-4 md:p-6 lg:p-8">
           <div className="mx-auto w-full">
-            <Outlet />
+            {children}
           </div>
         </main>
       </div>
-      
-      {/* Toast notifications */}
-      <Toaster />
     </div>
   );
 };

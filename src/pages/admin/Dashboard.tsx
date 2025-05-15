@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { PageHeader } from "@/components/page/PageHeader";
 import { PageWrapper } from "@/components/page/PageWrapper";
@@ -147,12 +148,12 @@ const AdminDashboard = () => {
     ];
 
     return (
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-2 md:gap-4">
         {links.map((link) => (
           <Card key={link.name} className="hover:shadow-md transition-shadow">
             <Button 
               variant="ghost" 
-              className="h-full w-full flex flex-col items-center justify-center py-6"
+              className="h-full w-full flex flex-col items-center justify-center py-2 md:py-6"
               onClick={() => {
                 toast({
                   title: `Navegando para ${link.name}`,
@@ -162,11 +163,13 @@ const AdminDashboard = () => {
                 window.location.href = link.path;
               }}
             >
-              <div className={cn("rounded-full p-3 mb-2", link.color)}>
-                <link.icon size={24} />
+              <div className={cn("rounded-full p-2 md:p-3 mb-1 md:mb-2", link.color)}>
+                <link.icon size={16} className="md:hidden" />
+                <link.icon size={24} className="hidden md:block" />
               </div>
-              <span>{link.name}</span>
-              <ArrowRight size={16} className="mt-2 opacity-50" />
+              <span className="text-xs md:text-base">{link.name}</span>
+              <ArrowRight size={12} className="mt-1 md:mt-2 opacity-50 md:hidden" />
+              <ArrowRight size={16} className="mt-2 opacity-50 hidden md:block" />
             </Button>
           </Card>
         ))}
@@ -175,61 +178,61 @@ const AdminDashboard = () => {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 md:space-y-6">
       <PageHeader
         title="Dashboard Administrativo"
         description="Visão geral da operação e principais métricas"
       >
-        <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 mt-3 sm:mt-0">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 mt-2 sm:mt-0">
           {/* Date filter */}
           <div className="flex shadow-sm rounded-md w-full sm:w-auto overflow-x-auto">
             <Button 
               variant={activeFilter === DATE_FILTER_PRESETS.LAST_7_DAYS ? "default" : "outline"}
               onClick={() => handleFilterChange(DATE_FILTER_PRESETS.LAST_7_DAYS)}
-              className="rounded-r-none"
+              className="rounded-r-none px-2 md:px-3 h-7 md:h-9"
               size="sm"
             >
-              7 dias
+              <span className="text-xs">7 dias</span>
             </Button>
             <Button 
               variant={activeFilter === DATE_FILTER_PRESETS.LAST_30_DAYS ? "default" : "outline"}
               onClick={() => handleFilterChange(DATE_FILTER_PRESETS.LAST_30_DAYS)}
-              className="rounded-none border-l-0 border-r-0"
+              className="rounded-none border-l-0 border-r-0 px-2 md:px-3 h-7 md:h-9"
               size="sm"
             >
-              30 dias
+              <span className="text-xs">30 dias</span>
             </Button>
             <Button 
               variant={activeFilter === DATE_FILTER_PRESETS.CURRENT_MONTH ? "default" : "outline"}
               onClick={() => handleFilterChange(DATE_FILTER_PRESETS.CURRENT_MONTH)}
-              className="rounded-none border-r-0"
+              className="rounded-none border-r-0 px-2 md:px-3 h-7 md:h-9"
               size="sm"
             >
-              Mês atual
+              <span className="text-xs">Mês</span>
             </Button>
             <Button 
               variant={activeFilter === DATE_FILTER_PRESETS.QUARTER ? "default" : "outline"}
               onClick={() => handleFilterChange(DATE_FILTER_PRESETS.QUARTER)}
-              className="rounded-l-none"
+              className="rounded-l-none px-2 md:px-3 h-7 md:h-9"
               size="sm"
             >
-              Trimestre
+              <span className="text-xs">Trimestre</span>
             </Button>
           </div>
           
-          <div className="flex items-center gap-2 w-full sm:w-auto mt-3 sm:mt-0">
+          <div className="flex items-center gap-2 w-full sm:w-auto mt-2 sm:mt-0">
             {/* Calendar picker */}
             <Popover>
               <PopoverTrigger asChild>
-                <Button variant="outline" size="sm" className="flex items-center gap-2 w-full sm:w-auto">
-                  <CalendarIcon size={16} />
-                  <span className="truncate">
+                <Button variant="outline" size="sm" className="flex items-center gap-1 h-7 md:h-9 text-xs w-full sm:w-auto">
+                  <CalendarIcon size={14} />
+                  <span className="truncate text-xs">
                     {dateRange.from && dateRange.to ? (
                       <>
-                        {format(dateRange.from, "dd/MM/yyyy")} - {format(dateRange.to, "dd/MM/yyyy")}
+                        {format(dateRange.from, "dd/MM")} - {format(dateRange.to, "dd/MM")}
                       </>
                     ) : (
-                      "Selecionar período"
+                      "Selec. período"
                     )}
                   </span>
                 </Button>
@@ -246,8 +249,8 @@ const AdminDashboard = () => {
                       setActiveFilter(DATE_FILTER_PRESETS.CUSTOM);
                     }
                   }}
-                  numberOfMonths={2}
-                  className={cn("p-3 pointer-events-auto")}
+                  numberOfMonths={1}
+                  className={cn("p-2 pointer-events-auto")}
                 />
               </PopoverContent>
             </Popover>
@@ -257,28 +260,28 @@ const AdminDashboard = () => {
               onClick={handleRefresh} 
               disabled={isLoading}
               size="sm"
-              className="flex items-center gap-2"
+              className="flex items-center p-0 h-7 md:h-9 w-7 md:w-9 justify-center"
             >
-              <RefreshCw className={`h-4 w-4 ${isLoading ? 'animate-spin' : ''}`} />
-              <span className="hidden sm:inline">Atualizar</span>
+              <RefreshCw className={`h-3 w-3 md:h-4 md:w-4 ${isLoading ? 'animate-spin' : ''}`} />
+              <span className="sr-only">Atualizar</span>
             </Button>
           </div>
         </div>
       </PageHeader>
 
       <PageWrapper>
-        <div className="space-y-6">
+        <div className="space-y-4 md:space-y-6">
           {/* Stats Cards */}
           <StatCards stats={MOCK_DATA.stats} isLoading={isLoading} />
           
           {/* Quick Links */}
-          <div className="mb-8">
-            <h3 className="text-lg font-medium mb-4">Atalhos Rápidos</h3>
+          <div className="mb-4 md:mb-8">
+            <h3 className="text-sm md:text-lg font-medium mb-2 md:mb-4">Atalhos Rápidos</h3>
             {renderQuickLinks()}
           </div>
           
           {/* Charts Grid */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-6">
             {/* Sales Chart */}
             <SalesChart data={MOCK_DATA.dailySales} isLoading={isLoading} />
             
