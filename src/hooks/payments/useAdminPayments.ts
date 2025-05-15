@@ -8,7 +8,7 @@ import { PaymentAction } from '@/components/payments/PaymentTableColumns';
 
 interface UseAdminPaymentsProps {
   searchTerm: string;
-  statusFilter: PaymentStatus | 'ALL';
+  statusFilter: PaymentStatus | string;
   page: number;
 }
 
@@ -31,7 +31,7 @@ export const useAdminPayments = ({ searchTerm, statusFilter, page }: UseAdminPay
 
     if (statusFilter !== 'ALL') {
       // Convert enum status to lowercase for database compatibility
-      const dbStatus = statusFilter.toLowerCase();
+      const dbStatus = typeof statusFilter === 'string' ? statusFilter.toLowerCase() : 'pending';
       query = query.eq('status', dbStatus);
     }
 
@@ -67,7 +67,7 @@ export const useAdminPayments = ({ searchTerm, statusFilter, page }: UseAdminPay
 
   const totalPages = Math.ceil((data?.totalCount || 0) / PAGE_SIZE);
 
-  const performPaymentAction = async (paymentId: string, action: PaymentAction, newStatus?: PaymentStatus) => {
+  const performPaymentAction = async (paymentId: string, action: PaymentAction, newStatus?: PaymentStatus | string) => {
     setActionLoading(paymentId);
     try {
       let updateData: any = {};
@@ -78,7 +78,7 @@ export const useAdminPayments = ({ searchTerm, statusFilter, page }: UseAdminPay
         updateData = { status: 'rejected' };
       } else if (newStatus) {
         // Convert to lowercase for database compatibility
-        updateData = { status: newStatus.toLowerCase() };
+        updateData = { status: typeof newStatus === 'string' ? newStatus.toLowerCase() : newStatus };
       }
 
       const { error } = await supabase

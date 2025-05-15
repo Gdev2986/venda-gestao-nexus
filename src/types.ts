@@ -48,7 +48,7 @@ export interface Payment {
   receipt_url?: string;
   client_name?: string;
   rejection_reason: string | null;
-  payment_type?: PaymentType;
+  payment_type?: PaymentType | string;
   bank_info?: {
     bank_name?: string;
     account_number?: string;

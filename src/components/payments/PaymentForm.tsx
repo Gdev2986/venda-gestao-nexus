@@ -22,7 +22,7 @@ export default function PaymentForm({ payment }: PaymentFormProps) {
   };
 
   // Helper function to render status badge
-  const getStatusBadge = (status: PaymentStatus) => {
+  const getStatusBadge = (status: PaymentStatus | string) => {
     switch (status) {
       case PaymentStatus.PENDING:
         return <Badge variant="outline">Pendente</Badge>;

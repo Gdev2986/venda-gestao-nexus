@@ -1,121 +1,163 @@
 
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Button } from "@/components/ui/button";
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { useState } from "react";
 import { Partner } from "@/types";
-import { MoreHorizontal, Trash, Pencil, User } from "lucide-react";
-import { formatCurrency } from "@/lib/formatters";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import { Button } from "@/components/ui/button";
+import { MoreHorizontal, Edit, Trash2, Eye } from "lucide-react";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
-export interface PartnersTableProps {
+interface PartnersTableProps {
   partners: Partner[];
   isLoading: boolean;
-  onDelete?: (partner: Partner) => void;
   onEdit?: (partner: Partner) => void;
-  onViewDetails?: (partner: Partner) => void;
+  onDelete?: (partner: Partner) => void;
+  onView?: (partner: Partner) => void;
   page?: number;
   setPage?: (page: number) => void;
   totalPages?: number;
 }
 
-const PartnersTable = ({ partners, isLoading, onDelete, onEdit, onViewDetails }: PartnersTableProps) => {
+const PartnersTable = ({
+  partners,
+  isLoading,
+  onEdit,
+  onDelete,
+  onView,
+  page = 1,
+  setPage,
+  totalPages = 1,
+}: PartnersTableProps) => {
+  const formatCurrency = (value: number) => {
+    return new Intl.NumberFormat("pt-BR", {
+      style: "currency",
+      currency: "BRL",
+    }).format(value);
+  };
+
+  const formatDate = (dateString: string) => {
+    return new Date(dateString).toLocaleDateString("pt-BR");
+  };
+
   if (isLoading) {
     return (
-      <div className="rounded-md border">
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>Nome</TableHead>
-              <TableHead>Email</TableHead>
-              <TableHead>Telefone</TableHead>
-              <TableHead className="text-right">Comissão</TableHead>
-              <TableHead className="text-right">Vendas</TableHead>
-              <TableHead></TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {Array(5).fill(0).map((_, index) => (
-              <TableRow key={index}>
-                <TableCell className="animate-pulse bg-gray-100 h-8"></TableCell>
-                <TableCell className="animate-pulse bg-gray-100 h-8"></TableCell>
-                <TableCell className="animate-pulse bg-gray-100 h-8"></TableCell>
-                <TableCell className="animate-pulse bg-gray-100 h-8"></TableCell>
-                <TableCell className="animate-pulse bg-gray-100 h-8"></TableCell>
-                <TableCell></TableCell>
-              </TableRow>
-            ))}
-          </TableBody>
-        </Table>
-      </div>
-    );
-  }
-
-  if (!partners.length) {
-    return (
-      <div className="rounded-md border p-8 text-center">
-        <h3 className="font-semibold mb-2">Nenhum parceiro encontrado</h3>
-        <p className="text-muted-foreground">Tente ajustar os filtros ou adicionar novos parceiros.</p>
+      <div className="flex justify-center items-center p-8">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
       </div>
     );
   }
 
   return (
-    <div className="rounded-md border">
-      <Table>
-        <TableHeader>
-          <TableRow>
-            <TableHead>Nome</TableHead>
-            <TableHead>Email</TableHead>
-            <TableHead>Telefone</TableHead>
-            <TableHead className="text-right">Taxa Comissão</TableHead>
-            <TableHead className="text-right">Total Gerado</TableHead>
-            <TableHead className="w-[60px]"></TableHead>
-          </TableRow>
-        </TableHeader>
-        <TableBody>
-          {partners.map((partner) => (
-            <TableRow key={partner.id}>
-              <TableCell className="font-medium">{partner.company_name}</TableCell>
-              <TableCell>{partner.email || "-"}</TableCell>
-              <TableCell>{partner.phone || "-"}</TableCell>
-              <TableCell className="text-right">{partner.commission_rate}%</TableCell>
-              <TableCell className="text-right">{formatCurrency(partner.total_commission || 0)}</TableCell>
-              <TableCell>
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
-                      <span className="sr-only">Open menu</span>
-                      <MoreHorizontal className="h-4 w-4" />
-                    </Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end">
-                    {onViewDetails && (
-                      <DropdownMenuItem onClick={() => onViewDetails(partner)}>
-                        <User className="mr-2 h-4 w-4" />
-                        Ver detalhes
-                      </DropdownMenuItem>
-                    )}
-                    {onEdit && (
-                      <DropdownMenuItem onClick={() => onEdit(partner)}>
-                        <Pencil className="mr-2 h-4 w-4" />
-                        Editar
-                      </DropdownMenuItem>
-                    )}
-                    {onDelete && (
-                      <DropdownMenuItem onClick={() => onDelete(partner)} className="text-destructive">
-                        <Trash className="mr-2 h-4 w-4" />
-                        Excluir
-                      </DropdownMenuItem>
-                    )}
-                  </DropdownMenuContent>
-                </DropdownMenu>
-              </TableCell>
+    <div className="space-y-4">
+      <div className="rounded-md border overflow-hidden">
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead>Nome da Empresa</TableHead>
+              <TableHead>Contato</TableHead>
+              <TableHead>Taxa de Comissão</TableHead>
+              <TableHead>Data de Criação</TableHead>
+              <TableHead className="text-right">Ações</TableHead>
             </TableRow>
-          ))}
-        </TableBody>
-      </Table>
+          </TableHeader>
+          <TableBody>
+            {partners.length > 0 ? (
+              partners.map((partner) => (
+                <TableRow key={partner.id}>
+                  <TableCell className="font-medium">{partner.company_name}</TableCell>
+                  <TableCell>
+                    {partner.contact_name && (
+                      <div className="space-y-1">
+                        <div>{partner.contact_name}</div>
+                        {partner.email && <div className="text-sm text-muted-foreground">{partner.email}</div>}
+                        {partner.phone && <div className="text-sm text-muted-foreground">{partner.phone}</div>}
+                      </div>
+                    )}
+                  </TableCell>
+                  <TableCell>{partner.commission_rate}%</TableCell>
+                  <TableCell>{formatDate(partner.created_at)}</TableCell>
+                  <TableCell className="text-right">
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button variant="ghost" size="icon">
+                          <MoreHorizontal className="h-4 w-4" />
+                          <span className="sr-only">Abrir menu</span>
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end">
+                        {onView && (
+                          <DropdownMenuItem onClick={() => onView(partner)}>
+                            <Eye className="mr-2 h-4 w-4" />
+                            <span>Visualizar</span>
+                          </DropdownMenuItem>
+                        )}
+                        {onEdit && (
+                          <DropdownMenuItem onClick={() => onEdit(partner)}>
+                            <Edit className="mr-2 h-4 w-4" />
+                            <span>Editar</span>
+                          </DropdownMenuItem>
+                        )}
+                        {onDelete && (
+                          <DropdownMenuItem 
+                            onClick={() => onDelete(partner)}
+                            className="text-destructive focus:text-destructive"
+                          >
+                            <Trash2 className="mr-2 h-4 w-4" />
+                            <span>Excluir</span>
+                          </DropdownMenuItem>
+                        )}
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  </TableCell>
+                </TableRow>
+              ))
+            ) : (
+              <TableRow>
+                <TableCell colSpan={5} className="h-24 text-center">
+                  Nenhum parceiro encontrado.
+                </TableCell>
+              </TableRow>
+            )}
+          </TableBody>
+        </Table>
+      </div>
+      
+      {setPage && totalPages > 1 && (
+        <div className="flex items-center justify-end space-x-2 py-4">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setPage(page - 1)}
+            disabled={page === 1}
+          >
+            Anterior
+          </Button>
+          <div className="text-sm text-muted-foreground">
+            Página {page} de {totalPages}
+          </div>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setPage(page + 1)}
+            disabled={page === totalPages}
+          >
+            Próximo
+          </Button>
+        </div>
+      )}
     </div>
   );
 };
 
 export default PartnersTable;
-export { PartnersTable };

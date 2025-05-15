@@ -1,3 +1,4 @@
+
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { ArrowUpDown, Copy, MoreHorizontal } from "lucide-react";
@@ -45,7 +46,7 @@ export enum PaymentAction {
 }
 
 // Function to determine the color based on payment status
-const getStatusColor = (status: PaymentStatus) => {
+const getStatusColor = (status: PaymentStatus | string) => {
   switch (status) {
     case PaymentStatus.PENDING:
       return "bg-yellow-100 text-yellow-800";
@@ -143,7 +144,7 @@ export const createPaymentColumns = () => {
       accessorKey: "status",
       header: "Status",
       cell: ({ row }) => (
-        <Badge className={getStatusColor(row.status)}>{row.status}</Badge>
+        <Badge className={getStatusColor(row.status as PaymentStatus | string)}>{row.status}</Badge>
       ),
     },
     {

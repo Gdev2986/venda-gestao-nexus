@@ -2,7 +2,7 @@
 import { PaymentStatus } from '@/types';
 
 interface PaymentStatusBadgeProps {
-  status: PaymentStatus;
+  status: PaymentStatus | string;
 }
 
 export const PaymentStatusBadge = ({ status }: PaymentStatusBadgeProps) => {
