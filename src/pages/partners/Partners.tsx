@@ -19,13 +19,16 @@ const Partners = () => {
     setSearchTerm(values.search || "");
   };
 
+  // Check PATHS.PARTNER.NEW exists and fallback to dashboard if not
+  const newPartnerLink = PATHS.PARTNER?.NEW || PATHS.DASHBOARD;
+
   return (
     <>
       <PageHeader
         title="Parceiros"
         description="Gerenciar parceiros"
         actionLabel="Novo Parceiro"
-        actionLink={PATHS.PARTNERS.NEW}
+        actionLink={newPartnerLink}
       />
 
       <PartnersFilterCard

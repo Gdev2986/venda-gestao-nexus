@@ -2,14 +2,14 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { Partner, UserRole } from '@/types';
-import { useUser } from '@/hooks/use-auth'; // Changed from '@/hooks/use-user'
+import { useAuth } from '@/hooks/use-auth'; // Changed from useUser
 import { useToast } from '@/hooks/use-toast';
 
 export const usePartners = () => {
   const [partners, setPartners] = useState<Partner[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const { user, session } = useUser();
+  const { user, session } = useAuth(); // Changed from useUser to useAuth
   const { toast } = useToast();
 
   useEffect(() => {
@@ -49,8 +49,8 @@ export const usePartners = () => {
     try {
       const { data, error } = await supabase
         .from('partners')
-        .insert([partner])
-        .select()
+        .insert([partner]) // Changed to pass an array with the partner object
+        .select();
 
       if (error) {
         throw new Error(error.message);

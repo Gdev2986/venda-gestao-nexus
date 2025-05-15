@@ -1,3 +1,4 @@
+
 import React, { useState } from "react";
 import { PageHeader } from "@/components/page/PageHeader";
 import { PageWrapper } from "@/components/page/PageWrapper";
@@ -50,11 +51,16 @@ const Partners = () => {
 
   const handleDeletePartner = async (partnerId: string) => {
     try {
-      await deletePartner(partnerId);
+      const success = await deletePartner(partnerId);
+      return success;
     } catch (err) {
       console.error("Failed to delete partner:", err);
+      return false;
     }
   };
+
+  // Use appropriate path
+  const newPartnerPath = PATHS.PARTNER?.NEW || PATHS.DASHBOARD;
 
   return (
     <>
@@ -62,10 +68,12 @@ const Partners = () => {
         title="Parceiros"
         description="Gerenciar parceiros"
         actionLabel="Novo Parceiro"
-        actionLink={PATHS.PARTNERS.NEW}
+        actionLink={newPartnerPath}
       />
 
-      <PartnersFilterCard onSearch={setSearchTerm} />
+      <PartnersFilterCard
+        onFilter={(values) => setSearchTerm(values.search || "")}
+      />
 
       <PageWrapper>
         <PartnersTableCard
