@@ -12,14 +12,14 @@ const Index = () => {
   useEffect(() => {
     // If authenticated and finished loading, redirect to dashboard
     if (user && !isLoading) {
-      console.error("Index: User authenticated, redirecting to dashboard");
+      console.log("Index: User authenticated, redirecting to dashboard");
       navigate("/dashboard");
     }
   }, [user, isLoading, navigate]);
 
   // If still loading or the user is not authenticated, show the login page
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-b from-primary-50 to-white p-4">
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-b from-background/50 to-background p-4 dark:from-background dark:to-background/80">
       <div className="flex flex-col md:flex-row items-center justify-center max-w-5xl w-full">
         <div className="w-full md:w-1/2 md:pr-8 text-center md:text-left mb-6 md:mb-0">
           <div className="flex items-center justify-center md:justify-start mb-4">
@@ -29,45 +29,45 @@ const Index = () => {
             <h1 className="text-3xl font-bold tracking-tight">SigmaPay</h1>
           </div>
           
-          <h2 className="text-4xl font-bold mb-4 text-gray-900">
+          <h2 className="text-4xl font-bold mb-4 text-foreground">
             Gestão de Vendas <span className="text-primary">Simplificada</span>
           </h2>
           
-          <p className="text-gray-600 text-lg mb-6">
+          <p className="text-muted-foreground text-lg mb-6">
             Uma plataforma completa para gerenciar suas vendas de maquininhas, clientes, pagamentos e muito mais.
           </p>
           
           <div className="grid grid-cols-2 gap-4 mb-8">
             <div className="flex flex-col items-center md:items-start">
-              <div className="bg-primary-100 p-2 rounded-full mb-2">
+              <div className="bg-primary/10 dark:bg-primary/20 p-2 rounded-full mb-2">
                 <LayoutDashboard className="h-6 w-6 text-primary" />
               </div>
-              <h3 className="text-lg font-semibold">Dashboard Inteligente</h3>
-              <p className="text-gray-500 text-sm">Visualize todas as suas vendas e métricas em tempo real.</p>
+              <h3 className="text-lg font-semibold text-foreground">Dashboard Inteligente</h3>
+              <p className="text-muted-foreground text-sm">Visualize todas as suas vendas e métricas em tempo real.</p>
             </div>
             
             <div className="flex flex-col items-center md:items-start">
-              <div className="bg-primary-100 p-2 rounded-full mb-2">
+              <div className="bg-primary/10 dark:bg-primary/20 p-2 rounded-full mb-2">
                 <CreditCard className="h-6 w-6 text-primary" />
               </div>
-              <h3 className="text-lg font-semibold">Gestão de Pagamentos</h3>
-              <p className="text-gray-500 text-sm">Receba seus pagamentos via PIX de forma rápida e segura.</p>
+              <h3 className="text-lg font-semibold text-foreground">Gestão de Pagamentos</h3>
+              <p className="text-muted-foreground text-sm">Receba seus pagamentos via PIX de forma rápida e segura.</p>
             </div>
             
             <div className="flex flex-col items-center md:items-start">
-              <div className="bg-primary-100 p-2 rounded-full mb-2">
+              <div className="bg-primary/10 dark:bg-primary/20 p-2 rounded-full mb-2">
                 <FileText className="h-6 w-6 text-primary" />
               </div>
-              <h3 className="text-lg font-semibold">Relatórios Detalhados</h3>
-              <p className="text-gray-500 text-sm">Análises completas sobre seu desempenho de vendas.</p>
+              <h3 className="text-lg font-semibold text-foreground">Relatórios Detalhados</h3>
+              <p className="text-muted-foreground text-sm">Análises completas sobre seu desempenho de vendas.</p>
             </div>
             
             <div className="flex flex-col items-center md:items-start">
-              <div className="bg-primary-100 p-2 rounded-full mb-2">
+              <div className="bg-primary/10 dark:bg-primary/20 p-2 rounded-full mb-2">
                 <Monitor className="h-6 w-6 text-primary" />
               </div>
-              <h3 className="text-lg font-semibold">Multiplataforma</h3>
-              <p className="text-gray-500 text-sm">Acesse de qualquer dispositivo, em qualquer lugar.</p>
+              <h3 className="text-lg font-semibold text-foreground">Multiplataforma</h3>
+              <p className="text-muted-foreground text-sm">Acesse de qualquer dispositivo, em qualquer lugar.</p>
             </div>
           </div>
         </div>
@@ -75,7 +75,7 @@ const Index = () => {
         <div className="w-full md:w-1/2">
           <LoginForm />
           <div className="mt-4 text-center">
-            <p className="text-gray-600">
+            <p className="text-muted-foreground">
               Não tem uma conta?{" "}
               <Link to="/register" className="text-primary hover:underline font-medium">
                 Cadastre-se
