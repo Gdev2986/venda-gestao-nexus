@@ -3,7 +3,7 @@ import { useState, useEffect } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import LoginForm from "@/components/auth/LoginForm";
 import { LayoutDashboard, CreditCard, FileText, Monitor } from "lucide-react";
-import { useAuth } from "@/contexts/AuthContext";
+import { useAuth } from "@/hooks/use-auth";
 import { PATHS } from "@/routes/paths";
 import { Spinner } from "@/components/ui/spinner";
 import { getDashboardRedirect } from "@/routes/routeUtils";
@@ -18,7 +18,6 @@ const Login = () => {
   useEffect(() => {
     // If authenticated and finished loading, redirect to appropriate dashboard
     if (user && !isLoading && userRole && !isRoleLoading) {
-      console.log("Login: User authenticated, redirecting to dashboard for role:", userRole);
       setRedirecting(true);
       const redirectPath = getDashboardRedirect(userRole);
       navigate(redirectPath, { replace: true });

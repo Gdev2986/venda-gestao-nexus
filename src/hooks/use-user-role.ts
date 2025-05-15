@@ -1,7 +1,6 @@
-
 import { useState, useEffect } from "react";
 import { UserRole } from "@/types";
-import { useAuth } from "@/contexts/AuthContext";
+import { useAuth } from "@/hooks/use-auth";
 import { supabase } from "@/integrations/supabase/client";
 import { cleanupAuthState, getAuthData, setAuthData } from "@/utils/auth-utils";
 
@@ -28,9 +27,7 @@ const normalizeUserRole = (role: any): UserRole => {
     case "FINANCE": return UserRole.FINANCE;
     case "SUPPORT": return UserRole.SUPPORT;
     case "USER": return UserRole.USER;
-    default: 
-      console.warn(`Unknown role value: ${role}, defaulting to CLIENT`);
-      return UserRole.CLIENT;
+    default: return UserRole.CLIENT;
   }
 };
 
@@ -46,7 +43,6 @@ export const useUserRole = () => {
       
       // If there's no user, don't fetch profile
       if (!user) {
-        console.log("useUserRole - No user, defaulting to CLIENT");
         setUserRole(UserRole.CLIENT); // Default to client when not logged in
         setIsRoleLoading(false);
         return;
@@ -57,15 +53,11 @@ export const useUserRole = () => {
         const cachedRole = getAuthData("userRole");
         
         if (cachedRole && Object.values(UserRole).includes(cachedRole as UserRole)) {
-          console.log("useUserRole - Using cached role:", cachedRole);
           setUserRole(normalizeUserRole(cachedRole));
           setIsRoleLoading(false);
-        } else {
-          console.log("useUserRole - No valid cached role found, fetching from database");
         }
         
         // Always verify with database to ensure role is current
-        console.log("useUserRole - Fetching user role from database for user ID:", user.id);
         const { data, error } = await supabase
           .from('profiles')
           .select('role')
@@ -73,11 +65,8 @@ export const useUserRole = () => {
           .single();
 
         if (error) {
-          console.error('Error fetching user profile:', error);
-          
           // If it's an authentication error or not found, log out
           if (error.code === 'PGRST116' || error.code === '404') {
-            console.log("Token expired or user not found, logging out");
             cleanupAuthState();
             await signOut();
             return;
@@ -85,25 +74,21 @@ export const useUserRole = () => {
           
           // If there's an error but we have a cached role, keep using it
           if (!cachedRole) {
-            console.log("useUserRole - Error fetching role and no cache, using default CLIENT");
             setUserRole(UserRole.CLIENT);
           }
         } else if (data && data.role) {
           // Normalize the role to ensure it matches our enum
           const normalizedRole = normalizeUserRole(data.role);
-          console.log("useUserRole - Database role:", data.role, "Normalized role:", normalizedRole);
           setUserRole(normalizedRole);
           
           // Store in sessionStorage for persistence
           setAuthData("userRole", normalizedRole);
         } else {
-          console.log("useUserRole - No role found in database, using default or cached role");
           if (!cachedRole) {
             setUserRole(UserRole.CLIENT);
           }
         }
       } catch (error) {
-        console.error('Error fetching profile:', error);
         // In case of error, try to log out to clear state
         cleanupAuthState();
       } finally {
@@ -117,7 +102,6 @@ export const useUserRole = () => {
 
   const updateUserRole = (role: UserRole) => {
     const normalizedRole = normalizeUserRole(role);
-    console.log("useUserRole - Updating role to:", normalizedRole);
     setUserRole(normalizedRole);
     setAuthData("userRole", normalizedRole);
   };

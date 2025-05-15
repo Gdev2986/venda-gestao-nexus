@@ -7,8 +7,6 @@ import { UserRole } from "@/types";
  * Handles case sensitivity and string/enum conversions
  */
 export const getDashboardPath = (userRole: UserRole | string): string => {
-  console.log("getDashboardPath - userRole:", userRole);
-  
   // Normalize role to uppercase string for consistent comparison
   const normalizedRole = userRole?.toString().toUpperCase();
   
@@ -38,7 +36,6 @@ export const getDashboardPath = (userRole: UserRole | string): string => {
     case "SUPPORT":
       return PATHS.USER.DASHBOARD;
     default:
-      console.log("Role não reconhecida:", userRole);
       // Default to login as a safe fallback
       return PATHS.LOGIN;
   }

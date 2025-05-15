@@ -1,3 +1,4 @@
+
 import { createContext, useContext, useEffect, useState } from "react";
 import { Session, User } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
@@ -39,10 +40,8 @@ const cleanupSupabaseState = () => {
     sessionStorage.removeItem('userRole');
     sessionStorage.removeItem('redirectPath');
     localStorage.removeItem('userRole');
-    
-    console.log("Complete cleanup of authentication state");
   } catch (error) {
-    console.error("Error clearing authentication state:", error);
+    // Silent error
   }
 };
 
@@ -58,38 +57,28 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const navigate = useNavigate();
   const location = useLocation();
 
-  console.log("AuthProvider rendering, isLoading:", isLoading, "user:", user?.email);
-
   useEffect(() => {
-    console.log("Setting up auth listener");
-    
     // Set up auth state listener FIRST to prevent missing events
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, newSession) => {
-        console.log("Auth state change event:", event);
-        
         // Set session and user state synchronously
         setSession(newSession);
         setUser(newSession?.user ?? null);
 
         // Handle auth events
         if (event === "SIGNED_IN") {
-          console.log("Signed in event detected");
-          
           // Track the session in our custom table - using setTimeout to avoid Supabase callback issues
           if (newSession?.user) {
             setTimeout(() => {
               toast({
-                title: "Successfully authenticated",
-                description: "Welcome to SigmaPay!",
+                title: "Autenticação bem-sucedida",
+                description: "Bem-vindo ao SigmaPay!",
               });
             }, 0);
           }
         }
         
         if (event === "SIGNED_OUT") {
-          console.log("Signed out event detected");
-          
           // Clear auth data
           clearAuthData();
           cleanupSupabaseState();
@@ -97,21 +86,13 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
           // Use setTimeout to avoid calling toast inside the callback
           setTimeout(() => {
             toast({
-              title: "Signed out",
-              description: "You have been successfully signed out.",
+              title: "Desconectado",
+              description: "Você foi desconectado com sucesso.",
             });
             
             // Force page reload to completely clear state
             window.location.href = PATHS.LOGIN;
           }, 0);
-        }
-        
-        if (event === "TOKEN_REFRESHED") {
-          console.log("Token refreshed event");
-        }
-        
-        if (event === "USER_UPDATED") {
-          console.log("User updated event");
         }
       }
     );
@@ -120,22 +101,17 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     const initialSessionCheck = async () => {
       setIsLoading(true);
       try {
-        console.log("Checking initial session");
         const { session: currentSession, user: currentUser, error } = await getCurrentSession();
         
         if (error) {
-          console.error("Error getting session:", error);
           // Clear data in case of error
           cleanupSupabaseState();
           throw error;
         }
-        
-        console.log("Initial session check complete:", !!currentSession);
-        
+                
         setSession(currentSession);
         setUser(currentUser);
       } catch (error) {
-        console.error("Error during initial session check:", error);
         setSession(null);
         setUser(null);
       } finally {
@@ -146,25 +122,22 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     initialSessionCheck();
 
     return () => {
-      console.log("Cleaning up auth listener");
       subscription.unsubscribe();
     };
   }, [toast]); // Only run on mount
 
   const signIn = async (email: string, password: string) => {
     try {
-      // Limpar qualquer dado de autenticação antes de tentar login
+      // Clear any auth data before attempting login
       cleanupSupabaseState();
       
-      console.log("Sign in attempt for:", email);
       setIsLoading(true);
       
-      // Tentativa de logout global antes de fazer login
+      // Attempt global logout before login
       try {
         await supabase.auth.signOut({ scope: 'global' });
       } catch (err) {
-        // Continuar mesmo se falhar
-        console.log("Falha ao fazer logout global antes do login, continuando...");
+        // Continue even if this fails
       }
       
       const { user: signedInUser, error } = await signInWithEmail(email, password);
@@ -179,8 +152,6 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       }
       
       if (signedInUser) {
-        console.log("Sign in successful");
-        
         // Fetch user role from profiles table after sign in
         const { data: profileData } = await supabase
           .from('profiles')
@@ -199,13 +170,11 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
             // Use the user's role to determine where to redirect
             const userRole = profileData?.role || UserRole.CLIENT;
             const dashboardPath = getDashboardRedirect(userRole);
-            console.log("Redirecting to dashboard path:", dashboardPath);
             navigate(dashboardPath, { replace: true });
           }
         }, 0);
       }
     } catch (error: any) {
-      console.error("Error during login:", error);
       // Toast is shown in the error handler above
     } finally {
       setIsLoading(false);
@@ -214,24 +183,23 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
   const signUp = async (email: string, password: string, userData: { name: string }) => {
     try {
-      // Limpar qualquer dado de autenticação antes de tentar cadastro
+      // Clear any auth data before attempting registration
       cleanupSupabaseState();
       
-      console.log("Sign up attempt for:", email);
       setIsLoading(true);
       
-      // Tentativa de logout global antes de fazer cadastro
+      // Attempt global logout before registration
       try {
         await supabase.auth.signOut({ scope: 'global' });
       } catch (err) {
-        // Continuar mesmo se falhar
+        // Continue even if this fails
       }
       
       const { user: newUser, error } = await signUpWithEmail(email, password, userData);
 
       if (error) {
         toast({
-          title: "Registration error",
+          title: "Erro no cadastro",
           description: error.message,
           variant: "destructive",
         });
@@ -239,13 +207,12 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       }
       
       toast({
-        title: "Registration successful",
-        description: "Please check your email to confirm your account.",
+        title: "Cadastro realizado com sucesso",
+        description: "Por favor, verifique seu email para confirmar sua conta.",
       });
 
       navigate(PATHS.HOME);
     } catch (error: any) {
-      console.error("Error during registration:", error);
       // Toast is shown in the error handler above
     } finally {
       setIsLoading(false);
@@ -254,31 +221,29 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
   const signOut = async () => {
     try {
-      console.log("Sign out attempt");
       setIsLoading(true);
       
-      // Limpar estado local imediatamente para melhor UX
+      // Clear local state immediately for better UX
       setUser(null);
       setSession(null);
       
-      // Limpar todos os dados de autenticação
+      // Clear all auth data
       cleanupSupabaseState();
       
       const { error } = await signOutUser();
       
       if (error) {
-        console.error("Erro ao fazer logout:", error);
+        // Error handling
       }
       
-      // Forçar recarga completa da página para limpar todo o estado
+      // Force complete page reload to clear all state
       window.location.href = PATHS.HOME;
       
       return { success: true, error: null };
     } catch (error: any) {
-      console.error("Error during sign out:", error);
       toast({
-        title: "Error signing out",
-        description: error.message || "An error occurred while trying to sign out",
+        title: "Erro ao sair",
+        description: error.message || "Ocorreu um erro ao tentar sair",
         variant: "destructive",
       });
       return { success: false, error };
