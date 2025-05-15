@@ -1,94 +1,111 @@
 
 import { useState } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Card } from "@/components/ui/card";
-import { PageHeader } from "@/components/page/PageHeader";
-import { AdminSecurityTab } from "@/components/admin/settings/AdminSecurityTab";
+import { useToast } from "@/hooks/use-toast";
+import { supabase } from "@/integrations/supabase/client";
 import { UsersTab } from "@/components/admin/settings/UsersTab";
 import { SystemTab } from "@/components/admin/settings/SystemTab";
-import { AdminNotificationsTab } from "@/components/admin/settings/AdminNotificationsTab";
 import { RoleChangeModal } from "@/components/admin/settings/RoleChangeModal";
+import { AdminNotificationsTab } from "@/components/admin/settings/AdminNotificationsTab";
+import { AdminSecurityTab } from "@/components/admin/settings/AdminSecurityTab";
 import { UserRole } from "@/types";
 
-// Define the profile data with the correct UserRole type
+// Update ProfileData interface with the correct UserRole type
 interface ProfileData {
   id: string;
   name: string;
   email: string;
-  role: UserRole;
+  avatar: string;
+  phone: string;
+  role: UserRole;  // Use proper UserRole enum
   created_at: string;
+  updated_at: string;
 }
 
-export default function AdminSettings() {
-  const [isRoleModalOpen, setIsRoleModalOpen] = useState(false);
+const AdminSettings = () => {
+  const [activeTab, setActiveTab] = useState("usuarios");
   const [selectedUser, setSelectedUser] = useState<ProfileData | null>(null);
-  const [selectedRole, setSelectedRole] = useState<UserRole>(UserRole.CLIENT);
+  const [newRole, setNewRole] = useState<UserRole>(UserRole.CLIENT);  // Use the proper enum
+  const [showRoleModal, setShowRoleModal] = useState(false);
   
-  const handleOpenRoleModal = (user: ProfileData) => {
-    setSelectedUser(user);
-    setSelectedRole(user.role);
-    setIsRoleModalOpen(true);
-  };
-  
-  const handleCloseRoleModal = () => {
-    setIsRoleModalOpen(false);
-    setSelectedUser(null);
-  };
-  
+  const { toast } = useToast();
+
   const handleRoleChange = async () => {
-    if (!selectedUser) return;
+    if (!selectedUser || !newRole) return;
     
-    // Add your role change logic here
-    console.log("Changing role of user", selectedUser.id, "to", selectedRole);
-    
-    // Close the modal after successful role change
-    handleCloseRoleModal();
-  };
-  
-  return (
-    <div className="space-y-6">
-      <PageHeader 
-        title="Configurações do Sistema" 
-        description="Gerencie configurações globais, usuários e segurança" 
-      />
+    try {
+      const { error } = await supabase
+        .from('profiles')
+        .update({ role: newRole })
+        .eq('id', selectedUser.id);
+        
+      if (error) throw error;
       
-      <Tabs defaultValue="users">
-        <TabsList className="mb-6">
-          <TabsTrigger value="users">Usuários</TabsTrigger>
-          <TabsTrigger value="security">Segurança</TabsTrigger>
-          <TabsTrigger value="notifications">Notificações</TabsTrigger>
-          <TabsTrigger value="system">Sistema</TabsTrigger>
+      toast({
+        title: "Função atualizada",
+        description: `A função de ${selectedUser.name} foi atualizada para ${newRole}.`
+      });
+      
+      setShowRoleModal(false);
+    } catch (error) {
+      console.error("Error updating role:", error);
+      toast({
+        variant: "destructive",
+        title: "Erro ao atualizar função",
+        description: "Não foi possível atualizar a função do usuário."
+      });
+    }
+  };
+
+  const openRoleModal = (user: ProfileData) => {
+    setSelectedUser(user);
+    setNewRole(user.role);
+    setShowRoleModal(true);
+  };
+
+  return (
+    <div className="container mx-auto py-10">
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+        <TabsList className="mb-6 overflow-x-auto flex whitespace-nowrap sm:inline-flex">
+          <TabsTrigger value="usuarios">Usuários</TabsTrigger>
+          <TabsTrigger value="sistema">Sistema</TabsTrigger>
+          <TabsTrigger value="notificacoes">Notificações</TabsTrigger>
+          <TabsTrigger value="seguranca">Segurança</TabsTrigger>
         </TabsList>
         
-        <TabsContent value="users">
-          <Card>
-            <UsersTab onRoleChange={handleOpenRoleModal} />
-          </Card>
+        {/* Users Tab */}
+        <TabsContent value="usuarios" className="mt-6">
+          <UsersTab openRoleModal={openRoleModal} />
         </TabsContent>
         
-        <TabsContent value="security">
-          <AdminSecurityTab />
+        {/* System Tab */}
+        <TabsContent value="sistema" className="mt-6">
+          <SystemTab />
         </TabsContent>
         
-        <TabsContent value="notifications">
+        {/* Notifications Tab */}
+        <TabsContent value="notificacoes" className="mt-6">
           <AdminNotificationsTab />
         </TabsContent>
         
-        <TabsContent value="system">
-          <SystemTab />
+        {/* Security Tab */}
+        <TabsContent value="seguranca" className="mt-6">
+          <AdminSecurityTab />
         </TabsContent>
       </Tabs>
       
-      {/* Role Change Modal */}
-      <RoleChangeModal
-        isOpen={isRoleModalOpen}
-        onClose={handleCloseRoleModal}
-        userName={selectedUser?.name || ''}
-        currentRole={selectedUser?.role || UserRole.CLIENT}
-        selectedRole={selectedRole}
-        onRoleChange={setSelectedRole}
-        onConfirm={handleRoleChange}
-      />
+      {/* Role Modal */}
+      {showRoleModal && selectedUser && (
+        <RoleChangeModal
+          user={selectedUser}
+          newRole={newRole}
+          setNewRole={setNewRole}
+          onClose={() => setShowRoleModal(false)}
+          onSave={handleRoleChange}
+        />
+      )}
     </div>
   );
-}
+};
+
+export default AdminSettings;

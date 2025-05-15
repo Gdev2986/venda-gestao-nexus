@@ -4,7 +4,7 @@ import { ptBR } from "date-fns/locale";
 import { Bell, ShoppingCart, CreditCard, Wrench, LifeBuoy } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import TablePagination from "@/components/ui/table-pagination";
-import { Notification } from "@/services/NotificationService";
+import { Notification } from "@/types";
 
 interface NotificationListProps {
   notifications: Notification[];
@@ -71,7 +71,7 @@ const NotificationList = ({
         {notifications.map((notification) => (
           <div 
             key={notification.id} 
-            className={`p-4 flex items-start hover:bg-muted/50 transition-colors ${notification.read ? 'opacity-70' : ''}`}
+            className={`p-4 flex items-start hover:bg-muted/50 transition-colors ${notification.is_read ? 'opacity-70' : ''}`}
           >
             <div className="mr-4 mt-1">{getIcon(notification.type)}</div>
             
@@ -86,7 +86,7 @@ const NotificationList = ({
               <p className="mt-1 text-sm text-muted-foreground">{notification.message}</p>
               
               <div className="mt-2 flex items-center gap-2">
-                {notification.read ? (
+                {notification.is_read ? (
                   <Button 
                     variant="ghost" 
                     size="sm" 
@@ -117,7 +117,7 @@ const NotificationList = ({
               </div>
             </div>
             
-            {!notification.read && (
+            {!notification.is_read && (
               <div className="mt-1 h-2 w-2 rounded-full bg-primary" />
             )}
           </div>

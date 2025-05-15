@@ -1,41 +1,20 @@
 
 import { Route } from "react-router-dom";
-import { PATHS } from "./paths";
-import { UserRole } from "@/types";
+import { lazy } from "react";
 
-// Layouts
-import MainLayout from "../layouts/MainLayout";
+// Client Pages
+const ClientDashboard = lazy(() => import("@/pages/user/Dashboard"));
+const UserMachines = lazy(() => import("@/pages/user/Machines"));
+const UserPayments = lazy(() => import("@/pages/user/Payments"));
+const UserSettings = lazy(() => import("@/pages/user/Settings"));
+const UserSupport = lazy(() => import("@/pages/user/Support"));
 
-// Auth Protection Component
-import RequireAuth from "../components/auth/RequireAuth";
-
-// Dashboard
-import ClientDashboard from "../pages/ClientDashboard";
-
-// Pages
-import UserPayments from "../pages/UserPayments";
-import Machines from "../pages/machines/Machines";
-import Support from "../pages/Support";
-import Settings from "../pages/settings/Settings";
-import Help from "../pages/Help";
-
-export const ClientRoutes = (
-  <Route element={<RequireAuth allowedRoles={[UserRole.CLIENT]} />}>
-    <Route element={<MainLayout />}>
-      <Route 
-        path={PATHS.USER.DASHBOARD} 
-        element={<ClientDashboard />} 
-      />
-      
-      <Route path={PATHS.USER.PAYMENTS} element={<UserPayments />} />
-      
-      <Route path={PATHS.USER.MACHINES} element={<Machines />} />
-      
-      <Route path={PATHS.USER.SUPPORT} element={<Support />} />
-      
-      <Route path={PATHS.USER.SETTINGS} element={<Settings />} />
-      
-      <Route path={PATHS.USER.HELP} element={<Help />} />
-    </Route>
-  </Route>
-);
+// Client Routes - defined as Route elements
+export const ClientRoutes = [
+  <Route key="client-index" index element={<ClientDashboard />} />,
+  <Route key="client-dashboard" path="dashboard" element={<ClientDashboard />} />,
+  <Route key="client-machines" path="machines" element={<UserMachines />} />,
+  <Route key="client-payments" path="payments" element={<UserPayments />} />,
+  <Route key="client-settings" path="settings" element={<UserSettings />} />,
+  <Route key="client-support" path="support" element={<UserSupport />} />
+];

@@ -1,84 +1,77 @@
 
-import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
+import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { PageHeader } from "@/components/page/PageHeader";
-import { Card, CardContent } from "@/components/ui/card";
-import { usePartnerClients } from '@/hooks/use-partner-clients';
-import { Loader2 } from 'lucide-react';
+import { PageWrapper } from "@/components/page/PageWrapper";
+import { Button } from "@/components/ui/button";
+import { useToast } from "@/hooks/use-toast";
+import { usePartnerClients } from "@/hooks/use-partner-clients";
+import { PlusCircle } from "lucide-react";
 import ClientsTable from "@/components/clients/ClientsTable";
-import { Client } from '@/types';
+import { Card, CardContent } from "@/components/ui/card";
 
 const PartnerClients = () => {
-  const [searchTerm, setSearchTerm] = useState('');
-  const navigate = useNavigate();
+  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const { clients, isLoading, error } = usePartnerClients();
-  const [filteredClients, setFilteredClients] = useState<Client[]>([]);
-  
-  // Filter clients based on search term
-  useEffect(() => {
-    if (!clients) {
-      setFilteredClients([]);
-      return;
-    }
-    
-    if (!searchTerm.trim()) {
-      setFilteredClients(clients);
-      return;
-    }
-    
-    const term = searchTerm.toLowerCase();
-    const filtered = clients.filter(client => 
-      (client.business_name && client.business_name.toLowerCase().includes(term)) ||
-      (client.contact_name && client.contact_name.toLowerCase().includes(term)) ||
-      (client.email && client.email.toLowerCase().includes(term))
-    );
-    
-    setFilteredClients(filtered);
-  }, [clients, searchTerm]);
-  
-  const handleViewClient = (clientId: string) => {
-    navigate(`/partner/clients/${clientId}`);
+  const navigate = useNavigate();
+  const { toast } = useToast();
+
+  const handleViewClient = (id: string) => {
+    navigate(`/partner/clients/${id}`);
+  };
+
+  const handleCreateClient = () => {
+    setIsCreateModalOpen(true);
+  };
+
+  const handleCreateClientSuccess = () => {
+    setIsCreateModalOpen(false);
+    toast({
+      title: "Cliente criado",
+      description: "O cliente foi criado com sucesso.",
+    });
   };
 
   return (
-    <div className="space-y-6">
-      <PageHeader
-        title="Meus Clientes"
-        description="Gerenciar seus clientes cadastrados"
-      />
-      
-      <div className="flex items-center justify-between">
-        <div className="max-w-sm flex-1">
-          <Input
-            placeholder="Buscar clientes..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-          />
-        </div>
+    <PageWrapper>
+      <div className="flex justify-between items-center mb-6">
+        <PageHeader
+          title="Clientes"
+          description="Gerencie os clientes vinculados à sua parceria"
+        />
+        <Button onClick={handleCreateClient}>
+          <PlusCircle className="mr-2 h-4 w-4" />
+          Novo Cliente
+        </Button>
       </div>
-      
+
       <Card>
         <CardContent className="p-0">
           {isLoading ? (
-            <div className="flex h-96 items-center justify-center">
-              <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+            <div className="flex justify-center items-center p-8">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
             </div>
           ) : error ? (
-            <div className="flex h-96 items-center justify-center">
-              <p className="text-destructive">Erro ao carregar clientes: {error.toString()}</p>
+            <div className="p-8 text-center text-destructive">
+              <p>Erro ao carregar clientes: {error}</p>
             </div>
           ) : (
             <ClientsTable 
-              clients={filteredClients} 
-              onViewClient={handleViewClient}
-              isPartnerView={true}
+              clients={clients} 
+              isPartnerView={true} 
             />
           )}
         </CardContent>
       </Card>
-    </div>
+
+      {/* {isCreateModalOpen && (
+        <CreateClientModal
+          onClose={() => setIsCreateModalOpen(false)}
+          onSuccess={handleCreateClientSuccess}
+          isPartnerMode={true}
+        />
+      )} */}
+    </PageWrapper>
   );
 };
 

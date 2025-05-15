@@ -27,11 +27,13 @@ const PartnerSales = () => {
         client_name: "Restaurante Silva",
         gross_amount: 1200,
         net_amount: 1140,
+        amount: 1200,
         date: new Date().toISOString(),
         payment_method: PaymentMethod.CREDIT,
         client_id: "c1",
         created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString()
+        updated_at: new Date().toISOString(),
+        status: "completed"
       },
       {
         id: "2",
@@ -40,11 +42,13 @@ const PartnerSales = () => {
         client_name: "Mercado Central",
         gross_amount: 850,
         net_amount: 807.5,
+        amount: 850,
         date: new Date().toISOString(),
         payment_method: PaymentMethod.DEBIT,
         client_id: "c2",
         created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString()
+        updated_at: new Date().toISOString(),
+        status: "completed"
       }
     ];
     
