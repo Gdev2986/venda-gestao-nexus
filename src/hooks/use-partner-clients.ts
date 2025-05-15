@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
@@ -19,11 +20,6 @@ interface PartnerClient {
   state?: string;
   zip?: string;
   document?: string;
-}
-
-// Break circular reference by using separate interface
-interface PartnerClientWithRelations extends PartnerClient {
-  clients: PartnerClient[];
 }
 
 interface UsePartnerClientsProps {
@@ -116,10 +112,24 @@ export const usePartnerClients = ({ partnerId }: UsePartnerClientsProps = {}) =>
         throw new Error("Partner ID is required to add a client");
       }
 
+      // Ensure business_name is not undefined
+      if (!clientData.business_name) {
+        throw new Error("Business name is required");
+      }
+
       const { data, error } = await supabase
         .from('clients')
         .insert({
-          ...clientData,
+          business_name: clientData.business_name,
+          email: clientData.email,
+          phone: clientData.phone,
+          status: clientData.status,
+          contact_name: clientData.contact_name,
+          address: clientData.address,
+          city: clientData.city,
+          state: clientData.state,
+          zip: clientData.zip,
+          document: clientData.document,
           partner_id: partnerId,
         })
         .select();

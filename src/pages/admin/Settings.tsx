@@ -26,7 +26,7 @@ interface ProfileData {
 const AdminSettings = () => {
   const [activeTab, setActiveTab] = useState("usuarios");
   const [selectedUser, setSelectedUser] = useState<ProfileData | null>(null);
-  const [newRole, setNewRole] = useState<UserRole>(UserRole.CLIENT);
+  const [newRole, setNewRole] = useState<string>(UserRole.CLIENT);
   const [showRoleModal, setShowRoleModal] = useState(false);
   
   const { toast } = useToast();
@@ -35,16 +35,19 @@ const AdminSettings = () => {
     if (!selectedUser || !newRole) return;
     
     try {
+      // Convert to UserRole enum for type safety
+      const userRole = toUserRole(newRole);
+      
       const { error } = await supabase
         .from('profiles')
-        .update({ role: newRole })
+        .update({ role: userRole })
         .eq('id', selectedUser.id);
         
       if (error) throw error;
       
       toast({
         title: "Função atualizada",
-        description: `A função de ${selectedUser.name} foi atualizada para ${newRole}.`
+        description: `A função de ${selectedUser.name} foi atualizada para ${userRole}.`
       });
       
       setShowRoleModal(false);
@@ -60,7 +63,7 @@ const AdminSettings = () => {
 
   const openRoleModal = (user: ProfileData) => {
     setSelectedUser(user);
-    setNewRole(toUserRole(user.role));
+    setNewRole(user.role);
     setShowRoleModal(true);
   };
 
@@ -100,7 +103,7 @@ const AdminSettings = () => {
         <RoleChangeModal
           user={selectedUser}
           newRole={newRole}
-          setNewRole={(role: string) => setNewRole(role)}
+          setNewRole={setNewRole}
           onClose={() => setShowRoleModal(false)}
           onSave={handleRoleChange}
         />

@@ -15,13 +15,14 @@ interface PartnerCreate {
   address?: string;
 }
 
-// Define a type representing the actual Supabase Partners table structure
+// Update SupabasePartner interface to match the actual database table structure
 interface SupabasePartner {
   id: string;
+  company_name: string;
   commission_rate: number;
   created_at: string;
   updated_at: string;
-  company_name: string;
+  // These fields might not exist in the database table
   contact_name?: string;
   contact_email?: string;
   contact_phone?: string;
@@ -53,7 +54,7 @@ export const usePartners = () => {
 
       if (data) {
         // Transform data to match our Partner interface with proper type checking
-        const transformedPartners: Partner[] = data.map((partner: SupabasePartner) => ({
+        const transformedPartners: Partner[] = data.map((partner: any) => ({
           id: partner.id,
           company_name: partner.company_name,
           created_at: partner.created_at,
@@ -132,21 +133,22 @@ export const usePartners = () => {
 
   const createPartner = async (partnerData: PartnerCreate): Promise<boolean> => {
     try {
-      // Create a partner object with only the fields that exist in the database table
-      const partnerToInsert = {
-        company_name: partnerData.company_name,
-        commission_rate: partnerData.commission_rate || 0,
-        contact_name: partnerData.contact_name || null,
-        contact_email: partnerData.contact_email || null,
-        contact_phone: partnerData.contact_phone || null,
-        email: partnerData.email || null,
-        phone: partnerData.phone || null,
-        address: partnerData.address || null
-      };
+      // Get Supabase table structure first
+      const { data: tableInfo, error: tableError } = await supabase
+        .rpc('get_table_definition', { table_name: 'partners' });
+      
+      if (tableError) {
+        console.error("Error getting table definition:", tableError);
+      }
 
+      // Only include fields that match the actual database schema
+      // We know for sure company_name and commission_rate exist
       const { data, error } = await supabase
         .from('partners')
-        .insert(partnerToInsert)
+        .insert({
+          company_name: partnerData.company_name,
+          commission_rate: partnerData.commission_rate
+        })
         .select();
 
       if (error) throw error;
@@ -177,10 +179,6 @@ export const usePartners = () => {
       const updateData = {
         ...(partnerData.company_name && { company_name: partnerData.company_name }),
         ...(partnerData.commission_rate !== undefined && { commission_rate: partnerData.commission_rate }),
-        ...(partnerData.contact_name && { contact_name: partnerData.contact_name }),
-        ...(partnerData.email && { email: partnerData.email }),
-        ...(partnerData.phone && { phone: partnerData.phone }),
-        ...(partnerData.address && { address: partnerData.address })
       };
 
       const { error } = await supabase

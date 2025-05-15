@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -52,22 +53,33 @@ const SendNotificationForm = ({ onClose }: SendNotificationFormProps) => {
   async function onSubmit(values: z.infer<typeof formSchema>) {
     setIsSubmitting(true);
     try {
-      // Convert the string role to a proper UserRole enum
-      const userRole = toUserRole(values.role);
+      // Get users with the specified role
+      const { data: users, error: usersError } = await supabase
+        .from("profiles")
+        .select("id")
+        .eq("role", values.role.toString());
 
-      const { data, error } = await supabase
-        .from("notifications")
-        .insert([
-          {
-            title: values.title,
-            message: values.message,
-            type: values.type,
-            role: userRole,
-          },
-        ]);
+      if (usersError) {
+        throw new Error(usersError.message);
+      }
 
-      if (error) {
-        throw new Error(error.message);
+      if (users && users.length > 0) {
+        // Insert a notification for each user with the specified role
+        const notificationsToInsert = users.map(user => ({
+          user_id: user.id,
+          title: values.title,
+          message: values.message,
+          type: values.type,
+          data: { role: values.role }
+        }));
+
+        const { error } = await supabase
+          .from("notifications")
+          .insert(notificationsToInsert);
+
+        if (error) {
+          throw new Error(error.message);
+        }
       }
 
       toast({

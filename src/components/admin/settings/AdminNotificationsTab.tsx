@@ -12,6 +12,7 @@ export const AdminNotificationsTab = () => {
   const [systemNotifications, setSystemNotifications] = useState(true);
   const [paymentNotifications, setPaymentNotifications] = useState(true);
   const [userNotifications, setUserNotifications] = useState(true);
+  const [showSendForm, setShowSendForm] = useState(false);
   const { toast } = useToast();
 
   const handleSaveSettings = () => {
@@ -19,6 +20,10 @@ export const AdminNotificationsTab = () => {
       title: "Configurações salvas",
       description: "As configurações de notificações foram atualizadas."
     });
+  };
+
+  const handleCloseForm = () => {
+    setShowSendForm(false);
   };
 
   return (
@@ -96,7 +101,7 @@ export const AdminNotificationsTab = () => {
               <CardTitle>Enviar Nova Notificação</CardTitle>
             </CardHeader>
             <CardContent>
-              <SendNotificationForm />
+              <SendNotificationForm onClose={handleCloseForm} />
             </CardContent>
           </Card>
         </TabsContent>

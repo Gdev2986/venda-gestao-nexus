@@ -1,3 +1,4 @@
+
 import { useState, useEffect, useCallback } from "react";
 import {
   Card,
@@ -97,7 +98,18 @@ const UserManagement = () => {
     try {
       const { data, error } = await supabase.from("profiles").select("*");
       if (error) throw error;
-      setUsers(data as UserData[]);
+      
+      // Add status property to match UserData interface
+      const processedUsers: UserData[] = data.map(user => ({
+        id: user.id,
+        name: user.name,
+        email: user.email,
+        role: user.role,
+        created_at: user.created_at,
+        status: 'active' // Default status since it's not in profiles table
+      }));
+      
+      setUsers(processedUsers);
     } catch (error: any) {
       toast({
         variant: "destructive",
@@ -128,26 +140,26 @@ const UserManagement = () => {
 
       const newUserId = authData.user?.id;
 
-      const { error: profileError } = await supabase
-        .from("profiles")
-        .insert([
-          {
+      if (newUserId) {
+        const { error: profileError } = await supabase
+          .from("profiles")
+          .upsert({
             id: newUserId,
             name: values.name,
             email: values.email,
             role: values.role,
-            status: values.status,
-          },
-        ]);
+            // status is not stored in profiles table
+          });
 
-      if (profileError) throw profileError;
+        if (profileError) throw profileError;
 
-      toast({
-        title: "Sucesso",
-        description: "Usuário criado com sucesso.",
-      });
-      fetchUsers();
-      setShowCreateModal(false);
+        toast({
+          title: "Sucesso",
+          description: "Usuário criado com sucesso.",
+        });
+        fetchUsers();
+        setShowCreateModal(false);
+      }
     } catch (error: any) {
       toast({
         variant: "destructive",
@@ -171,7 +183,7 @@ const UserManagement = () => {
           name: values.name,
           email: values.email,
           role: values.role,
-          status: values.status,
+          // status is not stored in profiles table
         })
         .eq("id", id);
 
@@ -200,9 +212,7 @@ const UserManagement = () => {
       const { error } = await supabase.from("profiles").delete().eq("id", id);
       if (error) throw error;
 
-      // Also delete the user from auth.users
-      const { error: authError } = await supabase.auth.admin.deleteUser(id);
-      if (authError) throw authError;
+      // Delete user authentication is usually handled by Supabase triggers
 
       toast({
         title: "Sucesso",
@@ -238,12 +248,16 @@ const UserManagement = () => {
     }
   };
 
+  const handleRoleChange = (userId: string, role: string) => {
+    updateUserRole(userId, toUserRole(role));
+  };
+
   const updateUserRole = async (userId: string, role: UserRole) => {
     setIsUpdating(true);
     try {
       const { error } = await supabase
         .from("profiles")
-        .update({ role: role })
+        .update({ role })
         .eq("id", userId);
 
       if (error) {

@@ -31,11 +31,8 @@ export const useAdminPayments = ({ searchTerm, statusFilter, page }: UseAdminPay
     }
 
     if (statusFilter !== 'ALL') {
-      // Convert the string status to lowercase for database compatibility
-      const dbStatus = typeof statusFilter === 'string' 
-        ? statusFilter.toLowerCase() 
-        : 'pending';
-      query = query.eq('status', dbStatus);
+      // Use the status directly as string for database query
+      query = query.eq('status', statusFilter);
     }
 
     const { data, error, count } = await query;
@@ -46,10 +43,9 @@ export const useAdminPayments = ({ searchTerm, statusFilter, page }: UseAdminPay
     }
 
     // Convert data with type assertion to ensure compatibility
-    // Convert the database status (lowercase) back to the enum format (uppercase)
     const typedData = data?.map(item => ({
       ...item,
-      status: item.status ? toPaymentStatus(item.status.toUpperCase()) : PaymentStatus.PENDING
+      status: item.status || PaymentStatus.PENDING
     })) as Payment[];
 
     return {
@@ -80,8 +76,8 @@ export const useAdminPayments = ({ searchTerm, statusFilter, page }: UseAdminPay
       } else if (action === PaymentAction.REJECT) {
         updateData = { status: 'rejected' };
       } else if (newStatus) {
-        // Convert to lowercase for database compatibility
-        updateData = { status: typeof newStatus === 'string' ? newStatus.toLowerCase() : newStatus };
+        // Use string directly
+        updateData = { status: newStatus };
       }
 
       const { error } = await supabase
