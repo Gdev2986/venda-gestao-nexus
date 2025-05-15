@@ -1,4 +1,3 @@
-
 import { supabase } from "@/integrations/supabase/client";
 import { UserRole } from "@/types";
 
@@ -47,11 +46,12 @@ export class NotificationServiceClass {
     userId: string
   ): Promise<void> {
     try {
+      // We need to cast the type to ensure it works with the database schema
       const { error } = await supabase.from("notifications").insert({
         user_id: userId,
         title: notification.title,
         message: notification.message,
-        type: notification.type,
+        type: notification.type as any,
         data: notification.data,
         is_read: false
       });
@@ -75,7 +75,7 @@ export class NotificationServiceClass {
       const { data: users, error: usersError } = await supabase
         .from("profiles")
         .select("id")
-        .eq("role", role);
+        .eq("role", role as any);
 
       if (usersError) throw usersError;
 
@@ -90,7 +90,7 @@ export class NotificationServiceClass {
           user_id: user.id,
           title: notification.title,
           message: notification.message,
-          type: notification.type,
+          type: notification.type as any,
           data: notification.data,
           is_read: false
         });
@@ -204,7 +204,7 @@ export class NotificationServiceClass {
 
       // Apply type filter if specified
       if (typeFilter !== "all") {
-        query = query.eq("type", typeFilter);
+        query = query.eq("type", typeFilter as any);
       }
 
       // Apply status filter if specified
