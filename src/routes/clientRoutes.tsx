@@ -15,12 +15,11 @@ const ClientLayout = () => {
   );
 };
 
-// Using USER paths instead of CLIENT since CLIENT doesn't exist in the paths file
 export const clientRoutes = (
-  <Route path={PATHS.USER.ROOT} element={<ClientLayout />}>
+  <Route path={PATHS.USER.DASHBOARD} element={<ClientLayout />}>
     <Route index element={<ClientDashboard />} />
-    <Route path={PATHS.USER.NEW} element={<ClientNew />} />
-    <Route path={`${PATHS.USER.DETAIL}/:id`} element={<ClientDetail />} />
+    <Route path="payments" element={<ClientNew />} />
+    <Route path={`clients/:id`} element={<ClientDetail />} />
   </Route>
 );
 

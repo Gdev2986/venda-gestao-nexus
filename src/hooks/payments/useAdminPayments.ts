@@ -31,7 +31,8 @@ export const useAdminPayments = ({ searchTerm, statusFilter, page }: UseAdminPay
 
     if (statusFilter !== 'ALL') {
       // Convert enum status to lowercase for database compatibility
-      const dbStatus = typeof statusFilter === 'string' ? statusFilter.toLowerCase() : 'pending';
+      // Cast to string to ensure type safety
+      const dbStatus = String(statusFilter).toLowerCase();
       query = query.eq('status', dbStatus);
     }
 
@@ -46,7 +47,7 @@ export const useAdminPayments = ({ searchTerm, statusFilter, page }: UseAdminPay
     // Convert the database status (lowercase) back to the enum format (uppercase)
     const typedData = data?.map(item => ({
       ...item,
-      status: item.status ? (item.status.toUpperCase() as PaymentStatus) : PaymentStatus.PENDING
+      status: item.status ? (String(item.status).toUpperCase() as PaymentStatus) : PaymentStatus.PENDING
     })) as Payment[];
 
     return {

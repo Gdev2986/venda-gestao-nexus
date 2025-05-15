@@ -26,7 +26,8 @@ export const usePaymentsFetcher = (options: UsePaymentsOptions = {}) => {
 
       // Apply status filter if not ALL
       if (statusFilter !== "ALL") {
-        query = query.eq("status", statusFilter);
+        // Cast to string to ensure type safety
+        query = query.eq("status", String(statusFilter));
       }
 
       // Apply search filter if provided

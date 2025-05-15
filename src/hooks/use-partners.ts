@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useCallback } from "react";
 import { Partner, FilterValues } from "@/types";
 import { supabase } from "@/integrations/supabase/client";
@@ -7,12 +6,14 @@ import { useToast } from "@/hooks/use-toast";
 interface PartnerCreate {
   company_name: string;
   commission_rate: number;
-  contact_name?: string;
-  contact_email?: string;
-  contact_phone?: string;
-  email?: string;
-  phone?: string;
-  address?: string;
+}
+
+interface PartnerRow {
+  id: string;
+  company_name: string;
+  commission_rate: number;
+  created_at: string;
+  updated_at: string;
 }
 
 export const usePartners = () => {
@@ -36,21 +37,21 @@ export const usePartners = () => {
 
       if (data) {
         // Transform data to match our Partner interface
-        const transformedPartners: Partner[] = data.map(partner => ({
+        const transformedPartners: Partner[] = data.map((partner: PartnerRow) => ({
           id: partner.id,
           company_name: partner.company_name,
           created_at: partner.created_at,
           updated_at: partner.updated_at,
           commission_rate: partner.commission_rate,
-          // Add optional fields with proper null checking
-          contact_name: partner.contact_name || undefined,
-          contact_email: partner.contact_email || undefined,
-          contact_phone: partner.contact_phone || undefined,
-          email: partner.email || undefined,
-          phone: partner.phone || undefined,
-          address: partner.address || undefined,
-          total_sales: partner.total_sales || 0,
-          total_commission: partner.total_commission || 0,
+          // Add optional fields with default values since they don't exist in the DB schema
+          contact_name: "",
+          contact_email: "",
+          contact_phone: "",
+          email: "",
+          phone: "",
+          address: "",
+          total_sales: 0,
+          total_commission: 0,
         }));
 
         setPartners(transformedPartners);
@@ -118,16 +119,10 @@ export const usePartners = () => {
       // Create a partner object with only the fields that exist in the database table
       const partnerToInsert = {
         company_name: partnerData.company_name,
-        commission_rate: partnerData.commission_rate || 0,
-        contact_name: partnerData.contact_name || null,
-        contact_email: partnerData.contact_email || null,
-        contact_phone: partnerData.contact_phone || null,
-        email: partnerData.email || null,
-        phone: partnerData.phone || null,
-        address: partnerData.address || null
+        commission_rate: partnerData.commission_rate || 0
       };
 
-      const { data, error } = await supabase
+      const { error } = await supabase
         .from('partners')
         .insert(partnerToInsert);
 
@@ -159,10 +154,6 @@ export const usePartners = () => {
       const updateData = {
         ...(partnerData.company_name && { company_name: partnerData.company_name }),
         ...(partnerData.commission_rate !== undefined && { commission_rate: partnerData.commission_rate }),
-        ...(partnerData.contact_name && { contact_name: partnerData.contact_name }),
-        ...(partnerData.email && { email: partnerData.email }),
-        ...(partnerData.phone && { phone: partnerData.phone }),
-        ...(partnerData.address && { address: partnerData.address })
       };
 
       const { error } = await supabase
