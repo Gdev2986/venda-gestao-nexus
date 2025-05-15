@@ -1,3 +1,4 @@
+
 import React, { useState } from "react";
 import { z } from "zod";
 import { useForm } from "react-hook-form";
@@ -52,8 +53,6 @@ const LoginForm = () => {
       setAuthError(null);
       await signIn(data.email, data.password);
     } catch (error: any) {
-      console.error("Erro durante login:", error);
-      
       // Tratamento de erros específicos
       if (error.message && error.message.includes("Database error")) {
         setAuthError("Erro de conexão com o servidor. Por favor, tente novamente mais tarde.");
@@ -79,7 +78,6 @@ const LoginForm = () => {
       if (error) throw error;
       
     } catch (error: any) {
-      console.error("Erro durante login com Google:", error);
       setAuthError(error.message || "Ocorreu um erro durante a autenticação com Google");
     }
   };

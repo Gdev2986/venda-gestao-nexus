@@ -26,14 +26,14 @@ const Register = () => {
     try {
       await signUp(email, password, { name });
       toast({
-        title: "Registration successful",
-        description: "Please check your email to confirm your account.",
+        title: "Cadastro realizado com sucesso",
+        description: "Por favor, verifique seu e-mail para confirmar sua conta.",
       });
       navigate(PATHS.LOGIN);
     } catch (error: any) {
       toast({
-        title: "Registration failed",
-        description: error.message || "An error occurred during registration.",
+        title: "Falha no cadastro",
+        description: error.message || "Ocorreu um erro durante o cadastro.",
         variant: "destructive",
       });
     } finally {
@@ -51,19 +51,19 @@ const Register = () => {
             </div>
             <h1 className="text-2xl font-bold">SigmaPay</h1>
           </div>
-          <CardTitle className="text-2xl font-bold text-center">Create an account</CardTitle>
+          <CardTitle className="text-2xl font-bold text-center">Criar uma conta</CardTitle>
           <CardDescription className="text-center">
-            Enter your information to create your account
+            Insira suas informações para criar sua conta
           </CardDescription>
         </CardHeader>
         
         <form onSubmit={handleSubmit}>
           <CardContent className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="name">Full Name</Label>
+              <Label htmlFor="name">Nome Completo</Label>
               <Input 
                 id="name" 
-                placeholder="John Doe"
+                placeholder="João Silva"
                 value={name}
                 onChange={(e) => setName(e.target.value)}
                 required
@@ -72,11 +72,11 @@ const Register = () => {
             </div>
             
             <div className="space-y-2">
-              <Label htmlFor="email">Email</Label>
+              <Label htmlFor="email">E-mail</Label>
               <Input 
                 id="email" 
                 type="email"
-                placeholder="name@example.com"
+                placeholder="nome@exemplo.com"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 required
@@ -85,7 +85,7 @@ const Register = () => {
             </div>
             
             <div className="space-y-2">
-              <Label htmlFor="password">Password</Label>
+              <Label htmlFor="password">Senha</Label>
               <Input 
                 id="password" 
                 type="password"
@@ -97,7 +97,7 @@ const Register = () => {
                 disabled={isSubmitting}
               />
               <p className="text-xs text-muted-foreground">
-                Password must be at least 8 characters long
+                A senha deve ter pelo menos 8 caracteres
               </p>
             </div>
           </CardContent>
@@ -111,20 +111,20 @@ const Register = () => {
               {isSubmitting ? (
                 <>
                   <Spinner className="mr-2 h-4 w-4" />
-                  Creating account...
+                  Criando conta...
                 </>
               ) : (
-                "Create account"
+                "Criar conta"
               )}
             </Button>
             
             <div className="text-center text-sm">
-              Already have an account?{" "}
+              Já possui uma conta?{" "}
               <Link 
                 to={PATHS.LOGIN}
                 className="text-primary hover:underline font-medium"
               >
-                Sign in
+                Entrar
               </Link>
             </div>
           </CardFooter>
