@@ -284,7 +284,7 @@ const AdminDashboard = () => {
           {/* Payment Methods Chart */}
           <PaymentMethodsChart data={MOCK_DATA.paymentMethods} isLoading={isLoading} />
           
-          {/* Partners and Growth Charts - Stack on mobile, side by side on larger screens */}
+          {/* Partners and Growth Charts - Stack on all screens, side by side on larger screens */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 md:gap-6">
             {/* Top Partners Chart */}
             <TopPartnersChart data={MOCK_DATA.topPartners} isLoading={isLoading} />

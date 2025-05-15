@@ -1,6 +1,6 @@
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, Legend } from "recharts";
+import { PieChart } from "@/components/charts";
 import { formatCurrency } from "@/lib/utils";
 
 interface PaymentMethodsChartProps {
@@ -8,61 +8,53 @@ interface PaymentMethodsChartProps {
     name: string;
     value: number;
     color: string;
+    percent: number;
   }>;
   isLoading?: boolean;
 }
 
-const COLORS = ["#3b82f6", "#22c55e", "#f59e0b"];
-
-const CustomTooltip = ({ active, payload }: any) => {
-  if (active && payload && payload.length) {
-    return (
-      <div className="bg-background p-3 border rounded-md shadow-sm">
-        <p className="font-medium">{payload[0].name}</p>
-        <p className="text-sm text-muted-foreground">
-          {formatCurrency(payload[0].value)}
-        </p>
-        <p className="text-sm text-muted-foreground">
-          {`${(payload[0].payload.percent * 100).toFixed(1)}%`}
-        </p>
-      </div>
-    );
-  }
-  return null;
-};
-
 const PaymentMethodsChart = ({ data, isLoading = false }: PaymentMethodsChartProps) => {
+  // Format data for the chart
+  const chartData = data.map(item => ({
+    name: item.name,
+    value: item.value,
+  }));
+
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Métodos de Pagamento</CardTitle>
+        <CardTitle className="text-base sm:text-lg">Métodos de Pagamento</CardTitle>
       </CardHeader>
       <CardContent>
         {isLoading ? (
-          <div className="h-[250px] md:h-[300px] bg-muted animate-pulse rounded flex items-center justify-center">
+          <div className="h-64 bg-muted animate-pulse rounded flex items-center justify-center">
             <p className="text-muted-foreground">Carregando dados...</p>
           </div>
         ) : (
-          <div className="h-[250px] md:h-[300px]">
-            <ResponsiveContainer width="100%" height="100%">
-              <PieChart>
-                <Pie
-                  data={data}
-                  cx="50%"
-                  cy="50%"
-                  labelLine={false}
-                  outerRadius={80}
-                  fill="#8884d8"
-                  dataKey="value"
-                >
-                  {data.map((entry, index) => (
-                    <Cell key={`cell-${index}`} fill={entry.color || COLORS[index % COLORS.length]} />
-                  ))}
-                </Pie>
-                <Tooltip content={<CustomTooltip />} />
-                <Legend />
-              </PieChart>
-            </ResponsiveContainer>
+          <div className="flex flex-col h-64 sm:h-72 md:h-80">
+            {/* Chart */}
+            <div className="flex-1 min-h-0">
+              <PieChart 
+                data={chartData} 
+                dataKey="value"
+                formatter={(value) => formatCurrency(value)}
+                innerRadius={0}
+                outerRadius={80}
+              />
+            </div>
+            
+            {/* Legend - Optimized for mobile */}
+            <div className="flex flex-wrap justify-center gap-4 mt-2 text-sm">
+              {data.map((item, index) => (
+                <div key={index} className="flex items-center">
+                  <div 
+                    className="w-3 h-3 mr-1 rounded-sm" 
+                    style={{ backgroundColor: item.color }}
+                  />
+                  <span>{item.name}: {item.percent}%</span>
+                </div>
+              ))}
+            </div>
           </div>
         )}
       </CardContent>

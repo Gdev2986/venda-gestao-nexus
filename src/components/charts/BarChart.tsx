@@ -8,7 +8,7 @@ interface BarChartProps {
   height?: number;
   color?: string;
   formatter?: (value: number) => string;
-  layout?: "vertical" | "horizontal";
+  margin?: { top: number; right: number; left: number; bottom: number };
 }
 
 export const BarChart = ({
@@ -16,44 +16,32 @@ export const BarChart = ({
   dataKey = "value",
   xAxisKey = "name",
   height = 300,
-  color = "hsl(var(--primary))",
+  color = "#3b82f6",
   formatter,
-  layout = "horizontal"
+  margin = { top: 10, right: 30, left: 20, bottom: 20 }
 }: BarChartProps) => {
   return (
     <ResponsiveContainer width="100%" height={height}>
-      <RechartsBarChart 
-        data={data}
-        layout={layout}
-        margin={{ top: 10, right: 30, left: 20, bottom: 20 }}
-      >
+      <RechartsBarChart data={data} margin={margin}>
         <CartesianGrid strokeDasharray="3 3" vertical={false} />
-        {layout === "horizontal" ? (
-          <>
-            <XAxis dataKey={xAxisKey} />
-            <YAxis 
-              tickFormatter={(value) => formatter ? formatter(value) : 
-                new Intl.NumberFormat("pt-BR", {
-                  notation: "compact",
-                  compactDisplay: "short",
-                }).format(value)
-              }
-            />
-          </>
-        ) : (
-          <>
-            <XAxis 
-              type="number" 
-              tickFormatter={(value) => formatter ? formatter(value) : 
-                new Intl.NumberFormat("pt-BR", {
-                  notation: "compact",
-                  compactDisplay: "short",
-                }).format(value)
-              }
-            />
-            <YAxis dataKey={xAxisKey} type="category" />
-          </>
-        )}
+        <XAxis 
+          dataKey={xAxisKey} 
+          tick={{ fontSize: 12 }} // Smaller font for mobile
+          interval={0} // Show all labels
+          angle={-45} // Angle labels for better fit on mobile
+          textAnchor="end" // Align labels
+          height={60} // More space for angled labels
+        />
+        <YAxis 
+          tickFormatter={(value) => formatter ? formatter(value) : 
+            new Intl.NumberFormat("pt-BR", {
+              notation: "compact",
+              compactDisplay: "short",
+            }).format(value)
+          }
+          tick={{ fontSize: 12 }} // Smaller font for mobile
+          width={40} // Smaller width for mobile
+        />
         <Tooltip 
           formatter={(value: any) => formatter ? formatter(value) : 
             new Intl.NumberFormat("pt-BR", {
@@ -61,12 +49,14 @@ export const BarChart = ({
               currency: "BRL",
             }).format(value)
           }
+          contentStyle={{ fontSize: '12px' }} // Smaller tooltip for mobile
         />
-        <Legend />
+        <Legend wrapperStyle={{ fontSize: '12px' }} /> {/* Smaller legend for mobile */}
         <Bar 
           dataKey={dataKey} 
           fill={color} 
-          radius={layout === "horizontal" ? [4, 4, 0, 0] : [0, 4, 4, 0]} 
+          radius={[4, 4, 0, 0]} // Rounded corners
+          maxBarSize={50} // Limit max width for aesthetic reasons
         />
       </RechartsBarChart>
     </ResponsiveContainer>

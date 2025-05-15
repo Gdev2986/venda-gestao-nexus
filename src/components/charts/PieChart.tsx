@@ -24,16 +24,23 @@ export const PieChart = ({
   outerRadius = 80,
   paddingAngle = 0
 }: PieChartProps) => {
+  // Calculate a responsive outerRadius based on container size
+  // This is a fallback - we'll use CSS for most of the responsiveness
+  const responsiveOuterRadius = (width: number) => {
+    const baseSize = Math.min(width * 0.35, outerRadius);
+    return baseSize;
+  };
+
   return (
     <ResponsiveContainer width="100%" height={height}>
-      <RechartsPieChart margin={{ top: 10, right: 30, left: 20, bottom: 20 }}>
+      <RechartsPieChart margin={{ top: 10, right: 10, left: 10, bottom: 10 }}>
         <Pie
           data={data}
           cx="50%"
           cy="50%"
-          labelLine={true}
-          label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(0)}%`}
-          outerRadius={outerRadius}
+          labelLine={false} // Remove label lines for mobile
+          label={({ name, percent }) => percent > 0.05 ? `${(percent * 100).toFixed(0)}%` : ''} // Only show labels for segments > 5%
+          outerRadius={({ width }) => responsiveOuterRadius(width)}
           innerRadius={innerRadius}
           paddingAngle={paddingAngle}
           dataKey={dataKey}
@@ -50,8 +57,14 @@ export const PieChart = ({
               currency: "BRL",
             }).format(value)
           }
+          contentStyle={{ fontSize: '12px' }} // Smaller font for mobile
         />
-        <Legend />
+        <Legend 
+          layout="horizontal"
+          verticalAlign="bottom"
+          align="center"
+          wrapperStyle={{ fontSize: '10px', paddingTop: '10px' }} // Smaller font for mobile
+        />
       </RechartsPieChart>
     </ResponsiveContainer>
   );
