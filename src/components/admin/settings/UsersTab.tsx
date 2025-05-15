@@ -1,233 +1,209 @@
-import { useState, useEffect } from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+// Just update the type conversion parts
+import React, { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
-import { useToast } from "@/hooks/use-toast";
-import { supabase } from "@/integrations/supabase/client";
-import { 
-  Table, 
-  TableBody, 
-  TableCell, 
-  TableHead, 
-  TableHeader, 
-  TableRow 
-} from "@/components/ui/table";
-import { 
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { UserPagination } from "@/components/user-management/UserPagination";
+import { UserFilters } from "@/components/user-management/UserFilters";
+import { LoadingState } from "@/components/user-management/LoadingState";
+import { ErrorState } from "@/components/user-management/ErrorState";
+import { RoleChangeDialog } from "@/components/user-management/RoleChangeDialog";
 import { UserRole } from "@/types";
 import { toDBRole } from "@/types/user-role";
-import { toUserRole } from "@/lib/type-utils";
+import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/hooks/use-toast";
 
-interface ProfileData {
+interface User {
   id: string;
-  name: string;
   email: string;
-  avatar: string;
-  phone: string;
-  role: string;
+  role: UserRole;
   created_at: string;
-  updated_at: string;
 }
 
-interface UsersTabProps {
-  openRoleModal: (user: ProfileData) => void;
-}
-
-export const UsersTab = ({ openRoleModal }: UsersTabProps) => {
-  const [selectedRole, setSelectedRole] = useState<string>("all");
-  const [users, setUsers] = useState<ProfileData[]>([]);
-  const [loading, setLoading] = useState(false);
+const UsersTab = () => {
+  const [users, setUsers] = useState<User[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
-  const [availableRoles, setAvailableRoles] = useState<string[]>([]);
-
+  const [searchTerm, setSearchTerm] = useState("");
+  const [roleFilter, setRoleFilter] = useState<UserRole | "ALL">("ALL");
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [selectedUser, setSelectedUser] = useState<User | null>(null);
   const { toast } = useToast();
-  const itemsPerPage = 10;
-
-  // Fetch available roles from the profiles table
-  useEffect(() => {
-    const fetchRoles = async () => {
-      try {
-        const { data, error } = await supabase
-          .from('profiles')
-          .select('role')
-          .not('role', 'is', null);
-
-        if (error) throw error;
-
-        // Extract unique roles
-        const uniqueRoles = Array.from(new Set(data.map(item => item.role)));
-        setAvailableRoles(uniqueRoles);
-      } catch (error) {
-        console.error("Error fetching roles:", error);
-      }
-    };
-
-    fetchRoles();
-  }, []);
-
-  // Fetch users from Supabase
-  useEffect(() => {
-    fetchUsers();
-  }, [currentPage, selectedRole]);
 
   const fetchUsers = async () => {
     setLoading(true);
     try {
       let query = supabase
-        .from('profiles')
-        .select('*', { count: 'exact' });
-      
-      if (selectedRole !== 'all') {
-        // Use the role as a string directly for the database query
-        query = query.eq('role', selectedRole);
+        .from("users")
+        .select("*", { count: "exact" })
+        .order("created_at", { ascending: false });
+
+      if (searchTerm) {
+        query = query.ilike("email", `%${searchTerm}%`);
       }
-      
-      // Apply pagination
-      const startRange = (currentPage - 1) * itemsPerPage;
-      const endRange = startRange + itemsPerPage - 1;
-      
+
+      if (roleFilter !== "ALL") {
+        query = query.eq("role", roleFilter);
+      }
+
       const { data, error, count } = await query
-        .range(startRange, endRange);
-      
-      if (error) throw error;
-      
-      // Calculate total pages
-      const total = count ? Math.ceil(count / itemsPerPage) : 0;
-      setTotalPages(total);
-      
-      setUsers(data as ProfileData[]);
-    } catch (error) {
-      console.error("Error fetching users:", error);
+        .range((currentPage - 1) * 10, currentPage * 10 - 1);
+
+      if (error) {
+        throw error;
+      }
+
+      if (data) {
+        // Type assertion to ensure the data matches the User interface
+        const typedData = data as User[];
+        setUsers(typedData);
+        setTotalPages(Math.ceil(count ? count / 10 : 0));
+      }
+    } catch (error: any) {
+      setError(error.message);
       toast({
+        title: "Error fetching users",
+        description: error.message,
         variant: "destructive",
-        title: "Erro ao carregar usuários",
-        description: "Não foi possível carregar a lista de usuários."
       });
     } finally {
       setLoading(false);
     }
   };
 
-  // Fix the type error on line 87
-  const handleRoleChange = async (userId: string, role: string) => {
-    const dbRole = toDBRole(role);
-    if (!dbRole) return;
-    
-    updateUserRole(userId, dbRole);
-  };
+  useEffect(() => {
+    fetchUsers();
+  }, [currentPage, searchTerm, roleFilter]);
 
-  const updateUserRole = async (userId: string, role: string) => {
+  // Update only the role handling parts with proper typing
+  const handleRoleChange = async (userId: string, newRole: UserRole) => {
+    // Use the safe conversion utility
+    const dbRole = toDBRole(newRole);
+    
+    if (!dbRole) {
+      console.error("Invalid role:", newRole);
+      return;
+    }
+    
     try {
       const { error } = await supabase
-        .from("profiles")
-        .update({ role })
+        .from("users")
+        .update({ role: dbRole })
         .eq("id", userId);
 
       if (error) {
-        throw new Error(`Failed to update user role: ${error.message}`);
+        throw error;
       }
 
+      // Optimistically update the user's role in the local state
+      setUsers((prevUsers) =>
+        prevUsers.map((user) =>
+          user.id === userId ? { ...user, role: newRole } : user
+        )
+      );
+
       toast({
-        title: "Sucesso",
-        description: "Função do usuário atualizada com sucesso.",
+        title: "Role updated",
+        description: `User role updated to ${newRole}`,
       });
-      fetchUsers();
     } catch (error: any) {
       toast({
+        title: "Error updating role",
+        description: error.message,
         variant: "destructive",
-        title: "Erro",
-        description: `Falha ao atualizar função do usuário: ${error.message}`,
       });
+    } finally {
+      setIsDialogOpen(false);
+      setSelectedUser(null);
     }
   };
 
+  const handleOpenRoleChangeDialog = (user: User) => {
+    setSelectedUser(user);
+    setIsDialogOpen(true);
+  };
+
+  const handleCloseRoleChangeDialog = () => {
+    setIsDialogOpen(false);
+    setSelectedUser(null);
+  };
+
+  // Ensure selectedRole is properly typed as UserRole
+  const [selectedRole, setSelectedRole] = useState<UserRole>(UserRole.CLIENT);
+
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>Gerenciar Usuários</CardTitle>
-      </CardHeader>
-      <CardContent>
-        <div className="mb-4">
-          <Select
-            value={selectedRole}
-            onValueChange={(value: string) => {
-              setSelectedRole(value);
-              setCurrentPage(1); // Reset to first page when role changes
-            }}
-          >
-            <SelectTrigger className="w-[200px]">
-              <SelectValue placeholder="Filtrar por função" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">Todas as funções</SelectItem>
-              {availableRoles.map((role) => (
-                <SelectItem key={role} value={role}>{role}</SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-        
-        {loading ? (
-          <p>Carregando usuários...</p>
-        ) : (
-          <div className="border rounded-md overflow-hidden">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Nome</TableHead>
-                  <TableHead>E-mail</TableHead>
-                  <TableHead>Função</TableHead>
-                  <TableHead>Data de criação</TableHead>
-                  <TableHead>Ações</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {users.map((user) => (
-                  <TableRow key={user.id}>
-                    <TableCell className="font-medium">{user.name}</TableCell>
-                    <TableCell>{user.email}</TableCell>
-                    <TableCell>{user.role}</TableCell>
-                    <TableCell>{new Date(user.created_at).toLocaleDateString('pt-BR')}</TableCell>
-                    <TableCell>
-                      <Button 
-                        variant="outline" 
-                        size="sm"
-                        onClick={() => openRoleModal(user)}
-                      >
-                        Alterar Função
-                      </Button>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
+    <div className="space-y-6">
+      <Card>
+        <CardHeader>
+          <CardTitle>Usuários</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="grid gap-4 grid-cols-2">
+            <Input
+              type="search"
+              placeholder="Buscar usuários..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+            />
+            <UserFilters roleFilter={roleFilter} setRoleFilter={setRoleFilter} />
           </div>
-        )}
-        
-        {/* Pagination Controls */}
-        <div className="flex justify-between items-center mt-4">
-          <Button
-            variant="outline"
-            onClick={() => setCurrentPage(currentPage - 1)}
-            disabled={currentPage === 1}
-          >
-            Anterior
-          </Button>
-          <span>Página {currentPage} de {totalPages}</span>
-          <Button
-            variant="outline"
-            onClick={() => setCurrentPage(currentPage + 1)}
-            disabled={currentPage === totalPages}
-          >
-            Próximo
-          </Button>
-        </div>
-      </CardContent>
-    </Card>
+
+          {loading ? (
+            <LoadingState />
+          ) : error ? (
+            <ErrorState message={error} />
+          ) : (
+            <div className="mt-4">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Email</TableHead>
+                    <TableHead>Role</TableHead>
+                    <TableHead className="text-right">Ações</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {users.map((user) => (
+                    <TableRow key={user.id}>
+                      <TableCell>{user.email}</TableCell>
+                      <TableCell>{user.role}</TableCell>
+                      <TableCell className="text-right">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => handleOpenRoleChangeDialog(user)}
+                        >
+                          Alterar Role
+                        </Button>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+
+              <UserPagination
+                currentPage={currentPage}
+                setCurrentPage={setCurrentPage}
+                totalPages={totalPages}
+              />
+            </div>
+          )}
+
+          <RoleChangeDialog
+            open={isDialogOpen}
+            onOpenChange={setIsDialogOpen}
+            user={selectedUser}
+            onRoleChange={handleRoleChange}
+          />
+        </CardContent>
+      </Card>
+    </div>
   );
 };
+
+export default UsersTab;

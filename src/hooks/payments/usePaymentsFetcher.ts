@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { PaymentRequest } from "@/types/payment.types";
@@ -25,9 +26,8 @@ export const usePaymentsFetcher = (options: UsePaymentsOptions = {}) => {
           client:clients(id, business_name, email)
         `);
 
-      // Fix the error on line 32
       if (statusFilter !== "ALL") {
-        const dbStatus = toDBPaymentStatus(statusFilter);
+        const dbStatus = toDBPaymentStatus(statusFilter as PaymentStatus);
         if (dbStatus) {
           query = query.eq("status", dbStatus);
         }

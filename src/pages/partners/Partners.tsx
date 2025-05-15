@@ -1,51 +1,40 @@
-
-import { useState } from "react";
-import { usePartners } from "@/hooks/use-partners";
+import React, { useState } from "react";
 import { PageHeader } from "@/components/page/PageHeader";
 import { PageWrapper } from "@/components/page/PageWrapper";
-import { Card } from "@/components/ui/card";
-import PartnersTable from "@/components/partners/PartnersTable";
-import PartnersFilterCard from "@/components/partners/PartnersFilterCard";
+import { PartnersFilterCard } from "@/components/partners/PartnersFilterCard";
+import { PartnersTableCard } from "@/components/partners/PartnersTableCard";
+import { PATHS } from "@/routes/paths";
+import { usePartners } from "@/hooks/use-partners";
 
 const Partners = () => {
-  const {
-    partners,
-    isLoading,
-    filterPartners,
-  } = usePartners();
-  
+  const { partners, loading, error, filterPartners } = usePartners();
   const [searchTerm, setSearchTerm] = useState("");
-  
-  const handleSearch = (search: string) => {
-    setSearchTerm(search);
-    filterPartners(search);
-  };
-  
+
+  // Use the filterPartners function correctly
+  const filteredPartners = filterPartners({ name: searchTerm });
+
   return (
-    <div>
+    <>
       <PageHeader
         title="Parceiros"
-        description="Gerencie todos os parceiros do sistema"
+        description="Gerenciar parceiros"
         actionLabel="Novo Parceiro"
-        actionOnClick={() => {}}
+        actionLink={PATHS.PARTNERS.NEW}
       />
-      
+
+      <PartnersFilterCard
+        searchTerm={searchTerm}
+        onSearchTermChange={setSearchTerm}
+      />
+
       <PageWrapper>
-        <div className="space-y-6">
-          <PartnersFilterCard
-            onFilter={(values) => filterPartners(values.search || "")}
-            isLoading={isLoading}
-          />
-          
-          <Card>
-            <PartnersTable 
-              partners={partners}
-              isLoading={isLoading}
-            />
-          </Card>
-        </div>
+        <PartnersTableCard
+          partners={filteredPartners}
+          loading={loading}
+          error={error}
+        />
       </PageWrapper>
-    </div>
+    </>
   );
 };
 
