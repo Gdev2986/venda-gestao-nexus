@@ -40,8 +40,11 @@ interface SalesTableProps {
   };
 }
 
-const getPaymentMethodLabel = (method: PaymentMethod) => {
-  switch (method) {
+const getPaymentMethodLabel = (method: string | PaymentMethod) => {
+  // Ensure method is handled as a string
+  const paymentMethodStr = String(method);
+
+  switch (paymentMethodStr) {
     case PaymentMethod.CREDIT:
       return <Badge variant="outline">Crédito</Badge>;
     case PaymentMethod.DEBIT:
@@ -49,7 +52,7 @@ const getPaymentMethodLabel = (method: PaymentMethod) => {
     case PaymentMethod.PIX:
       return <Badge variant="outline" className="border-warning text-warning">Pix</Badge>;
     default:
-      return null;
+      return <Badge variant="outline">{paymentMethodStr}</Badge>;
   }
 };
 

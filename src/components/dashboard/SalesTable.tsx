@@ -37,13 +37,14 @@ interface SalesTableProps {
   isLoading?: boolean;
 }
 
-const getPaymentMethodIcon = (method: string) => {
-  // Ensure method is a valid PaymentMethod enum value or use a default
-  const paymentMethod = Object.values(PaymentMethod).includes(method as PaymentMethod) 
-    ? method as PaymentMethod
-    : PaymentMethod.CREDIT;
-
-  switch (paymentMethod) {
+const getPaymentMethodIcon = (method: string | PaymentMethod) => {
+  // Ensure method is handled as a string
+  const paymentMethodStr = String(method);
+  
+  // Check if it's a valid PaymentMethod enum value
+  const isValidPaymentMethod = Object.values(PaymentMethod).includes(paymentMethodStr as PaymentMethod);
+  
+  switch (paymentMethodStr) {
     case PaymentMethod.CREDIT:
       return <Badge variant="outline">Crédito</Badge>;
     case PaymentMethod.DEBIT:
@@ -51,7 +52,7 @@ const getPaymentMethodIcon = (method: string) => {
     case PaymentMethod.PIX:
       return <Badge variant="outline" className="border-warning text-warning">Pix</Badge>;
     default:
-      return <Badge variant="outline">{method}</Badge>;
+      return <Badge variant="outline">{paymentMethodStr}</Badge>;
   }
 };
 

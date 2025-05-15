@@ -129,7 +129,7 @@ export const usePartners = () => {
 
       const { data, error } = await supabase
         .from('partners')
-        .insert([partnerToInsert]);
+        .insert(partnerToInsert);
 
       if (error) throw error;
 

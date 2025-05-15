@@ -59,10 +59,12 @@ const SendNotificationForm = () => {
         
       } else {
         // Filtrar por tipo específico de usuário
+        const targetRole = data.target;
+        
         const { data: users, error } = await supabase
           .from('profiles')
           .select('id')
-          .eq('role', data.target);
+          .eq('role', targetRole);
         
         if (error) throw error;
         userIds = users.map(user => user.id);
