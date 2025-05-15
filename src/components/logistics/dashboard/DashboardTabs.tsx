@@ -17,17 +17,17 @@ interface DashboardTabsProps {
 const DashboardTabs: React.FC<DashboardTabsProps> = ({ machineStatusData, requestsMonthlyData, slaData }) => {
   return (
     <Tabs defaultValue="overview" className="w-full">
-      <TabsList className="grid w-full grid-cols-4 mb-4">
-        <TabsTrigger value="overview">Visão Geral</TabsTrigger>
-        <TabsTrigger value="machines">Máquinas</TabsTrigger>
-        <TabsTrigger value="requests">Solicitações</TabsTrigger>
-        <TabsTrigger value="inventory">Estoque</TabsTrigger>
+      <TabsList className="grid w-full grid-cols-2 sm:grid-cols-4 mb-4">
+        <TabsTrigger value="overview" className="text-xs sm:text-sm">Visão Geral</TabsTrigger>
+        <TabsTrigger value="machines" className="text-xs sm:text-sm">Máquinas</TabsTrigger>
+        <TabsTrigger value="requests" className="text-xs sm:text-sm">Solicitações</TabsTrigger>
+        <TabsTrigger value="inventory" className="text-xs sm:text-sm">Estoque</TabsTrigger>
       </TabsList>
       
       {/* Overview Tab */}
-      <TabsContent value="overview" className="space-y-6">
+      <TabsContent value="overview" className="space-y-4 sm:space-y-6">
         {/* Status charts */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <MachineStatusChart data={machineStatusData} />
           <RequestsChart data={requestsMonthlyData} />
         </div>
@@ -47,7 +47,7 @@ const DashboardTabs: React.FC<DashboardTabsProps> = ({ machineStatusData, reques
       </TabsContent>
       
       {/* Inventory Tab */}
-      <TabsContent value="inventory" className="space-y-6">
+      <TabsContent value="inventory" className="space-y-4 sm:space-y-6">
         <StorageOptimizationCard />
       </TabsContent>
     </Tabs>

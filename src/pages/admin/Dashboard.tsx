@@ -147,12 +147,12 @@ const AdminDashboard = () => {
     ];
 
     return (
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 gap-3 md:grid-cols-4 md:gap-4">
         {links.map((link) => (
           <Card key={link.name} className="hover:shadow-md transition-shadow">
             <Button 
               variant="ghost" 
-              className="h-full w-full flex flex-col items-center justify-center py-6"
+              className="h-full w-full flex flex-col items-center justify-center py-4 md:py-6"
               onClick={() => {
                 toast({
                   title: `Navegando para ${link.name}`,
@@ -162,11 +162,11 @@ const AdminDashboard = () => {
                 window.location.href = link.path;
               }}
             >
-              <div className={cn("rounded-full p-3 mb-2", link.color)}>
-                <link.icon size={24} />
+              <div className={cn("rounded-full p-2 md:p-3 mb-2", link.color)}>
+                <link.icon className="h-4 w-4 md:h-5 md:w-5" />
               </div>
-              <span>{link.name}</span>
-              <ArrowRight size={16} className="mt-2 opacity-50" />
+              <span className="text-sm md:text-base">{link.name}</span>
+              <ArrowRight size={14} className="mt-1 opacity-50" />
             </Button>
           </Card>
         ))}
@@ -175,18 +175,18 @@ const AdminDashboard = () => {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 md:space-y-6">
       <PageHeader
-        title="Dashboard Administrativo"
+        title="Dashboard"
         description="Visão geral da operação e principais métricas"
       >
         <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 mt-3 sm:mt-0">
-          {/* Date filter */}
-          <div className="flex shadow-sm rounded-md w-full sm:w-auto overflow-x-auto">
+          {/* Date filter - scrollable on mobile */}
+          <div className="flex flex-nowrap overflow-x-auto w-full pb-1 sm:pb-0 sm:w-auto gap-0 shadow-sm rounded-md">
             <Button 
               variant={activeFilter === DATE_FILTER_PRESETS.LAST_7_DAYS ? "default" : "outline"}
               onClick={() => handleFilterChange(DATE_FILTER_PRESETS.LAST_7_DAYS)}
-              className="rounded-r-none"
+              className="rounded-r-none flex-shrink-0"
               size="sm"
             >
               7 dias
@@ -194,7 +194,7 @@ const AdminDashboard = () => {
             <Button 
               variant={activeFilter === DATE_FILTER_PRESETS.LAST_30_DAYS ? "default" : "outline"}
               onClick={() => handleFilterChange(DATE_FILTER_PRESETS.LAST_30_DAYS)}
-              className="rounded-none border-l-0 border-r-0"
+              className="rounded-none border-l-0 border-r-0 flex-shrink-0"
               size="sm"
             >
               30 dias
@@ -202,15 +202,15 @@ const AdminDashboard = () => {
             <Button 
               variant={activeFilter === DATE_FILTER_PRESETS.CURRENT_MONTH ? "default" : "outline"}
               onClick={() => handleFilterChange(DATE_FILTER_PRESETS.CURRENT_MONTH)}
-              className="rounded-none border-r-0"
+              className="rounded-none border-r-0 flex-shrink-0"
               size="sm"
             >
-              Mês atual
+              Mês
             </Button>
             <Button 
               variant={activeFilter === DATE_FILTER_PRESETS.QUARTER ? "default" : "outline"}
               onClick={() => handleFilterChange(DATE_FILTER_PRESETS.QUARTER)}
-              className="rounded-l-none"
+              className="rounded-l-none flex-shrink-0"
               size="sm"
             >
               Trimestre
@@ -223,13 +223,13 @@ const AdminDashboard = () => {
               <PopoverTrigger asChild>
                 <Button variant="outline" size="sm" className="flex items-center gap-2 w-full sm:w-auto">
                   <CalendarIcon size={16} />
-                  <span className="truncate">
+                  <span className="truncate text-xs sm:text-sm">
                     {dateRange.from && dateRange.to ? (
                       <>
-                        {format(dateRange.from, "dd/MM/yyyy")} - {format(dateRange.to, "dd/MM/yyyy")}
+                        {format(dateRange.from, "dd/MM/yy")} - {format(dateRange.to, "dd/MM/yy")}
                       </>
                     ) : (
-                      "Selecionar período"
+                      "Período"
                     )}
                   </span>
                 </Button>
@@ -246,7 +246,7 @@ const AdminDashboard = () => {
                       setActiveFilter(DATE_FILTER_PRESETS.CUSTOM);
                     }
                   }}
-                  numberOfMonths={2}
+                  numberOfMonths={1}
                   className={cn("p-3 pointer-events-auto")}
                 />
               </PopoverContent>
@@ -256,41 +256,38 @@ const AdminDashboard = () => {
               variant="outline" 
               onClick={handleRefresh} 
               disabled={isLoading}
-              size="sm"
-              className="flex items-center gap-2"
+              size="icon"
+              className="h-8 w-8 p-0"
             >
               <RefreshCw className={`h-4 w-4 ${isLoading ? 'animate-spin' : ''}`} />
-              <span className="hidden sm:inline">Atualizar</span>
             </Button>
           </div>
         </div>
       </PageHeader>
 
-      <PageWrapper>
-        <div className="space-y-6">
-          {/* Stats Cards */}
-          <StatCards stats={MOCK_DATA.stats} isLoading={isLoading} />
+      <PageWrapper className="space-y-4 md:space-y-6">
+        {/* Stats Cards */}
+        <StatCards stats={MOCK_DATA.stats} isLoading={isLoading} />
+        
+        {/* Quick Links */}
+        <div className="mt-4 md:mt-6">
+          <h3 className="text-base md:text-lg font-medium mb-3 md:mb-4">Atalhos Rápidos</h3>
+          {renderQuickLinks()}
+        </div>
+        
+        {/* Charts Grid */}
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-2 md:gap-6 mt-4 md:mt-6">
+          {/* Sales Chart */}
+          <SalesChart data={MOCK_DATA.dailySales} isLoading={isLoading} />
           
-          {/* Quick Links */}
-          <div className="mb-8">
-            <h3 className="text-lg font-medium mb-4">Atalhos Rápidos</h3>
-            {renderQuickLinks()}
-          </div>
+          {/* Payment Methods Chart */}
+          <PaymentMethodsChart data={MOCK_DATA.paymentMethods} isLoading={isLoading} />
           
-          {/* Charts Grid */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {/* Sales Chart */}
-            <SalesChart data={MOCK_DATA.dailySales} isLoading={isLoading} />
-            
-            {/* Payment Methods Chart */}
-            <PaymentMethodsChart data={MOCK_DATA.paymentMethods} isLoading={isLoading} />
-            
-            {/* Top Partners Chart */}
-            <TopPartnersChart data={MOCK_DATA.topPartners} isLoading={isLoading} />
-            
-            {/* Client Growth Chart */}
-            <ClientGrowthChart data={MOCK_DATA.clientGrowth} isLoading={isLoading} />
-          </div>
+          {/* Top Partners Chart */}
+          <TopPartnersChart data={MOCK_DATA.topPartners} isLoading={isLoading} />
+          
+          {/* Client Growth Chart */}
+          <ClientGrowthChart data={MOCK_DATA.clientGrowth} isLoading={isLoading} />
         </div>
       </PageWrapper>
     </div>

@@ -42,7 +42,7 @@ const MainLayout = ({ children }: MainLayoutProps) => {
 
   return (
     <div className="flex h-screen overflow-hidden bg-background">
-      {/* Sidebar component - mounted always but conditionally shown */}
+      {/* Sidebar component */}
       <Sidebar 
         isOpen={sidebarOpen} 
         isMobile={isMobile} 
@@ -52,11 +52,12 @@ const MainLayout = ({ children }: MainLayoutProps) => {
       
       {/* Main content */}
       <div 
-        className={`flex-1 flex flex-col transition-all duration-300 ease-in-out ${
+        className={cn(
+          "flex-1 flex flex-col transition-all duration-300 ease-in-out max-w-full",
           sidebarOpen && !isMobile ? 'ml-64' : 'ml-0'
-        } max-w-full`}
+        )}
       >
-        {/* Header - optimized for mobile */}
+        {/* Header */}
         <header className="h-14 md:h-16 border-b border-border flex items-center justify-between px-2 sm:px-4 bg-background sticky top-0 z-10">
           <div className="flex items-center space-x-2 md:space-x-4">
             <Button 
@@ -77,8 +78,8 @@ const MainLayout = ({ children }: MainLayoutProps) => {
           </div>
         </header>
         
-        {/* Main scrollable content - fixes mobile width issues */}
-        <main className="flex-1 w-full overflow-y-auto overflow-x-hidden p-2 sm:p-4 md:p-6 lg:p-8">
+        {/* Main scrollable content */}
+        <main className="flex-1 w-full overflow-y-auto overflow-x-hidden p-2 sm:p-4 md:p-6">
           <div className="mx-auto w-full">
             {children}
           </div>
@@ -86,6 +87,11 @@ const MainLayout = ({ children }: MainLayoutProps) => {
       </div>
     </div>
   );
+};
+
+// Missing function import
+const cn = (...classes: any[]) => {
+  return classes.filter(Boolean).join(' ');
 };
 
 export default MainLayout;
