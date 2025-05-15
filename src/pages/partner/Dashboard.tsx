@@ -120,8 +120,45 @@ const PartnerDashboard = () => {
         </CardContent>
       </PageWrapper>
       
+      {/* Payment Methods - Add this section */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-lg md:text-xl">Métodos de Pagamento</CardTitle>
+          <CardDescription>
+            Distribuição de vendas por meio de pagamento
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="h-64 md:h-72">
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart
+                data={[
+                  { name: 'Crédito', value: 28 },
+                  { name: 'Débito', value: 18 },
+                  { name: 'Pix', value: 12 }
+                ]}
+                margin={{
+                  top: 20,
+                  right: 20,
+                  left: 0,
+                  bottom: 5,
+                }}
+              >
+                <CartesianGrid strokeDasharray="3 3" />
+                <XAxis dataKey="name" />
+                <YAxis />
+                <Tooltip 
+                  formatter={(value) => [`${value} vendas`, undefined]} 
+                />
+                <Bar dataKey="value" name="Vendas" fill="#3b82f6" />
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
+        </CardContent>
+      </Card>
+      
       {/* Quick actions */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3 md:gap-6">
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 md:gap-6">
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center text-base md:text-lg">
@@ -160,7 +197,7 @@ const PartnerDashboard = () => {
           </CardContent>
         </Card>
         
-        <Card className="sm:col-span-2 md:col-span-1">
+        <Card>
           <CardHeader>
             <CardTitle className="flex items-center text-base md:text-lg">
               <CreditCard className="h-4 w-4 md:h-5 md:w-5 mr-2" /> 

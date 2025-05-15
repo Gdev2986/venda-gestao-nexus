@@ -158,7 +158,9 @@ const Dashboard = () => {
           </CardContent>
         </Card>
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 md:gap-6">
+        {/* Charts - stacked vertically on mobile */}
+        <div className="grid grid-cols-1 gap-4 md:gap-6">
+          {/* Daily Sales Chart */}
           <Card>
             <CardHeader>
               <CardTitle className="text-lg">Vendas Diárias</CardTitle>
@@ -170,6 +172,7 @@ const Dashboard = () => {
             </CardContent>
           </Card>
 
+          {/* Payment Methods Chart */}
           <Card>
             <CardHeader>
               <CardTitle className="text-lg">Métodos de Pagamento</CardTitle>

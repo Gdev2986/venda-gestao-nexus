@@ -74,9 +74,9 @@ const SalesChart = ({ data, isLoading = false, className }: SalesChartProps) => 
       </CardHeader>
       <CardContent>
         {isLoading ? (
-          <div className="h-[300px] bg-muted animate-pulse rounded" />
+          <div className="h-[250px] md:h-[300px] bg-muted animate-pulse rounded" />
         ) : (
-          <div className="h-[300px]">
+          <div className="h-[250px] md:h-[300px]">
             <ResponsiveContainer width="100%" height="100%">
               <BarChart
                 data={chartData}
