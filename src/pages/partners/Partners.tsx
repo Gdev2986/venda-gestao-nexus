@@ -1,51 +1,49 @@
 
-import { useState } from "react";
-import { usePartners } from "@/hooks/use-partners";
+import React, { useState } from "react";
 import { PageHeader } from "@/components/page/PageHeader";
 import { PageWrapper } from "@/components/page/PageWrapper";
-import { Card } from "@/components/ui/card";
-import PartnersTable from "@/components/partners/PartnersTable";
-import PartnersFilterCard from "@/components/partners/PartnersFilterCard";
+import { PartnersFilterCard } from "@/components/partners/PartnersFilterCard";
+import { PartnersTableCard } from "@/components/partners/PartnersTableCard";
+import { PATHS } from "@/routes/paths";
+import { usePartners } from "@/hooks/use-partners";
+import { FilterValues } from "@/types";
 
 const Partners = () => {
-  const {
-    partners,
-    isLoading,
-    filterPartners,
-  } = usePartners();
-  
+  const { partners, loading, error, filterPartners } = usePartners();
   const [searchTerm, setSearchTerm] = useState("");
-  
-  const handleSearch = (search: string) => {
-    setSearchTerm(search);
-    filterPartners(search);
+
+  // Use the filterPartners function correctly
+  const filteredPartners = filterPartners({ name: searchTerm });
+
+  const handleFilter = (values: FilterValues) => {
+    setSearchTerm(values.search || "");
   };
-  
+
+  // For partner paths, use the admin paths instead
+  const newPartnerLink = PATHS.ADMIN.PARTNER_NEW || PATHS.DASHBOARD;
+
   return (
-    <div>
+    <>
       <PageHeader
         title="Parceiros"
-        description="Gerencie todos os parceiros do sistema"
+        description="Gerenciar parceiros"
         actionLabel="Novo Parceiro"
-        actionOnClick={() => {}}
+        actionLink={newPartnerLink}
       />
-      
+
+      <PartnersFilterCard
+        onFilter={handleFilter}
+        isLoading={loading}
+      />
+
       <PageWrapper>
-        <div className="space-y-6">
-          <PartnersFilterCard
-            onFilter={(values) => filterPartners(values.search || "")}
-            isLoading={isLoading}
-          />
-          
-          <Card>
-            <PartnersTable 
-              partners={partners}
-              isLoading={isLoading}
-            />
-          </Card>
-        </div>
+        <PartnersTableCard
+          partners={filteredPartners}
+          loading={loading}
+          error={error}
+        />
       </PageWrapper>
-    </div>
+    </>
   );
 };
 
