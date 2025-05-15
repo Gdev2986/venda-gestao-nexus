@@ -1,6 +1,6 @@
 
-import LineChart from './LineChart';
-import BarChart from './BarChart';
+import { LineChart } from './LineChart';
+import { BarChart } from './BarChart';
 import CustomPieChart from './PieChart';
 
 // Export components

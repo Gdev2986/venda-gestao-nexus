@@ -1,7 +1,8 @@
+
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { Partner, UserRole } from '@/types';
-import { useUser } from '@/hooks/use-user';
+import { useUser } from '@/hooks/use-auth'; // Changed from '@/hooks/use-user'
 import { useToast } from '@/hooks/use-toast';
 
 export const usePartners = () => {
@@ -60,6 +61,8 @@ export const usePartners = () => {
         title: "Partner created",
         description: "Partner created successfully.",
       });
+      
+      return true; // Return a boolean to indicate success
     } catch (error: any) {
       setError(error.message);
       toast({
@@ -67,6 +70,7 @@ export const usePartners = () => {
         description: error.message,
         variant: "destructive",
       });
+      return false; // Return a boolean to indicate failure
     } finally {
       setLoading(false);
     }
@@ -92,6 +96,8 @@ export const usePartners = () => {
         title: "Partner updated",
         description: "Partner updated successfully.",
       });
+      
+      return true; // Return a boolean to indicate success
     } catch (error: any) {
       setError(error.message);
       toast({
@@ -99,6 +105,7 @@ export const usePartners = () => {
         description: error.message,
         variant: "destructive",
       });
+      return false; // Return a boolean to indicate failure
     } finally {
       setLoading(false);
     }
@@ -121,6 +128,8 @@ export const usePartners = () => {
         title: "Partner deleted",
         description: "Partner deleted successfully.",
       });
+      
+      return true; // Return a boolean to indicate success
     } catch (error: any) {
       setError(error.message);
       toast({
@@ -128,6 +137,7 @@ export const usePartners = () => {
         description: error.message,
         variant: "destructive",
       });
+      return false; // Return a boolean to indicate failure
     } finally {
       setLoading(false);
     }
@@ -141,33 +151,33 @@ export const usePartners = () => {
     return user?.user_metadata?.role === UserRole.FINANCIAL;
   };
 
-return {
-  partners,
-  loading,
-  error,
-  getUserRole,
-  createPartner,
-  updatePartner,
-  deletePartner,
-  isAdmin,
-  isFinancial,
-  filterPartners: (filters: any) => {
-    // Implement filtering logic here
-    if (!filters || Object.keys(filters).length === 0) {
-      return partners;
-    }
-    
-    return partners.filter(partner => {
-      let match = true;
-      
-      if (filters.name && partner.company_name) {
-        match = match && partner.company_name.toLowerCase().includes(filters.name.toLowerCase());
+  return {
+    partners,
+    loading,
+    error,
+    getUserRole,
+    createPartner,
+    updatePartner,
+    deletePartner,
+    isAdmin,
+    isFinancial,
+    filterPartners: (filters: any) => {
+      // Implement filtering logic here
+      if (!filters || Object.keys(filters).length === 0) {
+        return partners;
       }
       
-      // Add more filter conditions as needed
-      
-      return match;
-    });
-  }
-};
+      return partners.filter(partner => {
+        let match = true;
+        
+        if (filters.name && partner.company_name) {
+          match = match && partner.company_name.toLowerCase().includes(filters.name.toLowerCase());
+        }
+        
+        // Add more filter conditions as needed
+        
+        return match;
+      });
+    }
+  };
 };

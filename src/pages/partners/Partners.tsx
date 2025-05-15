@@ -1,3 +1,4 @@
+
 import React, { useState } from "react";
 import { PageHeader } from "@/components/page/PageHeader";
 import { PageWrapper } from "@/components/page/PageWrapper";
@@ -5,6 +6,7 @@ import { PartnersFilterCard } from "@/components/partners/PartnersFilterCard";
 import { PartnersTableCard } from "@/components/partners/PartnersTableCard";
 import { PATHS } from "@/routes/paths";
 import { usePartners } from "@/hooks/use-partners";
+import { FilterValues } from "@/types";
 
 const Partners = () => {
   const { partners, loading, error, filterPartners } = usePartners();
@@ -12,6 +14,10 @@ const Partners = () => {
 
   // Use the filterPartners function correctly
   const filteredPartners = filterPartners({ name: searchTerm });
+
+  const handleFilter = (values: FilterValues) => {
+    setSearchTerm(values.search || "");
+  };
 
   return (
     <>
@@ -23,8 +29,8 @@ const Partners = () => {
       />
 
       <PartnersFilterCard
-        searchTerm={searchTerm}
-        onSearchTermChange={setSearchTerm}
+        onFilter={handleFilter}
+        isLoading={loading}
       />
 
       <PageWrapper>

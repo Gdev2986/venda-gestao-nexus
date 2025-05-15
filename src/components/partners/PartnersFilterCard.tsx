@@ -9,10 +9,25 @@ import { Search } from "lucide-react";
 interface PartnersFilterCardProps {
   onFilter: (values: FilterValues) => void;
   isLoading?: boolean;
+  searchTerm?: string;
+  onSearchTermChange?: (value: string) => void;
 }
 
-const PartnersFilterCard = ({ onFilter, isLoading }: PartnersFilterCardProps) => {
-  const [searchTerm, setSearchTerm] = useState("");
+const PartnersFilterCard = ({ 
+  onFilter, 
+  isLoading,
+  searchTerm: externalSearchTerm,
+  onSearchTermChange
+}: PartnersFilterCardProps) => {
+  const [searchTerm, setSearchTerm] = useState(externalSearchTerm || "");
+  
+  const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    setSearchTerm(value);
+    if (onSearchTermChange) {
+      onSearchTermChange(value);
+    }
+  };
   
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -21,6 +36,9 @@ const PartnersFilterCard = ({ onFilter, isLoading }: PartnersFilterCardProps) =>
   
   const handleClearFilters = () => {
     setSearchTerm("");
+    if (onSearchTermChange) {
+      onSearchTermChange("");
+    }
     onFilter({});
   };
 
@@ -35,7 +53,7 @@ const PartnersFilterCard = ({ onFilter, isLoading }: PartnersFilterCardProps) =>
                 className="pl-9"
                 placeholder="Buscar por nome, email ou telefone" 
                 value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
+                onChange={handleSearchChange}
                 disabled={isLoading}
               />
             </div>

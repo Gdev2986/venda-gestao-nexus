@@ -7,18 +7,18 @@ import { Partner } from "@/types";
 
 export interface PartnersTableCardProps {
   partners: Partner[];
-  isLoading: boolean;
-  error: string;
-  onEdit: (partner: Partner) => void;
-  onDelete: (partnerId: string) => Promise<boolean>;
+  loading?: boolean; // Changed isLoading to loading to match use-partners.ts
+  error?: string | null; // Made error optional and allowed null
+  onEdit?: (partner: Partner) => void;
+  onDelete?: (partnerId: string) => Promise<boolean>;
 }
 
 export function PartnersTableCard({ 
   partners, 
-  isLoading, 
-  error, 
-  onEdit, 
-  onDelete
+  loading = false,  // Provided default value
+  error = null,    // Provided default value
+  onEdit = () => {}, // Provided default function
+  onDelete = async () => true // Provided default function
 }: PartnersTableCardProps) {
   return (
     <Card>
@@ -37,7 +37,7 @@ export function PartnersTableCard({
         ) : (
           <PartnersTable 
             partners={partners} 
-            isLoading={isLoading} 
+            isLoading={loading} 
             onEdit={onEdit}
             onDelete={(partner) => onDelete(partner.id)}
           />

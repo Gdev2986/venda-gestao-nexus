@@ -3,7 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { NotificationPreferences } from "@/components/settings/NotificationPreferences";
-import { NotificationsSettings } from "@/components/settings/NotificationsSettings";
+import NotificationsSettings from "@/components/settings/NotificationsSettings";
 import { SendNotificationForm } from "@/components/admin/notifications/SendNotificationForm";
 
 const AdminNotificationsTab = () => {
