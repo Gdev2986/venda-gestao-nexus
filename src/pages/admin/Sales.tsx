@@ -1,5 +1,5 @@
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { generateMockSalesData } from "@/utils/sales-utils";
 import { SalesFilterParams } from "@/types";
@@ -29,12 +29,8 @@ const AdminSales = () => {
   const breakpoint = useBreakpoint();
   const isMobile = ['xs', 'sm'].includes(breakpoint);
 
-  // Load initial data
-  useEffect(() => {
-    fetchSales();
-  }, []);
-
-  const fetchSales = () => {
+  // Usar useCallback para garantir que a função não seja recriada a cada renderização
+  const fetchSales = useCallback(() => {
     setIsLoading(true);
 
     // Simulate API call with delay
@@ -43,7 +39,12 @@ const AdminSales = () => {
       setSales(mockSales);
       setIsLoading(false);
     }, 800);
-  };
+  }, []);
+
+  // Load initial data
+  useEffect(() => {
+    fetchSales();
+  }, [fetchSales]);
 
   const handleRefresh = () => {
     setIsRefreshing(true);

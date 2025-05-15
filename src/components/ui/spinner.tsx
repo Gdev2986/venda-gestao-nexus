@@ -1,16 +1,18 @@
 
 import { cn } from "@/lib/utils";
 
+type SpinnerSize = "sm" | "md" | "lg";
+
 interface SpinnerProps {
-  size?: "sm" | "md" | "lg";
+  size?: SpinnerSize;
   className?: string;
 }
 
-export function Spinner({ size = "md", className }: SpinnerProps) {
+export const Spinner = ({ size = "md", className }: SpinnerProps) => {
   const sizeClasses = {
-    sm: "h-4 w-4",
-    md: "h-6 w-6",
-    lg: "h-8 w-8",
+    sm: "h-4 w-4 border-2",
+    md: "h-6 w-6 border-2",
+    lg: "h-10 w-10 border-3",
   };
 
   return (
@@ -24,4 +26,4 @@ export function Spinner({ size = "md", className }: SpinnerProps) {
       />
     </div>
   );
-}
+};

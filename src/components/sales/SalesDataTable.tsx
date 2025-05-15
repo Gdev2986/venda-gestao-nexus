@@ -2,7 +2,7 @@
 import { useState } from "react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import { ChevronLeft, ChevronRight, CreditCard } from "lucide-react";
+import { ChevronLeft, ChevronRight } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -21,7 +21,6 @@ import {
   CardDescription,
 } from "@/components/ui/card";
 import { PaymentMethod, Sale } from "@/types";
-import { Skeleton } from "@/components/ui/skeleton";
 
 interface SalesDataTableProps {
   sales: Sale[];
