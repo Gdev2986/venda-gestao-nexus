@@ -1,11 +1,11 @@
 
-export type PaymentRequestStatus = 'PENDING' | 'APPROVED' | 'REJECTED' | 'PAID';
+export type PaymentRequestStatus = 'PENDING' | 'APPROVED' | 'REJECTED' | 'PAID' | 'PROCESSING';
 
 export interface PaymentRequest {
   id: string;
   client_id: string;
   amount: number;
-  description?: string; // Changed to optional to match Payment interface
+  description?: string;
   status: PaymentRequestStatus;
   pix_key_id?: string;
   created_at: string;
@@ -24,14 +24,14 @@ export interface PixKey {
   id: string;
   key: string;
   key_type?: PixKeyType;
-  type?: string; // Added for backward compatibility
+  type?: string;
   client_id?: string;
   user_id?: string;
   created_at?: string;
   updated_at?: string;
-  name?: string; // Added for backward compatibility
-  owner_name?: string; // Added for display purposes
-  isDefault?: boolean; // Flag for default key, use this instead of is_default
+  name?: string;
+  owner_name?: string;
+  isDefault?: boolean;
   is_active?: boolean;
   bank_name?: string;
 }
@@ -55,6 +55,7 @@ export interface Client {
   state?: string;
   zip?: string;
   fee_plan_id?: string;
+  user_id?: string;
 }
 
 // Add the missing PaymentData export that uses the PaymentRequest interface

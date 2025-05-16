@@ -12,6 +12,7 @@ export type SupabaseClientRow = {
   status?: string;
   balance?: number;
   fee_plan_id?: string;
+  user_id?: string; // Add user_id field
 };
 
 // Type for client creation without ID and timestamps

@@ -1,10 +1,10 @@
 
 export enum PaymentStatus {
-  PENDING = "PENDENTE",
-  PROCESSING = "EM_PROCESSAMENTO",
-  APPROVED = "APROVADO",
-  REJECTED = "RECUSADO",
-  PAID = "PAGO"
+  PENDING = "PENDING",
+  PROCESSING = "PROCESSING",
+  APPROVED = "APPROVED",
+  REJECTED = "REJECTED",
+  PAID = "PAID"
 }
 
 export enum PaymentType {
@@ -33,7 +33,11 @@ export enum NotificationType {
   COMMISSION = "COMMISSION",
   SYSTEM = "SYSTEM",
   GENERAL = "GENERAL",
-  SALE = "SALE"
+  SALE = "SALE",
+  BALANCE_UPDATE = "BALANCE_UPDATE",
+  PAYMENT_REQUEST = "PAYMENT_REQUEST",
+  PAYMENT_APPROVED = "PAYMENT_APPROVED",
+  PAYMENT_REJECTED = "PAYMENT_REJECTED"
 }
 
 export enum PaymentAction {
@@ -42,4 +46,14 @@ export enum PaymentAction {
   VIEW = 'view',
   DELETE = 'delete',
   SEND_RECEIPT = 'send_receipt'
+}
+
+// Add missing Payment type
+export interface Payment {
+  id: string;
+  status: PaymentStatus | string;
+  amount: number;
+  created_at: string;
+  updated_at?: string;
+  client_id: string;
 }

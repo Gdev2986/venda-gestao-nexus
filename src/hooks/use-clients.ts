@@ -1,172 +1,194 @@
 
-import { useState, useCallback } from 'react';
-import { Client } from '@/types';
-import { supabase } from '@/integrations/supabase/client';
-import { useToast } from '@/hooks/use-toast';
-
-// Define the required structure for client creation
-export type ClientCreate = {
-  business_name: string;
-  contact_name?: string;
-  email?: string;
-  phone?: string;
-  address?: string;
-  city?: string;
-  state?: string;
-  zip?: string;
-  document?: string;
-  partner_id?: string;
-  user_id?: string;
-};
+import { useState } from "react";
+import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/hooks/use-toast";
+import { Client } from "@/types";
+import { ClientCreate, ClientUpdate } from "@/types/client";
 
 export const useClients = () => {
   const [clients, setClients] = useState<Client[]>([]);
-  const [filteredClients, setFilteredClients] = useState<Client[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<Error | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const { toast } = useToast();
 
-  // Fetch all clients from the database
-  const refreshClients = useCallback(async () => {
-    setLoading(true);
+  const fetchClients = async () => {
+    setIsLoading(true);
     setError(null);
+
     try {
       const { data, error } = await supabase
-        .from('clients')
-        .select('*')
-        .order('business_name', { ascending: true });
+        .from("clients")
+        .select("*")
+        .order("business_name", { ascending: true });
 
-      if (error) throw new Error(error.message);
-      
-      setClients(data as Client[]);
-      setFilteredClients(data as Client[]);
-    } catch (err) {
-      console.error("Error fetching clients:", err);
-      setError(err instanceof Error ? err : new Error('Unknown error'));
+      if (error) {
+        throw new Error(error.message);
+      }
+
+      setClients(data || []);
+      return data;
+    } catch (e: any) {
+      const errorMsg = e.message || "Failed to fetch clients";
+      setError(errorMsg);
       toast({
         variant: "destructive",
         title: "Error",
-        description: "Failed to load clients.",
+        description: errorMsg,
       });
+      return null;
     } finally {
-      setLoading(false);
+      setIsLoading(false);
     }
-  }, [toast]);
+  };
 
-  // Filter clients based on search term and status
-  const filterClients = useCallback((searchTerm: string, status: string) => {
-    let filtered = [...clients];
-    
-    if (searchTerm) {
-      const lowerSearchTerm = searchTerm.toLowerCase();
-      filtered = filtered.filter(client => 
-        (client.business_name && client.business_name.toLowerCase().includes(lowerSearchTerm)) ||
-        (client.contact_name && client.contact_name.toLowerCase().includes(lowerSearchTerm)) ||
-        (client.email && client.email.toLowerCase().includes(lowerSearchTerm)) ||
-        (client.document && client.document.toLowerCase().includes(lowerSearchTerm))
-      );
-    }
-    
-    if (status !== 'all') {
-      filtered = filtered.filter(client => client.status === status);
-    }
-    
-    setFilteredClients(filtered);
-  }, [clients]);
+  const getClientById = async (id: string) => {
+    setIsLoading(true);
+    setError(null);
 
-  // Add a new client
-  const addClient = async (clientData: ClientCreate): Promise<Client | false> => {
     try {
-      // Insert into Supabase
       const { data, error } = await supabase
-        .from('clients')
-        .insert(clientData)
+        .from("clients")
+        .select("*")
+        .eq("id", id)
+        .single();
+
+      if (error) {
+        throw new Error(error.message);
+      }
+
+      return data;
+    } catch (e: any) {
+      const errorMsg = e.message || "Failed to fetch client";
+      setError(errorMsg);
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: errorMsg,
+      });
+      return null;
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const addClient = async (client: ClientCreate) => {
+    setIsLoading(true);
+    setError(null);
+
+    try {
+      // Generate a UUID for the new client
+      const { data: insertData, error: insertError } = await supabase
+        .from("clients")
+        .insert({
+          business_name: client.business_name,
+          contact_name: client.contact_name,
+          email: client.email,
+          phone: client.phone,
+          address: client.address,
+          city: client.city,
+          state: client.state,
+          zip: client.zip,
+          document: client.document,
+          partner_id: client.partner_id
+        })
         .select()
         .single();
+
+      if (insertError) {
+        throw new Error(insertError.message);
+      }
+
+      if (insertData) {
+        setClients((prev) => [...prev, insertData]);
+        return insertData;
+      }
       
-      if (error) throw error;
-      
-      const newClient = data as Client;
-      setClients(prevClients => [...prevClients, newClient]);
-      setFilteredClients(prevFiltered => [...prevFiltered, newClient]);
-      
-      return newClient;
-    } catch (err) {
-      console.error("Error adding client:", err);
+      return null;
+    } catch (e: any) {
+      const errorMsg = e.message || "Failed to add client";
+      setError(errorMsg);
       toast({
         variant: "destructive",
         title: "Error",
-        description: "Failed to add client."
+        description: errorMsg,
       });
-      return false;
+      return null;
+    } finally {
+      setIsLoading(false);
     }
   };
 
-  // Update an existing client
-  const updateClient = async (id: string, clientData: Partial<ClientCreate>): Promise<boolean> => {
+  const updateClient = async (id: string, updates: ClientUpdate) => {
+    setIsLoading(true);
+    setError(null);
+
     try {
-      const { error } = await supabase
-        .from('clients')
-        .update(clientData)
-        .eq('id', id);
+      const { data, error } = await supabase
+        .from("clients")
+        .update(updates)
+        .eq("id", id)
+        .select()
+        .single();
+
+      if (error) {
+        throw new Error(error.message);
+      }
+
+      if (data) {
+        setClients((prev) =>
+          prev.map((client) => (client.id === id ? data : client))
+        );
+        return data;
+      }
       
-      if (error) throw error;
-      
-      // Update local state
-      const updatedClients = clients.map(client => {
-        if (client.id === id) {
-          return { ...client, ...clientData };
-        }
-        return client;
-      });
-      
-      setClients(updatedClients);
-      setFilteredClients(updatedClients.filter(client => filteredClients.some(fc => fc.id === client.id)));
-      
-      return true;
-    } catch (err) {
-      console.error("Error updating client:", err);
+      return null;
+    } catch (e: any) {
+      const errorMsg = e.message || "Failed to update client";
+      setError(errorMsg);
       toast({
         variant: "destructive",
         title: "Error",
-        description: "Failed to update client."
+        description: errorMsg,
       });
-      return false;
+      return null;
+    } finally {
+      setIsLoading(false);
     }
   };
 
-  // Delete a client
-  const deleteClient = async (id: string): Promise<boolean> => {
+  const deleteClient = async (id: string) => {
+    setIsLoading(true);
+    setError(null);
+
     try {
-      const { error } = await supabase
-        .from('clients')
-        .delete()
-        .eq('id', id);
-      
-      if (error) throw error;
-      
-      // Update local state
-      setClients(clients.filter(client => client.id !== id));
-      setFilteredClients(filteredClients.filter(client => client.id !== id));
-      
+      const { error } = await supabase.from("clients").delete().eq("id", id);
+
+      if (error) {
+        throw new Error(error.message);
+      }
+
+      setClients((prev) => prev.filter((client) => client.id !== id));
       return true;
-    } catch (err) {
-      console.error("Error deleting client:", err);
+    } catch (e: any) {
+      const errorMsg = e.message || "Failed to delete client";
+      setError(errorMsg);
       toast({
         variant: "destructive",
         title: "Error",
-        description: "Failed to delete client."
+        description: errorMsg,
       });
       return false;
+    } finally {
+      setIsLoading(false);
     }
   };
 
   return {
-    clients: filteredClients,
-    loading,
+    clients,
+    isLoading,
     error,
-    refreshClients,
-    filterClients,
+    fetchClients,
+    getClientById,
     addClient,
     updateClient,
     deleteClient,

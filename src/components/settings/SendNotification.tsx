@@ -10,8 +10,20 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
-import { NotificationType } from "@/types";
 
+// Create a string enum to match the database enum type
+const NotificationTypeEnum = {
+  SYSTEM: "SYSTEM",
+  GENERAL: "GENERAL", 
+  PAYMENT: "PAYMENT",
+  SALE: "SALE",
+  SUPPORT: "SUPPORT",
+  BALANCE: "BALANCE",
+  MACHINE: "MACHINE",
+  COMMISSION: "COMMISSION"
+} as const;
+
+// Use zod to validate the notification type
 const notificationFormSchema = z.object({
   title: z.string().min(3, {
     message: "Título deve ter pelo menos 3 caracteres.",
@@ -21,7 +33,7 @@ const notificationFormSchema = z.object({
   }),
   targetType: z.enum(["all", "specific"]),
   targetId: z.string().optional(),
-  type: z.nativeEnum(NotificationType)
+  type: z.enum(["SYSTEM", "GENERAL", "PAYMENT", "SALE", "SUPPORT", "BALANCE", "MACHINE", "COMMISSION"])
 });
 
 type NotificationFormValues = z.infer<typeof notificationFormSchema>;
@@ -67,7 +79,7 @@ export function SendNotification() {
       message: "",
       targetType: "all",
       targetId: "",
-      type: NotificationType.SYSTEM
+      type: "SYSTEM"
     },
   });
 
@@ -168,11 +180,14 @@ export function SendNotification() {
                   </SelectTrigger>
                 </FormControl>
                 <SelectContent>
-                  <SelectItem value={NotificationType.SYSTEM}>Sistema</SelectItem>
-                  <SelectItem value={NotificationType.GENERAL}>Geral</SelectItem>
-                  <SelectItem value={NotificationType.PAYMENT}>Pagamento</SelectItem>
-                  <SelectItem value={NotificationType.SALE}>Venda</SelectItem>
-                  <SelectItem value={NotificationType.SUPPORT}>Suporte</SelectItem>
+                  <SelectItem value="SYSTEM">Sistema</SelectItem>
+                  <SelectItem value="GENERAL">Geral</SelectItem>
+                  <SelectItem value="PAYMENT">Pagamento</SelectItem>
+                  <SelectItem value="SALE">Venda</SelectItem>
+                  <SelectItem value="SUPPORT">Suporte</SelectItem>
+                  <SelectItem value="BALANCE">Saldo</SelectItem>
+                  <SelectItem value="MACHINE">Máquinas</SelectItem>
+                  <SelectItem value="COMMISSION">Comissões</SelectItem>
                 </SelectContent>
               </Select>
               <FormMessage />

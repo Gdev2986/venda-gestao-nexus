@@ -6,6 +6,9 @@ export const PATHS = {
   FORGOT_PASSWORD: "/auth/forgot-password",
   RESET_PASSWORD: "/auth/reset-password",
   
+  // Home
+  HOME: "/",
+  
   // Main
   DASHBOARD: "/dashboard",
   CLIENTS: "/clients",
@@ -63,6 +66,7 @@ export const PATHS = {
     OPERATIONS: "/logistics/operations",
     REQUESTS: "/logistics/requests",
     CLIENTS: "/logistics/clients",
-    SETTINGS: "/logistics/settings"
+    SETTINGS: "/logistics/settings",
+    CALENDAR: "/logistics/calendar"
   }
 };

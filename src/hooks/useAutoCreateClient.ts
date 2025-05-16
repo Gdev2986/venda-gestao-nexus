@@ -37,17 +37,19 @@ export const useAutoCreateClient = () => {
               if (!existingClient) {
                 const name = profile.name || session.user.email?.split('@')[0] || 'New Client';
                 
+                const newClient = {
+                  business_name: name,
+                  contact_name: name,
+                  email: profile.email || session.user.email,
+                  phone: profile.phone,
+                  status: "active",
+                  balance: 0,
+                  user_id: session.user.id
+                };
+                
                 const { error: insertError } = await supabase
                   .from("clients")
-                  .insert({
-                    business_name: name,
-                    contact_name: name,
-                    email: profile.email || session.user.email,
-                    phone: profile.phone,
-                    status: "active",
-                    balance: 0,
-                    user_id: session.user.id
-                  });
+                  .insert(newClient);
 
                 if (insertError) throw insertError;
 
