@@ -18,8 +18,8 @@ export const MainRoutes = (
     <Route path={PATHS.CLIENT_REGISTRATION} element={<ClientRegistration />} />
 
     {/* Admin routes */}
-    <Route path={PATHS.ADMIN_DASHBOARD} element={<AdminDashboard />} />
-    <Route path={PATHS.ADMIN_CLIENTS} element={<AdminClients />} />
-    <Route path={PATHS.ADMIN_SETTINGS} element={<AdminSettings />} />
+    <Route path={PATHS.ADMIN.DASHBOARD} element={<AdminDashboard />} />
+    <Route path={PATHS.ADMIN.CLIENTS} element={<AdminClients />} />
+    <Route path={PATHS.ADMIN.SETTINGS} element={<AdminSettings />} />
   </>
 );

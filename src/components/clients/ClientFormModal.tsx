@@ -74,6 +74,18 @@ const ClientFormModal = ({
     }
   };
 
+  // Ensure initialData has all required properties for ClientForm
+  const formInitialData = initialData ? {
+    ...initialData,
+    contact_name: initialData.contact_name || "",
+    email: initialData.email || "",
+    phone: initialData.phone || "",
+    address: initialData.address || "",
+    city: initialData.city || "",
+    state: initialData.state || "",
+    zip: initialData.zip || ""
+  } : undefined;
+
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="max-w-2xl">
@@ -86,7 +98,7 @@ const ClientFormModal = ({
           onSubmit={handleCreateClient}
           isSubmitting={isSubmitting}
           title={title}
-          initialData={initialData}
+          initialData={formInitialData}
         />
       </DialogContent>
     </Dialog>
