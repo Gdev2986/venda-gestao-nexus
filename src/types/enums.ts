@@ -1,10 +1,10 @@
 
 export enum PaymentStatus {
-  PENDING = "PENDING",
-  PROCESSING = "PROCESSING",
-  APPROVED = "APPROVED",
-  REJECTED = "REJECTED",
-  PAID = "PAID"
+  PENDING = "PENDENTE",
+  PROCESSING = "EM_PROCESSAMENTO",
+  APPROVED = "APROVADO",
+  REJECTED = "RECUSADO",
+  PAID = "PAGO"
 }
 
 export enum PaymentType {
@@ -25,7 +25,6 @@ export enum UserRole {
   USER = "USUARIO"
 }
 
-// This enum should match exactly what's in the database
 export enum NotificationType {
   SUPPORT = "SUPPORT",
   PAYMENT = "PAYMENT",
@@ -43,14 +42,4 @@ export enum PaymentAction {
   VIEW = 'view',
   DELETE = 'delete',
   SEND_RECEIPT = 'send_receipt'
-}
-
-// Define Payment interface
-export interface Payment {
-  id: string;
-  status: PaymentStatus | string;
-  amount: number;
-  created_at: string;
-  updated_at?: string;
-  client_id: string;
 }

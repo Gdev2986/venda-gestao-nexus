@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { BrowserRouter as Router, Route, Routes, Navigate } from "react-router-dom";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
@@ -13,8 +12,7 @@ import { useAutoCreateClient } from "@/hooks/useAutoCreateClient";
 
 function App() {
   useAutoCreateClient();
-  const { isLoading, user } = useAuth();
-  const isAuthenticated = !!user;
+  const { isLoading, isAuthenticated } = useAuth();
   const [queryClient] = useState(() => new QueryClient());
 
   // Show loading indicator while checking auth status

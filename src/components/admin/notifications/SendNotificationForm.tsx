@@ -28,7 +28,7 @@ const formSchema = z.object({
   message: z.string().min(10, {
     message: "A mensagem deve ter pelo menos 10 caracteres.",
   }),
-  type: z.enum(["SUPPORT", "PAYMENT", "BALANCE", "MACHINE", "COMMISSION", "SYSTEM", "GENERAL", "SALE"]),
+  type: z.nativeEnum(NotificationType),
   role: z.string().min(1, {
     message: "Selecione uma função de usuário."
   })
@@ -75,7 +75,7 @@ const SendNotificationForm = ({ onClose }: SendNotificationFormProps) => {
     defaultValues: {
       title: "",
       message: "",
-      type: "GENERAL",
+      type: NotificationType.GENERAL,
       role: "CLIENT",
     },
   });
@@ -94,22 +94,21 @@ const SendNotificationForm = ({ onClose }: SendNotificationFormProps) => {
       }
 
       if (users && users.length > 0) {
-        // Insert notifications one by one instead of as an array
-        for (const user of users) {
-          const { error } = await supabase
-            .from("notifications")
-            .insert({
-              user_id: user.id,
-              title: values.title,
-              message: values.message,
-              type: values.type,
-              data: { role: values.role },
-              is_read: false
-            });
+        // Insert a notification for each user with the specified role
+        const notificationsToInsert = users.map(user => ({
+          user_id: user.id,
+          title: values.title,
+          message: values.message,
+          type: values.type,
+          data: { role: values.role }
+        }));
 
-          if (error) {
-            throw new Error(error.message);
-          }
+        const { error } = await supabase
+          .from("notifications")
+          .insert(notificationsToInsert);
+
+        if (error) {
+          throw new Error(error.message);
         }
       }
 
@@ -180,14 +179,9 @@ const SendNotificationForm = ({ onClose }: SendNotificationFormProps) => {
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
-                      <SelectItem value="SUPPORT">SUPPORT</SelectItem>
-                      <SelectItem value="PAYMENT">PAYMENT</SelectItem>
-                      <SelectItem value="BALANCE">BALANCE</SelectItem>
-                      <SelectItem value="MACHINE">MACHINE</SelectItem>
-                      <SelectItem value="COMMISSION">COMMISSION</SelectItem>
-                      <SelectItem value="SYSTEM">SYSTEM</SelectItem>
-                      <SelectItem value="GENERAL">GENERAL</SelectItem>
-                      <SelectItem value="SALE">SALE</SelectItem>
+                      {Object.values(NotificationType).map((type) => (
+                        <SelectItem key={type} value={type}>{type}</SelectItem>
+                      ))}
                     </SelectContent>
                   </Select>
                   <FormMessage />
