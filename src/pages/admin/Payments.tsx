@@ -1,9 +1,9 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Card } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import useAdminPayments, { PaymentAction } from "@/hooks/payments/useAdminPayments";
-import { PaymentStatus } from "@/types";
+import { PaymentStatus } from "@/types/enums";
 import AdminPaymentsList from "@/components/payments/AdminPaymentsList";
 import { PaymentFilters } from "@/components/payments/PaymentFilters";
 import { PaymentDetailsDialog } from "@/components/payments/PaymentDetailsDialog";
@@ -12,24 +12,29 @@ import { RejectPaymentDialog } from "@/components/payments/RejectPaymentDialog";
 import { PageHeader } from "@/components/page/PageHeader";
 import { Payment } from "@/types";
 import { convertToPaymentRequest } from "@/components/payments/payment-list/PaymentConverter";
+import { PaymentNotifications } from "@/components/payments/PaymentNotifications";
+import { SendReceiptDialog } from "@/components/payments/SendReceiptDialog";
 
 const AdminPayments = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState<PaymentStatus | "ALL">("ALL");
   const [page, setPage] = useState(1);
   const pageSize = 10;
+  const [activeTab, setActiveTab] = useState("all");
   
-  // UI state for dialogs
+  // UI state para diálogos
   const [selectedPayment, setSelectedPayment] = useState<Payment | null>(null);
   const [isDetailsDialogOpen, setIsDetailsDialogOpen] = useState(false);
   const [isApproveDialogOpen, setIsApproveDialogOpen] = useState(false);
   const [isRejectDialogOpen, setIsRejectDialogOpen] = useState(false);
+  const [isSendReceiptDialogOpen, setIsSendReceiptDialogOpen] = useState(false);
   
   const { 
     payments, 
     isLoading, 
     error, 
     totalPages,
+    refetch,
     performPaymentAction
   } = useAdminPayments({
     searchTerm,
@@ -37,8 +42,25 @@ const AdminPayments = () => {
     page,
     pageSize
   });
+
+  // Atualiza o filtro status com base na tab ativa
+  useEffect(() => {
+    if (activeTab === "all") {
+      setStatusFilter("ALL");
+    } else if (activeTab === "pending") {
+      setStatusFilter(PaymentStatus.PENDING);
+    } else if (activeTab === "processing") {
+      setStatusFilter(PaymentStatus.PROCESSING);
+    } else if (activeTab === "approved") {
+      setStatusFilter(PaymentStatus.APPROVED);
+    } else if (activeTab === "rejected") {
+      setStatusFilter(PaymentStatus.REJECTED);
+    } else if (activeTab === "paid") {
+      setStatusFilter(PaymentStatus.PAID);
+    }
+  }, [activeTab]);
   
-  // Handler for payment actions
+  // Handler para ações de pagamento
   const handlePaymentAction = async (paymentId: string, action: PaymentAction) => {
     const payment = payments.find(p => p.id === paymentId);
     if (!payment) return;
@@ -51,29 +73,50 @@ const AdminPayments = () => {
       setIsRejectDialogOpen(true);
     } else if (action === PaymentAction.VIEW) {
       setIsDetailsDialogOpen(true);
+    } else if (action === PaymentAction.SEND_RECEIPT) {
+      setIsSendReceiptDialogOpen(true);
+    } else {
+      await performPaymentAction(paymentId, action);
     }
   };
 
-  // Handler for dialog confirmations
-  const handleConfirmAction = async (action: PaymentAction): Promise<void> => {
+  // Handler para confirmação de diálogos
+  const handleConfirmAction = async (action: PaymentAction, formData?: any): Promise<void> => {
     if (!selectedPayment) return Promise.resolve();
     
     await performPaymentAction(selectedPayment.id, action);
     
-    // Close all dialogs
+    // Fecha todos os diálogos
     setIsDetailsDialogOpen(false);
     setIsApproveDialogOpen(false);
     setIsRejectDialogOpen(false);
+    setIsSendReceiptDialogOpen(false);
     setSelectedPayment(null);
 
     return Promise.resolve();
+  };
+
+  const handleApprovePayment = async (paymentId: string, receiptFile: File | null, notes: string) => {
+    console.log("Aprovando pagamento:", { paymentId, notes, hasFile: !!receiptFile });
+    // Em uma implementação real, você enviaria o arquivo para o servidor
+    await handleConfirmAction(PaymentAction.APPROVE);
+  };
+
+  const handleRejectPayment = async (paymentId: string, rejectionReason: string) => {
+    console.log("Rejeitando pagamento:", { paymentId, rejectionReason });
+    await handleConfirmAction(PaymentAction.REJECT);
+  };
+
+  const handleSendReceipt = async (paymentId: string, receiptFile: File, message: string) => {
+    console.log("Enviando comprovante:", { paymentId, message, hasFile: !!receiptFile });
+    await handleConfirmAction(PaymentAction.SEND_RECEIPT);
   };
   
   return (
     <div className="container mx-auto py-6 space-y-6">
       <PageHeader
         title="Pagamentos"
-        description="Gerencie e aprove solicitações de pagamento"
+        description="Gerencie e aprove solicitações de pagamento dos clientes"
       />
       
       <Card className="p-6">
@@ -85,44 +128,26 @@ const AdminPayments = () => {
         />
       </Card>
       
-      <Tabs defaultValue="all" className="w-full">
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
         <TabsList>
-          <TabsTrigger value="all">Todas Solicitações</TabsTrigger>
+          <TabsTrigger value="all">Todas</TabsTrigger>
           <TabsTrigger value="pending">Pendentes</TabsTrigger>
+          <TabsTrigger value="processing">Em Processamento</TabsTrigger>
           <TabsTrigger value="approved">Aprovados</TabsTrigger>
-          <TabsTrigger value="rejected">Rejeitados</TabsTrigger>
+          <TabsTrigger value="rejected">Recusados</TabsTrigger>
+          <TabsTrigger value="paid">Pagos</TabsTrigger>
         </TabsList>
-        <TabsContent value="all" className="pt-6">
+        
+        <TabsContent value={activeTab} className="pt-6">
           <AdminPaymentsList
             payments={payments}
             isLoading={isLoading}
             onActionClick={handlePaymentAction}
           />
         </TabsContent>
-        <TabsContent value="pending" className="pt-6">
-          <AdminPaymentsList
-            payments={payments.filter(p => p.status === "PENDING")}
-            isLoading={isLoading}
-            onActionClick={handlePaymentAction}
-          />
-        </TabsContent>
-        <TabsContent value="approved" className="pt-6">
-          <AdminPaymentsList
-            payments={payments.filter(p => p.status === "APPROVED")}
-            isLoading={isLoading}
-            onActionClick={handlePaymentAction}
-          />
-        </TabsContent>
-        <TabsContent value="rejected" className="pt-6">
-          <AdminPaymentsList
-            payments={payments.filter(p => p.status === "REJECTED")}
-            isLoading={isLoading}
-            onActionClick={handlePaymentAction}
-          />
-        </TabsContent>
       </Tabs>
       
-      {/* Payment Detail Dialog */}
+      {/* Diálogo de Detalhes do Pagamento */}
       {selectedPayment && (
         <PaymentDetailsDialog
           open={isDetailsDialogOpen}
@@ -131,27 +156,41 @@ const AdminPayments = () => {
         />
       )}
       
-      {/* Approve Payment Dialog */}
+      {/* Diálogo de Aprovação de Pagamento */}
       {selectedPayment && (
         <ApprovePaymentDialog
           open={isApproveDialogOpen}
           onOpenChange={setIsApproveDialogOpen}
           payment={convertToPaymentRequest(selectedPayment)}
-          onApprove={() => handleConfirmAction(PaymentAction.APPROVE)}
+          onApprove={handleApprovePayment}
           isProcessing={false}
         />
       )}
       
-      {/* Reject Payment Dialog */}
+      {/* Diálogo de Rejeição de Pagamento */}
       {selectedPayment && (
         <RejectPaymentDialog
           open={isRejectDialogOpen}
           onOpenChange={setIsRejectDialogOpen}
           payment={convertToPaymentRequest(selectedPayment)}
-          onReject={() => handleConfirmAction(PaymentAction.REJECT)}
+          onReject={handleRejectPayment}
           isProcessing={false}
         />
       )}
+
+      {/* Diálogo de Envio de Comprovante */}
+      {selectedPayment && (
+        <SendReceiptDialog
+          open={isSendReceiptDialogOpen}
+          onOpenChange={setIsSendReceiptDialogOpen}
+          payment={convertToPaymentRequest(selectedPayment)}
+          onSendReceipt={handleSendReceipt}
+          isProcessing={false}
+        />
+      )}
+      
+      {/* Componente para ouvir notificações de pagamentos em tempo real */}
+      <PaymentNotifications refreshPayments={refetch} />
     </div>
   );
 };

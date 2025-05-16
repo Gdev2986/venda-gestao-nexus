@@ -1,41 +1,41 @@
 
-import { UserRole } from "@/types/enums";
-import { PaymentStatus } from "@/types/enums";
+import { UserRole, PaymentStatus } from "@/types/enums";
 
 /**
- * Converts a string to a PaymentStatus enum value
+ * Converte uma string para um valor do enum PaymentStatus
  */
 export function toPaymentStatus(status: string | PaymentStatus): PaymentStatus {
   if (typeof status === 'string') {
     switch (status.toUpperCase()) {
-      case 'PENDING': return PaymentStatus.PENDING;
-      case 'APPROVED': return PaymentStatus.APPROVED;
-      case 'REJECTED': return PaymentStatus.REJECTED;
-      case 'PAID': return PaymentStatus.PAID;
-      default: return PaymentStatus.PENDING;
+      case 'PENDENTE': return PaymentStatus.PENDING;
+      case 'EM_PROCESSAMENTO': return PaymentStatus.PROCESSING;
+      case 'APROVADO': return PaymentStatus.APPROVED;
+      case 'RECUSADO': return PaymentStatus.REJECTED;
+      case 'PAGO': return PaymentStatus.PAID;
+      default: return PaymentStatus.PROCESSING;
     }
   }
   return status;
 }
 
 /**
- * Converts a string to a UserRole enum value
+ * Converte uma string para um valor do enum UserRole
  */
 export function toUserRole(role: string | UserRole): UserRole {
   if (typeof role === 'string') {
     const upperRole = role.toUpperCase();
-    // Check if the role exists in the UserRole enum
+    // Verifica se o role existe no enum UserRole
     if (Object.values(UserRole).includes(upperRole as UserRole)) {
       return upperRole as UserRole;
     }
-    // Default to USER role if not found
+    // Default para USER se não encontrado
     return UserRole.USER;
   }
   return role;
 }
 
 /**
- * Type guard to check if a string is a valid UserRole
+ * Type guard para verificar se uma string é um UserRole válido
  */
 export function isValidUserRole(role: string): role is UserRole {
   return Object.values(UserRole).includes(role as UserRole);

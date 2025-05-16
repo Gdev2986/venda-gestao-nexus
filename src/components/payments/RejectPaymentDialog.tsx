@@ -49,7 +49,7 @@ export function RejectPaymentDialog({
     setRejectionReason("");
   };
 
-  // Reset form when dialog opens/closes
+  // Resetar formulário quando o diálogo abre/fecha
   const handleOpenChange = (isOpen: boolean) => {
     if (!isOpen) {
       setRejectionReason("");
@@ -62,9 +62,9 @@ export function RejectPaymentDialog({
     <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogContent className="max-w-md">
         <DialogHeader>
-          <DialogTitle>Rejeitar Pagamento</DialogTitle>
+          <DialogTitle>Recusar Pagamento</DialogTitle>
           <DialogDescription>
-            Informe o motivo da rejeição do pagamento de{" "}
+            Informe o motivo da recusa do pagamento de{" "}
             {payment ? formatCurrency(payment.amount) : ""}
           </DialogDescription>
         </DialogHeader>
@@ -83,11 +83,11 @@ export function RejectPaymentDialog({
 
           <div>
             <Label htmlFor="rejection-reason" className="text-red-500">
-              Motivo da Rejeição *
+              Motivo da Recusa *
             </Label>
             <Textarea
               id="rejection-reason"
-              placeholder="Explique por que este pagamento está sendo rejeitado"
+              placeholder="Explique por que este pagamento está sendo recusado"
               value={rejectionReason}
               onChange={(e) => {
                 setRejectionReason(e.target.value);
@@ -96,6 +96,9 @@ export function RejectPaymentDialog({
               rows={4}
               className="mt-2"
             />
+            <p className="text-xs text-muted-foreground mt-1">
+              Esta mensagem será enviada ao cliente junto com a notificação de recusa.
+            </p>
           </div>
         </div>
 
@@ -112,7 +115,7 @@ export function RejectPaymentDialog({
                 Processando
               </>
             ) : (
-              "Rejeitar Pagamento"
+              "Recusar Pagamento"
             )}
           </Button>
         </DialogFooter>

@@ -1,72 +1,67 @@
 
 import { useState, useEffect } from "react";
+import { Search } from "lucide-react";
 import { Input } from "@/components/ui/input";
-import {
+import { 
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { PaymentStatus } from "@/types";
-import { Search } from "lucide-react";
+import { PaymentStatus } from "@/types/enums";
 
-export interface PaymentFiltersProps {
+interface PaymentFiltersProps {
   searchTerm: string;
   statusFilter: PaymentStatus | "ALL";
   setSearchTerm: (value: string) => void;
   setStatusFilter: (value: PaymentStatus | "ALL") => void;
-  // Add backwards compatibility for components that use old prop names
-  onSearchChange?: (value: string) => void;
-  onStatusFilterChange?: (value: PaymentStatus | "ALL") => void;
 }
 
-export function PaymentFilters({
+export const PaymentFilters = ({
   searchTerm,
   statusFilter,
   setSearchTerm,
   setStatusFilter,
-  onSearchChange,
-  onStatusFilterChange
-}: PaymentFiltersProps) {
-  // Handle both old and new prop patterns
-  const handleSearchChange = (value: string) => {
-    setSearchTerm(value);
-    if (onSearchChange) onSearchChange(value);
-  };
+}: PaymentFiltersProps) => {
+  const [localSearchTerm, setLocalSearchTerm] = useState(searchTerm);
 
-  const handleStatusChange = (value: PaymentStatus | "ALL") => {
-    setStatusFilter(value);
-    if (onStatusFilterChange) onStatusFilterChange(value);
-  };
+  // Atualiza o valor de busca depois de um tempo para evitar muitas chamadas
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setSearchTerm(localSearchTerm);
+    }, 500);
+
+    return () => clearTimeout(timer);
+  }, [localSearchTerm, setSearchTerm]);
 
   return (
-    <div className="grid gap-4 md:grid-cols-2">
-      <div className="relative">
-        <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground h-4 w-4" />
+    <div className="flex flex-col md:flex-row gap-4">
+      <div className="relative flex-1">
+        <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
         <Input
-          placeholder="Buscar pagamentos..."
-          value={searchTerm}
-          onChange={(e) => handleSearchChange(e.target.value)}
-          className="pl-10"
+          placeholder="Buscar por cliente, ID de pagamento..."
+          value={localSearchTerm}
+          onChange={(e) => setLocalSearchTerm(e.target.value)}
+          className="pl-8"
         />
       </div>
-
       <Select
         value={statusFilter}
-        onValueChange={(value: PaymentStatus | "ALL") => handleStatusChange(value)}
+        onValueChange={(value) => setStatusFilter(value as PaymentStatus | "ALL")}
       >
-        <SelectTrigger>
+        <SelectTrigger className="w-full md:w-[180px]">
           <SelectValue placeholder="Filtrar por status" />
         </SelectTrigger>
         <SelectContent>
           <SelectItem value="ALL">Todos os Status</SelectItem>
-          <SelectItem value="PENDING">Pendentes</SelectItem>
-          <SelectItem value="APPROVED">Aprovados</SelectItem>
-          <SelectItem value="REJECTED">Rejeitados</SelectItem>
-          <SelectItem value="PAID">Pagos</SelectItem>
+          <SelectItem value={PaymentStatus.PENDING}>Pendente</SelectItem>
+          <SelectItem value={PaymentStatus.PROCESSING}>Em Processamento</SelectItem>
+          <SelectItem value={PaymentStatus.APPROVED}>Aprovado</SelectItem>
+          <SelectItem value={PaymentStatus.REJECTED}>Recusado</SelectItem>
+          <SelectItem value={PaymentStatus.PAID}>Pago</SelectItem>
         </SelectContent>
       </Select>
     </div>
   );
-}
+};

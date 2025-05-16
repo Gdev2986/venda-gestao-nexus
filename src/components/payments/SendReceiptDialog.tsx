@@ -19,39 +19,44 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { AlertTriangle } from "lucide-react";
 import { Input } from "@/components/ui/input";
 
-interface ApprovePaymentDialogProps {
+interface SendReceiptDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   payment: PaymentData | null;
-  onApprove: (paymentId: string, receiptFile: File | null, notes: string) => Promise<void>;
+  onSendReceipt: (paymentId: string, receiptFile: File, message: string) => Promise<void>;
   isProcessing: boolean;
 }
 
-export function ApprovePaymentDialog({
+export function SendReceiptDialog({
   open,
   onOpenChange,
   payment,
-  onApprove,
+  onSendReceipt,
   isProcessing
-}: ApprovePaymentDialogProps) {
+}: SendReceiptDialogProps) {
   const [receiptFile, setReceiptFile] = useState<File | null>(null);
-  const [notes, setNotes] = useState("");
+  const [message, setMessage] = useState("");
   const [error, setError] = useState<string | null>(null);
 
-  const handleApprove = async () => {
+  const handleSendReceipt = async () => {
     if (!payment) return;
-    
+
+    if (!receiptFile) {
+      setError("Por favor, selecione um arquivo de comprovante.");
+      return;
+    }
+
     setError(null);
-    await onApprove(payment.id, receiptFile, notes);
+    await onSendReceipt(payment.id, receiptFile, message);
     setReceiptFile(null);
-    setNotes("");
+    setMessage("");
   };
 
   // Resetar formulário quando o diálogo abre/fecha
   const handleOpenChange = (isOpen: boolean) => {
     if (!isOpen) {
       setReceiptFile(null);
-      setNotes("");
+      setMessage("");
       setError(null);
     }
     onOpenChange(isOpen);
@@ -61,9 +66,9 @@ export function ApprovePaymentDialog({
     <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogContent className="max-w-md">
         <DialogHeader>
-          <DialogTitle>Aprovar Pagamento</DialogTitle>
+          <DialogTitle>Enviar Comprovante</DialogTitle>
           <DialogDescription>
-            Confirme a aprovação do pagamento de{" "}
+            Envie um comprovante de pagamento para o cliente referente ao pagamento de{" "}
             {payment ? formatCurrency(payment.amount) : ""}
           </DialogDescription>
         </DialogHeader>
@@ -81,8 +86,8 @@ export function ApprovePaymentDialog({
           )}
 
           <div>
-            <Label htmlFor="receipt-file">
-              Comprovante de Pagamento (opcional)
+            <Label htmlFor="receipt-file" className="text-primary">
+              Comprovante de Pagamento *
             </Label>
             <div className="mt-2 flex items-center gap-2">
               <Input
@@ -93,6 +98,7 @@ export function ApprovePaymentDialog({
                   const file = e.target.files?.[0];
                   if (file) {
                     setReceiptFile(file);
+                    setError(null);
                   }
                 }}
                 className="flex-1"
@@ -106,14 +112,14 @@ export function ApprovePaymentDialog({
           </div>
 
           <div>
-            <Label htmlFor="approval-notes">
-              Observações
+            <Label htmlFor="receipt-message">
+              Mensagem para o Cliente
             </Label>
             <Textarea
-              id="approval-notes"
-              placeholder="Adicione informações sobre o pagamento (opcional)"
-              value={notes}
-              onChange={(e) => setNotes(e.target.value)}
+              id="receipt-message"
+              placeholder="Digite uma mensagem para acompanhar o comprovante (opcional)"
+              value={message}
+              onChange={(e) => setMessage(e.target.value)}
               rows={3}
               className="mt-2"
             />
@@ -123,18 +129,19 @@ export function ApprovePaymentDialog({
         <DialogFooter>
           <Button variant="outline" onClick={() => onOpenChange(false)}>Cancelar</Button>
           <Button 
-            onClick={handleApprove} 
-            disabled={isProcessing || !payment}
-            variant="default"
-            className="bg-green-600 hover:bg-green-700"
+            onClick={handleSendReceipt} 
+            disabled={isProcessing || !payment || !receiptFile}
           >
             {isProcessing ? (
               <>
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                Processando
+                Enviando
               </>
             ) : (
-              "Aprovar Pagamento"
+              <>
+                <Upload className="mr-2 h-4 w-4" />
+                Enviar Comprovante
+              </>
             )}
           </Button>
         </DialogFooter>

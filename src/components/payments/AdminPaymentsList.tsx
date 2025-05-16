@@ -1,6 +1,6 @@
 
 import { useState } from 'react';
-import { Payment } from '@/types';
+import { Payment, PaymentStatus } from '@/types';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
 import { PaymentAction } from '@/hooks/payments/useAdminPayments';
@@ -11,6 +11,7 @@ import { PaymentListTable } from './payment-list/PaymentListTable';
 import { PaymentListLoadingState } from './payment-list/PaymentListLoadingState';
 import { PaymentListEmptyState } from './payment-list/PaymentListEmptyState';
 import { convertToPaymentRequest } from './payment-list/PaymentConverter';
+import { SendReceiptDialog } from './SendReceiptDialog';
 
 interface AdminPaymentsListProps {
   payments: Payment[];
@@ -18,18 +19,34 @@ interface AdminPaymentsListProps {
   isLoading: boolean;
 }
 
-// Define the component both as default export and named export for compatibility
+// Define o componente tanto como exportação padrão quanto exportação nomeada para compatibilidade
 const AdminPaymentsList = ({ payments, onActionClick, isLoading }: AdminPaymentsListProps) => {
   const { toast } = useToast();
   const [selectedPayments, setSelectedPayments] = useState<string[]>([]);
   const [approveDialogOpen, setApproveDialogOpen] = useState(false);
   const [rejectDialogOpen, setRejectDialogOpen] = useState(false);
   const [detailsDialogOpen, setDetailsDialogOpen] = useState(false);
+  const [sendReceiptDialogOpen, setSendReceiptDialogOpen] = useState(false);
   const [selectedPayment, setSelectedPayment] = useState<Payment | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
 
   const handleAction = (paymentId: string, action: PaymentAction) => {
-    onActionClick(paymentId, action);
+    const payment = payments.find(p => p.id === paymentId);
+    if (!payment) return;
+    
+    setSelectedPayment(payment);
+    
+    if (action === PaymentAction.APPROVE) {
+      setApproveDialogOpen(true);
+    } else if (action === PaymentAction.REJECT) {
+      setRejectDialogOpen(true);
+    } else if (action === PaymentAction.VIEW) {
+      setDetailsDialogOpen(true);
+    } else if (action === PaymentAction.SEND_RECEIPT) {
+      setSendReceiptDialogOpen(true);
+    } else {
+      onActionClick(paymentId, action);
+    }
   };
 
   const handleSelectPayment = (paymentId: string) => {
@@ -46,53 +63,22 @@ const AdminPaymentsList = ({ payments, onActionClick, isLoading }: AdminPayments
     }
   };
 
-  const handleDeleteSelected = () => {
-    if (selectedPayments.length === 0) {
-      toast({
-        title: 'Nenhum pagamento selecionado',
-        description: 'Selecione os pagamentos que deseja excluir.',
-      });
-      return;
-    }
-
-    selectedPayments.forEach((paymentId) => {
-      handleAction(paymentId, PaymentAction.DELETE);
-    });
-
-    setSelectedPayments([]);
-  };
-
-  const openApproveDialog = (payment: Payment) => {
-    setSelectedPayment(payment);
-    setApproveDialogOpen(true);
-  };
-
-  const openRejectDialog = (payment: Payment) => {
-    setSelectedPayment(payment);
-    setRejectDialogOpen(true);
-  };
-
-  const openDetailsDialog = (payment: Payment) => {
-    setSelectedPayment(payment);
-    setDetailsDialogOpen(true);
-  };
-
   const handleApprovePayment = async (paymentId: string, receiptFile: File | null, notes: string) => {
     setIsProcessing(true);
     try {
-      // Simular upload de arquivo
+      // Simular upload do comprovante
       let receiptUrl = null;
       if (receiptFile) {
         // Em um caso real, faria upload para o Supabase Storage
         receiptUrl = URL.createObjectURL(receiptFile);
       }
 
-      // Depois aprovaria o pagamento
-      await handleAction(paymentId, PaymentAction.APPROVE);
+      // Após enviar comprovante, aprovar o pagamento
+      await onActionClick(paymentId, PaymentAction.APPROVE);
       
       toast({
         title: "Pagamento aprovado",
-        description: "O pagamento foi aprovado com sucesso.",
+        description: notes ? `Observações: ${notes}` : "O pagamento foi aprovado com sucesso.",
       });
       
       setApproveDialogOpen(false);
@@ -107,14 +93,14 @@ const AdminPaymentsList = ({ payments, onActionClick, isLoading }: AdminPayments
     }
   };
 
-  const handleRejectPayment = async (paymentId: string, reason: string) => {
+  const handleRejectPayment = async (paymentId: string, rejectionReason: string) => {
     setIsProcessing(true);
     try {
-      await handleAction(paymentId, PaymentAction.REJECT);
+      await onActionClick(paymentId, PaymentAction.REJECT);
       
       toast({
-        title: "Pagamento rejeitado",
-        description: "O pagamento foi rejeitado com sucesso.",
+        title: "Pagamento recusado",
+        description: "O pagamento foi recusado com sucesso.",
       });
       
       setRejectDialogOpen(false);
@@ -122,7 +108,30 @@ const AdminPaymentsList = ({ payments, onActionClick, isLoading }: AdminPayments
       toast({
         variant: "destructive",
         title: "Erro",
-        description: "Ocorreu um erro ao rejeitar o pagamento.",
+        description: "Ocorreu um erro ao recusar o pagamento.",
+      });
+    } finally {
+      setIsProcessing(false);
+    }
+  };
+
+  const handleSendReceipt = async (paymentId: string, receiptFile: File, message: string) => {
+    setIsProcessing(true);
+    try {
+      // Em um caso real, faria upload do comprovante e enviaria notificação
+      console.log("Enviando comprovante:", { paymentId, message });
+      
+      toast({
+        title: "Comprovante enviado",
+        description: "O comprovante foi enviado com sucesso para o cliente.",
+      });
+      
+      setSendReceiptDialogOpen(false);
+    } catch (error) {
+      toast({
+        variant: "destructive",
+        title: "Erro",
+        description: "Ocorreu um erro ao enviar o comprovante.",
       });
     } finally {
       setIsProcessing(false);
@@ -144,14 +153,15 @@ const AdminPaymentsList = ({ payments, onActionClick, isLoading }: AdminPayments
         selectedPayments={selectedPayments}
         onSelectPayment={handleSelectPayment}
         onSelectAllPayments={handleSelectAllPayments}
-        onOpenDetails={openDetailsDialog}
-        onOpenApprove={openApproveDialog}
-        onOpenReject={openRejectDialog}
+        onAction={handleAction}
       />
       
       {selectedPayments.length > 0 && (
         <div className="mt-4">
-          <Button variant="destructive" onClick={handleDeleteSelected}>
+          <Button variant="destructive" onClick={() => {
+            selectedPayments.forEach(id => onActionClick(id, PaymentAction.DELETE));
+            setSelectedPayments([]);
+          }}>
             Excluir Pagamentos Selecionados ({selectedPayments.length})
           </Button>
         </div>
@@ -180,12 +190,20 @@ const AdminPaymentsList = ({ payments, onActionClick, isLoading }: AdminPayments
             onOpenChange={setDetailsDialogOpen}
             payment={convertToPaymentRequest(selectedPayment)}
           />
+
+          <SendReceiptDialog
+            open={sendReceiptDialogOpen}
+            onOpenChange={setSendReceiptDialogOpen}
+            payment={convertToPaymentRequest(selectedPayment)}
+            onSendReceipt={handleSendReceipt}
+            isProcessing={isProcessing}
+          />
         </>
       )}
     </>
   );
 };
 
-// Export both as default and named export for compatibility
+// Exporta tanto como padrão quanto como exportação nomeada para compatibilidade
 export { AdminPaymentsList };
 export default AdminPaymentsList;
