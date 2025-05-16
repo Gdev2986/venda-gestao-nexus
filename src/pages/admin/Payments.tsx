@@ -5,10 +5,10 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import useAdminPayments, { PaymentAction } from "@/hooks/payments/useAdminPayments";
 import { PaymentStatus } from "@/types";
 import AdminPaymentsList from "@/components/payments/AdminPaymentsList";
-import PaymentFilters from "@/components/payments/PaymentFilters";
-import PaymentDetailsDialog from "@/components/payments/PaymentDetailsDialog";
-import ApprovePaymentDialog from "@/components/payments/ApprovePaymentDialog";
-import RejectPaymentDialog from "@/components/payments/RejectPaymentDialog";
+import { PaymentFilters } from "@/components/payments/PaymentFilters";
+import { PaymentDetailsDialog } from "@/components/payments/PaymentDetailsDialog";
+import { ApprovePaymentDialog } from "@/components/payments/ApprovePaymentDialog";
+import { RejectPaymentDialog } from "@/components/payments/RejectPaymentDialog";
 import { PageHeader } from "@/components/page/PageHeader";
 
 const AdminPayments = () => {
@@ -101,10 +101,6 @@ const AdminPayments = () => {
           <AdminPaymentsList
             payments={payments}
             isLoading={isLoading}
-            error={error}
-            currentPage={page}
-            totalPages={totalPages}
-            onPageChange={setPage}
             onActionClick={handlePaymentAction}
           />
         </TabsContent>
@@ -112,10 +108,6 @@ const AdminPayments = () => {
           <AdminPaymentsList
             payments={payments.filter(p => p.status === "PENDING")}
             isLoading={isLoading}
-            error={error}
-            currentPage={page}
-            totalPages={totalPages}
-            onPageChange={setPage}
             onActionClick={handlePaymentAction}
           />
         </TabsContent>
@@ -123,10 +115,6 @@ const AdminPayments = () => {
           <AdminPaymentsList
             payments={payments.filter(p => p.status === "APPROVED")}
             isLoading={isLoading}
-            error={error}
-            currentPage={page}
-            totalPages={totalPages}
-            onPageChange={setPage}
             onActionClick={handlePaymentAction}
           />
         </TabsContent>
@@ -134,10 +122,6 @@ const AdminPayments = () => {
           <AdminPaymentsList
             payments={payments.filter(p => p.status === "REJECTED")}
             isLoading={isLoading}
-            error={error}
-            currentPage={page}
-            totalPages={totalPages}
-            onPageChange={setPage}
             onActionClick={handlePaymentAction}
           />
         </TabsContent>

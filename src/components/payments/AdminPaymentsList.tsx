@@ -1,9 +1,9 @@
 
 import { useState } from 'react';
-import { Payment, PaymentStatus } from '@/types';
+import { Payment } from '@/types';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
-import { PaymentAction } from './PaymentTableColumns';
+import { PaymentAction } from '@/hooks/payments/useAdminPayments';
 import { ApprovePaymentDialog } from './ApprovePaymentDialog';
 import { RejectPaymentDialog } from './RejectPaymentDialog';
 import { PaymentDetailsDialog } from './PaymentDetailsDialog';
@@ -14,12 +14,12 @@ import { convertToPaymentRequest } from './payment-list/PaymentConverter';
 
 interface AdminPaymentsListProps {
   payments: Payment[];
-  onAction: (paymentId: string, action: PaymentAction) => void;
+  onActionClick: (paymentId: string, action: PaymentAction) => void;
   isLoading: boolean;
 }
 
 // Define the component both as default export and named export for compatibility
-const AdminPaymentsList = ({ payments, onAction, isLoading }: AdminPaymentsListProps) => {
+const AdminPaymentsList = ({ payments, onActionClick, isLoading }: AdminPaymentsListProps) => {
   const { toast } = useToast();
   const [selectedPayments, setSelectedPayments] = useState<string[]>([]);
   const [approveDialogOpen, setApproveDialogOpen] = useState(false);
@@ -29,7 +29,7 @@ const AdminPaymentsList = ({ payments, onAction, isLoading }: AdminPaymentsListP
   const [isProcessing, setIsProcessing] = useState(false);
 
   const handleAction = (paymentId: string, action: PaymentAction) => {
-    onAction(paymentId, action);
+    onActionClick(paymentId, action);
   };
 
   const handleSelectPayment = (paymentId: string) => {

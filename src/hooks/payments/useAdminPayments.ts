@@ -8,7 +8,8 @@ import { useToast } from "@/hooks/use-toast";
 export enum PaymentAction {
   APPROVE = "approve",
   REJECT = "reject",
-  VIEW = "view"
+  VIEW = "view",
+  DELETE = "delete"
 }
 
 // Define the hook props
@@ -60,6 +61,12 @@ const useAdminPayments = ({
         toast({
           title: "Viewing Payment",
           description: `Viewing details for payment #${paymentId}.`
+        });
+        break;
+      case PaymentAction.DELETE:
+        toast({
+          title: "Payment Deleted",
+          description: `Payment #${paymentId} has been deleted.`
         });
         break;
       default:

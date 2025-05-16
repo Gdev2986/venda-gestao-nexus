@@ -4,13 +4,15 @@ import { useToast } from "@/hooks/use-toast";
 import { PageHeader } from "@/components/page/PageHeader";
 import { Button } from "@/components/ui/button";
 import { PlusIcon } from "lucide-react";
-import { ClientsTable } from "@/components/clients/ClientsTable";
+import ClientsTable from "@/components/clients/ClientsTable";
 import ClientDetailsModal from "@/components/clients/ClientDetailsModal";
 import ClientFormModal from "@/components/clients/ClientFormModal";
 import { PageWrapper } from "@/components/page/PageWrapper";
 import { usePartnerClients } from "@/hooks/use-partner-clients";
-import { Client } from "@/types/client";
 import { Spinner } from "@/components/ui/spinner";
+
+// Use the Client type from the hook's return type
+type Client = ReturnType<typeof usePartnerClients>["clients"][0];
 
 const PartnerClientsPage = () => {
   const { toast } = useToast();
@@ -24,12 +26,8 @@ const PartnerClientsPage = () => {
     isLoading, 
     error, 
     createClient, 
-    updateClient,
-    isCreating,
-    isUpdating
-  } = usePartnerClients({
-    searchTerm: ""
-  });
+    updateClient
+  } = usePartnerClients();
 
   const handleCreateClient = async (data: Partial<Client>) => {
     try {
@@ -62,7 +60,7 @@ const PartnerClientsPage = () => {
         id: selectedClient.id,
       });
       
-      if (success) {
+      if (success !== undefined) {
         toast({
           title: "Cliente atualizado",
           description: "Os dados do cliente foram atualizados com sucesso",
@@ -97,7 +95,7 @@ const PartnerClientsPage = () => {
   if (error) {
     return (
       <div className="p-8 text-center">
-        <h3 className="text-xl font-medium text-red-600">Error</h3>
+        <h3 className="text-xl font-medium text-red-600">Erro</h3>
         <p>{error.message}</p>
       </div>
     );
@@ -136,6 +134,10 @@ const PartnerClientsPage = () => {
               setShowNewClientModal(true);
             }, 300);
           }}
+          partners={[]}
+          feePlans={[]}
+          onDelete={() => {}}
+          getMachineCount={() => Promise.resolve(0)}
         />
       )}
 
@@ -143,10 +145,11 @@ const PartnerClientsPage = () => {
       <ClientFormModal
         isOpen={showNewClientModal}
         onClose={() => setShowNewClientModal(false)}
-        onSubmit={selectedClient ? handleUpdateClient : handleCreateClient}
-        isSubmitting={selectedClient ? isUpdating : isCreating}
-        initialData={selectedClient}
-        mode={selectedClient ? "edit" : "create"}
+        client={selectedClient}
+        feePlans={[]}
+        partners={[]}
+        onSave={selectedClient ? handleUpdateClient : handleCreateClient}
+        isSaving={selectedClient ? updateClient.isLoading : createClient.isLoading}
       />
     </PageWrapper>
   );

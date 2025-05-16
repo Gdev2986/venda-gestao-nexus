@@ -2,42 +2,20 @@
 import { supabase } from "@/integrations/supabase/client";
 
 /**
- * Generate a UUID using Supabase RPC
- * @returns The generated UUID string or null if there was an error
+ * Function to generate a UUID using Supabase's extension
  */
-export const generateUuid = async (): Promise<string | null> => {
+export const generateUuid = async (): Promise<string> => {
   try {
-    // Call the generate_uuid RPC function
-    const { data, error } = await supabase.rpc('generate_uuid');
+    const { data, error } = await supabase.rpc("generate_uuid");
     
     if (error) {
-      console.error("Error generating UUID:", error);
-      return null;
+      throw new Error(`Failed to generate UUID: ${error.message}`);
     }
     
-    return data;
-  } catch (error) {
-    console.error("Exception when generating UUID:", error);
-    return null;
-  }
-};
-
-/**
- * Get the currently logged-in user's role
- * @returns The user's role string or null if there was an error
- */
-export const getUserRole = async (): Promise<string | null> => {
-  try {
-    const { data, error } = await supabase.rpc('get_user_role');
-    
-    if (error) {
-      console.error("Error getting user role:", error);
-      return null;
-    }
-    
-    return data;
-  } catch (error) {
-    console.error("Exception when getting user role:", error);
-    return null;
+    return data as string;
+  } catch (err) {
+    console.error("Error generating UUID:", err);
+    // Fallback to client-side UUID generation
+    return crypto.randomUUID();
   }
 };
