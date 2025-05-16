@@ -35,13 +35,12 @@ const PartnerFormModal = ({
         }
         return success;
       } else {
-        const result = await createPartner({
+        await createPartner({
           company_name: data.company_name,
           commission_rate: data.commission_rate || 0,
         });
         
-        // Since createPartner is of type void, we'll determine success 
-        // based on whether an exception was thrown
+        // Successfully created partner
         onClose();
         return true;
       }

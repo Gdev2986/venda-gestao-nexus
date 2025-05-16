@@ -1,116 +1,16 @@
 
-import { useState } from 'react';
-import { useQuery } from '@tanstack/react-query';
-import { PaymentStatus } from '@/types/enums';
-import { supabase } from '@/integrations/supabase/client';
-import { useToast } from '@/hooks/use-toast';
-import { PaymentAction } from '@/components/payments/PaymentTableColumns';
+import { toPaymentStatus } from "@/lib/type-utils";
+import { PaymentStatus } from "@/types/enums";
 
-interface UseAdminPaymentsProps {
-  searchTerm: string;
-  statusFilter: PaymentStatus | string;
-  page: number;
-}
+export const filterPaymentsByStatus = (payments: any[], statusFilter: string | null) => {
+  if (!statusFilter || statusFilter === 'all') {
+    return payments;
+  }
 
-const PAGE_SIZE = 10;
-
-export const useAdminPayments = ({ searchTerm, statusFilter, page }: UseAdminPaymentsProps) => {
-  const [actionLoading, setActionLoading] = useState<string | null>(null);
-  const { toast } = useToast();
-
-  const fetchPayments = async () => {
-    let query = supabase
-      .from('payment_requests')
-      .select('*, client:clients(*)')
-      .order('created_at', { ascending: false })
-      .range((page - 1) * PAGE_SIZE, page * PAGE_SIZE - 1);
-
-    if (searchTerm) {
-      query = query.ilike('id', `%${searchTerm}%`);
-    }
-
-    if (statusFilter !== 'ALL') {
-      query = query.eq('status', statusFilter);
-    }
-
-    const { data, error, count } = await query;
-
-    if (error) {
-      console.error("Error fetching payments:", error);
-      throw new Error(error.message);
-    }
-
-    // Convert data with type assertion to ensure compatibility
-    const typedData = data?.map(item => ({
-      ...item,
-      status: item.status || "PENDING"
-    })) as any[];
-
-    return {
-      data: typedData || [],
-      totalCount: count || 0,
-    };
-  };
-
-  const {
-    data,
-    isLoading,
-    error,
-    refetch,
-  } = useQuery({
-    queryKey: ['adminPayments', searchTerm, statusFilter, page],
-    queryFn: fetchPayments
+  // Convert string status to enum value for type safety
+  const status = toPaymentStatus(statusFilter);
+  
+  return payments.filter((payment) => {
+    return payment.status === status;
   });
-
-  const totalPages = Math.ceil((data?.totalCount || 0) / PAGE_SIZE);
-
-  const performPaymentAction = async (paymentId: string, action: PaymentAction, newStatus?: PaymentStatus | string) => {
-    setActionLoading(paymentId);
-    try {
-      let updateData: any = {};
-
-      if (action === PaymentAction.APPROVE) {
-        updateData = { status: PaymentStatus.APPROVED };
-      } else if (action === PaymentAction.REJECT) {
-        updateData = { status: PaymentStatus.REJECTED };
-      } else if (newStatus) {
-        updateData = { status: newStatus };
-      }
-
-      const { error } = await supabase
-        .from('payment_requests')
-        .update(updateData)
-        .eq('id', paymentId);
-
-      if (error) {
-        throw new Error(`Failed to ${action} payment: ${error.message}`);
-      }
-
-      toast({
-        title: "Sucesso",
-        description: `Pagamento ${action} com sucesso.`,
-      });
-      refetch();
-    } catch (err: any) {
-      console.error(`Error performing action ${action}:`, err);
-      toast({
-        variant: "destructive",
-        title: "Erro",
-        description: `Falha ao ${action} pagamento: ${err.message}`,
-      });
-    } finally {
-      setActionLoading(null);
-    }
-  };
-
-  return {
-    payments: data?.data || [],
-    isLoading,
-    error,
-    totalCount: data?.totalCount || 0,
-    totalPages,
-    refetch,
-    actionLoading,
-    performPaymentAction,
-  };
-};
+}

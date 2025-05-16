@@ -1,18 +1,22 @@
 
 import { useState, useEffect } from "react";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import {
   Form,
   FormControl,
-  FormDescription,
   FormField,
   FormItem,
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import {
   Select,
   SelectContent,
@@ -24,8 +28,6 @@ import {
   Table,
   TableBody,
   TableCell,
-  TableCaption,
-  TableFooter,
   TableHead,
   TableHeader,
   TableRow,
@@ -41,7 +43,6 @@ import {
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
-import { UserRole } from "@/types/enums";
 import { UserData } from "@/types";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
@@ -55,7 +56,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { toUserRole } from "@/lib/type-utils";
+import { generateUuid } from "@/lib/supabase-utils";
 
 // Create a more specific schema that matches the database
 const formSchema = z.object({
@@ -65,7 +66,17 @@ const formSchema = z.object({
   email: z.string().email({
     message: "Please enter a valid email address.",
   }),
-  role: z.enum(Object.values(UserRole) as [UserRole, ...UserRole[]]),
+  role: z.enum([
+    "ADMIN",
+    "CLIENT",
+    "FINANCIAL",
+    "PARTNER",
+    "LOGISTICS",
+    "MANAGER",
+    "FINANCE",
+    "SUPPORT",
+    "USER",
+  ]),
   status: z.string().optional(),
 });
 
@@ -86,7 +97,7 @@ const UserManagement = () => {
     defaultValues: {
       name: "",
       email: "",
-      role: UserRole.CLIENT,
+      role: "CLIENT",
       status: "active",
     },
   });
@@ -127,13 +138,7 @@ const UserManagement = () => {
     setIsCreating(true);
     try {
       // Generate a UUID for the user
-      const { data: userData, error: uuidError } = await supabase.rpc('generate_uuid');
-      
-      if (uuidError) {
-        throw uuidError;
-      }
-      
-      const newUserId = userData;
+      const newUserId = await generateUuid();
       
       if (newUserId) {
         const { error: profileError } = await supabase
@@ -231,7 +236,7 @@ const UserManagement = () => {
     form.reset({
       name: user.name,
       email: user.email,
-      role: user.role as UserRole,
+      role: user.role as any, // Cast to any to avoid type issues
       status: user.status
     });
     setShowEditModal(true);
@@ -248,7 +253,7 @@ const UserManagement = () => {
     }
   };
 
-  const updateUserRole = async (userId: string, role: UserRole) => {
+  const updateUserRole = async (userId: string, role: string) => {
     setIsUpdating(true);
     try {
       const { error } = await supabase
@@ -277,10 +282,9 @@ const UserManagement = () => {
   };
 
   const handleRoleChange = (userId: string, role: string) => {
-    updateUserRole(userId, role as UserRole);
+    updateUserRole(userId, role);
   };
 
-  
   return (
     <div className="container mx-auto py-10">
       <Card>
@@ -321,15 +325,15 @@ const UserManagement = () => {
                           <SelectValue placeholder={user.role} />
                         </SelectTrigger>
                         <SelectContent>
-                          <SelectItem value={UserRole.ADMIN}>Admin</SelectItem>
-                          <SelectItem value={UserRole.CLIENT}>Cliente</SelectItem>
-                          <SelectItem value={UserRole.FINANCIAL}>Financeiro</SelectItem>
-                          <SelectItem value={UserRole.PARTNER}>Parceiro</SelectItem>
-                          <SelectItem value={UserRole.LOGISTICS}>Logística</SelectItem>
-                          <SelectItem value={UserRole.MANAGER}>Gerente</SelectItem>
-                          <SelectItem value={UserRole.FINANCE}>Finanças</SelectItem>
-                          <SelectItem value={UserRole.SUPPORT}>Suporte</SelectItem>
-                          <SelectItem value={UserRole.USER}>Usuário</SelectItem>
+                          <SelectItem value="ADMIN">Admin</SelectItem>
+                          <SelectItem value="CLIENT">Cliente</SelectItem>
+                          <SelectItem value="FINANCIAL">Financeiro</SelectItem>
+                          <SelectItem value="PARTNER">Parceiro</SelectItem>
+                          <SelectItem value="LOGISTICS">Logística</SelectItem>
+                          <SelectItem value="MANAGER">Gerente</SelectItem>
+                          <SelectItem value="FINANCE">Finanças</SelectItem>
+                          <SelectItem value="SUPPORT">Suporte</SelectItem>
+                          <SelectItem value="USER">Usuário</SelectItem>
                         </SelectContent>
                       </Select>
                     </TableCell>
@@ -408,15 +412,15 @@ const UserManagement = () => {
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        <SelectItem value={UserRole.ADMIN}>Admin</SelectItem>
-                        <SelectItem value={UserRole.CLIENT}>Cliente</SelectItem>
-                        <SelectItem value={UserRole.FINANCIAL}>Financeiro</SelectItem>
-                        <SelectItem value={UserRole.PARTNER}>Parceiro</SelectItem>
-                        <SelectItem value={UserRole.LOGISTICS}>Logística</SelectItem>
-                        <SelectItem value={UserRole.MANAGER}>Gerente</SelectItem>
-                        <SelectItem value={UserRole.FINANCE}>Finanças</SelectItem>
-                        <SelectItem value={UserRole.SUPPORT}>Suporte</SelectItem>
-                        <SelectItem value={UserRole.USER}>Usuário</SelectItem>
+                        <SelectItem value="ADMIN">Admin</SelectItem>
+                        <SelectItem value="CLIENT">Cliente</SelectItem>
+                        <SelectItem value="FINANCIAL">Financeiro</SelectItem>
+                        <SelectItem value="PARTNER">Parceiro</SelectItem>
+                        <SelectItem value="LOGISTICS">Logística</SelectItem>
+                        <SelectItem value="MANAGER">Gerente</SelectItem>
+                        <SelectItem value="FINANCE">Finanças</SelectItem>
+                        <SelectItem value="SUPPORT">Suporte</SelectItem>
+                        <SelectItem value="USER">Usuário</SelectItem>
                       </SelectContent>
                     </Select>
                     <FormMessage />
@@ -487,15 +491,15 @@ const UserManagement = () => {
                           </SelectTrigger>
                         </FormControl>
                         <SelectContent>
-                          <SelectItem value={UserRole.ADMIN}>Admin</SelectItem>
-                          <SelectItem value={UserRole.CLIENT}>Cliente</SelectItem>
-                          <SelectItem value={UserRole.FINANCIAL}>Financeiro</SelectItem>
-                          <SelectItem value={UserRole.PARTNER}>Parceiro</SelectItem>
-                          <SelectItem value={UserRole.LOGISTICS}>Logística</SelectItem>
-                          <SelectItem value={UserRole.MANAGER}>Gerente</SelectItem>
-                          <SelectItem value={UserRole.FINANCE}>Finanças</SelectItem>
-                          <SelectItem value={UserRole.SUPPORT}>Suporte</SelectItem>
-                          <SelectItem value={UserRole.USER}>Usuário</SelectItem>
+                          <SelectItem value="ADMIN">Admin</SelectItem>
+                          <SelectItem value="CLIENT">Cliente</SelectItem>
+                          <SelectItem value="FINANCIAL">Financeiro</SelectItem>
+                          <SelectItem value="PARTNER">Parceiro</SelectItem>
+                          <SelectItem value="LOGISTICS">Logística</SelectItem>
+                          <SelectItem value="MANAGER">Gerente</SelectItem>
+                          <SelectItem value="FINANCE">Finanças</SelectItem>
+                          <SelectItem value="SUPPORT">Suporte</SelectItem>
+                          <SelectItem value="USER">Usuário</SelectItem>
                         </SelectContent>
                       </Select>
                       <FormMessage />

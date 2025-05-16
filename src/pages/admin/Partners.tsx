@@ -13,12 +13,19 @@ import PartnerFormModal from "@/components/partners/PartnerFormModal";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 
 const PartnersPage = () => {
-  const { partners, isLoading, error, filterPartners, deletePartner, updatePartner } = usePartners();
+  const { partners, isLoading, error, deletePartner, updatePartner } = usePartners();
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [selectedPartner, setSelectedPartner] = useState<Partner | null>(null);
+  const [searchTerm, setSearchTerm] = useState("");
   const { toast } = useToast();
+  
+  // Filter partners by name (client-side filtering)
+  const filteredPartners = searchTerm 
+    ? partners.filter(partner => 
+        partner.company_name.toLowerCase().includes(searchTerm.toLowerCase()))
+    : partners;
 
   const handleEdit = (partner: Partner) => {
     setSelectedPartner(partner);
@@ -32,14 +39,22 @@ const PartnersPage = () => {
 
   const confirmDelete = async () => {
     if (selectedPartner) {
-      const success = await deletePartner(selectedPartner.id);
-      if (success) {
+      try {
+        await deletePartner(selectedPartner.id);
+        
         toast({
           title: "Parceiro excluído",
           description: "O parceiro foi removido com sucesso.",
         });
+        
+        setShowDeleteDialog(false);
+      } catch (err) {
+        toast({
+          variant: "destructive",
+          title: "Erro ao excluir",
+          description: "Não foi possível excluir o parceiro.",
+        });
       }
-      setShowDeleteDialog(false);
     }
   };
 
@@ -57,18 +72,18 @@ const PartnersPage = () => {
       <PageWrapper>
         <div className="space-y-6">
           <PartnersFilterCard
-            onFilter={(values) => filterPartners(values.search || "")}
+            onFilter={(values) => setSearchTerm(values.search || "")}
             isLoading={isLoading}
           />
 
           {error ? (
             <div className="p-4 border rounded-md bg-red-50 text-red-800">
               <p className="font-semibold">Erro ao carregar parceiros</p>
-              <p>{error}</p>
+              <p>{error.message}</p>
             </div>
           ) : (
             <PartnersTable
-              partners={partners}
+              partners={filteredPartners}
               isLoading={isLoading}
               onEdit={handleEdit}
               onDelete={handleDelete}
@@ -92,8 +107,12 @@ const PartnersPage = () => {
           title={`Editar ${selectedPartner.company_name}`}
           initialData={selectedPartner}
           onSubmit={async (data) => {
-            const success = await updatePartner(selectedPartner.id, data);
-            return success;
+            try {
+              await updatePartner(selectedPartner.id, data);
+              return true;
+            } catch (error) {
+              return false;
+            }
           }}
         />
       )}

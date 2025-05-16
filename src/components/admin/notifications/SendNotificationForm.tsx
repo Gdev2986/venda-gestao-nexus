@@ -18,8 +18,9 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
-import { UserRole, NotificationType } from "@/types/enums";
+import { NotificationType } from "@/types/enums";
 
+// Use string literals for role values to match database enum values
 const formSchema = z.object({
   title: z.string().min(2, {
     message: "O título deve ter pelo menos 2 caracteres.",
@@ -29,15 +30,15 @@ const formSchema = z.object({
   }),
   type: z.nativeEnum(NotificationType),
   role: z.enum([
-    UserRole.ADMIN,
-    UserRole.FINANCIAL,
-    UserRole.PARTNER,
-    UserRole.LOGISTICS,
-    UserRole.CLIENT,
-    UserRole.MANAGER,
-    UserRole.FINANCE,
-    UserRole.SUPPORT,
-    UserRole.USER
+    "ADMIN",
+    "FINANCIAL",
+    "PARTNER",
+    "LOGISTICS",
+    "CLIENT",
+    "MANAGER",
+    "FINANCE",
+    "SUPPORT",
+    "USER"
   ]),
 });
 
@@ -55,7 +56,7 @@ const SendNotificationForm = ({ onClose }: SendNotificationFormProps) => {
       title: "",
       message: "",
       type: NotificationType.GENERAL,
-      role: UserRole.CLIENT,
+      role: "CLIENT", // Use string literal instead of enum
     },
   });
 
@@ -180,9 +181,15 @@ const SendNotificationForm = ({ onClose }: SendNotificationFormProps) => {
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
-                      {Object.values(UserRole).map((role) => (
-                        <SelectItem key={role} value={role}>{role}</SelectItem>
-                      ))}
+                      <SelectItem value="ADMIN">ADMIN</SelectItem>
+                      <SelectItem value="CLIENT">CLIENT</SelectItem>
+                      <SelectItem value="FINANCIAL">FINANCIAL</SelectItem>
+                      <SelectItem value="PARTNER">PARTNER</SelectItem>
+                      <SelectItem value="LOGISTICS">LOGISTICS</SelectItem>
+                      <SelectItem value="MANAGER">MANAGER</SelectItem>
+                      <SelectItem value="FINANCE">FINANCE</SelectItem>
+                      <SelectItem value="SUPPORT">SUPPORT</SelectItem>
+                      <SelectItem value="USER">USER</SelectItem>
                     </SelectContent>
                   </Select>
                   <FormMessage />

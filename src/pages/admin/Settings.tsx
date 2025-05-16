@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
@@ -7,8 +8,6 @@ import { SystemTab } from "@/components/admin/settings/SystemTab";
 import { RoleChangeModal } from "@/components/admin/settings/RoleChangeModal";
 import { AdminNotificationsTab } from "@/components/admin/settings/AdminNotificationsTab";
 import { AdminSecurityTab } from "@/components/admin/settings/AdminSecurityTab";
-import { UserRole } from "@/types/enums";
-import { toUserRole } from "@/lib/type-utils";
 
 // Update ProfileData interface to accept string for role
 interface ProfileData {
@@ -25,7 +24,7 @@ interface ProfileData {
 const AdminSettings = () => {
   const [activeTab, setActiveTab] = useState("usuarios");
   const [selectedUser, setSelectedUser] = useState<ProfileData | null>(null);
-  const [newRole, setNewRole] = useState<string>(UserRole.CLIENT.toString());
+  const [newRole, setNewRole] = useState<string>("CLIENT");
   const [showRoleModal, setShowRoleModal] = useState(false);
   
   const { toast } = useToast();
@@ -34,19 +33,16 @@ const AdminSettings = () => {
     if (!selectedUser || !newRole) return;
     
     try {
-      // Convert to UserRole enum for type safety
-      const userRole = toUserRole(newRole);
-      
       const { error } = await supabase
         .from('profiles')
-        .update({ role: userRole })
+        .update({ role: newRole })
         .eq('id', selectedUser.id);
         
       if (error) throw error;
       
       toast({
         title: "Função atualizada",
-        description: `A função de ${selectedUser.name} foi atualizada para ${userRole}.`
+        description: `A função de ${selectedUser.name} foi atualizada para ${newRole}.`
       });
       
       setShowRoleModal(false);

@@ -1,169 +1,151 @@
 
-import { useState } from "react";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
-import { Partner } from "@/types";
-import { useToast } from "@/hooks/use-toast";
+import { useState, useEffect } from 'react';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { supabase } from '@/integrations/supabase/client';
+import { useToast } from '@/hooks/use-toast';
+import { Partner } from '@/types';
+import { generateUuid } from '@/lib/supabase-utils';
 
-interface UsePartnersOptions {
-  enabled?: boolean;
-  initialData?: Partner[];
-  searchTerm?: string;
-}
-
-export const usePartners = ({
-  enabled = true,
-  initialData = [],
-  searchTerm = "",
-}: UsePartnersOptions = {}) => {
-  const [isCreatingPartner, setIsCreatingPartner] = useState(false);
+export const usePartners = () => {
+  const [partners, setPartners] = useState<Partner[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<Error | null>(null);
   const queryClient = useQueryClient();
   const { toast } = useToast();
 
   const fetchPartners = async () => {
-    let query = supabase.from("partners").select("*");
+    setLoading(true);
+    try {
+      const { data, error } = await supabase
+        .from('partners')
+        .select('*');
 
-    if (searchTerm) {
-      query = query.ilike("company_name", `%${searchTerm}%`);
+      if (error) {
+        throw error;
+      }
+
+      setPartners(data);
+      setError(null);
+    } catch (err) {
+      setError(err as Error);
+      console.error('Error fetching partners:', err);
+    } finally {
+      setLoading(false);
     }
-
-    const { data, error } = await query.order("company_name", {
-      ascending: true,
-    });
-
-    if (error) {
-      throw error;
-    }
-
-    return data || [];
   };
 
-  const { data: partners = initialData, isLoading, error } = useQuery({
-    queryKey: ["partners", searchTerm],
-    queryFn: fetchPartners,
-    enabled,
-  });
+  useEffect(() => {
+    fetchPartners();
+  }, []);
 
-  const createPartnerMutation = useMutation({
-    mutationFn: async (partnerData: Partial<Partner>) => {
-      setIsCreatingPartner(true);
-      try {
-        // Generate UUID for the partner
-        const { data: generatedUUID, error: uuidError } = await supabase.rpc(
-          'generate_uuid'
-        );
-
-        if (uuidError) {
-          throw new Error(`Failed to generate UUID: ${uuidError.message}`);
-        }
-
-        const partnerId = generatedUUID;
-
-        // Ensure company_name is set
-        if (!partnerData.company_name) {
-          throw new Error("Company name is required");
-        }
-
-        const { data, error } = await supabase
-          .from("partners")
-          .insert({
-            id: partnerId,
-            company_name: partnerData.company_name,
-            commission_rate: partnerData.commission_rate || 0
-          })
-          .select();
-
-        if (error) {
-          throw error;
-        }
-
-        return data[0];
-      } finally {
-        setIsCreatingPartner(false);
+  // Mutation to create a new partner
+  const createPartner = useMutation({
+    mutationFn: async ({ company_name, commission_rate = 0, ...rest }: Partial<Partner>) => {
+      // Generate a UUID for the new partner
+      const newPartnerId = await generateUuid();
+      
+      if (!newPartnerId) {
+        throw new Error('Failed to generate UUID');
       }
+      
+      // Ensure company_name is provided
+      if (!company_name) {
+        throw new Error('Company name is required');
+      }
+      
+      const { error } = await supabase
+        .from('partners')
+        .insert({
+          id: newPartnerId,
+          company_name,
+          commission_rate,
+          ...rest
+        });
+        
+      if (error) throw error;
+      
+      return { id: newPartnerId, company_name, commission_rate, ...rest };
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["partners"] });
+      queryClient.invalidateQueries({ queryKey: ['partners'] });
       toast({
-        title: "Success",
-        description: "Partner created successfully",
+        title: 'Parceiro criado',
+        description: 'O parceiro foi criado com sucesso.',
       });
+      fetchPartners();
     },
     onError: (error) => {
       toast({
-        variant: "destructive",
-        title: "Error",
-        description: `Failed to create partner: ${error.message}`,
+        variant: 'destructive',
+        title: 'Erro',
+        description: `Falha ao criar parceiro: ${error.message}`,
       });
     },
   });
 
-  const updatePartnerMutation = useMutation({
-    mutationFn: async ({
-      id,
-      ...partnerData
-    }: Partial<Partner> & { id: string }) => {
-      const { data, error } = await supabase
-        .from("partners")
-        .update(partnerData)
-        .eq("id", id)
-        .select();
-
-      if (error) {
-        throw error;
-      }
-
-      return data[0];
+  // Mutation to delete a partner
+  const deletePartner = useMutation({
+    mutationFn: async (partnerId: string) => {
+      const { error } = await supabase
+        .from('partners')
+        .delete()
+        .eq('id', partnerId);
+      
+      if (error) throw error;
+      return true;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["partners"] });
+      queryClient.invalidateQueries({ queryKey: ['partners'] });
       toast({
-        title: "Success",
-        description: "Partner updated successfully",
+        title: 'Parceiro excluído',
+        description: 'O parceiro foi excluído com sucesso.',
       });
+      fetchPartners();
     },
     onError: (error) => {
       toast({
-        variant: "destructive",
-        title: "Error",
-        description: `Failed to update partner: ${error.message}`,
+        variant: 'destructive',
+        title: 'Erro',
+        description: `Falha ao excluir parceiro: ${error.message}`,
       });
     },
   });
 
-  const deletePartnerMutation = useMutation({
-    mutationFn: async (id: string) => {
-      const { error } = await supabase.from("partners").delete().eq("id", id);
-
-      if (error) {
-        throw error;
-      }
-
-      return id;
+  // Mutation to update a partner
+  const updatePartner = useMutation({
+    mutationFn: async ({ id, ...data }: Partial<Partner> & { id: string }) => {
+      const { error } = await supabase
+        .from('partners')
+        .update(data)
+        .eq('id', id);
+      
+      if (error) throw error;
+      return true;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["partners"] });
+      queryClient.invalidateQueries({ queryKey: ['partners'] });
       toast({
-        title: "Success",
-        description: "Partner deleted successfully",
+        title: 'Parceiro atualizado',
+        description: 'O parceiro foi atualizado com sucesso.',
       });
+      fetchPartners();
     },
     onError: (error) => {
       toast({
-        variant: "destructive",
-        title: "Error",
-        description: `Failed to delete partner: ${error.message}`,
+        variant: 'destructive',
+        title: 'Erro',
+        description: `Falha ao atualizar parceiro: ${error.message}`,
       });
     },
   });
 
   return {
     partners,
-    isLoading,
+    isLoading: loading,
     error,
-    isCreatingPartner,
-    createPartner: createPartnerMutation.mutate,
-    updatePartner: updatePartnerMutation.mutate,
-    deletePartner: deletePartnerMutation.mutate,
+    isCreatingPartner: false, // This would be updated when using the mutation
+    createPartner,
+    updatePartner,
+    deletePartner
   };
 };

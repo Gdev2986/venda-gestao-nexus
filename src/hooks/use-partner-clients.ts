@@ -1,163 +1,161 @@
 
-import { useState } from "react";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
-import { Client } from "@/types";
-import { useToast } from "@/hooks/use-toast";
+import { useState } from 'react';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { supabase } from '@/integrations/supabase/client';
+import { useToast } from '@/hooks/use-toast';
+import { Client } from '@/types';
+import { generateUuid } from '@/lib/supabase-utils';
 
 export interface UsePartnerClientsProps {
-  partnerId?: string;
-  enabled?: boolean;
-  initialData?: Client[];
+  partnerId: string;
 }
 
-export const usePartnerClients = ({
-  partnerId,
-  enabled = true,
-  initialData = [],
-}: UsePartnerClientsProps = {}) => {
-  const [isCreatingClient, setIsCreatingClient] = useState(false);
+export const usePartnerClients = ({ partnerId }: UsePartnerClientsProps) => {
+  const [clients, setClients] = useState<Client[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<Error | null>(null);
   const queryClient = useQueryClient();
   const { toast } = useToast();
 
   const fetchClients = async () => {
-    let query = supabase.from("clients").select("*");
+    setLoading(true);
+    try {
+      const { data, error } = await supabase
+        .from('clients')
+        .select('*')
+        .eq('partner_id', partnerId);
 
-    if (partnerId) {
-      query = query.eq("partner_id", partnerId);
+      if (error) {
+        throw error;
+      }
+
+      setClients(data);
+      setError(null);
+    } catch (err) {
+      setError(err as Error);
+      setClients([]);
+    } finally {
+      setLoading(false);
     }
-
-    const { data, error } = await query.order("business_name", {
-      ascending: true,
-    });
-
-    if (error) {
-      throw error;
-    }
-
-    return data || [];
   };
 
-  const { data: clients = initialData, isLoading, error } = useQuery({
-    queryKey: ["partnerClients", partnerId],
-    queryFn: fetchClients,
-    enabled,
-  });
-
-  const createClientMutation = useMutation({
-    mutationFn: async (clientData: Partial<Client>) => {
-      setIsCreatingClient(true);
-      try {
-        const { data: generatedUUID, error: uuidError } = await supabase.rpc(
-          'generate_uuid'
-        );
-
-        if (uuidError) {
-          throw new Error(`Failed to generate UUID: ${uuidError.message}`);
-        }
-
-        const clientId = generatedUUID;
-
-        // Ensure business_name is set
-        if (!clientData.business_name) {
-          throw new Error("Business name is required");
-        }
-
-        const { data, error } = await supabase.from("clients").insert({
-            id: clientId,
-            ...clientData,
-            ...(partnerId ? { partner_id: partnerId } : {}),
-            business_name: clientData.business_name // Ensuring it's explicitly set
-        }).select();
-
-        if (error) {
-          throw error;
-        }
-
-        return data[0];
-      } finally {
-        setIsCreatingClient(false);
+  // Mutation to create a new client
+  const createClient = useMutation({
+    mutationFn: async (client: Partial<Client>) => {
+      // Generate a UUID for the new client
+      const newClientId = await generateUuid();
+      
+      if (!newClientId) {
+        throw new Error('Failed to generate UUID');
       }
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["partnerClients", partnerId] });
-      toast({
-        title: "Success",
-        description: "Client created successfully",
-      });
-    },
-    onError: (error) => {
-      toast({
-        variant: "destructive",
-        title: "Error",
-        description: `Failed to create client: ${error.message}`,
-      });
-    },
-  });
 
-  const updateClientMutation = useMutation({
-    mutationFn: async ({ id, ...clientData }: Partial<Client> & { id: string }) => {
-      const { data, error } = await supabase
-        .from("clients")
-        .update(clientData)
-        .eq("id", id)
-        .select();
-
+      // Make sure business_name is provided
+      if (!client.business_name) {
+        throw new Error('Business name is required');
+      }
+      
+      // Insert new client with partner association
+      const { error } = await supabase
+        .from('clients')
+        .insert({
+          id: newClientId,
+          partner_id: partnerId,
+          business_name: client.business_name,
+          contact_name: client.contact_name,
+          email: client.email,
+          phone: client.phone,
+          address: client.address,
+          city: client.city,
+          state: client.state,
+          zip: client.zip,
+          document: client.document,
+          status: client.status || 'ACTIVE',
+        });
+      
       if (error) {
         throw error;
       }
-
-      return data[0];
+      
+      return { ...client, id: newClientId, partner_id: partnerId };
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["partnerClients", partnerId] });
+      queryClient.invalidateQueries({ queryKey: ['partnerClients', partnerId] });
       toast({
-        title: "Success",
-        description: "Client updated successfully",
+        title: 'Cliente criado',
+        description: 'O cliente foi criado com sucesso.',
       });
+      fetchClients();
     },
     onError: (error) => {
       toast({
-        variant: "destructive",
-        title: "Error",
-        description: `Failed to update client: ${error.message}`,
+        variant: 'destructive',
+        title: 'Erro',
+        description: `Falha ao criar cliente: ${error.message}`,
       });
     },
   });
 
-  const deleteClientMutation = useMutation({
-    mutationFn: async (id: string) => {
-      const { error } = await supabase.from("clients").delete().eq("id", id);
-
-      if (error) {
-        throw error;
-      }
-
-      return id;
+  // Mutation to delete a client
+  const deleteClient = useMutation({
+    mutationFn: async (clientId: string) => {
+      const { error } = await supabase
+        .from('clients')
+        .delete()
+        .eq('id', clientId);
+      
+      if (error) throw error;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["partnerClients", partnerId] });
+      queryClient.invalidateQueries({ queryKey: ['partnerClients', partnerId] });
       toast({
-        title: "Success",
-        description: "Client deleted successfully",
+        title: 'Cliente excluído',
+        description: 'O cliente foi excluído com sucesso.',
       });
+      fetchClients();
     },
     onError: (error) => {
       toast({
-        variant: "destructive",
-        title: "Error",
-        description: `Failed to delete client: ${error.message}`,
+        variant: 'destructive',
+        title: 'Erro',
+        description: `Falha ao excluir cliente: ${error.message}`,
+      });
+    },
+  });
+
+  // Mutation to update a client
+  const updateClient = useMutation({
+    mutationFn: async ({ id, ...data }: Partial<Client> & { id: string }) => {
+      const { error } = await supabase
+        .from('clients')
+        .update(data)
+        .eq('id', id);
+      
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['partnerClients', partnerId] });
+      toast({
+        title: 'Cliente atualizado',
+        description: 'O cliente foi atualizado com sucesso.',
+      });
+      fetchClients();
+    },
+    onError: (error) => {
+      toast({
+        variant: 'destructive',
+        title: 'Erro',
+        description: `Falha ao atualizar cliente: ${error.message}`,
       });
     },
   });
 
   return {
     clients,
-    isLoading,
+    isLoading: loading,
     error,
-    isCreatingClient,
-    createClient: createClientMutation.mutate,
-    updateClient: updateClientMutation.mutate,
-    deleteClient: deleteClientMutation.mutate,
+    fetchClients,
+    createClient,
+    deleteClient,
+    updateClient,
   };
 };
