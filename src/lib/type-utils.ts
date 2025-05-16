@@ -1,5 +1,5 @@
 
-import { PaymentStatus, UserRole } from "@/types/enums";
+import { UserRole } from "@/types/enums";
 
 /**
  * Converts a string to a PaymentStatus enum value
@@ -31,4 +31,11 @@ export function toUserRole(role: string | UserRole): UserRole {
     return UserRole.USER;
   }
   return role;
+}
+
+/**
+ * Type guard to check if a string is a valid UserRole
+ */
+export function isValidUserRole(role: string): role is UserRole {
+  return Object.values(UserRole).includes(role as UserRole);
 }

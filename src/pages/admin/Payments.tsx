@@ -11,6 +11,7 @@ import { ApprovePaymentDialog } from "@/components/payments/ApprovePaymentDialog
 import { RejectPaymentDialog } from "@/components/payments/RejectPaymentDialog";
 import { PageHeader } from "@/components/page/PageHeader";
 import { Payment } from "@/types";
+import { convertToPaymentRequest } from "@/components/payments/payment-list/PaymentConverter";
 
 const AdminPayments = () => {
   const [searchTerm, setSearchTerm] = useState("");
@@ -126,7 +127,7 @@ const AdminPayments = () => {
         <PaymentDetailsDialog
           open={isDetailsDialogOpen}
           onOpenChange={setIsDetailsDialogOpen}
-          payment={selectedPayment}
+          payment={convertToPaymentRequest(selectedPayment)}
         />
       )}
       
@@ -135,8 +136,9 @@ const AdminPayments = () => {
         <ApprovePaymentDialog
           open={isApproveDialogOpen}
           onOpenChange={setIsApproveDialogOpen}
-          payment={selectedPayment}
+          payment={convertToPaymentRequest(selectedPayment)}
           onApprove={() => handleConfirmAction(PaymentAction.APPROVE)}
+          isProcessing={false}
         />
       )}
       
@@ -145,8 +147,9 @@ const AdminPayments = () => {
         <RejectPaymentDialog
           open={isRejectDialogOpen}
           onOpenChange={setIsRejectDialogOpen}
-          payment={selectedPayment}
+          payment={convertToPaymentRequest(selectedPayment)}
           onReject={() => handleConfirmAction(PaymentAction.REJECT)}
+          isProcessing={false}
         />
       )}
     </div>

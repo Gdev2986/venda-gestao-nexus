@@ -5,7 +5,7 @@ export interface PaymentRequest {
   id: string;
   client_id: string;
   amount: number;
-  description: string;
+  description?: string; // Changed to optional to match Payment interface
   status: PaymentRequestStatus;
   pix_key_id?: string;
   created_at: string;

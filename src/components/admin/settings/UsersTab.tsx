@@ -81,7 +81,7 @@ export const UsersTab = ({ openRoleModal }: UsersTabProps) => {
         .select('*', { count: 'exact' });
       
       if (selectedRole !== 'all') {
-        query = query.eq('role', selectedRole);
+        query = query.eq('role', selectedRole as any);
       }
       
       // Apply pagination

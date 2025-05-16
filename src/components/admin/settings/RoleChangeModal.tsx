@@ -11,6 +11,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
+import { UserRole } from "@/types/enums";
 
 interface ProfileData {
   id: string;
@@ -79,7 +80,7 @@ export const RoleChangeModal = ({
     try {
       const { error } = await supabase
         .from('profiles')
-        .update({ role: newRole })
+        .update({ role: newRole as any })
         .eq('id', user.id);
 
       if (error) throw error;

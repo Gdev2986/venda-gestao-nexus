@@ -87,7 +87,7 @@ const SendNotificationForm = ({ onClose }: SendNotificationFormProps) => {
       const { data: users, error: usersError } = await supabase
         .from("profiles")
         .select("id")
-        .eq("role", values.role);
+        .eq("role", values.role as any);
 
       if (usersError) {
         throw new Error(usersError.message);
