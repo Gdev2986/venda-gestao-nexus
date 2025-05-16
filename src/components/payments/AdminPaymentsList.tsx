@@ -1,9 +1,9 @@
 
 import { useState } from 'react';
-import { Payment, PaymentStatus } from '@/types';
+import { Payment } from '@/types';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
-import { PaymentAction } from '@/hooks/payments/useAdminPayments';
+import { PaymentAction } from '@/types/enums';
 import { ApprovePaymentDialog } from './ApprovePaymentDialog';
 import { RejectPaymentDialog } from './RejectPaymentDialog';
 import { PaymentDetailsDialog } from './PaymentDetailsDialog';

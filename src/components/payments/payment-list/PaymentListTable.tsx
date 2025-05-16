@@ -2,7 +2,7 @@
 import { Payment, PaymentStatus } from '@/types';
 import { formatCurrency } from '@/lib/utils';
 import { formatDate } from '@/components/payments/PaymentTableColumns';
-import { PaymentAction } from '@/hooks/payments/useAdminPayments';
+import { PaymentAction } from '@/types/enums';
 import { Table, TableHead, TableRow, TableHeader, TableBody, TableCell } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';

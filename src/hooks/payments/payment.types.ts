@@ -60,6 +60,13 @@ export interface PaymentRequest {
   };
   payment_type?: string;
   due_date?: string;
+  bank_info?: {
+    bank_name: string;
+    branch_number: string;
+    account_number: string;
+    account_holder: string;
+  };
+  document_url?: string;
 }
 
 export type PixKeyType = 'CPF' | 'CNPJ' | 'EMAIL' | 'PHONE' | 'EVP';

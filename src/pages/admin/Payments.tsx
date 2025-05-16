@@ -2,8 +2,8 @@
 import { useState, useEffect } from "react";
 import { Card } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import useAdminPayments, { PaymentAction } from "@/hooks/payments/useAdminPayments";
-import { PaymentStatus } from "@/types/enums";
+import useAdminPayments from "@/hooks/payments/useAdminPayments";
+import { PaymentStatus, PaymentAction } from "@/types/enums";
 import AdminPaymentsList from "@/components/payments/AdminPaymentsList";
 import { PaymentFilters } from "@/components/payments/PaymentFilters";
 import { PaymentDetailsDialog } from "@/components/payments/PaymentDetailsDialog";

@@ -23,6 +23,7 @@ import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
+import { PaymentAction } from "@/types/enums";
 
 interface DataTableProps<TData, TValue> {
   columns: ColumnDef<TData, TValue>[];
@@ -35,15 +36,6 @@ export interface ColumnDef<TData = any, TValue = any> {
   header?: string | ((props: { column: ColumnDef<TData, TValue> }) => React.ReactNode);
   cell?: (props: { row: TData }) => React.ReactNode;
   footer?: string | ((props: { column: ColumnDef<TData, TValue> }) => React.ReactNode);
-}
-
-// Exporta PaymentAction para outros componentes usarem
-export enum PaymentAction {
-  APPROVE = 'approve',
-  REJECT = 'reject',
-  VIEW = 'view',
-  DELETE = 'delete',
-  SEND_RECEIPT = 'send_receipt',
 }
 
 // Função para determinar a cor baseada no status do pagamento

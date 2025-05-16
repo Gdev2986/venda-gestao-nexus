@@ -24,3 +24,22 @@ export enum UserRole {
   SUPPORT = "SUPORTE",
   USER = "USUARIO"
 }
+
+export enum NotificationType {
+  SUPPORT = "SUPPORT",
+  PAYMENT = "PAYMENT",
+  BALANCE = "BALANCE",
+  MACHINE = "MACHINE",
+  COMMISSION = "COMMISSION",
+  SYSTEM = "SYSTEM",
+  GENERAL = "GENERAL",
+  SALE = "SALE"
+}
+
+export enum PaymentAction {
+  APPROVE = 'approve',
+  REJECT = 'reject',
+  VIEW = 'view',
+  DELETE = 'delete',
+  SEND_RECEIPT = 'send_receipt'
+}
