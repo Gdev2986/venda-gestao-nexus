@@ -37,20 +37,8 @@ const AdminPayments = () => {
     pageSize
   });
   
-  // Handler for search input changes
-  const handleSearchChange = (value: string) => {
-    setSearchTerm(value);
-    setPage(1); // Reset to first page when search changes
-  };
-  
-  // Handler for status filter changes
-  const handleStatusFilterChange = (value: PaymentStatus | "ALL") => {
-    setStatusFilter(value);
-    setPage(1); // Reset to first page when filter changes
-  };
-  
   // Handler for payment actions
-  const handlePaymentAction = (paymentId: string, action: PaymentAction) => {
+  const handlePaymentAction = async (paymentId: string, action: PaymentAction) => {
     const payment = payments.find(p => p.id === paymentId);
     if (!payment) return;
     
@@ -66,16 +54,18 @@ const AdminPayments = () => {
   };
 
   // Handler for dialog confirmations
-  const handleConfirmAction = (action: PaymentAction) => {
-    if (!selectedPayment) return;
+  const handleConfirmAction = async (action: PaymentAction): Promise<void> => {
+    if (!selectedPayment) return Promise.resolve();
     
-    performPaymentAction(selectedPayment.id, action);
+    await performPaymentAction(selectedPayment.id, action);
     
     // Close all dialogs
     setIsDetailsDialogOpen(false);
     setIsApproveDialogOpen(false);
     setIsRejectDialogOpen(false);
     setSelectedPayment(null);
+
+    return Promise.resolve();
   };
   
   return (
@@ -89,8 +79,8 @@ const AdminPayments = () => {
         <PaymentFilters
           searchTerm={searchTerm}
           statusFilter={statusFilter}
-          setSearchTerm={handleSearchChange}
-          setStatusFilter={handleStatusFilterChange}
+          setSearchTerm={setSearchTerm}
+          setStatusFilter={setStatusFilter}
         />
       </Card>
       

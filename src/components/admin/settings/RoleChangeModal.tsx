@@ -10,6 +10,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { UserRole } from "@/types/enums";
 
 interface ProfileData {
   id: string;
@@ -23,12 +24,14 @@ interface ProfileData {
 }
 
 interface RoleChangeModalProps {
-  isOpen: boolean;
+  open?: boolean;
+  isOpen?: boolean; // Support both naming conventions
   user: ProfileData;
   onClose: () => void;
 }
 
 export const RoleChangeModal = ({ 
+  open, 
   isOpen, 
   user, 
   onClose 
@@ -36,6 +39,7 @@ export const RoleChangeModal = ({
   const [availableRoles, setAvailableRoles] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
   const [newRole, setNewRole] = useState(user.role);
+  const isModalOpen = open || isOpen; // Support both props
 
   // Fetch available roles from the profiles table
   useEffect(() => {
@@ -59,10 +63,10 @@ export const RoleChangeModal = ({
       }
     };
 
-    if (isOpen) {
+    if (isModalOpen) {
       fetchRoles();
     }
-  }, [isOpen]);
+  }, [isModalOpen]);
 
   const onSave = async () => {
     setLoading(true);
@@ -82,7 +86,7 @@ export const RoleChangeModal = ({
     }
   };
 
-  if (!isOpen) return null;
+  if (!isModalOpen) return null;
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex justify-center items-center">

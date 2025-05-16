@@ -6,7 +6,7 @@ import { supabase } from "@/integrations/supabase/client";
  */
 export const generateUuid = async (): Promise<string> => {
   try {
-    // Use rpc correctly with the function name "generate_uuid"
+    // Use the correct RPC function name "generate_uuid"
     const { data, error } = await supabase.rpc("generate_uuid");
     
     if (error) {

@@ -20,10 +20,7 @@ import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { NotificationType } from "@/types/enums";
 
-// Define a string literal type for roles to match database structure
-type DatabaseUserRole = "ADMIN" | "FINANCIAL" | "PARTNER" | "LOGISTICS" | "CLIENT" | 
-  "MANAGER" | "FINANCE" | "SUPPORT" | "USER";
-
+// Remove specific role restrictions to allow for dynamic roles
 const formSchema = z.object({
   title: z.string().min(2, {
     message: "O título deve ter pelo menos 2 caracteres.",
@@ -32,10 +29,9 @@ const formSchema = z.object({
     message: "A mensagem deve ter pelo menos 10 caracteres.",
   }),
   type: z.nativeEnum(NotificationType),
-  role: z.enum([
-    "ADMIN", "FINANCIAL", "PARTNER", "LOGISTICS", "CLIENT", 
-    "MANAGER", "FINANCE", "SUPPORT", "USER"
-  ] as const),
+  role: z.string().min(1, {
+    message: "Selecione uma função de usuário."
+  })
 });
 
 interface SendNotificationFormProps {
@@ -44,7 +40,35 @@ interface SendNotificationFormProps {
 
 const SendNotificationForm = ({ onClose }: SendNotificationFormProps) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [availableRoles, setAvailableRoles] = useState<string[]>([
+    "ADMIN", "CLIENT", "FINANCIAL", "PARTNER", "LOGISTICS", 
+    "MANAGER", "FINANCE", "SUPPORT", "USER"
+  ]);
   const { toast } = useToast();
+
+  // Fetch available roles when component mounts
+  useState(() => {
+    const fetchRoles = async () => {
+      try {
+        const { data, error } = await supabase
+          .from('profiles')
+          .select('role')
+          .not('role', 'is', null);
+
+        if (error) throw error;
+
+        // Extract unique roles
+        const uniqueRoles = Array.from(new Set(data.map(item => item.role)));
+        if (uniqueRoles.length > 0) {
+          setAvailableRoles(uniqueRoles);
+        }
+      } catch (error) {
+        console.error("Error fetching roles:", error);
+      }
+    };
+
+    fetchRoles();
+  });
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -52,7 +76,7 @@ const SendNotificationForm = ({ onClose }: SendNotificationFormProps) => {
       title: "",
       message: "",
       type: NotificationType.GENERAL,
-      role: "CLIENT" as const,
+      role: "CLIENT",
     },
   });
 
@@ -170,22 +194,16 @@ const SendNotificationForm = ({ onClose }: SendNotificationFormProps) => {
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>Função</FormLabel>
-                  <Select onValueChange={field.onChange as (value: string) => void} defaultValue={field.value}>
+                  <Select onValueChange={field.onChange} defaultValue={field.value}>
                     <FormControl>
                       <SelectTrigger>
                         <SelectValue placeholder="Selecione a função" />
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
-                      <SelectItem value="ADMIN">ADMIN</SelectItem>
-                      <SelectItem value="CLIENT">CLIENT</SelectItem>
-                      <SelectItem value="FINANCIAL">FINANCIAL</SelectItem>
-                      <SelectItem value="PARTNER">PARTNER</SelectItem>
-                      <SelectItem value="LOGISTICS">LOGISTICS</SelectItem>
-                      <SelectItem value="MANAGER">MANAGER</SelectItem>
-                      <SelectItem value="FINANCE">FINANCE</SelectItem>
-                      <SelectItem value="SUPPORT">SUPPORT</SelectItem>
-                      <SelectItem value="USER">USER</SelectItem>
+                      {availableRoles.map((role) => (
+                        <SelectItem key={role} value={role}>{role}</SelectItem>
+                      ))}
                     </SelectContent>
                   </Select>
                   <FormMessage />

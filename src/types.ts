@@ -1,4 +1,3 @@
-
 export enum UserRole {
   ADMIN = "ADMIN",
   CLIENT = "CLIENT", 
@@ -75,9 +74,11 @@ export interface Payment {
     type: string;
     owner_name: string;
   };
-  // Add missing properties being used in code
-  client?: any;
+  // Add missing properties to match PaymentRequest
+  approved_by?: string | null;
   description?: string;
+  // Add any other properties that might be needed
+  client?: any;
 }
 
 // Types for partners

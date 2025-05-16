@@ -16,14 +16,30 @@ export interface PaymentFiltersProps {
   statusFilter: PaymentStatus | "ALL";
   setSearchTerm: (value: string) => void;
   setStatusFilter: (value: PaymentStatus | "ALL") => void;
+  // Add backwards compatibility for components that use old prop names
+  onSearchChange?: (value: string) => void;
+  onStatusFilterChange?: (value: PaymentStatus | "ALL") => void;
 }
 
 export function PaymentFilters({
   searchTerm,
   statusFilter,
   setSearchTerm,
-  setStatusFilter
+  setStatusFilter,
+  onSearchChange,
+  onStatusFilterChange
 }: PaymentFiltersProps) {
+  // Handle both old and new prop patterns
+  const handleSearchChange = (value: string) => {
+    setSearchTerm(value);
+    if (onSearchChange) onSearchChange(value);
+  };
+
+  const handleStatusChange = (value: PaymentStatus | "ALL") => {
+    setStatusFilter(value);
+    if (onStatusFilterChange) onStatusFilterChange(value);
+  };
+
   return (
     <div className="grid gap-4 md:grid-cols-2">
       <div className="relative">
@@ -31,14 +47,14 @@ export function PaymentFilters({
         <Input
           placeholder="Buscar pagamentos..."
           value={searchTerm}
-          onChange={(e) => setSearchTerm(e.target.value)}
+          onChange={(e) => handleSearchChange(e.target.value)}
           className="pl-10"
         />
       </div>
 
       <Select
         value={statusFilter}
-        onValueChange={(value: PaymentStatus | "ALL") => setStatusFilter(value)}
+        onValueChange={(value: PaymentStatus | "ALL") => handleStatusChange(value)}
       >
         <SelectTrigger>
           <SelectValue placeholder="Filtrar por status" />

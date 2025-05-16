@@ -65,7 +65,7 @@ const AdminSettings = () => {
 
       {selectedUser && (
         <RoleChangeModal
-          isOpen={isRoleChangeModalOpen}
+          open={isRoleChangeModalOpen}
           onClose={() => setIsRoleChangeModalOpen(false)}
           user={selectedUser}
         />

@@ -1,153 +1,172 @@
 
-import { useState } from "react";
-import { useToast } from "@/hooks/use-toast";
-import { PageHeader } from "@/components/page/PageHeader";
+import { useState, useEffect } from "react";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { PlusIcon } from "lucide-react";
-import ClientsTable from "@/components/clients/ClientsTable";
-import ClientDetailsModal from "@/components/clients/ClientDetailsModal";
-import ClientFormModal from "@/components/clients/ClientFormModal";
-import { PageWrapper } from "@/components/page/PageWrapper";
-import { usePartnerClients } from "@/hooks/use-partner-clients";
-import { Spinner } from "@/components/ui/spinner";
-
-// Use the Client type from the hook's return type
-type Client = ReturnType<typeof usePartnerClients>["clients"][0];
+import { Input } from "@/components/ui/input";
+import { ClientStatus, Client } from "@/types";
+import { Search, Plus } from "lucide-react";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/hooks/use-toast";
+import { ClientsTable } from "@/components/clients/ClientsTable";
+import { ClientDetailsModal } from "@/components/clients/ClientDetailsModal";
 
 const PartnerClientsPage = () => {
-  const { toast } = useToast();
-  const [showNewClientModal, setShowNewClientModal] = useState(false);
+  const [clients, setClients] = useState<Client[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [statusFilter, setStatusFilter] = useState<string>("all");
   const [selectedClient, setSelectedClient] = useState<Client | null>(null);
   const [showDetailsModal, setShowDetailsModal] = useState(false);
+  const { toast } = useToast();
 
-  // Get clients data with the hook - fix by providing the required partnerId
-  const { 
-    clients, 
-    isLoading, 
-    error, 
-    createClient, 
-    updateClient
-  } = usePartnerClients({ partnerId: "current-partner-id" });
-
-  const handleCreateClient = async (data: Partial<Client>) => {
+  // Fetch clients from Supabase
+  const fetchClients = async () => {
+    setIsLoading(true);
     try {
-      const success = await createClient.mutateAsync(data);
-      if (success) {
-        toast({
-          title: "Cliente criado",
-          description: "O cliente foi criado com sucesso",
-        });
-        setShowNewClientModal(false);
-        return true;
+      let query = supabase
+        .from("clients")
+        .select("*");
+
+      // Apply filters
+      if (statusFilter !== "all") {
+        query = query.eq("status", statusFilter);
       }
-      return false;
-    } catch (error) {
-      toast({
-        variant: "destructive",
-        title: "Erro",
-        description: "Não foi possível criar o cliente",
-      });
-      return false;
-    }
-  };
-
-  const handleUpdateClient = async (data: Partial<Client>) => {
-    if (!selectedClient) return false;
-
-    try {
-      const success = await updateClient.mutateAsync({
-        ...data,
-        id: selectedClient.id,
-      });
       
-      if (success !== undefined) {
-        toast({
-          title: "Cliente atualizado",
-          description: "Os dados do cliente foram atualizados com sucesso",
-        });
-        setShowDetailsModal(false);
-        return true;
+      if (searchTerm) {
+        query = query.or(
+          `business_name.ilike.%${searchTerm}%,email.ilike.%${searchTerm}%`
+        );
       }
-      return false;
-    } catch (error) {
+
+      const { data, error } = await query;
+
+      if (error) throw error;
+
+      setClients(data as Client[]);
+    } catch (error: any) {
+      console.error("Error fetching clients:", error);
       toast({
         variant: "destructive",
-        title: "Erro",
-        description: "Não foi possível atualizar os dados do cliente",
+        title: "Error",
+        description: error.message,
       });
-      return false;
+    } finally {
+      setIsLoading(false);
     }
   };
 
-  const handleViewClient = (client: Client) => {
+  useEffect(() => {
+    fetchClients();
+  }, [statusFilter, searchTerm]);
+
+  const handleClientClick = (client: Client) => {
     setSelectedClient(client);
     setShowDetailsModal(true);
   };
 
-  if (isLoading) {
-    return (
-      <div className="flex items-center justify-center h-full">
-        <Spinner size="lg" />
-      </div>
-    );
-  }
+  const handleCloseModal = () => {
+    setShowDetailsModal(false);
+    setSelectedClient(null);
+  };
 
-  if (error) {
-    return (
-      <div className="p-8 text-center">
-        <h3 className="text-xl font-medium text-red-600">Erro</h3>
-        <p>{error.message}</p>
-      </div>
-    );
-  }
+  // Calculate client stats
+  const totalClients = clients.length;
+  const activeClients = clients.filter((c) => c.status === ClientStatus.ACTIVE).length;
+  const inactiveClients = clients.filter((c) => c.status === ClientStatus.INACTIVE).length;
 
   return (
-    <PageWrapper>
-      <PageHeader
-        title="Clientes"
-        description="Gerencie seus clientes"
-      >
-        <Button onClick={() => setShowNewClientModal(true)}>
-          <PlusIcon className="mr-2 h-4 w-4" />
-          Novo Cliente
-        </Button>
-      </PageHeader>
+    <div className="container mx-auto py-10">
+      <div className="flex flex-col space-y-6">
+        <div>
+          <h1 className="text-2xl font-bold">Clients Management</h1>
+          <p className="text-gray-500">View and manage your client accounts</p>
+        </div>
 
-      <div className="mt-8">
-        <ClientsTable 
-          clients={clients} 
-          isLoading={isLoading}
-          onView={handleViewClient}
-        />
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <Card>
+            <CardHeader className="pb-2">
+              <CardTitle className="text-sm font-medium text-gray-500">Total Clients</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{totalClients}</div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader className="pb-2">
+              <CardTitle className="text-sm font-medium text-gray-500">Active Clients</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{activeClients}</div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader className="pb-2">
+              <CardTitle className="text-sm font-medium text-gray-500">Inactive Clients</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{inactiveClients}</div>
+            </CardContent>
+          </Card>
+        </div>
+
+        <Card>
+          <CardHeader>
+            <div className="flex items-center justify-between">
+              <div>
+                <CardTitle>Your Clients</CardTitle>
+                <CardDescription>Manage your client accounts</CardDescription>
+              </div>
+              <Button>
+                <Plus className="mr-2 h-4 w-4" /> Add New Client
+              </Button>
+            </div>
+          </CardHeader>
+          <CardContent>
+            <div className="flex flex-col md:flex-row gap-4 mb-6">
+              <div className="relative flex-1">
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500" />
+                <Input
+                  placeholder="Search clients..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="pl-10"
+                />
+              </div>
+              <Select value={statusFilter} onValueChange={setStatusFilter}>
+                <SelectTrigger className="w-full md:w-[180px]">
+                  <SelectValue placeholder="Filter by status" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Statuses</SelectItem>
+                  <SelectItem value={ClientStatus.ACTIVE}>Active</SelectItem>
+                  <SelectItem value={ClientStatus.INACTIVE}>Inactive</SelectItem>
+                  <SelectItem value={ClientStatus.PENDING}>Pending</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            <ClientsTable 
+              clients={clients} 
+              isLoading={isLoading} 
+              onEdit={handleClientClick}
+              onDelete={() => {}} // Provide an empty function for now
+              onView={handleClientClick}
+            />
+          </CardContent>
+        </Card>
       </div>
 
-      {/* Client Details Modal */}
       {selectedClient && (
         <ClientDetailsModal
-          open={showDetailsModal}
-          onOpenChange={setShowDetailsModal}
+          isOpen={showDetailsModal}
+          onClose={handleCloseModal}
           client={selectedClient}
-          onEdit={() => {
-            setShowDetailsModal(false);
-            // Give time for the details modal to close before opening edit form
-            setTimeout(() => {
-              setShowNewClientModal(true);
-            }, 300);
-          }}
-          partners={[]}
-          feePlans={[]}
-          onDelete={() => {}}
-          getMachineCount={() => 0}
         />
       )}
-
-      {/* Create/Edit Client Form Modal */}
-      <ClientFormModal
-        isOpen={showNewClientModal}
-        onClose={() => setShowNewClientModal(false)}
-        title={selectedClient ? "Editar Cliente" : "Novo Cliente"}
-      />
-    </PageWrapper>
+    </div>
   );
 };
 
