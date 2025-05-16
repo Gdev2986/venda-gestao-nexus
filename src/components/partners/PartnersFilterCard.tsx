@@ -3,26 +3,45 @@ import { useState } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { FilterValues } from "@/types";
 import { Search } from "lucide-react";
 
-interface PartnersFilterCardProps {
-  onFilter: (values: FilterValues) => void;
-  isLoading?: boolean;
+export interface FilterValues {
+  search?: string;
+  status?: string;
+  [key: string]: any;
 }
 
-const PartnersFilterCard = ({ onFilter, isLoading }: PartnersFilterCardProps) => {
-  const [searchTerm, setSearchTerm] = useState("");
+export interface PartnersFilterCardProps {
+  onFilter: (values: FilterValues) => void;
+  isLoading?: boolean;
+  onSearch?: (term: string) => void;
+  searchTerm?: string;
+}
+
+export const PartnersFilterCard = ({ 
+  onFilter, 
+  isLoading, 
+  onSearch, 
+  searchTerm = "" 
+}: PartnersFilterCardProps) => {
+  const [searchValue, setSearchValue] = useState(searchTerm);
   
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    onFilter({ search: searchTerm });
+    onFilter({ search: searchValue });
+    if (onSearch) onSearch(searchValue);
   };
   
   const handleClearFilters = () => {
-    setSearchTerm("");
+    setSearchValue("");
     onFilter({});
+    if (onSearch) onSearch("");
   };
+
+  // If the searchTerm prop changes, update our local state
+  if (searchTerm !== searchValue && searchTerm !== undefined) {
+    setSearchValue(searchTerm);
+  }
 
   return (
     <Card>
@@ -34,8 +53,8 @@ const PartnersFilterCard = ({ onFilter, isLoading }: PartnersFilterCardProps) =>
               <Input 
                 className="pl-9"
                 placeholder="Buscar por nome, email ou telefone" 
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
+                value={searchValue}
+                onChange={(e) => setSearchValue(e.target.value)}
                 disabled={isLoading}
               />
             </div>
@@ -55,4 +74,3 @@ const PartnersFilterCard = ({ onFilter, isLoading }: PartnersFilterCardProps) =>
 };
 
 export default PartnersFilterCard;
-export { PartnersFilterCard };

@@ -5,8 +5,8 @@ import { toPaymentStatus } from "@/lib/type-utils";
 import { useToast } from "@/hooks/use-toast";
 
 // Function to filter payments by status
-export const filterPaymentsByStatus = (payments: any[], statusFilter: PaymentStatus | null) => {
-  if (!statusFilter || statusFilter === 'all') {
+export const filterPaymentsByStatus = (payments: any[], statusFilter: PaymentStatus | 'ALL' | null) => {
+  if (!statusFilter || statusFilter.toString().toLowerCase() === 'all') {
     return payments;
   }
   
@@ -17,7 +17,7 @@ export const filterPaymentsByStatus = (payments: any[], statusFilter: PaymentSta
 
 // Interface for the usePaymentsFetcher hook parameters
 interface UsePaymentsFetcherParams {
-  statusFilter?: string | null;
+  statusFilter?: PaymentStatus | 'ALL' | null;
   searchTerm?: string;
   fetchOnMount?: boolean;
   page?: number;
@@ -61,7 +61,7 @@ export const usePaymentsFetcher = ({
 
         // Filter by status if needed
         let filtered = mockPayments;
-        if (statusFilter) {
+        if (statusFilter && statusFilter !== 'ALL') {
           const status = statusFilter as PaymentStatus;
           filtered = filterPaymentsByStatus(mockPayments, status);
         }

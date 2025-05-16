@@ -12,7 +12,7 @@ import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Partner } from "@/types";
 import { usePartners } from "@/hooks/use-partners"; 
-import { PartnersTable } from "@/components/partners/PartnersTable";
+import PartnersTable from "@/components/partners/PartnersTable";
 import { PartnerFormModal } from "@/components/partners/PartnerFormModal";
 import { PartnersFilterCard } from "@/components/partners/PartnersFilterCard";
 
@@ -111,8 +111,8 @@ const Partners = () => {
         {/* Left column - filters */}
         <div className="md:col-span-2">
           <PartnersFilterCard 
-            onSearch={setSearchTerm} 
-            searchTerm={searchTerm}
+            onFilter={(values) => setSearchTerm(values.search || "")} 
+            isLoading={isLoading}
           />
         </div>
 
@@ -132,7 +132,7 @@ const Partners = () => {
                 partners={filteredPartners} 
                 isLoading={isLoading} 
                 onEdit={handleEdit}
-                onDelete={handleDeletePartner}
+                onDelete={(partner) => handleDeletePartner(partner.id)}
               />
             </CardContent>
           </Card>

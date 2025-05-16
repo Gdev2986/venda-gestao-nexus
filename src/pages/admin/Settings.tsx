@@ -5,7 +5,7 @@ import { SystemTab } from "@/components/admin/settings/SystemTab";
 import { AdminSecurityTab } from "@/components/admin/settings/AdminSecurityTab";
 import { AdminNotificationsTab } from "@/components/admin/settings/AdminNotificationsTab";
 import { UsersTab } from "@/components/admin/settings/UsersTab";
-import RoleChangeModal from "@/components/admin/settings/RoleChangeModal";
+import { RoleChangeModal } from "@/components/admin/settings/RoleChangeModal";
 
 interface ProfileData {
   id: string;
@@ -23,16 +23,7 @@ const AdminSettings = () => {
   const [selectedUser, setSelectedUser] = useState<ProfileData | null>(null);
 
   // User role types as they are in the database
-  type UserRoleType = 
-    | "ADMIN" 
-    | "CLIENT" 
-    | "FINANCIAL" 
-    | "PARTNER" 
-    | "LOGISTICS" 
-    | "MANAGER" 
-    | "FINANCE" 
-    | "SUPPORT" 
-    | "USER";
+  type ValidUserRole = "ADMIN" | "CLIENT" | "FINANCIAL" | "PARTNER" | "LOGISTICS";
 
   const openRoleModal = (user: ProfileData) => {
     setSelectedUser(user);

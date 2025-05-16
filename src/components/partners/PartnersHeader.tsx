@@ -2,7 +2,7 @@
 import { PlusIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
-interface PartnersHeaderProps {
+export interface PartnersHeaderProps {
   onCreateClick: () => void;
 }
 
