@@ -14,7 +14,8 @@ export enum PaymentStatus {
   PENDING = "PENDING",
   APPROVED = "APPROVED",
   REJECTED = "REJECTED",
-  PAID = "PAID"
+  PAID = "PAID",
+  PROCESSING = "PROCESSING"  // Added PROCESSING status
 }
 
 export enum PaymentType {
@@ -45,7 +46,11 @@ export enum NotificationType {
   SYSTEM = "SYSTEM",
   GENERAL = "GENERAL",
   SALE = "SALE",
-  SUPPORT = "SUPPORT"
+  SUPPORT = "SUPPORT",
+  BALANCE_UPDATE = "BALANCE_UPDATE",  // Added BALANCE_UPDATE
+  PAYMENT_REQUEST = "PAYMENT_REQUEST",
+  PAYMENT_APPROVED = "PAYMENT_APPROVED",
+  PAYMENT_REJECTED = "PAYMENT_REJECTED"
 }
 
 export interface Payment {
@@ -100,7 +105,7 @@ export interface Partner {
   total_commission?: number;
 }
 
-// Added Client interface to ensure type safety
+// Updated Client interface to ensure type safety
 export interface Client {
   id: string;
   business_name: string;
@@ -119,6 +124,7 @@ export interface Client {
   document?: string;
   fee_plan_id?: string;
   company_name?: string;
+  user_id?: string;  // Added user_id field
 }
 
 export interface FilterValues {

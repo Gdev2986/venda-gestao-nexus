@@ -9,19 +9,33 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import ClientForm, { ClientFormValues } from "./ClientForm";
+import { Client } from "@/types";
 
 export interface ClientFormModalProps {
   isOpen: boolean;
   onClose: () => void;
   title?: string;
+  initialData?: Client;
+  onSubmit?: (data: ClientFormValues) => Promise<boolean>;
 }
 
-const ClientFormModal = ({ isOpen, onClose, title = "Novo Cliente" }: ClientFormModalProps) => {
+const ClientFormModal = ({ 
+  isOpen, 
+  onClose, 
+  title = "Novo Cliente",
+  initialData,
+  onSubmit: externalSubmit 
+}: ClientFormModalProps) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { addClient } = useClients();
   const { toast } = useToast();
 
   const handleCreateClient = async (data: ClientFormValues) => {
+    // If external submit handler is provided, use that
+    if (externalSubmit) {
+      return externalSubmit(data);
+    }
+
     setIsSubmitting(true);
     try {
       // Convert form values to ClientCreate type
@@ -72,6 +86,7 @@ const ClientFormModal = ({ isOpen, onClose, title = "Novo Cliente" }: ClientForm
           onSubmit={handleCreateClient}
           isSubmitting={isSubmitting}
           title={title}
+          initialData={initialData}
         />
       </DialogContent>
     </Dialog>

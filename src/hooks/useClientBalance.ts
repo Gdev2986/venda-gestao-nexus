@@ -2,7 +2,7 @@
 import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
-import { Client } from "@/types";
+import { Client, NotificationType } from "@/types";
 
 interface UpdateClientBalanceOptions {
   clientId: string;
@@ -35,7 +35,7 @@ export const useClientBalance = () => {
       // Buscar o cliente para obter o saldo atual
       const { data: clientData, error: clientError } = await supabase
         .from("clients")
-        .select("balance, business_name")
+        .select("balance, business_name, user_id")
         .eq("id", clientId)
         .single();
 
@@ -75,20 +75,22 @@ export const useClientBalance = () => {
         ? `Seu saldo foi aumentado em R$ ${amount.toFixed(2)}`
         : `Seu saldo foi reduzido em R$ ${amount.toFixed(2)}`;
 
-      await supabase.from("notifications").insert({
-        user_id: (await supabase.from("clients").select("user_id").eq("id", clientId).single()).data?.user_id,
-        title: "Alteração de Saldo",
-        message: notificationMessage + (reason ? `: "${reason}"` : ""),
-        type: "BALANCE_UPDATE",
-        data: {
-          previous_balance: currentBalance,
-          new_balance: newBalance,
-          amount: amount,
-          type: type,
-          reason: reason || null,
-          timestamp: new Date().toISOString()
-        }
-      });
+      if (clientData.user_id) {
+        await supabase.from("notifications").insert({
+          user_id: clientData.user_id,
+          title: "Alteração de Saldo",
+          message: notificationMessage + (reason ? `: "${reason}"` : ""),
+          type: NotificationType.BALANCE,
+          data: {
+            previous_balance: currentBalance,
+            new_balance: newBalance,
+            amount: amount,
+            type: type,
+            reason: reason || null,
+            timestamp: new Date().toISOString()
+          }
+        });
+      }
 
       toast({
         title: "Saldo atualizado",

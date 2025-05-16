@@ -3,6 +3,7 @@ import { useEffect } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
+import { NotificationType } from "@/types";
 
 type ClientSubscriptionCallback = () => void;
 
@@ -37,7 +38,7 @@ export const useClientRealtime = (callback: ClientSubscriptionCallback) => {
         event: 'INSERT',
         schema: 'public',
         table: 'notifications',
-        filter: 'type=eq.BALANCE_UPDATE'
+        filter: `type=eq.${NotificationType.BALANCE}`
       }, (payload) => {
         console.log('Nova notificação de saldo:', payload);
         
