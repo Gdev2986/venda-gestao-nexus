@@ -1,10 +1,9 @@
 
-import { useState, useEffect } from "react";
-import { UsePaymentsOptions } from "./payments/payment.types";
-import { usePaymentsFetcher } from "./payments/usePaymentsFetcher";
+import { useState } from "react";
+import usePaymentsFetcher from "./payments/usePaymentsFetcher";
 import { usePaymentActions } from "./payments/usePaymentActions";
 
-export const usePayments = (options: UsePaymentsOptions = {}) => {
+export const usePayments = (options = {}) => {
   const {
     paymentRequests,
     setPaymentRequests,
@@ -33,3 +32,5 @@ export const usePayments = (options: UsePaymentsOptions = {}) => {
     rejectPayment,
   };
 };
+
+export default usePayments;

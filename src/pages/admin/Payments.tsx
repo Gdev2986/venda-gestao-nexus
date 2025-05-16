@@ -5,9 +5,8 @@ import { PATHS } from "@/routes/paths";
 import { PaymentFilters } from "@/components/payments/PaymentFilters";
 import { PageWrapper } from "@/components/page/PageWrapper";
 import AdminPaymentsList from "@/components/payments/AdminPaymentsList";
-import { useAdminPayments } from "@/hooks/payments/useAdminPayments";
+import useAdminPayments, { PaymentAction } from "@/hooks/payments/useAdminPayments";
 import { PaymentStatus } from "@/types";
-import { PaymentAction } from "@/components/payments/PaymentTableColumns";
 
 const AdminPayments = () => {
   const [searchTerm, setSearchTerm] = useState('');
