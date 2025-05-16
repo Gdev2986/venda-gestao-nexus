@@ -7,7 +7,7 @@ import MachinesTable from "@/components/logistics/dashboard/MachinesTable";
 import RequestsTable from "@/components/logistics/dashboard/RequestsTable";
 import DashboardHeader from "@/components/logistics/dashboard/DashboardHeader";
 import MachineStatusChart from "@/components/logistics/dashboard/MachineStatusChart";
-import DashboardTabs from "@/components/logistics/dashboard/DashboardTabs";
+import { DashboardTabs } from "@/components/logistics/dashboard/DashboardTabs";
 import SLAChart from "@/components/logistics/dashboard/SLAChart";
 import RequestsChart from "@/components/logistics/dashboard/RequestsChart";
 import RecentActivitiesCard from "@/components/logistics/dashboard/RecentActivitiesCard";
@@ -15,27 +15,26 @@ import AppointmentsCard from "@/components/logistics/dashboard/AppointmentsCard"
 import StorageOptimizationCard from "@/components/logistics/dashboard/StorageOptimizationCard";
 import NewRequestDialog from "@/components/logistics/modals/NewRequestDialog";
 import NewMachineDialog from "@/components/logistics/modals/NewMachineDialog";
-import { dashboardDataMock } from "@/data/logistics/dashboardData";
 
-// Define the required types
+// Define the required types for dashboard
 interface Activity {
   id: string;
   title: string;
   description: string;
   time: string;
-  timestamp: string; // Adding the required timestamp
+  timestamp: string;
 }
 
 interface MachineStatusData {
   name: string;
   value: number;
-  color: string; // Adding the required color
+  color: string;
 }
 
 interface RequestData {
   name: string;
   value: number;
-  total: number; // Adding the required total
+  total: number;
 }
 
 interface Appointment {
@@ -44,8 +43,8 @@ interface Appointment {
   client: string;
   time: string;
   date: string;
-  type: string; // Adding the required type
-  status: string; // Adding the required status
+  type: string;
+  status: string;
 }
 
 const LogisticsDashboard = () => {

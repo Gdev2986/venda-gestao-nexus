@@ -1,140 +1,155 @@
 
 import { useState } from "react";
+import { useToast } from "@/hooks/use-toast";
 import { PageHeader } from "@/components/page/PageHeader";
 import { Button } from "@/components/ui/button";
-import { 
-  Card, 
-  CardContent, 
-  CardHeader, 
-  CardTitle 
-} from "@/components/ui/card";
-import ClientsTable from "@/components/clients/ClientsTable";
-import { usePartnerClients } from "@/hooks/use-partner-clients";
-import { Client } from "@/types";
+import { PlusIcon } from "lucide-react";
+import { ClientsTable } from "@/components/clients/ClientsTable";
+import ClientDetailsModal from "@/components/clients/ClientDetailsModal";
 import ClientFormModal from "@/components/clients/ClientFormModal";
+import { PageWrapper } from "@/components/page/PageWrapper";
+import { usePartnerClients } from "@/hooks/use-partner-clients";
+import { Client } from "@/types/client";
+import { Spinner } from "@/components/ui/spinner";
 
-const PartnerClients = () => {
-  const [showCreateModal, setShowCreateModal] = useState(false);
+const PartnerClientsPage = () => {
+  const { toast } = useToast();
+  const [showNewClientModal, setShowNewClientModal] = useState(false);
   const [selectedClient, setSelectedClient] = useState<Client | null>(null);
-  const [searchTerm, setSearchTerm] = useState("");
-  const [statusFilter, setStatusFilter] = useState("all");
+  const [showDetailsModal, setShowDetailsModal] = useState(false);
 
-  // Get partner clients
-  const {
-    clients,
-    isLoading,
-    error,
-    createClient
-  } = usePartnerClients();
+  // Get clients data with the hook
+  const { 
+    clients, 
+    isLoading, 
+    error, 
+    createClient, 
+    updateClient,
+    isCreating,
+    isUpdating
+  } = usePartnerClients({
+    searchTerm: ""
+  });
 
-  // Handle filter changes
-  const handleFilterChange = (search: string, status: string) => {
-    setSearchTerm(search);
-    setStatusFilter(status);
-    
-    // Apply filters locally since we don't have setFilterValues
-    // This would typically be handled by filtering the clients data
-  };
-
-  // Handle client creation
   const handleCreateClient = async (data: Partial<Client>) => {
     try {
-      await createClient.mutateAsync(data);
-      setShowCreateModal(false);
-      return true;
-    } catch (e) {
-      console.error("Error creating client:", e);
+      const success = await createClient.mutateAsync(data);
+      if (success) {
+        toast({
+          title: "Cliente criado",
+          description: "O cliente foi criado com sucesso",
+        });
+        setShowNewClientModal(false);
+        return true;
+      }
+      return false;
+    } catch (error) {
+      toast({
+        variant: "destructive",
+        title: "Erro",
+        description: "Não foi possível criar o cliente",
+      });
       return false;
     }
   };
 
-  return (
-    <div className="container mx-auto py-10">
-      <PageHeader 
-        title="Clientes" 
-        description="Gerencie os clientes da sua parceria"
-        actionLabel="Novo Cliente"
-        actionOnClick={() => setShowCreateModal(true)}
-      />
+  const handleUpdateClient = async (data: Partial<Client>) => {
+    if (!selectedClient) return false;
+
+    try {
+      const success = await updateClient.mutateAsync({
+        ...data,
+        id: selectedClient.id,
+      });
       
-      <div className="grid gap-4 md:grid-cols-4 mb-6">
-        <div className="md:col-span-3">
-          <Card>
-            <CardHeader className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-              <CardTitle>Todos os Clientes</CardTitle>
-              <div className="flex items-center gap-2">
-                {/* Search and filter inputs could go here */}
-              </div>
-            </CardHeader>
-            <CardContent>
-              {error ? (
-                <div className="text-red-500 p-4 border border-red-300 rounded-md bg-red-50">
-                  {error.message || "Erro ao carregar clientes"}
-                </div>
-              ) : (
-                <ClientsTable 
-                  clients={clients} 
-                  isLoading={isLoading} 
-                  onRowClick={setSelectedClient}
-                />
-              )}
-            </CardContent>
-          </Card>
-        </div>
-        
-        <div>
-          <Card>
-            <CardHeader>
-              <CardTitle>Filtros</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div>
-                <label className="text-sm font-medium">Buscar</label>
-                <input
-                  type="text"
-                  value={searchTerm}
-                  onChange={(e) => handleFilterChange(e.target.value, statusFilter)}
-                  className="w-full mt-1 px-3 py-2 border rounded-md"
-                  placeholder="Nome ou e-mail"
-                />
-              </div>
-              
-              <div>
-                <label className="text-sm font-medium">Status</label>
-                <select
-                  value={statusFilter}
-                  onChange={(e) => handleFilterChange(searchTerm, e.target.value)}
-                  className="w-full mt-1 px-3 py-2 border rounded-md"
-                >
-                  <option value="all">Todos</option>
-                  <option value="active">Ativo</option>
-                  <option value="inactive">Inativo</option>
-                  <option value="pending">Pendente</option>
-                </select>
-              </div>
-              
-              <Button 
-                variant="outline" 
-                className="w-full"
-                onClick={() => handleFilterChange("", "all")}
-              >
-                Limpar Filtros
-              </Button>
-            </CardContent>
-          </Card>
-        </div>
+      if (success) {
+        toast({
+          title: "Cliente atualizado",
+          description: "Os dados do cliente foram atualizados com sucesso",
+        });
+        setShowDetailsModal(false);
+        return true;
+      }
+      return false;
+    } catch (error) {
+      toast({
+        variant: "destructive",
+        title: "Erro",
+        description: "Não foi possível atualizar os dados do cliente",
+      });
+      return false;
+    }
+  };
+
+  const handleRowClick = (client: Client) => {
+    setSelectedClient(client);
+    setShowDetailsModal(true);
+  };
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center h-full">
+        <Spinner size="lg" />
       </div>
-      
-      {/* Create Client Modal */}
-      <ClientFormModal 
-        open={showCreateModal}
-        onOpenChange={setShowCreateModal}
-        onSubmit={handleCreateClient}
-        isSubmitting={createClient.isPending}
-        mode="create"
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="p-8 text-center">
+        <h3 className="text-xl font-medium text-red-600">Error</h3>
+        <p>{error.message}</p>
+      </div>
+    );
+  }
+
+  return (
+    <PageWrapper>
+      <PageHeader
+        title="Clientes"
+        description="Gerencie seus clientes"
+      >
+        <Button onClick={() => setShowNewClientModal(true)}>
+          <PlusIcon className="mr-2 h-4 w-4" />
+          Novo Cliente
+        </Button>
+      </PageHeader>
+
+      <div className="mt-8">
+        <ClientsTable 
+          clients={clients} 
+          isLoading={isLoading}
+          onClientClick={handleRowClick}
+        />
+      </div>
+
+      {/* Client Details Modal */}
+      {selectedClient && (
+        <ClientDetailsModal
+          open={showDetailsModal}
+          onOpenChange={setShowDetailsModal}
+          client={selectedClient}
+          onEdit={() => {
+            setShowDetailsModal(false);
+            // Give time for the details modal to close before opening edit form
+            setTimeout(() => {
+              setShowNewClientModal(true);
+            }, 300);
+          }}
+        />
+      )}
+
+      {/* Create/Edit Client Form Modal */}
+      <ClientFormModal
+        isOpen={showNewClientModal}
+        onClose={() => setShowNewClientModal(false)}
+        onSubmit={selectedClient ? handleUpdateClient : handleCreateClient}
+        isSubmitting={selectedClient ? isUpdating : isCreating}
+        initialData={selectedClient}
+        mode={selectedClient ? "edit" : "create"}
       />
-    </div>
+    </PageWrapper>
   );
 };
 
-export default PartnerClients;
+export default PartnerClientsPage;

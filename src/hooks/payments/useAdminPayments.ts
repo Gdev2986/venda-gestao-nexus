@@ -4,11 +4,11 @@ import usePaymentsFetcher from "./usePaymentsFetcher";
 import { PaymentStatus } from "@/types";
 import { useToast } from "@/hooks/use-toast";
 
-// Define payment actions
+// Define payment actions - make sure it matches what's used in PaymentTableColumns
 export enum PaymentAction {
-  APPROVE = "APPROVE",
-  REJECT = "REJECT",
-  VIEW = "VIEW"
+  APPROVE = "approve",
+  REJECT = "reject",
+  VIEW = "view"
 }
 
 // Define the hook props
