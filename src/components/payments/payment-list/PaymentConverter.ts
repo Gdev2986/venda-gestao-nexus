@@ -1,6 +1,6 @@
 
 import { Payment } from "@/types";
-import { PaymentData } from "@/hooks/payments/payment.types";
+import { PaymentData } from "@/types/payment.types";
 
 /**
  * Converte um objeto Payment para PaymentRequest/PaymentData
@@ -12,7 +12,7 @@ export function convertToPaymentRequest(payment: Payment): PaymentData {
     client_id: payment.client_id,
     amount: payment.amount,
     description: payment.description || "",
-    status: payment.status as any, // Type casting for compatibility
+    status: payment.status,  // Now using string status for compatibility
     pix_key_id: payment.pix_key?.id || undefined,
     created_at: payment.created_at,
     updated_at: payment.updated_at || payment.created_at,

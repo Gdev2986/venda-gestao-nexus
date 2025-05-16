@@ -25,6 +25,7 @@ export enum UserRole {
   USER = "USUARIO"
 }
 
+// This enum should match exactly what's in the database
 export enum NotificationType {
   SUPPORT = "SUPPORT",
   PAYMENT = "PAYMENT",
@@ -33,11 +34,7 @@ export enum NotificationType {
   COMMISSION = "COMMISSION",
   SYSTEM = "SYSTEM",
   GENERAL = "GENERAL",
-  SALE = "SALE",
-  BALANCE_UPDATE = "BALANCE_UPDATE",
-  PAYMENT_REQUEST = "PAYMENT_REQUEST",
-  PAYMENT_APPROVED = "PAYMENT_APPROVED",
-  PAYMENT_REJECTED = "PAYMENT_REJECTED"
+  SALE = "SALE"
 }
 
 export enum PaymentAction {
@@ -48,7 +45,7 @@ export enum PaymentAction {
   SEND_RECEIPT = 'send_receipt'
 }
 
-// Add missing Payment type
+// Define Payment interface
 export interface Payment {
   id: string;
   status: PaymentStatus | string;

@@ -6,7 +6,7 @@ export interface PaymentRequest {
   client_id: string;
   amount: number;
   description?: string;
-  status: PaymentRequestStatus;
+  status: string;  // Changed to string for compatibility
   pix_key_id?: string;
   created_at: string;
   updated_at: string;

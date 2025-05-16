@@ -2,6 +2,7 @@
 import { useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { v4 as uuidv4 } from "uuid";
 
 export const useAutoCreateClient = () => {
   const { toast } = useToast();
@@ -36,20 +37,20 @@ export const useAutoCreateClient = () => {
               // If client doesn't exist, create one
               if (!existingClient) {
                 const name = profile.name || session.user.email?.split('@')[0] || 'New Client';
-                
-                const newClient = {
-                  business_name: name,
-                  contact_name: name,
-                  email: profile.email || session.user.email,
-                  phone: profile.phone,
-                  status: "active",
-                  balance: 0,
-                  user_id: session.user.id
-                };
+                const clientId = uuidv4();
                 
                 const { error: insertError } = await supabase
                   .from("clients")
-                  .insert(newClient);
+                  .insert({
+                    id: clientId,
+                    business_name: name,
+                    contact_name: name,
+                    email: profile.email || session.user.email,
+                    phone: profile.phone,
+                    status: "active",
+                    balance: 0,
+                    user_id: session.user.id
+                  });
 
                 if (insertError) throw insertError;
 

@@ -4,6 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { Client } from "@/types";
 import { ClientCreate, ClientUpdate } from "@/types/client";
+import { v4 as uuidv4 } from "uuid";
 
 export const useClients = () => {
   const [clients, setClients] = useState<Client[]>([]);
@@ -77,9 +78,12 @@ export const useClients = () => {
 
     try {
       // Generate a UUID for the new client
+      const clientId = uuidv4();
+      
       const { data: insertData, error: insertError } = await supabase
         .from("clients")
         .insert({
+          id: clientId,
           business_name: client.business_name,
           contact_name: client.contact_name,
           email: client.email,

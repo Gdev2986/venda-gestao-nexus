@@ -11,27 +11,27 @@ export interface MachineTransferFormProps {
   machines: Machine[];
   currentClientId?: string;
   onSubmit: (data: any) => Promise<void>;
-  isSubmitting?: boolean; // Adicionar propriedade isSubmitting como opcional
+  isSubmitting?: boolean;
 }
 
 const MachineTransferForm = ({
   machines,
   currentClientId,
   onSubmit,
-  isSubmitting = false // Definir valor padrão false
+  isSubmitting = false
 }: MachineTransferFormProps) => {
-  const { clients, loading } = useClients();
+  const { clients, isLoading, error } = useClients();
   const [selectedClient, setSelectedClient] = useState<string>("");
-  const [error, setError] = useState<string | null>(null);
+  const [formError, setFormError] = useState<string | null>(null);
 
   const filteredClients = clients.filter(client => client.id !== currentClientId);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setError(null);
+    setFormError(null);
 
     if (!selectedClient) {
-      setError("Por favor, selecione um cliente para transferência.");
+      setFormError("Por favor, selecione um cliente para transferência.");
       return;
     }
 
@@ -41,11 +41,11 @@ const MachineTransferForm = ({
         machineIds: machines.map(m => m.id)
       });
     } catch (error: any) {
-      setError(error.message || "Ocorreu um erro ao processar a transferência.");
+      setFormError(error.message || "Ocorreu um erro ao processar a transferência.");
     }
   };
 
-  if (loading) {
+  if (isLoading) {
     return <div className="flex justify-center p-4"><Spinner size="lg" /></div>;
   }
 
@@ -74,8 +74,8 @@ const MachineTransferForm = ({
         </Select>
       </div>
 
-      {error && (
-        <div className="text-sm text-destructive">{error}</div>
+      {formError && (
+        <div className="text-sm text-destructive">{formError}</div>
       )}
 
       <div className="flex justify-end">

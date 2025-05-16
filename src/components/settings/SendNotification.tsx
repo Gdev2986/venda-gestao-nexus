@@ -11,17 +11,12 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
 
-// Create a string enum to match the database enum type
-const NotificationTypeEnum = {
-  SYSTEM: "SYSTEM",
-  GENERAL: "GENERAL", 
-  PAYMENT: "PAYMENT",
-  SALE: "SALE",
-  SUPPORT: "SUPPORT",
-  BALANCE: "BALANCE",
-  MACHINE: "MACHINE",
-  COMMISSION: "COMMISSION"
-} as const;
+// Define allowed notification types as a string literal union to match database
+const notificationTypes = [
+  "SYSTEM", "GENERAL", "PAYMENT", "SALE", "SUPPORT", "BALANCE", "MACHINE", "COMMISSION"
+] as const;
+
+type NotificationType = typeof notificationTypes[number];
 
 // Use zod to validate the notification type
 const notificationFormSchema = z.object({
@@ -33,7 +28,7 @@ const notificationFormSchema = z.object({
   }),
   targetType: z.enum(["all", "specific"]),
   targetId: z.string().optional(),
-  type: z.enum(["SYSTEM", "GENERAL", "PAYMENT", "SALE", "SUPPORT", "BALANCE", "MACHINE", "COMMISSION"])
+  type: z.enum(notificationTypes)
 });
 
 type NotificationFormValues = z.infer<typeof notificationFormSchema>;
@@ -94,37 +89,41 @@ export function SendNotification() {
     
     try {
       if (data.targetType === "all") {
-        // Send to all clients
-        // Since the RPC function isn't available, we'll insert notifications directly
+        // Send to all clients by creating one notification to handle on the backend
         const { error } = await supabase
           .from('notifications')
           .insert({
+            user_id: 'ALL', // Special case for bulk notifications
             title: data.title,
             message: data.message,
             type: data.type,
-            user_id: 'ALL', // We'll handle this value in a database trigger or create a separate endpoint
+            is_read: false
           });
         
         if (error) throw error;
       } else if (data.targetType === "specific" && data.targetId) {
-        // Send to specific client
-        // First, get the user_id for this client
+        // Get the user_id for this client
         const { data: clientData, error: clientError } = await supabase
           .from('clients')
-          .select('id')
+          .select('user_id')
           .eq('id', data.targetId)
           .single();
           
         if (clientError) throw clientError;
         
-        // Then insert the notification for this specific client
+        if (!clientData.user_id) {
+          throw new Error("Este cliente não possui um usuário associado.");
+        }
+        
+        // Insert notification for this specific user
         const { error } = await supabase
           .from('notifications')
           .insert({
+            user_id: clientData.user_id,
             title: data.title,
             message: data.message,
             type: data.type,
-            user_id: clientData.id,
+            is_read: false
           });
         
         if (error) throw error;
