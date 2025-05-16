@@ -12,7 +12,7 @@ export function convertToPaymentRequest(payment: Payment): PaymentData {
     client_id: payment.client_id,
     amount: payment.amount,
     description: payment.description || "",
-    status: payment.status as any, // Convertendo string para PaymentRequestStatus
+    status: payment.status, // Convertendo string para PaymentRequestStatus
     pix_key_id: payment.pix_key?.id || undefined,
     created_at: payment.created_at,
     updated_at: payment.updated_at || payment.created_at,

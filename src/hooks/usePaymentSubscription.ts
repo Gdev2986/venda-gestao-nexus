@@ -63,7 +63,7 @@ export const usePaymentSubscription = (callback: SubscriptionCallback, options?:
         console.log('Solicitação de pagamento atualizada:', payload);
         
         if (notifyUser) {
-          const newStatus = payload.new?.status;
+          const newStatus = payload.new && 'status' in payload.new ? payload.new.status : null;
           let title = 'Atualização de Pagamento';
           let description = 'Uma solicitação de pagamento foi atualizada';
           let variant: 'default' | 'destructive' = 'default';

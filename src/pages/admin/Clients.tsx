@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { PageHeader } from "@/components/page/PageHeader";
 import { PageWrapper } from "@/components/page/PageWrapper";
@@ -24,6 +23,7 @@ import {
   AlertDialogAction,
 } from "@/components/ui/alert-dialog";
 import { Client } from "@/types";
+import { useClientRealtime } from "@/hooks/useClientRealtime";
 
 // Import the refactored components
 import ClientsTable from "@/components/clients/ClientsTable";
@@ -52,6 +52,9 @@ const AdminClients = () => {
     refreshClients,
   } = useClients();
   const { toast } = useToast();
+
+  // Configurar atualizações em tempo real
+  useClientRealtime(refreshClients);
 
   // Initialize clients data
   useEffect(() => {
@@ -190,6 +193,7 @@ const AdminClients = () => {
             setClientToDelete(client);
             setIsDeleteDialogOpen(true);
           }}
+          onRefresh={refreshClients}
         />
       </PageWrapper>
 
@@ -217,6 +221,8 @@ const AdminClients = () => {
           isOpen={isEditDialogOpen}
           onClose={() => setIsEditDialogOpen(false)}
           title="Editar Cliente"
+          initialData={selectedClient}
+          onSubmit={handleEditClient}
         />
       )}
 
