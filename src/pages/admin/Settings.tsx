@@ -22,9 +22,6 @@ const AdminSettings = () => {
   const [isRoleChangeModalOpen, setIsRoleChangeModalOpen] = useState(false);
   const [selectedUser, setSelectedUser] = useState<ProfileData | null>(null);
 
-  // User role types as they are in the database
-  type ValidUserRole = "ADMIN" | "CLIENT" | "FINANCIAL" | "PARTNER" | "LOGISTICS";
-
   const openRoleModal = (user: ProfileData) => {
     setSelectedUser(user);
     setIsRoleChangeModalOpen(true);

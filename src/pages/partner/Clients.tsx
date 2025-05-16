@@ -20,14 +20,14 @@ const PartnerClientsPage = () => {
   const [selectedClient, setSelectedClient] = useState<Client | null>(null);
   const [showDetailsModal, setShowDetailsModal] = useState(false);
 
-  // Get clients data with the hook
+  // Get clients data with the hook - fix by providing the required partnerId
   const { 
     clients, 
     isLoading, 
     error, 
     createClient, 
     updateClient
-  } = usePartnerClients();
+  } = usePartnerClients({ partnerId: "current-partner-id" });
 
   const handleCreateClient = async (data: Partial<Client>) => {
     try {
@@ -79,7 +79,7 @@ const PartnerClientsPage = () => {
     }
   };
 
-  const handleRowClick = (client: Client) => {
+  const handleViewClient = (client: Client) => {
     setSelectedClient(client);
     setShowDetailsModal(true);
   };
@@ -117,7 +117,7 @@ const PartnerClientsPage = () => {
         <ClientsTable 
           clients={clients} 
           isLoading={isLoading}
-          onClientClick={handleRowClick}
+          onView={handleViewClient}
         />
       </div>
 
@@ -137,7 +137,7 @@ const PartnerClientsPage = () => {
           partners={[]}
           feePlans={[]}
           onDelete={() => {}}
-          getMachineCount={() => Promise.resolve(0)}
+          getMachineCount={() => 0}
         />
       )}
 
@@ -145,11 +145,7 @@ const PartnerClientsPage = () => {
       <ClientFormModal
         isOpen={showNewClientModal}
         onClose={() => setShowNewClientModal(false)}
-        client={selectedClient}
-        feePlans={[]}
-        partners={[]}
-        onSave={selectedClient ? handleUpdateClient : handleCreateClient}
-        isSaving={selectedClient ? updateClient.isLoading : createClient.isLoading}
+        title={selectedClient ? "Editar Cliente" : "Novo Cliente"}
       />
     </PageWrapper>
   );

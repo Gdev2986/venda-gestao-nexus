@@ -10,6 +10,7 @@ import { PaymentDetailsDialog } from "@/components/payments/PaymentDetailsDialog
 import { ApprovePaymentDialog } from "@/components/payments/ApprovePaymentDialog";
 import { RejectPaymentDialog } from "@/components/payments/RejectPaymentDialog";
 import { PageHeader } from "@/components/page/PageHeader";
+import { Payment } from "@/types";
 
 const AdminPayments = () => {
   const [searchTerm, setSearchTerm] = useState("");
@@ -18,7 +19,7 @@ const AdminPayments = () => {
   const pageSize = 10;
   
   // UI state for dialogs
-  const [selectedPaymentId, setSelectedPaymentId] = useState<string | null>(null);
+  const [selectedPayment, setSelectedPayment] = useState<Payment | null>(null);
   const [isDetailsDialogOpen, setIsDetailsDialogOpen] = useState(false);
   const [isApproveDialogOpen, setIsApproveDialogOpen] = useState(false);
   const [isRejectDialogOpen, setIsRejectDialogOpen] = useState(false);
@@ -50,7 +51,10 @@ const AdminPayments = () => {
   
   // Handler for payment actions
   const handlePaymentAction = (paymentId: string, action: PaymentAction) => {
-    setSelectedPaymentId(paymentId);
+    const payment = payments.find(p => p.id === paymentId);
+    if (!payment) return;
+    
+    setSelectedPayment(payment);
     
     if (action === PaymentAction.APPROVE) {
       setIsApproveDialogOpen(true);
@@ -63,15 +67,15 @@ const AdminPayments = () => {
 
   // Handler for dialog confirmations
   const handleConfirmAction = (action: PaymentAction) => {
-    if (!selectedPaymentId) return;
+    if (!selectedPayment) return;
     
-    performPaymentAction(selectedPaymentId, action);
+    performPaymentAction(selectedPayment.id, action);
     
     // Close all dialogs
     setIsDetailsDialogOpen(false);
     setIsApproveDialogOpen(false);
     setIsRejectDialogOpen(false);
-    setSelectedPaymentId(null);
+    setSelectedPayment(null);
   };
   
   return (
@@ -85,8 +89,8 @@ const AdminPayments = () => {
         <PaymentFilters
           searchTerm={searchTerm}
           statusFilter={statusFilter}
-          onSearchChange={handleSearchChange}
-          onStatusFilterChange={handleStatusFilterChange}
+          setSearchTerm={handleSearchChange}
+          setStatusFilter={handleStatusFilterChange}
         />
       </Card>
       
@@ -128,27 +132,33 @@ const AdminPayments = () => {
       </Tabs>
       
       {/* Payment Detail Dialog */}
-      <PaymentDetailsDialog
-        open={isDetailsDialogOpen}
-        onOpenChange={setIsDetailsDialogOpen}
-        paymentId={selectedPaymentId || ""}
-      />
+      {selectedPayment && (
+        <PaymentDetailsDialog
+          open={isDetailsDialogOpen}
+          onOpenChange={setIsDetailsDialogOpen}
+          payment={selectedPayment}
+        />
+      )}
       
       {/* Approve Payment Dialog */}
-      <ApprovePaymentDialog
-        open={isApproveDialogOpen}
-        onOpenChange={setIsApproveDialogOpen}
-        onConfirm={() => handleConfirmAction(PaymentAction.APPROVE)}
-        paymentId={selectedPaymentId || ""}
-      />
+      {selectedPayment && (
+        <ApprovePaymentDialog
+          open={isApproveDialogOpen}
+          onOpenChange={setIsApproveDialogOpen}
+          payment={selectedPayment}
+          onApprove={() => handleConfirmAction(PaymentAction.APPROVE)}
+        />
+      )}
       
       {/* Reject Payment Dialog */}
-      <RejectPaymentDialog
-        open={isRejectDialogOpen}
-        onOpenChange={setIsRejectDialogOpen}
-        onConfirm={() => handleConfirmAction(PaymentAction.REJECT)}
-        paymentId={selectedPaymentId || ""}
-      />
+      {selectedPayment && (
+        <RejectPaymentDialog
+          open={isRejectDialogOpen}
+          onOpenChange={setIsRejectDialogOpen}
+          payment={selectedPayment}
+          onReject={() => handleConfirmAction(PaymentAction.REJECT)}
+        />
+      )}
     </div>
   );
 };

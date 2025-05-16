@@ -23,22 +23,19 @@ interface ProfileData {
 }
 
 interface RoleChangeModalProps {
+  isOpen: boolean;
   user: ProfileData;
-  newRole: string;
-  setNewRole: (role: string) => void;
   onClose: () => void;
-  onSave: () => void;
 }
 
 export const RoleChangeModal = ({ 
+  isOpen, 
   user, 
-  newRole, 
-  setNewRole, 
-  onClose, 
-  onSave 
+  onClose 
 }: RoleChangeModalProps) => {
   const [availableRoles, setAvailableRoles] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
+  const [newRole, setNewRole] = useState(user.role);
 
   // Fetch available roles from the profiles table
   useEffect(() => {
@@ -62,8 +59,30 @@ export const RoleChangeModal = ({
       }
     };
 
-    fetchRoles();
-  }, []);
+    if (isOpen) {
+      fetchRoles();
+    }
+  }, [isOpen]);
+
+  const onSave = async () => {
+    setLoading(true);
+    try {
+      const { error } = await supabase
+        .from('profiles')
+        .update({ role: newRole })
+        .eq('id', user.id);
+
+      if (error) throw error;
+      
+      onClose();
+    } catch (error) {
+      console.error("Error updating role:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  if (!isOpen) return null;
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex justify-center items-center">

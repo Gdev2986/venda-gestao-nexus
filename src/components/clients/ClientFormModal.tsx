@@ -10,7 +10,7 @@ import {
 } from "@/components/ui/dialog";
 import ClientForm, { ClientFormValues } from "./ClientForm";
 
-interface ClientFormModalProps {
+export interface ClientFormModalProps {
   isOpen: boolean;
   onClose: () => void;
   title?: string;
