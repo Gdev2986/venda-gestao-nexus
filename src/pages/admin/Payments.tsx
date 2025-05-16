@@ -18,7 +18,7 @@ import { useMediaQuery } from "@/hooks/use-media-query";
 
 const AdminPayments = () => {
   const [searchTerm, setSearchTerm] = useState("");
-  const [statusFilter, setStatusFilter] = useState<string>("ALL");
+  const [statusFilter, setStatusFilter] = useState<PaymentStatus | "ALL">("ALL");
   const [page, setPage] = useState(1);
   const pageSize = 10;
   const [activeTab, setActiveTab] = useState("all");
@@ -40,7 +40,7 @@ const AdminPayments = () => {
     performPaymentAction
   } = useAdminPayments({
     searchTerm,
-    statusFilter: statusFilter as PaymentStatus | 'ALL',
+    statusFilter,
     page,
     pageSize
   });

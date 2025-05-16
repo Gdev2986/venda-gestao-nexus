@@ -1,3 +1,4 @@
+
 export enum PaymentStatus {
   PENDING = "PENDENTE",
   PROCESSING = "EM_PROCESSAMENTO",

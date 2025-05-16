@@ -1,18 +1,19 @@
 
-import { Payment, PaymentStatus } from '@/types';
+import { Payment } from '@/types';
 import { formatCurrency } from '@/lib/utils';
 import { formatDate } from '@/components/payments/PaymentTableColumns';
-import { PaymentAction, PaymentStatus as EnumPaymentStatus } from '@/types/enums';
+import { PaymentAction, PaymentStatus } from '@/types/enums';
 import { Table, TableHead, TableRow, TableHeader, TableBody, TableCell } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Eye, Send, MoreHorizontal } from 'lucide-react';
+import { Eye, Send, MoreHorizontal, Download } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
-  DropdownMenuTrigger
+  DropdownMenuTrigger,
+  DropdownMenuSeparator
 } from '@/components/ui/dropdown-menu';
 import {
   Select,
@@ -33,15 +34,15 @@ interface PaymentListTableProps {
 // Função para determinar a cor baseada no status do pagamento
 const getStatusColor = (status: PaymentStatus | string) => {
   switch (status) {
-    case EnumPaymentStatus.PENDING:
+    case PaymentStatus.PENDING:
       return "bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-300";
-    case EnumPaymentStatus.PROCESSING:
+    case PaymentStatus.PROCESSING:
       return "bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300";
-    case EnumPaymentStatus.APPROVED:
+    case PaymentStatus.APPROVED:
       return "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300";
-    case EnumPaymentStatus.REJECTED:
+    case PaymentStatus.REJECTED:
       return "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300";
-    case EnumPaymentStatus.PAID:
+    case PaymentStatus.PAID:
       return "bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-300";
     default:
       return "bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300";
@@ -51,15 +52,15 @@ const getStatusColor = (status: PaymentStatus | string) => {
 // Traduzir o status para exibição
 const getStatusLabel = (status: PaymentStatus | string) => {
   switch (status) {
-    case EnumPaymentStatus.PENDING:
+    case PaymentStatus.PENDING:
       return "Pendente";
-    case EnumPaymentStatus.PROCESSING:
+    case PaymentStatus.PROCESSING:
       return "Em Processamento";
-    case EnumPaymentStatus.APPROVED:
+    case PaymentStatus.APPROVED:
       return "Aprovado";
-    case EnumPaymentStatus.REJECTED:
+    case PaymentStatus.REJECTED:
       return "Recusado";
-    case EnumPaymentStatus.PAID:
+    case PaymentStatus.PAID:
       return "Pago";
     default:
       return status;
@@ -74,11 +75,11 @@ export const PaymentListTable = ({
   onAction,
 }: PaymentListTableProps) => {
   const handleStatusChange = (paymentId: string, newStatus: string) => {
-    if (newStatus === EnumPaymentStatus.APPROVED) {
+    if (newStatus === PaymentStatus.APPROVED) {
       onAction(paymentId, PaymentAction.APPROVE);
-    } else if (newStatus === EnumPaymentStatus.REJECTED) {
+    } else if (newStatus === PaymentStatus.REJECTED) {
       onAction(paymentId, PaymentAction.REJECT);
-    } else if (newStatus === EnumPaymentStatus.PAID) {
+    } else if (newStatus === PaymentStatus.PAID) {
       onAction(paymentId, PaymentAction.APPROVE);
     }
   };
@@ -107,8 +108,8 @@ export const PaymentListTable = ({
         </TableHeader>
         <TableBody>
           {payments.map((payment) => {
-            const isPending = payment.status === EnumPaymentStatus.PENDING || payment.status === EnumPaymentStatus.PROCESSING;
-            const isApproved = payment.status === EnumPaymentStatus.APPROVED || payment.status === EnumPaymentStatus.PAID;
+            const isPending = payment.status === PaymentStatus.PENDING || payment.status === PaymentStatus.PROCESSING;
+            const isApproved = payment.status === PaymentStatus.APPROVED || payment.status === PaymentStatus.PAID;
             
             return (
               <TableRow key={payment.id} className="hover:bg-muted/50">
@@ -154,9 +155,15 @@ export const PaymentListTable = ({
                       TED: {payment.bank_info.bank_name}
                     </span>
                   ) : payment.document_url ? (
-                    <span className="text-xs">
-                      Boleto
-                    </span>
+                    <div className="flex items-center space-x-2">
+                      <span className="text-xs">Boleto</span>
+                      <Button size="sm" variant="ghost" className="h-6 w-6 p-0">
+                        <a href={payment.document_url} target="_blank" rel="noopener noreferrer">
+                          <Download className="h-3 w-3" />
+                          <span className="sr-only">Baixar Boleto</span>
+                        </a>
+                      </Button>
+                    </div>
                   ) : (
                     "N/A"
                   )}
@@ -194,9 +201,9 @@ export const PaymentListTable = ({
                           <SelectValue placeholder="Alterar status" />
                         </SelectTrigger>
                         <SelectContent>
-                          <SelectItem value={EnumPaymentStatus.APPROVED}>Aprovar</SelectItem>
-                          <SelectItem value={EnumPaymentStatus.REJECTED}>Recusar</SelectItem>
-                          <SelectItem value={EnumPaymentStatus.PAID}>Pago</SelectItem>
+                          <SelectItem value={PaymentStatus.APPROVED}>Aprovar</SelectItem>
+                          <SelectItem value={PaymentStatus.REJECTED}>Recusar</SelectItem>
+                          <SelectItem value={PaymentStatus.PAID}>Pago</SelectItem>
                         </SelectContent>
                       </Select>
                     )}
@@ -227,6 +234,13 @@ export const PaymentListTable = ({
                             Enviar comprovante
                           </DropdownMenuItem>
                         )}
+                        <DropdownMenuSeparator />
+                        <DropdownMenuItem 
+                          onClick={() => onAction(payment.id, PaymentAction.DELETE)}
+                          className="text-red-600 hover:text-red-800 focus:text-red-800"
+                        >
+                          Excluir
+                        </DropdownMenuItem>
                       </DropdownMenuContent>
                     </DropdownMenu>
                   </div>

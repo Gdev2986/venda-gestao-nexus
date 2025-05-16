@@ -1,41 +1,43 @@
 
 import { Payment } from "@/types";
-import { PaymentData, PaymentRequestStatus } from "@/hooks/payments/payment.types";
+import { PaymentData } from "@/hooks/payments/payment.types";
 
 /**
- * Converts a Payment to a PaymentRequest
+ * Converte um objeto Payment para PaymentRequest/PaymentData
+ * Isso é necessário para garantir compatibilidade entre as diferentes interfaces
  */
 export function convertToPaymentRequest(payment: Payment): PaymentData {
   return {
     id: payment.id,
     client_id: payment.client_id,
     amount: payment.amount,
-    status: payment.status as PaymentRequestStatus,
-    created_at: payment.created_at,
-    updated_at: payment.updated_at,
-    approved_by: payment.approved_at ? payment.client_id : null, // Use appropriate value
-    approved_at: payment.approved_at || null,
-    receipt_url: payment.receipt_url || null,
     description: payment.description || "",
+    status: payment.status,
+    pix_key_id: payment.pix_key_id || undefined,
+    created_at: payment.created_at,
+    updated_at: payment.updated_at || payment.created_at,
+    approved_at: payment.approved_at || null,
+    approved_by: payment.approved_by || null,
+    receipt_url: payment.receipt_url || null,
     rejection_reason: payment.rejection_reason || null,
-    ...(payment.client ? { client: payment.client } : {}),
-    ...(payment.pix_key ? { 
-      pix_key: {
-        ...payment.pix_key,
-        name: payment.pix_key.owner_name || "Default Name",
-        owner_name: payment.pix_key.owner_name || "Default Owner Name"
-      },
-      pix_key_id: payment.pix_key.id
-    } : {})
+    pix_key: payment.pix_key,
+    client: payment.client,
+    payment_type: payment.payment_type,
+    due_date: payment.due_date,
+    bank_info: payment.bank_info,
+    document_url: payment.document_url
   };
 }
 
 /**
- * Type guard to check if an object is a PaymentData
+ * Verifica se um objeto tem a estrutura de um PaymentRequest
  */
-export function isPaymentRequest(payment: any): payment is PaymentData {
-  return payment && 
-    typeof payment.id === 'string' &&
-    typeof payment.client_id === 'string' &&
-    typeof payment.amount === 'number';
+export function isPaymentRequest(obj: any): boolean {
+  return obj && 
+    typeof obj === 'object' && 
+    'id' in obj && 
+    'client_id' in obj && 
+    'amount' in obj && 
+    'status' in obj &&
+    'created_at' in obj;
 }

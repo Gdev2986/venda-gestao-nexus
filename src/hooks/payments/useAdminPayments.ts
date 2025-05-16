@@ -7,14 +7,14 @@ import { useToast } from "@/hooks/use-toast";
 // Define the hook props
 interface UseAdminPaymentsProps {
   searchTerm?: string;
-  statusFilter?: PaymentStatus | 'ALL';
+  statusFilter?: PaymentStatus | "ALL";
   page?: number;
   pageSize?: number;
 }
 
 const useAdminPayments = ({
   searchTerm = '',
-  statusFilter = 'ALL',
+  statusFilter = "ALL",
   page = 1,
   pageSize = 10
 }: UseAdminPaymentsProps) => {
@@ -40,31 +40,31 @@ const useAdminPayments = ({
       case PaymentAction.APPROVE:
         toast({
           title: "Pagamento Aprovado",
-          description: `Pagamento #${paymentId} foi aprovado.`
+          description: `Pagamento #${paymentId.substring(0, 8)} foi aprovado.`
         });
         break;
       case PaymentAction.REJECT:
         toast({
           title: "Pagamento Rejeitado",
-          description: `Pagamento #${paymentId} foi rejeitado.`
+          description: `Pagamento #${paymentId.substring(0, 8)} foi rejeitado.`
         });
         break;
       case PaymentAction.VIEW:
         toast({
           title: "Visualizando Pagamento",
-          description: `Visualizando detalhes do pagamento #${paymentId}.`
+          description: `Visualizando detalhes do pagamento #${paymentId.substring(0, 8)}.`
         });
         break;
       case PaymentAction.DELETE:
         toast({
           title: "Pagamento Excluído",
-          description: `Pagamento #${paymentId} foi excluído.`
+          description: `Pagamento #${paymentId.substring(0, 8)} foi excluído.`
         });
         break;
       case PaymentAction.SEND_RECEIPT:
         toast({
           title: "Comprovante Enviado",
-          description: `Comprovante para o pagamento #${paymentId} foi enviado.`
+          description: `Comprovante para o pagamento #${paymentId.substring(0, 8)} foi enviado.`
         });
         break;
       default:

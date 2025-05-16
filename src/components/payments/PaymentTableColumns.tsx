@@ -161,7 +161,7 @@ export const createPaymentColumns = (onActionClick: (paymentId: string, action: 
             <div>
               <div className="font-medium">PIX</div>
               <div className="text-xs text-muted-foreground truncate max-w-[150px]">
-                {row.pix_key.key_type || row.pix_key.type}: {row.pix_key.key}
+                {(row.pix_key.key_type || row.pix_key.type)}: {row.pix_key.key}
               </div>
             </div>
           );
@@ -198,7 +198,7 @@ export const createPaymentColumns = (onActionClick: (paymentId: string, action: 
       header: "Status",
       cell: ({ row }) => (
         <Badge className={getStatusColor(row.status as PaymentStatus | string)}>
-          {row.status}
+          {getStatusLabel(row.status)}
         </Badge>
       ),
     },
@@ -264,5 +264,23 @@ export const createPaymentColumns = (onActionClick: (paymentId: string, action: 
 
   return columns;
 };
+
+// Função para traduzir o status
+function getStatusLabel(status: string): string {
+  switch (status) {
+    case PaymentStatus.PENDING:
+      return "Pendente";
+    case PaymentStatus.PROCESSING:
+      return "Em Processamento";
+    case PaymentStatus.APPROVED:
+      return "Aprovado";
+    case PaymentStatus.REJECTED:
+      return "Recusado";
+    case PaymentStatus.PAID:
+      return "Pago";
+    default:
+      return status;
+  }
+}
 
 export default createPaymentColumns;
