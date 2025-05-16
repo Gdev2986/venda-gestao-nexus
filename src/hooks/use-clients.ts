@@ -7,15 +7,16 @@ import { useToast } from '@/hooks/use-toast';
 // Define the required structure for client creation
 export type ClientCreate = {
   business_name: string;
-  contact_name: string;
-  email: string;
-  phone: string;
+  contact_name?: string;
+  email?: string;
+  phone?: string;
   address?: string;
   city?: string;
   state?: string;
   zip?: string;
   document?: string;
   partner_id?: string;
+  user_id?: string;
 };
 
 export const useClients = () => {
@@ -37,54 +38,8 @@ export const useClients = () => {
 
       if (error) throw new Error(error.message);
       
-      // For development, let's provide mock data if no data is returned
-      const clientData = data || [
-        {
-          id: "1",
-          business_name: "Super Mercado Silva",
-          contact_name: "João Silva",
-          email: "joao@mercadosilva.com",
-          phone: "(11) 98765-4321",
-          address: "Rua das Flores, 123",
-          city: "São Paulo",
-          state: "SP",
-          zip: "01310-100",
-          partner_id: "1",
-          document: "12.345.678/0001-90",
-          status: "active"
-        },
-        {
-          id: "2",
-          business_name: "Padaria Central",
-          contact_name: "Maria Oliveira",
-          email: "maria@padariacentral.com",
-          phone: "(11) 91234-5678",
-          address: "Av. Brasil, 500",
-          city: "Rio de Janeiro",
-          state: "RJ",
-          zip: "20940-070",
-          partner_id: "2",
-          document: "98.765.432/0001-10",
-          status: "active"
-        },
-        {
-          id: "3",
-          business_name: "Lanchonete Boa Vista",
-          contact_name: "Pedro Santos",
-          email: "pedro@boavista.com",
-          phone: "(31) 99876-5432",
-          address: "Rua dos Pássaros, 45",
-          city: "Belo Horizonte",
-          state: "MG",
-          zip: "30140-072",
-          partner_id: "3",
-          document: "45.678.901/0001-23",
-          status: "inactive"
-        }
-      ];
-      
-      setClients(clientData as Client[]);
-      setFilteredClients(clientData as Client[]);
+      setClients(data as Client[]);
+      setFilteredClients(data as Client[]);
     } catch (err) {
       console.error("Error fetching clients:", err);
       setError(err instanceof Error ? err : new Error('Unknown error'));
@@ -105,9 +60,9 @@ export const useClients = () => {
     if (searchTerm) {
       const lowerSearchTerm = searchTerm.toLowerCase();
       filtered = filtered.filter(client => 
-        client.business_name.toLowerCase().includes(lowerSearchTerm) ||
-        client.contact_name.toLowerCase().includes(lowerSearchTerm) ||
-        client.email.toLowerCase().includes(lowerSearchTerm) ||
+        (client.business_name && client.business_name.toLowerCase().includes(lowerSearchTerm)) ||
+        (client.contact_name && client.contact_name.toLowerCase().includes(lowerSearchTerm)) ||
+        (client.email && client.email.toLowerCase().includes(lowerSearchTerm)) ||
         (client.document && client.document.toLowerCase().includes(lowerSearchTerm))
       );
     }
@@ -122,16 +77,16 @@ export const useClients = () => {
   // Add a new client
   const addClient = async (clientData: ClientCreate): Promise<Client | false> => {
     try {
-      // In a real app, this would insert into Supabase
-      // const { data, error } = await supabase.from('clients').insert(clientData).select().single();
+      // Insert into Supabase
+      const { data, error } = await supabase
+        .from('clients')
+        .insert(clientData)
+        .select()
+        .single();
       
-      // For now, let's mock this behavior
-      const newClient = {
-        id: `${Date.now()}`,
-        ...clientData,
-        status: 'active'
-      } as Client;
+      if (error) throw error;
       
+      const newClient = data as Client;
       setClients(prevClients => [...prevClients, newClient]);
       setFilteredClients(prevFiltered => [...prevFiltered, newClient]);
       
@@ -150,10 +105,14 @@ export const useClients = () => {
   // Update an existing client
   const updateClient = async (id: string, clientData: Partial<ClientCreate>): Promise<boolean> => {
     try {
-      // In a real app, this would update Supabase
-      // const { error } = await supabase.from('clients').update(clientData).eq('id', id);
+      const { error } = await supabase
+        .from('clients')
+        .update(clientData)
+        .eq('id', id);
       
-      // For now, let's mock this behavior
+      if (error) throw error;
+      
+      // Update local state
       const updatedClients = clients.map(client => {
         if (client.id === id) {
           return { ...client, ...clientData };
@@ -179,13 +138,15 @@ export const useClients = () => {
   // Delete a client
   const deleteClient = async (id: string): Promise<boolean> => {
     try {
-      // In a real app, this would delete from Supabase
-      // const { error } = await supabase.from('clients').delete().eq('id', id);
+      const { error } = await supabase
+        .from('clients')
+        .delete()
+        .eq('id', id);
       
-      // For now, let's mock this behavior
-      const updatedClients = clients.filter(client => client.id !== id);
+      if (error) throw error;
       
-      setClients(updatedClients);
+      // Update local state
+      setClients(clients.filter(client => client.id !== id));
       setFilteredClients(filteredClients.filter(client => client.id !== id));
       
       return true;
