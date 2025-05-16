@@ -8,7 +8,8 @@ import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { cn } from "@/lib/utils";
 
-interface Appointment {
+// Export the Appointment interface so it can be imported elsewhere
+export interface Appointment {
   id: number;
   client: string;
   type: string;
@@ -81,3 +82,4 @@ const AppointmentsCard: React.FC<AppointmentsCardProps> = ({ appointments }) => 
 };
 
 export default AppointmentsCard;
+
