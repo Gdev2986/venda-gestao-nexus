@@ -16,7 +16,7 @@ export const getDashboardPath = (userRole: UserRole): string => {
     case "ADMIN":
       return PATHS.ADMIN.DASHBOARD;
     case "CLIENT":
-      return PATHS.USER.DASHBOARD;
+      return PATHS.CLIENT.DASHBOARD;
     case "PARTNER":
       return PATHS.PARTNER.DASHBOARD;
     case "FINANCIAL":

@@ -1,3 +1,4 @@
+
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { DataTable } from "@/components/ui/data-table";
@@ -95,8 +96,6 @@ const Machines = () => {
     machine.serial_number.toLowerCase().includes(search.toLowerCase()) ||
     machine.model.toLowerCase().includes(search.toLowerCase())
   );
-
-  const machinesPath = PATHS.CLIENT.MACHINES || "/clients/machines";
 
   return (
     <div className="container py-6 space-y-6">
