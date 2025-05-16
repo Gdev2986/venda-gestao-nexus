@@ -1,143 +1,165 @@
 
-import { useState } from "react";
-import { Plus } from "lucide-react";
+import { useState, useEffect } from "react";
+import { 
+  Card, 
+  CardContent, 
+  CardHeader, 
+  CardTitle 
+} from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Badge } from "@/components/ui/badge";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Partner } from "@/types";
-import { usePartners } from "@/hooks/use-partners";
-import { useToast } from "@/hooks/use-toast";
-import { PageHeader } from "@/components/page/PageHeader";
-import { PageWrapper } from "@/components/page/PageWrapper";
-import PartnersTable from "@/components/partners/PartnersTable";
-import PartnersFilterCard from "@/components/partners/PartnersFilterCard";
-import PartnerFormModal from "@/components/partners/PartnerFormModal";
-import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
+import { usePartners } from "@/hooks/use-partners"; 
+import { PartnersTable } from "@/components/partners/PartnersTable";
+import { PartnerFormModal } from "@/components/partners/PartnerFormModal";
+import { PartnersFilterCard } from "@/components/partners/PartnersFilterCard";
 
-const PartnersPage = () => {
-  const { partners, isLoading, error, deletePartner, updatePartner } = usePartners();
+const Partners = () => {
+  const [searchTerm, setSearchTerm] = useState("");
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
-  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [selectedPartner, setSelectedPartner] = useState<Partner | null>(null);
-  const [searchTerm, setSearchTerm] = useState("");
-  const { toast } = useToast();
-  
-  // Filter partners by name (client-side filtering)
-  const filteredPartners = searchTerm 
-    ? partners.filter(partner => 
-        partner.company_name.toLowerCase().includes(searchTerm.toLowerCase()))
-    : partners;
+  const [filteredPartners, setFilteredPartners] = useState<Partner[]>([]);
+
+  const { 
+    partners, 
+    isLoading, 
+    error, 
+    createPartner, 
+    updatePartner,
+    deletePartner
+  } = usePartners();
+
+  useEffect(() => {
+    // Filter partners based on search term
+    if (!partners) return;
+    
+    const filtered = partners.filter(partner => {
+      return partner.company_name.toLowerCase().includes(searchTerm.toLowerCase());
+    });
+    
+    setFilteredPartners(filtered);
+  }, [partners, searchTerm]);
+
+  const handleCreatePartner = async (data: Partial<Partner>) => {
+    try {
+      // Use mutateAsync from the hook instead of calling directly
+      await createPartner.mutateAsync(data);
+      setShowCreateModal(false);
+      return true;
+    } catch (error) {
+      console.error("Error creating partner:", error);
+      return false;
+    }
+  };
+
+  const handleUpdatePartner = async (data: Partial<Partner>) => {
+    if (!selectedPartner) return false;
+    
+    try {
+      // Use mutateAsync from the hook
+      await updatePartner.mutateAsync({
+        ...data,
+        id: selectedPartner.id
+      });
+      
+      setShowEditModal(false);
+      setSelectedPartner(null);
+      return true;
+    } catch (error) {
+      console.error("Error updating partner:", error);
+      return false;
+    }
+  };
+
+  const handleDeletePartner = async (partnerId: string) => {
+    try {
+      // Use mutateAsync from the hook
+      await deletePartner.mutateAsync(partnerId);
+      return true;
+    } catch (error) {
+      console.error("Error deleting partner:", error);
+      return false;
+    }
+  };
 
   const handleEdit = (partner: Partner) => {
     setSelectedPartner(partner);
     setShowEditModal(true);
   };
 
-  const handleDelete = (partner: Partner) => {
-    setSelectedPartner(partner);
-    setShowDeleteDialog(true);
-  };
-
-  const confirmDelete = async () => {
-    if (selectedPartner) {
-      try {
-        await deletePartner(selectedPartner.id);
-        
-        toast({
-          title: "Parceiro excluído",
-          description: "O parceiro foi removido com sucesso.",
-        });
-        
-        setShowDeleteDialog(false);
-      } catch (err) {
-        toast({
-          variant: "destructive",
-          title: "Erro ao excluir",
-          description: "Não foi possível excluir o parceiro.",
-        });
-      }
-    }
-  };
-
   return (
-    <>
-      <PageHeader
-        title="Parceiros"
-        description="Gerencie os parceiros do sistema"
-      >
-        <Button onClick={() => setShowCreateModal(true)}>
-          <Plus className="mr-2 h-4 w-4" /> Novo Parceiro
-        </Button>
-      </PageHeader>
-
-      <PageWrapper>
-        <div className="space-y-6">
-          <PartnersFilterCard
-            onFilter={(values) => setSearchTerm(values.search || "")}
-            isLoading={isLoading}
-          />
-
-          {error ? (
-            <div className="p-4 border rounded-md bg-red-50 text-red-800">
-              <p className="font-semibold">Erro ao carregar parceiros</p>
-              <p>{error.message}</p>
-            </div>
-          ) : (
-            <PartnersTable
-              partners={filteredPartners}
-              isLoading={isLoading}
-              onEdit={handleEdit}
-              onDelete={handleDelete}
-            />
-          )}
+    <div className="container mx-auto py-10">
+      <div className="flex justify-between items-center mb-6">
+        <div>
+          <h1 className="text-2xl font-bold">Parceiros</h1>
+          <p className="text-muted-foreground">Gerenciar parceiros e comissões</p>
         </div>
-      </PageWrapper>
+        <Button onClick={() => setShowCreateModal(true)}>Novo Parceiro</Button>
+      </div>
 
-      {/* Create Partner Modal */}
-      <PartnerFormModal
-        isOpen={showCreateModal}
-        onClose={() => setShowCreateModal(false)}
-        title="Novo Parceiro"
-      />
-
-      {/* Edit Partner Modal */}
-      {selectedPartner && (
-        <PartnerFormModal
-          isOpen={showEditModal}
-          onClose={() => setShowEditModal(false)}
-          title={`Editar ${selectedPartner.company_name}`}
-          initialData={selectedPartner}
-          onSubmit={async (data) => {
-            try {
-              await updatePartner(selectedPartner.id, data);
-              return true;
-            } catch (error) {
-              return false;
-            }
-          }}
-        />
+      {/* Error display */}
+      {error && (
+        <div className="bg-destructive/15 border border-destructive text-destructive p-3 rounded-md mb-4">
+          Erro ao carregar parceiros: {error.message}
+        </div>
       )}
 
-      {/* Delete Confirmation Dialog */}
-      <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Confirmar exclusão</AlertDialogTitle>
-            <AlertDialogDescription>
-              Tem certeza que deseja excluir o parceiro 
-              <strong> {selectedPartner?.company_name}</strong>? 
-              Esta ação não pode ser desfeita.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Cancelar</AlertDialogCancel>
-            <AlertDialogAction onClick={confirmDelete} className="bg-destructive text-destructive-foreground">
-              Excluir
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
-    </>
+      <div className="grid gap-6 md:grid-cols-6">
+        {/* Left column - filters */}
+        <div className="md:col-span-2">
+          <PartnersFilterCard 
+            onSearch={setSearchTerm} 
+            searchTerm={searchTerm}
+          />
+        </div>
+
+        {/* Right column - partner list */}
+        <div className="md:col-span-4">
+          <Card>
+            <CardHeader>
+              <CardTitle>
+                Lista de Parceiros
+                <Badge variant="secondary" className="ml-2">
+                  {filteredPartners.length}
+                </Badge>
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <PartnersTable 
+                partners={filteredPartners} 
+                isLoading={isLoading} 
+                onEdit={handleEdit}
+                onDelete={handleDeletePartner}
+              />
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+
+      {/* Partner creation modal */}
+      <PartnerFormModal
+        open={showCreateModal}
+        onOpenChange={setShowCreateModal}
+        onSubmit={handleCreatePartner}
+        isSubmitting={createPartner.isPending}
+      />
+
+      {/* Partner edit modal */}
+      {selectedPartner && (
+        <PartnerFormModal
+          open={showEditModal}
+          onOpenChange={setShowEditModal}
+          onSubmit={handleUpdatePartner}
+          isSubmitting={updatePartner.isPending}
+          defaultValues={selectedPartner}
+          mode="edit"
+        />
+      )}
+    </div>
   );
 };
 
-export default PartnersPage;
+export default Partners;

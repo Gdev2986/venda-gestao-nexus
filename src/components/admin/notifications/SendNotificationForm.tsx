@@ -20,7 +20,10 @@ import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { NotificationType } from "@/types/enums";
 
-// Use string literals for role values to match database enum values
+// Define a string literal type for roles to match database structure
+type DatabaseUserRole = "ADMIN" | "FINANCIAL" | "PARTNER" | "LOGISTICS" | "CLIENT" | 
+  "MANAGER" | "FINANCE" | "SUPPORT" | "USER";
+
 const formSchema = z.object({
   title: z.string().min(2, {
     message: "O título deve ter pelo menos 2 caracteres.",
@@ -30,16 +33,9 @@ const formSchema = z.object({
   }),
   type: z.nativeEnum(NotificationType),
   role: z.enum([
-    "ADMIN",
-    "FINANCIAL",
-    "PARTNER",
-    "LOGISTICS",
-    "CLIENT",
-    "MANAGER",
-    "FINANCE",
-    "SUPPORT",
-    "USER"
-  ]),
+    "ADMIN", "FINANCIAL", "PARTNER", "LOGISTICS", "CLIENT", 
+    "MANAGER", "FINANCE", "SUPPORT", "USER"
+  ] as const),
 });
 
 interface SendNotificationFormProps {
@@ -56,7 +52,7 @@ const SendNotificationForm = ({ onClose }: SendNotificationFormProps) => {
       title: "",
       message: "",
       type: NotificationType.GENERAL,
-      role: "CLIENT", // Use string literal instead of enum
+      role: "CLIENT" as const,
     },
   });
 
@@ -174,7 +170,7 @@ const SendNotificationForm = ({ onClose }: SendNotificationFormProps) => {
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>Função</FormLabel>
-                  <Select onValueChange={field.onChange} defaultValue={field.value}>
+                  <Select onValueChange={field.onChange as (value: string) => void} defaultValue={field.value}>
                     <FormControl>
                       <SelectTrigger>
                         <SelectValue placeholder="Selecione a função" />

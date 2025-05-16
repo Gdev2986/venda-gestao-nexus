@@ -1,7 +1,7 @@
 
 import { useState, useCallback } from 'react';
 import { useToast } from '@/hooks/use-toast';
-import { Payment, PaymentStatus } from '@/types/enums';
+import { PaymentStatus } from "@/types";
 import { toPaymentStatus } from "@/lib/type-utils";
 import { filterPaymentsByStatus } from "./usePaymentsFetcher";
 
@@ -18,6 +18,7 @@ export enum PaymentAction {
   REJECT = 'reject',
   DELETE = 'delete',
   UPLOAD_RECEIPT = 'upload_receipt',
+  VIEW = 'view', // Adding VIEW action to match components/payments/PaymentTableColumns
 }
 
 export const useAdminPayments = ({ 
@@ -116,7 +117,10 @@ export const useAdminPayments = ({
 
       // Show toast notification
       const actionText = action === PaymentAction.APPROVE ? 'approved' : 
-                         action === PaymentAction.REJECT ? 'rejected' : 'deleted';
+                         action === PaymentAction.REJECT ? 'rejected' : 
+                         action === PaymentAction.DELETE ? 'deleted' : 
+                         action === PaymentAction.VIEW ? 'viewed' : 
+                         action === PaymentAction.UPLOAD_RECEIPT ? 'receipt uploaded' : 'processed';
       
       toast({
         title: `Payment ${actionText}`,
@@ -133,7 +137,7 @@ export const useAdminPayments = ({
     }
   }, [payments, toast]);
 
-  // Fetch payments on initial load
+  // Use useEffect to load payments initially
   useState(() => {
     fetchPayments();
   });

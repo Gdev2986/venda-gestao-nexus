@@ -1,26 +1,23 @@
 
 import { useState, useEffect, useCallback } from "react";
-import { PaymentStatus } from "@/types/enums";
+import { PaymentStatus } from "@/types";
 import { toPaymentStatus } from "@/lib/type-utils";
 import { useToast } from "@/hooks/use-toast";
 
 // Function to filter payments by status
-export const filterPaymentsByStatus = (payments: any[], statusFilter: string | null) => {
+export const filterPaymentsByStatus = (payments: any[], statusFilter: PaymentStatus | null) => {
   if (!statusFilter || statusFilter === 'all') {
     return payments;
   }
-
-  // Convert string status to enum value for type safety
-  const status = statusFilter as PaymentStatus;
   
   return payments.filter((payment) => {
-    return payment.status === status;
+    return payment.status === statusFilter;
   });
 }
 
 // Interface for the usePaymentsFetcher hook parameters
 interface UsePaymentsFetcherParams {
-  statusFilter?: string;
+  statusFilter?: string | null;
   searchTerm?: string;
   fetchOnMount?: boolean;
   page?: number;
@@ -65,7 +62,8 @@ export const usePaymentsFetcher = ({
         // Filter by status if needed
         let filtered = mockPayments;
         if (statusFilter) {
-          filtered = filterPaymentsByStatus(mockPayments, statusFilter);
+          const status = statusFilter as PaymentStatus;
+          filtered = filterPaymentsByStatus(mockPayments, status);
         }
 
         // Filter by search term if provided

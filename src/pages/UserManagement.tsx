@@ -58,6 +58,21 @@ import {
 } from "@/components/ui/alert-dialog";
 import { generateUuid } from "@/lib/supabase-utils";
 
+// Define supported user roles as string literals to match database structure
+const USER_ROLES = [
+  "ADMIN", 
+  "CLIENT", 
+  "FINANCIAL", 
+  "PARTNER", 
+  "LOGISTICS", 
+  "MANAGER", 
+  "FINANCE", 
+  "SUPPORT", 
+  "USER"
+] as const;
+
+type UserRoles = typeof USER_ROLES[number];
+
 // Create a more specific schema that matches the database
 const formSchema = z.object({
   name: z.string().min(2, {
@@ -66,17 +81,7 @@ const formSchema = z.object({
   email: z.string().email({
     message: "Please enter a valid email address.",
   }),
-  role: z.enum([
-    "ADMIN",
-    "CLIENT",
-    "FINANCIAL",
-    "PARTNER",
-    "LOGISTICS",
-    "MANAGER",
-    "FINANCE",
-    "SUPPORT",
-    "USER",
-  ]),
+  role: z.enum(USER_ROLES),
   status: z.string().optional(),
 });
 
@@ -236,7 +241,7 @@ const UserManagement = () => {
     form.reset({
       name: user.name,
       email: user.email,
-      role: user.role as any, // Cast to any to avoid type issues
+      role: user.role as UserRoles, // Cast to specific role type
       status: user.status
     });
     setShowEditModal(true);

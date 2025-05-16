@@ -31,6 +31,8 @@ const AdminPayments = () => {
     setPage(1); // Reset to first page when filters change
   };
 
+  // Create a wrapper function for performPaymentAction that ensures
+  // the action type is compatible with what AdminPaymentsList expects
   const handlePaymentAction = (paymentId: string, action: PaymentAction) => {
     performPaymentAction(paymentId, action);
   };
