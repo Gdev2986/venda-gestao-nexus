@@ -2,7 +2,8 @@
 import React from "react";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 
-interface Activity {
+// Export the Activity interface so it can be imported elsewhere
+export interface Activity {
   id: number;
   description: string;
   timestamp: string;

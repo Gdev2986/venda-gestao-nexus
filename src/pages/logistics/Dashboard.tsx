@@ -16,15 +16,11 @@ import StorageOptimizationCard from "@/components/logistics/dashboard/StorageOpt
 import NewRequestDialog from "@/components/logistics/modals/NewRequestDialog";
 import NewMachineDialog from "@/components/logistics/modals/NewMachineDialog";
 
-// Define the required types for dashboard
-interface DashboardActivity {
-  id: string;
-  title: string;
-  description: string;
-  time: string;
-  timestamp: string;
-}
+// Import the types from the components to ensure compatibility
+import { Activity } from "@/components/logistics/dashboard/RecentActivitiesCard";
+import { Appointment } from "@/components/logistics/dashboard/AppointmentsCard";
 
+// Define the required types for dashboard
 interface DashboardMachineStatusData {
   name: string;
   value: number;
@@ -35,16 +31,6 @@ interface DashboardRequestData {
   name: string;
   value: number;
   total: number;
-}
-
-interface DashboardAppointment {
-  id: string;
-  title: string;
-  client: string;
-  time: string;
-  date: string;
-  type: string;
-  status: string;
 }
 
 const LogisticsDashboard = () => {
@@ -64,19 +50,15 @@ const LogisticsDashboard = () => {
   };
 
   // Create properly typed mock data
-  const activities: DashboardActivity[] = [
+  const activities: Activity[] = [
     {
-      id: "1",
-      title: "Nova máquina registrada",
+      id: 1, // Changed from string to number to match the Activity interface
       description: "Máquina XYZ-123 foi adicionada ao estoque",
-      time: "10:30",
       timestamp: new Date().toISOString()
     },
     {
-      id: "2",
-      title: "Requisição atendida",
+      id: 2, // Changed from string to number to match the Activity interface
       description: "Requisição #4432 foi marcada como concluída",
-      time: "09:15",
       timestamp: new Date().toISOString()
     }
   ];
@@ -97,24 +79,20 @@ const LogisticsDashboard = () => {
     { name: "Fora do SLA", value: 15, total: 100 }
   ];
 
-  const appointments: DashboardAppointment[] = [
+  const appointments: Appointment[] = [
     {
-      id: "1",
-      title: "Instalação de Máquina",
+      id: 1, // Changed from string to number to match the Appointment interface
       client: "Empresa ABC",
-      time: "13:00",
+      type: "Instalação",
       date: "2025-05-20",
-      type: "installation",
-      status: "scheduled"
+      status: "Agendado"
     },
     {
-      id: "2",
-      title: "Manutenção Preventiva",
+      id: 2, // Changed from string to number to match the Appointment interface
       client: "Empresa XYZ",
-      time: "15:30",
+      type: "Manutenção",
       date: "2025-05-21",
-      type: "maintenance",
-      status: "pending"
+      status: "Pendente"
     }
   ];
 
