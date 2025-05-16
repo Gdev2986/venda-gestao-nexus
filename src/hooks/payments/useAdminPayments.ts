@@ -1,16 +1,8 @@
 
 import { useState, useEffect } from "react";
 import usePaymentsFetcher from "./usePaymentsFetcher";
-import { PaymentStatus } from "@/types";
+import { PaymentStatus, PaymentAction } from "@/types/enums";
 import { useToast } from "@/hooks/use-toast";
-
-// Define payment actions - make sure it matches what's used in PaymentTableColumns
-export enum PaymentAction {
-  APPROVE = "approve",
-  REJECT = "reject",
-  VIEW = "view",
-  DELETE = "delete"
-}
 
 // Define the hook props
 interface UseAdminPaymentsProps {
@@ -47,33 +39,39 @@ const useAdminPayments = ({
     switch (action) {
       case PaymentAction.APPROVE:
         toast({
-          title: "Payment Approved",
-          description: `Payment #${paymentId} has been approved.`
+          title: "Pagamento Aprovado",
+          description: `Pagamento #${paymentId} foi aprovado.`
         });
         break;
       case PaymentAction.REJECT:
         toast({
-          title: "Payment Rejected",
-          description: `Payment #${paymentId} has been rejected.`
+          title: "Pagamento Rejeitado",
+          description: `Pagamento #${paymentId} foi rejeitado.`
         });
         break;
       case PaymentAction.VIEW:
         toast({
-          title: "Viewing Payment",
-          description: `Viewing details for payment #${paymentId}.`
+          title: "Visualizando Pagamento",
+          description: `Visualizando detalhes do pagamento #${paymentId}.`
         });
         break;
       case PaymentAction.DELETE:
         toast({
-          title: "Payment Deleted",
-          description: `Payment #${paymentId} has been deleted.`
+          title: "Pagamento Excluído",
+          description: `Pagamento #${paymentId} foi excluído.`
+        });
+        break;
+      case PaymentAction.SEND_RECEIPT:
+        toast({
+          title: "Comprovante Enviado",
+          description: `Comprovante para o pagamento #${paymentId} foi enviado.`
         });
         break;
       default:
         toast({
           variant: "destructive",
-          title: "Invalid Action",
-          description: `The action ${action} is not supported.`
+          title: "Ação Inválida",
+          description: `A ação ${action} não é suportada.`
         });
     }
     

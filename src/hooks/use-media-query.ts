@@ -1,6 +1,12 @@
 
 import { useState, useEffect } from "react";
 
+/**
+ * Custom hook para verificar se uma media query corresponde
+ * 
+ * @param query A media query a ser verificada
+ * @returns boolean indicando se a media query corresponde
+ */
 export function useMediaQuery(query: string): boolean {
   const [matches, setMatches] = useState(false);
 
@@ -11,9 +17,9 @@ export function useMediaQuery(query: string): boolean {
     }
 
     const listener = () => setMatches(media.matches);
-    window.addEventListener("resize", listener);
+    media.addEventListener("change", listener);
     
-    return () => window.removeEventListener("resize", listener);
+    return () => media.removeEventListener("change", listener);
   }, [matches, query]);
 
   return matches;

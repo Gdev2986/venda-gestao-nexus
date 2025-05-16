@@ -14,13 +14,15 @@ import { Payment } from "@/types";
 import { convertToPaymentRequest } from "@/components/payments/payment-list/PaymentConverter";
 import { PaymentNotifications } from "@/components/payments/PaymentNotifications";
 import { SendReceiptDialog } from "@/components/payments/SendReceiptDialog";
+import { useMediaQuery } from "@/hooks/use-media-query";
 
 const AdminPayments = () => {
   const [searchTerm, setSearchTerm] = useState("");
-  const [statusFilter, setStatusFilter] = useState<PaymentStatus | "ALL">("ALL");
+  const [statusFilter, setStatusFilter] = useState<string>("ALL");
   const [page, setPage] = useState(1);
   const pageSize = 10;
   const [activeTab, setActiveTab] = useState("all");
+  const isMobile = useMediaQuery("(max-width: 768px)");
   
   // UI state para diálogos
   const [selectedPayment, setSelectedPayment] = useState<Payment | null>(null);
@@ -38,7 +40,7 @@ const AdminPayments = () => {
     performPaymentAction
   } = useAdminPayments({
     searchTerm,
-    statusFilter,
+    statusFilter: statusFilter as PaymentStatus | 'ALL',
     page,
     pageSize
   });
@@ -119,7 +121,7 @@ const AdminPayments = () => {
         description="Gerencie e aprove solicitações de pagamento dos clientes"
       />
       
-      <Card className="p-6">
+      <Card className="p-4 md:p-6">
         <PaymentFilters
           searchTerm={searchTerm}
           statusFilter={statusFilter}
@@ -129,13 +131,13 @@ const AdminPayments = () => {
       </Card>
       
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-        <TabsList>
-          <TabsTrigger value="all">Todas</TabsTrigger>
-          <TabsTrigger value="pending">Pendentes</TabsTrigger>
-          <TabsTrigger value="processing">Em Processamento</TabsTrigger>
-          <TabsTrigger value="approved">Aprovados</TabsTrigger>
-          <TabsTrigger value="rejected">Recusados</TabsTrigger>
-          <TabsTrigger value="paid">Pagos</TabsTrigger>
+        <TabsList className="w-full overflow-x-auto flex flex-nowrap md:flex-wrap py-1">
+          <TabsTrigger value="all" className="flex-shrink-0">Todas</TabsTrigger>
+          <TabsTrigger value="pending" className="flex-shrink-0">Pendentes</TabsTrigger>
+          <TabsTrigger value="processing" className="flex-shrink-0">Em Processamento</TabsTrigger>
+          <TabsTrigger value="approved" className="flex-shrink-0">Aprovados</TabsTrigger>
+          <TabsTrigger value="rejected" className="flex-shrink-0">Recusados</TabsTrigger>
+          <TabsTrigger value="paid" className="flex-shrink-0">Pagos</TabsTrigger>
         </TabsList>
         
         <TabsContent value={activeTab} className="pt-6">

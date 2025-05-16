@@ -1,8 +1,7 @@
-
 import { PaymentStatus } from "@/types/enums";
 import { Client, PixKey } from "@/types";
 
-export type PaymentRequestStatus = 'PENDING' | 'APPROVED' | 'REJECTED' | 'PAID';
+export type PaymentRequestStatus = 'PENDING' | 'APPROVED' | 'REJECTED' | 'PAID' | 'PROCESSING';
 
 export interface UsePaymentsOptions {
   statusFilter?: string;

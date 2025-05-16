@@ -23,17 +23,17 @@ interface PaymentDetailsDialogProps {
 }
 
 // Função para determinar a cor baseada no status do pagamento
-const getStatusColor = (status: PaymentStatus | string) => {
+const getStatusColor = (status: string) => {
   switch (status) {
-    case PaymentStatus.PENDING:
+    case "PENDENTE":
       return "bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-300";
-    case PaymentStatus.PROCESSING:
+    case "EM_PROCESSAMENTO":
       return "bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300";
-    case PaymentStatus.APPROVED:
+    case "APROVADO":
       return "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300";
-    case PaymentStatus.REJECTED:
+    case "RECUSADO":
       return "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300";
-    case PaymentStatus.PAID:
+    case "PAGO":
       return "bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-300";
     default:
       return "bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300";
@@ -41,17 +41,17 @@ const getStatusColor = (status: PaymentStatus | string) => {
 };
 
 // Traduzir o status para exibição
-const getStatusLabel = (status: PaymentStatus | string) => {
+const getStatusLabel = (status: string) => {
   switch (status) {
-    case PaymentStatus.PENDING:
+    case "PENDENTE":
       return "Pendente";
-    case PaymentStatus.PROCESSING:
+    case "EM_PROCESSAMENTO":
       return "Em Processamento";
-    case PaymentStatus.APPROVED:
+    case "APROVADO":
       return "Aprovado";
-    case PaymentStatus.REJECTED:
+    case "RECUSADO":
       return "Recusado";
-    case PaymentStatus.PAID:
+    case "PAGO":
       return "Pago";
     default:
       return status;
@@ -69,7 +69,7 @@ export function PaymentDetailsDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-md">
+      <DialogContent className="max-w-md max-h-[80vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>Detalhes do Pagamento</DialogTitle>
           <DialogDescription>
@@ -94,6 +94,11 @@ export function PaymentDetailsDialog({
             <div>
               <h3 className="text-sm font-medium text-muted-foreground">Cliente</h3>
               <p>{payment.client?.business_name || "N/A"}</p>
+              {payment.client?.balance !== undefined && (
+                <p className="text-xs text-muted-foreground">
+                  Saldo: {formatCurrency(payment.client.balance)}
+                </p>
+              )}
             </div>
             <div>
               <h3 className="text-sm font-medium text-muted-foreground">Data da Solicitação</h3>
@@ -169,14 +174,14 @@ export function PaymentDetailsDialog({
             )}
           </div>
 
-          {payment.status === PaymentStatus.APPROVED && payment.approved_at && (
+          {payment.status === "APROVADO" && payment.approved_at && (
             <div>
               <h3 className="text-sm font-medium text-muted-foreground">Aprovado em</h3>
               <p>{formatDate(payment.approved_at)}</p>
             </div>
           )}
 
-          {payment.status === PaymentStatus.REJECTED && payment.rejection_reason && (
+          {payment.status === "RECUSADO" && payment.rejection_reason && (
             <div>
               <h3 className="text-sm font-medium text-muted-foreground">Motivo da Recusa</h3>
               <p className="text-sm">{payment.rejection_reason}</p>
