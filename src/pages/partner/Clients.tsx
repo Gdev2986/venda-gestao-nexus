@@ -8,7 +8,7 @@ import { Search, Plus } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import { ClientsTable } from "@/components/clients/ClientsTable";
+import ClientsTable from "@/components/clients/ClientsTable";
 import { ClientDetailsModal } from "@/components/clients/ClientDetailsModal";
 
 const PartnerClientsPage = () => {
@@ -152,7 +152,7 @@ const PartnerClientsPage = () => {
               clients={clients} 
               isLoading={isLoading} 
               onEdit={handleClientClick}
-              onDelete={() => {}} // Provide an empty function for now
+              onDelete={() => {}}
               onView={handleClientClick}
             />
           </CardContent>
@@ -161,7 +161,7 @@ const PartnerClientsPage = () => {
 
       {selectedClient && (
         <ClientDetailsModal
-          isOpen={showDetailsModal}
+          open={showDetailsModal}
           onClose={handleCloseModal}
           client={selectedClient}
         />

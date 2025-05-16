@@ -109,7 +109,6 @@ export const UsersTab = ({ openRoleModal }: UsersTabProps) => {
       setLoading(false);
     }
   };
-
   
   return (
     <Card>

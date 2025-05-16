@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import {
   Card,
@@ -58,7 +57,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { generateUuid } from "@/lib/supabase-utils";
 
-// Define supported user roles as string literals to match database structure
+// Define supported user roles as string literals
 const USER_ROLES = [
   "ADMIN", 
   "CLIENT", 
@@ -71,9 +70,7 @@ const USER_ROLES = [
   "USER"
 ] as const;
 
-type UserRoles = typeof USER_ROLES[number];
-
-// Create a more specific schema that matches the database
+// Create a schema that accepts string roles
 const formSchema = z.object({
   name: z.string().min(2, {
     message: "Username must be at least 2 characters.",
@@ -81,7 +78,7 @@ const formSchema = z.object({
   email: z.string().email({
     message: "Please enter a valid email address.",
   }),
-  role: z.enum(USER_ROLES),
+  role: z.string(),
   status: z.string().optional(),
 });
 
@@ -146,14 +143,14 @@ const UserManagement = () => {
       const newUserId = await generateUuid();
       
       if (newUserId) {
+        // Use type casting for the role to handle string roles
         const { error: profileError } = await supabase
           .from("profiles")
           .insert({
             id: newUserId,
             name: values.name,
             email: values.email,
-            role: values.role,
-            // status is not stored in profiles table
+            role: values.role as any,
           });
 
         if (profileError) throw profileError;
@@ -182,13 +179,13 @@ const UserManagement = () => {
   ) => {
     setIsUpdating(true);
     try {
+      // Use type casting for the role to handle string roles
       const { error } = await supabase
         .from("profiles")
         .update({
           name: values.name,
           email: values.email,
-          role: values.role,
-          // status is not stored in profiles table
+          role: values.role as any,
         })
         .eq("id", id);
 
@@ -217,8 +214,6 @@ const UserManagement = () => {
       const { error } = await supabase.from("profiles").delete().eq("id", id);
       if (error) throw error;
 
-      // Delete user authentication is usually handled by Supabase triggers
-
       toast({
         title: "Sucesso",
         description: "Usuário excluído com sucesso.",
@@ -241,7 +236,7 @@ const UserManagement = () => {
     form.reset({
       name: user.name,
       email: user.email,
-      role: user.role as UserRoles, // Cast to specific role type
+      role: user.role as string,
       status: user.status
     });
     setShowEditModal(true);
@@ -261,9 +256,10 @@ const UserManagement = () => {
   const updateUserRole = async (userId: string, role: string) => {
     setIsUpdating(true);
     try {
+      // Use type casting to handle string roles
       const { error } = await supabase
         .from("profiles")
-        .update({ role })
+        .update({ role: role as any })
         .eq("id", userId);
 
       if (error) {

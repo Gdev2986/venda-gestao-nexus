@@ -20,7 +20,7 @@ import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { NotificationType } from "@/types/enums";
 
-// Remove specific role restrictions to allow for dynamic roles
+// Define the form schema with a string type for role
 const formSchema = z.object({
   title: z.string().min(2, {
     message: "O título deve ter pelo menos 2 caracteres.",

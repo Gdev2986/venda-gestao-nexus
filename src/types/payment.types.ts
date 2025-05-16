@@ -16,8 +16,8 @@ export interface PaymentRequest {
   rejection_reason: string | null;
   pix_key?: PixKey;
   client?: Client;
-  payment_type?: string; // Add this to make compatible with Payment type
-  due_date?: string; // Add missing property
+  payment_type?: string;
+  due_date?: string;
 }
 
 export interface PixKey {
