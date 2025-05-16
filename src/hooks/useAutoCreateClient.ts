@@ -26,19 +26,20 @@ export const useAutoCreateClient = () => {
             // Only create client for users with CLIENT role
             if (profile && profile.role === "CLIENT") {
               // Check if client already exists for this user
-              const { data: existingClient, error: checkError } = await supabase
-                .from("clients")
-                .select("id")
+              const { data: existingClientAccess, error: checkError } = await supabase
+                .from("user_client_access")
+                .select("client_id")
                 .eq("user_id", session.user.id)
                 .maybeSingle();
 
               if (checkError) throw checkError;
 
-              // If client doesn't exist, create one
-              if (!existingClient) {
+              // If no access found, create a new client
+              if (!existingClientAccess) {
                 const name = profile.name || session.user.email?.split('@')[0] || 'New Client';
                 const clientId = uuidv4();
                 
+                // Insert client first
                 const { error: insertError } = await supabase
                   .from("clients")
                   .insert({
@@ -49,10 +50,19 @@ export const useAutoCreateClient = () => {
                     phone: profile.phone,
                     status: "active",
                     balance: 0,
-                    user_id: session.user.id
                   });
 
                 if (insertError) throw insertError;
+                
+                // Then create the user-client association
+                const { error: accessError } = await supabase
+                  .from("user_client_access")
+                  .insert({
+                    user_id: session.user.id,
+                    client_id: clientId
+                  });
+                
+                if (accessError) throw accessError;
 
                 console.log("Created new client for user:", session.user.id);
                 toast({

@@ -2,6 +2,7 @@
 import { PaymentStatus } from "@/types/enums";
 import { Client, PixKey } from "@/types";
 
+// Make description optional to match the other PaymentRequest interface
 export type PaymentRequestStatus = 'PENDENTE' | 'APROVADO' | 'RECUSADO' | 'PAGO' | 'EM_PROCESSAMENTO';
 
 export interface UsePaymentsOptions {
@@ -16,7 +17,7 @@ export interface PaymentRequest {
   id: string;
   client_id: string;
   amount: number;
-  description: string;
+  description?: string; // Made optional to match types/payment.types.ts
   status: PaymentRequestStatus;
   pix_key_id?: string;
   created_at: string;

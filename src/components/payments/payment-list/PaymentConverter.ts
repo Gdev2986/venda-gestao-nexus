@@ -1,6 +1,7 @@
 
 import { Payment } from "@/types";
 import { PaymentData } from "@/types/payment.types";
+import { PixKeyType } from "@/types";
 
 /**
  * Converte um objeto Payment para PaymentRequest/PaymentData
@@ -20,7 +21,15 @@ export function convertToPaymentRequest(payment: Payment): PaymentData {
     approved_by: payment.approved_by || null,
     receipt_url: payment.receipt_url || null,
     rejection_reason: payment.rejection_reason || null,
-    pix_key: payment.pix_key,
+    pix_key: payment.pix_key ? {
+      id: payment.pix_key.id || "",
+      key: payment.pix_key.key || "",
+      type: payment.pix_key.type || "",
+      owner_name: payment.pix_key.owner_name || "",
+      // Cast key_type to PixKeyType if it exists, otherwise undefined
+      key_type: payment.pix_key.key_type as PixKeyType | undefined,
+      name: payment.pix_key.owner_name || ""
+    } : undefined,
     client: payment.client,
     payment_type: payment.payment_type,
     due_date: payment.due_date,

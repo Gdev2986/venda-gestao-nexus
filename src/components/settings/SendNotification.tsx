@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -90,41 +89,45 @@ export function SendNotification() {
     try {
       if (data.targetType === "all") {
         // Send to all clients by creating one notification to handle on the backend
+        const notificationData = {
+          user_id: 'ALL', // Special case for bulk notifications
+          title: data.title,
+          message: data.message,
+          type: data.type as string, // Cast to string to match database expectations
+          is_read: false
+        };
+        
         const { error } = await supabase
           .from('notifications')
-          .insert({
-            user_id: 'ALL', // Special case for bulk notifications
-            title: data.title,
-            message: data.message,
-            type: data.type,
-            is_read: false
-          });
+          .insert(notificationData);
         
         if (error) throw error;
       } else if (data.targetType === "specific" && data.targetId) {
-        // Get the user_id for this client
-        const { data: clientData, error: clientError } = await supabase
-          .from('clients')
+        // Get the user_id for this client - use user_client_access table instead
+        const { data: clientAccessData, error: clientAccessError } = await supabase
+          .from('user_client_access')
           .select('user_id')
-          .eq('id', data.targetId)
+          .eq('client_id', data.targetId)
           .single();
           
-        if (clientError) throw clientError;
+        if (clientAccessError) throw clientAccessError;
         
-        if (!clientData.user_id) {
+        if (!clientAccessData?.user_id) {
           throw new Error("Este cliente não possui um usuário associado.");
         }
         
         // Insert notification for this specific user
+        const notificationData = {
+          user_id: clientAccessData.user_id,
+          title: data.title,
+          message: data.message,
+          type: data.type as string, // Cast to string to match database expectations
+          is_read: false
+        };
+        
         const { error } = await supabase
           .from('notifications')
-          .insert({
-            user_id: clientData.user_id,
-            title: data.title,
-            message: data.message,
-            type: data.type,
-            is_read: false
-          });
+          .insert(notificationData);
         
         if (error) throw error;
       }

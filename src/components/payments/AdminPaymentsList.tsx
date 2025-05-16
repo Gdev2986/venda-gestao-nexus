@@ -12,6 +12,7 @@ import { PaymentListLoadingState } from './payment-list/PaymentListLoadingState'
 import { PaymentListEmptyState } from './payment-list/PaymentListEmptyState';
 import { convertToPaymentRequest } from './payment-list/PaymentConverter';
 import { SendReceiptDialog } from './SendReceiptDialog';
+import { PaymentData } from '@/types/payment.types'; // Import from the same place consistently
 
 interface AdminPaymentsListProps {
   payments: Payment[];

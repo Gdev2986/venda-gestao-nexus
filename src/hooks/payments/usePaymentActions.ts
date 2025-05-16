@@ -43,7 +43,7 @@ export const usePaymentActions = (
         receiptUrl = data.publicUrl;
       }
 
-      // 2. Update payment status to APPROVED
+      // 2. Update payment status to APPROVED - using string instead of enum
       const { error: updateError } = await supabase
         .from("payment_requests")
         .update({
@@ -59,13 +59,13 @@ export const usePaymentActions = (
         throw new Error(`Payment approval failed: ${updateError.message}`);
       }
 
-      // 3. Update local state
+      // 3. Update local state - using string instead of enum for compatibility
       setPayments((prevPayments) =>
         prevPayments.map((payment) => {
           if (payment.id === paymentId) {
             return {
               ...payment,
-              status: "APPROVED" as any,
+              status: "APPROVED", // Using string instead of enum
               approved_at: new Date().toISOString(),
               approved_by: "current-user-id", // Should be replaced with actual user ID
               receipt_url: receiptUrl,
@@ -110,13 +110,13 @@ export const usePaymentActions = (
         throw new Error(`Payment rejection failed: ${error.message}`);
       }
 
-      // Update local state
+      // Update local state using string literals
       setPayments((prevPayments) =>
         prevPayments.map((payment) => {
           if (payment.id === paymentId) {
             return {
               ...payment,
-              status: "REJECTED" as any,
+              status: "REJECTED", // Using string instead of enum
               rejection_reason: rejectionReason,
             };
           }
@@ -165,7 +165,7 @@ export const usePaymentActions = (
         
       const receiptUrl = data.publicUrl;
 
-      // Update payment with receipt URL
+      // Update payment with receipt URL using string literals
       const { error: updateError } = await supabase
         .from("payment_requests")
         .update({
@@ -178,14 +178,14 @@ export const usePaymentActions = (
         throw new Error(`Receipt update failed: ${updateError.message}`);
       }
 
-      // Update local state
+      // Update local state using string literals
       setPayments((prevPayments) =>
         prevPayments.map((payment) => {
           if (payment.id === paymentId) {
             return {
               ...payment,
               receipt_url: receiptUrl,
-              status: "PAID" as any,
+              status: "PAID", // Using string instead of enum
             };
           }
           return payment;

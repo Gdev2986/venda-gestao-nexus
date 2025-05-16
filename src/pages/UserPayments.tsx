@@ -1,4 +1,3 @@
-
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -27,6 +26,7 @@ import { TedRequestDialog } from "@/components/payments/TedRequestDialog";
 import { PaymentRequestTable } from "@/components/payments/PaymentRequestTable";
 import { formatCurrency } from "@/lib/utils";
 import { usePaymentSubscription } from "@/hooks/usePaymentSubscription";
+import { v4 as uuidv4 } from "uuid";
 
 const UserPayments = () => {
   const [isLoading, setIsLoading] = useState(true);
@@ -43,7 +43,6 @@ const UserPayments = () => {
   const { toast } = useToast();
   const { user } = useAuth();
   
-  // Fetch client data and ID
   const fetchClientData = async () => {
     if (!user) return;
     
@@ -79,7 +78,6 @@ const UserPayments = () => {
     }
   };
   
-  // Fetch payment requests
   const fetchPayments = async () => {
     if (!clientId) return;
     
@@ -122,7 +120,6 @@ const UserPayments = () => {
     }
   };
   
-  // Fetch pix keys
   const fetchPixKeys = async () => {
     if (!user) return;
     
@@ -143,28 +140,34 @@ const UserPayments = () => {
     }
   };
   
-  // Handle payment request (PIX)
-  const handleRequestPayment = async (amount: number, pixKeyId: string, description?: string) => {
+  // Handle payment request (PIX) - Updated to match PaymentRequestDialog prop types
+  const handleRequestPayment = async (amount: string, description: string, pixKeyId: string): Promise<void> => {
     if (!clientId) {
       toast({
         variant: "destructive",
         title: "Erro",
         description: "Não foi possível identificar o cliente"
       });
-      return false;
+      return;
     }
     
     try {
+      const parsedAmount = parseFloat(amount);
+      
+      // Create payment request with more fields as needed by the database
+      const paymentData = {
+        id: uuidv4(), // Generate an ID manually
+        amount: parsedAmount,
+        pix_key_id: pixKeyId,
+        client_id: clientId,
+        description: description || "Solicitação de pagamento via PIX",
+        status: "PENDING", // Use string literal instead of enum
+        payment_type: "PIX" // Use string literal instead of enum
+      };
+      
       const { error } = await supabase
         .from('payment_requests')
-        .insert({
-          amount,
-          pix_key_id: pixKeyId,
-          client_id: clientId,
-          description: description || "Solicitação de pagamento via PIX",
-          status: PaymentStatus.PENDING,
-          payment_type: PaymentType.PIX
-        });
+        .insert(paymentData);
       
       if (error) throw error;
       
@@ -175,7 +178,6 @@ const UserPayments = () => {
       
       setIsPixDialogOpen(false);
       fetchPayments();
-      return true;
     } catch (error) {
       console.error("Erro ao solicitar pagamento:", error);
       toast({
@@ -183,11 +185,10 @@ const UserPayments = () => {
         title: "Erro",
         description: "Ocorreu um erro ao solicitar o pagamento"
       });
-      return false;
     }
   };
   
-  // Handle boleto request
+  // Handle boleto request - updated to handle database field structure
   const handleRequestBoleto = async (amount: number, dueDate: string, description?: string, documentFile?: File) => {
     if (!clientId) return false;
     
@@ -212,18 +213,22 @@ const UserPayments = () => {
         documentUrl = data.publicUrl;
       }
       
-      // Create payment request
+      // Create payment request with the field structure that matches the database
+      const paymentData = {
+        id: uuidv4(), // Generate an ID manually
+        amount,
+        client_id: clientId,
+        description: description || "Solicitação de pagamento via Boleto",
+        status: "PENDING", // Use string literal instead of enum
+        payment_type: "BOLETO", // Use string literal instead of enum
+        document_url: documentUrl,
+        due_date: dueDate,
+        pix_key_id: null // Add this required field with a null value
+      };
+      
       const { error } = await supabase
         .from('payment_requests')
-        .insert({
-          amount,
-          client_id: clientId,
-          due_date: dueDate,
-          description: description || "Solicitação de pagamento via Boleto",
-          document_url: documentUrl,
-          status: PaymentStatus.PENDING,
-          payment_type: PaymentType.BOLETO
-        });
+        .insert(paymentData);
       
       if (error) throw error;
       
@@ -246,21 +251,26 @@ const UserPayments = () => {
     }
   };
   
-  // Handle TED request
+  // Handle TED request - updated to handle database field structure
   const handleRequestTED = async (amount: number, bankInfo: any, description?: string) => {
     if (!clientId) return false;
     
     try {
+      // Create payment request with the field structure that matches the database
+      const paymentData = {
+        id: uuidv4(), // Generate an ID manually
+        amount,
+        client_id: clientId,
+        description: description || "Solicitação de pagamento via TED",
+        status: "PENDING", // Use string literal instead of enum
+        payment_type: "TED", // Use string literal instead of enum
+        bank_info: bankInfo,
+        pix_key_id: null // Add this required field with a null value
+      };
+      
       const { error } = await supabase
         .from('payment_requests')
-        .insert({
-          amount,
-          client_id: clientId,
-          bank_info: bankInfo,
-          description: description || "Solicitação de pagamento via TED",
-          status: PaymentStatus.PENDING,
-          payment_type: PaymentType.TED
-        });
+        .insert(paymentData);
       
       if (error) throw error;
       
@@ -283,26 +293,22 @@ const UserPayments = () => {
     }
   };
   
-  // Effect to load initial data
   useEffect(() => {
     fetchClientData();
     fetchPixKeys();
   }, [user]);
   
-  // Effect to load payments when clientId is available
   useEffect(() => {
     if (clientId) {
       fetchPayments();
     }
   }, [clientId]);
   
-  // Set up real-time subscription
   usePaymentSubscription(fetchPayments, {
     notifyUser: true,
     filterByClientId: clientId
   });
   
-  // Filter payments by tab
   const filteredPayments = payments.filter(payment => {
     if (activeTab === 'all') return true;
     if (activeTab === 'pending') return payment.status === PaymentStatus.PENDING;

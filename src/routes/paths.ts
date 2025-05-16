@@ -1,72 +1,37 @@
-
+// Add CLIENT.MACHINES path to the PATHS object
 export const PATHS = {
-  // Auth
-  LOGIN: "/auth/login",
-  REGISTER: "/auth/register",
-  FORGOT_PASSWORD: "/auth/forgot-password",
-  RESET_PASSWORD: "/auth/reset-password",
-  
-  // Home
-  HOME: "/",
-  
-  // Main
-  DASHBOARD: "/dashboard",
-  CLIENTS: "/clients",
-  CLIENT_REGISTRATION: "/client-registration",
-  
-  // Admin
   ADMIN: {
     DASHBOARD: "/admin/dashboard",
     CLIENTS: "/admin/clients",
-    SETTINGS: "/admin/settings",
-    SALES: "/admin/sales",
-    PAYMENTS: "/admin/payments",
+    CLIENT_DETAILS: (id: string) => `/admin/clients/${id}`,
+    CLIENT_NEW: "/admin/clients/new",
+    MACHINES: "/admin/machines",
+    MACHINE_DETAILS: (id: string) => `/admin/machines/${id}`,
+    MACHINE_NEW: "/admin/machines/new",
     PARTNERS: "/admin/partners",
-    REPORTS: "/admin/reports",
-    FEES: "/admin/fees",
-    SUPPORT: "/admin/support"
+    PARTNER_DETAILS: (id: string) => `/admin/partners/${id}`,
+    PARTNER_NEW: "/admin/partners/new",
+    USERS: "/admin/users",
+    USER_DETAILS: (id: string) => `/admin/users/${id}`,
+    USER_NEW: "/admin/users/new",
+    PAYMENTS: "/admin/payments",
+    PAYMENT_DETAILS: (id: string) => `/admin/payments/${id}`,
+    PAYMENT_NEW: "/admin/payments/new",
+    SETTINGS: "/admin/settings",
+    SUPPORT: "/admin/support",
+    HELP: "/admin/help",
+    COMMISSIONS: "/admin/commissions",
+    COMMISSION_DETAILS: (id: string) => `/admin/commissions/${id}`,
+    COMMISSION_NEW: "/admin/commissions/new",
+    SALES: "/admin/sales",
   },
-  
-  // Partner
-  PARTNER: {
-    DASHBOARD: "/partner/dashboard",
-    CLIENTS: "/partner/clients",
-    SALES: "/partner/sales",
-    COMMISSIONS: "/partner/commissions",
-    REPORTS: "/partner/reports",
-    SUPPORT: "/partner/support",
-    HELP: "/partner/help",
-    SETTINGS: "/partner/settings"
-  },
-  
-  // Client
-  CLIENT_DASHBOARD: "/client/dashboard",
-  CLIENT_PAYMENTS: "/client/payments",
-  
-  // User (Client)
-  USER: {
+  CLIENT: {
     DASHBOARD: "/client/dashboard",
     PAYMENTS: "/client/payments",
     SUPPORT: "/client/support",
     HELP: "/client/help",
-    SETTINGS: "/client/settings"
+    SETTINGS: "/client/settings",
+    MACHINES: "/client/machines" // Add this missing path
   },
-  
-  // Financial
-  FINANCIAL: {
-    DASHBOARD: "/financial/dashboard",
-    REPORTS: "/financial/reports",
-    SETTINGS: "/financial/settings"
-  },
-  
-  // Logistics
-  LOGISTICS: {
-    DASHBOARD: "/logistics/dashboard",
-    MACHINES: "/logistics/machines",
-    OPERATIONS: "/logistics/operations",
-    REQUESTS: "/logistics/requests",
-    CLIENTS: "/logistics/clients",
-    SETTINGS: "/logistics/settings",
-    CALENDAR: "/logistics/calendar"
-  }
+  HOME: "/",
 };
