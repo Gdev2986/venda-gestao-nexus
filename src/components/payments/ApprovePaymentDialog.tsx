@@ -87,7 +87,9 @@ export function ApprovePaymentDialog({
           </DialogDescription>
         </DialogHeader>
 
-        {payment && <PaymentDetailView payment={payment} />}
+        {payment && (
+          <PaymentDetailView payment={payment} />
+        )}
 
         <div className="space-y-4">
           <div>

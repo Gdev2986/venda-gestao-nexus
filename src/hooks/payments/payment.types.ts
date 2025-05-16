@@ -1,5 +1,4 @@
 
-import { PixKey, Client } from "@/types";
 import { PaymentStatus } from "@/types/enums";
 
 export type PaymentRequestStatus = 'PENDING' | 'APPROVED' | 'REJECTED' | 'PAID';
@@ -25,48 +24,44 @@ export interface PaymentRequest {
   approved_by: string | null;
   receipt_url: string | null;
   rejection_reason: string | null;
-  pix_key?: PixKey;
-  client?: Client;
+  pix_key?: {
+    id: string;
+    key: string;
+    key_type?: string;
+    type?: string;
+    client_id?: string;
+    user_id?: string;
+    created_at?: string;
+    updated_at?: string;
+    name?: string;
+    owner_name?: string;
+    isDefault?: boolean;
+    is_active?: boolean;
+    bank_name?: string;
+  };
+  client?: {
+    id: string;
+    business_name: string;
+    document?: string;
+    email?: string;
+    phone?: string;
+    status?: string;
+    balance?: number;
+    partner_id?: string;
+    created_at?: string;
+    updated_at?: string;
+    contact_name?: string;
+    address?: string;
+    city?: string;
+    state?: string;
+    zip?: string;
+    fee_plan_id?: string;
+  };
   payment_type?: string;
   due_date?: string;
 }
 
-export interface PixKey {
-  id: string;
-  key: string;
-  key_type: PixKeyType;
-  type?: string;
-  client_id?: string;
-  user_id?: string;
-  created_at?: string;
-  updated_at?: string;
-  name?: string;
-  owner_name?: string;
-  isDefault?: boolean;
-  is_active?: boolean;
-  bank_name?: string;
-}
-
 export type PixKeyType = 'CPF' | 'CNPJ' | 'EMAIL' | 'PHONE' | 'EVP';
-
-export interface Client {
-  id: string;
-  business_name: string;
-  document?: string;
-  email?: string;
-  phone?: string;
-  status?: string;
-  balance?: number;
-  partner_id?: string;
-  created_at?: string;
-  updated_at?: string;
-  contact_name?: string;
-  address?: string;
-  city?: string;
-  state?: string;
-  zip?: string;
-  fee_plan_id?: string;
-}
 
 // Make PaymentData type compatible with both systems
 export type PaymentData = PaymentRequest;

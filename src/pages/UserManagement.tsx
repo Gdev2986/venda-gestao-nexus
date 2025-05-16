@@ -29,6 +29,14 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
@@ -124,13 +132,16 @@ const UserManagement = () => {
       const newUserId = userData;
       
       if (newUserId) {
+        // Convert role to a valid UserRole enum value
+        const validRole = toUserRole(values.role);
+        
         const { error: profileError } = await supabase
           .from("profiles")
           .insert({
             id: newUserId,
             name: values.name,
             email: values.email,
-            role: values.role,
+            role: validRole,
             // status is not stored in profiles table
           });
 
@@ -160,12 +171,15 @@ const UserManagement = () => {
   ) => {
     setIsUpdating(true);
     try {
+      // Convert role to a valid UserRole enum value
+      const validRole = toUserRole(values.role);
+      
       const { error } = await supabase
         .from("profiles")
         .update({
           name: values.name,
           email: values.email,
-          role: values.role,
+          role: validRole,
           // status is not stored in profiles table
         })
         .eq("id", id);
@@ -239,9 +253,12 @@ const UserManagement = () => {
   const updateUserRole = async (userId: string, role: string) => {
     setIsUpdating(true);
     try {
+      // Convert role to a valid UserRole enum value
+      const validRole = toUserRole(role);
+      
       const { error } = await supabase
         .from("profiles")
-        .update({ role })
+        .update({ role: validRole })
         .eq("id", userId);
 
       if (error) {
@@ -268,6 +285,7 @@ const UserManagement = () => {
     updateUserRole(userId, role);
   };
 
+  
   return (
     <div className="container mx-auto py-10">
       <Card>

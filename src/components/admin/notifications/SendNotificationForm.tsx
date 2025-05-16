@@ -18,7 +18,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
-import { UserRole, NotificationType } from "@/types";
+import { UserRole, NotificationType } from "@/types/enums";
 import { toUserRole } from "@/lib/type-utils";
 
 const formSchema = z.object({
@@ -29,7 +29,17 @@ const formSchema = z.object({
     message: "A mensagem deve ter pelo menos 10 caracteres.",
   }),
   type: z.nativeEnum(NotificationType),
-  role: z.enum([UserRole.ADMIN, UserRole.FINANCIAL, UserRole.PARTNER, UserRole.LOGISTICS, UserRole.CLIENT]),
+  role: z.enum([
+    UserRole.ADMIN,
+    UserRole.FINANCIAL,
+    UserRole.PARTNER,
+    UserRole.LOGISTICS,
+    UserRole.CLIENT,
+    UserRole.MANAGER,
+    UserRole.FINANCE,
+    UserRole.SUPPORT,
+    UserRole.USER
+  ]),
 });
 
 interface SendNotificationFormProps {

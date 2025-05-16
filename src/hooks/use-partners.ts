@@ -1,228 +1,165 @@
 
-import { useState, useEffect, useCallback } from "react";
-import { Partner, FilterValues } from "@/types";
+import { useState } from "react";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { Partner } from "@/types";
 import { useToast } from "@/hooks/use-toast";
 
-// Define interface for partner creation input data
-interface PartnerCreate {
-  company_name: string;
-  commission_rate?: number;
+interface UsePartnersOptions {
+  enabled?: boolean;
+  initialData?: Partner[];
+  searchTerm?: string;
 }
 
-export const usePartners = () => {
-  const [partners, setPartners] = useState<Partner[]>([]);
-  const [filteredPartners, setFilteredPartners] = useState<Partner[]>([]);
-  const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState("");
+export const usePartners = ({
+  enabled = true,
+  initialData = [],
+  searchTerm = "",
+}: UsePartnersOptions = {}) => {
+  const [isCreatingPartner, setIsCreatingPartner] = useState(false);
+  const queryClient = useQueryClient();
   const { toast } = useToast();
 
-  const fetchPartners = useCallback(async () => {
-    setIsLoading(true);
-    setError("");
-
-    try {
-      // Fetch partners from Supabase
-      const { data, error } = await supabase
-        .from('partners')
-        .select('*');
-
-      if (error) throw error;
-
-      if (data) {
-        // Transform data to match our Partner interface with proper type checking
-        const transformedPartners: Partner[] = data.map((partner: any) => ({
-          id: partner.id,
-          company_name: partner.company_name,
-          created_at: partner.created_at,
-          updated_at: partner.updated_at,
-          commission_rate: partner.commission_rate,
-          // Add optional fields with proper null checking
-          contact_name: partner.contact_name || undefined,
-          contact_email: partner.contact_email || undefined,
-          contact_phone: partner.contact_phone || undefined,
-          email: partner.email || undefined,
-          phone: partner.phone || undefined,
-          address: partner.address || undefined,
-          total_sales: partner.total_sales || 0,
-          total_commission: partner.total_commission || 0,
-        }));
-
-        setPartners(transformedPartners);
-        setFilteredPartners(transformedPartners);
-      }
-    } catch (err: any) {
-      console.error("Error fetching partners:", err);
-      setError(err.message || "Failed to load partners");
-      
-      // Use mock data in case of error for demonstration
-      const mockPartners: Partner[] = [
-        {
-          id: "1",
-          company_name: "Tech Solutions Partners",
-          contact_name: "João Silva",
-          email: "joao@techsolutions.com",
-          phone: "(11) 99877-6655",
-          commission_rate: 5,
-          address: "Av. Paulista, 1000",
-          created_at: new Date().toISOString(),
-          updated_at: new Date().toISOString(),
-          total_sales: 45000,
-          total_commission: 2250
-        },
-        {
-          id: "2",
-          company_name: "Connect Business",
-          contact_name: "Maria Oliveira",
-          email: "maria@connectbusiness.com",
-          phone: "(11) 98765-4321",
-          commission_rate: 4.5,
-          address: "Rua Augusta, 500",
-          created_at: new Date().toISOString(),
-          updated_at: new Date().toISOString(),
-          total_sales: 32000,
-          total_commission: 1440
-        }
-      ];
-      
-      setPartners(mockPartners);
-      setFilteredPartners(mockPartners);
-    } finally {
-      setIsLoading(false);
-    }
-  }, [toast]);
-
-  const filterPartners = useCallback((searchTerm = "", status = "") => {
-    let filtered = [...partners];
+  const fetchPartners = async () => {
+    let query = supabase.from("partners").select("*");
 
     if (searchTerm) {
-      const term = searchTerm.toLowerCase();
-      filtered = filtered.filter(partner =>
-        partner.company_name.toLowerCase().includes(term) ||
-        (partner.contact_name && partner.contact_name.toLowerCase().includes(term)) ||
-        (partner.email && partner.email.toLowerCase().includes(term)) ||
-        (partner.phone && partner.phone.includes(term))
-      );
+      query = query.ilike("company_name", `%${searchTerm}%`);
     }
 
-    setFilteredPartners(filtered);
-    return filtered;
-  }, [partners]);
+    const { data, error } = await query.order("company_name", {
+      ascending: true,
+    });
 
-  const createPartner = async (partnerData: PartnerCreate): Promise<boolean> => {
-    try {
-      // First generate a UUID for the partner
-      const { data: idData } = await supabase.rpc('generate_uuid');
-      const partnerId = idData;
-      
-      // Insert into Supabase with the new ID
-      const { error } = await supabase
-        .from('partners')
-        .insert({
-          id: partnerId,
-          company_name: partnerData.company_name,
-          commission_rate: partnerData.commission_rate || 0
-        });
-
-      if (error) throw error;
-
-      toast({
-        title: "Parceiro criado",
-        description: "O parceiro foi criado com sucesso."
-      });
-
-      await fetchPartners(); // Refresh the partners list
-      return true;
-    } catch (err: any) {
-      console.error("Error creating partner:", err);
-      
-      toast({
-        variant: "destructive",
-        title: "Erro",
-        description: err.message || "Não foi possível criar o parceiro."
-      });
-      
-      return false;
+    if (error) {
+      throw error;
     }
-  };
-  
-  const updatePartner = async (partnerId: string, partnerData: Partial<Partner>): Promise<boolean> => {
-    try {
-      // Create an update object with only the fields that exist in the database table
-      const updateData = {
-        ...(partnerData.company_name && { company_name: partnerData.company_name }),
-        ...(partnerData.commission_rate !== undefined && { commission_rate: partnerData.commission_rate }),
-      };
 
-      const { error } = await supabase
-        .from('partners')
-        .update(updateData)
-        .eq('id', partnerId);
-
-      if (error) throw error;
-
-      toast({
-        title: "Parceiro atualizado",
-        description: "As informações foram atualizadas com sucesso."
-      });
-
-      await fetchPartners(); // Refresh the partners list
-      return true;
-    } catch (err: any) {
-      console.error("Error updating partner:", err);
-      
-      toast({
-        variant: "destructive",
-        title: "Erro",
-        description: err.message || "Não foi possível atualizar o parceiro."
-      });
-      
-      return false;
-    }
+    return data || [];
   };
 
-  const deletePartner = async (partnerId: string): Promise<boolean> => {
-    try {
-      const { error } = await supabase
-        .from('partners')
-        .delete()
-        .eq('id', partnerId);
+  const { data: partners = initialData, isLoading, error } = useQuery({
+    queryKey: ["partners", searchTerm],
+    queryFn: fetchPartners,
+    enabled,
+  });
 
-      if (error) throw error;
+  const createPartnerMutation = useMutation({
+    mutationFn: async (partnerData: Partial<Partner>) => {
+      setIsCreatingPartner(true);
+      try {
+        // Generate UUID for the partner
+        const { data: generatedUUID, error: uuidError } = await supabase.rpc(
+          'generate_uuid'
+        );
 
+        if (uuidError) {
+          throw new Error(`Failed to generate UUID: ${uuidError.message}`);
+        }
+
+        const partnerId = generatedUUID;
+
+        const { data, error } = await supabase
+          .from("partners")
+          .insert([
+            {
+              id: partnerId,
+              ...partnerData,
+            },
+          ])
+          .select();
+
+        if (error) {
+          throw error;
+        }
+
+        return data[0];
+      } finally {
+        setIsCreatingPartner(false);
+      }
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["partners"] });
       toast({
-        title: "Parceiro removido",
-        description: "O parceiro foi removido com sucesso."
+        title: "Success",
+        description: "Partner created successfully",
       });
-
-      await fetchPartners(); // Refresh the partners list
-      return true;
-    } catch (err: any) {
-      console.error("Error deleting partner:", err);
-      
+    },
+    onError: (error) => {
       toast({
         variant: "destructive",
-        title: "Erro",
-        description: err.message || "Não foi possível remover o parceiro."
+        title: "Error",
+        description: `Failed to create partner: ${error.message}`,
       });
-      
-      return false;
-    }
-  };
+    },
+  });
 
-  useEffect(() => {
-    fetchPartners();
-  }, [fetchPartners]);
+  const updatePartnerMutation = useMutation({
+    mutationFn: async ({
+      id,
+      ...partnerData
+    }: Partial<Partner> & { id: string }) => {
+      const { data, error } = await supabase
+        .from("partners")
+        .update(partnerData)
+        .eq("id", id)
+        .select();
+
+      if (error) {
+        throw error;
+      }
+
+      return data[0];
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["partners"] });
+      toast({
+        title: "Success",
+        description: "Partner updated successfully",
+      });
+    },
+    onError: (error) => {
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: `Failed to update partner: ${error.message}`,
+      });
+    },
+  });
+
+  const deletePartnerMutation = useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase.from("partners").delete().eq("id", id);
+
+      if (error) {
+        throw error;
+      }
+
+      return id;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["partners"] });
+      toast({
+        title: "Success",
+        description: "Partner deleted successfully",
+      });
+    },
+    onError: (error) => {
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: `Failed to delete partner: ${error.message}`,
+      });
+    },
+  });
 
   return {
-    partners: filteredPartners,
-    allPartners: partners,
+    partners,
     isLoading,
     error,
-    refreshPartners: fetchPartners,
-    filterPartners,
-    createPartner,
-    updatePartner,
-    deletePartner
+    isCreatingPartner,
+    createPartner: createPartnerMutation.mutate,
+    updatePartner: updatePartnerMutation.mutate,
+    deletePartner: deletePartnerMutation.mutate,
   };
 };

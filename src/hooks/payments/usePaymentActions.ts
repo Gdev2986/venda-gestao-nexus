@@ -1,112 +1,149 @@
 
 import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { PaymentRequestStatus } from "@/types/payment.types";
 import { useToast } from "@/hooks/use-toast";
 import { PaymentData } from "./payment.types";
 
 export const usePaymentActions = (
-  paymentRequests: PaymentData[],
-  setPaymentRequests: React.Dispatch<React.SetStateAction<PaymentData[]>>
+  payments: PaymentData[],
+  setPayments: React.Dispatch<React.SetStateAction<PaymentData[]>>
 ) => {
+  const [processingIds, setProcessingIds] = useState<string[]>([]);
   const { toast } = useToast();
+
+  const isProcessing = (id: string) => processingIds.includes(id);
 
   const approvePayment = async (
     paymentId: string,
-    receiptUrl?: string | null
-  ): Promise<boolean> => {
+    receiptFile: File | null,
+    notes?: string
+  ) => {
+    setProcessingIds((prev) => [...prev, paymentId]);
+
     try {
-      const updateData: any = {
-        status: "APPROVED" as PaymentRequestStatus,
-        approved_at: new Date().toISOString(),
-      };
-      
-      if (receiptUrl) {
-        updateData.receipt_url = receiptUrl;
+      // 1. Upload receipt if provided
+      let receiptUrl = null;
+      if (receiptFile) {
+        const fileName = `receipts/${paymentId}/${Date.now()}-${receiptFile.name}`;
+        
+        const { data: uploadData, error: uploadError } = await supabase.storage
+          .from("payment-receipts")
+          .upload(fileName, receiptFile);
+
+        if (uploadError) {
+          throw new Error(`Receipt upload failed: ${uploadError.message}`);
+        }
+
+        // Get the public URL for the uploaded receipt
+        const { data } = supabase.storage
+          .from("payment-receipts")
+          .getPublicUrl(fileName);
+          
+        receiptUrl = data.publicUrl;
       }
-      
-      const { error } = await supabase
+
+      // 2. Update payment status to APPROVED
+      const { error: updateError } = await supabase
         .from("payment_requests")
-        .update(updateData)
+        .update({
+          status: "APPROVED",
+          approved_at: new Date().toISOString(),
+          approved_by: "current-user-id", // Should be replaced with actual user ID
+          receipt_url: receiptUrl,
+          ...(notes ? { notes } : {}),
+        })
         .eq("id", paymentId);
 
-      if (error) {
-        throw error;
+      if (updateError) {
+        throw new Error(`Payment approval failed: ${updateError.message}`);
       }
 
-      // Update the local state
-      setPaymentRequests(
-        paymentRequests.map((request) =>
-          request.id === paymentId
-            ? { ...request, status: "APPROVED" as PaymentRequestStatus, receipt_url: receiptUrl || request.receipt_url }
-            : request
+      // 3. Update local state
+      setPayments((prevPayments) =>
+        prevPayments.map((payment) =>
+          payment.id === paymentId
+            ? {
+                ...payment,
+                status: "APPROVED",
+                approved_at: new Date().toISOString(),
+                approved_by: "current-user-id", // Should be replaced with actual user ID
+                receipt_url: receiptUrl,
+              }
+            : payment
         )
       );
 
       toast({
         title: "Payment Approved",
-        description: "The payment has been successfully approved.",
+        description: "The payment request has been approved successfully.",
       });
 
       return true;
     } catch (error: any) {
+      console.error("Error approving payment:", error);
       toast({
-        title: "Error approving payment",
-        description: error.message,
         variant: "destructive",
+        title: "Approval Failed",
+        description: error.message,
       });
       return false;
+    } finally {
+      setProcessingIds((prev) => prev.filter((id) => id !== paymentId));
     }
   };
 
-  const rejectPayment = async (
-    paymentId: string,
-    rejectionReason: string
-  ): Promise<boolean> => {
+  const rejectPayment = async (paymentId: string, rejectionReason: string) => {
+    setProcessingIds((prev) => [...prev, paymentId]);
+
     try {
       const { error } = await supabase
         .from("payment_requests")
         .update({
-          status: "REJECTED" as PaymentRequestStatus,
-          rejection_reason: rejectionReason
+          status: "REJECTED",
+          rejection_reason: rejectionReason,
         })
         .eq("id", paymentId);
 
       if (error) {
-        throw error;
+        throw new Error(`Payment rejection failed: ${error.message}`);
       }
 
-      // Update the local state
-      setPaymentRequests(
-        paymentRequests.map((request) =>
-          request.id === paymentId
-            ? { 
-                ...request, 
-                status: "REJECTED" as PaymentRequestStatus,
-                rejection_reason: rejectionReason 
+      // Update local state
+      setPayments((prevPayments) =>
+        prevPayments.map((payment) =>
+          payment.id === paymentId
+            ? {
+                ...payment,
+                status: "REJECTED",
+                rejection_reason: rejectionReason,
               }
-            : request
+            : payment
         )
       );
 
       toast({
         title: "Payment Rejected",
-        description: "The payment has been rejected.",
+        description: "The payment request has been rejected.",
       });
 
       return true;
     } catch (error: any) {
+      console.error("Error rejecting payment:", error);
       toast({
-        title: "Error rejecting payment",
-        description: error.message,
         variant: "destructive",
+        title: "Rejection Failed",
+        description: error.message,
       });
       return false;
+    } finally {
+      setProcessingIds((prev) => prev.filter((id) => id !== paymentId));
     }
   };
 
   return {
     approvePayment,
-    rejectPayment
+    rejectPayment,
+    isProcessing,
+    processingIds,
   };
 };

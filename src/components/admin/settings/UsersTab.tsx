@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -84,7 +83,8 @@ export const UsersTab = ({ openRoleModal }: UsersTabProps) => {
       
       if (selectedRole !== 'all') {
         // Use the role string directly for the database query
-        query = query.eq('role', selectedRole);
+        const roleValue = selectedRole.toString();
+        query = query.eq('role', roleValue);
       }
       
       // Apply pagination
@@ -113,7 +113,8 @@ export const UsersTab = ({ openRoleModal }: UsersTabProps) => {
     }
   };
 
-        return (
+  
+  return (
     <Card>
       <CardHeader>
         <CardTitle>Gerenciar Usuários</CardTitle>

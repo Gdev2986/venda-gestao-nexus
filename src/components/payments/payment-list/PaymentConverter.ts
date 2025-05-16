@@ -19,7 +19,13 @@ export function convertToPaymentRequest(payment: Payment): PaymentData {
     description: payment.description || "",
     rejection_reason: payment.rejection_reason || null,
     ...(payment.client ? { client: payment.client } : {}),
-    ...(payment.pix_key ? { pix_key: payment.pix_key, pix_key_id: payment.pix_key.id } : {})
+    ...(payment.pix_key ? { 
+      pix_key: {
+        ...payment.pix_key,
+        name: payment.pix_key.owner_name || "Default Name"
+      },
+      pix_key_id: payment.pix_key.id
+    } : {})
   };
 }
 

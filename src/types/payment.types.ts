@@ -7,7 +7,7 @@ export interface PaymentRequest {
   amount: number;
   description: string;
   status: PaymentRequestStatus;
-  pix_key_id: string;
+  pix_key_id?: string;
   created_at: string;
   updated_at: string;
   approved_at: string | null;
@@ -23,7 +23,7 @@ export interface PaymentRequest {
 export interface PixKey {
   id: string;
   key: string;
-  key_type: PixKeyType;
+  key_type?: PixKeyType;
   type?: string; // Added for backward compatibility
   client_id?: string;
   user_id?: string;

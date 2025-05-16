@@ -1,91 +1,108 @@
 
 import { useState } from "react";
-import { useMachineStats } from "@/hooks/use-machine-stats";
-import { useToast } from "@/hooks/use-toast";
-import { PageWrapper } from "@/components/page/PageWrapper";
-
-// Import dashboard components
-import DashboardHeader from "@/components/logistics/dashboard/DashboardHeader";
-import StatsCardsGroup from "@/components/logistics/dashboard/StatsCardsGroup";
-import DashboardTabs from "@/components/logistics/dashboard/DashboardTabs";
-import AppointmentsCard from "@/components/logistics/dashboard/AppointmentsCard";
-import RecentActivitiesCard from "@/components/logistics/dashboard/RecentActivitiesCard";
-
-// Import modal dialogs
-import NewMachineDialog from "@/components/logistics/modals/NewMachineDialog";
-import NewRequestDialog from "@/components/logistics/modals/NewRequestDialog";
-
-// Import dashboard data
-import { 
-  machineStatusData, 
-  requestsMonthlyData, 
-  slaData,
-  upcomingAppointments,
-  recentActivities 
-} from "@/data/logistics/dashboardData";
+import { Card, CardContent } from "@/components/ui/card";
+import { PageHeader } from "@/components/page/PageHeader";
+import { Button } from "@/components/ui/button";
+import { Calendar, ExternalLink, Filter, Plus } from "lucide-react";
+import { StatsCardsGroup } from "@/components/logistics/dashboard/StatsCardsGroup";
+import { MachinesTable } from "@/components/logistics/dashboard/MachinesTable";
+import { RequestsTable } from "@/components/logistics/dashboard/RequestsTable";
+import { DashboardHeader } from "@/components/logistics/dashboard/DashboardHeader";
+import { MachineStatusChart } from "@/components/logistics/dashboard/MachineStatusChart";
+import { DashboardTabs } from "@/components/logistics/dashboard/DashboardTabs";
+import { SLAChart } from "@/components/logistics/dashboard/SLAChart";
+import { RequestsChart } from "@/components/logistics/dashboard/RequestsChart";
+import { RecentActivitiesCard } from "@/components/logistics/dashboard/RecentActivitiesCard";
+import { AppointmentsCard } from "@/components/logistics/dashboard/AppointmentsCard";
+import { StorageOptimizationCard } from "@/components/logistics/dashboard/StorageOptimizationCard";
+import { NewRequestDialog } from "@/components/logistics/modals/NewRequestDialog";
+import { NewMachineDialog } from "@/components/logistics/modals/NewMachineDialog";
 
 const LogisticsDashboard = () => {
-  const [dateRange, setDateRange] = useState<{ from: Date; to?: Date }>({
-    from: new Date(new Date().setDate(new Date().getDate() - 30)),
-    to: new Date()
-  });
-  
-  const [isNewMachineDialogOpen, setIsNewMachineDialogOpen] = useState(false);
-  const [isNewRequestDialogOpen, setIsNewRequestDialogOpen] = useState(false);
-  const { stats, isLoading, refreshStats } = useMachineStats(dateRange);
-  const { toast } = useToast();
-  
-  const handleRefresh = () => {
-    refreshStats();
-    toast({
-      title: "Dados atualizados",
-      description: "Os dados da dashboard foram atualizados com sucesso."
-    });
-  };
+  const [showRequestDialog, setShowRequestDialog] = useState(false);
+  const [showMachineDialog, setShowMachineDialog] = useState(false);
 
   return (
-    <PageWrapper>
-      <div className="space-y-6">
-        {/* Header with action buttons */}
-        <DashboardHeader 
-          onRefresh={handleRefresh}
-          onNewMachine={() => setIsNewMachineDialogOpen(true)}
-          onNewRequest={() => setIsNewRequestDialogOpen(true)}
-        />
-        
-        {/* Stats Cards */}
-        <StatsCardsGroup />
-        
-        {/* Main content */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* Main dashboard area - 2/3 width */}
-          <div className="lg:col-span-2 space-y-6 order-2 lg:order-1">
-            <DashboardTabs 
-              machineStatusData={machineStatusData}
-              requestsMonthlyData={requestsMonthlyData}
-              slaData={slaData}
-            />
-          </div>
-          
-          {/* Sidebar content - 1/3 width */}
-          <div className="space-y-6 order-1 lg:order-2">
-            <AppointmentsCard appointments={upcomingAppointments} />
-            <RecentActivitiesCard activities={recentActivities} />
-          </div>
-        </div>
-        
-        {/* Modals */}
-        <NewMachineDialog 
-          open={isNewMachineDialogOpen} 
-          onOpenChange={setIsNewMachineDialogOpen} 
-        />
-        
-        <NewRequestDialog 
-          open={isNewRequestDialogOpen} 
-          onOpenChange={setIsNewRequestDialogOpen} 
-        />
+    <div className="container mx-auto p-4">
+      <DashboardHeader />
+      
+      <div className="flex justify-end space-x-2 mb-4">
+        <Button variant="outline" size="sm">
+          <Calendar className="h-4 w-4 mr-2" />
+          Filtrar por Data
+        </Button>
+        <Button variant="outline" size="sm">
+          <Filter className="h-4 w-4 mr-2" />
+          Filtros Avançados
+        </Button>
+        <Button variant="outline" size="sm" onClick={() => setShowRequestDialog(true)}>
+          <Plus className="h-4 w-4 mr-2" />
+          Nova Solicitação
+        </Button>
+        <Button variant="default" size="sm" onClick={() => setShowMachineDialog(true)}>
+          <Plus className="h-4 w-4 mr-2" />
+          Nova Máquina
+        </Button>
       </div>
-    </PageWrapper>
+
+      <StatsCardsGroup />
+      
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-6">
+        <Card className="md:col-span-2">
+          <CardContent className="p-4">
+            <DashboardTabs />
+          </CardContent>
+        </Card>
+        <RecentActivitiesCard />
+      </div>
+      
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-6">
+        <Card className="md:col-span-1">
+          <CardContent className="p-4">
+            <MachineStatusChart />
+          </CardContent>
+        </Card>
+        <Card className="md:col-span-1">
+          <CardContent className="p-4">
+            <RequestsChart />
+          </CardContent>
+        </Card>
+        <Card className="md:col-span-1">
+          <CardContent className="p-4">
+            <SLAChart />
+          </CardContent>
+        </Card>
+      </div>
+      
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-6">
+        <Card className="md:col-span-2">
+          <CardContent className="p-4">
+            <MachinesTable />
+          </CardContent>
+        </Card>
+        <AppointmentsCard />
+      </div>
+      
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-6">
+        <Card className="md:col-span-2">
+          <CardContent className="p-4">
+            <RequestsTable />
+          </CardContent>
+        </Card>
+        <StorageOptimizationCard />
+      </div>
+      
+      {/* Dialogs */}
+      <NewRequestDialog 
+        open={showRequestDialog} 
+        onOpenChange={setShowRequestDialog} 
+      />
+      
+      <NewMachineDialog 
+        open={showMachineDialog} 
+        onOpenChange={setShowMachineDialog} 
+      />
+    </div>
   );
 };
 

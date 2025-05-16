@@ -1,7 +1,7 @@
 
 import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { Payment, PaymentStatus } from '@/types/enums';
+import { PaymentStatus } from '@/types/enums';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { PaymentAction } from '@/components/payments/PaymentTableColumns';
@@ -31,7 +31,8 @@ export const useAdminPayments = ({ searchTerm, statusFilter, page }: UseAdminPay
 
     if (statusFilter !== 'ALL') {
       // Use the status directly as string for database query
-      query = query.eq('status', statusFilter);
+      const statusValue = statusFilter.toString();
+      query = query.eq('status', statusValue);
     }
 
     const { data, error, count } = await query;
@@ -71,12 +72,12 @@ export const useAdminPayments = ({ searchTerm, statusFilter, page }: UseAdminPay
       let updateData: any = {};
 
       if (action === PaymentAction.APPROVE) {
-        updateData = { status: 'approved' };
+        updateData = { status: 'APPROVED' };
       } else if (action === PaymentAction.REJECT) {
-        updateData = { status: 'rejected' };
+        updateData = { status: 'REJECTED' };
       } else if (newStatus) {
         // Use string directly
-        updateData = { status: newStatus };
+        updateData = { status: newStatus.toString() };
       }
 
       const { error } = await supabase

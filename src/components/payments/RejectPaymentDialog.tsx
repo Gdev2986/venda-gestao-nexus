@@ -69,7 +69,9 @@ export function RejectPaymentDialog({
           </DialogDescription>
         </DialogHeader>
 
-        {payment && <PaymentDetailView payment={payment} />}
+        {payment && (
+          <PaymentDetailView payment={payment} />
+        )}
 
         <div className="space-y-4">
           {error && (

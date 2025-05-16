@@ -1,213 +1,160 @@
 
-import { useState, useEffect, useCallback } from "react";
-import { Client } from "@/types";
+import { useState } from "react";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { Client } from "@/types";
 import { useToast } from "@/hooks/use-toast";
 
-// Interface for client creation
-interface ClientCreate {
-  business_name: string;
-  email?: string;
-  phone?: string;
-  status?: string;
-  contact_name?: string;
-  address?: string;
-  city?: string;
-  state?: string;
-  zip?: string;
-  document?: string;
-  partner_id?: string;
+export interface UsePartnerClientsProps {
+  partnerId?: string;
+  enabled?: boolean;
+  initialData?: Client[];
 }
 
-export const usePartnerClients = (partnerId?: string) => {
-  const [clients, setClients] = useState<Client[]>([]);
-  const [filteredClients, setFilteredClients] = useState<Client[]>([]);
-  const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState("");
+export const usePartnerClients = ({
+  partnerId,
+  enabled = true,
+  initialData = [],
+}: UsePartnerClientsProps = {}) => {
+  const [isCreatingClient, setIsCreatingClient] = useState(false);
+  const queryClient = useQueryClient();
   const { toast } = useToast();
 
-  const fetchClients = useCallback(async () => {
-    setIsLoading(true);
-    setError("");
+  const fetchClients = async () => {
+    let query = supabase.from("clients").select("*");
 
-    try {
-      let query = supabase.from('clients').select('*');
-      
-      if (partnerId) {
-        query = query.eq('partner_id', partnerId);
-      }
-      
-      const { data, error } = await query;
+    if (partnerId) {
+      query = query.eq("partner_id", partnerId);
+    }
 
-      if (error) throw error;
+    const { data, error } = await query.order("business_name", {
+      ascending: true,
+    });
 
-      if (data) {
-        setClients(data);
-        setFilteredClients(data);
-      }
-    } catch (err: any) {
-      console.error("Error fetching clients:", err);
-      setError(err.message || "Failed to load clients");
-      
-      // Use mock data in case of error
-      const mockClients: Client[] = [
-        {
-          id: "1",
-          business_name: "ABC Company",
-          email: "contact@abc.com",
-          phone: "(11) 99999-8888",
-          status: "active",
-          partner_id: partnerId,
-          created_at: new Date().toISOString(),
-          updated_at: new Date().toISOString(),
-        },
-        {
-          id: "2",
-          business_name: "XYZ Enterprise",
-          email: "info@xyz.com",
-          phone: "(11) 88888-7777",
-          status: "active",
-          partner_id: partnerId,
-          created_at: new Date().toISOString(),
-          updated_at: new Date().toISOString(),
+    if (error) {
+      throw error;
+    }
+
+    return data || [];
+  };
+
+  const { data: clients = initialData, isLoading, error } = useQuery({
+    queryKey: ["partnerClients", partnerId],
+    queryFn: fetchClients,
+    enabled,
+  });
+
+  const createClientMutation = useMutation({
+    mutationFn: async (clientData: Partial<Client>) => {
+      setIsCreatingClient(true);
+      try {
+        // Generate UUID for the client
+        const { data: generatedUUID, error: uuidError } = await supabase.rpc(
+          'generate_uuid'
+        );
+
+        if (uuidError) {
+          throw new Error(`Failed to generate UUID: ${uuidError.message}`);
         }
-      ];
-      
-      setClients(mockClients);
-      setFilteredClients(mockClients);
-    } finally {
-      setIsLoading(false);
-    }
-  }, [partnerId, toast]);
 
-  const filterClients = useCallback((searchTerm = "", status = "") => {
-    let filtered = [...clients];
+        const clientId = generatedUUID;
 
-    if (searchTerm) {
-      const term = searchTerm.toLowerCase();
-      filtered = filtered.filter(client =>
-        client.business_name.toLowerCase().includes(term) ||
-        (client.email && client.email.toLowerCase().includes(term)) ||
-        (client.phone && client.phone.includes(term)) ||
-        (client.document && client.document.includes(term))
-      );
-    }
+        const { data, error } = await supabase.from("clients").insert([
+          {
+            id: clientId,
+            ...clientData,
+            ...(partnerId ? { partner_id: partnerId } : {}),
+          },
+        ]).select();
 
-    if (status && status !== "all") {
-      filtered = filtered.filter(client => client.status === status);
-    }
+        if (error) {
+          throw error;
+        }
 
-    setFilteredClients(filtered);
-    return filtered;
-  }, [clients]);
-
-  const createClient = async (clientData: ClientCreate): Promise<boolean> => {
-    try {
-      // First generate a UUID for the client
-      const { data: idData } = await supabase.rpc('generate_uuid');
-      const clientId = idData;
-      
-      // Insert with the new ID
-      const { error } = await supabase
-        .from('clients')
-        .insert({
-          id: clientId,
-          ...clientData
-        });
-
-      if (error) throw error;
-
+        return data[0];
+      } finally {
+        setIsCreatingClient(false);
+      }
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["partnerClients", partnerId] });
       toast({
-        title: "Cliente criado",
-        description: "O cliente foi criado com sucesso."
+        title: "Success",
+        description: "Client created successfully",
       });
-
-      await fetchClients(); // Refresh the clients list
-      return true;
-    } catch (err: any) {
-      console.error("Error creating client:", err);
-      
+    },
+    onError: (error) => {
       toast({
         variant: "destructive",
-        title: "Erro",
-        description: err.message || "Não foi possível criar o cliente."
+        title: "Error",
+        description: `Failed to create client: ${error.message}`,
       });
-      
-      return false;
-    }
-  };
-  
-  const updateClient = async (clientId: string, clientData: Partial<Client>): Promise<boolean> => {
-    try {
-      const { error } = await supabase
-        .from('clients')
+    },
+  });
+
+  const updateClientMutation = useMutation({
+    mutationFn: async ({ id, ...clientData }: Partial<Client> & { id: string }) => {
+      const { data, error } = await supabase
+        .from("clients")
         .update(clientData)
-        .eq('id', clientId);
+        .eq("id", id)
+        .select();
 
-      if (error) throw error;
+      if (error) {
+        throw error;
+      }
 
+      return data[0];
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["partnerClients", partnerId] });
       toast({
-        title: "Cliente atualizado",
-        description: "As informações foram atualizadas com sucesso."
+        title: "Success",
+        description: "Client updated successfully",
       });
-
-      await fetchClients(); // Refresh the clients list
-      return true;
-    } catch (err: any) {
-      console.error("Error updating client:", err);
-      
-      toast({
-        variant: "destructive",
-        title: "Erro",
-        description: err.message || "Não foi possível atualizar o cliente."
-      });
-      
-      return false;
-    }
-  };
-
-  const deleteClient = async (clientId: string): Promise<boolean> => {
-    try {
-      const { error } = await supabase
-        .from('clients')
-        .delete()
-        .eq('id', clientId);
-
-      if (error) throw error;
-
-      toast({
-        title: "Cliente removido",
-        description: "O cliente foi removido com sucesso."
-      });
-
-      await fetchClients(); // Refresh the clients list
-      return true;
-    } catch (err: any) {
-      console.error("Error deleting client:", err);
-      
+    },
+    onError: (error) => {
       toast({
         variant: "destructive",
-        title: "Erro",
-        description: err.message || "Não foi possível remover o cliente."
+        title: "Error",
+        description: `Failed to update client: ${error.message}`,
       });
-      
-      return false;
-    }
-  };
+    },
+  });
 
-  useEffect(() => {
-    fetchClients();
-  }, [fetchClients]);
+  const deleteClientMutation = useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase.from("clients").delete().eq("id", id);
+
+      if (error) {
+        throw error;
+      }
+
+      return id;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["partnerClients", partnerId] });
+      toast({
+        title: "Success",
+        description: "Client deleted successfully",
+      });
+    },
+    onError: (error) => {
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: `Failed to delete client: ${error.message}`,
+      });
+    },
+  });
 
   return {
-    clients: filteredClients,
-    allClients: clients,
+    clients,
     isLoading,
     error,
-    refreshClients: fetchClients,
-    filterClients,
-    createClient,
-    updateClient,
-    deleteClient
+    isCreatingClient,
+    createClient: createClientMutation.mutate,
+    updateClient: updateClientMutation.mutate,
+    deleteClient: deleteClientMutation.mutate,
   };
 };

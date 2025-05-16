@@ -35,7 +35,9 @@ export function PaymentDetailsDialog({
           </DialogDescription>
         </DialogHeader>
 
-        {payment && <PaymentDetailView payment={payment} />}
+        {payment && (
+          <PaymentDetailView payment={payment} />
+        )}
 
         {payment?.receipt_url && (
           <div className="mt-4">
