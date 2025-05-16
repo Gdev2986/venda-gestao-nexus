@@ -210,53 +210,46 @@ export const createPaymentColumns = (onActionClick: (paymentId: string, action: 
         const isApproved = row.status === PaymentStatus.APPROVED || row.status === PaymentStatus.PAID;
         
         return (
-          <div className="flex space-x-1">
-            <Button 
-              variant="outline" 
-              size="sm" 
-              className="h-8 px-2 text-xs"
-              onClick={() => onActionClick(row.id, PaymentAction.VIEW)}
-            >
-              <Eye className="h-3 w-3 mr-1" />
-              Ver
-            </Button>
-            
-            {isPending && (
-              <>
-                <Button 
-                  variant="outline" 
-                  size="sm"
-                  className="h-8 px-2 text-xs bg-green-50 text-green-700 border-green-200 hover:bg-green-100"
-                  onClick={() => onActionClick(row.id, PaymentAction.APPROVE)}
-                >
-                  <Check className="h-3 w-3 mr-1" />
-                  Aprovar
-                </Button>
-                
-                <Button 
-                  variant="outline"
-                  size="sm"
-                  className="h-8 px-2 text-xs bg-red-50 text-red-700 border-red-200 hover:bg-red-100"
-                  onClick={() => onActionClick(row.id, PaymentAction.REJECT)}
-                >
-                  <X className="h-3 w-3 mr-1" />
-                  Recusar
-                </Button>
-              </>
-            )}
-            
-            {isApproved && (
-              <Button 
-                variant="outline"
-                size="sm"
-                className="h-8 px-2 text-xs"
-                onClick={() => onActionClick(row.id, PaymentAction.SEND_RECEIPT)}
-              >
-                <Send className="h-3 w-3 mr-1" />
-                Enviar Comprovante
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="ghost" className="h-8 w-8 p-0">
+                <span className="sr-only">Abrir menu</span>
+                <MoreHorizontal className="h-4 w-4" />
               </Button>
-            )}
-          </div>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuItem onClick={() => onActionClick(row.id, PaymentAction.VIEW)}>
+                <Eye className="mr-2 h-4 w-4" />
+                Visualizar detalhes
+              </DropdownMenuItem>
+              
+              {isPending && (
+                <>
+                  <DropdownMenuItem onClick={() => onActionClick(row.id, PaymentAction.APPROVE)} className="text-green-600">
+                    <Check className="mr-2 h-4 w-4" />
+                    Aprovar pagamento
+                  </DropdownMenuItem>
+                  
+                  <DropdownMenuItem onClick={() => onActionClick(row.id, PaymentAction.REJECT)} className="text-red-600">
+                    <X className="mr-2 h-4 w-4" />
+                    Recusar pagamento
+                  </DropdownMenuItem>
+                </>
+              )}
+              
+              {isApproved && (
+                <DropdownMenuItem onClick={() => onActionClick(row.id, PaymentAction.SEND_RECEIPT)}>
+                  <Send className="mr-2 h-4 w-4" />
+                  Enviar comprovante
+                </DropdownMenuItem>
+              )}
+              
+              <DropdownMenuSeparator />
+              <DropdownMenuItem onClick={() => onActionClick(row.id, PaymentAction.DELETE)} className="text-red-600">
+                Excluir
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
         );
       },
     },

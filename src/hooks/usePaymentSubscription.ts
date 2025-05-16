@@ -3,14 +3,16 @@ import { useEffect } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
-import { PaymentStatus } from "@/types";
+import { PaymentStatus } from "@/types/enums";
 
 type SubscriptionCallback = () => void;
 
-export const usePaymentSubscription = (callback: SubscriptionCallback, options?: { 
+interface SubscriptionOptions {
   notifyUser?: boolean;
-  filterByClientId?: string;
-}) => {
+  filterByClientId?: string | null;
+}
+
+export const usePaymentSubscription = (callback: SubscriptionCallback, options?: SubscriptionOptions) => {
   const { toast } = useToast();
   const { user } = useAuth();
   const notifyUser = options?.notifyUser !== false; // Default to true
@@ -18,21 +20,27 @@ export const usePaymentSubscription = (callback: SubscriptionCallback, options?:
   useEffect(() => {
     if (!user) return;
     
-    console.log('Setting up payment subscription', options);
+    console.log('Configurando inscrição para pagamentos:', options);
 
-    // Set up four channels for different events: INSERT, UPDATE, DELETE, and * (all)
-    // This helps ensure we don't miss any events due to channel conflicts
+    // Configure filtros baseados em clientId
+    let commonFilter: any = {
+      schema: 'public',
+      table: 'payment_requests'
+    };
     
-    // Channel for INSERT events
+    // Se clientId for fornecido, filtre para esse cliente específico
+    if (options?.filterByClientId) {
+      commonFilter.filter = `client_id=eq.${options.filterByClientId}`;
+    }
+    
+    // Canal para eventos INSERT
     const insertChannel = supabase
       .channel('payment_requests_inserts')
       .on('postgres_changes', {
-        event: 'INSERT',
-        schema: 'public',
-        table: 'payment_requests',
-        ...(options?.filterByClientId ? { filter: `client_id=eq.${options.filterByClientId}` } : {})
+        ...commonFilter,
+        event: 'INSERT'
       }, (payload) => {
-        console.log('New payment request created:', payload);
+        console.log('Nova solicitação de pagamento criada:', payload);
         
         if (notifyUser) {
           toast({
@@ -45,21 +53,20 @@ export const usePaymentSubscription = (callback: SubscriptionCallback, options?:
       })
       .subscribe();
 
-    // Channel for UPDATE events
+    // Canal para eventos UPDATE
     const updateChannel = supabase
       .channel('payment_requests_updates')
       .on('postgres_changes', {
-        event: 'UPDATE',
-        schema: 'public',
-        table: 'payment_requests',
-        ...(options?.filterByClientId ? { filter: `client_id=eq.${options.filterByClientId}` } : {})
+        ...commonFilter,
+        event: 'UPDATE'
       }, (payload) => {
-        console.log('Payment request updated:', payload);
+        console.log('Solicitação de pagamento atualizada:', payload);
         
         if (notifyUser) {
           const newStatus = payload.new?.status;
           let title = 'Atualização de Pagamento';
           let description = 'Uma solicitação de pagamento foi atualizada';
+          let variant: 'default' | 'destructive' = 'default';
           
           if (newStatus === PaymentStatus.APPROVED) {
             title = 'Pagamento Aprovado';
@@ -67,25 +74,31 @@ export const usePaymentSubscription = (callback: SubscriptionCallback, options?:
           } else if (newStatus === PaymentStatus.REJECTED) {
             title = 'Pagamento Rejeitado';
             description = 'Uma solicitação de pagamento foi rejeitada';
+            variant = 'destructive';
+          } else if (newStatus === PaymentStatus.PAID) {
+            title = 'Pagamento Confirmado';
+            description = 'O pagamento foi confirmado e finalizado';
           }
           
-          toast({ title, description });
+          toast({ 
+            title, 
+            description,
+            variant 
+          });
         }
         
         callback();
       })
       .subscribe();
       
-    // Channel for DELETE events
+    // Canal para eventos DELETE
     const deleteChannel = supabase
       .channel('payment_requests_deletes')
       .on('postgres_changes', {
-        event: 'DELETE',
-        schema: 'public',
-        table: 'payment_requests',
-        ...(options?.filterByClientId ? { filter: `client_id=eq.${options.filterByClientId}` } : {})
+        ...commonFilter,
+        event: 'DELETE'
       }, (payload) => {
-        console.log('Payment request deleted:', payload);
+        console.log('Solicitação de pagamento excluída:', payload);
         
         if (notifyUser) {
           toast({
@@ -99,7 +112,7 @@ export const usePaymentSubscription = (callback: SubscriptionCallback, options?:
       .subscribe();
       
     return () => {
-      console.log('Cleaning up payment subscription');
+      console.log('Limpando inscrição para pagamentos');
       supabase.removeChannel(insertChannel);
       supabase.removeChannel(updateChannel);
       supabase.removeChannel(deleteChannel);

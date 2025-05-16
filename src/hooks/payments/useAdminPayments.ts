@@ -27,7 +27,7 @@ const useAdminPayments = ({
     totalPages
   } = usePaymentsFetcher({
     searchTerm,
-    statusFilter,
+    statusFilter: statusFilter as any, // TypeScript conversion
     page,
     pageSize
   });
