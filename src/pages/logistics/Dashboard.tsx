@@ -17,7 +17,7 @@ import NewRequestDialog from "@/components/logistics/modals/NewRequestDialog";
 import NewMachineDialog from "@/components/logistics/modals/NewMachineDialog";
 
 // Define the required types for dashboard
-interface Activity {
+interface DashboardActivity {
   id: string;
   title: string;
   description: string;
@@ -25,19 +25,19 @@ interface Activity {
   timestamp: string;
 }
 
-interface MachineStatusData {
+interface DashboardMachineStatusData {
   name: string;
   value: number;
   color: string;
 }
 
-interface RequestData {
+interface DashboardRequestData {
   name: string;
   value: number;
   total: number;
 }
 
-interface Appointment {
+interface DashboardAppointment {
   id: string;
   title: string;
   client: string;
@@ -64,7 +64,7 @@ const LogisticsDashboard = () => {
   };
 
   // Create properly typed mock data
-  const activities: Activity[] = [
+  const activities: DashboardActivity[] = [
     {
       id: "1",
       title: "Nova máquina registrada",
@@ -81,13 +81,13 @@ const LogisticsDashboard = () => {
     }
   ];
 
-  const machineStatusData: MachineStatusData[] = [
+  const machineStatusData: DashboardMachineStatusData[] = [
     { name: "Operacional", value: 65, color: "#22c55e" },
     { name: "Manutenção", value: 15, color: "#f59e0b" },
     { name: "Inativo", value: 20, color: "#ef4444" }
   ];
 
-  const requestsData: RequestData[] = [
+  const requestsData: DashboardRequestData[] = [
     { name: "Concluídos", value: 24, total: 30 },
     { name: "Pendentes", value: 6, total: 30 }
   ];
@@ -97,7 +97,7 @@ const LogisticsDashboard = () => {
     { name: "Fora do SLA", value: 15, total: 100 }
   ];
 
-  const appointments: Appointment[] = [
+  const appointments: DashboardAppointment[] = [
     {
       id: "1",
       title: "Instalação de Máquina",

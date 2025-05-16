@@ -1,5 +1,6 @@
 
 import { UserRole } from "@/types/enums";
+import { PaymentStatus } from "@/types/enums";
 
 /**
  * Converts a string to a PaymentStatus enum value
