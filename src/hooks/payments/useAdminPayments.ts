@@ -30,9 +30,7 @@ export const useAdminPayments = ({ searchTerm, statusFilter, page }: UseAdminPay
     }
 
     if (statusFilter !== 'ALL') {
-      // Use the status directly as string for database query
-      const statusValue = statusFilter.toString();
-      query = query.eq('status', statusValue);
+      query = query.eq('status', statusFilter);
     }
 
     const { data, error, count } = await query;
@@ -72,12 +70,11 @@ export const useAdminPayments = ({ searchTerm, statusFilter, page }: UseAdminPay
       let updateData: any = {};
 
       if (action === PaymentAction.APPROVE) {
-        updateData = { status: 'APPROVED' };
+        updateData = { status: PaymentStatus.APPROVED };
       } else if (action === PaymentAction.REJECT) {
-        updateData = { status: 'REJECTED' };
+        updateData = { status: PaymentStatus.REJECTED };
       } else if (newStatus) {
-        // Use string directly
-        updateData = { status: newStatus.toString() };
+        updateData = { status: newStatus };
       }
 
       const { error } = await supabase

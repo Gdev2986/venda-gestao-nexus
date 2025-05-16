@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -64,9 +65,7 @@ const formSchema = z.object({
   email: z.string().email({
     message: "Please enter a valid email address.",
   }),
-  role: z.string({
-    required_error: "Please select a role.",
-  }),
+  role: z.enum(Object.values(UserRole) as [UserRole, ...UserRole[]]),
   status: z.string().optional(),
 });
 
@@ -87,7 +86,7 @@ const UserManagement = () => {
     defaultValues: {
       name: "",
       email: "",
-      role: "CLIENT",
+      role: UserRole.CLIENT,
       status: "active",
     },
   });
@@ -128,20 +127,22 @@ const UserManagement = () => {
     setIsCreating(true);
     try {
       // Generate a UUID for the user
-      const { data: userData } = await supabase.rpc('generate_uuid');
+      const { data: userData, error: uuidError } = await supabase.rpc('generate_uuid');
+      
+      if (uuidError) {
+        throw uuidError;
+      }
+      
       const newUserId = userData;
       
       if (newUserId) {
-        // Convert role to a valid UserRole enum value
-        const validRole = toUserRole(values.role);
-        
         const { error: profileError } = await supabase
           .from("profiles")
           .insert({
             id: newUserId,
             name: values.name,
             email: values.email,
-            role: validRole,
+            role: values.role,
             // status is not stored in profiles table
           });
 
@@ -171,15 +172,12 @@ const UserManagement = () => {
   ) => {
     setIsUpdating(true);
     try {
-      // Convert role to a valid UserRole enum value
-      const validRole = toUserRole(values.role);
-      
       const { error } = await supabase
         .from("profiles")
         .update({
           name: values.name,
           email: values.email,
-          role: validRole,
+          role: values.role,
           // status is not stored in profiles table
         })
         .eq("id", id);
@@ -233,7 +231,7 @@ const UserManagement = () => {
     form.reset({
       name: user.name,
       email: user.email,
-      role: user.role,
+      role: user.role as UserRole,
       status: user.status
     });
     setShowEditModal(true);
@@ -250,15 +248,12 @@ const UserManagement = () => {
     }
   };
 
-  const updateUserRole = async (userId: string, role: string) => {
+  const updateUserRole = async (userId: string, role: UserRole) => {
     setIsUpdating(true);
     try {
-      // Convert role to a valid UserRole enum value
-      const validRole = toUserRole(role);
-      
       const { error } = await supabase
         .from("profiles")
-        .update({ role: validRole })
+        .update({ role })
         .eq("id", userId);
 
       if (error) {
@@ -282,7 +277,7 @@ const UserManagement = () => {
   };
 
   const handleRoleChange = (userId: string, role: string) => {
-    updateUserRole(userId, role);
+    updateUserRole(userId, role as UserRole);
   };
 
   
@@ -331,6 +326,10 @@ const UserManagement = () => {
                           <SelectItem value={UserRole.FINANCIAL}>Financeiro</SelectItem>
                           <SelectItem value={UserRole.PARTNER}>Parceiro</SelectItem>
                           <SelectItem value={UserRole.LOGISTICS}>Logística</SelectItem>
+                          <SelectItem value={UserRole.MANAGER}>Gerente</SelectItem>
+                          <SelectItem value={UserRole.FINANCE}>Finanças</SelectItem>
+                          <SelectItem value={UserRole.SUPPORT}>Suporte</SelectItem>
+                          <SelectItem value={UserRole.USER}>Usuário</SelectItem>
                         </SelectContent>
                       </Select>
                     </TableCell>
@@ -414,6 +413,10 @@ const UserManagement = () => {
                         <SelectItem value={UserRole.FINANCIAL}>Financeiro</SelectItem>
                         <SelectItem value={UserRole.PARTNER}>Parceiro</SelectItem>
                         <SelectItem value={UserRole.LOGISTICS}>Logística</SelectItem>
+                        <SelectItem value={UserRole.MANAGER}>Gerente</SelectItem>
+                        <SelectItem value={UserRole.FINANCE}>Finanças</SelectItem>
+                        <SelectItem value={UserRole.SUPPORT}>Suporte</SelectItem>
+                        <SelectItem value={UserRole.USER}>Usuário</SelectItem>
                       </SelectContent>
                     </Select>
                     <FormMessage />
@@ -489,6 +492,10 @@ const UserManagement = () => {
                           <SelectItem value={UserRole.FINANCIAL}>Financeiro</SelectItem>
                           <SelectItem value={UserRole.PARTNER}>Parceiro</SelectItem>
                           <SelectItem value={UserRole.LOGISTICS}>Logística</SelectItem>
+                          <SelectItem value={UserRole.MANAGER}>Gerente</SelectItem>
+                          <SelectItem value={UserRole.FINANCE}>Finanças</SelectItem>
+                          <SelectItem value={UserRole.SUPPORT}>Suporte</SelectItem>
+                          <SelectItem value={UserRole.USER}>Usuário</SelectItem>
                         </SelectContent>
                       </Select>
                       <FormMessage />

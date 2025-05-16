@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -19,7 +20,6 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { UserRole } from "@/types/enums";
-import { toUserRole } from "@/lib/type-utils";
 
 interface ProfileData {
   id: string;
@@ -82,9 +82,7 @@ export const UsersTab = ({ openRoleModal }: UsersTabProps) => {
         .select('*', { count: 'exact' });
       
       if (selectedRole !== 'all') {
-        // Use the role string directly for the database query
-        const roleValue = selectedRole.toString();
-        query = query.eq('role', roleValue);
+        query = query.eq('role', selectedRole);
       }
       
       // Apply pagination

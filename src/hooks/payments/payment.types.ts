@@ -1,5 +1,6 @@
 
 import { PaymentStatus } from "@/types/enums";
+import { Client, PixKey } from "@/types";
 
 export type PaymentRequestStatus = 'PENDING' | 'APPROVED' | 'REJECTED' | 'PAID';
 

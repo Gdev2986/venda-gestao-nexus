@@ -25,7 +25,7 @@ const PartnerFormModal = ({
   const { createPartner } = usePartners();
   const { toast } = useToast();
 
-  const handleSubmit = async (data: PartnerFormValues) => {
+  const handleSubmit = async (data: PartnerFormValues): Promise<boolean> => {
     setIsSubmitting(true);
     try {
       if (onSubmit) {
@@ -35,14 +35,15 @@ const PartnerFormModal = ({
         }
         return success;
       } else {
-        const success = await createPartner({
+        const result = await createPartner({
           company_name: data.company_name,
           commission_rate: data.commission_rate || 0,
         });
-        if (success) {
-          onClose();
-        }
-        return success;
+        
+        // Since createPartner is of type void, we'll determine success 
+        // based on whether an exception was thrown
+        onClose();
+        return true;
       }
     } catch (error) {
       toast({

@@ -48,7 +48,6 @@ export const usePartnerClients = ({
     mutationFn: async (clientData: Partial<Client>) => {
       setIsCreatingClient(true);
       try {
-        // Generate UUID for the client
         const { data: generatedUUID, error: uuidError } = await supabase.rpc(
           'generate_uuid'
         );
@@ -59,13 +58,17 @@ export const usePartnerClients = ({
 
         const clientId = generatedUUID;
 
-        const { data, error } = await supabase.from("clients").insert([
-          {
+        // Ensure business_name is set
+        if (!clientData.business_name) {
+          throw new Error("Business name is required");
+        }
+
+        const { data, error } = await supabase.from("clients").insert({
             id: clientId,
             ...clientData,
             ...(partnerId ? { partner_id: partnerId } : {}),
-          },
-        ]).select();
+            business_name: clientData.business_name // Ensuring it's explicitly set
+        }).select();
 
         if (error) {
           throw error;

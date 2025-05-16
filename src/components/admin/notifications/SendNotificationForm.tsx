@@ -19,7 +19,6 @@ import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { UserRole, NotificationType } from "@/types/enums";
-import { toUserRole } from "@/lib/type-utils";
 
 const formSchema = z.object({
   title: z.string().min(2, {
@@ -67,7 +66,7 @@ const SendNotificationForm = ({ onClose }: SendNotificationFormProps) => {
       const { data: users, error: usersError } = await supabase
         .from("profiles")
         .select("id")
-        .eq("role", values.role.toString());
+        .eq("role", values.role);
 
       if (usersError) {
         throw new Error(usersError.message);

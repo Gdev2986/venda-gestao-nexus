@@ -59,14 +59,18 @@ export const usePartners = ({
 
         const partnerId = generatedUUID;
 
+        // Ensure company_name is set
+        if (!partnerData.company_name) {
+          throw new Error("Company name is required");
+        }
+
         const { data, error } = await supabase
           .from("partners")
-          .insert([
-            {
-              id: partnerId,
-              ...partnerData,
-            },
-          ])
+          .insert({
+            id: partnerId,
+            company_name: partnerData.company_name,
+            commission_rate: partnerData.commission_rate || 0
+          })
           .select();
 
         if (error) {

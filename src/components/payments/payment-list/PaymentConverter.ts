@@ -22,7 +22,8 @@ export function convertToPaymentRequest(payment: Payment): PaymentData {
     ...(payment.pix_key ? { 
       pix_key: {
         ...payment.pix_key,
-        name: payment.pix_key.owner_name || "Default Name"
+        name: payment.pix_key.owner_name || "Default Name",
+        owner_name: payment.pix_key.owner_name || "Default Owner Name"
       },
       pix_key_id: payment.pix_key.id
     } : {})
