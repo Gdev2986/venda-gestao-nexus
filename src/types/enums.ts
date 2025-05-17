@@ -1,10 +1,10 @@
 
 export enum PaymentStatus {
-  PENDING = "PENDENTE",
-  PROCESSING = "EM_PROCESSAMENTO",
-  APPROVED = "APROVADO",
-  REJECTED = "RECUSADO",
-  PAID = "PAGO"
+  PENDING = "PENDING",
+  PROCESSING = "PROCESSING",
+  APPROVED = "APPROVED",
+  REJECTED = "REJECTED",
+  PAID = "PAID"
 }
 
 export enum PaymentType {
@@ -15,14 +15,14 @@ export enum PaymentType {
 
 export enum UserRole {
   ADMIN = "ADMIN",
-  CLIENT = "CLIENTE", 
-  FINANCIAL = "FINANCEIRO",
-  PARTNER = "PARCEIRO",
-  LOGISTICS = "LOGISTICA",
-  MANAGER = "GERENTE",
-  FINANCE = "FINANCAS",
-  SUPPORT = "SUPORTE",
-  USER = "USUARIO"
+  CLIENT = "CLIENT", 
+  FINANCIAL = "FINANCIAL",
+  PARTNER = "PARTNER",
+  LOGISTICS = "LOGISTICS",
+  MANAGER = "MANAGER",
+  FINANCE = "FINANCE",
+  SUPPORT = "SUPPORT",
+  USER = "USER"
 }
 
 export enum NotificationType {

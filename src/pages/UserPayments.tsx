@@ -1,4 +1,3 @@
-
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -162,7 +161,7 @@ const UserPayments = () => {
           pix_key_id: pixKeyId,
           client_id: clientId,
           description: description || "Solicitação de pagamento via PIX",
-          status: PaymentStatus.PENDING,
+          status: "PENDING",
           payment_type: PaymentType.PIX
         });
       
@@ -221,7 +220,7 @@ const UserPayments = () => {
           due_date: dueDate,
           description: description || "Solicitação de pagamento via Boleto",
           document_url: documentUrl,
-          status: PaymentStatus.PENDING,
+          status: "PENDING",
           payment_type: PaymentType.BOLETO
         });
       
@@ -258,7 +257,7 @@ const UserPayments = () => {
           client_id: clientId,
           bank_info: bankInfo,
           description: description || "Solicitação de pagamento via TED",
-          status: PaymentStatus.PENDING,
+          status: "PENDING",
           payment_type: PaymentType.TED
         });
       

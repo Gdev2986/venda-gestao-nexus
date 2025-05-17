@@ -18,7 +18,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Payment, PaymentStatus } from "@/types";
+import { PaymentStatus } from "@/types/enums";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 import { useState } from "react";
@@ -102,7 +102,7 @@ export const createPaymentColumns = (onActionClick: (paymentId: string, action: 
     }, 3000);
   };
 
-  const columns: ColumnDef<Payment>[] = [
+  const columns: ColumnDef<any>[] = [
     {
       id: "id",
       accessorKey: "id",
@@ -161,7 +161,7 @@ export const createPaymentColumns = (onActionClick: (paymentId: string, action: 
             <div>
               <div className="font-medium">PIX</div>
               <div className="text-xs text-muted-foreground truncate max-w-[150px]">
-                {(row.pix_key.key_type || row.pix_key.type)}: {row.pix_key.key}
+                {row.pix_key.type}: {row.pix_key.key}
               </div>
             </div>
           );
@@ -206,7 +206,7 @@ export const createPaymentColumns = (onActionClick: (paymentId: string, action: 
       id: "actions",
       header: "Ações",
       cell: ({ row }) => {
-        const isPending = row.status === PaymentStatus.PENDING || row.status === PaymentStatus.PROCESSING;
+        const isPending = row.status === PaymentStatus.PENDING || row.status === "PROCESSING";
         const isApproved = row.status === PaymentStatus.APPROVED || row.status === PaymentStatus.PAID;
         
         return (

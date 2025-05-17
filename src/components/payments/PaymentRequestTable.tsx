@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { DataTable } from "@/components/ui/data-table";
 import { useToast } from "@/hooks/use-toast";
 import { formatCurrency } from "@/lib/utils";
-import { Payment, PaymentStatus, PaymentType } from "@/types/enums";
+import { PaymentStatus, PaymentType } from "@/types/enums";
 import { Download, ExternalLink } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";

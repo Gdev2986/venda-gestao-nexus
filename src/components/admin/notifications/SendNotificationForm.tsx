@@ -87,36 +87,44 @@ const SendNotificationForm = ({ onClose }: SendNotificationFormProps) => {
       const { data: users, error: usersError } = await supabase
         .from("profiles")
         .select("id")
-        .eq("role", values.role as any);
+        .eq("role", values.role);
 
       if (usersError) {
         throw new Error(usersError.message);
       }
 
       if (users && users.length > 0) {
-        // Insert a notification for each user with the specified role
-        const notificationsToInsert = users.map(user => ({
-          user_id: user.id,
-          title: values.title,
-          message: values.message,
-          type: values.type,
-          data: { role: values.role }
-        }));
+        // Create notifications one by one for each user
+        for (const user of users) {
+          const notificationData = {
+            user_id: user.id,
+            title: values.title,
+            message: values.message,
+            type: values.type,
+            data: JSON.stringify({ role: values.role })
+          };
 
-        const { error } = await supabase
-          .from("notifications")
-          .insert(notificationsToInsert);
+          const { error } = await supabase
+            .from("notifications")
+            .insert(notificationData);
 
-        if (error) {
-          throw new Error(error.message);
+          if (error) {
+            console.error("Error creating notification:", error);
+          }
         }
-      }
 
-      toast({
-        title: "Notificação enviada",
-        description: "A notificação foi enviada com sucesso.",
-      });
-      onClose();
+        toast({
+          title: "Notificação enviada",
+          description: "A notificação foi enviada com sucesso.",
+        });
+        onClose();
+      } else {
+        toast({
+          variant: "default",
+          title: "Nenhum usuário encontrado",
+          description: "Não há usuários com a função selecionada.",
+        });
+      }
     } catch (error: any) {
       toast({
         variant: "destructive",
