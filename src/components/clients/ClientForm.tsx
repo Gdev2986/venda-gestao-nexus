@@ -254,7 +254,6 @@ const ClientForm = ({
                         <Input 
                           placeholder="UF" 
                           {...field} 
-                          disabled={!cepEditable} 
                           maxLength={2}
                         />
                       </FormControl>
@@ -275,7 +274,6 @@ const ClientForm = ({
                         <Input 
                           placeholder="Cidade" 
                           {...field}
-                          disabled={!cepEditable}
                         />
                       </FormControl>
                       <FormMessage />
