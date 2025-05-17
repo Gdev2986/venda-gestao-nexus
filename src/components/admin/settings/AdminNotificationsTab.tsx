@@ -7,7 +7,7 @@ import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { SendNotificationForm } from '@/components/admin/notifications/SendNotificationForm';
 
-export default function AdminNotificationsTab() {
+export const AdminNotificationsTab = () => {
   return (
     <div className="space-y-6">
       <h2 className="text-2xl font-bold tracking-tight">Notificações e Alertas</h2>
@@ -93,4 +93,7 @@ export default function AdminNotificationsTab() {
       </Tabs>
     </div>
   );
-}
+};
+
+// Add a default export that exports the named export
+export default AdminNotificationsTab;
