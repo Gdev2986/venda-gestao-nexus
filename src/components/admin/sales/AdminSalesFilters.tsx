@@ -1,4 +1,3 @@
-
 import { CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -10,7 +9,7 @@ import { format } from "date-fns";
 import { cn } from "@/lib/utils";
 import { useState } from "react";
 import { SalesFilterParams } from "@/types";
-import { TimeRangePicker } from "@/components/sales/filters"; // Fixed import path
+import { TimeRangePicker } from "@/components/sales/filters"; // Now this should work properly
 
 interface DateRange {
   from: Date;

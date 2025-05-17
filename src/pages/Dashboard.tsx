@@ -6,6 +6,7 @@ import { ChartsSection } from "@/components/dashboard/admin/ChartsSection";
 import StatCards from "@/components/dashboard/admin/StatCards";
 import { subDays } from "date-fns";
 import { SalesChartData } from "@/types";
+import { useState } from "react"; // Added missing import
 
 // Dashboard mock data
 const MOCK_DATA = {
