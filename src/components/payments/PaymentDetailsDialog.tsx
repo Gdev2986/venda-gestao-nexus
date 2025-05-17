@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
@@ -79,7 +80,7 @@ export function PaymentDetailsDialog({
       case "PROCESSING":
         return <Badge variant="secondary">Em processamento</Badge>;
       case "APPROVED":
-        return <Badge variant="success">Aprovado</Badge>;
+        return <Badge variant="default">Aprovado</Badge>;
       case "REJECTED":
         return <Badge variant="destructive">Rejeitado</Badge>;
       case "PAID":
@@ -131,7 +132,7 @@ export function PaymentDetailsDialog({
           <div className="grid grid-cols-2 gap-4">
             <div>
               <p className="text-sm text-muted-foreground">Método</p>
-              <p>{payment.payment_method}</p>
+              <p>{payment.payment_type || "N/A"}</p>
             </div>
             <div>
               <p className="text-sm text-muted-foreground">Data</p>
@@ -143,7 +144,7 @@ export function PaymentDetailsDialog({
             </div>
             <div>
               <p className="text-sm text-muted-foreground">Referência</p>
-              <p className="truncate">{payment.reference || "N/A"}</p>
+              <p className="truncate">{payment.description || "N/A"}</p>
             </div>
           </div>
 
@@ -157,12 +158,12 @@ export function PaymentDetailsDialog({
             </>
           )}
 
-          {payment.notes && (
+          {payment.rejection_reason && (
             <>
               <Separator />
               <div>
-                <p className="text-sm text-muted-foreground">Observações</p>
-                <p className="whitespace-pre-wrap">{payment.notes}</p>
+                <p className="text-sm text-muted-foreground">Motivo da Rejeição</p>
+                <p className="whitespace-pre-wrap">{payment.rejection_reason}</p>
               </div>
             </>
           )}

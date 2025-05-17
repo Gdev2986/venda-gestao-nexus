@@ -15,10 +15,7 @@ export const usePayments = (options = {}) => {
     fetchPaymentRequests,
   } = usePaymentsFetcher(options);
 
-  const { approvePayment, rejectPayment } = usePaymentActions(
-    paymentRequests,
-    setPaymentRequests
-  );
+  const { approvePayment, rejectPayment } = usePaymentActions();
 
   return {
     paymentRequests,

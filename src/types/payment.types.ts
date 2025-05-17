@@ -5,7 +5,7 @@ export interface PaymentRequest {
   id: string;
   client_id: string;
   amount: number;
-  description?: string; // Changed to optional to match Payment interface
+  description?: string;
   status: PaymentRequestStatus;
   pix_key_id?: string;
   created_at: string;
@@ -18,6 +18,7 @@ export interface PaymentRequest {
   client?: Client;
   payment_type?: string;
   due_date?: string;
+  notes?: string;
 }
 
 export interface PixKey {
@@ -57,5 +58,5 @@ export interface Client {
   fee_plan_id?: string;
 }
 
-// Add the missing PaymentData export that uses the PaymentRequest interface
-export type PaymentData = PaymentRequest;
+// Payment type is an alias for PaymentRequest to maintain compatibility
+export type Payment = PaymentRequest;

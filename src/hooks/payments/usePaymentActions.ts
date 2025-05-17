@@ -1,15 +1,14 @@
+
 import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/use-auth";
 import { PaymentAction, PaymentStatus } from "@/types/enums";
-import { usePaymentRequests } from "./use-payment-requests";
 
 export const usePaymentActions = () => {
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
   const { user } = useAuth();
-  const { mutate } = usePaymentRequests();
 
   const handlePaymentAction = async (
     paymentId: string,
@@ -28,25 +27,15 @@ export const usePaymentActions = () => {
     setIsLoading(true);
 
     try {
-      // Record the action in the payment_actions table
-      const { error: actionError } = await supabase
-        .from("payment_actions")
-        .insert({
-          payment_id: paymentId,
-          action_type: action,
-          user_id: user.id,
-          comment: comment || null,
-        });
-
-      if (actionError) {
-        throw new Error(`Erro ao registrar ação: ${actionError.message}`);
-      }
-
       // Update the payment status based on the action
       if (action === PaymentAction.APPROVE) {
         const { error: updateError } = await supabase
           .from("payment_requests")
-          .update({ status: "APPROVED" })
+          .update({ 
+            status: "APPROVED",
+            approved_at: new Date().toISOString(),
+            approved_by: user.id
+          })
           .eq("id", paymentId);
 
         if (updateError) {
@@ -60,7 +49,10 @@ export const usePaymentActions = () => {
       } else if (action === PaymentAction.REJECT) {
         const { error: updateError } = await supabase
           .from("payment_requests")
-          .update({ status: "REJECTED" })
+          .update({ 
+            status: "REJECTED",
+            rejection_reason: comment || null
+          })
           .eq("id", paymentId);
 
         if (updateError) {
@@ -87,8 +79,6 @@ export const usePaymentActions = () => {
         });
       }
 
-      // Refresh the payment requests data
-      mutate();
       return true;
     } catch (error: any) {
       console.error("Error handling payment action:", error);
