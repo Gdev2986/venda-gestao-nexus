@@ -14,7 +14,7 @@ const MachineSelectionField = ({
   const { machines, isLoading: isLoadingMachines } = useAvailableMachines();
 
   const handleMachineSelection = (machineId: string) => {
-    setSelectedMachines((prev) => {
+    setSelectedMachines((prev: string[]) => {
       if (prev.includes(machineId)) {
         return prev.filter((id) => id !== machineId);
       } else {

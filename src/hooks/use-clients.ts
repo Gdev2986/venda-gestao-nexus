@@ -22,12 +22,14 @@ export const useClients = () => {
   const [clients, setClients] = useState<Client[]>([]);
   const [filteredClients, setFilteredClients] = useState<Client[]>([]);
   const [loading, setLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(true); // Added for backward compatibility
   const [error, setError] = useState<Error | null>(null);
   const { toast } = useToast();
 
   // Fetch all clients from the database
   const refreshClients = useCallback(async () => {
     setLoading(true);
+    setIsLoading(true); // Keep backward compatibility
     setError(null);
     try {
       const { data, error } = await supabase
@@ -95,6 +97,7 @@ export const useClients = () => {
       });
     } finally {
       setLoading(false);
+      setIsLoading(false); // Keep backward compatibility
     }
   }, [toast]);
 
@@ -122,26 +125,38 @@ export const useClients = () => {
   // Add a new client
   const addClient = async (clientData: ClientCreate): Promise<Client | false> => {
     try {
-      // In a real app, this would insert into Supabase
-      // const { data, error } = await supabase.from('clients').insert(clientData).select().single();
+      // Try to insert into Supabase (this should work now with our policies)
+      const { data, error } = await supabase
+        .from('clients')
+        .insert({
+          ...clientData,
+          status: 'active'
+        })
+        .select()
+        .single();
       
-      // For now, let's mock this behavior
-      const newClient = {
-        id: `${Date.now()}`,
-        ...clientData,
-        status: 'active'
-      } as Client;
+      if (error) {
+        console.error("Error adding client:", error);
+        throw error;
+      }
+      
+      const newClient = data as Client;
       
       setClients(prevClients => [...prevClients, newClient]);
       setFilteredClients(prevFiltered => [...prevFiltered, newClient]);
+      
+      toast({
+        title: "Cliente adicionado",
+        description: "O cliente foi adicionado com sucesso e um usuário foi criado.",
+      });
       
       return newClient;
     } catch (err) {
       console.error("Error adding client:", err);
       toast({
         variant: "destructive",
-        title: "Error",
-        description: "Failed to add client."
+        title: "Erro",
+        description: err instanceof Error ? err.message : "Falha ao adicionar cliente."
       });
       return false;
     }
@@ -150,10 +165,14 @@ export const useClients = () => {
   // Update an existing client
   const updateClient = async (id: string, clientData: Partial<ClientCreate>): Promise<boolean> => {
     try {
-      // In a real app, this would update Supabase
-      // const { error } = await supabase.from('clients').update(clientData).eq('id', id);
+      // Update in Supabase
+      const { error } = await supabase
+        .from('clients')
+        .update(clientData)
+        .eq('id', id);
       
-      // For now, let's mock this behavior
+      if (error) throw error;
+      
       const updatedClients = clients.map(client => {
         if (client.id === id) {
           return { ...client, ...clientData };
@@ -179,10 +198,14 @@ export const useClients = () => {
   // Delete a client
   const deleteClient = async (id: string): Promise<boolean> => {
     try {
-      // In a real app, this would delete from Supabase
-      // const { error } = await supabase.from('clients').delete().eq('id', id);
+      // Delete from Supabase
+      const { error } = await supabase
+        .from('clients')
+        .delete()
+        .eq('id', id);
       
-      // For now, let's mock this behavior
+      if (error) throw error;
+      
       const updatedClients = clients.filter(client => client.id !== id);
       
       setClients(updatedClients);
@@ -203,6 +226,7 @@ export const useClients = () => {
   return {
     clients: filteredClients,
     loading,
+    isLoading, // Added for backward compatibility
     error,
     refreshClients,
     filterClients,
