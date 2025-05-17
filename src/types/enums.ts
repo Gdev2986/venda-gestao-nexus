@@ -33,7 +33,8 @@ export enum NotificationType {
   COMMISSION = "COMMISSION",
   SYSTEM = "SYSTEM",
   GENERAL = "GENERAL",
-  SALE = "SALE"
+  SALE = "SALE",
+  BALANCE_UPDATE = "BALANCE_UPDATE"
 }
 
 export enum PaymentAction {
