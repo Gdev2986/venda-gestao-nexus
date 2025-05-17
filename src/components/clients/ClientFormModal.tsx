@@ -97,7 +97,7 @@ const ClientFormModal = ({
           id: userId,
           name: data.contact_name,
           email: data.email,
-          role: UserRole.CLIENT, // Usando o enum correto
+          role: "CLIENT", // Usando string literal em vez do enum
           phone: data.phone
         });
 

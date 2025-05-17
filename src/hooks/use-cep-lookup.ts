@@ -48,7 +48,7 @@ export function useCepLookup() {
           throw new Error('Erro ao consultar CEP');
         }
         
-        const viaCepData = await viaCepResponse.json();
+        const viaCepData = await viaCepResponse.json();  // Fixed this line, was using response instead of viaCepResponse
         
         if (viaCepData.erro) {
           throw new Error('CEP não encontrado');
