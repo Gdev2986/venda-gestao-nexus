@@ -38,16 +38,16 @@ const ClientFormModal = ({
 
     setIsSubmitting(true);
     try {
-      // Convert form values to ClientCreate type with proper optional handling
+      // Convert form values to proper client data format with optional fields
       const clientData = {
         business_name: data.business_name,
-        contact_name: data.contact_name || "",
-        email: data.email || "",
-        phone: data.phone || "",
-        address: data.address || "",
-        city: data.city || "",
-        state: data.state || "",
-        zip: data.zip || "",
+        contact_name: data.contact_name || undefined, // Make optional to match Client type
+        email: data.email || undefined,
+        phone: data.phone || undefined,
+        address: data.address || undefined,
+        city: data.city || undefined,
+        state: data.state || undefined,
+        zip: data.zip || undefined,
         document: data.document,
         partner_id: data.partner_id
       };

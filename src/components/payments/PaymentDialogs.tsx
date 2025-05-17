@@ -38,9 +38,12 @@ export const PaymentDialogs = ({
   isProcessing
 }: PaymentDialogsProps) => {
   // Ensure that we always have a description field that's not undefined
+  // Convert our selectedPayment to the correct type with all required fields
   const payment = selectedPayment ? {
     ...selectedPayment,
-    description: selectedPayment.description || ""
+    description: selectedPayment.description || "",
+    // Ensure status is compatible with both systems by casting
+    status: selectedPayment.status as any
   } : null;
   
   return (

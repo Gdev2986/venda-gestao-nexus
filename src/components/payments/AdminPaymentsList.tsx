@@ -147,11 +147,13 @@ const AdminPaymentsList = ({ payments, onActionClick, isLoading }: AdminPayments
     return <PaymentListEmptyState />;
   }
 
+  // Helper function to ensure payment data has description field and correct status type
   const getPaymentWithDescription = (payment: Payment): PaymentData => {
     const converted = convertToPaymentRequest(payment);
     return {
       ...converted,
-      description: converted.description || "" // Ensure description is never undefined
+      description: converted.description || "", // Ensure description is never undefined
+      status: converted.status as any // Cast status to compatible type
     };
   };
 

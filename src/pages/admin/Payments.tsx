@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Card } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -120,7 +119,8 @@ const AdminPayments = () => {
     const converted = convertToPaymentRequest(payment);
     return {
       ...converted,
-      description: converted.description || "" // Ensure description is never undefined
+      description: converted.description || "", // Ensure description is never undefined
+      status: converted.status as any // Cast status to compatible type
     };
   };
   

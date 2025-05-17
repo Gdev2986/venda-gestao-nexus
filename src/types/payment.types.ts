@@ -1,45 +1,72 @@
 
-export type PaymentRequestStatus = 'PENDING' | 'APPROVED' | 'REJECTED' | 'PAID' | 'PROCESSING';
+import { PaymentStatus, PaymentType } from "./enums";
 
-export interface PaymentRequest {
+export type PaymentRequestStatus = 
+  | 'PENDING'
+  | 'APPROVED'
+  | 'REJECTED'
+  | 'PAID'
+  | 'PROCESSING'
+  | 'PENDENTE'
+  | 'APROVADO'
+  | 'RECUSADO'
+  | 'PAGO'
+  | 'EM_PROCESSAMENTO'
+  | PaymentStatus.PENDING
+  | PaymentStatus.APPROVED
+  | PaymentStatus.REJECTED
+  | PaymentStatus.PAID
+  | PaymentStatus.PROCESSING;
+
+export interface PixKeyInfo {
   id: string;
-  client_id: string;
+  key: string;
+  type: string;
+  owner_name: string;
+  key_type?: string;
+}
+
+export interface ClientInfo {
+  id: string;
+  business_name: string;
+  [key: string]: any;
+}
+
+export interface BankInfo {
+  bank_name?: string;
+  bank_code?: string;
+  agency?: string;
+  account?: string;
+  account_type?: string;
+  document?: string;
+  owner_name?: string;
+}
+
+export interface PaymentData {
+  id: string;
   amount: number;
-  description: string; // Making this required to match with hooks/payments/payment.types
+  description: string; // Required to match hooks/payments/payment.types
   status: PaymentRequestStatus;
   pix_key_id?: string;
   created_at: string;
-  updated_at: string;
+  updated_at?: string;
   approved_at?: string | null;
   approved_by?: string | null;
   receipt_url?: string | null;
   rejection_reason?: string | null;
-  pix_key?: PixKey;
-  client?: Client;
-  payment_type?: string;
-  due_date?: string;
-  bank_info?: any;
+  client_id: string;
+  payment_type?: PaymentType | string;
+  pix_key?: PixKeyInfo | PixKey;
+  client?: ClientInfo | Client;
+  bank_info?: BankInfo;
   document_url?: string;
+  due_date?: string;
 }
 
-export interface PixKey {
-  id: string;
-  key: string;
-  key_type?: PixKeyType | string;
-  type?: string; // Added for backward compatibility
-  client_id?: string;
-  user_id?: string;
-  created_at?: string;
-  updated_at?: string;
-  name?: string; // Added for backward compatibility
-  owner_name?: string; // Added for display purposes
-  isDefault?: boolean; // Flag for default key, use this instead of is_default
-  is_active?: boolean;
-  bank_name?: string;
-}
+// Make PaymentRequest an alias of PaymentData for backward compatibility
+export type PaymentRequest = PaymentData;
 
-export type PixKeyType = 'CPF' | 'CNPJ' | 'EMAIL' | 'PHONE' | 'EVP';
-
+// Define Client interface for compatibility with other components
 export interface Client {
   id: string;
   business_name: string;
@@ -51,7 +78,7 @@ export interface Client {
   partner_id?: string;
   created_at?: string;
   updated_at?: string;
-  contact_name?: string;
+  contact_name?: string; // Made optional to match Client type
   address?: string;
   city?: string;
   state?: string;
@@ -60,5 +87,20 @@ export interface Client {
   user_id?: string;
 }
 
-// Add the missing PaymentData export that uses the PaymentRequest interface
-export type PaymentData = PaymentRequest;
+export type PixKeyType = 'CPF' | 'CNPJ' | 'EMAIL' | 'PHONE' | 'EVP';
+
+export interface PixKey {
+  id: string;
+  key: string;
+  key_type?: PixKeyType | string;
+  type?: string;
+  client_id?: string;
+  user_id?: string;
+  created_at?: string;
+  updated_at?: string;
+  name?: string;
+  owner_name?: string;
+  isDefault?: boolean;
+  is_active?: boolean;
+  bank_name?: string;
+}
