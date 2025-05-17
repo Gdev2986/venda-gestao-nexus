@@ -1,5 +1,4 @@
 
-// Assuming this exists, if not we need to create it
 import { PaymentData } from '@/hooks/payments/payment.types';
 import { Payment, PaymentStatus } from '@/types';
 
@@ -9,7 +8,7 @@ export const convertPaymentToTableFormat = (payment: PaymentData) => {
     client: payment.client?.business_name || 'Cliente não especificado',
     amount: payment.amount,
     date: payment.created_at,
-    status: payment.status as any, // Cast to any to avoid type errors
+    status: payment.status,
     pix_key: payment.pix_key_id || '',
     receipt_url: payment.receipt_url,
     description: payment.description
@@ -28,20 +27,20 @@ export const convertToCSVFormat = (payments: PaymentData[]) => {
   }));
 };
 
-// Add this missing function that AdminPaymentsList.tsx is trying to import
+// Update the payment to payment request conversion
 export const convertToPaymentRequest = (payment: Payment): PaymentData => {
   return {
     id: payment.id,
     client_id: payment.client_id,
     amount: payment.amount,
     description: payment.description || '',
-    status: payment.status as any,
+    status: payment.status as PaymentStatus,
     pix_key_id: payment.pix_key?.id || '',
     created_at: payment.created_at,
     updated_at: payment.updated_at,
-    approved_at: payment.approved_at,
-    approved_by: payment.approved_by,
-    receipt_url: payment.receipt_url,
+    approved_at: payment.approved_at || null,
+    approved_by: payment.approved_by || null,
+    receipt_url: payment.receipt_url || null,
     rejection_reason: payment.rejection_reason,
     client: payment.client,
     pix_key: payment.pix_key

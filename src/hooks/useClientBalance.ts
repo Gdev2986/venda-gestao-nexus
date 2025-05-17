@@ -7,7 +7,6 @@ import { NotificationType } from '@/types/enums';
 interface ClientData {
   id: string;
   balance: number;
-  user_id?: string;
 }
 
 export function useClientBalance() {
@@ -46,7 +45,7 @@ export function useClientBalance() {
       // Get current client data
       const { data: clientData, error: clientError } = await supabase
         .from('clients')
-        .select('balance, user_id')
+        .select('balance')
         .eq('id', clientId)
         .single();
 
@@ -72,10 +71,8 @@ export function useClientBalance() {
         throw new Error('Erro ao atualizar saldo');
       }
 
-      // Check if balance_transactions table exists
-      // If database errors occur, you may need to comment out this block or create the table
+      // Record in client logs
       try {
-        // Record the transaction if possible
         await supabase
           .from('client_logs')
           .insert({

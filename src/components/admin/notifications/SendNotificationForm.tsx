@@ -41,8 +41,15 @@ interface SendNotificationFormProps {
 const SendNotificationForm = ({ onClose }: SendNotificationFormProps) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [availableRoles, setAvailableRoles] = useState<string[]>([
-    "ADMIN", "CLIENT", "FINANCIAL", "PARTNER", "LOGISTICS", 
-    "MANAGER", "FINANCE", "SUPPORT", "USER"
+    UserRole.ADMIN, 
+    UserRole.CLIENT, 
+    UserRole.FINANCIAL, 
+    UserRole.PARTNER, 
+    UserRole.LOGISTICS, 
+    UserRole.MANAGER, 
+    UserRole.FINANCE, 
+    UserRole.SUPPORT, 
+    UserRole.USER
   ]);
   const { toast } = useToast();
 
@@ -76,7 +83,7 @@ const SendNotificationForm = ({ onClose }: SendNotificationFormProps) => {
       title: "",
       message: "",
       type: NotificationType.GENERAL,
-      role: "CLIENT",
+      role: UserRole.CLIENT,
     },
   });
 
@@ -100,7 +107,7 @@ const SendNotificationForm = ({ onClose }: SendNotificationFormProps) => {
             user_id: user.id,
             title: values.title,
             message: values.message,
-            type: values.type, // Use the enum value directly
+            type: values.type,
             data: JSON.stringify({ role: values.role })
           };
 

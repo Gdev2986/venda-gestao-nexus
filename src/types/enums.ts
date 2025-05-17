@@ -43,3 +43,6 @@ export enum PaymentAction {
   DELETE = 'delete',
   SEND_RECEIPT = 'send_receipt'
 }
+
+// PaymentRequestStatus should align with PaymentStatus enum values
+export type PaymentRequestStatus = PaymentStatus;

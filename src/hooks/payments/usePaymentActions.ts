@@ -2,7 +2,7 @@
 import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import { PaymentData } from "./payment.types";
+import { PaymentData, PaymentRequest } from "./payment.types";
 import { PaymentStatus } from "@/types/enums";
 
 export const usePaymentActions = (
@@ -47,7 +47,7 @@ export const usePaymentActions = (
       const { error: updateError } = await supabase
         .from("payment_requests")
         .update({
-          status: PaymentStatus.APPROVED,
+          status: PaymentStatus.APPROVED as unknown as string,
           approved_at: new Date().toISOString(),
           approved_by: "current-user-id", // Should be replaced with actual user ID
           receipt_url: receiptUrl,
@@ -69,7 +69,7 @@ export const usePaymentActions = (
               approved_at: new Date().toISOString(),
               approved_by: "current-user-id", // Should be replaced with actual user ID
               receipt_url: receiptUrl,
-            };
+            } as PaymentData;
           }
           return payment;
         })
@@ -101,7 +101,7 @@ export const usePaymentActions = (
       const { error } = await supabase
         .from("payment_requests")
         .update({
-          status: PaymentStatus.REJECTED,
+          status: PaymentStatus.REJECTED as unknown as string,
           rejection_reason: rejectionReason,
         })
         .eq("id", paymentId);
@@ -118,7 +118,7 @@ export const usePaymentActions = (
               ...payment,
               status: PaymentStatus.REJECTED,
               rejection_reason: rejectionReason,
-            };
+            } as PaymentData;
           }
           return payment;
         })
@@ -170,7 +170,7 @@ export const usePaymentActions = (
         .from("payment_requests")
         .update({
           receipt_url: receiptUrl,
-          status: PaymentStatus.PAID,
+          status: PaymentStatus.PAID as unknown as string,
         })
         .eq("id", paymentId);
 
@@ -186,7 +186,7 @@ export const usePaymentActions = (
               ...payment,
               receipt_url: receiptUrl,
               status: PaymentStatus.PAID,
-            };
+            } as PaymentData;
           }
           return payment;
         })
