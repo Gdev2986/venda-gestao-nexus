@@ -2,7 +2,7 @@
 import { ApprovePaymentDialog } from "@/components/payments/ApprovePaymentDialog";
 import { RejectPaymentDialog } from "@/components/payments/RejectPaymentDialog";
 import { PaymentDetailsDialog } from "@/components/payments/PaymentDetailsDialog";
-import { PaymentData } from "@/hooks/payments/payment.types";
+import { PaymentData } from "@/types/payment.types";
 
 interface PaymentDialogsProps {
   selectedPayment: PaymentData | null;

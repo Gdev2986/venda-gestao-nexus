@@ -1,5 +1,5 @@
 
-import { PaymentStatus, PaymentType } from "./enums";
+import { PaymentStatus, PaymentType, NotificationType } from "./enums";
 
 export type PaymentRequestStatus = 
   | 'PENDING'

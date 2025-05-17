@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -90,26 +91,18 @@ export function SendNotification() {
         if (userError) throw userError;
         
         if (userAccess && userAccess.length > 0) {
-          // Create notifications for each user
-          const notifications = userAccess.map(access => ({
-            user_id: access.user_id,
-            title: data.title,
-            message: data.message,
-            type: data.type as unknown as string, // Cast to string to work with Supabase
-            data: { global: true }
-          }));
-          
-          const { error } = await supabase
-            .from('notifications')
-            .insert(notifications.map(n => ({
-              user_id: n.user_id,
-              title: n.title,
-              message: n.message,
-              type: n.type,
-              data: n.data
-            })));
-          
-          if (error) throw error;
+          // Insert notifications one by one to avoid type issues
+          for (const access of userAccess) {
+            await supabase
+              .from('notifications')
+              .insert({
+                user_id: access.user_id,
+                title: data.title,
+                message: data.message,
+                type: data.type,
+                data: { global: true }
+              });
+          }
         }
       } else if (data.targetType === "specific" && data.targetId) {
         // Find user_id linked to this client
@@ -128,7 +121,7 @@ export function SendNotification() {
             user_id: accessData.user_id,
             title: data.title,
             message: data.message,
-            type: data.type as unknown as string, // Cast to string to work with Supabase
+            type: data.type,
             data: { clientId: data.targetId }
           });
         

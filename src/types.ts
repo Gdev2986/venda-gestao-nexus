@@ -1,3 +1,4 @@
+
 export enum UserRole {
   ADMIN = "ADMIN",
   CLIENT = "CLIENT", 
@@ -56,7 +57,7 @@ export enum NotificationType {
 export interface Payment {
   id: string;
   created_at: string;
-  updated_at: string;
+  updated_at?: string;
   amount: number;
   status: PaymentStatus | string;
   client_id: string;
@@ -78,6 +79,7 @@ export interface Payment {
     key: string;
     type: string;
     owner_name: string;
+    key_type?: string;
   };
   // Add missing properties to match PaymentRequest
   approved_by?: string | null;

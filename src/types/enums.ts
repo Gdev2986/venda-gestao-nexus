@@ -52,3 +52,10 @@ export enum PaymentAction {
 export enum Payment {
   // Empty enum for compatibility
 }
+
+// Adding ClientStatus enum which was being used but not defined
+export enum ClientStatus {
+  ACTIVE = "active",
+  INACTIVE = "inactive",
+  PENDING = "pending"
+}
