@@ -97,17 +97,32 @@ export function AdminPaymentsList({
   const sendReceiptDialog = useDialog();
 
   const openApproveDialog = (payment: PaymentData) => {
-    setSelectedPayment(payment);
+    // Ensure payment has updated_at
+    const updatedPayment = {
+      ...payment,
+      updated_at: payment.updated_at || payment.created_at
+    };
+    setSelectedPayment(updatedPayment);
     approveDialog.setTrue();
   };
 
   const openRejectDialog = (payment: PaymentData) => {
-    setSelectedPayment(payment);
+    // Ensure payment has updated_at
+    const updatedPayment = {
+      ...payment,
+      updated_at: payment.updated_at || payment.created_at
+    };
+    setSelectedPayment(updatedPayment);
     rejectDialog.setTrue();
   };
 
   const openDetailsDialog = (payment: PaymentData) => {
-    setSelectedPayment(payment);
+    // Ensure payment has updated_at
+    const updatedPayment = {
+      ...payment,
+      updated_at: payment.updated_at || payment.created_at
+    };
+    setSelectedPayment(updatedPayment);
     detailsDialog.setTrue();
   };
 

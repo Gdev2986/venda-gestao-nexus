@@ -6,7 +6,7 @@ export * from './types/payment.types';
 // Adding explicit re-exports to ensure they're available
 export { ClientStatus, NotificationType, PaymentStatus, PaymentType, UserRole, PaymentAction } from './types/enums';
 export type { Client, ClientCreate, ClientUpdate } from './types/client';
-export type { PaymentData, PaymentRequest, BankInfo, PixKey, PixKeyInfo } from './types/payment.types';
+export type { PaymentData, PaymentRequest, BankInfo, PixKey, PixKeyInfo, UserData } from './types/payment.types';
 
 // Export any missing types
 export interface Payment {
@@ -75,11 +75,15 @@ export interface SalesFilterParams {
   maxAmount?: number;
   startHour?: number;
   endHour?: number;
+  installments?: number; // Added installments property
 }
 
 export interface SalesChartData {
   date: string;
   amount: number;
+  name?: string; // Added for compatibility
+  value?: number; // Added for compatibility
+  total?: number; // Added for compatibility
 }
 
 export interface Machine {

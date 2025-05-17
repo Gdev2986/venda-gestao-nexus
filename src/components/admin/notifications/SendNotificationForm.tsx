@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -40,14 +41,16 @@ const formSchema = z.object({
 
 type FormData = z.infer<typeof formSchema>;
 
-interface SendNotificationFormProps {
+export interface SendNotificationFormProps {
   userId?: string;
   onSuccess?: () => void;
+  onClose?: () => void; // Added this prop to fix error
 }
 
 export function SendNotificationForm({
   userId,
   onSuccess,
+  onClose,
 }: SendNotificationFormProps) {
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -85,6 +88,7 @@ export function SendNotificationForm({
 
       form.reset();
       onSuccess?.();
+      onClose?.(); // Call onClose if provided
     } catch (error: any) {
       console.error("Error sending notification:", error);
       toast({

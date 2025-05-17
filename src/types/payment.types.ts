@@ -52,7 +52,7 @@ export interface PaymentData {
   status: PaymentRequestStatus;
   pix_key_id?: string;
   created_at: string;
-  updated_at?: string; // Optional in PaymentData
+  updated_at: string; // Changed from optional to required
   approved_at?: string;
   approved_by?: string;
   receipt_url?: string;
@@ -66,10 +66,8 @@ export interface PaymentData {
   due_date?: string;
 }
 
-// Make PaymentRequest a type that extends PaymentData but requires updated_at
-export interface PaymentRequest extends Omit<PaymentData, 'updated_at'> {
-  updated_at: string; // Required in PaymentRequest
-}
+// Make PaymentRequest a type that extends PaymentData
+export type PaymentRequest = PaymentData;
 
 // Define Client interface for compatibility with other components
 export interface Client {
@@ -119,6 +117,7 @@ export interface UserData {
   role: string;
   avatar?: string;
   created_at?: string;
+  status?: string; // Add status property to fix the errors
 }
 
 export interface SalesChartData {
