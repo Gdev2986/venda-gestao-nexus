@@ -10,7 +10,8 @@ export enum PaymentStatus {
 export enum PaymentType {
   PIX = "PIX",
   TED = "TED",
-  BOLETO = "BOLETO"
+  BOLETO = "BOLETO",
+  CREDIT = "CREDIT"
 }
 
 export enum UserRole {

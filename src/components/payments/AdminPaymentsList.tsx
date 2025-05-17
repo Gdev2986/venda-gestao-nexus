@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useCallback } from "react";
 import {
   Table,
@@ -70,7 +69,7 @@ const paymentStatusColors: { [key in PaymentStatus]: string } = {
 
 const getPaymentMethodIcon = (method: string | PaymentType) => {
   switch (method) {
-    case PaymentType.CREDIT:
+    case "CREDIT":
       return <CreditCardIcon className="h-4 w-4 mr-2" />;
     default:
       return <DollarSign className="h-4 w-4 mr-2" />;
@@ -171,6 +170,7 @@ export function AdminPaymentsList({
     // Ensure bank_info has all required fields
     const paymentWithFullBankInfo = {
       ...payment,
+      updated_at: payment.updated_at || payment.created_at,
       bank_info: payment.bank_info ? {
         bank_name: payment.bank_info.bank_name || "",
         branch_number: payment.bank_info.branch_number || "",
@@ -201,6 +201,7 @@ export function AdminPaymentsList({
     // Ensure bank_info has all required fields
     const paymentWithFullBankInfo = {
       ...payment,
+      updated_at: payment.updated_at || payment.created_at,
       bank_info: payment.bank_info ? {
         bank_name: payment.bank_info.bank_name || "",
         branch_number: payment.bank_info.branch_number || "",
@@ -231,6 +232,7 @@ export function AdminPaymentsList({
     // Ensure bank_info has all required fields
     const paymentWithFullBankInfo = {
       ...payment,
+      updated_at: payment.updated_at || payment.created_at,
       bank_info: payment.bank_info ? {
         bank_name: payment.bank_info.bank_name || "",
         branch_number: payment.bank_info.branch_number || "",
@@ -256,6 +258,7 @@ export function AdminPaymentsList({
     // Ensure bank_info has all required fields
     const paymentWithFullBankInfo = {
       ...payment,
+      updated_at: payment.updated_at || payment.created_at,
       bank_info: payment.bank_info ? {
         bank_name: payment.bank_info.bank_name || "",
         branch_number: payment.bank_info.branch_number || "",
@@ -273,6 +276,7 @@ export function AdminPaymentsList({
     );
   };
 
+  
   return (
     <>
       <Card className="col-span-1 lg:col-span-full">
@@ -282,7 +286,7 @@ export function AdminPaymentsList({
             <Input
               placeholder="Buscar..."
               className="w-full sm:w-[250px]"
-              onChange={(e) => onSearchTermChange(e.target.value)}
+              onChange={(e) => onSearchTermChange?.(e.target.value)}
             />
             <Button size="sm" onClick={onRefresh} disabled={isLoading}>
               {isLoading ? (
@@ -368,29 +372,29 @@ export function AdminPaymentsList({
                   href="#"
                   onClick={(e) => {
                     e.preventDefault();
-                    if (currentPage > 1) onPageChange(currentPage - 1);
+                    if (currentPage && currentPage > 1 && onPageChange) onPageChange(currentPage - 1);
                   }}
                 />
               </PaginationItem>
-              {currentPage > 2 && (
+              {currentPage && currentPage > 2 && (
                 <PaginationItem>
                   <PaginationLink
                     href="#"
                     onClick={(e) => {
                       e.preventDefault();
-                      onPageChange(1);
+                      if (onPageChange) onPageChange(1);
                     }}
                   >
                     1
                   </PaginationLink>
                 </PaginationItem>
               )}
-              {currentPage > 3 && (
+              {currentPage && currentPage > 3 && (
                 <PaginationItem>
                   <PaginationEllipsis />
                 </PaginationItem>
               )}
-              {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+              {totalPages && currentPage && Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
                 let pageNumber;
 
                 if (totalPages <= 5) {
@@ -410,7 +414,7 @@ export function AdminPaymentsList({
                       isActive={pageNumber === currentPage}
                       onClick={(e) => {
                         e.preventDefault();
-                        onPageChange(pageNumber);
+                        if (onPageChange) onPageChange(pageNumber);
                       }}
                     >
                       {pageNumber}
@@ -418,18 +422,18 @@ export function AdminPaymentsList({
                   </PaginationItem>
                 );
               })}
-              {currentPage < totalPages - 2 && (
+              {currentPage && totalPages && currentPage < totalPages - 2 && (
                 <PaginationItem>
                   <PaginationEllipsis />
                 </PaginationItem>
               )}
-              {currentPage < totalPages - 1 && (
+              {currentPage && totalPages && currentPage < totalPages - 1 && (
                 <PaginationItem>
                   <PaginationLink
                     href="#"
                     onClick={(e) => {
                       e.preventDefault();
-                      onPageChange(totalPages);
+                      if (onPageChange) onPageChange(totalPages);
                     }}
                   >
                     {totalPages}
@@ -441,7 +445,7 @@ export function AdminPaymentsList({
                   href="#"
                   onClick={(e) => {
                     e.preventDefault();
-                    if (currentPage < totalPages) onPageChange(currentPage + 1);
+                    if (currentPage && totalPages && currentPage < totalPages && onPageChange) onPageChange(currentPage + 1);
                   }}
                 />
               </PaginationItem>
@@ -451,35 +455,43 @@ export function AdminPaymentsList({
       </Card>
 
       {/* Dialogs */}
-      <ApprovePaymentDialog
-        open={approveDialog.value}
-        onOpenChange={approveDialog.setFalse}
-        payment={selectedPayment}
-        onApprove={handleApprovePayment}
-        isProcessing={isProcessingMap[selectedPayment?.id || ""]}
-      />
+      {selectedPayment && (
+        <ApprovePaymentDialog
+          open={approveDialog.value}
+          onOpenChange={approveDialog.setFalse}
+          payment={selectedPayment}
+          onApprove={handleApprovePayment}
+          isProcessing={isProcessingMap[selectedPayment.id] || false}
+        />
+      )}
 
-      <RejectPaymentDialog
-        open={rejectDialog.value}
-        onOpenChange={rejectDialog.setFalse}
-        payment={selectedPayment}
-        onReject={handleRejectPayment}
-        isProcessing={isProcessingMap[selectedPayment?.id || ""]}
-      />
+      {selectedPayment && (
+        <RejectPaymentDialog
+          open={rejectDialog.value}
+          onOpenChange={rejectDialog.setFalse}
+          payment={selectedPayment}
+          onReject={handleRejectPayment}
+          isProcessing={isProcessingMap[selectedPayment.id] || false}
+        />
+      )}
 
-      <PaymentDetailsDialog
-        open={detailsDialog.value}
-        onOpenChange={detailsDialog.setFalse}
-        payment={selectedPayment}
-      />
+      {selectedPayment && (
+        <PaymentDetailsDialog
+          open={detailsDialog.value}
+          onOpenChange={detailsDialog.setFalse}
+          payment={selectedPayment}
+        />
+      )}
 
-      <SendPaymentReceipt
-        open={sendReceiptDialog.isOpen}
-        onOpenChange={sendReceiptDialog.close}
-        payment={selectedPayment}
-        onSubmit={handleSendReceipt}
-        isProcessing={isProcessingMap[selectedPayment?.id || ""]}
-      />
+      {selectedPayment && (
+        <SendPaymentReceipt
+          open={sendReceiptDialog.isOpen}
+          onOpenChange={sendReceiptDialog.close}
+          payment={selectedPayment}
+          onSubmit={handleSendReceipt}
+          isProcessing={isProcessingMap[selectedPayment.id] || false}
+        />
+      )}
     </>
   );
 }
