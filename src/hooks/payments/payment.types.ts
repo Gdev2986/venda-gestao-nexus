@@ -30,11 +30,11 @@ export interface PaymentRequest {
   status: PaymentRequestStatus;
   pix_key_id?: string;
   created_at: string;
-  updated_at: string; // Made this required to match usage
-  approved_at: string | null;
-  approved_by: string | null;
-  receipt_url: string | null;
-  rejection_reason: string | null;
+  updated_at: string;
+  approved_at?: string | null;
+  approved_by?: string | null;
+  receipt_url?: string | null;
+  rejection_reason?: string | null;
   pix_key?: {
     id: string;
     key: string;

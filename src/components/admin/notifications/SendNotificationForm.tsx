@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -94,21 +93,21 @@ const SendNotificationForm = ({ onClose }: SendNotificationFormProps) => {
       }
 
       if (users && users.length > 0) {
-        // Insert a notification for each user with the specified role
-        const notificationsToInsert = users.map(user => ({
-          user_id: user.id,
-          title: values.title,
-          message: values.message,
-          type: values.type,
-          data: { role: values.role }
-        }));
-
-        const { error } = await supabase
-          .from("notifications")
-          .insert(notificationsToInsert);
-
-        if (error) {
-          throw new Error(error.message);
+        // Insert notifications one by one to avoid type issues
+        for (const user of users) {
+          const { error } = await supabase
+            .from("notifications")
+            .insert({
+              user_id: user.id,
+              title: values.title,
+              message: values.message,
+              type: values.type as string,
+              data: { role: values.role }
+            });
+            
+          if (error) {
+            throw new Error(error.message);
+          }
         }
       }
 

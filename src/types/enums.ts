@@ -34,7 +34,6 @@ export enum NotificationType {
   SYSTEM = "SYSTEM",
   GENERAL = "GENERAL",
   SALE = "SALE",
-  // Adding back extended notification types that were removed
   BALANCE_UPDATE = "BALANCE_UPDATE",
   PAYMENT_REQUEST = "PAYMENT_REQUEST",
   PAYMENT_APPROVED = "PAYMENT_APPROVED",
@@ -49,7 +48,6 @@ export enum PaymentAction {
   SEND_RECEIPT = 'send_receipt'
 }
 
-// Adding ClientStatus enum which was being used but not defined
 export enum ClientStatus {
   ACTIVE = "active",
   INACTIVE = "inactive",

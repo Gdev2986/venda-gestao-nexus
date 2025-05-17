@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -99,7 +98,7 @@ export function SendNotification() {
                 user_id: access.user_id,
                 title: data.title,
                 message: data.message,
-                type: data.type,
+                type: data.type as string,
                 data: { global: true }
               });
           }
@@ -121,7 +120,7 @@ export function SendNotification() {
             user_id: accessData.user_id,
             title: data.title,
             message: data.message,
-            type: data.type,
+            type: data.type as string,
             data: { clientId: data.targetId }
           });
         

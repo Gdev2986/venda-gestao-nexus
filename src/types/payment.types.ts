@@ -49,7 +49,7 @@ export interface PaymentData {
   status: PaymentRequestStatus;
   pix_key_id?: string;
   created_at: string;
-  updated_at: string; // Made this required to match
+  updated_at: string;
   approved_at?: string | null;
   approved_by?: string | null;
   receipt_url?: string | null;
@@ -78,7 +78,7 @@ export interface Client {
   partner_id?: string;
   created_at?: string;
   updated_at?: string;
-  contact_name?: string; // Already optional, which is good
+  contact_name?: string;
   address?: string;
   city?: string;
   state?: string;

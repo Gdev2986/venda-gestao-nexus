@@ -7,6 +7,19 @@ import NotificationFilters from "@/components/notifications/NotificationFilters"
 import { PageHeader } from "@/components/page/PageHeader";
 import { Pagination } from "@/components/ui/pagination";
 
+interface NotificationFiltersProps {
+  filter: string;
+  setFilter: (filter: string) => void;
+  isLoading?: boolean;
+}
+
+interface NotificationListProps {
+  notifications: any[];
+  isLoading: boolean;
+  onMarkAsRead: (id: string) => Promise<void>;
+  onMarkAsUnread: (id: string) => Promise<void>;
+}
+
 const Notifications = () => {
   const [filter, setFilter] = useState<string>("all");
   const [page, setPage] = useState(1);
