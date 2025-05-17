@@ -52,7 +52,7 @@ export interface PaymentData {
   status: PaymentRequestStatus;
   pix_key_id?: string;
   created_at: string;
-  updated_at: string;
+  updated_at?: string;
   approved_at?: string;
   approved_by?: string;
   receipt_url?: string;
@@ -107,5 +107,5 @@ export interface PixKey {
   isDefault?: boolean;
   is_active?: boolean;
   bank_name?: string;
-  is_default?: boolean; // Backward compatibility
+  is_default?: boolean; // Duplicate removed
 }

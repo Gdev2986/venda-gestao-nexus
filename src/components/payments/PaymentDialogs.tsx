@@ -52,7 +52,7 @@ export const PaymentDialogs = ({
       account_number: selectedPayment.bank_info.account_number || "",
       account_holder: selectedPayment.bank_info.account_holder || "",
       ...selectedPayment.bank_info
-    } : undefined
+    } as BankInfo : undefined
   } : null;
   
   return (
@@ -60,7 +60,7 @@ export const PaymentDialogs = ({
       <ApprovePaymentDialog
         open={approveDialogOpen}
         onOpenChange={setApproveDialogOpen}
-        payment={payment as any}
+        payment={payment}
         onApprove={handleApprovePayment}
         isProcessing={isProcessing}
       />
@@ -68,7 +68,7 @@ export const PaymentDialogs = ({
       <RejectPaymentDialog
         open={rejectDialogOpen}
         onOpenChange={setRejectDialogOpen}
-        payment={payment as any}
+        payment={payment}
         onReject={handleRejectPayment}
         isProcessing={isProcessing}
       />
@@ -76,7 +76,7 @@ export const PaymentDialogs = ({
       <PaymentDetailsDialog
         open={detailsDialogOpen}
         onOpenChange={setDetailsDialogOpen}
-        payment={payment as any}
+        payment={payment}
       />
     </>
   );

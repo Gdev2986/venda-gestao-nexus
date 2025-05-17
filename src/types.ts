@@ -45,6 +45,8 @@ export interface Notification {
   is_read: boolean;
   type: NotificationType | string;
   data?: any;
+  read?: boolean; // Alias for is_read for backward compatibility
+  timestamp?: string; // Alias for created_at for backward compatibility
 }
 
 export interface Sale {
@@ -55,6 +57,10 @@ export interface Sale {
   client_name?: string;
   payment_method?: string;
   status?: string;
+  code: string; // Add missing property
+  terminal: string; // Add missing property
+  gross_amount: number; // Add missing property
+  net_amount: number; // Add missing property
 }
 
 export interface SalesFilterParams {
@@ -64,6 +70,11 @@ export interface SalesFilterParams {
   paymentMethod?: string;
   status?: string;
   search?: string;
+  terminal?: string; // Add missing property
+  minAmount?: number; // Add missing property
+  maxAmount?: number; // Add missing property
+  startHour?: number; // Add missing property
+  endHour?: number; // Add missing property
 }
 
 export interface SalesChartData {
@@ -77,6 +88,13 @@ export interface Machine {
   model: string;
   status: string;
   client_id?: string;
+  name?: string; // Add missing property
+  client_name?: string; // Add missing property
+  created_at?: string; // Add missing property
+  updated_at?: string; // Add missing property
+  location?: string; // Add missing property
+  last_maintenance?: string | null; // Add missing property
+  next_maintenance?: string | null; // Add missing property
 }
 
 export interface Partner {

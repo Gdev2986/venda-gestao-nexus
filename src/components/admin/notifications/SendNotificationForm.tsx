@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -96,13 +95,16 @@ const SendNotificationForm = ({ onClose }: SendNotificationFormProps) => {
       if (users && users.length > 0) {
         // Insert notifications one by one to avoid type issues
         for (const user of users) {
+          // Convert NotificationType enum to string to match database expectations
+          const notificationType = values.type.toString();
+          
           const { error } = await supabase
             .from("notifications")
             .insert({
               user_id: user.id,
               title: values.title,
               message: values.message,
-              type: values.type,
+              type: notificationType,
               data: { role: values.role }
             });
             

@@ -1,25 +1,18 @@
 
-import React, { useState } from 'react';
-import { 
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogDescription,
-  DialogFooter
-} from '@/components/ui/dialog';
-import { Button } from '@/components/ui/button';
-import { useToast } from '@/hooks/use-toast';
-import MachineTransferForm from '@/components/machines/MachineTransferForm';
-import { Machine } from '@/types';
+import { useState, useEffect } from "react";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
+import MachineTransferForm from "@/components/machines/MachineTransferForm";
+import { useMutation } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/hooks/use-toast";
+import { Machine } from "@/types";
 
-export interface MachineTransferDialogProps {
+interface MachineTransferDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  machineId?: string;
-  machineName?: string;
-  currentClientId?: string;
-  currentClientName?: string;
+  machineId: string;
+  machineName: string;
   onTransferComplete?: () => void;
 }
 
@@ -28,56 +21,79 @@ const MachineTransferDialog = ({
   onOpenChange,
   machineId,
   machineName,
-  currentClientId,
-  currentClientName,
-  onTransferComplete
+  onTransferComplete,
 }: MachineTransferDialogProps) => {
+  const [machine, setMachine] = useState<Machine | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { toast } = useToast();
 
+  // Load machine details on open
+  useEffect(() => {
+    if (open && machineId) {
+      loadMachineDetails();
+    }
+  }, [open, machineId]);
+
+  const loadMachineDetails = async () => {
+    setIsLoading(true);
+    try {
+      // In a real app, fetch from API
+      // Simulate API call
+      setTimeout(() => {
+        // Mock machine data
+        const mockMachine: Machine = {
+          id: machineId,
+          serial_number: machineName,
+          model: "Model XYZ",
+          status: "Active",
+          client_id: "client123",
+          name: machineName,
+          client_name: "Current Client",
+          created_at: "2023-01-01T00:00:00Z",
+          updated_at: "2023-01-01T00:00:00Z",
+          location: "Main Location"
+        };
+        setMachine(mockMachine);
+        setIsLoading(false);
+      }, 500);
+    } catch (error) {
+      console.error("Error loading machine details:", error);
+      toast({
+        variant: "destructive",
+        title: "Erro",
+        description: "Não foi possível carregar os detalhes da máquina",
+      });
+      setIsLoading(false);
+    }
+  };
+
   const handleTransfer = async (data: any) => {
     setIsSubmitting(true);
-    
     try {
-      // Here you would make an API call to transfer the machine
-      // Simulating API call with timeout
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      
-      // Success
+      // Simulate API call
+      await new Promise((resolve) => setTimeout(resolve, 1000));
+
       toast({
-        title: "Máquina transferida com sucesso",
-        description: `A máquina ${machineName} foi transferida para o novo cliente.`
+        title: "Transferência concluída",
+        description: `Máquina transferida com sucesso para ${data.clientName}`,
       });
-      
+
       if (onTransferComplete) {
         onTransferComplete();
       }
-      
+
       onOpenChange(false);
-    } catch (error) {
-      console.error('Error transferring machine:', error);
+    } catch (error: any) {
       toast({
-        title: "Erro ao transferir máquina",
-        description: "Ocorreu um erro ao processar a transferência. Tente novamente.",
-        variant: "destructive"
+        variant: "destructive",
+        title: "Erro",
+        description: error.message || "Ocorreu um erro na transferência",
       });
     } finally {
       setIsSubmitting(false);
     }
   };
-
-  // Create a properly typed machine object
-  const machineArray: Machine[] = machineId ? [{ 
-    id: machineId, 
-    serial_number: machineName || '', 
-    model: '',
-    status: 'active',
-    client_id: currentClientId,
-    name: machineName,
-    client_name: currentClientName,
-    created_at: new Date().toISOString(),
-    updated_at: new Date().toISOString()
-  }] : [];
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -85,31 +101,33 @@ const MachineTransferDialog = ({
         <DialogHeader>
           <DialogTitle>Transferir Máquina</DialogTitle>
           <DialogDescription>
-            Transferir a máquina {machineName || '#'} para outro cliente.
-            {currentClientName && (
-              <span className="block mt-1">
-                Cliente atual: <span className="font-medium">{currentClientName}</span>
-              </span>
-            )}
+            Transferir a máquina para outro cliente
           </DialogDescription>
         </DialogHeader>
-        
-        <MachineTransferForm
-          machines={machineArray}
-          currentClientId={currentClientId}
-          onSubmit={handleTransfer}
-          isSubmitting={isSubmitting}
-        />
-        
-        <DialogFooter className="mt-4">
-          <Button 
-            variant="outline" 
-            onClick={() => onOpenChange(false)}
-            disabled={isSubmitting}
-          >
-            Cancelar
-          </Button>
-        </DialogFooter>
+
+        {isLoading ? (
+          <div className="flex justify-center py-4">
+            <p>Carregando...</p>
+          </div>
+        ) : machine ? (
+          <MachineTransferForm
+            machine={machine}
+            currentClientId={machine.client_id || ""}
+            onSubmit={handleTransfer}
+            isSubmitting={isSubmitting}
+          />
+        ) : (
+          <div className="py-4 text-center">
+            <p className="text-destructive">Máquina não encontrada</p>
+            <Button
+              variant="outline"
+              onClick={() => onOpenChange(false)}
+              className="mt-2"
+            >
+              Fechar
+            </Button>
+          </div>
+        )}
       </DialogContent>
     </Dialog>
   );

@@ -81,6 +81,9 @@ export function SendNotification() {
     setIsLoading(true);
     
     try {
+      // Convert NotificationType enum to string
+      const notificationType = data.type.toString();
+      
       if (data.targetType === "all") {
         // Send to all clients
         // Get all user IDs
@@ -99,7 +102,7 @@ export function SendNotification() {
                 user_id: access.user_id,
                 title: data.title,
                 message: data.message,
-                type: data.type,
+                type: notificationType,
                 data: { global: true }
               });
           }
@@ -121,7 +124,7 @@ export function SendNotification() {
             user_id: accessData.user_id,
             title: data.title,
             message: data.message,
-            type: data.type,
+            type: notificationType,
             data: { clientId: data.targetId }
           });
         

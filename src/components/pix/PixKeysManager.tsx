@@ -1,352 +1,358 @@
-
-import React, { useState } from "react";
-import { usePixKeys } from "@/hooks/usePixKeys";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { Label } from "@/components/ui/label";
-import { PlusCircle, Star, StarOff, Trash, Edit, Check } from "lucide-react";
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { MoreVertical, Edit, Copy, Trash2, Plus } from "lucide-react";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { useToast } from "@/hooks/use-toast";
+import { useDialog } from "@/hooks/use-dialog";
+import { Badge } from "@/components/ui/badge";
+import { Pagination, PaginationContent, PaginationItem, PaginationLink, PaginationNext, PaginationPrevious } from "@/components/ui/pagination";
+import { Skeleton } from "@/components/ui/skeleton";
 import { PixKey } from "@/types";
+import { supabase } from "@/integrations/supabase/client";
+import { useUser } from "@/hooks/use-user";
+import PixKeyDialog from "@/components/pix/PixKeyDialog";
 
-const PixKeysManager: React.FC = () => {
-  const { pixKeys, isLoadingPixKeys } = usePixKeys();
-  const [isAddKeyOpen, setIsAddKeyOpen] = useState(false);
-  const [isEditKeyOpen, setIsEditKeyOpen] = useState(false);
-  const [isDeleteKeyOpen, setIsDeleteKeyOpen] = useState(false);
-  const [activeKey, setActiveKey] = useState<PixKey | null>(null);
+interface PixKeysManagerProps {
+  clientId?: string;
+}
+
+const PixKeysManager: React.FC<PixKeysManagerProps> = ({
+  clientId
+}) => {
+  const [pixKeys, setPixKeys] = useState<PixKey[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
+  const [selectedKey, setSelectedKey] = useState<PixKey | null>(null);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage] = useState(10);
+  const [totalItems, setTotalItems] = useState(0);
   const { toast } = useToast();
+  const { user } = useUser();
+  const addPixKeyDialog = useDialog();
+  const editPixKeyDialog = useDialog();
+  const deletePixKeyDialog = useDialog();
 
-  // Form state
-  const [keyName, setKeyName] = useState("");
-  const [keyType, setKeyType] = useState("CPF");
-  const [keyValue, setKeyValue] = useState("");
+  const fetchPixKeys = async () => {
+    setIsLoading(true);
+    try {
+      let query = supabase
+        .from('pix_keys')
+        .select('*')
+        .eq('client_id', clientId)
+        .order('created_at', { ascending: false });
 
-  const handleAddKey = () => {
-    // Reset form
-    setKeyName("");
-    setKeyType("CPF");
-    setKeyValue("");
-    setIsAddKeyOpen(true);
-  };
+      const { data, error } = await query;
 
-  const handleEditKey = (key: PixKey) => {
-    setActiveKey(key);
-    setKeyName(key.name);
-    setKeyType(key.type);
-    setKeyValue(key.key);
-    setIsEditKeyOpen(true);
-  };
+      if (error) throw error;
 
-  const handleDeleteKey = (key: PixKey) => {
-    setActiveKey(key);
-    setIsDeleteKeyOpen(true);
-  };
-
-  const handleSaveKey = () => {
-    // Validate
-    if (!keyName.trim() || !keyValue.trim()) {
+      setPixKeys(data || []);
+      setTotalItems(data?.length || 0);
+    } catch (error) {
+      console.error("Error fetching pix keys:", error);
       toast({
         variant: "destructive",
-        title: "Campos obrigatórios",
-        description: "Preencha todos os campos",
+        title: "Erro",
+        description: "Não foi possível carregar as chaves Pix",
       });
-      return;
+    } finally {
+      setIsLoading(false);
     }
-
-    // This is where you would save the key
-    toast({
-      title: "Chave salva",
-      description: "Sua chave PIX foi salva com sucesso",
-    });
-    setIsAddKeyOpen(false);
   };
 
-  const handleUpdateKey = () => {
-    if (!keyName.trim() || !keyValue.trim() || !activeKey) {
+  useEffect(() => {
+    if (clientId) {
+      fetchPixKeys();
+    }
+  }, [clientId]);
+
+  const handlePageChange = (newPage: number) => {
+    setCurrentPage(newPage);
+  };
+
+  const totalPages = Math.ceil(totalItems / itemsPerPage);
+
+  const handleSetDefault = async (key: PixKey) => {
+    if (key.isDefault) return;
+
+    try {
+      // Optimistically update the UI
+      const updatedKeys = pixKeys.map(pk => ({
+        ...pk,
+        isDefault: pk.id === key.id
+      }));
+      setPixKeys(updatedKeys);
+
+      // Call Supabase function to set the default key
+      const { error } = await supabase.rpc('set_default_pix_key', {
+        pix_key_id: key.id,
+        client_uuid: clientId
+      });
+
+      if (error) {
+        throw error;
+      }
+
+      toast({
+        title: "Chave padrão atualizada",
+        description: "A chave Pix padrão foi atualizada com sucesso",
+      });
+    } catch (error) {
+      console.error("Error setting default pix key:", error);
       toast({
         variant: "destructive",
-        title: "Campos obrigatórios",
-        description: "Preencha todos os campos",
+        title: "Erro",
+        description: "Não foi possível definir a chave Pix como padrão",
       });
-      return;
+      // Revert the UI update on error
+      fetchPixKeys();
     }
-
-    // This is where you would update the key
-    toast({
-      title: "Chave atualizada",
-      description: "Sua chave PIX foi atualizada com sucesso",
-    });
-    setIsEditKeyOpen(false);
   };
 
-  const handleConfirmDelete = () => {
-    if (!activeKey) return;
+  const handleDelete = async (key: PixKey) => {
+    try {
+      // Optimistically update the UI
+      const updatedKeys = pixKeys.filter(pk => pk.id !== key.id);
+      setPixKeys(updatedKeys);
 
-    // This is where you would delete the key
-    toast({
-      title: "Chave removida",
-      description: "Sua chave PIX foi removida com sucesso",
-    });
-    setIsDeleteKeyOpen(false);
+      // Call Supabase function to delete the key
+      const { error } = await supabase
+        .from('pix_keys')
+        .delete()
+        .eq('id', key.id);
+
+      if (error) {
+        throw error;
+      }
+
+      toast({
+        title: "Chave Pix excluída",
+        description: "A chave Pix foi excluída com sucesso",
+      });
+    } catch (error) {
+      console.error("Error deleting pix key:", error);
+      toast({
+        variant: "destructive",
+        title: "Erro",
+        description: "Não foi possível excluir a chave Pix",
+      });
+      // Revert the UI update on error
+      fetchPixKeys();
+    }
   };
 
-  const handleSetDefault = (key: PixKey) => {
-    // This is where you would set the key as default
-    toast({
-      title: "Chave padrão definida",
-      description: `A chave ${key.name} foi definida como padrão`,
-    });
+  const handleCreate = async (values: PixKey) => {
+    try {
+      // Call Supabase function to create the key
+      const { data, error } = await supabase
+        .from('pix_keys')
+        .insert([{
+          ...values,
+          client_id: clientId,
+          user_id: user?.id
+        }])
+        .select()
+        .single();
+
+      if (error) throw error;
+
+      toast({
+        title: "Chave Pix criada",
+        description: "A chave Pix foi criada com sucesso",
+      });
+      addPixKeyDialog.close();
+      fetchPixKeys();
+    } catch (error) {
+      console.error("Error creating pix key:", error);
+      toast({
+        variant: "destructive",
+        title: "Erro",
+        description: "Não foi possível criar a chave Pix",
+      });
+    }
   };
 
-  // Helper function to format key value for display
-  const formatKeyValue = (key: string, type: string): string => {
-    if (type === "CPF" && key.length === 11) {
-      return `${key.slice(0, 3)}.${key.slice(3, 6)}.${key.slice(6, 9)}-${key.slice(9)}`;
-    }
-    if (type === "CNPJ" && key.length === 14) {
-      return `${key.slice(0, 2)}.${key.slice(2, 5)}.${key.slice(5, 8)}/${key.slice(8, 12)}-${key.slice(12)}`;
-    }
-    if (type === "PHONE" && key.length >= 10) {
-      return `(${key.slice(0, 2)}) ${key.slice(2, 7)}-${key.slice(7)}`;
-    }
-    return key;
-  };
+  const handleEdit = async (values: PixKey) => {
+    try {
+      // Call Supabase function to update the key
+      const { error } = await supabase
+        .from('pix_keys')
+        .update(values)
+        .eq('id', selectedKey?.id);
 
-  if (isLoadingPixKeys) {
-    return (
-      <Card>
-        <CardHeader>
-          <CardTitle>Minhas Chaves PIX</CardTitle>
-          <CardDescription>Gerencie suas chaves PIX para receber pagamentos</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="flex items-center justify-center p-8">
-            <div className="animate-pulse flex space-x-4">
-              <div className="flex-1 space-y-4 py-1">
-                <div className="h-4 bg-gray-200 rounded w-3/4"></div>
-                <div className="h-4 bg-gray-200 rounded w-full"></div>
-                <div className="h-4 bg-gray-200 rounded w-5/6"></div>
-              </div>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-    );
-  }
+      if (error) throw error;
+
+      toast({
+        title: "Chave Pix atualizada",
+        description: "A chave Pix foi atualizada com sucesso",
+      });
+      editPixKeyDialog.close();
+      fetchPixKeys();
+    } catch (error) {
+      console.error("Error updating pix key:", error);
+      toast({
+        variant: "destructive",
+        title: "Erro",
+        description: "Não foi possível atualizar a chave Pix",
+      });
+    }
+  };
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>Minhas Chaves PIX</CardTitle>
-        <CardDescription>Gerencie suas chaves PIX para receber pagamentos</CardDescription>
+    <Card className="h-full">
+      <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+        <CardTitle>Chaves Pix</CardTitle>
+        <Button size="sm" onClick={addPixKeyDialog.open}>
+          <Plus className="mr-2 h-4 w-4" />
+          Adicionar
+        </Button>
       </CardHeader>
-      <CardContent>
-        {pixKeys.length === 0 ? (
-          <div className="text-center py-6">
-            <p className="text-muted-foreground mb-4">Você não possui chaves PIX cadastradas</p>
-            <Button onClick={handleAddKey}>
-              <PlusCircle className="mr-2 h-4 w-4" /> Adicionar Chave PIX
-            </Button>
-          </div>
-        ) : (
-          <div className="space-y-4">
-            {pixKeys.map((key) => (
-              <div
-                key={key.id}
-                className="flex items-center justify-between p-4 border rounded-md"
-              >
-                <div>
-                  <div className="font-medium flex items-center">
-                    {key.name}
-                    {key.is_default && (
-                      <span className="ml-2 bg-yellow-100 text-yellow-800 text-xs px-2 py-0.5 rounded-full">
-                        Padrão
-                      </span>
-                    )}
-                  </div>
-                  <div className="text-sm text-muted-foreground">
-                    {key.type}: {formatKeyValue(key.key, key.type)}
-                  </div>
-                </div>
-                <div className="flex items-center gap-2">
-                  {!key.is_default && (
-                    <Button
-                      variant="outline"
-                      size="icon"
-                      onClick={() => handleSetDefault(key)}
-                      title="Definir como padrão"
-                    >
-                      <Star className="h-4 w-4" />
-                    </Button>
-                  )}
+      <CardContent className="relative h-full overflow-hidden">
+        <ScrollArea className="absolute top-0 left-0 right-0 bottom-16 py-4">
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead className="w-[150px]">Chave</TableHead>
+                <TableHead>Tipo</TableHead>
+                <TableHead>Nome do titular</TableHead>
+                <TableHead className="text-right">Ações</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {isLoading ? (
+                [...Array(itemsPerPage)].map((_, i) => (
+                  <TableRow key={`skeleton-${i}`}>
+                    <TableCell><Skeleton /></TableCell>
+                    <TableCell><Skeleton /></TableCell>
+                    <TableCell><Skeleton /></TableCell>
+                    <TableCell className="text-right"><Skeleton /></TableCell>
+                  </TableRow>
+                ))
+              ) : pixKeys.length > 0 ? (
+                pixKeys.map((key) => (
+                  <TableRow key={key.id}>
+                    <TableCell className="font-medium">{key.key}</TableCell>
+                    <TableCell>{key.key_type}</TableCell>
+                    <TableCell>{key.owner_name}</TableCell>
+                    <TableCell className="text-right">
+                      {key.isDefault ? (
+                        <Badge variant="outline" className="ml-2">Padrão</Badge>
+                      ) : (
+                        <Button variant="ghost" size="sm" onClick={() => handleSetDefault(key)}>
+                          Definir como padrão
+                        </Button>
+                      )}
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button variant="ghost" className="h-8 w-8 p-0">
+                            <span className="sr-only">Abrir menu</span>
+                            <MoreVertical className="h-4 w-4" />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                          <DropdownMenuLabel>Ações</DropdownMenuLabel>
+                          <DropdownMenuItem onClick={() => {
+                            setSelectedKey(key);
+                            editPixKeyDialog.open();
+                          }}>
+                            <Edit className="mr-2 h-4 w-4" />
+                            Editar
+                          </DropdownMenuItem>
+                          <DropdownMenuSeparator />
+                          <DropdownMenuItem onClick={() => {
+                            setSelectedKey(key);
+                            deletePixKeyDialog.open();
+                          }}>
+                            <Trash2 className="mr-2 h-4 w-4" />
+                            Deletar
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    </TableCell>
+                  </TableRow>
+                ))
+              ) : (
+                <TableRow>
+                  <TableCell colSpan={4} className="text-center">
+                    Nenhuma chave Pix encontrada.
+                  </TableCell>
+                </TableRow>
+              )}
+            </TableBody>
+          </Table>
+        </ScrollArea>
+
+        {pixKeys.length > 0 && (
+          <div className="absolute bottom-2 left-2 right-2 z-10">
+            <div className="flex justify-center">
+              <div className="flex items-center space-x-2">
+                <Button
+                  onClick={() => handlePageChange(currentPage - 1)}
+                  disabled={currentPage === 1}
+                  variant="outline"
+                  size="sm"
+                  className="h-9 w-9 p-0"
+                >
+                  <PaginationPrevious className="h-4 w-4" />
+                </Button>
+                {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
                   <Button
-                    variant="outline"
-                    size="icon"
-                    onClick={() => handleEditKey(key)}
-                    title="Editar"
+                    key={page}
+                    variant={currentPage === page ? "default" : "outline"}
+                    size="sm"
+                    onClick={() => handlePageChange(page)}
+                    className={currentPage === page ? "pointer-events-none" : ""}
                   >
-                    <Edit className="h-4 w-4" />
+                    {page}
                   </Button>
-                  <Button
-                    variant="outline"
-                    size="icon"
-                    onClick={() => handleDeleteKey(key)}
-                    title="Remover"
-                  >
-                    <Trash className="h-4 w-4" />
-                  </Button>
-                </div>
+                ))}
+                <Button
+                  onClick={() => handlePageChange(currentPage + 1)}
+                  disabled={currentPage === totalPages}
+                  variant="outline"
+                  size="sm"
+                  className="h-9 w-9 p-0"
+                >
+                  <PaginationNext className="h-4 w-4" />
+                </Button>
               </div>
-            ))}
-            <Button onClick={handleAddKey} className="mt-4">
-              <PlusCircle className="mr-2 h-4 w-4" /> Adicionar Nova Chave PIX
-            </Button>
+            </div>
           </div>
         )}
+
+        <PixKeyDialog
+          open={addPixKeyDialog.isOpen}
+          onOpenChange={addPixKeyDialog.close}
+          onSubmit={handleCreate}
+        />
+
+        {selectedKey && (
+          <PixKeyDialog
+            open={editPixKeyDialog.isOpen}
+            onOpenChange={editPixKeyDialog.close}
+            onSubmit={handleEdit}
+            pixKey={selectedKey}
+          />
+        )}
+
+        {selectedKey && (
+          <PixKeyDialog
+            open={deletePixKeyDialog.isOpen}
+            onOpenChange={deletePixKeyDialog.close}
+            onSubmit={handleDelete}
+            pixKey={selectedKey}
+            isDeleteMode={true}
+          />
+        )}
       </CardContent>
-
-      {/* Add Key Dialog */}
-      <Dialog open={isAddKeyOpen} onOpenChange={setIsAddKeyOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Adicionar Chave PIX</DialogTitle>
-            <DialogDescription>
-              Adicione uma nova chave PIX para receber pagamentos
-            </DialogDescription>
-          </DialogHeader>
-          <div className="grid gap-4 py-4">
-            <div className="grid gap-2">
-              <Label htmlFor="name">Nome da chave</Label>
-              <Input
-                id="name"
-                placeholder="Exemplo: Chave Pessoal"
-                value={keyName}
-                onChange={(e) => setKeyName(e.target.value)}
-              />
-            </div>
-            <div className="grid gap-2">
-              <Label htmlFor="type">Tipo de chave</Label>
-              <Select
-                value={keyType}
-                onValueChange={setKeyType}
-              >
-                <SelectTrigger id="type">
-                  <SelectValue placeholder="Selecione o tipo" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="CPF">CPF</SelectItem>
-                  <SelectItem value="CNPJ">CNPJ</SelectItem>
-                  <SelectItem value="EMAIL">E-mail</SelectItem>
-                  <SelectItem value="PHONE">Telefone</SelectItem>
-                  <SelectItem value="EVP">Chave Aleatória</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="grid gap-2">
-              <Label htmlFor="value">Valor da chave</Label>
-              <Input
-                id="value"
-                placeholder={
-                  keyType === "CPF" ? "000.000.000-00" :
-                  keyType === "CNPJ" ? "00.000.000/0000-00" :
-                  keyType === "EMAIL" ? "exemplo@email.com" :
-                  keyType === "PHONE" ? "(00) 00000-0000" :
-                  "Chave aleatória"
-                }
-                value={keyValue}
-                onChange={(e) => setKeyValue(e.target.value)}
-              />
-            </div>
-          </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setIsAddKeyOpen(false)}>Cancelar</Button>
-            <Button onClick={handleSaveKey}>Salvar</Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-
-      {/* Edit Key Dialog */}
-      <Dialog open={isEditKeyOpen} onOpenChange={setIsEditKeyOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Editar Chave PIX</DialogTitle>
-            <DialogDescription>
-              Altere as informações da sua chave PIX
-            </DialogDescription>
-          </DialogHeader>
-          <div className="grid gap-4 py-4">
-            <div className="grid gap-2">
-              <Label htmlFor="edit-name">Nome da chave</Label>
-              <Input
-                id="edit-name"
-                placeholder="Exemplo: Chave Pessoal"
-                value={keyName}
-                onChange={(e) => setKeyName(e.target.value)}
-              />
-            </div>
-            <div className="grid gap-2">
-              <Label htmlFor="edit-type">Tipo de chave</Label>
-              <Select
-                value={keyType}
-                onValueChange={setKeyType}
-              >
-                <SelectTrigger id="edit-type">
-                  <SelectValue placeholder="Selecione o tipo" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="CPF">CPF</SelectItem>
-                  <SelectItem value="CNPJ">CNPJ</SelectItem>
-                  <SelectItem value="EMAIL">E-mail</SelectItem>
-                  <SelectItem value="PHONE">Telefone</SelectItem>
-                  <SelectItem value="EVP">Chave Aleatória</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="grid gap-2">
-              <Label htmlFor="edit-value">Valor da chave</Label>
-              <Input
-                id="edit-value"
-                placeholder={
-                  keyType === "CPF" ? "000.000.000-00" :
-                  keyType === "CNPJ" ? "00.000.000/0000-00" :
-                  keyType === "EMAIL" ? "exemplo@email.com" :
-                  keyType === "PHONE" ? "(00) 00000-0000" :
-                  "Chave aleatória"
-                }
-                value={keyValue}
-                onChange={(e) => setKeyValue(e.target.value)}
-              />
-            </div>
-          </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setIsEditKeyOpen(false)}>Cancelar</Button>
-            <Button onClick={handleUpdateKey}>Atualizar</Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-
-      {/* Delete Key Confirmation */}
-      <Dialog open={isDeleteKeyOpen} onOpenChange={setIsDeleteKeyOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Remover Chave PIX</DialogTitle>
-            <DialogDescription>
-              Tem certeza que deseja remover esta chave PIX? Esta ação não pode ser desfeita.
-            </DialogDescription>
-          </DialogHeader>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setIsDeleteKeyOpen(false)}>
-              Cancelar
-            </Button>
-            <Button variant="destructive" onClick={handleConfirmDelete}>
-              Remover
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
     </Card>
   );
 };
