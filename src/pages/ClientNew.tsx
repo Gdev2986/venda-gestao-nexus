@@ -6,7 +6,8 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useNavigate } from 'react-router-dom';
 import { PATHS } from '@/routes/paths';
 import { useToast } from '@/hooks/use-toast';
-import ClientForm, { ClientFormValues } from '@/components/clients/ClientForm';
+import ClientForm from '@/components/clients/ClientForm';
+import { ClientFormValues } from '@/components/clients/schema/clientFormSchema';
 import { useState } from 'react';
 
 const ClientNew = () => {

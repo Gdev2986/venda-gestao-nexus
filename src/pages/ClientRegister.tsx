@@ -5,7 +5,8 @@ import { useToast } from '@/hooks/use-toast';
 import { useNavigate } from 'react-router-dom';
 import { useState } from 'react';
 import { PATHS } from '@/routes/paths';
-import ClientForm, { ClientFormValues } from '@/components/clients/ClientForm';
+import ClientForm from '@/components/clients/ClientForm';
+import { ClientFormValues } from '@/components/clients/schema/clientFormSchema';
 
 const ClientRegister = () => {
   const navigate = useNavigate();

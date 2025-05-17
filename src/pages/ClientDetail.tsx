@@ -5,13 +5,14 @@ import { useClients } from '@/hooks/use-clients';
 import { PageHeader } from '@/components/page/PageHeader';
 import { Spinner } from '@/components/ui/spinner';
 import { Button } from '@/components/ui/button';
-import ClientForm, { ClientFormValues } from '@/components/clients/ClientForm';
+import ClientForm from '@/components/clients/ClientForm';
+import { ClientFormValues } from '@/components/clients/schema/clientFormSchema';
 import { BalanceUpdateDialog } from '@/components/clients/BalanceUpdateDialog';
 import { useState } from 'react';
 
 const ClientDetail = () => {
   const { clientId } = useParams<{ clientId: string }>();
-  const { clients, isLoading, error } = useClients();
+  const { clients, loading: isLoading, error } = useClients();
   const [isBalanceDialogOpen, setIsBalanceDialogOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   

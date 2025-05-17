@@ -6,7 +6,8 @@ import { Button } from "@/components/ui/button";
 import { Dialog } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
 import { useClients } from "@/hooks/use-clients";
-import ClientForm, { ClientFormValues } from "@/components/clients/ClientForm";
+import ClientForm from "@/components/clients/ClientForm";
+import { ClientFormValues } from "@/components/clients/schema/clientFormSchema";
 import { PATHS } from "@/routes/paths";
 import { ClientCreate } from "@/hooks/use-clients";
 

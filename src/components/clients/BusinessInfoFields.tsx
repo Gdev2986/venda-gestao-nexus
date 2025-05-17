@@ -1,113 +1,107 @@
 
-import { FormField, FormItem, FormLabel, FormControl, FormMessage, FormDescription } from "@/components/ui/form";
+import { FormField, FormItem, FormLabel, FormControl, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { UseFormReturn } from "react-hook-form";
-import { z } from "zod";
-import { useEffect } from "react";
-import { formatCNPJ } from "@/utils/client-utils";
-
-// Schema for business information fields
-export const businessInfoSchema = z.object({
-  business_name: z.string().min(2, {
-    message: "O nome da empresa deve ter pelo menos 2 caracteres.",
-  }),
-  document: z.string().optional(),
-  partner_id: z.string().optional(),
-});
-
-export type BusinessInfoFormValues = z.infer<typeof businessInfoSchema>;
+import { FormMaskedInput } from "./FormMaskedInput";
+import { usePartnersSelect } from "@/hooks/use-partners-select";
+import { Loader2 } from "lucide-react";
 
 interface BusinessInfoFieldsProps {
   form: UseFormReturn<any>;
-  partners: { id: string; business_name: string }[];
 }
 
-const BusinessInfoFields = ({ form, partners = [] }: BusinessInfoFieldsProps) => {
-  // Watch the document field to apply formatting
-  const documentValue = form.watch("document");
-  
-  // Apply CNPJ formatting whenever the value changes
-  useEffect(() => {
-    const currentDocument = documentValue;
-    if (currentDocument && typeof currentDocument === 'string') {
-      const formattedDocument = formatCNPJ(currentDocument);
-      if (formattedDocument !== currentDocument) {
-        form.setValue("document", formattedDocument, { shouldValidate: false });
-      }
-    }
-  }, [documentValue, form]);
+const BusinessInfoFields = ({ form }: BusinessInfoFieldsProps) => {
+  const { partners, isLoading: isLoadingPartners } = usePartnersSelect();
 
   return (
     <>
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <FormField
-          control={form.control}
-          name="business_name"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Nome da Empresa</FormLabel>
+      <FormField
+        control={form.control}
+        name="business_name"
+        render={({ field }) => (
+          <FormItem>
+            <FormLabel>Nome da Empresa<span className="text-destructive"> *</span></FormLabel>
+            <FormControl>
+              <Input placeholder="Nome da empresa" {...field} />
+            </FormControl>
+            <FormMessage />
+          </FormItem>
+        )}
+      />
+      
+      <FormMaskedInput
+        control={form.control}
+        name="document"
+        label="CNPJ"
+        mask="00.000.000/0000-00"
+        placeholder="00.000.000/0000-00"
+        required
+      />
+      
+      <FormField
+        control={form.control}
+        name="partner_id"
+        render={({ field }) => (
+          <FormItem>
+            <FormLabel>Parceiro</FormLabel>
+            <Select 
+              onValueChange={field.onChange} 
+              value={field.value}
+            >
               <FormControl>
-                <Input placeholder="Nome da empresa" {...field} />
+                <SelectTrigger>
+                  <SelectValue placeholder="Selecione um parceiro" />
+                </SelectTrigger>
               </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-
-        <FormField
-          control={form.control}
-          name="document"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>CNPJ</FormLabel>
-              <FormControl>
-                <Input placeholder="00.000.000/0001-00" {...field} />
-              </FormControl>
-              <FormDescription>
-                CNPJ da empresa
-              </FormDescription>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-      </div>
-
-      {partners.length > 0 && (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <FormField
-            control={form.control}
-            name="partner_id"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Parceiro</FormLabel>
-                <Select
-                  onValueChange={field.onChange}
-                  defaultValue={field.value}
-                >
-                  <FormControl>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Selecione um parceiro (opcional)" />
-                    </SelectTrigger>
-                  </FormControl>
-                  <SelectContent>
-                    <SelectItem value="none">Nenhum</SelectItem>
-                    {partners.map((partner) => (
-                      <SelectItem key={partner.id} value={partner.id}>
-                        {partner.business_name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                <FormDescription>
-                  Parceiro associado a este cliente (opcional)
-                </FormDescription>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-        </div>
-      )}
+              <SelectContent>
+                {isLoadingPartners ? (
+                  <div className="flex justify-center p-2">
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  </div>
+                ) : (
+                  partners.map((partner) => (
+                    <SelectItem key={partner.id} value={partner.id}>
+                      {partner.company_name}
+                    </SelectItem>
+                  ))
+                )}
+              </SelectContent>
+            </Select>
+            <FormMessage />
+          </FormItem>
+        )}
+      />
+      
+      <FormField
+        control={form.control}
+        name="balance"
+        render={({ field }) => (
+          <FormItem>
+            <FormLabel>Saldo Inicial (R$)</FormLabel>
+            <FormControl>
+              <Input 
+                type="number" 
+                step="0.01"
+                placeholder="0,00" 
+                {...field}
+                onChange={(e) => {
+                  const value = e.target.value ? parseFloat(e.target.value) : 0;
+                  field.onChange(value);
+                }}
+                value={field.value || ""}
+              />
+            </FormControl>
+            <FormMessage />
+          </FormItem>
+        )}
+      />
     </>
   );
 };
