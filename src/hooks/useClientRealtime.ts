@@ -1,27 +1,29 @@
 
-import { useEffect } from "react";
-import { supabase } from "@/integrations/supabase/client";
+import { useEffect } from 'react';
+import { supabase } from '@/integrations/supabase/client';
 
-/**
- * Hook to subscribe to realtime updates on the clients table
- * @param refreshCallback Function to call when an update is received
- */
-export function useClientRealtime(refreshCallback: () => void) {
+export const useClientRealtime = (refreshCallback: () => Promise<void>) => {
   useEffect(() => {
-    // Subscribe to changes in the clients table
+    // Inscrever-se para atualizações em tempo real da tabela clients
     const channel = supabase
-      .channel('clients-changes')
+      .channel('schema-db-changes')
       .on(
         'postgres_changes',
-        { event: '*', schema: 'public', table: 'clients' },
+        {
+          event: '*', // Escuta todos os eventos (INSERT, UPDATE, DELETE)
+          schema: 'public',
+          table: 'clients',
+        },
         () => {
+          // Quando receber qualquer mudança, atualiza a lista de clientes
           refreshCallback();
         }
       )
       .subscribe();
 
+    // Limpeza ao desmontar o componente
     return () => {
       supabase.removeChannel(channel);
     };
   }, [refreshCallback]);
-}
+};

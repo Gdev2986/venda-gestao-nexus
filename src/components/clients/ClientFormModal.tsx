@@ -51,8 +51,7 @@ const ClientFormModal = ({
         partner_id: data.partner_id || null,
       };
       
-      // Ao criar o cliente agora não precisamos fornecer um ID
-      // O banco de dados vai gerar automaticamente
+      // O banco de dados vai gerar automaticamente o UUID
       const result = await addClient(clientData);
       
       if (!result) {
