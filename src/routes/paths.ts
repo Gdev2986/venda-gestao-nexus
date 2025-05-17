@@ -29,6 +29,8 @@ export const ADMIN_PATHS = {
   REPORTS: "/admin/reports",
   FEES: "/admin/fees",
   SALES: "/admin/sales",
+  SALES_DETAILS: (id: string = ":id") => `/admin/sales/${id}`,
+  SALES_NEW: "/admin/sales/new",
   LOGISTICS: "/admin/logistics",
 };
 
@@ -47,6 +49,7 @@ export const LOGISTICS_PATHS = {
   DASHBOARD: "/logistics",
   MACHINES: "/logistics/machines",
   MACHINE_NEW: "/logistics/machines/new",
+  MACHINE_DETAILS: (id: string = ":id") => `/logistics/machines/${id}`,
   CLIENT_MACHINES: "/logistics/client-machines",
   INVENTORY: "/logistics/inventory",
   REQUESTS: "/logistics/requests",

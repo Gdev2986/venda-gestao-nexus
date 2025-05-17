@@ -16,12 +16,12 @@ export const salesRoutes = [
   />,
   <Route 
     key="admin-sales-details" 
-    path={PATHS.ADMIN.SALES_DETAILS()} 
+    path="/admin/sales/:id" 
     element={<SaleDetails />} 
   />,
   <Route 
     key="admin-sales-new" 
-    path={PATHS.ADMIN.SALES_NEW} 
+    path="/admin/sales/new" 
     element={<NewSale />} 
   />
 ];

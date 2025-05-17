@@ -1,4 +1,6 @@
 
+// Adding necessary exports and types
+
 export * from './types/enums';
 export * from './types/client';
 export * from './types/payment.types';
@@ -61,6 +63,7 @@ export interface Sale {
   terminal: string;
   gross_amount: number;
   net_amount: number;
+  created_at?: string; // Add this field to fix partner/ClientDetails.tsx
 }
 
 export interface SalesFilterParams {
@@ -75,7 +78,7 @@ export interface SalesFilterParams {
   maxAmount?: number;
   startHour?: number;
   endHour?: number;
-  installments?: number; // Adding installments to the interface
+  installments?: number;
 }
 
 export interface SalesChartData {
@@ -124,4 +127,9 @@ export enum PaymentMethod {
   CREDIT = "CREDIT",
   DEBIT = "DEBIT",
   PIX = "PIX",
+}
+
+// Define ExtendedSalesFilterParams for use in filters
+export interface ExtendedSalesFilterParams extends SalesFilterParams {
+  // Add any additional fields needed for filter components
 }

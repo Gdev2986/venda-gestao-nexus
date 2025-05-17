@@ -1,24 +1,19 @@
 
-export enum ClientStatus {
-  ACTIVE = "ACTIVE",
-  INACTIVE = "INACTIVE",
-  PENDING = "PENDING",
-  BLOCKED = "BLOCKED"
-}
+// Add missing notification types
 
 export enum NotificationType {
   PAYMENT = "PAYMENT",
-  BALANCE = "BALANCE",
-  BALANCE_UPDATE = "BALANCE_UPDATE",
-  MACHINE = "MACHINE",
-  COMMISSION = "COMMISSION",
-  SUPPORT = "SUPPORT",
   SYSTEM = "SYSTEM",
   GENERAL = "GENERAL",
+  SUPPORT = "SUPPORT",
+  MACHINE = "MACHINE",
+  COMMISSION = "COMMISSION",
+  PAYMENT_REQUEST = "PAYMENT_REQUEST",
   PAYMENT_APPROVED = "PAYMENT_APPROVED",
   PAYMENT_REJECTED = "PAYMENT_REJECTED",
-  PAYMENT_REQUEST = "PAYMENT_REQUEST",
-  SALE = "SALE"
+  SALE = "SALE",
+  BALANCE = "BALANCE",
+  BALANCE_UPDATE = "BALANCE_UPDATE"
 }
 
 export enum PaymentStatus {
@@ -29,29 +24,37 @@ export enum PaymentStatus {
   PROCESSING = "PROCESSING"
 }
 
+export enum PaymentAction {
+  APPROVE = "APPROVE",
+  REJECT = "REJECT",
+  MARK_AS_PAID = "MARK_AS_PAID",
+  DELETE = "DELETE",
+  RESEND = "RESEND"
+}
+
 export enum PaymentType {
   PIX = "PIX",
   TED = "TED",
   BOLETO = "BOLETO",
+  TRANSFERENCE = "TRANSFERENCE",
   CREDIT = "CREDIT",
+  DEBIT = "DEBIT"
 }
 
 export enum UserRole {
   ADMIN = "ADMIN",
   CLIENT = "CLIENT",
+  PARTNER = "PARTNER",
+  LOGISTICS = "LOGISTICS", 
   FINANCIAL = "FINANCIAL",
-  PARTNER = "PARTNER", 
-  LOGISTICS = "LOGISTICS",
-  USER = "USER",
   MANAGER = "MANAGER",
   FINANCE = "FINANCE",
   SUPPORT = "SUPPORT"
 }
 
-export enum PaymentAction {
-  APPROVE = "APPROVE",
-  REJECT = "REJECT",
-  VIEW = "VIEW",
-  DELETE = "DELETE",
-  SEND_RECEIPT = "SEND_RECEIPT"
+export enum ClientStatus {
+  ACTIVE = "ACTIVE",
+  INACTIVE = "INACTIVE",
+  PENDING = "PENDING",
+  BLOCKED = "BLOCKED"
 }
