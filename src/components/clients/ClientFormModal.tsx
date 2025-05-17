@@ -11,6 +11,7 @@ import {
 } from "@/components/ui/dialog";
 import ClientForm, { ClientFormValues } from "./ClientForm";
 import { v4 as uuidv4 } from "uuid";
+import { UserRole } from "@/types/enums";
 import bcrypt from "bcryptjs";
 
 export interface ClientFormModalProps {
@@ -96,7 +97,7 @@ const ClientFormModal = ({
           id: userId,
           name: data.contact_name,
           email: data.email,
-          role: 'CLIENT',
+          role: UserRole.CLIENT, // Usando o enum correto
           phone: data.phone
         });
 
