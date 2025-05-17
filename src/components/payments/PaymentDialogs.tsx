@@ -42,6 +42,7 @@ export const PaymentDialogs = ({
   const payment = selectedPayment ? {
     ...selectedPayment,
     description: selectedPayment.description || "",
+    updated_at: selectedPayment.updated_at || selectedPayment.created_at, // Ensure updated_at is present
     // Ensure status is compatible with both systems by casting
     status: selectedPayment.status as any
   } : null;

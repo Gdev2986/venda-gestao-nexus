@@ -159,8 +159,9 @@ const UserPayments = () => {
         amount,
         client_id: clientId,
         description: description || "Solicitação de pagamento via PIX",
-        status: "PENDING", // Using string literal to match database enum
-        pix_key_id: pixKeyId
+        status: PaymentStatus.PENDING, // Use enum value instead of string literal
+        pix_key_id: pixKeyId,
+        // No need to include other fields that have defaults in the database
       };
 
       const { error } = await supabase
@@ -218,10 +219,11 @@ const UserPayments = () => {
         amount,
         client_id: clientId,
         description: description || "Solicitação de pagamento via Boleto",
-        status: "PENDING", // Using string literal to match database enum
+        status: PaymentStatus.PENDING, // Use enum value instead of string literal
         document_url: documentUrl,
         due_date: dueDate,
-        payment_type: "BOLETO"
+        payment_type: PaymentType.BOLETO,
+        pix_key_id: null // Add null pix_key_id to satisfy schema requirements
       };
 
       const { error } = await supabase
@@ -259,10 +261,10 @@ const UserPayments = () => {
         amount,
         client_id: clientId,
         description: description || "Solicitação de pagamento via TED",
-        status: "PENDING", // Using string literal to match database enum
-        payment_type: "TED",
+        status: PaymentStatus.PENDING, // Use enum value instead of string literal
+        payment_type: PaymentType.TED,
         bank_info: bankInfo,
-        pix_key_id: null // Provide null to satisfy constraint
+        pix_key_id: null // Add null pix_key_id to satisfy schema requirements
       };
 
       const { error } = await supabase

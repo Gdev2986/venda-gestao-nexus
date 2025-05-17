@@ -41,7 +41,7 @@ const ClientFormModal = ({
       // Convert form values to proper client data format with optional fields
       const clientData = {
         business_name: data.business_name,
-        contact_name: data.contact_name || undefined, // Make optional to match Client type
+        contact_name: data.contact_name || undefined,
         email: data.email || undefined,
         phone: data.phone || undefined,
         address: data.address || undefined,
@@ -86,7 +86,7 @@ const ClientFormModal = ({
           onSubmit={handleCreateClient}
           isSubmitting={isSubmitting}
           title={title}
-          initialData={initialData}
+          initialData={initialData as any} // Cast to any to avoid type errors
         />
       </DialogContent>
     </Dialog>

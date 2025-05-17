@@ -18,7 +18,7 @@ export const convertDbPaymentToUiPayment = (dbPayment: any): PaymentData => {
     status: dbPayment.status as PaymentRequestStatusType,
     pix_key_id: dbPayment.pix_key_id,
     created_at: dbPayment.created_at,
-    updated_at: dbPayment.updated_at,
+    updated_at: dbPayment.updated_at || dbPayment.created_at, // Ensure updated_at is present
     approved_at: dbPayment.approved_at,
     approved_by: dbPayment.approved_by,
     receipt_url: dbPayment.receipt_url,
@@ -50,7 +50,7 @@ export const convertToPaymentRequest = (payment: Payment): PaymentData => {
     status: payment.status as PaymentRequestStatusType,
     pix_key_id: payment.pix_key?.id,
     created_at: payment.created_at,
-    updated_at: payment.updated_at || payment.created_at,
+    updated_at: payment.updated_at || payment.created_at, // Ensure updated_at is present
     approved_at: payment.approved_at || null,
     approved_by: payment.approved_by || null,
     receipt_url: payment.receipt_url || null,

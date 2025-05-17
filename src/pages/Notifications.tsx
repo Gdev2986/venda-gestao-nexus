@@ -1,70 +1,66 @@
 
-import { PageWrapper } from '@/components/page/PageWrapper';
-import { PageHeader } from '@/components/page/PageHeader';
-import { useNotifications } from '@/hooks/use-notifications';
-import NotificationList from '@/components/notifications/NotificationList';
-import NotificationFilters from '@/components/notifications/NotificationFilters';
-import { Button } from '@/components/ui/button';
-import { useState } from 'react';
+import { useState, useEffect } from "react";
+import { useNotifications } from "@/hooks/useNotifications";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import NotificationList from "@/components/notifications/NotificationList";
+import NotificationFilters from "@/components/notifications/NotificationFilters";
+import { PageHeader } from "@/components/page/PageHeader";
+import { Pagination } from "@/components/ui/pagination";
 
 const Notifications = () => {
+  const [filter, setFilter] = useState<string>("all");
+  const [page, setPage] = useState(1);
   const { 
     notifications, 
     loading, 
+    totalPages, 
     markAsRead, 
-    markAsUnread, 
-    markAllAsRead, 
-    refreshNotifications 
-  } = useNotifications();
+    markAsUnread 
+  } = useNotifications(filter, page);
   
-  const [filter, setFilter] = useState('all');
+  // Reset page to 1 when filter changes
+  useEffect(() => {
+    setPage(1);
+  }, [filter]);
   
-  // Filter notifications based on selected filter
-  const filteredNotifications = filter === 'all' 
-    ? notifications
-    : filter === 'unread'
-      ? notifications.filter(n => !n.read)
-      : notifications.filter(n => n.type === filter);
-
   return (
-    <PageWrapper>
-      <div className="space-y-6">
-        <PageHeader 
-          title="Notifications" 
-          description="View and manage your notifications"
-        />
-        
-        <div className="flex items-center justify-between">
-          <NotificationFilters
-            filter={filter}
-            setFilter={setFilter}
+    <div className="container py-6 space-y-6">
+      <PageHeader
+        title="Notificações"
+        description="Gerencie suas notificações"
+      />
+      
+      <Card className="overflow-hidden">
+        <CardHeader className="bg-muted/50">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <CardTitle className="text-xl">Suas Notificações</CardTitle>
+            <NotificationFilters
+              filter={filter}
+              setFilter={setFilter}
+              isLoading={loading}
+            />
+          </div>
+        </CardHeader>
+        <CardContent className="p-4 sm:p-6">
+          <NotificationList
+            notifications={notifications}
+            onMarkAsRead={markAsRead}
+            onMarkAsUnread={markAsUnread}
+            isLoading={loading}
           />
           
-          <div className="flex space-x-2">
-            <Button
-              variant="outline"
-              onClick={refreshNotifications}
-              disabled={loading}
-            >
-              Refresh
-            </Button>
-            <Button
-              onClick={markAllAsRead}
-              disabled={loading || notifications.filter(n => !n.read).length === 0}
-            >
-              Mark All as Read
-            </Button>
-          </div>
-        </div>
-        
-        <NotificationList
-          notifications={filteredNotifications}
-          isLoading={loading}
-          onMarkAsRead={markAsRead}
-          onMarkAsUnread={markAsUnread}
-        />
-      </div>
-    </PageWrapper>
+          {totalPages > 1 && (
+            <div className="mt-6 flex justify-center">
+              <Pagination
+                currentPage={page}
+                totalPages={totalPages}
+                onPageChange={setPage}
+              />
+            </div>
+          )}
+        </CardContent>
+      </Card>
+    </div>
   );
 };
 

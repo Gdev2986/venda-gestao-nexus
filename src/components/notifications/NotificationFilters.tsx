@@ -6,7 +6,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { NotificationType } from "@/types";
+import { NotificationType } from "@/types/enums";
 
 interface NotificationFiltersProps {
   typeFilter?: string;
@@ -15,6 +15,7 @@ interface NotificationFiltersProps {
   onTypeChange?: (value: string) => void;
   onStatusChange?: (value: string) => void;
   setFilter?: (value: string) => void; // Added for Notifications.tsx
+  isLoading?: boolean;
 }
 
 const NotificationFilters = ({ 
@@ -23,7 +24,8 @@ const NotificationFilters = ({
   filter,
   onTypeChange,
   onStatusChange,
-  setFilter
+  setFilter,
+  isLoading
 }: NotificationFiltersProps) => {
   // Handle the different props based on which component is calling this
   const handleTypeChange = (value: string) => {
@@ -40,6 +42,7 @@ const NotificationFilters = ({
       <Select 
         value={filter || typeFilter} 
         onValueChange={filter !== undefined ? setFilter : handleTypeChange}
+        disabled={isLoading}
       >
         <SelectTrigger className="w-[180px]">
           <SelectValue placeholder="Filtrar por tipo" />
@@ -58,6 +61,7 @@ const NotificationFilters = ({
       <Select 
         value={statusFilter} 
         onValueChange={handleStatusChange}
+        disabled={isLoading}
       >
         <SelectTrigger className="w-[160px]">
           <SelectValue placeholder="Filtrar por status" />

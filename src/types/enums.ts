@@ -33,9 +33,12 @@ export enum NotificationType {
   COMMISSION = "COMMISSION",
   SYSTEM = "SYSTEM",
   GENERAL = "GENERAL",
-  SALE = "SALE"
-  // Removed extended notification types to match database schema
-  // Database only supports the types above
+  SALE = "SALE",
+  // Adding back extended notification types that were removed
+  BALANCE_UPDATE = "BALANCE_UPDATE",
+  PAYMENT_REQUEST = "PAYMENT_REQUEST",
+  PAYMENT_APPROVED = "PAYMENT_APPROVED",
+  PAYMENT_REJECTED = "PAYMENT_REJECTED"
 }
 
 export enum PaymentAction {
@@ -44,11 +47,6 @@ export enum PaymentAction {
   VIEW = 'view',
   DELETE = 'delete',
   SEND_RECEIPT = 'send_receipt'
-}
-
-// Added Payment enum for compatibility with components expecting it
-export enum Payment {
-  // Empty enum for compatibility
 }
 
 // Adding ClientStatus enum which was being used but not defined

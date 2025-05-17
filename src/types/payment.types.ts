@@ -45,11 +45,11 @@ export interface BankInfo {
 export interface PaymentData {
   id: string;
   amount: number;
-  description: string; // Required to match hooks/payments/payment.types
+  description: string;
   status: PaymentRequestStatus;
   pix_key_id?: string;
   created_at: string;
-  updated_at?: string;
+  updated_at: string; // Made this required to match
   approved_at?: string | null;
   approved_by?: string | null;
   receipt_url?: string | null;
@@ -78,7 +78,7 @@ export interface Client {
   partner_id?: string;
   created_at?: string;
   updated_at?: string;
-  contact_name?: string; // Made optional to match Client type
+  contact_name?: string; // Already optional, which is good
   address?: string;
   city?: string;
   state?: string;

@@ -1,4 +1,3 @@
-
 import { Notification } from "@/types";
 import { formatDistanceToNow } from "date-fns";
 import { ptBR } from "date-fns/locale";
@@ -29,15 +28,19 @@ const NotificationList = ({
   onMarkAsUnread,
   isLoading = false 
 }: NotificationListProps) => {
-  const getIcon = (type: NotificationType) => {
+  const getIcon = (type: string) => {
     switch (type) {
       case NotificationType.PAYMENT:
+      case NotificationType.PAYMENT_APPROVED:
+      case NotificationType.PAYMENT_REJECTED:
+      case NotificationType.PAYMENT_REQUEST:
         return <FileText className="h-5 w-5 text-blue-500" />;
       case NotificationType.SALE:
         return <ShoppingCart className="h-5 w-5 text-green-500" />;
       case NotificationType.SYSTEM:
         return <RefreshCcw className="h-5 w-5 text-purple-500" />;
       case NotificationType.BALANCE:
+      case NotificationType.BALANCE_UPDATE:
         return <FileText className="h-5 w-5 text-amber-500" />;
       case NotificationType.GENERAL:
       default:

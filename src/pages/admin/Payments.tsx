@@ -114,13 +114,14 @@ const AdminPayments = () => {
     await handleConfirmAction(PaymentAction.SEND_RECEIPT);
   };
   
-  // Helper to ensure payment data has description field
+  // Helper to ensure payment data has description field and updated_at is present
   const getPaymentWithDescription = (payment: Payment): PaymentData => {
     const converted = convertToPaymentRequest(payment);
     return {
       ...converted,
       description: converted.description || "", // Ensure description is never undefined
-      status: converted.status as any // Cast status to compatible type
+      status: converted.status as any, // Cast status to compatible type
+      updated_at: converted.updated_at || payment.created_at || new Date().toISOString() // Ensure updated_at is present
     };
   };
   
