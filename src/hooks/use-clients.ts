@@ -3,6 +3,7 @@ import { useState, useCallback } from 'react';
 import { Client } from '@/types';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+import { v4 as uuidv4 } from "uuid";
 
 // Define the required structure for client creation
 export type ClientCreate = {
@@ -125,11 +126,24 @@ export const useClients = () => {
   // Add a new client
   const addClient = async (clientData: ClientCreate): Promise<Client | false> => {
     try {
-      // Try to insert into Supabase (this should work now with our policies)
+      // Generate a client ID to avoid foreign key constraint issues
+      const clientId = uuidv4();
+      
+      // Insert into Supabase with generated UUID
       const { data, error } = await supabase
         .from('clients')
         .insert({
-          ...clientData,
+          id: clientId, // Important: provide the ID explicitly
+          business_name: clientData.business_name,
+          contact_name: clientData.contact_name,
+          email: clientData.email,
+          phone: clientData.phone,
+          address: clientData.address,
+          city: clientData.city,
+          state: clientData.state,
+          zip: clientData.zip,
+          document: clientData.document,
+          partner_id: clientData.partner_id,
           status: 'active'
         })
         .select()

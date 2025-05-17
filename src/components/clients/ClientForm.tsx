@@ -1,51 +1,30 @@
+
 import { useState, useEffect } from "react";
+import { z } from "zod";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import * as z from "zod";
+import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import {
   Form,
   FormControl,
+  FormDescription,
   FormField,
   FormItem,
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
-import { Input } from "@/components/ui/input";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { MaskedInput } from "@/components/ui/masked-input";
-import { FormMaskedInput } from "./FormMaskedInput";
-import { usePartnersSelect } from "@/hooks/use-partners-select";
-import { useAvailableMachines } from "@/hooks/use-available-machines";
-import { useCepLookup } from "@/hooks/use-cep-lookup";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Loader2 } from "lucide-react";
-import { useClientRealtime } from "@/hooks/useClientRealtime";
+import { usePartners } from "@/hooks/use-partners";
+import { clientFormSchema } from "./schema/clientFormSchema";
 import AddressFields from "./AddressFields";
+import BusinessInfoFields from "./BusinessInfoFields";
+import ContactFields from "./ContactFields";
+import MachineSelectionField from "./MachineSelectionField";
 
-// Define the form schema with validations
-const formSchema = z.object({
-  business_name: z.string().min(2, { message: "Nome da empresa obrigatório" }),
-  document: z.string().min(14, { message: "CNPJ obrigatório" }),
-  contact_name: z.string().min(2, { message: "Nome do contato obrigatório" }),
-  email: z.string().email({ message: "Email inválido" }),
-  phone: z.string().min(11, { message: "Telefone obrigatório" }),
-  address: z.string().min(5, { message: "Endereço obrigatório" }),
-  city: z.string().min(2, { message: "Cidade obrigatória" }),
-  state: z.string().min(2, { message: "Estado obrigatório" }),
-  zip: z.string().min(8, { message: "CEP obrigatório" }),
-  balance: z.number().optional().default(0),
-  partner_id: z.string().optional(),
-  machines: z.array(z.string()).optional(),
-});
-
-// Define the form values type
-export type ClientFormValues = z.infer<typeof formSchema>;
+export type ClientFormValues = z.infer<typeof clientFormSchema>;
 
 interface ClientFormProps {
   isOpen: boolean;
@@ -64,99 +43,78 @@ const ClientForm = ({
   initialData,
   submitButtonText = "Salvar",
 }: ClientFormProps) => {
-  const { partners, isLoading: isLoadingPartners } = usePartnersSelect();
-  const { machines, isLoading: isLoadingMachines } = useAvailableMachines();
-  
   const [selectedMachines, setSelectedMachines] = useState<string[]>([]);
+  const { partners, isLoading: isLoadingPartners } = usePartners();
 
-  // Initialize form
   const form = useForm<ClientFormValues>({
-    resolver: zodResolver(formSchema),
-    defaultValues: {
+    resolver: zodResolver(clientFormSchema),
+    defaultValues: initialData || {
       business_name: "",
-      document: "",
       contact_name: "",
       email: "",
       phone: "",
+      document: "",
       address: "",
       city: "",
       state: "",
       zip: "",
+      partner_id: "",
       balance: 0,
-      partner_id: undefined,
       machines: [],
-      ...initialData,
     },
   });
 
-  // Setup realtime refresh
-  useClientRealtime(() => {
-    if (!isOpen) {
-      // Refresh data when modal is not open to prevent refreshing during form submission
-      console.log("Realtime update received");
+  // Reset form when initialData changes or modal opens/closes
+  useEffect(() => {
+    if (isOpen) {
+      if (initialData) {
+        form.reset(initialData);
+        setSelectedMachines(initialData.machines || []);
+      } else {
+        form.reset({
+          business_name: "",
+          contact_name: "",
+          email: "",
+          phone: "",
+          document: "",
+          address: "",
+          city: "",
+          state: "",
+          zip: "",
+          partner_id: "",
+          balance: 0,
+          machines: [],
+        });
+        setSelectedMachines([]);
+      }
     }
-  });
+  }, [initialData, isOpen, form]);
 
-  // Handle form submission
+  // Update form value when selected machines change
+  useEffect(() => {
+    form.setValue("machines", selectedMachines);
+  }, [selectedMachines, form]);
+
   const handleSubmit = async (data: ClientFormValues) => {
-    const result = await onSubmit({
-      ...data,
-      machines: selectedMachines,
-      balance: data.balance || 0,
-    });
-    if (result) {
+    const success = await onSubmit(data);
+    if (success && !initialData) {
       form.reset();
       setSelectedMachines([]);
     }
   };
 
-  // Handle machine selection
-  const handleMachineSelection = (machineId: string) => {
-    setSelectedMachines((prev) => {
-      if (prev.includes(machineId)) {
-        return prev.filter((id) => id !== machineId);
-      } else {
-        return [...prev, machineId];
-      }
-    });
-  };
-
-  // Keep selectedMachines in sync with form value
-  useEffect(() => {
-    if (form.getValues().machines?.length) {
-      setSelectedMachines(form.getValues().machines || []);
-    }
-  }, [isOpen]);
-
   return (
     <Form {...form}>
-      <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-6">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          {/* Left column: Business info and address */}
-          <div className="space-y-4">
-            <h3 className="text-md font-medium">Informações da Empresa</h3>
-            <FormField
-              control={form.control}
-              name="business_name"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Nome da Empresa<span className="text-destructive"> *</span></FormLabel>
-                  <FormControl>
-                    <Input placeholder="Nome da empresa" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            
-            <FormMaskedInput
-              control={form.control}
-              name="document"
-              label="CNPJ"
-              mask="00.000.000/0000-00"
-              placeholder="00.000.000/0000-00"
-              required
-            />
+      <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-8">
+        <Tabs defaultValue="business" className="w-full">
+          <TabsList className="grid grid-cols-3 mb-6">
+            <TabsTrigger value="business">Empresa</TabsTrigger>
+            <TabsTrigger value="contact">Contato</TabsTrigger>
+            <TabsTrigger value="address">Endereço</TabsTrigger>
+          </TabsList>
+
+          <TabsContent value="business" className="space-y-4">
+            <BusinessInfoFields form={form} />
             
             <FormField
               control={form.control}
@@ -164,140 +122,64 @@ const ClientForm = ({
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>Parceiro</FormLabel>
-                  <Select 
-                    onValueChange={field.onChange} 
-                    value={field.value}
-                  >
-                    <FormControl>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Selecione um parceiro" />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      {isLoadingPartners ? (
-                        <div className="flex justify-center p-2">
-                          <Loader2 className="h-4 w-4 animate-spin" />
-                        </div>
-                      ) : (
-                        partners.map((partner) => (
-                          <SelectItem key={partner.id} value={partner.id}>
-                            {partner.company_name}
-                          </SelectItem>
-                        ))
-                      )}
-                    </SelectContent>
-                  </Select>
+                  <FormControl>
+                    <select
+                      className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                      disabled={isLoadingPartners}
+                      {...field}
+                    >
+                      <option value="">Selecionar parceiro</option>
+                      {partners?.map((partner) => (
+                        <option key={partner.id} value={partner.id}>
+                          {partner.company_name}
+                        </option>
+                      ))}
+                    </select>
+                  </FormControl>
                   <FormMessage />
                 </FormItem>
               )}
             />
-            
+
             <FormField
               control={form.control}
               name="balance"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Saldo Inicial (R$)</FormLabel>
+                  <FormLabel>Saldo Inicial</FormLabel>
                   <FormControl>
-                    <Input 
-                      type="number" 
+                    <Input
+                      type="number"
                       step="0.01"
-                      placeholder="0,00" 
+                      placeholder="0.00"
                       {...field}
-                      onChange={(e) => {
-                        const value = e.target.value ? parseFloat(e.target.value) : 0;
-                        field.onChange(value);
-                      }}
-                      value={field.value || ""}
+                      onChange={(e) =>
+                        field.onChange(parseFloat(e.target.value) || 0)
+                      }
                     />
                   </FormControl>
+                  <FormDescription>Saldo inicial em reais</FormDescription>
                   <FormMessage />
                 </FormItem>
               )}
             />
-            
-            <h3 className="text-md font-medium mt-6">Endereço</h3>
-            
-            {/* Use the AddressFields component here */}
-            <AddressFields form={form} />
-          </div>
-          
-          {/* Right column: Contact info and machines */}
-          <div className="space-y-4">
-            <h3 className="text-md font-medium">Informações de Contato</h3>
-            
-            <FormField
-              control={form.control}
-              name="contact_name"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Nome do Contato<span className="text-destructive"> *</span></FormLabel>
-                  <FormControl>
-                    <Input placeholder="Nome do contato" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            
-            <FormField
-              control={form.control}
-              name="email"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Email<span className="text-destructive"> *</span></FormLabel>
-                  <FormControl>
-                    <Input type="email" placeholder="Email" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            
-            <FormMaskedInput
-              control={form.control}
-              name="phone"
-              label="Telefone"
-              mask="(00) 00000-0000"
-              placeholder="(00) 00000-0000"
-              required
-            />
-            
-            <h3 className="text-md font-medium mt-6">Máquinas</h3>
-            
-            <div className="border rounded p-3 space-y-2">
-              <p className="text-sm text-gray-500">Selecione as máquinas para este cliente:</p>
-              {isLoadingMachines ? (
-                <div className="flex justify-center p-4">
-                  <Loader2 className="h-5 w-5 animate-spin" />
-                </div>
-              ) : machines.length === 0 ? (
-                <p className="text-sm text-center py-4 text-muted-foreground">
-                  Não há máquinas disponíveis para associação.
-                </p>
-              ) : (
-                <div className="h-[200px] overflow-y-auto space-y-2">
-                  {machines.map((machine) => (
-                    <div key={machine.id} className="flex items-center gap-2 p-2 hover:bg-muted rounded">
-                      <input
-                        type="checkbox"
-                        id={`machine-${machine.id}`}
-                        checked={selectedMachines.includes(machine.id)}
-                        onChange={() => handleMachineSelection(machine.id)}
-                        className="h-4 w-4 rounded"
-                      />
-                      <label htmlFor={`machine-${machine.id}`} className="flex-1 text-sm cursor-pointer">
-                        {machine.serial_number} ({machine.model})
-                      </label>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
-          </div>
-        </div>
+          </TabsContent>
 
-        <div className="flex justify-end space-x-2 pt-4 border-t">
+          <TabsContent value="contact" className="space-y-4">
+            <ContactFields form={form} />
+          </TabsContent>
+
+          <TabsContent value="address" className="space-y-4">
+            <AddressFields form={form} />
+          </TabsContent>
+        </Tabs>
+
+        <MachineSelectionField
+          selectedMachines={selectedMachines}
+          setSelectedMachines={setSelectedMachines}
+        />
+
+        <div className="flex gap-2 justify-end mt-6">
           <Button type="button" variant="outline" onClick={onClose}>
             Cancelar
           </Button>
@@ -305,7 +187,7 @@ const ClientForm = ({
             {isSubmitting ? (
               <>
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                Salvando...
+                Processando
               </>
             ) : (
               submitButtonText
