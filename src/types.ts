@@ -75,15 +75,15 @@ export interface SalesFilterParams {
   maxAmount?: number;
   startHour?: number;
   endHour?: number;
-  installments?: number; // Added installments property
+  installments?: number;
 }
 
 export interface SalesChartData {
   date: string;
   amount: number;
-  name?: string; // Added for compatibility
-  value?: number; // Added for compatibility
-  total?: number; // Added for compatibility
+  name?: string;
+  value?: number;
+  total?: number;
 }
 
 export interface Machine {

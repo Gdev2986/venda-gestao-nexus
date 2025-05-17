@@ -4,7 +4,6 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import DateRangePicker from "./DateRangePicker";
 import TimeRangePicker from "./TimeRangePicker";
 import { SalesFilterParams } from "@/types";
@@ -88,24 +87,27 @@ export const AdvancedFilters = ({
           <div className="space-y-2">
             <Label>Período</Label>
             <DateRangePicker 
-              dateFrom={localFilters.dateFrom}
-              dateTo={localFilters.dateTo}
-              onRangeChange={(range) => {
-                handleInputChange('dateFrom', range.from);
-                handleInputChange('dateTo', range.to);
+              dateRange={{
+                from: localFilters.dateFrom ? new Date(localFilters.dateFrom) : undefined,
+                to: localFilters.dateTo ? new Date(localFilters.dateTo) : undefined
               }}
+              onDateRangeChange={(range) => {
+                handleInputChange('dateFrom', range?.from?.toISOString());
+                handleInputChange('dateTo', range?.to?.toISOString());
+              }}
+              onDatePreset={() => {}} // Empty function to meet interface requirements
             />
           </div>
           
           <div className="space-y-2">
             <Label>Horário</Label>
             <TimeRangePicker 
-              startHour={localFilters.startHour}
-              endHour={localFilters.endHour}
-              onRangeChange={(range) => {
-                handleInputChange('startHour', range.start);
-                handleInputChange('endHour', range.end);
+              value={[localFilters.startHour || 0, localFilters.endHour || 23]}
+              onChange={(range) => {
+                handleInputChange('startHour', range[0]);
+                handleInputChange('endHour', range[1]);
               }}
+              className="w-full"
             />
           </div>
           
@@ -123,4 +125,4 @@ export const AdvancedFilters = ({
   );
 };
 
-export default AdvancedFilters; // Added default export to fix error
+export default AdvancedFilters;

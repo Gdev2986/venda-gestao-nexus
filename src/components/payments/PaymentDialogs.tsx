@@ -60,7 +60,7 @@ export const PaymentDialogs = ({
       <ApprovePaymentDialog
         open={approveDialogOpen}
         onOpenChange={setApproveDialogOpen}
-        payment={payment}
+        payment={payment as PaymentRequest}
         onApprove={handleApprovePayment}
         isProcessing={isProcessing}
       />
@@ -68,7 +68,7 @@ export const PaymentDialogs = ({
       <RejectPaymentDialog
         open={rejectDialogOpen}
         onOpenChange={setRejectDialogOpen}
-        payment={payment}
+        payment={payment as PaymentRequest}
         onReject={handleRejectPayment}
         isProcessing={isProcessing}
       />
@@ -76,7 +76,7 @@ export const PaymentDialogs = ({
       <PaymentDetailsDialog
         open={detailsDialogOpen}
         onOpenChange={setDetailsDialogOpen}
-        payment={payment}
+        payment={payment as PaymentRequest}
       />
     </>
   );

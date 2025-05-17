@@ -1,123 +1,118 @@
 
-import { useState, useEffect } from "react";
-import { useToast } from "./use-toast";
-import { Notification } from "@/types";
-import { supabase } from "@/integrations/supabase/client";
-import { useUser } from "./use-user";
-import { NotificationType } from "@/types/enums";
+import { useState, useEffect } from 'react';
+import { Notification, NotificationType } from '@/types';
 
-export const useNotifications = () => {
-  const [notifications, setNotifications] = useState<Notification[]>([]);
+// Mock data for notifications
+const mockNotifications = [
+  {
+    id: '1',
+    title: 'Novo pagamento',
+    message: 'Você recebeu um novo pagamento de R$ 250,00',
+    type: NotificationType.PAYMENT,
+    is_read: false,
+    created_at: new Date().toISOString(),
+    read: false,
+    timestamp: new Date().toISOString(),
+  },
+  {
+    id: '2',
+    title: 'Atualização de saldo',
+    message: 'Seu saldo foi atualizado para R$ 1.250,00',
+    type: NotificationType.BALANCE_UPDATE,
+    is_read: true,
+    created_at: new Date(Date.now() - 86400000).toISOString(), // yesterday
+    read: true,
+    timestamp: new Date(Date.now() - 86400000).toISOString(),
+  },
+  {
+    id: '3',
+    title: 'Nova venda',
+    message: 'Você registrou uma nova venda de R$ 532,50',
+    type: NotificationType.SALE,
+    is_read: false,
+    created_at: new Date(Date.now() - 172800000).toISOString(), // 2 days ago
+    read: false,
+    timestamp: new Date(Date.now() - 172800000).toISOString(),
+  },
+];
+
+// This is a simple mock implementation - in a real app, this would connect to your backend
+export default function useNotifications() {
+  const [notifications, setNotifications] = useState<Notification[]>(mockNotifications);
   const [isLoading, setIsLoading] = useState(true);
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
-  const { toast } = useToast();
-  const { user } = useUser();
-  const PAGE_SIZE = 10;
 
-  const fetchNotifications = async () => {
-    if (!user) return;
-    
-    setIsLoading(true);
-    try {
-      const { data, error, count } = await supabase
-        .from('notifications')
-        .select('*', { count: 'exact' })
-        .eq('user_id', user.id)
-        .order('created_at', { ascending: false })
-        .range((currentPage - 1) * PAGE_SIZE, currentPage * PAGE_SIZE - 1);
-      
-      if (error) throw error;
-      
-      // Map the data to the Notification type
-      const formattedNotifications = data.map(item => ({
-        id: item.id,
-        title: item.title,
-        message: item.message,
-        type: item.type as NotificationType,
-        created_at: item.created_at,
-        is_read: item.is_read,
-        data: item.data,
-        // Add aliases for backward compatibility
-        read: item.is_read,
-        timestamp: item.created_at
-      }));
-      
-      setNotifications(formattedNotifications);
-      setTotalPages(Math.ceil((count || 0) / PAGE_SIZE));
-    } catch (error: any) {
-      console.error('Error fetching notifications:', error);
-      toast({
-        variant: 'destructive',
-        title: 'Error',
-        description: 'Failed to load notifications'
-      });
-    } finally {
+  useEffect(() => {
+    // Simulate loading
+    const timer = setTimeout(() => {
       setIsLoading(false);
-    }
-  };
+    }, 1000);
+
+    return () => clearTimeout(timer);
+  }, []);
 
   const markAsRead = async (id: string) => {
-    try {
-      const { error } = await supabase
-        .from('notifications')
-        .update({ is_read: true })
-        .eq('id', id);
-      
-      if (error) throw error;
-      
-      // Update the local state
-      setNotifications(prev => 
-        prev.map(notification => 
-          notification.id === id 
-            ? { ...notification, is_read: true, read: true } 
-            : notification
-        )
-      );
-    } catch (error: any) {
-      console.error('Error marking notification as read:', error);
-      toast({
-        variant: 'destructive',
-        title: 'Error',
-        description: 'Failed to mark notification as read'
-      });
-    }
+    setNotifications(prev => 
+      prev.map(notification => 
+        notification.id === id 
+          ? { 
+              ...notification, 
+              is_read: true,
+              read: true  // For backward compatibility
+            } 
+          : notification
+      )
+    );
+    return Promise.resolve();
+  };
+
+  const markAsUnread = async (id: string) => {
+    setNotifications(prev => 
+      prev.map(notification => 
+        notification.id === id 
+          ? { 
+              ...notification, 
+              is_read: false,
+              read: false  // For backward compatibility
+            } 
+          : notification
+      )
+    );
+    return Promise.resolve();
   };
 
   const markAllAsRead = async () => {
-    if (!user) return;
-    
-    try {
-      const { error } = await supabase
-        .from('notifications')
-        .update({ is_read: true })
-        .eq('user_id', user.id)
-        .eq('is_read', false);
-      
-      if (error) throw error;
-      
-      // Update the local state
-      setNotifications(prev => 
-        prev.map(notification => ({ ...notification, is_read: true, read: true }))
-      );
-      
-      toast({
-        title: 'Success',
-        description: 'All notifications marked as read'
-      });
-    } catch (error: any) {
-      console.error('Error marking all notifications as read:', error);
-      toast({
-        variant: 'destructive',
-        title: 'Error',
-        description: 'Failed to mark all notifications as read'
-      });
-    }
+    setNotifications(prev => 
+      prev.map(notification => ({ 
+        ...notification, 
+        is_read: true,
+        read: true  // For backward compatibility
+      }))
+    );
+    return Promise.resolve();
   };
 
-  useEffect(() => {
-    fetchNotifications();
-  }, [user, currentPage]);
+  const refreshNotifications = () => {
+    setIsLoading(true);
+    
+    setTimeout(() => {
+      // Simulate getting new notifications
+      const newNotification = {
+        id: Date.now().toString(),
+        title: 'Notificação atualizada',
+        message: 'Esta é uma nova notificação do sistema',
+        type: NotificationType.SYSTEM,
+        is_read: false,
+        created_at: new Date().toISOString(),
+        read: false,
+        timestamp: new Date().toISOString(),
+      };
+      
+      setNotifications(prev => [newNotification, ...prev]);
+      setIsLoading(false);
+    }, 1000);
+  };
 
   return {
     notifications,
@@ -126,9 +121,8 @@ export const useNotifications = () => {
     totalPages,
     setCurrentPage,
     markAsRead,
+    markAsUnread,
     markAllAsRead,
-    refreshNotifications: fetchNotifications
+    refreshNotifications
   };
-};
-
-export default useNotifications;
+}

@@ -103,13 +103,13 @@ export interface PixKey {
   created_at?: string;
   updated_at?: string;
   name?: string;
-  owner_name: string; // Made required
+  owner_name: string;
   is_default?: boolean;
   is_active?: boolean;
   bank_name?: string;
 }
 
-// Add any other types needed from the errors
+// Add UserData type with status property
 export interface UserData {
   id: string;
   email: string;
@@ -117,7 +117,7 @@ export interface UserData {
   role: string;
   avatar?: string;
   created_at?: string;
-  status?: string; // Add status property to fix the errors
+  status?: string;
 }
 
 export interface SalesChartData {

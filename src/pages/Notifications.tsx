@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import useNotifications from "@/hooks/useNotifications";
@@ -13,12 +14,12 @@ const notificationTypeBadges: { [key in NotificationType]?: string } = {
   [NotificationType.SUPPORT]: "bg-sky-100 text-sky-500",
   [NotificationType.PAYMENT]: "bg-emerald-100 text-emerald-500",
   [NotificationType.BALANCE]: "bg-orange-100 text-orange-500",
+  [NotificationType.BALANCE_UPDATE]: "bg-teal-100 text-teal-500",
   [NotificationType.MACHINE]: "bg-purple-100 text-purple-500",
   [NotificationType.COMMISSION]: "bg-yellow-100 text-yellow-500",
   [NotificationType.SYSTEM]: "bg-gray-100 text-gray-500",
   [NotificationType.GENERAL]: "bg-blue-100 text-blue-500",
   [NotificationType.SALE]: "bg-pink-100 text-pink-500",
-  [NotificationType.BALANCE_UPDATE]: "bg-teal-100 text-teal-500",
   [NotificationType.PAYMENT_REQUEST]: "bg-lime-100 text-lime-500",
   [NotificationType.PAYMENT_APPROVED]: "bg-green-100 text-green-500",
   [NotificationType.PAYMENT_REJECTED]: "bg-red-100 text-red-500"
@@ -41,7 +42,7 @@ const NotificationDisplay = ({ notification, markAsRead }: {
         <CardTitle className="text-sm font-medium">
           {notification.title}
         </CardTitle>
-        <Badge className={notificationTypeBadges[notification.type] || "bg-gray-100 text-gray-500"}>
+        <Badge className={notificationTypeBadges[notification.type as NotificationType] || "bg-gray-100 text-gray-500"}>
           {notification.type}
         </Badge>
       </CardHeader>
@@ -66,7 +67,11 @@ const NotificationDisplay = ({ notification, markAsRead }: {
 };
 
 // Update the Pagination component to use proper Pagination from UI components
-const NotificationsPagination = ({ currentPage, totalPages, onPageChange }: {
+const NotificationsPagination = ({ 
+  currentPage, 
+  totalPages, 
+  onPageChange 
+}: {
   currentPage: number;
   totalPages: number;
   onPageChange: (page: number) => void;
@@ -77,15 +82,26 @@ const NotificationsPagination = ({ currentPage, totalPages, onPageChange }: {
         <PaginationContent>
           <PaginationItem>
             <PaginationPrevious 
-              onClick={() => onPageChange(Math.max(currentPage - 1, 1))}
-              disabled={currentPage <= 1}
+              href="#" 
+              onClick={(e) => {
+                e.preventDefault();
+                if (currentPage > 1) onPageChange(currentPage - 1);
+              }}
+              aria-disabled={currentPage <= 1}
+              className={currentPage <= 1 ? "pointer-events-none opacity-50" : ""}
             />
           </PaginationItem>
           
           {/* Show first page */}
           {currentPage > 2 && (
             <PaginationItem>
-              <PaginationLink onClick={() => onPageChange(1)}>
+              <PaginationLink 
+                href="#" 
+                onClick={(e) => {
+                  e.preventDefault();
+                  onPageChange(1);
+                }}
+              >
                 1
               </PaginationLink>
             </PaginationItem>
@@ -94,14 +110,22 @@ const NotificationsPagination = ({ currentPage, totalPages, onPageChange }: {
           {/* Ellipsis if needed */}
           {currentPage > 3 && (
             <PaginationItem>
-              <PaginationLink disabled>...</PaginationLink>
+              <PaginationLink href="#" onClick={(e) => e.preventDefault()} aria-disabled={true} className="pointer-events-none">
+                ...
+              </PaginationLink>
             </PaginationItem>
           )}
           
           {/* Previous page if not first */}
           {currentPage > 1 && (
             <PaginationItem>
-              <PaginationLink onClick={() => onPageChange(currentPage - 1)}>
+              <PaginationLink 
+                href="#" 
+                onClick={(e) => {
+                  e.preventDefault();
+                  onPageChange(currentPage - 1);
+                }}
+              >
                 {currentPage - 1}
               </PaginationLink>
             </PaginationItem>
@@ -109,7 +133,11 @@ const NotificationsPagination = ({ currentPage, totalPages, onPageChange }: {
           
           {/* Current page */}
           <PaginationItem>
-            <PaginationLink isActive>
+            <PaginationLink 
+              href="#" 
+              onClick={(e) => e.preventDefault()} 
+              isActive
+            >
               {currentPage}
             </PaginationLink>
           </PaginationItem>
@@ -117,7 +145,13 @@ const NotificationsPagination = ({ currentPage, totalPages, onPageChange }: {
           {/* Next page if not last */}
           {currentPage < totalPages && (
             <PaginationItem>
-              <PaginationLink onClick={() => onPageChange(currentPage + 1)}>
+              <PaginationLink 
+                href="#" 
+                onClick={(e) => {
+                  e.preventDefault();
+                  onPageChange(currentPage + 1);
+                }}
+              >
                 {currentPage + 1}
               </PaginationLink>
             </PaginationItem>
@@ -126,14 +160,22 @@ const NotificationsPagination = ({ currentPage, totalPages, onPageChange }: {
           {/* Ellipsis if needed */}
           {currentPage < totalPages - 2 && (
             <PaginationItem>
-              <PaginationLink disabled>...</PaginationLink>
+              <PaginationLink href="#" onClick={(e) => e.preventDefault()} aria-disabled={true} className="pointer-events-none">
+                ...
+              </PaginationLink>
             </PaginationItem>
           )}
           
           {/* Last page if not already shown */}
           {currentPage < totalPages - 1 && totalPages > 1 && (
             <PaginationItem>
-              <PaginationLink onClick={() => onPageChange(totalPages)}>
+              <PaginationLink 
+                href="#" 
+                onClick={(e) => {
+                  e.preventDefault();
+                  onPageChange(totalPages);
+                }}
+              >
                 {totalPages}
               </PaginationLink>
             </PaginationItem>
@@ -141,8 +183,13 @@ const NotificationsPagination = ({ currentPage, totalPages, onPageChange }: {
           
           <PaginationItem>
             <PaginationNext 
-              onClick={() => onPageChange(Math.min(currentPage + 1, totalPages))}
-              disabled={currentPage >= totalPages}
+              href="#" 
+              onClick={(e) => {
+                e.preventDefault();
+                if (currentPage < totalPages) onPageChange(currentPage + 1);
+              }}
+              aria-disabled={currentPage >= totalPages}
+              className={currentPage >= totalPages ? "pointer-events-none opacity-50" : ""}
             />
           </PaginationItem>
         </PaginationContent>

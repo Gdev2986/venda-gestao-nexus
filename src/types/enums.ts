@@ -9,6 +9,7 @@ export enum ClientStatus {
 export enum NotificationType {
   PAYMENT = "PAYMENT",
   BALANCE = "BALANCE",
+  BALANCE_UPDATE = "BALANCE_UPDATE",
   MACHINE = "MACHINE",
   COMMISSION = "COMMISSION",
   SUPPORT = "SUPPORT",
@@ -32,7 +33,7 @@ export enum PaymentType {
   PIX = "PIX",
   TED = "TED",
   BOLETO = "BOLETO",
-  CREDIT = "CREDIT", // Added CREDIT to fix the error
+  CREDIT = "CREDIT",
 }
 
 export enum UserRole {
@@ -41,7 +42,10 @@ export enum UserRole {
   FINANCIAL = "FINANCIAL",
   PARTNER = "PARTNER", 
   LOGISTICS = "LOGISTICS",
-  USER = "USER"
+  USER = "USER",
+  MANAGER = "MANAGER",
+  FINANCE = "FINANCE",
+  SUPPORT = "SUPPORT"
 }
 
 export enum PaymentAction {
