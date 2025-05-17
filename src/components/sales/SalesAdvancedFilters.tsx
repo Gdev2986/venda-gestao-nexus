@@ -7,7 +7,7 @@ import {
   DateRangePicker, 
   BasicFilters, 
   AdvancedFilters 
-} from "./filters/index";
+} from "./filters";
 
 interface DateRange {
   from: Date;

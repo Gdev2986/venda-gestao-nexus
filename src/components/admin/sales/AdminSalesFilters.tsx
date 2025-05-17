@@ -10,7 +10,7 @@ import { format } from "date-fns";
 import { cn } from "@/lib/utils";
 import { useState } from "react";
 import { SalesFilterParams } from "@/types";
-import { TimeRangePicker } from "../../../components/sales/filters/index";
+import { TimeRangePicker } from "@/components/sales/filters"; // Fixed import path
 
 interface DateRange {
   from: Date;

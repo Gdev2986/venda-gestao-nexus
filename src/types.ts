@@ -75,7 +75,7 @@ export interface SalesFilterParams {
   maxAmount?: number;
   startHour?: number;
   endHour?: number;
-  installments?: number;
+  installments?: number; // Adding installments to the interface
 }
 
 export interface SalesChartData {

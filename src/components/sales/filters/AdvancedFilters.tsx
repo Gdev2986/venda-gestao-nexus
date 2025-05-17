@@ -87,10 +87,12 @@ export const AdvancedFilters = ({
           <div className="space-y-2">
             <Label>Período</Label>
             <DateRangePicker 
-              dateRange={{
-                from: localFilters.dateFrom ? new Date(localFilters.dateFrom) : undefined,
-                to: localFilters.dateTo ? new Date(localFilters.dateTo) : undefined
-              }}
+              dateRange={localFilters.dateFrom && localFilters.dateTo ? 
+                {
+                  from: new Date(localFilters.dateFrom),
+                  to: new Date(localFilters.dateTo)
+                } : undefined
+              }
               onDateRangeChange={(range) => {
                 handleInputChange('dateFrom', range?.from?.toISOString());
                 handleInputChange('dateTo', range?.to?.toISOString());

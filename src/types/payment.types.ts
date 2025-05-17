@@ -66,7 +66,7 @@ export interface PaymentData {
   due_date?: string;
 }
 
-// Make PaymentRequest a type that extends PaymentData
+// Make PaymentRequest a type alias of PaymentData to avoid confusion with browser's PaymentRequest
 export type PaymentRequest = PaymentData;
 
 // Define Client interface for compatibility with other components

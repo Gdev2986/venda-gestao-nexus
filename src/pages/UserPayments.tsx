@@ -14,7 +14,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { PaymentStatus, PaymentType } from "@/types/enums";
-import { useEffect, useState } from "react";
+import { useState, useEffect } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
@@ -159,7 +159,7 @@ const UserPayments = () => {
         amount,
         client_id: clientId,
         description: description || "Solicitação de pagamento via PIX",
-        status: PaymentStatus.PENDING, // Use enum value instead of string literal
+        status: "PENDING", // Use string literal instead of enum
         pix_key_id: pixKeyId,
         // No need to include other fields that have defaults in the database
       };
@@ -219,10 +219,10 @@ const UserPayments = () => {
         amount,
         client_id: clientId,
         description: description || "Solicitação de pagamento via Boleto",
-        status: PaymentStatus.PENDING, // Use enum value instead of string literal
+        status: "PENDING", // Use string literal instead of enum
         document_url: documentUrl,
         due_date: dueDate,
-        payment_type: PaymentType.BOLETO,
+        payment_type: "BOLETO",
         pix_key_id: null // Add null pix_key_id to satisfy schema requirements
       };
 
@@ -261,8 +261,8 @@ const UserPayments = () => {
         amount,
         client_id: clientId,
         description: description || "Solicitação de pagamento via TED",
-        status: PaymentStatus.PENDING, // Use enum value instead of string literal
-        payment_type: PaymentType.TED,
+        status: "PENDING", // Use string literal instead of enum
+        payment_type: "TED",
         bank_info: bankInfo,
         pix_key_id: null // Add null pix_key_id to satisfy schema requirements
       };
