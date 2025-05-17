@@ -1,7 +1,6 @@
 
 import { useState } from "react";
 import { Client } from "@/types";
-import { Button } from "@/components/ui/button";
 import {
   Table,
   TableBody,
@@ -10,17 +9,10 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import {
-  EyeIcon,
-  PenIcon,
-  Trash2,
-  CreditCard,
-  User
-} from "lucide-react";
-import { Skeleton } from "@/components/ui/skeleton";
+import { Button } from "@/components/ui/button";
+import { Loader2, RefreshCw, EyeIcon, PenIcon, Trash2 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
-import { BalanceUpdateDialog } from "./BalanceUpdateDialog";
-import { cn } from "@/lib/utils";
+import { formatCurrency } from "@/lib/formatters";
 
 interface ClientsTableProps {
   clients: Client[];
@@ -37,136 +29,142 @@ const ClientsTable = ({
   onView,
   onEdit,
   onDelete,
-  onRefresh
+  onRefresh,
 }: ClientsTableProps) => {
-  const [selectedClient, setSelectedClient] = useState<Client | null>(null);
-  const [isBalanceDialogOpen, setIsBalanceDialogOpen] = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
 
-  const handleBalanceUpdate = (client: Client) => {
-    setSelectedClient(client);
-    setIsBalanceDialogOpen(true);
-  };
-
-  const handleBalanceSuccess = () => {
+  const handleRefresh = async () => {
     if (onRefresh) {
-      onRefresh();
+      setRefreshing(true);
+      await onRefresh();
+      setTimeout(() => setRefreshing(false), 500);
     }
   };
 
-  if (isLoading) {
-    return (
-      <div className="space-y-2">
-        {Array.from({ length: 5 }).map((_, index) => (
-          <div key={index} className="flex space-x-4">
-            <Skeleton className="h-12 w-full" />
-          </div>
-        ))}
-      </div>
-    );
-  }
+  const getStatusColor = (status: string | undefined) => {
+    if (!status) return "bg-gray-100 text-gray-800";
 
-  const formatBalance = (balance?: number) => {
-    if (balance === undefined || balance === null) return "R$ 0,00";
-    return `R$ ${balance.toFixed(2).replace('.', ',')}`;
+    switch (status.toLowerCase()) {
+      case "active":
+        return "bg-green-100 text-green-800";
+      case "inactive":
+        return "bg-red-100 text-red-800";
+      case "pending":
+        return "bg-yellow-100 text-yellow-800";
+      default:
+        return "bg-gray-100 text-gray-800";
+    }
   };
 
   return (
-    <>
-      <div className="rounded-md border max-w-full">
-        <div className="overflow-x-auto">
-          <Table>
-            <TableHeader>
+    <div className="rounded-md border overflow-hidden">
+      {onRefresh && (
+        <div className="flex justify-end p-2 bg-muted/50">
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={handleRefresh}
+            disabled={refreshing}
+          >
+            {refreshing ? (
+              <Loader2 className="h-4 w-4 animate-spin" />
+            ) : (
+              <RefreshCw className="h-4 w-4" />
+            )}
+            <span className="ml-2">Atualizar</span>
+          </Button>
+        </div>
+      )}
+
+      <div className="overflow-x-auto">
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead className="w-[250px]">Nome</TableHead>
+              <TableHead className="hidden md:table-cell">Contato</TableHead>
+              <TableHead className="hidden md:table-cell">Email</TableHead>
+              <TableHead className="hidden lg:table-cell">Status</TableHead>
+              <TableHead className="hidden lg:table-cell text-right">Saldo</TableHead>
+              <TableHead className="text-right">Ações</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {isLoading ? (
               <TableRow>
-                <TableHead className="w-4 px-2">
-                  <User className="h-4 w-4" />
-                </TableHead>
-                <TableHead>Nome</TableHead>
-                <TableHead>Contato</TableHead>
-                <TableHead className="hidden md:table-cell">Email</TableHead>
-                <TableHead className="hidden md:table-cell">Telefone</TableHead>
-                <TableHead className="hidden lg:table-cell">Status</TableHead>
-                <TableHead className="hidden sm:table-cell">Saldo</TableHead>
-                <TableHead className="text-right">Ações</TableHead>
+                <TableCell colSpan={6} className="h-24 text-center">
+                  <div className="flex justify-center items-center">
+                    <Loader2 className="h-6 w-6 animate-spin opacity-50" />
+                    <span className="ml-2">Carregando clientes...</span>
+                  </div>
+                </TableCell>
               </TableRow>
-            </TableHeader>
-            <TableBody>
-              {clients.length === 0 ? (
-                <TableRow>
-                  <TableCell colSpan={8} className="text-center py-10 text-muted-foreground">
-                    Nenhum cliente encontrado.
+            ) : clients.length === 0 ? (
+              <TableRow>
+                <TableCell colSpan={6} className="h-24 text-center">
+                  Nenhum cliente encontrado.
+                </TableCell>
+              </TableRow>
+            ) : (
+              clients.map((client) => (
+                <TableRow key={client.id}>
+                  <TableCell className="font-medium">
+                    {client.business_name || client.company_name}
+                  </TableCell>
+                  <TableCell className="hidden md:table-cell">
+                    {client.contact_name}
+                  </TableCell>
+                  <TableCell className="hidden md:table-cell">
+                    {client.email}
+                  </TableCell>
+                  <TableCell className="hidden lg:table-cell">
+                    <Badge
+                      variant="secondary"
+                      className={getStatusColor(client.status)}
+                    >
+                      {client.status === "active" && "Ativo"}
+                      {client.status === "inactive" && "Inativo"}
+                      {!client.status && "Desconhecido"}
+                    </Badge>
+                  </TableCell>
+                  <TableCell className="hidden lg:table-cell text-right">
+                    {formatCurrency(client.balance || 0)}
+                  </TableCell>
+                  <TableCell className="text-right">
+                    <div className="flex justify-end gap-1">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => onView(client)}
+                        title="Visualizar"
+                      >
+                        <EyeIcon className="h-4 w-4" />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => onEdit(client)}
+                        title="Editar"
+                      >
+                        <PenIcon className="h-4 w-4" />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                        onClick={() => onDelete(client)}
+                        title="Excluir"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </div>
                   </TableCell>
                 </TableRow>
-              ) : (
-                clients.map((client) => (
-                  <TableRow key={client.id}>
-                    <TableCell className="px-2">
-                      {client.user_id && (
-                        <Badge variant="outline" className="h-5 w-5 p-0 flex items-center justify-center rounded-full">
-                          <User className="h-3 w-3" />
-                        </Badge>
-                      )}
-                    </TableCell>
-                    <TableCell className="font-medium">{client.business_name || "Nome não informado"}</TableCell>
-                    <TableCell>{client.contact_name}</TableCell>
-                    <TableCell className="hidden md:table-cell">{client.email}</TableCell>
-                    <TableCell className="hidden md:table-cell">{client.phone}</TableCell>
-                    <TableCell className="hidden lg:table-cell">
-                      <Badge variant={client.status === 'active' ? 'default' : 'secondary'}>
-                        {client.status === 'active' ? 'Ativo' : 'Inativo'}
-                      </Badge>
-                    </TableCell>
-                    <TableCell className="hidden sm:table-cell">
-                      <span className={cn(
-                        "font-medium",
-                        (client.balance || 0) > 0 ? "text-green-600 dark:text-green-400" : "text-muted-foreground"
-                      )}>
-                        {formatBalance(client.balance)}
-                      </span>
-                    </TableCell>
-                    <TableCell className="text-right">
-                      <div className="flex justify-end gap-2">
-                        <Button 
-                          variant="ghost" 
-                          size="icon" 
-                          onClick={() => handleBalanceUpdate(client)} 
-                          title="Gerenciar Saldo"
-                        >
-                          <CreditCard className="h-4 w-4" />
-                        </Button>
-                        <Button variant="ghost" size="icon" onClick={() => onView(client)} title="Visualizar">
-                          <EyeIcon className="h-4 w-4" />
-                        </Button>
-                        <Button variant="ghost" size="icon" onClick={() => onEdit(client)} title="Editar">
-                          <PenIcon className="h-4 w-4" />
-                        </Button>
-                        <Button 
-                          variant="ghost" 
-                          size="icon" 
-                          className="text-destructive hover:text-destructive/80"
-                          onClick={() => onDelete(client)}
-                          title="Excluir"
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
-                      </div>
-                    </TableCell>
-                  </TableRow>
-                ))
-              )}
-            </TableBody>
-          </Table>
-        </div>
+              ))
+            )}
+          </TableBody>
+        </Table>
       </div>
-      
-      {selectedClient && (
-        <BalanceUpdateDialog 
-          open={isBalanceDialogOpen}
-          onOpenChange={setIsBalanceDialogOpen}
-          client={selectedClient}
-          onSuccess={handleBalanceSuccess}
-        />
-      )}
-    </>
+    </div>
   );
 };
 

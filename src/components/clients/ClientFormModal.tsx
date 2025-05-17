@@ -11,7 +11,7 @@ import {
 } from "@/components/ui/dialog";
 import ClientForm, { ClientFormValues } from "./ClientForm";
 import { v4 as uuidv4 } from "uuid";
-import * as bcrypt from "bcryptjs";
+import bcrypt from "bcryptjs";
 
 export interface ClientFormModalProps {
   isOpen: boolean;
@@ -78,8 +78,9 @@ const ClientFormModal = ({
       }
 
       // 3. Criar usuário para o cliente
-      const firstName = data.contact_name.split(' ')[0];
-      const lastFourDigits = data.phone.replace(/\D/g, '').slice(-4);
+      const firstName = data.contact_name?.split(' ')[0] || '';
+      const phoneDigits = data.phone?.replace(/\D/g, '') || '';
+      const lastFourDigits = phoneDigits.slice(-4);
       const initialPassword = `${firstName}${lastFourDigits}`;
       
       // Hash a senha usando bcrypt
