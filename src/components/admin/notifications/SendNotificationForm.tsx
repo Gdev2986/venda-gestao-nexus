@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -101,7 +102,7 @@ const SendNotificationForm = ({ onClose }: SendNotificationFormProps) => {
               user_id: user.id,
               title: values.title,
               message: values.message,
-              type: values.type as string,
+              type: values.type,
               data: { role: values.role }
             });
             

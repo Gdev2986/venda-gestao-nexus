@@ -33,7 +33,10 @@ export interface ClientInfo {
 }
 
 export interface BankInfo {
-  bank_name?: string;
+  bank_name: string;
+  branch_number: string;
+  account_number: string;
+  account_holder: string;
   bank_code?: string;
   agency?: string;
   account?: string;
@@ -50,10 +53,10 @@ export interface PaymentData {
   pix_key_id?: string;
   created_at: string;
   updated_at: string;
-  approved_at?: string | null;
-  approved_by?: string | null;
-  receipt_url?: string | null;
-  rejection_reason?: string | null;
+  approved_at?: string;
+  approved_by?: string;
+  receipt_url?: string;
+  rejection_reason?: string;
   client_id: string;
   payment_type?: PaymentType | string;
   pix_key?: PixKeyInfo | PixKey;
@@ -70,6 +73,7 @@ export type PaymentRequest = PaymentData;
 export interface Client {
   id: string;
   business_name: string;
+  company_name?: string; // For compatibility
   document?: string;
   email?: string;
   phone?: string;
@@ -103,4 +107,5 @@ export interface PixKey {
   isDefault?: boolean;
   is_active?: boolean;
   bank_name?: string;
+  is_default?: boolean; // Backward compatibility
 }
