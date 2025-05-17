@@ -1,9 +1,14 @@
 
 import { Payment, PaymentStatus, PaymentType } from "@/types";
-import { PaymentData } from "@/hooks/payments/payment.types";
+import { PaymentData, PaymentRequestStatus as ImportedPaymentRequestStatus } from "@/hooks/payments/payment.types";
 
 /**
- * Converts a payment from the database to the format expected by the UI
+ * Type for payment request status
+ */
+type PaymentRequestStatus = ImportedPaymentRequestStatus;
+
+/**
+ * Converts a payment from the database to the UI payment format
  */
 export const convertDbPaymentToUiPayment = (dbPayment: any): PaymentData => {
   return {
@@ -35,6 +40,8 @@ export const convertDbPaymentToUiPayment = (dbPayment: any): PaymentData => {
 };
 
 /**
- * Type for payment request status
+ * Convert a payment to the payment request format
+ * (Added for compatibility with existing code)
  */
-type PaymentRequestStatus = 'PENDING' | 'APPROVED' | 'REJECTED' | 'PAID' | 'PROCESSING';
+export const convertToPaymentRequest = convertDbPaymentToUiPayment;
+

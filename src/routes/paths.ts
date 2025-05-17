@@ -51,6 +51,7 @@ export const LOGISTICS_PATHS = {
   SUPPORT: "/logistics/support",
   SETTINGS: "/logistics/settings",
   CALENDAR: "/logistics/calendar",
+  CLIENTS: "/logistics/clients",
 };
 
 // Paths for financial routes
@@ -70,6 +71,8 @@ export const PARTNER_PATHS = {
   REPORTS: "/partner/reports",
   SALES: "/partner/sales",
   SETTINGS: "/partner/settings",
+  SUPPORT: "/partner/support",
+  HELP: "/partner/help",
 };
 
 // Combined paths for easier access

@@ -21,3 +21,9 @@ export const getDashboardRedirect = (role: UserRole | string): string => {
       return PATHS.USER.DASHBOARD;
   }
 };
+
+/**
+ * Alias for getDashboardRedirect to maintain compatibility with existing code
+ */
+export const getDashboardPath = getDashboardRedirect;
+
