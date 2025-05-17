@@ -33,11 +33,9 @@ export enum NotificationType {
   COMMISSION = "COMMISSION",
   SYSTEM = "SYSTEM",
   GENERAL = "GENERAL",
-  SALE = "SALE",
-  BALANCE_UPDATE = "BALANCE_UPDATE",
-  PAYMENT_REQUEST = "PAYMENT_REQUEST",
-  PAYMENT_APPROVED = "PAYMENT_APPROVED",
-  PAYMENT_REJECTED = "PAYMENT_REJECTED"
+  SALE = "SALE"
+  // Removed extended notification types to match database schema
+  // Database only supports the types above
 }
 
 export enum PaymentAction {
