@@ -1,50 +1,42 @@
 
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
-import { Loader2 } from "lucide-react";
-import { useToast } from "@/hooks/use-toast";
+import { Loader2, Upload } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/hooks/use-toast";
 
-export interface PaymentReceiptUploaderProps {
+interface PaymentReceiptUploaderProps {
   paymentId: string;
-  onSuccess?: () => void;
-  onCancel?: () => void;
+  onSuccess: (url: string) => void;
 }
 
-export function PaymentReceiptUploader({
-  paymentId,
-  onSuccess,
-  onCancel
-}: PaymentReceiptUploaderProps) {
-  const [file, setFile] = useState<File | null>(null);
-  const [notes, setNotes] = useState<string>("");
+export function PaymentReceiptUploader({ paymentId, onSuccess }: PaymentReceiptUploaderProps) {
   const [isUploading, setIsUploading] = useState(false);
-  const [preview, setPreview] = useState<string | null>(null);
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const { toast } = useToast();
-  
+
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const selectedFile = e.target.files?.[0];
-    if (!selectedFile) return;
-    
-    setFile(selectedFile);
-    
-    // Create preview
-    const reader = new FileReader();
-    reader.onload = (event) => {
-      setPreview(event.target?.result as string);
-    };
-    reader.readAsDataURL(selectedFile);
+    if (e.target.files && e.target.files.length > 0) {
+      const file = e.target.files[0];
+      if (file.size > 5 * 1024 * 1024) { // 5MB limit
+        toast({
+          title: "Arquivo muito grande",
+          description: "O tamanho máximo permitido é 5MB.",
+          variant: "destructive"
+        });
+        return;
+      }
+      
+      setSelectedFile(file);
+    }
   };
-  
-  const handleSubmit = async () => {
-    if (!file) {
+
+  const handleUpload = async () => {
+    if (!selectedFile) {
       toast({
-        variant: "destructive",
-        title: "Erro",
-        description: "Por favor, selecione um arquivo para enviar."
+        title: "Nenhum arquivo selecionado",
+        description: "Por favor, selecione um comprovante para enviar.",
+        variant: "destructive"
       });
       return;
     }
@@ -53,116 +45,95 @@ export function PaymentReceiptUploader({
     
     try {
       // Upload file to Supabase Storage
-      const timestamp = Date.now();
-      const fileExt = file.name.split('.').pop();
-      const fileName = `receipt_${paymentId}_${timestamp}.${fileExt}`;
+      const fileExt = selectedFile.name.split('.').pop();
+      const fileName = `${paymentId}_${Date.now()}.${fileExt}`;
       const filePath = `receipts/${fileName}`;
       
-      const { data: uploadData, error: uploadError } = await supabase
-        .storage
+      const { error: uploadError, data } = await supabase.storage
         .from('payment_receipts')
-        .upload(filePath, file);
+        .upload(filePath, selectedFile, {
+          cacheControl: '3600',
+          upsert: true
+        });
+        
+      if (uploadError) throw uploadError;
       
-      if (uploadError) {
-        throw new Error(`Erro no upload: ${uploadError.message}`);
-      }
-      
-      // Get public URL for the uploaded file
-      const { data: urlData } = supabase
-        .storage
+      // Get the public URL
+      const { data: { publicUrl } } = supabase.storage
         .from('payment_receipts')
         .getPublicUrl(filePath);
-      
-      // Update payment record with receipt URL
+        
+      // Update the payment record with the receipt URL
       const { error: updateError } = await supabase
         .from('payment_requests')
         .update({ 
-          receipt_url: urlData.publicUrl,
-          status: 'PAID',
-          notes: notes || null
+          receipt_url: publicUrl,
+          status: "PAID" // Update status to PAID
         })
         .eq('id', paymentId);
-      
-      if (updateError) {
-        throw new Error(`Erro ao atualizar pagamento: ${updateError.message}`);
-      }
+        
+      if (updateError) throw updateError;
       
       toast({
         title: "Comprovante enviado",
         description: "O comprovante foi enviado com sucesso."
       });
       
-      onSuccess?.();
+      onSuccess(publicUrl);
     } catch (error: any) {
+      console.error("Error uploading receipt:", error);
       toast({
-        variant: "destructive",
-        title: "Erro",
-        description: error.message || "Não foi possível enviar o comprovante."
+        title: "Erro ao enviar comprovante",
+        description: error.message || "Não foi possível enviar o comprovante.",
+        variant: "destructive"
       });
     } finally {
       setIsUploading(false);
     }
   };
-  
+
   return (
     <div className="space-y-4">
-      <div>
-        <Label htmlFor="receipt">
-          Comprovante de Pagamento
-        </Label>
-        <div className="mt-2">
-          <Input
+      <div className="flex flex-col space-y-2">
+        <label htmlFor="receipt" className="text-sm font-medium">
+          Comprovante de Pagamento (PDF, JPG ou PNG)
+        </label>
+        
+        <div className="flex items-center space-x-2">
+          <input
             id="receipt"
             type="file"
-            accept="image/*,.pdf"
+            accept=".pdf,.jpg,.jpeg,.png"
             onChange={handleFileChange}
+            className="block w-full text-sm text-gray-500
+                      file:mr-4 file:py-2 file:px-4
+                      file:rounded file:border-0
+                      file:text-sm file:font-semibold
+                      file:bg-primary/10 file:text-primary
+                      hover:file:bg-primary/20"
             disabled={isUploading}
           />
-          
-          {preview && (
-            <div className="mt-2 border rounded-md overflow-hidden">
-              <img
-                src={preview}
-                alt="Prévia do comprovante"
-                className="w-full h-auto max-h-[200px] object-contain"
-              />
-            </div>
-          )}
         </div>
+        
+        {selectedFile && (
+          <p className="text-sm text-muted-foreground">
+            Arquivo selecionado: {selectedFile.name}
+          </p>
+        )}
       </div>
       
-      <div>
-        <Label htmlFor="notes">
-          Observações (opcional)
-        </Label>
-        <Textarea
-          id="notes"
-          placeholder="Adicione informações sobre o pagamento..."
-          value={notes}
-          onChange={(e) => setNotes(e.target.value)}
-          disabled={isUploading}
-        />
-      </div>
-      
-      <div className="flex justify-end space-x-2">
-        <Button
-          variant="outline"
-          onClick={onCancel}
-          disabled={isUploading}
-        >
-          Cancelar
-        </Button>
-        <Button
-          onClick={handleSubmit}
-          disabled={isUploading || !file}
-        >
+      <div className="flex justify-end">
+        <Button onClick={handleUpload} disabled={!selectedFile || isUploading}>
           {isUploading ? (
             <>
               <Loader2 className="mr-2 h-4 w-4 animate-spin" />
               Enviando...
             </>
           ) : (
-            "Enviar Comprovante"
+            <>
+              <Upload className="mr-2 h-4 w-4" />
+              Enviar Comprovante
+            </>
           )}
         </Button>
       </div>

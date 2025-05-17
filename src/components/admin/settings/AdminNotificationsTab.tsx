@@ -1,111 +1,96 @@
 
-import { useState } from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Label } from "@/components/ui/label";
-import { Switch } from "@/components/ui/switch";
-import { Button } from "@/components/ui/button";
-import { useToast } from "@/hooks/use-toast";
-import SendNotificationForm from "@/components/admin/notifications/SendNotificationForm";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import React from 'react';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
+import { Button } from '@/components/ui/button';
+import { Label } from '@/components/ui/label';
+import { Switch } from '@/components/ui/switch';
+import { SendNotificationForm } from '@/components/admin/notifications/SendNotificationForm';
 
-export const AdminNotificationsTab = () => {
-  const [systemNotifications, setSystemNotifications] = useState(true);
-  const [paymentNotifications, setPaymentNotifications] = useState(true);
-  const [userNotifications, setUserNotifications] = useState(true);
-  const [showSendForm, setShowSendForm] = useState(false);
-  const { toast } = useToast();
-
-  const handleSaveSettings = () => {
-    toast({
-      title: "Configurações salvas",
-      description: "As configurações de notificações foram atualizadas."
-    });
-  };
-
-  const handleCloseForm = () => {
-    setShowSendForm(false);
-  };
-
+export default function AdminNotificationsTab() {
   return (
-    <div className="grid gap-6">
-      <Tabs defaultValue="settings" className="space-y-4">
-        <TabsList>
-          <TabsTrigger value="settings">Configurações</TabsTrigger>
-          <TabsTrigger value="send">Enviar Notificação</TabsTrigger>
+    <div className="space-y-6">
+      <h2 className="text-2xl font-bold tracking-tight">Notificações e Alertas</h2>
+      
+      <Tabs defaultValue="send">
+        <TabsList className="mb-4">
+          <TabsTrigger value="send">Enviar Notificações</TabsTrigger>
+          <TabsTrigger value="config">Configurações</TabsTrigger>
+          <TabsTrigger value="templates">Templates</TabsTrigger>
         </TabsList>
         
-        <TabsContent value="settings">
+        <TabsContent value="send">
+          <SendNotificationForm />
+        </TabsContent>
+        
+        <TabsContent value="config">
           <Card>
             <CardHeader>
-              <CardTitle>Configurações de Notificações</CardTitle>
+              <CardTitle>Configurações de Notificação</CardTitle>
+              <CardDescription>Configure como e quando as notificações são enviadas</CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
-              <div className="flex items-center justify-between">
-                <div>
-                  <Label htmlFor="system-notifications" className="text-base font-medium">
-                    Notificações do Sistema
-                  </Label>
-                  <p className="text-sm text-muted-foreground">
-                    Receba alertas sobre atualizações do sistema e manutenção
-                  </p>
-                </div>
-                <Switch 
-                  id="system-notifications" 
-                  checked={systemNotifications} 
-                  onCheckedChange={setSystemNotifications}
-                />
+              <div className="flex items-center justify-between space-x-2">
+                <Label htmlFor="auto-notifications" className="flex flex-col space-y-1">
+                  <span>Notificações automáticas</span>
+                  <span className="font-normal text-sm text-muted-foreground">
+                    Enviar notificações automáticas para eventos do sistema
+                  </span>
+                </Label>
+                <Switch id="auto-notifications" defaultChecked />
               </div>
               
-              <div className="flex items-center justify-between">
-                <div>
-                  <Label htmlFor="payment-notifications" className="text-base font-medium">
-                    Notificações de Pagamentos
-                  </Label>
-                  <p className="text-sm text-muted-foreground">
-                    Receba alertas sobre novos pagamentos e solicitações
-                  </p>
-                </div>
-                <Switch 
-                  id="payment-notifications" 
-                  checked={paymentNotifications} 
-                  onCheckedChange={setPaymentNotifications}
-                />
+              <div className="flex items-center justify-between space-x-2">
+                <Label htmlFor="payment-notifications" className="flex flex-col space-y-1">
+                  <span>Notificações de pagamento</span>
+                  <span className="font-normal text-sm text-muted-foreground">
+                    Notificar clientes sobre mudanças no status de pagamento
+                  </span>
+                </Label>
+                <Switch id="payment-notifications" defaultChecked />
               </div>
               
-              <div className="flex items-center justify-between">
-                <div>
-                  <Label htmlFor="user-notifications" className="text-base font-medium">
-                    Notificações de Usuários
-                  </Label>
-                  <p className="text-sm text-muted-foreground">
-                    Receba alertas sobre novas contas e atualizações de perfil
-                  </p>
-                </div>
-                <Switch 
-                  id="user-notifications" 
-                  checked={userNotifications} 
-                  onCheckedChange={setUserNotifications}
-                />
+              <div className="flex items-center justify-between space-x-2">
+                <Label htmlFor="system-notifications" className="flex flex-col space-y-1">
+                  <span>Notificações de sistema</span>
+                  <span className="font-normal text-sm text-muted-foreground">
+                    Enviar notificações sobre manutenção do sistema
+                  </span>
+                </Label>
+                <Switch id="system-notifications" defaultChecked />
               </div>
-              
-              <Button onClick={handleSaveSettings} className="mt-4">
-                Salvar Configurações
-              </Button>
             </CardContent>
           </Card>
         </TabsContent>
         
-        <TabsContent value="send">
+        <TabsContent value="templates">
           <Card>
             <CardHeader>
-              <CardTitle>Enviar Nova Notificação</CardTitle>
+              <CardTitle>Templates de Notificação</CardTitle>
+              <CardDescription>Gerencie os templates de notificações do sistema</CardDescription>
             </CardHeader>
-            <CardContent>
-              <SendNotificationForm onClose={handleCloseForm} />
+            <CardContent className="space-y-4">
+              <p className="text-muted-foreground">
+                Os templates de notificação permitem padronizar as mensagens enviadas pelo sistema.
+              </p>
+              <div className="space-y-4">
+                <Button variant="outline" className="w-full justify-start">
+                  Boas-vindas
+                </Button>
+                <Button variant="outline" className="w-full justify-start">
+                  Pagamento recebido
+                </Button>
+                <Button variant="outline" className="w-full justify-start">
+                  Pagamento aprovado
+                </Button>
+                <Button variant="outline" className="w-full justify-start">
+                  Pagamento rejeitado
+                </Button>
+              </div>
             </CardContent>
           </Card>
         </TabsContent>
       </Tabs>
     </div>
   );
-};
+}

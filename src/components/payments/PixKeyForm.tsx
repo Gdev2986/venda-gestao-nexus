@@ -14,6 +14,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
 import { Loader2 } from "lucide-react";
+import { PixKeyType } from "@/types/payment.types";
 
 interface PixKeyFormProps {
   onSuccess?: () => void;
@@ -21,7 +22,7 @@ interface PixKeyFormProps {
 
 export function PixKeyForm({ onSuccess }: PixKeyFormProps) {
   const [isOpen, setIsOpen] = useState(false);
-  const [type, setType] = useState<string>("");
+  const [type, setType] = useState<PixKeyType | "">("");
   const [key, setKey] = useState("");
   const [name, setName] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -56,7 +57,7 @@ export function PixKeyForm({ onSuccess }: PixKeyFormProps) {
         .from('pix_keys')
         .insert({
           user_id: user.id,
-          type,
+          type: type as PixKeyType,
           key,
           name,
           is_default: false // New keys are not default by default
@@ -105,7 +106,12 @@ export function PixKeyForm({ onSuccess }: PixKeyFormProps) {
       
       <div className="space-y-2">
         <Label htmlFor="key-type">Tipo de chave</Label>
-        <Select value={type} onValueChange={setType} required disabled={isSubmitting}>
+        <Select
+          value={type}
+          onValueChange={(value) => setType(value as PixKeyType)}
+          required
+          disabled={isSubmitting}
+        >
           <SelectTrigger id="key-type">
             <SelectValue placeholder="Selecione o tipo de chave" />
           </SelectTrigger>

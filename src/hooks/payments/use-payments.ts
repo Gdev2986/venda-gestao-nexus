@@ -1,6 +1,6 @@
 
 import { useState, useEffect } from "react";
-import { Payment } from "@/types/payment.types";
+import { Payment, PaymentRequest } from "@/types/payment.types";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
@@ -66,8 +66,7 @@ export function usePayments(): UsePaymentsReturn {
             id, 
             key,
             type,
-            name,
-            owner_name
+            name
           )
         `)
         .eq('client_id', clientData.client_id)
@@ -78,25 +77,31 @@ export function usePayments(): UsePaymentsReturn {
       }
 
       // Transform the data to match the Payment type
-      const transformedPayments = (data || []).map(payment => ({
-        id: payment.id,
-        amount: payment.amount,
-        description: payment.description || '',
-        status: payment.status as PaymentStatus,
-        created_at: payment.created_at,
-        updated_at: payment.updated_at,
-        approved_at: payment.approved_at,
-        approved_by: payment.approved_by,
-        receipt_url: payment.receipt_url,
-        rejection_reason: payment.rejection_reason,
-        client_id: payment.client_id,
-        pix_key: payment.pix_key ? {
+      const transformedPayments: Payment[] = (data || []).map(payment => {
+        // Make sure pix_key has all required fields
+        const pixKey = payment.pix_key ? {
           id: payment.pix_key.id,
           key: payment.pix_key.key,
           type: payment.pix_key.type || '',
-          owner_name: payment.pix_key.owner_name || payment.pix_key.name || ''
-        } : undefined
-      }));
+          owner_name: payment.pix_key.name || ''
+        } : undefined;
+
+        return {
+          id: payment.id,
+          client_id: payment.client_id,
+          amount: payment.amount,
+          description: payment.description || '',
+          status: payment.status,
+          created_at: payment.created_at,
+          updated_at: payment.updated_at,
+          approved_at: payment.approved_at,
+          approved_by: payment.approved_by,
+          receipt_url: payment.receipt_url,
+          rejection_reason: payment.rejection_reason,
+          pix_key: pixKey,
+          type: payment.status === 'PAID' ? 'deposit' : 'withdrawal' // Mock type for filtering
+        };
+      });
 
       setPayments(transformedPayments);
     } catch (err: any) {
@@ -104,8 +109,8 @@ export function usePayments(): UsePaymentsReturn {
       setError(err instanceof Error ? err : new Error(err.message || 'Unknown error'));
       toast({
         variant: "destructive",
-        title: "Erro ao carregar pagamentos",
-        description: err.message || "Não foi possível carregar seus pagamentos"
+        title: "Error",
+        description: "Failed to fetch payment data"
       });
     } finally {
       setIsLoading(false);

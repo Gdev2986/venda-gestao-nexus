@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useUser } from "@/hooks/use-user";
@@ -8,7 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { PaymentStatus, PaymentType } from "@/types/enums";
+import { PaymentStatus } from "@/types/enums";
 import { formatCurrency } from "@/lib/utils";
 import { Loader2, AlertCircle } from "lucide-react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
@@ -57,6 +58,19 @@ const UserPayments = () => {
       const amountValue = parseFloat(amount);
       
       if (activeTab === "deposit") {
+        // Get the first available pix key id
+        const pixKeyId = pixKeys && pixKeys.length > 0 ? pixKeys[0].id : null;
+        
+        if (!pixKeyId) {
+          toast({
+            title: "Chave PIX necessária",
+            description: "Adicione uma chave PIX antes de solicitar um depósito.",
+            variant: "destructive",
+          });
+          setIsSubmitting(false);
+          return;
+        }
+        
         // Create a deposit request
         const { data, error } = await supabase
           .from("payment_requests")
@@ -64,9 +78,8 @@ const UserPayments = () => {
             client_id: user?.client_id,
             amount: amountValue,
             description: description || "Depósito via PIX",
-            type: PaymentType.PIX,
             status: "PENDING",
-            requested_by: user?.id,
+            pix_key_id: pixKeyId
           })
           .select()
           .single();
@@ -78,14 +91,14 @@ const UserPayments = () => {
           paymentId: data.id,
           amount: amountValue,
           description: description || "Depósito via PIX",
-          clientId: user?.client_id || "",
+          clientId: user?.client_id || ""
         });
 
         if (pixResponse.error) throw new Error(pixResponse.error);
 
         toast({
           title: "Solicitação enviada",
-          description: "Sua solicitação de depósito foi enviada com sucesso.",
+          description: "Sua solicitação de depósito foi enviada com sucesso."
         });
 
         // Reset form and refresh data
@@ -98,8 +111,9 @@ const UserPayments = () => {
           toast({
             title: "Descrição obrigatória",
             description: "Por favor, informe uma descrição para o saque.",
-            variant: "destructive",
+            variant: "destructive"
           });
+          setIsSubmitting(false);
           return;
         }
 
@@ -108,8 +122,22 @@ const UserPayments = () => {
           toast({
             title: "Saldo insuficiente",
             description: "Você não possui saldo suficiente para esta operação.",
+            variant: "destructive"
+          });
+          setIsSubmitting(false);
+          return;
+        }
+        
+        // Get the first available pix key id
+        const pixKeyId = pixKeys && pixKeys.length > 0 ? pixKeys[0].id : null;
+        
+        if (!pixKeyId) {
+          toast({
+            title: "Chave PIX necessária",
+            description: "Adicione uma chave PIX antes de solicitar um saque.",
             variant: "destructive",
           });
+          setIsSubmitting(false);
           return;
         }
 
@@ -119,16 +147,15 @@ const UserPayments = () => {
             client_id: user?.client_id,
             amount: amountValue,
             description: description,
-            type: "withdrawal",
             status: "PENDING",
-            requested_by: user?.id,
+            pix_key_id: pixKeyId
           });
 
         if (error) throw error;
 
         toast({
           title: "Solicitação enviada",
-          description: "Sua solicitação de saque foi enviada com sucesso.",
+          description: "Sua solicitação de saque foi enviada com sucesso."
         });
 
         // Reset form and refresh data
@@ -141,7 +168,7 @@ const UserPayments = () => {
       toast({
         title: "Erro na solicitação",
         description: error.message || "Ocorreu um erro ao processar sua solicitação.",
-        variant: "destructive",
+        variant: "destructive"
       });
     } finally {
       setIsSubmitting(false);

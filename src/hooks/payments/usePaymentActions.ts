@@ -32,7 +32,7 @@ export const usePaymentActions = () => {
         const { error: updateError } = await supabase
           .from("payment_requests")
           .update({ 
-            status: PaymentStatus.APPROVED,
+            status: "APPROVED", // Use string literal instead of enum
             approved_at: new Date().toISOString(),
             approved_by: user.id
           })
@@ -50,7 +50,7 @@ export const usePaymentActions = () => {
         const { error: updateError } = await supabase
           .from("payment_requests")
           .update({ 
-            status: PaymentStatus.REJECTED,
+            status: "REJECTED", // Use string literal instead of enum
             rejection_reason: comment || null
           })
           .eq("id", paymentId);
@@ -83,7 +83,7 @@ export const usePaymentActions = () => {
         const { error: updateError } = await supabase
           .from("payment_requests")
           .update({ 
-            status: PaymentStatus.PAID
+            status: "PAID" // Use string literal instead of enum
           })
           .eq("id", paymentId);
 

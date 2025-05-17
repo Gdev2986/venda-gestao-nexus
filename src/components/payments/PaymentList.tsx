@@ -103,7 +103,7 @@ export function PaymentList({ payments, onUpdate }: PaymentListProps) {
       case PaymentStatus.PENDING:
         return <Badge variant="outline">Pendente</Badge>;
       case PaymentStatus.APPROVED:
-        return <Badge variant="success">Aprovado</Badge>;
+        return <Badge variant="default">Aprovado</Badge>;
       case PaymentStatus.REJECTED:
         return <Badge variant="destructive">Rejeitado</Badge>;
       case PaymentStatus.PAID:
@@ -138,7 +138,7 @@ export function PaymentList({ payments, onUpdate }: PaymentListProps) {
               <h3 className="text-sm font-medium">Data</h3>
               <p className="text-sm">{formatDate(payment.created_at)}</p>
               <div className="mt-1">
-                {getStatusBadge(payment.status)}
+                {getStatusBadge(payment.status as PaymentStatus)}
               </div>
             </div>
             
@@ -160,7 +160,7 @@ export function PaymentList({ payments, onUpdate }: PaymentListProps) {
                     Ver detalhes
                   </DropdownMenuItem>
                   
-                  {payment.status === PaymentStatus.APPROVED && (
+                  {(payment.status as PaymentStatus) === PaymentStatus.APPROVED && (
                     <>
                       <DropdownMenuSeparator />
                       <DropdownMenuItem onClick={() => handleAction(payment.id, PaymentAction.SEND_RECEIPT)}>

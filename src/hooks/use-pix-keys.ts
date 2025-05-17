@@ -47,10 +47,10 @@ export function usePixKeys(): UsePixKeysReturn {
         key_type: key.type, // For compatibility
         user_id: key.user_id,
         name: key.name || '',
-        owner_name: key.owner_name || key.name || '',
+        owner_name: key.name || '', // Use name as owner_name
         isDefault: key.is_default || false,
-        is_active: key.is_active !== false, // Default to true if not specified
-        bank_name: key.bank_name || 'Default Bank'
+        is_active: true, // Default to true
+        bank_name: 'Default Bank' // Provide default value
       }));
 
       setPixKeys(transformedKeys);

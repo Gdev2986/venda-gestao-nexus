@@ -25,14 +25,14 @@ export interface PaymentRequest {
 export interface PixKey {
   id: string;
   key: string;
-  type: string;
+  type: string; // Make type required to match with expected usage
   key_type?: string;
   client_id?: string;
   user_id?: string;
   created_at?: string;
   updated_at?: string;
   name?: string;
-  owner_name: string;
+  owner_name: string; // Make owner_name required to match with expected usage
   isDefault?: boolean;
   is_active?: boolean;
   bank_name?: string;
