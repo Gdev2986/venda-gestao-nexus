@@ -5,15 +5,15 @@ export interface PaymentRequest {
   id: string;
   client_id: string;
   amount: number;
-  description?: string; // Optional to match the database
+  description: string; // Making this required to match with hooks/payments/payment.types
   status: PaymentRequestStatus;
   pix_key_id?: string;
   created_at: string;
   updated_at: string;
-  approved_at: string | null;
-  approved_by: string | null;
-  receipt_url: string | null;
-  rejection_reason: string | null;
+  approved_at?: string | null;
+  approved_by?: string | null;
+  receipt_url?: string | null;
+  rejection_reason?: string | null;
   pix_key?: PixKey;
   client?: Client;
   payment_type?: string;
@@ -57,7 +57,7 @@ export interface Client {
   state?: string;
   zip?: string;
   fee_plan_id?: string;
-  user_id?: string; // Added to match database schema
+  user_id?: string;
 }
 
 // Add the missing PaymentData export that uses the PaymentRequest interface

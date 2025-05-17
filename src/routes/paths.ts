@@ -11,16 +11,17 @@ export const AUTH_PATHS = {
 export const ADMIN_PATHS = {
   DASHBOARD: "/admin",
   CLIENTS: "/admin/clients",
-  CLIENT_DETAILS: (id: string) => `/admin/clients/${id}`,
+  CLIENT_DETAILS: (id: string = ":id") => `/admin/clients/${id}`,
   CLIENT_NEW: "/admin/clients/new",
   MACHINES: "/admin/machines",
-  MACHINE_DETAILS: (id: string) => `/admin/machines/${id}`,
+  MACHINE_DETAILS: (id: string = ":id") => `/admin/machines/${id}`,
   MACHINE_NEW: "/admin/machines/new",
   PARTNERS: "/admin/partners",
-  PARTNER_DETAILS: (id: string) => `/admin/partners/${id}`,
+  PARTNER_DETAILS: (id: string = ":id") => `/admin/partners/${id}`,
   PARTNER_NEW: "/admin/partners/new",
   PAYMENTS: "/admin/payments",
-  PAYMENT_DETAILS: (id: string) => `/admin/payments/${id}`,
+  PAYMENT_DETAILS: (id: string = ":id") => `/admin/payments/${id}`,
+  PAYMENT_NEW: "/admin/payments/new",
   SETTINGS: "/admin/settings",
   SUPPORT: "/admin/support",
   USER_MANAGEMENT: "/admin/users",
@@ -28,6 +29,7 @@ export const ADMIN_PATHS = {
   REPORTS: "/admin/reports",
   FEES: "/admin/fees",
   SALES: "/admin/sales",
+  LOGISTICS: "/admin/logistics",
 };
 
 // Paths for user routes
@@ -44,6 +46,7 @@ export const USER_PATHS = {
 export const LOGISTICS_PATHS = {
   DASHBOARD: "/logistics",
   MACHINES: "/logistics/machines",
+  MACHINE_NEW: "/logistics/machines/new",
   CLIENT_MACHINES: "/logistics/client-machines",
   INVENTORY: "/logistics/inventory",
   REQUESTS: "/logistics/requests",
@@ -60,13 +63,15 @@ export const FINANCIAL_PATHS = {
   PAYMENTS: "/financial/payments",
   REPORTS: "/financial/reports",
   SETTINGS: "/financial/settings",
+  REQUESTS: "/financial/requests",
+  CLIENTS: "/financial/clients",
 };
 
 // Paths for partner routes
 export const PARTNER_PATHS = {
   DASHBOARD: "/partner",
   CLIENTS: "/partner/clients",
-  CLIENT_DETAILS: (id: string) => `/partner/clients/${id}`,
+  CLIENT_DETAILS: (id: string = ":id") => `/partner/clients/${id}`,
   COMMISSIONS: "/partner/commissions",
   REPORTS: "/partner/reports",
   SALES: "/partner/sales",

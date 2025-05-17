@@ -2,8 +2,8 @@
 import { PageWrapper } from '@/components/page/PageWrapper';
 import { PageHeader } from '@/components/page/PageHeader';
 import { useNotifications } from '@/hooks/use-notifications';
-import { NotificationList } from '@/components/notifications/NotificationList';
-import { NotificationFilters } from '@/components/notifications/NotificationFilters';
+import NotificationList from '@/components/notifications/NotificationList';
+import NotificationFilters from '@/components/notifications/NotificationFilters';
 import { Button } from '@/components/ui/button';
 import { useState } from 'react';
 

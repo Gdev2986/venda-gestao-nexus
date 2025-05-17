@@ -155,6 +155,7 @@ const UserPayments = () => {
     }
     
     try {
+      // Create payment request with correct database fields
       const { error } = await supabase
         .from('payment_requests')
         .insert({
@@ -163,7 +164,6 @@ const UserPayments = () => {
           client_id: clientId,
           description: description || "Solicitação de pagamento via PIX",
           status: "PENDING", // Using string literal to match database enum
-          payment_type: PaymentType.PIX
         });
       
       if (error) throw error;
@@ -220,7 +220,6 @@ const UserPayments = () => {
           client_id: clientId,
           description: description || "Solicitação de pagamento via Boleto",
           status: "PENDING", // Using string literal to match database enum
-          payment_type: PaymentType.BOLETO,
           document_url: documentUrl,
           due_date: dueDate
         });
@@ -257,9 +256,7 @@ const UserPayments = () => {
           amount,
           client_id: clientId,
           description: description || "Solicitação de pagamento via TED",
-          status: "PENDING", // Using string literal to match database enum
-          payment_type: PaymentType.TED,
-          bank_info: bankInfo
+          status: "PENDING" // Using string literal to match database enum
         });
       
       if (error) throw error;

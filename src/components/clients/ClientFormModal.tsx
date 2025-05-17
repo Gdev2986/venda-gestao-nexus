@@ -38,7 +38,7 @@ const ClientFormModal = ({
 
     setIsSubmitting(true);
     try {
-      // Convert form values to ClientCreate type
+      // Convert form values to ClientCreate type with proper optional handling
       const clientData = {
         business_name: data.business_name,
         contact_name: data.contact_name || "",

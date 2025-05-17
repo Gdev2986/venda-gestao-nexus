@@ -13,7 +13,7 @@ export interface Client {
   partner_id?: string;
   created_at?: string;
   updated_at?: string;
-  contact_name?: string; // Made optional to match other definitions
+  contact_name?: string; // Keep optional to maintain consistency
   address?: string;
   city?: string;
   state?: string;

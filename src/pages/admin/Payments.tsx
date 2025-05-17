@@ -15,6 +15,7 @@ import { convertToPaymentRequest } from "@/components/payments/payment-list/Paym
 import { PaymentNotifications } from "@/components/payments/PaymentNotifications";
 import { SendReceiptDialog } from "@/components/payments/SendReceiptDialog";
 import { useMediaQuery } from "@/hooks/use-media-query";
+import { PaymentData } from "@/types/payment.types";
 
 const AdminPayments = () => {
   const [searchTerm, setSearchTerm] = useState("");
@@ -114,6 +115,15 @@ const AdminPayments = () => {
     await handleConfirmAction(PaymentAction.SEND_RECEIPT);
   };
   
+  // Helper to ensure payment data has description field
+  const getPaymentWithDescription = (payment: Payment): PaymentData => {
+    const converted = convertToPaymentRequest(payment);
+    return {
+      ...converted,
+      description: converted.description || "" // Ensure description is never undefined
+    };
+  };
+  
   return (
     <div className="container mx-auto py-6 space-y-6">
       <PageHeader
@@ -154,7 +164,7 @@ const AdminPayments = () => {
         <PaymentDetailsDialog
           open={isDetailsDialogOpen}
           onOpenChange={setIsDetailsDialogOpen}
-          payment={convertToPaymentRequest(selectedPayment)}
+          payment={getPaymentWithDescription(selectedPayment)}
         />
       )}
       
@@ -163,7 +173,7 @@ const AdminPayments = () => {
         <ApprovePaymentDialog
           open={isApproveDialogOpen}
           onOpenChange={setIsApproveDialogOpen}
-          payment={convertToPaymentRequest(selectedPayment)}
+          payment={getPaymentWithDescription(selectedPayment)}
           onApprove={handleApprovePayment}
           isProcessing={false}
         />
@@ -174,7 +184,7 @@ const AdminPayments = () => {
         <RejectPaymentDialog
           open={isRejectDialogOpen}
           onOpenChange={setIsRejectDialogOpen}
-          payment={convertToPaymentRequest(selectedPayment)}
+          payment={getPaymentWithDescription(selectedPayment)}
           onReject={handleRejectPayment}
           isProcessing={false}
         />
@@ -185,7 +195,7 @@ const AdminPayments = () => {
         <SendReceiptDialog
           open={isSendReceiptDialogOpen}
           onOpenChange={setIsSendReceiptDialogOpen}
-          payment={convertToPaymentRequest(selectedPayment)}
+          payment={getPaymentWithDescription(selectedPayment)}
           onSendReceipt={handleSendReceipt}
           isProcessing={false}
         />

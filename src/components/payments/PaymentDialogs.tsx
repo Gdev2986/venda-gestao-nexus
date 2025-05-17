@@ -37,12 +37,18 @@ export const PaymentDialogs = ({
   
   isProcessing
 }: PaymentDialogsProps) => {
+  // Ensure that we always have a description field that's not undefined
+  const payment = selectedPayment ? {
+    ...selectedPayment,
+    description: selectedPayment.description || ""
+  } : null;
+  
   return (
     <>
       <ApprovePaymentDialog
         open={approveDialogOpen}
         onOpenChange={setApproveDialogOpen}
-        payment={selectedPayment}
+        payment={payment}
         onApprove={handleApprovePayment}
         isProcessing={isProcessing}
       />
@@ -50,7 +56,7 @@ export const PaymentDialogs = ({
       <RejectPaymentDialog
         open={rejectDialogOpen}
         onOpenChange={setRejectDialogOpen}
-        payment={selectedPayment}
+        payment={payment}
         onReject={handleRejectPayment}
         isProcessing={isProcessing}
       />
@@ -58,7 +64,7 @@ export const PaymentDialogs = ({
       <PaymentDetailsDialog
         open={detailsDialogOpen}
         onOpenChange={setDetailsDialogOpen}
-        payment={selectedPayment}
+        payment={payment}
       />
     </>
   );
