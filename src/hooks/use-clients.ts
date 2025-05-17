@@ -1,9 +1,7 @@
-
 import { useState, useCallback } from 'react';
 import { Client } from '@/types';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
-import { v4 as uuidv4 } from "uuid";
 
 // Define the required structure for client creation
 export type ClientCreate = {
@@ -126,14 +124,13 @@ export const useClients = () => {
   // Add a new client
   const addClient = async (clientData: ClientCreate): Promise<Client | false> => {
     try {
-      // Generate a client ID to avoid foreign key constraint issues
-      const clientId = uuidv4();
+      // Agora não precisamos gerar explicitamente o ID 
+      // O banco de dados vai gerar automaticamente usando gen_random_uuid()
       
-      // Insert into Supabase with generated UUID
+      // Insert into Supabase 
       const { data, error } = await supabase
         .from('clients')
         .insert({
-          id: clientId, // Important: provide the ID explicitly
           business_name: clientData.business_name,
           contact_name: clientData.contact_name,
           email: clientData.email,

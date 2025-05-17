@@ -1,6 +1,7 @@
 
 import { useAvailableMachines } from "@/hooks/use-available-machines";
 import { Loader2 } from "lucide-react";
+import { useState } from "react";
 
 interface MachineSelectionFieldProps {
   selectedMachines: string[];
@@ -14,13 +15,15 @@ const MachineSelectionField = ({
   const { machines, isLoading: isLoadingMachines } = useAvailableMachines();
 
   const handleMachineSelection = (machineId: string) => {
-    setSelectedMachines((prev) => {
-      if (prev.includes(machineId)) {
-        return prev.filter((id) => id !== machineId);
-      } else {
-        return [...prev, machineId];
-      }
-    });
+    // Corrigindo o problema de tipagem aqui
+    // Ao invés de passar uma função de callback, vamos criar o novo array explicitamente
+    if (selectedMachines.includes(machineId)) {
+      const newSelection = selectedMachines.filter((id) => id !== machineId);
+      setSelectedMachines(newSelection);
+    } else {
+      const newSelection = [...selectedMachines, machineId];
+      setSelectedMachines(newSelection);
+    }
   };
 
   return (

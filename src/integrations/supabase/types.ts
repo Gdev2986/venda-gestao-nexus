@@ -109,7 +109,7 @@ export type Database = {
           document?: string | null
           email?: string | null
           fee_plan_id?: string | null
-          id: string
+          id?: string
           partner_id?: string | null
           phone?: string | null
           state?: string | null

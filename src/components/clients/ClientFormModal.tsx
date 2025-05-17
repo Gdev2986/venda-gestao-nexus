@@ -51,7 +51,8 @@ const ClientFormModal = ({
         partner_id: data.partner_id || null,
       };
       
-      // Add client to database
+      // Ao criar o cliente agora não precisamos fornecer um ID
+      // O banco de dados vai gerar automaticamente
       const result = await addClient(clientData);
       
       if (!result) {
