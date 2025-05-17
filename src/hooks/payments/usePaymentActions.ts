@@ -3,7 +3,6 @@ import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { PaymentData } from "./payment.types";
-import { PaymentStatus } from "@/types/enums";
 
 export const usePaymentActions = (
   payments: PaymentData[],
@@ -47,7 +46,7 @@ export const usePaymentActions = (
       const { error: updateError } = await supabase
         .from("payment_requests")
         .update({
-          status: PaymentStatus.APPROVED,
+          status: "APPROVED", // Use string literal to match database enum
           approved_at: new Date().toISOString(),
           approved_by: "current-user-id", // Should be replaced with actual user ID
           receipt_url: receiptUrl,
@@ -65,7 +64,7 @@ export const usePaymentActions = (
           if (payment.id === paymentId) {
             return {
               ...payment,
-              status: PaymentStatus.APPROVED as any,
+              status: "APPROVED" as any,
               approved_at: new Date().toISOString(),
               approved_by: "current-user-id", // Should be replaced with actual user ID
               receipt_url: receiptUrl,
@@ -101,7 +100,7 @@ export const usePaymentActions = (
       const { error } = await supabase
         .from("payment_requests")
         .update({
-          status: PaymentStatus.REJECTED,
+          status: "REJECTED", // Use string literal to match database enum
           rejection_reason: rejectionReason,
         })
         .eq("id", paymentId);
@@ -116,7 +115,7 @@ export const usePaymentActions = (
           if (payment.id === paymentId) {
             return {
               ...payment,
-              status: PaymentStatus.REJECTED as any,
+              status: "REJECTED" as any,
               rejection_reason: rejectionReason,
             };
           }
@@ -170,7 +169,7 @@ export const usePaymentActions = (
         .from("payment_requests")
         .update({
           receipt_url: receiptUrl,
-          status: PaymentStatus.PAID,
+          status: "PAID", // Use string literal to match database enum
         })
         .eq("id", paymentId);
 
@@ -185,7 +184,7 @@ export const usePaymentActions = (
             return {
               ...payment,
               receipt_url: receiptUrl,
-              status: PaymentStatus.PAID as any,
+              status: "PAID" as any,
             };
           }
           return payment;

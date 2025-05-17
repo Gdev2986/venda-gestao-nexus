@@ -1,48 +1,40 @@
 
-import { Payment } from "@/types";
+import { Payment, PaymentStatus, PaymentType } from "@/types";
 import { PaymentData } from "@/hooks/payments/payment.types";
 
 /**
- * Converte um objeto Payment para PaymentRequest/PaymentData
- * Isso é necessário para garantir compatibilidade entre as diferentes interfaces
+ * Converts a payment from the database to the format expected by the UI
  */
-export function convertToPaymentRequest(payment: Payment): PaymentData {
+export const convertDbPaymentToUiPayment = (dbPayment: any): PaymentData => {
   return {
-    id: payment.id,
-    client_id: payment.client_id,
-    amount: payment.amount,
-    description: payment.description || "",
-    status: payment.status, // Convertendo string para PaymentRequestStatus
-    pix_key_id: payment.pix_key?.id || undefined,
-    created_at: payment.created_at,
-    updated_at: payment.updated_at || payment.created_at,
-    approved_at: payment.approved_at || null,
-    approved_by: payment.approved_by || null,
-    receipt_url: payment.receipt_url || null,
-    rejection_reason: payment.rejection_reason || null,
-    pix_key: payment.pix_key,
-    client: payment.client,
-    payment_type: payment.payment_type,
-    due_date: payment.due_date,
-    bank_info: payment.bank_info ? {
-      bank_name: payment.bank_info.bank_name || "",
-      branch_number: payment.bank_info.branch_number || "",
-      account_number: payment.bank_info.account_number || "",
-      account_holder: payment.bank_info.account_holder || ""
+    id: dbPayment.id,
+    amount: dbPayment.amount,
+    description: dbPayment.description || "",
+    status: dbPayment.status as PaymentRequestStatus,
+    pix_key_id: dbPayment.pix_key_id,
+    created_at: dbPayment.created_at,
+    updated_at: dbPayment.updated_at,
+    approved_at: dbPayment.approved_at,
+    approved_by: dbPayment.approved_by,
+    receipt_url: dbPayment.receipt_url,
+    rejection_reason: dbPayment.rejection_reason,
+    client_id: dbPayment.client_id,
+    payment_type: dbPayment.payment_type || PaymentType.PIX,
+    pix_key: dbPayment.pix_key ? {
+      id: dbPayment.pix_key.id,
+      key: dbPayment.pix_key.key,
+      type: dbPayment.pix_key.type,
+      owner_name: dbPayment.pix_key.name,
+      key_type: dbPayment.pix_key.key_type || "CPF"
     } : undefined,
-    document_url: payment.document_url
+    client: dbPayment.client,
+    bank_info: dbPayment.bank_info,
+    document_url: dbPayment.document_url,
+    due_date: dbPayment.due_date
   };
-}
+};
 
 /**
- * Verifica se um objeto tem a estrutura de um PaymentRequest
+ * Type for payment request status
  */
-export function isPaymentRequest(obj: any): boolean {
-  return obj && 
-    typeof obj === 'object' && 
-    'id' in obj && 
-    'client_id' in obj && 
-    'amount' in obj && 
-    'status' in obj &&
-    'created_at' in obj;
-}
+type PaymentRequestStatus = 'PENDING' | 'APPROVED' | 'REJECTED' | 'PAID' | 'PROCESSING';

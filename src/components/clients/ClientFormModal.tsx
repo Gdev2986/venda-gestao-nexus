@@ -44,10 +44,10 @@ const ClientFormModal = ({
         contact_name: data.contact_name || "",
         email: data.email || "",
         phone: data.phone || "",
-        address: data.address,
-        city: data.city,
-        state: data.state,
-        zip: data.zip,
+        address: data.address || "",
+        city: data.city || "",
+        state: data.state || "",
+        zip: data.zip || "",
         document: data.document,
         partner_id: data.partner_id
       };

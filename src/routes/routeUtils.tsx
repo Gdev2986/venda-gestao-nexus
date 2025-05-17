@@ -1,44 +1,23 @@
 
-import { PATHS } from "./paths";
 import { UserRole } from "@/types";
+import { PATHS } from "./paths";
 
 /**
- * Returns the appropriate dashboard path based on user role
- * Handles case sensitivity and string/enum conversions
+ * Get the appropriate dashboard redirect path based on user role
  */
-export const getDashboardPath = (userRole: UserRole): string => {
-  console.log("getDashboardPath - userRole:", userRole);
-  
-  // Normalize role to uppercase string for consistent comparison
-  const normalizedRole = userRole?.toString().toUpperCase();
-  
-  switch (normalizedRole) {
-    case "ADMIN":
+export const getDashboardRedirect = (role: UserRole | string): string => {
+  switch (role) {
+    case UserRole.ADMIN:
       return PATHS.ADMIN.DASHBOARD;
-    case "CLIENT":
+    case UserRole.CLIENT:
       return PATHS.USER.DASHBOARD;
-    case "PARTNER":
-      return PATHS.PARTNER.DASHBOARD;
-    case "FINANCIAL":
+    case UserRole.FINANCIAL:
       return PATHS.FINANCIAL.DASHBOARD;
-    case "LOGISTICS":
+    case UserRole.LOGISTICS:
       return PATHS.LOGISTICS.DASHBOARD;
-    case "MANAGER":
-    case "FINANCE":
-    case "SUPPORT":
-    case "USER":
-      return PATHS.USER.DASHBOARD;
+    case UserRole.PARTNER:
+      return PATHS.PARTNER.DASHBOARD;
     default:
-      console.log("Role não reconhecido:", userRole);
-      // Default to login as a safe fallback
-      return PATHS.LOGIN;
+      return PATHS.USER.DASHBOARD;
   }
-};
-
-/**
- * Returns the appropriate dashboard redirect path based on user role
- */
-export const getDashboardRedirect = (userRole: UserRole): string => {
-  const path = getDashboardPath(userRole);
-  return path;
 };

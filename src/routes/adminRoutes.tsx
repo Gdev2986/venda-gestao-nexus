@@ -1,46 +1,32 @@
 
+import { Fragment } from "react";
 import { Route } from "react-router-dom";
+import { PATHS } from "./paths";
 import { UserRole } from "@/types";
 
 // Auth Protection Component
 import RequireAuth from "../components/auth/RequireAuth";
 
-// Layout Selector
-import AdminLayoutSelector from "../layouts/AdminLayoutSelector";
+// Layouts
+import AdminLayout from "../layouts/AdminLayout";
 
-// Import route groups
-import { dashboardRoute } from "./admin/dashboardRoute";
-import { clientRoutes } from "./admin/clientRoutes";
-import { logisticsRoutes } from "./admin/logisticsRoutes";
-import { salesRoutes } from "./admin/salesRoutes";
-import { partnerRoutes } from "./admin/partnerRoutes";
-import { paymentRoutes } from "./admin/paymentRoutes";
-import { settingsRoutes } from "./admin/settingsRoutes";
+// Pages
+import Dashboard from "../pages/admin/Dashboard";
+import Clients from "../pages/admin/Clients";
+import Machines from "../pages/admin/Machines";
+import Partners from "../pages/admin/Partners";
+import Payments from "../pages/admin/Payments";
+import Settings from "../pages/admin/Settings";
 
-// Combine all admin routes
 export const AdminRoutes = (
-  <Route element={<RequireAuth allowedRoles={[UserRole.ADMIN, UserRole.LOGISTICS, UserRole.FINANCIAL]} />}>
-    <Route element={<AdminLayoutSelector />}>
-      {/* Dashboard Route */}
-      {dashboardRoute}
-      
-      {/* Client Routes */}
-      {clientRoutes}
-      
-      {/* Logistics Routes */}
-      {logisticsRoutes}
-      
-      {/* Sales Routes */}
-      {salesRoutes}
-      
-      {/* Payment Routes */}
-      {paymentRoutes}
-      
-      {/* Partner Routes */}
-      {partnerRoutes}
-      
-      {/* Settings and Other Routes */}
-      {settingsRoutes}
+  <Route element={<RequireAuth allowedRoles={[UserRole.ADMIN]} />}>
+    <Route element={<AdminLayout />}>
+      <Route path={PATHS.ADMIN.DASHBOARD} element={<Dashboard />} />
+      <Route path={PATHS.ADMIN.CLIENTS} element={<Clients />} />
+      <Route path={PATHS.ADMIN.MACHINES} element={<Machines />} />
+      <Route path={PATHS.ADMIN.PARTNERS} element={<Partners />} />
+      <Route path={PATHS.ADMIN.PAYMENTS} element={<Payments />} />
+      <Route path={PATHS.ADMIN.SETTINGS} element={<Settings />} />
     </Route>
   </Route>
 );

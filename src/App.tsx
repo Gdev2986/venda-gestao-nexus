@@ -13,7 +13,8 @@ import { useAutoCreateClient } from "@/hooks/useAutoCreateClient";
 
 function App() {
   useAutoCreateClient();
-  const { isLoading, isAuthenticated } = useAuth();
+  const { user, isLoading } = useAuth();
+  const isAuthenticated = !!user;
   const [queryClient] = useState(() => new QueryClient());
 
   // Show loading indicator while checking auth status

@@ -1,10 +1,10 @@
 
 export enum PaymentStatus {
-  PENDING = "PENDENTE",
-  PROCESSING = "EM_PROCESSAMENTO",
-  APPROVED = "APROVADO",
-  REJECTED = "RECUSADO",
-  PAID = "PAGO"
+  PENDING = "PENDING",
+  PROCESSING = "PROCESSING",
+  APPROVED = "APPROVED",
+  REJECTED = "REJECTED",
+  PAID = "PAID"
 }
 
 export enum PaymentType {
@@ -15,14 +15,14 @@ export enum PaymentType {
 
 export enum UserRole {
   ADMIN = "ADMIN",
-  CLIENT = "CLIENTE", 
-  FINANCIAL = "FINANCEIRO",
-  PARTNER = "PARCEIRO",
-  LOGISTICS = "LOGISTICA",
-  MANAGER = "GERENTE",
-  FINANCE = "FINANCAS",
-  SUPPORT = "SUPORTE",
-  USER = "USUARIO"
+  CLIENT = "CLIENT", 
+  FINANCIAL = "FINANCIAL",
+  PARTNER = "PARTNER",
+  LOGISTICS = "LOGISTICS",
+  MANAGER = "MANAGER",
+  FINANCE = "FINANCE",
+  SUPPORT = "SUPPORT",
+  USER = "USER"
 }
 
 export enum NotificationType {
@@ -33,7 +33,11 @@ export enum NotificationType {
   COMMISSION = "COMMISSION",
   SYSTEM = "SYSTEM",
   GENERAL = "GENERAL",
-  SALE = "SALE"
+  SALE = "SALE",
+  BALANCE_UPDATE = "BALANCE_UPDATE",
+  PAYMENT_REQUEST = "PAYMENT_REQUEST",
+  PAYMENT_APPROVED = "PAYMENT_APPROVED",
+  PAYMENT_REJECTED = "PAYMENT_REJECTED"
 }
 
 export enum PaymentAction {
@@ -42,4 +46,9 @@ export enum PaymentAction {
   VIEW = 'view',
   DELETE = 'delete',
   SEND_RECEIPT = 'send_receipt'
+}
+
+// Added Payment enum for compatibility with components expecting it
+export enum Payment {
+  // Empty enum for compatibility
 }

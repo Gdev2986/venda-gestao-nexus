@@ -162,7 +162,7 @@ const UserPayments = () => {
           pix_key_id: pixKeyId,
           client_id: clientId,
           description: description || "Solicitação de pagamento via PIX",
-          status: PaymentStatus.PENDING,
+          status: "PENDING", // Using string literal to match database enum
           payment_type: PaymentType.PIX
         });
       
@@ -218,11 +218,11 @@ const UserPayments = () => {
         .insert({
           amount,
           client_id: clientId,
-          due_date: dueDate,
           description: description || "Solicitação de pagamento via Boleto",
+          status: "PENDING", // Using string literal to match database enum
+          payment_type: PaymentType.BOLETO,
           document_url: documentUrl,
-          status: PaymentStatus.PENDING,
-          payment_type: PaymentType.BOLETO
+          due_date: dueDate
         });
       
       if (error) throw error;
@@ -256,10 +256,10 @@ const UserPayments = () => {
         .insert({
           amount,
           client_id: clientId,
-          bank_info: bankInfo,
           description: description || "Solicitação de pagamento via TED",
-          status: PaymentStatus.PENDING,
-          payment_type: PaymentType.TED
+          status: "PENDING", // Using string literal to match database enum
+          payment_type: PaymentType.TED,
+          bank_info: bankInfo
         });
       
       if (error) throw error;

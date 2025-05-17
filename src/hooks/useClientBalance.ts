@@ -35,7 +35,7 @@ export const useClientBalance = () => {
       // Buscar o cliente para obter o saldo atual
       const { data: clientData, error: clientError } = await supabase
         .from("clients")
-        .select("balance, business_name, user_id")
+        .select("balance, business_name")
         .eq("id", clientId)
         .single();
 
@@ -70,14 +70,21 @@ export const useClientBalance = () => {
         action_type: type === "ADD" ? "BALANCE_INCREASE" : "BALANCE_DECREASE"
       });
 
-      // Criar uma notificação para o cliente
-      const notificationMessage = type === "ADD"
-        ? `Seu saldo foi aumentado em R$ ${amount.toFixed(2)}`
-        : `Seu saldo foi reduzido em R$ ${amount.toFixed(2)}`;
+      // Get user ID for this client from user_client_access
+      const { data: accessData, error: accessError } = await supabase
+        .from("user_client_access")
+        .select("user_id")
+        .eq("client_id", clientId)
+        .single();
 
-      if (clientData.user_id) {
+      if (!accessError && accessData?.user_id) {
+        // Criar uma notificação para o cliente
+        const notificationMessage = type === "ADD"
+          ? `Seu saldo foi aumentado em R$ ${amount.toFixed(2)}`
+          : `Seu saldo foi reduzido em R$ ${amount.toFixed(2)}`;
+
         await supabase.from("notifications").insert({
-          user_id: clientData.user_id,
+          user_id: accessData.user_id,
           title: "Alteração de Saldo",
           message: notificationMessage + (reason ? `: "${reason}"` : ""),
           type: NotificationType.BALANCE,
