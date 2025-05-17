@@ -2,7 +2,7 @@
 import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
-import { Client, NotificationType } from "@/types";
+import { Client } from "@/types";
 
 interface UpdateClientBalanceOptions {
   clientId: string;
@@ -70,34 +70,25 @@ export const useClientBalance = () => {
         action_type: type === "ADD" ? "BALANCE_INCREASE" : "BALANCE_DECREASE"
       });
 
-      // Get user ID for this client from user_client_access
-      const { data: accessData, error: accessError } = await supabase
-        .from("user_client_access")
-        .select("user_id")
-        .eq("client_id", clientId)
-        .single();
+      // Criar uma notificação para o cliente
+      const notificationMessage = type === "ADD"
+        ? `Seu saldo foi aumentado em R$ ${amount.toFixed(2)}`
+        : `Seu saldo foi reduzido em R$ ${amount.toFixed(2)}`;
 
-      if (!accessError && accessData?.user_id) {
-        // Criar uma notificação para o cliente
-        const notificationMessage = type === "ADD"
-          ? `Seu saldo foi aumentado em R$ ${amount.toFixed(2)}`
-          : `Seu saldo foi reduzido em R$ ${amount.toFixed(2)}`;
-
-        await supabase.from("notifications").insert({
-          user_id: accessData.user_id,
-          title: "Alteração de Saldo",
-          message: notificationMessage + (reason ? `: "${reason}"` : ""),
-          type: NotificationType.BALANCE,
-          data: {
-            previous_balance: currentBalance,
-            new_balance: newBalance,
-            amount: amount,
-            type: type,
-            reason: reason || null,
-            timestamp: new Date().toISOString()
-          }
-        });
-      }
+      await supabase.from("notifications").insert({
+        user_id: (await supabase.from("clients").select("user_id").eq("id", clientId).single()).data?.user_id,
+        title: "Alteração de Saldo",
+        message: notificationMessage + (reason ? `: "${reason}"` : ""),
+        type: "BALANCE_UPDATE",
+        data: {
+          previous_balance: currentBalance,
+          new_balance: newBalance,
+          amount: amount,
+          type: type,
+          reason: reason || null,
+          timestamp: new Date().toISOString()
+        }
+      });
 
       toast({
         title: "Saldo atualizado",

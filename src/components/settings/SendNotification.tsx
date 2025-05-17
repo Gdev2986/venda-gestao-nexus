@@ -1,129 +1,261 @@
 
 import { useState } from "react";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import * as z from "zod";
+import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
-import { UserRole, NotificationType } from "@/types/enums";
+import { NotificationType } from "@/types";
 
-export const SendNotification = () => {
-  const [title, setTitle] = useState("");
-  const [message, setMessage] = useState("");
-  const [targetRole, setTargetRole] = useState<string>("ALL");
-  const [notificationType, setNotificationType] = useState<NotificationType>(NotificationType.GENERAL);
-  const [isSending, setIsSending] = useState(false);
+const notificationFormSchema = z.object({
+  title: z.string().min(3, {
+    message: "Título deve ter pelo menos 3 caracteres.",
+  }),
+  message: z.string().min(10, {
+    message: "Mensagem deve ter pelo menos 10 caracteres.",
+  }),
+  targetType: z.enum(["all", "specific"]),
+  targetId: z.string().optional(),
+  type: z.nativeEnum(NotificationType)
+});
+
+type NotificationFormValues = z.infer<typeof notificationFormSchema>;
+
+export function SendNotification() {
   const { toast } = useToast();
-  
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const [clients, setClients] = useState<{ id: string; business_name: string }[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
+  const [loadingClients, setLoadingClients] = useState(false);
+
+  // Load clients for the dropdown when selecting specific client
+  const fetchClients = async () => {
+    if (clients.length > 0) return; // Already loaded
     
-    if (!title || !message) {
+    setLoadingClients(true);
+    try {
+      const { data, error } = await supabase
+        .from('clients')
+        .select('id, business_name')
+        .order('business_name', { ascending: true });
+        
+      if (error) throw error;
+      
+      if (data) {
+        setClients(data);
+      }
+    } catch (error) {
+      console.error('Error fetching clients:', error);
       toast({
         variant: "destructive",
-        title: "Campos obrigatórios",
-        description: "Por favor preencha todos os campos obrigatórios."
+        title: "Erro ao carregar clientes",
+        description: "Não foi possível carregar a lista de clientes."
       });
-      return;
+    } finally {
+      setLoadingClients(false);
     }
-    
-    setIsSending(true);
+  };
+
+  const form = useForm<NotificationFormValues>({
+    resolver: zodResolver(notificationFormSchema),
+    defaultValues: {
+      title: "",
+      message: "",
+      targetType: "all",
+      targetId: "",
+      type: NotificationType.SYSTEM
+    },
+  });
+
+  // Watch for changes to targetType to fetch clients when needed
+  const targetType = form.watch("targetType");
+  if (targetType === "specific" && clients.length === 0 && !loadingClients) {
+    fetchClients();
+  }
+
+  const onSubmit = async (data: NotificationFormValues) => {
+    setIsLoading(true);
     
     try {
-      // Here would be the API call to send the notification
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      if (data.targetType === "all") {
+        // Send to all clients
+        // Since the RPC function isn't available, we'll insert notifications directly
+        const { error } = await supabase
+          .from('notifications')
+          .insert({
+            title: data.title,
+            message: data.message,
+            type: data.type,
+            user_id: 'ALL', // We'll handle this value in a database trigger or create a separate endpoint
+          });
+        
+        if (error) throw error;
+      } else if (data.targetType === "specific" && data.targetId) {
+        // Send to specific client
+        // First, get the user_id for this client
+        const { data: clientData, error: clientError } = await supabase
+          .from('clients')
+          .select('id')
+          .eq('id', data.targetId)
+          .single();
+          
+        if (clientError) throw clientError;
+        
+        // Then insert the notification for this specific client
+        const { error } = await supabase
+          .from('notifications')
+          .insert({
+            title: data.title,
+            message: data.message,
+            type: data.type,
+            user_id: clientData.id,
+          });
+        
+        if (error) throw error;
+      }
       
       toast({
         title: "Notificação enviada",
-        description: "A notificação foi enviada com sucesso."
+        description: "Sua notificação foi enviada com sucesso."
       });
       
       // Reset form
-      setTitle("");
-      setMessage("");
-      setTargetRole("ALL");
-      setNotificationType(NotificationType.GENERAL);
+      form.reset();
+      
     } catch (error) {
+      console.error('Error sending notification:', error);
       toast({
         variant: "destructive",
-        title: "Erro ao enviar",
-        description: "Não foi possível enviar a notificação. Tente novamente."
+        title: "Erro ao enviar notificação",
+        description: "Não foi possível enviar a notificação."
       });
     } finally {
-      setIsSending(false);
+      setIsLoading(false);
     }
   };
-  
+
   return (
-    <form onSubmit={handleSubmit} className="space-y-4">
-      <div className="space-y-4">
-        <div>
-          <label className="block text-sm font-medium mb-1">Perfil alvo</label>
-          <Select value={targetRole} onValueChange={setTargetRole}>
-            <SelectTrigger>
-              <SelectValue placeholder="Selecione um perfil" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="ALL">Todos os usuários</SelectItem>
-              <SelectItem value={UserRole.ADMIN}>Administradores</SelectItem>
-              <SelectItem value={UserRole.CLIENT}>Clientes</SelectItem>
-              <SelectItem value={UserRole.FINANCIAL}>Financeiro</SelectItem>
-              <SelectItem value={UserRole.PARTNER}>Parceiros</SelectItem>
-              <SelectItem value={UserRole.LOGISTICS}>Logística</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
+    <Form {...form}>
+      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+        <FormField
+          control={form.control}
+          name="title"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Título</FormLabel>
+              <FormControl>
+                <Input placeholder="Título da notificação" {...field} />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
         
-        <div>
-          <label className="block text-sm font-medium mb-1">Tipo de notificação</label>
-          <Select 
-            value={notificationType} 
-            onValueChange={(value) => setNotificationType(value as NotificationType)}
-          >
-            <SelectTrigger>
-              <SelectValue placeholder="Selecione um tipo" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value={NotificationType.GENERAL}>Geral</SelectItem>
-              <SelectItem value={NotificationType.PAYMENT}>Pagamento</SelectItem>
-              <SelectItem value={NotificationType.SUPPORT}>Suporte</SelectItem>
-              <SelectItem value={NotificationType.SYSTEM}>Sistema</SelectItem>
-              <SelectItem value={NotificationType.BALANCE}>Saldo</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
+        <FormField
+          control={form.control}
+          name="type"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Tipo de Notificação</FormLabel>
+              <Select onValueChange={field.onChange} defaultValue={field.value}>
+                <FormControl>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Selecione o tipo" />
+                  </SelectTrigger>
+                </FormControl>
+                <SelectContent>
+                  <SelectItem value={NotificationType.SYSTEM}>Sistema</SelectItem>
+                  <SelectItem value={NotificationType.GENERAL}>Geral</SelectItem>
+                  <SelectItem value={NotificationType.PAYMENT}>Pagamento</SelectItem>
+                  <SelectItem value={NotificationType.SALE}>Venda</SelectItem>
+                  <SelectItem value={NotificationType.SUPPORT}>Suporte</SelectItem>
+                </SelectContent>
+              </Select>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
         
-        <div>
-          <label htmlFor="title" className="block text-sm font-medium mb-1">
-            Título
-          </label>
-          <Input
-            id="title"
-            value={title}
-            onChange={(e) => setTitle(e.target.value)}
-            placeholder="Título da notificação"
-            required
+        <FormField
+          control={form.control}
+          name="message"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Mensagem</FormLabel>
+              <FormControl>
+                <Textarea
+                  placeholder="Digite a mensagem da notificação"
+                  className="resize-none"
+                  rows={4}
+                  {...field}
+                />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+        
+        <FormField
+          control={form.control}
+          name="targetType"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Enviar para</FormLabel>
+              <Select onValueChange={field.onChange} defaultValue={field.value}>
+                <FormControl>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Selecione o destino" />
+                  </SelectTrigger>
+                </FormControl>
+                <SelectContent>
+                  <SelectItem value="all">Todos os clientes</SelectItem>
+                  <SelectItem value="specific">Cliente específico</SelectItem>
+                </SelectContent>
+              </Select>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+        
+        {targetType === "specific" && (
+          <FormField
+            control={form.control}
+            name="targetId"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Cliente</FormLabel>
+                <Select onValueChange={field.onChange} value={field.value}>
+                  <FormControl>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Selecione um cliente" />
+                    </SelectTrigger>
+                  </FormControl>
+                  <SelectContent>
+                    {loadingClients ? (
+                      <SelectItem value="loading" disabled>Carregando clientes...</SelectItem>
+                    ) : (
+                      clients.map(client => (
+                        <SelectItem key={client.id} value={client.id}>
+                          {client.business_name}
+                        </SelectItem>
+                      ))
+                    )}
+                  </SelectContent>
+                </Select>
+                <FormMessage />
+              </FormItem>
+            )}
           />
-        </div>
+        )}
         
-        <div>
-          <label htmlFor="message" className="block text-sm font-medium mb-1">
-            Mensagem
-          </label>
-          <Textarea
-            id="message"
-            value={message}
-            onChange={(e) => setMessage(e.target.value)}
-            placeholder="Mensagem da notificação"
-            required
-            rows={4}
-          />
-        </div>
-      </div>
-      
-      <Button type="submit" disabled={isSending}>
-        {isSending ? "Enviando..." : "Enviar notificação"}
-      </Button>
-    </form>
+        <Button type="submit" disabled={isLoading}>
+          {isLoading ? "Enviando..." : "Enviar notificação"}
+        </Button>
+      </form>
+    </Form>
   );
-};
+}

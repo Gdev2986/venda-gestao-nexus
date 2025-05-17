@@ -6,44 +6,24 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { NotificationType } from "@/types/enums";
+import { NotificationType } from "@/types";
 
 interface NotificationFiltersProps {
-  typeFilter?: string;
-  statusFilter?: string;
-  filter?: string; // Added for Notifications.tsx
-  onTypeChange?: (value: string) => void;
-  onStatusChange?: (value: string) => void;
-  setFilter?: (value: string) => void; // Added for Notifications.tsx
-  isLoading?: boolean;
+  typeFilter: string;
+  statusFilter: string;
+  onTypeChange: (value: string) => void;
+  onStatusChange: (value: string) => void;
 }
 
 const NotificationFilters = ({ 
-  typeFilter = 'all',
-  statusFilter = 'all',
-  filter,
-  onTypeChange,
-  onStatusChange,
-  setFilter,
-  isLoading
+  typeFilter, 
+  statusFilter, 
+  onTypeChange, 
+  onStatusChange 
 }: NotificationFiltersProps) => {
-  // Handle the different props based on which component is calling this
-  const handleTypeChange = (value: string) => {
-    if (onTypeChange) onTypeChange(value);
-  };
-  
-  const handleStatusChange = (value: string) => {
-    if (onStatusChange) onStatusChange(value);
-    if (setFilter) setFilter(value);
-  };
-  
   return (
     <div className="flex gap-4">
-      <Select 
-        value={filter || typeFilter} 
-        onValueChange={filter !== undefined ? setFilter : handleTypeChange}
-        disabled={isLoading}
-      >
+      <Select value={typeFilter} onValueChange={onTypeChange}>
         <SelectTrigger className="w-[180px]">
           <SelectValue placeholder="Filtrar por tipo" />
         </SelectTrigger>
@@ -58,11 +38,7 @@ const NotificationFilters = ({
         </SelectContent>
       </Select>
       
-      <Select 
-        value={statusFilter} 
-        onValueChange={handleStatusChange}
-        disabled={isLoading}
-      >
+      <Select value={statusFilter} onValueChange={onStatusChange}>
         <SelectTrigger className="w-[160px]">
           <SelectValue placeholder="Filtrar por status" />
         </SelectTrigger>

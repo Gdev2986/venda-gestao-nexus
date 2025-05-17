@@ -1,3 +1,4 @@
+
 import { CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -7,9 +8,9 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { CalendarIcon, Search } from "lucide-react";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { SalesFilterParams } from "@/types";
-import { TimeRangePicker } from "@/components/sales/filters"; // Now this should work properly
+import { TimeRangePicker } from "../../../components/sales/filters";
 
 interface DateRange {
   from: Date;

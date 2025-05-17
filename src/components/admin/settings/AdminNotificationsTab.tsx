@@ -5,7 +5,7 @@ import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
-import { SendNotificationForm } from "@/components/admin/notifications/SendNotificationForm";
+import SendNotificationForm from "@/components/admin/notifications/SendNotificationForm";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 export const AdminNotificationsTab = () => {

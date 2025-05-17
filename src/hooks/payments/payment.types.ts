@@ -1,23 +1,8 @@
 
 import { PaymentStatus } from "@/types/enums";
-import { Client, PixKey, BankInfo } from "@/types";
+import { Client, PixKey } from "@/types";
 
-export type PaymentRequestStatus = 
-  | 'PENDENTE' 
-  | 'APROVADO' 
-  | 'RECUSADO' 
-  | 'PAGO' 
-  | 'EM_PROCESSAMENTO'
-  | 'PENDING'
-  | 'APPROVED'
-  | 'REJECTED'
-  | 'PAID'
-  | 'PROCESSING'
-  | PaymentStatus.PENDING
-  | PaymentStatus.APPROVED
-  | PaymentStatus.REJECTED
-  | PaymentStatus.PAID
-  | PaymentStatus.PROCESSING;
+export type PaymentRequestStatus = 'PENDENTE' | 'APROVADO' | 'RECUSADO' | 'PAGO' | 'EM_PROCESSAMENTO';
 
 export interface UsePaymentsOptions {
   statusFilter?: string;
@@ -36,15 +21,51 @@ export interface PaymentRequest {
   pix_key_id?: string;
   created_at: string;
   updated_at: string;
-  approved_at?: string;
-  approved_by?: string;
-  receipt_url?: string;
-  rejection_reason?: string;
-  pix_key?: PixKey;
-  client?: Client;
+  approved_at: string | null;
+  approved_by: string | null;
+  receipt_url: string | null;
+  rejection_reason: string | null;
+  pix_key?: {
+    id: string;
+    key: string;
+    key_type?: string;
+    type?: string;
+    client_id?: string;
+    user_id?: string;
+    created_at?: string;
+    updated_at?: string;
+    name?: string;
+    owner_name?: string;
+    isDefault?: boolean;
+    is_active?: boolean;
+    bank_name?: string;
+  };
+  client?: {
+    id: string;
+    business_name: string;
+    document?: string;
+    email?: string;
+    phone?: string;
+    status?: string;
+    balance?: number;
+    partner_id?: string;
+    created_at?: string;
+    updated_at?: string;
+    contact_name?: string;
+    address?: string;
+    city?: string;
+    state?: string;
+    zip?: string;
+    fee_plan_id?: string;
+  };
   payment_type?: string;
   due_date?: string;
-  bank_info?: BankInfo;
+  bank_info?: {
+    bank_name: string;
+    branch_number: string;
+    account_number: string;
+    account_holder: string;
+  };
   document_url?: string;
 }
 

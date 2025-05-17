@@ -1,129 +1,90 @@
 
-import { useState, useEffect } from "react";
-import { Card, CardContent } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
-import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
-import DateRangePicker from "./DateRangePicker";
-import TimeRangePicker from "./TimeRangePicker";
+import { Slider } from "@/components/ui/slider";
+import { 
+  Select, 
+  SelectContent, 
+  SelectItem, 
+  SelectTrigger, 
+  SelectValue 
+} from "@/components/ui/select";
 import { SalesFilterParams } from "@/types";
-
-// Add installments to SalesFilterParams interface
-interface ExtendedSalesFilterParams extends SalesFilterParams {
-  installments?: number;
-}
+import { useState, useEffect } from "react";
 
 interface AdvancedFiltersProps {
-  filterValues: ExtendedSalesFilterParams;
-  onFilterChange: (filters: ExtendedSalesFilterParams) => void;
-  onResetFilters: () => void;
+  filters: SalesFilterParams;
+  onFilterChange: (key: keyof SalesFilterParams, value: any) => void;
 }
 
-export const AdvancedFilters = ({
-  filterValues,
-  onFilterChange,
-  onResetFilters
-}: AdvancedFiltersProps) => {
-  const [localFilters, setLocalFilters] = useState<ExtendedSalesFilterParams>(filterValues);
+// Constants
+const INSTALLMENTS = [
+  { value: "1", label: "À vista (1x)" },
+  { value: "2-6", label: "2 a 6 vezes" },
+  { value: "7-12", label: "7 a 12 vezes" }
+];
+
+const AdvancedFilters = ({ filters, onFilterChange }: AdvancedFiltersProps) => {
+  const [amountRange, setAmountRange] = useState<[number, number]>([
+    filters.minAmount || 0, 
+    filters.maxAmount || 2000
+  ]);
   
+  // Update the amount range when filters change externally
   useEffect(() => {
-    setLocalFilters(filterValues);
-  }, [filterValues]);
+    setAmountRange([
+      filters.minAmount || 0,
+      filters.maxAmount || 2000
+    ]);
+  }, [filters.minAmount, filters.maxAmount]);
   
-  const handleInputChange = (field: keyof ExtendedSalesFilterParams, value: any) => {
-    setLocalFilters(prev => ({
-      ...prev,
-      [field]: value
-    }));
+  const handleAmountRangeChange = (values: number[]) => {
+    setAmountRange([values[0], values[1]]);
+    onFilterChange("minAmount", values[0]);
+    onFilterChange("maxAmount", values[1]);
   };
-  
-  const handleApplyFilters = () => {
-    onFilterChange(localFilters);
-  };
-  
+
   return (
-    <Card className="w-full">
-      <CardContent className="p-4">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          <div className="space-y-2">
-            <Label>Terminal</Label>
-            <Input 
-              placeholder="Número do terminal"
-              value={localFilters.terminal || ''}
-              onChange={(e) => handleInputChange('terminal', e.target.value)}
-            />
+    <div className="pt-4 border-t">
+      <div className="flex flex-col sm:flex-row gap-8">
+        {/* Amount Range Filter */}
+        <div className="flex-1">
+          <div className="flex justify-between mb-2">
+            <Label>Valor</Label>
+            <span className="text-sm text-muted-foreground">
+              R$ {amountRange[0]} - R$ {amountRange[1]}
+            </span>
           </div>
-          
-          <div className="space-y-2">
-            <Label>Valor mínimo</Label>
-            <Input 
-              type="number"
-              placeholder="R$ 0,00"
-              value={localFilters.minAmount || ''}
-              onChange={(e) => handleInputChange('minAmount', parseFloat(e.target.value))}
-            />
-          </div>
-          
-          <div className="space-y-2">
-            <Label>Valor máximo</Label>
-            <Input 
-              type="number"
-              placeholder="R$ 0,00"
-              value={localFilters.maxAmount || ''}
-              onChange={(e) => handleInputChange('maxAmount', parseFloat(e.target.value))}
-            />
-          </div>
-          
-          <div className="space-y-2">
-            <Label>Parcelas</Label>
-            <Input 
-              type="number"
-              placeholder="Número de parcelas"
-              value={localFilters.installments || ''}
-              onChange={(e) => handleInputChange('installments', parseInt(e.target.value))}
-            />
-          </div>
-          
-          <div className="space-y-2">
-            <Label>Período</Label>
-            <DateRangePicker 
-              dateRange={localFilters.dateFrom && localFilters.dateTo ? 
-                {
-                  from: new Date(localFilters.dateFrom),
-                  to: new Date(localFilters.dateTo)
-                } : undefined
-              }
-              onDateRangeChange={(range) => {
-                handleInputChange('dateFrom', range?.from?.toISOString());
-                handleInputChange('dateTo', range?.to?.toISOString());
-              }}
-              onDatePreset={() => {}} // Empty function to meet interface requirements
-            />
-          </div>
-          
-          <div className="space-y-2">
-            <Label>Horário</Label>
-            <TimeRangePicker 
-              value={[localFilters.startHour || 0, localFilters.endHour || 23]}
-              onChange={(range) => {
-                handleInputChange('startHour', range[0]);
-                handleInputChange('endHour', range[1]);
-              }}
-              className="w-full"
-            />
-          </div>
-          
-          <div className="space-y-2 md:col-span-2 lg:col-span-3 flex space-x-2 justify-end pt-4">
-            <Button variant="outline" onClick={onResetFilters}>
-              Limpar filtros
-            </Button>
-            <Button onClick={handleApplyFilters}>
-              Aplicar filtros
-            </Button>
-          </div>
+          <Slider
+            value={amountRange}
+            max={2000} 
+            step={50}
+            onValueChange={handleAmountRangeChange}
+            className="mt-6"
+          />
         </div>
-      </CardContent>
-    </Card>
+        
+        {/* Installments Filter */}
+        <div className="w-full sm:w-1/3">
+          <Label htmlFor="installments" className="mb-1 block">Parcelas</Label>
+          <Select
+            value={filters.installments || ""}
+            onValueChange={(value) => onFilterChange("installments", value || undefined)}
+          >
+            <SelectTrigger id="installments">
+              <SelectValue placeholder="Qualquer parcela" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="">Qualquer parcela</SelectItem>
+              {INSTALLMENTS.map((option) => (
+                <SelectItem key={option.value} value={option.value}>
+                  {option.label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+      </div>
+    </div>
   );
 };
 

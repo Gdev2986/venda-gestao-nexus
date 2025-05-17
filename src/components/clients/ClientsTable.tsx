@@ -101,7 +101,7 @@ const ClientsTable = ({
                   <TableRow key={client.id}>
                     <TableCell className="px-2">
                       {client.user_id && (
-                        <Badge variant="outline" className="h-5 w-5 p-0 flex items-center justify-center rounded-full" title="Cliente possui conta de usuário">
+                        <Badge variant="outline" className="h-5 w-5 p-0 flex items-center justify-center rounded-full">
                           <User className="h-3 w-3" />
                         </Badge>
                       )}

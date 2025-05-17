@@ -1,123 +1,192 @@
-import { PageHeader } from "@/components/page/PageHeader";
-import { useToast } from "@/hooks/use-toast";
-import { DATE_FILTER_PRESETS, DateRangeFilters } from "@/components/dashboard/admin/DateRangeFilters";
-import { QuickLinks } from "@/components/dashboard/admin/QuickLinks";
-import { ChartsSection } from "@/components/dashboard/admin/ChartsSection";
-import StatCards from "@/components/dashboard/admin/StatCards";
-import { subDays } from "date-fns";
-import { SalesChartData } from "@/types";
-import { useState } from "react"; // Added missing import
 
-// Dashboard mock data
-const MOCK_DATA = {
-  stats: {
-    totalSales: 125750.50,
-    grossSales: 98230.75,
-    netSales: 88450.10,
-    pendingRequests: 42,
-    expenses: 15320.45,
-    totalCommissions: 9780.65,
-    currentBalance: 52480.90,
-    salesGrowth: 12.5,
-    isGrowthPositive: true
-  },
-  dailySales: [
-    { name: "01/05", gross: 12500, net: 9375 },
-    { name: "02/05", gross: 9800, net: 7350 },
-    { name: "03/05", gross: 15200, net: 11400 },
-    { name: "04/05", gross: 18500, net: 13875 },
-    { name: "05/05", gross: 22300, net: 16725 },
-    { name: "06/05", gross: 19800, net: 14850 },
-    { name: "07/05", gross: 14500, net: 10875 }
-  ],
-  paymentMethods: [
-    { name: "Crédito", value: 68500, color: "#3b82f6", percent: 55 },
-    { name: "Débito", value: 37500, color: "#22c55e", percent: 30 },
-    { name: "Pix", value: 19750, color: "#f59e0b", percent: 15 }
-  ],
-  topPartners: [
-    { name: "Parceiro A", value: 15200, commission: 1520 },
-    { name: "Parceiro B", value: 12800, commission: 1280 },
-    { name: "Parceiro C", value: 9750, commission: 975 },
-    { name: "Parceiro D", value: 7200, commission: 720 },
-    { name: "Parceiro E", value: 5100, commission: 510 }
-  ],
-  clientGrowth: [
-    { name: "Jan", clients: 24 },
-    { name: "Fev", clients: 28 },
-    { name: "Mar", clients: 35 },
-    { name: "Abr", clients: 42 },
-    { name: "Mai", clients: 48 },
-    { name: "Jun", clients: 53 }
-  ]
+import { useEffect, useState } from "react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { generateDailySalesData, generatePaymentMethodsData } from "@/utils/sales-utils";
+import { SalesChartData } from "@/types";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Calendar } from "@/components/ui/calendar";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { CalendarIcon } from "lucide-react";
+import { format } from "date-fns";
+import { cn } from "@/lib/utils";
+import { PaymentMethod } from "@/types";
+import { Button } from "@/components/ui/button";
+import DailySalesChart from "@/components/dashboard/DailySalesChart";
+import { PageWrapper } from "@/components/page/PageWrapper";
+
+interface DateRange {
+  from: Date;
+  to?: Date;
+}
+
+interface DashboardChartData {
+  date: string;
+  amount: number;
+}
+
+interface PaymentMethodData {
+  name: string;
+  amount: number;
+}
+
+// Adapter function to convert our data format to what the chart component expects
+const adaptDataForChart = (data: PaymentMethodData[] | DashboardChartData[]): SalesChartData[] => {
+  return data.map(item => ({
+    name: 'date' in item ? item.date : item.name,
+    value: 'amount' in item ? item.amount : item.amount,
+    total: 'amount' in item ? item.amount : item.amount // Set total for backward compatibility
+  }));
 };
 
-// Convert mock sales data to SalesChartData format
-const salesChartData: SalesChartData[] = MOCK_DATA.dailySales.map(item => ({
-  date: item.name,
-  amount: item.gross,
-  value: item.gross,
-  total: item.net
-}));
+const PaymentMethodsChart = ({ data }: { data: PaymentMethodData[] }) => (
+  <div className="h-[300px]">
+    <DailySalesChart data={adaptDataForChart(data)} />
+  </div>
+);
 
-const AdminDashboard = () => {
-  const [isLoading, setIsLoading] = useState(false);
-  const [activeFilter, setActiveFilter] = useState(DATE_FILTER_PRESETS.LAST_30_DAYS);
-  const [dateRange, setDateRange] = useState<{from: Date; to?: Date}>({
-    from: subDays(new Date(), 30),
+const Dashboard = () => {
+  const [dateRange, setDateRange] = useState<DateRange>({
+    from: new Date(new Date().getFullYear(), new Date().getMonth() - 1, new Date().getDate()),
     to: new Date()
   });
-  const { toast } = useToast();
-  
-  // Function to simulate data refresh
-  const handleRefresh = () => {
-    setIsLoading(true);
-    // Simulate API call
-    setTimeout(() => {
-      setIsLoading(false);
-      toast({
-        title: "Dados atualizados",
-        description: "Os dados do dashboard foram atualizados com sucesso."
-      });
-    }, 1500);
-  };
+  const [dailySales, setDailySales] = useState<DashboardChartData[]>([]);
+  const [paymentMethods, setPaymentMethods] = useState<PaymentMethodData[]>([]);
+
+  useEffect(() => {
+    if (dateRange?.from) {
+      // Ensure we have both from and to for the date range
+      const rangeToParse = {
+        from: dateRange.from,
+        to: dateRange.to || dateRange.from // Default to 'from' if 'to' is not set
+      };
+
+      // Simulate data fetch for daily sales chart
+      const dailySalesData = generateDailySalesData(rangeToParse).map(item => ({
+        date: item.name,
+        amount: item.total
+      }));
+      setDailySales(dailySalesData);
+    }
+  }, [dateRange]);
+
+  useEffect(() => {
+    // Simulate data fetch for payment methods chart
+    const paymentMethodsData: PaymentMethodData[] = [
+      { name: PaymentMethod.CREDIT, amount: 45 },
+      { name: PaymentMethod.DEBIT, amount: 30 },
+      { name: PaymentMethod.PIX, amount: 25 }
+    ];
+    
+    setPaymentMethods(paymentMethodsData);
+  }, []);
 
   return (
-    <div className="space-y-4 md:space-y-6">
-      <PageHeader
-        title="Dashboard"
-        description="Visão geral da operação e principais métricas"
-      >
-        <DateRangeFilters 
-          dateRange={dateRange}
-          setDateRange={setDateRange}
-          activeFilter={activeFilter}
-          setActiveFilter={setActiveFilter}
-          isLoading={isLoading}
-          onRefresh={handleRefresh}
-        />
-      </PageHeader>
+    <PageWrapper>
+      <div className="space-y-6">
+        <h1 className="text-2xl md:text-3xl font-bold">Dashboard</h1>
 
-      <div className="space-y-4 md:space-y-6">
-        {/* Stats Cards */}
-        <StatCards stats={MOCK_DATA.stats} isLoading={isLoading} />
-        
-        {/* Quick Links */}
-        <div className="mt-4 md:mt-6">
-          <QuickLinks />
+        <Card>
+          <CardHeader>
+            <CardTitle>Período</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="flex flex-col md:flex-row md:items-center space-y-3 md:space-y-0 md:space-x-4">
+              <Popover>
+                <PopoverTrigger asChild>
+                  <div className="w-full md:w-auto">
+                    <label
+                      htmlFor="date"
+                      className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 block mb-1.5"
+                    >
+                      Data
+                    </label>
+                    <Button
+                      id="date"
+                      variant={"outline"}
+                      className={cn(
+                        "w-full md:w-[240px] justify-start text-left font-normal",
+                        !dateRange?.from && "text-muted-foreground"
+                      )}
+                    >
+                      <CalendarIcon className="mr-2 h-4 w-4 flex-shrink-0" />
+                      <span className="truncate">
+                      {dateRange?.from ? (
+                        dateRange.to ? (
+                          <>
+                            {format(dateRange.from, "dd/MM/yyyy")} -{" "}
+                            {format(dateRange.to, "dd/MM/yyyy")}
+                          </>
+                        ) : (
+                          format(dateRange.from, "dd/MM/yyyy")
+                        )
+                      ) : (
+                        "Selecionar data"
+                      )}
+                      </span>
+                    </Button>
+                  </div>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0" align="start">
+                  <Calendar
+                    mode="range"
+                    defaultMonth={dateRange?.from}
+                    selected={dateRange}
+                    onSelect={setDateRange}
+                    numberOfMonths={1}
+                    className="pointer-events-auto"
+                  />
+                </PopoverContent>
+              </Popover>
+
+              <div className="w-full md:w-auto">
+                <label className="text-sm font-medium leading-none block mb-1.5">
+                  Filtros rápidos
+                </label>
+                <Select>
+                  <SelectTrigger className="w-full md:w-[180px]">
+                    <SelectValue placeholder="Selecionar filtro" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="day">Hoje</SelectItem>
+                    <SelectItem value="week">Essa semana</SelectItem>
+                    <SelectItem value="month">Esse mês</SelectItem>
+                    <SelectItem value="year">Esse ano</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Charts - stacked vertically on mobile */}
+        <div className="grid grid-cols-1 gap-4 md:gap-6">
+          {/* Daily Sales Chart */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-lg">Vendas Diárias</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="h-[250px] md:h-[300px]">
+                <DailySalesChart data={adaptDataForChart(dailySales)} />
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Payment Methods Chart */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-lg">Métodos de Pagamento</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="h-[250px] md:h-[300px]">
+                <PaymentMethodsChart data={paymentMethods} />
+              </div>
+            </CardContent>
+          </Card>
         </div>
-        
-        {/* Charts Grid */}
-        <ChartsSection 
-          salesData={MOCK_DATA.dailySales}
-          paymentMethodsData={MOCK_DATA.paymentMethods}
-          topPartnersData={MOCK_DATA.topPartners}
-          clientGrowthData={MOCK_DATA.clientGrowth}
-          isLoading={isLoading}
-        />
       </div>
-    </div>
+    </PageWrapper>
   );
 };
 
-export default AdminDashboard;
+export default Dashboard;

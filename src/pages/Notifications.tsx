@@ -1,247 +1,180 @@
 
-import { useState } from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import useNotifications from "@/hooks/useNotifications";
-import { format } from "date-fns";
-import { ptBR } from "date-fns/locale";
+import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
+import { useToast } from "@/hooks/use-toast";
+import { PageHeader } from "@/components/page/PageHeader";
 import { Button } from "@/components/ui/button";
-import { NotificationType } from "@/types/enums";
-import { Badge } from "@/components/ui/badge";
-import { CheckIcon } from "lucide-react";
-import { Pagination, PaginationContent, PaginationItem, PaginationLink, PaginationNext, PaginationPrevious } from "@/components/ui/pagination";
+import { Input } from "@/components/ui/input";
+import { 
+  Card,
+  CardContent,
+} from "@/components/ui/card";
+import { useNotifications } from "@/hooks/use-notifications";
+import NotificationList from "@/components/notifications/NotificationList";
+import NotificationFilters from "@/components/notifications/NotificationFilters";
+import { Loader2, ArrowLeft } from "lucide-react";
 
-const notificationTypeBadges: { [key in NotificationType]?: string } = {
-  [NotificationType.SUPPORT]: "bg-sky-100 text-sky-500",
-  [NotificationType.PAYMENT]: "bg-emerald-100 text-emerald-500",
-  [NotificationType.BALANCE]: "bg-orange-100 text-orange-500",
-  [NotificationType.BALANCE_UPDATE]: "bg-teal-100 text-teal-500",
-  [NotificationType.MACHINE]: "bg-purple-100 text-purple-500",
-  [NotificationType.COMMISSION]: "bg-yellow-100 text-yellow-500",
-  [NotificationType.SYSTEM]: "bg-gray-100 text-gray-500",
-  [NotificationType.GENERAL]: "bg-blue-100 text-blue-500",
-  [NotificationType.SALE]: "bg-pink-100 text-pink-500",
-  [NotificationType.PAYMENT_REQUEST]: "bg-lime-100 text-lime-500",
-  [NotificationType.PAYMENT_APPROVED]: "bg-green-100 text-green-500",
-  [NotificationType.PAYMENT_REJECTED]: "bg-red-100 text-red-500"
-};
+const Notifications = () => {
+  const [searchTerm, setSearchTerm] = useState("");
+  const [typeFilter, setTypeFilter] = useState("all");
+  const [statusFilter, setStatusFilter] = useState("all");
+  const [currentPage, setCurrentPage] = useState(1);
+  const [filteredNotifications, setFilteredNotifications] = useState<any[]>([]);
+  const [totalPages, setTotalPages] = useState(1);
+  const { toast } = useToast();
+  const navigate = useNavigate();
 
-const NotificationDisplay = ({ notification, markAsRead }: {
-  notification: any;
-  markAsRead: (id: string) => void;
-}) => {
-  const [isRead, setIsRead] = useState(notification.is_read);
-
-  const handleMarkAsRead = async () => {
-    await markAsRead(notification.id);
-    setIsRead(true);
-  };
-
-  return (
-    <Card className="border-none shadow-md">
-      <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-        <CardTitle className="text-sm font-medium">
-          {notification.title}
-        </CardTitle>
-        <Badge className={notificationTypeBadges[notification.type as NotificationType] || "bg-gray-100 text-gray-500"}>
-          {notification.type}
-        </Badge>
-      </CardHeader>
-      <CardContent>
-        <p className="text-sm text-muted-foreground">
-          {notification.message}
-        </p>
-        <div className="flex justify-between items-center mt-4">
-          <time className="text-xs text-gray-500">
-            {format(new Date(notification.created_at), "dd/MM/yyyy HH:mm", { locale: ptBR })}
-          </time>
-          {!isRead && (
-            <Button variant="ghost" size="sm" onClick={handleMarkAsRead}>
-              <CheckIcon className="h-4 w-4 mr-2" />
-              Marcar como lida
-            </Button>
-          )}
-        </div>
-      </CardContent>
-    </Card>
-  );
-};
-
-// Update the Pagination component to use proper Pagination from UI components
-const NotificationsPagination = ({ 
-  currentPage, 
-  totalPages, 
-  onPageChange 
-}: {
-  currentPage: number;
-  totalPages: number;
-  onPageChange: (page: number) => void;
-}) => {
-  return (
-    <div className="mt-6">
-      <Pagination>
-        <PaginationContent>
-          <PaginationItem>
-            <PaginationPrevious 
-              href="#" 
-              onClick={(e) => {
-                e.preventDefault();
-                if (currentPage > 1) onPageChange(currentPage - 1);
-              }}
-              aria-disabled={currentPage <= 1}
-              className={currentPage <= 1 ? "pointer-events-none opacity-50" : ""}
-            />
-          </PaginationItem>
-          
-          {/* Show first page */}
-          {currentPage > 2 && (
-            <PaginationItem>
-              <PaginationLink 
-                href="#" 
-                onClick={(e) => {
-                  e.preventDefault();
-                  onPageChange(1);
-                }}
-              >
-                1
-              </PaginationLink>
-            </PaginationItem>
-          )}
-          
-          {/* Ellipsis if needed */}
-          {currentPage > 3 && (
-            <PaginationItem>
-              <PaginationLink href="#" onClick={(e) => e.preventDefault()} aria-disabled={true} className="pointer-events-none">
-                ...
-              </PaginationLink>
-            </PaginationItem>
-          )}
-          
-          {/* Previous page if not first */}
-          {currentPage > 1 && (
-            <PaginationItem>
-              <PaginationLink 
-                href="#" 
-                onClick={(e) => {
-                  e.preventDefault();
-                  onPageChange(currentPage - 1);
-                }}
-              >
-                {currentPage - 1}
-              </PaginationLink>
-            </PaginationItem>
-          )}
-          
-          {/* Current page */}
-          <PaginationItem>
-            <PaginationLink 
-              href="#" 
-              onClick={(e) => e.preventDefault()} 
-              isActive
-            >
-              {currentPage}
-            </PaginationLink>
-          </PaginationItem>
-          
-          {/* Next page if not last */}
-          {currentPage < totalPages && (
-            <PaginationItem>
-              <PaginationLink 
-                href="#" 
-                onClick={(e) => {
-                  e.preventDefault();
-                  onPageChange(currentPage + 1);
-                }}
-              >
-                {currentPage + 1}
-              </PaginationLink>
-            </PaginationItem>
-          )}
-          
-          {/* Ellipsis if needed */}
-          {currentPage < totalPages - 2 && (
-            <PaginationItem>
-              <PaginationLink href="#" onClick={(e) => e.preventDefault()} aria-disabled={true} className="pointer-events-none">
-                ...
-              </PaginationLink>
-            </PaginationItem>
-          )}
-          
-          {/* Last page if not already shown */}
-          {currentPage < totalPages - 1 && totalPages > 1 && (
-            <PaginationItem>
-              <PaginationLink 
-                href="#" 
-                onClick={(e) => {
-                  e.preventDefault();
-                  onPageChange(totalPages);
-                }}
-              >
-                {totalPages}
-              </PaginationLink>
-            </PaginationItem>
-          )}
-          
-          <PaginationItem>
-            <PaginationNext 
-              href="#" 
-              onClick={(e) => {
-                e.preventDefault();
-                if (currentPage < totalPages) onPageChange(currentPage + 1);
-              }}
-              aria-disabled={currentPage >= totalPages}
-              className={currentPage >= totalPages ? "pointer-events-none opacity-50" : ""}
-            />
-          </PaginationItem>
-        </PaginationContent>
-      </Pagination>
-    </div>
-  );
-};
-
-const NotificationsPage = () => {
-  const {
-    notifications,
-    isLoading,
-    currentPage,
-    totalPages,
-    setCurrentPage,
-    markAsRead,
+  const { 
+    notifications, 
+    loading, 
+    markAsRead, 
+    markAsUnread,
     markAllAsRead,
+    deleteNotification,
     refreshNotifications
   } = useNotifications();
 
+  // Aplicar filtros e paginação
+  useEffect(() => {
+    // Filtrar notificações
+    let filtered = [...notifications];
+    
+    if (searchTerm) {
+      const term = searchTerm.toLowerCase();
+      filtered = filtered.filter(notification => 
+        notification.title.toLowerCase().includes(term) ||
+        notification.message.toLowerCase().includes(term)
+      );
+    }
+    
+    if (typeFilter !== "all") {
+      filtered = filtered.filter(notification => notification.type === typeFilter);
+    }
+    
+    if (statusFilter === "read") {
+      filtered = filtered.filter(notification => notification.read);
+    } else if (statusFilter === "unread") {
+      filtered = filtered.filter(notification => !notification.read);
+    }
+    
+    // Calcular paginação
+    const pageSize = 10;
+    const total = filtered.length;
+    const maxPages = Math.ceil(total / pageSize);
+    setTotalPages(maxPages || 1);
+    
+    // Aplicar paginação
+    const startIndex = (currentPage - 1) * pageSize;
+    const paginatedNotifications = filtered.slice(startIndex, startIndex + pageSize);
+    
+    setFilteredNotifications(paginatedNotifications);
+  }, [notifications, searchTerm, typeFilter, statusFilter, currentPage]);
+  
+  const handleSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setSearchTerm(e.target.value);
+    setCurrentPage(1); // Reset para primeira página ao pesquisar
+  };
+  
+  const handleMarkAllAsRead = async () => {
+    await markAllAsRead();
+    toast({
+      title: "Sucesso",
+      description: "Todas as notificações foram marcadas como lidas",
+    });
+  };
+  
+  const handleDeleteAll = async () => {
+    if (confirm("Tem certeza que deseja excluir todas as notificações?")) {
+      // Como o contexto não tem método para excluir todas, fazemos uma por uma
+      const promises = notifications.map(n => deleteNotification(n.id));
+      await Promise.all(promises);
+      
+      toast({
+        title: "Sucesso",
+        description: "Todas as notificações foram excluídas",
+      });
+    }
+  };
+
+  const handleGoBack = () => {
+    navigate(-1);
+  };
+
   return (
-    <div className="container mx-auto py-6 space-y-6">
-      <Card>
-        <CardHeader>
-          <CardTitle>Notificações</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          {isLoading ? (
-            <p>Carregando notificações...</p>
-          ) : notifications.length === 0 ? (
-            <p>Nenhuma notificação encontrada.</p>
-          ) : (
-            <div className="space-y-4">
-              {notifications.map((notification) => (
-                <NotificationDisplay
-                  key={notification.id}
-                  notification={notification}
-                  markAsRead={markAsRead}
-                />
-              ))}
-            </div>
-          )}
-          <NotificationsPagination
-            currentPage={currentPage}
-            totalPages={totalPages}
-            onPageChange={setCurrentPage}
+    <div className="container py-6 max-w-7xl">
+      <div className="mb-6">
+        <Button 
+          variant="ghost" 
+          onClick={handleGoBack}
+          className="mb-4"
+        >
+          <ArrowLeft className="mr-2 h-4 w-4" />
+          Voltar
+        </Button>
+        
+        <PageHeader
+          title="Notificações"
+          description="Gerencie suas notificações do sistema"
+        />
+      </div>
+      
+      <div className="flex flex-col md:flex-row gap-4 mb-6">
+        <div className="flex-1">
+          <Input
+            placeholder="Buscar por palavra-chave..."
+            value={searchTerm}
+            onChange={handleSearch}
+            className="w-full"
           />
-          <Button onClick={refreshNotifications}>Refresh Notifications</Button>
+        </div>
+        
+        <NotificationFilters
+          typeFilter={typeFilter}
+          statusFilter={statusFilter}
+          onTypeChange={setTypeFilter}
+          onStatusChange={setStatusFilter}
+        />
+        
+        <div className="flex gap-2">
+          <Button 
+            variant="outline" 
+            onClick={handleMarkAllAsRead}
+            disabled={loading || notifications.every(n => n.read)}
+          >
+            Marcar todas como lidas
+          </Button>
+          <Button 
+            variant="outline" 
+            className="text-destructive hover:text-destructive" 
+            onClick={handleDeleteAll}
+            disabled={loading || notifications.length === 0}
+          >
+            Excluir todas
+          </Button>
+        </div>
+      </div>
+      
+      <Card>
+        <CardContent className="p-0">
+          {loading ? (
+            <div className="flex justify-center items-center h-64">
+              <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+            </div>
+          ) : (
+            <NotificationList 
+              notifications={filteredNotifications} 
+              onMarkAsRead={markAsRead}
+              onMarkAsUnread={markAsUnread}
+              onDelete={deleteNotification}
+              currentPage={currentPage}
+              totalPages={totalPages}
+              onPageChange={setCurrentPage}
+            />
+          )}
         </CardContent>
       </Card>
     </div>
   );
 };
 
-export default NotificationsPage;
+export default Notifications;

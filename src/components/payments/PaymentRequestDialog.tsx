@@ -1,162 +1,216 @@
-
 import { useState } from "react";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
+import { Separator } from "@/components/ui/separator";
+import { useToast } from "@/hooks/use-toast";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { PixKey } from "@/types";
+import { PaymentType, PixKey } from "@/types";
+import { AlertCircle, BanknoteIcon, SendIcon, Wallet } from "lucide-react";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 
-export interface PaymentRequestDialogProps {
-  open: boolean;
+interface PaymentRequestDialogProps {
+  isOpen: boolean;
   onOpenChange: (open: boolean) => void;
   clientBalance: number;
   pixKeys: PixKey[];
-  isLoadingPixKeys: boolean;
-  onRequestPayment: (amount: number, description: string, pixKeyId: string) => Promise<void>;
+  isLoadingPixKeys?: boolean;
+  onRequestPayment: (
+    amount: string,
+    description: string,
+    pixKeyId: string | null
+  ) => void;
 }
 
 export const PaymentRequestDialog = ({
-  open,
+  isOpen,
   onOpenChange,
   clientBalance,
-  pixKeys,
-  isLoadingPixKeys,
+  pixKeys = [],
+  isLoadingPixKeys = false,
   onRequestPayment
 }: PaymentRequestDialogProps) => {
+  const { toast } = useToast();
   const [amount, setAmount] = useState("");
   const [description, setDescription] = useState("");
-  const [pixKeyId, setPixKeyId] = useState("");
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [error, setError] = useState("");
+  const [selectedPixKeyId, setSelectedPixKeyId] = useState<string | null>(null);
+  
+  // Reset form data when dialog is opened/closed
+  const handleOpenChange = (open: boolean) => {
+    if (!open) {
+      // Reset form data
+      setAmount("");
+      setDescription("");
+      setSelectedPixKeyId(null);
+    } else if (pixKeys.length > 0) {
+      // Preselect default key if available
+      const defaultKey = pixKeys.find(key => key.is_default);
+      if (defaultKey) {
+        setSelectedPixKeyId(defaultKey.id);
+      } else {
+        setSelectedPixKeyId(pixKeys[0].id);
+      }
+    }
+    
+    onOpenChange(open);
+  };
+  
+  const handleSubmit = () => {
+    // Validate amount
+    if (!amount || parseFloat(amount) <= 0) {
+      toast({
+        variant: "destructive",
+        title: "Valor inválido",
+        description: "Informe um valor válido para solicitação",
+      });
+      return;
+    }
+    
+    const parsedAmount = parseFloat(amount);
+    
+    if (parsedAmount > clientBalance) {
+      toast({
+        variant: "destructive",
+        title: "Saldo insuficiente",
+        description: "O valor solicitado é maior que seu saldo disponível",
+      });
+      return;
+    }
 
-  const resetForm = () => {
+    // Validate PIX key selection
+    if (!selectedPixKeyId) {
+      toast({
+        variant: "destructive",
+        title: "Chave PIX não selecionada",
+        description: "Por favor, selecione uma chave PIX para receber o pagamento",
+      });
+      return;
+    }
+    
+    // Call the parent onRequestPayment function with all the necessary data
+    onRequestPayment(
+      amount,
+      description,
+      selectedPixKeyId
+    );
+    
+    // Reset fields
     setAmount("");
     setDescription("");
-    setPixKeyId("");
-    setError("");
+    setSelectedPixKeyId(null);
   };
-
-  const handleClose = () => {
-    resetForm();
-    onOpenChange(false);
-  };
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setError("");
-
-    // Validation
-    if (!amount || parseFloat(amount) <= 0) {
-      setError("Por favor, insira um valor válido");
-      return;
-    }
-
-    if (parseFloat(amount) > clientBalance) {
-      setError("Valor solicitado é maior que o saldo disponível");
-      return;
-    }
-
-    if (!description.trim()) {
-      setError("Por favor, insira uma descrição");
-      return;
-    }
-
-    if (!pixKeyId) {
-      setError("Por favor, selecione uma chave PIX");
-      return;
-    }
-
-    try {
-      setIsSubmitting(true);
-      await onRequestPayment(parseFloat(amount), description, pixKeyId);
-      handleClose();
-    } catch (err: any) {
-      setError(err.message || "Erro ao solicitar pagamento");
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
-
+  
   return (
-    <Dialog open={open} onOpenChange={handleClose}>
-      <DialogContent className="sm:max-w-[425px]">
+    <Dialog open={isOpen} onOpenChange={handleOpenChange}>
+      <DialogContent className="sm:max-w-[500px]">
         <DialogHeader>
           <DialogTitle>Solicitar Pagamento</DialogTitle>
+          <DialogDescription>
+            Escolha a chave PIX e informe o valor que deseja retirar do seu saldo disponível.
+          </DialogDescription>
         </DialogHeader>
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div className="grid gap-4">
-            <div className="grid gap-2">
-              <Label htmlFor="amount">Valor (R$)</Label>
-              <Input
-                id="amount"
-                type="number"
-                step="0.01"
-                min="0"
-                value={amount}
-                onChange={(e) => setAmount(e.target.value)}
-                placeholder="0,00"
-                required
-              />
-              <div className="text-xs text-muted-foreground">
-                Saldo disponível: R$ {clientBalance.toFixed(2)}
-              </div>
+        
+        <div className="space-y-4 py-4">
+          <div className="flex items-center justify-between">
+            <span className="text-sm font-medium">Saldo Disponível:</span>
+            <span className="font-bold">{new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(clientBalance)}</span>
+          </div>
+          
+          <Separator />
+          
+          {pixKeys.length === 0 && !isLoadingPixKeys && (
+            <Alert variant="destructive">
+              <AlertCircle className="h-4 w-4" />
+              <AlertTitle>Nenhuma chave PIX cadastrada</AlertTitle>
+              <AlertDescription>
+                Você precisa cadastrar pelo menos uma chave PIX nas configurações antes de solicitar pagamentos.
+              </AlertDescription>
+            </Alert>
+          )}
+          
+          {isLoadingPixKeys && (
+            <div className="flex items-center justify-center p-4">
+              <span className="text-sm text-muted-foreground">Carregando chaves PIX...</span>
             </div>
-
-            <div className="grid gap-2">
-              <Label htmlFor="description">Descrição</Label>
-              <Textarea
-                id="description"
-                value={description}
-                onChange={(e) => setDescription(e.target.value)}
-                placeholder="Descreva o motivo do pagamento"
-                required
-              />
-            </div>
-
-            <div className="grid gap-2">
-              <Label htmlFor="pixKey">Chave PIX para pagamento</Label>
-              <Select
-                value={pixKeyId}
-                onValueChange={setPixKeyId}
-                disabled={isLoadingPixKeys || pixKeys.length === 0}
+          )}
+          
+          {pixKeys.length > 0 && !isLoadingPixKeys && (
+            <div className="space-y-2">
+              <Label htmlFor="pix-key">Chave PIX para recebimento</Label>
+              <Select 
+                value={selectedPixKeyId || ""} 
+                onValueChange={(value) => setSelectedPixKeyId(value)}
               >
                 <SelectTrigger>
                   <SelectValue placeholder="Selecione uma chave PIX" />
                 </SelectTrigger>
                 <SelectContent>
-                  {isLoadingPixKeys ? (
-                    <SelectItem value="loading" disabled>
-                      Carregando...
+                  {pixKeys.map((pixKey) => (
+                    <SelectItem 
+                      key={pixKey.id} 
+                      value={pixKey.id}
+                      className="flex items-center"
+                    >
+                      <div className="flex flex-col">
+                        <span>{pixKey.owner_name || pixKey.name}</span>
+                        <span className="text-xs text-muted-foreground">{pixKey.type}: {pixKey.key}</span>
+                      </div>
+                      {pixKey.is_default && (
+                        <span className="ml-2 text-xs bg-primary/10 text-primary px-2 py-0.5 rounded">
+                          Padrão
+                        </span>
+                      )}
                     </SelectItem>
-                  ) : pixKeys.length > 0 ? (
-                    pixKeys.map((key) => (
-                      <SelectItem key={key.id} value={key.id}>
-                        {key.name || key.key} {key.is_default && "(Padrão)"}
-                      </SelectItem>
-                    ))
-                  ) : (
-                    <SelectItem value="empty" disabled>
-                      Nenhuma chave cadastrada
-                    </SelectItem>
-                  )}
+                  ))}
                 </SelectContent>
               </Select>
             </div>
-
-            {error && <div className="text-sm font-medium text-red-500">{error}</div>}
+          )}
+          
+          <div className="space-y-2">
+            <Label htmlFor="amount">Valor da Solicitação</Label>
+            <div className="relative">
+              <span className="absolute left-3 top-2.5 text-muted-foreground">R$</span>
+              <Input
+                id="amount"
+                type="number"
+                placeholder="0,00"
+                value={amount}
+                onChange={(e) => setAmount(e.target.value)}
+                className="pl-9"
+              />
+            </div>
           </div>
-
-          <DialogFooter>
-            <Button type="button" variant="outline" onClick={handleClose}>
-              Cancelar
-            </Button>
-            <Button type="submit" disabled={isSubmitting}>
-              {isSubmitting ? "Enviando..." : "Solicitar"}
-            </Button>
-          </DialogFooter>
-        </form>
+          
+          <div className="space-y-2">
+            <Label htmlFor="description">Descrição (opcional)</Label>
+            <Input
+              id="description"
+              placeholder="Informe a finalidade da solicitação"
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+            />
+          </div>
+        </div>
+        
+        <DialogFooter>
+          <Button variant="outline" onClick={() => onOpenChange(false)}>Cancelar</Button>
+          <Button 
+            onClick={handleSubmit}
+            disabled={!selectedPixKeyId || pixKeys.length === 0 || !amount || parseFloat(amount) <= 0}
+          >
+            <Wallet className="h-4 w-4 mr-2" />
+            Solicitar
+          </Button>
+        </DialogFooter>
       </DialogContent>
     </Dialog>
   );

@@ -1,27 +1,5 @@
 
-import { ClientStatus } from "@/types/enums";
-
-// Define the Client interface for use throughout the application
-export interface Client {
-  id: string;
-  business_name: string;
-  company_name?: string; // Alias for business_name for backward compatibility
-  document?: string;
-  email?: string;
-  phone?: string;
-  status?: string | ClientStatus;
-  balance?: number;
-  partner_id?: string;
-  created_at?: string;
-  updated_at?: string;
-  contact_name?: string; 
-  address?: string;
-  city?: string;
-  state?: string;
-  zip?: string;
-  fee_plan_id?: string;
-  user_id?: string;
-}
+import { Client } from "@/types";
 
 // Define the SupabaseClientRow type based on the database schema
 export type SupabaseClientRow = {

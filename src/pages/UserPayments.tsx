@@ -1,3 +1,4 @@
+
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -14,7 +15,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { PaymentStatus, PaymentType } from "@/types/enums";
-import { useState, useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
@@ -154,19 +155,16 @@ const UserPayments = () => {
     }
     
     try {
-      // Create payment request with database schema compatible fields
-      const paymentRequest = {
-        amount,
-        client_id: clientId,
-        description: description || "Solicitação de pagamento via PIX",
-        status: "PENDING", // Use string literal instead of enum
-        pix_key_id: pixKeyId,
-        // No need to include other fields that have defaults in the database
-      };
-
       const { error } = await supabase
         .from('payment_requests')
-        .insert(paymentRequest);
+        .insert({
+          amount,
+          pix_key_id: pixKeyId,
+          client_id: clientId,
+          description: description || "Solicitação de pagamento via PIX",
+          status: PaymentStatus.PENDING,
+          payment_type: PaymentType.PIX
+        });
       
       if (error) throw error;
       
@@ -214,21 +212,18 @@ const UserPayments = () => {
         documentUrl = data.publicUrl;
       }
       
-      // Create payment request with database schema compatible fields
-      const paymentRequest = {
-        amount,
-        client_id: clientId,
-        description: description || "Solicitação de pagamento via Boleto",
-        status: "PENDING", // Use string literal instead of enum
-        document_url: documentUrl,
-        due_date: dueDate,
-        payment_type: "BOLETO",
-        pix_key_id: null // Add null pix_key_id to satisfy schema requirements
-      };
-
+      // Create payment request
       const { error } = await supabase
         .from('payment_requests')
-        .insert(paymentRequest);
+        .insert({
+          amount,
+          client_id: clientId,
+          due_date: dueDate,
+          description: description || "Solicitação de pagamento via Boleto",
+          document_url: documentUrl,
+          status: PaymentStatus.PENDING,
+          payment_type: PaymentType.BOLETO
+        });
       
       if (error) throw error;
       
@@ -256,20 +251,16 @@ const UserPayments = () => {
     if (!clientId) return false;
     
     try {
-      // Create payment request with database schema compatible fields
-      const paymentRequest = {
-        amount,
-        client_id: clientId,
-        description: description || "Solicitação de pagamento via TED",
-        status: "PENDING", // Use string literal instead of enum
-        payment_type: "TED",
-        bank_info: bankInfo,
-        pix_key_id: null // Add null pix_key_id to satisfy schema requirements
-      };
-
       const { error } = await supabase
         .from('payment_requests')
-        .insert(paymentRequest);
+        .insert({
+          amount,
+          client_id: clientId,
+          bank_info: bankInfo,
+          description: description || "Solicitação de pagamento via TED",
+          status: PaymentStatus.PENDING,
+          payment_type: PaymentType.TED
+        });
       
       if (error) throw error;
       

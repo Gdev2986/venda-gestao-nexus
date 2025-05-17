@@ -35,7 +35,7 @@ export const logisticsRoutes = [
   />,
   <Route 
     key="logistics-machine-details" 
-    path="/logistics/machines/:id" 
+    path={PATHS.LOGISTICS.MACHINE_DETAILS()} 
     element={<MachineDetails />} 
   />,
   <Route 

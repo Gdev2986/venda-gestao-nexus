@@ -1,7 +1,12 @@
 
-// Re-export all filter components
-export { default as SearchBar } from './SearchBar';
-export { default as DateRangePicker } from './DateRangePicker';
-export { default as TimeRangePicker } from './TimeRangePicker';
-export { default as BasicFilters } from './BasicFilters';
-export { default as AdvancedFilters } from './AdvancedFilters';
+import SearchBar from './SearchBar';
+import DateRangePicker from './DateRangePicker';
+import BasicFilters from './BasicFilters';
+import AdvancedFilters from './AdvancedFilters';
+
+export {
+  SearchBar,
+  DateRangePicker,
+  BasicFilters,
+  AdvancedFilters
+};

@@ -1,60 +1,45 @@
 
-// Add missing notification types
-
-export enum NotificationType {
-  PAYMENT = "PAYMENT",
-  SYSTEM = "SYSTEM",
-  GENERAL = "GENERAL",
-  SUPPORT = "SUPPORT",
-  MACHINE = "MACHINE",
-  COMMISSION = "COMMISSION",
-  PAYMENT_REQUEST = "PAYMENT_REQUEST",
-  PAYMENT_APPROVED = "PAYMENT_APPROVED",
-  PAYMENT_REJECTED = "PAYMENT_REJECTED",
-  SALE = "SALE",
-  BALANCE = "BALANCE",
-  BALANCE_UPDATE = "BALANCE_UPDATE"
-}
-
 export enum PaymentStatus {
-  PENDING = "PENDING",
-  APPROVED = "APPROVED",
-  REJECTED = "REJECTED",
-  PAID = "PAID",
-  PROCESSING = "PROCESSING"
-}
-
-export enum PaymentAction {
-  APPROVE = "APPROVE",
-  REJECT = "REJECT",
-  MARK_AS_PAID = "MARK_AS_PAID",
-  DELETE = "DELETE",
-  RESEND = "RESEND"
+  PENDING = "PENDENTE",
+  PROCESSING = "EM_PROCESSAMENTO",
+  APPROVED = "APROVADO",
+  REJECTED = "RECUSADO",
+  PAID = "PAGO"
 }
 
 export enum PaymentType {
   PIX = "PIX",
   TED = "TED",
-  BOLETO = "BOLETO",
-  TRANSFERENCE = "TRANSFERENCE",
-  CREDIT = "CREDIT",
-  DEBIT = "DEBIT"
+  BOLETO = "BOLETO"
 }
 
 export enum UserRole {
   ADMIN = "ADMIN",
-  CLIENT = "CLIENT",
-  PARTNER = "PARTNER",
-  LOGISTICS = "LOGISTICS", 
-  FINANCIAL = "FINANCIAL",
-  MANAGER = "MANAGER",
-  FINANCE = "FINANCE",
-  SUPPORT = "SUPPORT"
+  CLIENT = "CLIENTE", 
+  FINANCIAL = "FINANCEIRO",
+  PARTNER = "PARCEIRO",
+  LOGISTICS = "LOGISTICA",
+  MANAGER = "GERENTE",
+  FINANCE = "FINANCAS",
+  SUPPORT = "SUPORTE",
+  USER = "USUARIO"
 }
 
-export enum ClientStatus {
-  ACTIVE = "ACTIVE",
-  INACTIVE = "INACTIVE",
-  PENDING = "PENDING",
-  BLOCKED = "BLOCKED"
+export enum NotificationType {
+  SUPPORT = "SUPPORT",
+  PAYMENT = "PAYMENT",
+  BALANCE = "BALANCE",
+  MACHINE = "MACHINE",
+  COMMISSION = "COMMISSION",
+  SYSTEM = "SYSTEM",
+  GENERAL = "GENERAL",
+  SALE = "SALE"
+}
+
+export enum PaymentAction {
+  APPROVE = 'approve',
+  REJECT = 'reject',
+  VIEW = 'view',
+  DELETE = 'delete',
+  SEND_RECEIPT = 'send_receipt'
 }

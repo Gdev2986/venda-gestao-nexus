@@ -4,7 +4,7 @@ import { Card } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import useAdminPayments from "@/hooks/payments/useAdminPayments";
 import { PaymentStatus, PaymentAction } from "@/types/enums";
-import { AdminPaymentsList } from "@/components/payments/AdminPaymentsList";
+import AdminPaymentsList from "@/components/payments/AdminPaymentsList";
 import { PaymentFilters } from "@/components/payments/PaymentFilters";
 import { PaymentDetailsDialog } from "@/components/payments/PaymentDetailsDialog";
 import { ApprovePaymentDialog } from "@/components/payments/ApprovePaymentDialog";
@@ -13,9 +13,8 @@ import { PageHeader } from "@/components/page/PageHeader";
 import { Payment } from "@/types";
 import { convertToPaymentRequest } from "@/components/payments/payment-list/PaymentConverter";
 import { PaymentNotifications } from "@/components/payments/PaymentNotifications";
-import { SendPaymentReceipt } from "@/components/payments/SendPaymentReceipt";
+import { SendReceiptDialog } from "@/components/payments/SendReceiptDialog";
 import { useMediaQuery } from "@/hooks/use-media-query";
-import { PaymentData } from "@/types/payment.types";
 
 const AdminPayments = () => {
   const [searchTerm, setSearchTerm] = useState("");
@@ -110,20 +109,9 @@ const AdminPayments = () => {
     await handleConfirmAction(PaymentAction.REJECT);
   };
 
-  const handleSendReceipt = async (paymentId: string, email: string) => {
-    console.log("Enviando comprovante:", { paymentId, email });
+  const handleSendReceipt = async (paymentId: string, receiptFile: File, message: string) => {
+    console.log("Enviando comprovante:", { paymentId, message, hasFile: !!receiptFile });
     await handleConfirmAction(PaymentAction.SEND_RECEIPT);
-  };
-  
-  // Helper to ensure payment data has description field and updated_at is present
-  const getPaymentWithDescription = (payment: Payment): PaymentData => {
-    const converted = convertToPaymentRequest(payment);
-    return {
-      ...converted,
-      description: converted.description || "", // Ensure description is never undefined
-      status: converted.status as any, // Cast status to compatible type
-      updated_at: converted.updated_at || payment.created_at || new Date().toISOString() // Ensure updated_at is present
-    };
   };
   
   return (
@@ -157,11 +145,6 @@ const AdminPayments = () => {
             payments={payments}
             isLoading={isLoading}
             onActionClick={handlePaymentAction}
-            currentPage={page}
-            totalPages={totalPages}
-            onPageChange={setPage}
-            onSearchTermChange={setSearchTerm}
-            onRefresh={refetch}
           />
         </TabsContent>
       </Tabs>
@@ -171,7 +154,7 @@ const AdminPayments = () => {
         <PaymentDetailsDialog
           open={isDetailsDialogOpen}
           onOpenChange={setIsDetailsDialogOpen}
-          payment={getPaymentWithDescription(selectedPayment)}
+          payment={convertToPaymentRequest(selectedPayment)}
         />
       )}
       
@@ -180,7 +163,7 @@ const AdminPayments = () => {
         <ApprovePaymentDialog
           open={isApproveDialogOpen}
           onOpenChange={setIsApproveDialogOpen}
-          payment={getPaymentWithDescription(selectedPayment)}
+          payment={convertToPaymentRequest(selectedPayment)}
           onApprove={handleApprovePayment}
           isProcessing={false}
         />
@@ -191,7 +174,7 @@ const AdminPayments = () => {
         <RejectPaymentDialog
           open={isRejectDialogOpen}
           onOpenChange={setIsRejectDialogOpen}
-          payment={getPaymentWithDescription(selectedPayment)}
+          payment={convertToPaymentRequest(selectedPayment)}
           onReject={handleRejectPayment}
           isProcessing={false}
         />
@@ -199,11 +182,11 @@ const AdminPayments = () => {
 
       {/* Diálogo de Envio de Comprovante */}
       {selectedPayment && (
-        <SendPaymentReceipt
+        <SendReceiptDialog
           open={isSendReceiptDialogOpen}
           onOpenChange={setIsSendReceiptDialogOpen}
-          payment={getPaymentWithDescription(selectedPayment)}
-          onSubmit={handleSendReceipt}
+          payment={convertToPaymentRequest(selectedPayment)}
+          onSendReceipt={handleSendReceipt}
           isProcessing={false}
         />
       )}

@@ -2,12 +2,7 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { SalesFilterParams } from "@/types";
-import { 
-  SearchBar, 
-  DateRangePicker, 
-  BasicFilters, 
-  AdvancedFilters 
-} from "./filters";
+import { SearchBar, DateRangePicker, BasicFilters, AdvancedFilters } from "./filters";
 
 interface DateRange {
   from: Date;
@@ -39,10 +34,6 @@ const SalesAdvancedFilters = ({
   
   const handleFilterChange = (key: keyof SalesFilterParams, value: any) => {
     onFilterChange({ ...filters, [key]: value });
-  };
-  
-  const handleAdvancedFilterChange = (updatedFilters: SalesFilterParams) => {
-    onFilterChange({ ...filters, ...updatedFilters });
   };
   
   const handleDatePreset = (preset: 'today' | 'week' | 'month') => {
@@ -99,9 +90,8 @@ const SalesAdvancedFilters = ({
       {/* Advanced Filters (conditionally shown) */}
       {showMoreFilters && (
         <AdvancedFilters 
-          filterValues={filters}
-          onFilterChange={handleAdvancedFilterChange}
-          onResetFilters={onClearFilters}
+          filters={filters}
+          onFilterChange={handleFilterChange}
         />
       )}
       

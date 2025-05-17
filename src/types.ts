@@ -1,20 +1,57 @@
+export enum UserRole {
+  ADMIN = "ADMIN",
+  CLIENT = "CLIENT", 
+  FINANCIAL = "FINANCIAL",
+  PARTNER = "PARTNER",
+  LOGISTICS = "LOGISTICS",
+  MANAGER = "MANAGER",
+  FINANCE = "FINANCE",
+  SUPPORT = "SUPPORT",
+  USER = "USER"
+}
 
-// Adding necessary exports and types
+export enum PaymentStatus {
+  PENDING = "PENDING",
+  APPROVED = "APPROVED",
+  REJECTED = "REJECTED",
+  PAID = "PAID"
+}
 
-export * from './types/enums';
-export * from './types/client';
-export * from './types/payment.types';
+export enum PaymentType {
+  PIX = "PIX",
+  TED = "TED",
+  BOLETO = "BOLETO"
+}
 
-// Adding explicit re-exports to ensure they're available
-export { ClientStatus, NotificationType, PaymentStatus, PaymentType, UserRole, PaymentAction } from './types/enums';
-export type { Client, ClientCreate, ClientUpdate } from './types/client';
-export type { PaymentData, PaymentRequest, BankInfo, PixKey, PixKeyInfo, UserData } from './types/payment.types';
+// Added ClientStatus enum for the ClientStatus component
+export enum ClientStatus {
+  ACTIVE = "active",
+  INACTIVE = "inactive",
+  PENDING = "pending"
+}
 
-// Export any missing types
+export enum PaymentMethod {
+  CREDIT = "credit",
+  DEBIT = "debit",
+  PIX = "pix"
+}
+
+// Updated to match database notification_type enum
+export enum NotificationType {
+  PAYMENT = "PAYMENT",
+  BALANCE = "BALANCE", 
+  MACHINE = "MACHINE",
+  COMMISSION = "COMMISSION",
+  SYSTEM = "SYSTEM",
+  GENERAL = "GENERAL",
+  SALE = "SALE",
+  SUPPORT = "SUPPORT"
+}
+
 export interface Payment {
   id: string;
   created_at: string;
-  updated_at?: string;
+  updated_at: string;
   amount: number;
   status: PaymentStatus | string;
   client_id: string;
@@ -23,7 +60,12 @@ export interface Payment {
   client_name?: string;
   rejection_reason: string | null;
   payment_type?: PaymentType | string;
-  bank_info?: BankInfo;
+  bank_info?: {
+    bank_name?: string;
+    account_number?: string;
+    branch_number?: string;
+    account_holder?: string;
+  };
   document_url?: string;
   due_date?: string;
   pix_key?: {
@@ -31,105 +73,146 @@ export interface Payment {
     key: string;
     type: string;
     owner_name: string;
-    key_type?: string;
   };
+  // Add missing properties to match PaymentRequest
   approved_by?: string | null;
   description?: string;
+  // Add any other properties that might be needed
   client?: any;
 }
 
-// Add missing types needed in components
-export interface Notification {
+// Types for partners
+export interface Partner {
   id: string;
-  title: string;
-  message: string;
+  company_name: string;
   created_at: string;
-  is_read: boolean;
-  type: NotificationType | string;
-  data?: any;
-  read?: boolean; // Alias for is_read for backward compatibility
-  timestamp?: string; // Alias for created_at for backward compatibility
+  updated_at: string;
+  commission_rate: number;
+  contact_name?: string;
+  contact_email?: string;
+  contact_phone?: string;
+  business_name?: string; // For backward compatibility
+  email?: string; // Added for consistency with filtering
+  phone?: string; // Added for consistency with filtering
+  address?: string; // Added for completeness
+  // Add missing properties
+  total_sales?: number;
+  total_commission?: number;
+}
+
+// Added Client interface to ensure type safety
+export interface Client {
+  id: string;
+  business_name: string;
+  email?: string;
+  phone?: string;
+  status?: string;
+  balance?: number;
+  partner_id?: string;
+  created_at?: string;
+  updated_at?: string;
+  contact_name?: string;
+  address?: string;
+  city?: string;
+  state?: string;
+  zip?: string;
+  document?: string;
+  fee_plan_id?: string;
+  company_name?: string;
+}
+
+export interface FilterValues {
+  search?: string;
+  status?: string;
+  category?: string;
+  dateRange?: {
+    from: Date;
+    to?: Date;
+  };
+  searchTerm?: string; // Add searchTerm to fix errors
+  commissionRange?: [number, number]; // Add property for partner filtering
+}
+
+export interface PixKey {
+  id: string;
+  key: string;
+  type: string;
+  name: string;
+  owner_name?: string;
+  is_default?: boolean;
+  user_id?: string;
+  created_at?: string;
+  updated_at?: string;
+  bank_name?: string;
+  key_type?: string;
+  is_active?: boolean;
 }
 
 export interface Sale {
   id: string;
-  date: string;
-  amount: number;
-  client_id: string;
-  client_name?: string;
-  payment_method?: string;
-  status?: string;
   code: string;
   terminal: string;
+  client_name: string;
   gross_amount: number;
   net_amount: number;
-  created_at?: string; // Add this field to fix partner/ClientDetails.tsx
+  date: string;
+  payment_method: PaymentMethod | string;
+  client_id: string;
+  created_at: string;
+  updated_at: string;
+  amount?: number;
+  status?: string;
+  partner_id?: string;
+  machine_id?: string;
+  processing_status?: string;
 }
 
 export interface SalesFilterParams {
-  client?: string;
-  dateFrom?: string;
-  dateTo?: string;
-  paymentMethod?: string;
-  status?: string;
   search?: string;
+  paymentMethod?: string;
   terminal?: string;
   minAmount?: number;
   maxAmount?: number;
   startHour?: number;
   endHour?: number;
-  installments?: number;
+  installments?: string;
+}
+
+export interface UserData {
+  id: string;
+  name: string;
+  email: string;
+  role: UserRole | string; // Allow string role from database
+  created_at: string;
+  status: string;
 }
 
 export interface SalesChartData {
-  date: string;
-  amount: number;
-  name?: string;
-  value?: number;
-  total?: number;
+  name: string;
+  value: number;
 }
 
+// Add Machine interface to fix missing type errors
 export interface Machine {
   id: string;
   serial_number: string;
   model: string;
   status: string;
   client_id?: string;
+  created_at?: string;
+  updated_at?: string;
   name?: string;
   client_name?: string;
-  created_at?: string;
-  updated_at?: string;
-  location?: string;
-  last_maintenance?: string | null;
-  next_maintenance?: string | null;
+  serialNumber?: string;
 }
 
-export interface Partner {
+// Add a Notification interface
+export interface Notification {
   id: string;
-  company_name: string;
-  commission_rate?: number;
-  created_at?: string;
-  updated_at?: string;
-  contact_name?: string;
-  email?: string;
-  phone?: string;
-  business_name?: string; // Alias for company_name
-}
-
-export interface FilterValues {
-  search?: string;
-  status?: string;
-  commissionRange?: number[];
-}
-
-// Add PaymentMethod type
-export enum PaymentMethod {
-  CREDIT = "CREDIT",
-  DEBIT = "DEBIT",
-  PIX = "PIX",
-}
-
-// Define ExtendedSalesFilterParams for use in filters
-export interface ExtendedSalesFilterParams extends SalesFilterParams {
-  // Add any additional fields needed for filter components
+  title: string;
+  message: string;
+  type: NotificationType;
+  read: boolean;
+  timestamp: Date;
+  data?: any;
 }
