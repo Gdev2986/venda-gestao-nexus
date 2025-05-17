@@ -1,3 +1,4 @@
+
 import { useState, useEffect, useCallback } from "react";
 import {
   Table,
@@ -15,7 +16,7 @@ import {
 } from "@/components/ui/card";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import { CheckIcon, Copy, CreditCardIcon, CurrencyDollar, Delete, Edit, Eye, MoreHorizontal, RefreshCw, Send, Trash2, XCircle } from "lucide-react";
+import { CheckIcon, CreditCardIcon, DollarSign, Delete, Edit, Eye, MoreHorizontal, RefreshCw, Send, Trash2, XCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { PaymentStatus, PaymentType, PaymentAction } from "@/types/enums";
@@ -44,19 +45,19 @@ import {
   PaginationPrevious,
 } from "@/components/ui/pagination";
 import { Icons } from "@/components/ui/icons";
-import { usePayments } from "@/hooks/payments";
-import { useBoolean } from "usehooks-ts";
+import { useBoolean } from "@/hooks/use-boolean";
 import { SendPaymentReceipt } from "@/components/payments/SendPaymentReceipt";
 
 interface PaymentsListProps {
   payments: PaymentData[];
   isLoading: boolean;
-  currentPage: number;
-  totalPages: number;
-  onPageChange: (page: number) => void;
-  onStatusFilterChange: (status: string | undefined) => void;
-  onSearchTermChange: (term: string) => void;
-  onRefresh: () => void;
+  currentPage?: number;
+  totalPages?: number;
+  onPageChange?: (page: number) => void;
+  onStatusFilterChange?: (status: string | undefined) => void;
+  onSearchTermChange?: (term: string) => void;
+  onRefresh?: () => void;
+  onActionClick?: (paymentId: string, action: PaymentAction) => void;
 }
 
 const paymentStatusColors: { [key in PaymentStatus]: string } = {
@@ -72,7 +73,7 @@ const getPaymentMethodIcon = (method: string | PaymentType) => {
     case PaymentType.CREDIT:
       return <CreditCardIcon className="h-4 w-4 mr-2" />;
     default:
-      return <CurrencyDollar className="h-4 w-4 mr-2" />;
+      return <DollarSign className="h-4 w-4 mr-2" />;
   }
 };
 

@@ -1,8 +1,7 @@
-
 import { useState } from "react";
-import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import { PaymentData } from "./payment.types";
+import { PaymentData } from "@/types/payment.types";
+import { supabase } from "@/integrations/supabase/client";
 
 export const usePaymentActions = (
   payments: PaymentData[],
@@ -169,7 +168,7 @@ export const usePaymentActions = (
         .from("payment_requests")
         .update({
           receipt_url: receiptUrl,
-          status: "PAID", // Use string literal to match database enum
+          status: "PAID" as any, // Explicit cast
         })
         .eq("id", paymentId);
 
