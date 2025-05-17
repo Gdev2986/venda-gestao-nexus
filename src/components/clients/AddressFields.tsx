@@ -1,4 +1,3 @@
-
 import { FormField, FormItem, FormLabel, FormControl, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { UseFormReturn } from "react-hook-form";
@@ -45,6 +44,7 @@ const AddressFields = ({ form }: AddressFieldsProps) => {
     const data = await lookupCep(zipValue);
     
     if (data) {
+      // Set values but keep fields editable
       form.setValue("state", data.state, { shouldValidate: true });
       form.setValue("city", data.city, { shouldValidate: true });
       if (data.street) {

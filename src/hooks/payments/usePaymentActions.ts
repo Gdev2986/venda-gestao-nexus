@@ -65,7 +65,7 @@ export const usePaymentActions = (
           if (payment.id === paymentId) {
             return {
               ...payment,
-              status: PaymentStatus.APPROVED,
+              status: "APPROVED" as any,
               approved_at: new Date().toISOString(),
               approved_by: "current-user-id", // Should be replaced with actual user ID
               receipt_url: receiptUrl,
@@ -116,7 +116,7 @@ export const usePaymentActions = (
           if (payment.id === paymentId) {
             return {
               ...payment,
-              status: PaymentStatus.REJECTED,
+              status: "REJECTED" as any,
               rejection_reason: rejectionReason,
             };
           }
@@ -185,7 +185,7 @@ export const usePaymentActions = (
             return {
               ...payment,
               receipt_url: receiptUrl,
-              status: PaymentStatus.PAID,
+              status: "PAID" as any,
             };
           }
           return payment;

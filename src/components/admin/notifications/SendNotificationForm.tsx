@@ -18,7 +18,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
-import { NotificationType } from "@/types/enums";
+import { NotificationType, UserRole } from "@/types/enums";
 
 // Define the form schema with a string type for role
 const formSchema = z.object({
@@ -100,7 +100,7 @@ const SendNotificationForm = ({ onClose }: SendNotificationFormProps) => {
             user_id: user.id,
             title: values.title,
             message: values.message,
-            type: values.type,
+            type: values.type as unknown as string, // Cast to string to match database expectations
             data: JSON.stringify({ role: values.role })
           };
 

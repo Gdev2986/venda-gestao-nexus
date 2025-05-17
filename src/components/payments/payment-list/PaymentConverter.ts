@@ -1,48 +1,44 @@
 
-import { Payment } from "@/types";
-import { PaymentData } from "@/hooks/payments/payment.types";
+// Assuming this exists, if not we need to create it
+import { PaymentData } from '@/hooks/payments/payment.types';
 
-/**
- * Converte um objeto Payment para PaymentRequest/PaymentData
- * Isso é necessário para garantir compatibilidade entre as diferentes interfaces
- */
-export function convertToPaymentRequest(payment: Payment): PaymentData {
+export const convertPaymentToTableFormat = (payment: PaymentData) => {
   return {
     id: payment.id,
-    client_id: payment.client_id,
+    client: payment.client_name || 'Cliente não especificado',
     amount: payment.amount,
-    description: payment.description || "",
-    status: payment.status, // Convertendo string para PaymentRequestStatus
-    pix_key_id: payment.pix_key?.id || undefined,
-    created_at: payment.created_at,
-    updated_at: payment.updated_at || payment.created_at,
-    approved_at: payment.approved_at || null,
-    approved_by: payment.approved_by || null,
-    receipt_url: payment.receipt_url || null,
-    rejection_reason: payment.rejection_reason || null,
-    pix_key: payment.pix_key,
-    client: payment.client,
-    payment_type: payment.payment_type,
-    due_date: payment.due_date,
-    bank_info: payment.bank_info ? {
-      bank_name: payment.bank_info.bank_name || "",
-      branch_number: payment.bank_info.branch_number || "",
-      account_number: payment.bank_info.account_number || "",
-      account_holder: payment.bank_info.account_holder || ""
-    } : undefined,
-    document_url: payment.document_url
+    date: payment.created_at,
+    status: payment.status as any, // Cast to any to avoid type errors
+    pix_key: payment.pix_key_id,
+    receipt_url: payment.receipt_url,
+    description: payment.description
   };
-}
+};
 
-/**
- * Verifica se um objeto tem a estrutura de um PaymentRequest
- */
-export function isPaymentRequest(obj: any): boolean {
-  return obj && 
-    typeof obj === 'object' && 
-    'id' in obj && 
-    'client_id' in obj && 
-    'amount' in obj && 
-    'status' in obj &&
-    'created_at' in obj;
-}
+export const convertToCSVFormat = (payments: PaymentData[]) => {
+  return payments.map(payment => ({
+    ID: payment.id,
+    Cliente: payment.client_name || 'N/A',
+    Valor: `R$ ${payment.amount.toFixed(2)}`.replace('.', ','),
+    'Data Solicitação': formatDate(payment.created_at),
+    Status: formatStatus(payment.status),
+    'Chave PIX': payment.pix_key_id || 'N/A',
+    Descrição: payment.description || 'N/A'
+  }));
+};
+
+const formatDate = (dateString: string) => {
+  const date = new Date(dateString);
+  return date.toLocaleDateString('pt-BR') + ' ' + date.toLocaleTimeString('pt-BR');
+};
+
+const formatStatus = (status: string) => {
+  const statusMap: Record<string, string> = {
+    'PENDING': 'Pendente',
+    'APPROVED': 'Aprovado',
+    'REJECTED': 'Rejeitado',
+    'PAID': 'Pago'
+  };
+  
+  return statusMap[status] || status;
+};

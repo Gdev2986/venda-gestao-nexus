@@ -34,7 +34,7 @@ export enum NotificationType {
   SYSTEM = "SYSTEM",
   GENERAL = "GENERAL",
   SALE = "SALE",
-  BALANCE_UPDATE = "BALANCE_UPDATE"
+  BALANCE_UPDATE = "BALANCE"  // Changed to match the database type
 }
 
 export enum PaymentAction {
