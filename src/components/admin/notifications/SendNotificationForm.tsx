@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
@@ -47,7 +47,7 @@ const SendNotificationForm = ({ onClose }: SendNotificationFormProps) => {
   const { toast } = useToast();
 
   // Fetch available roles when component mounts
-  useState(() => {
+  useEffect(() => {
     const fetchRoles = async () => {
       try {
         const { data, error } = await supabase
@@ -68,7 +68,7 @@ const SendNotificationForm = ({ onClose }: SendNotificationFormProps) => {
     };
 
     fetchRoles();
-  });
+  }, []);
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -100,7 +100,7 @@ const SendNotificationForm = ({ onClose }: SendNotificationFormProps) => {
             user_id: user.id,
             title: values.title,
             message: values.message,
-            type: values.type as unknown as string, // Cast to string to match database expectations
+            type: values.type, // Use the enum value directly
             data: JSON.stringify({ role: values.role })
           };
 

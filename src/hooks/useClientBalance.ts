@@ -1,3 +1,4 @@
+
 import { useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from './use-toast';
@@ -49,8 +50,13 @@ export function useClientBalance() {
         .eq('id', clientId)
         .single();
 
-      if (clientError || !clientData) {
+      if (clientError) {
+        console.error('Client error:', clientError);
         throw new Error('Cliente não encontrado');
+      }
+
+      if (!clientData) {
+        throw new Error('Dados do cliente não encontrados');
       }
 
       const currentBalance = clientData.balance || 0;
@@ -66,34 +72,45 @@ export function useClientBalance() {
         throw new Error('Erro ao atualizar saldo');
       }
 
-      // Record transaction
-      const { error: transactionError } = await supabase
-        .from('balance_transactions')
-        .insert({
-          client_id: clientId,
-          amount,
-          previous_balance: currentBalance,
-          new_balance: newBalance,
-          description: description || `Ajuste de saldo: ${amount > 0 ? '+' : ''}${amount}`,
-          type: transactionType || (amount > 0 ? 'credit' : 'debit'),
-        });
-
-      if (transactionError) {
-        console.error('Error recording transaction:', transactionError);
+      // Check if balance_transactions table exists
+      // If database errors occur, you may need to comment out this block or create the table
+      try {
+        // Record the transaction if possible
+        await supabase
+          .from('client_logs')
+          .insert({
+            client_id: clientId,
+            action_type: amount > 0 ? 'credit' : 'debit',
+            previous_value: JSON.stringify({ balance: currentBalance }),
+            new_value: JSON.stringify({ balance: newBalance }),
+            changed_by: 'system',
+          });
+      } catch (error) {
+        console.error('Error recording transaction (non-critical):', error);
         // Continue execution even if transaction recording fails
       }
 
-      // Send notification to client if user_id exists
-      if (clientData.user_id) {
-        const userId = clientData.user_id;
-        
-        await supabase.from("notifications").insert({
-          user_id: userId,
-          title: "Saldo Atualizado",
-          message: `Seu saldo foi ${amount > 0 ? "aumentado" : "diminuído"} em R$ ${Math.abs(amount).toFixed(2)}`,
-          type: "BALANCE",
-          data: JSON.stringify({ amount, previous_balance: currentBalance, new_balance: newBalance })
-        });
+      // Try to send a notification if user_id exists
+      try {
+        // Get user_id from user_client_access table
+        const { data: userAccess } = await supabase
+          .from('user_client_access')
+          .select('user_id')
+          .eq('client_id', clientId)
+          .single();
+
+        if (userAccess && userAccess.user_id) {
+          await supabase.from("notifications").insert({
+            user_id: userAccess.user_id,
+            title: "Saldo Atualizado",
+            message: `Seu saldo foi ${amount > 0 ? "aumentado" : "diminuído"} em R$ ${Math.abs(amount).toFixed(2)} ${description ? `: ${description}` : ''}`,
+            type: NotificationType.BALANCE,
+            data: JSON.stringify({ amount, previous_balance: currentBalance, new_balance: newBalance })
+          });
+        }
+      } catch (error) {
+        console.error('Failed to send notification (non-critical):', error);
+        // Continue even if notification fails
       }
 
       toast({

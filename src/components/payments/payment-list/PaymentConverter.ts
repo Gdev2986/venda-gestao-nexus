@@ -1,7 +1,7 @@
 
 // Assuming this exists, if not we need to create it
 import { PaymentData } from '@/hooks/payments/payment.types';
-import { Payment } from '@/types';
+import { Payment, PaymentStatus } from '@/types';
 
 export const convertPaymentToTableFormat = (payment: PaymentData) => {
   return {
@@ -10,7 +10,7 @@ export const convertPaymentToTableFormat = (payment: PaymentData) => {
     amount: payment.amount,
     date: payment.created_at,
     status: payment.status as any, // Cast to any to avoid type errors
-    pix_key: payment.pix_key_id,
+    pix_key: payment.pix_key_id || '',
     receipt_url: payment.receipt_url,
     description: payment.description
   };
@@ -35,8 +35,8 @@ export const convertToPaymentRequest = (payment: Payment): PaymentData => {
     client_id: payment.client_id,
     amount: payment.amount,
     description: payment.description || '',
-    status: payment.status,
-    pix_key_id: payment.pix_key_id,
+    status: payment.status as any,
+    pix_key_id: payment.pix_key?.id || '',
     created_at: payment.created_at,
     updated_at: payment.updated_at,
     approved_at: payment.approved_at,

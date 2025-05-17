@@ -47,7 +47,7 @@ export const usePaymentActions = (
       const { error: updateError } = await supabase
         .from("payment_requests")
         .update({
-          status: "APPROVED",  // Use string literal instead of enum
+          status: PaymentStatus.APPROVED,
           approved_at: new Date().toISOString(),
           approved_by: "current-user-id", // Should be replaced with actual user ID
           receipt_url: receiptUrl,
@@ -65,7 +65,7 @@ export const usePaymentActions = (
           if (payment.id === paymentId) {
             return {
               ...payment,
-              status: "APPROVED" as any,
+              status: PaymentStatus.APPROVED,
               approved_at: new Date().toISOString(),
               approved_by: "current-user-id", // Should be replaced with actual user ID
               receipt_url: receiptUrl,
@@ -101,7 +101,7 @@ export const usePaymentActions = (
       const { error } = await supabase
         .from("payment_requests")
         .update({
-          status: "REJECTED",  // Use string literal instead of enum
+          status: PaymentStatus.REJECTED,
           rejection_reason: rejectionReason,
         })
         .eq("id", paymentId);
@@ -116,7 +116,7 @@ export const usePaymentActions = (
           if (payment.id === paymentId) {
             return {
               ...payment,
-              status: "REJECTED" as any,
+              status: PaymentStatus.REJECTED,
               rejection_reason: rejectionReason,
             };
           }
@@ -170,7 +170,7 @@ export const usePaymentActions = (
         .from("payment_requests")
         .update({
           receipt_url: receiptUrl,
-          status: "PAID",  // Use string literal instead of enum
+          status: PaymentStatus.PAID,
         })
         .eq("id", paymentId);
 
@@ -185,7 +185,7 @@ export const usePaymentActions = (
             return {
               ...payment,
               receipt_url: receiptUrl,
-              status: "PAID" as any,
+              status: PaymentStatus.PAID,
             };
           }
           return payment;

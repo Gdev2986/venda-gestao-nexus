@@ -33,19 +33,21 @@ export function BalanceUpdateDialog({
   const [amount, setAmount] = useState<string>("");
   const [reason, setReason] = useState<string>("");
   const [updateType, setUpdateType] = useState<"ADD" | "SUBTRACT">("ADD");
-  const { updateClientBalance, isUpdating } = useClientBalance();
+  const { updateBalance, isLoading } = useClientBalance();
 
   const handleSubmit = async () => {
     if (!amount || isNaN(Number(amount)) || Number(amount) <= 0) {
       return;
     }
     
-    const success = await updateClientBalance({
-      clientId: client.id,
-      amount: parseFloat(amount),
+    const finalAmount = updateType === "ADD" ? parseFloat(amount) : -parseFloat(amount);
+    
+    const success = await updateBalance(
+      client.id,
+      finalAmount,
       reason,
-      type: updateType
-    });
+      updateType.toLowerCase()
+    );
     
     if (success && onSuccess) {
       onSuccess();
@@ -116,12 +118,12 @@ export function BalanceUpdateDialog({
         </div>
         
         <AlertDialogFooter>
-          <AlertDialogCancel disabled={isUpdating}>Cancelar</AlertDialogCancel>
+          <AlertDialogCancel disabled={isLoading}>Cancelar</AlertDialogCancel>
           <AlertDialogAction 
             onClick={handleSubmit} 
-            disabled={isUpdating || !amount || isNaN(Number(amount)) || Number(amount) <= 0}
+            disabled={isLoading || !amount || isNaN(Number(amount)) || Number(amount) <= 0}
           >
-            {isUpdating ? "Atualizando..." : "Confirmar"}
+            {isLoading ? "Atualizando..." : "Confirmar"}
           </AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialogContent>

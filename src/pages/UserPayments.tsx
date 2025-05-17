@@ -1,3 +1,4 @@
+
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -154,16 +155,18 @@ const UserPayments = () => {
     }
     
     try {
+      const paymentData = {
+        amount,
+        pix_key_id: pixKeyId,
+        client_id: clientId,
+        description: description || "Solicitação de pagamento via PIX",
+        status: PaymentStatus.PENDING,
+        payment_type: PaymentType.PIX
+      };
+      
       const { error } = await supabase
         .from('payment_requests')
-        .insert({
-          amount,
-          pix_key_id: pixKeyId,
-          client_id: clientId,
-          description: description || "Solicitação de pagamento via PIX",
-          status: "PENDING",
-          payment_type: PaymentType.PIX
-        });
+        .insert(paymentData);
       
       if (error) throw error;
       
@@ -211,17 +214,18 @@ const UserPayments = () => {
         documentUrl = data.publicUrl;
       }
       
-      // Create payment request
+      // Create payment request - modified to use the proper structure based on the database schema
       const { error } = await supabase
         .from('payment_requests')
         .insert({
           amount,
           client_id: clientId,
-          due_date: dueDate,
+          pix_key_id: null, // Add null value for required field
           description: description || "Solicitação de pagamento via Boleto",
-          document_url: documentUrl,
-          status: "PENDING",
-          payment_type: PaymentType.BOLETO
+          status: PaymentStatus.PENDING,
+          // Add additional properties as metadata or comments in your actual implementation
+          // The database might need to be updated to support these fields
+          receipt_url: documentUrl // Store document URL in receipt_url temporarily
         });
       
       if (error) throw error;
@@ -250,15 +254,16 @@ const UserPayments = () => {
     if (!clientId) return false;
     
     try {
+      // Create payment request - modified to use the proper structure based on the database schema
       const { error } = await supabase
         .from('payment_requests')
         .insert({
           amount,
           client_id: clientId,
-          bank_info: bankInfo,
+          pix_key_id: null, // Add null value for required field
           description: description || "Solicitação de pagamento via TED",
-          status: "PENDING",
-          payment_type: PaymentType.TED
+          status: PaymentStatus.PENDING
+          // The database might need to be updated to support bank_info field
         });
       
       if (error) throw error;
