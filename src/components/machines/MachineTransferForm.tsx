@@ -1,196 +1,178 @@
 
 import { useState, useEffect } from "react";
-import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { useForm } from "react-hook-form";
 import * as z from "zod";
 import { Button } from "@/components/ui/button";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
-import { Calendar } from "@/components/ui/calendar";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { CalendarIcon } from "lucide-react";
-import { format } from "date-fns";
-import { cn } from "@/lib/utils";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Machine, Client } from "@/types";
+import { supabase } from "@/integrations/supabase/client";
 
-interface MachineTransferFormProps {
+const FormSchema = z.object({
+  clientId: z.string().min(1, { message: "Cliente é obrigatório" }),
+  clientName: z.string().optional(),
+  notes: z.string().optional(),
+});
+
+export interface MachineTransferFormProps {
   machine: Machine;
-  clients: Client[];
-  onSubmit: (values: any) => void;
+  onSubmit: (data: z.infer<typeof FormSchema>) => void;
   isSubmitting: boolean;
 }
 
-// Define the form schema
-const formSchema = z.object({
-  machineId: z.string(),
-  toClientId: z.string(),
-  transferDate: z.date(),
-  cutoffDate: z.date().optional(),
-});
+const MachineTransferForm = ({
+  machine,
+  onSubmit,
+  isSubmitting,
+}: MachineTransferFormProps) => {
+  const [clients, setClients] = useState<Client[]>([]);
+  const [isLoadingClients, setIsLoadingClients] = useState(false);
 
-export default function MachineTransferForm({ machine, clients, onSubmit, isSubmitting }: MachineTransferFormProps) {
-  const [availableClients, setAvailableClients] = useState<Client[]>([]);
-
-  // Filter out the current client from the available clients
-  useEffect(() => {
-    if (clients && machine) {
-      const filteredClients = clients.filter(client => client.id !== machine.client_id);
-      setAvailableClients(filteredClients);
-    }
-  }, [clients, machine]);
-
-  const form = useForm<z.infer<typeof formSchema>>({
-    resolver: zodResolver(formSchema),
+  const form = useForm<z.infer<typeof FormSchema>>({
+    resolver: zodResolver(FormSchema),
     defaultValues: {
-      machineId: machine?.id || "",
-      toClientId: "",
-      transferDate: new Date(),
-      cutoffDate: new Date(),
+      clientId: "",
+      clientName: "",
+      notes: "",
     },
   });
 
-  const handleSubmit = (values: z.infer<typeof formSchema>) => {
-    onSubmit(values);
+  useEffect(() => {
+    loadClients();
+  }, []);
+
+  const loadClients = async () => {
+    setIsLoadingClients(true);
+    try {
+      // In a real app, fetch from API
+      // For now, mock data
+      setTimeout(() => {
+        const mockClients: Client[] = [
+          {
+            id: "1",
+            business_name: "Client 1",
+            status: "ACTIVE",
+          },
+          {
+            id: "2",
+            business_name: "Client 2",
+            status: "ACTIVE",
+          },
+          {
+            id: "3",
+            business_name: "Client 3",
+            status: "ACTIVE",
+          },
+        ];
+        setClients(mockClients);
+        setIsLoadingClients(false);
+      }, 500);
+    } catch (error) {
+      console.error("Error loading clients:", error);
+      setIsLoadingClients(false);
+    }
   };
 
-  // Get current client if exists
-  const currentClient = machine?.client_id
-    ? clients.find(c => c.id === machine.client_id)
-    : null;
+  const handleSelectClient = (clientId: string) => {
+    const client = clients.find((c) => c.id === clientId);
+    if (client) {
+      form.setValue("clientName", client.business_name);
+    }
+  };
 
   return (
     <Form {...form}>
-      <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-6">
-        {/* Machine Info */}
-        <div className="bg-muted/50 p-4 rounded-lg">
-          <h3 className="font-medium mb-2">Informações da Máquina</h3>
-          <p><span className="text-muted-foreground">Modelo:</span> {machine?.model}</p>
-          <p><span className="text-muted-foreground">Serial:</span> {machine?.serial_number}</p>
-          <p>
-            <span className="text-muted-foreground">Cliente Atual:</span>{" "}
-            {currentClient ? currentClient.business_name : "Sem Cliente"}
-          </p>
+      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+        <div className="grid gap-6">
+          <div className="space-y-4">
+            <h3 className="text-lg font-medium">Detalhes da Máquina</h3>
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <p className="text-sm font-medium text-muted-foreground">Número de Série</p>
+                <p className="text-sm">{machine.serial_number}</p>
+              </div>
+              <div>
+                <p className="text-sm font-medium text-muted-foreground">Modelo</p>
+                <p className="text-sm">{machine.model}</p>
+              </div>
+              <div>
+                <p className="text-sm font-medium text-muted-foreground">Status</p>
+                <p className="text-sm">{machine.status}</p>
+              </div>
+              <div>
+                <p className="text-sm font-medium text-muted-foreground">Cliente Atual</p>
+                <p className="text-sm">{machine.client_name || "Não associado"}</p>
+              </div>
+            </div>
+          </div>
+
+          <div className="space-y-4">
+            <h3 className="text-lg font-medium">Novo Cliente</h3>
+            <FormField
+              control={form.control}
+              name="clientId"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Cliente</FormLabel>
+                  <Select
+                    disabled={isLoadingClients || isSubmitting}
+                    onValueChange={(value) => {
+                      field.onChange(value);
+                      handleSelectClient(value);
+                    }}
+                    defaultValue={field.value}
+                  >
+                    <FormControl>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Selecione um cliente" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      {clients.map((client) => (
+                        <SelectItem key={client.id} value={client.id}>
+                          {client.business_name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="notes"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Observações</FormLabel>
+                  <FormControl>
+                    <Input
+                      {...field}
+                      placeholder="Observações sobre a transferência"
+                      disabled={isSubmitting}
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          </div>
         </div>
 
-        {/* Select new client */}
-        <FormField
-          control={form.control}
-          name="toClientId"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Transferir Para</FormLabel>
-              <Select onValueChange={field.onChange} defaultValue={field.value}>
-                <FormControl>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Selecione o cliente destino" />
-                  </SelectTrigger>
-                </FormControl>
-                <SelectContent>
-                  {availableClients.map((client) => (
-                    <SelectItem key={client.id} value={client.id}>
-                      {client.business_name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-
-        {/* Transfer Date */}
-        <FormField
-          control={form.control}
-          name="transferDate"
-          render={({ field }) => (
-            <FormItem className="flex flex-col">
-              <FormLabel>Data de Transferência</FormLabel>
-              <Popover>
-                <PopoverTrigger asChild>
-                  <FormControl>
-                    <Button
-                      variant={"outline"}
-                      className={cn(
-                        "w-full pl-3 text-left font-normal",
-                        !field.value && "text-muted-foreground"
-                      )}
-                    >
-                      {field.value ? (
-                        format(field.value, "dd/MM/yyyy")
-                      ) : (
-                        <span>Escolha uma data</span>
-                      )}
-                      <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
-                    </Button>
-                  </FormControl>
-                </PopoverTrigger>
-                <PopoverContent className="w-auto p-0" align="start">
-                  <Calendar
-                    mode="single"
-                    selected={field.value}
-                    onSelect={field.onChange}
-                    disabled={(date) =>
-                      date < new Date("1900-01-01") ||
-                      date > new Date("2100-01-01")
-                    }
-                    initialFocus
-                  />
-                </PopoverContent>
-              </Popover>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-
-        {/* Cutoff Date */}
-        <FormField
-          control={form.control}
-          name="cutoffDate"
-          render={({ field }) => (
-            <FormItem className="flex flex-col">
-              <FormLabel>Data de Corte (Opcional)</FormLabel>
-              <Popover>
-                <PopoverTrigger asChild>
-                  <FormControl>
-                    <Button
-                      variant={"outline"}
-                      className={cn(
-                        "w-full pl-3 text-left font-normal",
-                        !field.value && "text-muted-foreground"
-                      )}
-                    >
-                      {field.value ? (
-                        format(field.value, "dd/MM/yyyy")
-                      ) : (
-                        <span>Escolha uma data</span>
-                      )}
-                      <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
-                    </Button>
-                  </FormControl>
-                </PopoverTrigger>
-                <PopoverContent className="w-auto p-0" align="start">
-                  <Calendar
-                    mode="single"
-                    selected={field.value || undefined}
-                    onSelect={field.onChange}
-                    disabled={(date) =>
-                      date < new Date("1900-01-01") ||
-                      date > new Date("2100-01-01")
-                    }
-                    initialFocus
-                  />
-                </PopoverContent>
-              </Popover>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-
-        <Button type="submit" className="w-full" disabled={isSubmitting}>
-          {isSubmitting ? "Processando..." : "Confirmar Transferência"}
-        </Button>
+        <div className="flex justify-end space-x-2">
+          <Button
+            type="submit"
+            disabled={isSubmitting}
+          >
+            {isSubmitting ? "Transferindo..." : "Transferir Máquina"}
+          </Button>
+        </div>
       </form>
     </Form>
   );
-}
+};
+
+export default MachineTransferForm;

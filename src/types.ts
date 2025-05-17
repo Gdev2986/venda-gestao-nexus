@@ -57,10 +57,10 @@ export interface Sale {
   client_name?: string;
   payment_method?: string;
   status?: string;
-  code: string; // Add missing property
-  terminal: string; // Add missing property
-  gross_amount: number; // Add missing property
-  net_amount: number; // Add missing property
+  code: string;
+  terminal: string;
+  gross_amount: number;
+  net_amount: number;
 }
 
 export interface SalesFilterParams {
@@ -70,11 +70,11 @@ export interface SalesFilterParams {
   paymentMethod?: string;
   status?: string;
   search?: string;
-  terminal?: string; // Add missing property
-  minAmount?: number; // Add missing property
-  maxAmount?: number; // Add missing property
-  startHour?: number; // Add missing property
-  endHour?: number; // Add missing property
+  terminal?: string;
+  minAmount?: number;
+  maxAmount?: number;
+  startHour?: number;
+  endHour?: number;
 }
 
 export interface SalesChartData {
@@ -88,13 +88,13 @@ export interface Machine {
   model: string;
   status: string;
   client_id?: string;
-  name?: string; // Add missing property
-  client_name?: string; // Add missing property
-  created_at?: string; // Add missing property
-  updated_at?: string; // Add missing property
-  location?: string; // Add missing property
-  last_maintenance?: string | null; // Add missing property
-  next_maintenance?: string | null; // Add missing property
+  name?: string;
+  client_name?: string;
+  created_at?: string;
+  updated_at?: string;
+  location?: string;
+  last_maintenance?: string | null;
+  next_maintenance?: string | null;
 }
 
 export interface Partner {
@@ -103,11 +103,16 @@ export interface Partner {
   commission_rate?: number;
   created_at?: string;
   updated_at?: string;
+  contact_name?: string;
+  email?: string;
+  phone?: string;
+  business_name?: string; // Alias for company_name
 }
 
 export interface FilterValues {
   search?: string;
   status?: string;
+  commissionRange?: number[];
 }
 
 // Add PaymentMethod type

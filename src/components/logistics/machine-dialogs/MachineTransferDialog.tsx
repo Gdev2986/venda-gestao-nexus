@@ -13,6 +13,8 @@ interface MachineTransferDialogProps {
   onOpenChange: (open: boolean) => void;
   machineId: string;
   machineName: string;
+  currentClientId?: string; // Make this optional to match how it's used
+  currentClientName?: string; // Add this property
   onTransferComplete?: () => void;
 }
 
@@ -21,6 +23,8 @@ const MachineTransferDialog = ({
   onOpenChange,
   machineId,
   machineName,
+  currentClientId,
+  currentClientName,
   onTransferComplete,
 }: MachineTransferDialogProps) => {
   const [machine, setMachine] = useState<Machine | null>(null);
@@ -47,9 +51,9 @@ const MachineTransferDialog = ({
           serial_number: machineName,
           model: "Model XYZ",
           status: "Active",
-          client_id: "client123",
+          client_id: currentClientId || "",
           name: machineName,
-          client_name: "Current Client",
+          client_name: currentClientName || "Current Client",
           created_at: "2023-01-01T00:00:00Z",
           updated_at: "2023-01-01T00:00:00Z",
           location: "Main Location"
@@ -112,7 +116,6 @@ const MachineTransferDialog = ({
         ) : machine ? (
           <MachineTransferForm
             machine={machine}
-            currentClientId={machine.client_id || ""}
             onSubmit={handleTransfer}
             isSubmitting={isSubmitting}
           />
