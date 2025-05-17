@@ -1,254 +1,202 @@
-
 import { useState, useEffect } from "react";
-import { BalanceCards } from "@/components/payments/BalanceCards";
-import { PaymentHistoryCard } from "@/components/payments/PaymentHistoryCard";
-import { PaymentRequestDialog } from "@/components/payments/PaymentRequestDialog";
-import { ClientPaymentsHeader } from "@/components/payments/ClientPaymentsHeader";
-import { supabase } from "@/integrations/supabase/client";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { PageHeader } from "@/components/page/PageHeader";
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
-import { Payment, PaymentStatus, PaymentType } from "@/types";
-import { usePaymentSubscription } from "@/hooks/usePaymentSubscription";
+import { Button } from "@/components/ui/button";
+import { CheckCircle2, Copy, RefreshCw } from "lucide-react";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import { format } from "date-fns";
+import { ptBR } from "date-fns/locale";
+import { Badge } from "@/components/ui/badge";
+import { PaymentStatus } from "@/types/enums";
+import { PaymentRequestDialog } from "@/components/payments/PaymentRequestDialog";
+import { usePaymentRequests } from "@/hooks/usePaymentRequests";
 
 const ClientPayments = () => {
-  const [isDialogOpen, setIsDialogOpen] = useState(false);
-  const [isLoading, setIsLoading] = useState(true);
-  const [payments, setPayments] = useState<Payment[]>([]);
-  const [clientBalance, setClientBalance] = useState(15000);
-  const [pixKeys, setPixKeys] = useState([]);
-  const [isLoadingPixKeys, setIsLoadingPixKeys] = useState(true);
-  const [clientId, setClientId] = useState<string | null>(null);
-  
   const { user } = useAuth();
   const { toast } = useToast();
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [copiedPaymentId, setCopiedPaymentId] = useState<string | null>(null);
+  const [isRefreshing, setIsRefreshing] = useState(false);
   
-  // Function to fetch client data
-  const fetchClientData = async () => {
-    if (!user) return;
-    
-    try {
-      // Fetch the client ID linked to the logged-in user
-      const { data: clientAccessData, error: clientAccessError } = await supabase
-        .from('user_client_access')
-        .select('client_id')
-        .eq('user_id', user.id)
-        .limit(1)
-        .single();
-      
-      if (clientAccessError) {
-        console.error("Error fetching client access:", clientAccessError);
-        return;
-      }
-      
-      if (!clientAccessData) {
-        console.log("No client associated with this user");
-        return;
-      }
-      
-      setClientId(clientAccessData.client_id);
-      
-      // Fetch client data like balance
-      const { data: clientData, error: clientError } = await supabase
-        .from('clients')
-        .select('balance')
-        .eq('id', clientAccessData.client_id)
-        .single();
-      
-      if (clientError) {
-        console.error("Error fetching client data:", clientError);
-      } else if (clientData) {
-        setClientBalance(clientData.balance || 15000);
-      }
-    } catch (error) {
-      console.error("Error fetching client data:", error);
+  const {
+    isLoading,
+    clientBalance,
+    paymentRequests,
+    isDialogOpen: dialogOpen,
+    setIsDialogOpen: setDialogOpen,
+    handleRequestPayment,
+    pixKeys,
+    isLoadingPixKeys,
+    loadPaymentRequests
+  } = usePaymentRequests();
+
+  useEffect(() => {
+    if (user) {
+      loadPaymentRequests();
     }
+  }, [user, loadPaymentRequests]);
+
+  const handleCopyPaymentId = (paymentId: string) => {
+    navigator.clipboard.writeText(paymentId);
+    setCopiedPaymentId(paymentId);
+    toast({
+      title: "ID copiado",
+      description: "O ID do pagamento foi copiado para a área de transferência.",
+    });
+    setTimeout(() => setCopiedPaymentId(null), 2000);
   };
-  
-  // Function to load payments
-  const loadPayments = async () => {
-    if (!clientId) return;
-    
-    setIsLoading(true);
+
+  const handleRefreshPayments = async () => {
+    setIsRefreshing(true);
     try {
-      const { data, error } = await supabase
-        .from('payment_requests')
-        .select(`
-          id,
-          amount,
-          description,
-          status,
-          created_at,
-          updated_at,
-          rejection_reason,
-          receipt_url,
-          pix_key_id,
-          client_id,
-          pix_key:pix_keys(id, key, type, name)
-        `)
-        .eq('client_id', clientId)
-        .order('created_at', { ascending: false });
-      
-      if (error) {
-        console.error("Error fetching payment requests:", error);
-        throw error;
-      }
-      
-      // Transform the data to match the expected Payment interface
-      const formattedPayments: Payment[] = data ? data.map(request => ({
-        id: request.id,
-        amount: request.amount,
-        description: request.description || '',
-        status: request.status as PaymentStatus,
-        created_at: request.created_at,
-        updated_at: request.updated_at,
-        rejection_reason: request.rejection_reason,
-        receipt_url: request.receipt_url,
-        client_id: request.client_id,
-        payment_type: PaymentType.PIX,
-        pix_key: request.pix_key ? {
-          id: request.pix_key.id,
-          key: request.pix_key.key,
-          type: request.pix_key.type,
-          owner_name: request.pix_key.name // Use name as owner_name
-        } : undefined
-      })) : [];
-      
-      setPayments(formattedPayments);
+      await loadPaymentRequests();
+      toast({
+        title: "Pagamentos atualizados",
+        description: "A lista de pagamentos foi atualizada com sucesso.",
+      });
     } catch (error) {
-      console.error("Error loading payments:", error);
       toast({
         variant: "destructive",
-        title: "Erro ao carregar pagamentos",
-        description: "Não foi possível carregar as solicitações de pagamento."
+        title: "Erro ao atualizar",
+        description: "Não foi possível atualizar a lista de pagamentos.",
       });
     } finally {
-      setIsLoading(false);
+      setIsRefreshing(false);
     }
   };
-  
-  // Function to fetch PIX keys
-  const fetchPixKeys = async () => {
-    if (!user) return;
-    
-    setIsLoadingPixKeys(true);
-    try {
-      const { data, error } = await supabase
-        .from('pix_keys')
-        .select('*')
-        .eq('user_id', user.id);
-      
-      if (error) {
-        console.error("Error fetching PIX keys:", error);
-        throw error;
-      }
-      
-      setPixKeys(data || []);
-    } catch (error) {
-      console.error("Error fetching PIX keys:", error);
-    } finally {
-      setIsLoadingPixKeys(false);
-    }
+
+  const openPaymentRequestDialog = () => {
+    setIsDialogOpen(true);
   };
-  
-  // Function to request payment
-  const handleRequestPayment = async (
-    amount: number,
-    pixKeyId: string | null,
-    description?: string
-  ) => {
-    if (!clientId) {
-      toast({
-        variant: "destructive",
-        title: "Erro",
-        description: "Não foi possível identificar o cliente"
-      });
-      return false;
-    }
-    
-    try {
-      const { data, error } = await supabase
-        .from('payment_requests')
-        .insert({
-          amount,
-          pix_key_id: pixKeyId,
-          client_id: clientId,
-          description: description || "Solicitação de pagamento",
-          // Use the string value directly instead of enum
-          status: "PENDING"
-        })
-        .select();
-      
-      if (error) {
-        console.error("Error requesting payment:", error);
-        toast({
-          variant: "destructive",
-          title: "Erro",
-          description: "Não foi possível criar a solicitação de pagamento"
-        });
-        return false;
-      }
-      
-      toast({
-        title: "Solicitação enviada",
-        description: "Sua solicitação de pagamento foi enviada com sucesso"
-      });
-      
-      // Reload payments after creating a new one
-      loadPayments();
-      setIsDialogOpen(false);
-      return true;
-    } catch (error) {
-      console.error("Error requesting payment:", error);
-      toast({
-        variant: "destructive",
-        title: "Erro",
-        description: "Ocorreu um erro ao solicitar o pagamento"
-      });
-      return false;
-    }
-  };
-  
-  // Effect to load initial data
-  useEffect(() => {
-    fetchClientData();
-    fetchPixKeys();
-  }, [user]);
-  
-  // Effect to load payments when clientId is available
-  useEffect(() => {
-    if (clientId) {
-      loadPayments();
-    }
-  }, [clientId]);
-  
-  // Set up real-time subscription for this specific client
-  usePaymentSubscription(loadPayments, { 
-    notifyUser: true,
-    filterByClientId: clientId
-  });
 
   return (
-    <div className="flex-1">
-      <ClientPaymentsHeader 
-        onRequestPayment={() => setIsDialogOpen(true)} 
+    <div className="container mx-auto py-6 space-y-6">
+      <PageHeader
+        title="Seus Pagamentos"
+        description="Acompanhe o histórico e solicite novos pagamentos"
       />
-      
-      <BalanceCards clientBalance={clientBalance} />
-      
-      <PaymentHistoryCard 
-        payments={payments} 
-        isLoading={isLoading} 
-      />
-      
-      <PaymentRequestDialog 
-        isOpen={isDialogOpen}
+
+      <Card className="p-4 md:p-6">
+        <CardHeader>
+          <CardTitle>Saldo Disponível</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="flex items-center justify-between">
+            <div className="text-2xl font-bold">
+              R$ {clientBalance?.toFixed(2) || "0,00"}
+            </div>
+            <Button onClick={openPaymentRequestDialog}>Solicitar Pagamento</Button>
+          </div>
+        </CardContent>
+      </Card>
+
+      <Card className="p-4 md:p-6">
+        <CardHeader className="flex items-center justify-between">
+          <CardTitle>Histórico de Pagamentos</CardTitle>
+          <Button
+            variant="ghost"
+            onClick={handleRefreshPayments}
+            disabled={isLoading || isRefreshing}
+          >
+            {isLoading || isRefreshing ? (
+              <>
+                <RefreshCw className="mr-2 h-4 w-4 animate-spin" />
+                Atualizando...
+              </>
+            ) : (
+              <>
+                <RefreshCw className="mr-2 h-4 w-4" />
+                Atualizar
+              </>
+            )}
+          </Button>
+        </CardHeader>
+        <CardContent className="overflow-x-auto">
+          {isLoading ? (
+            <div className="text-center py-4">Carregando pagamentos...</div>
+          ) : paymentRequests.length === 0 ? (
+            <div className="text-center py-4">Nenhum pagamento encontrado.</div>
+          ) : (
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Data</TableHead>
+                  <TableHead>Valor</TableHead>
+                  <TableHead>Status</TableHead>
+                  <TableHead>Descrição</TableHead>
+                  <TableHead className="w-[150px]">ID do Pagamento</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {paymentRequests.map((payment) => (
+                  <TableRow key={payment.id}>
+                    <TableCell>
+                      {format(new Date(payment.created_at), "dd/MM/yyyy HH:mm", {
+                        locale: ptBR,
+                      })}
+                    </TableCell>
+                    <TableCell>
+                      {new Intl.NumberFormat("pt-BR", {
+                        style: "currency",
+                        currency: "BRL",
+                      }).format(payment.amount)}
+                    </TableCell>
+                    <TableCell>
+                      <Badge
+                        variant={
+                          payment.status === PaymentStatus.APPROVED
+                            ? "success"
+                            : payment.status === PaymentStatus.REJECTED
+                            ? "destructive"
+                            : "secondary"
+                        }
+                      >
+                        {payment.status}
+                      </Badge>
+                    </TableCell>
+                    <TableCell>{payment.description}</TableCell>
+                    <TableCell>
+                      <div className="flex items-center space-x-2">
+                        <span className="truncate">{payment.id}</span>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => handleCopyPaymentId(payment.id)}
+                          disabled={copiedPaymentId === payment.id}
+                        >
+                          {copiedPaymentId === payment.id ? (
+                            <CheckCircle2 className="h-4 w-4 mr-2 text-green-500" />
+                          ) : (
+                            <Copy className="h-4 w-4 mr-2" />
+                          )}
+                          Copiar
+                        </Button>
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          )}
+        </CardContent>
+      </Card>
+
+      <PaymentRequestDialog
+        open={isDialogOpen}
         onOpenChange={setIsDialogOpen}
         clientBalance={clientBalance}
         pixKeys={pixKeys}
         isLoadingPixKeys={isLoadingPixKeys}
-        onRequestPayment={(amount, description, pixKeyId) => {
-          return handleRequestPayment(parseFloat(amount), pixKeyId || "", description);
-        }}
+        onRequestPayment={handleRequestPayment}
       />
     </div>
   );

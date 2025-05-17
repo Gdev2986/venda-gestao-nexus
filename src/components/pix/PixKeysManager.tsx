@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -13,12 +14,26 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { supabase } from "@/integrations/supabase/client";
 import { useUser } from "@/hooks/use-user";
 import PixKeyDialog from "@/components/pix/PixKeyDialog";
-interface PixKey {
-  id: string;
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
+import { PixKey } from "@/types";
+
+interface PixKeyFormData {
+  id?: string;
   key: string;
-  type: string;
-  owner_name: string;
-  key_type?: string;
+  type: "CPF" | "CNPJ" | "EMAIL" | "PHONE" | "RANDOM";
+  name: string;
+  is_default?: boolean;
+  user_id?: string;
+  created_at?: string;
+  updated_at?: string;
+}
+
+interface PixKeyDialogProps {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  pixKeyData?: PixKey | null;
+  onSave: (keyData: PixKeyFormData) => Promise<void>;
+  loading: boolean;
 }
 
 const PixKeysManager = () => {
@@ -47,7 +62,20 @@ const PixKeysManager = () => {
 
       if (error) throw error;
 
-      setPixKeys(data || []);
+      // Transform data to ensure it matches PixKey interface
+      const transformedData: PixKey[] = (data || []).map(item => ({
+        id: item.id,
+        key: item.key,
+        type: item.type,
+        name: item.name,
+        owner_name: item.name || '', // Add owner_name from name
+        user_id: item.user_id,
+        is_default: item.is_default || false,
+        created_at: item.created_at,
+        updated_at: item.updated_at
+      }));
+
+      setPixKeys(transformedData);
       setTotalItems(count || 0);
     } catch (error: any) {
       toast({
@@ -74,14 +102,19 @@ const PixKeysManager = () => {
     setSelectedKey(null);
   };
 
-  const handleSave = async (keyData: PixKey) => {
+  const handleSave = async (keyData: PixKeyFormData) => {
     try {
       setLoading(true);
       if (keyData.id) {
         // Update existing key
         const { error } = await supabase
           .from("pix_keys")
-          .update(keyData)
+          .update({
+            key: keyData.key,
+            type: keyData.type,
+            name: keyData.name,
+            is_default: keyData.is_default
+          })
           .eq("id", keyData.id);
 
         if (error) throw error;
@@ -94,7 +127,13 @@ const PixKeysManager = () => {
         // Create new key
         const { error } = await supabase
           .from("pix_keys")
-          .insert(keyData);
+          .insert({
+            key: keyData.key,
+            type: keyData.type,
+            name: keyData.name,
+            is_default: keyData.is_default || false,
+            user_id: user?.id
+          });
 
         if (error) throw error;
 
@@ -192,7 +231,7 @@ const PixKeysManager = () => {
                     <TableRow key={key.id}>
                       <TableCell className="font-medium">{key.type}</TableCell>
                       <TableCell>{key.key}</TableCell>
-                      <TableCell>{key.owner_name}</TableCell>
+                      <TableCell>{key.owner_name || key.name}</TableCell>
                       <TableCell className="text-right">
                         <DropdownMenu>
                           <DropdownMenuTrigger asChild>
@@ -259,7 +298,7 @@ const PixKeysManager = () => {
       <PixKeyDialog
         open={isDialogOpen}
         onOpenChange={closeDialog}
-        keyData={selectedKey}
+        pixKeyData={selectedKey}
         onSave={handleSave}
         loading={loading}
       />

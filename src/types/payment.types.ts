@@ -52,7 +52,7 @@ export interface PaymentData {
   status: PaymentRequestStatus;
   pix_key_id?: string;
   created_at: string;
-  updated_at?: string;
+  updated_at?: string; // Optional in PaymentData
   approved_at?: string;
   approved_by?: string;
   receipt_url?: string;
@@ -66,8 +66,10 @@ export interface PaymentData {
   due_date?: string;
 }
 
-// Make PaymentRequest an alias of PaymentData for backward compatibility
-export type PaymentRequest = PaymentData;
+// Make PaymentRequest a type that extends PaymentData but requires updated_at
+export interface PaymentRequest extends Omit<PaymentData, 'updated_at'> {
+  updated_at: string; // Required in PaymentRequest
+}
 
 // Define Client interface for compatibility with other components
 export interface Client {
@@ -97,15 +99,32 @@ export interface PixKey {
   id: string;
   key: string;
   key_type?: PixKeyType | string;
-  type?: string;
+  type: string;
   client_id?: string;
   user_id?: string;
   created_at?: string;
   updated_at?: string;
   name?: string;
-  owner_name?: string;
-  isDefault?: boolean;
+  owner_name: string; // Made required
+  is_default?: boolean;
   is_active?: boolean;
   bank_name?: string;
-  is_default?: boolean; // Duplicate removed
+}
+
+// Add any other types needed from the errors
+export interface UserData {
+  id: string;
+  email: string;
+  name?: string;
+  role: string;
+  avatar?: string;
+  created_at?: string;
+}
+
+export interface SalesChartData {
+  date: string;
+  amount: number;
+  name?: string;
+  value?: number;
+  total?: number;
 }

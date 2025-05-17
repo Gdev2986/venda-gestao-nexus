@@ -84,7 +84,8 @@ export function AdminPaymentsList({
   onPageChange,
   onStatusFilterChange,
   onSearchTermChange,
-  onRefresh
+  onRefresh,
+  onActionClick
 }: PaymentsListProps) {
   const [selectedPayment, setSelectedPayment] = useState<PaymentData | null>(null);
   const [isProcessingMap, setIsProcessingMap] = useState<{ [paymentId: string]: boolean }>({});
@@ -167,17 +168,17 @@ export function AdminPaymentsList({
   };
 
   const approveButton = (payment: PaymentData) => {
-    // Ensure bank_info has all required fields
+    // Ensure bank_info has all required fields and updated_at is present
     const paymentWithFullBankInfo = {
       ...payment,
-      updated_at: payment.updated_at || payment.created_at,
+      updated_at: payment.updated_at || payment.created_at, // Ensure updated_at is present
       bank_info: payment.bank_info ? {
         bank_name: payment.bank_info.bank_name || "",
         branch_number: payment.bank_info.branch_number || "",
         account_number: payment.bank_info.account_number || "",
         account_holder: payment.bank_info.account_holder || "",
         ...payment.bank_info
-      } as BankInfo : undefined
+      } : undefined
     };
     
     return (
@@ -198,17 +199,17 @@ export function AdminPaymentsList({
   };
 
   const rejectButton = (payment: PaymentData) => {
-    // Ensure bank_info has all required fields
+    // Ensure bank_info has all required fields and updated_at is present
     const paymentWithFullBankInfo = {
       ...payment,
-      updated_at: payment.updated_at || payment.created_at,
+      updated_at: payment.updated_at || payment.created_at, // Ensure updated_at is present
       bank_info: payment.bank_info ? {
         bank_name: payment.bank_info.bank_name || "",
         branch_number: payment.bank_info.branch_number || "",
         account_number: payment.bank_info.account_number || "",
         account_holder: payment.bank_info.account_holder || "",
         ...payment.bank_info
-      } as BankInfo : undefined
+      } : undefined
     };
     
     return (
@@ -229,17 +230,17 @@ export function AdminPaymentsList({
   };
 
   const detailsButton = (payment: PaymentData) => {
-    // Ensure bank_info has all required fields
+    // Ensure bank_info has all required fields and updated_at is present
     const paymentWithFullBankInfo = {
       ...payment,
-      updated_at: payment.updated_at || payment.created_at,
+      updated_at: payment.updated_at || payment.created_at, // Ensure updated_at is present
       bank_info: payment.bank_info ? {
         bank_name: payment.bank_info.bank_name || "",
         branch_number: payment.bank_info.branch_number || "",
         account_number: payment.bank_info.account_number || "",
         account_holder: payment.bank_info.account_holder || "",
         ...payment.bank_info
-      } as BankInfo : undefined
+      } : undefined
     };
     
     return (
@@ -255,17 +256,17 @@ export function AdminPaymentsList({
   };
 
   const deleteButton = (payment: PaymentData) => {
-    // Ensure bank_info has all required fields
+    // Ensure bank_info has all required fields and updated_at is present
     const paymentWithFullBankInfo = {
       ...payment,
-      updated_at: payment.updated_at || payment.created_at,
+      updated_at: payment.updated_at || payment.created_at, // Ensure updated_at is present
       bank_info: payment.bank_info ? {
         bank_name: payment.bank_info.bank_name || "",
         branch_number: payment.bank_info.branch_number || "",
         account_number: payment.bank_info.account_number || "",
         account_holder: payment.bank_info.account_holder || "",
         ...payment.bank_info
-      } as BankInfo : undefined
+      } : undefined
     };
     
     return (

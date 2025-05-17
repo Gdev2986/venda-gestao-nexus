@@ -1,5 +1,5 @@
 
-import { useState, useCallback } from "react";
+import { useState, useCallback } from 'react';
 
 export interface UseBooleanOutput {
   value: boolean;
@@ -12,9 +12,17 @@ export interface UseBooleanOutput {
 export function useBoolean(defaultValue = false): UseBooleanOutput {
   const [value, setValue] = useState<boolean>(defaultValue);
 
-  const setTrue = useCallback(() => setValue(true), []);
-  const setFalse = useCallback(() => setValue(false), []);
-  const toggle = useCallback(() => setValue(x => !x), []);
+  const setTrue = useCallback(() => {
+    setValue(true);
+  }, []);
+
+  const setFalse = useCallback(() => {
+    setValue(false);
+  }, []);
+
+  const toggle = useCallback(() => {
+    setValue((prev) => !prev);
+  }, []);
 
   return { value, setValue, setTrue, setFalse, toggle };
 }

@@ -31,11 +31,17 @@ export function convertPaymentStatusToDbFormat(status: string): PaymentStatus {
  * Converts enum payment status to UI-friendly string
  */
 export function convertPaymentStatusToUiFormat(status: PaymentStatus | string): string {
-  if (typeof status !== 'string') {
-    status = status.toString();
+  // Convert status to uppercase string to handle both enum and string types
+  let statusStr: string;
+  
+  if (typeof status === 'string') {
+    statusStr = status.toUpperCase();
+  } else {
+    // Safely convert enum to string if it's not already a string
+    statusStr = String(status).toUpperCase();
   }
   
-  switch (status.toUpperCase()) {
+  switch (statusStr) {
     case PaymentStatus.PENDING:
       return 'Pendente';
     case PaymentStatus.APPROVED:
@@ -47,6 +53,6 @@ export function convertPaymentStatusToUiFormat(status: PaymentStatus | string): 
     case PaymentStatus.PROCESSING:
       return 'Em Processamento';
     default:
-      return status;
+      return String(status); // Return as is if not matched
   }
 }
