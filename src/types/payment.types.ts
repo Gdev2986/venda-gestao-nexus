@@ -10,29 +10,30 @@ export interface PaymentRequest {
   pix_key_id?: string;
   created_at: string;
   updated_at: string;
-  approved_at: string | null;
-  approved_by: string | null;
-  receipt_url: string | null;
-  rejection_reason: string | null;
+  approved_at?: string | null;
+  approved_by?: string | null;
+  receipt_url?: string | null;
+  rejection_reason?: string | null;
   pix_key?: PixKey;
   client?: Client;
   payment_type?: string;
   due_date?: string;
   notes?: string;
+  type?: string;
 }
 
 export interface PixKey {
   id: string;
   key: string;
-  key_type?: PixKeyType;
-  type?: string; // Added for backward compatibility
+  type: string;
+  key_type?: string;
   client_id?: string;
   user_id?: string;
   created_at?: string;
   updated_at?: string;
-  name?: string; // Added for backward compatibility
-  owner_name?: string; // Added for display purposes
-  isDefault?: boolean; // Flag for default key, use this instead of is_default
+  name?: string;
+  owner_name: string;
+  isDefault?: boolean;
   is_active?: boolean;
   bank_name?: string;
 }

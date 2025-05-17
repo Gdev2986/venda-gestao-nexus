@@ -39,7 +39,30 @@ export function useUser() {
           throw error;
         }
 
-        setUser(data);
+        // Transform the data to match the UserProfile type
+        const userProfile: UserProfile = {
+          id: data.id,
+          email: data.email,
+          name: data.name,
+          role: data.role as UserRole,
+          avatar_url: data.avatar,
+          phone: data.phone
+        };
+
+        // Fetch client_id if needed
+        if (data.role === UserRole.CLIENT) {
+          const { data: clientData } = await supabase
+            .from("user_client_access")
+            .select("client_id")
+            .eq("user_id", authUser.id)
+            .single();
+            
+          if (clientData) {
+            userProfile.client_id = clientData.client_id;
+          }
+        }
+
+        setUser(userProfile);
       } catch (err: any) {
         console.error("Error fetching user profile:", err);
         setError(err);

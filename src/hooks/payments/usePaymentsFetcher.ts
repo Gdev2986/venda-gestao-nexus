@@ -1,11 +1,12 @@
 
 import { useState, useEffect, useCallback } from "react";
-import { PaymentStatus } from "@/types";
+import { PaymentStatus } from "@/types/enums";
 import { toPaymentStatus } from "@/lib/type-utils";
 import { useToast } from "@/hooks/use-toast";
+import { PaymentRequest } from "@/types/payment.types";
 
 // Function to filter payments by status
-export const filterPaymentsByStatus = (payments: any[], statusFilter: PaymentStatus | 'ALL' | null) => {
+export const filterPaymentsByStatus = (payments: PaymentRequest[], statusFilter: PaymentStatus | 'ALL' | null) => {
   if (!statusFilter || statusFilter.toString().toLowerCase() === 'all') {
     return payments;
   }
@@ -31,7 +32,7 @@ export const usePaymentsFetcher = ({
   page = 1,
   pageSize = 10
 }: UsePaymentsFetcherParams = {}) => {
-  const [paymentRequests, setPaymentRequests] = useState<any[]>([]);
+  const [paymentRequests, setPaymentRequests] = useState<PaymentRequest[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
   const [currentPage, setCurrentPage] = useState(page);
@@ -47,16 +48,19 @@ export const usePaymentsFetcher = ({
       // Mock API call with setTimeout
       setTimeout(() => {
         // Generate some mock data
-        const mockPayments = Array.from({ length: pageSize }, (_, i) => ({
+        const mockPayments: PaymentRequest[] = Array.from({ length: pageSize }, (_, i) => ({
           id: `payment-${(currentPage - 1) * pageSize + i + 1}`,
           client_id: `client-${i % 3 + 1}`,
-          client_name: `Client ${i % 3 + 1}`,
           amount: Math.floor(Math.random() * 10000) / 100,
-          status: Object.values(PaymentStatus)[i % 4],
+          status: Object.values(PaymentStatus)[i % 4] as any,
           created_at: new Date(Date.now() - i * 86400000).toISOString(),
           updated_at: new Date(Date.now() - i * 43200000).toISOString(),
           description: `Payment for service ${i + 1}`,
           rejection_reason: i % 4 === 3 ? 'Documentation incomplete' : null,
+          client: {
+            id: `client-${i % 3 + 1}`,
+            business_name: `Client ${i % 3 + 1}`
+          }
         }));
 
         // Filter by status if needed
@@ -70,7 +74,7 @@ export const usePaymentsFetcher = ({
         if (searchTerm) {
           filtered = filtered.filter(
             (payment) =>
-              payment.client_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+              payment.client?.business_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
               payment.id.toLowerCase().includes(searchTerm.toLowerCase())
           );
         }

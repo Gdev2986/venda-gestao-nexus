@@ -2,7 +2,7 @@
 import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import { useAuth } from "@/hooks/use-auth";
+import { useAuth } from "@/contexts/AuthContext";
 import { PaymentAction, PaymentStatus } from "@/types/enums";
 
 export const usePaymentActions = () => {
@@ -32,7 +32,7 @@ export const usePaymentActions = () => {
         const { error: updateError } = await supabase
           .from("payment_requests")
           .update({ 
-            status: "APPROVED",
+            status: PaymentStatus.APPROVED,
             approved_at: new Date().toISOString(),
             approved_by: user.id
           })
@@ -50,7 +50,7 @@ export const usePaymentActions = () => {
         const { error: updateError } = await supabase
           .from("payment_requests")
           .update({ 
-            status: "REJECTED",
+            status: PaymentStatus.REJECTED,
             rejection_reason: comment || null
           })
           .eq("id", paymentId);
@@ -76,6 +76,24 @@ export const usePaymentActions = () => {
         toast({
           title: "Pagamento excluído",
           description: "O pagamento foi excluído com sucesso",
+        });
+      } else if (action === PaymentAction.SEND_RECEIPT) {
+        // In a real app, here you would handle uploading receipt or sending receipt
+        // For now, just mark as paid
+        const { error: updateError } = await supabase
+          .from("payment_requests")
+          .update({ 
+            status: PaymentStatus.PAID
+          })
+          .eq("id", paymentId);
+
+        if (updateError) {
+          throw new Error(`Erro ao atualizar pagamento: ${updateError.message}`);
+        }
+
+        toast({
+          title: "Comprovante enviado",
+          description: "O comprovante foi enviado com sucesso",
         });
       }
 
