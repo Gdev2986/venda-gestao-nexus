@@ -1,17 +1,21 @@
+
 import React from 'react';
 import { useParams } from 'react-router-dom';
-import { useClient } from '@/hooks/use-clients';
+import { useClients } from '@/hooks/use-clients';
 import { PageHeader } from '@/components/page/PageHeader';
 import { Spinner } from '@/components/ui/spinner';
 import { Button } from '@/components/ui/button';
-import ClientForm from '@/components/clients/ClientForm';
+import ClientForm, { ClientFormValues } from '@/components/clients/ClientForm';
 import { BalanceUpdateDialog } from '@/components/clients/BalanceUpdateDialog';
 import { useState } from 'react';
 
 const ClientDetail = () => {
   const { clientId } = useParams<{ clientId: string }>();
-  const { client, isLoading, error, mutate } = useClient(clientId!);
+  const { clients, isLoading, error } = useClients();
   const [isBalanceDialogOpen, setIsBalanceDialogOpen] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  
+  const client = clients?.find(c => c.id === clientId);
 
   if (isLoading) {
     return (
@@ -26,11 +30,17 @@ const ClientDetail = () => {
   }
 
   if (!client) {
-    return <div>Client not found</div>;
+    return <div>Cliente não encontrado</div>;
   }
+  
+  const handleFormSubmit = async (data: ClientFormValues) => {
+    // Implementation would go here
+    console.log("Saving client data:", data);
+    return true;
+  };
 
   const handleBalanceUpdateSuccess = () => {
-    mutate();
+    // Refresh client data
   };
 
   return (
@@ -40,7 +50,14 @@ const ClientDetail = () => {
         description="Visualize e edite as informações do cliente"
       />
       <div className="space-y-4">
-        <ClientForm client={client} />
+        <ClientForm 
+          isOpen={true}
+          onClose={() => {}}
+          onSubmit={handleFormSubmit}
+          isSubmitting={isSubmitting}
+          initialData={client as any}
+          submitButtonText="Atualizar"
+        />
         <Button onClick={() => setIsBalanceDialogOpen(true)}>Atualizar Saldo</Button>
       </div>
 

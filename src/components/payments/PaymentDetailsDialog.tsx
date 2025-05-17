@@ -1,213 +1,238 @@
-
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
+import { useState } from "react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Separator } from "@/components/ui/separator";
-import { PaymentData } from "@/hooks/payments/payment.types";
-import { formatCurrency } from "@/lib/formatters";
-import { ExternalLink, Download } from "lucide-react";
-import { formatDate } from "@/components/payments/PaymentTableColumns";
+import { Payment } from "@/types";
+import { formatCurrency } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
+import { Separator } from "@/components/ui/separator";
+import { usePaymentActions } from "@/hooks/payments/usePaymentActions";
 import { PaymentStatus } from "@/types/enums";
+import { Loader2 } from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
+import { format } from "date-fns";
+import { ptBR } from "date-fns/locale";
+import { useUser } from "@/hooks/use-user";
+import { UserRole } from "@/types/enums";
+import { PaymentReceiptUploader } from "./PaymentReceiptUploader";
+import { PaymentReceiptViewer } from "./PaymentReceiptViewer";
 
 interface PaymentDetailsDialogProps {
+  payment: Payment | null;
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  payment: PaymentData | null;
+  onPaymentUpdated?: () => void;
 }
 
-// Função para determinar a cor baseada no status do pagamento
-const getStatusColor = (status: string) => {
-  switch (status) {
-    case "PENDENTE":
-      return "bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-300";
-    case "EM_PROCESSAMENTO":
-      return "bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300";
-    case "APROVADO":
-      return "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300";
-    case "RECUSADO":
-      return "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300";
-    case "PAGO":
-      return "bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-300";
-    default:
-      return "bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300";
-  }
-};
-
-// Traduzir o status para exibição
-const getStatusLabel = (status: string) => {
-  switch (status) {
-    case "PENDENTE":
-      return "Pendente";
-    case "EM_PROCESSAMENTO":
-      return "Em Processamento";
-    case "APROVADO":
-      return "Aprovado";
-    case "RECUSADO":
-      return "Recusado";
-    case "PAGO":
-      return "Pago";
-    default:
-      return status;
-  }
-};
-
 export function PaymentDetailsDialog({
+  payment,
   open,
   onOpenChange,
-  payment,
+  onPaymentUpdated,
 }: PaymentDetailsDialogProps) {
-  if (!payment) {
-    return null;
-  }
+  const { approvePayment, rejectPayment, isLoading } = usePaymentActions();
+  const { toast } = useToast();
+  const { user } = useUser();
+  const [showReceiptUploader, setShowReceiptUploader] = useState(false);
+
+  if (!payment) return null;
+
+  const handleApprove = async () => {
+    try {
+      await approvePayment(payment.id);
+      toast({
+        title: "Pagamento aprovado",
+        description: "O pagamento foi aprovado com sucesso.",
+      });
+      onPaymentUpdated?.();
+      onOpenChange(false);
+    } catch (error) {
+      toast({
+        variant: "destructive",
+        title: "Erro",
+        description: "Não foi possível aprovar o pagamento.",
+      });
+    }
+  };
+
+  const handleReject = async () => {
+    try {
+      await rejectPayment(payment.id);
+      toast({
+        title: "Pagamento rejeitado",
+        description: "O pagamento foi rejeitado com sucesso.",
+      });
+      onPaymentUpdated?.();
+      onOpenChange(false);
+    } catch (error) {
+      toast({
+        variant: "destructive",
+        title: "Erro",
+        description: "Não foi possível rejeitar o pagamento.",
+      });
+    }
+  };
+
+  const getStatusBadge = (status: string) => {
+    switch (status) {
+      case "PENDING":
+        return <Badge variant="outline">Pendente</Badge>;
+      case "PROCESSING":
+        return <Badge variant="secondary">Em processamento</Badge>;
+      case "APPROVED":
+        return <Badge variant="success">Aprovado</Badge>;
+      case "REJECTED":
+        return <Badge variant="destructive">Rejeitado</Badge>;
+      case "PAID":
+        return <Badge variant="default">Pago</Badge>;
+      default:
+        return <Badge variant="outline">{status}</Badge>;
+    }
+  };
+
+  const formatDate = (dateString: string) => {
+    try {
+      return format(new Date(dateString), "PPP 'às' p", { locale: ptBR });
+    } catch (error) {
+      return "Data inválida";
+    }
+  };
+
+  const canApproveOrReject =
+    user?.role === UserRole.ADMIN ||
+    user?.role === UserRole.FINANCIAL ||
+    user?.role === UserRole.FINANCE;
+
+  const isPending = payment.status === PaymentStatus.PENDING;
+  const hasReceipt = !!payment.receipt_url;
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-md max-h-[80vh] overflow-y-auto">
+      <DialogContent className="sm:max-w-[500px]">
         <DialogHeader>
           <DialogTitle>Detalhes do Pagamento</DialogTitle>
-          <DialogDescription>
-            Informações completas da solicitação de pagamento
-          </DialogDescription>
         </DialogHeader>
 
         <div className="space-y-4">
           <div className="flex justify-between items-center">
             <div>
-              <h3 className="text-sm font-medium text-muted-foreground">Valor</h3>
-              <p className="text-2xl font-bold">{formatCurrency(payment.amount)}</p>
+              <p className="text-sm text-muted-foreground">Valor</p>
+              <p className="text-xl font-semibold">
+                {formatCurrency(payment.amount)}
+              </p>
             </div>
-            <Badge className={getStatusColor(payment.status)}>
-              {getStatusLabel(payment.status)}
-            </Badge>
+            <div className="text-right">
+              <p className="text-sm text-muted-foreground">Status</p>
+              <div>{getStatusBadge(payment.status)}</div>
+            </div>
           </div>
 
           <Separator />
 
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <h3 className="text-sm font-medium text-muted-foreground">Cliente</h3>
-              <p>{payment.client?.business_name || "N/A"}</p>
-              {payment.client?.balance !== undefined && (
-                <p className="text-xs text-muted-foreground">
-                  Saldo: {formatCurrency(payment.client.balance)}
-                </p>
-              )}
+              <p className="text-sm text-muted-foreground">Método</p>
+              <p>{payment.payment_method}</p>
             </div>
             <div>
-              <h3 className="text-sm font-medium text-muted-foreground">Data da Solicitação</h3>
+              <p className="text-sm text-muted-foreground">Data</p>
               <p>{formatDate(payment.created_at)}</p>
+            </div>
+            <div>
+              <p className="text-sm text-muted-foreground">Cliente</p>
+              <p>{payment.client?.business_name || "N/A"}</p>
+            </div>
+            <div>
+              <p className="text-sm text-muted-foreground">Referência</p>
+              <p className="truncate">{payment.reference || "N/A"}</p>
             </div>
           </div>
 
-          <div>
-            <h3 className="text-sm font-medium text-muted-foreground">Descrição</h3>
-            <p className="text-sm">{payment.description || "Sem descrição"}</p>
-          </div>
+          {payment.description && (
+            <>
+              <Separator />
+              <div>
+                <p className="text-sm text-muted-foreground">Descrição</p>
+                <p className="whitespace-pre-wrap">{payment.description}</p>
+              </div>
+            </>
+          )}
+
+          {payment.notes && (
+            <>
+              <Separator />
+              <div>
+                <p className="text-sm text-muted-foreground">Observações</p>
+                <p className="whitespace-pre-wrap">{payment.notes}</p>
+              </div>
+            </>
+          )}
+
+          {hasReceipt && (
+            <>
+              <Separator />
+              <div>
+                <p className="text-sm text-muted-foreground mb-2">Comprovante</p>
+                <PaymentReceiptViewer url={payment.receipt_url} />
+              </div>
+            </>
+          )}
+
+          {showReceiptUploader && (
+            <>
+              <Separator />
+              <PaymentReceiptUploader
+                paymentId={payment.id}
+                onSuccess={() => {
+                  setShowReceiptUploader(false);
+                  onPaymentUpdated?.();
+                }}
+                onCancel={() => setShowReceiptUploader(false)}
+              />
+            </>
+          )}
 
           <Separator />
 
-          <div>
-            <h3 className="text-sm font-medium text-muted-foreground mb-2">Informações de Pagamento</h3>
-            
-            {payment.pix_key && (
-              <div className="bg-muted p-3 rounded-md mb-2">
-                <p className="font-medium">PIX</p>
-                <div className="grid grid-cols-2 gap-2 mt-1">
-                  <div>
-                    <p className="text-xs text-muted-foreground">Tipo</p>
-                    <p className="text-sm">{payment.pix_key.key_type || payment.pix_key.type}</p>
-                  </div>
-                  <div>
-                    <p className="text-xs text-muted-foreground">Chave</p>
-                    <p className="text-sm break-all">{payment.pix_key.key}</p>
-                  </div>
-                </div>
-              </div>
-            )}
-            
-            {payment.bank_info && (
-              <div className="bg-muted p-3 rounded-md mb-2">
-                <p className="font-medium">TED</p>
-                <div className="grid grid-cols-2 gap-2 mt-1">
-                  <div>
-                    <p className="text-xs text-muted-foreground">Banco</p>
-                    <p className="text-sm">{payment.bank_info.bank_name}</p>
-                  </div>
-                  <div>
-                    <p className="text-xs text-muted-foreground">Agência</p>
-                    <p className="text-sm">{payment.bank_info.branch_number}</p>
-                  </div>
-                  <div>
-                    <p className="text-xs text-muted-foreground">Conta</p>
-                    <p className="text-sm">{payment.bank_info.account_number}</p>
-                  </div>
-                  <div>
-                    <p className="text-xs text-muted-foreground">Titular</p>
-                    <p className="text-sm">{payment.bank_info.account_holder}</p>
-                  </div>
-                </div>
-              </div>
+          <div className="flex justify-end gap-2">
+            {canApproveOrReject && isPending && (
+              <>
+                <Button
+                  variant="outline"
+                  onClick={handleReject}
+                  disabled={isLoading}
+                >
+                  {isLoading ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : (
+                    "Rejeitar"
+                  )}
+                </Button>
+                <Button onClick={handleApprove} disabled={isLoading}>
+                  {isLoading ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : (
+                    "Aprovar"
+                  )}
+                </Button>
+              </>
             )}
 
-            {payment.document_url && (
-              <div className="bg-muted p-3 rounded-md">
-                <p className="font-medium">Boleto</p>
-                <Button 
-                  variant="outline" 
-                  size="sm" 
-                  className="mt-2"
-                  asChild
-                >
-                  <a href={payment.document_url} target="_blank" rel="noopener noreferrer">
-                    <Download className="mr-2 h-4 w-4" />
-                    Baixar Boleto
-                  </a>
-                </Button>
-              </div>
+            {payment.status === PaymentStatus.APPROVED && !hasReceipt && (
+              <Button
+                onClick={() => setShowReceiptUploader(true)}
+                disabled={showReceiptUploader}
+              >
+                Anexar Comprovante
+              </Button>
+            )}
+
+            {!showReceiptUploader && (
+              <Button variant="outline" onClick={() => onOpenChange(false)}>
+                Fechar
+              </Button>
             )}
           </div>
-
-          {payment.status === "APROVADO" && payment.approved_at && (
-            <div>
-              <h3 className="text-sm font-medium text-muted-foreground">Aprovado em</h3>
-              <p>{formatDate(payment.approved_at)}</p>
-            </div>
-          )}
-
-          {payment.status === "RECUSADO" && payment.rejection_reason && (
-            <div>
-              <h3 className="text-sm font-medium text-muted-foreground">Motivo da Recusa</h3>
-              <p className="text-sm">{payment.rejection_reason}</p>
-            </div>
-          )}
-
-          {payment.receipt_url && (
-            <div>
-              <h3 className="text-sm font-medium text-muted-foreground">Comprovante</h3>
-              <Button 
-                variant="outline" 
-                className="mt-1"
-                asChild
-              >
-                <a href={payment.receipt_url} target="_blank" rel="noopener noreferrer">
-                  <ExternalLink className="mr-2 h-4 w-4" />
-                  Ver Comprovante
-                </a>
-              </Button>
-            </div>
-          )}
         </div>
-
-        <DialogFooter>
-          <Button onClick={() => onOpenChange(false)}>Fechar</Button>
-        </DialogFooter>
       </DialogContent>
     </Dialog>
   );

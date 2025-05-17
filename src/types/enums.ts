@@ -44,5 +44,5 @@ export enum PaymentAction {
   SEND_RECEIPT = 'send_receipt'
 }
 
-// PaymentRequestStatus should align with PaymentStatus enum values
-export type PaymentRequestStatus = PaymentStatus;
+// PaymentRequestStatus should be exactly the same string literals as PaymentStatus to ensure compatibility
+export type PaymentRequestStatus = "PENDING" | "PROCESSING" | "APPROVED" | "REJECTED" | "PAID";

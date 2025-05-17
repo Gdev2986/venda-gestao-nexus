@@ -26,6 +26,7 @@ import { useAvailableMachines } from "@/hooks/use-available-machines";
 import { useCepLookup } from "@/hooks/use-cep-lookup";
 import { Loader2 } from "lucide-react";
 import { useClientRealtime } from "@/hooks/useClientRealtime";
+import AddressFields from "./AddressFields";
 
 // Define the form schema with validations
 const formSchema = z.object({
@@ -65,9 +66,7 @@ const ClientForm = ({
 }: ClientFormProps) => {
   const { partners, isLoading: isLoadingPartners } = usePartnersSelect();
   const { machines, isLoading: isLoadingMachines } = useAvailableMachines();
-  const { lookupCep, isLoading: isLoadingCep, error: cepError } = useCepLookup();
   
-  const [cepEditable, setCepEditable] = useState(false);
   const [selectedMachines, setSelectedMachines] = useState<string[]>([]);
 
   // Initialize form
@@ -108,20 +107,6 @@ const ClientForm = ({
     if (result) {
       form.reset();
       setSelectedMachines([]);
-    }
-  };
-
-  // Handle CEP lookup
-  const handleCepChange = async (value: string) => {
-    if (value.replace(/\D/g, "").length === 8) {
-      const address = await lookupCep(value);
-      if (address) {
-        form.setValue("state", address.state);
-        form.setValue("city", address.city);
-        setCepEditable(false);
-      } else {
-        setCepEditable(true);
-      }
     }
   };
 
@@ -233,69 +218,8 @@ const ClientForm = ({
             
             <h3 className="text-md font-medium mt-6">Endereço</h3>
             
-            <FormMaskedInput
-              control={form.control}
-              name="zip"
-              label="CEP"
-              mask="00000-000"
-              placeholder="00000-000"
-              required
-            />
-            
-            <div className="flex gap-4">
-              <div className="flex-1">
-                <FormField
-                  control={form.control}
-                  name="state"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Estado<span className="text-destructive"> *</span></FormLabel>
-                      <FormControl>
-                        <Input 
-                          placeholder="UF" 
-                          {...field} 
-                          maxLength={2}
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              </div>
-              
-              <div className="flex-1">
-                <FormField
-                  control={form.control}
-                  name="city"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Cidade<span className="text-destructive"> *</span></FormLabel>
-                      <FormControl>
-                        <Input 
-                          placeholder="Cidade" 
-                          {...field}
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              </div>
-            </div>
-            
-            <FormField
-              control={form.control}
-              name="address"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Endereço Completo<span className="text-destructive"> *</span></FormLabel>
-                  <FormControl>
-                    <Input placeholder="Endereço completo" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+            {/* Use the AddressFields component here */}
+            <AddressFields form={form} />
           </div>
           
           {/* Right column: Contact info and machines */}

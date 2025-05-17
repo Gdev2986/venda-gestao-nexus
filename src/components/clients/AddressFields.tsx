@@ -47,7 +47,8 @@ const AddressFields = ({ form }: AddressFieldsProps) => {
     selectedState, 
     setSelectedState, 
     isLoadingStates, 
-    isLoadingCities 
+    isLoadingCities,
+    error: locationError
   } = useIBGELocations();
   
   // Watch the zip field to apply formatting
@@ -133,7 +134,7 @@ const AddressFields = ({ form }: AddressFieldsProps) => {
                     )}
                   </Button>
                 </div>
-                {error && <p className="text-sm text-muted-foreground mt-1">{error}</p>}
+                {error && <p className="text-sm text-destructive mt-1">{error}</p>}
                 <FormMessage />
               </FormItem>
             )}
@@ -164,10 +165,14 @@ const AddressFields = ({ form }: AddressFieldsProps) => {
                       <Loader2 className="h-4 w-4 animate-spin mr-2" />
                       <span>Carregando estados...</span>
                     </div>
+                  ) : locationError ? (
+                    <div className="p-2 text-sm text-destructive">
+                      Erro ao carregar estados. Tente novamente.
+                    </div>
                   ) : (
                     states.map((state) => (
                       <SelectItem key={state.sigla} value={state.sigla}>
-                        {state.nome}
+                        {state.nome} ({state.sigla})
                       </SelectItem>
                     ))
                   )}
@@ -199,6 +204,14 @@ const AddressFields = ({ form }: AddressFieldsProps) => {
                     <div className="flex items-center justify-center p-2">
                       <Loader2 className="h-4 w-4 animate-spin mr-2" />
                       <span>Carregando cidades...</span>
+                    </div>
+                  ) : locationError ? (
+                    <div className="p-2 text-sm text-destructive">
+                      Erro ao carregar cidades. Tente novamente.
+                    </div>
+                  ) : cities.length === 0 && selectedState ? (
+                    <div className="p-2 text-sm text-muted-foreground">
+                      Nenhuma cidade encontrada para este estado.
                     </div>
                   ) : (
                     cities.map((city) => (

@@ -1,221 +1,134 @@
-
 import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import { PaymentData, PaymentRequest } from "./payment.types";
-import { PaymentStatus } from "@/types/enums";
+import { useAuth } from "@/hooks/use-auth";
+import { PaymentAction, PaymentStatus } from "@/types/enums";
+import { usePaymentRequests } from "./use-payment-requests";
 
-export const usePaymentActions = (
-  payments: PaymentData[],
-  setPayments: React.Dispatch<React.SetStateAction<PaymentData[]>>
-) => {
-  const [processingIds, setProcessingIds] = useState<string[]>([]);
+export const usePaymentActions = () => {
+  const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
+  const { user } = useAuth();
+  const { mutate } = usePaymentRequests();
 
-  const isProcessing = (id: string) => processingIds.includes(id);
-
-  const approvePayment = async (
+  const handlePaymentAction = async (
     paymentId: string,
-    receiptFile: File | null,
-    notes?: string
+    action: PaymentAction,
+    comment?: string
   ) => {
-    setProcessingIds((prev) => [...prev, paymentId]);
+    if (!user) {
+      toast({
+        title: "Erro",
+        description: "Você precisa estar logado para realizar esta ação",
+        variant: "destructive",
+      });
+      return false;
+    }
+
+    setIsLoading(true);
 
     try {
-      // 1. Upload receipt if provided
-      let receiptUrl = null;
-      if (receiptFile) {
-        const fileName = `receipts/${paymentId}/${Date.now()}-${receiptFile.name}`;
-        
-        const { data: uploadData, error: uploadError } = await supabase.storage
-          .from("payment-receipts")
-          .upload(fileName, receiptFile);
+      // Record the action in the payment_actions table
+      const { error: actionError } = await supabase
+        .from("payment_actions")
+        .insert({
+          payment_id: paymentId,
+          action_type: action,
+          user_id: user.id,
+          comment: comment || null,
+        });
 
-        if (uploadError) {
-          throw new Error(`Receipt upload failed: ${uploadError.message}`);
+      if (actionError) {
+        throw new Error(`Erro ao registrar ação: ${actionError.message}`);
+      }
+
+      // Update the payment status based on the action
+      if (action === PaymentAction.APPROVE) {
+        const { error: updateError } = await supabase
+          .from("payment_requests")
+          .update({ status: "APPROVED" })
+          .eq("id", paymentId);
+
+        if (updateError) {
+          throw new Error(`Erro ao aprovar pagamento: ${updateError.message}`);
         }
 
-        // Get the public URL for the uploaded receipt
-        const { data } = supabase.storage
-          .from("payment-receipts")
-          .getPublicUrl(fileName);
-          
-        receiptUrl = data.publicUrl;
+        toast({
+          title: "Pagamento aprovado",
+          description: "O pagamento foi aprovado com sucesso",
+        });
+      } else if (action === PaymentAction.REJECT) {
+        const { error: updateError } = await supabase
+          .from("payment_requests")
+          .update({ status: "REJECTED" })
+          .eq("id", paymentId);
+
+        if (updateError) {
+          throw new Error(`Erro ao rejeitar pagamento: ${updateError.message}`);
+        }
+
+        toast({
+          title: "Pagamento rejeitado",
+          description: "O pagamento foi rejeitado",
+        });
+      } else if (action === PaymentAction.DELETE) {
+        const { error: deleteError } = await supabase
+          .from("payment_requests")
+          .delete()
+          .eq("id", paymentId);
+
+        if (deleteError) {
+          throw new Error(`Erro ao excluir pagamento: ${deleteError.message}`);
+        }
+
+        toast({
+          title: "Pagamento excluído",
+          description: "O pagamento foi excluído com sucesso",
+        });
       }
 
-      // 2. Update payment status to APPROVED
-      const { error: updateError } = await supabase
-        .from("payment_requests")
-        .update({
-          status: PaymentStatus.APPROVED as unknown as string,
-          approved_at: new Date().toISOString(),
-          approved_by: "current-user-id", // Should be replaced with actual user ID
-          receipt_url: receiptUrl,
-          ...(notes ? { notes } : {}),
-        })
-        .eq("id", paymentId);
-
-      if (updateError) {
-        throw new Error(`Payment approval failed: ${updateError.message}`);
-      }
-
-      // 3. Update local state
-      setPayments((prevPayments) =>
-        prevPayments.map((payment) => {
-          if (payment.id === paymentId) {
-            return {
-              ...payment,
-              status: PaymentStatus.APPROVED,
-              approved_at: new Date().toISOString(),
-              approved_by: "current-user-id", // Should be replaced with actual user ID
-              receipt_url: receiptUrl,
-            } as PaymentData;
-          }
-          return payment;
-        })
-      );
-
-      toast({
-        title: "Pagamento Aprovado",
-        description: "O pagamento foi aprovado com sucesso.",
-      });
-
+      // Refresh the payment requests data
+      mutate();
       return true;
     } catch (error: any) {
-      console.error("Erro ao aprovar pagamento:", error);
+      console.error("Error handling payment action:", error);
       toast({
+        title: "Erro",
+        description: error.message || "Ocorreu um erro ao processar a ação",
         variant: "destructive",
-        title: "Falha na Aprovação",
-        description: error.message,
       });
       return false;
     } finally {
-      setProcessingIds((prev) => prev.filter((id) => id !== paymentId));
+      setIsLoading(false);
     }
   };
 
-  const rejectPayment = async (paymentId: string, rejectionReason: string) => {
-    setProcessingIds((prev) => [...prev, paymentId]);
-
-    try {
-      const { error } = await supabase
-        .from("payment_requests")
-        .update({
-          status: PaymentStatus.REJECTED as unknown as string,
-          rejection_reason: rejectionReason,
-        })
-        .eq("id", paymentId);
-
-      if (error) {
-        throw new Error(`Payment rejection failed: ${error.message}`);
-      }
-
-      // Update local state
-      setPayments((prevPayments) =>
-        prevPayments.map((payment) => {
-          if (payment.id === paymentId) {
-            return {
-              ...payment,
-              status: PaymentStatus.REJECTED,
-              rejection_reason: rejectionReason,
-            } as PaymentData;
-          }
-          return payment;
-        })
-      );
-
-      toast({
-        title: "Pagamento Rejeitado",
-        description: "O pagamento foi rejeitado com sucesso.",
-      });
-
-      return true;
-    } catch (error: any) {
-      console.error("Erro ao rejeitar pagamento:", error);
-      toast({
-        variant: "destructive",
-        title: "Falha na Rejeição",
-        description: error.message,
-      });
-      return false;
-    } finally {
-      setProcessingIds((prev) => prev.filter((id) => id !== paymentId));
-    }
+  const approvePayment = async (paymentId: string, comment?: string) => {
+    return handlePaymentAction(paymentId, PaymentAction.APPROVE, comment);
   };
 
-  const sendReceipt = async (paymentId: string, receiptFile: File, message?: string) => {
-    setProcessingIds((prev) => [...prev, paymentId]);
+  const rejectPayment = async (paymentId: string, comment?: string) => {
+    return handlePaymentAction(paymentId, PaymentAction.REJECT, comment);
+  };
 
-    try {
-      // Upload receipt
-      const fileName = `receipts/${paymentId}/${Date.now()}-${receiptFile.name}`;
-      
-      const { data: uploadData, error: uploadError } = await supabase.storage
-        .from("payment-receipts")
-        .upload(fileName, receiptFile);
+  const deletePayment = async (paymentId: string) => {
+    return handlePaymentAction(paymentId, PaymentAction.DELETE);
+  };
 
-      if (uploadError) {
-        throw new Error(`Receipt upload failed: ${uploadError.message}`);
-      }
+  const viewPayment = async (paymentId: string) => {
+    return handlePaymentAction(paymentId, PaymentAction.VIEW);
+  };
 
-      // Get the public URL for the uploaded receipt
-      const { data } = supabase.storage
-        .from("payment-receipts")
-        .getPublicUrl(fileName);
-        
-      const receiptUrl = data.publicUrl;
-
-      // Update payment with receipt URL
-      const { error: updateError } = await supabase
-        .from("payment_requests")
-        .update({
-          receipt_url: receiptUrl,
-          status: PaymentStatus.PAID as unknown as string,
-        })
-        .eq("id", paymentId);
-
-      if (updateError) {
-        throw new Error(`Receipt update failed: ${updateError.message}`);
-      }
-
-      // Update local state
-      setPayments((prevPayments) =>
-        prevPayments.map((payment) => {
-          if (payment.id === paymentId) {
-            return {
-              ...payment,
-              receipt_url: receiptUrl,
-              status: PaymentStatus.PAID,
-            } as PaymentData;
-          }
-          return payment;
-        })
-      );
-
-      toast({
-        title: "Comprovante Enviado",
-        description: "O comprovante foi enviado com sucesso.",
-      });
-
-      return true;
-    } catch (error: any) {
-      console.error("Erro ao enviar comprovante:", error);
-      toast({
-        variant: "destructive",
-        title: "Falha no Envio",
-        description: error.message,
-      });
-      return false;
-    } finally {
-      setProcessingIds((prev) => prev.filter((id) => id !== paymentId));
-    }
+  const sendReceipt = async (paymentId: string) => {
+    return handlePaymentAction(paymentId, PaymentAction.SEND_RECEIPT);
   };
 
   return {
+    isLoading,
     approvePayment,
     rejectPayment,
+    deletePayment,
+    viewPayment,
     sendReceipt,
-    isProcessing,
-    processingIds,
   };
 };
