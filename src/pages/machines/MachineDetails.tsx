@@ -1,5 +1,4 @@
-
-import { useEffect, useState } from "react";
+import { useEffect, useState, ReactNode } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { PageHeader } from "@/components/page/PageHeader";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
@@ -81,19 +80,15 @@ const MachineDetails = () => {
     }
   };
   
+  // Define title and description with proper typing
+  let pageTitle: ReactNode = loading ? <Skeleton className="h-8 w-48" /> : `Máquina: ${machine?.serial_number || "Detalhes"}`;
+  let pageDescription: ReactNode = loading ? <Skeleton className="h-5 w-64" /> : `Informações detalhadas sobre a máquina e seu histórico`;
+  
   return (
     <div className="space-y-6">
       <PageHeader
-        title={
-          loading 
-          ? <Skeleton className="h-8 w-48" /> 
-          : `Máquina: ${machine?.serial_number || "Detalhes"}`
-        }
-        description={
-          loading 
-          ? <Skeleton className="h-5 w-64" /> 
-          : `Informações detalhadas sobre a máquina e seu histórico`
-        }
+        title={pageTitle}
+        description={pageDescription}
         breadcrumbs={[
           { label: "Máquinas", href: PATHS.LOGISTICS.MACHINES },
           { label: loading ? "..." : (machine?.serial_number || "Detalhes"), href: "#" },

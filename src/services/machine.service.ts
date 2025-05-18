@@ -1,4 +1,3 @@
-
 import { supabase } from "@/integrations/supabase/client";
 import { 
   Machine, 
@@ -66,6 +65,7 @@ export const getMachinesByStatus = async (status: MachineStatus): Promise<Machin
         model, 
         status, 
         client_id,
+        notes,
         created_at, 
         updated_at,
         client:client_id (
@@ -87,6 +87,7 @@ export const getMachinesByStatus = async (status: MachineStatus): Promise<Machin
       client_name: item.client?.business_name,
       created_at: item.created_at,
       updated_at: item.updated_at,
+      notes: item.notes,
       client: item.client,
     }));
   } catch (error) {
