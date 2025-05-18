@@ -72,7 +72,7 @@ const MachinesStockTab = ({ machines, isLoading, onAddNewClick }: MachinesStockT
                     <TableCell>
                       <Badge className="bg-blue-100 text-blue-700">Em Estoque</Badge>
                     </TableCell>
-                    <TableCell>{new Date(machine.created_at).toLocaleDateString('pt-BR')}</TableCell>
+                    <TableCell>{new Date(machine.created_at || "").toLocaleDateString('pt-BR')}</TableCell>
                     <TableCell>
                       <div className="flex space-x-2">
                         <Button variant="outline" size="sm">

@@ -57,8 +57,8 @@ export const getMachines = getAllMachines;
 // Get machines by status
 export const getMachinesByStatus = async (status: MachineStatus): Promise<Machine[]> => {
   try {
-    // Status is already in lowercase in the MachineStatus enum
-    const statusStr = status;
+    // Convert enum to string for database query
+    const statusStr = String(status);
     
     const { data, error } = await supabase
       .from("machines")
@@ -147,15 +147,15 @@ export const getMachineStats = async (): Promise<MachineStats> => {
 // Create a new machine
 export const createMachine = async (params: MachineCreateParams): Promise<Machine> => {
   try {
-    // Status is already in lowercase in the MachineStatus enum
-    const status = params.status || MachineStatus.STOCK;
+    // Convert enum to string for database insert
+    const statusStr = params.status ? String(params.status) : String(MachineStatus.STOCK);
     
     const { data, error } = await supabase
       .from("machines")
       .insert({
         serial_number: params.serial_number,
         model: params.model,
-        status: status,
+        status: statusStr,
         client_id: params.client_id,
         notes: params.notes
       })
@@ -187,7 +187,7 @@ export const updateMachine = async (id: string, params: MachineUpdateParams): Pr
     
     if (params.serial_number !== undefined) updateData.serial_number = params.serial_number;
     if (params.model !== undefined) updateData.model = params.model;
-    if (params.status !== undefined) updateData.status = params.status;
+    if (params.status !== undefined) updateData.status = String(params.status);
     if (params.client_id !== undefined) updateData.client_id = params.client_id;
     if (params.notes !== undefined) updateData.notes = params.notes;
     
@@ -263,15 +263,15 @@ export const transferMachine = async (params: MachineTransferParams): Promise<Ma
     if (transferError) throw transferError;
 
     // Update the machine's client_id
-    const newStatus = params.to_client_id 
-      ? MachineStatus.ACTIVE
-      : MachineStatus.STOCK;
+    const newStatusStr = params.to_client_id 
+      ? String(MachineStatus.ACTIVE)
+      : String(MachineStatus.STOCK);
       
     const { error: machineError } = await supabase
       .from("machines")
       .update({ 
         client_id: params.to_client_id,
-        status: newStatus
+        status: newStatusStr
       })
       .eq("id", params.machine_id);
 
