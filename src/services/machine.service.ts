@@ -9,6 +9,9 @@ import {
   MachineStats
 } from "@/types/machine.types";
 
+// Export the Machine interface to fix import errors
+export type { Machine };
+
 export async function getAllMachines(): Promise<Machine[]> {
   try {
     const { data, error } = await supabase
@@ -38,7 +41,7 @@ export async function getMachinesByStatus(status: MachineStatus): Promise<Machin
         *,
         client:clients(id, business_name)
       `)
-      .eq("status", status)
+      .eq("status", status as string) // Cast to string to fix type mismatch
       .order("created_at", { ascending: false });
 
     if (error) {
@@ -81,7 +84,7 @@ export async function createMachine(params: MachineCreateParams): Promise<Machin
       .insert({
         serial_number: params.serial_number,
         model: params.model,
-        status: params.status,
+        status: params.status as string, // Cast to string to fix type mismatch
         client_id: params.client_id,
       })
       .select()
@@ -150,7 +153,7 @@ export async function transferMachine(params: MachineTransferParams): Promise<an
       .from("machines")
       .update({
         client_id: params.to_client_id,
-        status: newStatus,
+        status: newStatus as string, // Cast to string to fix type mismatch
       })
       .eq("id", params.machine_id);
 
@@ -244,7 +247,6 @@ export async function getMachinesByClient(clientId: string): Promise<Machine[]> 
   }
 }
 
-// Get all clients that have machines
 export async function getClientsWithMachines(): Promise<any[]> {
   try {
     // Get unique client IDs with machines

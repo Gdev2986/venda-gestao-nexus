@@ -1,6 +1,6 @@
 
 import { Card, CardContent } from "@/components/ui/card";
-import { Machine } from "@/services/machine.service";
+import { Machine } from "@/types/machine.types"; // Changed import path
 import { Skeleton } from "@/components/ui/skeleton";
 import {
   Table,

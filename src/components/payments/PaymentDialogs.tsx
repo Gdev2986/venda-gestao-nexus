@@ -58,7 +58,7 @@ export const PaymentDialogs = ({
       <PaymentDetailsDialog
         open={detailsDialogOpen}
         onOpenChange={setDetailsDialogOpen}
-        payment={selectedPayment as Payment} // Use type assertion to match the required type
+        payment={selectedPayment as unknown as Payment} // Type assertion to fix compatibility
       />
     </>
   );

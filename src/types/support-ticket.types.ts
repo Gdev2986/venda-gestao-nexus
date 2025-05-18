@@ -16,16 +16,16 @@ export enum TicketType {
   INSTALLATION = "INSTALLATION",
   MAINTENANCE = "MAINTENANCE",
   REMOVAL = "REMOVAL",
-  REPLACEMENT = "REPLACEMENT", 
-  SUPPLIES = "SUPPLIES", // For example, receipt paper
-  OTHER = "OTHER",
-  PAPER = "PAPER" // Adding PAPER to match what's being used
+  REPLACEMENT = "REPLACEMENT",
+  PAPER = "PAPER",
+  SUPPLIES = "SUPPLIES",
+  OTHER = "OTHER"
 }
 
 export interface SupportTicket {
   id: string;
   client_id: string;
-  machine_id?: string; 
+  machine_id?: string;
   type: TicketType;
   status: TicketStatus;
   priority: TicketPriority;
@@ -44,4 +44,23 @@ export interface SupportTicket {
     serial_number: string;
     model: string;
   };
+}
+
+export interface CreateSupportTicketParams {
+  client_id: string;
+  machine_id?: string;
+  type: TicketType;
+  priority: TicketPriority;
+  description: string;
+  scheduled_date?: string;
+  created_by: string;
+}
+
+export interface UpdateSupportTicketParams {
+  status?: TicketStatus;
+  priority?: TicketPriority;
+  description?: string;
+  scheduled_date?: string;
+  assigned_to?: string;
+  machine_id?: string;
 }

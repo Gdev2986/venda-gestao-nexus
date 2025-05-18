@@ -1,64 +1,93 @@
 
-export type PaymentRequestStatus = 'PENDING' | 'APPROVED' | 'REJECTED' | 'PAID';
-
-export interface PixKey {
-  id: string;
-  key: string;
-  type: string; // Required field
-  key_type?: string;
-  client_id?: string;
-  user_id?: string;
-  created_at?: string;
-  updated_at?: string;
-  name?: string;
-  owner_name: string; // Required field
-  isDefault?: boolean;
-  is_active?: boolean;
-  bank_name?: string;
+export enum PaymentStatus {
+  PENDING = "PENDING",
+  PROCESSING = "PROCESSING",
+  APPROVED = "APPROVED",
+  REJECTED = "REJECTED",
+  PAID = "PAID"
 }
 
-export interface Client {
-  id: string;
-  business_name: string;
-  document?: string;
-  email?: string;
-  phone?: string;
-  status?: string;
-  balance?: number;
-  partner_id?: string;
-  created_at?: string;
-  updated_at?: string;
-  contact_name?: string;
-  address?: string;
-  city?: string;
-  state?: string;
-  zip?: string;
-  fee_plan_id?: string;
+export enum PaymentType {
+  PIX = "PIX",
+  TED = "TED",
+  BOLETO = "BOLETO"
 }
-
-export type PixKeyType = 'CPF' | 'CNPJ' | 'EMAIL' | 'PHONE' | 'EVP' | 'RANDOM';
 
 export interface PaymentRequest {
   id: string;
   client_id: string;
   amount: number;
-  description?: string;
-  status: PaymentRequestStatus;
-  pix_key_id?: string;
-  pix_key?: PixKey;
-  client?: Client;
+  status: PaymentStatus;
   created_at: string;
   updated_at: string;
-  approved_at?: string | null;
+  approved_at?: string;
   approved_by?: string | null;
-  receipt_url?: string | null;
+  receipt_url?: string;
+  description?: string;
   rejection_reason?: string | null;
-  payment_type?: string;
-  due_date?: string;
-  notes?: string;
-  type?: string;
-  is_read?: boolean;
+  payment_type?: PaymentType;
+  pix_key_id?: string;
+  client?: {
+    id: string;
+    business_name: string;
+    email?: string;
+  };
 }
 
-// Payment type is an alias for PaymentRequest to maintain compatibility
-export type Payment = PaymentRequest;
+export interface Payment {
+  id: string;
+  created_at: string;
+  updated_at: string;
+  amount: number;
+  status: PaymentStatus | string;
+  client_id: string;
+  approved_at?: string; 
+  receipt_url?: string;
+  client_name?: string;
+  rejection_reason: string | null;
+  payment_type?: PaymentType | string;
+  bank_info?: {
+    bank_name?: string;
+    account_number?: string;
+    branch_number?: string;
+    account_holder?: string;
+  };
+  document_url?: string;
+  due_date?: string;
+  pix_key?: {
+    id: string;
+    key: string;
+    type: string;
+    owner_name: string;
+  };
+  approved_by?: string | null;
+  description?: string;
+  client?: any;
+}
+
+export interface PaymentFormData {
+  amount: number;
+  payment_type: PaymentType;
+  pix_key_id?: string;
+  bank_info?: {
+    bank_name: string;
+    branch_number: string;
+    account_number: string;
+    account_type: string;
+    account_holder: string;
+    document: string;
+  };
+  description?: string;
+}
+
+export interface ApprovePaymentParams {
+  id: string;
+  receipt_url?: string;
+  notes?: string;
+  approved_by: string;
+}
+
+export interface RejectPaymentParams {
+  id: string;
+  rejection_reason: string;
+}
