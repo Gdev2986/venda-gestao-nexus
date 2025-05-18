@@ -1,6 +1,7 @@
 
 import { User, Session } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
+import { UserRole } from "@/types";
 
 // Generate a unique device ID for session management
 export const getDeviceId = (): string => {
@@ -63,6 +64,27 @@ export const getCurrentSession = async (): Promise<{
   }
 };
 
+// Fetch user role directly from database
+export const fetchUserRole = async (userId: string): Promise<UserRole | null> => {
+  try {
+    const { data, error } = await supabase
+      .from('profiles')
+      .select('role')
+      .eq('id', userId)
+      .single();
+    
+    if (error) {
+      console.error('Error fetching user role:', error);
+      return null;
+    }
+    
+    return data?.role as UserRole || null;
+  } catch (error) {
+    console.error('Exception fetching user role:', error);
+    return null;
+  }
+};
+
 // Sign in with email and password
 export const signInWithEmail = async (email: string, password: string): Promise<{
   user: User | null;
@@ -82,9 +104,9 @@ export const signInWithEmail = async (email: string, password: string): Promise<
       let errorMessage = "An error occurred during authentication";
       
       if (error.message === "Invalid login credentials") {
-        errorMessage = "Invalid credentials. Please check your email and password.";
+        errorMessage = "Credenciais inválidas. Verifique seu email e senha.";
       } else if (error.message.includes("Database error")) {
-        errorMessage = "Server connection error. Please try again later.";
+        errorMessage = "Erro de conexão com o servidor. Tente novamente mais tarde.";
       }
       
       return { user: null, error: new Error(errorMessage) };
@@ -125,10 +147,10 @@ export const signUpWithEmail = async (
     });
 
     if (error) {
-      let errorMessage = "An error occurred during registration";
+      let errorMessage = "Ocorreu um erro durante o cadastro";
       
       if (error.message.includes("already registered")) {
-        errorMessage = "This email is already registered. Try logging in.";
+        errorMessage = "Este email já está registrado. Tente fazer login.";
       }
       
       return { user: null, error: new Error(errorMessage) };

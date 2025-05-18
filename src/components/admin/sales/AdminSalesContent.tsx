@@ -1,6 +1,13 @@
 
 import React from "react";
-import { SalesData } from "@/pages/admin/Sales";
+
+export interface SalesData {
+  id: string;
+  date: string;
+  amount: number;
+  client: string;
+  status: string;
+}
 
 export interface AdminSalesContentProps {
   sales: SalesData[];
@@ -26,7 +33,6 @@ const AdminSalesContent: React.FC<AdminSalesContentProps> = ({
   setPage,
   itemsPerPage
 }) => {
-  // Implement your component here
   return (
     <div>
       <p>Sales content would display here</p>

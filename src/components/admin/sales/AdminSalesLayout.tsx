@@ -11,10 +11,10 @@ export interface AdminSalesLayoutProps {
 
 const AdminSalesLayout: React.FC<AdminSalesLayoutProps> = ({ 
   children,
-  isRefreshing,
-  onRefresh,
-  onImport,
-  onExport
+  isRefreshing = false,
+  onRefresh = () => {},
+  onImport = () => {},
+  onExport = () => {}
 }) => {
   return <div className="space-y-4">{children}</div>;
 };

@@ -5,43 +5,44 @@ import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useNavigate } from "react-router-dom";
 import { PATHS } from "@/routes/paths";
+import { UserRole } from "@/types";
 import { 
   getCurrentSession, 
   signInWithEmail, 
   signUpWithEmail, 
   signOutUser, 
-  clearAuthData 
+  clearAuthData
 } from "@/services/auth-service";
 import { AuthContextType } from "./auth-types";
 
-// Função para limpar todos os dados relacionados ao Supabase
+// Function to clear all Supabase-related data
 const cleanupSupabaseState = () => {
   try {
-    // Limpar tokens padrão
+    // Clear standard tokens
     localStorage.removeItem('supabase.auth.token');
     
-    // Remover todas as chaves do Supabase do localStorage
+    // Remove all Supabase keys from localStorage
     Object.keys(localStorage).forEach((key) => {
       if (key.startsWith('supabase.auth.') || key.includes('sb-')) {
         localStorage.removeItem(key);
       }
     });
     
-    // Remover do sessionStorage se estiver em uso
+    // Remove from sessionStorage if being used
     Object.keys(sessionStorage).forEach((key) => {
       if (key.startsWith('supabase.auth.') || key.includes('sb-')) {
         sessionStorage.removeItem(key);
       }
     });
     
-    // Limpar outros dados de autenticação
+    // Clear other auth-related data
     sessionStorage.removeItem('userRole');
     sessionStorage.removeItem('redirectPath');
     localStorage.removeItem('userRole');
     
-    console.log("Limpeza completa do estado de autenticação");
+    console.log("Auth state cleanup complete");
   } catch (error) {
-    console.error("Erro ao limpar estado de autenticação:", error);
+    console.error("Error during auth state cleanup:", error);
   }
 };
 
@@ -52,11 +53,13 @@ export const AuthContext = createContext<AuthContextType | undefined>(undefined)
 export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [session, setSession] = useState<Session | null>(null);
   const [user, setUser] = useState<User | null>(null);
+  const [userRole, setUserRole] = useState<UserRole | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
   const { toast } = useToast();
   const navigate = useNavigate();
 
-  console.log("AuthProvider rendering, isLoading:", isLoading, "user:", user?.email);
+  console.log("AuthProvider rendering - isLoading:", isLoading, "user:", user?.email, "userRole:", userRole);
 
   useEffect(() => {
     console.log("Setting up auth listener");
@@ -66,16 +69,37 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       async (event, newSession) => {
         console.log("Auth state change event:", event);
         
-        // Set session and user state synchronously
+        // Update session state synchronously first
         setSession(newSession);
         setUser(newSession?.user ?? null);
+        setIsAuthenticated(!!newSession);
 
         // Handle auth events
         if (event === "SIGNED_IN") {
           console.log("Signed in event detected");
           
-          // Track the session in our custom table - using setTimeout to avoid Supabase callback issues
+          // Only fetch user role if we have a session
           if (newSession?.user) {
+            try {
+              // Fetch user role from profiles table
+              const { data: profile, error } = await supabase
+                .from('profiles')
+                .select('role')
+                .eq('id', newSession.user.id)
+                .single();
+              
+              if (error) {
+                console.error("Error fetching user role:", error);
+              } else {
+                // Normalize the role to match our UserRole enum
+                const normalizedRole = profile?.role?.toUpperCase() as UserRole;
+                console.log("User role fetched:", normalizedRole);
+                setUserRole(normalizedRole);
+              }
+            } catch (err) {
+              console.error("Error in role fetching:", err);
+            }
+            
             setTimeout(() => {
               toast({
                 title: "Successfully authenticated",
@@ -88,7 +112,13 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         if (event === "SIGNED_OUT") {
           console.log("Signed out event detected");
           
-          // Clear auth data
+          // Clear auth data immediately
+          setSession(null);
+          setUser(null);
+          setUserRole(null);
+          setIsAuthenticated(false);
+          
+          // Clean up all auth-related data
           clearAuthData();
           cleanupSupabaseState();
           
@@ -99,7 +129,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
               description: "You have been successfully signed out.",
             });
             
-            // Força recarregamento da página para limpar completamente o estado
+            // Force page reload to clear state completely
             window.location.href = PATHS.LOGIN;
           }, 0);
         }
@@ -123,7 +153,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         
         if (error) {
           console.error("Error getting session:", error);
-          // Limpar dados em caso de erro
+          // Clean up data if there's an error
           cleanupSupabaseState();
           throw error;
         }
@@ -132,10 +162,36 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         
         setSession(currentSession);
         setUser(currentUser);
+        setIsAuthenticated(!!currentSession);
+        
+        // Only fetch user role if we have a user
+        if (currentUser) {
+          try {
+            // Fetch user role from profiles table
+            const { data: profile, error: roleError } = await supabase
+              .from('profiles')
+              .select('role')
+              .eq('id', currentUser.id)
+              .single();
+            
+            if (roleError) {
+              console.error("Error fetching user role:", roleError);
+            } else {
+              // Normalize the role to match our UserRole enum
+              const normalizedRole = profile?.role?.toUpperCase() as UserRole;
+              console.log("User role fetched:", normalizedRole);
+              setUserRole(normalizedRole);
+            }
+          } catch (err) {
+            console.error("Error in role fetching:", err);
+          }
+        }
       } catch (error) {
         console.error("Error during initial session check:", error);
         setSession(null);
         setUser(null);
+        setUserRole(null);
+        setIsAuthenticated(false);
       } finally {
         setIsLoading(false);
       }
@@ -151,18 +207,18 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
   const signIn = async (email: string, password: string) => {
     try {
-      // Limpar qualquer dado de autenticação antes de tentar login
+      // Clean up any existing auth data before attempting login
       cleanupSupabaseState();
       
       console.log("Sign in attempt for:", email);
       setIsLoading(true);
       
-      // Tentativa de logout global antes de fazer login
+      // Try global logout before login to ensure clean state
       try {
         await supabase.auth.signOut({ scope: 'global' });
       } catch (err) {
-        // Continuar mesmo se falhar
-        console.log("Falha ao fazer logout global antes do login, continuando...");
+        // Continue even if this fails
+        console.log("Failed to perform global logout before login, continuing...");
       }
       
       const { user: signedInUser, error } = await signInWithEmail(email, password);
@@ -199,17 +255,17 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
   const signUp = async (email: string, password: string, userData: { name: string }) => {
     try {
-      // Limpar qualquer dado de autenticação antes de tentar cadastro
+      // Clean up any existing auth data before attempting signup
       cleanupSupabaseState();
       
       console.log("Sign up attempt for:", email);
       setIsLoading(true);
       
-      // Tentativa de logout global antes de fazer cadastro
+      // Try global logout before signup to ensure clean state
       try {
         await supabase.auth.signOut({ scope: 'global' });
       } catch (err) {
-        // Continuar mesmo se falhar
+        // Continue even if this fails
       }
       
       const { user: newUser, error } = await signUpWithEmail(email, password, userData);
@@ -242,20 +298,22 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       console.log("Sign out attempt");
       setIsLoading(true);
       
-      // Limpar estado local imediatamente para melhor UX
+      // Clear local state immediately for better UX
       setUser(null);
       setSession(null);
+      setUserRole(null);
+      setIsAuthenticated(false);
       
-      // Limpar todos os dados de autenticação
+      // Clean up all auth data
       cleanupSupabaseState();
       
       const { error } = await signOutUser();
       
       if (error) {
-        console.error("Erro ao fazer logout:", error);
+        console.error("Error during logout:", error);
       }
       
-      // Forçar recarga completa da página para limpar todo o estado
+      // Force complete page reload to clear all state
       window.location.href = PATHS.HOME;
       
       return { success: true, error: null };
@@ -278,6 +336,8 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         user,
         session,
         isLoading,
+        isAuthenticated,
+        userRole,
         signIn,
         signUp,
         signOut,

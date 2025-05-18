@@ -1,174 +1,253 @@
 
 import { supabase } from "@/integrations/supabase/client";
-import { SupportTicket, TicketStatus, TicketPriority, TicketType } from "@/types/support.types";
-import { CreateSupportTicketParams, UpdateSupportTicketParams } from "@/types/support.types";
+import { TicketStatus, TicketPriority, TicketType, SupportTicket, CreateSupportTicketParams, UpdateSupportTicketParams } from "@/types/support.types";
 
-// Mock data for local development - will be replaced by Supabase implementation
-const mockTickets = [
-  {
-    id: "1",
-    title: "Machine not working",
-    description: "The terminal is not turning on",
-    status: "PENDING",
-    priority: "HIGH",
-    type: "MAINTENANCE",
-    client_id: "client-1",
-    created_by: "user-1",
-    created_at: new Date().toISOString(),
-    updated_at: new Date().toISOString(),
-    client: {
-      id: "client-1",
-      business_name: "ABC Store"
-    }
-  },
-  {
-    id: "2",
-    title: "Need new paper rolls",
-    description: "Please send 5 paper rolls",
-    status: "IN_PROGRESS",
-    priority: "MEDIUM",
-    type: "SUPPLIES",
-    client_id: "client-2",
-    created_by: "user-2",
-    created_at: new Date().toISOString(),
-    updated_at: new Date().toISOString(),
-    client: {
-      id: "client-2",
-      business_name: "XYZ Restaurant"
-    }
-  }
-];
-
-// Helper function to convert database types to our app types
-const mapDatabaseTicketToAppTicket = (dbTicket: any): SupportTicket => {
-  return {
-    ...dbTicket,
-    status: dbTicket.status as TicketStatus,
-    priority: dbTicket.priority as TicketPriority,
-    type: dbTicket.type as TicketType,
-    client: dbTicket.client ? {
-      id: dbTicket.client.id || "",
-      business_name: dbTicket.client.business_name || ""
-    } : undefined
-  };
-};
-
-// Get all support tickets
-export async function getAllSupportTickets(): Promise<SupportTicket[]> {
+/**
+ * Gets a list of all support tickets with optional filtering
+ */
+export const getSupportTickets = async (
+  filters?: { clientId?: string; status?: TicketStatus; type?: TicketType; }
+): Promise<SupportTicket[]> => {
   try {
-    // Create a temporary table for development if needed
-    const tableExists = await checkIfSupportTicketsTableExists();
-    
-    if (!tableExists) {
-      console.warn("Support tickets table doesn't exist in the database. Using mock data.");
-      return mockTickets.map(ticket => mapDatabaseTicketToAppTicket(ticket));
-    }
-    
-    const { data, error } = await supabase
-      .from("support_conversations")
+    // Start building the query
+    let query = supabase
+      .from('support_tickets')
       .select(`
         *,
-        client:clients(id, business_name, address, city, state),
+        client:clients(business_name),
         machine:machines(id, serial_number, model)
-      `)
-      .order("created_at", { ascending: false });
+      `);
+
+    // Apply filters if they exist
+    if (filters?.clientId) {
+      query = query.eq('client_id', filters.clientId);
+    }
+
+    if (filters?.status) {
+      query = query.eq('status', filters.status);
+    }
+
+    if (filters?.type) {
+      query = query.eq('type', filters.type);
+    }
+
+    // Execute the query
+    const { data, error } = await query.order('created_at', { ascending: false });
 
     if (error) {
-      console.error("Error fetching support tickets:", error);
-      return mockTickets.map(ticket => mapDatabaseTicketToAppTicket(ticket));
+      console.error('Error fetching support tickets:', error);
+      throw error;
     }
 
-    return data.map(mapDatabaseTicketToAppTicket);
-  } catch (error) {
-    console.error("Error in getAllSupportTickets:", error);
-    return mockTickets.map(ticket => mapDatabaseTicketToAppTicket(ticket));
-  }
-}
-
-// Helper to check if support_tickets table exists
-async function checkIfSupportTicketsTableExists(): Promise<boolean> {
-  try {
-    // Use a simple query to check if the table exists
-    const { error } = await supabase
-      .from('support_conversations')
-      .select('id')
-      .limit(1);
-    
-    // If no error, the table exists
-    return !error;
-  } catch (error) {
-    console.warn("Error checking support_tickets table:", error);
-    return false;
-  }
-}
-
-// Create a new support ticket
-export async function createSupportTicket(params: CreateSupportTicketParams): Promise<SupportTicket> {
-  try {
-    // For development, return a mock ticket
-    if (!(await checkIfSupportTicketsTableExists())) {
-      const newTicket = {
-        id: `mock-${Date.now()}`,
-        title: params.title,
-        description: params.description,
-        status: params.status || TicketStatus.PENDING,
-        priority: params.priority,
-        type: params.type,
-        client_id: params.client_id,
-        machine_id: params.machine_id,
-        user_id: "mock-user",
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString(),
+    // Transform the data to match our SupportTicket interface
+    return data.map(ticket => {
+      return {
+        id: ticket.id,
+        title: ticket.title,
+        client_id: ticket.client_id,
+        machine_id: ticket.machine_id,
+        user_id: ticket.user_id,
+        type: ticket.type as TicketType,
+        status: ticket.status as TicketStatus,
+        priority: ticket.priority as TicketPriority,
+        description: ticket.description,
+        scheduled_date: ticket.scheduled_date,
+        created_at: ticket.created_at,
+        updated_at: ticket.updated_at,
+        created_by: ticket.created_by,
+        assigned_to: ticket.assigned_to,
         client: {
-          id: "mock-client",
-          business_name: "Client Name"
-        }
+          id: ticket.client_id,
+          business_name: ticket.client?.business_name || ""
+        },
+        machine: ticket.machine ? {
+          id: ticket.machine.id,
+          serial_number: ticket.machine.serial_number,
+          model: ticket.machine.model
+        } : undefined
       };
-      return newTicket as SupportTicket;
-    }
+    });
+  } catch (error) {
+    console.error('Error in getSupportTickets:', error);
+    return [];
+  }
+};
 
+/**
+ * Gets support tickets by client ID
+ */
+export const getClientSupportTickets = async (clientId: string): Promise<SupportTicket[]> => {
+  return getSupportTickets({ clientId });
+};
+
+/**
+ * Gets support tickets by type
+ */
+export const getSupportTicketsByType = async (type: TicketType): Promise<SupportTicket[]> => {
+  return getSupportTickets({ type });
+};
+
+/**
+ * Gets a single support ticket by ID
+ */
+export const getSupportTicketById = async (id: string): Promise<SupportTicket | null> => {
+  try {
     const { data, error } = await supabase
-      .from("support_conversations")
-      .insert({
-        client_id: params.client_id,
-        subject: params.title,
-        status: "OPEN"
-      })
-      .select()
+      .from('support_tickets')
+      .select(`
+        *,
+        client:clients(business_name),
+        machine:machines(id, serial_number, model)
+      `)
+      .eq('id', id)
       .single();
 
     if (error) {
+      console.error('Error fetching support ticket:', error);
+      return null;
+    }
+
+    // Transform the data to match our SupportTicket interface
+    return {
+      id: data.id,
+      title: data.title,
+      client_id: data.client_id,
+      machine_id: data.machine_id,
+      user_id: data.user_id,
+      type: data.type as TicketType,
+      status: data.status as TicketStatus,
+      priority: data.priority as TicketPriority,
+      description: data.description,
+      scheduled_date: data.scheduled_date,
+      created_at: data.created_at,
+      updated_at: data.updated_at,
+      created_by: data.created_by,
+      assigned_to: data.assigned_to,
+      client: {
+        id: data.client_id,
+        business_name: data.client?.business_name || ""
+      },
+      machine: data.machine ? {
+        id: data.machine.id,
+        serial_number: data.machine.serial_number,
+        model: data.machine.model
+      } : undefined
+    };
+  } catch (error) {
+    console.error('Error in getSupportTicketById:', error);
+    return null;
+  }
+};
+
+/**
+ * Creates a new support ticket
+ */
+export const createSupportTicket = async (ticket: CreateSupportTicketParams): Promise<SupportTicket | null> => {
+  try {
+    const { data, error } = await supabase
+      .from('support_tickets')
+      .insert({
+        title: ticket.title,
+        description: ticket.description,
+        client_id: ticket.client_id,
+        machine_id: ticket.machine_id,
+        user_id: ticket.user_id,
+        type: ticket.type,
+        status: ticket.status || TicketStatus.PENDING,
+        priority: ticket.priority,
+        assigned_to: ticket.assigned_to,
+        created_by: ticket.created_by
+      })
+      .select(`
+        *,
+        client:clients(business_name)
+      `)
+      .single();
+
+    if (error) {
+      console.error('Error creating support ticket:', error);
       throw error;
     }
 
     return {
       id: data.id,
-      title: params.title,
-      description: params.description,
-      status: TicketStatus.PENDING,
-      priority: params.priority as TicketPriority,
-      type: params.type as TicketType,
-      client_id: params.client_id,
-      machine_id: params.machine_id,
-      user_id: "system",
+      title: data.title,
+      description: data.description,
+      client_id: data.client_id,
+      machine_id: data.machine_id,
+      user_id: data.user_id,
+      type: data.type as TicketType,
+      status: data.status as TicketStatus,
+      priority: data.priority as TicketPriority,
       created_at: data.created_at,
-      updated_at: data.updated_at
+      updated_at: data.updated_at,
+      created_by: data.created_by,
+      assigned_to: data.assigned_to,
+      client: {
+        id: data.client_id,
+        business_name: data.client?.business_name || ""
+      }
     };
-  } catch (error: any) {
-    console.error("Error creating support ticket:", error);
-    // Return a mock ticket for development
-    return {
-      id: `mock-${Date.now()}`,
-      title: params.title,
-      description: params.description,
-      status: TicketStatus.PENDING,
-      priority: params.priority as TicketPriority,
-      type: params.type as TicketType,
-      client_id: params.client_id,
-      machine_id: params.machine_id,
-      user_id: "mock-user",
-      created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString()
-    };
+  } catch (error) {
+    console.error('Error in createSupportTicket:', error);
+    return null;
   }
-}
+};
+
+/**
+ * Updates an existing support ticket
+ */
+export const updateSupportTicket = async (id: string, updates: UpdateSupportTicketParams): Promise<SupportTicket | null> => {
+  try {
+    // Create an update object with only the fields that need to be updated
+    const updateData: any = {};
+    if (updates.title !== undefined) updateData.title = updates.title;
+    if (updates.description !== undefined) updateData.description = updates.description;
+    if (updates.status !== undefined) updateData.status = updates.status;
+    if (updates.priority !== undefined) updateData.priority = updates.priority;
+    if (updates.type !== undefined) updateData.type = updates.type;
+    if (updates.assigned_to !== undefined) updateData.assigned_to = updates.assigned_to;
+    if (updates.user_id !== undefined) updateData.user_id = updates.user_id;
+    
+    // Always update the updated_at timestamp
+    updateData.updated_at = new Date().toISOString();
+
+    const { data, error } = await supabase
+      .from('support_tickets')
+      .update(updateData)
+      .eq('id', id)
+      .select(`
+        *,
+        client:clients(business_name)
+      `)
+      .single();
+
+    if (error) {
+      console.error('Error updating support ticket:', error);
+      throw error;
+    }
+
+    return {
+      id: data.id,
+      title: data.title,
+      description: data.description,
+      client_id: data.client_id,
+      machine_id: data.machine_id,
+      user_id: data.user_id,
+      type: data.type as TicketType,
+      status: data.status as TicketStatus,
+      priority: data.priority as TicketPriority,
+      created_at: data.created_at,
+      updated_at: data.updated_at,
+      created_by: data.created_by,
+      assigned_to: data.assigned_to,
+      client: {
+        id: data.client_id,
+        business_name: data.client?.business_name || ""
+      }
+    };
+  } catch (error) {
+    console.error('Error in updateSupportTicket:', error);
+    return null;
+  }
+};

@@ -1,228 +1,201 @@
-import { supabase } from '@/integrations/supabase/client';
-import { 
-  Payment, 
-  PaymentRequest, 
-  PixKey,
-  PaymentRequestStatus 
-} from '@/types/payment.types';
-import { PaymentStatus } from '@/types/enums';
 
-// Helper function to convert payment status string to enum
-function toPaymentStatus(status: string | PaymentStatus): PaymentStatus {
-  if (typeof status === 'string') {
-    switch (status) {
-      case 'PENDING': return PaymentStatus.PENDING;
-      case 'PROCESSING': return PaymentStatus.PROCESSING;
-      case 'APPROVED': return PaymentStatus.APPROVED;
-      case 'REJECTED': return PaymentStatus.REJECTED;
-      case 'PAID': return PaymentStatus.PAID;
-      default: return PaymentStatus.PENDING;
+import { supabase } from "@/integrations/supabase/client";
+import { Payment, PaymentStatus } from "@/types";
+
+/**
+ * Gets a list of all payments with optional filtering
+ */
+export const getPayments = async (
+  filters?: { clientId?: string; status?: PaymentStatus; startDate?: Date; endDate?: Date; }
+): Promise<Payment[]> => {
+  try {
+    // Start building the query
+    let query = supabase
+      .from('payments')
+      .select(`
+        *,
+        client:clients(id, business_name)
+      `);
+
+    // Apply filters if they exist
+    if (filters?.clientId) {
+      query = query.eq('client_id', filters.clientId);
     }
+
+    if (filters?.status) {
+      // Normalize status to match the enum
+      const normalizedStatus = filters.status.toString();
+      query = query.eq('status', normalizedStatus);
+    }
+
+    if (filters?.startDate) {
+      query = query.gte('created_at', filters.startDate.toISOString());
+    }
+
+    if (filters?.endDate) {
+      query = query.lte('created_at', filters.endDate.toISOString());
+    }
+
+    // Execute the query
+    const { data, error } = await query.order('created_at', { ascending: false });
+
+    if (error) {
+      console.error('Error fetching payments:', error);
+      throw error;
+    }
+
+    // Transform to match our Payment interface
+    return data.map(payment => ({
+      id: payment.id,
+      amount: payment.amount,
+      status: payment.status as PaymentStatus,
+      client_id: payment.client_id,
+      created_at: payment.created_at,
+      updated_at: payment.updated_at,
+      approved_at: payment.approved_at,
+      receipt_url: payment.receipt_url,
+      client_name: payment.client?.business_name,
+      rejection_reason: payment.rejection_reason,
+      payment_type: payment.payment_type,
+      bank_info: payment.bank_info,
+      document_url: payment.document_url,
+      due_date: payment.due_date,
+      pix_key: payment.pix_key,
+      approved_by: payment.approved_by,
+      description: payment.description,
+      client: payment.client
+    }));
+  } catch (error) {
+    console.error('Error in getPayments:', error);
+    throw error;
   }
-  return status;
-}
+};
 
 /**
- * Get payment requests by status
+ * Gets a single payment by ID
  */
-export async function getPaymentRequestsByStatus(status: PaymentStatus | string): Promise<PaymentRequest[]> {
-  // Convert enum to string if needed
-  const statusValue = typeof status === 'string' ? status : status.toString();
+export const getPaymentById = async (id: string): Promise<Payment | null> => {
+  try {
+    const { data, error } = await supabase
+      .from('payments')
+      .select(`
+        *,
+        client:clients(id, business_name)
+      `)
+      .eq('id', id)
+      .single();
 
-  const { data, error } = await supabase
-    .from('payment_requests')
-    .select(`
-      *,
-      client:client_id (*),
-      pix_key:pix_key_id (*)
-    `)
-    .eq('status', statusValue);
+    if (error) {
+      console.error('Error fetching payment:', error);
+      return null;
+    }
 
-  if (error) {
-    console.error(`Error fetching payment requests with status ${status}:`, error);
-    throw new Error(error.message);
+    return {
+      id: data.id,
+      amount: data.amount,
+      status: data.status as PaymentStatus,
+      client_id: data.client_id,
+      created_at: data.created_at,
+      updated_at: data.updated_at,
+      approved_at: data.approved_at,
+      receipt_url: data.receipt_url,
+      client_name: data.client?.business_name,
+      rejection_reason: data.rejection_reason,
+      payment_type: data.payment_type,
+      bank_info: data.bank_info,
+      document_url: data.document_url,
+      due_date: data.due_date,
+      pix_key: data.pix_key,
+      approved_by: data.approved_by,
+      description: data.description,
+      client: data.client
+    };
+  } catch (error) {
+    console.error('Error in getPaymentById:', error);
+    return null;
   }
-
-  // Need to cast data as it comes from database
-  const paymentRequests = data.map(item => ({
-    ...item,
-    status: toPaymentStatus(item.status)
-  })) as unknown as PaymentRequest[];
-
-  return paymentRequests;
-}
+};
 
 /**
- * Get all payment requests
+ * Approves a payment
  */
-export async function getAllPaymentRequests(): Promise<PaymentRequest[]> {
-  const { data, error } = await supabase
-    .from('payment_requests')
-    .select(`
-      *,
-      client:client_id (*),
-      pix_key:pix_key_id (*)
-    `)
-    .order('created_at', { ascending: false });
+export const approvePayment = async (paymentId: string, approverId: string): Promise<Payment | null> => {
+  try {
+    const { data, error } = await supabase
+      .from('payments')
+      .update({
+        status: PaymentStatus.APPROVED,
+        approved_at: new Date().toISOString(),
+        approved_by: approverId,
+        updated_at: new Date().toISOString()
+      })
+      .eq('id', paymentId)
+      .select()
+      .single();
 
-  if (error) {
-    console.error('Error fetching all payment requests:', error);
-    throw new Error(error.message);
+    if (error) {
+      console.error('Error approving payment:', error);
+      throw error;
+    }
+
+    return data as Payment;
+  } catch (error) {
+    console.error('Error in approvePayment:', error);
+    return null;
   }
-
-  // Need to cast data as it comes from database
-  const paymentRequests = data.map(item => ({
-    ...item,
-    status: toPaymentStatus(item.status)
-  })) as unknown as PaymentRequest[];
-
-  return paymentRequests;
-}
+};
 
 /**
- * Create a new payment request
+ * Rejects a payment
  */
-export async function createPaymentRequest(
-  clientId: string,
-  amount: number,
-  pixKeyId: string,
-  description?: string
-): Promise<PaymentRequest> {
-  const { data, error } = await supabase
-    .from('payment_requests')
-    .insert({
-      client_id: clientId,
-      amount,
-      pix_key_id: pixKeyId,
-      description: description || 'Solicitação de pagamento',
-    })
-    .select()
-    .single();
+export const rejectPayment = async (paymentId: string, reason: string): Promise<Payment | null> => {
+  try {
+    const { data, error } = await supabase
+      .from('payments')
+      .update({
+        status: 'REJECTED' as PaymentStatus,
+        rejection_reason: reason,
+        updated_at: new Date().toISOString()
+      })
+      .eq('id', paymentId)
+      .select()
+      .single();
 
-  if (error) {
-    console.error('Error creating payment request:', error);
-    throw new Error(error.message);
+    if (error) {
+      console.error('Error rejecting payment:', error);
+      throw error;
+    }
+
+    return data as Payment;
+  } catch (error) {
+    console.error('Error in rejectPayment:', error);
+    return null;
   }
-
-  return {
-    ...data,
-    status: toPaymentStatus(data.status)
-  } as unknown as PaymentRequest;
-}
+};
 
 /**
- * Approve a payment request
+ * Marks a payment as paid
  */
-export async function approvePaymentRequest(
-  id: string,
-  approvedBy: string,
-  receiptUrl?: string
-): Promise<PaymentRequest> {
-  const updates: any = {
-    status: PaymentStatus.APPROVED.toString(),
-    approved_by: approvedBy,
-    approved_at: new Date().toISOString(),
-  };
+export const markPaymentAsPaid = async (paymentId: string): Promise<Payment | null> => {
+  try {
+    const { data, error } = await supabase
+      .from('payments')
+      .update({
+        status: 'PAID' as PaymentStatus,
+        updated_at: new Date().toISOString()
+      })
+      .eq('id', paymentId)
+      .select()
+      .single();
 
-  if (receiptUrl) {
-    updates.receipt_url = receiptUrl;
+    if (error) {
+      console.error('Error marking payment as paid:', error);
+      throw error;
+    }
+
+    return data as Payment;
+  } catch (error) {
+    console.error('Error in markPaymentAsPaid:', error);
+    return null;
   }
-
-  const { data, error } = await supabase
-    .from('payment_requests')
-    .update(updates)
-    .eq('id', id)
-    .select()
-    .single();
-
-  if (error) {
-    console.error('Error approving payment request:', error);
-    throw new Error(error.message);
-  }
-
-  return {
-    ...data,
-    status: toPaymentStatus(data.status)
-  } as unknown as PaymentRequest;
-}
-
-/**
- * Reject a payment request
- */
-export async function rejectPaymentRequest(
-  id: string,
-  rejectionReason: string
-): Promise<PaymentRequest> {
-  const { data, error } = await supabase
-    .from('payment_requests')
-    .update({
-      status: PaymentStatus.REJECTED.toString(),
-      rejection_reason: rejectionReason,
-    })
-    .eq('id', id)
-    .select()
-    .single();
-
-  if (error) {
-    console.error('Error rejecting payment request:', error);
-    throw new Error(error.message);
-  }
-
-  return {
-    ...data,
-    status: toPaymentStatus(data.status)
-  } as unknown as PaymentRequest;
-}
-
-/**
- * Get a payment request by ID
- */
-export async function getPaymentRequestById(id: string): Promise<PaymentRequest> {
-  const { data, error } = await supabase
-    .from('payment_requests')
-    .select(`
-      *,
-      client:client_id (*),
-      pix_key:pix_key_id (*)
-    `)
-    .eq('id', id)
-    .single();
-
-  if (error) {
-    console.error(`Error fetching payment request with id ${id}:`, error);
-    throw new Error(error.message);
-  }
-
-  return {
-    ...data,
-    status: toPaymentStatus(data.status)
-  } as unknown as PaymentRequest;
-}
-
-/**
- * Get payment requests for a client
- */
-export async function getClientPayments(clientId: string): Promise<Payment[]> {
-  const { data, error } = await supabase
-    .from('payment_requests')
-    .select(`
-      *,
-      client:client_id (*),
-      pix_key:pix_key_id (*)
-    `)
-    .eq('client_id', clientId)
-    .order('created_at', { ascending: false });
-
-  if (error) {
-    console.error(`Error fetching payment requests for client ${clientId}:`, error);
-    throw new Error(error.message);
-  }
-
-  // Need to cast data as it comes from database
-  const paymentRequests = data.map(item => ({
-    ...item,
-    status: toPaymentStatus(item.status)
-  })) as unknown as Payment[];
-
-  return paymentRequests;
-}
+};

@@ -4,8 +4,8 @@ export enum MachineStatus {
   INACTIVE = "INACTIVE",
   MAINTENANCE = "MAINTENANCE",
   BLOCKED = "BLOCKED",
-  STOCK = "STOCK",
-  TRANSIT = "TRANSIT"
+  TRANSIT = "TRANSIT",
+  STOCK = "STOCK"
 }
 
 export interface Machine {
@@ -14,58 +14,12 @@ export interface Machine {
   model: string;
   status: MachineStatus;
   client_id?: string;
+  client_name?: string;
   created_at?: string;
   updated_at?: string;
+  name?: string;
+  serialNumber?: string;
   client?: {
-    id: string;
-    business_name: string;
-  };
-}
-
-export interface MachineWithClient extends Machine {
-  client?: {
-    id: string;
-    business_name: string;
-  };
-}
-
-export interface MachineCreateParams {
-  serial_number: string;
-  model: string;
-  status?: MachineStatus;
-  client_id?: string;
-}
-
-export interface MachineUpdateParams {
-  serial_number?: string;
-  model?: string;
-  status?: MachineStatus;
-  client_id?: string | null;
-}
-
-export interface MachineTransferParams {
-  machine_id: string;
-  from_client_id?: string;
-  to_client_id: string;
-  notes?: string;
-  created_by?: string; // Adding this field to fix errors
-}
-
-export interface MachineTransfer {
-  id: string;
-  machine_id: string;
-  from_client_id?: string;
-  to_client_id: string;
-  transfer_date: string;
-  cutoff_date: string;
-  created_by: string;
-  created_at: string;
-  machine?: Machine;
-  from_client?: {
-    id: string;
-    business_name: string;
-  };
-  to_client?: {
     id: string;
     business_name: string;
   };
@@ -76,19 +30,30 @@ export interface MachineStats {
   active: number;
   inactive: number;
   maintenance: number;
-  blocked?: number; // Adding for compatibility
-  stock?: number; // Adding for compatibility
-  transit?: number; // Adding for compatibility
-  byClient: {
-    client_id: string;
-    client_name: string;
-    count: number;
-  }[];
-  byModel: {
-    model: string;
-    count: number;
-  }[];
-  byStatus?: {
-    [key: string]: number;
-  }; // Adding for compatibility
+  blocked: number;
+  stock: number;
+  transit: number;
+  byStatus: Record<string, number>;
+  byClient?: Record<string, number>;
+  byModel?: Record<string, number>;
+}
+
+export interface MachineTransfer {
+  id: string;
+  machine_id: string;
+  from_client_id: string;
+  to_client_id: string;
+  transfer_date: string;
+  cutoff_date?: string;
+  created_at: string;
+  created_by: string;
+  machine: Machine;
+  from_client: {
+    id: string;
+    business_name: string;
+  };
+  to_client: {
+    id: string;
+    business_name: string;
+  };
 }

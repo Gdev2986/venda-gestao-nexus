@@ -73,6 +73,7 @@ export interface CreateSupportTicketParams {
   status?: TicketStatus;
   assigned_to?: string;
   created_by?: string;
+  user_id?: string;
 }
 
 export interface UpdateSupportTicketParams {
@@ -82,4 +83,5 @@ export interface UpdateSupportTicketParams {
   priority?: TicketPriority;
   type?: TicketType;
   assigned_to?: string;
+  user_id?: string;
 }

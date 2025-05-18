@@ -5,10 +5,11 @@ import NotificationList from "@/components/notifications/NotificationList";
 import NotificationFilters from "@/components/notifications/NotificationFilters";
 import { useNotifications } from "@/contexts/NotificationsContext";
 import { PageHeader } from "@/components/page/PageHeader";
+import { NotificationType } from "@/types";
 
 const Notifications = () => {
-  const [typeFilter, setTypeFilter] = useState("all");
-  const [statusFilter, setStatusFilter] = useState("all");
+  const [typeFilter, setTypeFilter] = useState<string>("all");
+  const [statusFilter, setStatusFilter] = useState<string>("all");
   
   const {
     notifications,
@@ -42,8 +43,8 @@ const Notifications = () => {
               statusFilter={statusFilter}
               onTypeChange={setTypeFilter}
               onStatusChange={setStatusFilter}
-              onMarkAllAsRead={markAllAsRead}
-              onRefresh={refreshNotifications}
+              onMarkAllAsRead={() => markAllAsRead()}
+              onRefresh={() => refreshNotifications()}
             />
           </CardHeader>
           <CardContent>
