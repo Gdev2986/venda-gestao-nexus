@@ -100,8 +100,7 @@ const ClientForm = ({
     <Form {...form}>
       <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-6">
         {/* Main content area */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          {/* Left Column - Company and Contact Info */}
+        <div className="grid grid-cols-1 gap-6">
           <div className="space-y-6">
             <div>
               <h3 className="text-lg font-medium mb-4">Informações da Empresa</h3>
@@ -116,10 +115,7 @@ const ClientForm = ({
                 <ContactInfoFields form={form} />
               </div>
             </div>
-          </div>
-          
-          {/* Right Column - Address and Machines */}
-          <div className="space-y-6">
+
             <div>
               <h3 className="text-lg font-medium mb-4">Endereço</h3>
               <div className="space-y-4">
@@ -182,3 +178,4 @@ const ClientForm = ({
 };
 
 export default ClientForm;
+export type { ClientFormValues };

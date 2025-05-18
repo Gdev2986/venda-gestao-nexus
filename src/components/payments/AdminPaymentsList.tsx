@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { PaymentRequest, Payment } from "@/types/payment.types";
@@ -17,10 +18,22 @@ import { CheckCircle, XCircle } from "lucide-react";
 interface AdminPaymentsListProps {
   payments: Payment[];
   isLoading: boolean;
-  onView: (payment: PaymentRequest) => void;
+  onView: (payment: Payment) => void;
+  onApprove?: (payment: Payment) => void;
+  onReject?: (payment: Payment) => void;
+  onDelete?: (payment: Payment) => void;
+  onRefresh?: () => void;
 }
 
-export const AdminPaymentsList = ({ payments, isLoading, onView }: AdminPaymentsListProps) => {
+export const AdminPaymentsList = ({ 
+  payments, 
+  isLoading, 
+  onView,
+  onApprove,
+  onReject,
+  onDelete,
+  onRefresh
+}: AdminPaymentsListProps) => {
   return (
     <div className="rounded-md border">
       <Table>

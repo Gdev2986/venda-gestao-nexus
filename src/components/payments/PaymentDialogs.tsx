@@ -2,7 +2,7 @@
 import { ApprovePaymentDialog } from "@/components/payments/ApprovePaymentDialog";
 import { RejectPaymentDialog } from "@/components/payments/RejectPaymentDialog";
 import { PaymentDetailsDialog } from "@/components/payments/PaymentDetailsDialog";
-import { Payment } from "@/types/payment.types";
+import { Payment, PaymentRequest } from "@/types/payment.types";
 
 interface PaymentDialogsProps {
   selectedPayment: Payment | null;
@@ -39,27 +39,31 @@ export const PaymentDialogs = ({
 }: PaymentDialogsProps) => {
   return (
     <>
-      <ApprovePaymentDialog
-        open={approveDialogOpen}
-        onOpenChange={setApproveDialogOpen}
-        payment={selectedPayment as Payment}
-        onApprove={handleApprovePayment}
-        isProcessing={isProcessing}
-      />
-      
-      <RejectPaymentDialog
-        open={rejectDialogOpen}
-        onOpenChange={setRejectDialogOpen}
-        payment={selectedPayment as Payment}
-        onReject={handleRejectPayment}
-        isProcessing={isProcessing}
-      />
-      
-      <PaymentDetailsDialog
-        open={detailsDialogOpen}
-        onOpenChange={setDetailsDialogOpen}
-        payment={selectedPayment as Payment}
-      />
+      {selectedPayment && (
+        <>
+          <ApprovePaymentDialog
+            open={approveDialogOpen}
+            onOpenChange={setApproveDialogOpen}
+            payment={selectedPayment}
+            onApprove={handleApprovePayment}
+            isProcessing={isProcessing}
+          />
+          
+          <RejectPaymentDialog
+            open={rejectDialogOpen}
+            onOpenChange={setRejectDialogOpen}
+            payment={selectedPayment}
+            onReject={handleRejectPayment}
+            isProcessing={isProcessing}
+          />
+          
+          <PaymentDetailsDialog
+            open={detailsDialogOpen}
+            onOpenChange={setDetailsDialogOpen}
+            payment={selectedPayment}
+          />
+        </>
+      )}
     </>
   );
 };
