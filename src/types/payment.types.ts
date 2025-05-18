@@ -1,7 +1,7 @@
 
-import { PaymentStatus, PaymentType } from './enums';
+import { PaymentStatus as EnumsPaymentStatus, PaymentType as EnumsPaymentType } from './enums';
 
-export { PaymentStatus, PaymentType };
+export { EnumsPaymentStatus as PaymentStatus, EnumsPaymentType as PaymentType };
 
 export interface PixKey {
   id: string;
@@ -17,15 +17,15 @@ export interface Payment {
   id: string;
   client_id: string;
   amount: number;
-  status: PaymentStatus;
+  status: EnumsPaymentStatus;
   approved_by?: string;
   approved_at?: string;
   created_at: string;
-  updated_at?: string;
+  updated_at: string; // Changed this from optional to required
   receipt_url?: string;
   description?: string;
   rejection_reason?: string;
-  payment_type?: PaymentType;
+  payment_type?: EnumsPaymentType;
   client?: {
     id: string;
     business_name: string;
@@ -45,7 +45,7 @@ export interface PaymentRequest extends Payment {
   pix_key_id: string;
 }
 
-export type PaymentRequestStatus = PaymentStatus;
+export type PaymentRequestStatus = EnumsPaymentStatus;
 
 // PixKey types used in forms and components
 export type PixKeyType = 'CPF' | 'CNPJ' | 'EMAIL' | 'PHONE' | 'EVP';

@@ -70,7 +70,7 @@ export const getMachinesByStatus = async (status: MachineStatus): Promise<Machin
           business_name
         )
       `)
-      .eq("status", status.toString())
+      .eq("status", status)
       .order("created_at", { ascending: false });
 
     if (error) throw error;
@@ -145,7 +145,7 @@ export const createMachine = async (params: MachineCreateParams): Promise<Machin
       .insert({
         serial_number: params.serial_number,
         model: params.model,
-        status: params.status?.toString() || MachineStatus.STOCK.toString(),
+        status: params.status || MachineStatus.STOCK,
         client_id: params.client_id
       })
       .select()
@@ -175,7 +175,7 @@ export const updateMachine = async (id: string, params: MachineUpdateParams): Pr
     
     if (params.serial_number !== undefined) updateData.serial_number = params.serial_number;
     if (params.model !== undefined) updateData.model = params.model;
-    if (params.status !== undefined) updateData.status = params.status.toString();
+    if (params.status !== undefined) updateData.status = params.status;
     if (params.client_id !== undefined) updateData.client_id = params.client_id;
     
     const { data, error } = await supabase
@@ -250,8 +250,8 @@ export const transferMachine = async (params: MachineTransferParams): Promise<Ma
 
     // Update the machine's client_id
     const newStatus = params.to_client_id 
-      ? MachineStatus.ACTIVE.toString() 
-      : MachineStatus.STOCK.toString();
+      ? MachineStatus.ACTIVE 
+      : MachineStatus.STOCK;
       
     const { error: machineError } = await supabase
       .from("machines")

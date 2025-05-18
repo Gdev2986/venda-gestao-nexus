@@ -13,8 +13,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { PageHeader } from "@/components/page/PageHeader";
 import { ptBR } from "date-fns/locale";
-import { PaymentStatus } from "@/types/payment.types";
-import { Payment } from "@/types/payment.types";
+import { PaymentStatus, Payment } from "@/types/payment.types";
 
 // This is a stub implementation of the user payments page
 // It will be expanded with more features in the future
@@ -34,15 +33,8 @@ const UserPayments = () => {
           // In a real implementation, you would get the client ID from the user context
           // For demo purposes, we're using a hard-coded value
           const clientId = "c87e857c-f385-4f8f-9d5d-a165d6172676"; // TODO: Replace with real client ID from user context
-          const data = await getClientPayments(clientId);
-          
-          // Convert payment service type to payment.types type
-          const convertedPayments: Payment[] = data.map(p => ({
-            ...p,
-            client_id: p.client_id || '',
-          }));
-          
-          setPayments(convertedPayments);
+          const fetchedPayments = await getClientPayments(clientId);
+          setPayments(fetchedPayments);
         } catch (error) {
           console.error("Failed to fetch payments:", error);
         } finally {

@@ -120,7 +120,7 @@ export const getClientPayments = async (clientId: string): Promise<Payment[]> =>
       status: item.status as PaymentStatus,
       description: item.description || '',
       created_at: item.created_at,
-      updated_at: item.updated_at,
+      updated_at: item.updated_at || item.created_at, // Ensure updated_at is always defined
       approved_at: item.approved_at,
       receipt_url: item.receipt_url,
       rejection_reason: item.rejection_reason,
