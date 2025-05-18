@@ -28,8 +28,8 @@ export function toUserRole(role: string | UserRole): UserRole {
     if (Object.values(UserRole).includes(upperRole as UserRole)) {
       return upperRole as UserRole;
     }
-    // Default para USER se não encontrado
-    return UserRole.USER;
+    // Default para CLIENT se não encontrado
+    return UserRole.CLIENT;
   }
   return role;
 }

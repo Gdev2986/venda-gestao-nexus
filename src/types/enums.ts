@@ -5,7 +5,8 @@ export enum UserRole {
   FINANCIAL = "FINANCIAL",
   LOGISTICS = "LOGISTICS",
   PARTNER = "PARTNER",
-  CLIENT = "CLIENT"
+  CLIENT = "CLIENT",
+  USER = "USER" // Added for backward compatibility
 }
 
 // Payment status
@@ -26,4 +27,27 @@ export enum PaymentType {
   DEBIT_CARD = "DEBIT_CARD",
   CASH = "CASH",
   OTHER = "OTHER"
+}
+
+// Payment actions
+export enum PaymentAction {
+  APPROVE = "APPROVE",
+  REJECT = "REJECT",
+  VIEW = "VIEW",
+  SEND_RECEIPT = "SEND_RECEIPT",
+  DELETE = "DELETE"
+}
+
+// Client status - needed in other files
+export enum ClientStatus {
+  ACTIVE = "active",
+  INACTIVE = "inactive",
+  PENDING = "pending"
+}
+
+// Payment methods - needed in other files
+export enum PaymentMethod {
+  CREDIT = "credit",
+  DEBIT = "debit",
+  PIX = "pix"
 }
