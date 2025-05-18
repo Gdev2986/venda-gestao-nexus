@@ -21,7 +21,7 @@ export interface Notification {
   title: string;
   message: string;
   type: string;
-  is_read: boolean;
+  is_read: boolean; // Changed from read to is_read to match API
   timestamp: string;
   data?: any;
 }
@@ -56,8 +56,8 @@ export enum NotificationType {
   SUPPORT = "SUPPORT"
 }
 
-// Re-export other types but avoid re-exporting the ambiguous types
+// Re-export types using 'export type' to fix the isolatedModules error
 export type { Client } from './payment.types';
 export type { PixKeyType } from './payment.types';
-export { PaymentRequest, Payment, PixKey } from './payment.types';
+export { PaymentRequest, Payment } from './payment.types';
 export * from './enums';
