@@ -46,6 +46,7 @@ const generateMockTickets = (count: number): SupportTicket[] => {
       title: `Ticket de ${types[typeIndex].toLowerCase()} para ${mockClients[clientIndex].business_name}`,
       client_id: mockClients[clientIndex].id,
       machine_id: mockMachines[machineIndex].id,
+      user_id: 'system', // Changed from created_by to user_id
       type: types[typeIndex],
       status: statuses[statusIndex],
       priority: priorities[priorityIndex],
@@ -53,7 +54,6 @@ const generateMockTickets = (count: number): SupportTicket[] => {
       scheduled_date: scheduledDate.toISOString(),
       created_at: createdDate.toISOString(),
       updated_at: createdDate.toISOString(),
-      created_by: 'system',
       client: mockClients[clientIndex],
       machine: mockMachines[machineIndex]
     };
@@ -93,6 +93,7 @@ export const useSupportTickets = (options: UseSupportTicketsOptions = {}) => {
           title: ticketData.title || '',
           client_id: ticketData.client_id!,
           machine_id: ticketData.machine_id,
+          user_id: 'current_user', // Changed from created_by to user_id
           type: ticketData.type || TicketType.OTHER,
           status: TicketStatus.PENDING,
           priority: ticketData.priority || TicketPriority.MEDIUM,
@@ -100,7 +101,6 @@ export const useSupportTickets = (options: UseSupportTicketsOptions = {}) => {
           scheduled_date: ticketData.scheduled_date,
           created_at: new Date().toISOString(),
           updated_at: new Date().toISOString(),
-          created_by: 'current_user',
           // Add client and machine info if available
           client: ticketData.client,
           machine: ticketData.machine

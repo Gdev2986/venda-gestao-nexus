@@ -1,3 +1,4 @@
+
 import React, { createContext, useContext, useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "./AuthContext";
@@ -21,6 +22,9 @@ interface NotificationsContextProps {
   fetchNotifications: () => Promise<void>;
   markAsRead: (notificationId: string) => Promise<void>;
   markAllAsRead: () => Promise<void>;
+  isLoading?: boolean;
+  deleteNotification?: (notificationId: string) => Promise<void>;
+  refreshNotifications?: () => Promise<void>;
 }
 
 const NotificationsContext = createContext<NotificationsContextProps | undefined>(
@@ -32,6 +36,7 @@ export const NotificationsProvider: React.FC<{ children: React.ReactNode }> = ({
 }) => {
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [unreadCount, setUnreadCount] = useState(0);
+  const [isLoading, setIsLoading] = useState(false);
   const { user } = useAuth();
   const { toast } = useToast();
 
@@ -71,6 +76,7 @@ export const NotificationsProvider: React.FC<{ children: React.ReactNode }> = ({
 
   const fetchNotifications = async () => {
     if (!user) return;
+    setIsLoading(true);
 
     try {
       const { data, error } = await supabase
@@ -83,7 +89,11 @@ export const NotificationsProvider: React.FC<{ children: React.ReactNode }> = ({
         throw error;
       }
 
-      setNotifications(data || []);
+      // Fix the type casting to ensure compatibility
+      setNotifications((data || []).map(item => ({
+        ...item,
+        type: item.type as NotificationType
+      })));
     } catch (error: any) {
       console.error("Error fetching notifications:", error);
       toast({
@@ -91,6 +101,8 @@ export const NotificationsProvider: React.FC<{ children: React.ReactNode }> = ({
         description: error.message || "Failed to load notifications.",
         variant: "destructive",
       });
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -151,12 +163,45 @@ export const NotificationsProvider: React.FC<{ children: React.ReactNode }> = ({
     }
   };
 
+  // Add deleteNotification function to fix the error
+  const deleteNotification = async (notificationId: string) => {
+    try {
+      const { error } = await supabase
+        .from("notifications")
+        .delete()
+        .eq("id", notificationId);
+
+      if (error) {
+        throw error;
+      }
+
+      setNotifications((prevNotifications) =>
+        prevNotifications.filter((notification) => notification.id !== notificationId)
+      );
+    } catch (error: any) {
+      console.error("Error deleting notification:", error);
+      toast({
+        title: "Error",
+        description: error.message || "Failed to delete notification.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  // Add refreshNotifications function
+  const refreshNotifications = async () => {
+    await fetchNotifications();
+  };
+
   const value: NotificationsContextProps = {
     notifications,
     unreadCount,
     fetchNotifications,
     markAsRead,
     markAllAsRead,
+    isLoading,
+    deleteNotification,
+    refreshNotifications
   };
 
   return (

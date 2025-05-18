@@ -6,7 +6,8 @@ export enum UserRole {
   LOGISTICS = "LOGISTICS",
   PARTNER = "PARTNER",
   CLIENT = "CLIENT",
-  USER = "USER" // Added for backward compatibility
+  USER = "USER", // Added for backward compatibility
+  FINANCE = "FINANCE" // Added to fix type error
 }
 
 // Payment status

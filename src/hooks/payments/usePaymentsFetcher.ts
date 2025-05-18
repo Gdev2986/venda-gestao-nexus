@@ -60,7 +60,9 @@ export const usePaymentsFetcher = ({
           client: {
             id: `client-${i % 3 + 1}`,
             business_name: `Client ${i % 3 + 1}`
-          }
+          },
+          // Add missing property
+          pix_key_id: `pix-key-${i % 2 + 1}`
         }));
 
         // Filter by status if needed

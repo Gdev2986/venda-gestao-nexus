@@ -3,9 +3,7 @@ export enum MachineStatus {
   ACTIVE = "ACTIVE",
   INACTIVE = "INACTIVE",
   MAINTENANCE = "MAINTENANCE",
-  BLOCKED = "BLOCKED",
-  STOCK = "STOCK",
-  TRANSIT = "TRANSIT"
+  BLOCKED = "BLOCKED"
 }
 
 export interface Machine {
@@ -16,12 +14,12 @@ export interface Machine {
   client_id?: string;
   created_at?: string;
   updated_at?: string;
+}
+
+export interface MachineWithClient extends Machine {
   client?: {
     id: string;
     business_name: string;
-    address?: string;
-    city?: string;
-    state?: string;
   };
 }
 
@@ -41,9 +39,9 @@ export interface MachineUpdateParams {
 
 export interface MachineTransferParams {
   machine_id: string;
-  from_client_id: string | null;
+  from_client_id?: string;
   to_client_id: string;
-  created_by: string;
+  notes?: string;
 }
 
 export interface MachineTransfer {
@@ -71,9 +69,13 @@ export interface MachineStats {
   active: number;
   inactive: number;
   maintenance: number;
-  stock: number;
-  transit: number;
-  blocked: number;
-  by_model?: Record<string, number>;
-  byStatus?: Record<string, number>;
+  byClient: {
+    client_id: string;
+    client_name: string;
+    count: number;
+  }[];
+  byModel: {
+    model: string;
+    count: number;
+  }[];
 }
