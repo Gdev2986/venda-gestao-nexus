@@ -20,7 +20,7 @@ export interface PixKey {
   key: string;
   type: string;
   name: string;
-  owner_name?: string;
+  owner_name: string;
   is_default?: boolean;
   user_id?: string;
   created_at?: string;
@@ -40,7 +40,7 @@ export interface PaymentRequest {
   approved_at?: string;
   approved_by?: string | null;
   receipt_url?: string;
-  description?: string;
+  description: string;
   rejection_reason?: string | null;
   payment_type?: PaymentType;
   pix_key_id?: string;
@@ -58,6 +58,7 @@ export interface PaymentRequest {
   };
   document_url?: string;
   due_date?: string;
+  type?: string;
 }
 
 export interface Payment {
@@ -70,7 +71,7 @@ export interface Payment {
   approved_at?: string; 
   receipt_url?: string;
   client_name?: string;
-  rejection_reason: string | null;
+  rejection_reason: string;
   payment_type?: PaymentType | string;
   bank_info?: {
     bank_name?: string;
@@ -84,32 +85,5 @@ export interface Payment {
   approved_by?: string | null;
   description?: string;
   client?: any;
-  type?: string; // Added for UserPayments.tsx
-}
-
-export interface PaymentFormData {
-  amount: number;
-  payment_type: PaymentType;
-  pix_key_id?: string;
-  bank_info?: {
-    bank_name: string;
-    branch_number: string;
-    account_number: string;
-    account_type: string;
-    account_holder: string;
-    document: string;
-  };
-  description?: string;
-}
-
-export interface ApprovePaymentParams {
-  id: string;
-  receipt_url?: string;
-  notes?: string;
-  approved_by: string;
-}
-
-export interface RejectPaymentParams {
-  id: string;
-  rejection_reason: string;
+  type?: string;
 }

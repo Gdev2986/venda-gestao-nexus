@@ -16,51 +16,64 @@ export enum TicketType {
   INSTALLATION = "INSTALLATION",
   MAINTENANCE = "MAINTENANCE",
   REMOVAL = "REMOVAL",
-  REPLACEMENT = "REPLACEMENT",
-  PAPER = "PAPER",
-  SUPPLIES = "SUPPLIES",
+  REPLACEMENT = "REPLACEMENT", 
+  SUPPLIES = "SUPPLIES", 
+  PAPER = "PAPER", 
   OTHER = "OTHER"
 }
 
 export interface SupportTicket {
   id: string;
-  client_id: string;
-  machine_id?: string;
-  type: TicketType;
-  status: TicketStatus;
-  priority: TicketPriority;
+  title: string;
   description: string;
-  scheduled_date?: string;
+  status: TicketStatus | string;
+  priority: TicketPriority | string;
+  type: TicketType | string;
+  client_id: string;
+  machine_id?: string | null;
+  assigned_to?: string | null;
+  created_by: string;
   created_at: string;
   updated_at: string;
-  created_by: string;
-  assigned_to?: string;
+  scheduled_date?: string | null;
+  completed_date?: string | null;
   client?: {
-    id: string;
     business_name: string;
+    address?: string;
+    city?: string;
+    state?: string;
   };
   machine?: {
-    id: string;
     serial_number: string;
     model: string;
+  };
+  assigned_user?: {
+    name: string;
   };
 }
 
 export interface CreateSupportTicketParams {
-  client_id: string;
-  machine_id?: string;
-  type: TicketType;
-  priority: TicketPriority;
+  title: string;
   description: string;
-  scheduled_date?: string;
+  status: TicketStatus | string;
+  priority: TicketPriority | string;
+  type: TicketType | string;
+  client_id: string;
+  machine_id?: string | null;
+  assigned_to?: string | null;
+  scheduled_date?: string | null;
   created_by: string;
 }
 
 export interface UpdateSupportTicketParams {
-  status?: TicketStatus;
-  priority?: TicketPriority;
+  title?: string;
   description?: string;
-  scheduled_date?: string;
-  assigned_to?: string;
-  machine_id?: string;
+  status?: TicketStatus | string;
+  priority?: TicketPriority | string;
+  type?: TicketType | string;
+  client_id?: string;
+  machine_id?: string | null;
+  assigned_to?: string | null;
+  scheduled_date?: string | null;
+  completed_date?: string | null;
 }

@@ -1,5 +1,5 @@
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { UserRole } from "@/types";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
@@ -84,9 +84,16 @@ export const useUserRole = () => {
   const [userRole, setUserRole] = useState<UserRole>(UserRole.CLIENT); // Default to CLIENT
   const [isRoleLoading, setIsRoleLoading] = useState<boolean>(true);
   const { user, signOut } = useAuth();
+  const roleChecked = useRef<boolean>(false);
   
   useEffect(() => {
     const fetchUserRole = async () => {
+      // Skip if role has already been checked
+      if (roleChecked.current && userRole) {
+        setIsRoleLoading(false);
+        return;
+      }
+      
       // Reset role loading state when user changes
       setIsRoleLoading(true);
       
@@ -106,12 +113,14 @@ export const useUserRole = () => {
           console.log("useUserRole - Using cached role:", cachedRole);
           setUserRole(normalizeUserRole(cachedRole));
           setIsRoleLoading(false);
-        } else {
-          console.log("useUserRole - No valid cached role found, fetching from database");
+          roleChecked.current = true;
+          return;
         }
         
-        // Always verify with database to ensure role is current
+        // Only fetch from database if no cached role
+        console.log("useUserRole - No valid cached role found, fetching from database");
         console.log("useUserRole - Fetching user role from database for user ID:", user.id);
+        
         const { data, error } = await supabase
           .from('profiles')
           .select('role')
@@ -154,10 +163,11 @@ export const useUserRole = () => {
         clearAllAuthData();
       } finally {
         setIsRoleLoading(false);
+        roleChecked.current = true;
       }
     };
 
-    // Fetch profile when user changes
+    // Fetch profile when user changes or on initial load
     fetchUserRole();
   }, [user, signOut]);
 
@@ -166,6 +176,7 @@ export const useUserRole = () => {
     console.log("useUserRole - Updating role to:", normalizedRole);
     setUserRole(normalizedRole);
     setAuthData("userRole", normalizedRole);
+    roleChecked.current = true;
   };
 
   return { userRole, isRoleLoading, updateUserRole };

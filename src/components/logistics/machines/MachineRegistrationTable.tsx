@@ -1,209 +1,281 @@
 
-import { useState, useEffect } from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import React, { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
-import { Badge } from "@/components/ui/badge";
+import { Table, TableHeader, TableRow, TableHead, TableBody, TableCell } from "@/components/ui/table";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Edit, Trash2, Link as LinkIcon } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import { Skeleton } from "@/components/ui/skeleton";
-import { Plus, ArrowRight, Edit, Trash2 } from "lucide-react";
-import { useDialog } from "@/hooks/use-dialog";
+import { fetchMachines, deleteMachine, updateMachine } from "@/services/machine.service";
 import { Machine, MachineStatus } from "@/types/machine.types";
-import { useMachines } from "@/hooks/logistics/use-machines";
-import { 
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import NewMachineDialog from "@/components/logistics/modals/NewMachineDialog";
-import MachineTransferDialog from "@/components/logistics/machine-dialogs/MachineTransferDialog";
-import { useNavigate } from "react-router-dom";
-import { PATHS } from "@/routes/paths";
+import { Badge } from "@/components/ui/badge";
+import { Link } from "react-router-dom";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
+import { useMediaQuery } from "@/hooks/use-media-query";
+import MachineTransferForm from "@/components/machines/MachineTransferForm";
+import { supabase } from "@/integrations/supabase/client";
 
-const MachineRegistrationTable = () => {
+export default function MachineRegistrationTable() {
+  const [machines, setMachines] = useState<Machine[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
-  const newMachineDialog = useDialog();
-  const transferDialog = useDialog();
-  const navigate = useNavigate();
-  const { toast } = useToast();
+  const [statusFilter, setStatusFilter] = useState<string>("all");
+  const [openTransferDialog, setOpenTransferDialog] = useState(false);
   const [selectedMachine, setSelectedMachine] = useState<Machine | null>(null);
-  
-  // Use the machines hook with realtime enabled
-  const { machines, isLoading, fetchMachines } = useMachines({ 
-    enableRealtime: true,
-    initialFetch: true
-  });
-  
-  // Filter machines based on search term
-  const filteredMachines = machines.filter(machine => {
-    if (!searchTerm) return true;
+  const { toast } = useToast();
+  const isMobile = useMediaQuery("(max-width: 768px)");
+
+  useEffect(() => {
+    loadMachines();
     
-    const searchLower = searchTerm.toLowerCase();
-    return (
-      machine.serial_number.toLowerCase().includes(searchLower) ||
-      machine.model.toLowerCase().includes(searchLower) ||
-      (machine.client?.business_name && 
-        machine.client.business_name.toLowerCase().includes(searchLower))
-    );
-  });
+    // Set up realtime subscription
+    const channel = supabase
+      .channel('machines-changes')
+      .on('postgres_changes', { 
+        event: '*', 
+        schema: 'public', 
+        table: 'machines' 
+      }, () => {
+        loadMachines();
+      })
+      .subscribe();
+    
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, []);
 
-  const handleOpenTransferDialog = (machine: Machine) => {
-    setSelectedMachine(machine);
-    transferDialog.open();
-  };
-
-  const handleViewDetails = (machineId: string) => {
-    navigate(PATHS.LOGISTICS.MACHINE_DETAILS(machineId));
-  };
-
-  const getStatusBadge = (status: MachineStatus) => {
-    switch (status) {
-      case MachineStatus.ACTIVE:
-        return <Badge className="bg-green-100 text-green-800 hover:bg-green-200">Operando</Badge>;
-      case MachineStatus.MAINTENANCE:
-        return <Badge className="bg-yellow-100 text-yellow-800 hover:bg-yellow-200">Manutenção</Badge>;
-      case MachineStatus.INACTIVE:
-        return <Badge className="bg-red-100 text-red-800 hover:bg-red-200">Inativa</Badge>;
-      case MachineStatus.STOCK:
-        return <Badge className="bg-blue-100 text-blue-800 hover:bg-blue-200">Estoque</Badge>;
-      case MachineStatus.TRANSIT:
-        return <Badge className="bg-purple-100 text-purple-800 hover:bg-purple-200">Em Trânsito</Badge>;
-      default:
-        return <Badge variant="outline">{status}</Badge>;
+  const loadMachines = async () => {
+    setIsLoading(true);
+    try {
+      const data = await fetchMachines();
+      setMachines(data);
+    } catch (error) {
+      console.error("Error loading machines:", error);
+      toast({
+        title: "Erro ao carregar máquinas",
+        description: "Não foi possível carregar a lista de máquinas.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
     }
   };
 
-  const handleNewMachineSuccess = () => {
-    toast({
-      title: "Máquina cadastrada",
-      description: "A máquina foi cadastrada com sucesso.",
-    });
-    fetchMachines();
+  const handleDelete = async (id: string) => {
+    if (window.confirm("Tem certeza que deseja excluir esta máquina?")) {
+      try {
+        await deleteMachine(id);
+        setMachines(machines.filter(m => m.id !== id));
+        toast({
+          title: "Máquina excluída com sucesso",
+          variant: "success",
+        });
+      } catch (error) {
+        console.error("Error deleting machine:", error);
+        toast({
+          title: "Erro ao excluir máquina",
+          description: "Não foi possível excluir a máquina.",
+          variant: "destructive",
+        });
+      }
+    }
   };
 
+  const handleStatusChange = async (id: string, status: string) => {
+    try {
+      await updateMachine(id, { status: status as MachineStatus });
+      setMachines(machines.map(m => m.id === id ? { ...m, status } : m));
+      toast({
+        title: "Status atualizado com sucesso",
+        variant: "success",
+      });
+    } catch (error) {
+      console.error("Error updating machine status:", error);
+      toast({
+        title: "Erro ao atualizar status",
+        description: "Não foi possível atualizar o status da máquina.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleTransfer = (machine: Machine) => {
+    setSelectedMachine(machine);
+    setOpenTransferDialog(true);
+  };
+
+  const getStatusBadge = (status: string) => {
+    switch (status) {
+      case MachineStatus.ACTIVE:
+        return <Badge className="bg-green-500 hover:bg-green-600">Ativo</Badge>;
+      case MachineStatus.INACTIVE:
+        return <Badge className="bg-red-500 hover:bg-red-600">Inativo</Badge>;
+      case MachineStatus.MAINTENANCE:
+        return <Badge className="bg-yellow-500 hover:bg-yellow-600">Manutenção</Badge>;
+      case MachineStatus.STOCK:
+        return <Badge className="bg-blue-500 hover:bg-blue-600">Estoque</Badge>;
+      case MachineStatus.TRANSIT:
+        return <Badge className="bg-purple-500 hover:bg-purple-600">Em Trânsito</Badge>;
+      case MachineStatus.BLOCKED:
+        return <Badge className="bg-gray-500 hover:bg-gray-600">Bloqueado</Badge>;
+      default:
+        return <Badge>{status}</Badge>;
+    }
+  };
+
+  const filteredMachines = machines.filter(machine => {
+    const matchesSearch = 
+      machine.serial_number.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      machine.model.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (machine.client?.business_name && machine.client.business_name.toLowerCase().includes(searchTerm.toLowerCase()));
+    
+    const matchesStatus = statusFilter === "all" || machine.status === statusFilter;
+    
+    return matchesSearch && matchesStatus;
+  });
+
   return (
-    <Card className="w-full">
-      <CardHeader className="flex flex-row items-center justify-between space-y-0">
-        <CardTitle>Cadastro de Máquinas</CardTitle>
-        <Button onClick={newMachineDialog.open} size="sm">
-          <Plus size={16} className="mr-2" />
-          Nova Máquina
-        </Button>
-      </CardHeader>
-      <CardContent>
-        <div className="mb-4">
-          <Input
-            placeholder="Buscar por número de série, modelo ou cliente..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            className="max-w-md"
-          />
-        </div>
-        
-        <div className="rounded-md border">
-          <Table>
-            <TableHeader>
+    <div className="space-y-4">
+      <div className="flex flex-col sm:flex-row gap-4">
+        <Input
+          placeholder="Buscar por número de série, modelo ou cliente..."
+          value={searchTerm}
+          onChange={(e) => setSearchTerm(e.target.value)}
+          className="sm:max-w-xs"
+        />
+        <Select value={statusFilter} onValueChange={setStatusFilter}>
+          <SelectTrigger className="sm:max-w-xs">
+            <SelectValue placeholder="Filtrar por status" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">Todos os Status</SelectItem>
+            <SelectItem value={MachineStatus.ACTIVE}>Ativos</SelectItem>
+            <SelectItem value={MachineStatus.INACTIVE}>Inativos</SelectItem>
+            <SelectItem value={MachineStatus.MAINTENANCE}>Em Manutenção</SelectItem>
+            <SelectItem value={MachineStatus.STOCK}>Em Estoque</SelectItem>
+            <SelectItem value={MachineStatus.TRANSIT}>Em Trânsito</SelectItem>
+            <SelectItem value={MachineStatus.BLOCKED}>Bloqueados</SelectItem>
+          </SelectContent>
+        </Select>
+      </div>
+      
+      <div className="rounded-md border overflow-x-auto">
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead>Número de Série</TableHead>
+              <TableHead>Modelo</TableHead>
+              <TableHead>Status</TableHead>
+              <TableHead>Cliente</TableHead>
+              <TableHead className="text-right">Ações</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {isLoading ? (
               <TableRow>
-                <TableHead>Número de Série</TableHead>
-                <TableHead>Modelo</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead>Cliente</TableHead>
-                <TableHead>Data de Registro</TableHead>
-                <TableHead className="text-right">Ações</TableHead>
+                <TableCell colSpan={5} className="text-center py-8">Carregando...</TableCell>
               </TableRow>
-            </TableHeader>
-            <TableBody>
-              {isLoading ? (
-                Array(5).fill(0).map((_, i) => (
-                  <TableRow key={`loading-${i}`}>
-                    <TableCell><Skeleton className="h-4 w-24" /></TableCell>
-                    <TableCell><Skeleton className="h-4 w-24" /></TableCell>
-                    <TableCell><Skeleton className="h-6 w-16" /></TableCell>
-                    <TableCell><Skeleton className="h-4 w-32" /></TableCell>
-                    <TableCell><Skeleton className="h-4 w-24" /></TableCell>
-                    <TableCell className="text-right"><Skeleton className="h-8 w-16 ml-auto" /></TableCell>
-                  </TableRow>
-                ))
-              ) : filteredMachines.length > 0 ? (
-                filteredMachines.map((machine) => (
-                  <TableRow key={machine.id}>
-                    <TableCell className="font-medium">{machine.serial_number}</TableCell>
-                    <TableCell>{machine.model}</TableCell>
-                    <TableCell>{getStatusBadge(machine.status)}</TableCell>
-                    <TableCell>
-                      {machine.client ? machine.client.business_name : "Em Estoque"}
-                    </TableCell>
-                    <TableCell>
-                      {new Date(machine.created_at).toLocaleDateString('pt-BR')}
-                    </TableCell>
-                    <TableCell className="text-right">
-                      <div className="flex justify-end gap-2">
-                        <Button 
-                          variant="outline" 
-                          size="icon" 
-                          onClick={() => handleViewDetails(machine.id)}
-                          title="Editar detalhes"
-                        >
-                          <Edit className="h-4 w-4" />
-                        </Button>
-                        <Button 
-                          variant="outline" 
-                          size="icon"
-                          onClick={() => handleOpenTransferDialog(machine)}
-                          title="Transferir máquina"
-                        >
-                          <ArrowRight className="h-4 w-4" />
-                        </Button>
-                      </div>
-                    </TableCell>
-                  </TableRow>
-                ))
-              ) : (
-                <TableRow>
-                  <TableCell colSpan={6} className="text-center py-10">
-                    {searchTerm ? (
-                      <p>Nenhuma máquina encontrada com os critérios de busca.</p>
+            ) : filteredMachines.length === 0 ? (
+              <TableRow>
+                <TableCell colSpan={5} className="text-center py-8">
+                  Nenhuma máquina encontrada. Registre uma nova máquina.
+                </TableCell>
+              </TableRow>
+            ) : (
+              filteredMachines.map((machine) => (
+                <TableRow key={machine.id}>
+                  <TableCell>{machine.serial_number}</TableCell>
+                  <TableCell>{machine.model}</TableCell>
+                  <TableCell>
+                    <Select defaultValue={machine.status} onValueChange={(value) => handleStatusChange(machine.id, value)}>
+                      <SelectTrigger className="w-[140px] h-8">
+                        <SelectValue>
+                          {getStatusBadge(machine.status)}
+                        </SelectValue>
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value={MachineStatus.ACTIVE}>
+                          <Badge className="bg-green-500 hover:bg-green-600">Ativo</Badge>
+                        </SelectItem>
+                        <SelectItem value={MachineStatus.INACTIVE}>
+                          <Badge className="bg-red-500 hover:bg-red-600">Inativo</Badge>
+                        </SelectItem>
+                        <SelectItem value={MachineStatus.MAINTENANCE}>
+                          <Badge className="bg-yellow-500 hover:bg-yellow-600">Manutenção</Badge>
+                        </SelectItem>
+                        <SelectItem value={MachineStatus.STOCK}>
+                          <Badge className="bg-blue-500 hover:bg-blue-600">Estoque</Badge>
+                        </SelectItem>
+                        <SelectItem value={MachineStatus.TRANSIT}>
+                          <Badge className="bg-purple-500 hover:bg-purple-600">Em Trânsito</Badge>
+                        </SelectItem>
+                        <SelectItem value={MachineStatus.BLOCKED}>
+                          <Badge className="bg-gray-500 hover:bg-gray-600">Bloqueado</Badge>
+                        </SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </TableCell>
+                  <TableCell>
+                    {machine.client ? (
+                      <Link 
+                        to={`/admin/clients/${machine.client.id}`} 
+                        className="text-blue-600 hover:underline flex items-center gap-1"
+                      >
+                        <LinkIcon className="h-3.5 w-3.5" />
+                        {machine.client.business_name}
+                      </Link>
                     ) : (
-                      <p>Nenhuma máquina cadastrada. Use o botão acima para adicionar.</p>
+                      <span className="text-gray-500">Sem cliente</span>
                     )}
                   </TableCell>
+                  <TableCell className="text-right">
+                    <div className="flex justify-end gap-2">
+                      <Button 
+                        variant="outline" 
+                        size="sm"
+                        onClick={() => handleTransfer(machine)}
+                      >
+                        <LinkIcon className="h-4 w-4 mr-1" />
+                        {isMobile ? '' : 'Vincular'}
+                      </Button>
+                      <Button 
+                        variant="ghost" 
+                        size="sm" 
+                        className="text-red-600" 
+                        onClick={() => handleDelete(machine.id)}
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  </TableCell>
                 </TableRow>
-              )}
-            </TableBody>
-          </Table>
-        </div>
-        
-        {/* Add Machine Modal */}
-        <NewMachineDialog
-          open={newMachineDialog.isOpen}
-          onOpenChange={newMachineDialog.close}
-          onSuccess={handleNewMachineSuccess}
-        />
-        
-        {/* Transfer Machine Modal */}
-        {selectedMachine && (
-          <MachineTransferDialog
-            open={transferDialog.isOpen}
-            onOpenChange={transferDialog.close}
-            machineId={selectedMachine.id}
-            machineName={selectedMachine.serial_number}
-            onTransferComplete={fetchMachines}
-          />
-        )}
-      </CardContent>
-    </Card>
+              ))
+            )}
+          </TableBody>
+        </Table>
+      </div>
+      
+      <Dialog open={openTransferDialog} onOpenChange={setOpenTransferDialog}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Transferir Máquina</DialogTitle>
+            <DialogDescription>
+              Vincule esta máquina a um novo cliente ou remova a vinculação atual.
+            </DialogDescription>
+          </DialogHeader>
+          
+          {selectedMachine && (
+            <MachineTransferForm 
+              machine={selectedMachine} 
+              onTransferComplete={() => {
+                setOpenTransferDialog(false);
+                loadMachines();
+              }}
+            />
+          )}
+        </DialogContent>
+      </Dialog>
+    </div>
   );
-};
-
-export default MachineRegistrationTable;
+}

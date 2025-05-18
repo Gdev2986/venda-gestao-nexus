@@ -12,7 +12,7 @@ export type NotificationType =
   | 'COMMISSION'
   | 'GENERAL'
   | 'SALE'
-  | 'ADMIN_NOTIFICATION'; // Added ADMIN_NOTIFICATION for SendNotificationForm
+  | 'ADMIN_NOTIFICATION';
 
 export interface Notification {
   id: string;

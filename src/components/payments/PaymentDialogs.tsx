@@ -39,9 +39,25 @@ export const PaymentDialogs = ({
 }: PaymentDialogsProps) => {
   if (!selectedPayment) return null;
   
-  // Create a compatible payment object that satisfies both types
-  const paymentForApproval = selectedPayment as unknown as PaymentRequest;
-  const paymentForDetails = selectedPayment as unknown as Payment;
+  // Create compatible payment objects that satisfy both types
+  const paymentForApproval = {
+    ...selectedPayment,
+    description: selectedPayment.description || ""
+  } as PaymentRequest;
+  
+  const paymentForReject = {
+    ...selectedPayment,
+    description: selectedPayment.description || ""
+  } as PaymentRequest;
+  
+  const paymentForDetails = {
+    ...selectedPayment,
+    rejection_reason: selectedPayment.rejection_reason || "",
+    pix_key: selectedPayment.pix_key ? {
+      ...selectedPayment.pix_key,
+      owner_name: selectedPayment.pix_key.owner_name || selectedPayment.pix_key.name || ""
+    } : undefined
+  } as Payment;
   
   return (
     <>
@@ -56,7 +72,7 @@ export const PaymentDialogs = ({
       <RejectPaymentDialog
         open={rejectDialogOpen}
         onOpenChange={setRejectDialogOpen}
-        payment={paymentForApproval}
+        payment={paymentForReject}
         onReject={handleRejectPayment}
         isProcessing={isProcessing}
       />
