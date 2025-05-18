@@ -1,7 +1,9 @@
 
-import { PaymentStatus, PaymentType } from "@/types/enums";
+import { PaymentStatus as PaymentStatusEnum, PaymentType } from "@/types/enums";
 
 export type PixKeyType = 'CPF' | 'CNPJ' | 'EMAIL' | 'PHONE' | 'EVP' | 'RANDOM';
+
+export { PaymentStatusEnum as PaymentStatus };
 
 export interface PixKey {
   id: string;
@@ -22,7 +24,7 @@ export interface PaymentRequest {
   id: string;
   client_id: string;
   amount: number;
-  status: PaymentStatus;
+  status: PaymentStatusEnum;
   created_at: string;
   updated_at: string;
   approved_at?: string;

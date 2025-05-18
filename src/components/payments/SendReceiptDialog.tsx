@@ -1,29 +1,19 @@
 
-import { useState } from "react";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
+import { useState } from 'react';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { PaymentData } from "@/hooks/payments/payment.types";
-import { formatCurrency } from "@/lib/formatters";
-import { Loader2, Upload } from "lucide-react";
-import { PaymentDetailView } from "./PaymentDetailView";
-import { Alert, AlertDescription } from "@/components/ui/alert";
-import { AlertTriangle } from "lucide-react";
-import { Input } from "@/components/ui/input";
+import { FileUploader } from "@/components/payments/FileUploader";
+import { Payment } from "@/types/payment.types";
+import { formatCurrency } from "@/lib/utils";
+import { Loader2 } from "lucide-react";
+import { Label } from '@/components/ui/label';
 
-interface SendReceiptDialogProps {
+export interface SendReceiptDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  payment: PaymentData | null;
-  onSendReceipt: (paymentId: string, receiptFile: File, message: string) => Promise<void>;
+  payment: Payment;
+  onSend: (paymentId: string, receiptFile: File, message: string) => Promise<void>;
   isProcessing: boolean;
 }
 
@@ -31,120 +21,92 @@ export function SendReceiptDialog({
   open,
   onOpenChange,
   payment,
-  onSendReceipt,
+  onSend,
   isProcessing
 }: SendReceiptDialogProps) {
-  const [receiptFile, setReceiptFile] = useState<File | null>(null);
-  const [message, setMessage] = useState("");
-  const [error, setError] = useState<string | null>(null);
+  const [file, setFile] = useState<File | null>(null);
+  const [message, setMessage] = useState<string>("");
+  const [isSending, setIsSending] = useState(false);
 
-  const handleSendReceipt = async () => {
-    if (!payment) return;
-
-    if (!receiptFile) {
-      setError("Por favor, selecione um arquivo de comprovante.");
-      return;
-    }
-
-    setError(null);
-    await onSendReceipt(payment.id, receiptFile, message);
-    setReceiptFile(null);
-    setMessage("");
-  };
-
-  // Resetar formulário quando o diálogo abre/fecha
-  const handleOpenChange = (isOpen: boolean) => {
-    if (!isOpen) {
-      setReceiptFile(null);
+  const handleSend = async () => {
+    if (!file) return;
+    
+    setIsSending(true);
+    try {
+      await onSend(payment.id, file, message);
+      setFile(null);
       setMessage("");
-      setError(null);
+      onOpenChange(false);
+    } catch (error) {
+      console.error('Error sending receipt:', error);
+    } finally {
+      setIsSending(false);
     }
-    onOpenChange(isOpen);
   };
 
   return (
-    <Dialog open={open} onOpenChange={handleOpenChange}>
-      <DialogContent className="max-w-md">
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="sm:max-w-md">
         <DialogHeader>
           <DialogTitle>Enviar Comprovante</DialogTitle>
-          <DialogDescription>
-            Envie um comprovante de pagamento para o cliente referente ao pagamento de{" "}
-            {payment ? formatCurrency(payment.amount) : ""}
-          </DialogDescription>
         </DialogHeader>
-
-        {payment && (
-          <PaymentDetailView payment={payment} />
-        )}
-
+        
         <div className="space-y-4">
-          {error && (
-            <Alert variant="destructive">
-              <AlertTriangle className="h-4 w-4" />
-              <AlertDescription>{error}</AlertDescription>
-            </Alert>
-          )}
-
-          <div>
-            <Label htmlFor="receipt-file" className="text-primary">
-              Comprovante de Pagamento *
-            </Label>
-            <div className="mt-2 flex items-center gap-2">
-              <Input
-                id="receipt-file"
-                type="file"
-                accept="image/jpeg,image/png,application/pdf"
-                onChange={(e) => {
-                  const file = e.target.files?.[0];
-                  if (file) {
-                    setReceiptFile(file);
-                    setError(null);
-                  }
-                }}
-                className="flex-1"
-              />
-              {receiptFile && (
-                <div className="text-sm text-muted-foreground">
-                  {receiptFile.name}
-                </div>
-              )}
+          <div className="space-y-2">
+            <div className="flex justify-between">
+              <span>Cliente</span>
+              <span className="font-medium">{payment.client?.business_name || 'Cliente'}</span>
+            </div>
+            <div className="flex justify-between">
+              <span>Valor</span>
+              <span className="font-medium">{formatCurrency(payment.amount)}</span>
             </div>
           </div>
-
-          <div>
-            <Label htmlFor="receipt-message">
-              Mensagem para o Cliente
-            </Label>
-            <Textarea
-              id="receipt-message"
-              placeholder="Digite uma mensagem para acompanhar o comprovante (opcional)"
-              value={message}
-              onChange={(e) => setMessage(e.target.value)}
-              rows={3}
-              className="mt-2"
+          
+          <div className="space-y-2">
+            <Label htmlFor="receipt">Comprovante</Label>
+            <FileUploader 
+              id="receipt"
+              onFileSelect={setFile} 
+              selectedFile={file}
+              accept=".jpg,.jpeg,.png,.pdf"
             />
           </div>
+          
+          <div className="space-y-2">
+            <Label htmlFor="message">Mensagem (opcional)</Label>
+            <Textarea
+              id="message"
+              value={message}
+              onChange={(e) => setMessage(e.target.value)}
+              placeholder="Adicione uma observação..."
+              className="min-h-[100px]"
+            />
+          </div>
+          
+          <div className="flex justify-end pt-4 space-x-2">
+            <Button
+              variant="outline"
+              onClick={() => onOpenChange(false)}
+              disabled={isSending || isProcessing}
+            >
+              Cancelar
+            </Button>
+            <Button
+              onClick={handleSend}
+              disabled={!file || isSending || isProcessing}
+            >
+              {isSending || isProcessing ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Enviando...
+                </>
+              ) : (
+                "Enviar Comprovante"
+              )}
+            </Button>
+          </div>
         </div>
-
-        <DialogFooter>
-          <Button variant="outline" onClick={() => onOpenChange(false)}>Cancelar</Button>
-          <Button 
-            onClick={handleSendReceipt} 
-            disabled={isProcessing || !payment || !receiptFile}
-          >
-            {isProcessing ? (
-              <>
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                Enviando
-              </>
-            ) : (
-              <>
-                <Upload className="mr-2 h-4 w-4" />
-                Enviar Comprovante
-              </>
-            )}
-          </Button>
-        </DialogFooter>
       </DialogContent>
     </Dialog>
   );

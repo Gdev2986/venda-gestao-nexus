@@ -13,6 +13,10 @@ import {
  * Get all machines with client information
  * This replaces the previous fetchMachines function
  */
+export const fetchMachines = async (): Promise<Machine[]> => {
+  return getAllMachines();
+};
+
 export const getAllMachines = async (): Promise<Machine[]> => {
   const { data, error } = await supabase
     .from('machines')
@@ -91,7 +95,7 @@ export const getMachinesByStatus = async (status: MachineStatus): Promise<Machin
         business_name
       )
     `)
-    .eq('status', status as string)
+    .eq('status', status)
     .order('serial_number', { ascending: true });
 
   if (error) {
@@ -125,13 +129,13 @@ export const getMachinesByClient = async (clientId: string) => {
  * Create a new machine
  */
 export const createMachine = async (machine: MachineCreateParams) => {
-  // Cast string to enum for type safety
+  // Cast enum to string for database insertion
   const { data, error } = await supabase
     .from('machines')
     .insert({
       serial_number: machine.serial_number,
       model: machine.model,
-      status: machine.status as string,
+      status: machine.status,
       client_id: machine.client_id
     })
     .select()
@@ -148,12 +152,12 @@ export const createMachine = async (machine: MachineCreateParams) => {
  * Update a machine
  */
 export const updateMachine = async (id: string, updates: MachineUpdateParams) => {
-  // Cast string to enum for type safety
+  // Cast enum to string for database insertion
   const { data, error } = await supabase
     .from('machines')
     .update({
       ...updates,
-      status: updates.status as string
+      status: updates.status
     })
     .eq('id', id)
     .select()
@@ -188,7 +192,7 @@ export const deleteMachine = async (id: string) => {
 export const transferMachine = async (params: MachineTransferParams) => {
   const { machine_id, from_client_id, to_client_id, created_by } = params;
   
-  // Start a transaction by using the rpc method
+  // For Supabase database operation
   const { error: transferError } = await supabase.rpc("transfer_machine", {
     p_machine_id: machine_id,
     p_from_client_id: from_client_id || null,
@@ -212,7 +216,7 @@ export const transferMachine = async (params: MachineTransferParams) => {
   const { error: updateError } = await supabase
     .from('machines')
     .update({
-      status: newStatus as string,
+      status: newStatus,
       client_id: to_client_id === 'stock' ? null : to_client_id,
     })
     .eq('id', machine_id);
@@ -255,7 +259,7 @@ export const getMachinesInStock = async () => {
     .from('machines')
     .select('*')
     .is('client_id', null)
-    .eq('status', MachineStatus.STOCK as string);
+    .eq('status', MachineStatus.STOCK);
 
   if (error) {
     throw new Error(error.message);
@@ -319,4 +323,3 @@ const getMostCommonStatus = (machines: any[]) => {
   
   return predominantStatus;
 };
-

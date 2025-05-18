@@ -7,9 +7,9 @@ import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
-import { useNotifications } from '@/contexts/NotificationsContext';
+import { useNotifications } from '@/hooks/use-notifications';
 import { Loader2 } from 'lucide-react';
-import { NotificationType } from '@/types/notification.types';
+import { NotificationType } from '@/types/enums';
 
 export function SendNotificationForm() {
   const { toast } = useToast();
@@ -34,15 +34,12 @@ export function SendNotificationForm() {
     setIsSending(true);
     try {
       // In a real implementation, this would send to the right users based on userType
-      // For now, we're just using a mock implementation
       await sendNotification(
         '9027d4fc-2715-4439-8c84-93aa536514fb', // Example user ID
-        {
-          title,
-          message,
-          type: 'ADMIN_NOTIFICATION' as NotificationType,
-          data: {}
-        }
+        title,
+        message,
+        NotificationType.ADMIN_NOTIFICATION || NotificationType.SYSTEM,
+        {}
       );
       
       toast({

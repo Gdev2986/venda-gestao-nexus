@@ -6,7 +6,7 @@ import { Table, TableHeader, TableRow, TableHead, TableBody, TableCell } from "@
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Edit, Trash2, Link as LinkIcon } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import { fetchMachines, deleteMachine, updateMachine } from "@/services/machine.service";
+import { getAllMachines, deleteMachine, updateMachine } from "@/services/machine.service";
 import { Machine, MachineStatus } from "@/types/machine.types";
 import { Badge } from "@/components/ui/badge";
 import { Link } from "react-router-dom";
@@ -48,13 +48,8 @@ export default function MachineRegistrationTable() {
   const loadMachines = async () => {
     setIsLoading(true);
     try {
-      const data = await fetchMachines();
-      // Cast fetched data to Machine[] to ensure type safety
-      const typedMachines = data.map(m => ({
-        ...m,
-        status: m.status as MachineStatus
-      })) as Machine[];
-      setMachines(typedMachines);
+      const data = await getAllMachines();
+      setMachines(data);
     } catch (error) {
       console.error("Error loading machines:", error);
       toast({

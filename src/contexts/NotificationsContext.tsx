@@ -1,10 +1,9 @@
 
 import { createContext, useState, useEffect, ReactNode, useContext } from 'react';
 import { supabase } from '@/integrations/supabase/client';
-import { Notification } from '@/types/notification.types';
+import { Notification, NotificationType } from '@/types/notification.types';
 import { useAuth } from './AuthContext';
 import { useToast } from '@/hooks/use-toast';
-import { NotificationType } from '@/types/enums';
 
 interface NotificationsContextData {
   notifications: Notification[];
@@ -20,7 +19,7 @@ interface NotificationsContextData {
     userId: string, 
     title: string, 
     message: string, 
-    type: NotificationType, 
+    type: NotificationType,
     data?: any
   ) => Promise<void>;
 }
@@ -77,9 +76,10 @@ export const NotificationsProvider = ({ children }: NotificationsProviderProps) 
           ...item,
           timestamp: new Date(item.created_at),
           read: item.is_read,
+          type: item.type as NotificationType, // Ensure type is cast to NotificationType
         }));
         
-        setNotifications(notificationsData);
+        setNotifications(notificationsData as Notification[]);
         setUnreadCount(notificationsData.filter((n) => !n.is_read).length);
       }
     } catch (err: any) {
@@ -229,14 +229,14 @@ export const NotificationsProvider = ({ children }: NotificationsProviderProps) 
     data?: any
   ) => {
     try {
-      // Convert NotificationType enum to string value for database insertion
-      const typeValue = type as unknown as string;
+      // Cast NotificationType enum to string for database insertion
+      const typeString = type as unknown as string;
       
       const { error } = await supabase.from('notifications').insert({
         user_id: userId,
         title,
         message,
-        type: typeValue,
+        type: typeString,
         is_read: false,
         data,
       });

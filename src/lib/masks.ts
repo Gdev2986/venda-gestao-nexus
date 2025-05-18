@@ -53,3 +53,8 @@ export const dateMask = (value: string): string => {
     .replace(/(\d{2})(\d)/, '$1/$2')
     .replace(/(\d{4})\d+?$/, '$1');
 };
+
+// Aliases for compatibility
+export const maskCPF = cpfMask;
+export const maskCNPJ = cnpjMask;
+export const maskPhoneNumber = phoneNumberMask;

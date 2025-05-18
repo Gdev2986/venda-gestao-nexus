@@ -1,6 +1,6 @@
 
 import { supabase } from "@/integrations/supabase/client";
-import { Payment, PaymentRequest, PaymentStatus } from "@/types/payment.types";
+import { Payment, PaymentRequest, PaymentStatus, PaymentType } from "@/types/payment.types";
 
 interface GetPaymentsParams {
   clientId?: string;
@@ -30,7 +30,7 @@ export async function getPayments({
     }
 
     if (status) {
-      query = query.eq("status", status as string);
+      query = query.eq("status", status);
     }
 
     // Execute query
@@ -40,7 +40,10 @@ export async function getPayments({
       throw error;
     }
 
-    return data;
+    return data.map(item => ({
+      ...item,
+      status: item.status as PaymentStatus
+    }));
   } catch (error) {
     console.error("Error fetching payments:", error);
     throw error;
@@ -54,7 +57,7 @@ export async function createPaymentRequest(payment: Omit<PaymentRequest, "id" | 
       amount: payment.amount,
       pix_key_id: payment.pix_key?.id,
       description: payment.description,
-      status: "PENDING",
+      status: PaymentStatus.PENDING,
     }).select().single();
 
     if (error) {
@@ -73,7 +76,7 @@ export async function approvePayment(paymentId: string, userId: string) {
     const { data, error } = await supabase
       .from("payment_requests")
       .update({
-        status: "APPROVED", // Use string literal instead of enum
+        status: PaymentStatus.APPROVED,
         approved_by: userId,
         approved_at: new Date().toISOString(),
       })
@@ -100,7 +103,7 @@ export async function rejectPayment(
     const { data, error } = await supabase
       .from("payment_requests")
       .update({
-        status: "REJECTED", // Use string literal instead of enum
+        status: PaymentStatus.REJECTED,
         rejection_reason: rejectionReason,
       })
       .eq("id", paymentId)
@@ -136,6 +139,7 @@ export async function getPaymentById(paymentId: string): Promise<Payment> {
     // Transform to Payment type with proper structure
     const payment: Payment = {
       ...data,
+      status: data.status as PaymentStatus,
       description: data.description || "",
       rejection_reason: data.rejection_reason || null,
       pix_key: data.pix_key ? {
@@ -171,6 +175,7 @@ export async function getClientPayments(clientId: string): Promise<Payment[]> {
 
     return data.map((payment) => ({
       ...payment,
+      status: payment.status as PaymentStatus,
       description: payment.description || "",
       rejection_reason: payment.rejection_reason || null,
       pix_key: payment.pix_key ? {
@@ -180,7 +185,7 @@ export async function getClientPayments(clientId: string): Promise<Payment[]> {
         name: payment.pix_key.name || '',
         owner_name: payment.pix_key.name || ''
       } : undefined
-    }));
+    })) as Payment[];
   } catch (error) {
     console.error("Error fetching client payments:", error);
     throw error;
@@ -201,7 +206,7 @@ export async function createPixPaymentRequest(pixPayment: {
         amount: pixPayment.amount,
         pix_key_id: pixPayment.pix_key_id,
         description: pixPayment.description,
-        status: "PENDING",
+        status: PaymentStatus.PENDING,
       })
       .select()
       .single();
@@ -210,7 +215,11 @@ export async function createPixPaymentRequest(pixPayment: {
       throw error;
     }
 
-    return data;
+    return {
+      ...data,
+      status: data.status as PaymentStatus,
+      rejection_reason: null
+    } as Payment;
   } catch (error) {
     console.error("Error creating PIX payment request:", error);
     throw error;
@@ -233,8 +242,8 @@ export async function createBoletoPaymentRequest(boletoPayment: {
         pix_key_id: boletoPayment.pix_key_id,
         description: boletoPayment.description,
         due_date: boletoPayment.due_date,
-        payment_type: "BOLETO",
-        status: "PENDING",
+        payment_type: PaymentType.BOLETO,
+        status: PaymentStatus.PENDING,
       })
       .select()
       .single();
@@ -243,7 +252,11 @@ export async function createBoletoPaymentRequest(boletoPayment: {
       throw error;
     }
 
-    return data;
+    return {
+      ...data,
+      status: data.status as PaymentStatus,
+      rejection_reason: null
+    } as Payment;
   } catch (error) {
     console.error("Error creating boleto payment request:", error);
     throw error;
@@ -268,8 +281,8 @@ export async function createTedPaymentRequest(tedPayment: {
         description: tedPayment.description,
         due_date: tedPayment.due_date,
         notes: tedPayment.notes,
-        payment_type: "TED",
-        status: "PENDING",
+        payment_type: PaymentType.TED,
+        status: PaymentStatus.PENDING,
       })
       .select()
       .single();
@@ -278,7 +291,11 @@ export async function createTedPaymentRequest(tedPayment: {
       throw error;
     }
 
-    return data;
+    return {
+      ...data,
+      status: data.status as PaymentStatus,
+      rejection_reason: null
+    } as Payment;
   } catch (error) {
     console.error("Error creating TED payment request:", error);
     throw error;

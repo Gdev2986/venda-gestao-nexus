@@ -25,14 +25,6 @@ export enum PaymentType {
   BOLETO = "BOLETO"
 }
 
-export enum PaymentAction {
-  APPROVE = "APPROVE",
-  REJECT = "REJECT",
-  VIEW = "VIEW",
-  DELETE = "DELETE",
-  SEND_RECEIPT = "SEND_RECEIPT"
-}
-
 export enum ClientStatus {
   ACTIVE = "active",
   INACTIVE = "inactive",
@@ -56,16 +48,12 @@ export enum NotificationType {
   SUPPORT = "SUPPORT",
   PAYMENT_REQUEST = "PAYMENT_REQUEST",
   PAYMENT_APPROVED = "PAYMENT_APPROVED",
-  PAYMENT_REJECTED = "PAYMENT_REJECTED",
-  ADMIN_NOTIFICATION = "ADMIN_NOTIFICATION",
-  NEW_CLIENT = "NEW_CLIENT"
+  PAYMENT_REJECTED = "PAYMENT_REJECTED"
 }
 
-export enum MachineStatus {
-  ACTIVE = "ACTIVE",
-  INACTIVE = "INACTIVE",
-  MAINTENANCE = "MAINTENANCE", 
-  BLOCKED = "BLOCKED",
-  STOCK = "STOCK",
-  TRANSIT = "TRANSIT"
+export enum PaymentAction {
+  APPROVE = "APPROVE",
+  REJECT = "REJECT",
+  VIEW = "VIEW",
+  SEND_RECEIPT = "SEND_RECEIPT"
 }
