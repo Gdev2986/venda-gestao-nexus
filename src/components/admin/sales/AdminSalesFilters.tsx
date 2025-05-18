@@ -11,11 +11,22 @@ export interface AdminSalesFiltersProps {
     };
   };
   onFilter?: () => void;
+  onFilterChange?: (key: string, value: any) => void;
+  setFilters?: React.Dispatch<React.SetStateAction<{
+    search: string;
+    status: string;
+    dateRange: {
+      from: Date;
+      to: Date;
+    };
+  }>>;
 }
 
 const AdminSalesFilters: React.FC<AdminSalesFiltersProps> = ({
   filters,
-  onFilter
+  onFilter,
+  onFilterChange,
+  setFilters
 }) => {
   return (
     <div>

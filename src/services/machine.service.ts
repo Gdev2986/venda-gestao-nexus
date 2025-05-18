@@ -28,21 +28,29 @@ export interface MachineTransferParams {
 }
 
 // Helper to convert string status to enum safely
-const normalizeStatus = (status: string): string => {
+const normalizeStatus = (status: string): MachineStatus => {
   const upperStatus = status.toUpperCase();
   switch (upperStatus) {
     case 'ACTIVE':
+      return MachineStatus.ACTIVE;
     case 'INACTIVE':
+      return MachineStatus.INACTIVE;
     case 'MAINTENANCE':
+      return MachineStatus.MAINTENANCE;
     case 'BLOCKED':
-      return upperStatus;
+      return MachineStatus.BLOCKED;
+    case 'TRANSIT':
+      return MachineStatus.TRANSIT;
+    case 'STOCK':
+      return MachineStatus.STOCK;
     default:
-      return 'ACTIVE'; // Default status
+      return MachineStatus.ACTIVE; // Default status
   }
 };
 
 /**
  * Gets a list of all machines with optional filtering
+ * This is now aliased to getAllMachines for backward compatibility
  */
 export const getMachines = async (
   filter?: { status?: string; client_id?: string; search?: string }
@@ -80,7 +88,7 @@ export const getMachines = async (
       id: item.id,
       serial_number: item.serial_number,
       model: item.model,
-      status: item.status,
+      status: normalizeStatus(item.status),
       client_id: item.client_id || undefined,
       client_name: item.client?.business_name,
       created_at: item.created_at,
@@ -91,6 +99,16 @@ export const getMachines = async (
     console.error('Error in getMachines:', error);
     throw error;
   }
+};
+
+// Add this alias for backward compatibility
+export const getAllMachines = getMachines;
+
+/**
+ * Gets machines filtered by status
+ */
+export const getMachinesByStatus = async (status: MachineStatus): Promise<Machine[]> => {
+  return getMachines({ status: status.toString() });
 };
 
 /**
@@ -172,7 +190,7 @@ export const getMachineById = async (id: string): Promise<Machine | null> => {
       id: data.id,
       serial_number: data.serial_number,
       model: data.model,
-      status: data.status as MachineStatus,
+      status: normalizeStatus(data.status),
       client_id: data.client_id || undefined,
       client_name: data.client?.business_name,
       created_at: data.created_at,
@@ -210,7 +228,15 @@ export const createMachine = async (machine: MachineCreateParams): Promise<Machi
       throw error;
     }
 
-    return data as Machine;
+    return {
+      id: data.id,
+      serial_number: data.serial_number,
+      model: data.model,
+      status: normalizeStatus(data.status),
+      client_id: data.client_id || undefined,
+      created_at: data.created_at,
+      updated_at: data.updated_at
+    };
   } catch (error) {
     console.error('Error in createMachine:', error);
     throw error;
@@ -220,7 +246,7 @@ export const createMachine = async (machine: MachineCreateParams): Promise<Machi
 /**
  * Updates an existing machine
  */
-export const updateMachine = async (machine: MachineUpdateParams): Promise<Machine | null> => {
+export const updateMachine = async (id: string, machine: MachineUpdateParams): Promise<Machine | null> => {
   try {
     // Create update object with only the fields that need updating
     const updateData: any = {};
@@ -234,7 +260,7 @@ export const updateMachine = async (machine: MachineUpdateParams): Promise<Machi
     const { data, error } = await supabase
       .from('machines')
       .update(updateData)
-      .eq('id', machine.id)
+      .eq('id', id)
       .select()
       .single();
 
@@ -243,9 +269,39 @@ export const updateMachine = async (machine: MachineUpdateParams): Promise<Machi
       throw error;
     }
 
-    return data as Machine;
+    return {
+      id: data.id,
+      serial_number: data.serial_number,
+      model: data.model,
+      status: normalizeStatus(data.status),
+      client_id: data.client_id || undefined,
+      created_at: data.created_at,
+      updated_at: data.updated_at
+    };
   } catch (error) {
     console.error('Error in updateMachine:', error);
+    throw error;
+  }
+};
+
+/**
+ * Deletes a machine
+ */
+export const deleteMachine = async (id: string): Promise<boolean> => {
+  try {
+    const { error } = await supabase
+      .from('machines')
+      .delete()
+      .eq('id', id);
+    
+    if (error) {
+      console.error('Error deleting machine:', error);
+      throw error;
+    }
+    
+    return true;
+  } catch (error) {
+    console.error('Error in deleteMachine:', error);
     throw error;
   }
 };
@@ -325,7 +381,10 @@ export const transferMachine = async (params: MachineTransferParams): Promise<Ma
       cutoff_date: fullTransfer.cutoff_date,
       created_at: fullTransfer.created_at,
       created_by: fullTransfer.created_by,
-      machine: fullTransfer.machine,
+      machine: fullTransfer.machine ? {
+        ...fullTransfer.machine,
+        status: normalizeStatus(fullTransfer.machine.status)
+      } : undefined,
       from_client: {
         id: fullTransfer.from_client?.id || '',
         business_name: fullTransfer.from_client?.business_name || ''
@@ -372,7 +431,10 @@ export const getMachineTransferHistory = async (machineId: string): Promise<Mach
       cutoff_date: transfer.cutoff_date,
       created_at: transfer.created_at,
       created_by: transfer.created_by,
-      machine: transfer.machine,
+      machine: transfer.machine ? {
+        ...transfer.machine,
+        status: normalizeStatus(transfer.machine.status)
+      } : undefined,
       from_client: {
         id: transfer.from_client?.id || '',
         business_name: transfer.from_client?.business_name || ''
@@ -384,6 +446,37 @@ export const getMachineTransferHistory = async (machineId: string): Promise<Mach
     }));
   } catch (error) {
     console.error('Error in getMachineTransferHistory:', error);
+    return [];
+  }
+};
+
+/**
+ * Gets a list of clients with machines
+ */
+export const getClientsWithMachines = async (): Promise<any[]> => {
+  try {
+    const { data, error } = await supabase
+      .from('clients')
+      .select(`
+        id,
+        business_name,
+        machines:machines(count)
+      `)
+      .not('machines', 'is', null)
+      .order('business_name', { ascending: true });
+    
+    if (error) {
+      console.error('Error fetching clients with machines:', error);
+      throw error;
+    }
+    
+    return data.map(client => ({
+      id: client.id,
+      business_name: client.business_name,
+      machineCount: client.machines?.[0]?.count || 0
+    }));
+  } catch (error) {
+    console.error('Error in getClientsWithMachines:', error);
     return [];
   }
 };

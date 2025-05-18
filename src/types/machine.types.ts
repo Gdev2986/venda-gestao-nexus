@@ -47,7 +47,7 @@ export interface MachineTransfer {
   cutoff_date?: string;
   created_at: string;
   created_by: string;
-  machine: Machine;
+  machine?: Machine;
   from_client: {
     id: string;
     business_name: string;

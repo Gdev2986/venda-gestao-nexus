@@ -7,15 +7,15 @@ import {
   createMachine, 
   updateMachine, 
   transferMachine,
-  getMachineStats
+  getMachineStats,
+  MachineCreateParams,
+  MachineUpdateParams,
+  MachineTransferParams
 } from "@/services/machine.service";
 import { supabase } from "@/integrations/supabase/client";
 import {
   Machine,
   MachineStatus,
-  MachineCreateParams,
-  MachineUpdateParams,
-  MachineTransferParams,
   MachineStats
 } from "@/types/machine.types";
 
@@ -91,7 +91,6 @@ export function useMachines(options: UseMachinesOptions = {}) {
 
   const modifyMachine = async (id: string, machineData: MachineUpdateParams) => {
     try {
-      // Since both updateMachine and MachineUpdateParams use the same enum, this should work
       const updatedMachine = await updateMachine(id, machineData);
       toast({
         title: "Máquina atualizada",

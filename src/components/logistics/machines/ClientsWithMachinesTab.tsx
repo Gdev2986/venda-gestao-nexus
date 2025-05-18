@@ -1,77 +1,50 @@
-import { useState, useEffect } from "react";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { Link } from "react-router-dom";
-import { Smartphone, ArrowRight } from "lucide-react";
-import { getClientsWithMachines } from "@/services/machine.service";
-import { Skeleton } from "@/components/ui/skeleton";
-import { Input } from "@/components/ui/input";
 
-interface ClientWithMachines {
+import React, { useState, useEffect } from "react";
+import { Table, TableHeader, TableRow, TableHead, TableBody, TableCell } from "@/components/ui/table";
+import { Input } from "@/components/ui/input";
+import { getClientsWithMachines } from "@/services/machine.service";
+import { Badge } from "@/components/ui/badge";
+import { Link } from "react-router-dom";
+import { LinkIcon } from "lucide-react";
+
+export interface ClientWithMachines {
   id: string;
   business_name: string;
   machineCount: number;
-  predominantStatus: string;
+  predominantStatus?: string;
 }
 
-interface ClientsWithMachinesTabProps {
-  clients?: ClientWithMachines[];
-  isLoading?: boolean;
-}
-
-export default function ClientsWithMachinesTab({ clients: initialClients, isLoading: initialLoading }: ClientsWithMachinesTabProps) {
-  const [clients, setClients] = useState<ClientWithMachines[]>(initialClients || []);
-  const [isLoading, setIsLoading] = useState(initialLoading !== undefined ? initialLoading : true);
+const ClientsWithMachinesTab: React.FC = () => {
+  const [clients, setClients] = useState<ClientWithMachines[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
-  
+
   useEffect(() => {
-    // If clients are provided as props, use them
-    if (initialClients) {
-      setClients(initialClients);
-      return;
-    }
-    
-    // Otherwise fetch them
-    const fetchClients = async () => {
+    const loadClients = async () => {
       try {
         const data = await getClientsWithMachines();
         setClients(data);
       } catch (error) {
-        console.error("Error fetching clients with machines:", error);
+        console.error("Error loading clients with machines:", error);
       } finally {
         setIsLoading(false);
       }
     };
     
-    fetchClients();
-  }, [initialClients]);
-  
-  // Filter clients based on search term
+    loadClients();
+  }, []);
+
   const filteredClients = clients.filter(client => 
     client.business_name.toLowerCase().includes(searchTerm.toLowerCase())
   );
-  
-  const getStatusBadge = (status: string) => {
-    switch (status) {
-      case 'ACTIVE':
-        return <Badge className="bg-green-500">Ativas</Badge>;
-      case 'INACTIVE':
-        return <Badge className="bg-red-500">Inativas</Badge>;
-      case 'MAINTENANCE':
-        return <Badge variant="outline" className="border-yellow-500 text-yellow-700">Manutenção</Badge>;
-      default:
-        return <Badge variant="outline">{status}</Badge>;
-    }
-  };
 
   return (
     <div className="space-y-4">
       <Input
-        placeholder="Buscar por nome do cliente..."
+        placeholder="Buscar cliente..."
         value={searchTerm}
         onChange={(e) => setSearchTerm(e.target.value)}
-        className="max-w-sm mb-4"
+        className="max-w-sm"
       />
       
       <div className="rounded-md border overflow-hidden">
@@ -79,49 +52,33 @@ export default function ClientsWithMachinesTab({ clients: initialClients, isLoad
           <TableHeader>
             <TableRow>
               <TableHead>Cliente</TableHead>
-              <TableHead className="w-[150px]">Qtd. Máquinas</TableHead>
-              <TableHead className="w-[150px]">Status Predominante</TableHead>
-              <TableHead className="w-[100px] text-right">Ações</TableHead>
+              <TableHead>Nº de Máquinas</TableHead>
+              <TableHead>Ações</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {isLoading ? (
-              Array.from({ length: 5 }).map((_, index) => (
-                <TableRow key={`skeleton-${index}`}>
-                  <TableCell><Skeleton className="h-4 w-full" /></TableCell>
-                  <TableCell><Skeleton className="h-4 w-12" /></TableCell>
-                  <TableCell><Skeleton className="h-6 w-24" /></TableCell>
-                  <TableCell><Skeleton className="h-9 w-24 ml-auto" /></TableCell>
-                </TableRow>
-              ))
+              <TableRow>
+                <TableCell colSpan={3} className="text-center py-10">Carregando...</TableCell>
+              </TableRow>
             ) : filteredClients.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={4} className="text-center py-4">
-                  Nenhum cliente com máquinas encontrado
-                </TableCell>
+                <TableCell colSpan={3} className="text-center py-10">Nenhum cliente com máquinas encontrado</TableCell>
               </TableRow>
             ) : (
-              filteredClients.map(client => (
+              filteredClients.map((client) => (
                 <TableRow key={client.id}>
                   <TableCell className="font-medium">{client.business_name}</TableCell>
                   <TableCell>
-                    <div className="flex items-center">
-                      <Smartphone className="h-4 w-4 mr-2 text-muted-foreground" />
-                      <span>{client.machineCount}</span>
-                    </div>
+                    <Badge variant="outline" className="px-2 py-1">
+                      {client.machineCount}
+                    </Badge>
                   </TableCell>
-                  <TableCell>{getStatusBadge(client.predominantStatus)}</TableCell>
-                  <TableCell className="text-right">
-                    <Button 
-                      asChild 
-                      variant="outline" 
-                      size="sm"
-                    >
-                      <Link to={`/admin/clients/${client.id}`}>
-                        <span className="mr-1">Detalhes</span>
-                        <ArrowRight className="h-4 w-4" />
-                      </Link>
-                    </Button>
+                  <TableCell>
+                    <Link to={`/logistics/clients/${client.id}/machines`} className="text-blue-600 hover:underline flex items-center gap-1 w-fit">
+                      <LinkIcon className="h-3.5 w-3.5" />
+                      Ver máquinas
+                    </Link>
                   </TableCell>
                 </TableRow>
               ))
@@ -131,4 +88,6 @@ export default function ClientsWithMachinesTab({ clients: initialClients, isLoad
       </div>
     </div>
   );
-}
+};
+
+export default ClientsWithMachinesTab;

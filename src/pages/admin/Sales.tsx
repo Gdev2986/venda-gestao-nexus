@@ -1,142 +1,127 @@
 
-import React, { useState } from "react";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { useState } from "react";
+import { PageHeader } from "@/components/page/PageHeader";
 import { Button } from "@/components/ui/button";
-import { PlusCircle } from "lucide-react";
-import { useNavigate } from "react-router-dom";
+import { FileUp, Plus } from "lucide-react";
+import { useDialog } from "@/hooks/use-dialog";
+import { Card, CardContent } from "@/components/ui/card";
 import AdminSalesLayout from "@/components/admin/sales/AdminSalesLayout";
 import AdminSalesFilters from "@/components/admin/sales/AdminSalesFilters";
-import AdminSalesContent from "@/components/admin/sales/AdminSalesContent";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import SalesUploader from "@/components/sales/SalesUploader";
+import AdminSalesContent, { SalesData } from "@/components/admin/sales/AdminSalesContent";
 import { useToast } from "@/hooks/use-toast";
+import { addDays } from "date-fns";
 
-export interface SalesData {
-  id: string;
-  date: string;
-  terminal: string;
-  amount: number;
+export interface SalesFilters {
+  search: string;
   status: string;
-  client: string;
-  paymentMethod: string;
+  dateRange: {
+    from: Date;
+    to: Date;
+  };
 }
 
-const AdminSales = () => {
-  const navigate = useNavigate();
-  const { toast } = useToast();
-  const [isImportDialogOpen, setIsImportDialogOpen] = useState(false);
-  const [filters, setFilters] = useState({
-    search: "",
-    status: "all",
-    dateRange: {
-      from: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000),
-      to: new Date(),
-    },
-  });
-  const [isLoading, setIsLoading] = useState(false);
-  const [salesData, setSalesData] = useState<SalesData[]>([]);
-  const [page, setPage] = useState(1);
-  const [itemsPerPage] = useState(10);
+const defaultFilters: SalesFilters = {
+  search: "",
+  status: "all",
+  dateRange: {
+    from: addDays(new Date(), -30),
+    to: new Date(),
+  }
+};
+
+// Sample data for demonstration
+const mockSalesData: SalesData[] = [
+  { id: '1', date: '2025-01-01', amount: 150, client: 'Company A', status: 'completed' },
+  { id: '2', date: '2025-01-02', amount: 200, client: 'Company B', status: 'pending' },
+  { id: '3', date: '2025-01-03', amount: 300, client: 'Company C', status: 'completed' },
+];
+
+const AdminSalesPage = () => {
   const [isRefreshing, setIsRefreshing] = useState(false);
-
-  const handleNewSale = () => {
-    navigate("/admin/sales/new");
-  };
-
-  const handleImportSales = () => {
-    setIsImportDialogOpen(true);
-  };
-
-  const handleFileProcessed = (file: File, recordCount: number) => {
-    toast({
-      title: "Importação concluída",
-      description: `${recordCount} registros foram importados de ${file.name}`,
-    });
-    setIsImportDialogOpen(false);
-  };
+  const [filters, setFilters] = useState<SalesFilters>(defaultFilters);
+  const [page, setPage] = useState(1);
+  const [isLoading, setIsLoading] = useState(false);
+  const [sales, setSales] = useState<SalesData[]>(mockSalesData);
   
-  const handleRefresh = () => {
-    // Implementation for refresh functionality
+  const importDialog = useDialog();
+  const createSaleDialog = useDialog();
+  const { toast } = useToast();
+
+  const refreshSales = async () => {
     setIsRefreshing(true);
+    // In a real app, this would fetch sales data
     setTimeout(() => {
+      setSales(mockSalesData);
       setIsRefreshing(false);
       toast({
-        title: "Dados atualizados",
-        description: "Lista de vendas atualizada com sucesso"
+        title: "Vendas atualizadas",
+        description: "Os dados foram atualizados com sucesso",
       });
-    }, 1000);
+    }, 500);
   };
-
+  
+  const handleImport = () => {
+    importDialog.open();
+  };
+  
   const handleExport = () => {
     toast({
-      title: "Exportando dados",
-      description: "Os dados estão sendo exportados"
+      title: "Exportação iniciada",
+      description: "Os dados serão exportados e enviados por email",
     });
+  };
+  
+  const handleFilterChange = (key: string, value: any) => {
+    setFilters(prev => ({ ...prev, [key]: value }));
   };
 
   return (
-    <AdminSalesLayout 
-      isRefreshing={isRefreshing}
-      onRefresh={handleRefresh}
-      onImport={handleImportSales}
-      onExport={handleExport}
-    >
-      <Card>
-        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-          <div>
-            <CardTitle className="text-2xl font-bold">Vendas</CardTitle>
-            <CardDescription>
-              Gerencie todas as vendas do sistema
-            </CardDescription>
-          </div>
-          <div className="flex space-x-2">
-            <Button variant="outline" onClick={handleImportSales}>
+    <div className="space-y-6">
+      <PageHeader 
+        title="Vendas"
+        description="Gerenciamento de vendas e relatórios"
+        action={
+          <div className="flex gap-2">
+            <Button variant="outline" onClick={importDialog.open}>
+              <FileUp className="mr-2 h-4 w-4" />
               Importar
             </Button>
-            <Button onClick={handleNewSale}>
-              <PlusCircle className="mr-2 h-4 w-4" /> Nova Venda
+            <Button onClick={createSaleDialog.open}>
+              <Plus className="mr-2 h-4 w-4" />
+              Nova Venda
             </Button>
           </div>
-        </CardHeader>
-        <CardContent>
-          <AdminSalesFilters 
-            filters={filters} 
-            onFilterChange={(key, value) => setFilters({...filters, [key]: value})}
-          />
-          <AdminSalesContent 
-            filters={filters} 
-            isLoading={isLoading}
-            sales={salesData}
-            page={page}
-            setPage={setPage}
-            itemsPerPage={itemsPerPage}
-          />
-        </CardContent>
-      </Card>
-
-      <Dialog open={isImportDialogOpen} onOpenChange={setIsImportDialogOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Importar Vendas</DialogTitle>
-          </DialogHeader>
-          <div className="space-y-4 pt-4">
-            <p className="text-muted-foreground">
-              Selecione um arquivo CSV para importar vendas. O arquivo deve conter as colunas: data, terminal, valor, método de pagamento e cliente.
-            </p>
-            <div className="flex justify-center py-8">
-              <SalesUploader onFileProcessed={handleFileProcessed} />
-            </div>
-          </div>
-        </DialogContent>
-      </Dialog>
-    </AdminSalesLayout>
+        }
+      />
+      
+      <AdminSalesLayout
+        isRefreshing={isRefreshing}
+        onRefresh={refreshSales}
+        onImport={handleImport}
+        onExport={handleExport}
+      >
+        <Card>
+          <CardContent className="p-6">
+            <AdminSalesFilters 
+              filters={filters} 
+              onFilterChange={handleFilterChange}
+            />
+            
+            <AdminSalesContent 
+              sales={sales}
+              filters={filters}
+              isLoading={isLoading}
+              page={page}
+              setPage={setPage}
+              itemsPerPage={10}
+            />
+          </CardContent>
+        </Card>
+      </AdminSalesLayout>
+      
+      {/* Dialogs would be here */}
+    </div>
   );
 };
 
-export default AdminSales;
+export default AdminSalesPage;

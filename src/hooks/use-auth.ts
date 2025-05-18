@@ -1,3 +1,8 @@
 
 // Re-export the useAuth hook from the AuthContext with additional type safety
-export { useAuth } from "@/contexts/AuthContext";
+import { useAuth as useAuthContext } from "@/contexts/AuthContext";
+import { AuthContextType } from "@/contexts/auth-types";
+
+export const useAuth = (): AuthContextType => {
+  return useAuthContext();
+};
