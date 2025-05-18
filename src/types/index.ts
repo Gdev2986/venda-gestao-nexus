@@ -21,7 +21,7 @@ export interface Notification {
   title: string;
   message: string;
   type: NotificationType;
-  is_read: boolean;
+  is_read: boolean; // Ensure this property exists in the interface
   timestamp: string;
   data?: any;
 }

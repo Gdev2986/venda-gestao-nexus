@@ -118,7 +118,7 @@ export const NotificationsProvider: React.FC<{ children: React.ReactNode }> = ({
       const { error } = await supabase.from("notifications").insert({
         title,
         message,
-        type: type.toString(),
+        type,
         user_id: userId,
         is_read: false,
         data
