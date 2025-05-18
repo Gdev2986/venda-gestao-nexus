@@ -10,9 +10,9 @@ import {
 import { Button } from "@/components/ui/button";
 import { PlusCircle } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-import AdminSalesContent from "@/components/admin/sales/AdminSalesContent";
 import AdminSalesLayout from "@/components/admin/sales/AdminSalesLayout";
 import AdminSalesFilters from "@/components/admin/sales/AdminSalesFilters";
+import AdminSalesContent from "@/components/admin/sales/AdminSalesContent";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import SalesUploader from "@/components/sales/SalesUploader";
 import { useToast } from "@/hooks/use-toast";
@@ -40,6 +40,10 @@ const AdminSales = () => {
     },
   });
   const [isLoading, setIsLoading] = useState(false);
+  const [salesData, setSalesData] = useState<SalesData[]>([]);
+  const [page, setPage] = useState(1);
+  const [itemsPerPage] = useState(10);
+  const [isRefreshing, setIsRefreshing] = useState(false);
 
   const handleNewSale = () => {
     navigate("/admin/sales/new");
@@ -56,9 +60,33 @@ const AdminSales = () => {
     });
     setIsImportDialogOpen(false);
   };
+  
+  const handleRefresh = () => {
+    // Implementation for refresh functionality
+    setIsRefreshing(true);
+    setTimeout(() => {
+      setIsRefreshing(false);
+      toast({
+        title: "Dados atualizados",
+        description: "Lista de vendas atualizada com sucesso"
+      });
+    }, 1000);
+  };
+
+  const handleExport = () => {
+    toast({
+      title: "Exportando dados",
+      description: "Os dados estão sendo exportados"
+    });
+  };
 
   return (
-    <AdminSalesLayout>
+    <AdminSalesLayout 
+      isRefreshing={isRefreshing}
+      onRefresh={handleRefresh}
+      onImport={handleImportSales}
+      onExport={handleExport}
+    >
       <Card>
         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
           <div>
@@ -77,8 +105,18 @@ const AdminSales = () => {
           </div>
         </CardHeader>
         <CardContent>
-          <AdminSalesFilters filters={filters} setFilters={setFilters} />
-          <AdminSalesContent filters={filters} isLoading={isLoading} />
+          <AdminSalesFilters 
+            filters={filters} 
+            onFilterChange={(key, value) => setFilters({...filters, [key]: value})}
+          />
+          <AdminSalesContent 
+            filters={filters} 
+            isLoading={isLoading}
+            sales={salesData}
+            page={page}
+            setPage={setPage}
+            itemsPerPage={itemsPerPage}
+          />
         </CardContent>
       </Card>
 

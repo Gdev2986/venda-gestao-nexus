@@ -1,5 +1,4 @@
 
-// Support ticket enums
 export enum TicketStatus {
   PENDING = "PENDING",
   IN_PROGRESS = "IN_PROGRESS",
@@ -7,14 +6,16 @@ export enum TicketStatus {
   CLOSED = "CLOSED",
   REJECTED = "REJECTED",
   COMPLETED = "COMPLETED",
-  CANCELED = "CANCELED"
+  CANCELED = "CANCELED",
+  OPEN = "OPEN"
 }
 
 export enum TicketPriority {
   LOW = "LOW",
   MEDIUM = "MEDIUM",
   HIGH = "HIGH",
-  CRITICAL = "CRITICAL"
+  CRITICAL = "CRITICAL",
+  URGENT = "URGENT"
 }
 
 export enum TicketType {
@@ -28,7 +29,10 @@ export enum TicketType {
   REMOVAL = "REMOVAL",
   REPLACEMENT = "REPLACEMENT",
   SUPPLIES = "SUPPLIES",
-  PAPER = "PAPER"
+  PAPER = "PAPER",
+  GENERAL = "GENERAL",
+  FEATURE = "FEATURE",
+  BUG = "BUG"
 }
 
 // Support ticket interface
@@ -37,7 +41,7 @@ export interface SupportTicket {
   title: string;
   client_id: string;
   machine_id?: string;
-  user_id?: string; // Added to fix type error, now optional
+  user_id?: string; // Made optional
   type: TicketType;
   status: TicketStatus;
   priority: TicketPriority;
@@ -45,7 +49,8 @@ export interface SupportTicket {
   scheduled_date?: string;
   created_at: string;
   updated_at: string;
-  created_by?: string; // Added as optional for backward compatibility
+  created_by?: string; // Added for backward compatibility
+  assigned_to?: string; // Added for compatibility
   client?: {
     id: string;
     business_name: string;
@@ -55,4 +60,26 @@ export interface SupportTicket {
     serial_number: string;
     model: string;
   };
+}
+
+// Create and update params for support tickets
+export interface CreateSupportTicketParams {
+  title: string;
+  description: string;
+  client_id: string;
+  machine_id?: string;
+  type: TicketType;
+  priority: TicketPriority;
+  status?: TicketStatus;
+  assigned_to?: string;
+  created_by?: string;
+}
+
+export interface UpdateSupportTicketParams {
+  title?: string;
+  description?: string;
+  status?: TicketStatus;
+  priority?: TicketPriority;
+  type?: TicketType;
+  assigned_to?: string;
 }

@@ -1,3 +1,4 @@
+
 import { supabase } from '@/integrations/supabase/client';
 import {
   Machine,
@@ -74,6 +75,8 @@ export async function getMachineStats(): Promise<MachineStats> {
     blocked: 0,
     stock: 0,
     transit: 0,
+    byClient: [],
+    byModel: [],
     byStatus: {}
   };
 
@@ -128,7 +131,7 @@ export async function getMachinesByStatus(status: MachineStatus): Promise<Machin
         state
       )
     `)
-    .eq('status', status.toString());
+    .eq('status', status);
 
   if (error) {
     console.error(`Error fetching machines with status ${status}:`, error);
@@ -177,9 +180,15 @@ export async function getClientsWithMachines(): Promise<any[]> {
  * Create a new machine
  */
 export async function createMachine(params: MachineCreateParams): Promise<Machine> {
+  // Convert the enum to string for Supabase
+  const machineData = {
+    ...params,
+    status: params.status?.toString() || MachineStatus.STOCK.toString()
+  };
+
   const { data, error } = await supabase
     .from('machines')
-    .insert(params)
+    .insert(machineData)
     .select()
     .single();
 
@@ -195,9 +204,15 @@ export async function createMachine(params: MachineCreateParams): Promise<Machin
  * Update an existing machine
  */
 export async function updateMachine(id: string, params: MachineUpdateParams): Promise<Machine> {
+  // Convert the enum to string for Supabase if it exists
+  const updateData: any = { ...params };
+  if (params.status) {
+    updateData.status = params.status.toString();
+  }
+
   const { data, error } = await supabase
     .from('machines')
-    .update(params)
+    .update(updateData)
     .eq('id', id)
     .select()
     .single();
@@ -229,9 +244,15 @@ export async function deleteMachine(id: string): Promise<void> {
  * Transfer a machine to another client
  */
 export async function transferMachine(params: MachineTransferParams): Promise<MachineTransfer> {
+  // Ensure created_by is set for Supabase
+  const transferData = {
+    ...params,
+    created_by: params.created_by || 'system'
+  };
+
   const { data, error } = await supabase
     .from('machine_transfers')
-    .insert(params)
+    .insert(transferData)
     .select(`
       *,
       machine:machine_id (
@@ -256,7 +277,19 @@ export async function transferMachine(params: MachineTransferParams): Promise<Ma
     throw new Error(error.message);
   }
 
-  return data as MachineTransfer;
+  // Safe type casting with object shape validation
+  const transfer = data as unknown;
+  // Validate the shape before casting
+  if (data && 
+      typeof data === 'object' && 
+      'machine_id' in data && 
+      'to_client_id' in data &&
+      data.machine && typeof data.machine === 'object' &&
+      data.to_client && typeof data.to_client === 'object') {
+    return transfer as MachineTransfer;
+  }
+  
+  throw new Error('Invalid transfer data received from server');
 }
 
 /**
@@ -289,5 +322,10 @@ export async function getAllMachineTransfers(): Promise<MachineTransfer[]> {
     throw new Error(error.message);
   }
 
-  return data as MachineTransfer[];
+  // Safe type casting with array validation
+  if (Array.isArray(data)) {
+    return data as unknown as MachineTransfer[];
+  }
+  
+  return [];
 }

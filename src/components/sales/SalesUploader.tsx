@@ -5,7 +5,7 @@ import { Upload } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
 export interface SalesUploaderProps {
-  onFileProcessed: (file: File, recordCount: number) => void;
+  onFileProcessed?: (file: File, recordCount: number) => void;
 }
 
 export const SalesUploader: React.FC<SalesUploaderProps> = ({ onFileProcessed }) => {
@@ -46,7 +46,9 @@ export const SalesUploader: React.FC<SalesUploaderProps> = ({ onFileProcessed })
         description: `${recordCount} vendas foram importadas.`,
       });
 
-      onFileProcessed(file, recordCount);
+      if (onFileProcessed) {
+        onFileProcessed(file, recordCount);
+      }
     } catch (error) {
       toast({
         variant: "destructive",

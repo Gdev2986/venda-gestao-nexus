@@ -1,4 +1,3 @@
-
 import { supabase } from '@/integrations/supabase/client';
 import { 
   Payment, 
@@ -27,7 +26,8 @@ function toPaymentStatus(status: string | PaymentStatus): PaymentStatus {
  * Get payment requests by status
  */
 export async function getPaymentRequestsByStatus(status: PaymentStatus | string): Promise<PaymentRequest[]> {
-  const statusValue = typeof status === 'string' ? status : status as unknown as string;
+  // Convert enum to string if needed
+  const statusValue = typeof status === 'string' ? status : status.toString();
 
   const { data, error } = await supabase
     .from('payment_requests')
@@ -119,7 +119,7 @@ export async function approvePaymentRequest(
   receiptUrl?: string
 ): Promise<PaymentRequest> {
   const updates: any = {
-    status: PaymentStatus.APPROVED,
+    status: PaymentStatus.APPROVED.toString(),
     approved_by: approvedBy,
     approved_at: new Date().toISOString(),
   };
@@ -156,7 +156,7 @@ export async function rejectPaymentRequest(
   const { data, error } = await supabase
     .from('payment_requests')
     .update({
-      status: PaymentStatus.REJECTED,
+      status: PaymentStatus.REJECTED.toString(),
       rejection_reason: rejectionReason,
     })
     .eq('id', id)

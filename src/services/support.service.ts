@@ -1,6 +1,7 @@
 
 import { supabase } from "@/integrations/supabase/client";
-import { SupportTicket, TicketStatus, TicketPriority, TicketType, CreateSupportTicketParams, UpdateSupportTicketParams } from "@/types/support.types";
+import { SupportTicket, TicketStatus, TicketPriority, TicketType } from "@/types/support.types";
+import { CreateSupportTicketParams, UpdateSupportTicketParams } from "@/types/support.types";
 
 // Mock data for local development - will be replaced by Supabase implementation
 const mockTickets = [
@@ -16,6 +17,7 @@ const mockTickets = [
     created_at: new Date().toISOString(),
     updated_at: new Date().toISOString(),
     client: {
+      id: "client-1",
       business_name: "ABC Store"
     }
   },
@@ -31,6 +33,7 @@ const mockTickets = [
     created_at: new Date().toISOString(),
     updated_at: new Date().toISOString(),
     client: {
+      id: "client-2",
       business_name: "XYZ Restaurant"
     }
   }
@@ -40,9 +43,13 @@ const mockTickets = [
 const mapDatabaseTicketToAppTicket = (dbTicket: any): SupportTicket => {
   return {
     ...dbTicket,
-    status: dbTicket.status,
-    priority: dbTicket.priority,
-    type: dbTicket.type
+    status: dbTicket.status as TicketStatus,
+    priority: dbTicket.priority as TicketPriority,
+    type: dbTicket.type as TicketType,
+    client: dbTicket.client ? {
+      id: dbTicket.client.id || "",
+      business_name: dbTicket.client.business_name || ""
+    } : undefined
   };
 };
 
@@ -54,7 +61,7 @@ export async function getAllSupportTickets(): Promise<SupportTicket[]> {
     
     if (!tableExists) {
       console.warn("Support tickets table doesn't exist in the database. Using mock data.");
-      return mockTickets as SupportTicket[];
+      return mockTickets.map(ticket => mapDatabaseTicketToAppTicket(ticket));
     }
     
     const { data, error } = await supabase
@@ -68,13 +75,13 @@ export async function getAllSupportTickets(): Promise<SupportTicket[]> {
 
     if (error) {
       console.error("Error fetching support tickets:", error);
-      return mockTickets as SupportTicket[];
+      return mockTickets.map(ticket => mapDatabaseTicketToAppTicket(ticket));
     }
 
     return data.map(mapDatabaseTicketToAppTicket);
   } catch (error) {
     console.error("Error in getAllSupportTickets:", error);
-    return mockTickets as SupportTicket[];
+    return mockTickets.map(ticket => mapDatabaseTicketToAppTicket(ticket));
   }
 }
 
@@ -104,16 +111,16 @@ export async function createSupportTicket(params: CreateSupportTicketParams): Pr
         id: `mock-${Date.now()}`,
         title: params.title,
         description: params.description,
-        status: params.status,
+        status: params.status || TicketStatus.PENDING,
         priority: params.priority,
         type: params.type,
         client_id: params.client_id,
         machine_id: params.machine_id,
-        assigned_to: params.assigned_to,
-        created_by: params.created_by,
+        user_id: "mock-user",
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString(),
         client: {
+          id: "mock-client",
           business_name: "Client Name"
         }
       };
@@ -143,12 +150,11 @@ export async function createSupportTicket(params: CreateSupportTicketParams): Pr
       type: params.type as TicketType,
       client_id: params.client_id,
       machine_id: params.machine_id,
-      assigned_to: params.assigned_to,
-      created_by: params.created_by,
+      user_id: "system",
       created_at: data.created_at,
       updated_at: data.updated_at
     };
-  } catch (error) {
+  } catch (error: any) {
     console.error("Error creating support ticket:", error);
     // Return a mock ticket for development
     return {
@@ -160,8 +166,7 @@ export async function createSupportTicket(params: CreateSupportTicketParams): Pr
       type: params.type as TicketType,
       client_id: params.client_id,
       machine_id: params.machine_id,
-      assigned_to: params.assigned_to,
-      created_by: params.created_by,
+      user_id: "mock-user",
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString()
     };

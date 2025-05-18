@@ -3,35 +3,30 @@ import { formatDistanceToNow } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { Bell, ShoppingCart, CreditCard, Wrench, LifeBuoy } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import TablePagination from "@/components/ui/table-pagination";
+import { Skeleton } from "@/components/ui/skeleton";
 
 interface Notification {
   id: string;
   title: string;
   message: string;
   type: string;
-  read: boolean;
-  timestamp: Date;
+  is_read: boolean;
+  created_at: string;
+  data?: any;
 }
 
 interface NotificationListProps {
   notifications: Notification[];
   onMarkAsRead: (id: string) => void;
-  onMarkAsUnread: (id: string) => void;
-  onDelete: (id: string) => void;
-  currentPage: number;
-  totalPages: number;
-  onPageChange: (page: number) => void;
+  onDelete?: (id: string) => void;
+  isLoading?: boolean;
 }
 
 const NotificationList = ({ 
   notifications, 
   onMarkAsRead,
-  onMarkAsUnread,
   onDelete,
-  currentPage,
-  totalPages,
-  onPageChange 
+  isLoading = false
 }: NotificationListProps) => {
 
   const getIcon = (type: string) => {
@@ -51,6 +46,22 @@ const NotificationList = ({
     }
   };
 
+  if (isLoading) {
+    return (
+      <div className="space-y-4 py-4">
+        {[1, 2, 3].map((i) => (
+          <div key={i} className="flex items-start space-x-4 px-1">
+            <Skeleton className="h-8 w-8 rounded-full" />
+            <div className="space-y-2 flex-1">
+              <Skeleton className="h-4 w-3/4" />
+              <Skeleton className="h-4 w-full" />
+            </div>
+          </div>
+        ))}
+      </div>
+    );
+  }
+
   if (notifications.length === 0) {
     return (
       <div className="p-8 text-center">
@@ -65,7 +76,7 @@ const NotificationList = ({
         {notifications.map((notification) => (
           <div 
             key={notification.id} 
-            className={`p-4 flex items-start hover:bg-muted/50 transition-colors ${notification.read ? 'opacity-70' : ''}`}
+            className={`p-4 flex items-start hover:bg-muted/50 transition-colors ${notification.is_read ? 'opacity-70' : ''}`}
           >
             <div className="mr-4 mt-1">{getIcon(notification.type)}</div>
             
@@ -73,7 +84,7 @@ const NotificationList = ({
               <div className="flex items-center">
                 <h4 className="text-sm font-medium flex-1">{notification.title}</h4>
                 <span className="text-xs text-muted-foreground">
-                  {formatDistanceToNow(new Date(notification.timestamp), { 
+                  {formatDistanceToNow(new Date(notification.created_at), { 
                     addSuffix: true,
                     locale: ptBR
                   })}
@@ -83,14 +94,13 @@ const NotificationList = ({
               <p className="mt-1 text-sm text-muted-foreground">{notification.message}</p>
               
               <div className="mt-2 flex items-center gap-2">
-                {notification.read ? (
+                {notification.is_read ? (
                   <Button 
                     variant="ghost" 
                     size="sm" 
                     className="h-auto px-2 py-1 text-xs"
-                    onClick={() => onMarkAsUnread(notification.id)}
                   >
-                    Marcar como não lida
+                    Lida
                   </Button>
                 ) : (
                   <Button 
@@ -103,30 +113,24 @@ const NotificationList = ({
                   </Button>
                 )}
                 
-                <Button 
-                  variant="ghost" 
-                  size="sm" 
-                  className="h-auto px-2 py-1 text-xs text-destructive hover:text-destructive"
-                  onClick={() => onDelete(notification.id)}
-                >
-                  Excluir
-                </Button>
+                {onDelete && (
+                  <Button 
+                    variant="ghost" 
+                    size="sm" 
+                    className="h-auto px-2 py-1 text-xs text-destructive hover:text-destructive"
+                    onClick={() => onDelete(notification.id)}
+                  >
+                    Excluir
+                  </Button>
+                )}
               </div>
             </div>
             
-            {!notification.read && (
+            {!notification.is_read && (
               <div className="mt-1 h-2 w-2 rounded-full bg-primary" />
             )}
           </div>
         ))}
-      </div>
-      
-      <div className="p-4 border-t">
-        <TablePagination
-          currentPage={currentPage}
-          totalPages={totalPages}
-          onPageChange={onPageChange}
-        />
       </div>
     </div>
   );

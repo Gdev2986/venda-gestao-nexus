@@ -1,5 +1,5 @@
 
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import NotificationList from "@/components/notifications/NotificationList";
 import NotificationFilters from "@/components/notifications/NotificationFilters";
@@ -7,24 +7,22 @@ import { useNotifications } from "@/contexts/NotificationsContext";
 import { PageHeader } from "@/components/page/PageHeader";
 
 const Notifications = () => {
+  const [typeFilter, setTypeFilter] = useState("all");
+  const [statusFilter, setStatusFilter] = useState("all");
+  
   const {
     notifications,
     markAsRead,
     markAllAsRead,
     fetchNotifications,
-    isLoading = false,
-    deleteNotification = () => Promise.resolve(),
+    isLoading,
+    deleteNotification,
     refreshNotifications = fetchNotifications
   } = useNotifications();
 
   useEffect(() => {
-    // If refreshNotifications exists, use it, otherwise use fetchNotifications
-    if (refreshNotifications) {
-      refreshNotifications();
-    } else {
-      fetchNotifications();
-    }
-  }, [refreshNotifications, fetchNotifications]);
+    refreshNotifications();
+  }, [refreshNotifications]);
 
   return (
     <div className="container py-6">
@@ -40,8 +38,12 @@ const Notifications = () => {
               <CardTitle>Suas Notificações</CardTitle>
             </div>
             <NotificationFilters 
+              typeFilter={typeFilter}
+              statusFilter={statusFilter}
+              onTypeChange={setTypeFilter}
+              onStatusChange={setStatusFilter}
               onMarkAllAsRead={markAllAsRead}
-              onRefresh={refreshNotifications || fetchNotifications}
+              onRefresh={refreshNotifications}
             />
           </CardHeader>
           <CardContent>
