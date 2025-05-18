@@ -59,7 +59,7 @@ export const getPaymentsByStatus = async (status: PaymentStatus): Promise<Paymen
         rejection_reason,
         client:client_id (business_name, email, phone)
       `)
-      .eq("status", status.toString()) // Convert enum to string
+      .eq("status", status) // Use status directly - Supabase will convert to string
       .order("created_at", { ascending: false });
 
     if (error) throw error;
@@ -138,7 +138,7 @@ export const getClientPayments = async (clientId: string): Promise<Payment[]> =>
         key: item.pix_key.key,
         type: item.pix_key.type,
         name: item.pix_key.name,
-        owner_name: item.pix_key.owner_name || item.pix_key.name
+        owner_name: item.pix_key.owner_name || item.pix_key.name // Ensure owner_name is always defined
       } : undefined
     }));
   } catch (error) {

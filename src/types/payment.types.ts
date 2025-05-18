@@ -8,7 +8,7 @@ export interface PixKey {
   key: string;
   type: string;
   name: string;
-  owner_name?: string;
+  owner_name: string;  // Changed from optional to required
   is_default?: boolean;
   bank_name?: string;
 }
@@ -24,7 +24,7 @@ export interface Payment {
   updated_at: string;
   receipt_url?: string;
   description?: string;
-  rejection_reason: string | null; // Changed from optional to required with null
+  rejection_reason: string | null; // Required with null
   payment_type?: EnumsPaymentType;
   client?: {
     id: string;
