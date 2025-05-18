@@ -10,9 +10,10 @@ import { Loader2 } from "lucide-react";
 interface PaymentReceiptUploaderProps {
   paymentId: string;
   onSuccess: () => void;
+  onCancel?: () => void; // Make onCancel optional
 }
 
-export function PaymentReceiptUploader({ paymentId, onSuccess }: PaymentReceiptUploaderProps) {
+export function PaymentReceiptUploader({ paymentId, onSuccess, onCancel }: PaymentReceiptUploaderProps) {
   const [file, setFile] = useState<File | null>(null);
   const [isUploading, setIsUploading] = useState(false);
   const { toast } = useToast();
@@ -79,7 +80,11 @@ export function PaymentReceiptUploader({ paymentId, onSuccess }: PaymentReceiptU
   };
 
   const handleCancel = () => {
-    onSuccess();
+    if (onCancel) {
+      onCancel();
+    } else {
+      onSuccess();
+    }
   };
 
   return (

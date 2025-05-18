@@ -1,197 +1,179 @@
 
-import { useState, useEffect } from "react";
-import { z } from "zod";
+import { useState, useEffect } from 'react';
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import {
   Form,
   FormControl,
-  FormDescription,
   FormField,
   FormItem,
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
-import { Checkbox } from "@/components/ui/checkbox";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Loader2 } from "lucide-react";
-import { usePartners } from "@/hooks/use-partners";
-import { clientFormSchema } from "./schema/clientFormSchema";
-import AddressFields from "./AddressFields";
-import BusinessInfoFields from "./BusinessInfoFields";
-import ContactFields from "./ContactFields";
-import MachineSelectionField from "./MachineSelectionField";
-
-export type ClientFormValues = z.infer<typeof clientFormSchema>;
+import { Input } from "@/components/ui/input";
+import { clientFormSchema, ClientFormValues } from './schema/clientFormSchema';
+import BusinessInfoFields from './BusinessInfoFields';
+import ContactInfoFields from './ContactInfoFields';
+import AddressFields from './AddressFields';
+import { useMachines } from '@/hooks/use-machines';
+import { MultiSelect } from '@/components/ui/multi-select';
 
 interface ClientFormProps {
-  isOpen: boolean;
-  onClose: () => void;
   onSubmit: (data: ClientFormValues) => Promise<boolean>;
   isSubmitting: boolean;
+  isOpen: boolean;
+  onClose: () => void;
   initialData?: ClientFormValues;
   submitButtonText?: string;
 }
 
 const ClientForm = ({
-  isOpen,
-  onClose,
   onSubmit,
   isSubmitting,
+  isOpen,
+  onClose,
   initialData,
   submitButtonText = "Salvar",
 }: ClientFormProps) => {
-  const [selectedMachines, setSelectedMachines] = useState<string[]>([]);
-  const { partners, isLoading: isLoadingPartners } = usePartners();
-
+  const [submitError, setSubmitError] = useState<string | null>(null);
+  const { machines, isLoading: isLoadingMachines } = useMachines();
+  
   const form = useForm<ClientFormValues>({
     resolver: zodResolver(clientFormSchema),
     defaultValues: initialData || {
       business_name: "",
+      document: "",
       contact_name: "",
       email: "",
       phone: "",
-      document: "",
       address: "",
       city: "",
       state: "",
       zip: "",
-      partner_id: "",
       balance: 0,
+      partner_id: "",
       machines: [],
-    },
+    }
   });
 
-  // Reset form when initialData changes or modal opens/closes
+  // Reset form when modal opens/closes
   useEffect(() => {
     if (isOpen) {
-      if (initialData) {
-        form.reset(initialData);
-        setSelectedMachines(initialData.machines || []);
-      } else {
-        form.reset({
-          business_name: "",
-          contact_name: "",
-          email: "",
-          phone: "",
-          document: "",
-          address: "",
-          city: "",
-          state: "",
-          zip: "",
-          partner_id: "",
-          balance: 0,
-          machines: [],
-        });
-        setSelectedMachines([]);
-      }
+      form.reset(initialData || {
+        business_name: "",
+        document: "",
+        contact_name: "",
+        email: "",
+        phone: "",
+        address: "",
+        city: "",
+        state: "",
+        zip: "",
+        balance: 0,
+        partner_id: "",
+        machines: [],
+      });
     }
-  }, [initialData, isOpen, form]);
-
-  // Update form value when selected machines change
-  useEffect(() => {
-    form.setValue("machines", selectedMachines);
-  }, [selectedMachines, form]);
+  }, [isOpen, initialData, form]);
 
   const handleSubmit = async (data: ClientFormValues) => {
-    const success = await onSubmit(data);
-    if (success && !initialData) {
-      form.reset();
-      setSelectedMachines([]);
+    setSubmitError(null);
+    try {
+      const result = await onSubmit(data);
+      if (result) {
+        form.reset();
+        onClose();
+      }
+    } catch (error: any) {
+      setSubmitError(error.message || "Erro ao salvar cliente");
     }
   };
 
+  // Transform machines array to options for MultiSelect
+  const machineOptions = machines ? machines.map(machine => ({
+    label: `${machine.model} - ${machine.serial_number}`,
+    value: machine.id
+  })) : [];
+
   return (
     <Form {...form}>
-      <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-8">
-        <Tabs defaultValue="business" className="w-full">
-          <TabsList className="grid grid-cols-3 mb-6">
-            <TabsTrigger value="business">Empresa</TabsTrigger>
-            <TabsTrigger value="contact">Contato</TabsTrigger>
-            <TabsTrigger value="address">Endereço</TabsTrigger>
-          </TabsList>
-
-          <TabsContent value="business" className="space-y-4">
-            <BusinessInfoFields form={form} />
+      <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-6">
+        {/* Main content area */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          {/* Left Column - Company and Contact Info */}
+          <div className="space-y-6">
+            <div>
+              <h3 className="text-lg font-medium mb-4">Informações da Empresa</h3>
+              <div className="space-y-4">
+                <BusinessInfoFields form={form} />
+              </div>
+            </div>
             
-            <FormField
-              control={form.control}
-              name="partner_id"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Parceiro</FormLabel>
-                  <FormControl>
-                    <select
-                      className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-                      disabled={isLoadingPartners}
-                      {...field}
-                    >
-                      <option value="">Selecionar parceiro</option>
-                      {partners?.map((partner) => (
-                        <option key={partner.id} value={partner.id}>
-                          {partner.company_name}
-                        </option>
-                      ))}
-                    </select>
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            <FormField
-              control={form.control}
-              name="balance"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Saldo Inicial</FormLabel>
-                  <FormControl>
-                    <Input
-                      type="number"
-                      step="0.01"
-                      placeholder="0.00"
-                      {...field}
-                      onChange={(e) =>
-                        field.onChange(parseFloat(e.target.value) || 0)
-                      }
-                    />
-                  </FormControl>
-                  <FormDescription>Saldo inicial em reais</FormDescription>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-          </TabsContent>
-
-          <TabsContent value="contact" className="space-y-4">
-            <ContactFields form={form} />
-          </TabsContent>
-
-          <TabsContent value="address" className="space-y-4">
-            <AddressFields form={form} />
-          </TabsContent>
-        </Tabs>
-
-        <MachineSelectionField
-          selectedMachines={selectedMachines}
-          setSelectedMachines={setSelectedMachines}
-        />
-
-        <div className="flex gap-2 justify-end mt-6">
-          <Button type="button" variant="outline" onClick={onClose}>
+            <div>
+              <h3 className="text-lg font-medium mb-4">Informações de Contato</h3>
+              <div className="space-y-4">
+                <ContactInfoFields form={form} />
+              </div>
+            </div>
+          </div>
+          
+          {/* Right Column - Address and Machines */}
+          <div className="space-y-6">
+            <div>
+              <h3 className="text-lg font-medium mb-4">Endereço</h3>
+              <div className="space-y-4">
+                <AddressFields form={form} />
+              </div>
+            </div>
+            
+            <div>
+              <h3 className="text-lg font-medium mb-4">Máquinas</h3>
+              <FormField
+                control={form.control}
+                name="machines"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Selecione as máquinas para este cliente</FormLabel>
+                    <FormControl>
+                      <MultiSelect
+                        options={machineOptions}
+                        placeholder="Selecione as máquinas..."
+                        isLoading={isLoadingMachines}
+                        value={field.value?.map(id => 
+                          machineOptions.find(option => option.value === id) || { label: id, value: id }
+                        ) || []}
+                        onChange={selected => field.onChange(selected.map(item => item.value))}
+                        emptyMessage={isLoadingMachines ? "Carregando máquinas..." : "Não há máquinas disponíveis para associação"}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
+          </div>
+        </div>
+        
+        {/* Display any submission errors */}
+        {submitError && (
+          <div className="bg-destructive/15 text-destructive p-3 rounded-md text-sm">
+            {submitError}
+          </div>
+        )}
+        
+        {/* Form buttons */}
+        <div className="flex justify-end gap-2 pt-4">
+          <Button
+            type="button"
+            variant="outline"
+            onClick={onClose}
+            disabled={isSubmitting}
+          >
             Cancelar
           </Button>
           <Button type="submit" disabled={isSubmitting}>
-            {isSubmitting ? (
-              <>
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                Processando
-              </>
-            ) : (
-              submitButtonText
-            )}
+            {isSubmitting ? "Salvando..." : submitButtonText}
           </Button>
         </div>
       </form>

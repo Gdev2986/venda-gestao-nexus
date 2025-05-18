@@ -1,226 +1,232 @@
+import React, {
+  createContext,
+  useState,
+  useEffect,
+  useContext,
+  useCallback,
+} from "react";
+import { useAuth } from "@/contexts/AuthContext";
+import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/hooks/use-toast";
+import { formatDistanceToNow } from 'date-fns';
+import { ptBR } from 'date-fns/locale';
 
-import React, { createContext, useState, useContext, useEffect, ReactNode } from 'react';
-import { supabase } from '@/integrations/supabase/client';
-import { useAuth } from './AuthContext';
-import { useToast } from '@/hooks/use-toast';
-
-// Define the notification type
+// Update the notification type to support read/unread status and timestamp
 export interface Notification {
   id: string;
-  user_id: string;
   title: string;
   message: string;
   type: string;
   data?: any;
-  is_read: boolean; // Changed from read to is_read to match database
-  created_at: string; // Use created_at instead of timestamp
+  created_at: string;
+  is_read: boolean; // Using is_read instead of read
+  user_id: string;
 }
 
+// Update the context type to include missing methods
 export interface NotificationsContextType {
   notifications: Notification[];
   unreadCount: number;
-  isLoading: boolean; // Add isLoading property
-  markAsRead: (id: string) => Promise<void>;
-  markAsUnread: (id: string) => Promise<void>; // Add markAsUnread method
-  markAllAsRead: () => Promise<void>;
-  fetchNotifications: () => Promise<void>;
-  sendNotification: (userId: string, title: string, message: string, type: string, data?: any) => Promise<void>;
-  deleteNotification: (id: string) => Promise<void>; // Add deleteNotification method
-  refreshNotifications: () => Promise<void>; // Add refreshNotifications method (alias for fetchNotifications)
+  loading: boolean; // Add loading
+  markAsRead: (notificationId: string) => Promise<void>;
+  markAsUnread: (notificationId: string) => Promise<void>; // Add markAsUnread
+  deleteNotification: (notificationId: string) => Promise<void>; // Add deleteNotification
+  refreshNotifications: () => Promise<void>; // Add refreshNotifications
 }
 
-const NotificationsContext = createContext<NotificationsContextType | undefined>(undefined);
-
-export const NotificationsProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
-  const [notifications, setNotifications] = useState<Notification[]>([]);
-  const [unreadCount, setUnreadCount] = useState(0);
-  const [isLoading, setIsLoading] = useState(false);
-  const { user } = useAuth();
-  const { toast } = useToast();
-
-  const fetchNotifications = async () => {
-    if (!user) return;
-    
-    setIsLoading(true);
-    try {
-      const { data, error } = await supabase
-        .from('notifications')
-        .select('*')
-        .eq('user_id', user.id)
-        .order('created_at', { ascending: false });
-      
-      if (error) throw error;
-      
-      setNotifications(data || []);
-      setUnreadCount(data?.filter(n => !n.is_read).length || 0);
-    } catch (error) {
-      console.error('Error fetching notifications:', error);
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const markAsRead = async (id: string) => {
-    if (!user) return;
-    
-    try {
-      const { error } = await supabase
-        .from('notifications')
-        .update({ is_read: true })
-        .eq('id', id);
-      
-      if (error) throw error;
-      
-      // Update local state
-      setNotifications(prev => 
-        prev.map(n => n.id === id ? { ...n, is_read: true } : n)
-      );
-      setUnreadCount(prev => Math.max(0, prev - 1));
-    } catch (error) {
-      console.error('Error marking notification as read:', error);
-    }
-  };
-
-  const markAsUnread = async (id: string) => {
-    if (!user) return;
-    
-    try {
-      const { error } = await supabase
-        .from('notifications')
-        .update({ is_read: false })
-        .eq('id', id);
-      
-      if (error) throw error;
-      
-      // Update local state
-      setNotifications(prev => 
-        prev.map(n => n.id === id ? { ...n, is_read: false } : n)
-      );
-      setUnreadCount(prev => prev + 1);
-    } catch (error) {
-      console.error('Error marking notification as unread:', error);
-    }
-  };
-
-  const markAllAsRead = async () => {
-    if (!user) return;
-    
-    try {
-      const { error } = await supabase
-        .from('notifications')
-        .update({ is_read: true })
-        .eq('user_id', user.id)
-        .eq('is_read', false);
-      
-      if (error) throw error;
-      
-      // Update local state
-      setNotifications(prev => prev.map(n => ({ ...n, is_read: true })));
-      setUnreadCount(0);
-    } catch (error) {
-      console.error('Error marking all notifications as read:', error);
-    }
-  };
-
-  const deleteNotification = async (id: string) => {
-    if (!user) return;
-    
-    try {
-      const { error } = await supabase
-        .from('notifications')
-        .delete()
-        .eq('id', id);
-      
-      if (error) throw error;
-      
-      // Update local state
-      const notificationToDelete = notifications.find(n => n.id === id);
-      setNotifications(prev => prev.filter(n => n.id !== id));
-      if (notificationToDelete && !notificationToDelete.is_read) {
-        setUnreadCount(prev => Math.max(0, prev - 1));
-      }
-    } catch (error) {
-      console.error('Error deleting notification:', error);
-    }
-  };
-
-  const sendNotification = async (userId: string, title: string, message: string, type: string, data?: any) => {
-    try {
-      // Cast the type to any to avoid type checking issues with Supabase
-      const { error } = await supabase
-        .from('notifications')
-        .insert({
-          user_id: userId,
-          title,
-          message,
-          type: type as any,
-          data,
-          is_read: false
-        });
-      
-      if (error) throw error;
-      
-      // Only refresh if this is for the current user
-      if (user && userId === user.id) {
-        fetchNotifications();
-      }
-    } catch (error) {
-      console.error('Error sending notification:', error);
-      throw error;
-    }
-  };
-
-  // Alias for fetchNotifications
-  const refreshNotifications = fetchNotifications;
-
-  useEffect(() => {
-    if (user) {
-      fetchNotifications();
-      
-      // Set up realtime subscription
-      const channel = supabase
-        .channel('schema-db-changes')
-        .on('postgres_changes', {
-          event: '*',
-          schema: 'public',
-          table: 'notifications',
-          filter: `user_id=eq.${user.id}`
-        }, () => {
-          fetchNotifications();
-        })
-        .subscribe();
-      
-      return () => {
-        supabase.removeChannel(channel);
-      };
-    } else {
-      setNotifications([]);
-      setUnreadCount(0);
-    }
-  }, [user]);
-
-  return (
-    <NotificationsContext.Provider value={{
-      notifications,
-      unreadCount,
-      isLoading,
-      markAsRead,
-      markAsUnread,
-      markAllAsRead,
-      fetchNotifications,
-      sendNotification,
-      deleteNotification,
-      refreshNotifications
-    }}>
-      {children}
-    </NotificationsContext.Provider>
-  );
-};
+const NotificationsContext = createContext<NotificationsContextType | undefined>(
+  undefined
+);
 
 export const useNotifications = () => {
   const context = useContext(NotificationsContext);
-  if (context === undefined) {
-    throw new Error('useNotifications must be used within a NotificationsProvider');
+  if (!context) {
+    throw new Error(
+      "useNotifications must be used within a NotificationsProvider"
+    );
   }
   return context;
+};
+
+export const NotificationsProvider = ({
+  children,
+}: {
+  children: React.ReactNode;
+}) => {
+  const { user } = useAuth();
+  const [notifications, setNotifications] = useState<Notification[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
+  const { toast } = useToast();
+
+  const fetchNotifications = useCallback(async () => {
+    if (!user) return;
+
+    setIsLoading(true);
+    try {
+      const { data, error } = await supabase
+        .from("notifications")
+        .select("*")
+        .eq("user_id", user.id)
+        .order("created_at", { ascending: false });
+
+      if (error) {
+        throw new Error(`Failed to fetch notifications: ${error.message}`);
+      }
+
+      setNotifications(data || []);
+    } catch (error: any) {
+      toast({
+        variant: "destructive",
+        title: "Erro",
+        description: `Falha ao carregar notificações: ${error.message}`,
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  }, [user, toast]);
+
+  useEffect(() => {
+    fetchNotifications();
+
+    // Setup a real-time subscription
+    const channel = supabase
+      .channel('public:notifications')
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'notifications', filter: `user_id=eq.${user?.id}` },
+        (payload) => {
+          console.log('Change received!', payload)
+          fetchNotifications();
+        }
+      )
+      .subscribe()
+
+    return () => {
+      supabase.removeChannel(channel)
+    }
+  }, [user, fetchNotifications]);
+
+  const insertNotification = async (
+    user_id: string,
+    title: string,
+    message: string,
+    type: string,
+    data?: any
+  ) => {
+    try {
+      const { error: insertError } = await supabase
+        .from('notifications')
+        .insert({
+          user_id: user_id,
+          title: title,
+          message: message,
+          type: type as any, // Cast to any to fix the type error
+          data: data,
+        });
+
+      if (insertError) {
+        throw new Error(`Failed to insert notification: ${insertError.message}`);
+      }
+
+      fetchNotifications();
+    } catch (error: any) {
+      toast({
+        variant: "destructive",
+        title: "Erro",
+        description: `Falha ao inserir notificação: ${error.message}`,
+      });
+    }
+  };
+
+  const markAsRead = async (notificationId: string) => {
+    try {
+      const { error } = await supabase
+        .from("notifications")
+        .update({ is_read: true })
+        .eq("id", notificationId);
+
+      if (error) {
+        throw new Error(`Failed to mark as read: ${error.message}`);
+      }
+
+      setNotifications((prevNotifications) =>
+        prevNotifications.map((notification) =>
+          notification.id === notificationId ? { ...notification, is_read: true } : notification
+        )
+      );
+    } catch (error: any) {
+      toast({
+        variant: "destructive",
+        title: "Erro",
+        description: `Falha ao marcar como lida: ${error.message}`,
+      });
+    }
+  };
+
+  const markAsUnread = async (notificationId: string) => {
+    try {
+      const { error } = await supabase
+        .from("notifications")
+        .update({ is_read: false })
+        .eq("id", notificationId);
+
+      if (error) {
+        throw new Error(`Failed to mark as unread: ${error.message}`);
+      }
+
+      setNotifications((prevNotifications) =>
+        prevNotifications.map((notification) =>
+          notification.id === notificationId ? { ...notification, is_read: false } : notification
+        )
+      );
+    } catch (error: any) {
+      toast({
+        variant: "destructive",
+        title: "Erro",
+        description: `Failed to mark as unread: ${error.message}`,
+      });
+    }
+  };
+
+  const deleteNotification = async (notificationId: string) => {
+    try {
+      const { error } = await supabase
+        .from("notifications")
+        .delete()
+        .eq("id", notificationId);
+
+      if (error) {
+        throw new Error(`Failed to delete notification: ${error.message}`);
+      }
+
+      setNotifications((prevNotifications) =>
+        prevNotifications.filter((notification) => notification.id !== notificationId)
+      );
+    } catch (error: any) {
+      toast({
+        variant: "destructive",
+        title: "Erro",
+        description: `Failed to delete notification: ${error.message}`,
+      });
+    }
+  };
+
+  const unreadCount = notifications.filter((notification) => !notification.is_read).length;
+
+  // Add the missing methods to the context value
+  const contextValue: NotificationsContextType = {
+    notifications,
+    unreadCount,
+    loading: isLoading,
+    markAsRead,
+    markAsUnread, // Add this function
+    deleteNotification, // Add this function
+    refreshNotifications: fetchNotifications, // Add this function
+  };
+
+  return (
+    <NotificationsContext.Provider value={contextValue}>
+      {children}
+    </NotificationsContext.Provider>
+  );
 };

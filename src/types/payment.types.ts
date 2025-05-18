@@ -5,7 +5,7 @@ export interface PaymentRequest {
   id: string;
   client_id: string;
   amount: number;
-  description?: string;
+  description: string;
   status: PaymentRequestStatus;
   pix_key_id?: string;
   created_at: string;
@@ -13,7 +13,7 @@ export interface PaymentRequest {
   approved_at?: string | null;
   approved_by?: string | null;
   receipt_url?: string | null;
-  rejection_reason?: string | null;
+  rejection_reason: string | null;
   pix_key?: PixKey;
   client?: Client;
   payment_type?: string;
@@ -60,7 +60,14 @@ export interface Client {
 }
 
 // Payment type is an alias for PaymentRequest to maintain compatibility but with required fields
-export type Payment = PaymentRequest & {
+export type Payment = {
+  id: string;
+  client_id: string;
+  amount: number;
+  description: string;
+  status: PaymentRequestStatus;
+  created_at: string;
+  updated_at: string;
   rejection_reason: string | null;
   pix_key?: {
     id: string;
@@ -68,4 +75,13 @@ export type Payment = PaymentRequest & {
     type: string;
     owner_name: string;
   };
+  pix_key_id?: string;
+  approved_at?: string | null;
+  approved_by?: string | null;
+  receipt_url?: string | null;
+  client?: Client;
+  payment_type?: string;
+  due_date?: string;
+  notes?: string;
+  type?: string;
 };

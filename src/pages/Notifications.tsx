@@ -1,178 +1,173 @@
-
 import { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
-import { useToast } from "@/hooks/use-toast";
-import { PageHeader } from "@/components/page/PageHeader";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { 
-  Card,
-  CardContent,
-} from "@/components/ui/card";
-import { useNotifications } from "@/hooks/use-notifications";
-import NotificationList from "@/components/notifications/NotificationList";
-import NotificationFilters from "@/components/notifications/NotificationFilters";
-import { Loader2, ArrowLeft } from "lucide-react";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import { useToast } from "@/hooks/use-toast";
+import { formatRelative } from "date-fns";
+import { ptBR } from "date-fns/locale";
+import { useNotifications, Notification } from "@/contexts/NotificationsContext";
+import { Badge } from "@/components/ui/badge";
+import { CheckCheck, Trash2 } from "lucide-react";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 const Notifications = () => {
-  const [searchTerm, setSearchTerm] = useState("");
-  const [typeFilter, setTypeFilter] = useState("all");
-  const [statusFilter, setStatusFilter] = useState("all");
-  const [currentPage, setCurrentPage] = useState(1);
-  const [filteredNotifications, setFilteredNotifications] = useState<any[]>([]);
-  const [totalPages, setTotalPages] = useState(1);
-  const { toast } = useToast();
-  const navigate = useNavigate();
-
-  const { 
-    notifications, 
-    isLoading, // Use isLoading instead of loading
-    markAsRead, 
+  const {
+    notifications,
+    unreadCount,
+    loading,
+    markAsRead,
     markAsUnread,
-    markAllAsRead,
     deleteNotification,
-    refreshNotifications
+    refreshNotifications,
   } = useNotifications();
+  const { toast } = useToast();
+  const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [showDeleteAlert, setShowDeleteAlert] = useState(false);
 
-  // Aplicar filtros e paginação
   useEffect(() => {
-    // Filtrar notificações
-    let filtered = [...notifications];
-    
-    if (searchTerm) {
-      const term = searchTerm.toLowerCase();
-      filtered = filtered.filter(notification => 
-        notification.title.toLowerCase().includes(term) ||
-        notification.message.toLowerCase().includes(term)
-      );
-    }
-    
-    if (typeFilter !== "all") {
-      filtered = filtered.filter(notification => notification.type === typeFilter);
-    }
-    
-    if (statusFilter === "read") {
-      filtered = filtered.filter(notification => notification.is_read);
-    } else if (statusFilter === "unread") {
-      filtered = filtered.filter(notification => !notification.is_read);
-    }
-    
-    // Calcular paginação
-    const pageSize = 10;
-    const total = filtered.length;
-    const maxPages = Math.ceil(total / pageSize);
-    setTotalPages(maxPages || 1);
-    
-    // Aplicar paginação
-    const startIndex = (currentPage - 1) * pageSize;
-    const paginatedNotifications = filtered.slice(startIndex, startIndex + pageSize);
-    
-    setFilteredNotifications(paginatedNotifications);
-  }, [notifications, searchTerm, typeFilter, statusFilter, currentPage]);
-  
-  const handleSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setSearchTerm(e.target.value);
-    setCurrentPage(1); // Reset para primeira página ao pesquisar
-  };
-  
-  const handleMarkAllAsRead = async () => {
-    await markAllAsRead();
-    toast({
-      title: "Sucesso",
-      description: "Todas as notificações foram marcadas como lidas",
-    });
-  };
-  
-  const handleDeleteAll = async () => {
-    if (confirm("Tem certeza que deseja excluir todas as notificações?")) {
-      // Como o contexto não tem método para excluir todas, fazemos uma por uma
-      const promises = notifications.map(n => deleteNotification(n.id));
-      await Promise.all(promises);
-      
-      toast({
-        title: "Sucesso",
-        description: "Todas as notificações foram excluídas",
-      });
-    }
+    refreshNotifications();
+  }, [refreshNotifications]);
+
+  const formatRelativeTime = (dateStr: string): string => {
+    const date = new Date(dateStr);
+    return formatRelative(date, new Date(), { locale: ptBR });
   };
 
-  const handleGoBack = () => {
-    navigate(-1);
+  const handleDelete = (id: string) => {
+    setDeletingId(id);
+    setShowDeleteAlert(true);
+  };
+
+  const confirmDelete = async () => {
+    if (deletingId) {
+      try {
+        await deleteNotification(deletingId);
+        toast({
+          title: "Notificação excluída",
+          description: "A notificação foi excluída com sucesso.",
+        });
+      } catch (error: any) {
+        toast({
+          variant: "destructive",
+          title: "Erro",
+          description:
+            error.message || "Não foi possível excluir a notificação.",
+        });
+      } finally {
+        setShowDeleteAlert(false);
+        setDeletingId(null);
+      }
+    }
   };
 
   return (
-    <div className="container py-6 max-w-7xl">
-      <div className="mb-6">
-        <Button 
-          variant="ghost" 
-          onClick={handleGoBack}
-          className="mb-4"
-        >
-          <ArrowLeft className="mr-2 h-4 w-4" />
-          Voltar
-        </Button>
-        
-        <PageHeader
-          title="Notificações"
-          description="Gerencie suas notificações do sistema"
-        />
-      </div>
-      
-      <div className="flex flex-col md:flex-row gap-4 mb-6">
-        <div className="flex-1">
-          <Input
-            placeholder="Buscar por palavra-chave..."
-            value={searchTerm}
-            onChange={handleSearch}
-            className="w-full"
-          />
-        </div>
-        
-        <NotificationFilters
-          typeFilter={typeFilter}
-          statusFilter={statusFilter}
-          onTypeChange={setTypeFilter}
-          onStatusChange={setStatusFilter}
-        />
-        
-        <div className="flex gap-2">
-          <Button 
-            variant="outline" 
-            onClick={handleMarkAllAsRead}
-            disabled={isLoading || notifications.every(n => n.is_read)}
-          >
-            Marcar todas como lidas
-          </Button>
-          <Button 
-            variant="outline" 
-            className="text-destructive hover:text-destructive" 
-            onClick={handleDeleteAll}
-            disabled={isLoading || notifications.length === 0}
-          >
-            Excluir todas
-          </Button>
-        </div>
-      </div>
-      
+    <div className="container mx-auto py-6">
       <Card>
-        <CardContent className="p-0">
-          {isLoading ? (
-            <div className="flex justify-center items-center h-64">
-              <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
-            </div>
+        <CardHeader>
+          <div className="flex justify-between items-center">
+            <CardTitle>Notificações</CardTitle>
+            {unreadCount > 0 && (
+              <Badge variant="secondary">{unreadCount} não lidas</Badge>
+            )}
+          </div>
+        </CardHeader>
+        <CardContent>
+          {loading ? (
+            <p>Carregando notificações...</p>
+          ) : notifications.length === 0 ? (
+            <p>Nenhuma notificação encontrada.</p>
           ) : (
-            <NotificationList 
-              notifications={filteredNotifications} 
-              onMarkAsRead={markAsRead}
-              onMarkAsUnread={markAsUnread}
-              onDelete={deleteNotification}
-              currentPage={currentPage}
-              totalPages={totalPages}
-              onPageChange={setCurrentPage}
-            />
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Título</TableHead>
+                  <TableHead>Mensagem</TableHead>
+                  <TableHead>Data</TableHead>
+                  <TableHead>Status</TableHead>
+                  <TableHead className="text-right">Ações</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {notifications.map((notification) => (
+                  <TableRow key={notification.id}>
+                    <TableCell>{notification.title}</TableCell>
+                    <TableCell>{notification.message}</TableCell>
+                    <TableCell>
+                      {formatRelativeTime(notification.created_at)}
+                    </TableCell>
+                    <TableCell>
+                      <Badge variant={notification.is_read ? "outline" : "default"}>
+                        {notification.is_read ? "Lida" : "Não lida"}
+                      </Badge>
+                    </TableCell>
+                    <TableCell className="text-right">
+                      <div className="flex justify-end gap-2">
+                        {!notification.is_read && (
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => markAsRead(notification.id)}
+                            title="Marcar como lida"
+                          >
+                            <CheckCheck className="h-4 w-4" />
+                          </Button>
+                        )}
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="text-destructive hover:text-destructive/80"
+                          onClick={() => handleDelete(notification.id)}
+                          title="Excluir"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
           )}
         </CardContent>
       </Card>
+
+      <AlertDialog open={showDeleteAlert} onOpenChange={setShowDeleteAlert}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Confirmar Exclusão</AlertDialogTitle>
+            <AlertDialogDescription>
+              Tem certeza de que deseja excluir esta notificação? Esta ação não
+              pode ser desfeita.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={confirmDelete}
+              disabled={loading}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              {loading ? "Excluindo..." : "Excluir"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };

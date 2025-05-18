@@ -1,8 +1,19 @@
-
 import { useState } from "react";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import * as z from "zod";
+
 import { Button } from "@/components/ui/button";
+import {
+  Form,
+  FormControl,
+  FormDescription,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import {
   Select,
   SelectContent,
@@ -10,166 +21,170 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { supabase } from "@/integrations/supabase/client";
+import { Switch } from "@/components/ui/switch";
+import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
-import { Loader2 } from "lucide-react";
-import { PixKeyType } from "@/types/payment.types";
+import { supabase } from "@/integrations/supabase/client";
+
+const FormSchema = z.object({
+  key: z.string().min(2, {
+    message: "Chave Pix é obrigatória.",
+  }),
+  name: z.string().min(2, {
+    message: "Nome é obrigatório.",
+  }),
+  type: z.enum(["CPF", "CNPJ", "EMAIL", "PHONE", "EVP", "RANDOM"]),
+  isDefault: z.boolean().default(false).optional(),
+});
 
 interface PixKeyFormProps {
-  onSuccess?: () => void;
+  onCancel: () => void;
+  onSubmit: () => void;
 }
 
-export function PixKeyForm({ onSuccess }: PixKeyFormProps) {
-  const [isOpen, setIsOpen] = useState(false);
-  const [type, setType] = useState<PixKeyType | "">("");
-  const [key, setKey] = useState("");
-  const [name, setName] = useState("");
+export function PixKeyForm({ onCancel, onSubmit }: PixKeyFormProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { toast } = useToast();
   const { user } = useAuth();
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    
-    if (!user) {
-      toast({
-        variant: "destructive",
-        title: "Erro",
-        description: "Você precisa estar logado para adicionar uma chave PIX"
-      });
-      return;
-    }
-    
-    if (!type || !key || !name) {
-      toast({
-        variant: "destructive",
-        title: "Campos obrigatórios",
-        description: "Preencha todos os campos para adicionar uma chave PIX"
-      });
-      return;
-    }
-    
+  const form = useForm<z.infer<typeof FormSchema>>({
+    resolver: zodResolver(FormSchema),
+    defaultValues: {
+      key: "",
+      name: "",
+      type: "EMAIL",
+      isDefault: false,
+    },
+  });
+
+  async function handleCreatePixKey(values: z.infer<typeof FormSchema>) {
     setIsSubmitting(true);
-    
+
     try {
-      // Cast the type to any to bypass TypeScript checking
-      const { data, error } = await supabase
+      if (!user) {
+        throw new Error("Usuário não autenticado.");
+      }
+
+      const { error: insertError } = await supabase
         .from('pix_keys')
         .insert({
           user_id: user.id,
-          type: type as any,
-          key,
-          name,
-          is_default: false // New keys are not default by default
-        })
-        .select();
-      
-      if (error) throw error;
-      
+          key: values.key,
+          name: values.name,
+          type: values.type as any,
+          is_default: values.isDefault || false,
+        });
+
+      if (insertError) {
+        throw new Error(`Erro ao criar chave Pix: ${insertError.message}`);
+      }
+
       toast({
-        title: "Chave PIX adicionada",
-        description: "Sua chave PIX foi adicionada com sucesso"
+        title: "Sucesso",
+        description: "Chave Pix criada com sucesso!",
       });
-      
-      setType("");
-      setKey("");
-      setName("");
-      setIsOpen(false);
-      
-      if (onSuccess) onSuccess();
+
+      onSubmit();
     } catch (error: any) {
       toast({
         variant: "destructive",
         title: "Erro",
-        description: error.message || "Não foi possível adicionar a chave PIX"
+        description: error.message,
       });
     } finally {
       setIsSubmitting(false);
     }
-  };
-  
-  if (!isOpen) {
-    return (
-      <Button 
-        variant="outline" 
-        onClick={() => setIsOpen(true)}
-        className="w-full"
-      >
-        Adicionar nova chave PIX
-      </Button>
-    );
   }
-  
+
   return (
-    <form onSubmit={handleSubmit} className="space-y-4 p-4 border rounded-md">
-      <h3 className="text-sm font-medium">Nova chave PIX</h3>
-      
-      <div className="space-y-2">
-        <Label htmlFor="key-type">Tipo de chave</Label>
-        <Select
-          value={type}
-          onValueChange={(value) => setType(value as PixKeyType)}
-          required
-          disabled={isSubmitting}
-        >
-          <SelectTrigger id="key-type">
-            <SelectValue placeholder="Selecione o tipo de chave" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="CPF">CPF</SelectItem>
-            <SelectItem value="CNPJ">CNPJ</SelectItem>
-            <SelectItem value="EMAIL">E-mail</SelectItem>
-            <SelectItem value="PHONE">Telefone</SelectItem>
-            <SelectItem value="EVP">Chave aleatória</SelectItem>
-          </SelectContent>
-        </Select>
-      </div>
-      
-      <div className="space-y-2">
-        <Label htmlFor="key-value">Chave</Label>
-        <Input
-          id="key-value"
-          value={key}
-          onChange={(e) => setKey(e.target.value)}
-          placeholder="Digite sua chave PIX"
-          required
-          disabled={isSubmitting}
-        />
-      </div>
-      
-      <div className="space-y-2">
-        <Label htmlFor="key-name">Nome da chave</Label>
-        <Input
-          id="key-name"
-          value={name}
-          onChange={(e) => setName(e.target.value)}
-          placeholder="Ex: Minha chave principal"
-          required
-          disabled={isSubmitting}
-        />
-      </div>
-      
-      <div className="flex justify-end space-x-2">
-        <Button
-          type="button"
-          variant="ghost"
-          onClick={() => setIsOpen(false)}
-          disabled={isSubmitting}
-        >
-          Cancelar
-        </Button>
-        <Button type="submit" disabled={isSubmitting}>
-          {isSubmitting ? (
-            <>
-              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-              Salvando...
-            </>
-          ) : (
-            "Salvar"
+    <Form {...form}>
+      <form
+        onSubmit={form.handleSubmit(handleCreatePixKey)}
+        className="space-y-8"
+      >
+        <FormField
+          control={form.control}
+          name="key"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Chave Pix</FormLabel>
+              <FormControl>
+                <Input placeholder="Sua chave Pix" {...field} />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
           )}
-        </Button>
-      </div>
-    </form>
+        />
+        <FormField
+          control={form.control}
+          name="name"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Nome</FormLabel>
+              <FormControl>
+                <Input placeholder="Nome da chave Pix" {...field} />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+        <FormField
+          control={form.control}
+          name="type"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Tipo de Chave</FormLabel>
+              <Select onValueChange={field.onChange} defaultValue={field.value}>
+                <FormControl>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Selecione o tipo de chave" />
+                  </SelectTrigger>
+                </FormControl>
+                <SelectContent>
+                  <SelectItem value="CPF">CPF</SelectItem>
+                  <SelectItem value="CNPJ">CNPJ</SelectItem>
+                  <SelectItem value="EMAIL">Email</SelectItem>
+                  <SelectItem value="PHONE">Telefone</SelectItem>
+                  <SelectItem value="EVP">EVP</SelectItem>
+                  <SelectItem value="RANDOM">Aleatória</SelectItem>
+                </SelectContent>
+              </Select>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+        <FormField
+          control={form.control}
+          name="isDefault"
+          render={({ field }) => (
+            <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
+              <div className="space-y-0.5">
+                <FormLabel className="text-sm font-medium leading-none">
+                  Chave padrão
+                </FormLabel>
+                <FormDescription>
+                  Defina como chave padrão para recebimentos.
+                </FormDescription>
+              </div>
+              <FormControl>
+                <Switch
+                  checked={field.value}
+                  onCheckedChange={field.onChange}
+                />
+              </FormControl>
+            </FormItem>
+          )}
+        />
+        <div className="flex justify-end space-x-2">
+          <Button variant="ghost" onClick={onCancel}>
+            Cancelar
+          </Button>
+          <Button type="submit" disabled={isSubmitting}>
+            {isSubmitting ? "Criando..." : "Criar Chave"}
+          </Button>
+        </div>
+      </form>
+    </Form>
   );
 }

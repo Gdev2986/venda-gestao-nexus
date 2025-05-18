@@ -2,10 +2,10 @@
 import { ApprovePaymentDialog } from "@/components/payments/ApprovePaymentDialog";
 import { RejectPaymentDialog } from "@/components/payments/RejectPaymentDialog";
 import { PaymentDetailsDialog } from "@/components/payments/PaymentDetailsDialog";
-import { PaymentRequest, Payment } from "@/types/payment.types";
+import { Payment } from "@/types/payment.types";
 
 interface PaymentDialogsProps {
-  selectedPayment: PaymentRequest | null;
+  selectedPayment: Payment | null;
   
   approveDialogOpen: boolean;
   setApproveDialogOpen: (open: boolean) => void;
@@ -42,7 +42,7 @@ export const PaymentDialogs = ({
       <ApprovePaymentDialog
         open={approveDialogOpen}
         onOpenChange={setApproveDialogOpen}
-        payment={selectedPayment}
+        payment={selectedPayment as Payment}
         onApprove={handleApprovePayment}
         isProcessing={isProcessing}
       />
@@ -50,7 +50,7 @@ export const PaymentDialogs = ({
       <RejectPaymentDialog
         open={rejectDialogOpen}
         onOpenChange={setRejectDialogOpen}
-        payment={selectedPayment}
+        payment={selectedPayment as Payment}
         onReject={handleRejectPayment}
         isProcessing={isProcessing}
       />
@@ -58,7 +58,7 @@ export const PaymentDialogs = ({
       <PaymentDetailsDialog
         open={detailsDialogOpen}
         onOpenChange={setDetailsDialogOpen}
-        payment={selectedPayment as Payment} // Use type assertion to match the required type
+        payment={selectedPayment as Payment}
       />
     </>
   );

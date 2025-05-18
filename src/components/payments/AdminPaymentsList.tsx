@@ -1,208 +1,87 @@
-
-import { useState } from 'react';
-import { Payment, PaymentRequest } from '@/types';
-import { Button } from '@/components/ui/button';
-import { useToast } from '@/hooks/use-toast';
-import { PaymentAction } from '@/types/enums';
-import { ApprovePaymentDialog } from './ApprovePaymentDialog';
-import { RejectPaymentDialog } from './RejectPaymentDialog';
-import { PaymentDetailsDialog } from './PaymentDetailsDialog';
-import { PaymentListTable } from './payment-list/PaymentListTable';
-import { PaymentListLoadingState } from './payment-list/PaymentListLoadingState';
-import { PaymentListEmptyState } from './payment-list/PaymentListEmptyState';
-import { SendReceiptDialog } from './SendReceiptDialog';
+import { useState } from "react";
+import { Button } from "@/components/ui/button";
+import { PaymentRequest, Payment } from "@/types/payment.types";
+import { Badge } from "@/components/ui/badge";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import { format } from "date-fns";
+import { ptBR } from "date-fns/locale";
+import { CheckCircle, XCircle } from "lucide-react";
 
 interface AdminPaymentsListProps {
   payments: Payment[];
-  onActionClick: (paymentId: string, action: PaymentAction) => void;
   isLoading: boolean;
+  onView: (payment: PaymentRequest) => void;
 }
 
-// Define o componente tanto como exportação padrão quanto exportação nomeada para compatibilidade
-const AdminPaymentsList = ({ payments, onActionClick, isLoading }: AdminPaymentsListProps) => {
-  const { toast } = useToast();
-  const [selectedPayments, setSelectedPayments] = useState<string[]>([]);
-  const [approveDialogOpen, setApproveDialogOpen] = useState(false);
-  const [rejectDialogOpen, setRejectDialogOpen] = useState(false);
-  const [detailsDialogOpen, setDetailsDialogOpen] = useState(false);
-  const [sendReceiptDialogOpen, setSendReceiptDialogOpen] = useState(false);
-  const [selectedPayment, setSelectedPayment] = useState<Payment | null>(null);
-  const [isProcessing, setIsProcessing] = useState(false);
-
-  const handleAction = (paymentId: string, action: PaymentAction) => {
-    const payment = payments.find(p => p.id === paymentId);
-    if (!payment) return;
-    
-    setSelectedPayment(payment);
-    
-    if (action === PaymentAction.APPROVE) {
-      setApproveDialogOpen(true);
-    } else if (action === PaymentAction.REJECT) {
-      setRejectDialogOpen(true);
-    } else if (action === PaymentAction.VIEW) {
-      setDetailsDialogOpen(true);
-    } else if (action === PaymentAction.SEND_RECEIPT) {
-      setSendReceiptDialogOpen(true);
-    } else {
-      onActionClick(paymentId, action);
-    }
-  };
-
-  const handleSelectPayment = (paymentId: string) => {
-    setSelectedPayments((prev) =>
-      prev.includes(paymentId) ? prev.filter((id) => id !== paymentId) : [...prev, paymentId]
-    );
-  };
-
-  const handleSelectAllPayments = () => {
-    if (selectedPayments.length === payments.length) {
-      setSelectedPayments([]);
-    } else {
-      setSelectedPayments(payments.map((payment) => payment.id));
-    }
-  };
-
-  const handleApprovePayment = async (paymentId: string, receiptFile: File | null, notes: string) => {
-    setIsProcessing(true);
-    try {
-      // Simular upload do comprovante
-      let receiptUrl = null;
-      if (receiptFile) {
-        // Em um caso real, faria upload para o Supabase Storage
-        receiptUrl = URL.createObjectURL(receiptFile);
-      }
-
-      // Após enviar comprovante, aprovar o pagamento
-      await onActionClick(paymentId, PaymentAction.APPROVE);
-      
-      toast({
-        title: "Pagamento aprovado",
-        description: notes ? `Observações: ${notes}` : "O pagamento foi aprovado com sucesso.",
-      });
-      
-      setApproveDialogOpen(false);
-    } catch (error) {
-      toast({
-        variant: "destructive",
-        title: "Erro",
-        description: "Ocorreu um erro ao aprovar o pagamento.",
-      });
-    } finally {
-      setIsProcessing(false);
-    }
-  };
-
-  const handleRejectPayment = async (paymentId: string, rejectionReason: string) => {
-    setIsProcessing(true);
-    try {
-      await onActionClick(paymentId, PaymentAction.REJECT);
-      
-      toast({
-        title: "Pagamento recusado",
-        description: "O pagamento foi recusado com sucesso.",
-      });
-      
-      setRejectDialogOpen(false);
-    } catch (error) {
-      toast({
-        variant: "destructive",
-        title: "Erro",
-        description: "Ocorreu um erro ao recusar o pagamento.",
-      });
-    } finally {
-      setIsProcessing(false);
-    }
-  };
-
-  const handleSendReceipt = async (paymentId: string, receiptFile: File, message: string) => {
-    setIsProcessing(true);
-    try {
-      // Em um caso real, faria upload do comprovante e enviaria notificação
-      console.log("Enviando comprovante:", { paymentId, message });
-      
-      toast({
-        title: "Comprovante enviado",
-        description: "O comprovante foi enviado com sucesso para o cliente.",
-      });
-      
-      setSendReceiptDialogOpen(false);
-    } catch (error) {
-      toast({
-        variant: "destructive",
-        title: "Erro",
-        description: "Ocorreu um erro ao enviar o comprovante.",
-      });
-    } finally {
-      setIsProcessing(false);
-    }
-  };
-
-  if (isLoading) {
-    return <PaymentListLoadingState />;
-  }
-
-  if (payments.length === 0) {
-    return <PaymentListEmptyState />;
-  }
-
+export const AdminPaymentsList = ({ payments, isLoading, onView }: AdminPaymentsListProps) => {
   return (
-    <>
-      <PaymentListTable 
-        payments={payments}
-        selectedPayments={selectedPayments}
-        onSelectPayment={handleSelectPayment}
-        onSelectAllPayments={handleSelectAllPayments}
-        onAction={handleAction}
-      />
-      
-      {selectedPayments.length > 0 && (
-        <div className="mt-4">
-          <Button variant="destructive" onClick={() => {
-            selectedPayments.forEach(id => onActionClick(id, PaymentAction.DELETE));
-            setSelectedPayments([]);
-          }}>
-            Excluir Pagamentos Selecionados ({selectedPayments.length})
-          </Button>
-        </div>
-      )}
-      
-      {selectedPayment && (
-        <>
-          <ApprovePaymentDialog
-            open={approveDialogOpen}
-            onOpenChange={setApproveDialogOpen}
-            payment={selectedPayment as PaymentRequest}
-            onApprove={handleApprovePayment}
-            isProcessing={isProcessing}
-          />
-          
-          <RejectPaymentDialog
-            open={rejectDialogOpen}
-            onOpenChange={setRejectDialogOpen}
-            payment={selectedPayment as PaymentRequest}
-            onReject={handleRejectPayment}
-            isProcessing={isProcessing}
-          />
-          
-          <PaymentDetailsDialog 
-            open={detailsDialogOpen}
-            onOpenChange={setDetailsDialogOpen}
-            payment={selectedPayment}
-          />
-
-          <SendReceiptDialog
-            open={sendReceiptDialogOpen}
-            onOpenChange={setSendReceiptDialogOpen}
-            payment={selectedPayment as PaymentRequest}
-            onSendReceipt={handleSendReceipt}
-            isProcessing={isProcessing}
-          />
-        </>
-      )}
-    </>
+    <div className="rounded-md border">
+      <Table>
+        <TableHeader>
+          <TableRow>
+            <TableHead>ID</TableHead>
+            <TableHead>Cliente</TableHead>
+            <TableHead>Valor</TableHead>
+            <TableHead>Data de Criação</TableHead>
+            <TableHead>Status</TableHead>
+            <TableHead className="text-right">Ações</TableHead>
+          </TableRow>
+        </TableHeader>
+        <TableBody>
+          {isLoading ? (
+            <TableRow>
+              <TableCell colSpan={6} className="text-center">
+                Carregando pagamentos...
+              </TableCell>
+            </TableRow>
+          ) : payments.length === 0 ? (
+            <TableRow>
+              <TableCell colSpan={6} className="text-center">
+                Nenhum pagamento encontrado.
+              </TableCell>
+            </TableRow>
+          ) : (
+            payments.map((payment) => (
+              <TableRow key={payment.id}>
+                <TableCell>{payment.id}</TableCell>
+                <TableCell>{payment.client?.business_name}</TableCell>
+                <TableCell>R$ {payment.amount.toFixed(2)}</TableCell>
+                <TableCell>
+                  {format(new Date(payment.created_at), "dd/MM/yyyy HH:mm", {
+                    locale: ptBR,
+                  })}
+                </TableCell>
+                <TableCell>
+                  {payment.status === "PENDING" && (
+                    <Badge variant="secondary">Pendente</Badge>
+                  )}
+                  {payment.status === "APPROVED" && (
+                    <Badge className="bg-green-500 text-white">Aprovado</Badge>
+                  )}
+                  {payment.status === "REJECTED" && (
+                    <Badge variant="destructive">Rejeitado</Badge>
+                  )}
+                  {payment.status === "PAID" && (
+                    <Badge className="bg-blue-500 text-white">Pago</Badge>
+                  )}
+                </TableCell>
+                <TableCell className="text-right">
+                  <Button variant="outline" size="sm" onClick={() => onView(payment)}>
+                    Visualizar
+                  </Button>
+                </TableCell>
+              </TableRow>
+            ))
+          )}
+        </TableBody>
+      </Table>
+    </div>
   );
 };
-
-// Exporta tanto como padrão quanto como exportação nomeada para compatibilidade
-export { AdminPaymentsList };
-export default AdminPaymentsList;

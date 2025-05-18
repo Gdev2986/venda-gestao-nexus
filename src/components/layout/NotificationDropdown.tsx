@@ -1,184 +1,188 @@
-
-import { useState, useRef, useEffect } from "react";
-import { cn } from "@/lib/utils";
-import { Bell } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
-  DropdownMenuLabel,
   DropdownMenuSeparator,
+  DropdownMenuShortcut,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Bell, CheckCheck, Loader2, X } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import {
+  useNotifications,
+  Notification as NotificationType,
+} from "@/contexts/NotificationsContext";
+import { useEffect, useState } from "react";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import { Button } from "@/components/ui/button";
-import { motion, AnimatePresence } from "framer-motion";
-import { Link } from "react-router-dom";
-import { useNotifications } from "@/hooks/use-notifications";
-import { formatDistanceToNow } from "date-fns";
+import { formatRelative } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import { ShoppingCart, CreditCard, Wrench, LifeBuoy } from "lucide-react";
 
-const NotificationDropdown = () => {
-  const [isOpen, setIsOpen] = useState(false);
-  const dropdownRef = useRef<HTMLDivElement>(null);
-  
-  const {
-    notifications,
-    unreadCount,
-    markAsRead,
-    markAllAsRead
-  } = useNotifications();
+const formatRelativeTime = (dateString: string) => {
+  return formatRelative(new Date(dateString), new Date(), {
+    locale: ptBR,
+    weekStartsOn: 1,
+  });
+};
 
-  // Pega apenas as 5 notificações mais recentes para exibir no dropdown
-  const recentNotifications = notifications.slice(0, 5);
+const NotificationItem = ({
+  notification,
+  markAsRead,
+  deleteNotification,
+}: {
+  notification: NotificationType;
+  markAsRead: (notificationId: string) => Promise<void>;
+  deleteNotification: (notificationId: string) => Promise<void>;
+}) => {
+  const [isMarkingAsRead, setIsMarkingAsRead] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
 
-  // Fechar dropdown quando clicar fora
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (
-        dropdownRef.current &&
-        !dropdownRef.current.contains(event.target as Node)
-      ) {
-        setIsOpen(false);
-      }
-    };
+  const handleMarkAsRead = async () => {
+    setIsMarkingAsRead(true);
+    try {
+      await markAsRead(notification.id);
+    } finally {
+      setIsMarkingAsRead(false);
+    }
+  };
 
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => {
-      document.removeEventListener("mousedown", handleClickOutside);
-    };
-  }, []);
-
-  const getIcon = (type: string) => {
-    switch (type) {
-      case "SALE":
-        return <ShoppingCart className="h-4 w-4 text-primary" />;
-      case "PAYMENT":
-      case "PAYMENT_APPROVED":
-      case "PAYMENT_REJECTED":
-      case "PAYMENT_REQUEST":
-        return <CreditCard className="h-4 w-4 text-primary" />;
-      case "MACHINE":
-        return <Wrench className="h-4 w-4 text-primary" />;
-      case "SUPPORT":
-        return <LifeBuoy className="h-4 w-4 text-primary" />;
-      default:
-        return <Bell className="h-4 w-4 text-primary" />;
+  const handleDeleteNotification = async () => {
+    setIsDeleting(true);
+    try {
+      await deleteNotification(notification.id);
+    } finally {
+      setIsDeleting(false);
     }
   };
 
   return (
-    <div ref={dropdownRef}>
-      <DropdownMenu open={isOpen} onOpenChange={setIsOpen}>
-        <DropdownMenuTrigger asChild>
+    <DropdownMenuItem className="gap-4">
+      <div className="grid gap-1.5">
+        <div className="flex items-center justify-between">
+          <DropdownMenuShortcut>
+            <Badge variant={notification.is_read ? "outline" : "default"}>
+              {notification.is_read ? "Lida" : "Nova"}
+            </Badge>
+          </DropdownMenuShortcut>
           <Button
             variant="ghost"
             size="icon"
-            className="relative"
-            aria-label="Notificações"
+            onClick={handleMarkAsRead}
+            disabled={isMarkingAsRead}
           >
-            <Bell className="h-5 w-5" />
-            <AnimatePresence>
-              {unreadCount > 0 && (
-                <motion.span
-                  initial={{ scale: 0 }}
-                  animate={{ scale: 1 }}
-                  exit={{ scale: 0 }}
-                  transition={{
-                    type: "spring",
-                    stiffness: 500,
-                    damping: 25,
-                  }}
-                  className="absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-destructive text-[10px] font-medium text-destructive-foreground"
-                >
-                  {unreadCount}
-                </motion.span>
-              )}
-            </AnimatePresence>
-          </Button>
-        </DropdownMenuTrigger>
-        <DropdownMenuContent
-          align="end"
-          className="w-80"
-          sideOffset={5}
-        >
-          <div className="flex items-center justify-between p-4">
-            <DropdownMenuLabel className="font-normal">
-              Notificações
-            </DropdownMenuLabel>
-            {unreadCount > 0 && (
-              <Button
-                variant="ghost"
-                size="sm"
-                className="h-auto px-2 py-1 text-xs"
-                onClick={markAllAsRead}
-              >
-                Marcar todas como lidas
-              </Button>
+            {isMarkingAsRead ? (
+              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+            ) : (
+              <CheckCheck className="h-4 w-4" />
             )}
-          </div>
-          <DropdownMenuSeparator />
-          <div className="max-h-80 overflow-y-auto">
-            <AnimatePresence>
-              {recentNotifications.length === 0 ? (
-                <div className="p-4 text-center text-muted-foreground">
-                  Nenhuma notificação
-                </div>
-              ) : (
-                recentNotifications.map((notification) => (
-                  <motion.div
-                    key={notification.id}
-                    initial={{ opacity: 0, y: -10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, height: 0 }}
-                    transition={{ duration: 0.2 }}
-                  >
-                    <DropdownMenuItem
-                      className={cn(
-                        "flex flex-col items-start gap-1 p-4 focus:bg-accent/50",
-                        notification.is_read ? "opacity-70" : ""
-                      )}
-                      onClick={() => markAsRead(notification.id)}
-                    >
-                      <div className="flex w-full justify-between">
-                        <div className="flex items-center">
-                          {getIcon(notification.type)}
-                          <span className="ml-2 font-medium">{notification.title}</span>
-                        </div>
-                        <span className="text-xs text-muted-foreground">
-                          {formatDistanceToNow(new Date(notification.created_at), {
-                            addSuffix: true,
-                            locale: ptBR
-                          })}
-                        </span>
-                      </div>
-                      <span className="text-sm text-muted-foreground">
-                        {notification.message}
-                      </span>
-                      {!notification.is_read && (
-                        <div className="mt-1 h-2 w-2 rounded-full bg-primary" />
-                      )}
-                    </DropdownMenuItem>
-                    <DropdownMenuSeparator />
-                  </motion.div>
-                ))
-              )}
-            </AnimatePresence>
-          </div>
-          <div className="p-2">
-            <Button 
-              variant="outline" 
-              size="sm" 
-              className="w-full"
-              asChild
-            >
-              <Link to="/notifications">Ver todas notificações</Link>
-            </Button>
-          </div>
-        </DropdownMenuContent>
-      </DropdownMenu>
-    </div>
+          </Button>
+          <Button
+            variant="ghost"
+            size="icon"
+            className="text-destructive hover:text-destructive/80"
+            onClick={handleDeleteNotification}
+            disabled={isDeleting}
+          >
+            {isDeleting ? (
+              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+            ) : (
+              <X className="h-4 w-4" />
+            )}
+          </Button>
+        </div>
+        <p className="text-sm font-semibold">{notification.title}</p>
+        <p className="text-sm text-muted-foreground">{notification.message}</p>
+        <p className="text-xs text-muted-foreground">
+          {formatRelativeTime(notification.created_at)}
+        </p>
+      </div>
+    </DropdownMenuItem>
   );
 };
 
-export default NotificationDropdown;
+export function NotificationDropdown() {
+  const {
+    notifications,
+    unreadCount,
+    loading,
+    markAsRead,
+    deleteNotification,
+    refreshNotifications,
+  } = useNotifications();
+  const [isRefreshing, setIsRefreshing] = useState(false);
+
+  useEffect(() => {
+    const fetchData = async () => {
+      setIsRefreshing(true);
+      try {
+        await refreshNotifications();
+      } finally {
+        setIsRefreshing(false);
+      }
+    };
+
+    fetchData();
+  }, [refreshNotifications]);
+
+  return (
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <Button variant="ghost" className="relative">
+          <Bell className="h-5 w-5" />
+          {unreadCount > 0 ? (
+            <Badge
+              variant="secondary"
+              className="absolute -top-1 -right-1 rounded-full px-1.5 py-0 text-xs"
+            >
+              {unreadCount}
+            </Badge>
+          ) : null}
+        </Button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent className="w-80">
+        <div className="flex items-center justify-between pl-4 pr-2 pt-2">
+          <p className="text-sm font-medium">Notificações</p>
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={refreshNotifications}
+            disabled={isRefreshing}
+          >
+            {isRefreshing ? (
+              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+            ) : (
+              <Bell className="h-4 w-4" />
+            )}
+          </Button>
+        </div>
+        <DropdownMenuSeparator />
+        <ScrollArea className="max-h-[400px] flex-1">
+          {loading ? (
+            <DropdownMenuItem className="justify-center">
+              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              Carregando notificações...
+            </DropdownMenuItem>
+          ) : notifications.length === 0 ? (
+            <DropdownMenuItem className="justify-center">
+              Nenhuma notificação
+            </DropdownMenuItem>
+          ) : (
+            notifications.map((notification) => (
+              <NotificationItem
+                key={notification.id}
+                notification={notification}
+                markAsRead={markAsRead}
+                deleteNotification={deleteNotification}
+              />
+            ))
+          )}
+        </ScrollArea>
+        <DropdownMenuSeparator />
+        <DropdownMenuItem className="justify-center">
+          <a href="/notifications">Ver todas</a>
+        </DropdownMenuItem>
+      </DropdownMenuContent>
+    </DropdownMenu>
+  );
+}

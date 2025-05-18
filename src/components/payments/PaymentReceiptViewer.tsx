@@ -1,68 +1,52 @@
 
-import { useState } from "react";
-import { Button } from "@/components/ui/button";
-import { Loader2, Download, Eye } from "lucide-react";
+import React from 'react';
+import { Button } from '@/components/ui/button';
+import { ExternalLink } from 'lucide-react';
 
-interface PaymentReceiptViewerProps {
+export interface PaymentReceiptViewerProps {
   receiptUrl: string;
 }
 
 export function PaymentReceiptViewer({ receiptUrl }: PaymentReceiptViewerProps) {
-  const [isExpanded, setIsExpanded] = useState(false);
-  const [isLoading, setIsLoading] = useState(true);
+  const handleOpenInNewTab = () => {
+    window.open(receiptUrl, '_blank', 'noopener,noreferrer');
+  };
+
+  const isImage = /\.(jpg|jpeg|png|gif|webp)$/i.test(receiptUrl);
+  const isPdf = /\.pdf$/i.test(receiptUrl);
 
   return (
     <div className="space-y-2">
-      <div className="flex items-center justify-between">
-        <h4 className="text-sm font-medium">Comprovante de Pagamento</h4>
-        <div className="flex gap-2">
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => setIsExpanded(!isExpanded)}
-          >
-            <Eye className="h-4 w-4 mr-1" />
-            {isExpanded ? "Ocultar" : "Visualizar"}
-          </Button>
-          <Button
-            variant="outline"
-            size="sm"
-            asChild
-          >
-            <a href={receiptUrl} download target="_blank" rel="noopener noreferrer">
-              <Download className="h-4 w-4 mr-1" />
-              Baixar
-            </a>
-          </Button>
-        </div>
+      <div className="flex justify-between items-center">
+        <h3 className="text-lg font-medium">Comprovante de Pagamento</h3>
+        <Button variant="outline" size="sm" onClick={handleOpenInNewTab}>
+          <ExternalLink className="h-4 w-4 mr-2" />
+          Abrir em nova aba
+        </Button>
       </div>
 
-      {isExpanded && (
-        <div className="border rounded overflow-hidden relative">
-          {isLoading && (
-            <div className="absolute inset-0 flex items-center justify-center bg-background/80">
-              <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
-            </div>
-          )}
-          
-          {receiptUrl.endsWith('.pdf') ? (
-            <iframe
-              src={`${receiptUrl}#toolbar=0&navpanes=0`}
-              className="w-full h-96"
-              onLoad={() => setIsLoading(false)}
-              title="Comprovante de Pagamento"
-            />
-          ) : (
-            <img
-              src={receiptUrl}
-              alt="Comprovante de Pagamento"
-              className="w-full max-h-96 object-contain"
-              onLoad={() => setIsLoading(false)}
-              onError={() => setIsLoading(false)}
-            />
-          )}
-        </div>
-      )}
+      <div className="border rounded-md overflow-hidden">
+        {isImage ? (
+          <img 
+            src={receiptUrl} 
+            alt="Comprovante de Pagamento" 
+            className="w-full max-h-[500px] object-contain"
+          />
+        ) : isPdf ? (
+          <div className="p-4 flex flex-col items-center justify-center bg-muted h-[300px]">
+            <p className="text-muted-foreground mb-2">Arquivo PDF</p>
+            <Button variant="secondary" size="sm" onClick={handleOpenInNewTab}>
+              Visualizar PDF
+            </Button>
+          </div>
+        ) : (
+          <div className="p-4 flex items-center justify-center bg-muted h-[300px]">
+            <p className="text-muted-foreground">
+              Comprovante não pode ser exibido. Clique em "Abrir em nova aba" para visualizar.
+            </p>
+          </div>
+        )}
+      </div>
     </div>
   );
 }
