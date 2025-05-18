@@ -1,29 +1,28 @@
 
-import React, { useState, useEffect } from "react";
-import { Table, TableHeader, TableRow, TableHead, TableBody, TableCell } from "@/components/ui/table";
-import { Input } from "@/components/ui/input";
-import { getClientsWithMachines } from "@/services/machine.service";
-import { Badge } from "@/components/ui/badge";
-import { Link } from "react-router-dom";
-import { LinkIcon } from "lucide-react";
+import React, { useState, useEffect } from 'react';
+import { getAllMachines, getClientsWithMachines } from '@/services/machine.service';
+import { Machine, MachineStatus } from '@/types/machine.types';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { Badge } from '@/components/ui/badge';
+import { Input } from '@/components/ui/input';
 
-export interface ClientWithMachines {
+interface Client {
   id: string;
   business_name: string;
   machineCount: number;
-  predominantStatus?: string;
+  machines?: Array<{id: string; status: MachineStatus}>;
 }
 
 const ClientsWithMachinesTab: React.FC = () => {
-  const [clients, setClients] = useState<ClientWithMachines[]>([]);
+  const [clients, setClients] = useState<Client[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [searchTerm, setSearchTerm] = useState("");
-
+  const [searchTerm, setSearchTerm] = useState('');
+  
   useEffect(() => {
-    const loadClients = async () => {
+    const loadData = async () => {
       try {
-        const data = await getClientsWithMachines();
-        setClients(data);
+        const clientsWithMachines = await getClientsWithMachines();
+        setClients(clientsWithMachines);
       } catch (error) {
         console.error("Error loading clients with machines:", error);
       } finally {
@@ -31,61 +30,75 @@ const ClientsWithMachinesTab: React.FC = () => {
       }
     };
     
-    loadClients();
+    loadData();
   }, []);
-
+  
   const filteredClients = clients.filter(client => 
     client.business_name.toLowerCase().includes(searchTerm.toLowerCase())
   );
-
+  
+  const getStatusBadge = (status: MachineStatus) => {
+    switch (status) {
+      case MachineStatus.ACTIVE:
+        return <Badge className="bg-green-500">Ativo</Badge>;
+      case MachineStatus.INACTIVE:
+        return <Badge className="bg-red-500">Inativo</Badge>;
+      case MachineStatus.MAINTENANCE:
+        return <Badge className="bg-yellow-500">Manutenção</Badge>;
+      case MachineStatus.STOCK:
+        return <Badge className="bg-blue-500">Estoque</Badge>;
+      default:
+        return <Badge>{status}</Badge>;
+    }
+  };
+  
+  if (isLoading) {
+    return <div className="flex justify-center py-8">Carregando clientes...</div>;
+  }
+  
   return (
     <div className="space-y-4">
       <Input
-        placeholder="Buscar cliente..."
+        placeholder="Buscar por nome do cliente..."
         value={searchTerm}
         onChange={(e) => setSearchTerm(e.target.value)}
-        className="max-w-sm"
+        className="max-w-xs"
       />
       
-      <div className="rounded-md border overflow-hidden">
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>Cliente</TableHead>
-              <TableHead>Nº de Máquinas</TableHead>
-              <TableHead>Ações</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {isLoading ? (
+      {filteredClients.length === 0 ? (
+        <div className="text-center py-8 text-muted-foreground">
+          Nenhum cliente com máquinas encontrado.
+        </div>
+      ) : (
+        <div className="rounded-md border overflow-hidden">
+          <Table>
+            <TableHeader>
               <TableRow>
-                <TableCell colSpan={3} className="text-center py-10">Carregando...</TableCell>
+                <TableHead>Cliente</TableHead>
+                <TableHead className="text-right">Qtd. Máquinas</TableHead>
+                <TableHead className="text-right">Status</TableHead>
               </TableRow>
-            ) : filteredClients.length === 0 ? (
-              <TableRow>
-                <TableCell colSpan={3} className="text-center py-10">Nenhum cliente com máquinas encontrado</TableCell>
-              </TableRow>
-            ) : (
-              filteredClients.map((client) => (
+            </TableHeader>
+            <TableBody>
+              {filteredClients.map((client) => (
                 <TableRow key={client.id}>
                   <TableCell className="font-medium">{client.business_name}</TableCell>
-                  <TableCell>
-                    <Badge variant="outline" className="px-2 py-1">
-                      {client.machineCount}
-                    </Badge>
-                  </TableCell>
-                  <TableCell>
-                    <Link to={`/logistics/clients/${client.id}/machines`} className="text-blue-600 hover:underline flex items-center gap-1 w-fit">
-                      <LinkIcon className="h-3.5 w-3.5" />
-                      Ver máquinas
-                    </Link>
+                  <TableCell className="text-right">{client.machineCount}</TableCell>
+                  <TableCell className="text-right">
+                    <div className="flex justify-end space-x-1">
+                      {client.machines && client.machines.map((machine, idx) => (
+                        <div key={idx}>
+                          {getStatusBadge(machine.status)}
+                        </div>
+                      ))}
+                    </div>
                   </TableCell>
                 </TableRow>
-              ))
-            )}
-          </TableBody>
-        </Table>
-      </div>
+              ))}
+            </TableBody>
+          </Table>
+        </div>
+      )}
     </div>
   );
 };

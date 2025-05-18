@@ -6,7 +6,7 @@ import { Table, TableHeader, TableRow, TableHead, TableBody, TableCell } from "@
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Edit, Trash2, Link as LinkIcon } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import { getMachines as getAllMachines, deleteMachine, updateMachine } from "@/services/machine.service";
+import { getAllMachines, deleteMachine, updateMachine } from "@/services/machine.service";
 import { Machine, MachineStatus } from "@/types/machine.types";
 import { Badge } from "@/components/ui/badge";
 import { Link } from "react-router-dom";
@@ -82,10 +82,10 @@ export default function MachineRegistrationTable() {
     }
   };
 
-  const handleStatusChange = async (id: string, status: string) => {
+  const handleStatusChange = async (id: string, status: MachineStatus) => {
     try {
-      await updateMachine(id, { id, status });
-      setMachines(machines.map(m => m.id === id ? { ...m, status: status as MachineStatus } : m));
+      await updateMachine(id, { status });
+      setMachines(machines.map(m => m.id === id ? { ...m, status } : m));
       toast({
         title: "Status atualizado com sucesso",
         variant: "default",
@@ -188,10 +188,13 @@ export default function MachineRegistrationTable() {
                   <TableCell>{machine.serial_number}</TableCell>
                   <TableCell>{machine.model}</TableCell>
                   <TableCell>
-                    <Select defaultValue={machine.status} onValueChange={(value) => handleStatusChange(machine.id, value)}>
+                    <Select 
+                      defaultValue={machine.status} 
+                      onValueChange={(value) => handleStatusChange(machine.id, value as MachineStatus)}
+                    >
                       <SelectTrigger className="w-[140px] h-8">
                         <SelectValue>
-                          {getStatusBadge(machine.status as MachineStatus)}
+                          {getStatusBadge(machine.status)}
                         </SelectValue>
                       </SelectTrigger>
                       <SelectContent>

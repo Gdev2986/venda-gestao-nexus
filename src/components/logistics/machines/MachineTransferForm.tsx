@@ -6,7 +6,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { useToast } from "@/hooks/use-toast";
 import { DatePicker } from "@/components/ui/date-picker";
 import { supabase } from "@/integrations/supabase/client";
-import { transferMachine, MachineTransferParams } from "@/services/machine.service";
+import { transferMachine } from "@/services/machine.service";
+import { MachineTransferParams } from "@/types/machine.types";
 
 interface MachineTransferFormProps {
   machineId: string;

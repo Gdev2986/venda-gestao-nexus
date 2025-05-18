@@ -7,17 +7,17 @@ import {
   createMachine, 
   updateMachine, 
   transferMachine,
-  getMachineStats,
-  MachineCreateParams,
-  MachineUpdateParams,
-  MachineTransferParams
+  getMachineStats 
 } from "@/services/machine.service";
-import { supabase } from "@/integrations/supabase/client";
-import {
+import { 
   Machine,
   MachineStatus,
-  MachineStats
+  MachineStats,
+  MachineCreateParams,
+  MachineUpdateParams,
+  MachineTransferParams 
 } from "@/types/machine.types";
+import { supabase } from "@/integrations/supabase/client";
 
 interface UseMachinesOptions {
   status?: MachineStatus;
