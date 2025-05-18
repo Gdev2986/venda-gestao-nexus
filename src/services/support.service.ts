@@ -1,14 +1,8 @@
 
-// Since we're seeing errors related to Supabase table access in support.service.ts,
-// Let's replace it with a mock implementation that doesn't attempt to access non-existent tables
+// This is a mock implementation of the support service that uses mock data
+// In a production environment, this would use actual API calls
 
 import { TicketStatus, TicketPriority, TicketType, SupportTicket, CreateSupportTicketParams, UpdateSupportTicketParams } from "@/types/support.types";
-
-/**
- * This is a stub implementation of the support service that uses mock data.
- * In a production environment, once the support_tickets table is created in Supabase,
- * this would use actual API calls.
- */
 
 // Mock data for support tickets
 const mockTickets: SupportTicket[] = [

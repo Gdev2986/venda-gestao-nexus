@@ -21,10 +21,10 @@ export interface Payment {
   approved_by?: string;
   approved_at?: string;
   created_at: string;
-  updated_at: string; // Changed this from optional to required
+  updated_at: string;
   receipt_url?: string;
   description?: string;
-  rejection_reason?: string;
+  rejection_reason: string | null; // Changed from optional to required with null
   payment_type?: EnumsPaymentType;
   client?: {
     id: string;

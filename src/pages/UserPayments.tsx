@@ -13,10 +13,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { PageHeader } from "@/components/page/PageHeader";
 import { ptBR } from "date-fns/locale";
-import { PaymentStatus, Payment } from "@/types/payment.types";
-
-// This is a stub implementation of the user payments page
-// It will be expanded with more features in the future
+import { Payment, PaymentStatus } from "@/types/payment.types";
 
 const UserPayments = () => {
   const { user } = useAuth();
@@ -46,7 +43,7 @@ const UserPayments = () => {
     fetchPayments();
   }, [user]);
 
-  const getStatusBadge = (status: PaymentStatus | string, paymentType?: string) => {
+  const getStatusBadge = (status: PaymentStatus | string) => {
     if (status === PaymentStatus.PENDING) {
       return <Badge variant="outline">Pendente</Badge>;
     } else if (status === PaymentStatus.APPROVED) {
@@ -62,8 +59,9 @@ const UserPayments = () => {
 
   const handleViewDetails = (payment: Payment) => {
     // Ensure payment object has the expected structure for PaymentDetailsDialog
-    const adaptedPayment = {
+    const adaptedPayment: Payment = {
       ...payment,
+      rejection_reason: payment.rejection_reason || null,
       pix_key: payment.pix_key ? {
         ...payment.pix_key,
         owner_name: payment.pix_key.owner_name || payment.pix_key.name || ''
@@ -131,7 +129,7 @@ const UserPayments = () => {
                           </p>
                         </div>
                         <div className="text-right">
-                          <div className="mb-2">{getStatusBadge(payment.status, payment.payment_type)}</div>
+                          <div className="mb-2">{getStatusBadge(payment.status)}</div>
                           <Button
                             variant="outline"
                             size="sm"

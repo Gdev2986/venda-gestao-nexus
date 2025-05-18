@@ -29,6 +29,7 @@ export const getAllPayments = async (): Promise<Payment[]> => {
       created_at: item.created_at,
       updated_at: item.updated_at,
       approved_at: item.approved_at,
+      rejection_reason: null, // Ensure rejection_reason is always defined
       client: item.client ? {
         id: item.client_id,
         business_name: item.client.business_name,
@@ -55,9 +56,10 @@ export const getPaymentsByStatus = async (status: PaymentStatus): Promise<Paymen
         created_at,
         updated_at,
         approved_at,
+        rejection_reason,
         client:client_id (business_name, email, phone)
       `)
-      .eq("status", status)
+      .eq("status", status.toString()) // Convert enum to string
       .order("created_at", { ascending: false });
 
     if (error) throw error;
@@ -70,6 +72,7 @@ export const getPaymentsByStatus = async (status: PaymentStatus): Promise<Paymen
       created_at: item.created_at,
       updated_at: item.updated_at,
       approved_at: item.approved_at,
+      rejection_reason: item.rejection_reason || null, // Ensure rejection_reason is always defined
       client: item.client ? {
         id: item.client_id,
         business_name: item.client.business_name,
@@ -117,13 +120,13 @@ export const getClientPayments = async (clientId: string): Promise<Payment[]> =>
       id: item.id,
       client_id: item.client_id,
       amount: item.amount,
-      status: item.status as PaymentStatus,
       description: item.description || '',
+      status: item.status as PaymentStatus,
       created_at: item.created_at,
       updated_at: item.updated_at || item.created_at, // Ensure updated_at is always defined
       approved_at: item.approved_at,
       receipt_url: item.receipt_url,
-      rejection_reason: item.rejection_reason,
+      rejection_reason: item.rejection_reason || null, // Ensure rejection_reason is always defined
       client: item.client ? {
         id: item.client_id,
         business_name: item.client.business_name,
