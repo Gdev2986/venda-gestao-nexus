@@ -1,127 +1,151 @@
 
-import { useState } from 'react';
-import { useToast } from '@/hooks/use-toast';
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Textarea } from '@/components/ui/textarea';
-import { Label } from '@/components/ui/label';
-import { useNotifications } from '@/hooks/use-notifications';
-import { Loader2 } from 'lucide-react';
-import { NotificationType } from '@/types/enums';
+import { useState } from "react";
+import { useToast } from "@/hooks/use-toast";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Card } from "@/components/ui/card";
+import { NotificationType } from "@/types/enums";
+import { Notification } from "@/types/notification.types";
 
-export function SendNotificationForm() {
+export const SendNotificationForm = ({
+  onSendNotification,
+}: {
+  onSendNotification: (notification: Partial<Notification>) => Promise<any>;
+}) => {
+  const [title, setTitle] = useState("");
+  const [message, setMessage] = useState("");
+  const [type, setType] = useState<string>(NotificationType.SYSTEM);
+  const [recipients, setRecipients] = useState<"all" | "admins" | "clients">(
+    "all"
+  );
+  const [sending, setSending] = useState(false);
+
   const { toast } = useToast();
-  const { sendNotification, isLoading } = useNotifications();
-  const [title, setTitle] = useState('');
-  const [message, setMessage] = useState('');
-  const [userType, setUserType] = useState('all');
-  const [isSending, setIsSending] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
-    if (!title || !message) {
+    if (!title || !message || !type) {
       toast({
-        title: 'Formulário incompleto',
-        description: 'Por favor, preencha todos os campos obrigatórios.',
-        variant: 'destructive',
+        title: "Campos obrigatórios",
+        description: "Preencha todos os campos obrigatórios",
+        variant: "destructive",
       });
       return;
     }
-    
-    setIsSending(true);
+
+    setSending(true);
     try {
-      // In a real implementation, this would send to the right users based on userType
-      await sendNotification(
-        '9027d4fc-2715-4439-8c84-93aa536514fb', // Example user ID
+      await onSendNotification({
         title,
         message,
-        NotificationType.ADMIN_NOTIFICATION || NotificationType.SYSTEM,
-        {}
-      );
-      
-      toast({
-        title: 'Notificação enviada',
-        description: 'A notificação foi enviada com sucesso.',
+        type: type as NotificationType,
+        recipients
       });
       
-      // Reset form
-      setTitle('');
-      setMessage('');
-      setUserType('all');
-    } catch (error) {
-      console.error('Error sending notification:', error);
+      setTitle("");
+      setMessage("");
+      setType(NotificationType.ADMIN_NOTIFICATION);
+      setRecipients("all");
+      
       toast({
-        title: 'Erro ao enviar notificação',
-        description: 'Não foi possível enviar a notificação. Tente novamente mais tarde.',
-        variant: 'destructive',
+        title: "Notificação enviada",
+        description: "A notificação foi enviada com sucesso",
+      });
+    } catch (error) {
+      console.error("Error sending notification:", error);
+      toast({
+        title: "Erro",
+        description: "Ocorreu um erro ao enviar a notificação",
+        variant: "destructive",
       });
     } finally {
-      setIsSending(false);
+      setSending(false);
     }
   };
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>Enviar Notificação</CardTitle>
-        <CardDescription>Envie notificações para usuários ou grupos específicos</CardDescription>
-      </CardHeader>
-      <form onSubmit={handleSubmit}>
-        <CardContent className="space-y-4">
-          <div className="space-y-2">
-            <Label htmlFor="title">Título</Label>
-            <Input 
-              id="title" 
-              value={title} 
-              onChange={(e) => setTitle(e.target.value)} 
-              placeholder="Título da notificação"
-              required
-            />
-          </div>
-          
-          <div className="space-y-2">
-            <Label htmlFor="message">Mensagem</Label>
-            <Textarea 
-              id="message" 
-              value={message} 
-              onChange={(e) => setMessage(e.target.value)} 
-              placeholder="Conteúdo da notificação"
-              required
-              className="min-h-[120px]"
-            />
-          </div>
-          
-          <div className="space-y-2">
-            <Label htmlFor="user-type">Destinatários</Label>
-            <Select value={userType} onValueChange={setUserType}>
-              <SelectTrigger id="user-type">
-                <SelectValue placeholder="Selecione os destinatários" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">Todos os usuários</SelectItem>
-                <SelectItem value="clients">Apenas clientes</SelectItem>
-                <SelectItem value="partners">Apenas parceiros</SelectItem>
-                <SelectItem value="admins">Apenas administradores</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-        </CardContent>
-        <CardFooter>
-          <Button type="submit" disabled={isSending || isLoading}>
-            {isSending ? (
-              <>
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" /> 
-                Enviando...
-              </>
-            ) : (
-              'Enviar Notificação'
-            )}
-          </Button>
-        </CardFooter>
+    <Card className="p-4">
+      <form onSubmit={handleSubmit} className="space-y-4">
+        <div>
+          <label className="block text-sm font-medium mb-1" htmlFor="title">
+            Título
+          </label>
+          <Input
+            id="title"
+            value={title}
+            onChange={(e) => setTitle(e.target.value)}
+            placeholder="Título da notificação"
+            required
+          />
+        </div>
+
+        <div>
+          <label className="block text-sm font-medium mb-1" htmlFor="message">
+            Mensagem
+          </label>
+          <Textarea
+            id="message"
+            value={message}
+            onChange={(e) => setMessage(e.target.value)}
+            placeholder="Conteúdo da notificação"
+            required
+          />
+        </div>
+
+        <div>
+          <label className="block text-sm font-medium mb-1" htmlFor="type">
+            Tipo
+          </label>
+          <Select
+            value={type}
+            onValueChange={setType}
+          >
+            <SelectTrigger id="type">
+              <SelectValue placeholder="Selecione o tipo" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value={NotificationType.SYSTEM}>Sistema</SelectItem>
+              <SelectItem value={NotificationType.PAYMENT}>Pagamento</SelectItem>
+              <SelectItem value={NotificationType.MACHINE}>Máquinas</SelectItem>
+              <SelectItem value={NotificationType.GENERAL}>Geral</SelectItem>
+              <SelectItem value={NotificationType.ADMIN_NOTIFICATION}>Admin</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+
+        <div>
+          <label className="block text-sm font-medium mb-1" htmlFor="recipients">
+            Destinatários
+          </label>
+          <Select
+            value={recipients}
+            onValueChange={(value: "all" | "admins" | "clients") =>
+              setRecipients(value)
+            }
+          >
+            <SelectTrigger id="recipients">
+              <SelectValue placeholder="Selecione os destinatários" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Todos</SelectItem>
+              <SelectItem value="admins">Apenas Administradores</SelectItem>
+              <SelectItem value="clients">Apenas Clientes</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+
+        <Button type="submit" disabled={sending}>
+          {sending ? "Enviando..." : "Enviar Notificação"}
+        </Button>
       </form>
     </Card>
   );
-}
+};

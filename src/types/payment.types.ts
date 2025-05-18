@@ -3,7 +3,7 @@ import { PaymentStatus as PaymentStatusEnum, PaymentType } from "@/types/enums";
 
 export type PixKeyType = 'CPF' | 'CNPJ' | 'EMAIL' | 'PHONE' | 'EVP' | 'RANDOM';
 
-export { PaymentStatusEnum as PaymentStatus };
+export { PaymentStatusEnum as PaymentStatus, PaymentType };
 
 export interface PixKey {
   id: string;
