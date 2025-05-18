@@ -13,8 +13,8 @@ export interface PixKey {
   user_id?: string;
   created_at?: string;
   updated_at?: string;
-  name?: string;
-  owner_name: string; // Required field
+  name: string; // Now required to match the interface in PixKeyDisplay
+  owner_name?: string;
   isDefault?: boolean;
   is_active?: boolean;
   bank_name?: string;
@@ -39,6 +39,7 @@ export interface Client {
   state?: string;
   zip?: string;
   fee_plan_id?: string;
+  company_name?: string;
 }
 
 export interface PaymentRequest {

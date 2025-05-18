@@ -1,20 +1,15 @@
 
-import { UserRole } from "@/types";
-import LogisticsLayout from "./LogisticsLayout";
-import MainLayout from "./MainLayout";
+import React from "react";
+import { Outlet } from "react-router-dom";
+import MainLayout from "@/layouts/MainLayout";
 import { useUserRole } from "@/hooks/use-user-role";
+import { UserRole } from "@/types";
 
-// Custom layout selector based on user role
 const AdminLayoutSelector = () => {
   const { userRole } = useUserRole();
-  
-  // Use LogisticsLayout for Logistics users
-  if (userRole === UserRole.LOGISTICS) {
-    return <LogisticsLayout />;
-  }
-  
-  // Use default MainLayout for other roles
-  return <MainLayout />;
+
+  // Use MainLayout as the default layout for admin users
+  return <MainLayout><Outlet /></MainLayout>;
 };
 
 export default AdminLayoutSelector;

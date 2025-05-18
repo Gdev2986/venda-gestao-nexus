@@ -1,19 +1,9 @@
 
 import React, { createContext, useContext, useState, useEffect, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { Notification } from "@/types";
+import { Notification, NotificationType } from "@/types";
 import { useAuth } from "@/hooks/use-auth";
 import { useToast } from "@/hooks/use-toast";
-
-export type NotificationType = 
-  | "PAYMENT" 
-  | "BALANCE" 
-  | "MACHINE" 
-  | "COMMISSION" 
-  | "SYSTEM" 
-  | "GENERAL" 
-  | "SALE" 
-  | "SUPPORT";
 
 export interface NotificationsContextType {
   notifications: Notification[];
@@ -24,11 +14,11 @@ export interface NotificationsContextType {
   refreshNotifications: () => Promise<void>;
   loading: boolean;
   isLoading: boolean;
-  sendNotification: (userId: string, title: string, message: string, type: string, data?: Record<string, any>) => Promise<void>;
+  sendNotification: (userId: string, title: string, message: string, type: NotificationType, data?: Record<string, any>) => Promise<void>;
   markAsUnread: (notificationId: string) => Promise<void>;
 }
 
-const NotificationsContext = createContext<NotificationsContextType>({
+export const NotificationsContext = createContext<NotificationsContextType>({
   notifications: [],
   unreadCount: 0,
   markAsRead: async () => {},
@@ -121,14 +111,14 @@ export const NotificationsProvider: React.FC<{ children: React.ReactNode }> = ({
     userId: string,
     title: string,
     message: string,
-    type: string,
+    type: NotificationType,
     data?: Record<string, any>
   ) => {
     try {
       const { error } = await supabase.from("notifications").insert({
         title,
         message,
-        type,
+        type: type as string,
         user_id: userId,
         is_read: false,
         data
@@ -243,5 +233,3 @@ export const NotificationsProvider: React.FC<{ children: React.ReactNode }> = ({
     </NotificationsContext.Provider>
   );
 };
-
-export const useNotifications = () => useContext(NotificationsContext);

@@ -1,5 +1,5 @@
 
-import { Route } from "react-router-dom";
+import { Route, Outlet } from "react-router-dom";
 import { PATHS } from "./paths";
 import { UserRole } from "@/types";
 
@@ -21,7 +21,7 @@ import AdminReports from "../pages/admin/Reports";
 
 export const FinancialRoutes = (
   <Route element={<RequireAuth allowedRoles={[UserRole.FINANCIAL]} />}>
-    <Route element={<MainLayout />}>
+    <Route element={<MainLayout><Outlet /></MainLayout>}>
       {/* Financial-specific pages */}
       <Route 
         path={PATHS.FINANCIAL.DASHBOARD} 

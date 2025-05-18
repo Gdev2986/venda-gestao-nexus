@@ -2,8 +2,13 @@
 import { FormField, FormItem, FormLabel, FormControl, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { FormMaskedInput } from "./FormMaskedInput";
+import { UseFormReturn } from "react-hook-form";
 
-const ContactInfoFields = ({ form }) => {
+interface ContactInfoFieldsProps {
+  form: UseFormReturn<any>;
+}
+
+const ContactInfoFields = ({ form }: ContactInfoFieldsProps) => {
   return (
     <>
       <FormField
@@ -42,9 +47,11 @@ const ContactInfoFields = ({ form }) => {
             <FormLabel>Telefone</FormLabel>
             <FormControl>
               <FormMaskedInput
+                control={form.control}
+                name="phone"
+                label="Telefone"
                 mask="(99) 99999-9999"
                 placeholder="(00) 00000-0000"
-                {...field}
               />
             </FormControl>
             <FormMessage />

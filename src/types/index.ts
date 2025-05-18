@@ -57,6 +57,7 @@ export enum NotificationType {
 }
 
 // Re-export other types but avoid re-exporting the ambiguous types
-export type { Client, PixKeyType } from './payment.types';
+export type { Client } from './payment.types';
+export type { PixKeyType } from './payment.types';
 export { PaymentRequest, Payment, PixKey } from './payment.types';
 export * from './enums';
