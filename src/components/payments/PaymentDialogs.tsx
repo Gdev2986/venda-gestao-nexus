@@ -2,7 +2,8 @@
 import { ApprovePaymentDialog } from "@/components/payments/ApprovePaymentDialog";
 import { RejectPaymentDialog } from "@/components/payments/RejectPaymentDialog";
 import { PaymentDetailsDialog } from "@/components/payments/PaymentDetailsDialog";
-import { Payment, PaymentRequest } from "@/types/payment.types";
+import { Payment } from "@/types/payment.types";
+import { PaymentStatus } from "@/types/enums";
 
 interface PaymentDialogsProps {
   selectedPayment: Payment | null;
@@ -44,7 +45,7 @@ export const PaymentDialogs = ({
           <ApprovePaymentDialog
             open={approveDialogOpen}
             onOpenChange={setApproveDialogOpen}
-            payment={selectedPayment}
+            payment={selectedPayment as any} // Cast for type compatibility
             onApprove={handleApprovePayment}
             isProcessing={isProcessing}
           />
@@ -52,7 +53,7 @@ export const PaymentDialogs = ({
           <RejectPaymentDialog
             open={rejectDialogOpen}
             onOpenChange={setRejectDialogOpen}
-            payment={selectedPayment}
+            payment={selectedPayment as any} // Cast for type compatibility
             onReject={handleRejectPayment}
             isProcessing={isProcessing}
           />

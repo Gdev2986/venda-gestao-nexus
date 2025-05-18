@@ -1,7 +1,7 @@
 
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { PaymentRequest, Payment } from "@/types/payment.types";
+import { Payment } from "@/types/payment.types";
 import { Badge } from "@/components/ui/badge";
 import {
   Table,
@@ -86,7 +86,7 @@ export const AdminPaymentsList = ({
                   )}
                 </TableCell>
                 <TableCell className="text-right">
-                  <Button variant="outline" size="sm" onClick={() => onView(payment)}>
+                  <Button variant="outline" size="sm" onClick={() => onView(payment as any)}>
                     Visualizar
                   </Button>
                 </TableCell>

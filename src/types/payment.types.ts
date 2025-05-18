@@ -62,5 +62,5 @@ export interface PaymentRequest {
   type?: string;
 }
 
-// Payment type is an alias for PaymentRequest to maintain compatibility but with required fields
+// Payment type is an alias for PaymentRequest for compatibility
 export type Payment = PaymentRequest;
