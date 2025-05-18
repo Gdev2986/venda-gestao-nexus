@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -11,13 +12,8 @@ import { Badge } from "@/components/ui/badge";
 import { Link } from "react-router-dom";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { useMediaQuery } from "@/hooks/use-media-query";
-import MachineTransferForm from "@/components/logistics/machines/MachineTransferForm";
+import { MachineTransferForm } from "@/components/logistics/machines/MachineTransferForm";
 import { supabase } from "@/integrations/supabase/client";
-
-interface MachineTransferDialogProps {
-  machine: Machine;
-  onTransferComplete: () => void;
-}
 
 export default function MachineRegistrationTable() {
   const [machines, setMachines] = useState<Machine[]>([]);
@@ -53,7 +49,12 @@ export default function MachineRegistrationTable() {
     setIsLoading(true);
     try {
       const data = await fetchMachines();
-      setMachines(data);
+      // Cast fetched data to Machine[] to ensure type safety
+      const typedMachines = data.map(m => ({
+        ...m,
+        status: m.status as MachineStatus
+      })) as Machine[];
+      setMachines(typedMachines);
     } catch (error) {
       console.error("Error loading machines:", error);
       toast({
@@ -89,7 +90,7 @@ export default function MachineRegistrationTable() {
   const handleStatusChange = async (id: string, status: string) => {
     try {
       await updateMachine(id, { status: status as MachineStatus });
-      setMachines(machines.map(m => m.id === id ? { ...m, status } : m));
+      setMachines(machines.map(m => m.id === id ? { ...m, status: status as MachineStatus } : m));
       toast({
         title: "Status atualizado com sucesso",
         variant: "default",
@@ -109,7 +110,7 @@ export default function MachineRegistrationTable() {
     setOpenTransferDialog(true);
   };
 
-  const getStatusBadge = (status: string) => {
+  const getStatusBadge = (status: MachineStatus) => {
     switch (status) {
       case MachineStatus.ACTIVE:
         return <Badge className="bg-green-500 hover:bg-green-600">Ativo</Badge>;
@@ -195,7 +196,7 @@ export default function MachineRegistrationTable() {
                     <Select defaultValue={machine.status} onValueChange={(value) => handleStatusChange(machine.id, value)}>
                       <SelectTrigger className="w-[140px] h-8">
                         <SelectValue>
-                          {getStatusBadge(machine.status)}
+                          {getStatusBadge(machine.status as MachineStatus)}
                         </SelectValue>
                       </SelectTrigger>
                       <SelectContent>
@@ -270,7 +271,7 @@ export default function MachineRegistrationTable() {
           </DialogHeader>
           
           {selectedMachine && (
-            <MachineTransferForm 
+            <MachineTransferForm
               machineId={selectedMachine.id}
               machineName={selectedMachine.serial_number}
               currentClientId={selectedMachine.client_id}

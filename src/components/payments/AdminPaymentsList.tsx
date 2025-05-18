@@ -43,7 +43,7 @@ export function AdminPaymentsList({
   selectedStatus,
   onActionClick
 }: PaymentsProps) {
-  const [selectedPayment, setSelectedPayment] = useState<PaymentRequest | Payment | null>(null);
+  const [selectedPayment, setSelectedPayment] = useState<Payment | null>(null);
   const [approveDialogOpen, setApproveDialogOpen] = useState(false);
   const [rejectDialogOpen, setRejectDialogOpen] = useState(false);
   const [detailsDialogOpen, setDetailsDialogOpen] = useState(false);
@@ -51,18 +51,33 @@ export function AdminPaymentsList({
   const { toast } = useToast();
   const isMobile = useMediaQuery("(max-width: 768px)");
 
-  const handleApproveClick = (payment: PaymentRequest | Payment) => {
-    setSelectedPayment(payment);
+  const handleApproveClick = (payment: Payment | PaymentRequest) => {
+    // Ensure payment has the required properties for Payment type
+    const paymentWithRequiredProps: Payment = {
+      ...payment as any,
+      rejection_reason: payment.rejection_reason || null
+    };
+    setSelectedPayment(paymentWithRequiredProps);
     setApproveDialogOpen(true);
   };
 
-  const handleRejectClick = (payment: PaymentRequest | Payment) => {
-    setSelectedPayment(payment);
+  const handleRejectClick = (payment: Payment | PaymentRequest) => {
+    // Ensure payment has the required properties for Payment type
+    const paymentWithRequiredProps: Payment = {
+      ...payment as any,
+      rejection_reason: payment.rejection_reason || null
+    };
+    setSelectedPayment(paymentWithRequiredProps);
     setRejectDialogOpen(true);
   };
 
-  const handleViewClick = (payment: PaymentRequest | Payment) => {
-    setSelectedPayment(payment);
+  const handleViewClick = (payment: Payment | PaymentRequest) => {
+    // Ensure payment has the required properties for Payment type
+    const paymentWithRequiredProps: Payment = {
+      ...payment as any,
+      rejection_reason: payment.rejection_reason || null
+    };
+    setSelectedPayment(paymentWithRequiredProps);
     setDetailsDialogOpen(true);
   };
 
@@ -79,7 +94,8 @@ export function AdminPaymentsList({
       setApproveDialogOpen(false);
       toast({
         title: "Pagamento aprovado",
-        description: "O pagamento foi aprovado com sucesso."
+        description: "O pagamento foi aprovado com sucesso",
+        variant: "default"
       });
     } catch (error) {
       console.error("Error approving payment:", error);
@@ -106,7 +122,8 @@ export function AdminPaymentsList({
       setRejectDialogOpen(false);
       toast({
         title: "Pagamento rejeitado",
-        description: "O pagamento foi rejeitado com sucesso."
+        description: "O pagamento foi rejeitado com sucesso",
+        variant: "default"
       });
     } catch (error) {
       console.error("Error rejecting payment:", error);
@@ -183,7 +200,7 @@ export function AdminPaymentsList({
                 const paymentForActions = {
                   ...payment,
                   description: payment.description || ""
-                } as PaymentRequest;
+                } as Payment;
                 
                 return (
                   <TableRow key={payment.id}>

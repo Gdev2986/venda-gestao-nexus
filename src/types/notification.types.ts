@@ -1,18 +1,5 @@
 
-export type NotificationType = 
-  | 'PAYMENT_REQUEST'
-  | 'PAYMENT_APPROVED'
-  | 'PAYMENT_REJECTED'
-  | 'NEW_CLIENT'
-  | 'SYSTEM'
-  | 'SUPPORT'
-  | 'PAYMENT'
-  | 'BALANCE'
-  | 'MACHINE'
-  | 'COMMISSION'
-  | 'GENERAL'
-  | 'SALE'
-  | 'ADMIN_NOTIFICATION';
+import { NotificationType } from "@/types/enums";
 
 export interface Notification {
   id: string;

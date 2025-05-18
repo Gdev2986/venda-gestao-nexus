@@ -1,65 +1,64 @@
 
-import { PaymentData } from '@/hooks/payments/payment.types';
-import { Payment, PaymentStatus } from '@/types';
+import { PixKey, Payment, PaymentRequest } from '@/types/payment.types';
 
-export const convertPaymentToTableFormat = (payment: PaymentData) => {
-  return {
-    id: payment.id,
-    client: payment.client?.business_name || 'Cliente não especificado',
-    amount: payment.amount,
-    date: payment.created_at,
-    status: payment.status,
-    pix_key: payment.pix_key_id || '',
-    receipt_url: payment.receipt_url,
-    description: payment.description
-  };
-};
-
-export const convertToCSVFormat = (payments: PaymentData[]) => {
-  return payments.map(payment => ({
-    ID: payment.id,
-    Cliente: payment.client?.business_name || 'N/A',
-    Valor: `R$ ${payment.amount.toFixed(2)}`.replace('.', ','),
-    'Data Solicitação': formatDate(payment.created_at),
-    Status: formatStatus(payment.status),
-    'Chave PIX': payment.pix_key_id || 'N/A',
-    Descrição: payment.description || 'N/A'
-  }));
-};
-
-// Update the payment to payment request conversion
-export const convertToPaymentRequest = (payment: Payment): PaymentData => {
-  return {
+/**
+ * Converts payment data from the database to a consistent format
+ * for use in components. This normalizes the structure between different parts
+ * of the application.
+ */
+export const convertPayment = (payment: any): Payment => {
+  if (!payment) {
+    throw new Error('Invalid payment data provided to converter');
+  }
+  
+  // Ensure all required fields are present
+  const normalizedPayment: Payment = {
     id: payment.id,
     client_id: payment.client_id,
     amount: payment.amount,
-    description: payment.description || '',
-    status: payment.status as PaymentStatus,
-    pix_key_id: payment.pix_key?.id || '',
+    status: payment.status,
     created_at: payment.created_at,
     updated_at: payment.updated_at,
-    approved_at: payment.approved_at || null,
+    approved_at: payment.approved_at,
     approved_by: payment.approved_by || null,
     receipt_url: payment.receipt_url || null,
-    rejection_reason: payment.rejection_reason,
-    client: payment.client,
-    pix_key: payment.pix_key
+    description: payment.description || '',
+    rejection_reason: payment.rejection_reason || null,
+    payment_type: payment.payment_type,
+    pix_key_id: payment.pix_key_id,
+    client: payment.client || undefined,
+    client_name: payment.client?.business_name || payment.client_name || 'Desconhecido'
   };
+
+  // Handle pix_key with owner_name issue
+  if (payment.pix_key) {
+    const pixKey: PixKey = {
+      id: payment.pix_key.id,
+      key: payment.pix_key.key,
+      type: payment.pix_key.type,
+      name: payment.pix_key.name || '',
+      owner_name: payment.pix_key.owner_name || payment.pix_key.name || '',
+      is_default: payment.pix_key.is_default,
+      user_id: payment.pix_key.user_id,
+      created_at: payment.pix_key.created_at,
+      updated_at: payment.pix_key.updated_at,
+      bank_name: payment.pix_key.bank_name,
+      key_type: payment.pix_key.key_type,
+      is_active: payment.pix_key.is_active
+    };
+    
+    normalizedPayment.pix_key = pixKey;
+  }
+
+  return normalizedPayment;
 };
 
-const formatDate = (dateString: string) => {
-  const date = new Date(dateString);
-  return date.toLocaleDateString('pt-BR') + ' ' + date.toLocaleTimeString('pt-BR');
-};
-
-const formatStatus = (status: string) => {
-  const statusMap: Record<string, string> = {
-    'PENDING': 'Pendente',
-    'PROCESSING': 'Processando',
-    'APPROVED': 'Aprovado',
-    'REJECTED': 'Rejeitado',
-    'PAID': 'Pago'
+/**
+ * Convert PaymentRequest to Payment
+ */
+export const convertRequestToPayment = (request: PaymentRequest): Payment => {
+  return {
+    ...request,
+    rejection_reason: request.rejection_reason || null
   };
-  
-  return statusMap[status] || status;
 };

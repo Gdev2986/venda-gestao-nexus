@@ -1,7 +1,7 @@
 
 import { PaymentStatus } from "@/types/enums";
 import { Client, PixKey } from "@/types";
-import { PaymentRequest as BasePaymentRequest, Payment } from "@/types/payment.types";
+import { PaymentRequest as BasePaymentRequest, Payment as BasePayment } from "@/types/payment.types";
 
 // Update to use PaymentStatus enum
 export type PaymentRequestStatus = PaymentStatus;
@@ -21,4 +21,4 @@ export interface PaymentRequest extends BasePaymentRequest {
 export type PixKeyType = 'CPF' | 'CNPJ' | 'EMAIL' | 'PHONE' | 'EVP';
 
 // Make PaymentData type compatible with both systems
-export type PaymentData = Payment;
+export type PaymentData = BasePayment;

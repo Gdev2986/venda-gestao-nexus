@@ -42,21 +42,15 @@ export function BalanceUpdateDialog({
     
     const finalAmount = updateType === "ADD" ? parseFloat(amount) : -parseFloat(amount);
     
-    const success = await updateBalance({
-      clientId: client.id,
-      amount: finalAmount,
-      reason: reason
-    });
+    await updateBalance(client.id, finalAmount, reason);
     
-    if (success && onSuccess) {
+    onOpenChange(false);
+    setAmount("");
+    setReason("");
+    setUpdateType("ADD");
+    
+    if (onSuccess) {
       onSuccess();
-    }
-    
-    if (success) {
-      onOpenChange(false);
-      setAmount("");
-      setReason("");
-      setUpdateType("ADD");
     }
   };
 

@@ -1,309 +1,226 @@
 
-import { supabase } from "@/integrations/supabase/client";
+import { supabase } from '@/integrations/supabase/client';
 import { 
   Machine, 
   MachineCreateParams, 
-  MachineUpdateParams,
-  MachineStatus,
+  MachineUpdateParams, 
   MachineTransferParams,
+  MachineStatus,
   MachineStats
-} from "@/types/machine.types";
+} from '@/types/machine.types';
 
 /**
- * Fetch all machines
+ * Get all machines with client information
  */
-export const getAllMachines = async (): Promise<Machine[]> => {
-  return fetchMachines();
-};
+export const fetchMachines = async () => {
+  const { data, error } = await supabase
+    .from('machines')
+    .select(`
+      id,
+      serial_number,
+      model,
+      status,
+      client_id,
+      created_at,
+      updated_at,
+      client:clients (
+        id,
+        business_name
+      )
+    `)
+    .order('serial_number', { ascending: true });
 
-/**
- * Fetch all machines
- */
-export const fetchMachines = async (): Promise<Machine[]> => {
-  try {
-    const { data, error } = await supabase
-      .from("machines")
-      .select(`
-        *,
-        client:clients(id, business_name)
-      `)
-      .order("created_at", { ascending: false });
-
-    if (error) throw error;
-    
-    // Map the response to ensure status is MachineStatus
-    const machines: Machine[] = (data || []).map(item => ({
-      ...item,
-      status: item.status as MachineStatus
-    }));
-    
-    return machines;
-  } catch (error) {
-    console.error("Error fetching machines:", error);
-    throw error;
+  if (error) {
+    throw new Error(error.message);
   }
+
+  return data || [];
 };
 
 /**
- * Fetch machines by status
+ * Get machine statistics
+ * Returns count of machines by status
  */
-export const getMachinesByStatus = async (status: MachineStatus): Promise<Machine[]> => {
-  return fetchMachinesByStatus(status);
-};
+export const getMachineStats = async (): Promise<MachineStats> => {
+  const { data, error } = await supabase
+    .from('machines')
+    .select('status');
 
-/**
- * Fetch machines by status
- */
-export const fetchMachinesByStatus = async (status: MachineStatus): Promise<Machine[]> => {
-  try {
-    const { data, error } = await supabase
-      .from("machines")
-      .select(`
-        *,
-        client:clients(id, business_name)
-      `)
-      .eq("status", status)
-      .order("created_at", { ascending: false });
-
-    if (error) throw error;
-    
-    // Map the response to ensure status is MachineStatus
-    const machines: Machine[] = (data || []).map(item => ({
-      ...item,
-      status: item.status as MachineStatus
-    }));
-    
-    return machines;
-  } catch (error) {
-    console.error(`Error fetching machines with status ${status}:`, error);
-    throw error;
+  if (error) {
+    throw new Error(error.message);
   }
+
+  const total = data.length;
+  const byStatus = data.reduce((acc: Record<string, number>, machine) => {
+    acc[machine.status] = (acc[machine.status] || 0) + 1;
+    return acc;
+  }, {});
+
+  const stock = byStatus[MachineStatus.STOCK] || 0;
+  const inUse = total - stock;
+
+  return {
+    total,
+    stock,
+    withClients: inUse,
+    byStatus
+  };
 };
 
 /**
- * Fetch machines by client
+ * Get machines by client ID
  */
-export const fetchMachinesByClient = async (clientId: string): Promise<Machine[]> => {
-  try {
-    const { data, error } = await supabase
-      .from("machines")
-      .select(`
-        *,
-        client:clients(id, business_name)
-      `)
-      .eq("client_id", clientId)
-      .order("created_at", { ascending: false });
+export const getMachinesByClient = async (clientId: string) => {
+  const { data, error } = await supabase
+    .from('machines')
+    .select('*')
+    .eq('client_id', clientId);
 
-    if (error) throw error;
-    return data || [];
-  } catch (error) {
-    console.error(`Error fetching machines for client ${clientId}:`, error);
-    throw error;
+  if (error) {
+    throw new Error(error.message);
   }
+
+  return data || [];
 };
 
 /**
  * Create a new machine
  */
-export const createMachine = async (machine: MachineCreateParams): Promise<Machine> => {
-  try {
-    const { data, error } = await supabase
-      .from("machines")
-      .insert({
-        serial_number: machine.serial_number,
-        model: machine.model,
-        status: machine.status,
-        client_id: machine.client_id || null
-      })
-      .select()
-      .single();
+export const createMachine = async (machine: MachineCreateParams) => {
+  // Cast string to enum for type safety
+  const { data, error } = await supabase
+    .from('machines')
+    .insert({
+      serial_number: machine.serial_number,
+      model: machine.model,
+      status: machine.status as unknown as string,
+      client_id: machine.client_id
+    })
+    .select()
+    .single();
 
-    if (error) throw error;
-    return { ...data, status: data.status as MachineStatus };
-  } catch (error) {
-    console.error("Error creating machine:", error);
-    throw error;
+  if (error) {
+    throw new Error(error.message);
   }
+
+  return data;
 };
 
 /**
  * Update a machine
  */
-export const updateMachine = async (
-  machineId: string,
-  updates: MachineUpdateParams
-): Promise<Machine> => {
-  try {
-    const updateData: any = {};
-    if (updates.model !== undefined) updateData.model = updates.model;
-    if (updates.serial_number !== undefined) updateData.serial_number = updates.serial_number;
-    if (updates.status !== undefined) updateData.status = updates.status;
-    if (updates.client_id !== undefined) updateData.client_id = updates.client_id;
-    
-    const { data, error } = await supabase
-      .from("machines")
-      .update(updateData)
-      .eq("id", machineId)
-      .select()
-      .single();
+export const updateMachine = async (id: string, updates: MachineUpdateParams) => {
+  // Cast string to enum for type safety
+  const { data, error } = await supabase
+    .from('machines')
+    .update({
+      ...updates,
+      status: updates.status as unknown as string
+    })
+    .eq('id', id)
+    .select()
+    .single();
 
-    if (error) throw error;
-    return { ...data, status: data.status as MachineStatus };
-  } catch (error) {
-    console.error(`Error updating machine ${machineId}:`, error);
-    throw error;
+  if (error) {
+    throw new Error(error.message);
   }
+
+  return data;
 };
 
 /**
  * Delete a machine
  */
-export const deleteMachine = async (machineId: string): Promise<void> => {
-  try {
-    const { error } = await supabase
-      .from("machines")
-      .delete()
-      .eq("id", machineId);
+export const deleteMachine = async (id: string) => {
+  const { error } = await supabase
+    .from('machines')
+    .delete()
+    .eq('id', id);
 
-    if (error) throw error;
-  } catch (error) {
-    console.error(`Error deleting machine ${machineId}:`, error);
-    throw error;
+  if (error) {
+    throw new Error(error.message);
   }
+
+  return true;
 };
 
 /**
- * Transfer machine between clients
+ * Transfer a machine between clients
  */
-export const transferMachine = async (params: MachineTransferParams): Promise<void> => {
-  try {
-    // First, update the machine client_id
-    const status = params.to_client_id === "stock" ? MachineStatus.STOCK : MachineStatus.ACTIVE;
-    const clientId = params.to_client_id === "stock" ? null : params.to_client_id;
-    
-    const { error: updateError } = await supabase
-      .from("machines")
-      .update({ 
-        client_id: clientId,
-        status: status
-      })
-      .eq("id", params.machine_id);
+export const transferMachine = async (params: MachineTransferParams) => {
+  const { machine_id, from_client_id, to_client_id, created_by } = params;
+  
+  // Start a transaction by using the rpc method
+  const { error: transferError } = await supabase.rpc('transfer_machine', {
+    p_machine_id: machine_id,
+    p_from_client_id: from_client_id || null,
+    p_to_client_id: to_client_id === 'stock' ? null : to_client_id,
+    p_created_by: created_by,
+  });
 
-    if (updateError) throw updateError;
-
-    // Log the transfer
-    const { error: logError } = await supabase
-      .from("machine_transfers")
-      .insert({
-        machine_id: params.machine_id,
-        from_client_id: params.from_client_id,
-        to_client_id: params.to_client_id,
-        transfer_date: params.transfer_date || new Date().toISOString(),
-        created_by: params.created_by
-      });
-
-    if (logError) throw logError;
-  } catch (error) {
-    console.error(`Error transferring machine ${params.machine_id}:`, error);
-    throw error;
+  if (transferError) {
+    throw new Error(transferError.message);
   }
+
+  // Update machine status based on the transfer
+  let newStatus: MachineStatus;
+  
+  if (to_client_id === 'stock') {
+    newStatus = MachineStatus.STOCK;
+  } else {
+    newStatus = MachineStatus.ACTIVE;
+  }
+  
+  const { error: updateError } = await supabase
+    .from('machines')
+    .update({
+      status: newStatus as unknown as string,
+      client_id: to_client_id === 'stock' ? null : to_client_id,
+    })
+    .eq('id', machine_id);
+
+  if (updateError) {
+    throw new Error(updateError.message);
+  }
+
+  return true;
 };
 
 /**
- * Get machine statistics
+ * Get a machine by ID
  */
-export const getMachineStats = async (): Promise<MachineStats> => {
-  try {
-    // Get total machines
-    const { count: total, error: totalError } = await supabase
-      .from("machines")
-      .select("*", { count: "exact", head: true });
+export const getMachineById = async (id: string) => {
+  const { data, error } = await supabase
+    .from('machines')
+    .select(`
+      *,
+      client:clients (
+        id,
+        business_name
+      )
+    `)
+    .eq('id', id)
+    .single();
 
-    if (totalError) throw totalError;
-
-    // Get machines in stock
-    const { count: stock, error: stockError } = await supabase
-      .from("machines")
-      .select("*", { count: "exact", head: true })
-      .eq("status", "STOCK");
-
-    if (stockError) throw stockError;
-
-    // Get machines with clients
-    const { count: withClients, error: clientsError } = await supabase
-      .from("machines")
-      .select("*", { count: "exact", head: true })
-      .not("client_id", "is", null);
-
-    if (clientsError) throw clientsError;
-
-    // Get machines by status
-    const { data: statusCounts, error: statusError } = await supabase
-      .from("machines")
-      .select("status")
-      .not("status", "is", null);
-
-    if (statusError) throw statusError;
-
-    // Count machines by status
-    const byStatus: Record<string, number> = {};
-    statusCounts.forEach((machine) => {
-      const status = machine.status as string;
-      byStatus[status] = (byStatus[status] || 0) + 1;
-    });
-
-    return {
-      total: total || 0,
-      stock: stock || 0,
-      withClients: withClients || 0,
-      byStatus
-    };
-  } catch (error) {
-    console.error("Error getting machine statistics:", error);
-    throw error;
+  if (error) {
+    throw new Error(error.message);
   }
+
+  return data;
 };
 
 /**
- * Get clients with machines
+ * Get machines in stock
  */
-export const getClientsWithMachines = async (): Promise<any[]> => {
-  try {
-    const { data, error } = await supabase
-      .from("machines")
-      .select(`
-        client_id,
-        client:clients(id, business_name),
-        status
-      `)
-      .not("client_id", "is", null);
+export const getMachinesInStock = async () => {
+  const { data, error } = await supabase
+    .from('machines')
+    .select('*')
+    .is('client_id', null);
 
-    if (error) throw error;
-    
-    // Process data to get clients with machine counts
-    const clientsMap = new Map();
-    
-    data.forEach(machine => {
-      if (machine.client_id && machine.client) {
-        const clientId = machine.client_id;
-        
-        if (!clientsMap.has(clientId)) {
-          clientsMap.set(clientId, {
-            id: clientId,
-            business_name: machine.client.business_name,
-            machineCount: 1,
-            predominantStatus: machine.status
-          });
-        } else {
-          const client = clientsMap.get(clientId);
-          client.machineCount += 1;
-        }
-      }
-    });
-    
-    return Array.from(clientsMap.values());
-  } catch (error) {
-    console.error("Error fetching clients with machines:", error);
-    throw error;
+  if (error) {
+    throw new Error(error.message);
   }
+
+  return data || [];
 };

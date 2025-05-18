@@ -18,8 +18,8 @@ export const phoneMask = (value: string): string => {
   }
 };
 
-// Mask for CPF (Brazilian individual taxpayer registry)
-export const cpfMask = (value: string): string => {
+// For PixKeyForm component
+export const maskCPF = (value: string): string => {
   if (!value) return '';
   
   const numericValue = value.replace(/\D/g, '');
@@ -35,8 +35,7 @@ export const cpfMask = (value: string): string => {
   }
 };
 
-// Mask for CNPJ (Brazilian company taxpayer registry)
-export const cnpjMask = (value: string): string => {
+export const maskCNPJ = (value: string): string => {
   if (!value) return '';
   
   const numericValue = value.replace(/\D/g, '');
@@ -53,6 +52,9 @@ export const cnpjMask = (value: string): string => {
     return `${numericValue.substring(0, 2)}.${numericValue.substring(2, 5)}.${numericValue.substring(5, 8)}/${numericValue.substring(8, 12)}-${numericValue.substring(12, 14)}`;
   }
 };
+
+// Alias for phone mask to match function name in PixKeyForm
+export const maskPhoneNumber = phoneMask;
 
 // Mask for CEP (Brazilian postal code)
 export const cepMask = (value: string): string => {

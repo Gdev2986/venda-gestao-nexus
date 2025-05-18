@@ -10,9 +10,9 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { toast } from "@/hooks/use-toast";
+import { useToast } from "@/hooks/use-toast";
 import { Loader2, Plus, X } from "lucide-react";
-import { maskCPF, maskCNPJ, maskPhoneNumber } from "@/lib/masks";
+import { phoneMask, cpfMask, cnpjMask } from "@/lib/masks";
 
 interface PixKeyFormProps {
   onSubmit: (data: {
@@ -54,11 +54,11 @@ export function PixKeyForm({
     // Apply appropriate mask based on keyType
     let maskedValue = value;
     if (keyType === "CPF") {
-      maskedValue = maskCPF(value);
+      maskedValue = cpfMask(value);
     } else if (keyType === "CNPJ") {
-      maskedValue = maskCNPJ(value);
+      maskedValue = cnpjMask(value);
     } else if (keyType === "PHONE") {
-      maskedValue = maskPhoneNumber(value);
+      maskedValue = phoneMask(value);
     }
     
     setKeyValue(maskedValue);

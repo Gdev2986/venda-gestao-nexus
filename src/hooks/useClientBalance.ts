@@ -23,25 +23,7 @@ export function useClientBalance(clientId?: string): UseClientBalanceReturn {
 
     setIsLoading(true);
     try {
-      // Option 1: Using view (if available)
-      try {
-        const { data, error } = await supabase
-          .from("vw_client_balance")
-          .select("balance")
-          .eq("client_id", clientId)
-          .single();
-
-        if (!error && data) {
-          setBalance(data.balance || 0);
-          setIsLoading(false);
-          return;
-        }
-      } catch (e) {
-        // View doesn't exist, continue to option 2
-        console.log("vw_client_balance not available, falling back to clients table");
-      }
-
-      // Option 2: Get directly from clients table
+      // Get directly from clients table
       const { data, error } = await supabase
         .from("clients")
         .select("balance")
@@ -99,6 +81,7 @@ export function useClientBalance(clientId?: string): UseClientBalanceReturn {
         description: amount > 0 
           ? `Valor adicionado ao saldo: ${amount.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}` 
           : `Valor debitado do saldo: ${Math.abs(amount).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}`,
+        variant: "default"
       });
       
     } catch (error) {

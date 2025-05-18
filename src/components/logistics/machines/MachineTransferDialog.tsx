@@ -30,12 +30,6 @@ export function MachineTransferDialog({
     onOpenChange(false);
   };
 
-  const machine = {
-    id: machineId,
-    serial_number: machineName,
-    model: "Unknown Model" // Add a default model if not available
-  };
-
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-md">
@@ -44,8 +38,9 @@ export function MachineTransferDialog({
         </DialogHeader>
 
         <MachineTransferForm 
-          machine={machine}
-          currentClient={currentClientId}
+          machineId={machineId}
+          machineName={machineName}
+          currentClientId={currentClientId}
           onTransferComplete={handleTransferComplete}
         />
       </DialogContent>

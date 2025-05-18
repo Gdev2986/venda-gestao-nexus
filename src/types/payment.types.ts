@@ -1,17 +1,5 @@
 
-export enum PaymentStatus {
-  PENDING = "PENDING",
-  PROCESSING = "PROCESSING",
-  APPROVED = "APPROVED",
-  REJECTED = "REJECTED",
-  PAID = "PAID"
-}
-
-export enum PaymentType {
-  PIX = "PIX",
-  TED = "TED",
-  BOLETO = "BOLETO"
-}
+import { PaymentStatus, PaymentType } from "@/types/enums";
 
 export type PixKeyType = 'CPF' | 'CNPJ' | 'EMAIL' | 'PHONE' | 'EVP' | 'RANDOM';
 
@@ -61,7 +49,8 @@ export interface PaymentRequest {
   type?: string;
 }
 
-export interface Payment extends PaymentRequest {
+export interface Payment extends Omit<PaymentRequest, 'rejection_reason'> {
   rejection_reason: string | null;
   client_name?: string;
+  pix_key?: PixKey;
 }

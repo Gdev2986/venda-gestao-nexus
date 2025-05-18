@@ -14,6 +14,7 @@ import { Payment } from "@/types/payment.types";
 import { PaymentNotifications } from "@/components/payments/PaymentNotifications";
 import { SendReceiptDialog } from "@/components/payments/SendReceiptDialog";
 import { useMediaQuery } from "@/hooks/use-media-query";
+import { convertRequestToPayment } from "@/components/payments/payment-list/PaymentConverter";
 
 const AdminPayments = () => {
   const [searchTerm, setSearchTerm] = useState("");
@@ -66,7 +67,9 @@ const AdminPayments = () => {
     const payment = payments.find(p => p.id === paymentId);
     if (!payment) return;
     
-    setSelectedPayment(payment);
+    // Ensure payment is properly converted to match the expected Payment type
+    const typedPayment = convertRequestToPayment(payment);
+    setSelectedPayment(typedPayment);
     
     if (action === PaymentAction.APPROVE) {
       setIsApproveDialogOpen(true);
@@ -148,50 +151,40 @@ const AdminPayments = () => {
         </TabsContent>
       </Tabs>
       
-      {/* Diálogo de Detalhes do Pagamento */}
+      {/* Dialogs for payment actions */}
       {selectedPayment && (
-        <PaymentDetailsDialog
-          open={isDetailsDialogOpen}
-          onOpenChange={setIsDetailsDialogOpen}
-          payment={selectedPayment}
-        />
+        <>
+          <PaymentDetailsDialog
+            open={isDetailsDialogOpen}
+            onOpenChange={setIsDetailsDialogOpen}
+            payment={selectedPayment}
+          />
+          
+          <ApprovePaymentDialog
+            open={isApproveDialogOpen}
+            onOpenChange={setIsApproveDialogOpen}
+            payment={selectedPayment}
+            onApprove={handleApprovePayment}
+            isProcessing={false}
+          />
+          
+          <RejectPaymentDialog
+            open={isRejectDialogOpen}
+            onOpenChange={setIsRejectDialogOpen}
+            payment={selectedPayment}
+            onReject={handleRejectPayment}
+            isProcessing={false}
+          />
+          
+          <SendReceiptDialog
+            open={isSendReceiptDialogOpen}
+            onOpenChange={setIsSendReceiptDialogOpen}
+            payment={selectedPayment}
+            onSend={handleSendReceipt}
+            isProcessing={false}
+          />
+        </>
       )}
-      
-      {/* Diálogo de Aprovação de Pagamento */}
-      {selectedPayment && (
-        <ApprovePaymentDialog
-          open={isApproveDialogOpen}
-          onOpenChange={setIsApproveDialogOpen}
-          payment={selectedPayment}
-          onApprove={handleApprovePayment}
-          isProcessing={false}
-        />
-      )}
-      
-      {/* Diálogo de Rejeição de Pagamento */}
-      {selectedPayment && (
-        <RejectPaymentDialog
-          open={isRejectDialogOpen}
-          onOpenChange={setIsRejectDialogOpen}
-          payment={selectedPayment}
-          onReject={handleRejectPayment}
-          isProcessing={false}
-        />
-      )}
-
-      {/* Diálogo de Envio de Comprovante */}
-      {selectedPayment && (
-        <SendReceiptDialog
-          open={isSendReceiptDialogOpen}
-          onOpenChange={setIsSendReceiptDialogOpen}
-          payment={selectedPayment}
-          onSendReceipt={handleSendReceipt}
-          isProcessing={false}
-        />
-      )}
-      
-      {/* Componente para ouvir notificações de pagamentos em tempo real */}
-      <PaymentNotifications refreshPayments={refetch} />
     </div>
   );
 };

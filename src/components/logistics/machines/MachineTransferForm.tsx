@@ -17,7 +17,7 @@ import { Client } from "@/types";
 import { supabase } from "@/integrations/supabase/client";
 import { Loader2 } from "lucide-react";
 
-interface MachineTransferFormProps {
+export interface MachineTransferFormProps {
   machineId: string;
   machineName: string;
   currentClientId?: string | null;
@@ -89,7 +89,8 @@ export function MachineTransferForm({
 
       toast({
         title: "Transferência concluída",
-        description: `Máquina ${machineName} transferida com sucesso`
+        description: `Máquina ${machineName} transferida com sucesso`,
+        variant: "default"
       });
       
       onTransferComplete();

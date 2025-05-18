@@ -39,12 +39,22 @@ export const PaymentDialogs = ({
 }: PaymentDialogsProps) => {
   if (!selectedPayment) return null;
   
+  // Convert selectedPayment to match the type expected by child components
+  const paymentData: any = {
+    ...selectedPayment,
+    rejection_reason: selectedPayment.rejection_reason || null,
+    pix_key: selectedPayment.pix_key ? {
+      ...selectedPayment.pix_key,
+      owner_name: selectedPayment.pix_key.owner_name || selectedPayment.pix_key.name || ''
+    } : undefined
+  };
+  
   return (
     <>
       <ApprovePaymentDialog
         open={approveDialogOpen}
         onOpenChange={setApproveDialogOpen}
-        payment={selectedPayment}
+        payment={paymentData}
         onApprove={handleApprovePayment}
         isProcessing={isProcessing}
       />
@@ -52,7 +62,7 @@ export const PaymentDialogs = ({
       <RejectPaymentDialog
         open={rejectDialogOpen}
         onOpenChange={setRejectDialogOpen}
-        payment={selectedPayment}
+        payment={paymentData}
         onReject={handleRejectPayment}
         isProcessing={isProcessing}
       />
@@ -60,7 +70,7 @@ export const PaymentDialogs = ({
       <PaymentDetailsDialog
         open={detailsDialogOpen}
         onOpenChange={setDetailsDialogOpen}
-        payment={selectedPayment}
+        payment={paymentData}
       />
     </>
   );
