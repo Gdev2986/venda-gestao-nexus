@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { z } from "zod";
 import { useForm } from "react-hook-form";
@@ -108,16 +109,19 @@ const CreateMachineDialog = ({
     
     try {
       // Determine machine status based on client selection
-      const status = values.client_id 
+      const status = values.client_id && values.client_id !== "none_stock"
         ? MachineStatus.ACTIVE  // If client is selected, machine is active
         : MachineStatus.STOCK;  // If no client, machine is in stock
+      
+      // Fix the client_id value
+      const clientId = values.client_id === "none_stock" ? undefined : values.client_id;
       
       if (isEditMode && machine) {
         // Update existing machine
         const updateData: MachineUpdateParams = {
           serial_number: values.serial_number,
           model: values.model,
-          client_id: values.client_id || null,
+          client_id: clientId || null,
           status,
           notes: values.notes
         };
@@ -133,7 +137,7 @@ const CreateMachineDialog = ({
         const createData: MachineCreateParams = {
           serial_number: values.serial_number,
           model: values.model,
-          client_id: values.client_id,
+          client_id: clientId,
           status,
           notes: values.notes
         };
@@ -155,6 +159,7 @@ const CreateMachineDialog = ({
         onSuccess();
       }
     } catch (error: any) {
+      console.error("Error saving machine:", error);
       toast({
         title: "Erro",
         description: error.message || "Ocorreu um erro ao salvar a máquina.",

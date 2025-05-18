@@ -1,3 +1,4 @@
+
 import { supabase } from "@/integrations/supabase/client";
 import { 
   Machine, 
@@ -20,6 +21,7 @@ export const getAllMachines = async (): Promise<Machine[]> => {
         model, 
         status, 
         client_id,
+        notes,
         created_at, 
         updated_at,
         client:client_id (
@@ -38,6 +40,7 @@ export const getAllMachines = async (): Promise<Machine[]> => {
       status: item.status as MachineStatus,
       client_id: item.client_id,
       client_name: item.client?.business_name,
+      notes: item.notes,
       created_at: item.created_at,
       updated_at: item.updated_at,
       client: item.client,
@@ -63,6 +66,7 @@ export const getMachinesByStatus = async (status: MachineStatus): Promise<Machin
         model, 
         status, 
         client_id,
+        notes,
         created_at, 
         updated_at,
         client:client_id (
@@ -82,6 +86,7 @@ export const getMachinesByStatus = async (status: MachineStatus): Promise<Machin
       status: item.status as MachineStatus,
       client_id: item.client_id,
       client_name: item.client?.business_name,
+      notes: item.notes,
       created_at: item.created_at,
       updated_at: item.updated_at,
       client: item.client,
@@ -142,16 +147,14 @@ export const createMachine = async (params: MachineCreateParams): Promise<Machin
   try {
     const statusStr = params.status ? params.status.toString() : MachineStatus.STOCK.toString();
     
-    // Remove notes from the data being sent to Supabase since the column doesn't exist
-    const { notes, ...machineData } = params;
-    
     const { data, error } = await supabase
       .from("machines")
       .insert({
-        serial_number: machineData.serial_number,
-        model: machineData.model,
+        serial_number: params.serial_number,
+        model: params.model,
         status: statusStr as any,
-        client_id: machineData.client_id
+        client_id: params.client_id,
+        notes: params.notes
       })
       .select()
       .single();
@@ -164,6 +167,7 @@ export const createMachine = async (params: MachineCreateParams): Promise<Machin
       model: data.model,
       status: data.status as MachineStatus,
       client_id: data.client_id,
+      notes: data.notes,
       created_at: data.created_at,
       updated_at: data.updated_at
     };
@@ -182,7 +186,7 @@ export const updateMachine = async (id: string, params: MachineUpdateParams): Pr
     if (params.model !== undefined) updateData.model = params.model;
     if (params.status !== undefined) updateData.status = params.status.toString();
     if (params.client_id !== undefined) updateData.client_id = params.client_id;
-    // Remove notes from the update data since the column doesn't exist
+    if (params.notes !== undefined) updateData.notes = params.notes;
     
     const { data, error } = await supabase
       .from("machines")
@@ -199,6 +203,7 @@ export const updateMachine = async (id: string, params: MachineUpdateParams): Pr
       model: data.model,
       status: data.status as MachineStatus,
       client_id: data.client_id,
+      notes: data.notes,
       created_at: data.created_at,
       updated_at: data.updated_at
     };

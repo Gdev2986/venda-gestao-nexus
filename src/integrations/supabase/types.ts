@@ -278,6 +278,7 @@ export type Database = {
           created_at: string | null
           id: string
           model: string
+          notes: string | null
           serial_number: string
           status: Database["public"]["Enums"]["machine_status"]
           updated_at: string | null
@@ -287,6 +288,7 @@ export type Database = {
           created_at?: string | null
           id?: string
           model: string
+          notes?: string | null
           serial_number: string
           status?: Database["public"]["Enums"]["machine_status"]
           updated_at?: string | null
@@ -296,6 +298,7 @@ export type Database = {
           created_at?: string | null
           id?: string
           model?: string
+          notes?: string | null
           serial_number?: string
           status?: Database["public"]["Enums"]["machine_status"]
           updated_at?: string | null

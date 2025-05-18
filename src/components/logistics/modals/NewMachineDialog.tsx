@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
@@ -87,6 +88,7 @@ const NewMachineDialog = ({ open, onOpenChange, onSuccess }: NewMachineDialogPro
       onOpenChange(false);
       if (onSuccess) onSuccess();
     } catch (error: any) {
+      console.error("Error creating machine:", error);
       toast({
         title: "Erro ao cadastrar máquina",
         description: error.message || "Ocorreu um erro ao cadastrar a máquina",
