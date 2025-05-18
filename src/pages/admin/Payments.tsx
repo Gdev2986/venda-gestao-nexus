@@ -11,7 +11,6 @@ import { ApprovePaymentDialog } from "@/components/payments/ApprovePaymentDialog
 import { RejectPaymentDialog } from "@/components/payments/RejectPaymentDialog";
 import { PageHeader } from "@/components/page/PageHeader";
 import { Payment, PaymentRequest } from "@/types/payment.types";
-import { convertToPaymentRequest } from "@/components/payments/payment-list/PaymentConverter";
 import { PaymentNotifications } from "@/components/payments/PaymentNotifications";
 import { SendReceiptDialog } from "@/components/payments/SendReceiptDialog";
 import { useMediaQuery } from "@/hooks/use-media-query";
@@ -67,7 +66,7 @@ const AdminPayments = () => {
     const payment = payments.find(p => p.id === paymentId);
     if (!payment) return;
     
-    // Ensure payment is converted to the correct type
+    // Use type assertion to handle the type correctly
     setSelectedPayment(payment);
     
     if (action === PaymentAction.APPROVE) {
@@ -143,7 +142,7 @@ const AdminPayments = () => {
         
         <TabsContent value={activeTab} className="pt-6">
           <AdminPaymentsList
-            payments={payments}
+            payments={payments as Payment[]} 
             isLoading={isLoading}
             onActionClick={handlePaymentAction}
           />
@@ -164,7 +163,7 @@ const AdminPayments = () => {
         <ApprovePaymentDialog
           open={isApproveDialogOpen}
           onOpenChange={setIsApproveDialogOpen}
-          payment={selectedPayment as PaymentRequest}
+          payment={selectedPayment as unknown as PaymentRequest}
           onApprove={handleApprovePayment}
           isProcessing={false}
         />
@@ -175,7 +174,7 @@ const AdminPayments = () => {
         <RejectPaymentDialog
           open={isRejectDialogOpen}
           onOpenChange={setIsRejectDialogOpen}
-          payment={selectedPayment as PaymentRequest}
+          payment={selectedPayment as unknown as PaymentRequest}
           onReject={handleRejectPayment}
           isProcessing={false}
         />
@@ -186,7 +185,7 @@ const AdminPayments = () => {
         <SendReceiptDialog
           open={isSendReceiptDialogOpen}
           onOpenChange={setIsSendReceiptDialogOpen}
-          payment={selectedPayment as PaymentRequest}
+          payment={selectedPayment as unknown as PaymentRequest}
           onSendReceipt={handleSendReceipt}
           isProcessing={false}
         />

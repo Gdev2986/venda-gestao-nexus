@@ -1,6 +1,5 @@
-
 import { useState } from 'react';
-import { Payment, PaymentRequest } from '@/types';
+import { Payment, PaymentRequest } from '@/types/payment.types';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
 import { PaymentAction } from '@/types/enums';
@@ -171,7 +170,7 @@ const AdminPaymentsList = ({ payments, onActionClick, isLoading }: AdminPayments
           <ApprovePaymentDialog
             open={approveDialogOpen}
             onOpenChange={setApproveDialogOpen}
-            payment={selectedPayment as PaymentRequest}
+            payment={selectedPayment as unknown as PaymentRequest}
             onApprove={handleApprovePayment}
             isProcessing={isProcessing}
           />
@@ -179,7 +178,7 @@ const AdminPaymentsList = ({ payments, onActionClick, isLoading }: AdminPayments
           <RejectPaymentDialog
             open={rejectDialogOpen}
             onOpenChange={setRejectDialogOpen}
-            payment={selectedPayment as PaymentRequest}
+            payment={selectedPayment as unknown as PaymentRequest}
             onReject={handleRejectPayment}
             isProcessing={isProcessing}
           />
@@ -193,7 +192,7 @@ const AdminPaymentsList = ({ payments, onActionClick, isLoading }: AdminPayments
           <SendReceiptDialog
             open={sendReceiptDialogOpen}
             onOpenChange={setSendReceiptDialogOpen}
-            payment={selectedPayment as PaymentRequest}
+            payment={selectedPayment as unknown as PaymentRequest}
             onSendReceipt={handleSendReceipt}
             isProcessing={isProcessing}
           />

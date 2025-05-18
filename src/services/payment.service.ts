@@ -1,10 +1,10 @@
 
 import { supabase } from "@/integrations/supabase/client";
-import { Payment, PaymentRequest, PaymentRequestStatus, PixKey } from "@/types/payment.types";
+import { Payment, PaymentRequest, PaymentStatus, PixKey } from "@/types/payment.types";
 
 interface GetPaymentsParams {
   clientId?: string;
-  status?: PaymentRequestStatus;
+  status?: PaymentStatus;
   limit?: number;
 }
 
@@ -136,7 +136,18 @@ export async function getPaymentById(paymentId: string): Promise<Payment> {
     // Transform to Payment type with proper structure
     const payment: Payment = {
       ...data,
-      pix_key: data.pix_key as PixKey,
+      pix_key: data.pix_key ? {
+        id: data.pix_key.id,
+        key: data.pix_key.key,
+        type: data.pix_key.type,
+        name: data.pix_key.name,
+        owner_name: data.pix_key.owner_name || '',
+        is_default: data.pix_key.is_default,
+        user_id: data.pix_key.user_id,
+        created_at: data.pix_key.created_at,
+        updated_at: data.pix_key.updated_at,
+        bank_name: data.pix_key.bank_name
+      } : undefined
     };
 
     return payment;
@@ -163,7 +174,18 @@ export async function getClientPayments(clientId: string): Promise<Payment[]> {
 
     return data.map((payment) => ({
       ...payment,
-      pix_key: payment.pix_key as PixKey,
+      pix_key: payment.pix_key ? {
+        id: payment.pix_key.id,
+        key: payment.pix_key.key,
+        type: payment.pix_key.type,
+        name: payment.pix_key.name,
+        owner_name: payment.pix_key.owner_name || '',
+        is_default: payment.pix_key.is_default,
+        user_id: payment.pix_key.user_id,
+        created_at: payment.pix_key.created_at,
+        updated_at: payment.pix_key.updated_at,
+        bank_name: payment.pix_key.bank_name
+      } : undefined
     }));
   } catch (error) {
     console.error("Error fetching client payments:", error);

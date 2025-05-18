@@ -13,6 +13,23 @@ export enum PaymentType {
   BOLETO = "BOLETO"
 }
 
+export type PixKeyType = 'CPF' | 'CNPJ' | 'EMAIL' | 'PHONE' | 'EVP' | 'RANDOM';
+
+export interface PixKey {
+  id: string;
+  key: string;
+  type: string;
+  name: string;
+  owner_name?: string;
+  is_default?: boolean;
+  user_id?: string;
+  created_at?: string;
+  updated_at?: string;
+  bank_name?: string;
+  key_type?: string;
+  is_active?: boolean;
+}
+
 export interface PaymentRequest {
   id: string;
   client_id: string;
@@ -32,6 +49,15 @@ export interface PaymentRequest {
     business_name: string;
     email?: string;
   };
+  pix_key?: PixKey;
+  bank_info?: {
+    bank_name?: string;
+    account_number?: string;
+    branch_number?: string;
+    account_holder?: string;
+  };
+  document_url?: string;
+  due_date?: string;
 }
 
 export interface Payment {
@@ -54,15 +80,11 @@ export interface Payment {
   };
   document_url?: string;
   due_date?: string;
-  pix_key?: {
-    id: string;
-    key: string;
-    type: string;
-    owner_name: string;
-  };
+  pix_key?: PixKey;
   approved_by?: string | null;
   description?: string;
   client?: any;
+  type?: string; // Added for UserPayments.tsx
 }
 
 export interface PaymentFormData {

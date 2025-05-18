@@ -2,74 +2,157 @@
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
-import { useToast } from "@/hooks/use-toast";
 import { PixKey } from "@/types/payment.types";
+import { useToast } from "./use-toast";
 
-interface UsePixKeysReturn {
-  pixKeys: PixKey[];
-  isLoading: boolean;
-  error: Error | null;
-  mutate: () => void;
-}
-
-export function usePixKeys(): UsePixKeysReturn {
-  const [pixKeys, setPixKeys] = useState<PixKey[]>([]);
-  const [isLoading, setIsLoading] = useState<boolean>(true);
+export function usePixKeys() {
+  const [keys, setKeys] = useState<PixKey[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<Error | null>(null);
   const { user } = useAuth();
   const { toast } = useToast();
 
-  const fetchPixKeys = async () => {
+  const fetchKeys = async () => {
     if (!user) {
-      setIsLoading(false);
-      setPixKeys([]);
+      setKeys([]);
       return;
     }
-
+    
+    setIsLoading(true);
+    setError(null);
+    
     try {
-      setIsLoading(true);
-      setError(null);
-
-      const { data, error: pixError } = await supabase
-        .from('pix_keys')
-        .select('*')
-        .eq('user_id', user.id);
-
-      if (pixError) {
-        throw new Error(pixError.message);
-      }
-
-      // Transform data to match the PixKey type
-      const transformedKeys: PixKey[] = (data || []).map(key => ({
+      const { data, error } = await supabase
+        .from("pix_keys")
+        .select("*")
+        .eq("user_id", user.id)
+        .order("is_default", { ascending: false });
+        
+      if (error) throw error;
+      
+      // Convert DB data to PixKey type
+      const pixKeys: PixKey[] = data.map(key => ({
         id: key.id,
         key: key.key,
         type: key.type,
-        key_type: key.type, // For compatibility
+        name: key.name,
+        owner_name: key.owner_name || '',
+        is_default: key.is_default,
         user_id: key.user_id,
-        name: key.name || '',
-        owner_name: key.name || '', // Use name as owner_name
-        isDefault: key.is_default || false,
-        is_active: true, // Default to true
-        bank_name: 'Default Bank' // Provide default value
+        created_at: key.created_at,
+        updated_at: key.updated_at,
+        bank_name: key.bank_name
       }));
-
-      setPixKeys(transformedKeys);
+      
+      setKeys(pixKeys);
     } catch (err: any) {
-      console.error('Error fetching PIX keys:', err);
-      setError(err instanceof Error ? err : new Error(err.message || 'Unknown error'));
+      setError(err);
+      toast({
+        variant: "destructive",
+        title: "Erro ao carregar chaves PIX",
+        description: err.message || "Não foi possível carregar suas chaves PIX"
+      });
     } finally {
       setIsLoading(false);
     }
   };
-
+  
   useEffect(() => {
-    fetchPixKeys();
+    fetchKeys();
+    
+    // Set up real-time subscription for PIX key changes
+    if (user) {
+      const channel = supabase
+        .channel('pix-keys-changes')
+        .on(
+          'postgres_changes',
+          {
+            event: '*',
+            schema: 'public',
+            table: 'pix_keys',
+            filter: `user_id=eq.${user.id}`,
+          },
+          () => {
+            fetchKeys();
+          }
+        )
+        .subscribe();
+        
+      return () => {
+        supabase.removeChannel(channel);
+      };
+    }
   }, [user]);
-
+  
+  const setDefaultKey = async (keyId: string) => {
+    if (!user) return;
+    
+    try {
+      // First, unset all defaults
+      const { error: error1 } = await supabase
+        .from("pix_keys")
+        .update({ is_default: false })
+        .eq("user_id", user.id);
+      
+      if (error1) throw error1;
+      
+      // Then set this one as default
+      const { error: error2 } = await supabase
+        .from("pix_keys")
+        .update({ is_default: true })
+        .eq("id", keyId)
+        .eq("user_id", user.id);
+        
+      if (error2) throw error2;
+      
+      toast({
+        title: "Chave padrão atualizada",
+        description: "A chave PIX padrão foi atualizada com sucesso"
+      });
+      
+      await fetchKeys();
+    } catch (err: any) {
+      toast({
+        variant: "destructive",
+        title: "Erro",
+        description: err.message || "Não foi possível definir a chave como padrão"
+      });
+    }
+  };
+  
+  const deleteKey = async (keyId: string) => {
+    if (!user) return;
+    
+    try {
+      const { error } = await supabase
+        .from("pix_keys")
+        .delete()
+        .eq("id", keyId)
+        .eq("user_id", user.id);
+        
+      if (error) throw error;
+      
+      toast({
+        title: "Chave excluída",
+        description: "A chave PIX foi excluída com sucesso"
+      });
+      
+      await fetchKeys();
+    } catch (err: any) {
+      toast({
+        variant: "destructive",
+        title: "Erro",
+        description: err.message || "Não foi possível excluir a chave PIX"
+      });
+    }
+  };
+  
   return {
-    pixKeys,
+    keys,
     isLoading,
     error,
-    mutate: fetchPixKeys
+    refreshKeys: fetchKeys,
+    setDefaultKey,
+    deleteKey
   };
 }

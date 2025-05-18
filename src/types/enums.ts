@@ -1,18 +1,5 @@
 
-export enum PaymentStatus {
-  PENDING = "PENDING",
-  PROCESSING = "PROCESSING",
-  APPROVED = "APPROVED",
-  REJECTED = "REJECTED",
-  PAID = "PAID"
-}
-
-export enum PaymentType {
-  PIX = "PIX",
-  TED = "TED",
-  BOLETO = "BOLETO"
-}
-
+// Add this file to centralize enum definitions
 export enum UserRole {
   ADMIN = "ADMIN",
   CLIENT = "CLIENT", 
@@ -25,24 +12,72 @@ export enum UserRole {
   USER = "USER"
 }
 
-export enum NotificationType {
-  SUPPORT = "SUPPORT",
-  PAYMENT = "PAYMENT",
-  BALANCE = "BALANCE",
-  MACHINE = "MACHINE",
-  COMMISSION = "COMMISSION",
-  SYSTEM = "SYSTEM",
-  GENERAL = "GENERAL",
-  SALE = "SALE"
+export enum PaymentStatus {
+  PENDING = "PENDING",
+  PROCESSING = "PROCESSING",
+  APPROVED = "APPROVED",
+  REJECTED = "REJECTED",
+  PAID = "PAID"
 }
 
 export enum PaymentAction {
-  APPROVE = 'approve',
-  REJECT = 'reject',
-  VIEW = 'view',
-  DELETE = 'delete',
-  SEND_RECEIPT = 'send_receipt'
+  APPROVE = "APPROVE",
+  REJECT = "REJECT",
+  DELETE = "DELETE",
+  VIEW = "VIEW",
+  SEND_RECEIPT = "SEND_RECEIPT"
 }
 
-// PaymentRequestStatus should be exactly the same string literals as PaymentStatus to ensure compatibility
-export type PaymentRequestStatus = "PENDING" | "PROCESSING" | "APPROVED" | "REJECTED" | "PAID";
+export enum PaymentType {
+  PIX = "PIX",
+  TED = "TED",
+  BOLETO = "BOLETO"
+}
+
+export enum ClientStatus {
+  ACTIVE = "active",
+  INACTIVE = "inactive",
+  PENDING = "pending"
+}
+
+export enum PaymentMethod {
+  CREDIT = "credit",
+  DEBIT = "debit",
+  PIX = "pix"
+}
+
+export enum MachineStatus {
+  ACTIVE = "ACTIVE",
+  INACTIVE = "INACTIVE",
+  MAINTENANCE = "MAINTENANCE",
+  STOCK = "STOCK",
+  TRANSIT = "TRANSIT",
+  BLOCKED = "BLOCKED"
+}
+
+export enum TicketStatus {
+  PENDING = "PENDING",
+  IN_PROGRESS = "IN_PROGRESS",
+  COMPLETED = "COMPLETED",
+  CANCELED = "CANCELED"
+}
+
+export enum TicketPriority {
+  LOW = "LOW",
+  MEDIUM = "MEDIUM",
+  HIGH = "HIGH"
+}
+
+export enum TicketType {
+  INSTALLATION = "INSTALLATION",
+  MAINTENANCE = "MAINTENANCE",
+  REMOVAL = "REMOVAL",
+  REPLACEMENT = "REPLACEMENT", 
+  SUPPLIES = "SUPPLIES", 
+  PAPER = "PAPER", 
+  OTHER = "OTHER"
+}
+
+// Import and re-export NotificationType from notification.types.ts
+import { NotificationType } from "./notification.types";
+export { NotificationType };

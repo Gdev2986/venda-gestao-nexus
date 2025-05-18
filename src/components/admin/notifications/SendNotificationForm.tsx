@@ -9,6 +9,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { useNotifications } from '@/contexts/NotificationsContext';
 import { Loader2 } from 'lucide-react';
+import { NotificationType } from '@/types/notification.types';
 
 export function SendNotificationForm() {
   const { toast } = useToast();
@@ -38,7 +39,7 @@ export function SendNotificationForm() {
         '9027d4fc-2715-4439-8c84-93aa536514fb', // Example user ID
         title,
         message,
-        'ADMIN_NOTIFICATION'
+        'SYSTEM' as NotificationType
       );
       
       toast({

@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -29,65 +28,7 @@ export function PixKeyForm({ onSuccess }: PixKeyFormProps) {
   const { toast } = useToast();
   const { user } = useAuth();
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    
-    if (!user) {
-      toast({
-        variant: "destructive",
-        title: "Erro",
-        description: "Você precisa estar logado para adicionar uma chave PIX"
-      });
-      return;
-    }
-    
-    if (!type || !key || !name) {
-      toast({
-        variant: "destructive",
-        title: "Campos obrigatórios",
-        description: "Preencha todos os campos para adicionar uma chave PIX"
-      });
-      return;
-    }
-    
-    setIsSubmitting(true);
-    
-    try {
-      // Cast the type to any to bypass TypeScript checking
-      const { data, error } = await supabase
-        .from('pix_keys')
-        .insert({
-          user_id: user.id,
-          type: type as any,
-          key,
-          name,
-          is_default: false // New keys are not default by default
-        })
-        .select();
-      
-      if (error) throw error;
-      
-      toast({
-        title: "Chave PIX adicionada",
-        description: "Sua chave PIX foi adicionada com sucesso"
-      });
-      
-      setType("");
-      setKey("");
-      setName("");
-      setIsOpen(false);
-      
-      if (onSuccess) onSuccess();
-    } catch (error: any) {
-      toast({
-        variant: "destructive",
-        title: "Erro",
-        description: error.message || "Não foi possível adicionar a chave PIX"
-      });
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
+  
   
   if (!isOpen) {
     return (
@@ -122,6 +63,7 @@ export function PixKeyForm({ onSuccess }: PixKeyFormProps) {
             <SelectItem value="EMAIL">E-mail</SelectItem>
             <SelectItem value="PHONE">Telefone</SelectItem>
             <SelectItem value="EVP">Chave aleatória</SelectItem>
+            <SelectItem value="RANDOM">Chave aleatória (alt)</SelectItem>
           </SelectContent>
         </Select>
       </div>
@@ -172,4 +114,76 @@ export function PixKeyForm({ onSuccess }: PixKeyFormProps) {
       </div>
     </form>
   );
+
+  
+  function handleSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    
+    if (!user) {
+      toast({
+        variant: "destructive",
+        title: "Erro",
+        description: "Você precisa estar logado para adicionar uma chave PIX"
+      });
+      return;
+    }
+    
+    if (!type || !key || !name) {
+      toast({
+        variant: "destructive",
+        title: "Campos obrigatórios",
+        description: "Preencha todos os campos para adicionar uma chave PIX"
+      });
+      return;
+    }
+    
+    setIsSubmitting(true);
+    
+    try {
+      
+      const insertPromise = supabase
+        .from('pix_keys')
+        .insert({
+          user_id: user.id,
+          type: type as any,
+          key,
+          name,
+          is_default: false 
+        })
+        .select();
+      
+      insertPromise.then(({data, error}) => {
+        if (error) throw error;
+        
+        toast({
+          title: "Chave PIX adicionada",
+          description: "Sua chave PIX foi adicionada com sucesso"
+        });
+        
+        setType("");
+        setKey("");
+        setName("");
+        setIsOpen(false);
+        
+        if (onSuccess) onSuccess();
+      })
+      .catch((error) => {
+        toast({
+          variant: "destructive",
+          title: "Erro",
+          description: error.message || "Não foi possível adicionar a chave PIX"
+        });
+      })
+      .finally(() => {
+        setIsSubmitting(false);
+      });
+    } catch (error: any) {
+      toast({
+        variant: "destructive",
+        title: "Erro",
+        description: error.message || "Não foi possível adicionar a chave PIX"
+      });
+      setIsSubmitting(false);
+    }
+  }
 }

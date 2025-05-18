@@ -3,7 +3,7 @@ import React, { createContext, useContext, useState, useEffect, ReactNode } from
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "./AuthContext";
 import { useToast } from "@/hooks/use-toast";
-import { NotificationType } from "@/types/enums";
+import { NotificationType } from "@/types/notification.types";
 
 export interface Notification {
   id: string;
@@ -64,8 +64,19 @@ export const NotificationsProvider: React.FC<{ children: ReactNode }> = ({ child
 
       if (error) throw error;
 
-      setNotifications(data || []);
-      setUnreadCount((data || []).filter((n: Notification) => !n.is_read).length);
+      // Convert DB data to Notification type
+      const typedNotifications = data?.map(item => ({
+        id: item.id,
+        title: item.title,
+        message: item.message,
+        type: item.type as NotificationType,
+        is_read: item.is_read,
+        created_at: item.created_at,
+        data: item.data
+      })) || [];
+
+      setNotifications(typedNotifications);
+      setUnreadCount(typedNotifications.filter(n => !n.is_read).length);
     } catch (error) {
       console.error('Error fetching notifications:', error);
     } finally {
@@ -247,6 +258,33 @@ export const NotificationsProvider: React.FC<{ children: ReactNode }> = ({ child
       });
     }
   };
+
+  // Add the event listeners for real-time updates
+  useEffect(() => {
+    fetchNotifications();
+    
+    if (user) {
+      const channel = supabase
+        .channel('notification-changes')
+        .on(
+          'postgres_changes',
+          {
+            event: '*',
+            schema: 'public',
+            table: 'notifications',
+            filter: `user_id=eq.${user.id}`,
+          },
+          () => {
+            fetchNotifications();
+          }
+        )
+        .subscribe();
+
+      return () => {
+        supabase.removeChannel(channel);
+      };
+    }
+  }, [user]);
 
   const value = {
     notifications,

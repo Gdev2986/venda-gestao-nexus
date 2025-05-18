@@ -4,14 +4,15 @@ export enum MachineStatus {
   INACTIVE = "INACTIVE",
   MAINTENANCE = "MAINTENANCE",
   STOCK = "STOCK",
-  TRANSIT = "TRANSIT"
+  TRANSIT = "TRANSIT",
+  BLOCKED = "BLOCKED" // Added for compatibility with existing code
 }
 
 export interface Machine {
   id: string;
   serial_number: string;
   model: string;
-  status: MachineStatus;
+  status: MachineStatus | string;
   client_id?: string | null;
   created_at: string;
   updated_at: string;
@@ -24,14 +25,14 @@ export interface Machine {
 export interface MachineCreateParams {
   serial_number: string;
   model: string;
-  status: MachineStatus;
+  status: MachineStatus | string;
   client_id?: string;
 }
 
 export interface MachineUpdateParams {
   serial_number?: string;
   model?: string;
-  status?: MachineStatus;
+  status?: MachineStatus | string;
   client_id?: string | null;
 }
 

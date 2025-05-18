@@ -5,7 +5,14 @@ export type NotificationType =
   | 'PAYMENT_REJECTED'
   | 'NEW_CLIENT'
   | 'SYSTEM'
-  | 'SUPPORT';
+  | 'SUPPORT'
+  | 'PAYMENT'
+  | 'BALANCE'
+  | 'MACHINE'
+  | 'COMMISSION'
+  | 'GENERAL'
+  | 'SALE'
+  | 'ADMIN_NOTIFICATION'; // Added ADMIN_NOTIFICATION for SendNotificationForm
 
 export interface Notification {
   id: string;

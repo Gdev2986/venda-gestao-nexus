@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { PixKey } from "@/types/payment.types";
@@ -126,7 +125,7 @@ export function PixKeyDisplay({ pixKey, onUpdate }: PixKeyDisplayProps) {
           <div>
             <div className="flex items-center gap-1">
               <h4 className="text-sm font-medium">{pixKey.name || "Chave PIX"}</h4>
-              {pixKey.isDefault && (
+              {pixKey.is_default && (
                 <span className="text-xs bg-primary/10 text-primary px-1.5 py-0.5 rounded-full">
                   Padrão
                 </span>
@@ -141,7 +140,7 @@ export function PixKeyDisplay({ pixKey, onUpdate }: PixKeyDisplayProps) {
           </div>
           
           <div className="flex gap-1">
-            {!pixKey.isDefault && (
+            {!pixKey.is_default && (
               <Button
                 variant="ghost"
                 size="icon"
@@ -153,7 +152,7 @@ export function PixKeyDisplay({ pixKey, onUpdate }: PixKeyDisplayProps) {
                 <Star className="h-4 w-4" />
               </Button>
             )}
-            {pixKey.isDefault && (
+            {pixKey.is_default && (
               <Button
                 variant="ghost"
                 size="icon"
