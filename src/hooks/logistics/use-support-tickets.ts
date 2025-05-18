@@ -43,12 +43,13 @@ const generateMockTickets = (count: number): SupportTicket[] => {
     
     return {
       id: uuidv4(),
+      title: `Ticket de ${types[typeIndex].toLowerCase()} para ${mockClients[clientIndex].business_name}`,
       client_id: mockClients[clientIndex].id,
       machine_id: mockMachines[machineIndex].id,
       type: types[typeIndex],
       status: statuses[statusIndex],
       priority: priorities[priorityIndex],
-      description: `Ticket de ${types[typeIndex].toLowerCase()} para ${mockClients[clientIndex].business_name}`,
+      description: `Detalhes do ticket de ${types[typeIndex].toLowerCase()} para ${mockClients[clientIndex].business_name}`,
       scheduled_date: scheduledDate.toISOString(),
       created_at: createdDate.toISOString(),
       updated_at: createdDate.toISOString(),
@@ -89,6 +90,7 @@ export const useSupportTickets = (options: UseSupportTicketsOptions = {}) => {
       setTimeout(() => {
         const newTicket: SupportTicket = {
           id: uuidv4(),
+          title: ticketData.title || '',
           client_id: ticketData.client_id!,
           machine_id: ticketData.machine_id,
           type: ticketData.type || TicketType.OTHER,
@@ -140,7 +142,7 @@ export const useSupportTickets = (options: UseSupportTicketsOptions = {}) => {
       }
       acc[ticket.status].push(ticket);
       return acc;
-    }, {} as Record<TicketStatus, SupportTicket[]>);
+    }, {} as Record<string, SupportTicket[]>);
   };
   
   return {
