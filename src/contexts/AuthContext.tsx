@@ -1,4 +1,3 @@
-
 import { createContext, useContext, useEffect, useState } from "react";
 import { Session, User } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
@@ -15,30 +14,28 @@ import {
 } from "@/services/auth-service";
 import { AuthContextType } from "./auth-types";
 
-// Function to clear all Supabase-related data
-const cleanupSupabaseState = () => {
+// Function to clean up Supabase-related data
+export const cleanupSupabaseState = () => {
   try {
-    // Clear standard tokens
+    // Clear standard auth data
     localStorage.removeItem('supabase.auth.token');
+    sessionStorage.removeItem('userRole');
+    sessionStorage.removeItem('redirectPath');
+    localStorage.removeItem('userRole');
     
-    // Remove all Supabase keys from localStorage
+    // Clear all Supabase keys from localStorage
     Object.keys(localStorage).forEach((key) => {
       if (key.startsWith('supabase.auth.') || key.includes('sb-')) {
         localStorage.removeItem(key);
       }
     });
     
-    // Remove from sessionStorage if being used
+    // Clear from sessionStorage if being used
     Object.keys(sessionStorage).forEach((key) => {
       if (key.startsWith('supabase.auth.') || key.includes('sb-')) {
         sessionStorage.removeItem(key);
       }
     });
-    
-    // Clear other auth-related data
-    sessionStorage.removeItem('userRole');
-    sessionStorage.removeItem('redirectPath');
-    localStorage.removeItem('userRole');
     
     console.log("Auth state cleanup complete");
   } catch (error) {
@@ -64,7 +61,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   useEffect(() => {
     console.log("Setting up auth listener");
     
-    // Set up auth state listener FIRST to prevent missing events
+    // Set up auth state listener FIRST
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, newSession) => {
         console.log("Auth state change event:", event);
@@ -80,30 +77,31 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
           
           // Only fetch user role if we have a session
           if (newSession?.user) {
-            try {
-              // Fetch user role from profiles table
-              const { data: profile, error } = await supabase
-                .from('profiles')
-                .select('role')
-                .eq('id', newSession.user.id)
-                .single();
-              
-              if (error) {
-                console.error("Error fetching user role:", error);
-              } else {
-                // Normalize the role to match our UserRole enum
-                const normalizedRole = profile?.role?.toUpperCase() as UserRole;
-                console.log("User role fetched:", normalizedRole);
-                setUserRole(normalizedRole);
+            // Defer data fetching to prevent deadlocks
+            setTimeout(async () => {
+              try {
+                // Fetch user role from profiles table
+                const { data: profile, error } = await supabase
+                  .from('profiles')
+                  .select('role')
+                  .eq('id', newSession.user.id)
+                  .single();
+                
+                if (error) {
+                  console.error("Error fetching user role:", error);
+                } else {
+                  // Normalize the role to match our UserRole enum
+                  const normalizedRole = profile?.role?.toUpperCase() as UserRole;
+                  console.log("User role fetched:", normalizedRole);
+                  setUserRole(normalizedRole);
+                }
+              } catch (err) {
+                console.error("Error in role fetching:", err);
               }
-            } catch (err) {
-              console.error("Error in role fetching:", err);
-            }
-            
-            setTimeout(() => {
+              
               toast({
-                title: "Successfully authenticated",
-                description: "Welcome to SigmaPay!",
+                title: "Login bem-sucedido",
+                description: "Bem-vindo ao SigmaPay!",
               });
             }, 0);
           }
@@ -119,27 +117,18 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
           setIsAuthenticated(false);
           
           // Clean up all auth-related data
-          clearAuthData();
           cleanupSupabaseState();
           
           // Use setTimeout to avoid calling toast inside the callback
           setTimeout(() => {
             toast({
-              title: "Signed out",
-              description: "You have been successfully signed out.",
+              title: "Sessão encerrada",
+              description: "Você foi desconectado com sucesso.",
             });
             
             // Force page reload to clear state completely
             window.location.href = PATHS.LOGIN;
           }, 0);
-        }
-        
-        if (event === "TOKEN_REFRESHED") {
-          console.log("Token refreshed event");
-        }
-        
-        if (event === "USER_UPDATED") {
-          console.log("User updated event");
         }
       }
     );
@@ -149,33 +138,26 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       setIsLoading(true);
       try {
         console.log("Checking initial session");
-        const { session: currentSession, user: currentUser, error } = await getCurrentSession();
+        const { data: { session } } = await supabase.auth.getSession();
         
-        if (error) {
-          console.error("Error getting session:", error);
-          // Clean up data if there's an error
-          cleanupSupabaseState();
-          throw error;
-        }
+        console.log("Initial session check complete:", !!session);
         
-        console.log("Initial session check complete:", !!currentSession);
-        
-        setSession(currentSession);
-        setUser(currentUser);
-        setIsAuthenticated(!!currentSession);
+        setSession(session);
+        setUser(session?.user ?? null);
+        setIsAuthenticated(!!session);
         
         // Only fetch user role if we have a user
-        if (currentUser) {
+        if (session?.user) {
           try {
             // Fetch user role from profiles table
-            const { data: profile, error: roleError } = await supabase
+            const { data: profile, error } = await supabase
               .from('profiles')
               .select('role')
-              .eq('id', currentUser.id)
+              .eq('id', session.user.id)
               .single();
             
-            if (roleError) {
-              console.error("Error fetching user role:", roleError);
+            if (error) {
+              console.error("Error fetching user role:", error);
             } else {
               // Normalize the role to match our UserRole enum
               const normalizedRole = profile?.role?.toUpperCase() as UserRole;
@@ -200,7 +182,6 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     initialSessionCheck();
 
     return () => {
-      console.log("Cleaning up auth listener");
       subscription.unsubscribe();
     };
   }, [toast]); // Only run on mount
@@ -221,18 +202,21 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         console.log("Failed to perform global logout before login, continuing...");
       }
       
-      const { user: signedInUser, error } = await signInWithEmail(email, password);
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      });
 
       if (error) {
         toast({
-          title: "Login error",
+          title: "Erro de login",
           description: error.message,
           variant: "destructive",
         });
         throw error;
       }
       
-      if (signedInUser) {
+      if (data.user) {
         console.log("Sign in successful, navigating to dashboard");
         // Use setTimeout to avoid race conditions with onAuthStateChange
         setTimeout(() => {
@@ -245,9 +229,14 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
           }
         }, 0);
       }
+      
+      return { user: data.user, error: null };
     } catch (error: any) {
       console.error("Error during login:", error);
-      // Toast is shown in the error handler above
+      return { 
+        user: null, 
+        error: error instanceof Error ? error : new Error("Unknown error during login") 
+      };
     } finally {
       setIsLoading(false);
     }
@@ -268,26 +257,45 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         // Continue even if this fails
       }
       
-      const { user: newUser, error } = await signUpWithEmail(email, password, userData);
+      const { error, data } = await supabase.auth.signUp({
+        email,
+        password,
+        options: {
+          data: {
+            name: userData.name,
+          },
+          emailRedirectTo: `${window.location.origin}/dashboard`,
+        },
+      });
 
       if (error) {
+        let errorMessage = "Ocorreu um erro durante o cadastro";
+        
+        if (error.message.includes("already registered")) {
+          errorMessage = "Este email já está registrado. Tente fazer login.";
+        }
+        
         toast({
-          title: "Registration error",
-          description: error.message,
+          title: "Erro de registro",
+          description: errorMessage,
           variant: "destructive",
         });
         throw error;
       }
       
       toast({
-        title: "Registration successful",
-        description: "Please check your email to confirm your account.",
+        title: "Registro bem-sucedido",
+        description: "Por favor, verifique seu email para confirmar sua conta.",
       });
 
       navigate(PATHS.HOME);
+      return { user: data?.user || null, error: null };
     } catch (error: any) {
       console.error("Error during registration:", error);
-      // Toast is shown in the error handler above
+      return { 
+        user: null, 
+        error: error instanceof Error ? error : new Error("Unknown error during registration") 
+      };
     } finally {
       setIsLoading(false);
     }
@@ -307,9 +315,9 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       // Clean up all auth data
       cleanupSupabaseState();
       
-      const { error } = await signOutUser();
-      
-      if (error) {
+      try {
+        await supabase.auth.signOut({ scope: 'global' });
+      } catch (error) {
         console.error("Error during logout:", error);
       }
       
@@ -320,8 +328,8 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     } catch (error: any) {
       console.error("Error during sign out:", error);
       toast({
-        title: "Error signing out",
-        description: error.message || "An error occurred while trying to sign out",
+        title: "Erro ao sair",
+        description: error.message || "Ocorreu um erro ao tentar sair",
         variant: "destructive",
       });
       return { success: false, error };
