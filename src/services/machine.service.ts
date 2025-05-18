@@ -71,7 +71,7 @@ export const getMachinesByStatus = async (status: MachineStatus): Promise<Machin
           business_name
         )
       `)
-      .eq("status", statusStr)
+      .eq("status", statusStr as any)
       .order("created_at", { ascending: false });
 
     if (error) throw error;
@@ -148,7 +148,7 @@ export const createMachine = async (params: MachineCreateParams): Promise<Machin
       .insert({
         serial_number: params.serial_number,
         model: params.model,
-        status: statusStr,
+        status: statusStr as any,
         client_id: params.client_id
       })
       .select()
@@ -260,7 +260,7 @@ export const transferMachine = async (params: MachineTransferParams): Promise<Ma
       .from("machines")
       .update({ 
         client_id: params.to_client_id,
-        status: newStatusStr
+        status: newStatusStr as any
       })
       .eq("id", params.machine_id);
 

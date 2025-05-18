@@ -60,7 +60,7 @@ export const getPaymentsByStatus = async (status: PaymentStatus): Promise<Paymen
         rejection_reason,
         client:client_id (business_name, email, phone)
       `)
-      .eq("status", statusStr)
+      .eq("status", statusStr as any)
       .order("created_at", { ascending: false });
 
     if (error) throw error;
