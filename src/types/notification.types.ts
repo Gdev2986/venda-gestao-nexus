@@ -23,4 +23,6 @@ export interface Notification {
   data?: any;
   is_read: boolean;
   created_at: string;
+  timestamp?: Date; // For compatibility with existing code
+  read?: boolean;    // For compatibility with existing code
 }

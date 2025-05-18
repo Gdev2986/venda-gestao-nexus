@@ -17,6 +17,7 @@ import { useNotifications } from "@/hooks/use-notifications";
 import { formatDistanceToNow } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { ShoppingCart, CreditCard, Wrench, LifeBuoy } from "lucide-react";
+import { Notification } from "@/types/notification.types";
 
 const NotificationDropdown = () => {
   const [isOpen, setIsOpen] = useState(false);
@@ -125,7 +126,7 @@ const NotificationDropdown = () => {
                   Nenhuma notificação
                 </div>
               ) : (
-                recentNotifications.map((notification) => (
+                recentNotifications.map((notification: Notification) => (
                   <motion.div
                     key={notification.id}
                     initial={{ opacity: 0, y: -10 }}

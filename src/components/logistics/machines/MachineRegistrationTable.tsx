@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -12,7 +11,7 @@ import { Badge } from "@/components/ui/badge";
 import { Link } from "react-router-dom";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { useMediaQuery } from "@/hooks/use-media-query";
-import MachineTransferForm from "@/components/machines/MachineTransferForm";
+import MachineTransferForm from "@/components/logistics/machines/MachineTransferForm";
 import { supabase } from "@/integrations/supabase/client";
 
 interface MachineTransferDialogProps {

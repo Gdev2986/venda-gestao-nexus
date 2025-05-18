@@ -1,122 +1,124 @@
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from './use-toast';
-import { useAuth } from '@/contexts/AuthContext';
 
-interface UpdateBalanceParams {
-  clientId: string;
-  amount: number;
-  reason?: string;
+interface UseClientBalanceReturn {
+  balance: number;
+  isLoading: boolean;
+  updateBalance: (clientId: string, amount: number, description: string) => Promise<void>;
+  refreshBalance: () => Promise<void>;
 }
 
-export function useClientBalance() {
-  const [isLoading, setIsLoading] = useState(false);
+export function useClientBalance(clientId?: string): UseClientBalanceReturn {
+  const [balance, setBalance] = useState<number>(0);
+  const [isLoading, setIsLoading] = useState<boolean>(true);
   const { toast } = useToast();
-  const { user } = useAuth();
 
-  const updateBalance = async ({
-    clientId,
-    amount,
-    reason = ''
-  }: UpdateBalanceParams): Promise<boolean> => {
-    if (!user) {
-      toast({
-        variant: "destructive",
-        title: "Erro de autenticação",
-        description: "Você precisa estar logado para atualizar saldos."
-      });
-      return false;
+  const fetchBalance = async () => {
+    if (!clientId) {
+      setIsLoading(false);
+      return;
     }
 
     setIsLoading(true);
-
     try {
-      // Get current balance
-      const { data: clientData, error: clientError } = await supabase
-        .from('clients')
-        .select('balance')
-        .eq('id', clientId)
+      // Option 1: Using view (if available)
+      try {
+        const { data, error } = await supabase
+          .from("vw_client_balance")
+          .select("balance")
+          .eq("client_id", clientId)
+          .single();
+
+        if (!error && data) {
+          setBalance(data.balance || 0);
+          setIsLoading(false);
+          return;
+        }
+      } catch (e) {
+        // View doesn't exist, continue to option 2
+        console.log("vw_client_balance not available, falling back to clients table");
+      }
+
+      // Option 2: Get directly from clients table
+      const { data, error } = await supabase
+        .from("clients")
+        .select("balance")
+        .eq("id", clientId)
         .single();
 
-      if (clientError) {
-        throw new Error(`Erro ao buscar cliente: ${clientError.message}`);
+      if (error) {
+        throw error;
       }
 
-      const currentBalance = clientData?.balance || 0;
-      const newBalance = currentBalance + amount;
-
-      // Update balance
-      const { error: updateError } = await supabase
-        .from('clients')
-        .update({ 
-          balance: newBalance,
-          updated_at: new Date().toISOString()
-        })
-        .eq('id', clientId);
-
-      if (updateError) {
-        throw new Error(`Erro ao atualizar saldo: ${updateError.message}`);
-      }
-
-      // Record the transaction in a log table (if exists)
-      try {
-        await supabase
-          .from('balance_transactions')
-          .insert({
-            client_id: clientId,
-            amount: amount,
-            previous_balance: currentBalance,
-            new_balance: newBalance,
-            description: reason,
-            created_by: user.id
-          });
-      } catch (logError) {
-        console.warn("Could not log balance transaction:", logError);
-        // Don't throw here, the main operation succeeded
-      }
-
-      // Send notification to client (optional)
-      try {
-        const operationName = amount > 0 ? "Crédito" : "Débito";
-        await supabase
-          .from('notifications')
-          .insert({
-            user_id: clientId, // This assumes notification is for the client's user
-            title: `${operationName} em sua conta`,
-            message: reason || `Um ${amount > 0 ? 'depósito' : 'saque'} de ${Math.abs(amount).toFixed(2)} foi ${amount > 0 ? 'adicionado à' : 'debitado da'} sua conta.`,
-            type: 'BALANCE',
-            data: {
-              amount: amount,
-              balance: newBalance
-            }
-          });
-      } catch (notificationError) {
-        console.warn("Could not send balance notification:", notificationError);
-        // Don't throw here, the main operation succeeded
-      }
-
+      setBalance(data?.balance || 0);
+    } catch (error) {
+      console.error("Error fetching balance:", error);
       toast({
-        title: "Saldo atualizado",
-        description: `O saldo do cliente foi ${amount > 0 ? 'aumentado' : 'reduzido'} em R$ ${Math.abs(amount).toFixed(2)}.`
-      });
-
-      return true;
-    } catch (error: any) {
-      console.error("Error updating client balance:", error);
-      toast({
+        title: "Erro ao carregar saldo",
+        description: "Não foi possível carregar o saldo do cliente.",
         variant: "destructive",
-        title: "Erro ao atualizar saldo",
-        description: error.message || "Ocorreu um erro ao atualizar o saldo do cliente."
       });
-      return false;
     } finally {
       setIsLoading(false);
     }
   };
 
+  const updateBalance = async (clientId: string, amount: number, description: string) => {
+    try {
+      // Update client balance directly
+      const { data: currentData, error: fetchError } = await supabase
+        .from("clients")
+        .select("balance")
+        .eq("id", clientId)
+        .single();
+
+      if (fetchError) {
+        throw fetchError;
+      }
+
+      const currentBalance = currentData?.balance || 0;
+      const newBalance = currentBalance + amount;
+
+      const { error: updateError } = await supabase
+        .from("clients")
+        .update({ balance: newBalance })
+        .eq("id", clientId);
+
+      if (updateError) {
+        throw updateError;
+      }
+
+      // Update local state
+      setBalance(newBalance);
+      
+      // Show success message
+      toast({
+        title: "Saldo atualizado",
+        description: amount > 0 
+          ? `Valor adicionado ao saldo: ${amount.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}` 
+          : `Valor debitado do saldo: ${Math.abs(amount).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}`,
+      });
+      
+    } catch (error) {
+      console.error("Error updating balance:", error);
+      toast({
+        title: "Erro ao atualizar saldo",
+        description: "Não foi possível atualizar o saldo do cliente.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  useEffect(() => {
+    fetchBalance();
+  }, [clientId]);
+
   return {
+    balance,
+    isLoading,
     updateBalance,
-    isLoading
+    refreshBalance: fetchBalance
   };
 }

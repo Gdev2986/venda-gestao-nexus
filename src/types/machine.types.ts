@@ -1,10 +1,10 @@
-
 export enum MachineStatus {
   ACTIVE = "ACTIVE",
   INACTIVE = "INACTIVE",
   MAINTENANCE = "MAINTENANCE", 
   BLOCKED = "BLOCKED",
-  STOCK = "STOCK"
+  STOCK = "STOCK",
+  TRANSIT = "TRANSIT"
 }
 
 export interface Machine {
@@ -51,7 +51,8 @@ export interface MachineStats {
 }
 
 export interface MachineTransferFormProps {
-  machine: { id: string; name?: string; model: string; serial_number: string };
-  currentClient?: string | null;
+  machineId: string;
+  machineName: string;
+  currentClientId?: string | null;
   onTransferComplete: () => void;
 }

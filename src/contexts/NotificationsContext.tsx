@@ -2,8 +2,8 @@
 import React, { createContext, useState, useContext, useEffect, ReactNode } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
-import { Notification, NotificationType } from "@/types";
-import { toast } from "@/hooks/use-toast";
+import { Notification, NotificationType } from "@/types/notification.types";
+import { useToast } from "@/hooks/use-toast";
 
 interface NotificationsContextData {
   notifications: Notification[];
@@ -11,8 +11,7 @@ interface NotificationsContextData {
   isLoading: boolean;
   markAsRead: (id: string) => Promise<void>;
   markAllAsRead: () => Promise<void>;
-  sendNotification: (options: {
-    userId: string;
+  sendNotification: (userId: string, notification: {
     title: string;
     message: string;
     type: NotificationType;
@@ -42,6 +41,7 @@ export function NotificationsProvider({ children }: NotificationsProviderProps) 
   const [unreadCount, setUnreadCount] = useState(0);
   const [isLoading, setIsLoading] = useState(false);
   const { user } = useAuth();
+  const { toast } = useToast();
 
   const fetchNotifications = async () => {
     if (!user) {
@@ -66,19 +66,11 @@ export function NotificationsProvider({ children }: NotificationsProviderProps) 
       }
 
       // Transform to Notification type
-      const transformedNotifications: Notification[] = data.map((item) => ({
-        id: item.id,
-        title: item.title,
-        message: item.message,
-        type: item.type as NotificationType,
-        read: item.is_read,
-        timestamp: new Date(item.created_at),
-        data: item.data,
-      }));
+      const transformedNotifications: Notification[] = data || [];
 
       // Count unread notifications
       const unreadNotifications = transformedNotifications.filter(
-        (notification) => !notification.read
+        (notification) => !notification.is_read
       );
 
       setNotifications(transformedNotifications);
@@ -111,7 +103,7 @@ export function NotificationsProvider({ children }: NotificationsProviderProps) 
       setNotifications((prevNotifications) =>
         prevNotifications.map((notification) =>
           notification.id === id
-            ? { ...notification, read: true }
+            ? { ...notification, is_read: true }
             : notification
         )
       );
@@ -143,7 +135,7 @@ export function NotificationsProvider({ children }: NotificationsProviderProps) 
       setNotifications((prevNotifications) =>
         prevNotifications.map((notification) => ({
           ...notification,
-          read: true,
+          is_read: true,
         }))
       );
 
@@ -153,34 +145,26 @@ export function NotificationsProvider({ children }: NotificationsProviderProps) 
     }
   };
 
-  const sendNotification = async ({
-    userId,
-    title,
-    message,
-    type,
-    data,
-  }: {
-    userId: string;
+  const sendNotification = async (userId: string, notification: {
     title: string;
     message: string;
     type: NotificationType;
     data?: any;
   }) => {
     try {
-      // Convert NotificationType enum to string to avoid issues with Supabase
-      const notificationType = type.toString();
-      
       // Create the notification object with the correct shape
       const notificationData = {
         user_id: userId,
-        title,
-        message,
-        type: notificationType,  // Convert to string
+        title: notification.title,
+        message: notification.message,
+        type: notification.type,
         is_read: false,
-        data: data || {},
+        data: notification.data || {}
       };
       
-      const { error } = await supabase.from("notifications").insert(notificationData);
+      const { error } = await supabase
+        .from("notifications")
+        .insert(notificationData);
 
       if (error) {
         throw error;
@@ -220,18 +204,10 @@ export function NotificationsProvider({ children }: NotificationsProviderProps) 
         (payload) => {
           if (payload.eventType === "INSERT") {
             // Add new notification to the list
-            const newNotification = {
-              id: payload.new.id,
-              title: payload.new.title,
-              message: payload.new.message,
-              type: payload.new.type as NotificationType,
-              read: payload.new.is_read,
-              timestamp: new Date(payload.new.created_at),
-              data: payload.new.data,
-            };
+            const newNotification = payload.new as Notification;
 
             setNotifications((prev) => [newNotification, ...prev]);
-            if (!newNotification.read) {
+            if (!newNotification.is_read) {
               setUnreadCount((prev) => prev + 1);
             }
 
@@ -249,7 +225,7 @@ export function NotificationsProvider({ children }: NotificationsProviderProps) 
                       ...n,
                       title: payload.new.title,
                       message: payload.new.message,
-                      read: payload.new.is_read,
+                      is_read: payload.new.is_read,
                     }
                   : n
               )
@@ -258,7 +234,7 @@ export function NotificationsProvider({ children }: NotificationsProviderProps) 
             // Recalculate unread count
             setNotifications((prevNotifications) => {
               const unreadCount = prevNotifications.filter(
-                (notification) => !notification.read
+                (notification) => !notification.is_read
               ).length;
               setUnreadCount(unreadCount);
               return prevNotifications;
@@ -272,7 +248,7 @@ export function NotificationsProvider({ children }: NotificationsProviderProps) 
             // Recalculate unread count
             setNotifications((prevNotifications) => {
               const unreadCount = prevNotifications.filter(
-                (notification) => !notification.read
+                (notification) => !notification.is_read
               ).length;
               setUnreadCount(unreadCount);
               return prevNotifications;

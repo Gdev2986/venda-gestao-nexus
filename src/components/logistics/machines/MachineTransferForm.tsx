@@ -13,14 +13,21 @@ import {
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
 import { transferMachine } from "@/services/machine.service";
-import { MachineTransferFormProps } from "@/types/machine.types";
-import { supabase } from "@/integrations/supabase/client";
 import { Client } from "@/types";
+import { supabase } from "@/integrations/supabase/client";
 import { Loader2 } from "lucide-react";
 
+interface MachineTransferFormProps {
+  machineId: string;
+  machineName: string;
+  currentClientId?: string | null;
+  onTransferComplete: () => void;
+}
+
 export function MachineTransferForm({
-  machine,
-  currentClient,
+  machineId,
+  machineName,
+  currentClientId,
   onTransferComplete
 }: MachineTransferFormProps) {
   const [selectedClientId, setSelectedClientId] = useState<string>("");
@@ -74,15 +81,15 @@ export function MachineTransferForm({
 
     try {
       await transferMachine({
-        machine_id: machine.id,
-        from_client_id: currentClient || undefined,
+        machine_id: machineId,
+        from_client_id: currentClientId || undefined,
         to_client_id: selectedClientId,
         created_by: user?.id || 'system'
       });
 
       toast({
         title: "Transferência concluída",
-        description: `Máquina ${machine.serial_number} transferida com sucesso`
+        description: `Máquina ${machineName} transferida com sucesso`
       });
       
       onTransferComplete();
@@ -107,7 +114,7 @@ export function MachineTransferForm({
       <div>
         <Label>Máquina</Label>
         <Input 
-          value={`${machine.serial_number} - ${machine.model}`} 
+          value={machineName} 
           readOnly 
           className="bg-muted"
         />
@@ -116,7 +123,7 @@ export function MachineTransferForm({
       <div>
         <Label>Cliente Atual</Label>
         <Input 
-          value={currentClient ? clients.find(c => c.id === currentClient)?.business_name || "Desconhecido" : "Sem cliente (estoque)"} 
+          value={currentClientId ? clients.find(c => c.id === currentClientId)?.business_name || "Desconhecido" : "Sem cliente (estoque)"} 
           readOnly 
           className="bg-muted"
         />
@@ -137,7 +144,7 @@ export function MachineTransferForm({
               <SelectItem 
                 key={client.id} 
                 value={client.id}
-                disabled={client.id === currentClient}
+                disabled={client.id === currentClientId}
               >
                 {client.business_name}
               </SelectItem>

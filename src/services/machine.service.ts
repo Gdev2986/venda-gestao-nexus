@@ -30,7 +30,14 @@ export const fetchMachines = async (): Promise<Machine[]> => {
       .order("created_at", { ascending: false });
 
     if (error) throw error;
-    return data || [];
+    
+    // Map the response to ensure status is MachineStatus
+    const machines: Machine[] = (data || []).map(item => ({
+      ...item,
+      status: item.status as MachineStatus
+    }));
+    
+    return machines;
   } catch (error) {
     console.error("Error fetching machines:", error);
     throw error;
@@ -55,11 +62,18 @@ export const fetchMachinesByStatus = async (status: MachineStatus): Promise<Mach
         *,
         client:clients(id, business_name)
       `)
-      .eq("status", status as string)
+      .eq("status", status)
       .order("created_at", { ascending: false });
 
     if (error) throw error;
-    return data || [];
+    
+    // Map the response to ensure status is MachineStatus
+    const machines: Machine[] = (data || []).map(item => ({
+      ...item,
+      status: item.status as MachineStatus
+    }));
+    
+    return machines;
   } catch (error) {
     console.error(`Error fetching machines with status ${status}:`, error);
     throw error;
@@ -98,14 +112,14 @@ export const createMachine = async (machine: MachineCreateParams): Promise<Machi
       .insert({
         serial_number: machine.serial_number,
         model: machine.model,
-        status: machine.status as string,
+        status: machine.status,
         client_id: machine.client_id || null
       })
       .select()
       .single();
 
     if (error) throw error;
-    return data;
+    return { ...data, status: data.status as MachineStatus };
   } catch (error) {
     console.error("Error creating machine:", error);
     throw error;
@@ -123,7 +137,7 @@ export const updateMachine = async (
     const updateData: any = {};
     if (updates.model !== undefined) updateData.model = updates.model;
     if (updates.serial_number !== undefined) updateData.serial_number = updates.serial_number;
-    if (updates.status !== undefined) updateData.status = updates.status as string;
+    if (updates.status !== undefined) updateData.status = updates.status;
     if (updates.client_id !== undefined) updateData.client_id = updates.client_id;
     
     const { data, error } = await supabase
@@ -134,7 +148,7 @@ export const updateMachine = async (
       .single();
 
     if (error) throw error;
-    return data;
+    return { ...data, status: data.status as MachineStatus };
   } catch (error) {
     console.error(`Error updating machine ${machineId}:`, error);
     throw error;
@@ -164,11 +178,14 @@ export const deleteMachine = async (machineId: string): Promise<void> => {
 export const transferMachine = async (params: MachineTransferParams): Promise<void> => {
   try {
     // First, update the machine client_id
+    const status = params.to_client_id === "stock" ? MachineStatus.STOCK : MachineStatus.ACTIVE;
+    const clientId = params.to_client_id === "stock" ? null : params.to_client_id;
+    
     const { error: updateError } = await supabase
       .from("machines")
       .update({ 
-        client_id: params.to_client_id,
-        status: params.to_client_id ? "ACTIVE" : "STOCK"
+        client_id: clientId,
+        status: status
       })
       .eq("id", params.machine_id);
 

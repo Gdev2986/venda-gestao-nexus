@@ -63,4 +63,5 @@ export interface PaymentRequest {
 
 export interface Payment extends PaymentRequest {
   rejection_reason: string | null;
+  client_name?: string;
 }
