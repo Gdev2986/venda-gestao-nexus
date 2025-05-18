@@ -9,7 +9,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Machine } from "@/types/machine.types"; // Fixed import path
+import { Machine, MachineStatus } from "@/types/machine.types";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
 import { useNavigate } from "react-router-dom";
@@ -25,7 +25,7 @@ const MachinesStockTab = ({ machines, isLoading, onAddNewClick }: MachinesStockT
   const navigate = useNavigate();
   
   // Filter for only stock machines
-  const stockMachines = machines.filter(m => m.status === "STOCK");
+  const stockMachines = machines.filter(m => m.status === MachineStatus.STOCK);
 
   return (
     <div>

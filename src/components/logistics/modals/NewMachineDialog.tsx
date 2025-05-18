@@ -87,6 +87,11 @@ const NewMachineDialog = ({ open, onOpenChange, onSuccess }: NewMachineDialogPro
       resetForm();
       onOpenChange(false);
       if (onSuccess) onSuccess();
+      
+      toast({
+        title: "Máquina cadastrada com sucesso",
+        description: `A máquina ${serialNumber} foi adicionada ao sistema.`,
+      });
     } catch (error: any) {
       console.error("Error creating machine:", error);
       toast({
