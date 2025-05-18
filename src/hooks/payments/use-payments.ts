@@ -83,7 +83,8 @@ export function usePayments(): UsePaymentsReturn {
           id: payment.pix_key.id,
           key: payment.pix_key.key,
           type: payment.pix_key.type || '',
-          owner_name: payment.pix_key.name || ''
+          name: payment.pix_key.name || '', // Required field
+          owner_name: payment.pix_key.name || '' // Use name as a fallback
         } : undefined;
 
         return {

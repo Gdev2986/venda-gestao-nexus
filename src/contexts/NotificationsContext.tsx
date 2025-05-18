@@ -31,6 +31,16 @@ export const NotificationsContext = createContext<NotificationsContextType>({
   markAsUnread: async () => {},
 });
 
+export const useNotifications = (): NotificationsContextType => {
+  const context = useContext(NotificationsContext);
+  
+  if (context === undefined) {
+    throw new Error('useNotifications must be used within a NotificationsProvider');
+  }
+  
+  return context;
+};
+
 export const NotificationsProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [unreadCount, setUnreadCount] = useState(0);
@@ -62,7 +72,7 @@ export const NotificationsProvider: React.FC<{ children: React.ReactNode }> = ({
           id: dbNotif.id,
           title: dbNotif.title,
           message: dbNotif.message,
-          type: dbNotif.type,
+          type: dbNotif.type as NotificationType,
           is_read: dbNotif.is_read,
           timestamp: dbNotif.created_at,
           data: dbNotif.data

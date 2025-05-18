@@ -1,16 +1,18 @@
 
-import React from "react";
-import { PaymentRequest } from "@/types";
+import React, { useState } from "react";
+import { PaymentRequest } from "@/types/payment.types";
 
-// Add this function that's referenced but not defined in the code
-const handleViewPayment = (payment: PaymentRequest) => {
-  // Since we don't have access to the component state, we'll create a stub function
-  // that can be properly implemented in the full component file
-  console.log("View payment:", payment);
-};
-
-// Create a proper AdminPayments component
 const AdminPayments: React.FC = () => {
+  const [selectedPayment, setSelectedPayment] = useState<PaymentRequest | null>(null);
+  const [detailsDialogOpen, setDetailsDialogOpen] = useState(false);
+
+  // Add this function that's referenced but not defined in the code
+  const handleViewPayment = (payment: PaymentRequest) => {
+    setSelectedPayment(payment);
+    setDetailsDialogOpen(true);
+  };
+
+  // Create a proper AdminPayments component
   return (
     <div>
       <h1>Admin Payments Page</h1>

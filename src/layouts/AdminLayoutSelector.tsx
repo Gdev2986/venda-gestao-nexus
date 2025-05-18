@@ -5,10 +5,6 @@ import MainLayout from "@/layouts/MainLayout";
 import { useUserRole } from "@/hooks/use-user-role";
 import { UserRole } from "@/types";
 
-interface MainLayoutProps {
-  children: React.ReactNode;
-}
-
 const AdminLayoutSelector = () => {
   const { userRole } = useUserRole();
 

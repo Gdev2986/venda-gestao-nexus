@@ -19,7 +19,12 @@ const MainLayout = ({ children }: MainLayoutProps) => {
 
   return (
     <div className="flex h-screen overflow-hidden bg-background">
-      <Sidebar />
+      <Sidebar 
+        isOpen={sidebarOpen} 
+        isMobile={isMobile} 
+        onClose={() => toggleSidebar()} 
+        userRole={undefined} 
+      />
 
       <div className={`flex-1 flex flex-col transition-all duration-300 ease-in-out ${
         sidebarOpen && !isMobile ? 'ml-64' : 'ml-0'

@@ -20,7 +20,7 @@ export interface Notification {
   id: string;
   title: string;
   message: string;
-  type: string;
+  type: NotificationType;
   is_read: boolean; // Changed from read to is_read to match API
   timestamp: string;
   data?: any;
@@ -59,5 +59,5 @@ export enum NotificationType {
 // Re-export types using 'export type' to fix the isolatedModules error
 export type { Client } from './payment.types';
 export type { PixKeyType } from './payment.types';
-export { PaymentRequest, Payment } from './payment.types';
+export type { PaymentRequest, Payment } from './payment.types';
 export * from './enums';

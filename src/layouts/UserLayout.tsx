@@ -1,19 +1,20 @@
+
 import { useState, useEffect } from "react";
-import { useLocation } from "react-router-dom";
+import { Outlet } from "react-router-dom";
 import { UserRole } from "@/types";
-import Sidebar from "./sidebar/Sidebar";
 import { Button } from "@/components/ui/button";
 import { Menu } from "lucide-react";
 import { useIsMobile } from "@/hooks/use-mobile";
-import { NotificationDropdown } from "./NotificationDropdown";
-import ThemeToggle from "../theme/theme-toggle";
+import { NotificationDropdown } from "@/components/layout/NotificationDropdown";
+import ThemeToggle from "@/components/theme/theme-toggle";
 import { useUserRole } from "@/hooks/use-user-role";
+import AdminSidebar from "./AdminSidebar"; // Using AdminSidebar temporarily
 
-type MainLayoutProps = {
-  children: React.ReactNode;
+type UserLayoutProps = {
+  children?: React.ReactNode;
 };
 
-const MainLayout = ({ children }: MainLayoutProps) => {
+const UserLayout = ({ children }: UserLayoutProps) => {
   // Use localStorage to persist sidebar state
   const [sidebarOpen, setSidebarOpen] = useState(() => {
     const saved = localStorage.getItem("sidebar-state");
@@ -42,7 +43,7 @@ const MainLayout = ({ children }: MainLayoutProps) => {
   return (
     <div className="flex h-screen overflow-hidden bg-background">
       {/* Sidebar component */}
-      <Sidebar 
+      <AdminSidebar 
         isOpen={sidebarOpen} 
         isMobile={isMobile} 
         onClose={() => setSidebarOpen(false)} 
@@ -79,7 +80,7 @@ const MainLayout = ({ children }: MainLayoutProps) => {
         {/* Main scrollable content */}
         <main className="flex-1 w-full overflow-y-auto overflow-x-hidden p-2 sm:p-4 md:p-6">
           <div className="mx-auto w-full">
-            {children}
+            {children || <Outlet />}
           </div>
         </main>
       </div>
@@ -87,9 +88,4 @@ const MainLayout = ({ children }: MainLayoutProps) => {
   );
 };
 
-// Missing function import
-const cn = (...classes: any[]) => {
-  return classes.filter(Boolean).join(' ');
-};
-
-export default MainLayout;
+export default UserLayout;

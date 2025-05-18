@@ -1,9 +1,9 @@
 
-import React, { useState } from "react";
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { z } from "zod";
-import { Button } from "@/components/ui/button";
+import { useState } from 'react';
+import { z } from 'zod';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { Button } from '@/components/ui/button';
 import {
   Form,
   FormControl,
@@ -11,50 +11,56 @@ import {
   FormItem,
   FormLabel,
   FormMessage,
-} from "@/components/ui/form";
-import { Input } from "@/components/ui/input";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { useToast } from "@/hooks/use-toast";
-import { supabase } from "@/integrations/supabase/client";
-import { useUser } from "@/hooks/use-user";
+} from '@/components/ui/form';
+import { Input } from '@/components/ui/input';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import { useToast } from '@/hooks/use-toast';
+import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@/hooks/use-auth';
+import { PixKeyType } from '@/types/payment.types';
 
-// Define PixKeyType separately here to avoid import issues
-export type PixKeyType = 'CPF' | 'CNPJ' | 'EMAIL' | 'PHONE' | 'EVP' | 'RANDOM';
-
-// Props for PixKeyForm component
-export interface PixKeyFormProps {
+interface PixKeyFormProps {
   onSuccess?: () => void;
 }
 
-// Define form schema using zod
-const pixKeySchema = z.object({
-  key: z.string().min(1, { message: "Chave PIX é obrigatória" }),
-  type: z.string().min(1, { message: "Tipo de chave é obrigatório" }),
-  name: z.string().min(1, { message: "Nome é obrigatório" }),
+const pixKeyFormSchema = z.object({
+  key: z.string().min(1, {
+    message: 'Chave não pode estar vazia.',
+  }),
+  type: z.enum(['CPF', 'CNPJ', 'EMAIL', 'PHONE', 'EVP', 'RANDOM']),
+  name: z.string().min(1, {
+    message: 'Nome não pode estar vazio.',
+  }),
 });
 
-type PixKeyFormValues = z.infer<typeof pixKeySchema>;
+type PixKeyFormValues = z.infer<typeof pixKeyFormSchema>;
 
-export const PixKeyForm: React.FC<PixKeyFormProps> = ({ onSuccess }) => {
-  const [isSubmitting, setIsSubmitting] = useState(false);
+export const PixKeyForm = ({ onSuccess }: PixKeyFormProps) => {
   const { toast } = useToast();
-  const { user } = useUser();
+  const { user } = useAuth();
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const form = useForm<PixKeyFormValues>({
-    resolver: zodResolver(pixKeySchema),
+    resolver: zodResolver(pixKeyFormSchema),
     defaultValues: {
-      key: "",
-      type: "",
-      name: "",
+      key: '',
+      type: 'CPF',
+      name: '',
     },
   });
 
-  const onSubmit = async (values: PixKeyFormValues) => {
-    if (!user?.id) {
+  const onSubmit = async (data: PixKeyFormValues) => {
+    if (!user) {
       toast({
-        variant: "destructive",
-        title: "Erro",
-        description: "Usuário não autenticado",
+        variant: 'destructive',
+        title: 'Erro',
+        description: 'Você precisa estar logado para cadastrar uma chave PIX.',
       });
       return;
     }
@@ -62,28 +68,31 @@ export const PixKeyForm: React.FC<PixKeyFormProps> = ({ onSuccess }) => {
     setIsSubmitting(true);
 
     try {
-      const { error } = await supabase.from("pix_keys").insert({
+      const { error } = await supabase.from('pix_keys').insert({
+        key: data.key,
+        type: data.type,
+        name: data.name,
         user_id: user.id,
-        key: values.key,
-        type: values.type,
-        name: values.name,
       });
 
       if (error) throw error;
 
       toast({
-        title: "Chave PIX adicionada",
-        description: "Sua chave PIX foi adicionada com sucesso.",
+        title: 'Sucesso',
+        description: 'Chave PIX cadastrada com sucesso!',
       });
 
       form.reset();
-      if (onSuccess) onSuccess();
+      
+      if (onSuccess) {
+        onSuccess();
+      }
     } catch (error: any) {
-      console.error("Error adding PIX key:", error);
+      console.error('Error adding PIX key:', error);
       toast({
-        variant: "destructive",
-        title: "Erro",
-        description: error.message || "Não foi possível adicionar a chave PIX.",
+        variant: 'destructive',
+        title: 'Erro',
+        description: error.message || 'Não foi possível cadastrar a chave PIX.',
       });
     } finally {
       setIsSubmitting(false);
@@ -102,6 +111,7 @@ export const PixKeyForm: React.FC<PixKeyFormProps> = ({ onSuccess }) => {
               <Select
                 onValueChange={field.onChange}
                 defaultValue={field.value}
+                disabled={isSubmitting}
               >
                 <FormControl>
                   <SelectTrigger>
@@ -114,6 +124,7 @@ export const PixKeyForm: React.FC<PixKeyFormProps> = ({ onSuccess }) => {
                   <SelectItem value="EMAIL">Email</SelectItem>
                   <SelectItem value="PHONE">Telefone</SelectItem>
                   <SelectItem value="EVP">Chave aleatória</SelectItem>
+                  <SelectItem value="RANDOM">Chave aleatória (antiga)</SelectItem>
                 </SelectContent>
               </Select>
               <FormMessage />
@@ -129,8 +140,9 @@ export const PixKeyForm: React.FC<PixKeyFormProps> = ({ onSuccess }) => {
               <FormLabel>Chave PIX</FormLabel>
               <FormControl>
                 <Input
+                  placeholder="Informe sua chave PIX"
+                  disabled={isSubmitting}
                   {...field}
-                  placeholder="Digite sua chave PIX"
                 />
               </FormControl>
               <FormMessage />
@@ -143,11 +155,12 @@ export const PixKeyForm: React.FC<PixKeyFormProps> = ({ onSuccess }) => {
           name="name"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Nome da Chave</FormLabel>
+              <FormLabel>Nome do Titular</FormLabel>
               <FormControl>
                 <Input
+                  placeholder="Nome do titular da conta"
+                  disabled={isSubmitting}
                   {...field}
-                  placeholder="Ex: Minha chave principal"
                 />
               </FormControl>
               <FormMessage />
@@ -155,8 +168,8 @@ export const PixKeyForm: React.FC<PixKeyFormProps> = ({ onSuccess }) => {
           )}
         />
 
-        <Button type="submit" className="w-full" disabled={isSubmitting}>
-          {isSubmitting ? "Adicionando..." : "Adicionar Chave PIX"}
+        <Button type="submit" disabled={isSubmitting} className="w-full">
+          {isSubmitting ? 'Salvando...' : 'Adicionar Chave PIX'}
         </Button>
       </form>
     </Form>

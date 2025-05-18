@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect } from "react";
-import { Bell, Check, Trash2, X } from "lucide-react";
+import { Bell, Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -10,8 +10,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Badge } from "@/components/ui/badge";
-import { useNotifications } from "@/hooks/use-notifications";
-import { Notification } from "@/types";
+import { useNotifications } from "@/contexts/NotificationsContext";
 import { formatDistanceToNow } from "date-fns";
 import { ptBR } from "date-fns/locale";
 
