@@ -1,32 +1,32 @@
 
-import { Route, Outlet } from "react-router-dom";
+import { Route, Navigate } from "react-router-dom";
+import { Outlet } from "react-router-dom"; // Added import for Outlet
 import { PATHS } from "./paths";
-
-// Layouts
 import LogisticsLayout from "../layouts/LogisticsLayout";
 
 // Logistics Pages
-import Dashboard from "../pages/logistics/Dashboard";
-import Machines from "../pages/logistics/Machines";
-import MachineStock from "../pages/logistics/MachineStock";
-import ClientMachines from "../pages/logistics/ClientMachines";
-import Operations from "../pages/logistics/Operations";
-import Requests from "../pages/logistics/Requests";
-import Calendar from "../pages/logistics/Calendar";
-import ServiceRequests from "../pages/logistics/ServiceRequests";
-import Inventory from "../pages/logistics/Inventory";
+import LogisticsDashboard from "../pages/logistics/Dashboard";
+import LogisticsMachines from "../pages/logistics/Machines";
+import LogisticsInventory from "../pages/logistics/Inventory";
+import LogisticsRequests from "../pages/logistics/Requests";
+import LogisticsOperations from "../pages/logistics/Operations";
+import LogisticsClientMachines from "../pages/logistics/ClientMachines";
+import LogisticsSettings from "../pages/logistics/Settings";
+import LogisticsCalendar from "../pages/logistics/Calendar";
+import LogisticsSupport from "../pages/logistics/Support";
+import MainLayout from "@/layouts/MainLayout";
 
 export const logisticsRoutes = (
-  <Route path="/logistics" element={<LogisticsLayout><Outlet /></LogisticsLayout>}>
-    <Route index element={<Dashboard />} />
-    <Route path="dashboard" element={<Dashboard />} />
-    <Route path="machines" element={<Machines />} />
-    <Route path="machine-stock" element={<MachineStock />} />
-    <Route path="client-machines" element={<ClientMachines />} />
-    <Route path="operations" element={<Operations />} />
-    <Route path="requests" element={<Requests />} />
-    <Route path="service-requests" element={<ServiceRequests />} />
-    <Route path="calendar" element={<Calendar />} />
-    <Route path="inventory" element={<Inventory />} />
+  <Route path="/logistics" element={<MainLayout><Outlet /></MainLayout>}>
+    <Route index element={<Navigate to={PATHS.LOGISTICS.DASHBOARD} replace />} />
+    <Route path="dashboard" element={<LogisticsDashboard />} />
+    <Route path="machines" element={<LogisticsMachines />} />
+    <Route path="stock" element={<LogisticsInventory />} /> 
+    <Route path="client-machines" element={<LogisticsClientMachines />} />
+    <Route path="operations" element={<LogisticsOperations />} />
+    <Route path="requests" element={<LogisticsRequests />} />
+    <Route path="calendar" element={<LogisticsCalendar />} />
+    <Route path="support" element={<LogisticsSupport />} />
+    <Route path="settings" element={<LogisticsSettings />} />
   </Route>
 );

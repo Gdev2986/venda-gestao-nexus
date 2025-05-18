@@ -13,7 +13,7 @@ import {
 import { useToast } from "@/hooks/use-toast";
 import { formatRelative } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import { useNotifications } from "@/contexts/NotificationsContext";
+import { useNotifications } from "@/hooks/use-notifications";
 import { Badge } from "@/components/ui/badge";
 import { CheckCheck, Trash2 } from "lucide-react";
 import {

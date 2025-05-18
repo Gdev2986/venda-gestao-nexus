@@ -22,5 +22,4 @@ const AdminPayments: React.FC = () => {
   );
 };
 
-export { handleViewPayment };
 export default AdminPayments;

@@ -31,16 +31,6 @@ export const NotificationsContext = createContext<NotificationsContextType>({
   markAsUnread: async () => {},
 });
 
-export const useNotifications = (): NotificationsContextType => {
-  const context = useContext(NotificationsContext);
-  
-  if (context === undefined) {
-    throw new Error('useNotifications must be used within a NotificationsProvider');
-  }
-  
-  return context;
-};
-
 export const NotificationsProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [unreadCount, setUnreadCount] = useState(0);
@@ -128,7 +118,7 @@ export const NotificationsProvider: React.FC<{ children: React.ReactNode }> = ({
       const { error } = await supabase.from("notifications").insert({
         title,
         message,
-        type: type as string,
+        type,
         user_id: userId,
         is_read: false,
         data

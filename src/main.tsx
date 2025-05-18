@@ -5,7 +5,7 @@ import { BrowserRouter } from 'react-router-dom';
 import App from './App';
 import { ThemeProvider } from './components/theme-provider';
 import { Toaster } from './components/ui/toaster';
-import { NotificationsProvider } from './contexts/NotificationsContext'; // Import from the correct location
+import { NotificationsProvider } from './contexts/NotificationsContext'; // Fixed import path
 import './index.css';
 
 ReactDOM.createRoot(document.getElementById('root') as HTMLElement).render(

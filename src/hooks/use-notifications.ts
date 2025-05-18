@@ -11,3 +11,6 @@ export const useNotifications = (): NotificationsContextType => {
   
   return context;
 };
+
+// Re-export the NotificationsProvider from the context file
+export { NotificationsProvider } from '@/contexts/NotificationsContext';

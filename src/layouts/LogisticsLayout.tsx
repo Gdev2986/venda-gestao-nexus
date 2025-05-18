@@ -1,64 +1,79 @@
 
-import React from "react";
+import React, { useState, useEffect } from "react";
 import { Outlet } from "react-router-dom";
+import { useIsMobile } from "@/hooks/use-mobile";
+import Sidebar from "@/components/layout/sidebar/Sidebar";
 import { Button } from "@/components/ui/button";
 import { Menu } from "lucide-react";
-import { useIsMobile } from "@/hooks/use-mobile";
-import { useSidebar } from "@/hooks/use-sidebar";
-import { Toaster } from "@/components/ui/toaster";
 import { NotificationDropdown } from "@/components/layout/NotificationDropdown";
 import ThemeToggle from "@/components/theme/theme-toggle";
-import AdminSidebar from "./AdminSidebar"; // Using AdminSidebar for now, can create a LogisticsSidebar later
+import { useUserRole } from "@/hooks/use-user-role";
+import { UserRole } from "@/types";
 
-interface LogisticsLayoutProps {
-  children: React.ReactNode;
-}
+const LogisticsLayout = () => {
+  // Use localStorage to persist sidebar state
+  const [sidebarOpen, setSidebarOpen] = useState(() => {
+    const saved = localStorage.getItem("sidebar-state");
+    return saved !== null ? JSON.parse(saved) : true;
+  });
 
-const LogisticsLayout: React.FC<LogisticsLayoutProps> = ({ children }) => {
   const isMobile = useIsMobile();
-  const { isOpen: sidebarOpen, toggle: toggleSidebar } = useSidebar();
+  const { userRole } = useUserRole();
+
+  // Close sidebar on mobile by default
+  useEffect(() => {
+    if (isMobile) {
+      setSidebarOpen(false);
+    }
+  }, [isMobile]);
+
+  // Save sidebar state to localStorage when it changes
+  useEffect(() => {
+    if (!isMobile) {
+      localStorage.setItem("sidebar-state", JSON.stringify(sidebarOpen));
+    }
+  }, [sidebarOpen, isMobile]);
 
   return (
     <div className="flex h-screen overflow-hidden bg-background">
-      <AdminSidebar 
-        isOpen={sidebarOpen} 
-        isMobile={isMobile} 
-        onClose={() => toggleSidebar()} 
-        userRole="LOGISTICS"
+      <Sidebar 
+        isOpen={sidebarOpen}
+        isMobile={isMobile}
+        onClose={() => setSidebarOpen(false)}
+        userRole={UserRole.LOGISTICS}
       />
 
-      <div className={`flex-1 flex flex-col transition-all duration-300 ease-in-out ${
-        sidebarOpen && !isMobile ? 'ml-64' : 'ml-0'
-      } max-w-full`}>
-        {/* Header */}
+      <div
+        className={`flex-1 flex flex-col transition-all duration-300 ease-in-out ${
+          sidebarOpen && !isMobile ? "ml-64" : "ml-0"
+        } max-w-full`}
+      >
         <header className="h-14 md:h-16 border-b border-border flex items-center justify-between px-4 bg-background sticky top-0 z-10">
-          <div className="flex items-center gap-2">
-            <Button 
-              variant="ghost" 
-              size="sm" 
-              onClick={toggleSidebar}
-              aria-label={sidebarOpen ? "Close sidebar" : "Open sidebar"}
+          <div className="flex items-center space-x-2 md:space-x-4">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setSidebarOpen(!sidebarOpen)}
+              aria-label={sidebarOpen ? "Fechar menu" : "Abrir menu"}
               className="p-1"
             >
               <Menu className="h-4 w-4 md:h-5 md:w-5" />
             </Button>
-            <h1 className="text-lg font-semibold">Logistics Panel</h1>
+            <h1 className="text-base md:text-xl font-semibold truncate">SigmaPay</h1>
           </div>
 
-          <div className="flex items-center gap-2 md:gap-4">
+          <div className="flex items-center space-x-2 md:space-x-4">
             <ThemeToggle />
             <NotificationDropdown />
           </div>
         </header>
 
-        {/* Main content */}
-        <main className="flex-1 overflow-y-auto p-4 md:p-6">
-          {children || <Outlet />}
+        <main className="flex-1 w-full overflow-y-auto overflow-x-hidden p-4 md:p-6 lg:p-8">
+          <div className="mx-auto w-full">
+            <Outlet />
+          </div>
         </main>
       </div>
-      
-      {/* Toast notifications */}
-      <Toaster />
     </div>
   );
 };
