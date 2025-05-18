@@ -1,5 +1,14 @@
 
-import { NotificationType } from './enums';
+export enum NotificationType {
+  SYSTEM = "SYSTEM",
+  PAYMENT = "PAYMENT",
+  BALANCE = "BALANCE",
+  MACHINE = "MACHINE",
+  COMMISSION = "COMMISSION",
+  GENERAL = "GENERAL",
+  SALE = "SALE",
+  SUPPORT = "SUPPORT"
+}
 
 export interface Notification {
   id: string;

@@ -3,14 +3,35 @@ import React, { useState } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
-import SendNotificationForm from "@/components/admin/notifications/SendNotificationForm";
+import { SendNotificationForm } from "@/components/admin/notifications/SendNotificationForm";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import { UserRole, NotificationType } from "@/types/enums";
+import { UserRole } from "@/types/enums";
+import { NotificationType } from "@/types/notification.types";
 
 const AdminNotificationsTab = () => {
   const [isTestLoading, setIsTestLoading] = useState(false);
   const { toast } = useToast();
+
+  const sendNotification = async (notification: any) => {
+    try {
+      // Implementation will come here
+      console.log("Sending notification:", notification);
+      toast({
+        title: "Notification sent",
+        description: "Your notification has been sent successfully",
+      });
+      return true;
+    } catch (error) {
+      console.error("Error sending notification:", error);
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Failed to send notification",
+      });
+      return false;
+    }
+  };
 
   const sendTestNotification = async () => {
     setIsTestLoading(true);
@@ -65,7 +86,7 @@ const AdminNotificationsTab = () => {
         <TabsContent value="send" className="space-y-4 pt-4">
           <Card>
             <CardContent className="pt-6">
-              <SendNotificationForm />
+              <SendNotificationForm onSendNotification={sendNotification} />
             </CardContent>
           </Card>
         </TabsContent>

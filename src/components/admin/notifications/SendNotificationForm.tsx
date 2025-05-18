@@ -12,14 +12,14 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Card } from "@/components/ui/card";
-import { NotificationType } from "@/types/enums";
+import { NotificationType } from "@/types/notification.types";
 import { Notification } from "@/types/notification.types";
 
-export const SendNotificationForm = ({
-  onSendNotification,
-}: {
+interface SendNotificationFormProps {
   onSendNotification: (notification: Partial<Notification>) => Promise<any>;
-}) => {
+}
+
+export const SendNotificationForm = ({ onSendNotification }: SendNotificationFormProps) => {
   const [title, setTitle] = useState("");
   const [message, setMessage] = useState("");
   const [type, setType] = useState<NotificationType>(NotificationType.SYSTEM);
