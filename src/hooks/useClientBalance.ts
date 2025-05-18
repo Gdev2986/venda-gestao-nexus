@@ -1,19 +1,21 @@
+import { useState, useEffect } from "react";
+import { supabase } from "@/integrations/supabase/client";
+import { Client } from "@/types";
 
-import { useState } from 'react';
-import { supabase } from '@/integrations/supabase/client';
-import { useToast } from './use-toast';
-import { NotificationType } from '@/types/enums';
-
-interface ClientData {
-  id: string;
-  balance: number;
-}
-
-export function useClientBalance() {
+export const useClientBalance = (clientId?: string | null) => {
+  const [balance, setBalance] = useState<number | null>(null);
   const [isLoading, setIsLoading] = useState(false);
-  const { toast } = useToast();
+  const [error, setError] = useState<Error | null>(null);
 
-  const getClientBalance = async (clientId: string): Promise<number | null> => {
+  const fetchBalance = async () => {
+    if (!clientId) {
+      setBalance(null);
+      return;
+    }
+
+    setIsLoading(true);
+    setError(null);
+
     try {
       const { data, error } = await supabase
         .from('clients')
@@ -22,116 +24,58 @@ export function useClientBalance() {
         .single();
 
       if (error) {
-        console.error('Error fetching client balance:', error);
-        return null;
+        setError(error);
+      } else if (data) {
+        setBalance(data.balance);
+      } else {
+        setBalance(0);
       }
-
-      return data?.balance || 0;
-    } catch (error) {
-      console.error('Error in getClientBalance:', error);
-      return null;
-    }
-  };
-
-  const updateBalance = async (
-    clientId: string,
-    amount: number,
-    description?: string,
-    transactionType?: string
-  ): Promise<boolean> => {
-    setIsLoading(true);
-
-    try {
-      // Get current client data
-      const { data: clientData, error: clientError } = await supabase
-        .from('clients')
-        .select('balance')
-        .eq('id', clientId)
-        .single();
-
-      if (clientError) {
-        console.error('Client error:', clientError);
-        throw new Error('Cliente não encontrado');
-      }
-
-      if (!clientData) {
-        throw new Error('Dados do cliente não encontrados');
-      }
-
-      const currentBalance = clientData.balance || 0;
-      const newBalance = currentBalance + amount;
-
-      // Update client balance
-      const { error: updateError } = await supabase
-        .from('clients')
-        .update({ balance: newBalance })
-        .eq('id', clientId);
-
-      if (updateError) {
-        throw new Error('Erro ao atualizar saldo');
-      }
-
-      // Record in client logs
-      try {
-        await supabase
-          .from('client_logs')
-          .insert({
-            client_id: clientId,
-            action_type: amount > 0 ? 'credit' : 'debit',
-            previous_value: JSON.stringify({ balance: currentBalance }),
-            new_value: JSON.stringify({ balance: newBalance }),
-            changed_by: 'system',
-          });
-      } catch (error) {
-        console.error('Error recording transaction (non-critical):', error);
-        // Continue execution even if transaction recording fails
-      }
-
-      // Try to send a notification if user_id exists
-      try {
-        // Get user_id from user_client_access table
-        const { data: userAccess } = await supabase
-          .from('user_client_access')
-          .select('user_id')
-          .eq('client_id', clientId)
-          .single();
-
-        if (userAccess && userAccess.user_id) {
-          await supabase.from("notifications").insert({
-            user_id: userAccess.user_id,
-            title: "Saldo Atualizado",
-            message: `Seu saldo foi ${amount > 0 ? "aumentado" : "diminuído"} em R$ ${Math.abs(amount).toFixed(2)} ${description ? `: ${description}` : ''}`,
-            type: NotificationType.BALANCE,
-            data: JSON.stringify({ amount, previous_balance: currentBalance, new_balance: newBalance })
-          });
-        }
-      } catch (error) {
-        console.error('Failed to send notification (non-critical):', error);
-        // Continue even if notification fails
-      }
-
-      toast({
-        title: 'Saldo atualizado',
-        description: `O saldo foi ${amount > 0 ? 'aumentado' : 'diminuído'} em R$ ${Math.abs(amount).toFixed(2)}`,
-      });
-
-      return true;
-    } catch (error: any) {
-      console.error('Error updating balance:', error);
-      toast({
-        variant: 'destructive',
-        title: 'Erro',
-        description: error.message || 'Não foi possível atualizar o saldo',
-      });
-      return false;
+    } catch (err: any) {
+      setError(err);
     } finally {
       setIsLoading(false);
     }
   };
 
-  return {
-    getClientBalance,
-    updateBalance,
-    isLoading,
+  useEffect(() => {
+    fetchBalance();
+  }, [clientId]);
+  
+  const sendBalanceNotification = async (client: Client, newBalance: number) => {
+    try {
+      if (!client?.id) return;
+      
+      // Get the user_id for this client
+      const { data: userData, error: userError } = await supabase
+        .from('user_client_access')
+        .select('user_id')
+        .eq('client_id', client.id)
+        .maybeSingle();
+      
+      if (userError || !userData?.user_id) {
+        console.error('Error finding user for client notification:', userError);
+        return;
+      }
+      
+      await supabase
+        .from('notifications')
+        .insert({
+          user_id: userData.user_id,
+          title: "Atualização de Saldo",
+          message: `O saldo da sua conta foi atualizado para R$ ${newBalance.toFixed(2)}`,
+          type: "BALANCE", // Use string literal instead of enum reference
+          data: {
+            balance: newBalance,
+            previous_balance: client.balance || 0,
+            operation_date: new Date().toISOString()
+          },
+          is_read: false
+        });
+        
+    } catch (error) {
+      console.error('Error sending balance notification:', error);
+    }
   };
-}
+
+  return { balance, isLoading, error, refreshBalance: fetchBalance, sendBalanceNotification };
+};

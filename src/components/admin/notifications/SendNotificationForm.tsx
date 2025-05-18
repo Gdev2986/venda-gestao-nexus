@@ -37,9 +37,12 @@ export function SendNotificationForm() {
       // For now, we're just using a mock implementation
       await sendNotification(
         '9027d4fc-2715-4439-8c84-93aa536514fb', // Example user ID
-        title,
-        message,
-        'SYSTEM' as NotificationType
+        {
+          title,
+          message,
+          type: 'ADMIN_NOTIFICATION' as NotificationType,
+          data: {}
+        }
       );
       
       toast({

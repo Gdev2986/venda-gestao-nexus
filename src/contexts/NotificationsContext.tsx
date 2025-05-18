@@ -201,14 +201,14 @@ export const NotificationsProvider: React.FC<{ children: React.ReactNode }> = ({
     try {
       const { error } = await supabase
         .from('notifications')
-        .insert([{
+        .insert({
           user_id: userId,
           title: notification.title,
           message: notification.message,
           type: notification.type,
           data: notification.data || {},
           is_read: false
-        }]);
+        });
 
       if (error) throw error;
       

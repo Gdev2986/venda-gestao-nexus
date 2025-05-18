@@ -1,5 +1,5 @@
 
-import { LayoutDashboard, ListOrdered, Wallet, Settings, Users, BarChart3, MessageSquare, Percent, Building2, Truck } from "lucide-react";
+import { LayoutDashboard, ListOrdered, Wallet, Settings, Users, BarChart3, MessageSquare, Percent, Building2, Truck, Smartphone } from "lucide-react";
 import { SidebarItem } from "../types";
 import { UserRole } from "@/types";
 import { PATHS } from "@/routes/paths";
@@ -33,6 +33,12 @@ export const adminItems: SidebarItem[] = [
     title: "Parceiros",
     icon: Users,
     href: PATHS.ADMIN.PARTNERS,
+    roles: [UserRole.ADMIN],
+  },
+  {
+    title: "Máquinas",
+    icon: Smartphone,
+    href: PATHS.LOGISTICS.MACHINES,
     roles: [UserRole.ADMIN],
   },
   {
