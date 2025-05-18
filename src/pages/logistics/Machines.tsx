@@ -126,7 +126,7 @@ const LogisticsMachines = () => {
               <SelectValue placeholder="Todos os Status" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="">Todos os Status</SelectItem>
+              <SelectItem value="all">Todos os Status</SelectItem>
               <SelectItem value="STOCK">Em Estoque</SelectItem>
               <SelectItem value="ACTIVE">Operando</SelectItem>
               <SelectItem value="MAINTENANCE">Em Manutenção</SelectItem>

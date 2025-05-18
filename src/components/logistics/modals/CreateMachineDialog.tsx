@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { z } from "zod";
 import { useForm } from "react-hook-form";
@@ -245,7 +244,7 @@ const CreateMachineDialog = ({
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
-                      <SelectItem value="">Em Estoque</SelectItem>
+                      <SelectItem value="none_stock">Em Estoque</SelectItem>
                       {availableClients.map(client => (
                         <SelectItem key={client.id} value={client.id}>
                           {client.business_name}

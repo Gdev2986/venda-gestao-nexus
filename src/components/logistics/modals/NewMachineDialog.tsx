@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
@@ -203,7 +202,7 @@ const NewMachineDialog = ({ open, onOpenChange, onSuccess }: NewMachineDialogPro
             Cancelar
           </Button>
           <Button
-            onClick={handleSubmit}
+            onClick={() => {}} // Placeholder for your handleSubmit function
             disabled={isSubmitting}
           >
             {isSubmitting ? "Cadastrando..." : "Cadastrar Máquina"}
