@@ -1,11 +1,14 @@
+
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Client } from "@/types";
+import { useToast } from "@/hooks/use-toast";
 
 export const useClientBalance = (clientId?: string | null) => {
   const [balance, setBalance] = useState<number | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<Error | null>(null);
+  const { toast } = useToast();
 
   const fetchBalance = async () => {
     if (!clientId) {
@@ -32,6 +35,51 @@ export const useClientBalance = (clientId?: string | null) => {
       }
     } catch (err: any) {
       setError(err);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const updateBalance = async (newBalance: number) => {
+    if (!clientId) {
+      toast({
+        title: "Erro",
+        description: "ID do cliente não fornecido",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    setIsLoading(true);
+    setError(null);
+    
+    try {
+      const { data, error } = await supabase
+        .from('clients')
+        .update({ balance: newBalance })
+        .eq('id', clientId)
+        .select()
+        .single();
+        
+      if (error) {
+        throw error;
+      }
+      
+      setBalance(newBalance);
+      toast({
+        title: "Saldo atualizado",
+        description: `Novo saldo: R$ ${newBalance.toFixed(2)}`,
+        variant: "default",
+      });
+      
+      return data;
+    } catch (err: any) {
+      setError(err);
+      toast({
+        title: "Erro ao atualizar saldo",
+        description: err.message || "Ocorreu um erro ao atualizar o saldo",
+        variant: "destructive",
+      });
     } finally {
       setIsLoading(false);
     }
@@ -77,5 +125,12 @@ export const useClientBalance = (clientId?: string | null) => {
     }
   };
 
-  return { balance, isLoading, error, refreshBalance: fetchBalance, sendBalanceNotification };
+  return { 
+    balance, 
+    isLoading, 
+    error, 
+    refreshBalance: fetchBalance, 
+    sendBalanceNotification,
+    updateBalance
+  };
 };

@@ -1,33 +1,40 @@
-
-import React, { useState, useEffect } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { useState, useEffect } from "react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Search, ArrowRight } from "lucide-react";
+import { Link } from "react-router-dom";
+import { Smartphone, ArrowRight } from "lucide-react";
 import { getClientsWithMachines } from "@/services/machine.service";
 import { Skeleton } from "@/components/ui/skeleton";
-import { useNavigate } from 'react-router-dom';
-import { PATHS } from '@/routes/paths';
+import { Input } from "@/components/ui/input";
 
 interface ClientWithMachines {
   id: string;
   business_name: string;
   machineCount: number;
-  status?: string;
+  predominantStatus: string;
 }
 
-const ClientsWithMachinesTab = () => {
-  const [clients, setClients] = useState<ClientWithMachines[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [search, setSearch] = useState('');
-  const navigate = useNavigate();
+interface ClientsWithMachinesTabProps {
+  clients?: ClientWithMachines[];
+  isLoading?: boolean;
+}
 
+export default function ClientsWithMachinesTab({ clients: initialClients, isLoading: initialLoading }: ClientsWithMachinesTabProps) {
+  const [clients, setClients] = useState<ClientWithMachines[]>(initialClients || []);
+  const [isLoading, setIsLoading] = useState(initialLoading !== undefined ? initialLoading : true);
+  const [searchTerm, setSearchTerm] = useState("");
+  
   useEffect(() => {
-    async function fetchData() {
+    // If clients are provided as props, use them
+    if (initialClients) {
+      setClients(initialClients);
+      return;
+    }
+    
+    // Otherwise fetch them
+    const fetchClients = async () => {
       try {
-        setIsLoading(true);
         const data = await getClientsWithMachines();
         setClients(data);
       } catch (error) {
@@ -35,94 +42,93 @@ const ClientsWithMachinesTab = () => {
       } finally {
         setIsLoading(false);
       }
-    }
+    };
     
-    fetchData();
-  }, []);
+    fetchClients();
+  }, [initialClients]);
   
   // Filter clients based on search term
   const filteredClients = clients.filter(client => 
-    client.business_name.toLowerCase().includes(search.toLowerCase())
+    client.business_name.toLowerCase().includes(searchTerm.toLowerCase())
   );
   
-  const handleViewDetails = (clientId: string) => {
-    // Navigate to client details page
-    navigate(PATHS.LOGISTICS.CLIENTS);
-    // In a real application, you might want to include the client ID in the URL
-    // navigate(`${PATHS.LOGISTICS.CLIENTS}/${clientId}`);
+  const getStatusBadge = (status: string) => {
+    switch (status) {
+      case 'ACTIVE':
+        return <Badge className="bg-green-500">Ativas</Badge>;
+      case 'INACTIVE':
+        return <Badge className="bg-red-500">Inativas</Badge>;
+      case 'MAINTENANCE':
+        return <Badge variant="outline" className="border-yellow-500 text-yellow-700">Manutenção</Badge>;
+      default:
+        return <Badge variant="outline">{status}</Badge>;
+    }
   };
-  
+
   return (
     <div className="space-y-4">
-      <div className="flex justify-between">
-        <div className="relative max-w-sm">
-          <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-          <Input
-            type="search"
-            placeholder="Buscar clientes..."
-            className="pl-8"
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-          />
-        </div>
-      </div>
+      <Input
+        placeholder="Buscar por nome do cliente..."
+        value={searchTerm}
+        onChange={(e) => setSearchTerm(e.target.value)}
+        className="max-w-sm mb-4"
+      />
       
-      <Card>
-        <CardHeader>
-          <CardTitle>Clientes com Máquinas</CardTitle>
-        </CardHeader>
-        <CardContent>
-          {isLoading ? (
-            <div className="space-y-2">
-              {[1, 2, 3].map((i) => (
-                <div key={i} className="flex items-center justify-between p-2">
-                  <div className="space-y-2">
-                    <Skeleton className="h-4 w-48" />
-                    <Skeleton className="h-3 w-32" />
-                  </div>
-                  <Skeleton className="h-8 w-24" />
-                </div>
-              ))}
-            </div>
-          ) : filteredClients.length > 0 ? (
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Cliente</TableHead>
-                  <TableHead className="text-center">Total de Máquinas</TableHead>
-                  <TableHead className="text-center">Status</TableHead>
-                  <TableHead className="text-right">Ações</TableHead>
+      <div className="rounded-md border overflow-hidden">
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead>Cliente</TableHead>
+              <TableHead className="w-[150px]">Qtd. Máquinas</TableHead>
+              <TableHead className="w-[150px]">Status Predominante</TableHead>
+              <TableHead className="w-[100px] text-right">Ações</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {isLoading ? (
+              Array.from({ length: 5 }).map((_, index) => (
+                <TableRow key={`skeleton-${index}`}>
+                  <TableCell><Skeleton className="h-4 w-full" /></TableCell>
+                  <TableCell><Skeleton className="h-4 w-12" /></TableCell>
+                  <TableCell><Skeleton className="h-6 w-24" /></TableCell>
+                  <TableCell><Skeleton className="h-9 w-24 ml-auto" /></TableCell>
                 </TableRow>
-              </TableHeader>
-              <TableBody>
-                {filteredClients.map((client) => (
-                  <TableRow key={client.id}>
-                    <TableCell className="font-medium">{client.business_name}</TableCell>
-                    <TableCell className="text-center">{client.machineCount}</TableCell>
-                    <TableCell className="text-center">
-                      <Badge className="bg-green-100 text-green-800">
-                        Ativo
-                      </Badge>
-                    </TableCell>
-                    <TableCell className="text-right">
-                      <Button variant="ghost" size="sm" onClick={() => handleViewDetails(client.id)}>
-                        <ArrowRight className="mr-2 h-4 w-4" />
-                        Ver Detalhes
-                      </Button>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          ) : (
-            <div className="py-8 text-center">
-              <p className="text-muted-foreground">Nenhum cliente com máquina encontrado</p>
-            </div>
-          )}
-        </CardContent>
-      </Card>
+              ))
+            ) : filteredClients.length === 0 ? (
+              <TableRow>
+                <TableCell colSpan={4} className="text-center py-4">
+                  Nenhum cliente com máquinas encontrado
+                </TableCell>
+              </TableRow>
+            ) : (
+              filteredClients.map(client => (
+                <TableRow key={client.id}>
+                  <TableCell className="font-medium">{client.business_name}</TableCell>
+                  <TableCell>
+                    <div className="flex items-center">
+                      <Smartphone className="h-4 w-4 mr-2 text-muted-foreground" />
+                      <span>{client.machineCount}</span>
+                    </div>
+                  </TableCell>
+                  <TableCell>{getStatusBadge(client.predominantStatus)}</TableCell>
+                  <TableCell className="text-right">
+                    <Button 
+                      asChild 
+                      variant="outline" 
+                      size="sm"
+                    >
+                      <Link to={`/admin/clients/${client.id}`}>
+                        <span className="mr-1">Detalhes</span>
+                        <ArrowRight className="h-4 w-4" />
+                      </Link>
+                    </Button>
+                  </TableCell>
+                </TableRow>
+              ))
+            )}
+          </TableBody>
+        </Table>
+      </div>
     </div>
   );
-};
-
-export default ClientsWithMachinesTab;
+}

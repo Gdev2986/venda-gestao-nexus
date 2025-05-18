@@ -6,7 +6,15 @@ import { UserRole } from "@/types";
 
 export const useUserRole = () => {
   const { user, isLoading: authLoading } = useAuth();
-  const [userRole, setUserRole] = useState<UserRole>(UserRole.CLIENT);
+  const [userRole, setUserRole] = useState<UserRole>(() => {
+    // Initialize from session storage if available
+    if (typeof window !== "undefined") {
+      const userId = localStorage.getItem("supabase.auth.token.user_id");
+      const cachedRole = userId ? localStorage.getItem(`user_role_${userId}`) : null;
+      return cachedRole ? normalizeRole(cachedRole) : UserRole.CLIENT;
+    }
+    return UserRole.CLIENT;
+  });
   const [isRoleLoading, setIsRoleLoading] = useState<boolean>(true);
 
   // Normalize role to our enum type
@@ -29,8 +37,8 @@ export const useUserRole = () => {
   const fetchUserRole = useCallback(async () => {
     if (!user?.id) return;
 
-    // Check session storage first to avoid unnecessary database calls
-    const cachedRole = sessionStorage.getItem(`user_role_${user.id}`);
+    // Check local storage first to avoid unnecessary database calls
+    const cachedRole = localStorage.getItem(`user_role_${user.id}`);
     
     if (cachedRole) {
       console.info('useUserRole - Using cached role:', cachedRole);
@@ -54,8 +62,8 @@ export const useUserRole = () => {
       const role = data || 'CLIENT';
       console.info('useUserRole - Database role:', role, 'Normalized role:', normalizeRole(role));
       
-      // Store in session storage to avoid frequent db calls
-      sessionStorage.setItem(`user_role_${user.id}`, role);
+      // Store in local storage for persistence
+      localStorage.setItem(`user_role_${user.id}`, role);
       
       setUserRole(normalizeRole(role));
     } catch (error) {
@@ -68,7 +76,7 @@ export const useUserRole = () => {
   // Clear cache on logout
   const clearRoleCache = useCallback(() => {
     if (user?.id) {
-      sessionStorage.removeItem(`user_role_${user.id}`);
+      localStorage.removeItem(`user_role_${user.id}`);
     }
   }, [user?.id]);
 
@@ -86,14 +94,16 @@ export const useUserRole = () => {
 
     // Clear role cache when component unmounts or when user changes
     return () => {
-      clearRoleCache();
+      // Don't clear cache on unmount to persist between page navigations
+      // Only clear on logout action
     };
-  }, [authLoading, user, fetchUserRole, clearRoleCache]);
+  }, [authLoading, user, fetchUserRole]);
 
   return {
     userRole,
     isRoleLoading,
     isLoading: authLoading || isRoleLoading,
-    refreshRole: fetchUserRole
+    refreshRole: fetchUserRole,
+    clearRoleCache
   };
 };

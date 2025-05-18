@@ -12,6 +12,13 @@ import {
 /**
  * Fetch all machines
  */
+export const getAllMachines = async (): Promise<Machine[]> => {
+  return fetchMachines();
+};
+
+/**
+ * Fetch all machines
+ */
 export const fetchMachines = async (): Promise<Machine[]> => {
   try {
     const { data, error } = await supabase
@@ -33,7 +40,14 @@ export const fetchMachines = async (): Promise<Machine[]> => {
 /**
  * Fetch machines by status
  */
-export const fetchMachinesByStatus = async (status: string | MachineStatus): Promise<Machine[]> => {
+export const getMachinesByStatus = async (status: MachineStatus): Promise<Machine[]> => {
+  return fetchMachinesByStatus(status);
+};
+
+/**
+ * Fetch machines by status
+ */
+export const fetchMachinesByStatus = async (status: MachineStatus): Promise<Machine[]> => {
   try {
     const { data, error } = await supabase
       .from("machines")
@@ -188,7 +202,7 @@ export const getMachineStats = async (): Promise<MachineStats> => {
     const { count: stock, error: stockError } = await supabase
       .from("machines")
       .select("*", { count: "exact", head: true })
-      .eq("status", MachineStatus.STOCK.toString());
+      .eq("status", MachineStatus.STOCK);
 
     if (stockError) throw stockError;
 
@@ -223,6 +237,50 @@ export const getMachineStats = async (): Promise<MachineStats> => {
     };
   } catch (error) {
     console.error("Error getting machine statistics:", error);
+    throw error;
+  }
+};
+
+/**
+ * Get clients with machines
+ */
+export const getClientsWithMachines = async (): Promise<any[]> => {
+  try {
+    const { data, error } = await supabase
+      .from("machines")
+      .select(`
+        client_id,
+        client:clients(id, business_name),
+        status
+      `)
+      .not("client_id", "is", null);
+
+    if (error) throw error;
+    
+    // Process data to get clients with machine counts
+    const clientsMap = new Map();
+    
+    data.forEach(machine => {
+      if (machine.client_id && machine.client) {
+        const clientId = machine.client_id;
+        
+        if (!clientsMap.has(clientId)) {
+          clientsMap.set(clientId, {
+            id: clientId,
+            business_name: machine.client.business_name,
+            machineCount: 1,
+            predominantStatus: machine.status
+          });
+        } else {
+          const client = clientsMap.get(clientId);
+          client.machineCount += 1;
+        }
+      }
+    });
+    
+    return Array.from(clientsMap.values());
+  } catch (error) {
+    console.error("Error fetching clients with machines:", error);
     throw error;
   }
 };

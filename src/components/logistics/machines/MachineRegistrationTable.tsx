@@ -15,6 +15,11 @@ import { useMediaQuery } from "@/hooks/use-media-query";
 import MachineTransferForm from "@/components/machines/MachineTransferForm";
 import { supabase } from "@/integrations/supabase/client";
 
+interface MachineTransferDialogProps {
+  machine: Machine;
+  onTransferComplete: () => void;
+}
+
 export default function MachineRegistrationTable() {
   const [machines, setMachines] = useState<Machine[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -69,7 +74,7 @@ export default function MachineRegistrationTable() {
         setMachines(machines.filter(m => m.id !== id));
         toast({
           title: "Máquina excluída com sucesso",
-          variant: "success",
+          variant: "default",
         });
       } catch (error) {
         console.error("Error deleting machine:", error);
@@ -88,7 +93,7 @@ export default function MachineRegistrationTable() {
       setMachines(machines.map(m => m.id === id ? { ...m, status } : m));
       toast({
         title: "Status atualizado com sucesso",
-        variant: "success",
+        variant: "default",
       });
     } catch (error) {
       console.error("Error updating machine status:", error);
@@ -267,7 +272,9 @@ export default function MachineRegistrationTable() {
           
           {selectedMachine && (
             <MachineTransferForm 
-              machine={selectedMachine} 
+              machineId={selectedMachine.id}
+              machineName={selectedMachine.serial_number}
+              currentClientId={selectedMachine.client_id}
               onTransferComplete={() => {
                 setOpenTransferDialog(false);
                 loadMachines();
