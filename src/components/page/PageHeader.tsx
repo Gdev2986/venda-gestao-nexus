@@ -1,10 +1,11 @@
 
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
+import { ReactNode } from "react";
 
 interface PageHeaderProps {
-  title: string;
-  description?: string;
+  title: ReactNode;
+  description?: ReactNode;
   actionLabel?: string;
   actionLink?: string;
   actionOnClick?: () => void;
