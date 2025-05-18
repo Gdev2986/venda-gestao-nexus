@@ -1,8 +1,8 @@
 
-import React, { createContext, useContext, useState, useEffect, useCallback } from "react";
+import React, { createContext, useState, useEffect, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Notification, NotificationType } from "@/types";
-import { useAuth } from "@/hooks/use-auth";
+import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
 
 export interface NotificationsContextType {
@@ -118,7 +118,7 @@ export const NotificationsProvider: React.FC<{ children: React.ReactNode }> = ({
       const { error } = await supabase.from("notifications").insert({
         title,
         message,
-        type,
+        type: type.toString(),
         user_id: userId,
         is_read: false,
         data

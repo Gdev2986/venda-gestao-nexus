@@ -21,7 +21,7 @@ export interface Notification {
   title: string;
   message: string;
   type: NotificationType;
-  is_read: boolean; // Using is_read instead of read
+  is_read: boolean;
   timestamp: string;
   data?: any;
 }

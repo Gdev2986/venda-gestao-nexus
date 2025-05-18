@@ -1,170 +1,199 @@
-
 import { useState, useEffect } from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Bell, Check, Trash, Clock } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
-import { useToast } from "@/hooks/use-toast";
-import { formatRelative } from "date-fns";
-import { ptBR } from "date-fns/locale";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { useNotifications } from "@/hooks/use-notifications";
 import { Badge } from "@/components/ui/badge";
-import { CheckCheck, Trash2 } from "lucide-react";
-import {
+import { Notification, NotificationType } from "@/types";
+import { formatDistanceToNow } from "date-fns";
+import { ptBR } from "date-fns/locale";
+import { Skeleton } from "@/components/ui/skeleton";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { 
   AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
   AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogCancel,
+  AlertDialogAction,
 } from "@/components/ui/alert-dialog";
 
-const Notifications = () => {
-  const {
-    notifications,
-    unreadCount,
-    loading,
-    markAsRead,
-    markAsUnread,
-    deleteNotification,
-    refreshNotifications,
-  } = useNotifications();
-  const { toast } = useToast();
-  const [deletingId, setDeletingId] = useState<string | null>(null);
-  const [showDeleteAlert, setShowDeleteAlert] = useState(false);
-
+const NotificationsPage = () => {
+  const { notifications, markAsRead, markAllAsRead, deleteNotification, isLoading, markAsUnread } = useNotifications();
+  const [selectedNotification, setSelectedNotification] = useState<Notification | null>(null);
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  
   useEffect(() => {
-    refreshNotifications();
-  }, [refreshNotifications]);
+    document.title = "Notificações | SigmaPay";
+  }, []);
 
-  const formatRelativeTime = (dateStr: string): string => {
-    const date = new Date(dateStr);
-    return formatRelative(date, new Date(), { locale: ptBR });
+  const filterByDate = (date: Date): string => {
+    const today = new Date();
+    const yesterday = new Date(today);
+    yesterday.setDate(today.getDate() - 1);
+  
+    if (date.toDateString() === today.toDateString()) {
+      return 'Hoje';
+    } else if (date.toDateString() === yesterday.toDateString()) {
+      return 'Ontem';
+    } else {
+      return date.toLocaleDateString();
+    }
   };
 
-  const handleDelete = (id: string) => {
-    setDeletingId(id);
-    setShowDeleteAlert(true);
-  };
-
-  const confirmDelete = async () => {
-    if (deletingId) {
-      try {
-        await deleteNotification(deletingId);
-        toast({
-          title: "Notificação excluída",
-          description: "A notificação foi excluída com sucesso.",
-        });
-      } catch (error: any) {
-        toast({
-          variant: "destructive",
-          title: "Erro",
-          description:
-            error.message || "Não foi possível excluir a notificação.",
-        });
-      } finally {
-        setShowDeleteAlert(false);
-        setDeletingId(null);
-      }
+  const getNotificationIcon = (type: NotificationType) => {
+    switch (type) {
+      case NotificationType.PAYMENT:
+        return <CreditCard className="h-4 w-4" />;
+      case NotificationType.BALANCE:
+        return <Wallet className="h-4 w-4" />;
+      case NotificationType.MACHINE:
+        return <Laptop className="h-4 w-4" />;
+      case NotificationType.COMMISSION:
+        return <LucideTrendingUp className="h-4 w-4" />;
+      case NotificationType.SYSTEM:
+        return <Settings className="h-4 w-4" />;
+      case NotificationType.GENERAL:
+        return <MessageSquare className="h-4 w-4" />;
+      case NotificationType.SALE:
+        return <ShoppingCart className="h-4 w-4" />;
+      case NotificationType.SUPPORT:
+        return <HelpCircle className="h-4 w-4" />;
+      default:
+        return <Bell className="h-4 w-4" />;
     }
   };
 
   return (
     <div className="container mx-auto py-6">
-      <Card>
-        <CardHeader>
-          <div className="flex justify-between items-center">
-            <CardTitle>Notificações</CardTitle>
-            {unreadCount > 0 && (
-              <Badge variant="secondary">{unreadCount} não lidas</Badge>
-            )}
-          </div>
-        </CardHeader>
-        <CardContent>
-          {loading ? (
-            <p>Carregando notificações...</p>
-          ) : notifications.length === 0 ? (
-            <p>Nenhuma notificação encontrada.</p>
-          ) : (
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Título</TableHead>
-                  <TableHead>Mensagem</TableHead>
-                  <TableHead>Data</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead className="text-right">Ações</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {notifications.map((notification) => (
-                  <TableRow key={notification.id}>
-                    <TableCell>{notification.title}</TableCell>
-                    <TableCell>{notification.message}</TableCell>
-                    <TableCell>
-                      {formatRelativeTime(notification.timestamp)}
-                    </TableCell>
-                    <TableCell>
-                      <Badge variant={notification.is_read ? "outline" : "default"}>
-                        {notification.is_read ? "Lida" : "Não lida"}
-                      </Badge>
-                    </TableCell>
-                    <TableCell className="text-right">
-                      <div className="flex justify-end gap-2">
-                        {!notification.is_read && (
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            onClick={() => markAsRead(notification.id)}
-                            title="Marcar como lida"
-                          >
-                            <CheckCheck className="h-4 w-4" />
-                          </Button>
-                        )}
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="text-destructive hover:text-destructive/80"
-                          onClick={() => handleDelete(notification.id)}
-                          title="Excluir"
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
-                      </div>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          )}
-        </CardContent>
-      </Card>
+      <div className="flex justify-between items-center mb-6">
+        <div>
+          <h1 className="text-3xl font-bold tracking-tight">Notificações</h1>
+          <p className="text-muted-foreground">
+            Receba atualizações sobre pagamentos, vendas e outras atividades importantes.
+          </p>
+        </div>
+        {notifications.length > 0 && (
+          <Button onClick={markAllAsRead} variant="outline" size="sm">
+            Marcar todas como lidas
+          </Button>
+        )}
+      </div>
 
-      <AlertDialog open={showDeleteAlert} onOpenChange={setShowDeleteAlert}>
+      {isLoading ? (
+        <div className="space-y-4">
+          {Array.from({ length: 3 }).map((_, index) => (
+            <Card key={index} className="overflow-hidden">
+              <CardHeader className="p-4">
+                <div className="flex justify-between">
+                  <Skeleton className="h-5 w-1/3" />
+                  <Skeleton className="h-5 w-1/6" />
+                </div>
+              </CardHeader>
+              <CardContent className="p-4 pt-0">
+                <Skeleton className="h-4 w-full mb-2" />
+                <Skeleton className="h-4 w-2/3" />
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      ) : notifications.length === 0 ? (
+        <Alert>
+          <Bell className="h-4 w-4" />
+          <AlertDescription>
+            Você não tem notificações. Quando houver novidades, elas aparecerão aqui.
+          </AlertDescription>
+        </Alert>
+      ) : (
+        <div className="space-y-4">
+          {notifications.map((notification) => (
+            <Card 
+              key={notification.id} 
+              className={`overflow-hidden transition-all hover:shadow-md ${
+                !notification.is_read ? "border-l-4 border-l-primary" : ""
+              }`}
+            >
+              <CardHeader className="p-4 pb-2 flex flex-row items-start justify-between">
+                <div className="flex gap-2 items-center">
+                  <div className="bg-primary/10 p-2 rounded-full">
+                    {getNotificationIcon(notification.type)}
+                  </div>
+                  <div>
+                    <CardTitle className="text-base font-medium flex items-center gap-2">
+                      {notification.title}
+                      {!notification.is_read && (
+                        <Badge variant="default" className="h-1.5 w-1.5 rounded-full p-0 bg-primary" />
+                      )}
+                    </CardTitle>
+                    <CardDescription>
+                      {formatDistanceToNow(new Date(notification.timestamp), { 
+                        addSuffix: true,
+                        locale: ptBR
+                      })}
+                    </CardDescription>
+                  </div>
+                </div>
+                <div className="flex space-x-1">
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={() => {
+                      if (notification.is_read) {
+                        markAsUnread(notification.id);
+                      } else {
+                        markAsRead(notification.id);
+                      }
+                    }}
+                  >
+                    <Check className="h-4 w-4" />
+                    <span className="sr-only">
+                      {notification.is_read ? "Marcar como não lida" : "Marcar como lida"}
+                    </span>
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={() => {
+                      setSelectedNotification(notification);
+                      setIsDeleteDialogOpen(true);
+                    }}
+                  >
+                    <Trash className="h-4 w-4" />
+                    <span className="sr-only">Excluir notificação</span>
+                  </Button>
+                </div>
+              </CardHeader>
+              <CardContent className="p-4 pt-0">
+                <p className="text-sm">{notification.message}</p>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      )}
+
+      <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Confirmar Exclusão</AlertDialogTitle>
+            <AlertDialogTitle>Excluir notificação</AlertDialogTitle>
             <AlertDialogDescription>
-              Tem certeza de que deseja excluir esta notificação? Esta ação não
-              pode ser desfeita.
+              Tem certeza de que deseja excluir esta notificação? Esta ação não pode ser desfeita.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogCancel onClick={() => setIsDeleteDialogOpen(false)}>
+              Cancelar
+            </AlertDialogCancel>
             <AlertDialogAction
-              onClick={confirmDelete}
-              disabled={loading}
-              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              onClick={async () => {
+                if (selectedNotification) {
+                  await deleteNotification(selectedNotification.id);
+                  setIsDeleteDialogOpen(false);
+                }
+              }}
             >
-              {loading ? "Excluindo..." : "Excluir"}
+              Excluir
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
@@ -173,4 +202,15 @@ const Notifications = () => {
   );
 };
 
-export default Notifications;
+export default NotificationsPage;
+
+import {
+  CreditCard,
+  Wallet,
+  Laptop,
+  TrendingUp as LucideTrendingUp,
+  Settings,
+  MessageSquare,
+  ShoppingCart,
+  HelpCircle,
+} from "lucide-react";
