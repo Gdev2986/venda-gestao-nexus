@@ -7,7 +7,7 @@ import {
   MachineTransfer,
   MachineTransferParams,
   MachineCreateParams,
-  MachineUpdateParams
+  MachineUpdateParams 
 } from "@/types/machine.types";
 
 // Get all machines
@@ -36,7 +36,7 @@ export const getAllMachines = async (): Promise<Machine[]> => {
       id: item.id,
       serial_number: item.serial_number,
       model: item.model,
-      status: item.status,
+      status: item.status as MachineStatus,
       client_id: item.client_id,
       client_name: item.client?.business_name,
       created_at: item.created_at,
@@ -70,7 +70,7 @@ export const getMachinesByStatus = async (status: MachineStatus): Promise<Machin
           business_name
         )
       `)
-      .eq("status", status)
+      .eq("status", status.toString())
       .order("created_at", { ascending: false });
 
     if (error) throw error;
@@ -79,7 +79,7 @@ export const getMachinesByStatus = async (status: MachineStatus): Promise<Machin
       id: item.id,
       serial_number: item.serial_number,
       model: item.model,
-      status: item.status,
+      status: item.status as MachineStatus,
       client_id: item.client_id,
       client_name: item.client?.business_name,
       created_at: item.created_at,
@@ -145,7 +145,7 @@ export const createMachine = async (params: MachineCreateParams): Promise<Machin
       .insert({
         serial_number: params.serial_number,
         model: params.model,
-        status: params.status || MachineStatus.STOCK,
+        status: params.status?.toString() || MachineStatus.STOCK.toString(),
         client_id: params.client_id
       })
       .select()
@@ -157,7 +157,7 @@ export const createMachine = async (params: MachineCreateParams): Promise<Machin
       id: data.id,
       serial_number: data.serial_number,
       model: data.model,
-      status: data.status,
+      status: data.status as MachineStatus,
       client_id: data.client_id,
       created_at: data.created_at,
       updated_at: data.updated_at
@@ -175,7 +175,7 @@ export const updateMachine = async (id: string, params: MachineUpdateParams): Pr
     
     if (params.serial_number !== undefined) updateData.serial_number = params.serial_number;
     if (params.model !== undefined) updateData.model = params.model;
-    if (params.status !== undefined) updateData.status = params.status;
+    if (params.status !== undefined) updateData.status = params.status.toString();
     if (params.client_id !== undefined) updateData.client_id = params.client_id;
     
     const { data, error } = await supabase
@@ -191,7 +191,7 @@ export const updateMachine = async (id: string, params: MachineUpdateParams): Pr
       id: data.id,
       serial_number: data.serial_number,
       model: data.model,
-      status: data.status,
+      status: data.status as MachineStatus,
       client_id: data.client_id,
       created_at: data.created_at,
       updated_at: data.updated_at
@@ -249,11 +249,15 @@ export const transferMachine = async (params: MachineTransferParams): Promise<Ma
     if (transferError) throw transferError;
 
     // Update the machine's client_id
+    const newStatus = params.to_client_id 
+      ? MachineStatus.ACTIVE.toString() 
+      : MachineStatus.STOCK.toString();
+      
     const { error: machineError } = await supabase
       .from("machines")
       .update({ 
         client_id: params.to_client_id,
-        status: params.to_client_id ? MachineStatus.ACTIVE : MachineStatus.STOCK
+        status: newStatus
       })
       .eq("id", params.machine_id);
 

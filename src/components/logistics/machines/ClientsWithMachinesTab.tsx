@@ -10,7 +10,7 @@ interface Client {
   id: string;
   business_name: string;
   machineCount: number;
-  machines?: Array<{id: string; status: MachineStatus}>;
+  machines?: Array<{id: string; status: string}>;
 }
 
 const ClientsWithMachinesTab: React.FC = () => {
@@ -37,7 +37,7 @@ const ClientsWithMachinesTab: React.FC = () => {
     client.business_name.toLowerCase().includes(searchTerm.toLowerCase())
   );
   
-  const getStatusBadge = (status: MachineStatus) => {
+  const getStatusBadge = (status: string) => {
     switch (status) {
       case MachineStatus.ACTIVE:
         return <Badge className="bg-green-500">Ativo</Badge>;

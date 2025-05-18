@@ -13,7 +13,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { PageHeader } from "@/components/page/PageHeader";
 import { ptBR } from "date-fns/locale";
-import { PaymentStatus } from "@/types/enums";
+import { PaymentStatus } from "@/types/payment.types";
 import { Payment } from "@/types/payment.types";
 
 // This is a stub implementation of the user payments page
@@ -35,7 +35,14 @@ const UserPayments = () => {
           // For demo purposes, we're using a hard-coded value
           const clientId = "c87e857c-f385-4f8f-9d5d-a165d6172676"; // TODO: Replace with real client ID from user context
           const data = await getClientPayments(clientId);
-          setPayments(data);
+          
+          // Convert payment service type to payment.types type
+          const convertedPayments: Payment[] = data.map(p => ({
+            ...p,
+            client_id: p.client_id || '',
+          }));
+          
+          setPayments(convertedPayments);
         } catch (error) {
           console.error("Failed to fetch payments:", error);
         } finally {
@@ -71,7 +78,7 @@ const UserPayments = () => {
       } : undefined
     };
     
-    setSelectedPayment(adaptedPayment as any);
+    setSelectedPayment(adaptedPayment);
     setIsDetailsOpen(true);
   };
 
@@ -160,7 +167,7 @@ const UserPayments = () => {
 
       {selectedPayment && (
         <PaymentDetailsDialog
-          payment={selectedPayment as any}
+          payment={selectedPayment}
           open={isDetailsOpen}
           onOpenChange={setIsDetailsOpen}
         />
