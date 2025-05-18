@@ -1,25 +1,33 @@
 
-import React from 'react';
-import ReactDOM from 'react-dom/client';
+import { createRoot } from 'react-dom/client';
 import { BrowserRouter } from 'react-router-dom';
-import App from './App';
-import { ThemeProvider } from './components/theme-provider';
-import { Toaster } from './components/ui/toaster';
-import { AuthProvider } from './contexts/AuthContext';
-import { NotificationsProvider } from './contexts/NotificationsContext';
+import { AuthProvider } from '@/contexts/AuthContext';
+import { ThemeProvider } from '@/components/theme-provider';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { NotificationsProvider } from '@/hooks/use-notifications';
+import App from './App.tsx';
 import './index.css';
 
-ReactDOM.createRoot(document.getElementById('root') as HTMLElement).render(
-  <React.StrictMode>
-    <BrowserRouter>
-      <ThemeProvider defaultTheme="system" storageKey="ui-theme">
+// Create a client
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      staleTime: 60 * 1000, // 1 minute
+      refetchOnWindowFocus: false,
+    },
+  },
+});
+
+createRoot(document.getElementById("root")!).render(
+  <BrowserRouter>
+    <ThemeProvider defaultTheme="light" storageKey="vite-ui-theme">
+      <QueryClientProvider client={queryClient}>
         <AuthProvider>
           <NotificationsProvider>
             <App />
-            <Toaster />
           </NotificationsProvider>
         </AuthProvider>
-      </ThemeProvider>
-    </BrowserRouter>
-  </React.StrictMode>,
+      </QueryClientProvider>
+    </ThemeProvider>
+  </BrowserRouter>
 );

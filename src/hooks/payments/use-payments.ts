@@ -83,8 +83,7 @@ export function usePayments(): UsePaymentsReturn {
           id: payment.pix_key.id,
           key: payment.pix_key.key,
           type: payment.pix_key.type || '',
-          name: payment.pix_key.name || '', // Required field
-          owner_name: payment.pix_key.name || '' // Use name as a fallback
+          owner_name: payment.pix_key.name || ''
         } : undefined;
 
         return {
@@ -98,7 +97,7 @@ export function usePayments(): UsePaymentsReturn {
           approved_at: payment.approved_at,
           approved_by: payment.approved_by,
           receipt_url: payment.receipt_url,
-          rejection_reason: payment.rejection_reason || null, // Ensure it's not undefined
+          rejection_reason: payment.rejection_reason,
           pix_key: pixKey,
           type: payment.status === 'PAID' ? 'deposit' : 'withdrawal' // Mock type for filtering
         };

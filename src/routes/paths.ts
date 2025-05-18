@@ -62,7 +62,7 @@ export const PATHS = {
     SALES: "/financial/sales",
     CLIENTS: "/financial/clients",
     CLIENT_DETAILS: (id: string = ":id") => `/financial/clients/${id}`,
-    PAYMENTS: "/financial/payments", // Change to financial/payments instead of admin payments
+    PAYMENTS: "/admin/payments", // Use the same admin payments route
     PARTNERS: "/financial/partners",
     REPORTS: "/financial/reports",
     FEES: "/financial/fees",
@@ -78,7 +78,6 @@ export const PATHS = {
     MACHINE_NEW: "/logistics/machines/new",
     MACHINE_DETAILS: (id: string = ":id") => `/logistics/machines/${id}`,
     STOCK: "/logistics/stock", // Add stock path
-    MACHINE_STOCK: "/logistics/machine-stock", // Add machine_stock path for route
     CLIENT_MACHINES: "/logistics/client-machines", // Add client machines path
     OPERATIONS: "/logistics/operations",
     REQUESTS: "/logistics/requests",

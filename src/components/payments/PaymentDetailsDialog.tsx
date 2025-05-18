@@ -1,178 +1,240 @@
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
-import { Payment } from "@/types/payment.types";
+
+import { useState } from "react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
+import { Payment } from "@/types";
+import { formatCurrency } from "@/lib/utils";
+import { Badge } from "@/components/ui/badge";
+import { Separator } from "@/components/ui/separator";
+import { usePaymentActions } from "@/hooks/payments/usePaymentActions";
+import { PaymentStatus } from "@/types/enums";
+import { Loader2 } from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import { useAuth } from "@/hooks/use-auth";
-import { Badge } from "@/components/ui/badge";
-import { PaymentReceiptUploader } from "@/components/payments/PaymentReceiptUploader";
-import { PaymentReceiptViewer } from "@/components/payments/PaymentReceiptViewer";
-import { useToast } from "@/hooks/use-toast";
-import { useEffect, useState } from "react";
-import { supabase } from "@/integrations/supabase/client";
+import { useUser } from "@/hooks/use-user";
+import { UserRole } from "@/types/enums";
+import { PaymentReceiptUploader } from "./PaymentReceiptUploader";
+import { PaymentReceiptViewer } from "./PaymentReceiptViewer";
 
 interface PaymentDetailsDialogProps {
+  payment: Payment | null;
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  payment: Payment | null;
+  onPaymentUpdated?: () => void;
 }
 
-export const PaymentDetailsDialog = ({
+export function PaymentDetailsDialog({
+  payment,
   open,
   onOpenChange,
-  payment,
-}: PaymentDetailsDialogProps) => {
-  const { user, userRole } = useAuth();
+  onPaymentUpdated,
+}: PaymentDetailsDialogProps) {
+  const { approvePayment, rejectPayment, isLoading } = usePaymentActions();
   const { toast } = useToast();
-  const [refresh, setRefresh] = useState(false);
+  const { user } = useUser();
+  const [showReceiptUploader, setShowReceiptUploader] = useState(false);
 
-  const refreshPayment = () => {
-    setRefresh(!refresh);
-  };
+  if (!payment) return null;
 
-  useEffect(() => {
-    if (payment?.id) {
-      fetchPaymentDetails();
-    }
-  }, [payment?.id, refresh]);
-
-  const fetchPaymentDetails = async () => {
+  const handleApprove = async () => {
     try {
-      const { data, error } = await supabase
-        .from('payment_requests')
-        .select(`
-          id,
-          amount,
-          description,
-          status,
-          pix_key_id,
-          created_at,
-          updated_at,
-          approved_at,
-          approved_by,
-          receipt_url,
-          rejection_reason,
-          client_id,
-          pix_key:pix_keys (
-            id, 
-            key,
-            type,
-            name
-          )
-        `)
-        .eq('id', payment.id)
-        .single();
-
-      if (error) {
-        throw new Error(error.message);
-      }
-
-      // TODO: Update payment details in the parent component
-      // This might involve a callback function to update the state in the parent
-      console.log("Payment details refreshed:", data);
-    } catch (err: any) {
-      console.error('Error fetching payment details:', err);
+      await approvePayment(payment.id);
+      toast({
+        title: "Pagamento aprovado",
+        description: "O pagamento foi aprovado com sucesso.",
+      });
+      onPaymentUpdated?.();
+      onOpenChange(false);
+    } catch (error) {
       toast({
         variant: "destructive",
-        title: "Error",
-        description: "Failed to refresh payment data"
+        title: "Erro",
+        description: "Não foi possível aprovar o pagamento.",
       });
     }
   };
 
-  if (!payment) {
-    return null;
-  }
+  const handleReject = async () => {
+    try {
+      await rejectPayment(payment.id);
+      toast({
+        title: "Pagamento rejeitado",
+        description: "O pagamento foi rejeitado com sucesso.",
+      });
+      onPaymentUpdated?.();
+      onOpenChange(false);
+    } catch (error) {
+      toast({
+        variant: "destructive",
+        title: "Erro",
+        description: "Não foi possível rejeitar o pagamento.",
+      });
+    }
+  };
+
+  const getStatusBadge = (status: string) => {
+    switch (status) {
+      case "PENDING":
+        return <Badge variant="outline">Pendente</Badge>;
+      case "PROCESSING":
+        return <Badge variant="secondary">Em processamento</Badge>;
+      case "APPROVED":
+        return <Badge variant="default">Aprovado</Badge>;
+      case "REJECTED":
+        return <Badge variant="destructive">Rejeitado</Badge>;
+      case "PAID":
+        return <Badge variant="default">Pago</Badge>;
+      default:
+        return <Badge variant="outline">{status}</Badge>;
+    }
+  };
+
+  const formatDate = (dateString: string) => {
+    try {
+      return format(new Date(dateString), "PPP 'às' p", { locale: ptBR });
+    } catch (error) {
+      return "Data inválida";
+    }
+  };
+
+  const canApproveOrReject =
+    user?.role === UserRole.ADMIN ||
+    user?.role === UserRole.FINANCIAL ||
+    user?.role === UserRole.FINANCE;
+
+  const isPending = payment.status === PaymentStatus.PENDING;
+  const hasReceipt = !!payment.receipt_url;
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[625px]">
+      <DialogContent className="sm:max-w-[500px]">
         <DialogHeader>
-          <DialogTitle>Detalhes da Solicitação de Pagamento</DialogTitle>
-          <DialogDescription>
-            Visualize os detalhes da solicitação de pagamento.
-          </DialogDescription>
+          <DialogTitle>Detalhes do Pagamento</DialogTitle>
         </DialogHeader>
 
-        <div className="grid gap-4 py-4">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="space-y-4">
+          <div className="flex justify-between items-center">
             <div>
-              <div className="text-sm font-medium leading-none">ID</div>
-              <div className="text-sm text-muted-foreground">{payment.id}</div>
+              <p className="text-sm text-muted-foreground">Valor</p>
+              <p className="text-xl font-semibold">
+                {formatCurrency(payment.amount)}
+              </p>
             </div>
-            <div>
-              <div className="text-sm font-medium leading-none">Status</div>
-              <div className="text-sm text-muted-foreground">
-                <Badge variant="secondary">{payment.status}</Badge>
-              </div>
+            <div className="text-right">
+              <p className="text-sm text-muted-foreground">Status</p>
+              <div>{getStatusBadge(payment.status)}</div>
             </div>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <Separator />
+
+          <div className="grid grid-cols-2 gap-4">
             <div>
-              <div className="text-sm font-medium leading-none">Valor</div>
-              <div className="text-sm text-muted-foreground">
-                {payment.amount.toLocaleString("pt-BR", {
-                  style: "currency",
-                  currency: "BRL",
-                })}
-              </div>
+              <p className="text-sm text-muted-foreground">Método</p>
+              <p>{payment.payment_type || "N/A"}</p>
             </div>
             <div>
-              <div className="text-sm font-medium leading-none">Data de Criação</div>
-              <div className="text-sm text-muted-foreground">
-                {format(new Date(payment.created_at), "dd/MM/yyyy HH:mm", {
-                  locale: ptBR,
-                })}
-              </div>
+              <p className="text-sm text-muted-foreground">Data</p>
+              <p>{formatDate(payment.created_at)}</p>
+            </div>
+            <div>
+              <p className="text-sm text-muted-foreground">Cliente</p>
+              <p>{payment.client?.business_name || "N/A"}</p>
+            </div>
+            <div>
+              <p className="text-sm text-muted-foreground">Referência</p>
+              <p className="truncate">{payment.description || "N/A"}</p>
             </div>
           </div>
 
-          <div>
-            <div className="text-sm font-medium leading-none">Descrição</div>
-            <div className="text-sm text-muted-foreground">
-              {payment.description}
-            </div>
-          </div>
-
-          {payment.pix_key && (
-            <div>
-              <div className="text-sm font-medium leading-none">Chave Pix</div>
-              <div className="text-sm text-muted-foreground">
-                {payment.pix_key.key} ({payment.pix_key.type})
+          {payment.description && (
+            <>
+              <Separator />
+              <div>
+                <p className="text-sm text-muted-foreground">Descrição</p>
+                <p className="whitespace-pre-wrap">{payment.description}</p>
               </div>
-            </div>
+            </>
           )}
 
           {payment.rejection_reason && (
-            <div>
-              <div className="text-sm font-medium leading-none">
-                Motivo da Rejeição
+            <>
+              <Separator />
+              <div>
+                <p className="text-sm text-muted-foreground">Motivo da Rejeição</p>
+                <p className="whitespace-pre-wrap">{payment.rejection_reason}</p>
               </div>
-              <div className="text-sm text-muted-foreground">
-                {payment.rejection_reason}
-              </div>
-            </div>
+            </>
           )}
 
-          {payment.receipt_url && (
-            <PaymentReceiptViewer receiptUrl={payment.receipt_url} />
+          {hasReceipt && (
+            <>
+              <Separator />
+              <div>
+                <p className="text-sm text-muted-foreground mb-2">Comprovante</p>
+                <PaymentReceiptViewer url={payment.receipt_url} />
+              </div>
+            </>
           )}
 
-          {userRole === 'ADMIN' && payment.status === 'APPROVED' && !payment.receipt_url && (
-            <PaymentReceiptUploader
-              paymentId={payment.id}
-              onSuccess={() => refreshPayment()}
-              onCancel={() => refreshPayment()}
-            />
+          {showReceiptUploader && (
+            <>
+              <Separator />
+              <PaymentReceiptUploader
+                paymentId={payment.id}
+                onSuccess={() => {
+                  setShowReceiptUploader(false);
+                  onPaymentUpdated?.();
+                }}
+                onCancel={() => setShowReceiptUploader(false)}
+              />
+            </>
           )}
+
+          <Separator />
+
+          <div className="flex justify-end gap-2">
+            {canApproveOrReject && isPending && (
+              <>
+                <Button
+                  variant="outline"
+                  onClick={handleReject}
+                  disabled={isLoading}
+                >
+                  {isLoading ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : (
+                    "Rejeitar"
+                  )}
+                </Button>
+                <Button onClick={handleApprove} disabled={isLoading}>
+                  {isLoading ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : (
+                    "Aprovar"
+                  )}
+                </Button>
+              </>
+            )}
+
+            {payment.status === PaymentStatus.APPROVED && !hasReceipt && (
+              <Button
+                onClick={() => setShowReceiptUploader(true)}
+                disabled={showReceiptUploader}
+              >
+                Anexar Comprovante
+              </Button>
+            )}
+
+            {!showReceiptUploader && (
+              <Button variant="outline" onClick={() => onOpenChange(false)}>
+                Fechar
+              </Button>
+            )}
+          </div>
         </div>
       </DialogContent>
     </Dialog>
   );
-};
+}

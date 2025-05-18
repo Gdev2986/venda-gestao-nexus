@@ -12,10 +12,10 @@ import { getDashboardPath } from "./routes/routeUtils";
 // Route groups
 import { AuthRoutes } from "./routes/authRoutes";
 import { AdminRoutes } from "./routes/adminRoutes";
-import { clientRoutes } from "./routes/clientRoutes";
+import { ClientRoutes } from "./routes/clientRoutes";
 import { PartnerRoutes } from "./routes/partnerRoutes";
-import { financialRoutes } from "./routes/financialRoutes";
-import { logisticsRoutes } from "./routes/logisticsRoutes";
+import { FinancialRoutes } from "./routes/financialRoutes";
+import { LogisticsRoutes } from "./routes/logisticsRoutes";
 
 // Layouts
 import RootLayout from "./layouts/RootLayout";
@@ -68,10 +68,10 @@ function App() {
 
       {/* Protected Routes by Role */}
       {AdminRoutes}
-      {clientRoutes}
+      {ClientRoutes}
       {PartnerRoutes}
-      {financialRoutes}
-      {logisticsRoutes}
+      {FinancialRoutes}
+      {LogisticsRoutes}
 
       {/* Shared Routes (accessible by all roles) */}
       <Route path="/notifications" element={<Notifications />} />

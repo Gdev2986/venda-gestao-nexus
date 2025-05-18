@@ -6,7 +6,7 @@ import Sidebar from "./sidebar/Sidebar";
 import { Button } from "@/components/ui/button";
 import { Menu } from "lucide-react";
 import { useIsMobile } from "@/hooks/use-mobile";
-import { NotificationDropdown } from "./NotificationDropdown";
+import NotificationDropdown from "./NotificationDropdown";
 import ThemeToggle from "../theme/theme-toggle";
 import { useUserRole } from "@/hooks/use-user-role";
 

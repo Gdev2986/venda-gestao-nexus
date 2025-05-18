@@ -9,8 +9,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import ClientForm from "./ClientForm";
-import { ClientFormValues } from './schema/clientFormSchema';
+import ClientForm, { ClientFormValues } from "./ClientForm";
 import { useAuth } from "@/hooks/use-auth";
 import { UserRole } from "@/types/enums";
 

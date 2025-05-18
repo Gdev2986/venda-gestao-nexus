@@ -1,14 +1,16 @@
 
-import React, { useState, useEffect } from "react";
-import { Outlet } from "react-router-dom";
+import { Outlet, useLocation } from "react-router-dom";
+import { useState, useEffect } from "react";
+import { motion } from "framer-motion";
+import MainSidebar from "./MainSidebar";
+import { useUserRole } from "@/hooks/use-user-role";
 import { useIsMobile } from "@/hooks/use-mobile";
-import Sidebar from "@/components/layout/sidebar/Sidebar";
 import { Button } from "@/components/ui/button";
 import { Menu } from "lucide-react";
-import { NotificationDropdown } from "@/components/layout/NotificationDropdown";
+import NotificationDropdown from "@/components/layout/NotificationDropdown";
 import ThemeToggle from "@/components/theme/theme-toggle";
-import { useUserRole } from "@/hooks/use-user-role";
-import { UserRole } from "@/types";
+import { Toaster } from "@/components/ui/toaster";
+import { Spinner } from "@/components/ui/spinner";
 
 const LogisticsLayout = () => {
   // Use localStorage to persist sidebar state
@@ -16,9 +18,17 @@ const LogisticsLayout = () => {
     const saved = localStorage.getItem("sidebar-state");
     return saved !== null ? JSON.parse(saved) : true;
   });
-
+  
   const isMobile = useIsMobile();
   const { userRole } = useUserRole();
+  const [isLoading, setIsLoading] = useState(true);
+  const location = useLocation();
+
+  // Log for debugging
+  useEffect(() => {
+    console.log("LogisticsLayout rendering at path:", location.pathname);
+    console.log("LogisticsLayout - userRole:", userRole);
+  }, [location.pathname, userRole]);
 
   // Close sidebar on mobile by default
   useEffect(() => {
@@ -29,51 +39,84 @@ const LogisticsLayout = () => {
 
   // Save sidebar state to localStorage when it changes
   useEffect(() => {
-    if (!isMobile) {
+    if (!isMobile) { // Only save state for desktop
       localStorage.setItem("sidebar-state", JSON.stringify(sidebarOpen));
     }
   }, [sidebarOpen, isMobile]);
 
+  // Add loading animation with shorter duration
+  useEffect(() => {
+    // Simulate loading for smoother transitions
+    setIsLoading(true);
+    const timer = setTimeout(() => {
+      setIsLoading(false);
+    }, 300); // 0.3 second loading time (reduced for better UX)
+    
+    return () => clearTimeout(timer);
+  }, []);
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center h-screen w-full bg-background">
+        <motion.div
+          initial={{ opacity: 0, scale: 0.8 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ duration: 0.3 }}
+          className="flex flex-col items-center"
+        >
+          <Spinner size="lg" />
+          <p className="mt-4 text-muted-foreground">Carregando...</p>
+        </motion.div>
+      </div>
+    );
+  }
+
   return (
     <div className="flex h-screen overflow-hidden bg-background">
-      <Sidebar 
-        isOpen={sidebarOpen}
-        isMobile={isMobile}
-        onClose={() => setSidebarOpen(false)}
-        userRole={UserRole.LOGISTICS}
+      {/* Sidebar component - mounted always but conditionally shown */}
+      <MainSidebar 
+        isOpen={sidebarOpen} 
+        isMobile={isMobile} 
+        onClose={() => setSidebarOpen(false)} 
+        userRole={userRole}
       />
-
-      <div
+      
+      {/* Main content */}
+      <div 
         className={`flex-1 flex flex-col transition-all duration-300 ease-in-out ${
-          sidebarOpen && !isMobile ? "ml-64" : "ml-0"
-        } max-w-full`}
+          sidebarOpen && !isMobile ? 'ml-64' : 'ml-0'
+        }`}
       >
-        <header className="h-14 md:h-16 border-b border-border flex items-center justify-between px-4 bg-background sticky top-0 z-10">
-          <div className="flex items-center space-x-2 md:space-x-4">
-            <Button
-              variant="ghost"
-              size="sm"
+        {/* Header */}
+        <header className="h-16 border-b border-border flex items-center justify-between px-4 bg-background sticky top-0 z-10">
+          <div className="flex items-center space-x-4">
+            <Button 
+              variant="ghost" 
+              size="icon" 
               onClick={() => setSidebarOpen(!sidebarOpen)}
-              aria-label={sidebarOpen ? "Fechar menu" : "Abrir menu"}
-              className="p-1"
+              aria-label={sidebarOpen ? "Close menu" : "Open menu"}
             >
-              <Menu className="h-4 w-4 md:h-5 md:w-5" />
+              <Menu className="h-5 w-5" />
             </Button>
-            <h1 className="text-base md:text-xl font-semibold truncate">SigmaPay</h1>
+            <h1 className="text-xl font-semibold">SigmaPay</h1>
           </div>
-
-          <div className="flex items-center space-x-2 md:space-x-4">
+          
+          <div className="flex items-center space-x-4">
             <ThemeToggle />
             <NotificationDropdown />
           </div>
         </header>
-
-        <main className="flex-1 w-full overflow-y-auto overflow-x-hidden p-4 md:p-6 lg:p-8">
-          <div className="mx-auto w-full">
+        
+        {/* Main scrollable content */}
+        <main className="flex-1 overflow-auto p-4 md:p-6 lg:p-8">
+          <div className="mx-auto max-w-7xl">
             <Outlet />
           </div>
         </main>
       </div>
+      
+      {/* Toast notifications */}
+      <Toaster />
     </div>
   );
 };

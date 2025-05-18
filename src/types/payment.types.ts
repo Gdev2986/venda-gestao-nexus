@@ -1,65 +1,63 @@
 
-export type PixKeyType = "CPF" | "CNPJ" | "EMAIL" | "PHONE" | "RANDOM" | "EVP";
-
-export interface PixKey {
-  id: string;
-  user_id: string;
-  key: string;
-  type: PixKeyType;
-  name: string;
-  is_default?: boolean;
-  created_at?: string;
-  updated_at?: string;
-}
-
-export interface Client {
-  id: string;
-  name: string;
-  email: string;
-  phone: string;
-  cnpj: string;
-  status: string;
-  address: string;
-  city: string;
-  state: string;
-  zip_code: string;
-  created_at: string;
-  balance: number;
-  partner_id?: string;
-}
-
-export enum PaymentStatus {
-  PENDING = "PENDING",
-  APPROVED = "APPROVED",
-  REJECTED = "REJECTED",
-  PAID = "PAID"
-}
+export type PaymentRequestStatus = 'PENDING' | 'APPROVED' | 'REJECTED' | 'PAID';
 
 export interface PaymentRequest {
   id: string;
   client_id: string;
   amount: number;
-  description: string;
-  status: PaymentStatus | string;
+  description?: string;
+  status: PaymentRequestStatus;
+  pix_key_id?: string;
   created_at: string;
   updated_at: string;
-  approved_at?: string;
-  approved_by?: string;
-  receipt_url?: string;
-  rejection_reason?: string;
-  pix_key: PixKey;
-  type: string;
+  approved_at?: string | null;
+  approved_by?: string | null;
+  receipt_url?: string | null;
+  rejection_reason?: string | null;
+  pix_key?: PixKey;
+  client?: Client;
+  payment_type?: string;
+  due_date?: string;
+  notes?: string;
+  type?: string;
 }
 
-export interface Payment {
+export interface PixKey {
   id: string;
-  client_id: string;
-  amount: number;
-  description: string;
-  status: PaymentStatus | string;
-  created_at: string;
-  updated_at: string;
-  approved_at?: string;
-  receipt_url?: string;
-  type: string;
+  key: string;
+  type: string; // Make type required to match with expected usage
+  key_type?: string;
+  client_id?: string;
+  user_id?: string;
+  created_at?: string;
+  updated_at?: string;
+  name?: string;
+  owner_name: string; // Make owner_name required to match with expected usage
+  isDefault?: boolean;
+  is_active?: boolean;
+  bank_name?: string;
 }
+
+export type PixKeyType = 'CPF' | 'CNPJ' | 'EMAIL' | 'PHONE' | 'EVP';
+
+export interface Client {
+  id: string;
+  business_name: string;
+  document?: string;
+  email?: string;
+  phone?: string;
+  status?: string;
+  balance?: number;
+  partner_id?: string;
+  created_at?: string;
+  updated_at?: string;
+  contact_name?: string;
+  address?: string;
+  city?: string;
+  state?: string;
+  zip?: string;
+  fee_plan_id?: string;
+}
+
+// Payment type is an alias for PaymentRequest to maintain compatibility
+export type Payment = PaymentRequest;

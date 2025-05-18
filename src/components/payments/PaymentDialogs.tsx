@@ -2,11 +2,10 @@
 import { ApprovePaymentDialog } from "@/components/payments/ApprovePaymentDialog";
 import { RejectPaymentDialog } from "@/components/payments/RejectPaymentDialog";
 import { PaymentDetailsDialog } from "@/components/payments/PaymentDetailsDialog";
-import { Payment } from "@/types/payment.types";
-import { PaymentStatus } from "@/types/enums";
+import { PaymentData } from "@/hooks/payments/payment.types";
 
 interface PaymentDialogsProps {
-  selectedPayment: Payment | null;
+  selectedPayment: PaymentData | null;
   
   approveDialogOpen: boolean;
   setApproveDialogOpen: (open: boolean) => void;
@@ -40,31 +39,27 @@ export const PaymentDialogs = ({
 }: PaymentDialogsProps) => {
   return (
     <>
-      {selectedPayment && (
-        <>
-          <ApprovePaymentDialog
-            open={approveDialogOpen}
-            onOpenChange={setApproveDialogOpen}
-            payment={selectedPayment as any} // Cast for type compatibility
-            onApprove={handleApprovePayment}
-            isProcessing={isProcessing}
-          />
-          
-          <RejectPaymentDialog
-            open={rejectDialogOpen}
-            onOpenChange={setRejectDialogOpen}
-            payment={selectedPayment as any} // Cast for type compatibility
-            onReject={handleRejectPayment}
-            isProcessing={isProcessing}
-          />
-          
-          <PaymentDetailsDialog
-            open={detailsDialogOpen}
-            onOpenChange={setDetailsDialogOpen}
-            payment={selectedPayment}
-          />
-        </>
-      )}
+      <ApprovePaymentDialog
+        open={approveDialogOpen}
+        onOpenChange={setApproveDialogOpen}
+        payment={selectedPayment}
+        onApprove={handleApprovePayment}
+        isProcessing={isProcessing}
+      />
+      
+      <RejectPaymentDialog
+        open={rejectDialogOpen}
+        onOpenChange={setRejectDialogOpen}
+        payment={selectedPayment}
+        onReject={handleRejectPayment}
+        isProcessing={isProcessing}
+      />
+      
+      <PaymentDetailsDialog
+        open={detailsDialogOpen}
+        onOpenChange={setDetailsDialogOpen}
+        payment={selectedPayment}
+      />
     </>
   );
 };
