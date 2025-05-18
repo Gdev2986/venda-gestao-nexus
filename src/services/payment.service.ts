@@ -1,303 +1,254 @@
 
 import { supabase } from "@/integrations/supabase/client";
-import { Payment, PaymentRequest, PaymentStatus, PaymentType } from "@/types/payment.types";
+import { Payment, PaymentRequest, PaymentStatus } from "@/types/payment.types";
 
-interface GetPaymentsParams {
-  clientId?: string;
-  status?: PaymentStatus;
-  limit?: number;
+// Function to get user's payment requests
+export async function getUserPaymentRequests(userId: string): Promise<PaymentRequest[]> {
+  try {
+    // Get client IDs for this user
+    const { data: clientIds, error: clientsError } = await supabase
+      .from("user_client_access")
+      .select("client_id")
+      .eq("user_id", userId);
+
+    if (clientsError) {
+      console.error("Error getting client IDs:", clientsError);
+      return [];
+    }
+
+    if (!clientIds || clientIds.length === 0) {
+      return [];
+    }
+
+    // Fetch payment requests for these clients
+    const { data: payments, error: paymentsError } = await supabase
+      .from("payment_requests")
+      .select(`
+        *,
+        client:clients(id, business_name, email),
+        pix_key:pix_keys(id, key, type, name, owner_name)
+      `)
+      .in("client_id", clientIds.map(item => item.client_id));
+
+    if (paymentsError) {
+      console.error("Error getting payment requests:", paymentsError);
+      return [];
+    }
+
+    return payments as PaymentRequest[];
+  } catch (error) {
+    console.error("Error in getUserPaymentRequests:", error);
+    return [];
+  }
 }
 
-export async function getPayments({
-  clientId,
-  status,
-  limit = 100,
-}: GetPaymentsParams = {}) {
+// Function to get all payment requests (for admin/financial)
+export async function getAllPaymentRequests(status?: PaymentStatus): Promise<Payment[]> {
   try {
-    // Build query
     let query = supabase
       .from("payment_requests")
       .select(`
         *,
-        pix_key:pix_keys(*)
+        client:clients(id, business_name, email),
+        pix_key:pix_keys(id, key, type, name, owner_name)
       `)
-      .order("created_at", { ascending: false })
-      .limit(limit);
-
-    // Apply filters if provided
-    if (clientId) {
-      query = query.eq("client_id", clientId);
-    }
+      .order("created_at", { ascending: false });
 
     if (status) {
       query = query.eq("status", status);
     }
 
-    // Execute query
     const { data, error } = await query;
 
     if (error) {
-      throw error;
+      console.error("Error getting all payment requests:", error);
+      return [];
     }
 
-    return data.map(item => ({
-      ...item,
-      status: item.status as PaymentStatus
-    }));
+    // Map to the Payment interface
+    const payments: Payment[] = data.map((item: any) => {
+      return {
+        id: item.id,
+        client_id: item.client_id,
+        client: item.client,
+        client_name: item.client?.business_name || 'Unknown',
+        amount: item.amount,
+        status: item.status,
+        created_at: item.created_at,
+        updated_at: item.updated_at,
+        approved_at: item.approved_at,
+        approved_by: item.approved_by,
+        receipt_url: item.receipt_url,
+        description: item.description,
+        rejection_reason: item.rejection_reason,
+        payment_type: item.payment_type,
+        pix_key_id: item.pix_key_id,
+        pix_key: item.pix_key
+      };
+    });
+
+    return payments;
   } catch (error) {
-    console.error("Error fetching payments:", error);
-    throw error;
+    console.error("Error in getAllPaymentRequests:", error);
+    return [];
   }
 }
 
-export async function createPaymentRequest(payment: Omit<PaymentRequest, "id" | "created_at" | "status" | "updated_at" | "approved_at" | "approved_by" | "receipt_url" | "rejection_reason">) {
-  try {
-    const { data, error } = await supabase.from("payment_requests").insert({
-      client_id: payment.client_id,
-      amount: payment.amount,
-      pix_key_id: payment.pix_key?.id,
-      description: payment.description,
-      status: PaymentStatus.PENDING,
-    }).select().single();
-
-    if (error) {
-      throw error;
-    }
-
-    return data;
-  } catch (error) {
-    console.error("Error creating payment request:", error);
-    throw error;
-  }
-}
-
-export async function approvePayment(paymentId: string, userId: string) {
+// Function to approve a payment request
+export async function approvePaymentRequest(
+  paymentId: string, 
+  adminId: string
+): Promise<Payment | null> {
   try {
     const { data, error } = await supabase
       .from("payment_requests")
       .update({
-        status: PaymentStatus.APPROVED,
-        approved_by: userId,
+        status: "APPROVED",
+        approved_by: adminId,
         approved_at: new Date().toISOString(),
+        updated_at: new Date().toISOString()
       })
       .eq("id", paymentId)
-      .select()
-      .single();
-
-    if (error) {
-      throw error;
-    }
-
-    return data;
-  } catch (error) {
-    console.error("Error approving payment:", error);
-    throw error;
-  }
-}
-
-export async function rejectPayment(
-  paymentId: string,
-  rejectionReason: string
-) {
-  try {
-    const { data, error } = await supabase
-      .from("payment_requests")
-      .update({
-        status: PaymentStatus.REJECTED,
-        rejection_reason: rejectionReason,
-      })
-      .eq("id", paymentId)
-      .select()
-      .single();
-
-    if (error) {
-      throw error;
-    }
-
-    return data;
-  } catch (error) {
-    console.error("Error rejecting payment:", error);
-    throw error;
-  }
-}
-
-export async function getPaymentById(paymentId: string): Promise<Payment> {
-  try {
-    const { data, error } = await supabase
-      .from("payment_requests")
       .select(`
         *,
-        pix_key:pix_keys(*)
+        client:clients(id, business_name, email),
+        pix_key:pix_keys(id, key, type, name, owner_name)
       `)
-      .eq("id", paymentId)
       .single();
 
     if (error) {
-      throw error;
+      console.error("Error approving payment:", error);
+      return null;
     }
 
-    // Transform to Payment type with proper structure
+    // Map to Payment interface
     const payment: Payment = {
-      ...data,
-      status: data.status as PaymentStatus,
-      description: data.description || "",
-      rejection_reason: data.rejection_reason || null,
-      pix_key: data.pix_key ? {
-        id: data.pix_key.id,
-        key: data.pix_key.key,
-        type: data.pix_key.type,
-        name: data.pix_key.name || '',
-        owner_name: data.pix_key.name || ''
-      } : undefined
+      id: data.id,
+      client_id: data.client_id,
+      client: data.client,
+      client_name: data.client?.business_name || 'Unknown',
+      amount: data.amount,
+      status: data.status,
+      created_at: data.created_at,
+      updated_at: data.updated_at,
+      approved_at: data.approved_at,
+      approved_by: data.approved_by,
+      receipt_url: data.receipt_url,
+      description: data.description,
+      rejection_reason: data.rejection_reason,
+      payment_type: data.payment_type,
+      pix_key_id: data.pix_key_id,
+      pix_key: data.pix_key
     };
 
     return payment;
   } catch (error) {
-    console.error("Error fetching payment:", error);
-    throw error;
+    console.error("Error in approvePaymentRequest:", error);
+    return null;
   }
 }
 
-export async function getClientPayments(clientId: string): Promise<Payment[]> {
+// Function to reject a payment request
+export async function rejectPaymentRequest(
+  paymentId: string,
+  reason: string
+): Promise<Payment | null> {
   try {
     const { data, error } = await supabase
       .from("payment_requests")
+      .update({
+        status: "REJECTED",
+        rejection_reason: reason,
+        updated_at: new Date().toISOString()
+      })
+      .eq("id", paymentId)
       .select(`
         *,
-        pix_key:pix_keys(*)
+        client:clients(id, business_name, email),
+        pix_key:pix_keys(id, key, type, name, owner_name)
       `)
-      .eq("client_id", clientId)
-      .order("created_at", { ascending: false });
-
-    if (error) {
-      throw error;
-    }
-
-    return data.map((payment) => ({
-      ...payment,
-      status: payment.status as PaymentStatus,
-      description: payment.description || "",
-      rejection_reason: payment.rejection_reason || null,
-      pix_key: payment.pix_key ? {
-        id: payment.pix_key.id,
-        key: payment.pix_key.key,
-        type: payment.pix_key.type,
-        name: payment.pix_key.name || '',
-        owner_name: payment.pix_key.name || ''
-      } : undefined
-    })) as Payment[];
-  } catch (error) {
-    console.error("Error fetching client payments:", error);
-    throw error;
-  }
-}
-
-export async function createPixPaymentRequest(pixPayment: {
-  client_id: string;
-  amount: number;
-  pix_key_id: string;
-  description?: string;
-}): Promise<Payment> {
-  try {
-    const { data, error } = await supabase
-      .from("payment_requests")
-      .insert({
-        client_id: pixPayment.client_id,
-        amount: pixPayment.amount,
-        pix_key_id: pixPayment.pix_key_id,
-        description: pixPayment.description,
-        status: PaymentStatus.PENDING,
-      })
-      .select()
       .single();
 
     if (error) {
-      throw error;
+      console.error("Error rejecting payment:", error);
+      return null;
     }
 
-    return {
-      ...data,
-      status: data.status as PaymentStatus,
-      rejection_reason: null
-    } as Payment;
+    // Map to Payment interface
+    const payment: Payment = {
+      id: data.id,
+      client_id: data.client_id,
+      client: data.client,
+      client_name: data.client?.business_name || 'Unknown',
+      amount: data.amount,
+      status: data.status,
+      created_at: data.created_at,
+      updated_at: data.updated_at,
+      approved_at: data.approved_at,
+      approved_by: data.approved_by,
+      receipt_url: data.receipt_url,
+      description: data.description,
+      rejection_reason: data.rejection_reason,
+      payment_type: data.payment_type,
+      pix_key_id: data.pix_key_id,
+      pix_key: data.pix_key
+    };
+
+    return payment;
   } catch (error) {
-    console.error("Error creating PIX payment request:", error);
-    throw error;
+    console.error("Error in rejectPaymentRequest:", error);
+    return null;
   }
 }
 
-export async function createBoletoPaymentRequest(boletoPayment: {
-  client_id: string;
-  amount: number;
-  description?: string;
-  due_date: string;
-  pix_key_id?: string;
-}): Promise<Payment> {
+// Function to upload payment receipt
+export async function uploadPaymentReceipt(
+  paymentId: string,
+  receiptUrl: string
+): Promise<Payment | null> {
   try {
     const { data, error } = await supabase
       .from("payment_requests")
-      .insert({
-        client_id: boletoPayment.client_id,
-        amount: boletoPayment.amount,
-        pix_key_id: boletoPayment.pix_key_id,
-        description: boletoPayment.description,
-        due_date: boletoPayment.due_date,
-        payment_type: PaymentType.BOLETO,
-        status: PaymentStatus.PENDING,
+      .update({
+        receipt_url: receiptUrl,
+        updated_at: new Date().toISOString()
       })
-      .select()
+      .eq("id", paymentId)
+      .select(`
+        *,
+        client:clients(id, business_name, email),
+        pix_key:pix_keys(id, key, type, name, owner_name)
+      `)
       .single();
 
     if (error) {
-      throw error;
+      console.error("Error uploading receipt:", error);
+      return null;
     }
 
-    return {
-      ...data,
-      status: data.status as PaymentStatus,
-      rejection_reason: null
-    } as Payment;
+    // Map to Payment interface
+    const payment: Payment = {
+      id: data.id,
+      client_id: data.client_id,
+      client: data.client,
+      client_name: data.client?.business_name || 'Unknown',
+      amount: data.amount,
+      status: data.status,
+      created_at: data.created_at,
+      updated_at: data.updated_at,
+      approved_at: data.approved_at,
+      approved_by: data.approved_by,
+      receipt_url: data.receipt_url,
+      description: data.description,
+      rejection_reason: data.rejection_reason,
+      payment_type: data.payment_type,
+      pix_key_id: data.pix_key_id,
+      pix_key: data.pix_key
+    };
+
+    return payment;
   } catch (error) {
-    console.error("Error creating boleto payment request:", error);
-    throw error;
-  }
-}
-
-export async function createTedPaymentRequest(tedPayment: {
-  client_id: string;
-  amount: number;
-  description?: string;
-  due_date: string;
-  pix_key_id?: string;
-  notes?: string;
-}): Promise<Payment> {
-  try {
-    const { data, error } = await supabase
-      .from("payment_requests")
-      .insert({
-        client_id: tedPayment.client_id,
-        amount: tedPayment.amount,
-        pix_key_id: tedPayment.pix_key_id,
-        description: tedPayment.description,
-        due_date: tedPayment.due_date,
-        notes: tedPayment.notes,
-        payment_type: PaymentType.TED,
-        status: PaymentStatus.PENDING,
-      })
-      .select()
-      .single();
-
-    if (error) {
-      throw error;
-    }
-
-    return {
-      ...data,
-      status: data.status as PaymentStatus,
-      rejection_reason: null
-    } as Payment;
-  } catch (error) {
-    console.error("Error creating TED payment request:", error);
-    throw error;
+    console.error("Error in uploadPaymentReceipt:", error);
+    return null;
   }
 }

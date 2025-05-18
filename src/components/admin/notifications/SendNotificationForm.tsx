@@ -117,6 +117,7 @@ export const SendNotificationForm = ({
               <SelectItem value={NotificationType.MACHINE}>Máquinas</SelectItem>
               <SelectItem value={NotificationType.GENERAL}>Geral</SelectItem>
               <SelectItem value={NotificationType.ADMIN_NOTIFICATION}>Admin</SelectItem>
+              <SelectItem value={NotificationType.SUPPORT}>Suporte</SelectItem>
             </SelectContent>
           </Select>
         </div>

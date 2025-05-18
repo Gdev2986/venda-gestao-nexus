@@ -9,9 +9,21 @@ export interface FileUploaderProps {
   selectedFile: File | null;
   accept?: string;
   id?: string;
+  label?: string; // Added label prop
+  currentFile?: File; // Renamed from selectedFile to currentFile for clarity
 }
 
-export function FileUploader({ onFileSelect, selectedFile, accept = "*", id = "file-upload" }: FileUploaderProps) {
+export function FileUploader({ 
+  onFileSelect, 
+  selectedFile, 
+  accept = "*", 
+  id = "file-upload", 
+  label,
+  currentFile
+}: FileUploaderProps) {
+  // Use selectedFile or currentFile if provided
+  const fileToDisplay = selectedFile || currentFile || null;
+
   const handleFileChange = (e: ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
       onFileSelect(e.target.files[0]);
@@ -24,7 +36,8 @@ export function FileUploader({ onFileSelect, selectedFile, accept = "*", id = "f
 
   return (
     <div className="space-y-2">
-      {!selectedFile ? (
+      {label && <label className="block text-sm font-medium mb-1">{label}</label>}
+      {!fileToDisplay ? (
         <div className="grid w-full items-center gap-1.5">
           <Input
             id={id}
@@ -37,9 +50,9 @@ export function FileUploader({ onFileSelect, selectedFile, accept = "*", id = "f
       ) : (
         <div className="bg-muted/50 p-3 rounded-md flex items-center justify-between">
           <div className="truncate flex-1">
-            <p className="text-sm font-medium">{selectedFile.name}</p>
+            <p className="text-sm font-medium">{fileToDisplay.name}</p>
             <p className="text-xs text-muted-foreground">
-              {(selectedFile.size / 1024).toFixed(1)} KB
+              {(fileToDisplay.size / 1024).toFixed(1)} KB
             </p>
           </div>
           <Button

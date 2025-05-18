@@ -58,7 +58,7 @@ export async function getAllSupportTickets(): Promise<SupportTicket[]> {
     }
     
     const { data, error } = await supabase
-      .from("support_tickets")
+      .from("support_conversations")
       .select(`
         *,
         client:clients(id, business_name, address, city, state),
