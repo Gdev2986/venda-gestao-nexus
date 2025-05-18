@@ -12,7 +12,7 @@ interface UseAdminPaymentsProps {
   pageSize?: number;
 }
 
-const useAdminPayments = ({
+export const useAdminPayments = ({
   searchTerm = '',
   statusFilter = "ALL",
   page = 1,
@@ -89,4 +89,5 @@ const useAdminPayments = ({
   };
 };
 
+// Fix: Add a default export for backward compatibility
 export default useAdminPayments;
