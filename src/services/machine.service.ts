@@ -55,6 +55,7 @@ export const getMachines = getAllMachines;
 // Get machines by status
 export const getMachinesByStatus = async (status: MachineStatus): Promise<Machine[]> => {
   try {
+    const statusStr = status.toString();
     const { data, error } = await supabase
       .from("machines")
       .select(`
@@ -70,7 +71,7 @@ export const getMachinesByStatus = async (status: MachineStatus): Promise<Machin
           business_name
         )
       `)
-      .eq("status", status.toString()) // Convert enum to string for Supabase
+      .eq("status", statusStr)
       .order("created_at", { ascending: false });
 
     if (error) throw error;
@@ -140,12 +141,14 @@ export const getMachineStats = async (): Promise<MachineStats> => {
 // Create a new machine
 export const createMachine = async (params: MachineCreateParams): Promise<Machine> => {
   try {
+    const statusStr = params.status ? params.status.toString() : MachineStatus.STOCK.toString();
+    
     const { data, error } = await supabase
       .from("machines")
       .insert({
         serial_number: params.serial_number,
         model: params.model,
-        status: params.status ? params.status.toString() : MachineStatus.STOCK.toString(), // Convert enum to string
+        status: statusStr,
         client_id: params.client_id
       })
       .select()
@@ -175,7 +178,7 @@ export const updateMachine = async (id: string, params: MachineUpdateParams): Pr
     
     if (params.serial_number !== undefined) updateData.serial_number = params.serial_number;
     if (params.model !== undefined) updateData.model = params.model;
-    if (params.status !== undefined) updateData.status = params.status.toString(); // Convert enum to string
+    if (params.status !== undefined) updateData.status = params.status.toString();
     if (params.client_id !== undefined) updateData.client_id = params.client_id;
     
     const { data, error } = await supabase
@@ -249,7 +252,7 @@ export const transferMachine = async (params: MachineTransferParams): Promise<Ma
     if (transferError) throw transferError;
 
     // Update the machine's client_id
-    const newStatus = params.to_client_id 
+    const newStatusStr = params.to_client_id 
       ? MachineStatus.ACTIVE.toString()
       : MachineStatus.STOCK.toString();
       
@@ -257,7 +260,7 @@ export const transferMachine = async (params: MachineTransferParams): Promise<Ma
       .from("machines")
       .update({ 
         client_id: params.to_client_id,
-        status: newStatus
+        status: newStatusStr
       })
       .eq("id", params.machine_id);
 

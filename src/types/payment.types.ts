@@ -8,9 +8,10 @@ export interface PixKey {
   key: string;
   type: string;
   name: string;
-  owner_name: string;  // Changed from optional to required
+  owner_name: string;  // Required
   is_default?: boolean;
   bank_name?: string;
+  key_type?: string;   // Added to match usage in the code
 }
 
 export interface Payment {

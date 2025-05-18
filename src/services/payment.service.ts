@@ -46,6 +46,7 @@ export const getAllPayments = async (): Promise<Payment[]> => {
 // Get payments by status
 export const getPaymentsByStatus = async (status: PaymentStatus): Promise<Payment[]> => {
   try {
+    const statusStr = status.toString();
     const { data, error } = await supabase
       .from("payment_requests")
       .select(`
@@ -59,7 +60,7 @@ export const getPaymentsByStatus = async (status: PaymentStatus): Promise<Paymen
         rejection_reason,
         client:client_id (business_name, email, phone)
       `)
-      .eq("status", status.toString()) // Convert enum to string for Supabase
+      .eq("status", statusStr)
       .order("created_at", { ascending: false });
 
     if (error) throw error;

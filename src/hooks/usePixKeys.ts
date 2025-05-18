@@ -40,8 +40,7 @@ export const usePixKeys = () => {
           is_default: key.is_default || false,
           created_at: key.created_at,
           updated_at: key.updated_at,
-          bank_name: "Default Bank", // Providing default value
-          key_type: key.type // Add key_type as alias for type
+          bank_name: "Default Bank" // Providing default value
         })) || [];
 
         setPixKeys(formattedKeys);
@@ -56,7 +55,6 @@ export const usePixKeys = () => {
               id: "default-key",
               key: "example@email.com",
               type: "EMAIL",
-              key_type: "EMAIL", // Add key_type
               name: "Chave Principal",
               owner_name: "Chave Principal", // Make sure owner_name is set
               user_id: user.id,
@@ -81,7 +79,6 @@ export const usePixKeys = () => {
             id: "default-key",
             key: "example@email.com",
             type: "EMAIL",
-            key_type: "EMAIL", // Add key_type
             name: "Chave Principal",
             owner_name: "Chave Principal", // Make sure owner_name is set
             user_id: user ? user.id : "",
