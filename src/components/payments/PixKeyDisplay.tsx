@@ -1,22 +1,20 @@
 
 import { useState } from "react";
-import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { Check, Loader2, Trash } from "lucide-react";
-import { supabase } from "@/integrations/supabase/client";
-import { useToast } from "@/hooks/use-toast";
 import { PixKey } from "@/types/payment.types";
-import { 
-  AlertDialog, 
-  AlertDialogAction, 
-  AlertDialogCancel, 
-  AlertDialogContent, 
-  AlertDialogDescription, 
-  AlertDialogFooter, 
-  AlertDialogHeader, 
-  AlertDialogTitle 
+import { Copy, Info, Check, Trash2, Star, StarOff } from "lucide-react";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import { useToast } from "@/hooks/use-toast";
+import { supabase } from "@/integrations/supabase/client";
 
 interface PixKeyDisplayProps {
   pixKey: PixKey;
@@ -24,152 +22,213 @@ interface PixKeyDisplayProps {
 }
 
 export function PixKeyDisplay({ pixKey, onUpdate }: PixKeyDisplayProps) {
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [isUpdating, setIsUpdating] = useState(false);
+  const [copied, setCopied] = useState(false);
   const { toast } = useToast();
-  const [isDeleting, setIsDeleting] = useState(false);
-  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
-  const [isSettingDefault, setIsSettingDefault] = useState(false);
-  
+
+  const handleCopy = async () => {
+    await navigator.clipboard.writeText(pixKey.key);
+    setCopied(true);
+    toast({
+      title: "Chave copiada!",
+      description: "A chave PIX foi copiada para a área de transferência",
+    });
+    setTimeout(() => setCopied(false), 2000);
+  };
+
   const handleDelete = async () => {
-    setIsDeleting(true);
+    setIsUpdating(true);
     try {
       const { error } = await supabase
-        .from('pix_keys')
+        .from("pix_keys")
         .delete()
-        .eq('id', pixKey.id);
-      
+        .eq("id", pixKey.id);
+
       if (error) throw error;
-      
+
       toast({
-        title: "Chave PIX removida",
-        description: "Sua chave PIX foi removida com sucesso"
+        title: "Chave excluída",
+        description: "A chave PIX foi removida com sucesso",
       });
-      
+
       if (onUpdate) onUpdate();
     } catch (error: any) {
       toast({
         variant: "destructive",
         title: "Erro",
-        description: error.message || "Não foi possível remover a chave PIX"
+        description: error.message || "Não foi possível excluir a chave PIX",
       });
     } finally {
-      setIsDeleting(false);
-      setShowDeleteDialog(false);
+      setIsUpdating(false);
+      setIsDeleteDialogOpen(false);
     }
   };
-  
-  const setAsDefault = async () => {
-    setIsSettingDefault(true);
+
+  const handleSetDefault = async () => {
+    setIsUpdating(true);
     try {
-      // First, set all keys to not default
-      await supabase
-        .from('pix_keys')
+      // First, unset all defaults
+      const { error: updateError1 } = await supabase
+        .from("pix_keys")
         .update({ is_default: false })
-        .neq('id', pixKey.id);
-      
-      // Then set this key as default
-      const { error } = await supabase
-        .from('pix_keys')
+        .neq("id", pixKey.id);
+
+      if (updateError1) throw updateError1;
+
+      // Then set this one as default
+      const { error: updateError2 } = await supabase
+        .from("pix_keys")
         .update({ is_default: true })
-        .eq('id', pixKey.id);
-      
-      if (error) throw error;
-      
+        .eq("id", pixKey.id);
+
+      if (updateError2) throw updateError2;
+
       toast({
-        title: "Chave padrão definida",
-        description: "Esta chave PIX agora é sua chave padrão"
+        title: "Chave padrão",
+        description: "A chave PIX foi definida como padrão",
       });
-      
+
       if (onUpdate) onUpdate();
     } catch (error: any) {
       toast({
         variant: "destructive",
         title: "Erro",
-        description: error.message || "Não foi possível definir a chave padrão"
+        description: error.message || "Não foi possível definir a chave como padrão",
       });
     } finally {
-      setIsSettingDefault(false);
+      setIsUpdating(false);
     }
   };
-  
-  // Show a simplified key for privacy
-  const maskKey = (key: string, type: string) => {
-    if (type === "CPF" || type === "CNPJ") {
-      return "●●●.●●●.●●●-●●";
-    } else if (type === "EMAIL") {
-      const [username, domain] = key.split('@');
-      if (username && domain) {
-        return `${username.substring(0, 2)}●●●@${domain}`;
-      }
-    } else if (type === "PHONE") {
-      return "●● ● ●●●●-●●●●";
+
+  const getPixTypeLabel = (type: string) => {
+    switch (type.toUpperCase()) {
+      case "CPF":
+        return "CPF";
+      case "CNPJ":
+        return "CNPJ";
+      case "EMAIL":
+        return "E-mail";
+      case "PHONE":
+        return "Telefone";
+      case "EVP":
+      case "RANDOM":
+        return "Chave aleatória";
+      default:
+        return type;
     }
-    return "●●●●●●●●●●●●";
   };
-  
+
   return (
     <>
-      <Card className="relative">
-        <CardContent className="p-4 flex items-center justify-between">
+      <div className="border rounded-md p-3 flex flex-col">
+        <div className="flex items-start justify-between">
           <div>
-            <div className="flex items-center gap-2">
-              <p className="font-medium">{pixKey.name}</p>
+            <div className="flex items-center gap-1">
+              <h4 className="text-sm font-medium">{pixKey.name || "Chave PIX"}</h4>
               {pixKey.isDefault && (
-                <Badge variant="outline" className="text-blue-500 border-blue-500">
+                <span className="text-xs bg-primary/10 text-primary px-1.5 py-0.5 rounded-full">
                   Padrão
-                </Badge>
+                </span>
               )}
             </div>
-            <p className="text-sm text-muted-foreground">{pixKey.type}</p>
-            <p className="text-sm">{maskKey(pixKey.key, pixKey.type)}</p>
+            <div className="mt-1 flex items-center gap-1">
+              <span className="text-xs bg-muted px-1.5 py-0.5 rounded">
+                {getPixTypeLabel(pixKey.type)}
+              </span>
+              <Info className="h-3 w-3 text-muted-foreground" />
+            </div>
           </div>
           
-          <div className="flex space-x-1">
+          <div className="flex gap-1">
             {!pixKey.isDefault && (
               <Button
                 variant="ghost"
                 size="icon"
-                onClick={setAsDefault}
-                disabled={isSettingDefault}
+                className="h-8 w-8"
+                title="Definir como padrão"
+                onClick={handleSetDefault}
+                disabled={isUpdating}
               >
-                {isSettingDefault ? (
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                ) : (
-                  <Check className="h-4 w-4" />
-                )}
-                <span className="sr-only">Definir como padrão</span>
+                <Star className="h-4 w-4" />
               </Button>
             )}
-            
+            {pixKey.isDefault && (
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-8 w-8 text-primary"
+                title="Padrão"
+                disabled
+              >
+                <StarOff className="h-4 w-4" />
+              </Button>
+            )}
             <Button
               variant="ghost"
               size="icon"
-              onClick={() => setShowDeleteDialog(true)}
-              className="text-red-500"
-              disabled={isDeleting}
+              className="h-8 w-8"
+              title="Excluir chave"
+              onClick={() => setIsDeleteDialogOpen(true)}
+              disabled={isUpdating}
             >
-              {isDeleting ? (
-                <Loader2 className="h-4 w-4 animate-spin" />
-              ) : (
-                <Trash className="h-4 w-4" />
-              )}
-              <span className="sr-only">Remover</span>
+              <Trash2 className="h-4 w-4 text-destructive" />
             </Button>
           </div>
-        </CardContent>
-      </Card>
-      
-      <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
+        </div>
+
+        <div className="flex mt-2 items-center gap-1">
+          <div className="text-sm font-mono text-muted-foreground flex-1 truncate">
+            {pixKey.key}
+          </div>
+          <Button
+            variant="ghost"
+            size="sm"
+            className="h-7 px-2"
+            onClick={handleCopy}
+          >
+            {copied ? (
+              <Check className="h-3 w-3 mr-1 text-green-600" />
+            ) : (
+              <Copy className="h-3 w-3 mr-1" />
+            )}
+            <span className="text-xs">Copiar</span>
+          </Button>
+        </div>
+        
+        <div className="mt-1 text-xs text-muted-foreground">
+          {pixKey.owner_name && (
+            <span>Titular: {pixKey.owner_name}</span>
+          )}
+          {pixKey.bank_name && (
+            <>
+              {pixKey.owner_name && <span> · </span>}
+              <span>Banco: {pixKey.bank_name}</span>
+            </>
+          )}
+        </div>
+      </div>
+
+      <AlertDialog
+        open={isDeleteDialogOpen}
+        onOpenChange={setIsDeleteDialogOpen}
+      >
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Remover chave PIX?</AlertDialogTitle>
+            <AlertDialogTitle>Excluir chave PIX</AlertDialogTitle>
             <AlertDialogDescription>
-              Tem certeza que deseja remover esta chave PIX? Esta ação não pode ser desfeita.
+              Tem certeza que deseja excluir esta chave PIX? Esta ação não pode
+              ser desfeita.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Cancelar</AlertDialogCancel>
-            <AlertDialogAction variant="destructive" onClick={handleDelete}>
-              Remover
+            <AlertDialogCancel disabled={isUpdating}>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleDelete}
+              disabled={isUpdating}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              Excluir
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

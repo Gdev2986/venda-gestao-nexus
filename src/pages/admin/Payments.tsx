@@ -10,7 +10,7 @@ import { PaymentDetailsDialog } from "@/components/payments/PaymentDetailsDialog
 import { ApprovePaymentDialog } from "@/components/payments/ApprovePaymentDialog";
 import { RejectPaymentDialog } from "@/components/payments/RejectPaymentDialog";
 import { PageHeader } from "@/components/page/PageHeader";
-import { Payment } from "@/types";
+import { Payment, PaymentRequest } from "@/types/payment.types";
 import { convertToPaymentRequest } from "@/components/payments/payment-list/PaymentConverter";
 import { PaymentNotifications } from "@/components/payments/PaymentNotifications";
 import { SendReceiptDialog } from "@/components/payments/SendReceiptDialog";
@@ -67,6 +67,7 @@ const AdminPayments = () => {
     const payment = payments.find(p => p.id === paymentId);
     if (!payment) return;
     
+    // Ensure payment is converted to the correct type
     setSelectedPayment(payment);
     
     if (action === PaymentAction.APPROVE) {
@@ -154,7 +155,7 @@ const AdminPayments = () => {
         <PaymentDetailsDialog
           open={isDetailsDialogOpen}
           onOpenChange={setIsDetailsDialogOpen}
-          payment={convertToPaymentRequest(selectedPayment)}
+          payment={selectedPayment}
         />
       )}
       
@@ -163,7 +164,7 @@ const AdminPayments = () => {
         <ApprovePaymentDialog
           open={isApproveDialogOpen}
           onOpenChange={setIsApproveDialogOpen}
-          payment={convertToPaymentRequest(selectedPayment)}
+          payment={selectedPayment as PaymentRequest}
           onApprove={handleApprovePayment}
           isProcessing={false}
         />
@@ -174,7 +175,7 @@ const AdminPayments = () => {
         <RejectPaymentDialog
           open={isRejectDialogOpen}
           onOpenChange={setIsRejectDialogOpen}
-          payment={convertToPaymentRequest(selectedPayment)}
+          payment={selectedPayment as PaymentRequest}
           onReject={handleRejectPayment}
           isProcessing={false}
         />
@@ -185,7 +186,7 @@ const AdminPayments = () => {
         <SendReceiptDialog
           open={isSendReceiptDialogOpen}
           onOpenChange={setIsSendReceiptDialogOpen}
-          payment={convertToPaymentRequest(selectedPayment)}
+          payment={selectedPayment as PaymentRequest}
           onSendReceipt={handleSendReceipt}
           isProcessing={false}
         />

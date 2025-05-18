@@ -97,7 +97,7 @@ export function usePayments(): UsePaymentsReturn {
           approved_at: payment.approved_at,
           approved_by: payment.approved_by,
           receipt_url: payment.receipt_url,
-          rejection_reason: payment.rejection_reason,
+          rejection_reason: payment.rejection_reason || null, // Ensure it's not undefined
           pix_key: pixKey,
           type: payment.status === 'PAID' ? 'deposit' : 'withdrawal' // Mock type for filtering
         };
