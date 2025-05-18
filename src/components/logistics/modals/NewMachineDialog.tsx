@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
@@ -80,7 +79,8 @@ const NewMachineDialog = ({ open, onOpenChange, onSuccess }: NewMachineDialogPro
         serial_number: serialNumber,
         model,
         status,
-        client_id: finalClientId
+        client_id: finalClientId,
+        notes: observations
       });
       
       resetForm();
