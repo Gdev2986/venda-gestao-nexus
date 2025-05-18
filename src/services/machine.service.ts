@@ -57,7 +57,9 @@ export const getMachines = getAllMachines;
 // Get machines by status
 export const getMachinesByStatus = async (status: MachineStatus): Promise<Machine[]> => {
   try {
-    const statusStr = status.toString();
+    // Convert enum to lowercase for database compatibility
+    const statusStr = status.toLowerCase();
+    
     const { data, error } = await supabase
       .from("machines")
       .select(`
@@ -74,7 +76,7 @@ export const getMachinesByStatus = async (status: MachineStatus): Promise<Machin
           business_name
         )
       `)
-      .eq("status", statusStr as any)
+      .eq("status", statusStr)
       .order("created_at", { ascending: false });
 
     if (error) throw error;
@@ -145,14 +147,15 @@ export const getMachineStats = async (): Promise<MachineStats> => {
 // Create a new machine
 export const createMachine = async (params: MachineCreateParams): Promise<Machine> => {
   try {
-    const statusStr = params.status ? params.status.toString() : MachineStatus.STOCK.toString();
+    // Convert status to lowercase for database compatibility
+    const statusStr = params.status ? params.status.toLowerCase() : MachineStatus.STOCK.toLowerCase();
     
     const { data, error } = await supabase
       .from("machines")
       .insert({
         serial_number: params.serial_number,
         model: params.model,
-        status: statusStr as any,
+        status: statusStr,
         client_id: params.client_id,
         notes: params.notes
       })
@@ -184,7 +187,7 @@ export const updateMachine = async (id: string, params: MachineUpdateParams): Pr
     
     if (params.serial_number !== undefined) updateData.serial_number = params.serial_number;
     if (params.model !== undefined) updateData.model = params.model;
-    if (params.status !== undefined) updateData.status = params.status.toString();
+    if (params.status !== undefined) updateData.status = params.status.toLowerCase();
     if (params.client_id !== undefined) updateData.client_id = params.client_id;
     if (params.notes !== undefined) updateData.notes = params.notes;
     
@@ -261,14 +264,14 @@ export const transferMachine = async (params: MachineTransferParams): Promise<Ma
 
     // Update the machine's client_id
     const newStatusStr = params.to_client_id 
-      ? MachineStatus.ACTIVE.toString()
-      : MachineStatus.STOCK.toString();
+      ? MachineStatus.ACTIVE.toLowerCase()
+      : MachineStatus.STOCK.toLowerCase();
       
     const { error: machineError } = await supabase
       .from("machines")
       .update({ 
         client_id: params.to_client_id,
-        status: newStatusStr as any
+        status: newStatusStr
       })
       .eq("id", params.machine_id);
 

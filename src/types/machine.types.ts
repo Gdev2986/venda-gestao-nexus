@@ -1,11 +1,11 @@
 
 export enum MachineStatus {
-  ACTIVE = "ACTIVE",
-  INACTIVE = "INACTIVE",
-  MAINTENANCE = "MAINTENANCE",
-  BLOCKED = "BLOCKED",
-  TRANSIT = "TRANSIT",
-  STOCK = "STOCK"
+  ACTIVE = "active",
+  INACTIVE = "inactive",
+  MAINTENANCE = "maintenance",
+  BLOCKED = "blocked",
+  TRANSIT = "transit",
+  STOCK = "stock"
 }
 
 export interface Machine {
@@ -19,7 +19,6 @@ export interface Machine {
   updated_at?: string;
   name?: string;
   serialNumber?: string;
-  // Make notes optional since it doesn't exist in the database
   notes?: string;
   client?: {
     id: string;
@@ -73,7 +72,6 @@ export interface MachineCreateParams {
   model: string;
   status?: MachineStatus;
   client_id?: string;
-  // Make notes optional since it doesn't exist in the database
   notes?: string;
 }
 
@@ -82,6 +80,5 @@ export interface MachineUpdateParams {
   model?: string;
   status?: MachineStatus;
   client_id?: string | null;
-  // Make notes optional since it doesn't exist in the database
   notes?: string;
 }

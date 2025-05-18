@@ -53,14 +53,14 @@ export enum PaymentMethod {
   PIX = "pix"
 }
 
-// Machine status - adding missing statuses
+// Machine status - using lowercase values to match database
 export enum MachineStatus {
-  ACTIVE = "ACTIVE",
-  INACTIVE = "INACTIVE",
-  MAINTENANCE = "MAINTENANCE",
-  BLOCKED = "BLOCKED",
-  STOCK = "STOCK",
-  TRANSIT = "TRANSIT"
+  ACTIVE = "active",
+  INACTIVE = "inactive",
+  MAINTENANCE = "maintenance",
+  BLOCKED = "blocked",
+  STOCK = "stock",
+  TRANSIT = "transit"
 }
 
 // Ticket status - adding missing statuses
