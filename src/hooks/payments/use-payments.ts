@@ -65,7 +65,8 @@ export function usePayments(): UsePaymentsReturn {
             id, 
             key,
             type,
-            name
+            name,
+            user_id
           )
         `)
         .eq('client_id', clientData.client_id)
@@ -94,7 +95,8 @@ export function usePayments(): UsePaymentsReturn {
             key: payment.pix_key.key,
             type: payment.pix_key.type,
             name: payment.pix_key.name,
-            owner_name: payment.pix_key.name
+            owner_name: payment.pix_key.name,
+            user_id: payment.pix_key.user_id // Include the user_id from the database
           } : undefined
         };
       });

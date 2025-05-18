@@ -108,7 +108,8 @@ export const getClientPayments = async (clientId: string): Promise<Payment[]> =>
           key,
           type,
           name,
-          owner_name
+          owner_name,
+          user_id
         ),
         client:client_id (business_name, email, phone)
       `)
@@ -139,7 +140,8 @@ export const getClientPayments = async (clientId: string): Promise<Payment[]> =>
         key: item.pix_key.key,
         type: item.pix_key.type,
         name: item.pix_key.name,
-        owner_name: item.pix_key.owner_name || item.pix_key.name // Ensure owner_name is always defined
+        owner_name: item.pix_key.owner_name || item.pix_key.name, // Ensure owner_name is always defined
+        user_id: item.pix_key.user_id // Add the required user_id field
       } : undefined
     }));
   } catch (error) {

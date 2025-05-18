@@ -57,7 +57,7 @@ export const usePixKeys = () => {
               type: "EMAIL",
               name: "Chave Principal",
               owner_name: "Chave Principal", // Make sure owner_name is set
-              user_id: user.id,
+              user_id: user.id, // Make sure user_id is set
               is_default: true,
               created_at: new Date().toISOString(),
               updated_at: new Date().toISOString(),
@@ -81,7 +81,7 @@ export const usePixKeys = () => {
             type: "EMAIL",
             name: "Chave Principal",
             owner_name: "Chave Principal", // Make sure owner_name is set
-            user_id: user ? user.id : "",
+            user_id: user ? user.id : "", // Make sure user_id is set
             is_default: true,
             created_at: new Date().toISOString(),
             updated_at: new Date().toISOString(),

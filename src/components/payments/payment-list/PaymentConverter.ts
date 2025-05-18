@@ -32,6 +32,7 @@ export const convertRequestToPayment = (request: any): Payment => {
       type: request.pix_key.type,
       name: request.pix_key.name,
       owner_name: request.pix_key.owner_name || request.pix_key.name,
+      user_id: request.pix_key.user_id || "default-user-id" // Adding required user_id field
     };
     
     // Only add optional properties if they exist
