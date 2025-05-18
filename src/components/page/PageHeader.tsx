@@ -8,6 +8,7 @@ interface PageHeaderProps {
   actionLabel?: string;
   actionLink?: string;
   actionOnClick?: () => void;
+  action?: React.ReactNode;
   children?: React.ReactNode;
 }
 
@@ -17,6 +18,7 @@ export function PageHeader({
   actionLabel,
   actionLink,
   actionOnClick,
+  action,
   children,
 }: PageHeaderProps) {
   return (
@@ -37,6 +39,7 @@ export function PageHeader({
           </Button>
         )
       )}
+      {action}
     </div>
   );
 }

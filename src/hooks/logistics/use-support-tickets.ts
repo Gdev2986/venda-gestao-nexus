@@ -1,143 +1,156 @@
 
 import { useState, useEffect } from "react";
-import { useToast } from "@/hooks/use-toast";
-import { 
-  getAllSupportTickets, 
-  getSupportTicketsByStatus, 
-  createSupportTicket, 
-  updateSupportTicket, 
-  getSupportTicketStats,
-  SupportTicket,
-  SupportTicketStatus,
-  SupportTicketCreateParams,
-  SupportTicketUpdateParams
-} from "@/services/support.service";
-import { supabase } from "@/integrations/supabase/client";
+import { SupportTicket, TicketPriority, TicketStatus, TicketType } from "@/types/support.types";
+import { v4 as uuidv4 } from 'uuid';
+
+// Mock data generator
+const generateMockTickets = (count: number): SupportTicket[] => {
+  const types = Object.values(TicketType);
+  const statuses = Object.values(TicketStatus);
+  const priorities = Object.values(TicketPriority);
+  
+  const mockClients = [
+    { id: '1', business_name: 'Supermercado ABC' },
+    { id: '2', business_name: 'Farmácia São José' },
+    { id: '3', business_name: 'Restaurante Sabor Caseiro' },
+    { id: '4', business_name: 'Padaria Bom Pão' },
+    { id: '5', business_name: 'Loja Tudo Barato' },
+  ];
+  
+  const mockMachines = [
+    { id: '1', serial_number: 'SN-100001', model: 'Terminal Pro' },
+    { id: '2', serial_number: 'SN-100002', model: 'Terminal Standard' },
+    { id: '3', serial_number: 'SN-100003', model: 'Terminal Mini' },
+    { id: '4', serial_number: 'SN-100004', model: 'Terminal Pro' },
+    { id: '5', serial_number: 'SN-100005', model: 'Terminal Mini' },
+  ];
+  
+  return Array.from({ length: count }).map((_, index) => {
+    const clientIndex = Math.floor(Math.random() * mockClients.length);
+    const machineIndex = Math.floor(Math.random() * mockMachines.length);
+    const typeIndex = Math.floor(Math.random() * types.length);
+    const statusIndex = Math.floor(Math.random() * statuses.length);
+    const priorityIndex = Math.floor(Math.random() * priorities.length);
+    
+    // Generate a date within the next 7 days for scheduled tickets
+    const today = new Date();
+    const scheduledDate = new Date();
+    scheduledDate.setDate(today.getDate() + Math.floor(Math.random() * 7) + 1);
+    
+    // Generate created_at date within the last 30 days
+    const createdDate = new Date();
+    createdDate.setDate(today.getDate() - Math.floor(Math.random() * 30));
+    
+    return {
+      id: uuidv4(),
+      client_id: mockClients[clientIndex].id,
+      machine_id: mockMachines[machineIndex].id,
+      type: types[typeIndex],
+      status: statuses[statusIndex],
+      priority: priorities[priorityIndex],
+      description: `Ticket de ${types[typeIndex].toLowerCase()} para ${mockClients[clientIndex].business_name}`,
+      scheduled_date: scheduledDate.toISOString(),
+      created_at: createdDate.toISOString(),
+      updated_at: createdDate.toISOString(),
+      created_by: 'system',
+      client: mockClients[clientIndex],
+      machine: mockMachines[machineIndex]
+    };
+  });
+};
 
 interface UseSupportTicketsOptions {
-  status?: SupportTicketStatus;
-  clientId?: string;
   initialFetch?: boolean;
-  enableRealtime?: boolean;
 }
 
-export function useSupportTickets(options: UseSupportTicketsOptions = {}) {
+export const useSupportTickets = (options: UseSupportTicketsOptions = {}) => {
   const [tickets, setTickets] = useState<SupportTicket[]>([]);
-  const [stats, setStats] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<Error | null>(null);
-  const { toast } = useToast();
-
-  const fetchTickets = async () => {
-    setIsLoading(true);
-    setError(null);
-    try {
-      let data: SupportTicket[];
-      
-      if (options.status) {
-        data = await getSupportTicketsByStatus(options.status);
-      } else {
-        data = await getAllSupportTickets();
-      }
-
-      // Filter by client if needed
-      if (options.clientId) {
-        data = data.filter(ticket => ticket.client_id === options.clientId);
-      }
-
-      setTickets(data);
-      
-      // Fetch stats if needed
-      if (!options.status && !options.clientId) {
-        const statsData = await getSupportTicketStats();
-        setStats(statsData);
-      }
-    } catch (err: any) {
-      setError(err);
-      console.error("Error fetching support tickets:", err);
-      toast({
-        title: "Error",
-        description: "Failed to fetch support tickets data",
-        variant: "destructive",
-      });
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const addTicket = async (ticketData: SupportTicketCreateParams) => {
-    try {
-      const newTicket = await createSupportTicket(ticketData);
-      toast({
-        title: "Support ticket created",
-        description: "The support ticket has been created successfully",
-      });
-      return newTicket;
-    } catch (err: any) {
-      console.error("Error creating support ticket:", err);
-      toast({
-        title: "Error",
-        description: err.message || "Failed to create support ticket",
-        variant: "destructive",
-      });
-      throw err;
-    }
-  };
-
-  const updateTicket = async (id: string, ticketData: SupportTicketUpdateParams) => {
-    try {
-      const updatedTicket = await updateSupportTicket(id, ticketData);
-      toast({
-        title: "Support ticket updated",
-        description: "The support ticket has been updated successfully",
-      });
-      return updatedTicket;
-    } catch (err: any) {
-      console.error("Error updating support ticket:", err);
-      toast({
-        title: "Error",
-        description: err.message || "Failed to update support ticket",
-        variant: "destructive",
-      });
-      throw err;
-    }
-  };
-
-  // Initial fetch
+  
   useEffect(() => {
     if (options.initialFetch !== false) {
       fetchTickets();
     }
-  }, [options.status, options.clientId]);
-
-  // Set up real-time subscription
-  useEffect(() => {
-    if (!options.enableRealtime) return;
-
-    const channel = supabase
-      .channel("support-ticket-changes")
-      .on(
-        "postgres_changes",
-        { event: "*", schema: "public", table: "support_tickets" },
-        () => {
-          // Refresh data when any change occurs
-          fetchTickets();
-        }
-      )
-      .subscribe();
-
-    return () => {
-      supabase.removeChannel(channel);
-    };
-  }, [options.enableRealtime, options.status, options.clientId]);
-
+  }, []);
+  
+  const fetchTickets = () => {
+    setIsLoading(true);
+    
+    // Simulate API request delay
+    setTimeout(() => {
+      const mockTickets = generateMockTickets(15);
+      setTickets(mockTickets);
+      setIsLoading(false);
+    }, 800);
+  };
+  
+  const addTicket = (ticketData: Partial<SupportTicket>) => {
+    return new Promise<SupportTicket>((resolve) => {
+      setTimeout(() => {
+        const newTicket: SupportTicket = {
+          id: uuidv4(),
+          client_id: ticketData.client_id!,
+          machine_id: ticketData.machine_id,
+          type: ticketData.type || TicketType.OTHER,
+          status: TicketStatus.PENDING,
+          priority: ticketData.priority || TicketPriority.MEDIUM,
+          description: ticketData.description || '',
+          scheduled_date: ticketData.scheduled_date,
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString(),
+          created_by: 'current_user',
+          // Add client and machine info if available
+          client: ticketData.client,
+          machine: ticketData.machine
+        };
+        
+        setTickets(prev => [newTicket, ...prev]);
+        resolve(newTicket);
+      }, 500);
+    });
+  };
+  
+  const updateTicketStatus = (ticketId: string, status: TicketStatus) => {
+    return new Promise<void>((resolve) => {
+      setTimeout(() => {
+        setTickets(prev => 
+          prev.map(ticket => 
+            ticket.id === ticketId 
+              ? { ...ticket, status, updated_at: new Date().toISOString() } 
+              : ticket
+          )
+        );
+        resolve();
+      }, 500);
+    });
+  };
+  
+  const getTicketById = (ticketId: string) => {
+    return tickets.find(ticket => ticket.id === ticketId) || null;
+  };
+  
+  const getPendingTicketsCount = () => {
+    return tickets.filter(ticket => ticket.status === TicketStatus.PENDING).length;
+  };
+  
+  const getTicketsGroupedByStatus = () => {
+    return tickets.reduce((acc, ticket) => {
+      if (!acc[ticket.status]) {
+        acc[ticket.status] = [];
+      }
+      acc[ticket.status].push(ticket);
+      return acc;
+    }, {} as Record<TicketStatus, SupportTicket[]>);
+  };
+  
   return {
     tickets,
-    stats,
     isLoading,
-    error,
     fetchTickets,
     addTicket,
-    updateTicket
+    updateTicketStatus,
+    getTicketById,
+    getPendingTicketsCount,
+    getTicketsGroupedByStatus
   };
-}
+};

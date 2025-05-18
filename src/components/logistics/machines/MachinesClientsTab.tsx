@@ -1,9 +1,7 @@
 
-import React, { useState, useEffect } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Search } from "lucide-react";
+import { Card, CardContent } from "@/components/ui/card";
+import { Machine } from "@/services/machine.service";
+import { Skeleton } from "@/components/ui/skeleton";
 import {
   Table,
   TableBody,
@@ -13,70 +11,45 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { Machine } from "@/services/machine.service";
-import { getClientsWithMachines } from "@/services/machine.service";
-import { Skeleton } from "@/components/ui/skeleton";
-import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
+import { Button } from "@/components/ui/button";
+import { useNavigate } from "react-router-dom";
+import { PATHS } from "@/routes/paths";
 
 interface MachinesClientsTabProps {
   machines: Machine[];
   isLoading: boolean;
 }
 
-interface ClientWithMachines {
-  id: string;
-  business_name: string;
-  machineCount: number;
-}
+const MachinesClientsTab = ({ machines, isLoading }: MachinesClientsTabProps) => {
+  const navigate = useNavigate();
 
-const MachinesClientsTab: React.FC<MachinesClientsTabProps> = ({ machines, isLoading }) => {
-  const [search, setSearch] = useState('');
-  const [clientsData, setClientsData] = useState<Record<string, Machine[]>>({});
-  const [clients, setClients] = useState<ClientWithMachines[]>([]);
-  const [loadingClients, setLoadingClients] = useState(true);
-  
-  // Fetch clients with machines
-  useEffect(() => {
-    async function fetchClientsData() {
-      try {
-        const clientsList = await getClientsWithMachines();
-        setClients(clientsList);
-        
-        // Group machines by client
-        const groupedMachines: Record<string, Machine[]> = {};
-        machines.forEach(machine => {
-          if (machine.client_id) {
-            if (!groupedMachines[machine.client_id]) {
-              groupedMachines[machine.client_id] = [];
-            }
-            groupedMachines[machine.client_id].push(machine);
-          }
-        });
-        
-        setClientsData(groupedMachines);
-      } catch (error) {
-        console.error("Error fetching clients:", error);
-      } finally {
-        setLoadingClients(false);
-      }
+  // Group machines by client
+  const clientMachines = machines.reduce((acc, machine) => {
+    if (!machine.client) return acc;
+    
+    if (!acc[machine.client.id]) {
+      acc[machine.client.id] = {
+        client: machine.client,
+        machines: []
+      };
     }
     
-    fetchClientsData();
-  }, [machines]);
-  
-  // Filter clients based on search
-  const filteredClients = clients.filter(client => 
-    client.business_name.toLowerCase().includes(search.toLowerCase())
-  );
-  
+    acc[machine.client.id].machines.push(machine);
+    return acc;
+  }, {} as Record<string, { client: { id: string, business_name: string }, machines: Machine[] }>);
+
+  const clientsList = Object.values(clientMachines);
+
   const getStatusBadge = (status: string) => {
     switch (status) {
       case "ACTIVE":
-        return <Badge className="bg-green-100 text-green-800 hover:bg-green-200">Ativa</Badge>;
+        return <Badge className="bg-green-100 text-green-800">Operando</Badge>;
       case "MAINTENANCE":
-        return <Badge className="bg-yellow-100 text-yellow-800 hover:bg-yellow-200">Manutenção</Badge>;
+        return <Badge className="bg-yellow-100 text-yellow-800">Manutenção</Badge>;
       case "INACTIVE":
-        return <Badge className="bg-red-100 text-red-800 hover:bg-red-200">Inativa</Badge>;
+        return <Badge className="bg-red-100 text-red-800">Inativa</Badge>;
+      case "TRANSIT":
+        return <Badge className="bg-purple-100 text-purple-800">Em Trânsito</Badge>;
       default:
         return <Badge variant="outline">{status}</Badge>;
     }
@@ -84,99 +57,68 @@ const MachinesClientsTab: React.FC<MachinesClientsTabProps> = ({ machines, isLoa
 
   return (
     <div className="space-y-6">
-      <div className="flex justify-between">
-        <div className="relative max-w-sm">
-          <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-          <Input
-            type="search"
-            placeholder="Buscar clientes..."
-            className="pl-8"
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-          />
-        </div>
-      </div>
+      <h3 className="text-lg font-medium">Máquinas com Clientes</h3>
       
-      {isLoading || loadingClients ? (
-        <div className="space-y-6">
-          {[1, 2, 3].map((i) => (
-            <Card key={i}>
-              <CardHeader>
-                <Skeleton className="h-6 w-48" />
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-2">
-                  {[1, 2].map((j) => (
-                    <div key={j} className="flex items-center justify-between">
-                      <Skeleton className="h-4 w-32" />
-                      <Skeleton className="h-4 w-24" />
-                      <Skeleton className="h-4 w-16" />
-                      <Skeleton className="h-4 w-24" />
-                    </div>
-                  ))}
+      {isLoading ? (
+        <div className="space-y-4">
+          {Array(2).fill(0).map((_, i) => (
+            <Card key={i} className="overflow-hidden">
+              <CardContent className="p-0">
+                <div className="p-4 border-b">
+                  <Skeleton className="h-6 w-48" />
+                </div>
+                <div className="p-4">
+                  <Skeleton className="h-24 w-full" />
                 </div>
               </CardContent>
             </Card>
           ))}
         </div>
-      ) : filteredClients.length > 0 ? (
-        <Accordion type="single" collapsible className="space-y-4">
-          {filteredClients.map((client) => (
-            <AccordionItem value={client.id} key={client.id} className="border rounded-lg shadow-sm bg-white">
-              <AccordionTrigger className="px-4">
-                <div className="flex items-center justify-between w-full">
-                  <div className="font-medium">{client.business_name}</div>
-                  <div className="flex gap-4 items-center">
-                    <Badge variant="outline">{client.machineCount} máquinas</Badge>
-                  </div>
+      ) : clientsList.length > 0 ? (
+        <div className="space-y-6">
+          {clientsList.map((item) => (
+            <Card key={item.client.id} className="overflow-hidden">
+              <CardContent className="p-0">
+                <div className="p-4 border-b flex justify-between items-center">
+                  <h4 className="text-lg font-medium">{item.client.business_name}</h4>
+                  <span className="text-sm text-gray-500">{item.machines.length} máquinas</span>
                 </div>
-              </AccordionTrigger>
-              <AccordionContent className="px-4 pb-4">
-                {clientsData[client.id] && clientsData[client.id].length > 0 ? (
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead>Serial</TableHead>
-                        <TableHead>Modelo</TableHead>
-                        <TableHead>Status</TableHead>
-                        <TableHead className="text-right">Ações</TableHead>
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Serial</TableHead>
+                      <TableHead>Modelo</TableHead>
+                      <TableHead>Status</TableHead>
+                      <TableHead className="text-right">Ações</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {item.machines.map((machine) => (
+                      <TableRow key={machine.id}>
+                        <TableCell>{machine.serial_number}</TableCell>
+                        <TableCell>{machine.model}</TableCell>
+                        <TableCell>{getStatusBadge(machine.status)}</TableCell>
+                        <TableCell className="text-right">
+                          <Button 
+                            variant="ghost" 
+                            size="sm"
+                            onClick={() => navigate(PATHS.LOGISTICS.MACHINE_DETAILS(machine.id))}
+                          >
+                            Detalhes
+                          </Button>
+                        </TableCell>
                       </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {clientsData[client.id].map((machine) => (
-                        <TableRow key={machine.id}>
-                          <TableCell className="font-medium">{machine.serial_number}</TableCell>
-                          <TableCell>{machine.model}</TableCell>
-                          <TableCell>{getStatusBadge(machine.status)}</TableCell>
-                          <TableCell className="text-right">
-                            <div className="flex justify-end gap-2">
-                              <Button variant="outline" size="sm">
-                                Transferir
-                              </Button>
-                              <Button variant="ghost" size="sm">
-                                Histórico
-                              </Button>
-                            </div>
-                          </TableCell>
-                        </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
-                ) : (
-                  <p className="text-sm text-muted-foreground text-center py-4">
-                    Não foram encontradas máquinas para este cliente.
-                  </p>
-                )}
-              </AccordionContent>
-            </AccordionItem>
+                    ))}
+                  </TableBody>
+                </Table>
+              </CardContent>
+            </Card>
           ))}
-        </Accordion>
+        </div>
       ) : (
-        <Card>
-          <CardContent className="flex flex-col items-center justify-center py-8">
-            <p className="text-muted-foreground">Nenhum cliente com máquina encontrado</p>
-          </CardContent>
-        </Card>
+        <div className="text-center py-12 border rounded-lg bg-gray-50">
+          <p className="text-gray-500">Nenhum cliente possui máquinas vinculadas.</p>
+        </div>
       )}
     </div>
   );

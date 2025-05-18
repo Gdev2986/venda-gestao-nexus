@@ -53,7 +53,7 @@ export async function getAllMachines(): Promise<Machine[]> {
       throw error;
     }
 
-    return data;
+    return data as Machine[];
   } catch (error) {
     console.error("Error fetching machines:", error);
     throw error;
@@ -75,7 +75,7 @@ export async function getMachinesByStatus(status: MachineStatus): Promise<Machin
       throw error;
     }
 
-    return data;
+    return data as Machine[];
   } catch (error) {
     console.error(`Error fetching machines with status ${status}:`, error);
     throw error;
@@ -97,7 +97,7 @@ export async function getMachineById(id: string): Promise<Machine> {
       throw error;
     }
 
-    return data;
+    return data as Machine;
   } catch (error) {
     console.error(`Error fetching machine with id ${id}:`, error);
     throw error;
@@ -121,7 +121,7 @@ export async function createMachine(params: MachineCreateParams): Promise<Machin
       throw error;
     }
 
-    return data;
+    return data as Machine;
   } catch (error) {
     console.error("Error creating machine:", error);
     throw error;
@@ -146,7 +146,7 @@ export async function updateMachine(id: string, params: MachineUpdateParams): Pr
       throw error;
     }
 
-    return data;
+    return data as Machine;
   } catch (error) {
     console.error(`Error updating machine ${id}:`, error);
     throw error;
@@ -263,7 +263,7 @@ export async function getMachinesByClient(clientId: string): Promise<Machine[]> 
       throw error;
     }
 
-    return data;
+    return data as Machine[];
   } catch (error) {
     console.error(`Error fetching machines for client ${clientId}:`, error);
     throw error;

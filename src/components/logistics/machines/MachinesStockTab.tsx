@@ -1,3 +1,4 @@
+
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import {
@@ -8,14 +9,23 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { Machine } from "@/services/machine.service";
+import { Skeleton } from "@/components/ui/skeleton";
+import { Badge } from "@/components/ui/badge";
+import { useNavigate } from "react-router-dom";
+import { PATHS } from "@/routes/paths";
 
-const MachinesStockTab = () => {
-  // Mock data for machines in stock (keeping the same data from original file)
-  const stockMachines = [
-    { serial: "SN-100003", model: "Terminal Pro", status: "Novo", location: "Depósito Central", arrivalDate: "15/04/2025" },
-    { serial: "SN-100004", model: "Terminal Mini", status: "Novo", location: "Depósito Central", arrivalDate: "15/04/2025" },
-    { serial: "SN-100006", model: "Terminal Pro", status: "Revisado", location: "Depósito Central", arrivalDate: "10/04/2025" },
-  ];
+interface MachinesStockTabProps {
+  machines: Machine[];
+  isLoading: boolean;
+  onAddNewClick: () => void;
+}
+
+const MachinesStockTab = ({ machines, isLoading, onAddNewClick }: MachinesStockTabProps) => {
+  const navigate = useNavigate();
+  
+  // Filter for only stock machines
+  const stockMachines = machines.filter(m => m.status === "STOCK");
 
   return (
     <div>
@@ -25,7 +35,7 @@ const MachinesStockTab = () => {
           <Button variant="outline" size="sm">
             Gerar Relatório
           </Button>
-          <Button size="sm">
+          <Button size="sm" onClick={onAddNewClick}>
             Entrada no Estoque
           </Button>
         </div>
@@ -39,38 +49,53 @@ const MachinesStockTab = () => {
                 <TableHead>Serial</TableHead>
                 <TableHead>Modelo</TableHead>
                 <TableHead>Status</TableHead>
-                <TableHead>Local</TableHead>
                 <TableHead>Data de Entrada</TableHead>
                 <TableHead className="w-[150px]">Ações</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
-              {stockMachines.map((machine, i) => (
-                <TableRow key={i}>
-                  <TableCell>{machine.serial}</TableCell>
-                  <TableCell>{machine.model}</TableCell>
-                  <TableCell>
-                    <span className={`inline-flex items-center rounded-full px-2 py-1 text-xs font-medium ${
-                      machine.status === "Novo" ? "bg-green-50 text-green-700" : 
-                      "bg-blue-50 text-blue-700"
-                    }`}>
-                      {machine.status}
-                    </span>
-                  </TableCell>
-                  <TableCell>{machine.location}</TableCell>
-                  <TableCell>{machine.arrivalDate}</TableCell>
-                  <TableCell>
-                    <div className="flex space-x-2">
-                      <Button variant="outline" size="sm">
-                        Associar
-                      </Button>
-                      <Button variant="ghost" size="sm">
-                        Detalhes
-                      </Button>
-                    </div>
+              {isLoading ? (
+                Array(3).fill(0).map((_, i) => (
+                  <TableRow key={i}>
+                    <TableCell><Skeleton className="h-5 w-32" /></TableCell>
+                    <TableCell><Skeleton className="h-5 w-24" /></TableCell>
+                    <TableCell><Skeleton className="h-5 w-20" /></TableCell>
+                    <TableCell><Skeleton className="h-5 w-28" /></TableCell>
+                    <TableCell><Skeleton className="h-8 w-24" /></TableCell>
+                  </TableRow>
+                ))
+              ) : stockMachines.length > 0 ? (
+                stockMachines.map((machine) => (
+                  <TableRow key={machine.id}>
+                    <TableCell>{machine.serial_number}</TableCell>
+                    <TableCell>{machine.model}</TableCell>
+                    <TableCell>
+                      <Badge className="bg-blue-100 text-blue-700">Em Estoque</Badge>
+                    </TableCell>
+                    <TableCell>{new Date(machine.created_at).toLocaleDateString('pt-BR')}</TableCell>
+                    <TableCell>
+                      <div className="flex space-x-2">
+                        <Button variant="outline" size="sm">
+                          Associar
+                        </Button>
+                        <Button 
+                          variant="ghost" 
+                          size="sm" 
+                          onClick={() => navigate(PATHS.LOGISTICS.MACHINE_DETAILS(machine.id))}
+                        >
+                          Detalhes
+                        </Button>
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                ))
+              ) : (
+                <TableRow>
+                  <TableCell colSpan={5} className="text-center py-8">
+                    Não há máquinas em estoque. Use o botão acima para adicionar.
                   </TableCell>
                 </TableRow>
-              ))}
+              )}
             </TableBody>
           </Table>
         </CardContent>

@@ -70,7 +70,7 @@ const MachinesTabNavigation = () => {
         
         <TabsContent value="stock">
           <MachinesStockTab 
-            machines={machines.filter(m => !m.client_id)}
+            machines={machines}
             isLoading={isLoading}
             onAddNewClick={handleAddNewMachine}
           />

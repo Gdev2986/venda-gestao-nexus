@@ -1,297 +1,276 @@
 
-import { useState, useEffect } from "react";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
+import React, { useEffect, useState } from "react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { PageHeader } from "@/components/page/PageHeader";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { PieChart, Pie, LineChart, Line, BarChart, Bar, XAxis, YAxis, Tooltip, Legend, ResponsiveContainer, Cell } from "recharts";
 import { useMachines } from "@/hooks/logistics/use-machines";
 import { useSupportTickets } from "@/hooks/logistics/use-support-tickets";
-import { Plus, RefreshCcw, Clock, CheckCircle, AlertTriangle } from "lucide-react";
-import { useDialog } from "@/hooks/use-dialog";
-import NewMachineDialog from "@/components/logistics/modals/NewMachineDialog";
-import NewRequestDialog from "@/components/logistics/modals/NewRequestDialog";
-import { Table, TableHeader, TableRow, TableHead, TableBody, TableCell } from "@/components/ui/table";
-import { Badge } from "@/components/ui/badge";
-import { format } from "date-fns";
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
+import { PieChart, Pie, Cell } from "recharts";
+import { TicketStatus, TicketPriority } from "@/types/support.types";
 
 const LogisticsDashboard = () => {
-  const [activeTab, setActiveTab] = useState("overview");
-  const { stats: machineStats, isLoading: machinesLoading } = useMachines({ enableRealtime: true });
-  const { tickets, stats: ticketStats, isLoading: ticketsLoading } = useSupportTickets({ enableRealtime: true });
+  const { machines, stats, isLoading: machinesLoading } = useMachines({
+    enableRealtime: true,
+    initialFetch: true,
+  });
   
-  const newMachineDialog = useDialog();
-  const newRequestDialog = useDialog();
+  const { 
+    tickets, 
+    isLoading: ticketsLoading, 
+    getPendingTicketsCount 
+  } = useSupportTickets();
   
-  // Mock data for activity logs
+  const [todayTicketsCount, setTodayTicketsCount] = useState(0);
+  
+  useEffect(() => {
+    if (tickets.length > 0) {
+      const today = new Date().toISOString().split('T')[0];
+      const todayCount = tickets.filter(ticket => 
+        ticket.created_at.startsWith(today) && 
+        ticket.status === TicketStatus.PENDING
+      ).length;
+      setTodayTicketsCount(todayCount);
+    }
+  }, [tickets]);
+  
+  // Calculate SLA metrics (mock data)
+  const slaData = {
+    average: 1.5, // days
+    goal: 2.0,  // days
+    withinSla: 85 // percentage
+  };
+  
+  // Generate monthly request data (mock)
+  const monthNames = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'];
+  const currentMonth = new Date().getMonth();
+  
+  const monthlyRequestsData = Array(6).fill(0).map((_, i) => {
+    const monthIndex = (currentMonth - 5 + i) % 12;
+    const month = monthNames[monthIndex];
+    return {
+      month,
+      requests: Math.floor(Math.random() * 25) + 5
+    };
+  });
+  
+  // Generate machine status data
+  const statusColors = {
+    "ACTIVE": "#34D399", // green
+    "INACTIVE": "#F87171", // red
+    "MAINTENANCE": "#FBBF24", // yellow
+    "STOCK": "#60A5FA", // blue
+    "TRANSIT": "#A78BFA" // purple
+  };
+  
+  const statusLabels = {
+    "ACTIVE": "Operando",
+    "INACTIVE": "Inativa",
+    "MAINTENANCE": "Em Manutenção",
+    "STOCK": "Em Estoque",
+    "TRANSIT": "Em Trânsito"
+  };
+  
+  const getMachineStatusData = () => {
+    if (!stats || machinesLoading) return [];
+    
+    return Object.entries(stats.byStatus || {}).map(([status, count]) => ({
+      name: statusLabels[status as keyof typeof statusLabels] || status,
+      value: count as number,
+      status
+    }));
+  };
+  
+  const machineStatusData = getMachineStatusData();
+  
+  // Generate recent activities (mock)
   const recentActivities = [
-    { id: 1, description: "Máquina SN-100042 foi adicionada ao estoque", timestamp: new Date().toISOString() },
-    { id: 2, description: "Solicitação #4432 foi marcada como concluída", timestamp: new Date(Date.now() - 86400000).toISOString() },
-    { id: 3, description: "Cliente ABC recebeu nova máquina", timestamp: new Date(Date.now() - 172800000).toISOString() },
+    { id: 1, text: "Máquina SN-100008 foi adicionada ao estoque", time: "Hoje, 10:30" },
+    { id: 2, text: "Solicitação #4432 foi marcada como concluída", time: "Hoje, 09:15" },
+    { id: 3, text: "Máquina SN-100007 foi transferida para Cliente ABC", time: "Ontem, 16:45" },
+    { id: 4, text: "Nova solicitação #4435 de manutenção criada", time: "Ontem, 14:20" },
+    { id: 5, text: "Máquina SN-100005 em manutenção", time: "21/05/2025, 11:30" }
   ];
   
-  // Mock data for monthly requests
-  const monthlyRequestsData = [
-    { name: 'Jan', total: 24 },
-    { name: 'Fev', total: 18 },
-    { name: 'Mar', total: 25 },
-    { name: 'Abr', total: 22 },
-    { name: 'Mai', total: 30 },
-    { name: 'Jun', total: 27 },
+  // Generate upcoming appointments (mock)
+  const upcomingAppointments = [
+    { id: 1, client: "Supermercado ABC", type: "Instalação", date: "25/05/2025" },
+    { id: 2, client: "Farmácia São José", type: "Manutenção", date: "26/05/2025" },
+    { id: 3, client: "Restaurante Sabor Caseiro", type: "Troca", date: "27/05/2025" },
+    { id: 4, client: "Padaria Bom Pão", type: "Instalação", date: "28/05/2025" }
   ];
-  
-  // Mock data for SLA performance
-  const slaData = [
-    { name: 'Dentro do SLA', value: 85, color: '#22c55e' },
-    { name: 'Fora do SLA', value: 15, color: '#ef4444' },
-  ];
-  
-  // Get upcoming appointments from tickets
-  const upcomingAppointments = tickets
-    .filter(ticket => 
-      ticket.scheduled_date && 
-      new Date(ticket.scheduled_date) > new Date() &&
-      ticket.status !== 'RESOLVED' && 
-      ticket.status !== 'CANCELLED'
-    )
-    .sort((a, b) => 
-      new Date(a.scheduled_date as string).getTime() - new Date(b.scheduled_date as string).getTime()
-    )
-    .slice(0, 5);
-  
-  const getPriorityBadge = (priority: string) => {
-    switch (priority) {
-      case "HIGH":
-        return <Badge className="bg-red-100 text-red-800">Alta</Badge>;
-      case "MEDIUM":
-        return <Badge className="bg-yellow-100 text-yellow-800">Média</Badge>;
-      case "LOW":
-        return <Badge className="bg-blue-100 text-blue-800">Baixa</Badge>;
-      default:
-        return <Badge variant="outline">{priority}</Badge>;
-    }
-  };
-  
-  const getStatusBadge = (status: string) => {
-    switch (status) {
-      case "PENDING":
-        return <Badge className="bg-yellow-100 text-yellow-800">Pendente</Badge>;
-      case "IN_PROGRESS":
-        return <Badge className="bg-blue-100 text-blue-800">Em Progresso</Badge>;
-      case "ASSIGNED":
-        return <Badge className="bg-purple-100 text-purple-800">Atribuída</Badge>;
-      case "RESOLVED":
-        return <Badge className="bg-green-100 text-green-800">Resolvida</Badge>;
-      case "CANCELLED":
-        return <Badge className="bg-gray-100 text-gray-800">Cancelada</Badge>;
-      default:
-        return <Badge variant="outline">{status}</Badge>;
-    }
-  };
-  
-  const getRequestTypeName = (type: string): string => {
-    switch (type) {
-      case 'INSTALLATION': return 'Instalação';
-      case 'MAINTENANCE': return 'Manutenção';
-      case 'REMOVAL': return 'Retirada';
-      case 'REPLACEMENT': return 'Substituição';
-      case 'PAPER': return 'Troca de Bobina';
-      case 'OTHER': return 'Outro';
-      default: return type;
-    }
-  };
-  
-  // Format date for display
-  const formatDate = (dateStr: string | undefined): string => {
-    if (!dateStr) return 'N/A';
-    return format(new Date(dateStr), 'dd/MM/yyyy');
-  };
-  
-  // Get machine status data for chart
-  const machineStatusData = machineStats ? [
-    { name: 'Operando', value: machineStats.byStatus?.ACTIVE || 0, color: '#22c55e' },
-    { name: 'Manutenção', value: machineStats.byStatus?.MAINTENANCE || 0, color: '#f59e0b' },
-    { name: 'Inativas', value: machineStats.byStatus?.INACTIVE || 0, color: '#ef4444' },
-    { name: 'Em Estoque', value: machineStats.byStatus?.STOCK || 0, color: '#3b82f6' },
-    { name: 'Em Trânsito', value: machineStats.byStatus?.TRANSIT || 0, color: '#8b5cf6' },
-  ] : [];
-  
-  const handleRefresh = () => {
-    window.location.reload();
-  };
 
   return (
     <div className="space-y-6">
       <PageHeader 
-        title="Dashboard de Logística" 
-        description="Visão geral do sistema de gerenciamento de máquinas e solicitações"
-        action={
-          <div className="flex space-x-2">
-            <Button variant="outline" onClick={handleRefresh}>
-              <RefreshCcw className="mr-2 h-4 w-4" />
-              Atualizar
-            </Button>
-            <Button variant="outline" onClick={newRequestDialog.open}>
-              <Plus className="mr-2 h-4 w-4" />
-              Nova Solicitação
-            </Button>
-            <Button onClick={newMachineDialog.open}>
-              <Plus className="mr-2 h-4 w-4" />
-              Nova Máquina
-            </Button>
-          </div>
-        }
+        title="Logística" 
+        description="Acompanhe as métricas, solicitações e equipamentos"
       />
       
-      {/* Main Metrics */}
-      <div className="grid gap-4 grid-cols-1 md:grid-cols-2 lg:grid-cols-4">
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium">
-              Total de Máquinas
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">
-              {machinesLoading ? "..." : machineStats?.total || 0}
-            </div>
-            <p className="text-xs text-muted-foreground mt-1">
-              {machineStats?.withClients || 0} com clientes • {machineStats?.stock || 0} em estoque
-            </p>
-          </CardContent>
-        </Card>
-        
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium">
-              Máquinas Operando
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">
-              {machinesLoading ? "..." : machineStats?.byStatus?.ACTIVE || 0}
-            </div>
-            <p className="text-xs text-muted-foreground mt-1">
-              {machineStats && machineStats.total > 0 
-                ? `${Math.round(((machineStats?.byStatus?.ACTIVE || 0) / machineStats.total) * 100)}% do total`
-                : "0% do total"}
-            </p>
-          </CardContent>
-        </Card>
-        
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium">
-              Solicitações Pendentes
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">
-              {ticketsLoading ? "..." : ticketStats?.pending || 0}
-            </div>
-            <p className="text-xs text-muted-foreground mt-1">
-              {ticketStats?.scheduledToday || 0} agendadas para hoje
-            </p>
-          </CardContent>
-        </Card>
-        
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium">
-              SLA Médio
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">
-              1.5 dias
-            </div>
-            <p className="text-xs text-muted-foreground mt-1">
-              Meta: 2 dias • {slaData[0].value}% dentro do SLA
-            </p>
-          </CardContent>
-        </Card>
-      </div>
-      
-      <Tabs defaultValue="overview" value={activeTab} onValueChange={setActiveTab}>
+      <Tabs defaultValue="overview" className="space-y-6">
         <TabsList>
           <TabsTrigger value="overview">Visão Geral</TabsTrigger>
-          <TabsTrigger value="machines">Máquinas</TabsTrigger>
           <TabsTrigger value="requests">Solicitações</TabsTrigger>
+          <TabsTrigger value="reports">Relatórios</TabsTrigger>
         </TabsList>
         
-        <TabsContent value="overview" className="space-y-4">
-          <div className="grid gap-4 grid-cols-1 md:grid-cols-3">
-            {/* Machine Status Chart */}
-            <Card className="md:col-span-2">
-              <CardHeader>
-                <CardTitle>Status das Máquinas</CardTitle>
-                <CardDescription>Distribuição por status de operação</CardDescription>
+        <TabsContent value="overview" className="space-y-6">
+          {/* Metrics Row */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
+            <Card>
+              <CardHeader className="pb-2">
+                <CardTitle className="text-sm font-medium text-muted-foreground">
+                  Total de Máquinas
+                </CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="h-80">
-                  <ResponsiveContainer width="100%" height="100%">
-                    <PieChart>
-                      <Pie
-                        data={machineStatusData}
-                        cx="50%"
-                        cy="50%"
-                        labelLine={false}
-                        outerRadius={130}
-                        fill="#8884d8"
-                        dataKey="value"
-                        nameKey="name"
-                        label={({name, percent}) => `${name}: ${(percent * 100).toFixed(0)}%`}
-                      >
-                        {machineStatusData.map((entry, index) => (
-                          <Cell key={`cell-${index}`} fill={entry.color} />
-                        ))}
-                      </Pie>
-                      <Tooltip formatter={(value) => [`${value} máquinas`, '']} />
-                      <Legend />
-                    </PieChart>
-                  </ResponsiveContainer>
+                <div className="text-2xl font-bold">
+                  {machinesLoading ? "..." : stats?.total || 0}
                 </div>
               </CardContent>
             </Card>
             
-            {/* Recent Activities */}
+            <Card>
+              <CardHeader className="pb-2">
+                <CardTitle className="text-sm font-medium text-muted-foreground">
+                  Máquinas Operando
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold">
+                  {machinesLoading ? "..." : stats?.byStatus?.ACTIVE || 0}
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  {machinesLoading ? "" : stats?.byStatus?.ACTIVE && stats?.total
+                    ? `${Math.round((stats.byStatus.ACTIVE / stats.total) * 100)}% do total`
+                    : "0% do total"
+                  }
+                </p>
+              </CardContent>
+            </Card>
+            
+            <Card>
+              <CardHeader className="pb-2">
+                <CardTitle className="text-sm font-medium text-muted-foreground">
+                  Solicitações Pendentes
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold">
+                  {ticketsLoading ? "..." : getPendingTicketsCount()}
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  {ticketsLoading ? "" : `${todayTicketsCount} novas hoje`}
+                </p>
+              </CardContent>
+            </Card>
+            
+            <Card>
+              <CardHeader className="pb-2">
+                <CardTitle className="text-sm font-medium text-muted-foreground">
+                  SLA Médio
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold">
+                  {slaData.average} dias
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  Meta: {slaData.goal} dias
+                </p>
+              </CardContent>
+            </Card>
+          </div>
+          
+          {/* Charts and Info Grid */}
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            {/* Machine Status Pie Chart */}
+            <Card className="lg:col-span-1">
+              <CardHeader>
+                <CardTitle>Status das Máquinas</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="h-[300px] flex items-center justify-center">
+                  {machineStatusData.length > 0 ? (
+                    <ResponsiveContainer width="100%" height="100%">
+                      <PieChart>
+                        <Pie
+                          data={machineStatusData}
+                          cx="50%"
+                          cy="50%"
+                          labelLine={false}
+                          outerRadius={100}
+                          fill="#8884d8"
+                          dataKey="value"
+                        >
+                          {machineStatusData.map((entry) => (
+                            <Cell 
+                              key={entry.status} 
+                              fill={statusColors[entry.status as keyof typeof statusColors] || "#9CA3AF"} 
+                            />
+                          ))}
+                        </Pie>
+                        <Tooltip 
+                          formatter={(value: number, name: string) => [
+                            `${value} máquina${value > 1 ? 's' : ''}`, 
+                            name
+                          ]}
+                        />
+                      </PieChart>
+                    </ResponsiveContainer>
+                  ) : (
+                    <div className="text-center text-muted-foreground">
+                      {machinesLoading ? "Carregando..." : "Sem dados disponíveis"}
+                    </div>
+                  )}
+                </div>
+              </CardContent>
+            </Card>
+            
+            {/* Monthly Requests Bar Chart */}
+            <Card className="lg:col-span-2">
+              <CardHeader>
+                <CardTitle>Solicitações Mensais</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="h-[300px]">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <BarChart
+                      data={monthlyRequestsData}
+                      margin={{
+                        top: 10,
+                        right: 30,
+                        left: 0,
+                        bottom: 0,
+                      }}
+                    >
+                      <CartesianGrid strokeDasharray="3 3" />
+                      <XAxis dataKey="month" />
+                      <YAxis allowDecimals={false} />
+                      <Tooltip />
+                      <Bar dataKey="requests" fill="#8884d8" />
+                    </BarChart>
+                  </ResponsiveContainer>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+          
+          {/* Secondary Cards Row */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
+            {/* Recent Activity */}
             <Card>
               <CardHeader>
                 <CardTitle>Últimas Atividades</CardTitle>
               </CardHeader>
               <CardContent>
-                <ul className="space-y-4">
+                <div className="space-y-4">
                   {recentActivities.map((activity) => (
-                    <li key={activity.id} className="flex items-start space-x-2">
-                      <Clock className="h-5 w-5 text-muted-foreground flex-shrink-0 mt-0.5" />
-                      <div>
-                        <p className="text-sm">{activity.description}</p>
-                        <span className="text-xs text-muted-foreground">
-                          {format(new Date(activity.timestamp), 'dd/MM/yyyy HH:mm')}
-                        </span>
-                      </div>
-                    </li>
+                    <div key={activity.id} className="border-b pb-4 last:border-0 last:pb-0">
+                      <p className="text-sm">{activity.text}</p>
+                      <span className="text-xs text-muted-foreground">{activity.time}</span>
+                    </div>
                   ))}
-                </ul>
-              </CardContent>
-            </Card>
-            
-            {/* Monthly Requests */}
-            <Card className="md:col-span-2">
-              <CardHeader>
-                <CardTitle>Solicitações Mensais</CardTitle>
-                <CardDescription>Total de solicitações nos últimos 6 meses</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="h-80">
-                  <ResponsiveContainer width="100%" height="100%">
-                    <BarChart data={monthlyRequestsData}>
-                      <XAxis dataKey="name" />
-                      <YAxis />
-                      <Tooltip />
-                      <Bar dataKey="total" fill="#3b82f6" radius={[4, 4, 0, 0]} />
-                    </BarChart>
-                  </ResponsiveContainer>
                 </div>
               </CardContent>
             </Card>
@@ -300,108 +279,74 @@ const LogisticsDashboard = () => {
             <Card>
               <CardHeader>
                 <CardTitle>Performance SLA</CardTitle>
-                <CardDescription>Solicitações atendidas dentro do prazo</CardDescription>
               </CardHeader>
               <CardContent>
-                <div className="h-60">
-                  <ResponsiveContainer width="100%" height="100%">
-                    <PieChart>
-                      <Pie
-                        data={slaData}
-                        cx="50%"
-                        cy="50%"
-                        innerRadius={60}
-                        outerRadius={80}
-                        fill="#8884d8"
-                        dataKey="value"
-                        nameKey="name"
-                        label={({name, percent}) => `${(percent * 100).toFixed(0)}%`}
-                      >
-                        {slaData.map((entry, index) => (
-                          <Cell key={`cell-${index}`} fill={entry.color} />
-                        ))}
-                      </Pie>
-                      <Tooltip formatter={(value) => [`${value}%`, '']} />
-                      <Legend />
-                    </PieChart>
-                  </ResponsiveContainer>
+                <div className="flex flex-col items-center">
+                  <div className="text-4xl font-bold text-green-500">{slaData.withinSla}%</div>
+                  <p className="text-sm text-muted-foreground">
+                    das solicitações atendidas dentro do prazo
+                  </p>
+                  
+                  <div className="w-full bg-gray-200 rounded-full h-2.5 mt-6 dark:bg-gray-700">
+                    <div 
+                      className="bg-green-500 h-2.5 rounded-full" 
+                      style={{ width: `${slaData.withinSla}%` }}
+                    ></div>
+                  </div>
+                  
+                  <div className="flex justify-between w-full mt-2 text-xs text-muted-foreground">
+                    <span>0%</span>
+                    <span>Meta: 90%</span>
+                    <span>100%</span>
+                  </div>
                 </div>
               </CardContent>
             </Card>
             
             {/* Upcoming Appointments */}
-            <Card className="md:col-span-3">
+            <Card>
               <CardHeader>
                 <CardTitle>Próximos Atendimentos</CardTitle>
               </CardHeader>
               <CardContent>
-                {upcomingAppointments.length > 0 ? (
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead>Cliente</TableHead>
-                        <TableHead>Tipo</TableHead>
-                        <TableHead>Data</TableHead>
-                        <TableHead>Prioridade</TableHead>
-                        <TableHead>Status</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {upcomingAppointments.map((appointment) => (
-                        <TableRow key={appointment.id}>
-                          <TableCell>{appointment.client?.business_name}</TableCell>
-                          <TableCell>{getRequestTypeName(appointment.type)}</TableCell>
-                          <TableCell>{formatDate(appointment.scheduled_date)}</TableCell>
-                          <TableCell>{getPriorityBadge(appointment.priority)}</TableCell>
-                          <TableCell>{getStatusBadge(appointment.status)}</TableCell>
-                        </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
-                ) : (
-                  <div className="py-10 text-center">
-                    <CheckCircle className="mx-auto h-10 w-10 text-muted-foreground opacity-50" />
-                    <p className="mt-2 text-sm text-muted-foreground">Não há atendimentos agendados</p>
-                  </div>
-                )}
+                <div className="space-y-4">
+                  {upcomingAppointments.map((appointment) => (
+                    <div key={appointment.id} className="flex justify-between border-b pb-4 last:border-0 last:pb-0">
+                      <div>
+                        <p className="text-sm font-medium">{appointment.client}</p>
+                        <span className="text-xs text-muted-foreground">{appointment.type}</span>
+                      </div>
+                      <span className="text-sm">{appointment.date}</span>
+                    </div>
+                  ))}
+                </div>
               </CardContent>
             </Card>
           </div>
         </TabsContent>
         
-        <TabsContent value="machines">
+        <TabsContent value="requests">
           <Card>
             <CardHeader>
-              <CardTitle>Estatísticas de Máquinas</CardTitle>
+              <CardTitle>Solicitações</CardTitle>
             </CardHeader>
             <CardContent>
-              <p>Conteúdo detalhado de máquinas</p>
+              <p>Conteúdo da aba de solicitações será implementado em breve.</p>
             </CardContent>
           </Card>
         </TabsContent>
         
-        <TabsContent value="requests">
+        <TabsContent value="reports">
           <Card>
             <CardHeader>
-              <CardTitle>Estatísticas de Solicitações</CardTitle>
+              <CardTitle>Relatórios</CardTitle>
             </CardHeader>
             <CardContent>
-              <p>Conteúdo detalhado de solicitações</p>
+              <p>Conteúdo da aba de relatórios será implementado em breve.</p>
             </CardContent>
           </Card>
         </TabsContent>
       </Tabs>
-      
-      {/* Dialogs */}
-      <NewMachineDialog 
-        open={newMachineDialog.isOpen}
-        onOpenChange={newMachineDialog.close}
-      />
-      
-      <NewRequestDialog 
-        open={newRequestDialog.isOpen}
-        onOpenChange={newRequestDialog.close}
-      />
     </div>
   );
 };

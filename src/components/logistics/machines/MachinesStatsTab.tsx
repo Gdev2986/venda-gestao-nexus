@@ -1,99 +1,92 @@
 
 import React from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { PieChart, Pie, Cell, ResponsiveContainer, Legend, Tooltip } from 'recharts';
-
-interface MachinesStat {
-  name: string;
-  value: number;
-  color: string;
-}
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, Legend } from 'recharts';
+import { Skeleton } from "@/components/ui/skeleton";
 
 interface MachinesStatsTabProps {
-  stats: any;
+  stats: any | null;
 }
 
 const MachinesStatsTab: React.FC<MachinesStatsTabProps> = ({ stats }) => {
   if (!stats) {
     return (
-      <div className="flex items-center justify-center h-64">
-        <p>Carregando estatísticas...</p>
+      <div className="space-y-6">
+        <Card>
+          <CardHeader>
+            <CardTitle><Skeleton className="h-6 w-48" /></CardTitle>
+            <CardDescription><Skeleton className="h-4 w-64" /></CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="h-[300px] flex items-center justify-center">
+              <Skeleton className="h-64 w-64 rounded-full" />
+            </div>
+          </CardContent>
+        </Card>
       </div>
     );
   }
 
-  // Transform stats data for chart
-  const getChartData = () => {
-    const statusColors: Record<string, string> = {
-      ACTIVE: '#22c55e', // green
-      MAINTENANCE: '#f59e0b', // yellow
-      INACTIVE: '#ef4444', // red
-      STOCK: '#3b82f6', // blue
-      TRANSIT: '#8b5cf6', // purple
-    };
-
-    const data: MachinesStat[] = [];
-
-    // Add status counts to chart
-    if (stats.byStatus) {
-      Object.entries(stats.byStatus).forEach(([status, count]) => {
-        const statusName = getStatusName(status);
-        data.push({
-          name: statusName,
-          value: count as number,
-          color: statusColors[status] || '#64748b',
-        });
-      });
-    }
-
-    return data;
+  const statusColors = {
+    "ACTIVE": "#34D399", // green
+    "INACTIVE": "#F87171", // red
+    "MAINTENANCE": "#FBBF24", // yellow
+    "STOCK": "#60A5FA", // blue
+    "TRANSIT": "#A78BFA", // purple
   };
 
-  // Get readable status name
-  const getStatusName = (status: string): string => {
-    switch (status) {
-      case 'ACTIVE': return 'Operando';
-      case 'MAINTENANCE': return 'Em Manutenção';
-      case 'INACTIVE': return 'Inativa';
-      case 'STOCK': return 'Em Estoque';
-      case 'TRANSIT': return 'Em Trânsito';
-      default: return status;
-    }
+  const statusLabels = {
+    "ACTIVE": "Operando",
+    "INACTIVE": "Inativa",
+    "MAINTENANCE": "Em Manutenção",
+    "STOCK": "Em Estoque",
+    "TRANSIT": "Em Trânsito"
   };
 
-  // Calculate percentages
-  const getPercentage = (value: number): string => {
-    return stats.total > 0 ? `${Math.round((value / stats.total) * 100)}%` : '0%';
-  };
-
-  const chartData = getChartData();
+  // Transform status counts to chart data
+  const statusData = Object.entries(stats.byStatus || {}).map(([status, count]) => ({
+    name: statusLabels[status as keyof typeof statusLabels] || status,
+    value: count as number,
+    status
+  }));
 
   return (
-    <div className="grid gap-6 md:grid-cols-2">
-      <Card className="col-span-2">
+    <div className="space-y-6">
+      <Card>
         <CardHeader>
           <CardTitle>Status das Máquinas</CardTitle>
+          <CardDescription>Distribuição das máquinas por status</CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="h-80">
+          <div className="h-[400px]">
             <ResponsiveContainer width="100%" height="100%">
               <PieChart>
                 <Pie
-                  data={chartData}
+                  data={statusData}
                   cx="50%"
                   cy="50%"
-                  labelLine={false}
-                  outerRadius={130}
+                  labelLine={true}
+                  outerRadius={120}
                   fill="#8884d8"
                   dataKey="value"
                   nameKey="name"
-                  label={({name, percent}) => `${name}: ${(percent * 100).toFixed(0)}%`}
+                  label={({ name, percent }) => 
+                    `${name}: ${(percent * 100).toFixed(0)}%`
+                  }
                 >
-                  {chartData.map((entry, index) => (
-                    <Cell key={`cell-${index}`} fill={entry.color} />
+                  {statusData.map((entry) => (
+                    <Cell 
+                      key={entry.status} 
+                      fill={statusColors[entry.status as keyof typeof statusColors] || "#9CA3AF"} 
+                    />
                   ))}
                 </Pie>
-                <Tooltip formatter={(value) => [`${value} máquinas`, '']} />
+                <Tooltip 
+                  formatter={(value: number, name: string) => [
+                    `${value} máquina${value > 1 ? 's' : ''}`, 
+                    name
+                  ]}
+                />
                 <Legend />
               </PieChart>
             </ResponsiveContainer>
@@ -101,40 +94,28 @@ const MachinesStatsTab: React.FC<MachinesStatsTabProps> = ({ stats }) => {
         </CardContent>
       </Card>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>Total de Máquinas</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="text-5xl font-bold mb-4">{stats.total}</div>
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <p className="text-sm text-muted-foreground">Em Estoque</p>
-              <p className="text-2xl font-semibold">{stats.stock}</p>
-              <p className="text-xs text-muted-foreground">{getPercentage(stats.stock)}</p>
-            </div>
-            <div>
-              <p className="text-sm text-muted-foreground">Com Clientes</p>
-              <p className="text-2xl font-semibold">{stats.withClients}</p>
-              <p className="text-xs text-muted-foreground">{getPercentage(stats.withClients)}</p>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-
-      <Card>
-        <CardHeader>
-          <CardTitle>Eficiência de Uso</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="text-5xl font-bold mb-4">
-            {stats.total > 0 ? `${Math.round((stats.byStatus?.ACTIVE || 0) / stats.total * 100)}%` : '0%'}
-          </div>
-          <p className="text-sm text-muted-foreground">
-            Porcentagem de máquinas em operação ativa
-          </p>
-        </CardContent>
-      </Card>
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-4xl font-bold">{stats.total || 0}</CardTitle>
+            <CardDescription>Total de Máquinas</CardDescription>
+          </CardHeader>
+        </Card>
+        
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-4xl font-bold">{stats.stock || 0}</CardTitle>
+            <CardDescription>Máquinas em Estoque</CardDescription>
+          </CardHeader>
+        </Card>
+        
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-4xl font-bold">{stats.withClients || 0}</CardTitle>
+            <CardDescription>Máquinas com Clientes</CardDescription>
+          </CardHeader>
+        </Card>
+      </div>
     </div>
   );
 };
