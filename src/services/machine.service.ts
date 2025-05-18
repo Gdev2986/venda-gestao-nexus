@@ -11,8 +11,9 @@ import {
 
 /**
  * Get all machines with client information
+ * This replaces the previous fetchMachines function
  */
-export const fetchMachines = async () => {
+export const getAllMachines = async (): Promise<Machine[]> => {
   const { data, error } = await supabase
     .from('machines')
     .select(`
@@ -34,7 +35,11 @@ export const fetchMachines = async () => {
     throw new Error(error.message);
   }
 
-  return data || [];
+  // Cast the status to MachineStatus enum
+  return (data || []).map(machine => ({
+    ...machine,
+    status: machine.status as MachineStatus
+  }));
 };
 
 /**
@@ -68,6 +73,39 @@ export const getMachineStats = async (): Promise<MachineStats> => {
 };
 
 /**
+ * Get machines by status
+ */
+export const getMachinesByStatus = async (status: MachineStatus): Promise<Machine[]> => {
+  const { data, error } = await supabase
+    .from('machines')
+    .select(`
+      id,
+      serial_number, 
+      model,
+      status,
+      client_id,
+      created_at,
+      updated_at,
+      client:clients (
+        id,
+        business_name
+      )
+    `)
+    .eq('status', status as string)
+    .order('serial_number', { ascending: true });
+
+  if (error) {
+    throw new Error(error.message);
+  }
+
+  // Cast the status to MachineStatus enum
+  return (data || []).map(machine => ({
+    ...machine,
+    status: machine.status as MachineStatus
+  }));
+};
+
+/**
  * Get machines by client ID
  */
 export const getMachinesByClient = async (clientId: string) => {
@@ -93,7 +131,7 @@ export const createMachine = async (machine: MachineCreateParams) => {
     .insert({
       serial_number: machine.serial_number,
       model: machine.model,
-      status: machine.status as unknown as string,
+      status: machine.status as string,
       client_id: machine.client_id
     })
     .select()
@@ -115,7 +153,7 @@ export const updateMachine = async (id: string, updates: MachineUpdateParams) =>
     .from('machines')
     .update({
       ...updates,
-      status: updates.status as unknown as string
+      status: updates.status as string
     })
     .eq('id', id)
     .select()
@@ -151,7 +189,7 @@ export const transferMachine = async (params: MachineTransferParams) => {
   const { machine_id, from_client_id, to_client_id, created_by } = params;
   
   // Start a transaction by using the rpc method
-  const { error: transferError } = await supabase.rpc('transfer_machine', {
+  const { error: transferError } = await supabase.rpc("transfer_machine", {
     p_machine_id: machine_id,
     p_from_client_id: from_client_id || null,
     p_to_client_id: to_client_id === 'stock' ? null : to_client_id,
@@ -174,7 +212,7 @@ export const transferMachine = async (params: MachineTransferParams) => {
   const { error: updateError } = await supabase
     .from('machines')
     .update({
-      status: newStatus as unknown as string,
+      status: newStatus as string,
       client_id: to_client_id === 'stock' ? null : to_client_id,
     })
     .eq('id', machine_id);
@@ -216,7 +254,8 @@ export const getMachinesInStock = async () => {
   const { data, error } = await supabase
     .from('machines')
     .select('*')
-    .is('client_id', null);
+    .is('client_id', null)
+    .eq('status', MachineStatus.STOCK as string);
 
   if (error) {
     throw new Error(error.message);
@@ -224,3 +263,60 @@ export const getMachinesInStock = async () => {
 
   return data || [];
 };
+
+/**
+ * Get clients with machines
+ */
+export const getClientsWithMachines = async () => {
+  const { data, error } = await supabase
+    .from('clients')
+    .select(`
+      id,
+      business_name,
+      machines:machines (
+        id,
+        serial_number,
+        model,
+        status
+      )
+    `)
+    .not('machines', 'is', null);
+
+  if (error) {
+    throw new Error(error.message);
+  }
+  
+  // Format the data to return clients with machine count and status summary
+  return (data || []).map(client => {
+    if (!client.machines) return null;
+    
+    return {
+      id: client.id,
+      business_name: client.business_name,
+      machineCount: client.machines.length,
+      machines: client.machines,
+      predominantStatus: getMostCommonStatus(client.machines)
+    };
+  }).filter(Boolean);
+};
+
+// Helper function to get the most common machine status for a client
+const getMostCommonStatus = (machines: any[]) => {
+  const statusCount: Record<string, number> = {};
+  machines.forEach(machine => {
+    statusCount[machine.status] = (statusCount[machine.status] || 0) + 1;
+  });
+  
+  let maxCount = 0;
+  let predominantStatus = '';
+  
+  Object.entries(statusCount).forEach(([status, count]) => {
+    if (count > maxCount) {
+      maxCount = count;
+      predominantStatus = status;
+    }
+  });
+  
+  return predominantStatus;
+};
+

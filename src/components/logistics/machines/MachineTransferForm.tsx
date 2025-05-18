@@ -1,21 +1,14 @@
 
-import { useState, useEffect } from "react";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { useToast } from "@/hooks/use-toast";
-import { useAuth } from "@/contexts/AuthContext";
-import { transferMachine } from "@/services/machine.service";
-import { Client } from "@/types";
-import { supabase } from "@/integrations/supabase/client";
-import { Loader2 } from "lucide-react";
+import { useState, useEffect } from 'react';
+import { Button } from '@/components/ui/button';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Card, CardContent } from '@/components/ui/card';
+import { useToast } from '@/hooks/use-toast';
+import { transferMachine } from '@/services/machine.service';
+import { useUser } from '@/hooks/use-user';
+
+// Import client services or hooks
+import { useClients } from '@/hooks/use-clients';
 
 export interface MachineTransferFormProps {
   machineId: string;
@@ -24,148 +17,103 @@ export interface MachineTransferFormProps {
   onTransferComplete: () => void;
 }
 
-export function MachineTransferForm({
-  machineId,
-  machineName,
-  currentClientId,
-  onTransferComplete
+export function MachineTransferForm({ 
+  machineId, 
+  machineName, 
+  currentClientId, 
+  onTransferComplete 
 }: MachineTransferFormProps) {
-  const [selectedClientId, setSelectedClientId] = useState<string>("");
-  const [clients, setClients] = useState<Client[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [isSubmitting, setIsSubmitting] = useState(false);
   const { toast } = useToast();
-  const { user } = useAuth();
-
-  useEffect(() => {
-    const fetchClients = async () => {
-      try {
-        const { data, error } = await supabase
-          .from("clients")
-          .select("id, business_name")
-          .order("business_name", { ascending: true });
-
-        if (error) {
-          throw error;
-        }
-
-        setClients(data || []);
-      } catch (error) {
-        console.error("Error fetching clients:", error);
-        toast({
-          variant: "destructive",
-          title: "Erro ao carregar clientes",
-          description: "Não foi possível carregar a lista de clientes"
-        });
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    fetchClients();
-  }, [toast]);
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-
-    if (!selectedClientId) {
+  const { user } = useUser();
+  const [targetClientId, setTargetClientId] = useState<string>('');
+  const [isLoading, setIsLoading] = useState(false);
+  
+  // Get list of clients for dropdown
+  const { clients, isLoading: clientsLoading } = useClients();
+  
+  const handleTransfer = async () => {
+    if (!targetClientId) {
       toast({
-        variant: "destructive",
-        title: "Erro na transferência",
-        description: "Selecione um cliente para transferir a máquina"
+        title: "Erro",
+        description: "Selecione um cliente para transferir a máquina",
+        variant: "destructive"
       });
       return;
     }
-
-    setIsSubmitting(true);
-
+    
+    setIsLoading(true);
     try {
       await transferMachine({
         machine_id: machineId,
         from_client_id: currentClientId || undefined,
-        to_client_id: selectedClientId,
-        created_by: user?.id || 'system'
+        to_client_id: targetClientId,
+        created_by: user?.id || ''
       });
-
+      
       toast({
-        title: "Transferência concluída",
-        description: `Máquina ${machineName} transferida com sucesso`,
-        variant: "default"
+        title: "Sucesso",
+        description: "Máquina transferida com sucesso"
       });
       
       onTransferComplete();
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error transferring machine:", error);
       toast({
-        variant: "destructive",
         title: "Erro na transferência",
-        description: "Não foi possível transferir a máquina. Tente novamente."
+        description: error.message || "Não foi possível transferir a máquina",
+        variant: "destructive"
       });
     } finally {
-      setIsSubmitting(false);
+      setIsLoading(false);
     }
   };
-
-  if (isLoading) {
-    return <div className="text-center py-4">Carregando clientes...</div>;
-  }
-
+  
   return (
-    <form onSubmit={handleSubmit} className="space-y-4">
-      <div>
-        <Label>Máquina</Label>
-        <Input 
-          value={machineName} 
-          readOnly 
-          className="bg-muted"
-        />
+    <div className="space-y-4">
+      <p className="text-sm text-muted-foreground">
+        Maquina: <span className="font-medium text-foreground">{machineName}</span>
+      </p>
+      
+      <div className="space-y-2">
+        <p className="text-sm font-medium">Cliente atual:</p>
+        <Card>
+          <CardContent className="py-3">
+            {currentClientId ? (
+              <span className="text-sm">
+                {clients?.find(c => c.id === currentClientId)?.business_name || 'Cliente não encontrado'}
+              </span>
+            ) : (
+              <span className="text-sm text-muted-foreground italic">Estoque</span>
+            )}
+          </CardContent>
+        </Card>
       </div>
-
-      <div>
-        <Label>Cliente Atual</Label>
-        <Input 
-          value={currentClientId ? clients.find(c => c.id === currentClientId)?.business_name || "Desconhecido" : "Sem cliente (estoque)"} 
-          readOnly 
-          className="bg-muted"
-        />
-      </div>
-
-      <div>
-        <Label htmlFor="new-client">Transferir para</Label>
-        <Select
-          value={selectedClientId}
-          onValueChange={setSelectedClientId}
-        >
-          <SelectTrigger id="new-client">
+      
+      <div className="space-y-2">
+        <p className="text-sm font-medium">Transferir para:</p>
+        <Select onValueChange={setTargetClientId} value={targetClientId}>
+          <SelectTrigger>
             <SelectValue placeholder="Selecione o cliente" />
           </SelectTrigger>
-          <SelectContent className="max-h-[300px]">
-            <SelectItem value="stock">Retornar para Estoque</SelectItem>
-            {clients.map((client) => (
-              <SelectItem 
-                key={client.id} 
-                value={client.id}
-                disabled={client.id === currentClientId}
-              >
+          <SelectContent>
+            <SelectItem value="stock">Estoque</SelectItem>
+            {clients?.filter(client => client.id !== currentClientId).map((client) => (
+              <SelectItem key={client.id} value={client.id}>
                 {client.business_name}
               </SelectItem>
             ))}
           </SelectContent>
         </Select>
       </div>
-
-      <div className="flex justify-end pt-2">
-        <Button type="submit" disabled={isSubmitting || !selectedClientId}>
-          {isSubmitting ? (
-            <>
-              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-              Transferindo...
-            </>
-          ) : (
-            "Transferir"
-          )}
+      
+      <div className="flex justify-end space-x-2 pt-4">
+        <Button variant="outline" onClick={onTransferComplete} disabled={isLoading}>
+          Cancelar
+        </Button>
+        <Button onClick={handleTransfer} disabled={!targetClientId || isLoading}>
+          {isLoading ? "Transferindo..." : "Transferir"}
         </Button>
       </div>
-    </form>
+    </div>
   );
 }
