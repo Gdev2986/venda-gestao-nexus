@@ -25,20 +25,20 @@ export interface PaymentRequest {
 export interface PixKey {
   id: string;
   key: string;
-  type: string; // Make type required to match with expected usage
+  type: string; // Required field
   key_type?: string;
   client_id?: string;
   user_id?: string;
   created_at?: string;
   updated_at?: string;
   name?: string;
-  owner_name: string; // Make owner_name required to match with expected usage
+  owner_name: string; // Required field
   isDefault?: boolean;
   is_active?: boolean;
   bank_name?: string;
 }
 
-export type PixKeyType = 'CPF' | 'CNPJ' | 'EMAIL' | 'PHONE' | 'EVP';
+export type PixKeyType = 'CPF' | 'CNPJ' | 'EMAIL' | 'PHONE' | 'EVP' | 'RANDOM';
 
 export interface Client {
   id: string;
@@ -59,5 +59,13 @@ export interface Client {
   fee_plan_id?: string;
 }
 
-// Payment type is an alias for PaymentRequest to maintain compatibility
-export type Payment = PaymentRequest;
+// Payment type is an alias for PaymentRequest to maintain compatibility but with required fields
+export type Payment = PaymentRequest & {
+  rejection_reason: string | null;
+  pix_key?: {
+    id: string;
+    key: string;
+    type: string;
+    owner_name: string;
+  };
+};

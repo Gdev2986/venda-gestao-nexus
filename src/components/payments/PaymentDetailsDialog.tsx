@@ -173,7 +173,7 @@ export function PaymentDetailsDialog({
               <Separator />
               <div>
                 <p className="text-sm text-muted-foreground mb-2">Comprovante</p>
-                <PaymentReceiptViewer url={payment.receipt_url} />
+                <PaymentReceiptViewer receiptUrl={payment.receipt_url!} />
               </div>
             </>
           )}
@@ -187,7 +187,6 @@ export function PaymentDetailsDialog({
                   setShowReceiptUploader(false);
                   onPaymentUpdated?.();
                 }}
-                onCancel={() => setShowReceiptUploader(false)}
               />
             </>
           )}

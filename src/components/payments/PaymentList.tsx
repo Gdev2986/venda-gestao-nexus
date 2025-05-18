@@ -98,15 +98,15 @@ export function PaymentList({ payments, onUpdate }: PaymentListProps) {
     }
   };
 
-  const getStatusBadge = (status: PaymentStatus) => {
+  const getStatusBadge = (status: string) => {
     switch (status) {
-      case PaymentStatus.PENDING:
+      case "PENDING":
         return <Badge variant="outline">Pendente</Badge>;
-      case PaymentStatus.APPROVED:
+      case "APPROVED":
         return <Badge variant="default">Aprovado</Badge>;
-      case PaymentStatus.REJECTED:
+      case "REJECTED":
         return <Badge variant="destructive">Rejeitado</Badge>;
-      case PaymentStatus.PAID:
+      case "PAID":
         return <Badge variant="default">Pago</Badge>;
       default:
         return <Badge variant="outline">{status}</Badge>;
@@ -138,7 +138,7 @@ export function PaymentList({ payments, onUpdate }: PaymentListProps) {
               <h3 className="text-sm font-medium">Data</h3>
               <p className="text-sm">{formatDate(payment.created_at)}</p>
               <div className="mt-1">
-                {getStatusBadge(payment.status as PaymentStatus)}
+                {getStatusBadge(payment.status)}
               </div>
             </div>
             
@@ -160,7 +160,7 @@ export function PaymentList({ payments, onUpdate }: PaymentListProps) {
                     Ver detalhes
                   </DropdownMenuItem>
                   
-                  {(payment.status as PaymentStatus) === PaymentStatus.APPROVED && (
+                  {payment.status === "APPROVED" && (
                     <>
                       <DropdownMenuSeparator />
                       <DropdownMenuItem onClick={() => handleAction(payment.id, PaymentAction.SEND_RECEIPT)}>

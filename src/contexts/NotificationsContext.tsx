@@ -12,8 +12,8 @@ export interface Notification {
   message: string;
   type: string;
   data?: any;
-  is_read?: boolean;
-  created_at?: string;
+  is_read: boolean; // Changed from read to is_read to match database
+  created_at: string; // Use created_at instead of timestamp
 }
 
 export interface NotificationsContextType {
@@ -21,9 +21,12 @@ export interface NotificationsContextType {
   unreadCount: number;
   isLoading: boolean; // Add isLoading property
   markAsRead: (id: string) => Promise<void>;
+  markAsUnread: (id: string) => Promise<void>; // Add markAsUnread method
   markAllAsRead: () => Promise<void>;
   fetchNotifications: () => Promise<void>;
   sendNotification: (userId: string, title: string, message: string, type: string, data?: any) => Promise<void>;
+  deleteNotification: (id: string) => Promise<void>; // Add deleteNotification method
+  refreshNotifications: () => Promise<void>; // Add refreshNotifications method (alias for fetchNotifications)
 }
 
 const NotificationsContext = createContext<NotificationsContextType | undefined>(undefined);
@@ -78,6 +81,27 @@ export const NotificationsProvider: React.FC<{ children: ReactNode }> = ({ child
     }
   };
 
+  const markAsUnread = async (id: string) => {
+    if (!user) return;
+    
+    try {
+      const { error } = await supabase
+        .from('notifications')
+        .update({ is_read: false })
+        .eq('id', id);
+      
+      if (error) throw error;
+      
+      // Update local state
+      setNotifications(prev => 
+        prev.map(n => n.id === id ? { ...n, is_read: false } : n)
+      );
+      setUnreadCount(prev => prev + 1);
+    } catch (error) {
+      console.error('Error marking notification as unread:', error);
+    }
+  };
+
   const markAllAsRead = async () => {
     if (!user) return;
     
@@ -98,15 +122,38 @@ export const NotificationsProvider: React.FC<{ children: ReactNode }> = ({ child
     }
   };
 
+  const deleteNotification = async (id: string) => {
+    if (!user) return;
+    
+    try {
+      const { error } = await supabase
+        .from('notifications')
+        .delete()
+        .eq('id', id);
+      
+      if (error) throw error;
+      
+      // Update local state
+      const notificationToDelete = notifications.find(n => n.id === id);
+      setNotifications(prev => prev.filter(n => n.id !== id));
+      if (notificationToDelete && !notificationToDelete.is_read) {
+        setUnreadCount(prev => Math.max(0, prev - 1));
+      }
+    } catch (error) {
+      console.error('Error deleting notification:', error);
+    }
+  };
+
   const sendNotification = async (userId: string, title: string, message: string, type: string, data?: any) => {
     try {
+      // Cast the type to any to avoid type checking issues with Supabase
       const { error } = await supabase
         .from('notifications')
         .insert({
           user_id: userId,
           title,
           message,
-          type,
+          type: type as any,
           data,
           is_read: false
         });
@@ -122,6 +169,9 @@ export const NotificationsProvider: React.FC<{ children: ReactNode }> = ({ child
       throw error;
     }
   };
+
+  // Alias for fetchNotifications
+  const refreshNotifications = fetchNotifications;
 
   useEffect(() => {
     if (user) {
@@ -155,9 +205,12 @@ export const NotificationsProvider: React.FC<{ children: ReactNode }> = ({ child
       unreadCount,
       isLoading,
       markAsRead,
+      markAsUnread,
       markAllAsRead,
       fetchNotifications,
-      sendNotification
+      sendNotification,
+      deleteNotification,
+      refreshNotifications
     }}>
       {children}
     </NotificationsContext.Provider>

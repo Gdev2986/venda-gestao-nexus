@@ -1,6 +1,6 @@
 
 import { useState } from 'react';
-import { Payment } from '@/types';
+import { Payment, PaymentRequest } from '@/types';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
 import { PaymentAction } from '@/types/enums';
@@ -10,7 +10,6 @@ import { PaymentDetailsDialog } from './PaymentDetailsDialog';
 import { PaymentListTable } from './payment-list/PaymentListTable';
 import { PaymentListLoadingState } from './payment-list/PaymentListLoadingState';
 import { PaymentListEmptyState } from './payment-list/PaymentListEmptyState';
-import { convertToPaymentRequest } from './payment-list/PaymentConverter';
 import { SendReceiptDialog } from './SendReceiptDialog';
 
 interface AdminPaymentsListProps {
@@ -172,7 +171,7 @@ const AdminPaymentsList = ({ payments, onActionClick, isLoading }: AdminPayments
           <ApprovePaymentDialog
             open={approveDialogOpen}
             onOpenChange={setApproveDialogOpen}
-            payment={convertToPaymentRequest(selectedPayment)}
+            payment={selectedPayment as PaymentRequest}
             onApprove={handleApprovePayment}
             isProcessing={isProcessing}
           />
@@ -180,7 +179,7 @@ const AdminPaymentsList = ({ payments, onActionClick, isLoading }: AdminPayments
           <RejectPaymentDialog
             open={rejectDialogOpen}
             onOpenChange={setRejectDialogOpen}
-            payment={convertToPaymentRequest(selectedPayment)}
+            payment={selectedPayment as PaymentRequest}
             onReject={handleRejectPayment}
             isProcessing={isProcessing}
           />
@@ -188,13 +187,13 @@ const AdminPaymentsList = ({ payments, onActionClick, isLoading }: AdminPayments
           <PaymentDetailsDialog 
             open={detailsDialogOpen}
             onOpenChange={setDetailsDialogOpen}
-            payment={convertToPaymentRequest(selectedPayment)}
+            payment={selectedPayment}
           />
 
           <SendReceiptDialog
             open={sendReceiptDialogOpen}
             onOpenChange={setSendReceiptDialogOpen}
-            payment={convertToPaymentRequest(selectedPayment)}
+            payment={selectedPayment as PaymentRequest}
             onSendReceipt={handleSendReceipt}
             isProcessing={isProcessing}
           />

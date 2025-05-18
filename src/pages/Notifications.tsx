@@ -26,7 +26,7 @@ const Notifications = () => {
 
   const { 
     notifications, 
-    loading, 
+    isLoading, // Use isLoading instead of loading
     markAsRead, 
     markAsUnread,
     markAllAsRead,
@@ -52,9 +52,9 @@ const Notifications = () => {
     }
     
     if (statusFilter === "read") {
-      filtered = filtered.filter(notification => notification.read);
+      filtered = filtered.filter(notification => notification.is_read);
     } else if (statusFilter === "unread") {
-      filtered = filtered.filter(notification => !notification.read);
+      filtered = filtered.filter(notification => !notification.is_read);
     }
     
     // Calcular paginação
@@ -139,7 +139,7 @@ const Notifications = () => {
           <Button 
             variant="outline" 
             onClick={handleMarkAllAsRead}
-            disabled={loading || notifications.every(n => n.read)}
+            disabled={isLoading || notifications.every(n => n.is_read)}
           >
             Marcar todas como lidas
           </Button>
@@ -147,7 +147,7 @@ const Notifications = () => {
             variant="outline" 
             className="text-destructive hover:text-destructive" 
             onClick={handleDeleteAll}
-            disabled={loading || notifications.length === 0}
+            disabled={isLoading || notifications.length === 0}
           >
             Excluir todas
           </Button>
@@ -156,7 +156,7 @@ const Notifications = () => {
       
       <Card>
         <CardContent className="p-0">
-          {loading ? (
+          {isLoading ? (
             <div className="flex justify-center items-center h-64">
               <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
             </div>
