@@ -57,3 +57,25 @@ export interface MachineTransfer {
     business_name: string;
   };
 }
+
+export interface MachineTransferParams {
+  machine_id: string;
+  from_client_id?: string;
+  to_client_id: string;
+  cutoff_date?: string;
+  created_by?: string;
+}
+
+export interface MachineCreateParams {
+  serial_number: string;
+  model: string;
+  status?: MachineStatus;
+  client_id?: string;
+}
+
+export interface MachineUpdateParams {
+  serial_number?: string;
+  model?: string;
+  status?: MachineStatus;
+  client_id?: string;
+}
