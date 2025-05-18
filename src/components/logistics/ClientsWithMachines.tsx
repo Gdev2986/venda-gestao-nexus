@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useNavigate } from "react-router-dom";
 import { PATHS } from "@/routes/paths";
+import { MachineStatus } from '@/types/machine.types';
 
 interface ClientWithMachine {
   id: string;
@@ -26,12 +27,12 @@ const ClientsWithMachines: React.FC<ClientsWithMachinesProps> = ({ clients, isLo
     if (!status) return <Badge variant="outline">Desconhecido</Badge>;
     
     switch (status) {
-      case "ACTIVE":
+      case MachineStatus.ACTIVE:
         return <Badge className="bg-green-100 text-green-800">Operando</Badge>;
-      case "MAINTENANCE":
+      case MachineStatus.MAINTENANCE:
         return <Badge className="bg-yellow-100 text-yellow-800">Manutenção</Badge>;
-      case "INACTIVE":
-        return <Badge className="bg-red-100 text-red-800">Inativo</Badge>;
+      case MachineStatus.INACTIVE:
+        return <Badge className="bg-red-100 text-red-800">Inativa</Badge>;
       default:
         return <Badge variant="outline">{status}</Badge>;
     }

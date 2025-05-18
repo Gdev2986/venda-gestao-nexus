@@ -1,43 +1,13 @@
 
 import { supabase } from "@/integrations/supabase/client";
-
-export type MachineStatus = "ACTIVE" | "INACTIVE" | "MAINTENANCE" | "STOCK" | "TRANSIT";
-
-export interface Machine {
-  id: string;
-  serial_number: string;
-  model: string;
-  status: MachineStatus;
-  client_id?: string | null;
-  created_at: string;
-  updated_at: string;
-  client?: {
-    id: string;
-    business_name: string;
-  };
-}
-
-export interface MachineCreateParams {
-  serial_number: string;
-  model: string;
-  status: MachineStatus;
-  client_id?: string;
-}
-
-export interface MachineUpdateParams {
-  serial_number?: string;
-  model?: string;
-  status?: MachineStatus;
-  client_id?: string | null;
-}
-
-export interface MachineTransferParams {
-  machine_id: string;
-  from_client_id: string | null;
-  to_client_id: string | null;
-  transfer_date?: string;
-  created_by: string;
-}
+import { 
+  Machine, 
+  MachineStatus, 
+  MachineCreateParams, 
+  MachineUpdateParams, 
+  MachineTransferParams,
+  MachineStats
+} from "@/types/machine.types";
 
 export async function getAllMachines(): Promise<Machine[]> {
   try {
@@ -130,14 +100,16 @@ export async function createMachine(params: MachineCreateParams): Promise<Machin
 
 export async function updateMachine(id: string, params: MachineUpdateParams): Promise<Machine> {
   try {
+    const updateData: any = {};
+    
+    if (params.serial_number !== undefined) updateData.serial_number = params.serial_number;
+    if (params.model !== undefined) updateData.model = params.model;
+    if (params.status !== undefined) updateData.status = params.status;
+    if (params.client_id !== undefined) updateData.client_id = params.client_id;
+    
     const { data, error } = await supabase
       .from("machines")
-      .update({
-        serial_number: params.serial_number,
-        model: params.model,
-        status: params.status,
-        client_id: params.client_id,
-      })
+      .update(updateData)
       .eq("id", id)
       .select()
       .single();
@@ -172,11 +144,13 @@ export async function transferMachine(params: MachineTransferParams): Promise<an
     }
 
     // Update the machine's client_id
+    const newStatus = params.to_client_id ? MachineStatus.ACTIVE : MachineStatus.STOCK;
+    
     const { error: updateError } = await supabase
       .from("machines")
       .update({
         client_id: params.to_client_id,
-        status: params.to_client_id ? "ACTIVE" : "STOCK",
+        status: newStatus,
       })
       .eq("id", params.machine_id);
 
@@ -191,18 +165,18 @@ export async function transferMachine(params: MachineTransferParams): Promise<an
   }
 }
 
-export async function getMachineStats(): Promise<any> {
+export async function getMachineStats(): Promise<MachineStats> {
   try {
-    const { data, error } = await supabase
+    const { data: stockData, error: stockError } = await supabase
       .from("machines")
       .select("status")
-      .is("client_id", null);
+      .eq("status", MachineStatus.STOCK);
 
-    if (error) {
-      throw error;
+    if (stockError) {
+      throw stockError;
     }
 
-    const stockCount = data.length;
+    const stockCount = stockData.length;
 
     const { count: totalCount, error: countError } = await supabase
       .from("machines")
@@ -237,9 +211,9 @@ export async function getMachineStats(): Promise<any> {
     }
 
     return {
-      total: totalCount,
+      total: totalCount || 0,
       stock: stockCount,
-      withClients: withClientsCount,
+      withClients: withClientsCount || 0,
       byStatus: statusCounts,
     };
   } catch (error) {
@@ -270,6 +244,7 @@ export async function getMachinesByClient(clientId: string): Promise<Machine[]> 
   }
 }
 
+// Get all clients that have machines
 export async function getClientsWithMachines(): Promise<any[]> {
   try {
     // Get unique client IDs with machines

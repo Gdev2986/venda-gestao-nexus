@@ -1,33 +1,16 @@
 
-import React from "react";
-import { useAuth } from "@/contexts/AuthContext";
-import { useToast } from "@/hooks/use-toast";
+import { useState } from "react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
-import { z } from "zod";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { useForm } from "react-hook-form";
-import {
-  Form,
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from "@/components/ui/form";
-import { MachineStatus } from "@/services/machine.service";
+import { Textarea } from "@/components/ui/textarea";
+import { useClients } from "@/hooks/use-clients";
 import { useMachines } from "@/hooks/logistics/use-machines";
+import { useAuth } from "@/contexts/AuthContext";
+import { MachineStatus } from "@/types/machine.types";
+import { useToast } from "@/hooks/use-toast";
 
 interface NewMachineDialogProps {
   open: boolean;
@@ -35,169 +18,197 @@ interface NewMachineDialogProps {
   onSuccess?: () => void;
 }
 
-const formSchema = z.object({
-  serial_number: z.string().min(1, "Serial number is required"),
-  model: z.string().min(1, "Model is required"),
-  status: z.enum(["ACTIVE", "INACTIVE", "MAINTENANCE", "STOCK", "TRANSIT"] as const),
-  client_id: z.string().optional(),
-  notes: z.string().optional(),
-});
-
-type FormValues = z.infer<typeof formSchema>;
-
-const NewMachineDialog: React.FC<NewMachineDialogProps> = ({ open, onOpenChange, onSuccess }) => {
-  const { toast } = useToast();
-  const { user } = useAuth();
+const NewMachineDialog = ({ open, onOpenChange, onSuccess }: NewMachineDialogProps) => {
   const { addMachine } = useMachines();
+  const { clients, isLoading: isClientsLoading } = useClients();
+  const { user } = useAuth();
+  const { toast } = useToast();
   
-  const form = useForm<FormValues>({
-    resolver: zodResolver(formSchema),
-    defaultValues: {
-      serial_number: "",
-      model: "",
-      status: "STOCK",
-      client_id: undefined,
-      notes: "",
-    },
-  });
+  // Form state
+  const [serialNumber, setSerialNumber] = useState("");
+  const [model, setModel] = useState("");
+  const [status, setStatus] = useState<MachineStatus>(MachineStatus.STOCK);
+  const [clientId, setClientId] = useState<string | undefined>(undefined);
+  const [observations, setObservations] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [errors, setErrors] = useState<Record<string, string>>({});
 
-  const onSubmit = async (data: FormValues) => {
-    if (!user) return;
+  const resetForm = () => {
+    setSerialNumber("");
+    setModel("");
+    setStatus(MachineStatus.STOCK);
+    setClientId(undefined);
+    setObservations("");
+    setErrors({});
+  };
+  
+  const validateForm = () => {
+    const newErrors: Record<string, string> = {};
+    
+    if (!serialNumber.trim()) {
+      newErrors.serialNumber = "O número de série é obrigatório";
+    }
+    
+    if (!model.trim()) {
+      newErrors.model = "O modelo é obrigatório";
+    }
+    
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+  
+  const handleSubmit = async () => {
+    if (!validateForm()) return;
+    
+    setIsSubmitting(true);
     
     try {
+      // If status is not STOCK, we need a client
+      if (status !== MachineStatus.STOCK && !clientId) {
+        setErrors({
+          ...errors,
+          clientId: "Selecione um cliente para máquinas que não estão em estoque"
+        });
+        setIsSubmitting(false);
+        return;
+      }
+      
+      // If status is STOCK, clear client selection
+      const finalClientId = status === MachineStatus.STOCK ? undefined : clientId;
+      
       await addMachine({
-        serial_number: data.serial_number,
-        model: data.model,
-        status: data.status as MachineStatus,
-        client_id: data.client_id,
+        serial_number: serialNumber,
+        model,
+        status,
+        client_id: finalClientId
       });
       
-      form.reset();
+      resetForm();
       onOpenChange(false);
-      
-      if (onSuccess) {
-        onSuccess();
-      }
-    } catch (error) {
-      console.error("Error submitting form:", error);
+      if (onSuccess) onSuccess();
+    } catch (error: any) {
+      toast({
+        title: "Erro ao cadastrar máquina",
+        description: error.message || "Ocorreu um erro ao cadastrar a máquina",
+        variant: "destructive",
+      });
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
   return (
     <Dialog open={open} onOpenChange={(isOpen) => {
-      if (!isOpen) {
-        // Reset form when dialog closes
-        form.reset();
-      }
+      if (!isOpen) resetForm();
       onOpenChange(isOpen);
     }}>
       <DialogContent className="sm:max-w-[500px]">
         <DialogHeader>
           <DialogTitle>Cadastrar Nova Máquina</DialogTitle>
-          <DialogDescription>
-            Preencha os dados para adicionar uma nova máquina ao sistema.
-          </DialogDescription>
         </DialogHeader>
         
-        <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-            <FormField
-              control={form.control}
-              name="serial_number"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Número de Série</FormLabel>
-                  <FormControl>
-                    <Input placeholder="Ex: SN-10xxxx" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
+        <div className="grid gap-4 py-4">
+          <div className="grid grid-cols-1 gap-2">
+            <Label htmlFor="serial-number" className={errors.serialNumber ? "text-destructive" : ""}>
+              Número de Série *
+            </Label>
+            <Input
+              id="serial-number"
+              placeholder="Ex: SN-123456"
+              value={serialNumber}
+              onChange={(e) => setSerialNumber(e.target.value)}
+              className={errors.serialNumber ? "border-destructive" : ""}
             />
-            
-            <FormField
-              control={form.control}
-              name="model"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Modelo</FormLabel>
-                  <FormControl>
-                    <Select 
-                      onValueChange={field.onChange} 
-                      defaultValue={field.value}
-                    >
-                      <SelectTrigger>
-                        <SelectValue placeholder="Selecione o modelo" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="Terminal Pro">Terminal Pro</SelectItem>
-                        <SelectItem value="Terminal Standard">Terminal Standard</SelectItem>
-                        <SelectItem value="Terminal Mini">Terminal Mini</SelectItem>
-                        <SelectItem value="POS">POS</SelectItem>
-                        <SelectItem value="Mobile">Mobile</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
+            {errors.serialNumber && (
+              <p className="text-xs text-destructive">{errors.serialNumber}</p>
+            )}
+          </div>
+          
+          <div className="grid grid-cols-1 gap-2">
+            <Label htmlFor="model" className={errors.model ? "text-destructive" : ""}>
+              Modelo *
+            </Label>
+            <Input
+              id="model"
+              placeholder="Ex: Terminal Pro"
+              value={model}
+              onChange={(e) => setModel(e.target.value)}
+              className={errors.model ? "border-destructive" : ""}
             />
-            
-            <FormField
-              control={form.control}
-              name="status"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Status Inicial</FormLabel>
-                  <FormControl>
-                    <Select 
-                      onValueChange={field.onChange} 
-                      defaultValue={field.value}
-                    >
-                      <SelectTrigger>
-                        <SelectValue placeholder="Selecione o status" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="STOCK">Em Estoque</SelectItem>
-                        <SelectItem value="ACTIVE">Ativo</SelectItem>
-                        <SelectItem value="MAINTENANCE">Em Manutenção</SelectItem>
-                        <SelectItem value="INACTIVE">Inativo</SelectItem>
-                        <SelectItem value="TRANSIT">Em Trânsito</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
+            {errors.model && (
+              <p className="text-xs text-destructive">{errors.model}</p>
+            )}
+          </div>
+          
+          <div className="grid grid-cols-1 gap-2">
+            <Label htmlFor="status">Status Inicial</Label>
+            <Select
+              value={status}
+              onValueChange={(value) => setStatus(value as MachineStatus)}
+            >
+              <SelectTrigger id="status">
+                <SelectValue placeholder="Selecione o status" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value={MachineStatus.STOCK}>Em Estoque</SelectItem>
+                <SelectItem value={MachineStatus.ACTIVE}>Operando</SelectItem>
+                <SelectItem value={MachineStatus.MAINTENANCE}>Em Manutenção</SelectItem>
+                <SelectItem value={MachineStatus.INACTIVE}>Inativa</SelectItem>
+                <SelectItem value={MachineStatus.TRANSIT}>Em Trânsito</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+          
+          {status !== MachineStatus.STOCK && (
+            <div className="grid grid-cols-1 gap-2">
+              <Label htmlFor="client" className={errors.clientId ? "text-destructive" : ""}>
+                Cliente
+              </Label>
+              <Select
+                value={clientId}
+                onValueChange={setClientId}
+                disabled={isClientsLoading}
+              >
+                <SelectTrigger id="client">
+                  <SelectValue placeholder="Selecione o cliente" />
+                </SelectTrigger>
+                <SelectContent>
+                  {clients?.map((client) => (
+                    <SelectItem key={client.id} value={client.id}>
+                      {client.business_name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              {errors.clientId && (
+                <p className="text-xs text-destructive">{errors.clientId}</p>
               )}
+            </div>
+          )}
+          
+          <div className="grid grid-cols-1 gap-2">
+            <Label htmlFor="observations">Observações (opcional)</Label>
+            <Textarea
+              id="observations"
+              placeholder="Informações adicionais sobre a máquina"
+              value={observations}
+              onChange={(e) => setObservations(e.target.value)}
+              rows={3}
             />
-            
-            <FormField
-              control={form.control}
-              name="notes"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Observações (opcional)</FormLabel>
-                  <FormControl>
-                    <Textarea 
-                      placeholder="Adicione observações sobre a máquina..." 
-                      {...field} 
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            <DialogFooter>
-              <Button variant="outline" type="button" onClick={() => onOpenChange(false)}>
-                Cancelar
-              </Button>
-              <Button type="submit" disabled={form.formState.isSubmitting}>
-                Cadastrar
-              </Button>
-            </DialogFooter>
-          </form>
-        </Form>
+          </div>
+        </div>
+        
+        <DialogFooter>
+          <Button variant="outline" onClick={() => onOpenChange(false)}>
+            Cancelar
+          </Button>
+          <Button
+            onClick={handleSubmit}
+            disabled={isSubmitting}
+          >
+            {isSubmitting ? "Cadastrando..." : "Cadastrar Máquina"}
+          </Button>
+        </DialogFooter>
       </DialogContent>
     </Dialog>
   );

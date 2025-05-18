@@ -7,14 +7,17 @@ import {
   createMachine, 
   updateMachine, 
   transferMachine,
-  getMachineStats,
+  getMachineStats
+} from "@/services/machine.service";
+import { supabase } from "@/integrations/supabase/client";
+import {
   Machine,
   MachineStatus,
   MachineCreateParams,
   MachineUpdateParams,
-  MachineTransferParams
-} from "@/services/machine.service";
-import { supabase } from "@/integrations/supabase/client";
+  MachineTransferParams,
+  MachineStats
+} from "@/types/machine.types";
 
 interface UseMachinesOptions {
   status?: MachineStatus;
@@ -25,7 +28,7 @@ interface UseMachinesOptions {
 
 export function useMachines(options: UseMachinesOptions = {}) {
   const [machines, setMachines] = useState<Machine[]>([]);
-  const [stats, setStats] = useState<any>(null);
+  const [stats, setStats] = useState<MachineStats | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
   const { toast } = useToast();
@@ -71,15 +74,15 @@ export function useMachines(options: UseMachinesOptions = {}) {
     try {
       const newMachine = await createMachine(machineData);
       toast({
-        title: "Machine created",
-        description: "The machine has been added successfully",
+        title: "Máquina criada",
+        description: "A máquina foi adicionada com sucesso",
       });
       return newMachine;
     } catch (err: any) {
       console.error("Error creating machine:", err);
       toast({
-        title: "Error",
-        description: err.message || "Failed to create machine",
+        title: "Erro",
+        description: err.message || "Falha ao criar máquina",
         variant: "destructive",
       });
       throw err;
@@ -90,15 +93,15 @@ export function useMachines(options: UseMachinesOptions = {}) {
     try {
       const updatedMachine = await updateMachine(id, machineData);
       toast({
-        title: "Machine updated",
-        description: "The machine has been updated successfully",
+        title: "Máquina atualizada",
+        description: "A máquina foi atualizada com sucesso",
       });
       return updatedMachine;
     } catch (err: any) {
       console.error("Error updating machine:", err);
       toast({
-        title: "Error",
-        description: err.message || "Failed to update machine",
+        title: "Erro",
+        description: err.message || "Falha ao atualizar máquina",
         variant: "destructive",
       });
       throw err;
@@ -109,15 +112,15 @@ export function useMachines(options: UseMachinesOptions = {}) {
     try {
       const result = await transferMachine(params);
       toast({
-        title: "Machine transferred",
-        description: "The machine has been transferred successfully",
+        title: "Máquina transferida",
+        description: "A máquina foi transferida com sucesso",
       });
       return result;
     } catch (err: any) {
       console.error("Error transferring machine:", err);
       toast({
-        title: "Error",
-        description: err.message || "Failed to transfer machine",
+        title: "Erro",
+        description: err.message || "Falha ao transferir máquina",
         variant: "destructive",
       });
       throw err;
