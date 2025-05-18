@@ -10,9 +10,9 @@ import {
 import { Button } from "@/components/ui/button";
 import { PlusCircle } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-import { AdminSalesContent } from "@/components/admin/sales/AdminSalesContent";
-import { AdminSalesLayout } from "@/components/admin/sales/AdminSalesLayout";
-import { AdminSalesFilters } from "@/components/admin/sales/AdminSalesFilters";
+import AdminSalesContent from "@/components/admin/sales/AdminSalesContent";
+import AdminSalesLayout from "@/components/admin/sales/AdminSalesLayout";
+import AdminSalesFilters from "@/components/admin/sales/AdminSalesFilters";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import SalesUploader from "@/components/sales/SalesUploader";
 import { useToast } from "@/hooks/use-toast";

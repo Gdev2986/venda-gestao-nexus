@@ -52,3 +52,39 @@ export enum PaymentMethod {
   DEBIT = "debit",
   PIX = "pix"
 }
+
+// Machine status - adding missing statuses
+export enum MachineStatus {
+  ACTIVE = "ACTIVE",
+  INACTIVE = "INACTIVE",
+  MAINTENANCE = "MAINTENANCE",
+  BLOCKED = "BLOCKED",
+  STOCK = "STOCK",
+  TRANSIT = "TRANSIT"
+}
+
+// Ticket status - adding missing statuses
+export enum TicketStatus {
+  PENDING = "PENDING",
+  IN_PROGRESS = "IN_PROGRESS",
+  RESOLVED = "RESOLVED",
+  CLOSED = "CLOSED",
+  REJECTED = "REJECTED",
+  COMPLETED = "COMPLETED",
+  CANCELED = "CANCELED"
+}
+
+// Ticket types - adding missing types
+export enum TicketType {
+  TECHNICAL = "TECHNICAL",
+  BILLING = "BILLING",
+  INQUIRY = "INQUIRY",
+  MACHINE = "MACHINE",
+  OTHER = "OTHER",
+  INSTALLATION = "INSTALLATION",
+  MAINTENANCE = "MAINTENANCE",
+  REMOVAL = "REMOVAL",
+  REPLACEMENT = "REPLACEMENT",
+  SUPPLIES = "SUPPLIES",
+  PAPER = "PAPER"
+}

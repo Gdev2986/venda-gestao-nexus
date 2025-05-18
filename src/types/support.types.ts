@@ -5,7 +5,9 @@ export enum TicketStatus {
   IN_PROGRESS = "IN_PROGRESS",
   RESOLVED = "RESOLVED",
   CLOSED = "CLOSED",
-  REJECTED = "REJECTED"
+  REJECTED = "REJECTED",
+  COMPLETED = "COMPLETED",
+  CANCELED = "CANCELED"
 }
 
 export enum TicketPriority {
@@ -20,7 +22,13 @@ export enum TicketType {
   BILLING = "BILLING",
   INQUIRY = "INQUIRY",
   MACHINE = "MACHINE",
-  OTHER = "OTHER"
+  OTHER = "OTHER",
+  INSTALLATION = "INSTALLATION",
+  MAINTENANCE = "MAINTENANCE",
+  REMOVAL = "REMOVAL",
+  REPLACEMENT = "REPLACEMENT",
+  SUPPLIES = "SUPPLIES",
+  PAPER = "PAPER"
 }
 
 // Support ticket interface
@@ -37,8 +45,7 @@ export interface SupportTicket {
   scheduled_date?: string;
   created_at: string;
   updated_at: string;
-  // Replace created_by with user_id 
-  // created_by field is removed as user_id is used instead
+  created_by?: string; // Added as optional for backward compatibility
   client?: {
     id: string;
     business_name: string;

@@ -1,8 +1,8 @@
 
 import React, { useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { NotificationList } from "@/components/notifications/NotificationList";
-import { NotificationFilters } from "@/components/notifications/NotificationFilters";
+import NotificationList from "@/components/notifications/NotificationList";
+import NotificationFilters from "@/components/notifications/NotificationFilters";
 import { useNotifications } from "@/contexts/NotificationsContext";
 import { PageHeader } from "@/components/page/PageHeader";
 
@@ -12,9 +12,9 @@ const Notifications = () => {
     markAsRead,
     markAllAsRead,
     fetchNotifications,
-    isLoading,
-    deleteNotification,
-    refreshNotifications
+    isLoading = false,
+    deleteNotification = () => Promise.resolve(),
+    refreshNotifications = fetchNotifications
   } = useNotifications();
 
   useEffect(() => {
@@ -48,8 +48,8 @@ const Notifications = () => {
             <NotificationList 
               notifications={notifications}
               onMarkAsRead={markAsRead}
-              isLoading={isLoading || false}
-              onDelete={deleteNotification || (() => Promise.resolve())}
+              isLoading={isLoading}
+              onDelete={deleteNotification}
             />
           </CardContent>
         </Card>
