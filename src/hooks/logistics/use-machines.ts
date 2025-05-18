@@ -57,6 +57,8 @@ export function useMachines(options: UseMachinesOptions = {}) {
         const statsData = await getMachineStats();
         setStats(statsData);
       }
+      
+      return data;
     } catch (err: any) {
       setError(err);
       console.error("Error fetching machines:", err);
@@ -65,6 +67,8 @@ export function useMachines(options: UseMachinesOptions = {}) {
         description: "Failed to fetch machines data",
         variant: "destructive",
       });
+      
+      return [];
     } finally {
       setIsLoading(false);
     }

@@ -19,6 +19,7 @@ export interface Machine {
   updated_at?: string;
   name?: string;
   serialNumber?: string;
+  notes?: string;
   client?: {
     id: string;
     business_name: string;
@@ -71,11 +72,13 @@ export interface MachineCreateParams {
   model: string;
   status?: MachineStatus;
   client_id?: string;
+  notes?: string;
 }
 
 export interface MachineUpdateParams {
   serial_number?: string;
   model?: string;
   status?: MachineStatus;
-  client_id?: string;
+  client_id?: string | null;
+  notes?: string;
 }

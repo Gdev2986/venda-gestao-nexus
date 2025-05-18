@@ -21,6 +21,7 @@ export const getAllMachines = async (): Promise<Machine[]> => {
         model, 
         status, 
         client_id,
+        notes,
         created_at, 
         updated_at,
         client:client_id (
@@ -41,6 +42,7 @@ export const getAllMachines = async (): Promise<Machine[]> => {
       client_name: item.client?.business_name,
       created_at: item.created_at,
       updated_at: item.updated_at,
+      notes: item.notes,
       client: item.client,
     }));
   } catch (error) {
@@ -149,7 +151,8 @@ export const createMachine = async (params: MachineCreateParams): Promise<Machin
         serial_number: params.serial_number,
         model: params.model,
         status: statusStr as any,
-        client_id: params.client_id
+        client_id: params.client_id,
+        notes: params.notes
       })
       .select()
       .single();
@@ -162,6 +165,7 @@ export const createMachine = async (params: MachineCreateParams): Promise<Machin
       model: data.model,
       status: data.status as MachineStatus,
       client_id: data.client_id,
+      notes: data.notes,
       created_at: data.created_at,
       updated_at: data.updated_at
     };
@@ -180,6 +184,7 @@ export const updateMachine = async (id: string, params: MachineUpdateParams): Pr
     if (params.model !== undefined) updateData.model = params.model;
     if (params.status !== undefined) updateData.status = params.status.toString();
     if (params.client_id !== undefined) updateData.client_id = params.client_id;
+    if (params.notes !== undefined) updateData.notes = params.notes;
     
     const { data, error } = await supabase
       .from("machines")
@@ -196,6 +201,7 @@ export const updateMachine = async (id: string, params: MachineUpdateParams): Pr
       model: data.model,
       status: data.status as MachineStatus,
       client_id: data.client_id,
+      notes: data.notes,
       created_at: data.created_at,
       updated_at: data.updated_at
     };
