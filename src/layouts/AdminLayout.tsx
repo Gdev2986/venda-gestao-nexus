@@ -1,16 +1,14 @@
-
 import { Outlet } from "react-router-dom";
+import { useAuth } from "@/contexts/AuthContext";
+import AdminSidebar from "./AdminSidebar";
 import { useState, useEffect } from "react";
-import { motion } from "framer-motion";
-import MainSidebar from "./MainSidebar";
 import { useUserRole } from "@/hooks/use-user-role";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { Button } from "@/components/ui/button";
 import { Menu } from "lucide-react";
-import NotificationDropdown from "@/components/layout/NotificationDropdown";
+import { NotificationDropdown } from "@/components/layout/NotificationDropdown";
 import ThemeToggle from "@/components/theme/theme-toggle";
 import { Toaster } from "@/components/ui/toaster";
-import { Spinner } from "@/components/ui/spinner";
 
 const AdminLayout = () => {
   // Use localStorage to persist sidebar state
@@ -21,7 +19,7 @@ const AdminLayout = () => {
   
   const isMobile = useIsMobile();
   const { userRole } = useUserRole();
-  const [isLoading, setIsLoading] = useState(true);
+  const { user } = useAuth();
 
   // Close sidebar on mobile by default
   useEffect(() => {
@@ -37,37 +35,10 @@ const AdminLayout = () => {
     }
   }, [sidebarOpen, isMobile]);
 
-  // Add loading animation
-  useEffect(() => {
-    // Simulate loading for smoother transitions
-    setIsLoading(true);
-    const timer = setTimeout(() => {
-      setIsLoading(false);
-    }, 300); // 0.3 second loading time - reduced to improve mobile experience
-    
-    return () => clearTimeout(timer);
-  }, []);
-
-  if (isLoading) {
-    return (
-      <div className="flex items-center justify-center h-screen w-full" style={{ backgroundColor: 'hsl(196, 70%, 20%)' }}>
-        <motion.div
-          initial={{ opacity: 0, scale: 0.8 }}
-          animate={{ opacity: 1, scale: 1 }}
-          transition={{ duration: 0.3 }}
-          className="flex flex-col items-center"
-        >
-          <Spinner size="lg" className="border-white border-t-transparent" />
-          <p className="mt-4 text-white">Carregando...</p>
-        </motion.div>
-      </div>
-    );
-  }
-
   return (
     <div className="flex h-screen overflow-hidden bg-background">
       {/* Sidebar component - mounted always but conditionally shown */}
-      <MainSidebar 
+      <AdminSidebar 
         isOpen={sidebarOpen} 
         isMobile={isMobile} 
         onClose={() => setSidebarOpen(false)} 
@@ -87,7 +58,7 @@ const AdminLayout = () => {
               variant="ghost" 
               size="sm" 
               onClick={() => setSidebarOpen(!sidebarOpen)}
-              aria-label={sidebarOpen ? "Close menu" : "Open menu"}
+              aria-label={sidebarOpen ? "Fechar menu" : "Abrir menu"}
               className="p-1"
             >
               <Menu className="h-4 w-4 md:h-5 md:w-5" />

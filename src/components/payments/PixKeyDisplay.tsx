@@ -1,6 +1,8 @@
-import { useState } from "react";
-import { Button } from "@/components/ui/button";
-import {
+
+import { useState } from 'react';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent } from '@/components/ui/card';
+import { 
   AlertDialog,
   AlertDialogAction,
   AlertDialogCancel,
@@ -9,90 +11,97 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
-import { Edit, Trash2 } from "lucide-react";
-import { PixKey } from "@/types/payment.types";
-import { useToast } from "@/hooks/use-toast";
-import { supabase } from "@/integrations/supabase/client";
+  AlertDialogTrigger
+} from '@/components/ui/alert-dialog';
+import { Copy, Trash2 } from 'lucide-react';
+import { useToast } from '@/hooks/use-toast';
+import { PixKey } from '@/types';
+import { supabase } from '@/integrations/supabase/client';
 
 interface PixKeyDisplayProps {
   pixKey: PixKey;
-  onEdit: (pixKey: PixKey) => void;
-  onDelete: (pixKeyId: string) => void;
+  onUpdate: () => void;
 }
 
-export function PixKeyDisplay({ pixKey, onEdit, onDelete }: PixKeyDisplayProps) {
-  const [open, setOpen] = useState(false);
+export const PixKeyDisplay = ({ pixKey, onUpdate }: PixKeyDisplayProps) => {
   const { toast } = useToast();
   const [isDeleting, setIsDeleting] = useState(false);
+  const [showDialog, setShowDialog] = useState(false);
 
-  const handleDeleteConfirm = async () => {
+  const handleCopyKey = () => {
+    navigator.clipboard.writeText(pixKey.key);
+    toast({
+      title: 'Chave copiada!',
+      description: 'A chave PIX foi copiada para a área de transferência.',
+    });
+  };
+
+  const handleDeletePixKey = async () => {
     setIsDeleting(true);
     try {
-      await onDelete(pixKey.id);
+      const { error } = await supabase
+        .from('pix_keys')
+        .delete()
+        .eq('id', pixKey.id);
+
+      if (error) throw error;
+
       toast({
-        title: "Chave Pix excluída",
-        description: "A Chave Pix foi excluída com sucesso.",
+        title: 'Chave PIX removida',
+        description: 'A chave PIX foi removida com sucesso.',
       });
-    } catch (error) {
+      setShowDialog(false);
+      onUpdate();
+    } catch (error: any) {
       toast({
-        variant: "destructive",
-        title: "Erro",
-        description: "Não foi possível excluir a Chave Pix.",
+        variant: 'destructive',
+        title: 'Erro',
+        description: error.message || 'Não foi possível remover a chave PIX.',
       });
     } finally {
       setIsDeleting(false);
-      setOpen(false);
     }
   };
 
   return (
-    <div className="border rounded-md p-4 flex items-center justify-between">
-      <div>
-        <h3 className="text-lg font-semibold">{pixKey.name}</h3>
-        <p className="text-sm text-muted-foreground">
-          Chave: {pixKey.key} ({pixKey.type})
-        </p>
-        <p className="text-sm text-muted-foreground">
-          Proprietário: {pixKey.owner_name}
-        </p>
-        {pixKey.bank_name && (
-          <p className="text-sm text-muted-foreground">
-            Banco: {pixKey.bank_name}
-          </p>
-        )}
-      </div>
-      <div className="flex space-x-2">
-        <Button variant="ghost" size="icon" onClick={() => onEdit(pixKey)}>
-          <Edit className="h-4 w-4" />
-        </Button>
-        <AlertDialog open={open} onOpenChange={setOpen}>
-          <AlertDialogTrigger asChild>
-            <Button variant="ghost" size="icon" className="text-destructive hover:text-destructive/80">
-              <Trash2 className="h-4 w-4" />
-            </Button>
-          </AlertDialogTrigger>
-          <AlertDialogContent>
-            <AlertDialogHeader>
-              <AlertDialogTitle>Confirmar exclusão</AlertDialogTitle>
-              <AlertDialogDescription>
-                Tem certeza de que deseja excluir esta Chave Pix? Esta ação não
-                pode ser desfeita.
-              </AlertDialogDescription>
-            </AlertDialogHeader>
-            <AlertDialogFooter>
-              <AlertDialogCancel disabled={isDeleting}>Cancelar</AlertDialogCancel>
-              <AlertDialogAction
-                className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-                onClick={handleDeleteConfirm}
-              >
-                {isDeleting ? "Excluindo..." : "Excluir"}
-              </AlertDialogAction>
-            </AlertDialogFooter>
-          </AlertDialogContent>
-        </AlertDialog>
-      </div>
-    </div>
+    <Card>
+      <CardContent className="p-4 flex justify-between items-center">
+        <div>
+          <div className="font-medium">{pixKey.type}</div>
+          <div className="text-sm text-muted-foreground">{pixKey.key}</div>
+        </div>
+        <div className="flex gap-2">
+          <Button variant="outline" size="icon" onClick={handleCopyKey} title="Copiar chave">
+            <Copy className="h-4 w-4" />
+          </Button>
+          
+          <AlertDialog open={showDialog} onOpenChange={setShowDialog}>
+            <AlertDialogTrigger asChild>
+              <Button variant="ghost" size="icon" className="text-destructive hover:bg-destructive/10 hover:text-destructive" title="Remover chave">
+                <Trash2 className="h-4 w-4" />
+              </Button>
+            </AlertDialogTrigger>
+            <AlertDialogContent>
+              <AlertDialogHeader>
+                <AlertDialogTitle>Confirmar exclusão</AlertDialogTitle>
+                <AlertDialogDescription>
+                  Tem certeza de que deseja remover esta chave PIX? Esta ação não pode ser desfeita.
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogCancel disabled={isDeleting}>Cancelar</AlertDialogCancel>
+                <AlertDialogAction
+                  onClick={handleDeletePixKey}
+                  disabled={isDeleting}
+                  className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                >
+                  {isDeleting ? "Removendo..." : "Remover"}
+                </AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
+        </div>
+      </CardContent>
+    </Card>
   );
-}
-
+};

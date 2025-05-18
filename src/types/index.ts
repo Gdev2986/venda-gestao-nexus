@@ -1,6 +1,12 @@
 
 import { PixKey } from './payment.types';
 
+export enum ClientStatus {
+  ACTIVE = "ACTIVE",
+  INACTIVE = "INACTIVE",
+  PENDING = "PENDING"
+}
+
 export type User = {
   id: string;
   email: string;
@@ -38,5 +44,19 @@ export interface Fee {
   description?: string;
 }
 
-export * from './payment.types';
+// Export NotificationType enum
+export enum NotificationType {
+  PAYMENT = "PAYMENT",
+  BALANCE = "BALANCE",
+  MACHINE = "MACHINE",
+  COMMISSION = "COMMISSION",
+  SYSTEM = "SYSTEM",
+  GENERAL = "GENERAL",
+  SALE = "SALE",
+  SUPPORT = "SUPPORT"
+}
+
+// Re-export other types but avoid re-exporting the ambiguous types
+export type { Client, PixKeyType } from './payment.types';
+export { PaymentRequest, Payment, PixKey } from './payment.types';
 export * from './enums';

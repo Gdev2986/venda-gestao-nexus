@@ -15,8 +15,7 @@ import { Notification } from "@/types";
 import { formatDistanceToNow } from "date-fns";
 import { ptBR } from "date-fns/locale";
 
-// Exporting as a named export rather than default
-export const NotificationDropdown = () => {
+export const NotificationDropdown: React.FC = () => {
   const { 
     notifications, 
     unreadCount, 
@@ -142,3 +141,5 @@ export const NotificationDropdown = () => {
     </DropdownMenu>
   );
 };
+
+export default NotificationDropdown;

@@ -7,7 +7,7 @@ import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
-import { useNotifications } from '@/contexts/NotificationsContext';
+import { useNotifications } from '@/hooks/use-notifications';
 import { Loader2 } from 'lucide-react';
 
 export function SendNotificationForm() {
@@ -38,7 +38,7 @@ export function SendNotificationForm() {
         '9027d4fc-2715-4439-8c84-93aa536514fb', // Example user ID
         title,
         message,
-        'ADMIN_NOTIFICATION'
+        'GENERAL'
       );
       
       toast({

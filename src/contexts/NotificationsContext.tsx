@@ -24,13 +24,7 @@ export interface NotificationsContextType {
   refreshNotifications: () => Promise<void>;
   loading: boolean;
   isLoading: boolean;
-  sendNotification: (options: {
-    title: string;
-    message: string;
-    type: NotificationType;
-    userId: string;
-    data?: Record<string, any>;
-  }) => Promise<void>;
+  sendNotification: (userId: string, title: string, message: string, type: string, data?: Record<string, any>) => Promise<void>;
   markAsUnread: (notificationId: string) => Promise<void>;
 }
 
@@ -123,24 +117,18 @@ export const NotificationsProvider: React.FC<{ children: React.ReactNode }> = ({
     }
   }, [user, fetchNotifications]);
 
-  const sendNotification = async ({
-    title,
-    message,
-    type,
-    userId,
-    data
-  }: {
-    title: string;
-    message: string;
-    type: NotificationType;
-    userId: string;
-    data?: Record<string, any>;
-  }) => {
+  const sendNotification = async (
+    userId: string,
+    title: string,
+    message: string,
+    type: string,
+    data?: Record<string, any>
+  ) => {
     try {
-      const { data: notifData, error } = await supabase.from("notifications").insert({
+      const { error } = await supabase.from("notifications").insert({
         title,
         message,
-        type: type as any,
+        type,
         user_id: userId,
         is_read: false,
         data
@@ -256,4 +244,4 @@ export const NotificationsProvider: React.FC<{ children: React.ReactNode }> = ({
   );
 };
 
-export const useNotificationsContext = () => useContext(NotificationsContext);
+export const useNotifications = () => useContext(NotificationsContext);

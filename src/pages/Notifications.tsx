@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -12,7 +13,8 @@ import {
 import { useToast } from "@/hooks/use-toast";
 import { formatRelative } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import { useNotifications, Notification } from "@/contexts/NotificationsContext";
+import { useNotifications } from "@/hooks/use-notifications";
+import { Notification } from "@/types";
 import { Badge } from "@/components/ui/badge";
 import { CheckCheck, Trash2 } from "lucide-react";
 import {
@@ -109,7 +111,7 @@ const Notifications = () => {
                     <TableCell>{notification.title}</TableCell>
                     <TableCell>{notification.message}</TableCell>
                     <TableCell>
-                      {formatRelativeTime(notification.created_at)}
+                      {formatRelativeTime(notification.timestamp)}
                     </TableCell>
                     <TableCell>
                       <Badge variant={notification.is_read ? "outline" : "default"}>

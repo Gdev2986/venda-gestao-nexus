@@ -1,6 +1,6 @@
 
 import { Badge } from "@/components/ui/badge";
-import { ClientStatus as ClientStatusEnum } from "@/types/index";
+import { ClientStatus as ClientStatusEnum } from "@/types";
 
 interface ClientStatusProps {
   status: string;
