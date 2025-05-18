@@ -23,8 +23,17 @@ import {
 import { PaymentStatusBadge } from "./payment-list/PaymentStatusBadge";
 import { Check, X, MoreVertical, Eye } from "lucide-react";
 import { formatCurrency, formatDate } from "@/lib/formatters";
-import { PaymentsProps } from "@/pages/admin/Payments";
 import { useMediaQuery } from "@/hooks/use-media-query";
+import { PaymentAction } from "@/types/enums";
+
+export interface PaymentsProps {
+  payments: Payment[];
+  approvePayment?: (paymentId: string, receiptFile: File | null, notes: string) => Promise<any>;
+  rejectPayment?: (paymentId: string, rejectionReason: string) => Promise<any>;
+  isLoading: boolean;
+  selectedStatus?: string;
+  onActionClick?: (paymentId: string, action: PaymentAction) => void;
+}
 
 export function AdminPaymentsList({
   payments,
@@ -32,6 +41,7 @@ export function AdminPaymentsList({
   rejectPayment,
   isLoading,
   selectedStatus,
+  onActionClick
 }: PaymentsProps) {
   const [selectedPayment, setSelectedPayment] = useState<PaymentRequest | Payment | null>(null);
   const [approveDialogOpen, setApproveDialogOpen] = useState(false);
@@ -63,12 +73,13 @@ export function AdminPaymentsList({
   ) => {
     setIsProcessing(true);
     try {
-      await approvePayment(paymentId, receiptFile, notes);
+      if (approvePayment) {
+        await approvePayment(paymentId, receiptFile, notes);
+      }
       setApproveDialogOpen(false);
       toast({
         title: "Pagamento aprovado",
-        description: "O pagamento foi aprovado com sucesso.",
-        variant: "success",
+        description: "O pagamento foi aprovado com sucesso."
       });
     } catch (error) {
       console.error("Error approving payment:", error);
@@ -89,12 +100,13 @@ export function AdminPaymentsList({
   ) => {
     setIsProcessing(true);
     try {
-      await rejectPayment(paymentId, rejectionReason);
+      if (rejectPayment) {
+        await rejectPayment(paymentId, rejectionReason);
+      }
       setRejectDialogOpen(false);
       toast({
         title: "Pagamento rejeitado",
-        description: "O pagamento foi rejeitado com sucesso.",
-        variant: "success",
+        description: "O pagamento foi rejeitado com sucesso."
       });
     } catch (error) {
       console.error("Error rejecting payment:", error);
@@ -195,17 +207,35 @@ export function AdminPaymentsList({
                           </DropdownMenuTrigger>
                           <DropdownMenuContent align="end">
                             <DropdownMenuLabel>Ações</DropdownMenuLabel>
-                            <DropdownMenuItem onClick={() => handleViewClick(payment)}>
+                            <DropdownMenuItem onClick={() => {
+                              if (onActionClick) {
+                                onActionClick(payment.id, PaymentAction.VIEW);
+                              } else {
+                                handleViewClick(payment);
+                              }
+                            }}>
                               <Eye className="mr-2 h-4 w-4" />
                               Visualizar
                             </DropdownMenuItem>
                             {isPending && (
                               <>
-                                <DropdownMenuItem onClick={() => handleApproveClick(paymentForActions)}>
+                                <DropdownMenuItem onClick={() => {
+                                  if (onActionClick) {
+                                    onActionClick(payment.id, PaymentAction.APPROVE);
+                                  } else {
+                                    handleApproveClick(paymentForActions);
+                                  }
+                                }}>
                                   <Check className="mr-2 h-4 w-4" />
                                   Aprovar
                                 </DropdownMenuItem>
-                                <DropdownMenuItem onClick={() => handleRejectClick(paymentForActions)}>
+                                <DropdownMenuItem onClick={() => {
+                                  if (onActionClick) {
+                                    onActionClick(payment.id, PaymentAction.REJECT);
+                                  } else {
+                                    handleRejectClick(paymentForActions);
+                                  }
+                                }}>
                                   <X className="mr-2 h-4 w-4" />
                                   Rejeitar
                                 </DropdownMenuItem>
@@ -218,7 +248,13 @@ export function AdminPaymentsList({
                           <Button
                             variant="outline"
                             size="sm"
-                            onClick={() => handleViewClick(payment)}
+                            onClick={() => {
+                              if (onActionClick) {
+                                onActionClick(payment.id, PaymentAction.VIEW);
+                              } else {
+                                handleViewClick(payment);
+                              }
+                            }}
                           >
                             <Eye className="h-4 w-4" />
                           </Button>
@@ -228,7 +264,13 @@ export function AdminPaymentsList({
                                 variant="outline"
                                 size="sm"
                                 className="text-green-600 border-green-600 hover:bg-green-50"
-                                onClick={() => handleApproveClick(paymentForActions)}
+                                onClick={() => {
+                                  if (onActionClick) {
+                                    onActionClick(payment.id, PaymentAction.APPROVE);
+                                  } else {
+                                    handleApproveClick(paymentForActions);
+                                  }
+                                }}
                               >
                                 <Check className="h-4 w-4" />
                               </Button>
@@ -236,7 +278,13 @@ export function AdminPaymentsList({
                                 variant="outline"
                                 size="sm"
                                 className="text-red-600 border-red-600 hover:bg-red-50"
-                                onClick={() => handleRejectClick(paymentForActions)}
+                                onClick={() => {
+                                  if (onActionClick) {
+                                    onActionClick(payment.id, PaymentAction.REJECT);
+                                  } else {
+                                    handleRejectClick(paymentForActions);
+                                  }
+                                }}
                               >
                                 <X className="h-4 w-4" />
                               </Button>
@@ -253,18 +301,20 @@ export function AdminPaymentsList({
         </CardContent>
       </Card>
 
-      <PaymentDialogs
-        selectedPayment={selectedPayment}
-        approveDialogOpen={approveDialogOpen}
-        setApproveDialogOpen={setApproveDialogOpen}
-        handleApprovePayment={handleApprovePayment}
-        rejectDialogOpen={rejectDialogOpen}
-        setRejectDialogOpen={setRejectDialogOpen}
-        handleRejectPayment={handleRejectPayment}
-        detailsDialogOpen={detailsDialogOpen}
-        setDetailsDialogOpen={setDetailsDialogOpen}
-        isProcessing={isProcessing}
-      />
+      {onActionClick ? null : (
+        <PaymentDialogs
+          selectedPayment={selectedPayment}
+          approveDialogOpen={approveDialogOpen}
+          setApproveDialogOpen={setApproveDialogOpen}
+          handleApprovePayment={handleApprovePayment}
+          rejectDialogOpen={rejectDialogOpen}
+          setRejectDialogOpen={setRejectDialogOpen}
+          handleRejectPayment={handleRejectPayment}
+          detailsDialogOpen={detailsDialogOpen}
+          setDetailsDialogOpen={setDetailsDialogOpen}
+          isProcessing={isProcessing}
+        />
+      )}
     </>
   );
 }

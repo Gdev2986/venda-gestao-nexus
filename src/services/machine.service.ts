@@ -55,7 +55,7 @@ export const fetchMachinesByStatus = async (status: MachineStatus): Promise<Mach
         *,
         client:clients(id, business_name)
       `)
-      .eq("status", status)
+      .eq("status", status as string)
       .order("created_at", { ascending: false });
 
     if (error) throw error;
@@ -98,7 +98,7 @@ export const createMachine = async (machine: MachineCreateParams): Promise<Machi
       .insert({
         serial_number: machine.serial_number,
         model: machine.model,
-        status: machine.status,
+        status: machine.status as string,
         client_id: machine.client_id || null
       })
       .select()
@@ -120,9 +120,15 @@ export const updateMachine = async (
   updates: MachineUpdateParams
 ): Promise<Machine> => {
   try {
+    const updateData: any = {};
+    if (updates.model !== undefined) updateData.model = updates.model;
+    if (updates.serial_number !== undefined) updateData.serial_number = updates.serial_number;
+    if (updates.status !== undefined) updateData.status = updates.status as string;
+    if (updates.client_id !== undefined) updateData.client_id = updates.client_id;
+    
     const { data, error } = await supabase
       .from("machines")
-      .update(updates)
+      .update(updateData)
       .eq("id", machineId)
       .select()
       .single();
@@ -162,7 +168,7 @@ export const transferMachine = async (params: MachineTransferParams): Promise<vo
       .from("machines")
       .update({ 
         client_id: params.to_client_id,
-        status: params.to_client_id ? MachineStatus.ACTIVE : MachineStatus.STOCK
+        status: params.to_client_id ? "ACTIVE" : "STOCK"
       })
       .eq("id", params.machine_id);
 
@@ -202,7 +208,7 @@ export const getMachineStats = async (): Promise<MachineStats> => {
     const { count: stock, error: stockError } = await supabase
       .from("machines")
       .select("*", { count: "exact", head: true })
-      .eq("status", MachineStatus.STOCK);
+      .eq("status", "STOCK");
 
     if (stockError) throw stockError;
 

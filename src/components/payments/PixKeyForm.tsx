@@ -1,4 +1,5 @@
-import { useState } from "react";
+
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -9,50 +10,154 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { supabase } from "@/integrations/supabase/client";
-import { useToast } from "@/hooks/use-toast";
-import { useAuth } from "@/contexts/AuthContext";
-import { Loader2 } from "lucide-react";
-import { PixKeyType } from "@/types/payment.types";
+import { toast } from "@/hooks/use-toast";
+import { Loader2, Plus, X } from "lucide-react";
+import { maskCPF, maskCNPJ, maskPhoneNumber } from "@/lib/masks";
 
 interface PixKeyFormProps {
-  onSuccess?: () => void;
+  onSubmit: (data: {
+    key: string;
+    type: string;
+    name: string;
+  }) => Promise<void>;
+  isSubmitting?: boolean;
+  onCancel?: () => void;
+  className?: string;
 }
 
-export function PixKeyForm({ onSuccess }: PixKeyFormProps) {
-  const [isOpen, setIsOpen] = useState(false);
-  const [type, setType] = useState<PixKeyType | "">("");
-  const [key, setKey] = useState("");
-  const [name, setName] = useState("");
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const { toast } = useToast();
-  const { user } = useAuth();
+export function PixKeyForm({
+  onSubmit,
+  isSubmitting = false,
+  onCancel,
+  className = "",
+}: PixKeyFormProps) {
+  const [keyType, setKeyType] = useState<string>("CPF");
+  const [keyValue, setKeyValue] = useState<string>("");
+  const [keyName, setKeyName] = useState<string>("");
+  const [formErrors, setFormErrors] = useState<{
+    type?: string;
+    key?: string;
+    name?: string;
+  }>({});
 
-  
-  
-  if (!isOpen) {
-    return (
-      <Button 
-        variant="outline" 
-        onClick={() => setIsOpen(true)}
-        className="w-full"
-      >
-        Adicionar nova chave PIX
-      </Button>
-    );
-  }
-  
-  return (
-    <form onSubmit={handleSubmit} className="space-y-4 p-4 border rounded-md">
-      <h3 className="text-sm font-medium">Nova chave PIX</h3>
+  // This effect ensures the keyValue is masked correctly when the keyType changes
+  useEffect(() => {
+    if (keyValue) {
+      // Clear the value when changing types to avoid validation confusion
+      setKeyValue("");
+    }
+  }, [keyType]);
+
+  const handleKeyValueChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    
+    // Apply appropriate mask based on keyType
+    let maskedValue = value;
+    if (keyType === "CPF") {
+      maskedValue = maskCPF(value);
+    } else if (keyType === "CNPJ") {
+      maskedValue = maskCNPJ(value);
+    } else if (keyType === "PHONE") {
+      maskedValue = maskPhoneNumber(value);
+    }
+    
+    setKeyValue(maskedValue);
+    
+    // Clear error when user types
+    if (formErrors.key) {
+      setFormErrors(prev => ({ ...prev, key: undefined }));
+    }
+  };
+
+  const validateForm = (): boolean => {
+    const errors: {
+      type?: string;
+      key?: string;
+      name?: string;
+    } = {};
+
+    if (!keyType) {
+      errors.type = "O tipo de chave é obrigatório";
+    }
+
+    if (!keyValue) {
+      errors.key = "A chave é obrigatória";
+    } else {
+      // Validate CPF format: xxx.xxx.xxx-xx
+      if (keyType === "CPF" && !/^\d{3}\.\d{3}\.\d{3}-\d{2}$/.test(keyValue)) {
+        errors.key = "CPF inválido. Use o formato: xxx.xxx.xxx-xx";
+      }
       
+      // Validate CNPJ format: xx.xxx.xxx/xxxx-xx
+      else if (keyType === "CNPJ" && !/^\d{2}\.\d{3}\.\d{3}\/\d{4}-\d{2}$/.test(keyValue)) {
+        errors.key = "CNPJ inválido. Use o formato: xx.xxx.xxx/xxxx-xx";
+      }
+      
+      // Validate Email format
+      else if (keyType === "EMAIL" && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(keyValue)) {
+        errors.key = "Email inválido";
+      }
+      
+      // Validate Phone format: (xx) 9xxxx-xxxx
+      else if (keyType === "PHONE" && !/^\(\d{2}\) \d{5}-\d{4}$/.test(keyValue)) {
+        errors.key = "Telefone inválido. Use o formato: (xx) 9xxxx-xxxx";
+      }
+    }
+
+    if (!keyName) {
+      errors.name = "O nome da chave é obrigatório";
+    }
+
+    setFormErrors(errors);
+    return Object.keys(errors).length === 0;
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (validateForm()) {
+      try {
+        // Remove masks from the key value before submitting
+        let cleanKeyValue = keyValue;
+        if (keyType === "CPF") {
+          cleanKeyValue = keyValue.replace(/\D/g, "");
+        } else if (keyType === "CNPJ") {
+          cleanKeyValue = keyValue.replace(/\D/g, "");
+        } else if (keyType === "PHONE") {
+          cleanKeyValue = keyValue.replace(/\D/g, "");
+        }
+        
+        await onSubmit({
+          type: keyType,
+          key: cleanKeyValue,
+          name: keyName,
+        });
+        
+        // Reset form on success
+        setKeyType("CPF");
+        setKeyValue("");
+        setKeyName("");
+      } catch (error) {
+        console.error("Error adding PIX key:", error);
+        toast({
+          title: "Erro ao adicionar chave PIX",
+          description: "Não foi possível adicionar a chave PIX. Por favor, tente novamente.",
+          variant: "destructive",
+        });
+      }
+    }
+  };
+
+  return (
+    <form 
+      onSubmit={handleSubmit} 
+      className={`space-y-4 ${className}`}
+    >
       <div className="space-y-2">
-        <Label htmlFor="key-type">Tipo de chave</Label>
+        <Label htmlFor="key-type">Tipo de Chave</Label>
         <Select
-          value={type}
-          onValueChange={(value) => setType(value as PixKeyType)}
-          required
-          disabled={isSubmitting}
+          value={keyType}
+          onValueChange={setKeyType}
         >
           <SelectTrigger id="key-type">
             <SelectValue placeholder="Selecione o tipo de chave" />
@@ -60,130 +165,87 @@ export function PixKeyForm({ onSuccess }: PixKeyFormProps) {
           <SelectContent>
             <SelectItem value="CPF">CPF</SelectItem>
             <SelectItem value="CNPJ">CNPJ</SelectItem>
-            <SelectItem value="EMAIL">E-mail</SelectItem>
+            <SelectItem value="EMAIL">Email</SelectItem>
             <SelectItem value="PHONE">Telefone</SelectItem>
-            <SelectItem value="EVP">Chave aleatória</SelectItem>
-            <SelectItem value="RANDOM">Chave aleatória (alt)</SelectItem>
+            <SelectItem value="RANDOM">Chave Aleatória</SelectItem>
           </SelectContent>
         </Select>
+        {formErrors.type && (
+          <p className="text-sm text-destructive">{formErrors.type}</p>
+        )}
       </div>
-      
+
       <div className="space-y-2">
-        <Label htmlFor="key-value">Chave</Label>
+        <Label htmlFor="key-value">Chave PIX</Label>
         <Input
           id="key-value"
-          value={key}
-          onChange={(e) => setKey(e.target.value)}
-          placeholder="Digite sua chave PIX"
-          required
-          disabled={isSubmitting}
+          placeholder={
+            keyType === "CPF" ? "123.456.789-10" :
+            keyType === "CNPJ" ? "12.345.678/0001-90" :
+            keyType === "EMAIL" ? "email@exemplo.com" :
+            keyType === "PHONE" ? "(11) 98765-4321" :
+            "Chave aleatória"
+          }
+          value={keyValue}
+          onChange={handleKeyValueChange}
+          maxLength={
+            keyType === "CPF" ? 14 :
+            keyType === "CNPJ" ? 18 :
+            keyType === "PHONE" ? 15 :
+            undefined
+          }
         />
+        {formErrors.key && (
+          <p className="text-sm text-destructive">{formErrors.key}</p>
+        )}
       </div>
-      
+
       <div className="space-y-2">
-        <Label htmlFor="key-name">Nome da chave</Label>
+        <Label htmlFor="key-name">Nome (identificação)</Label>
         <Input
           id="key-name"
-          value={name}
-          onChange={(e) => setName(e.target.value)}
-          placeholder="Ex: Minha chave principal"
-          required
-          disabled={isSubmitting}
+          placeholder="Ex: PIX Banco XYZ"
+          value={keyName}
+          onChange={(e) => {
+            setKeyName(e.target.value);
+            if (formErrors.name) {
+              setFormErrors(prev => ({ ...prev, name: undefined }));
+            }
+          }}
         />
+        {formErrors.name && (
+          <p className="text-sm text-destructive">{formErrors.name}</p>
+        )}
       </div>
-      
-      <div className="flex justify-end space-x-2">
-        <Button
-          type="button"
-          variant="ghost"
-          onClick={() => setIsOpen(false)}
+
+      <div className="flex justify-end gap-2 pt-2">
+        {onCancel && (
+          <Button
+            type="button"
+            variant="outline"
+            onClick={onCancel}
+          >
+            <X className="mr-2 h-4 w-4" />
+            Cancelar
+          </Button>
+        )}
+        <Button 
+          type="submit"
           disabled={isSubmitting}
         >
-          Cancelar
-        </Button>
-        <Button type="submit" disabled={isSubmitting}>
           {isSubmitting ? (
             <>
               <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-              Salvando...
+              Adicionando...
             </>
           ) : (
-            "Salvar"
+            <>
+              <Plus className="mr-2 h-4 w-4" />
+              Adicionar Chave
+            </>
           )}
         </Button>
       </div>
     </form>
   );
-
-  
-  function handleSubmit(e: React.FormEvent) {
-    e.preventDefault();
-    
-    if (!user) {
-      toast({
-        variant: "destructive",
-        title: "Erro",
-        description: "Você precisa estar logado para adicionar uma chave PIX"
-      });
-      return;
-    }
-    
-    if (!type || !key || !name) {
-      toast({
-        variant: "destructive",
-        title: "Campos obrigatórios",
-        description: "Preencha todos os campos para adicionar uma chave PIX"
-      });
-      return;
-    }
-    
-    setIsSubmitting(true);
-    
-    try {
-      
-      const insertPromise = supabase
-        .from('pix_keys')
-        .insert({
-          user_id: user.id,
-          type: type as any,
-          key,
-          name,
-          is_default: false 
-        })
-        .select();
-      
-      insertPromise.then(({data, error}) => {
-        if (error) throw error;
-        
-        toast({
-          title: "Chave PIX adicionada",
-          description: "Sua chave PIX foi adicionada com sucesso"
-        });
-        
-        setType("");
-        setKey("");
-        setName("");
-        setIsOpen(false);
-        
-        if (onSuccess) onSuccess();
-      })
-      .catch((error) => {
-        toast({
-          variant: "destructive",
-          title: "Erro",
-          description: error.message || "Não foi possível adicionar a chave PIX"
-        });
-      })
-      .finally(() => {
-        setIsSubmitting(false);
-      });
-    } catch (error: any) {
-      toast({
-        variant: "destructive",
-        title: "Erro",
-        description: error.message || "Não foi possível adicionar a chave PIX"
-      });
-      setIsSubmitting(false);
-    }
-  }
 }

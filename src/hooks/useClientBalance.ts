@@ -1,136 +1,122 @@
 
-import { useState, useEffect } from "react";
-import { supabase } from "@/integrations/supabase/client";
-import { Client } from "@/types";
-import { useToast } from "@/hooks/use-toast";
+import { useState } from 'react';
+import { supabase } from '@/integrations/supabase/client';
+import { useToast } from './use-toast';
+import { useAuth } from '@/contexts/AuthContext';
 
-export const useClientBalance = (clientId?: string | null) => {
-  const [balance, setBalance] = useState<number | null>(null);
+interface UpdateBalanceParams {
+  clientId: string;
+  amount: number;
+  reason?: string;
+}
+
+export function useClientBalance() {
   const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState<Error | null>(null);
   const { toast } = useToast();
+  const { user } = useAuth();
 
-  const fetchBalance = async () => {
-    if (!clientId) {
-      setBalance(null);
-      return;
+  const updateBalance = async ({
+    clientId,
+    amount,
+    reason = ''
+  }: UpdateBalanceParams): Promise<boolean> => {
+    if (!user) {
+      toast({
+        variant: "destructive",
+        title: "Erro de autenticação",
+        description: "Você precisa estar logado para atualizar saldos."
+      });
+      return false;
     }
 
     setIsLoading(true);
-    setError(null);
 
     try {
-      const { data, error } = await supabase
+      // Get current balance
+      const { data: clientData, error: clientError } = await supabase
         .from('clients')
         .select('balance')
         .eq('id', clientId)
         .single();
 
-      if (error) {
-        setError(error);
-      } else if (data) {
-        setBalance(data.balance);
-      } else {
-        setBalance(0);
+      if (clientError) {
+        throw new Error(`Erro ao buscar cliente: ${clientError.message}`);
       }
-    } catch (err: any) {
-      setError(err);
-    } finally {
-      setIsLoading(false);
-    }
-  };
 
-  const updateBalance = async (newBalance: number) => {
-    if (!clientId) {
-      toast({
-        title: "Erro",
-        description: "ID do cliente não fornecido",
-        variant: "destructive",
-      });
-      return;
-    }
-    
-    setIsLoading(true);
-    setError(null);
-    
-    try {
-      const { data, error } = await supabase
+      const currentBalance = clientData?.balance || 0;
+      const newBalance = currentBalance + amount;
+
+      // Update balance
+      const { error: updateError } = await supabase
         .from('clients')
-        .update({ balance: newBalance })
-        .eq('id', clientId)
-        .select()
-        .single();
-        
-      if (error) {
-        throw error;
+        .update({ 
+          balance: newBalance,
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', clientId);
+
+      if (updateError) {
+        throw new Error(`Erro ao atualizar saldo: ${updateError.message}`);
       }
-      
-      setBalance(newBalance);
+
+      // Record the transaction in a log table (if exists)
+      try {
+        await supabase
+          .from('balance_transactions')
+          .insert({
+            client_id: clientId,
+            amount: amount,
+            previous_balance: currentBalance,
+            new_balance: newBalance,
+            description: reason,
+            created_by: user.id
+          });
+      } catch (logError) {
+        console.warn("Could not log balance transaction:", logError);
+        // Don't throw here, the main operation succeeded
+      }
+
+      // Send notification to client (optional)
+      try {
+        const operationName = amount > 0 ? "Crédito" : "Débito";
+        await supabase
+          .from('notifications')
+          .insert({
+            user_id: clientId, // This assumes notification is for the client's user
+            title: `${operationName} em sua conta`,
+            message: reason || `Um ${amount > 0 ? 'depósito' : 'saque'} de ${Math.abs(amount).toFixed(2)} foi ${amount > 0 ? 'adicionado à' : 'debitado da'} sua conta.`,
+            type: 'BALANCE',
+            data: {
+              amount: amount,
+              balance: newBalance
+            }
+          });
+      } catch (notificationError) {
+        console.warn("Could not send balance notification:", notificationError);
+        // Don't throw here, the main operation succeeded
+      }
+
       toast({
         title: "Saldo atualizado",
-        description: `Novo saldo: R$ ${newBalance.toFixed(2)}`,
-        variant: "default",
+        description: `O saldo do cliente foi ${amount > 0 ? 'aumentado' : 'reduzido'} em R$ ${Math.abs(amount).toFixed(2)}.`
       });
-      
-      return data;
-    } catch (err: any) {
-      setError(err);
+
+      return true;
+    } catch (error: any) {
+      console.error("Error updating client balance:", error);
       toast({
-        title: "Erro ao atualizar saldo",
-        description: err.message || "Ocorreu um erro ao atualizar o saldo",
         variant: "destructive",
+        title: "Erro ao atualizar saldo",
+        description: error.message || "Ocorreu um erro ao atualizar o saldo do cliente."
       });
+      return false;
     } finally {
       setIsLoading(false);
     }
   };
 
-  useEffect(() => {
-    fetchBalance();
-  }, [clientId]);
-  
-  const sendBalanceNotification = async (client: Client, newBalance: number) => {
-    try {
-      if (!client?.id) return;
-      
-      // Get the user_id for this client
-      const { data: userData, error: userError } = await supabase
-        .from('user_client_access')
-        .select('user_id')
-        .eq('client_id', client.id)
-        .maybeSingle();
-      
-      if (userError || !userData?.user_id) {
-        console.error('Error finding user for client notification:', userError);
-        return;
-      }
-      
-      await supabase
-        .from('notifications')
-        .insert({
-          user_id: userData.user_id,
-          title: "Atualização de Saldo",
-          message: `O saldo da sua conta foi atualizado para R$ ${newBalance.toFixed(2)}`,
-          type: "BALANCE", // Use string literal instead of enum reference
-          data: {
-            balance: newBalance,
-            previous_balance: client.balance || 0,
-            operation_date: new Date().toISOString()
-          },
-          is_read: false
-        });
-        
-    } catch (error) {
-      console.error('Error sending balance notification:', error);
-    }
+  return {
+    updateBalance,
+    isLoading
   };
-
-  return { 
-    balance, 
-    isLoading, 
-    error, 
-    refreshBalance: fetchBalance, 
-    sendBalanceNotification,
-    updateBalance
-  };
-};
+}

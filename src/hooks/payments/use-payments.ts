@@ -1,10 +1,9 @@
 
 import { useState, useEffect } from "react";
-import { Payment, PaymentRequest } from "@/types/payment.types";
+import { Payment, PaymentRequest, PaymentStatus } from "@/types/payment.types";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
-import { PaymentStatus } from "@/types/enums";
 
 export interface UsePaymentsReturn {
   payments: Payment[];
@@ -78,28 +77,25 @@ export function usePayments(): UsePaymentsReturn {
 
       // Transform the data to match the Payment type
       const transformedPayments: Payment[] = (data || []).map(payment => {
-        // Make sure pix_key has all required fields
-        const pixKey = payment.pix_key ? {
-          id: payment.pix_key.id,
-          key: payment.pix_key.key,
-          type: payment.pix_key.type || '',
-          owner_name: payment.pix_key.name || ''
-        } : undefined;
-
         return {
           id: payment.id,
           client_id: payment.client_id,
           amount: payment.amount,
           description: payment.description || '',
-          status: payment.status,
+          status: payment.status as PaymentStatus,
           created_at: payment.created_at,
           updated_at: payment.updated_at,
           approved_at: payment.approved_at,
           approved_by: payment.approved_by,
           receipt_url: payment.receipt_url,
-          rejection_reason: payment.rejection_reason || null, // Ensure it's not undefined
-          pix_key: pixKey,
-          type: payment.status === 'PAID' ? 'deposit' : 'withdrawal' // Mock type for filtering
+          rejection_reason: payment.rejection_reason || null,
+          pix_key: payment.pix_key ? {
+            id: payment.pix_key.id,
+            key: payment.pix_key.key,
+            type: payment.pix_key.type,
+            name: payment.pix_key.name,
+            owner_name: payment.pix_key.name
+          } : undefined
         };
       });
 

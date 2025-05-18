@@ -42,12 +42,11 @@ export function BalanceUpdateDialog({
     
     const finalAmount = updateType === "ADD" ? parseFloat(amount) : -parseFloat(amount);
     
-    const success = await updateBalance(
-      client.id,
-      finalAmount,
-      reason,
-      updateType.toLowerCase()
-    );
+    const success = await updateBalance({
+      clientId: client.id,
+      amount: finalAmount,
+      reason: reason
+    });
     
     if (success && onSuccess) {
       onSuccess();

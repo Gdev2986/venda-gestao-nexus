@@ -20,7 +20,7 @@ export interface PixKey {
   key: string;
   type: string;
   name: string;
-  owner_name: string;
+  owner_name?: string;
   is_default?: boolean;
   user_id?: string;
   created_at?: string;
@@ -39,7 +39,7 @@ export interface PaymentRequest {
   updated_at: string;
   approved_at?: string;
   approved_by?: string | null;
-  receipt_url?: string;
+  receipt_url?: string | null;
   description: string;
   rejection_reason?: string | null;
   payment_type?: PaymentType;
@@ -61,29 +61,6 @@ export interface PaymentRequest {
   type?: string;
 }
 
-export interface Payment {
-  id: string;
-  created_at: string;
-  updated_at: string;
-  amount: number;
-  status: PaymentStatus | string;
-  client_id: string;
-  approved_at?: string; 
-  receipt_url?: string;
-  client_name?: string;
-  rejection_reason: string;
-  payment_type?: PaymentType | string;
-  bank_info?: {
-    bank_name?: string;
-    account_number?: string;
-    branch_number?: string;
-    account_holder?: string;
-  };
-  document_url?: string;
-  due_date?: string;
-  pix_key?: PixKey;
-  approved_by?: string | null;
-  description?: string;
-  client?: any;
-  type?: string;
+export interface Payment extends PaymentRequest {
+  rejection_reason: string | null;
 }

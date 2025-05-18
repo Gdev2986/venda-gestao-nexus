@@ -1,5 +1,4 @@
 
-// Add this file to centralize enum definitions
 export enum UserRole {
   ADMIN = "ADMIN",
   CLIENT = "CLIENT", 
@@ -20,18 +19,18 @@ export enum PaymentStatus {
   PAID = "PAID"
 }
 
-export enum PaymentAction {
-  APPROVE = "APPROVE",
-  REJECT = "REJECT",
-  DELETE = "DELETE",
-  VIEW = "VIEW",
-  SEND_RECEIPT = "SEND_RECEIPT"
-}
-
 export enum PaymentType {
   PIX = "PIX",
   TED = "TED",
   BOLETO = "BOLETO"
+}
+
+export enum PaymentAction {
+  APPROVE = "APPROVE",
+  REJECT = "REJECT",
+  VIEW = "VIEW",
+  DELETE = "DELETE",
+  SEND_RECEIPT = "SEND_RECEIPT"
 }
 
 export enum ClientStatus {
@@ -46,38 +45,16 @@ export enum PaymentMethod {
   PIX = "pix"
 }
 
-export enum MachineStatus {
-  ACTIVE = "ACTIVE",
-  INACTIVE = "INACTIVE",
-  MAINTENANCE = "MAINTENANCE",
-  STOCK = "STOCK",
-  TRANSIT = "TRANSIT",
-  BLOCKED = "BLOCKED"
+export enum NotificationType {
+  PAYMENT = "PAYMENT",
+  BALANCE = "BALANCE", 
+  MACHINE = "MACHINE",
+  COMMISSION = "COMMISSION",
+  SYSTEM = "SYSTEM",
+  GENERAL = "GENERAL",
+  SALE = "SALE",
+  SUPPORT = "SUPPORT",
+  PAYMENT_REQUEST = "PAYMENT_REQUEST",
+  PAYMENT_APPROVED = "PAYMENT_APPROVED",
+  PAYMENT_REJECTED = "PAYMENT_REJECTED"
 }
-
-export enum TicketStatus {
-  PENDING = "PENDING",
-  IN_PROGRESS = "IN_PROGRESS",
-  COMPLETED = "COMPLETED",
-  CANCELED = "CANCELED"
-}
-
-export enum TicketPriority {
-  LOW = "LOW",
-  MEDIUM = "MEDIUM",
-  HIGH = "HIGH"
-}
-
-export enum TicketType {
-  INSTALLATION = "INSTALLATION",
-  MAINTENANCE = "MAINTENANCE",
-  REMOVAL = "REMOVAL",
-  REPLACEMENT = "REPLACEMENT", 
-  SUPPLIES = "SUPPLIES", 
-  PAPER = "PAPER", 
-  OTHER = "OTHER"
-}
-
-// Import and re-export NotificationType from notification.types.ts
-import { NotificationType } from "./notification.types";
-export { NotificationType };

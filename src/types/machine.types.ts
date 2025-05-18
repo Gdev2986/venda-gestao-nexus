@@ -2,20 +2,19 @@
 export enum MachineStatus {
   ACTIVE = "ACTIVE",
   INACTIVE = "INACTIVE",
-  MAINTENANCE = "MAINTENANCE",
-  STOCK = "STOCK",
-  TRANSIT = "TRANSIT",
-  BLOCKED = "BLOCKED"
+  MAINTENANCE = "MAINTENANCE", 
+  BLOCKED = "BLOCKED",
+  STOCK = "STOCK"
 }
 
 export interface Machine {
   id: string;
   serial_number: string;
   model: string;
-  status: MachineStatus | string;
-  client_id?: string | null;
-  created_at: string;
-  updated_at: string;
+  status: MachineStatus;
+  client_id?: string;
+  created_at?: string;
+  updated_at?: string;
   client?: {
     id: string;
     business_name: string;
@@ -25,21 +24,21 @@ export interface Machine {
 export interface MachineCreateParams {
   serial_number: string;
   model: string;
-  status: MachineStatus | string;
+  status: MachineStatus;
   client_id?: string;
 }
 
 export interface MachineUpdateParams {
   serial_number?: string;
   model?: string;
-  status?: MachineStatus | string;
-  client_id?: string | null;
+  status?: MachineStatus;
+  client_id?: string;
 }
 
 export interface MachineTransferParams {
   machine_id: string;
-  from_client_id: string | null;
-  to_client_id: string | null;
+  from_client_id?: string;
+  to_client_id: string;
   transfer_date?: string;
   created_by: string;
 }
@@ -49,4 +48,10 @@ export interface MachineStats {
   stock: number;
   withClients: number;
   byStatus: Record<string, number>;
+}
+
+export interface MachineTransferFormProps {
+  machine: { id: string; name?: string; model: string; serial_number: string };
+  currentClient?: string | null;
+  onTransferComplete: () => void;
 }
