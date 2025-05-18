@@ -3,7 +3,7 @@ import { useState } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { SystemTab } from "@/components/admin/settings/SystemTab";
 import { AdminSecurityTab } from "@/components/admin/settings/AdminSecurityTab";
-import { AdminNotificationsTab } from "@/components/admin/settings/AdminNotificationsTab";
+import AdminNotificationsTab from "@/components/admin/settings/AdminNotificationsTab";
 import { UsersTab } from "@/components/admin/settings/UsersTab";
 import { RoleChangeModal } from "@/components/admin/settings/RoleChangeModal";
 

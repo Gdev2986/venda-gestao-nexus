@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useToast } from "@/hooks/use-toast";
 import {
   Dialog,
@@ -18,7 +18,8 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Loader2 } from "lucide-react";
-import { Machine, transferMachine } from "@/services/machine.service";
+import { Machine, MachineTransferParams } from "@/types/machine.types";
+import { transferMachine } from "@/services/machine.service";
 
 interface MachineTransferDialogProps {
   open: boolean;
@@ -52,12 +53,14 @@ export function MachineTransferDialog({
     setIsSubmitting(true);
 
     try {
-      const result = await transferMachine({
+      const transferParams: MachineTransferParams = {
         machine_id: machine.id,
         from_client_id: machine.client_id || null,
         to_client_id: selectedClientId,
         created_by: "current_user", // This would be the actual user ID in a real app
-      });
+      };
+
+      const result = await transferMachine(transferParams);
 
       if (result) {
         toast({
@@ -82,7 +85,7 @@ export function MachineTransferDialog({
   };
 
   // Reset selected client when dialog opens or machine changes
-  useState(() => {
+  useEffect(() => {
     if (open) {
       setSelectedClientId("");
     }

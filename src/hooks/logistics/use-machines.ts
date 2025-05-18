@@ -91,6 +91,7 @@ export function useMachines(options: UseMachinesOptions = {}) {
 
   const modifyMachine = async (id: string, machineData: MachineUpdateParams) => {
     try {
+      // Since both updateMachine and MachineUpdateParams use the same enum, this should work
       const updatedMachine = await updateMachine(id, machineData);
       toast({
         title: "Máquina atualizada",

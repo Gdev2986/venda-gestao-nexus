@@ -22,7 +22,7 @@ export const SendNotificationForm = ({
 }) => {
   const [title, setTitle] = useState("");
   const [message, setMessage] = useState("");
-  const [type, setType] = useState<string>(NotificationType.SYSTEM);
+  const [type, setType] = useState<NotificationType>(NotificationType.SYSTEM);
   const [recipients, setRecipients] = useState<"all" | "admins" | "clients">(
     "all"
   );
@@ -46,13 +46,13 @@ export const SendNotificationForm = ({
       await onSendNotification({
         title,
         message,
-        type: type as NotificationType,
+        type,
         recipients
       });
       
       setTitle("");
       setMessage("");
-      setType(NotificationType.ADMIN_NOTIFICATION);
+      setType(NotificationType.SYSTEM);
       setRecipients("all");
       
       toast({
@@ -106,7 +106,7 @@ export const SendNotificationForm = ({
           </label>
           <Select
             value={type}
-            onValueChange={setType}
+            onValueChange={(value) => setType(value as NotificationType)}
           >
             <SelectTrigger id="type">
               <SelectValue placeholder="Selecione o tipo" />
@@ -116,7 +116,6 @@ export const SendNotificationForm = ({
               <SelectItem value={NotificationType.PAYMENT}>Pagamento</SelectItem>
               <SelectItem value={NotificationType.MACHINE}>Máquinas</SelectItem>
               <SelectItem value={NotificationType.GENERAL}>Geral</SelectItem>
-              <SelectItem value={NotificationType.ADMIN_NOTIFICATION}>Admin</SelectItem>
               <SelectItem value={NotificationType.SUPPORT}>Suporte</SelectItem>
             </SelectContent>
           </Select>

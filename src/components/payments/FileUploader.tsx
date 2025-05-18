@@ -6,16 +6,16 @@ import { Trash } from 'lucide-react';
 
 export interface FileUploaderProps {
   onFileSelect: (file: File | null) => void;
-  selectedFile: File | null;
+  selectedFile?: File | null;
   accept?: string;
   id?: string;
-  label?: string; // Added label prop
-  currentFile?: File; // Renamed from selectedFile to currentFile for clarity
+  label?: string;
+  currentFile?: File;
 }
 
 export function FileUploader({ 
   onFileSelect, 
-  selectedFile, 
+  selectedFile = null,
   accept = "*", 
   id = "file-upload", 
   label,

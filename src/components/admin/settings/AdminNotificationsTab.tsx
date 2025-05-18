@@ -5,6 +5,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { supabase } from "@/integrations/supabase/client"; 
 import { useToast } from "@/hooks/use-toast";
 import { Notification } from "@/types/notification.types";
+import { NotificationType, UserRole } from "@/types/enums";
 
 const AdminNotificationsTab = () => {
   const { toast } = useToast();
@@ -27,7 +28,7 @@ const AdminNotificationsTab = () => {
         const { data, error } = await supabase
           .from("profiles")
           .select("id")
-          .in("role", ["ADMIN", "FINANCIAL", "MANAGER"]);
+          .in("role", [UserRole.ADMIN, UserRole.FINANCIAL]);
         if (error) throw error;
         userIdsList = data.map(user => user.id);
       } else if (notification.recipients === "clients") {
@@ -35,7 +36,7 @@ const AdminNotificationsTab = () => {
         const { data, error } = await supabase
           .from("profiles")
           .select("id")
-          .eq("role", "CLIENT");
+          .eq("role", UserRole.CLIENT);
         if (error) throw error;
         userIdsList = data.map(user => user.id);
       }
@@ -46,7 +47,7 @@ const AdminNotificationsTab = () => {
           user_id: userId,
           title: notification.title,
           message: notification.message,
-          type: notification.type,
+          type: notification.type?.toString(), // Convert enum to string
           data: notification.data || {}
         });
       });

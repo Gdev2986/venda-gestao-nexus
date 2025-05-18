@@ -1,7 +1,7 @@
+
 import { useState, useEffect } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { getClientPayments } from "@/services/payment.service";
-import { Payment } from "@/types/payment.types";
 import { formatCurrency } from "@/lib/utils";
 import { PaymentDetailsDialog } from "@/components/payments/PaymentDetailsDialog";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -14,6 +14,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { PageHeader } from "@/components/page/PageHeader";
 import { ptBR } from "date-fns/locale";
 import { PaymentStatus } from "@/types/enums";
+import { Payment } from "@/types/payment.types";
 
 // This is a stub implementation of the user payments page
 // It will be expanded with more features in the future
@@ -61,7 +62,16 @@ const UserPayments = () => {
   };
 
   const handleViewDetails = (payment: Payment) => {
-    setSelectedPayment(payment);
+    // Ensure payment object has the expected structure for PaymentDetailsDialog
+    const adaptedPayment = {
+      ...payment,
+      pix_key: payment.pix_key ? {
+        ...payment.pix_key,
+        owner_name: payment.pix_key.owner_name || payment.pix_key.name || ''
+      } : undefined
+    };
+    
+    setSelectedPayment(adaptedPayment as any);
     setIsDetailsOpen(true);
   };
 
@@ -150,7 +160,7 @@ const UserPayments = () => {
 
       {selectedPayment && (
         <PaymentDetailsDialog
-          payment={selectedPayment}
+          payment={selectedPayment as any}
           open={isDetailsOpen}
           onOpenChange={setIsDetailsOpen}
         />

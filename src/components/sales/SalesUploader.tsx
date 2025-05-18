@@ -1,98 +1,94 @@
-import { useState } from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { FileUploader } from "@/components/payments/FileUploader";
-import { Button } from "@/components/ui/button";
-import { useToast } from "@/hooks/use-toast";
-import { Loader2 } from "lucide-react";
-interface SalesUploaderProps {
-  onFileProcessed: (file: File, recordCount: number) => void;
-}
-const SalesUploader = ({
-  onFileProcessed
-}: SalesUploaderProps) => {
-  const [file, setFile] = useState<File | null>(null);
-  const [isProcessing, setIsProcessing] = useState(false);
-  const [recordCount, setRecordCount] = useState<number | null>(null);
-  const {
-    toast
-  } = useToast();
 
-  // Handle file selection
-  const handleFileSelect = (selectedFile: File | null) => {
-    setFile(selectedFile);
-    setRecordCount(null);
+import { useState } from 'react';
+import { FileUploader } from '@/components/payments/FileUploader';
+import { Button } from '@/components/ui/button';
+import { Progress } from '@/components/ui/progress';
+import { Upload, Check, AlertCircle } from 'lucide-react';
+import { Card, CardContent, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
+
+interface SalesUploaderProps {
+  onSubmit: (file: File) => Promise<void>;
+  isUploading?: boolean;
+  error?: string | null;
+  successCount?: number;
+  totalCount?: number;
+}
+
+export default function SalesUploader({
+  onSubmit,
+  isUploading = false,
+  error = null,
+  successCount = 0,
+  totalCount = 0,
+}: SalesUploaderProps) {
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  
+  const handleUpload = async () => {
     if (selectedFile) {
-      // Simulate file parsing to get record count
-      setTimeout(() => {
-        // Generate random number of records between 50 and 500
-        const count = Math.floor(Math.random() * 450) + 50;
-        setRecordCount(count);
-      }, 800);
+      await onSubmit(selectedFile);
     }
   };
-
-  // Handle file upload
-  const handleUpload = () => {
-    if (!file) return;
-    setIsProcessing(true);
-
-    // Simulate processing delay
-    setTimeout(() => {
-      setIsProcessing(false);
-
-      // Invoke callback with file and record count
-      if (recordCount) {
-        onFileProcessed(file, recordCount);
-      }
-
-      // Reset state
-      setFile(null);
-      setRecordCount(null);
-    }, 1500);
+  
+  const handleFileSelect = (file: File | null) => {
+    setSelectedFile(file);
   };
-
-  // Handle cancel
-  const handleCancel = () => {
-    setFile(null);
-    setRecordCount(null);
+  
+  const getUploadProgress = () => {
+    if (totalCount === 0) return 0;
+    return (successCount / totalCount) * 100;
   };
-  return <Card className="h-full">
-      <CardHeader className="my-0 py-[8px]">
-        
+  
+  return (
+    <Card className="mb-6">
+      <CardHeader>
+        <CardTitle className="text-lg font-medium">Importar Vendas</CardTitle>
       </CardHeader>
-      <CardContent className="space-y-4">
-        <FileUploader onFileSelect={handleFileSelect} accept=".csv,.xlsx,.xls" label="Arraste um arquivo CSV ou Excel ou clique para selecionar" currentFile={file} />
-        
-        {file && <div className="mt-4 space-y-3">
-            <div className="text-sm">
-              <p className="font-medium">Arquivo: {file.name}</p>
-              {recordCount ? <p className="text-muted-foreground">
-                  {recordCount} registros encontrados
-                </p> : <div className="flex items-center gap-2">
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                  <span className="text-muted-foreground">
-                    Analisando arquivo...
-                  </span>
-                </div>}
+      <CardContent>
+        <div className="space-y-4">
+          <FileUploader
+            onFileSelect={handleFileSelect}
+            selectedFile={selectedFile}
+            accept=".csv,.xlsx"
+            label="Selecione um arquivo CSV ou Excel para importar"
+          />
+          
+          {isUploading && (
+            <div className="space-y-2">
+              <div className="flex justify-between text-sm">
+                <span>Processando...</span>
+                <span>{successCount} de {totalCount} registros</span>
+              </div>
+              <Progress value={getUploadProgress()} />
             </div>
-            
-            <div className="flex items-center gap-2">
-              <Button variant="default" className="flex-1" disabled={!recordCount || isProcessing} onClick={handleUpload}>
-                {isProcessing ? <>
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Processando...
-                  </> : "Confirmar Upload"}
-              </Button>
-              <Button variant="outline" className="flex-1" onClick={handleCancel} disabled={isProcessing}>
-                Cancelar
-              </Button>
+          )}
+          
+          {error && (
+            <div className="rounded-md p-3 bg-destructive/10 flex items-start">
+              <AlertCircle className="h-5 w-5 text-destructive mr-2 flex-shrink-0" />
+              <div className="text-sm text-destructive">{error}</div>
             </div>
-            
-            <p className="text-xs text-muted-foreground italic">
-              Nota: Este é um upload simulado. A integração com backend será implementada futuramente.
-            </p>
-          </div>}
+          )}
+          
+          {!isUploading && successCount > 0 && (
+            <div className="rounded-md p-3 bg-green-50 flex items-start">
+              <Check className="h-5 w-5 text-green-600 mr-2 flex-shrink-0" />
+              <div className="text-sm text-green-700">
+                Importação concluída com sucesso! {successCount} registros importados.
+              </div>
+            </div>
+          )}
+        </div>
       </CardContent>
-    </Card>;
-};
-export default SalesUploader;
+      <CardFooter>
+        <Button 
+          onClick={handleUpload} 
+          disabled={!selectedFile || isUploading}
+          className="w-full sm:w-auto"
+        >
+          <Upload className="mr-2 h-4 w-4" />
+          {isUploading ? "Importando..." : "Importar Vendas"}
+        </Button>
+      </CardFooter>
+    </Card>
+  );
+}
