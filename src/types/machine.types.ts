@@ -75,4 +75,5 @@ export interface MachineStats {
   transit: number;
   blocked: number;
   by_model?: Record<string, number>;
+  byStatus?: Record<string, number>;
 }

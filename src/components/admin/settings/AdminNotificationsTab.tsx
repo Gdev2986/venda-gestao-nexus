@@ -1,91 +1,111 @@
 
-import { useState } from "react";
-import { SendNotificationForm } from "@/components/admin/notifications/SendNotificationForm";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { supabase } from "@/integrations/supabase/client"; 
+import React, { useState } from "react";
+import { Card, CardContent } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import SendNotificationForm from "@/components/admin/notifications/SendNotificationForm";
+import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import { Notification } from "@/types/notification.types";
-import { NotificationType, UserRole } from "@/types/enums";
+import { UserRole, NotificationType } from "@/types/enums";
 
 const AdminNotificationsTab = () => {
+  const [isTestLoading, setIsTestLoading] = useState(false);
   const { toast } = useToast();
-  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const handleSendNotification = async (notification: Partial<Notification>) => {
+  const sendTestNotification = async () => {
+    setIsTestLoading(true);
+
     try {
-      setIsSubmitting(true);
-      
-      // Determine target users based on recipients field
-      let userIdsList: string[] = [];
-      
-      if (notification.recipients === "all") {
-        // Get all user IDs
-        const { data, error } = await supabase.from("profiles").select("id");
-        if (error) throw error;
-        userIdsList = data.map(user => user.id);
-      } else if (notification.recipients === "admins") {
-        // Get admin user IDs
-        const { data, error } = await supabase
-          .from("profiles")
-          .select("id")
-          .in("role", [UserRole.ADMIN, UserRole.FINANCIAL]);
-        if (error) throw error;
-        userIdsList = data.map(user => user.id);
-      } else if (notification.recipients === "clients") {
-        // Get client user IDs
-        const { data, error } = await supabase
-          .from("profiles")
-          .select("id")
-          .eq("role", UserRole.CLIENT);
-        if (error) throw error;
-        userIdsList = data.map(user => user.id);
+      // Get admin users
+      const { data: profiles } = await supabase
+        .from("profiles")
+        .select("id, role")
+        .eq("role", UserRole.ADMIN)
+        .limit(1);
+
+      if (!profiles || profiles.length === 0) {
+        throw new Error("No admin users found");
       }
-      
-      // Create notification entries for each user
-      const notificationPromises = userIdsList.map(userId => {
-        return supabase.from("notifications").insert({
-          user_id: userId,
-          title: notification.title,
-          message: notification.message,
-          type: notification.type?.toString(), // Convert enum to string
-          data: notification.data || {}
-        });
+
+      // Insert test notification
+      const { error } = await supabase.from("notifications").insert({
+        user_id: profiles[0].id,
+        title: "Test Notification",
+        message: "This is a test notification from the Admin panel.",
+        type: NotificationType.SYSTEM,
+        data: { isTest: true }
       });
-      
-      await Promise.all(notificationPromises);
-      
+
+      if (error) throw error;
+
       toast({
-        title: "Notificação enviada",
-        description: `Notificação enviada para ${userIdsList.length} usuários`,
+        title: "Test notification sent",
+        description: "A test notification has been sent to admin users.",
       });
-      
-      return true;
-    } catch (error) {
-      console.error("Error sending notification:", error);
+    } catch (error: any) {
       toast({
-        title: "Erro",
-        description: "Falha ao enviar notificação",
         variant: "destructive",
+        title: "Error",
+        description: `Failed to send test notification: ${error.message}`,
       });
-      throw error;
     } finally {
-      setIsSubmitting(false);
+      setIsTestLoading(false);
     }
   };
 
   return (
     <div className="space-y-6">
-      <Card>
-        <CardHeader>
-          <CardTitle>Enviar Notificação</CardTitle>
-          <CardDescription>
-            Envie notificações para todos os usuários do sistema ou grupos específicos
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <SendNotificationForm onSendNotification={handleSendNotification} />
-        </CardContent>
-      </Card>
+      <Tabs defaultValue="send">
+        <TabsList>
+          <TabsTrigger value="send">Enviar Notificações</TabsTrigger>
+          <TabsTrigger value="templates">Templates</TabsTrigger>
+          <TabsTrigger value="settings">Configurações</TabsTrigger>
+        </TabsList>
+        
+        <TabsContent value="send" className="space-y-4 pt-4">
+          <Card>
+            <CardContent className="pt-6">
+              <SendNotificationForm />
+            </CardContent>
+          </Card>
+        </TabsContent>
+        
+        <TabsContent value="templates" className="space-y-4 pt-4">
+          <Card>
+            <CardContent className="pt-6">
+              <h3 className="text-lg font-medium">Templates de Notificação</h3>
+              <p className="text-muted-foreground">
+                Configure templates para diferentes tipos de notificação.
+              </p>
+              
+              {/* Template management UI would go here */}
+              <div className="border rounded-lg p-4 mt-4 bg-muted/30">
+                <p className="text-sm text-muted-foreground">
+                  Funcionalidade em desenvolvimento. Os templates serão disponibilizados em breve.
+                </p>
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+        
+        <TabsContent value="settings" className="space-y-4 pt-4">
+          <Card>
+            <CardContent className="pt-6">
+              <h3 className="text-lg font-medium">Testar Notificações</h3>
+              <p className="text-muted-foreground mb-4">
+                Envie uma notificação de teste para validar o sistema.
+              </p>
+              
+              <Button 
+                onClick={sendTestNotification} 
+                disabled={isTestLoading}
+              >
+                {isTestLoading ? "Enviando..." : "Enviar Notificação de Teste"}
+              </Button>
+            </CardContent>
+          </Card>
+        </TabsContent>
+      </Tabs>
     </div>
   );
 };

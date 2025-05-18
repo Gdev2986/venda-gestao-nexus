@@ -1,7 +1,8 @@
 
 import React, { useState } from "react";
 import { PaymentDialogs } from "@/components/payments/PaymentDialogs";
-import { PaymentRequest, Payment, PaymentStatus } from "@/types/payment.types";
+import { PaymentRequest, Payment } from "@/types/payment.types";
+import { PaymentStatus } from "@/types/enums"; // Import from enums instead
 import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";

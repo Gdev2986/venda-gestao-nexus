@@ -1,12 +1,16 @@
 
 import { PaymentStatus, PaymentType } from './enums';
 
+export { PaymentStatus, PaymentType };
+
 export interface PixKey {
   id: string;
   key: string;
   type: string;
   name: string;
   owner_name?: string;
+  is_default?: boolean;
+  bank_name?: string;
 }
 
 export interface Payment {
@@ -42,3 +46,6 @@ export interface PaymentRequest extends Payment {
 }
 
 export type PaymentRequestStatus = PaymentStatus;
+
+// PixKey types used in forms and components
+export type PixKeyType = 'CPF' | 'CNPJ' | 'EMAIL' | 'PHONE' | 'EVP';

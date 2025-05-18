@@ -3,7 +3,10 @@ export enum TicketStatus {
   OPEN = "OPEN",
   IN_PROGRESS = "IN_PROGRESS",
   RESOLVED = "RESOLVED",
-  CLOSED = "CLOSED"
+  CLOSED = "CLOSED",
+  PENDING = "PENDING",
+  COMPLETED = "COMPLETED",
+  CANCELED = "CANCELED"
 }
 
 export enum TicketPriority {
@@ -18,7 +21,14 @@ export enum TicketType {
   BILLING = "BILLING",
   GENERAL = "GENERAL",
   FEATURE = "FEATURE",
-  BUG = "BUG"
+  BUG = "BUG",
+  MAINTENANCE = "MAINTENANCE",
+  INSTALLATION = "INSTALLATION",
+  REMOVAL = "REMOVAL",
+  REPLACEMENT = "REPLACEMENT",
+  PAPER = "PAPER",
+  SUPPLIES = "SUPPLIES",
+  OTHER = "OTHER"
 }
 
 export interface SupportTicket {
@@ -32,6 +42,18 @@ export interface SupportTicket {
   assigned_to?: string;
   created_at: string;
   updated_at: string;
+  client_id?: string;
+  machine_id?: string;
+  scheduled_date?: string;
+  client?: {
+    id: string;
+    business_name: string;
+  };
+  machine?: {
+    id: string;
+    serial_number: string;
+    model: string;
+  };
 }
 
 export interface CreateSupportTicketParams {
