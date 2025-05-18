@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
@@ -37,7 +38,20 @@ export function usePixKeys(): UsePixKeysReturn {
         throw error;
       }
 
-      setPixKeys(data || []);
+      // Ensure all keys have the required owner_name property
+      const formattedKeys: PixKey[] = (data || []).map(item => ({
+        id: item.id,
+        key: item.key,
+        type: item.type,
+        name: item.name,
+        owner_name: item.name, // Use name as owner_name if not provided
+        user_id: item.user_id,
+        is_default: item.is_default || false,
+        created_at: item.created_at,
+        updated_at: item.updated_at
+      }));
+
+      setPixKeys(formattedKeys);
     } catch (error: any) {
       console.error("Error fetching PIX keys:", error);
       toast({
@@ -74,15 +88,20 @@ export function usePixKeys(): UsePixKeysReturn {
         throw error;
       }
       
-      // Add to local state
-      setPixKeys([...pixKeys, data]);
+      // Add to local state with owner_name
+      const newKey: PixKey = {
+        ...data,
+        owner_name: name // Ensure owner_name is set
+      };
+      
+      setPixKeys([...pixKeys, newKey]);
       
       toast({
         title: "Chave PIX adicionada",
         description: "Sua chave PIX foi adicionada com sucesso.",
       });
       
-      return data;
+      return newKey;
     } catch (error: any) {
       console.error("Error creating PIX key:", error);
       toast({

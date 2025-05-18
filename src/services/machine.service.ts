@@ -70,7 +70,7 @@ export const getMachinesByStatus = async (status: MachineStatus): Promise<Machin
           business_name
         )
       `)
-      .eq("status", status) // Use status directly - Supabase will convert to string
+      .eq("status", status.toString()) // Convert enum to string for Supabase
       .order("created_at", { ascending: false });
 
     if (error) throw error;
@@ -145,7 +145,7 @@ export const createMachine = async (params: MachineCreateParams): Promise<Machin
       .insert({
         serial_number: params.serial_number,
         model: params.model,
-        status: params.status || MachineStatus.STOCK, // Use status enum directly
+        status: params.status ? params.status.toString() : MachineStatus.STOCK.toString(), // Convert enum to string
         client_id: params.client_id
       })
       .select()
@@ -250,8 +250,8 @@ export const transferMachine = async (params: MachineTransferParams): Promise<Ma
 
     // Update the machine's client_id
     const newStatus = params.to_client_id 
-      ? MachineStatus.ACTIVE
-      : MachineStatus.STOCK;
+      ? MachineStatus.ACTIVE.toString()
+      : MachineStatus.STOCK.toString();
       
     const { error: machineError } = await supabase
       .from("machines")

@@ -1,6 +1,6 @@
 
 import { useState, useEffect } from "react";
-import { PixKey } from "@/types";
+import { PixKey } from "@/types/payment.types";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
@@ -35,7 +35,7 @@ export const usePixKeys = () => {
           key: key.key,
           type: key.type,
           name: key.name,
-          owner_name: key.name, // Use name as owner_name
+          owner_name: key.name, // Use name as owner_name since it's required
           user_id: key.user_id,
           is_default: key.is_default || false,
           created_at: key.created_at,
@@ -58,7 +58,7 @@ export const usePixKeys = () => {
               type: "EMAIL",
               key_type: "EMAIL", // Add key_type
               name: "Chave Principal",
-              owner_name: "Chave Principal",
+              owner_name: "Chave Principal", // Make sure owner_name is set
               user_id: user.id,
               is_default: true,
               created_at: new Date().toISOString(),
@@ -83,7 +83,7 @@ export const usePixKeys = () => {
             type: "EMAIL",
             key_type: "EMAIL", // Add key_type
             name: "Chave Principal",
-            owner_name: "Chave Principal",
+            owner_name: "Chave Principal", // Make sure owner_name is set
             user_id: user ? user.id : "",
             is_default: true,
             created_at: new Date().toISOString(),
