@@ -12,7 +12,7 @@ export interface PixKey {
   is_default?: boolean;
   bank_name?: string;
   key_type?: string;   // Added to match usage in the code
-  user_id?: string;    // Added to fix the errors
+  user_id: string;     // Required to fix the errors
   created_at?: string;
   updated_at?: string;
 }

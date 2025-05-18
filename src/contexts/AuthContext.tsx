@@ -213,7 +213,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
           description: error.message,
           variant: "destructive",
         });
-        throw error;
+        return { user: null, error };
       }
       
       if (data.user) {
@@ -242,7 +242,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     }
   };
 
-  const signUp = async (email: string, password: string, userData: { name: string }) => {
+  const signUp = async (email: string, password: string, userData: { name: string, role?: UserRole | string }) => {
     try {
       // Clean up any existing auth data before attempting signup
       cleanupSupabaseState();
@@ -263,6 +263,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         options: {
           data: {
             name: userData.name,
+            role: userData.role
           },
           emailRedirectTo: `${window.location.origin}/dashboard`,
         },
@@ -280,7 +281,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
           description: errorMessage,
           variant: "destructive",
         });
-        throw error;
+        return { user: null, error };
       }
       
       toast({

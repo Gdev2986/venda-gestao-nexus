@@ -24,12 +24,20 @@ const Register = () => {
     setIsSubmitting(true);
     
     try {
-      await signUp(email, password, { name });
-      toast({
-        title: "Cadastro realizado com sucesso",
-        description: "Por favor, verifique seu e-mail para confirmar sua conta.",
-      });
-      navigate(PATHS.LOGIN);
+      const result = await signUp(email, password, { name });
+      if (result.error) {
+        toast({
+          title: "Falha no cadastro",
+          description: result.error.message || "Ocorreu um erro durante o cadastro.",
+          variant: "destructive",
+        });
+      } else {
+        toast({
+          title: "Cadastro realizado com sucesso",
+          description: "Por favor, verifique seu e-mail para confirmar sua conta.",
+        });
+        navigate(PATHS.LOGIN);
+      }
     } catch (error: any) {
       toast({
         title: "Falha no cadastro",

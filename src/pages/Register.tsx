@@ -55,7 +55,11 @@ const Register = () => {
   const onSubmit = async (data: z.infer<typeof formSchema>) => {
     try {
       setAuthError(null);
-      await signUp(data.email, data.password, { name: data.name });
+      const result = await signUp(data.email, data.password, { name: data.name });
+      
+      if (result.error) {
+        setAuthError(result.error.message || "Ocorreu um erro durante o registro");
+      }
     } catch (error: any) {
       // Erro já tratado no contexto de autenticação
       setAuthError(error.message || "Ocorreu um erro durante o registro");
