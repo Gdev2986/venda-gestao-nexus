@@ -11,47 +11,18 @@ const RootLayout = () => {
   const { user, isLoading, isAuthenticated, userRole } = useAuth();
   const location = useLocation();
   const [showLoading, setShowLoading] = useState(true);
-  const [redirectPath, setRedirectPath] = useState<string | null>(null);
-  
-  // Debug logging
-  useEffect(() => {
-    console.log("RootLayout render status:", {
-      isLoading,
-      isAuthenticated,
-      userRole,
-      path: location.pathname
-    });
-  }, [isLoading, isAuthenticated, userRole, location.pathname]);
   
   // Add a slight delay for loading animation
   useEffect(() => {
     if (!isLoading) {
       const timer = setTimeout(() => {
         setShowLoading(false);
-      }, 500); // 0.5 second loading time
+      }, 500);
       
       return () => clearTimeout(timer);
     }
   }, [isLoading]);
 
-  // Determine redirect path when user and role are available
-  useEffect(() => {
-    // Only set redirect path when we have all necessary data
-    if (!isLoading && isAuthenticated && user && userRole) {
-      try {
-        const dashboardPath = getDashboardPath(userRole);
-        console.log(`User authenticated as ${userRole}, will redirect to ${dashboardPath}`);
-        setRedirectPath(dashboardPath);
-      } catch (error) {
-        console.error("Error getting dashboard path:", error);
-        setRedirectPath(PATHS.LOGIN);
-      }
-    } else if (!isLoading && !isAuthenticated) {
-      console.log("User not authenticated, will redirect to login");
-      setRedirectPath(PATHS.LOGIN);
-    }
-  }, [isLoading, isAuthenticated, user, userRole]);
-  
   // If still loading, show a spinner
   if (isLoading || showLoading) {
     return (
@@ -69,15 +40,14 @@ const RootLayout = () => {
     );
   }
   
-  // Only redirect when we have determined the path
-  if (redirectPath) {
-    if (redirectPath === PATHS.LOGIN && location.pathname !== PATHS.LOGIN) {
-      console.log("Redirecting to login");
-      return <Navigate to={PATHS.LOGIN} replace />;
-    } else if (redirectPath !== PATHS.LOGIN && location.pathname === PATHS.LOGIN) {
-      console.log("Redirecting to dashboard:", redirectPath);
-      return <Navigate to={redirectPath} replace />;
+  // Simple redirection logic
+  if (isAuthenticated && userRole) {
+    const dashboardPath = getDashboardPath(userRole);
+    if (location.pathname === PATHS.LOGIN) {
+      return <Navigate to={dashboardPath} replace />;
     }
+  } else if (!isAuthenticated && location.pathname !== PATHS.LOGIN) {
+    return <Navigate to={PATHS.LOGIN} replace />;
   }
   
   // Show loading if we're still deciding where to redirect

@@ -29,15 +29,6 @@ const Login = () => {
     return () => window.removeEventListener('resize', checkMobile);
   }, []);
 
-  useEffect(() => {
-    // If authenticated and finished loading, redirect to dashboard
-    if (user && !isLoading) {
-      console.log("Login: User authenticated, redirecting to dashboard");
-      setRedirecting(true);
-      navigate(PATHS.DASHBOARD); // This will be handled by the RootLayout component
-    }
-  }, [user, isLoading, navigate]);
-
   // If redirecting or loading, show a spinner
   if (isLoading || redirecting) {
     return (
@@ -50,7 +41,6 @@ const Login = () => {
     );
   }
 
-  // If still loading or the user is not authenticated, show the login page
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-b from-background/50 to-background p-4 dark:from-background dark:to-background/80">
       <div className="flex flex-col md:flex-row items-center justify-center max-w-5xl w-full">
