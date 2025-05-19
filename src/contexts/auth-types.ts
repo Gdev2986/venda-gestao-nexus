@@ -23,13 +23,13 @@ export interface AuthContextType {
   user: User | null;
   session: Session | null;
   profile: UserProfile | null;
-  userRole: UserRole | null; // Add userRole property
+  userRole: UserRole | null;
   isLoading: boolean;
   isAuthenticated: boolean;
   signIn: (email: string, password: string) => Promise<{ error: any }>;
   signUp: (email: string, password: string, metadata?: { name?: string }) => Promise<{ error: any, data: any }>;
   signOut: () => Promise<void>;
-  updatePassword: (password: string) => Promise<{ error: any }>;
-  requestPasswordReset: (email: string) => Promise<{ error: any }>;
-  resetPassword: (password: string) => Promise<{ error: any }>;
+  updatePassword?: (password: string) => Promise<{ error: any }>;
+  requestPasswordReset?: (email: string) => Promise<{ error: any }>;
+  resetPassword?: (password: string) => Promise<{ error: any }>;
 }

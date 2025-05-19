@@ -1,4 +1,3 @@
-
 import { createContext, useContext, useEffect, useState } from "react";
 import { Session, User } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
@@ -220,28 +219,27 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
           description: error.message,
           variant: "destructive",
         });
-        return { user: null, error };
+        return { error };
       }
       
       if (data.user) {
         console.log("Sign in successful");
         // Let the auth state change listener handle redirects
-        return { user: data.user, error: null };
+        return { error: null };
       }
       
       setIsLoading(false);
-      return { user: data.user, error: null };
+      return { error: null };
     } catch (error: any) {
       console.error("Error during login:", error);
       setIsLoading(false);
       return { 
-        user: null, 
         error: error instanceof Error ? error : new Error("Unknown error during login") 
       };
     }
   };
 
-  const signUp = async (email: string, password: string, userData: { name: string, role?: UserRole | string }) => {
+  const signUp = async (email: string, password: string, metadata?: { name?: string }) => {
     try {
       // Clean up any existing auth data before attempting signup
       cleanupSupabaseState();
@@ -261,8 +259,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         password,
         options: {
           data: {
-            name: userData.name,
-            role: userData.role
+            name: metadata?.name,
           },
           emailRedirectTo: `${window.location.origin}/dashboard`,
         },
@@ -281,7 +278,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
           variant: "destructive",
         });
         setIsLoading(false);
-        return { user: null, error };
+        return { data: null, error };
       }
       
       toast({
@@ -291,12 +288,12 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
       navigate(PATHS.HOME);
       setIsLoading(false);
-      return { user: data?.user || null, error: null };
+      return { data: data?.user || null, error: null };
     } catch (error: any) {
       console.error("Error during registration:", error);
       setIsLoading(false);
       return { 
-        user: null, 
+        data: null,
         error: error instanceof Error ? error : new Error("Unknown error during registration") 
       };
     }
@@ -326,8 +323,6 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       
       // Navigate to login page
       navigate(PATHS.LOGIN);
-      
-      return { success: true, error: null };
     } catch (error: any) {
       console.error("Error during sign out:", error);
       setIsLoading(false);
@@ -336,7 +331,6 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         description: error.message || "Ocorreu um erro ao tentar sair",
         variant: "destructive",
       });
-      return { success: false, error };
     }
   };
 

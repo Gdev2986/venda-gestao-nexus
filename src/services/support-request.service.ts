@@ -16,9 +16,9 @@ export async function createSupportRequest(request: SupportRequest): Promise<{ d
       id,
       client_id: request.client_id,
       technician_id: request.technician_id,
-      type: request.type as any, // Cast to any to avoid type issues
-      status: request.status as any, // Cast to any to avoid type issues
-      priority: request.priority as any, // Cast to any to avoid type issues
+      type: request.type,
+      status: request.status,
+      priority: request.priority,
       title: request.title,
       description: request.description,
       scheduled_date: request.scheduled_date,
@@ -115,7 +115,7 @@ async function createRequestNotification(request: SupportRequest, requestId: str
             user_id: user.id,
             title: 'Nova Solicitação Técnica',
             message: `${request.title} - ${request.priority.toUpperCase()}`,
-            type: NotificationType.SUPPORT,
+            type: 'SUPPORT', // Cast to string as notification_type is a string enum
             data: { 
               request_id: requestId,
               type: request.type,
@@ -142,7 +142,7 @@ async function createRequestNotification(request: SupportRequest, requestId: str
             user_id: user.id,
             title: 'Nova Solicitação Técnica',
             message: `${request.title} - ${request.priority.toUpperCase()}`,
-            type: NotificationType.ADMIN_NOTIFICATION,
+            type: 'SUPPORT', // Use the string version that matches the database enum
             data: { 
               request_id: requestId,
               type: request.type,
@@ -179,7 +179,7 @@ async function createStatusUpdateNotification(requestId: string, updates: Partia
           user_id: clientData.user_id,
           title: 'Atualização de Solicitação',
           message: `Sua solicitação "${request.title}" foi atualizada para ${updates.status}`,
-          type: NotificationType.SUPPORT,
+          type: 'SUPPORT', // Use the string version that matches the database enum
           data: { request_id: requestId, new_status: updates.status },
           is_read: false,
           created_at: new Date().toISOString()
@@ -194,7 +194,7 @@ async function createStatusUpdateNotification(requestId: string, updates: Partia
           user_id: updates.technician_id,
           title: 'Nova Solicitação Atribuída',
           message: `Você foi atribuído à solicitação "${request.title}"`,
-          type: NotificationType.SUPPORT,
+          type: 'SUPPORT', // Use the string version that matches the database enum
           data: { request_id: requestId },
           is_read: false,
           created_at: new Date().toISOString()
