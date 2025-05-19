@@ -9,7 +9,7 @@ import { NotificationsProvider } from '@/contexts/NotificationsContext';
 import App from './App.tsx';
 import './index.css';
 
-// Ensure React is available globally
+// Make React available globally (explicit assignment)
 window.React = React;
 
 // Create a query client
@@ -32,12 +32,14 @@ function renderApp() {
   }
   
   try {
-    // Check if React is properly initialized to avoid hook errors
-    if (!React || !React.useState) {
-      console.error('React is not properly initialized');
+    // Verify React is properly loaded
+    if (!window.React || !window.React.useState) {
+      console.error('React is not properly initialized, retrying in 50ms');
+      setTimeout(renderApp, 50);  // Retry with a longer delay
       return;
     }
     
+    console.log('React successfully initialized, rendering application');
     const root = createRoot(rootElement);
     
     root.render(
@@ -62,13 +64,15 @@ function renderApp() {
   }
 }
 
-// Initialize the app when DOM is fully ready
+// Ensure DOM is ready before attempting to render
 if (document.readyState === 'loading') {
   document.addEventListener('DOMContentLoaded', () => {
-    // Small delay to ensure React is fully initialized
-    setTimeout(renderApp, 10);
+    console.log('DOM content loaded, initializing app with delay');
+    // Increased delay to ensure React is fully initialized
+    setTimeout(renderApp, 50);
   });
 } else {
-  // Small delay to ensure everything is initialized
-  setTimeout(renderApp, 10);
+  console.log('DOM already loaded, initializing app with delay');
+  // Increased delay for already loaded document
+  setTimeout(renderApp, 50);
 }
