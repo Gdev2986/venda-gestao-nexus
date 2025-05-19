@@ -54,6 +54,25 @@ const PartnersTable = ({
     );
   }
 
+  // Helper function to render badge based on status
+  const renderStatusBadge = (partner: Partner) => {
+    const status = partner.status || 'active'; // Default to active if not specified
+    
+    if (status === 'active') {
+      return (
+        <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">
+          Ativo
+        </Badge>
+      );
+    } else {
+      return (
+        <Badge variant="outline" className="bg-red-50 text-red-700 border-red-200">
+          Inativo
+        </Badge>
+      );
+    }
+  };
+
   return (
     <div className="rounded-md border overflow-hidden">
       <div className="overflow-x-auto">
@@ -78,15 +97,7 @@ const PartnersTable = ({
                   {partner.commission_rate ? `${partner.commission_rate}%` : "Não definida"}
                 </TableCell>
                 <TableCell className="hidden md:table-cell">
-                  {partner.status === "active" ? (
-                    <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">
-                      Ativo
-                    </Badge>
-                  ) : (
-                    <Badge variant="outline" className="bg-red-50 text-red-700 border-red-200">
-                      Inativo
-                    </Badge>
-                  )}
+                  {renderStatusBadge(partner)}
                 </TableCell>
                 <TableCell className="text-right">
                   <DropdownMenu>
@@ -135,15 +146,7 @@ const PartnersTable = ({
                   {partner.commission_rate ? `Taxa: ${partner.commission_rate}%` : "Sem taxa definida"}
                 </p>
                 <div className="mt-1">
-                  {partner.status === "active" ? (
-                    <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">
-                      Ativo
-                    </Badge>
-                  ) : (
-                    <Badge variant="outline" className="bg-red-50 text-red-700 border-red-200">
-                      Inativo
-                    </Badge>
-                  )}
+                  {renderStatusBadge(partner)}
                 </div>
               </div>
               <div className="flex space-x-1">

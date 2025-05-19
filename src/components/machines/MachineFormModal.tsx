@@ -47,7 +47,7 @@ const MachineFormModal = ({
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-md max-w-[90%]">
+      <DialogContent className="sm:max-w-md max-w-[90%] max-h-[95vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="text-xl">Cadastrar Nova Máquina</DialogTitle>
           <button 
@@ -135,7 +135,7 @@ const MachineFormModal = ({
           </div>
         </div>
         
-        <DialogFooter className="sm:justify-end gap-2 mt-4 flex flex-col sm:flex-row">
+        <DialogFooter className="sm:justify-end mt-4 flex flex-col-reverse sm:flex-row gap-2">
           <Button type="button" variant="outline" onClick={onClose} className="w-full sm:w-auto">
             Cancelar
           </Button>

@@ -81,9 +81,24 @@ const ClientFormModal = ({
         }
       } else {
         // Default create logic
+        // Map formData to match database schema
+        const clientData = {
+          business_name: formData.company_name,
+          document: formData.cnpj,
+          partner_id: formData.partner_id || null,
+          balance: formData.initial_balance || 0,
+          contact_name: formData.contact_name,
+          email: formData.email,
+          phone: formData.phone,
+          address: formData.address,
+          city: formData.city,
+          state: formData.state,
+          zip: formData.zip_code
+        };
+        
         const { data, error } = await supabase
           .from("clients")
-          .insert([formData])
+          .insert(clientData)
           .select();
         
         if (error) {

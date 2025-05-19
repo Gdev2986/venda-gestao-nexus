@@ -74,11 +74,10 @@ export interface Payment {
     type: string;
     owner_name: string;
   };
-  // Add missing properties to match PaymentRequest
-  approved_by?: string | null;
-  description?: string;
-  // Add any other properties that might be needed
+  // Add these to make compatible with PaymentRequest interface
   client?: any;
+  description?: string;
+  approved_by?: string | null;
 }
 
 // Types for partners
@@ -95,9 +94,9 @@ export interface Partner {
   email?: string; // Added for consistency with filtering
   phone?: string; // Added for consistency with filtering
   address?: string; // Added for completeness
-  // Add missing properties
   total_sales?: number;
   total_commission?: number;
+  status?: string; // Added status field for PartnersTable
 }
 
 // Added Client interface to ensure type safety
@@ -119,6 +118,12 @@ export interface Client {
   document?: string;
   fee_plan_id?: string;
   company_name?: string;
+  // Add new fields needed by ClientFormModal
+  cnpj?: string;
+  initial_balance?: number; 
+  address_number?: string;
+  neighborhood?: string;
+  zip_code?: string;
 }
 
 export interface FilterValues {

@@ -9,6 +9,8 @@ const Partners = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [filteredPartners, setFilteredPartners] = useState<Partner[]>([]);
   const [showCreateModal, setShowCreateModal] = useState(false);
+  const [editPartner, setEditPartner] = useState<Partner | null>(null);
+  const [showEditModal, setShowEditModal] = useState(false);
   
   const { 
     partners, 
@@ -52,6 +54,11 @@ const Partners = () => {
       console.error("Error creating partner:", error);
       return false;
     }
+  };
+
+  const handleEditPartner = (partner: Partner) => {
+    setEditPartner(partner);
+    setShowEditModal(true);
   };
 
   const handleCreateClick = () => {
@@ -108,6 +115,7 @@ const Partners = () => {
                   partners={filteredPartners} 
                   isLoading={isLoading}
                   onDelete={(partner) => handleDelete(partner.id)}
+                  onEdit={handleEditPartner}
                 />
               )}
             </div>
@@ -122,6 +130,22 @@ const Partners = () => {
         onSubmit={handleCreatePartner}
         isSubmitting={createPartner.isPending}
       />
+      
+      {/* Partner edit modal */}
+      {editPartner && (
+        <PartnerFormModal
+          open={showEditModal}
+          onOpenChange={setShowEditModal}
+          onSubmit={(data) => {
+            console.log("Edit partner data:", data);
+            setShowEditModal(false);
+            return Promise.resolve(true);
+          }}
+          isSubmitting={false}
+          defaultValues={editPartner}
+          mode="edit"
+        />
+      )}
     </div>
   );
 };

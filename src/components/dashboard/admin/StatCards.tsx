@@ -22,18 +22,18 @@ interface StatCardsProps {
 const StatCards = ({ stats, isLoading }: StatCardsProps) => {
   if (isLoading) {
     return (
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-        {Array(4).fill(0).map((_, i) => (
-          <Card key={i}>
-            <CardHeader className="pb-2">
-              <Skeleton className="h-4 w-24" />
-              <Skeleton className="h-8 w-36 mt-2" />
-            </CardHeader>
-            <CardContent>
-              <Skeleton className="h-4 w-full" />
-            </CardContent>
-          </Card>
-        ))}
+      <div className="grid grid-cols-1 gap-4">
+        {/* Full width card for Total Sales */}
+        <Skeleton className="h-28" />
+        
+        {/* Two cards in one row for Gross and Net */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <Skeleton className="h-24" />
+          <Skeleton className="h-24" />
+        </div>
+        
+        {/* Full width card for Office Commission */}
+        <Skeleton className="h-28" />
       </div>
     );
   }
