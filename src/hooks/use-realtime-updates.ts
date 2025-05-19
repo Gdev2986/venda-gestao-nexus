@@ -80,11 +80,7 @@ export function useRealtimeUpdates({
       .channel(channelName)
       .on(
         'postgres_changes',
-        {
-          event: eventType,
-          schema: 'public',
-          table: tableName,
-        },
+        { event: eventType, schema: 'public', table: tableName },
         handleRealtimeChange
       )
       .subscribe();
