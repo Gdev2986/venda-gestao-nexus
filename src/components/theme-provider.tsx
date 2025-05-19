@@ -34,7 +34,7 @@ export function ThemeProvider({
     if (typeof window !== "undefined") {
       try {
         const storedTheme = window.localStorage.getItem(storageKey);
-        return (storedTheme as Theme) || defaultTheme;
+        return storedTheme ? (storedTheme as Theme) : defaultTheme;
       } catch (error) {
         console.error("Error accessing localStorage:", error);
         return defaultTheme;
@@ -43,7 +43,10 @@ export function ThemeProvider({
     return defaultTheme;
   });
 
+  // Apply theme to document element
   React.useEffect(() => {
+    if (typeof window === "undefined") return;
+    
     const root = window.document.documentElement;
     
     root.classList.remove("light", "dark");
@@ -58,13 +61,14 @@ export function ThemeProvider({
     }
   }, [theme]);
 
+  // Save theme to localStorage
   React.useEffect(() => {
-    if (typeof window !== "undefined") {
-      try {
-        window.localStorage.setItem(storageKey, theme);
-      } catch (error) {
-        console.error("Error writing to localStorage:", error);
-      }
+    if (typeof window === "undefined") return;
+    
+    try {
+      window.localStorage.setItem(storageKey, theme);
+    } catch (error) {
+      console.error("Error writing to localStorage:", error);
     }
   }, [theme, storageKey]);
 

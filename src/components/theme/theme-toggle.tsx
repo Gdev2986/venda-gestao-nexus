@@ -9,9 +9,9 @@ import { useTheme } from "@/components/theme-provider";
 const ThemeToggle = () => {
   const { theme, setTheme } = useTheme();
   
-  const toggleTheme = () => {
+  const toggleTheme = React.useCallback(() => {
     setTheme(theme === "dark" ? "light" : "dark");
-  };
+  }, [theme, setTheme]);
 
   return (
     <Button

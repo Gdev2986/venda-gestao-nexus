@@ -23,6 +23,7 @@ const Settings = () => {
 
   const handleThemeChange = (newTheme: string) => {
     setTheme(newTheme as "light" | "dark" | "system");
+    console.log(`Theme changed to: ${newTheme}`);
   };
 
   const handleLanguageChange = (newLanguage: string) => {
@@ -181,7 +182,6 @@ const Settings = () => {
             <Button onClick={handleManagePixKeys} variant="outline">
               Gerenciar chaves PIX
             </Button>
-            {/* Add payment settings content here */}
           </CardContent>
         </Card>
       </div>

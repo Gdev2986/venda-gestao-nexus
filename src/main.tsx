@@ -19,7 +19,7 @@ const queryClient = new QueryClient({
   },
 });
 
-// Ensure DOM is ready before attempting to render
+// Robust initialization function that handles various DOM loading states
 function initializeApp() {
   const rootElement = document.getElementById('root');
   
@@ -28,28 +28,38 @@ function initializeApp() {
     return;
   }
   
-  const root = createRoot(rootElement);
+  console.log('Initializing React application...');
   
-  root.render(
-    <React.StrictMode>
-      <BrowserRouter>
-        <ThemeProvider defaultTheme="light" storageKey="sigmapay-theme">
-          <QueryClientProvider client={queryClient}>
-            <AuthProvider>
-              <NotificationsProvider>
-                <App />
-              </NotificationsProvider>
-            </AuthProvider>
-          </QueryClientProvider>
-        </ThemeProvider>
-      </BrowserRouter>
-    </React.StrictMode>
-  );
+  try {
+    const root = createRoot(rootElement);
+    
+    root.render(
+      <React.StrictMode>
+        <BrowserRouter>
+          <ThemeProvider defaultTheme="light" storageKey="sigmapay-theme">
+            <QueryClientProvider client={queryClient}>
+              <AuthProvider>
+                <NotificationsProvider>
+                  <App />
+                </NotificationsProvider>
+              </AuthProvider>
+            </QueryClientProvider>
+          </ThemeProvider>
+        </BrowserRouter>
+      </React.StrictMode>
+    );
+    
+    console.log('React application rendered successfully');
+  } catch (error) {
+    console.error('Failed to render React application:', error);
+  }
 }
 
-// Ensure DOM is fully loaded
+// Handle both loading states to ensure initialization happens correctly
 if (document.readyState === 'loading') {
+  // DOM still loading, wait for it to complete
   document.addEventListener('DOMContentLoaded', initializeApp);
 } else {
+  // DOM already loaded, initialize immediately
   initializeApp();
 }
