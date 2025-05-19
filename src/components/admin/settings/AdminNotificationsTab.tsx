@@ -8,26 +8,101 @@ import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { UserRole } from "@/types/enums";
 import { NotificationType } from "@/types/notification.types";
+import { useAuth } from "@/contexts/AuthContext";
 
 const AdminNotificationsTab = () => {
   const [isTestLoading, setIsTestLoading] = useState(false);
   const { toast } = useToast();
+  const { user } = useAuth();
 
   const sendNotification = async (notification: any) => {
-    try {
-      // Implementation will come here
-      console.log("Sending notification:", notification);
+    if (!user) {
       toast({
-        title: "Notification sent",
-        description: "Your notification has been sent successfully",
+        variant: "destructive",
+        title: "Error",
+        description: "You must be logged in to send notifications",
+      });
+      return false;
+    }
+
+    try {
+      console.log("Preparing to send notification:", notification);
+
+      let query;
+      
+      if (notification.recipient_roles && notification.recipient_roles.length > 0) {
+        // Send to specific roles
+        console.log("Sending to specific roles:", notification.recipient_roles);
+        
+        // First, get users with the specified roles
+        const { data: profiles, error: profilesError } = await supabase
+          .from("profiles")
+          .select("id")
+          .in("role", notification.recipient_roles);
+          
+        if (profilesError) throw profilesError;
+        
+        if (!profiles || profiles.length === 0) {
+          toast({
+            variant: "destructive",
+            title: "Nenhum destinatário encontrado",
+            description: "Não há usuários com as funções selecionadas"
+          });
+          return false;
+        }
+        
+        // Then, insert notifications for each user
+        const notificationsToInsert = profiles.map(profile => ({
+          user_id: profile.id,
+          title: notification.title,
+          message: notification.message,
+          type: notification.type,
+          data: notification.data || {}
+        }));
+        
+        const { error: insertError } = await supabase
+          .from("notifications")
+          .insert(notificationsToInsert);
+          
+        if (insertError) throw insertError;
+      } else {
+        // Handle 'all' users case
+        console.log("Sending to all users");
+        
+        // Get all profiles (potentially with role filtering in the future)
+        const { data: profiles, error: profilesError } = await supabase
+          .from("profiles")
+          .select("id");
+          
+        if (profilesError) throw profilesError;
+        
+        // Create a notification for each user
+        const notificationsToInsert = profiles.map(profile => ({
+          user_id: profile.id,
+          title: notification.title,
+          message: notification.message,
+          type: notification.type,
+          data: notification.data || {}
+        }));
+        
+        const { error: insertError } = await supabase
+          .from("notifications")
+          .insert(notificationsToInsert);
+          
+        if (insertError) throw insertError;
+      }
+      
+      toast({
+        title: "Notificação enviada",
+        description: "Sua notificação foi enviada com sucesso",
       });
       return true;
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error sending notification:", error);
       toast({
         variant: "destructive",
         title: "Error",
-        description: "Failed to send notification",
+        description: `Failed to send notification: ${error.message}`,
       });
       return false;
     }
@@ -37,37 +112,46 @@ const AdminNotificationsTab = () => {
     setIsTestLoading(true);
 
     try {
-      // Get admin users
-      const { data: profiles } = await supabase
+      if (!user) {
+        throw new Error("User not authenticated");
+      }
+      
+      // Get all admin users to send test to
+      const { data: adminProfiles, error: adminError } = await supabase
         .from("profiles")
-        .select("id, role")
-        .eq("role", UserRole.ADMIN)
-        .limit(1);
+        .select("id")
+        .eq("role", UserRole.ADMIN);
 
-      if (!profiles || profiles.length === 0) {
+      if (adminError) throw adminError;
+      
+      if (!adminProfiles || adminProfiles.length === 0) {
         throw new Error("No admin users found");
       }
-
-      // Insert test notification
-      const { error } = await supabase.from("notifications").insert({
-        user_id: profiles[0].id,
-        title: "Test Notification",
-        message: "This is a test notification from the Admin panel.",
+      
+      // Insert test notification for all admins
+      const notificationsToInsert = adminProfiles.map(profile => ({
+        user_id: profile.id,
+        title: "Notificação de Teste",
+        message: "Esta é uma notificação de teste do painel de administração.",
         type: NotificationType.SYSTEM,
         data: { isTest: true }
-      });
+      }));
+      
+      const { error } = await supabase
+        .from("notifications")
+        .insert(notificationsToInsert);
 
       if (error) throw error;
 
       toast({
-        title: "Test notification sent",
-        description: "A test notification has been sent to admin users.",
+        title: "Notificação de teste enviada",
+        description: "Uma notificação de teste foi enviada para todos os administradores.",
       });
     } catch (error: any) {
       toast({
         variant: "destructive",
-        title: "Error",
-        description: `Failed to send test notification: ${error.message}`,
+        title: "Erro",
+        description: `Falha ao enviar notificação de teste: ${error.message}`,
       });
     } finally {
       setIsTestLoading(false);
@@ -99,7 +183,6 @@ const AdminNotificationsTab = () => {
                 Configure templates para diferentes tipos de notificação.
               </p>
               
-              {/* Template management UI would go here */}
               <div className="border rounded-lg p-4 mt-4 bg-muted/30">
                 <p className="text-sm text-muted-foreground">
                   Funcionalidade em desenvolvimento. Os templates serão disponibilizados em breve.

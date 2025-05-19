@@ -1,76 +1,98 @@
 
-import { 
+import { Button } from "@/components/ui/button";
+import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { NotificationType } from "@/types";
-import { Button } from "@/components/ui/button";
-import { RefreshCw, Check } from "lucide-react";
+import { RefreshCcw, Bell, BellOff, Volume2, VolumeX } from "lucide-react";
+import { useNotifications } from "@/hooks/use-notifications";
 
 interface NotificationFiltersProps {
-  typeFilter?: string;
-  statusFilter?: string;
-  onTypeChange?: (value: string) => void;
-  onStatusChange?: (value: string) => void;
-  onMarkAllAsRead?: () => Promise<void>;
-  onRefresh?: () => Promise<void>;
+  typeFilter: string;
+  statusFilter: string;
+  onTypeChange: (type: string) => void;
+  onStatusChange: (status: string) => void;
+  onMarkAllAsRead: () => void;
+  onRefresh: () => void;
 }
 
-const NotificationFilters = ({ 
-  typeFilter = "all", 
-  statusFilter = "all", 
+const NotificationFilters = ({
+  typeFilter,
+  statusFilter,
   onTypeChange,
   onStatusChange,
   onMarkAllAsRead,
-  onRefresh
+  onRefresh,
 }: NotificationFiltersProps) => {
+  const { soundEnabled, setSoundEnabled } = useNotifications();
+
   return (
-    <div className="flex items-center justify-between">
-      <div className="flex gap-4">
+    <div className="flex flex-wrap items-center gap-2">
+      <div className="flex gap-2">
         <Select value={typeFilter} onValueChange={onTypeChange}>
-          <SelectTrigger className="w-[180px]">
-            <SelectValue placeholder="Filtrar por tipo" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">Todos os tipos</SelectItem>
-            <SelectItem value={NotificationType.GENERAL}>Geral</SelectItem>
-            <SelectItem value={NotificationType.SALE}>Vendas</SelectItem>
-            <SelectItem value={NotificationType.PAYMENT}>Pagamentos</SelectItem>
-            <SelectItem value={NotificationType.MACHINE}>Máquinas</SelectItem>
-            <SelectItem value={NotificationType.SUPPORT}>Suporte</SelectItem>
-            <SelectItem value={NotificationType.SYSTEM}>Sistema</SelectItem>
-          </SelectContent>
-        </Select>
-        
-        <Select value={statusFilter} onValueChange={onStatusChange}>
-          <SelectTrigger className="w-[160px]">
-            <SelectValue placeholder="Filtrar por status" />
+          <SelectTrigger className="h-8 w-[120px]">
+            <SelectValue placeholder="Tipo" />
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="all">Todos</SelectItem>
-            <SelectItem value="unread">Não lidas</SelectItem>
-            <SelectItem value="read">Lidas</SelectItem>
+            <SelectItem value="system">Sistema</SelectItem>
+            <SelectItem value="payment">Pagamento</SelectItem>
+            <SelectItem value="payment_request">Solicitação</SelectItem>
+            <SelectItem value="payment_approved">Aprovado</SelectItem>
+            <SelectItem value="payment_rejected">Rejeitado</SelectItem>
+            <SelectItem value="sale">Venda</SelectItem>
+            <SelectItem value="machine">Máquina</SelectItem>
+            <SelectItem value="support">Suporte</SelectItem>
+          </SelectContent>
+        </Select>
+
+        <Select value={statusFilter} onValueChange={onStatusChange}>
+          <SelectTrigger className="h-8 w-[120px]">
+            <SelectValue placeholder="Status" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">Todos</SelectItem>
+            <SelectItem value="read">Lidos</SelectItem>
+            <SelectItem value="unread">Não lidos</SelectItem>
           </SelectContent>
         </Select>
       </div>
-      
-      <div className="flex gap-2">
-        {onMarkAllAsRead && (
-          <Button variant="outline" size="sm" onClick={onMarkAllAsRead}>
-            <Check className="h-4 w-4 mr-2" />
-            Marcar todas como lidas
-          </Button>
-        )}
-        
-        {onRefresh && (
-          <Button variant="outline" size="sm" onClick={onRefresh}>
-            <RefreshCw className="h-4 w-4 mr-2" />
-            Atualizar
-          </Button>
-        )}
+
+      <div className="flex gap-2 ml-auto">
+        <Button
+          variant="outline"
+          size="icon"
+          className="h-8 w-8"
+          onClick={() => setSoundEnabled(!soundEnabled)}
+          title={soundEnabled ? "Desativar sons" : "Ativar sons"}
+        >
+          {soundEnabled ? (
+            <Volume2 className="h-4 w-4" />
+          ) : (
+            <VolumeX className="h-4 w-4" />
+          )}
+        </Button>
+        <Button
+          variant="outline"
+          size="icon"
+          className="h-8 w-8"
+          onClick={onMarkAllAsRead}
+          title="Marcar todas como lidas"
+        >
+          <Bell className="h-4 w-4" />
+        </Button>
+        <Button
+          variant="outline"
+          size="icon"
+          className="h-8 w-8"
+          onClick={onRefresh}
+          title="Atualizar"
+        >
+          <RefreshCcw className="h-4 w-4" />
+        </Button>
       </div>
     </div>
   );

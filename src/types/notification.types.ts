@@ -23,5 +23,5 @@ export interface Notification {
   data?: any;
   is_read?: boolean;
   created_at: string;
-  recipients?: "all" | "admins" | "clients"; // Optional field for sending notifications
+  recipient_roles?: string[]; // Optional field for sending notifications to specific roles
 }

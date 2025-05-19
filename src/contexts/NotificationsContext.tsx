@@ -4,6 +4,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "./AuthContext";
 import { useToast } from "@/hooks/use-toast";
 import { NotificationType } from "@/types/notification.types";
+import { playNotificationSoundIfEnabled } from "@/services/notificationSoundService";
+import { UserRole } from "@/types";
 
 interface Notification {
   id: string;
@@ -14,6 +16,7 @@ interface Notification {
   data?: any;
   is_read: boolean;
   created_at: string;
+  recipient_roles?: string[]; // Array of roles this notification is for
 }
 
 interface NotificationsContextProps {
@@ -25,6 +28,8 @@ interface NotificationsContextProps {
   isLoading?: boolean;
   deleteNotification?: (notificationId: string) => Promise<void>;
   refreshNotifications?: () => Promise<void>;
+  soundEnabled: boolean;
+  setSoundEnabled: (enabled: boolean) => void;
 }
 
 const NotificationsContext = createContext<NotificationsContextProps | undefined>(
@@ -37,14 +42,31 @@ export const NotificationsProvider: React.FC<{ children: React.ReactNode }> = ({
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [unreadCount, setUnreadCount] = useState(0);
   const [isLoading, setIsLoading] = useState(false);
-  const { user } = useAuth();
+  const [soundEnabled, setSoundEnabled] = useState<boolean>(true);
+  const { user, profile } = useAuth();
   const { toast } = useToast();
+
+  // Load sound preference from localStorage on initial load
+  useEffect(() => {
+    const savedSoundPreference = localStorage.getItem("notification_sound_enabled");
+    if (savedSoundPreference !== null) {
+      setSoundEnabled(savedSoundPreference === "true");
+    }
+  }, []);
+
+  // Save sound preference to localStorage when changed
+  useEffect(() => {
+    localStorage.setItem("notification_sound_enabled", soundEnabled.toString());
+  }, [soundEnabled]);
 
   useEffect(() => {
     if (user) {
       fetchNotifications();
 
-      // Realtime subscription
+      // Set up realtime subscription for new notifications
+      const userRole = profile?.role || '';
+      console.log('Setting up realtime notifications for user role:', userRole);
+      
       const channel = supabase
         .channel('public:notifications')
         .on(
@@ -53,24 +75,45 @@ export const NotificationsProvider: React.FC<{ children: React.ReactNode }> = ({
             event: '*',
             schema: 'public',
             table: 'notifications',
-            filter: 'user_id=eq.' + user.id,
+            filter: `user_id=eq.${user.id}`,
           },
           (payload) => {
-            console.log('Change received!', payload)
-            fetchNotifications();
+            console.log('Notification change received!', payload);
+            
+            if (payload.eventType === 'INSERT') {
+              const newNotification = payload.new as Notification;
+              
+              // Play sound based on notification type
+              playNotificationSoundIfEnabled(newNotification.type, soundEnabled);
+              
+              // Show toast notification
+              toast({
+                title: newNotification.title,
+                description: newNotification.message,
+              });
+              
+              // Update our notifications state
+              setNotifications(prev => [newNotification, ...prev]);
+            } else {
+              // For updates or deletions, just refresh the list
+              fetchNotifications();
+            }
           }
         )
-        .subscribe()
+        .subscribe((status) => {
+          console.log('Realtime subscription status:', status);
+        });
 
       return () => {
-        supabase.removeChannel(channel)
-      }
+        console.log('Cleaning up notification subscription');
+        supabase.removeChannel(channel);
+      };
     }
-  }, [user]);
+  }, [user, profile?.role, soundEnabled]);
 
+  // Update unread count whenever notifications change
   useEffect(() => {
-    const count = notifications.filter((notification) => !notification.is_read)
-      .length;
+    const count = notifications.filter((notification) => !notification.is_read).length;
     setUnreadCount(count);
   }, [notifications]);
 
@@ -163,7 +206,6 @@ export const NotificationsProvider: React.FC<{ children: React.ReactNode }> = ({
     }
   };
 
-  // Add deleteNotification function to fix the error
   const deleteNotification = async (notificationId: string) => {
     try {
       const { error } = await supabase
@@ -188,7 +230,6 @@ export const NotificationsProvider: React.FC<{ children: React.ReactNode }> = ({
     }
   };
 
-  // Add refreshNotifications function
   const refreshNotifications = async () => {
     await fetchNotifications();
   };
@@ -201,7 +242,9 @@ export const NotificationsProvider: React.FC<{ children: React.ReactNode }> = ({
     markAllAsRead,
     isLoading,
     deleteNotification,
-    refreshNotifications
+    refreshNotifications,
+    soundEnabled,
+    setSoundEnabled
   };
 
   return (

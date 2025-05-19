@@ -1,7 +1,7 @@
 
 import { useState, useRef, useEffect } from "react";
 import { cn } from "@/lib/utils";
-import { Bell } from "lucide-react";
+import { Bell, BellOff, Volume2, VolumeX } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -17,7 +17,8 @@ import { useNotifications } from "@/hooks/use-notifications";
 import { formatDistanceToNow } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { ShoppingCart, CreditCard, Wrench, LifeBuoy } from "lucide-react";
-import { Notification } from "@/types/notification.types";
+import { Notification, NotificationType } from "@/types/notification.types";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 const NotificationDropdown = () => {
   const [isOpen, setIsOpen] = useState(false);
@@ -27,7 +28,9 @@ const NotificationDropdown = () => {
     notifications,
     unreadCount,
     markAsRead,
-    markAllAsRead
+    markAllAsRead,
+    soundEnabled,
+    setSoundEnabled
   } = useNotifications();
 
   // Pega apenas as 5 notificações mais recentes para exibir no dropdown
@@ -52,20 +55,24 @@ const NotificationDropdown = () => {
 
   const getIcon = (type: string) => {
     switch (type) {
-      case "SALE":
+      case NotificationType.SALE:
         return <ShoppingCart className="h-4 w-4 text-primary" />;
-      case "PAYMENT":
-      case "PAYMENT_APPROVED":
-      case "PAYMENT_REJECTED":
-      case "PAYMENT_REQUEST":
+      case NotificationType.PAYMENT:
+      case NotificationType.PAYMENT_APPROVED:
+      case NotificationType.PAYMENT_REJECTED:
+      case NotificationType.PAYMENT_REQUEST:
         return <CreditCard className="h-4 w-4 text-primary" />;
-      case "MACHINE":
+      case NotificationType.MACHINE:
         return <Wrench className="h-4 w-4 text-primary" />;
-      case "SUPPORT":
+      case NotificationType.SUPPORT:
         return <LifeBuoy className="h-4 w-4 text-primary" />;
       default:
         return <Bell className="h-4 w-4 text-primary" />;
     }
+  };
+
+  const toggleSound = () => {
+    setSoundEnabled(!soundEnabled);
   };
 
   return (
@@ -107,22 +114,41 @@ const NotificationDropdown = () => {
             <DropdownMenuLabel className="font-normal">
               Notificações
             </DropdownMenuLabel>
-            {unreadCount > 0 && (
-              <Button
-                variant="ghost"
-                size="sm"
-                className="h-auto px-2 py-1 text-xs"
-                onClick={() => {
-                  markAllAsRead();
-                  // Add haptic feedback for mobile devices
-                  if (navigator.vibrate) {
-                    navigator.vibrate(100);
-                  }
-                }}
-              >
-                Marcar todas como lidas
-              </Button>
-            )}
+            <div className="flex gap-2">
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-8 w-8"
+                      onClick={toggleSound}
+                    >
+                      {soundEnabled ? <Volume2 className="h-4 w-4" /> : <VolumeX className="h-4 w-4" />}
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    {soundEnabled ? "Desativar sons" : "Ativar sons"}
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
+              {unreadCount > 0 && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="h-auto px-2 py-1 text-xs"
+                  onClick={() => {
+                    markAllAsRead();
+                    // Add haptic feedback for mobile devices
+                    if (navigator.vibrate) {
+                      navigator.vibrate(100);
+                    }
+                  }}
+                >
+                  Marcar todas como lidas
+                </Button>
+              )}
+            </div>
           </div>
           <DropdownMenuSeparator />
           <div className="max-h-[60vh] sm:max-h-80 overflow-y-auto">
