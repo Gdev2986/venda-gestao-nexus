@@ -9,7 +9,7 @@ import { NotificationsProvider } from '@/contexts/NotificationsContext';
 import App from './App.tsx';
 import './index.css';
 
-// Create a query client
+// Create a query client with default options
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
@@ -53,13 +53,13 @@ function renderApp() {
   }
 }
 
-// Make sure DOM is fully loaded before attempting to render
+// Ensure DOM is fully loaded before rendering
 if (document.readyState === 'loading') {
   document.addEventListener('DOMContentLoaded', () => {
-    // Add a small delay to ensure React is fully initialized
-    setTimeout(renderApp, 10);
+    // Small delay to ensure React is fully initialized
+    setTimeout(renderApp, 50);
   });
 } else {
-  // DOM already loaded, add slight delay to ensure React initialization
-  setTimeout(renderApp, 10);
+  // DOM already loaded, still use a small delay
+  setTimeout(renderApp, 50);
 }
