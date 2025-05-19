@@ -1,7 +1,7 @@
 
 "use client";
 
-import * as React from "react";
+import React from "react";
 
 type Theme = "dark" | "light" | "system";
 
@@ -33,30 +33,34 @@ export function ThemeProvider({
 
   // Apply theme to document
   React.useEffect(() => {
-    const root = window.document.documentElement;
-    root.classList.remove("light", "dark");
+    if (typeof window !== 'undefined') {
+      const root = window.document.documentElement;
+      root.classList.remove("light", "dark");
 
-    if (theme === "system") {
-      const systemTheme = window.matchMedia("(prefers-color-scheme: dark)")
-        .matches
-        ? "dark"
-        : "light";
-      root.classList.add(systemTheme);
-      return;
+      if (theme === "system") {
+        const systemTheme = window.matchMedia("(prefers-color-scheme: dark)")
+          .matches
+          ? "dark"
+          : "light";
+        root.classList.add(systemTheme);
+        return;
+      }
+
+      root.classList.add(theme);
     }
-
-    root.classList.add(theme);
   }, [theme]);
 
   // Load theme from localStorage only on client-side
   React.useEffect(() => {
-    try {
-      const storedTheme = localStorage.getItem(storageKey);
-      if (storedTheme && ["dark", "light", "system"].includes(storedTheme as Theme)) {
-        setTheme(storedTheme as Theme);
+    if (typeof window !== 'undefined') {
+      try {
+        const storedTheme = localStorage.getItem(storageKey);
+        if (storedTheme && ["dark", "light", "system"].includes(storedTheme as Theme)) {
+          setTheme(storedTheme as Theme);
+        }
+      } catch (error) {
+        console.error("Error reading from localStorage:", error);
       }
-    } catch (error) {
-      console.error("Error reading from localStorage:", error);
     }
   }, [storageKey]);
 
@@ -64,10 +68,12 @@ export function ThemeProvider({
     () => ({
       theme,
       setTheme: (newTheme: Theme) => {
-        try {
-          localStorage.setItem(storageKey, newTheme);
-        } catch (error) {
-          console.error("Error writing to localStorage:", error);
+        if (typeof window !== 'undefined') {
+          try {
+            localStorage.setItem(storageKey, newTheme);
+          } catch (error) {
+            console.error("Error writing to localStorage:", error);
+          }
         }
         setTheme(newTheme);
       },

@@ -19,24 +19,34 @@ const queryClient = new QueryClient({
   },
 });
 
-// Get the root element
-const rootElement = document.getElementById("root");
-if (!rootElement) throw new Error('Root element not found');
+// Wait until DOM is fully loaded
+const initializeApp = () => {
+  // Get the root element
+  const rootElement = document.getElementById("root");
+  if (!rootElement) throw new Error('Root element not found');
 
-const root = createRoot(rootElement);
+  const root = createRoot(rootElement);
 
-root.render(
-  <React.StrictMode>
-    <BrowserRouter>
-      <ThemeProvider defaultTheme="light" storageKey="vite-ui-theme">
-        <QueryClientProvider client={queryClient}>
-          <AuthProvider>
-            <NotificationsProvider>
-              <App />
-            </NotificationsProvider>
-          </AuthProvider>
-        </QueryClientProvider>
-      </ThemeProvider>
-    </BrowserRouter>
-  </React.StrictMode>
-);
+  root.render(
+    <React.StrictMode>
+      <BrowserRouter>
+        <ThemeProvider defaultTheme="light" storageKey="vite-ui-theme">
+          <QueryClientProvider client={queryClient}>
+            <AuthProvider>
+              <NotificationsProvider>
+                <App />
+              </NotificationsProvider>
+            </AuthProvider>
+          </QueryClientProvider>
+        </ThemeProvider>
+      </BrowserRouter>
+    </React.StrictMode>
+  );
+};
+
+// Ensure the DOM is ready before rendering
+if (document.readyState === "loading") {
+  document.addEventListener("DOMContentLoaded", initializeApp);
+} else {
+  initializeApp();
+}
