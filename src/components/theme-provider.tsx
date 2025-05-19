@@ -1,8 +1,7 @@
 
 "use client";
 
-import * as React from "react";
-import { createContext, useContext, useEffect, useState, useMemo } from "react";
+import React from "react";
 
 type Theme = "dark" | "light" | "system";
 
@@ -17,39 +16,36 @@ type ThemeProviderState = {
   setTheme: (theme: Theme) => void;
 };
 
-const initialState: ThemeProviderState = {
+// Create a context with a default value
+const ThemeProviderContext = React.createContext<ThemeProviderState>({
   theme: "system",
   setTheme: () => null,
-};
-
-const ThemeProviderContext = createContext<ThemeProviderState>(initialState);
+});
 
 export function ThemeProvider({
   children,
   defaultTheme = "system",
-  storageKey = "ui-theme",
+  storageKey = "sigmapay-theme",
   ...props
 }: ThemeProviderProps) {
-  const [theme, setTheme] = useState<Theme>(defaultTheme);
-  
-  // Load theme from localStorage on component mount
-  useEffect(() => {
-    if (typeof window === "undefined") return;
-    
-    try {
-      const savedTheme = localStorage.getItem(storageKey);
-      if (savedTheme && ["dark", "light", "system"].includes(savedTheme as Theme)) {
-        setTheme(savedTheme as Theme);
-      }
-    } catch (error) {
-      console.error("Error accessing localStorage:", error);
+  // Initialize state with defaultTheme
+  const [theme, setTheme] = React.useState<Theme>(defaultTheme);
+
+  // Load the saved theme from localStorage on mount
+  React.useEffect(() => {
+    const savedTheme = localStorage.getItem(storageKey);
+    if (savedTheme && ["dark", "light", "system"].includes(savedTheme as Theme)) {
+      setTheme(savedTheme as Theme);
     }
   }, [storageKey]);
 
-  // Apply theme to document root element
-  useEffect(() => {
-    if (typeof window === "undefined") return;
-    
+  // Update localStorage when theme changes
+  React.useEffect(() => {
+    localStorage.setItem(storageKey, theme);
+  }, [theme, storageKey]);
+
+  // Apply the theme to the document element
+  React.useEffect(() => {
     const root = document.documentElement;
     root.classList.remove("light", "dark");
 
@@ -63,23 +59,10 @@ export function ThemeProvider({
     }
   }, [theme]);
 
-  // Save theme to localStorage when it changes
-  useEffect(() => {
-    if (typeof window === "undefined") return;
-    
-    try {
-      localStorage.setItem(storageKey, theme);
-    } catch (error) {
-      console.error("Error writing to localStorage:", error);
-    }
-  }, [theme, storageKey]);
-
-  const value = useMemo(
+  const value = React.useMemo(
     () => ({
       theme,
-      setTheme: (newTheme: Theme) => {
-        setTheme(newTheme);
-      },
+      setTheme,
     }),
     [theme]
   );
@@ -92,10 +75,11 @@ export function ThemeProvider({
 }
 
 export const useTheme = () => {
-  const context = useContext(ThemeProviderContext);
+  const context = React.useContext(ThemeProviderContext);
 
-  if (context === undefined)
+  if (context === undefined) {
     throw new Error("useTheme must be used within a ThemeProvider");
+  }
 
   return context;
 };

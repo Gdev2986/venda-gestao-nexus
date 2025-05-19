@@ -48,13 +48,9 @@ const initializeApp = () => {
   );
 };
 
-// Attach event listeners for initialization
-if (typeof window !== 'undefined') {
-  // If document is still loading, wait for it to be ready
-  if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', initializeApp);
-  } else {
-    // If already interactive or complete, initialize immediately
-    initializeApp();
-  }
+// Ensure DOM is ready before mounting React
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', initializeApp);
+} else {
+  initializeApp();
 }
