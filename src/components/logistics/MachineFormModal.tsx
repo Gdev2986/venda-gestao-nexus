@@ -170,7 +170,9 @@ const MachineFormModal = ({ open, onOpenChange, machine, onSave }: MachineFormMo
                       <SelectItem value="ACTIVE">Operando</SelectItem>
                       <SelectItem value="MAINTENANCE">Em Manutenção</SelectItem>
                       <SelectItem value="INACTIVE">Parada</SelectItem>
-                      <SelectItem value="REPLACEMENT_REQUESTED">Troca Solicitada</SelectItem>
+                      <SelectItem value="STOCK">Em Estoque</SelectItem>
+                      <SelectItem value="TRANSIT">Em Trânsito</SelectItem>
+                      <SelectItem value="BLOCKED">Bloqueada</SelectItem>
                     </SelectContent>
                   </Select>
                   <FormMessage />

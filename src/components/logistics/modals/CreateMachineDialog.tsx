@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -8,15 +8,16 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
-import { MachineStatus } from "@/types/machine.types";
+import { Machine, MachineStatus } from "@/types/machine.types";
 
 interface CreateMachineDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onSuccess?: () => void;
+  machine?: Machine; // Add this prop to support editing existing machines
 }
 
-const CreateMachineDialog = ({ open, onOpenChange, onSuccess }: CreateMachineDialogProps) => {
+const CreateMachineDialog = ({ open, onOpenChange, onSuccess, machine }: CreateMachineDialogProps) => {
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
   
@@ -25,6 +26,16 @@ const CreateMachineDialog = ({ open, onOpenChange, onSuccess }: CreateMachineDia
   const [model, setModel] = useState("");
   const [status, setStatus] = useState<MachineStatus>(MachineStatus.STOCK);
   const [notes, setNotes] = useState("");
+  
+  // Set initial values when machine prop changes or dialog opens
+  useEffect(() => {
+    if (open && machine) {
+      setSerialNumber(machine.serial_number || "");
+      setModel(machine.model || "");
+      setStatus(machine.status || MachineStatus.STOCK);
+      setNotes(machine.notes || "");
+    }
+  }, [open, machine]);
   
   const resetForm = () => {
     setSerialNumber("");
@@ -55,24 +66,48 @@ const CreateMachineDialog = ({ open, onOpenChange, onSuccess }: CreateMachineDia
     setIsSubmitting(true);
     
     try {
-      const { data, error } = await supabase
-        .from('machines')
-        .insert({
-          serial_number: serialNumber,
-          model: model,
-          status: status,
-          notes: notes
-        })
-        .select();
-      
-      if (error) {
-        throw error;
+      if (machine?.id) {
+        // Update existing machine
+        const { data, error } = await supabase
+          .from('machines')
+          .update({
+            serial_number: serialNumber,
+            model: model,
+            status: status,
+            notes: notes
+          })
+          .eq('id', machine.id)
+          .select();
+        
+        if (error) {
+          throw error;
+        }
+        
+        toast({
+          title: "Máquina atualizada com sucesso",
+          description: `A máquina ${serialNumber} foi atualizada.`
+        });
+      } else {
+        // Create new machine
+        const { data, error } = await supabase
+          .from('machines')
+          .insert({
+            serial_number: serialNumber,
+            model: model,
+            status: status,
+            notes: notes
+          })
+          .select();
+        
+        if (error) {
+          throw error;
+        }
+        
+        toast({
+          title: "Máquina cadastrada com sucesso",
+          description: `A máquina ${serialNumber} foi adicionada ao sistema.`
+        });
       }
-      
-      toast({
-        title: "Máquina cadastrada com sucesso",
-        description: `A máquina ${serialNumber} foi adicionada ao sistema.`
-      });
       
       resetForm();
       onOpenChange(false);
@@ -85,8 +120,8 @@ const CreateMachineDialog = ({ open, onOpenChange, onSuccess }: CreateMachineDia
       console.error("Error saving machine:", error);
       
       toast({
-        title: "Erro ao cadastrar máquina",
-        description: error.message || "Ocorreu um erro ao cadastrar a máquina.",
+        title: machine?.id ? "Erro ao atualizar máquina" : "Erro ao cadastrar máquina",
+        description: error.message || "Ocorreu um erro ao processar a operação.",
         variant: "destructive"
       });
     } finally {
@@ -98,7 +133,7 @@ const CreateMachineDialog = ({ open, onOpenChange, onSuccess }: CreateMachineDia
     <Dialog open={open} onOpenChange={handleClose}>
       <DialogContent className="sm:max-w-[500px]">
         <DialogHeader>
-          <DialogTitle>Nova Máquina</DialogTitle>
+          <DialogTitle>{machine?.id ? "Editar Máquina" : "Nova Máquina"}</DialogTitle>
         </DialogHeader>
         
         <form onSubmit={onSubmit} className="space-y-4">
@@ -169,7 +204,7 @@ const CreateMachineDialog = ({ open, onOpenChange, onSuccess }: CreateMachineDia
               Cancelar
             </Button>
             <Button type="submit" disabled={isSubmitting}>
-              {isSubmitting ? "Salvando..." : "Salvar"}
+              {isSubmitting ? "Salvando..." : (machine?.id ? "Atualizar" : "Salvar")}
             </Button>
           </div>
         </form>
