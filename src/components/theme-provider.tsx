@@ -2,6 +2,7 @@
 "use client";
 
 import * as React from "react";
+import { createContext, useContext, useEffect, useState } from "react";
 
 type Theme = "dark" | "light" | "system";
 
@@ -21,7 +22,7 @@ const initialState: ThemeProviderState = {
   setTheme: () => null,
 };
 
-const ThemeProviderContext = React.createContext<ThemeProviderState>(initialState);
+const ThemeProviderContext = createContext<ThemeProviderState>(initialState);
 
 export function ThemeProvider({
   children,
@@ -29,19 +30,18 @@ export function ThemeProvider({
   storageKey = "sigmapay-theme",
   ...props
 }: ThemeProviderProps) {
-  const [theme, setTheme] = React.useState<Theme>(() => {
-    if (typeof window === "undefined") return defaultTheme;
-    
-    try {
-      const storedTheme = window.localStorage.getItem(storageKey);
-      return (storedTheme as Theme) || defaultTheme;
-    } catch (error) {
-      console.error("Error reading from localStorage:", error);
-      return defaultTheme;
+  const [theme, setTheme] = useState<Theme>(defaultTheme);
+  
+  // Initialize theme from localStorage on mount
+  useEffect(() => {
+    const savedTheme = localStorage.getItem(storageKey);
+    if (savedTheme && ["dark", "light", "system"].includes(savedTheme)) {
+      setTheme(savedTheme as Theme);
     }
-  });
+  }, [storageKey]);
 
-  React.useEffect(() => {
+  // Update root classes when theme changes
+  useEffect(() => {
     const root = window.document.documentElement;
     
     root.classList.remove("light", "dark");
@@ -56,7 +56,8 @@ export function ThemeProvider({
     }
   }, [theme]);
 
-  React.useEffect(() => {
+  // Save theme to localStorage
+  useEffect(() => {
     try {
       localStorage.setItem(storageKey, theme);
     } catch (error) {
@@ -65,7 +66,7 @@ export function ThemeProvider({
   }, [theme, storageKey]);
 
   // Listen for system theme changes
-  React.useEffect(() => {
+  useEffect(() => {
     if (theme !== "system") return;
     
     const mediaQuery = window.matchMedia("(prefers-color-scheme: dark)");
@@ -82,13 +83,10 @@ export function ThemeProvider({
     return () => mediaQuery.removeEventListener("change", handleChange);
   }, [theme]);
 
-  const value = React.useMemo(
-    () => ({
-      theme,
-      setTheme,
-    }),
-    [theme]
-  );
+  const value = {
+    theme,
+    setTheme,
+  };
 
   return (
     <ThemeProviderContext.Provider {...props} value={value}>
@@ -97,8 +95,8 @@ export function ThemeProvider({
   );
 }
 
-export const useTheme = () => {
-  const context = React.useContext(ThemeProviderContext);
+export const useTheme = (): ThemeProviderState => {
+  const context = useContext(ThemeProviderContext);
 
   if (context === undefined) {
     throw new Error("useTheme must be used within a ThemeProvider");

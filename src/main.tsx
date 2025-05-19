@@ -32,6 +32,12 @@ function renderApp() {
   }
   
   try {
+    // Check if React is properly initialized to avoid hook errors
+    if (!React || !React.useState) {
+      console.error('React is not properly initialized');
+      return;
+    }
+    
     const root = createRoot(rootElement);
     
     root.render(
@@ -56,10 +62,13 @@ function renderApp() {
   }
 }
 
-// Initialize the app when DOM is ready
+// Initialize the app when DOM is fully ready
 if (document.readyState === 'loading') {
-  document.addEventListener('DOMContentLoaded', renderApp);
+  document.addEventListener('DOMContentLoaded', () => {
+    // Small delay to ensure React is fully initialized
+    setTimeout(renderApp, 10);
+  });
 } else {
   // Small delay to ensure everything is initialized
-  setTimeout(renderApp, 0);
+  setTimeout(renderApp, 10);
 }
