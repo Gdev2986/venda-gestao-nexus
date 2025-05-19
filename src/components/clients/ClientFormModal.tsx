@@ -171,7 +171,7 @@ const ClientFormModal = ({
                     <SelectValue placeholder="Selecione um parceiro" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="">Nenhum</SelectItem>
+                    <SelectItem value="none">Nenhum</SelectItem>
                     {availablePartners.map((partner) => (
                       <SelectItem key={partner.id} value={partner.id}>
                         {partner.company_name}
