@@ -1,5 +1,5 @@
 
-import React from 'react';
+import * as React from 'react';
 import { createRoot } from 'react-dom/client';
 import { BrowserRouter } from 'react-router-dom';
 import { AuthProvider } from '@/contexts/AuthContext';
@@ -18,6 +18,9 @@ const queryClient = new QueryClient({
     },
   },
 });
+
+// Make sure React is defined in the global scope
+window.React = React;
 
 // Robust initialization function that handles various DOM loading states
 function initializeApp() {
@@ -38,11 +41,11 @@ function initializeApp() {
         <BrowserRouter>
           <QueryClientProvider client={queryClient}>
             <AuthProvider>
-              <NotificationsProvider>
-                <ThemeProvider defaultTheme="light" storageKey="sigmapay-theme">
+              <ThemeProvider defaultTheme="light" storageKey="sigmapay-theme">
+                <NotificationsProvider>
                   <App />
-                </ThemeProvider>
-              </NotificationsProvider>
+                </NotificationsProvider>
+              </ThemeProvider>
             </AuthProvider>
           </QueryClientProvider>
         </BrowserRouter>
@@ -61,5 +64,5 @@ if (document.readyState === 'loading') {
   document.addEventListener('DOMContentLoaded', initializeApp);
 } else {
   // DOM already loaded, initialize immediately
-  initializeApp();
+  setTimeout(initializeApp, 0);
 }
