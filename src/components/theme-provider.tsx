@@ -29,27 +29,25 @@ export function ThemeProvider({
   storageKey = "ui-theme",
   ...props
 }: ThemeProviderProps) {
-  const [theme, setTheme] = React.useState<Theme>(defaultTheme);
+  const [theme, setTheme] = React.useState<Theme>(
+    defaultTheme
+  );
 
-  // Only access localStorage on the client side
+  // First effect: Load theme from localStorage
   React.useEffect(() => {
-    const root = window.document.documentElement;
-    
-    // First load - check localStorage
     try {
-      const savedTheme = localStorage.getItem(storageKey) as Theme | null;
-      if (savedTheme && (savedTheme === "dark" || savedTheme === "light" || savedTheme === "system")) {
-        setTheme(savedTheme);
+      const storedTheme = localStorage.getItem(storageKey) as Theme | null;
+      if (storedTheme && ["dark", "light", "system"].includes(storedTheme)) {
+        setTheme(storedTheme);
       }
-    } catch (e) {
-      console.error("Error accessing localStorage:", e);
+    } catch (error) {
+      console.error("Error reading from localStorage:", error);
     }
   }, [storageKey]);
 
-  // Apply theme to document
+  // Second effect: Apply theme to document
   React.useEffect(() => {
     const root = window.document.documentElement;
-    
     root.classList.remove("light", "dark");
 
     if (theme === "system") {
@@ -57,7 +55,6 @@ export function ThemeProvider({
         .matches
         ? "dark"
         : "light";
-
       root.classList.add(systemTheme);
       return;
     }
@@ -65,17 +62,20 @@ export function ThemeProvider({
     root.classList.add(theme);
   }, [theme]);
 
-  const value = {
-    theme,
-    setTheme: (newTheme: Theme) => {
-      try {
-        localStorage.setItem(storageKey, newTheme);
-      } catch (e) {
-        console.error("Error writing to localStorage:", e);
-      }
-      setTheme(newTheme);
-    },
-  };
+  const value = React.useMemo(
+    () => ({
+      theme,
+      setTheme: (newTheme: Theme) => {
+        try {
+          localStorage.setItem(storageKey, newTheme);
+        } catch (error) {
+          console.error("Error writing to localStorage:", error);
+        }
+        setTheme(newTheme);
+      },
+    }),
+    [theme, storageKey]
+  );
 
   return (
     <ThemeProviderContext.Provider {...props} value={value}>

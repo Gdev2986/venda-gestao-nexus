@@ -1,3 +1,3 @@
 
-// Re-export the useNotifications hook and provider from the NotificationsContext
-export { useNotifications, NotificationsProvider } from "@/contexts/NotificationsContext";
+// Re-export the useNotifications hook and NotificationsProvider from the NotificationsContext
+export { useNotifications } from "@/contexts/NotificationsContext";
