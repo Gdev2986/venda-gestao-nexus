@@ -1,3 +1,4 @@
 
 // Re-export the useNotifications hook from the NotificationsContext
-export { useNotifications } from "@/contexts/NotificationsContext";
+import { useNotifications } from "@/contexts/NotificationsContext";
+export { useNotifications };

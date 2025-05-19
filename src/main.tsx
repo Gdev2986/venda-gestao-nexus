@@ -1,4 +1,5 @@
 
+import React from 'react';
 import { createRoot } from 'react-dom/client';
 import { BrowserRouter } from 'react-router-dom';
 import { AuthProvider } from '@/contexts/AuthContext';
@@ -25,15 +26,17 @@ if (!rootElement) throw new Error('Root element not found');
 const root = createRoot(rootElement);
 
 root.render(
-  <BrowserRouter>
-    <ThemeProvider defaultTheme="light" storageKey="vite-ui-theme">
-      <QueryClientProvider client={queryClient}>
-        <AuthProvider>
-          <NotificationsProvider>
-            <App />
-          </NotificationsProvider>
-        </AuthProvider>
-      </QueryClientProvider>
-    </ThemeProvider>
-  </BrowserRouter>
+  <React.StrictMode>
+    <BrowserRouter>
+      <ThemeProvider defaultTheme="light" storageKey="vite-ui-theme">
+        <QueryClientProvider client={queryClient}>
+          <AuthProvider>
+            <NotificationsProvider>
+              <App />
+            </NotificationsProvider>
+          </AuthProvider>
+        </QueryClientProvider>
+      </ThemeProvider>
+    </BrowserRouter>
+  </React.StrictMode>
 );
