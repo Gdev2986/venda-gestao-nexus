@@ -1,74 +1,59 @@
 
-import { useState } from 'react';
+import { useState } from "react";
 
-interface AddressData {
-  state: string;
-  city: string;
-  neighborhood?: string;
-  street?: string;
+interface CepData {
+  cep: string;
+  logradouro: string;
+  complemento: string;
+  bairro: string;
+  localidade: string;
+  uf: string;
+  ibge: string;
+  gia: string;
+  ddd: string;
+  siafi: string;
 }
 
-export function useCepLookup() {
+export const useCepLookup = () => {
   const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useState<Error | null>(null);
 
-  const lookupCep = async (cep: string): Promise<AddressData | null> => {
-    if (!cep || cep.replace(/\D/g, '').length !== 8) {
-      setError('CEP inválido');
-      return null;
-    }
-
-    const cleanCep = cep.replace(/\D/g, '');
-    
+  const lookupCep = async (cep: string): Promise<CepData | null> => {
     setIsLoading(true);
     setError(null);
     
     try {
-      // First try BrasilAPI
-      const response = await fetch(`https://brasilapi.com.br/api/cep/v1/${cleanCep}`);
+      // Format CEP to remove any non-number characters
+      const formattedCep = cep.replace(/\D/g, '');
+      
+      if (formattedCep.length !== 8) {
+        throw new Error('CEP inválido. O CEP deve conter 8 dígitos.');
+      }
+      
+      const response = await fetch(`https://viacep.com.br/ws/${formattedCep}/json/`);
       
       if (!response.ok) {
-        throw new Error('Erro ao consultar CEP');
+        throw new Error('Falha ao buscar o CEP.');
       }
       
       const data = await response.json();
       
-      return {
-        state: data.state,
-        city: data.city,
-        neighborhood: data.neighborhood,
-        street: data.street
-      };
-    } catch (err) {
-      // Try ViaCEP as fallback
-      try {
-        const viaCepResponse = await fetch(`https://viacep.com.br/ws/${cleanCep}/json/`);
-        
-        if (!viaCepResponse.ok) {
-          throw new Error('Erro ao consultar CEP');
-        }
-        
-        const viaCepData = await viaCepResponse.json();  // Fixed this line, was using response instead of viaCepResponse
-        
-        if (viaCepData.erro) {
-          throw new Error('CEP não encontrado');
-        }
-        
-        return {
-          state: viaCepData.uf,
-          city: viaCepData.localidade,
-          neighborhood: viaCepData.bairro,
-          street: viaCepData.logradouro
-        };
-      } catch (fallbackErr) {
-        console.error('Erro na consulta do CEP:', fallbackErr);
-        setError('Não foi possível consultar o CEP. Preencha os campos manualmente.');
-        return null;
+      if (data.erro) {
+        throw new Error('CEP não encontrado.');
       }
+      
+      return data;
+    } catch (err) {
+      setError(err instanceof Error ? err : new Error('Erro desconhecido ao buscar o CEP'));
+      return null;
     } finally {
       setIsLoading(false);
     }
   };
 
-  return { lookupCep, isLoading, error };
-}
+  return {
+    lookupCep,
+    isLoading,
+    error
+  };
+};
