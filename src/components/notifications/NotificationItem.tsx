@@ -2,7 +2,17 @@
 import { motion } from "framer-motion";
 import { formatDistanceToNow } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import { ShoppingCart, CreditCard, Wrench, LifeBuoy, Bell, Trash2 } from "lucide-react";
+import { 
+  ShoppingCart, 
+  CreditCard, 
+  Wrench, 
+  LifeBuoy, 
+  Bell, 
+  Trash2, 
+  MessageSquare,
+  Box,
+  TruckIcon
+} from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Notification, NotificationType } from "@/types/notification.types";
 import { DropdownMenuItem, DropdownMenuSeparator } from "@/components/ui/dropdown-menu";
@@ -22,11 +32,21 @@ export const NotificationItem = ({ notification, onMarkAsRead, onDelete }: Notif
       case NotificationType.PAYMENT:
         return <CreditCard className="h-4 w-4 text-primary" />;
       case NotificationType.MACHINE:
-        return <Wrench className="h-4 w-4 text-primary" />;
+        return <Box className="h-4 w-4 text-primary" />;
       case NotificationType.SUPPORT:
         return <LifeBuoy className="h-4 w-4 text-primary" />;
-      default:
+      case NotificationType.GENERAL:
         return <Bell className="h-4 w-4 text-primary" />;
+      case NotificationType.COMMISSION:
+        return <CreditCard className="h-4 w-4 text-primary" />;
+      case NotificationType.BALANCE:
+        return <CreditCard className="h-4 w-4 text-primary" />;
+      case NotificationType.ADMIN_NOTIFICATION:
+        return <Bell className="h-4 w-4 text-primary" />;
+      case NotificationType.LOGISTICS:
+        return <TruckIcon className="h-4 w-4 text-primary" />;
+      default:
+        return <MessageSquare className="h-4 w-4 text-primary" />;
     }
   };
 

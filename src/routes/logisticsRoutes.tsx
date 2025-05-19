@@ -15,6 +15,7 @@ import Operations from "../pages/logistics/Operations";
 import LogisticsRequests from "../pages/logistics/Requests";
 import LogisticsInventory from "../pages/logistics/Inventory";
 import LogisticsMachines from "../pages/logistics/Machines";
+import LogisticsReports from "../pages/logistics/Reports";
 import NewMachine from "../pages/machines/NewMachine";
 import MachineDetails from "../pages/machines/MachineDetails";
 import Clients from "../pages/clients/Clients";
@@ -56,6 +57,11 @@ export const LogisticsRoutes = (
       <Route 
         path={PATHS.LOGISTICS.REQUESTS} 
         element={<LogisticsRequests />} 
+      />
+      
+      <Route 
+        path={PATHS.LOGISTICS.REPORTS} 
+        element={<LogisticsReports />} 
       />
       
       <Route 

@@ -1,5 +1,5 @@
 
-import { LayoutDashboard, Truck, MessageSquare, Box, Building2, Settings } from "lucide-react";
+import { LayoutDashboard, Truck, MessageSquare, Box, Building2, Settings, FileText } from "lucide-react";
 import { SidebarItem } from "../types";
 import { UserRole } from "@/types";
 import { PATHS } from "@/routes/paths";
@@ -27,6 +27,12 @@ export const logisticsItems: SidebarItem[] = [
     title: "Solicitações e Suporte",
     icon: MessageSquare,
     href: PATHS.LOGISTICS.REQUESTS,
+    roles: [UserRole.LOGISTICS, UserRole.ADMIN],
+  },
+  {
+    title: "Relatórios",
+    icon: FileText,
+    href: PATHS.LOGISTICS.REPORTS,
     roles: [UserRole.LOGISTICS, UserRole.ADMIN],
   },
   {

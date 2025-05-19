@@ -12,6 +12,7 @@ export const notificationSounds = {
   [NotificationType.SALE]: "/sounds/notification-sale.mp3",
   [NotificationType.SUPPORT]: "/sounds/notification-support.mp3",
   [NotificationType.ADMIN_NOTIFICATION]: "/sounds/notification-admin.mp3",
+  [NotificationType.LOGISTICS]: "/sounds/notification-logistics.mp3",
 };
 
 // Default sound fallback if type doesn't match

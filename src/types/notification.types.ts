@@ -8,7 +8,8 @@ export enum NotificationType {
   GENERAL = "GENERAL",
   SALE = "SALE",
   SUPPORT = "SUPPORT",
-  ADMIN_NOTIFICATION = "ADMIN_NOTIFICATION"
+  ADMIN_NOTIFICATION = "ADMIN_NOTIFICATION",
+  LOGISTICS = "LOGISTICS"
 }
 
 export interface Notification {
