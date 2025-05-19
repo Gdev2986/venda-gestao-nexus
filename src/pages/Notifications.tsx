@@ -25,6 +25,24 @@ const Notifications = () => {
     refreshNotifications();
   }, [refreshNotifications]);
 
+  // Filter notifications based on current filters
+  const filteredNotifications = notifications.filter(notification => {
+    // Filter by type
+    if (typeFilter !== 'all' && notification.type.toLowerCase() !== typeFilter.toLowerCase()) {
+      return false;
+    }
+    
+    // Filter by status
+    if (statusFilter === 'read' && !notification.is_read) {
+      return false;
+    }
+    if (statusFilter === 'unread' && notification.is_read) {
+      return false;
+    }
+    
+    return true;
+  });
+
   return (
     <div className="container py-6">
       <PageHeader
@@ -49,7 +67,7 @@ const Notifications = () => {
           </CardHeader>
           <CardContent>
             <NotificationList 
-              notifications={notifications}
+              notifications={filteredNotifications}
               onMarkAsRead={markAsRead}
               isLoading={isLoading}
               onDelete={deleteNotification}

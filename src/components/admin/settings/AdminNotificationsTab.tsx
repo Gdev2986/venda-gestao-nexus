@@ -128,12 +128,12 @@ const AdminNotificationsTab = () => {
         throw new Error("No admin users found");
       }
       
-      // Insert test notification for all admins - Fix: Using specific string literal for type
+      // Insert test notification for all admins - Make sure to use a valid literal type
       const testNotifications = adminProfiles.map(profile => ({
         user_id: profile.id,
         title: "Notificação de Teste",
         message: "Esta é uma notificação de teste do painel de administração.",
-        type: "SYSTEM" as const, // Using a string literal instead of enum
+        type: "SYSTEM" as const, // Use string literal with "as const" to satisfy TypeScript
         data: { isTest: true }
       }));
       

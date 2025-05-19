@@ -158,9 +158,6 @@ export const SendNotificationForm = ({ onSendNotification }: SendNotificationFor
               <SelectContent>
                 <SelectItem value={NotificationType.SYSTEM}>Sistema</SelectItem>
                 <SelectItem value={NotificationType.PAYMENT}>Pagamento</SelectItem>
-                <SelectItem value={NotificationType.PAYMENT_REQUEST}>Solicitação de Pagamento</SelectItem>
-                <SelectItem value={NotificationType.PAYMENT_APPROVED}>Pagamento Aprovado</SelectItem>
-                <SelectItem value={NotificationType.PAYMENT_REJECTED}>Pagamento Rejeitado</SelectItem>
                 <SelectItem value={NotificationType.MACHINE}>Máquinas</SelectItem>
                 <SelectItem value={NotificationType.GENERAL}>Geral</SelectItem>
                 <SelectItem value={NotificationType.SUPPORT}>Suporte</SelectItem>

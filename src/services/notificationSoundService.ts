@@ -5,9 +5,6 @@ import { NotificationType } from "@/types/notification.types";
 export const notificationSounds = {
   [NotificationType.SYSTEM]: "/sounds/notification-system.mp3",
   [NotificationType.PAYMENT]: "/sounds/notification-payment.mp3",
-  [NotificationType.PAYMENT_REQUEST]: "/sounds/notification-payment-request.mp3",
-  [NotificationType.PAYMENT_APPROVED]: "/sounds/notification-payment-approved.mp3",
-  [NotificationType.PAYMENT_REJECTED]: "/sounds/notification-payment-rejected.mp3",
   [NotificationType.BALANCE]: "/sounds/notification-balance.mp3",
   [NotificationType.MACHINE]: "/sounds/notification-machine.mp3",
   [NotificationType.COMMISSION]: "/sounds/notification-commission.mp3",

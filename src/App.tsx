@@ -19,6 +19,7 @@ import { LogisticsRoutes } from "./routes/logisticsRoutes";
 
 // Layouts
 import RootLayout from "./layouts/RootLayout";
+import MainLayout from "./layouts/MainLayout";
 
 // Pages
 import NotFound from "./pages/NotFound";
@@ -73,8 +74,10 @@ function App() {
       {FinancialRoutes}
       {LogisticsRoutes}
 
-      {/* Shared Routes (accessible by all roles) */}
-      <Route path="/notifications" element={<Notifications />} />
+      {/* Shared Routes (accessible by all roles) - Now using MainLayout */}
+      <Route element={<MainLayout />}>
+        <Route path="/notifications" element={<Notifications />} />
+      </Route>
 
       {/* 404 */}
       <Route path={PATHS.NOT_FOUND} element={<NotFound />} />
