@@ -19,29 +19,37 @@ const queryClient = new QueryClient({
   },
 });
 
-// Wait for the DOM to be fully loaded before rendering
-document.addEventListener('DOMContentLoaded', () => {
+// Ensure DOM is ready before attempting to render
+function initializeApp() {
   const rootElement = document.getElementById('root');
   
-  if (rootElement) {
-    const root = createRoot(rootElement);
-    
-    root.render(
-      <React.StrictMode>
-        <BrowserRouter>
-          <ThemeProvider defaultTheme="light" storageKey="sigmapay-theme">
-            <QueryClientProvider client={queryClient}>
-              <AuthProvider>
-                <NotificationsProvider>
-                  <App />
-                </NotificationsProvider>
-              </AuthProvider>
-            </QueryClientProvider>
-          </ThemeProvider>
-        </BrowserRouter>
-      </React.StrictMode>
-    );
-  } else {
+  if (!rootElement) {
     console.error('Root element not found');
+    return;
   }
-});
+  
+  const root = createRoot(rootElement);
+  
+  root.render(
+    <React.StrictMode>
+      <BrowserRouter>
+        <ThemeProvider defaultTheme="light" storageKey="sigmapay-theme">
+          <QueryClientProvider client={queryClient}>
+            <AuthProvider>
+              <NotificationsProvider>
+                <App />
+              </NotificationsProvider>
+            </AuthProvider>
+          </QueryClientProvider>
+        </ThemeProvider>
+      </BrowserRouter>
+    </React.StrictMode>
+  );
+}
+
+// Ensure DOM is fully loaded
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', initializeApp);
+} else {
+  initializeApp();
+}
