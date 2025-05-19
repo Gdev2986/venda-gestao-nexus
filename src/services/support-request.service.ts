@@ -16,9 +16,9 @@ export async function createSupportRequest(request: SupportRequest): Promise<{ d
       id,
       client_id: request.client_id,
       technician_id: request.technician_id,
-      type: request.type,
-      status: request.status,
-      priority: request.priority,
+      type: request.type as any, // Cast to any to avoid type issues
+      status: request.status as any, // Cast to any to avoid type issues
+      priority: request.priority as any, // Cast to any to avoid type issues
       title: request.title,
       description: request.description,
       scheduled_date: request.scheduled_date,
@@ -108,25 +108,24 @@ async function createRequestNotification(request: SupportRequest, requestId: str
 
     if (logisticsUsers && logisticsUsers.length > 0) {
       // Create notifications for each logistics user
-      const notifications = logisticsUsers.map(user => ({
-        user_id: user.id,
-        title: 'Nova Solicitação Técnica',
-        message: `${request.title} - ${request.priority.toUpperCase()}`,
-        type: NotificationType.SUPPORT,
-        data: { 
-          request_id: requestId,
-          type: request.type,
-          priority: request.priority,
-          client_id: request.client_id
-        },
-        is_read: false,
-        created_at: new Date().toISOString()
-      }));
-
-      // Insert notifications
-      await supabase
-        .from('notifications')
-        .insert(notifications);
+      for (const user of logisticsUsers) {
+        await supabase
+          .from('notifications')
+          .insert({
+            user_id: user.id,
+            title: 'Nova Solicitação Técnica',
+            message: `${request.title} - ${request.priority.toUpperCase()}`,
+            type: NotificationType.SUPPORT,
+            data: { 
+              request_id: requestId,
+              type: request.type,
+              priority: request.priority,
+              client_id: request.client_id
+            },
+            is_read: false,
+            created_at: new Date().toISOString()
+          });
+      }
     }
     
     // Also notify the admin users
@@ -136,24 +135,24 @@ async function createRequestNotification(request: SupportRequest, requestId: str
       .eq('role', 'ADMIN');
       
     if (adminUsers && adminUsers.length > 0) {
-      const notifications = adminUsers.map(user => ({
-        user_id: user.id,
-        title: 'Nova Solicitação Técnica',
-        message: `${request.title} - ${request.priority.toUpperCase()}`,
-        type: NotificationType.ADMIN_NOTIFICATION,
-        data: { 
-          request_id: requestId,
-          type: request.type,
-          priority: request.priority,
-          client_id: request.client_id
-        },
-        is_read: false,
-        created_at: new Date().toISOString()
-      }));
-
-      await supabase
-        .from('notifications')
-        .insert(notifications);
+      for (const user of adminUsers) {
+        await supabase
+          .from('notifications')
+          .insert({
+            user_id: user.id,
+            title: 'Nova Solicitação Técnica',
+            message: `${request.title} - ${request.priority.toUpperCase()}`,
+            type: NotificationType.ADMIN_NOTIFICATION,
+            data: { 
+              request_id: requestId,
+              type: request.type,
+              priority: request.priority,
+              client_id: request.client_id
+            },
+            is_read: false,
+            created_at: new Date().toISOString()
+          });
+      }
     }
   } catch (error) {
     console.error('Error creating notification:', error);

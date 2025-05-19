@@ -1,7 +1,7 @@
 
 import { PieChart, Pie, Cell, ResponsiveContainer, Legend, Tooltip } from "recharts";
 
-interface ChartData {
+export interface ChartData {
   name: string;
   value: number;
   color: string;

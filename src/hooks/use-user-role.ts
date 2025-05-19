@@ -1,17 +1,24 @@
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { UserRole } from "@/types";
 
 export const useUserRole = () => {
-  const { user, userRole: authUserRole, isLoading: authLoading } = useAuth();
+  const { user, profile, isLoading: authLoading } = useAuth();
   const [isRoleLoading, setIsRoleLoading] = useState<boolean>(authLoading);
+  const [userRole, setUserRole] = useState<UserRole | null>(null);
 
-  // We now use the role from the AuthContext directly
-  // which is populated after authentication is confirmed
+  useEffect(() => {
+    if (profile) {
+      setUserRole(profile.role);
+      setIsRoleLoading(false);
+    } else if (!authLoading && !profile) {
+      setIsRoleLoading(false);
+    }
+  }, [profile, authLoading]);
   
   return {
-    userRole: authUserRole,
+    userRole,
     isRoleLoading,
     isLoading: authLoading || isRoleLoading
   };

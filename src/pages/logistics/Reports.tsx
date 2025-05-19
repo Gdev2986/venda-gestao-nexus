@@ -122,11 +122,11 @@ const LogisticsReports = () => {
               <CardContent className="pt-2">
                 <div className="h-80">
                   <RequestsPieChart data={[
-                    { name: 'Instalação', value: 35 },
-                    { name: 'Manutenção', value: 55 },
-                    { name: 'Retirada', value: 15 },
-                    { name: 'Suprimentos', value: 25 },
-                    { name: 'Outros', value: 10 },
+                    { name: 'Instalação', value: 35, color: '#4CAF50' },
+                    { name: 'Manutenção', value: 55, color: '#2196F3' },
+                    { name: 'Retirada', value: 15, color: '#FF5722' },
+                    { name: 'Suprimentos', value: 25, color: '#9C27B0' },
+                    { name: 'Outros', value: 10, color: '#607D8B' },
                   ]} />
                 </div>
               </CardContent>

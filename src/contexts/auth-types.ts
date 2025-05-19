@@ -23,6 +23,7 @@ export interface AuthContextType {
   user: User | null;
   session: Session | null;
   profile: UserProfile | null;
+  userRole: UserRole | null; // Add userRole property
   isLoading: boolean;
   isAuthenticated: boolean;
   signIn: (email: string, password: string) => Promise<{ error: any }>;

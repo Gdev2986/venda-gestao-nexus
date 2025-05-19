@@ -5,6 +5,8 @@ export const PATHS = {
   REGISTER: "/register",
   FORGOT_PASSWORD: "/forgot-password",
   RESET_PASSWORD: "/reset-password",
+  DASHBOARD: "/dashboard", // Add generic dashboard path
+  NOT_FOUND: "/404", // Add not found path
   
   // Admin routes
   ADMIN: {
@@ -29,7 +31,10 @@ export const PATHS = {
     INTEGRATIONS: "/admin/integrations",
     LOGISTICS: "/admin/logistics",
     REQUESTS: "/admin/requests",
-    HELP: "/admin/help"
+    HELP: "/admin/help",
+    USER_MANAGEMENT: "/admin/user-management", // Add missing path
+    FEES: "/admin/fees", // Add missing path
+    SUPPORT: "/admin/support" // Add missing path
   },
   
   // Financial routes
