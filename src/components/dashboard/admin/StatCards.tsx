@@ -1,9 +1,7 @@
-
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { ArrowDown, ArrowUp } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { formatCurrency } from "@/lib/utils";
-
 interface StatCardsProps {
   stats: {
     totalSales: number;
@@ -18,11 +16,12 @@ interface StatCardsProps {
   };
   isLoading: boolean;
 }
-
-const StatCards = ({ stats, isLoading }: StatCardsProps) => {
+const StatCards = ({
+  stats,
+  isLoading
+}: StatCardsProps) => {
   if (isLoading) {
-    return (
-      <div className="grid grid-cols-1 gap-4">
+    return <div className="grid grid-cols-1 gap-4">
         {/* Full width card for Total Sales */}
         <Skeleton className="h-28" />
         
@@ -34,12 +33,9 @@ const StatCards = ({ stats, isLoading }: StatCardsProps) => {
         
         {/* Full width card for Office Commission */}
         <Skeleton className="h-28" />
-      </div>
-    );
+      </div>;
   }
-
-  return (
-    <div className="grid grid-cols-1 gap-4">
+  return <div className="grid grid-cols-1 gap-4">
       {/* Total Sales - Full width */}
       <Card className="col-span-1">
         <CardHeader className="pb-2">
@@ -51,11 +47,7 @@ const StatCards = ({ stats, isLoading }: StatCardsProps) => {
         <CardContent>
           <div className="flex items-center text-sm">
             <div className={`flex items-center ${stats.isGrowthPositive ? 'text-green-500' : 'text-red-500'}`}>
-              {stats.isGrowthPositive ? (
-                <ArrowUp className="h-4 w-4 mr-1" />
-              ) : (
-                <ArrowDown className="h-4 w-4 mr-1" />
-              )}
+              {stats.isGrowthPositive ? <ArrowUp className="h-4 w-4 mr-1" /> : <ArrowDown className="h-4 w-4 mr-1" />}
               <span>{stats.salesGrowth}% em relação ao mês anterior</span>
             </div>
           </div>
@@ -63,8 +55,8 @@ const StatCards = ({ stats, isLoading }: StatCardsProps) => {
       </Card>
       
       {/* Two cards side by side: Gross and Net Sales */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-        <Card>
+      <div className="grid grid-cols-2 gap-3 py-0">
+        <Card className="aspect-square w-full\n">
           <CardHeader className="pb-2">
             <CardDescription>Valor Bruto</CardDescription>
             <CardTitle className="text-xl md:text-2xl font-bold">
@@ -78,7 +70,7 @@ const StatCards = ({ stats, isLoading }: StatCardsProps) => {
           </CardContent>
         </Card>
         
-        <Card>
+        <Card className="aspect-square w-full\n">
           <CardHeader className="pb-2">
             <CardDescription>Valor Líquido</CardDescription>
             <CardTitle className="text-xl md:text-2xl font-bold">
@@ -87,7 +79,7 @@ const StatCards = ({ stats, isLoading }: StatCardsProps) => {
           </CardHeader>
           <CardContent>
             <div className="text-sm text-muted-foreground">
-              Margem de {((stats.netSales / stats.grossSales) * 100).toFixed(1)}%
+              Margem de {(stats.netSales / stats.grossSales * 100).toFixed(1)}%
             </div>
           </CardContent>
         </Card>
@@ -107,8 +99,6 @@ const StatCards = ({ stats, isLoading }: StatCardsProps) => {
           </div>
         </CardContent>
       </Card>
-    </div>
-  );
+    </div>;
 };
-
 export default StatCards;
