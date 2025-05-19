@@ -1,7 +1,7 @@
 
 "use client";
 
-import React from "react";
+import * as React from "react";
 
 type Theme = "dark" | "light" | "system";
 
@@ -29,23 +29,8 @@ export function ThemeProvider({
   storageKey = "ui-theme",
   ...props
 }: ThemeProviderProps) {
-  const [theme, setTheme] = React.useState<Theme>(
-    defaultTheme
-  );
+  const [theme, setTheme] = React.useState<Theme>(defaultTheme);
 
-  // Load theme from localStorage only on client-side
-  React.useEffect(() => {
-    try {
-      const storedTheme = localStorage.getItem(storageKey);
-      if (storedTheme && ["dark", "light", "system"].includes(storedTheme as Theme)) {
-        setTheme(storedTheme as Theme);
-      }
-    } catch (error) {
-      console.error("Error reading from localStorage:", error);
-    }
-  }, [storageKey]);
-
-  // Apply theme to document
   React.useEffect(() => {
     const root = window.document.documentElement;
     root.classList.remove("light", "dark");
@@ -61,6 +46,17 @@ export function ThemeProvider({
 
     root.classList.add(theme);
   }, [theme]);
+
+  React.useEffect(() => {
+    try {
+      const storedTheme = localStorage.getItem(storageKey);
+      if (storedTheme && ["dark", "light", "system"].includes(storedTheme as Theme)) {
+        setTheme(storedTheme as Theme);
+      }
+    } catch (error) {
+      console.error("Error reading from localStorage:", error);
+    }
+  }, [storageKey]);
 
   const value = React.useMemo(
     () => ({
