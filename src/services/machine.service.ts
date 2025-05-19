@@ -1,3 +1,4 @@
+
 import { supabase } from "@/integrations/supabase/client";
 import { 
   Machine, 
@@ -56,7 +57,9 @@ export const getMachines = getAllMachines;
 // Get machines by status
 export const getMachinesByStatus = async (status: MachineStatus): Promise<Machine[]> => {
   try {
-    // We need to use the enum value directly since they now match the database values
+    // Convert enum to string for database query
+    const statusStr = status as string;
+    
     const { data, error } = await supabase
       .from("machines")
       .select(`
@@ -73,7 +76,7 @@ export const getMachinesByStatus = async (status: MachineStatus): Promise<Machin
           business_name
         )
       `)
-      .eq("status", status)
+      .eq("status", statusStr)
       .order("created_at", { ascending: false });
 
     if (error) throw error;
@@ -144,15 +147,15 @@ export const getMachineStats = async (): Promise<MachineStats> => {
 // Create a new machine
 export const createMachine = async (params: MachineCreateParams): Promise<Machine> => {
   try {
-    // Default to STOCK status if not provided - the enum values now match the database
-    const status = params.status || MachineStatus.STOCK;
+    // Default to STOCK status if not provided and convert enum to string
+    const statusStr = (params.status || MachineStatus.STOCK) as string;
     
     const { data, error } = await supabase
       .from("machines")
       .insert({
         serial_number: params.serial_number,
         model: params.model,
-        status: status,
+        status: statusStr,
         client_id: params.client_id,
         notes: params.notes
       })
@@ -184,7 +187,7 @@ export const updateMachine = async (id: string, params: MachineUpdateParams): Pr
     
     if (params.serial_number !== undefined) updateData.serial_number = params.serial_number;
     if (params.model !== undefined) updateData.model = params.model;
-    if (params.status !== undefined) updateData.status = params.status;
+    if (params.status !== undefined) updateData.status = params.status as string;
     if (params.client_id !== undefined) updateData.client_id = params.client_id;
     if (params.notes !== undefined) updateData.notes = params.notes;
     
@@ -268,7 +271,7 @@ export const transferMachine = async (params: MachineTransferParams): Promise<Ma
       .from("machines")
       .update({ 
         client_id: params.to_client_id,
-        status: newStatus
+        status: newStatus as string
       })
       .eq("id", params.machine_id);
 
