@@ -19,7 +19,7 @@ const queryClient = new QueryClient({
   },
 });
 
-// Wait until DOM is fully loaded
+// Initialize app function
 const initializeApp = () => {
   // Get the root element
   const rootElement = document.getElementById("root");
@@ -48,12 +48,13 @@ const initializeApp = () => {
   );
 };
 
-// Ensure the DOM is ready before rendering
-document.addEventListener("DOMContentLoaded", () => {
-  initializeApp();
-});
-
-// If the DOM is already loaded, initialize immediately
-if (document.readyState !== "loading") {
-  initializeApp();
+// Attach event listeners for initialization
+if (typeof window !== 'undefined') {
+  // If document is still loading, wait for it to be ready
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initializeApp);
+  } else {
+    // If already interactive or complete, initialize immediately
+    initializeApp();
+  }
 }

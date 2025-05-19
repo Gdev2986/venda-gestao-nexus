@@ -2,6 +2,7 @@
 "use client";
 
 import * as React from "react";
+import { createContext, useContext, useEffect, useState, useMemo } from "react";
 
 type Theme = "dark" | "light" | "system";
 
@@ -21,7 +22,7 @@ const initialState: ThemeProviderState = {
   setTheme: () => null,
 };
 
-const ThemeProviderContext = React.createContext<ThemeProviderState>(initialState);
+const ThemeProviderContext = createContext<ThemeProviderState>(initialState);
 
 export function ThemeProvider({
   children,
@@ -29,10 +30,10 @@ export function ThemeProvider({
   storageKey = "ui-theme",
   ...props
 }: ThemeProviderProps) {
-  const [theme, setTheme] = React.useState<Theme>(defaultTheme);
+  const [theme, setTheme] = useState<Theme>(defaultTheme);
   
   // Load theme from localStorage on component mount
-  React.useEffect(() => {
+  useEffect(() => {
     if (typeof window === "undefined") return;
     
     try {
@@ -46,7 +47,7 @@ export function ThemeProvider({
   }, [storageKey]);
 
   // Apply theme to document root element
-  React.useEffect(() => {
+  useEffect(() => {
     if (typeof window === "undefined") return;
     
     const root = document.documentElement;
@@ -63,7 +64,7 @@ export function ThemeProvider({
   }, [theme]);
 
   // Save theme to localStorage when it changes
-  React.useEffect(() => {
+  useEffect(() => {
     if (typeof window === "undefined") return;
     
     try {
@@ -73,7 +74,7 @@ export function ThemeProvider({
     }
   }, [theme, storageKey]);
 
-  const value = React.useMemo(
+  const value = useMemo(
     () => ({
       theme,
       setTheme: (newTheme: Theme) => {
@@ -91,7 +92,7 @@ export function ThemeProvider({
 }
 
 export const useTheme = () => {
-  const context = React.useContext(ThemeProviderContext);
+  const context = useContext(ThemeProviderContext);
 
   if (context === undefined)
     throw new Error("useTheme must be used within a ThemeProvider");

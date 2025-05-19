@@ -1,16 +1,22 @@
 
+"use client";
+
 import { Moon, Sun } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useTheme } from "../theme-provider";
 
 const ThemeToggle = () => {
   const { theme, setTheme } = useTheme();
+  
+  const toggleTheme = () => {
+    setTheme(theme === "dark" ? "light" : "dark");
+  };
 
   return (
     <Button
       variant="ghost"
       size="icon"
-      onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
+      onClick={toggleTheme}
       title={theme === "dark" ? "Mudar para modo claro" : "Mudar para modo escuro"}
     >
       {theme === "dark" ? (
