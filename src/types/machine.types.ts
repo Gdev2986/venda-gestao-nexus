@@ -1,11 +1,10 @@
-
 export enum MachineStatus {
-  ACTIVE = "active",
-  INACTIVE = "inactive",
-  MAINTENANCE = "maintenance",
-  BLOCKED = "blocked",
-  TRANSIT = "transit",
-  STOCK = "stock"
+  ACTIVE = "ACTIVE",
+  INACTIVE = "INACTIVE",
+  MAINTENANCE = "MAINTENANCE", 
+  BLOCKED = "BLOCKED",
+  TRANSIT = "TRANSIT",
+  STOCK = "STOCK"
 }
 
 export interface Machine {
