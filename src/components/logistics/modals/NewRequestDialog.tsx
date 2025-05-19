@@ -16,7 +16,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
 import { useMachines } from "@/hooks/logistics/use-machines";
 import { cn } from "@/lib/utils";
-import { TicketType, TicketPriority } from "@/types/support-ticket.types"; // Updated import
+import { TicketType, TicketPriority, TicketStatus, SupportTicket } from "@/types/support-ticket.types"; 
 
 interface NewRequestDialogProps {
   open: boolean;
@@ -32,6 +32,7 @@ const NewRequestDialog = ({ open, onOpenChange, onSuccess }: NewRequestDialogPro
   // Form state
   const [clientId, setClientId] = useState("");
   const [machineId, setMachineId] = useState("");
+  const [title, setTitle] = useState("");
   const [type, setType] = useState<TicketType>(TicketType.MAINTENANCE);
   const [priority, setPriority] = useState<TicketPriority>(TicketPriority.MEDIUM);
   const [description, setDescription] = useState("");
@@ -50,6 +51,7 @@ const NewRequestDialog = ({ open, onOpenChange, onSuccess }: NewRequestDialogPro
   const resetForm = () => {
     setClientId("");
     setMachineId("");
+    setTitle("");
     setType(TicketType.MAINTENANCE);
     setPriority(TicketPriority.MEDIUM);
     setDescription("");
@@ -71,6 +73,10 @@ const NewRequestDialog = ({ open, onOpenChange, onSuccess }: NewRequestDialogPro
     
     if (!clientId) {
       newErrors.clientId = "Selecione um cliente";
+    }
+    
+    if (!title) {
+      newErrors.title = "Digite um título para a solicitação";
     }
     
     if (!type) {
@@ -96,7 +102,21 @@ const NewRequestDialog = ({ open, onOpenChange, onSuccess }: NewRequestDialogPro
     setIsSubmitting(true);
     
     try {
-      // Add mock implementation for now
+      // Create the support request
+      const newRequest: SupportTicket = {
+        client_id: clientId,
+        title: title,
+        type: type,
+        priority: priority,
+        status: TicketStatus.PENDING,
+        description: description,
+        scheduled_date: scheduledDate ? scheduledDate.toISOString() : null,
+      };
+      
+      // Here we would typically save the request to the database
+      console.log('Creating support request:', newRequest);
+      
+      // For now this is a mock - in real implementation it would save to Supabase
       await new Promise(resolve => setTimeout(resolve, 1000));
       
       toast({
@@ -175,6 +195,21 @@ const NewRequestDialog = ({ open, onOpenChange, onSuccess }: NewRequestDialogPro
           )}
           
           <div className="grid grid-cols-1 gap-2">
+            <Label htmlFor="title" className={errors.title ? "text-destructive" : ""}>
+              Título *
+            </Label>
+            <Input
+              id="title"
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
+              className={errors.title ? "border-destructive" : ""}
+            />
+            {errors.title && (
+              <p className="text-xs text-destructive">{errors.title}</p>
+            )}
+          </div>
+          
+          <div className="grid grid-cols-1 gap-2">
             <Label htmlFor="type" className={errors.type ? "text-destructive" : ""}>
               Tipo de Solicitação *
             </Label>
@@ -190,7 +225,6 @@ const NewRequestDialog = ({ open, onOpenChange, onSuccess }: NewRequestDialogPro
                 <SelectItem value={TicketType.MAINTENANCE}>Manutenção</SelectItem>
                 <SelectItem value={TicketType.REMOVAL}>Retirada</SelectItem>
                 <SelectItem value={TicketType.REPLACEMENT}>Substituição</SelectItem>
-                <SelectItem value={TicketType.PAPER}>Bobina</SelectItem>
                 <SelectItem value={TicketType.SUPPLIES}>Suprimentos</SelectItem>
                 <SelectItem value={TicketType.OTHER}>Outro</SelectItem>
               </SelectContent>

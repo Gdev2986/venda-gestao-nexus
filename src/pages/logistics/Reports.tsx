@@ -1,141 +1,159 @@
 
-import React, { useState } from "react";
+import { useState } from "react";
 import { PageHeader } from "@/components/page/PageHeader";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import RequestsReportView from "@/components/logistics/reports/RequestsReportView";
-import { 
-  Breadcrumb,
-  BreadcrumbItem,
-  BreadcrumbLink,
-  BreadcrumbList,
-  BreadcrumbPage,
-  BreadcrumbSeparator,
-} from "@/components/ui/breadcrumb";
-import { PATHS } from "@/routes/paths";
-import { useMediaQuery } from "@/hooks/use-media-query";
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Calendar as CalendarIcon, Download, Filter } from "lucide-react";
+import { DateRange } from "react-day-picker";
+import { format } from "date-fns";
+import { ptBR } from 'date-fns/locale';
+import { Calendar } from "@/components/ui/calendar";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { cn } from "@/lib/utils";
+import SLAReport from "@/components/logistics/reports/SLAReport";
+import RequestsPieChart from "@/components/logistics/reports/RequestsPieChart";
+import RequestsDataTable from "@/components/logistics/reports/RequestsDataTable";
 
 const LogisticsReports = () => {
-  const [activeTab, setActiveTab] = useState<string>("requests");
-  const isMobile = useMediaQuery("(max-width: 768px)");
+  const [date, setDate] = useState<DateRange | undefined>({
+    from: new Date(new Date().setDate(new Date().getDate() - 30)),
+    to: new Date(),
+  });
 
-  // Mock data for Machine Status Report
-  const machineStatusData = [
-    { status: "Em Operação", count: 45 },
-    { status: "Manutenção", count: 12 },
-    { status: "Estoque", count: 18 },
-    { status: "Em Trânsito", count: 5 },
-    { status: "Inativa", count: 3 }
-  ];
+  const [reportType, setReportType] = useState<string>("performance");
+  const [activeTab, setActiveTab] = useState<string>("graphs");
 
-  // Mock data for Support Trends Report
-  const supportTrendsData = [
-    { month: "Jan", installation: 10, maintenance: 15, removal: 5 },
-    { month: "Fev", installation: 12, maintenance: 18, removal: 6 },
-    { month: "Mar", installation: 15, maintenance: 12, removal: 8 },
-    { month: "Abr", installation: 8, maintenance: 17, removal: 9 },
-    { month: "Mai", installation: 14, maintenance: 20, removal: 7 }
-  ];
+  const handleExportReport = () => {
+    // Implementation for exporting reports would go here
+    console.log("Exporting report", { reportType, date });
+    // In a real implementation, this would generate and download a CSV or PDF
+    alert("Exportação de relatórios será implementada em breve.");
+  };
 
   return (
-    <div className="space-y-4">
-      <div className="flex flex-col space-y-2">
-        <Breadcrumb>
-          <BreadcrumbList>
-            <BreadcrumbItem>
-              <BreadcrumbLink href={PATHS.LOGISTICS.DASHBOARD}>Dashboard</BreadcrumbLink>
-            </BreadcrumbItem>
-            <BreadcrumbSeparator />
-            <BreadcrumbPage>Relatórios</BreadcrumbPage>
-          </BreadcrumbList>
-        </Breadcrumb>
-        
-        <PageHeader 
-          title="Relatórios de Logística" 
-          description="Análise e visualização de dados operacionais"
-        />
+    <div className="space-y-6">
+      <PageHeader 
+        title="Relatórios de Logística" 
+        description="Análise e exportação de dados operacionais"
+      />
+
+      <div className="flex flex-col md:flex-row gap-4 md:items-center justify-between">
+        <div className="flex flex-col sm:flex-row gap-4">
+          <Popover>
+            <PopoverTrigger asChild>
+              <Button
+                id="date"
+                variant={"outline"}
+                className={cn(
+                  "justify-start text-left font-normal w-full sm:w-[300px]",
+                  !date && "text-muted-foreground"
+                )}
+              >
+                <CalendarIcon className="mr-2 h-4 w-4" />
+                {date?.from ? (
+                  date.to ? (
+                    <>
+                      {format(date.from, "dd/MM/yyyy", { locale: ptBR })} -{" "}
+                      {format(date.to, "dd/MM/yyyy", { locale: ptBR })}
+                    </>
+                  ) : (
+                    format(date.from, "dd/MM/yyyy", { locale: ptBR })
+                  )
+                ) : (
+                  <span>Selecione o período</span>
+                )}
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent className="w-auto p-0" align="start">
+              <Calendar
+                initialFocus
+                mode="range"
+                defaultMonth={date?.from}
+                selected={date}
+                onSelect={setDate}
+                numberOfMonths={2}
+                locale={ptBR}
+              />
+            </PopoverContent>
+          </Popover>
+          
+          <div className="grid gap-2">
+            <Label htmlFor="report-type">Tipo de Relatório</Label>
+            <Select value={reportType} onValueChange={setReportType}>
+              <SelectTrigger id="report-type" className="w-full sm:w-[200px]">
+                <SelectValue placeholder="Selecione o tipo" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="performance">Desempenho</SelectItem>
+                <SelectItem value="requests">Solicitações</SelectItem>
+                <SelectItem value="technicians">Técnicos</SelectItem>
+                <SelectItem value="machines">Máquinas</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+        </div>
+
+        <Button onClick={handleExportReport}>
+          <Download className="w-4 h-4 mr-2" />
+          Exportar Relatório
+        </Button>
       </div>
-      
-      <Tabs defaultValue="requests" value={activeTab} onValueChange={setActiveTab}>
+
+      <Tabs value={activeTab} onValueChange={setActiveTab}>
         <TabsList>
-          <TabsTrigger value="requests">Solicitações</TabsTrigger>
-          <TabsTrigger value="machines">Máquinas</TabsTrigger>
-          <TabsTrigger value="performance">Performance</TabsTrigger>
+          <TabsTrigger value="graphs">Gráficos</TabsTrigger>
+          <TabsTrigger value="table">Tabela de Dados</TabsTrigger>
         </TabsList>
         
-        <TabsContent value="requests" className="pt-4 space-y-4">
-          <RequestsReportView />
+        <TabsContent value="graphs" className="pt-4 space-y-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center justify-between">
+                  <span>Solicitações por Tipo</span>
+                  <Button variant="outline" size="icon">
+                    <Filter className="w-4 h-4" />
+                  </Button>
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="pt-2">
+                <div className="h-80">
+                  <RequestsPieChart data={[
+                    { name: 'Instalação', value: 35 },
+                    { name: 'Manutenção', value: 55 },
+                    { name: 'Retirada', value: 15 },
+                    { name: 'Suprimentos', value: 25 },
+                    { name: 'Outros', value: 10 },
+                  ]} />
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center justify-between">
+                  <span>Tempo Médio de Resolução (SLA)</span>
+                  <Button variant="outline" size="icon">
+                    <Filter className="w-4 h-4" />
+                  </Button>
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="pt-2">
+                <div className="h-80">
+                  <SLAReport />
+                </div>
+              </CardContent>
+            </Card>
+          </div>
         </TabsContent>
         
-        <TabsContent value="machines" className="pt-4 space-y-4">
+        <TabsContent value="table" className="pt-4">
           <Card>
-            <CardHeader>
-              <CardTitle>Status das Máquinas</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="h-80">
-                <ResponsiveContainer width="100%" height="100%">
-                  <BarChart
-                    data={machineStatusData}
-                    margin={{ top: 10, right: 30, left: 0, bottom: 20 }}
-                  >
-                    <CartesianGrid strokeDasharray="3 3" />
-                    <XAxis dataKey="status" />
-                    <YAxis />
-                    <Tooltip />
-                    <Bar dataKey="count" fill="#8884d8" />
-                  </BarChart>
-                </ResponsiveContainer>
-              </div>
-            </CardContent>
-          </Card>
-          
-          <Card>
-            <CardHeader>
-              <CardTitle>Distribuição por Clientes</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p className="text-center text-muted-foreground py-4">
-                Conecte-se ao banco de dados para visualizar dados reais de distribuição de máquinas por clientes.
-              </p>
-            </CardContent>
-          </Card>
-        </TabsContent>
-        
-        <TabsContent value="performance" className="pt-4 space-y-4">
-          <Card>
-            <CardHeader>
-              <CardTitle>Tendências de Suporte</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="h-80">
-                <ResponsiveContainer width="100%" height="100%">
-                  <BarChart
-                    data={supportTrendsData}
-                    margin={{ top: 10, right: 30, left: 0, bottom: 20 }}
-                  >
-                    <CartesianGrid strokeDasharray="3 3" />
-                    <XAxis dataKey="month" />
-                    <YAxis />
-                    <Tooltip />
-                    <Bar dataKey="installation" name="Instalação" fill="#8884d8" />
-                    <Bar dataKey="maintenance" name="Manutenção" fill="#82ca9d" />
-                    <Bar dataKey="removal" name="Retirada" fill="#ffc658" />
-                  </BarChart>
-                </ResponsiveContainer>
-              </div>
-            </CardContent>
-          </Card>
-          
-          <Card>
-            <CardHeader>
-              <CardTitle>Performance de Atendimento</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p className="text-center text-muted-foreground py-4">
-                Conecte-se ao banco de dados para visualizar dados reais de performance de atendimento.
-              </p>
+            <CardContent className="p-6">
+              <RequestsDataTable />
             </CardContent>
           </Card>
         </TabsContent>

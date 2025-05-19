@@ -2,30 +2,27 @@
 import { supabase } from "@/integrations/supabase/client";
 import { generateUuid } from "@/lib/supabase-utils";
 import { NotificationType } from "@/types/notification.types";
+import { TicketType, TicketPriority, TicketStatus, SupportTicket } from "@/types/support-ticket.types";
 
-export interface SupportRequest {
-  id?: string;
-  client_id: string;
-  technician_id?: string;
-  type: string;
-  status: string;
-  priority: string;
-  title: string;
-  description: string;
-  scheduled_date?: string | null;
-  resolution?: string | null;
-  created_at?: string;
-  updated_at?: string;
-}
+export type SupportRequest = SupportTicket;
 
 export async function createSupportRequest(request: SupportRequest): Promise<{ data: any, error: any }> {
   const id = await generateUuid();
   
+  // Need to use explicit typing for the insert due to database schema changes
   const { data, error } = await supabase
     .from('support_requests')
     .insert({
       id,
-      ...request,
+      client_id: request.client_id,
+      technician_id: request.technician_id,
+      type: request.type,
+      status: request.status,
+      priority: request.priority,
+      title: request.title,
+      description: request.description,
+      scheduled_date: request.scheduled_date,
+      resolution: request.resolution,
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString()
     })

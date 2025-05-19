@@ -30,7 +30,6 @@ import {
   Search, 
   Edit, 
   Calendar, 
-  Trash2, 
   CheckCircle, 
   XCircle 
 } from "lucide-react";
@@ -39,6 +38,7 @@ import { useDialog } from "@/hooks/use-dialog";
 import { Spinner } from "@/components/ui/spinner";
 import { formatDate } from "@/components/payments/PaymentTableColumns";
 import { Badge } from "@/components/ui/badge";
+import { SupportTicket, TicketStatus } from "@/types/support-ticket.types";
 
 interface SupportRequestStatusProps {
   status: string;
@@ -128,9 +128,9 @@ const ServiceList = () => {
     initialFetch: true 
   });
 
-  const serviceDetailsDialog = useDialog();
-  const serviceEditDialog = useDialog();
-  const scheduleDialog = useDialog();
+  const serviceDetailsDialog = useDialog<SupportTicket>();
+  const serviceEditDialog = useDialog<SupportTicket>();
+  const scheduleDialog = useDialog<SupportTicket>();
   
   // Filter requests based on selected filters and search term
   const filteredRequests = requests.filter(request => {
@@ -154,7 +154,7 @@ const ServiceList = () => {
   
   // Handle status change
   const handleStatusChange = async (requestId: string, newStatus: string) => {
-    await updateRequest(requestId, { status: newStatus });
+    await updateRequest(requestId, { status: newStatus as TicketStatus });
   };
   
   if (isLoading) {

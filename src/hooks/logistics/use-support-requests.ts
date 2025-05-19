@@ -10,6 +10,8 @@ import {
   getSupportRequests
 } from "@/services/support-request.service";
 import { UserRole } from "@/types";
+import { playNotificationSoundIfEnabled } from "@/services/notificationSoundService";
+import { NotificationType } from "@/types/notification.types";
 
 interface UseSupportRequestsOptions {
   enableRealtime?: boolean;
@@ -105,6 +107,9 @@ export function useSupportRequests(options: UseSupportRequestsOptions = {}) {
               description: 'Uma nova solicitação técnica foi criada',
               variant: 'default',
             });
+            
+            // Play notification sound
+            playNotificationSoundIfEnabled(NotificationType.SUPPORT);
           }
         }
       )

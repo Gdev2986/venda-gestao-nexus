@@ -1,73 +1,53 @@
 
-export enum TicketStatus {
-  OPEN = "OPEN",
-  IN_PROGRESS = "IN_PROGRESS",
-  RESOLVED = "RESOLVED",
-  CLOSED = "CLOSED",
-  PENDING = "PENDING",
-  COMPLETED = "COMPLETED",
-  CANCELED = "CANCELED"
+export enum TicketType {
+  INSTALLATION = "INSTALLATION",
+  MAINTENANCE = "MAINTENANCE",
+  REPLACEMENT = "REPLACEMENT",
+  SUPPLIES = "SUPPLIES",
+  REMOVAL = "REMOVAL",
+  OTHER = "OTHER"
 }
 
 export enum TicketPriority {
   LOW = "LOW",
   MEDIUM = "MEDIUM",
-  HIGH = "HIGH",
-  URGENT = "URGENT"
+  HIGH = "HIGH"
 }
 
-export enum TicketType {
-  TECHNICAL = "TECHNICAL",
-  BILLING = "BILLING",
-  GENERAL = "GENERAL",
-  FEATURE = "FEATURE",
-  BUG = "BUG",
-  MAINTENANCE = "MAINTENANCE",
-  INSTALLATION = "INSTALLATION",
-  REMOVAL = "REMOVAL",
-  REPLACEMENT = "REPLACEMENT",
-  PAPER = "PAPER",
-  SUPPLIES = "SUPPLIES",
-  OTHER = "OTHER"
+export enum TicketStatus {
+  PENDING = "PENDING",
+  IN_PROGRESS = "IN_PROGRESS",
+  COMPLETED = "COMPLETED",
+  CANCELED = "CANCELED"
 }
 
 export interface SupportTicket {
-  id: string;
-  title: string;
-  description: string;
+  id?: string;
+  client_id: string;
+  technician_id?: string;
+  type: TicketType;
   status: TicketStatus;
   priority: TicketPriority;
-  type: TicketType;
-  user_id: string;
-  assigned_to?: string;
-  created_at: string;
-  updated_at: string;
-  client_id?: string;
-  machine_id?: string;
-  scheduled_date?: string;
+  title: string;
+  description: string;
+  scheduled_date?: string | null;
+  resolution?: string | null;
+  created_at?: string;
+  updated_at?: string;
   client?: {
     id: string;
     business_name: string;
+    contact_name?: string;
+    phone?: string;
+    address?: string;
+    city?: string;
+    state?: string;
+    zip?: string;
   };
-  machine?: {
+  technician?: {
     id: string;
-    serial_number: string;
-    model: string;
+    name: string;
+    email?: string;
+    phone?: string;
   };
-}
-
-export interface CreateSupportTicketParams {
-  title: string;
-  description: string;
-  priority: TicketPriority;
-  type: TicketType;
-}
-
-export interface UpdateSupportTicketParams {
-  title?: string;
-  description?: string;
-  status?: TicketStatus;
-  priority?: TicketPriority;
-  type?: TicketType;
-  assigned_to?: string;
 }

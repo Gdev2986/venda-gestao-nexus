@@ -313,6 +313,48 @@ export type Database = {
           },
         ]
       }
+      notification_history: {
+        Row: {
+          created_at: string | null
+          id: string
+          is_read: boolean | null
+          notification_id: string | null
+          read_at: string | null
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          is_read?: boolean | null
+          notification_id?: string | null
+          read_at?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          is_read?: boolean | null
+          notification_id?: string | null
+          read_at?: string | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "notification_history_notification_id_fkey"
+            columns: ["notification_id"]
+            isOneToOne: false
+            referencedRelation: "notifications"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "notification_history_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       notification_preferences: {
         Row: {
           admin_messages: boolean
@@ -672,6 +714,66 @@ export type Database = {
           },
         ]
       }
+      support_requests: {
+        Row: {
+          client_id: string
+          created_at: string | null
+          description: string
+          id: string
+          priority: Database["public"]["Enums"]["support_request_priority"]
+          resolution: string | null
+          scheduled_date: string | null
+          status: Database["public"]["Enums"]["support_request_status"]
+          technician_id: string | null
+          title: string
+          type: Database["public"]["Enums"]["support_request_type"]
+          updated_at: string | null
+        }
+        Insert: {
+          client_id: string
+          created_at?: string | null
+          description: string
+          id?: string
+          priority: Database["public"]["Enums"]["support_request_priority"]
+          resolution?: string | null
+          scheduled_date?: string | null
+          status?: Database["public"]["Enums"]["support_request_status"]
+          technician_id?: string | null
+          title: string
+          type: Database["public"]["Enums"]["support_request_type"]
+          updated_at?: string | null
+        }
+        Update: {
+          client_id?: string
+          created_at?: string | null
+          description?: string
+          id?: string
+          priority?: Database["public"]["Enums"]["support_request_priority"]
+          resolution?: string | null
+          scheduled_date?: string | null
+          status?: Database["public"]["Enums"]["support_request_status"]
+          technician_id?: string | null
+          title?: string
+          type?: Database["public"]["Enums"]["support_request_type"]
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "support_requests_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "support_requests_technician_id_fkey"
+            columns: ["technician_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       user_client_access: {
         Row: {
           client_id: string
@@ -772,11 +874,25 @@ export type Database = {
         | "GENERAL"
         | "SALE"
         | "SUPPORT"
+        | "LOGISTICS"
       payment_method: "CREDIT" | "DEBIT" | "PIX"
       payment_request_status: "PENDING" | "APPROVED" | "PAID" | "REJECTED"
       payment_status: "PENDING" | "APPROVED" | "REJECTED"
       pix_key_type: "CPF" | "CNPJ" | "EMAIL" | "PHONE" | "RANDOM"
       processing_status: "RAW" | "PROCESSED"
+      support_request_priority: "LOW" | "MEDIUM" | "HIGH"
+      support_request_status:
+        | "PENDING"
+        | "IN_PROGRESS"
+        | "COMPLETED"
+        | "CANCELED"
+      support_request_type:
+        | "INSTALLATION"
+        | "MAINTENANCE"
+        | "REPLACEMENT"
+        | "SUPPLIES"
+        | "REMOVAL"
+        | "OTHER"
       user_role: "ADMIN" | "FINANCIAL" | "PARTNER" | "LOGISTICS" | "CLIENT"
     }
     CompositeTypes: {
@@ -910,12 +1026,28 @@ export const Constants = {
         "GENERAL",
         "SALE",
         "SUPPORT",
+        "LOGISTICS",
       ],
       payment_method: ["CREDIT", "DEBIT", "PIX"],
       payment_request_status: ["PENDING", "APPROVED", "PAID", "REJECTED"],
       payment_status: ["PENDING", "APPROVED", "REJECTED"],
       pix_key_type: ["CPF", "CNPJ", "EMAIL", "PHONE", "RANDOM"],
       processing_status: ["RAW", "PROCESSED"],
+      support_request_priority: ["LOW", "MEDIUM", "HIGH"],
+      support_request_status: [
+        "PENDING",
+        "IN_PROGRESS",
+        "COMPLETED",
+        "CANCELED",
+      ],
+      support_request_type: [
+        "INSTALLATION",
+        "MAINTENANCE",
+        "REPLACEMENT",
+        "SUPPLIES",
+        "REMOVAL",
+        "OTHER",
+      ],
       user_role: ["ADMIN", "FINANCIAL", "PARTNER", "LOGISTICS", "CLIENT"],
     },
   },
