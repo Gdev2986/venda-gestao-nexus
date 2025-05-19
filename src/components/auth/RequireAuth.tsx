@@ -14,20 +14,13 @@ interface RequireAuthProps {
   redirectTo?: string;
 }
 
-// Define route permissions globally
-const routePermissions: Record<string, UserRole[]> = {
-  '/admin': [UserRole.ADMIN],
-  '/financial': [UserRole.ADMIN, UserRole.FINANCIAL],
-  '/logistics': [UserRole.ADMIN, UserRole.LOGISTICS],
-  '/partner': [UserRole.PARTNER],
-  '/user': [UserRole.CLIENT],
-};
-
 const RequireAuth = ({ allowedRoles = [], redirectTo = PATHS.LOGIN }: RequireAuthProps) => {
   const { user, isLoading, isAuthenticated, userRole } = useAuth();
   const location = useLocation();
   const { toast } = useToast();
   const [showLoading, setShowLoading] = useState(true);
+  const [shouldRedirect, setShouldRedirect] = useState(false);
+  const [redirectPath, setRedirectPath] = useState(redirectTo);
   
   // Debug information
   useEffect(() => {
@@ -51,6 +44,51 @@ const RequireAuth = ({ allowedRoles = [], redirectTo = PATHS.LOGIN }: RequireAut
     }
   }, [isLoading]);
 
+  // Check authentication and permissions
+  useEffect(() => {
+    // Only proceed when loading is complete
+    if (!isLoading) {
+      // If not authenticated, redirect to login
+      if (!isAuthenticated || !user) {
+        setShouldRedirect(true);
+        setRedirectPath(PATHS.LOGIN);
+        return;
+      }
+      
+      // If we have a userRole, check permissions
+      if (userRole) {
+        // Check if user has permission to access this route
+        const hasPermission = allowedRoles.length === 0 || allowedRoles.includes(userRole);
+        
+        // If no permission, redirect to appropriate dashboard
+        if (!hasPermission) {
+          console.log(`User with role ${userRole} not allowed to access ${location.pathname}`);
+          
+          toast({
+            title: "Acesso não autorizado",
+            description: "Você não tem permissão para acessar esta página",
+            variant: "destructive",
+          });
+          
+          try {
+            const dashboardPath = getDashboardPath(userRole);
+            setRedirectPath(dashboardPath);
+            setShouldRedirect(true);
+          } catch (error) {
+            console.error("Error getting dashboard path:", error);
+            setRedirectPath(PATHS.LOGIN);
+            setShouldRedirect(true);
+          }
+        }
+      } else if (isAuthenticated && user) {
+        // If authenticated but no role, fetch the role again
+        // This should rarely happen if our AuthContext is working correctly
+        console.log("User is authenticated but missing role, fetching role");
+        // We'll let the AuthContext handle the role fetching
+      }
+    }
+  }, [isLoading, isAuthenticated, user, userRole, allowedRoles, location.pathname, toast]);
+
   // If still loading, show a spinner
   if (isLoading || showLoading) {
     return (
@@ -68,78 +106,17 @@ const RequireAuth = ({ allowedRoles = [], redirectTo = PATHS.LOGIN }: RequireAut
     );
   }
 
-  // If not authenticated and not loading, redirect to login
-  if (!isAuthenticated || !user) {
-    console.log("User not authenticated, redirecting to login from", location.pathname);
-    // Store the current location for redirect after login
-    sessionStorage.setItem("redirectPath", location.pathname);
+  // Handle redirects
+  if (shouldRedirect) {
+    console.log("RequireAuth redirecting to:", redirectPath);
     
-    // Use window.location.href for more reliable mobile redirects
-    window.location.href = PATHS.LOGIN;
-    
-    // Return a loading component while redirecting
-    return (
-      <div className="flex flex-col items-center justify-center h-screen bg-background">
-        <Spinner size="lg" />
-        <p className="mt-4 text-muted-foreground">Redirecionando para login...</p>
-      </div>
-    );
-  }
-
-  // If we have a userRole, check permissions
-  if (userRole) {
-    // Check if user has permission to access this route
-    const hasPermission = allowedRoles.length === 0 || allowedRoles.includes(userRole);
-
-    // If no permission, redirect to appropriate dashboard
-    if (!hasPermission) {
-      console.log(`User with role ${userRole} not allowed to access ${location.pathname}`);
-      
-      toast({
-        title: "Acesso não autorizado",
-        description: "Você não tem permissão para acessar esta página",
-        variant: "destructive",
-      });
-      
-      try {
-        const dashboardPath = getDashboardPath(userRole);
-        
-        // Use window.location.href for more reliable mobile redirects
-        window.location.href = dashboardPath;
-        
-        // Return a loading component while redirecting
-        return (
-          <div className="flex flex-col items-center justify-center h-screen bg-background">
-            <Spinner size="lg" />
-            <p className="mt-4 text-muted-foreground">Redirecionando...</p>
-          </div>
-        );
-      } catch (error) {
-        console.error("Error getting dashboard path:", error);
-        
-        // Fallback to login page
-        window.location.href = PATHS.LOGIN;
-        
-        // Return a loading component while redirecting
-        return (
-          <div className="flex flex-col items-center justify-center h-screen bg-background">
-            <Spinner size="lg" />
-            <p className="mt-4 text-muted-foreground">Redirecionando...</p>
-          </div>
-        );
-      }
+    // Store current path for post-login redirect if going to login
+    if (redirectPath === PATHS.LOGIN) {
+      sessionStorage.setItem("redirectPath", location.pathname);
     }
-  } else {
-    // If no role but authenticated, there's something wrong with the user data
-    console.error("User is authenticated but has no role");
-    toast({
-      title: "Erro de autenticação",
-      description: "Ocorreu um erro ao verificar suas permissões",
-      variant: "destructive",
-    });
     
     // Use window.location.href for more reliable mobile redirects
-    window.location.href = PATHS.LOGIN;
+    window.location.href = redirectPath;
     
     // Return a loading component while redirecting
     return (

@@ -74,7 +74,7 @@ const RootLayout = () => {
     if (redirectPath === PATHS.LOGIN && location.pathname !== PATHS.LOGIN) {
       console.log("Redirecting to login");
       return <Navigate to={PATHS.LOGIN} replace />;
-    } else if (redirectPath !== PATHS.LOGIN) {
+    } else if (redirectPath !== PATHS.LOGIN && location.pathname === PATHS.LOGIN) {
       console.log("Redirecting to dashboard:", redirectPath);
       return <Navigate to={redirectPath} replace />;
     }

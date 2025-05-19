@@ -80,6 +80,12 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       // Normalize the role to match our UserRole enum
       const normalizedRole = profile?.role?.toUpperCase() as UserRole;
       console.log("User role fetched:", normalizedRole);
+      
+      // Store the role in session storage as a fallback
+      if (normalizedRole) {
+        sessionStorage.setItem('userRole', normalizedRole);
+      }
+      
       return normalizedRole;
     } catch (err) {
       console.error("Error in role fetching:", err);
@@ -101,11 +107,18 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
           if (redirectPath) {
             console.log("Redirecting to saved path:", redirectPath);
             sessionStorage.removeItem('redirectPath');
-            navigate(redirectPath);
+            // Use window.location.href for more reliable mobile redirects
+            window.location.href = redirectPath;
           } else {
-            const dashboardPath = PATHS.DASHBOARD; // Will be handled by RootLayout
-            console.log("Redirecting to dashboard:", dashboardPath);
-            navigate(dashboardPath);
+            try {
+              const dashboardPath = PATHS.DASHBOARD; // Will be handled by RootLayout
+              console.log("Redirecting to dashboard:", dashboardPath);
+              // Use window.location.href for more reliable mobile redirects
+              window.location.href = dashboardPath;
+            } catch (error) {
+              console.error("Error getting dashboard path:", error);
+              window.location.href = PATHS.LOGIN;
+            }
           }
         } catch (error) {
           console.error("Error during redirect:", error);
@@ -137,9 +150,19 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         
         // Only fetch user role if we have a user
         if (session?.user) {
-          // Wait for the role to be fetched before finishing loading
+          // Check if we have a cached role first
+          const cachedRole = sessionStorage.getItem('userRole') as UserRole | null;
+          
+          if (cachedRole) {
+            console.log("Using cached role:", cachedRole);
+            setUserRole(cachedRole as UserRole);
+          }
+          
+          // Fetch fresh role data regardless of cache to ensure consistency
           const role = await fetchUserRole(session.user.id);
-          setUserRole(role);
+          if (role) {
+            setUserRole(role);
+          }
         }
         
       } catch (error) {
@@ -173,16 +196,34 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
             // Set loading to true while we fetch the role
             setIsLoading(true);
             
+            // Check if we have a cached role first
+            const cachedRole = sessionStorage.getItem('userRole') as UserRole | null;
+            
+            if (cachedRole) {
+              console.log("Using cached role for quick response:", cachedRole);
+              setUserRole(cachedRole as UserRole);
+            }
+            
             // Wait for the role to be fetched using setTimeout to prevent potential deadlocks
             setTimeout(async () => {
               try {
                 const role = await fetchUserRole(newSession.user.id);
-                setUserRole(role);
-                
-                toast({
-                  title: "Login bem-sucedido",
-                  description: "Bem-vindo ao SigmaPay!",
-                });
+                if (role) {
+                  setUserRole(role);
+                  
+                  toast({
+                    title: "Login bem-sucedido",
+                    description: "Bem-vindo ao SigmaPay!",
+                  });
+                } else {
+                  // Handle missing role error
+                  console.error("Could not fetch user role");
+                  toast({
+                    title: "Erro de autenticação",
+                    description: "Não foi possível verificar suas permissões",
+                    variant: "destructive",
+                  });
+                }
               } catch (err) {
                 console.error("Error in role fetching after sign in:", err);
               } finally {

@@ -20,9 +20,12 @@ const ProtectedRoute = ({ children }: ProtectedRouteProps) => {
     console.log("ProtectedRoute effect - isLoading:", isLoading, "user:", !!user, "userRole:", userRole);
     
     // Only determine redirect after loading is complete AND we have all necessary data
-    if (!isLoading && (!user || !userRole)) {
-      console.log("Setting shouldRedirect to true - missing user or role");
-      setShouldRedirect(true);
+    if (!isLoading) {
+      // Only redirect if authentication has failed
+      if (!user) {
+        console.log("Setting shouldRedirect to true - missing user");
+        setShouldRedirect(true);
+      }
     }
   }, [isLoading, user, userRole]);
 
@@ -56,7 +59,7 @@ const ProtectedRoute = ({ children }: ProtectedRouteProps) => {
     );
   }
 
-  // Se não houver usuário autenticado OU userRole não estiver disponível, redirecione
+  // Se não houver usuário autenticado, redirecione
   if (shouldRedirect) {
     console.log("Redirecting to / from", location.pathname);
     // Store the current location using sessionStorage for better security
@@ -72,7 +75,7 @@ const ProtectedRoute = ({ children }: ProtectedRouteProps) => {
     );
   }
 
-  // Se estiver autenticado E tivermos o userRole, renderize o conteúdo protegido
+  // Se estiver autenticado, renderize o conteúdo protegido
   return <>{children}</>;
 };
 
