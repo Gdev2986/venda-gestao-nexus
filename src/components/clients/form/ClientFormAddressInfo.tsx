@@ -31,6 +31,10 @@ export const ClientFormAddressInfo = ({ form }: ClientFormAddressInfoProps) => {
     handleCepLookup();
   }, [cep, lookupCep, form]);
 
+  const handleCepChange = (value: string) => {
+    setCep(value);
+  };
+
   return (
     <div className="space-y-4">
       <h3 className="text-lg font-medium">Endereço</h3>
@@ -42,7 +46,7 @@ export const ClientFormAddressInfo = ({ form }: ClientFormAddressInfoProps) => {
           mask="00000-000"
           placeholder="00000-000"
           required
-          onChange={(value) => setCep(value)}
+          onChange={handleCepChange}
         />
         
         <FormField

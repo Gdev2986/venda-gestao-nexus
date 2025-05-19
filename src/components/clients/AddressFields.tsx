@@ -68,19 +68,19 @@ const AddressFields = ({ form }: AddressFieldsProps) => {
     const data = await lookupCep(zipValue);
     
     if (data) {
-      // Set the address if available from CEP lookup
-      if (data.street) {
-        form.setValue("address", data.street, { shouldValidate: true });
+      // Set the address if available from CEP lookup - using logradouro from CepData
+      if (data.logradouro) {
+        form.setValue("address", data.logradouro, { shouldValidate: true });
       }
       
       // We still get state and city from CEP lookup, but user can change them after
-      if (data.state) {
-        form.setValue("state", data.state, { shouldValidate: true });
-        setSelectedState(data.state);
+      if (data.uf) {
+        form.setValue("state", data.uf, { shouldValidate: true });
+        setSelectedState(data.uf);
       }
       
-      if (data.city) {
-        form.setValue("city", data.city, { shouldValidate: true });
+      if (data.localidade) {
+        form.setValue("city", data.localidade, { shouldValidate: true });
       }
     }
   };
@@ -134,7 +134,7 @@ const AddressFields = ({ form }: AddressFieldsProps) => {
                     )}
                   </Button>
                 </div>
-                {error && <p className="text-sm text-destructive mt-1">{error}</p>}
+                {error && <p className="text-sm text-destructive mt-1">{error.message}</p>}
                 <FormMessage />
               </FormItem>
             )}
