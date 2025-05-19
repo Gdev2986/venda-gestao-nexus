@@ -4,7 +4,7 @@ import { BrowserRouter } from 'react-router-dom';
 import { AuthProvider } from '@/contexts/AuthContext';
 import { ThemeProvider } from '@/components/theme-provider';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { NotificationsProvider } from '@/hooks/use-notifications';
+import { NotificationsProvider } from '@/contexts/NotificationsContext';
 import App from './App.tsx';
 import './index.css';
 
@@ -18,7 +18,7 @@ const queryClient = new QueryClient({
   },
 });
 
-// Garantindo que estamos usando o React.StrictMode
+// Get the root element
 const rootElement = document.getElementById("root");
 if (!rootElement) throw new Error('Root element not found');
 

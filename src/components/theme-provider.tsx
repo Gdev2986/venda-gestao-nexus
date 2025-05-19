@@ -1,5 +1,8 @@
 
-import React, { createContext, useContext, useEffect, useState } from "react";
+"use client";
+
+import * as React from "react";
+import { createContext, useContext, useState, useEffect } from "react";
 
 type Theme = "dark" | "light" | "system";
 
@@ -27,22 +30,29 @@ export function ThemeProvider({
   storageKey = "ui-theme",
   ...props
 }: ThemeProviderProps) {
-  // Fix: Safely initialize useState for server-side rendering
   const [theme, setTheme] = useState<Theme>(defaultTheme);
-  
-  // Effect to load theme from localStorage only on client side
+
+  // Only access localStorage on the client side
   useEffect(() => {
+    const root = window.document.documentElement;
+    
+    // First load - check localStorage
     if (typeof window !== "undefined") {
-      const storedTheme = localStorage.getItem(storageKey);
-      if (storedTheme && (storedTheme === "dark" || storedTheme === "light" || storedTheme === "system")) {
-        setTheme(storedTheme as Theme);
+      try {
+        const savedTheme = localStorage.getItem(storageKey) as Theme | null;
+        if (savedTheme && (savedTheme === "dark" || savedTheme === "light" || savedTheme === "system")) {
+          setTheme(savedTheme);
+        }
+      } catch (e) {
+        console.error("Error accessing localStorage:", e);
       }
     }
   }, [storageKey]);
 
+  // Apply theme to document
   useEffect(() => {
     const root = window.document.documentElement;
-
+    
     root.classList.remove("light", "dark");
 
     if (theme === "system") {
@@ -60,9 +70,15 @@ export function ThemeProvider({
 
   const value = {
     theme,
-    setTheme: (theme: Theme) => {
-      localStorage.setItem(storageKey, theme);
-      setTheme(theme);
+    setTheme: (newTheme: Theme) => {
+      if (typeof window !== "undefined") {
+        try {
+          localStorage.setItem(storageKey, newTheme);
+        } catch (e) {
+          console.error("Error writing to localStorage:", e);
+        }
+      }
+      setTheme(newTheme);
     },
   };
 
