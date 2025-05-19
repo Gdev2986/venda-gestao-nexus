@@ -29,30 +29,27 @@ export function ThemeProvider({
   storageKey = "ui-theme",
   ...props
 }: ThemeProviderProps) {
-  // Using a function in useState to avoid issues with server rendering
+  // Initialize state with a function to properly handle browser environment
   const [theme, setTheme] = React.useState<Theme>(() => {
-    // Don't try to access window/localStorage during SSR
-    if (typeof window === "undefined") {
-      return defaultTheme;
+    // For safety, check if running in browser environment
+    if (typeof window !== "undefined") {
+      try {
+        const storedTheme = localStorage.getItem(storageKey);
+        if (storedTheme && ["dark", "light", "system"].includes(storedTheme as Theme)) {
+          return storedTheme as Theme;
+        }
+      } catch (error) {
+        console.error("Error accessing localStorage:", error);
+      }
     }
-    
-    try {
-      const storedTheme = window.localStorage.getItem(storageKey);
-      return (storedTheme && ["dark", "light", "system"].includes(storedTheme as Theme)) 
-        ? (storedTheme as Theme) 
-        : defaultTheme;
-    } catch (error) {
-      console.error("Error reading from localStorage:", error);
-      return defaultTheme;
-    }
+    return defaultTheme;
   });
 
+  // Apply theme to document root element
   React.useEffect(() => {
-    // Safely check for window access
     if (typeof window === "undefined") return;
     
-    const root = window.document.documentElement;
-    
+    const root = document.documentElement;
     root.classList.remove("light", "dark");
 
     if (theme === "system") {
@@ -65,6 +62,7 @@ export function ThemeProvider({
     }
   }, [theme]);
 
+  // Create the context value with memoization
   const value = React.useMemo(
     () => ({
       theme,
