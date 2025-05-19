@@ -16,12 +16,47 @@ type ThemeProviderState = {
   setTheme: (theme: Theme) => void;
 };
 
-const initialState: ThemeProviderState = {
+// Create context with default values
+const ThemeProviderContext = React.createContext<ThemeProviderState>({
   theme: "system",
   setTheme: () => null,
-};
+});
 
-const ThemeProviderContext = React.createContext<ThemeProviderState>(initialState);
+// Custom hook to safely access localStorage
+const useLocalStorage = (key: string, defaultValue: string): [string, (value: string) => void] => {
+  // Create a ref to track if component is mounted
+  const isMounted = React.useRef(false);
+  
+  // Initialize state with a function to safely access localStorage
+  const [value, setValue] = React.useState<string>(() => {
+    if (typeof window === "undefined") return defaultValue;
+    
+    try {
+      const item = window.localStorage.getItem(key);
+      return item || defaultValue;
+    } catch (error) {
+      console.error("Error reading from localStorage:", error);
+      return defaultValue;
+    }
+  });
+  
+  // Effect to update localStorage when value changes
+  React.useEffect(() => {
+    // Skip initial render
+    if (!isMounted.current) {
+      isMounted.current = true;
+      return;
+    }
+    
+    try {
+      window.localStorage.setItem(key, value);
+    } catch (error) {
+      console.error("Error writing to localStorage:", error);
+    }
+  }, [key, value]);
+  
+  return [value, setValue];
+};
 
 export function ThemeProvider({
   children,
@@ -29,57 +64,59 @@ export function ThemeProvider({
   storageKey = "sigmapay-theme",
   ...props
 }: ThemeProviderProps) {
-  // Use a lazy initializer function for useState to safely access localStorage
-  const [theme, setTheme] = React.useState<Theme>(() => {
-    if (typeof window !== "undefined") {
-      try {
-        const storedTheme = window.localStorage.getItem(storageKey);
-        return storedTheme ? (storedTheme as Theme) : defaultTheme;
-      } catch (error) {
-        console.error("Error accessing localStorage:", error);
-        return defaultTheme;
-      }
-    }
-    return defaultTheme;
-  });
+  // Use our custom hook for localStorage
+  const [theme, setThemeValue] = useLocalStorage(storageKey, defaultTheme);
+  
+  // Validate that theme is a valid Theme type
+  const validTheme = (theme === "dark" || theme === "light" || theme === "system") 
+    ? theme as Theme 
+    : defaultTheme;
+  
+  // Handle theme changes
+  const setTheme = React.useCallback((theme: Theme) => {
+    setThemeValue(theme);
+  }, [setThemeValue]);
 
   // Apply theme to document element
   React.useEffect(() => {
-    if (typeof window === "undefined") return;
-    
     const root = window.document.documentElement;
     
     root.classList.remove("light", "dark");
 
-    if (theme === "system") {
+    if (validTheme === "system") {
       const systemTheme = window.matchMedia("(prefers-color-scheme: dark)").matches
         ? "dark"
         : "light";
       root.classList.add(systemTheme);
     } else {
-      root.classList.add(theme);
+      root.classList.add(validTheme);
     }
-  }, [theme]);
+  }, [validTheme]);
 
-  // Save theme to localStorage
+  // Listen for system theme changes
   React.useEffect(() => {
-    if (typeof window === "undefined") return;
+    if (validTheme !== "system") return;
     
-    try {
-      window.localStorage.setItem(storageKey, theme);
-    } catch (error) {
-      console.error("Error writing to localStorage:", error);
-    }
-  }, [theme, storageKey]);
+    const mediaQuery = window.matchMedia("(prefers-color-scheme: dark)");
+    
+    const handleChange = () => {
+      const root = window.document.documentElement;
+      const systemTheme = mediaQuery.matches ? "dark" : "light";
+      
+      root.classList.remove("light", "dark");
+      root.classList.add(systemTheme);
+    };
+    
+    mediaQuery.addEventListener("change", handleChange);
+    return () => mediaQuery.removeEventListener("change", handleChange);
+  }, [validTheme]);
 
   const value = React.useMemo(
     () => ({
-      theme,
-      setTheme: (t: Theme) => {
-        setTheme(t);
-      },
+      theme: validTheme,
+      setTheme,
     }),
-    [theme]
+    [validTheme, setTheme]
   );
 
   return (

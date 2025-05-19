@@ -9,6 +9,11 @@ import { NotificationsProvider } from '@/contexts/NotificationsContext';
 import App from './App.tsx';
 import './index.css';
 
+// Make React available in the global scope to ensure it's accessible everywhere
+if (typeof window !== 'undefined') {
+  window.React = React;
+}
+
 // Create a query client
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -19,19 +24,9 @@ const queryClient = new QueryClient({
   },
 });
 
-// Make sure React is defined in the global scope
-window.React = React;
-
-// Robust initialization function that handles various DOM loading states
-function initializeApp() {
-  const rootElement = document.getElementById('root');
-  
-  if (!rootElement) {
-    console.error('Root element not found');
-    return;
-  }
-  
-  console.log('Initializing React application...');
+// Function to safely render the app
+function renderApp(rootElement: HTMLElement) {
+  console.log('Rendering application...');
   
   try {
     const root = createRoot(rootElement);
@@ -52,17 +47,46 @@ function initializeApp() {
       </React.StrictMode>
     );
     
-    console.log('React application rendered successfully');
+    console.log('Application rendered successfully');
   } catch (error) {
-    console.error('Failed to render React application:', error);
+    console.error('Failed to render application:', error);
   }
 }
 
-// Only initialize when the DOM is fully loaded to avoid React null issues
+// Initialize the app after DOM is fully ready
+function initApp() {
+  const rootElement = document.getElementById('root');
+  
+  if (!rootElement) {
+    console.error('Root element not found, waiting...');
+    
+    // Try again after a small delay if element wasn't found
+    setTimeout(() => {
+      const retryRoot = document.getElementById('root');
+      if (retryRoot) {
+        console.log('Root element found on retry');
+        renderApp(retryRoot);
+      } else {
+        console.error('Root element still not found after retry');
+      }
+    }, 100);
+    
+    return;
+  }
+  
+  renderApp(rootElement);
+}
+
+// Handle different document ready states
 if (document.readyState === 'loading') {
-  // DOM still loading, wait for it to complete
-  document.addEventListener('DOMContentLoaded', initializeApp);
+  // Document still loading, wait for DOMContentLoaded
+  document.addEventListener('DOMContentLoaded', () => {
+    console.log('DOMContentLoaded event fired');
+    // Use a small timeout to ensure React is fully initialized
+    setTimeout(initApp, 10);
+  });
 } else {
-  // DOM already loaded, initialize immediately
-  setTimeout(initializeApp, 0);
+  // Document already loaded, initialize with a small delay
+  console.log('Document already loaded');
+  setTimeout(initApp, 10);
 }
