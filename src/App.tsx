@@ -1,4 +1,3 @@
-
 import { Routes, Route, Navigate } from "react-router-dom";
 import { PATHS } from "./routes/paths";
 import { useEffect, useState } from "react";
@@ -32,6 +31,7 @@ function App() {
   const { toast } = useToast();
   const [dashboardPath, setDashboardPath] = useState<string | null>(null);
   const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+  const [isRedirecting, setIsRedirecting] = useState(false);
 
   // Log role changes for debugging
   useEffect(() => {
@@ -63,23 +63,37 @@ function App() {
       </div>
     );
   }
+  
+  // If we're already redirecting, don't trigger additional redirects
+  if (isRedirecting) {
+    return (
+      <div className="flex flex-col items-center justify-center h-screen bg-background">
+        <Spinner size="lg" />
+        <p className="mt-4 text-muted-foreground">Redirecionando...</p>
+      </div>
+    );
+  }
 
   return (
     <Routes>
       {/* Root path handling */}
-      <Route path={PATHS.HOME} element={<RootLayout />} />
+      <Route path={PATHS.HOME} element={
+        dashboardPath && dashboardPath !== PATHS.LOGIN ? 
+          <Navigate to={dashboardPath} replace /> : 
+          <Navigate to={PATHS.LOGIN} replace />
+      } />
       
       {/* Generic dashboard route */}
       <Route 
         path={PATHS.DASHBOARD} 
         element={
-          dashboardPath ? 
-          <Navigate to={dashboardPath} replace /> : 
-          <Navigate to={PATHS.LOGIN} replace />
+          dashboardPath && dashboardPath !== PATHS.LOGIN ? 
+            <Navigate to={dashboardPath} replace /> : 
+            <Navigate to={PATHS.LOGIN} replace />
         } 
       />
 
-      {/* Auth Routes */}
+      {/* Auth Routes - Important: keep these before other routes */}
       {AuthRoutes}
 
       {/* Protected Routes by Role */}
@@ -98,8 +112,8 @@ function App() {
       {/* Catch-all redirect to the appropriate dashboard or login */}
       <Route path="*" element={
         dashboardPath ? 
-        <Navigate to={dashboardPath} replace /> : 
-        <Navigate to={PATHS.LOGIN} replace />
+          <Navigate to={dashboardPath} replace /> : 
+          <Navigate to={PATHS.LOGIN} replace />
       } />
     </Routes>
   );

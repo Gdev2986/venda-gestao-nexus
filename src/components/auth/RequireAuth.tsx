@@ -57,6 +57,23 @@ const RequireAuth = ({ allowedRoles = [], redirectTo = PATHS.LOGIN }: RequireAut
     });
   }, [isLoading, isAuthenticated, userRole, location.pathname, allowedRoles, session, isMobile, redirectAttempted]);
 
+  // If already redirected, don't attempt again (prevents loops)
+  if (redirectAttempted) {
+    return (
+      <div className="flex flex-col items-center justify-center h-screen bg-background">
+        <motion.div
+          initial={{ opacity: 0, scale: 0.8 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ duration: 0.5 }}
+          className="flex flex-col items-center"
+        >
+          <Spinner size="lg" />
+          <p className="mt-4 text-muted-foreground">Redirecionando...</p>
+        </motion.div>
+      </div>
+    );
+  }
+
   // If still loading, show a spinner
   if (isLoading || showLoading) {
     return (
@@ -74,12 +91,6 @@ const RequireAuth = ({ allowedRoles = [], redirectTo = PATHS.LOGIN }: RequireAut
     );
   }
 
-  // Prevent infinite redirect loops
-  if (redirectAttempted) {
-    // If we already attempted a redirect, go to login as a fallback
-    return <Navigate to={PATHS.LOGIN} replace />;
-  }
-  
   // If not authenticated or no session exists, redirect to login
   if (!isAuthenticated || !session || !user) {
     console.log("User not authenticated or no session, redirecting to login from", location.pathname);

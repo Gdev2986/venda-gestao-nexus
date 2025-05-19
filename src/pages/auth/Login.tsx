@@ -15,8 +15,9 @@ const Login = () => {
   const redirectAttemptedRef = useRef(false);
   const isMobileDevice = useIsMobile();
 
+  // Handle auth redirection
   useEffect(() => {
-    // If authenticated and finished loading, redirect to dashboard
+    // Only redirect if we have a user and aren't already redirecting
     if (user && !isLoading && !redirectAttemptedRef.current) {
       console.log("Login: User authenticated, redirecting to dashboard");
       console.log("Device type:", isMobileDevice ? "Mobile" : "Desktop");
@@ -24,7 +25,9 @@ const Login = () => {
       redirectAttemptedRef.current = true;
       
       // Use window.location.href for more reliable redirect
-      window.location.href = PATHS.DASHBOARD;
+      setTimeout(() => {
+        window.location.href = PATHS.DASHBOARD;
+      }, 300);
     }
   }, [user, isLoading, navigate, isMobileDevice]);
 
@@ -40,7 +43,6 @@ const Login = () => {
     );
   }
 
-  // If still loading or the user is not authenticated, show the login page
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-b from-background/50 to-background p-4 dark:from-background dark:to-background/80">
       <div className="flex flex-col md:flex-row items-center justify-center max-w-5xl w-full">

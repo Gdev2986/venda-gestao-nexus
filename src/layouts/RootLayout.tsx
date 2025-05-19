@@ -14,6 +14,7 @@ const RootLayout = () => {
   const [showLoading, setShowLoading] = useState(true);
   const [redirectAttempted, setRedirectAttempted] = useState(false);
   const { toast } = useToast();
+  const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
   
   // Debug logging
   useEffect(() => {
@@ -25,7 +26,7 @@ const RootLayout = () => {
       path: location.pathname,
       redirectAttempted,
       userAgent: navigator.userAgent,
-      isMobile: /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)
+      isMobile
     });
   }, [isLoading, isAuthenticated, userRole, session, location.pathname, redirectAttempted]);
   
@@ -57,6 +58,11 @@ const RootLayout = () => {
     );
   }
   
+  // Prevent redirect if we're already at login page
+  if (location.pathname === PATHS.LOGIN) {
+    return <Navigate to={PATHS.LOGIN} replace />;
+  }
+  
   // Prevent infinite redirect loop
   if (redirectAttempted) {
     return <Navigate to={PATHS.LOGIN} replace />;
@@ -75,7 +81,15 @@ const RootLayout = () => {
       });
       
       setRedirectAttempted(true);
-      return <Navigate to={dashboardPath} replace />;
+      
+      // Use window.location for mobile devices
+      if (isMobile) {
+        console.log("Mobile device detected, using window.location for redirect");
+        window.location.href = dashboardPath;
+        return null;
+      } else {
+        return <Navigate to={dashboardPath} replace />;
+      }
     } catch (error) {
       console.error("Error getting dashboard path:", error);
       
