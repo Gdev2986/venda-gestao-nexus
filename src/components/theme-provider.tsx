@@ -29,46 +29,44 @@ export function ThemeProvider({
   storageKey = "ui-theme",
   ...props
 }: ThemeProviderProps) {
-  const [theme, setTheme] = React.useState<Theme>(defaultTheme);
-
-  // Apply theme to document
-  React.useEffect(() => {
-    if (typeof window !== 'undefined') {
-      const root = window.document.documentElement;
-      root.classList.remove("light", "dark");
-
-      if (theme === "system") {
-        const systemTheme = window.matchMedia("(prefers-color-scheme: dark)")
-          .matches
-          ? "dark"
-          : "light";
-        root.classList.add(systemTheme);
-        return;
+  const [theme, setTheme] = React.useState<Theme>(
+    () => {
+      if (typeof window === "undefined") return defaultTheme;
+      
+      try {
+        const storedTheme = window.localStorage.getItem(storageKey);
+        return (storedTheme && ["dark", "light", "system"].includes(storedTheme as Theme)) 
+          ? (storedTheme as Theme) 
+          : defaultTheme;
+      } catch (error) {
+        console.error("Error reading from localStorage:", error);
+        return defaultTheme;
       }
+    }
+  );
 
+  React.useEffect(() => {
+    const root = typeof window !== "undefined" ? window.document.documentElement : null;
+    
+    if (!root) return;
+    
+    root.classList.remove("light", "dark");
+
+    if (theme === "system") {
+      const systemTheme = window.matchMedia("(prefers-color-scheme: dark)").matches
+        ? "dark"
+        : "light";
+      root.classList.add(systemTheme);
+    } else {
       root.classList.add(theme);
     }
   }, [theme]);
-
-  // Load theme from localStorage only on client-side
-  React.useEffect(() => {
-    if (typeof window !== 'undefined') {
-      try {
-        const storedTheme = localStorage.getItem(storageKey);
-        if (storedTheme && ["dark", "light", "system"].includes(storedTheme as Theme)) {
-          setTheme(storedTheme as Theme);
-        }
-      } catch (error) {
-        console.error("Error reading from localStorage:", error);
-      }
-    }
-  }, [storageKey]);
 
   const value = React.useMemo(
     () => ({
       theme,
       setTheme: (newTheme: Theme) => {
-        if (typeof window !== 'undefined') {
+        if (typeof window !== "undefined") {
           try {
             localStorage.setItem(storageKey, newTheme);
           } catch (error) {

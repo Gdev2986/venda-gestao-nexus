@@ -23,14 +23,17 @@ const queryClient = new QueryClient({
 const initializeApp = () => {
   // Get the root element
   const rootElement = document.getElementById("root");
-  if (!rootElement) throw new Error('Root element not found');
+  if (!rootElement) {
+    console.error('Root element not found');
+    return;
+  }
 
   const root = createRoot(rootElement);
 
   root.render(
     <React.StrictMode>
       <BrowserRouter>
-        <ThemeProvider defaultTheme="light" storageKey="vite-ui-theme">
+        <ThemeProvider defaultTheme="light" storageKey="sigmapay-theme">
           <QueryClientProvider client={queryClient}>
             <AuthProvider>
               <NotificationsProvider>
