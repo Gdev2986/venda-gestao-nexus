@@ -10,6 +10,15 @@ import {
   MachineUpdateParams 
 } from "@/types/machine.types";
 
+// Function to convert MachineStatus enum to database-accepted string literal
+const mapStatusToDb = (status: MachineStatus): "ACTIVE" | "INACTIVE" | "MAINTENANCE" | "BLOCKED" => {
+  // Map TRANSIT and STOCK to acceptable values for the database
+  if (status === MachineStatus.TRANSIT || status === MachineStatus.STOCK) {
+    return "INACTIVE"; // Map to INACTIVE as a fallback
+  }
+  return status as "ACTIVE" | "INACTIVE" | "MAINTENANCE" | "BLOCKED";
+};
+
 // Get all machines
 export const getAllMachines = async (): Promise<Machine[]> => {
   try {
@@ -57,8 +66,8 @@ export const getMachines = getAllMachines;
 // Get machines by status
 export const getMachinesByStatus = async (status: MachineStatus): Promise<Machine[]> => {
   try {
-    // Convert enum to string for database query
-    const statusStr = status.toString();
+    // Convert enum to database-accepted value
+    const dbStatus = mapStatusToDb(status);
     
     const { data, error } = await supabase
       .from("machines")
@@ -76,7 +85,7 @@ export const getMachinesByStatus = async (status: MachineStatus): Promise<Machin
           business_name
         )
       `)
-      .eq("status", statusStr)
+      .eq("status", dbStatus)
       .order("created_at", { ascending: false });
 
     if (error) throw error;
@@ -147,15 +156,15 @@ export const getMachineStats = async (): Promise<MachineStats> => {
 // Create a new machine
 export const createMachine = async (params: MachineCreateParams): Promise<Machine> => {
   try {
-    // Default to STOCK status if not provided and convert enum to string
-    const statusStr = (params.status || MachineStatus.STOCK).toString();
+    // Default to STOCK status if not provided and convert enum to database-accepted string
+    const dbStatus = params.status ? mapStatusToDb(params.status) : mapStatusToDb(MachineStatus.STOCK);
     
     const { data, error } = await supabase
       .from("machines")
       .insert({
         serial_number: params.serial_number,
         model: params.model,
-        status: statusStr,
+        status: dbStatus,
         client_id: params.client_id,
         notes: params.notes
       })
@@ -187,7 +196,7 @@ export const updateMachine = async (id: string, params: MachineUpdateParams): Pr
     
     if (params.serial_number !== undefined) updateData.serial_number = params.serial_number;
     if (params.model !== undefined) updateData.model = params.model;
-    if (params.status !== undefined) updateData.status = params.status.toString();
+    if (params.status !== undefined) updateData.status = mapStatusToDb(params.status);
     if (params.client_id !== undefined) updateData.client_id = params.client_id;
     if (params.notes !== undefined) updateData.notes = params.notes;
     
@@ -267,13 +276,14 @@ export const transferMachine = async (params: MachineTransferParams): Promise<Ma
       ? MachineStatus.ACTIVE
       : MachineStatus.STOCK;
       
-    const newStatusStr = newStatus.toString();
+    // Map the enum to database-accepted value
+    const dbStatus = mapStatusToDb(newStatus);
       
     const { error: machineError } = await supabase
       .from("machines")
       .update({ 
         client_id: params.to_client_id,
-        status: newStatusStr
+        status: dbStatus
       })
       .eq("id", params.machine_id);
 
