@@ -19,19 +19,14 @@ const queryClient = new QueryClient({
   },
 });
 
-// Initialize app function
-const initializeApp = () => {
-  // Get the root element
-  const rootElement = document.getElementById("root");
-  if (!rootElement) {
-    console.error('Root element not found');
-    return;
-  }
+// Make sure document is fully loaded before mounting React
+const root = document.getElementById('root');
 
-  const root = createRoot(rootElement);
-
-  // Use StrictMode to highlight potential problems
-  root.render(
+// Wait for the DOM to be ready before rendering
+if (root) {
+  const reactRoot = createRoot(root);
+  
+  reactRoot.render(
     <React.StrictMode>
       <BrowserRouter>
         <ThemeProvider defaultTheme="light" storageKey="sigmapay-theme">
@@ -46,11 +41,6 @@ const initializeApp = () => {
       </BrowserRouter>
     </React.StrictMode>
   );
-};
-
-// Make sure DOM is fully loaded before mounting React
-if (document.readyState === 'loading') {
-  document.addEventListener('DOMContentLoaded', initializeApp);
 } else {
-  initializeApp();
+  console.error('Root element not found');
 }
