@@ -39,9 +39,9 @@ const StatCards = ({ stats, isLoading }: StatCardsProps) => {
   }
 
   return (
-    <div className="grid grid-cols-1 gap-4">
-      {/* Total Sales - Full width */}
-      <Card className="col-span-1">
+    <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+      {/* Total Sales - Full width on mobile, 25% width on desktop */}
+      <Card className="col-span-1 md:col-span-4">
         <CardHeader className="pb-2">
           <CardDescription>Faturamento do mês</CardDescription>
           <CardTitle className="text-2xl md:text-3xl font-bold">
@@ -62,39 +62,38 @@ const StatCards = ({ stats, isLoading }: StatCardsProps) => {
         </CardContent>
       </Card>
       
-      {/* Two cards side by side: Gross and Net Sales */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-        <Card>
-          <CardHeader className="pb-2">
-            <CardDescription>Valor Bruto</CardDescription>
-            <CardTitle className="text-xl md:text-2xl font-bold">
-              {formatCurrency(stats.grossSales)}
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-sm text-muted-foreground">
-              Valor total bruto
-            </div>
-          </CardContent>
-        </Card>
-        
-        <Card>
-          <CardHeader className="pb-2">
-            <CardDescription>Valor Líquido</CardDescription>
-            <CardTitle className="text-xl md:text-2xl font-bold">
-              {formatCurrency(stats.netSales)}
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-sm text-muted-foreground">
-              Margem de {((stats.netSales / stats.grossSales) * 100).toFixed(1)}%
-            </div>
-          </CardContent>
-        </Card>
-      </div>
+      {/* Gross Sales - 50% width on desktop, full width on mobile */}
+      <Card className="col-span-1 md:col-span-2">
+        <CardHeader className="pb-2">
+          <CardDescription>Valor Bruto</CardDescription>
+          <CardTitle className="text-xl md:text-2xl font-bold">
+            {formatCurrency(stats.grossSales)}
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="text-sm text-muted-foreground">
+            Valor total bruto
+          </div>
+        </CardContent>
+      </Card>
       
-      {/* Office Commission - Full width */}
-      <Card className="col-span-1">
+      {/* Net Sales - 50% width on desktop, full width on mobile */}
+      <Card className="col-span-1 md:col-span-2">
+        <CardHeader className="pb-2">
+          <CardDescription>Valor Líquido</CardDescription>
+          <CardTitle className="text-xl md:text-2xl font-bold">
+            {formatCurrency(stats.netSales)}
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="text-sm text-muted-foreground">
+            Margem de {((stats.netSales / stats.grossSales) * 100).toFixed(1)}%
+          </div>
+        </CardContent>
+      </Card>
+      
+      {/* Office Commission - Full width on mobile, 25% width on desktop */}
+      <Card className="col-span-1 md:col-span-4">
         <CardHeader className="pb-2">
           <CardDescription>Comissão Escritório</CardDescription>
           <CardTitle className="text-2xl md:text-3xl font-bold">
