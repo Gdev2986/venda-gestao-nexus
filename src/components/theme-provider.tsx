@@ -27,10 +27,11 @@ export function ThemeProvider({
   storageKey = "ui-theme",
   ...props
 }: ThemeProviderProps) {
-  // Fix the React hook error by properly initializing with a function
+  // Corrigir a inicialização do useState e verificação do ambiente
   const [theme, setTheme] = useState<Theme>(() => {
-    if (typeof window !== 'undefined') {
-      return (localStorage.getItem(storageKey) as Theme) || defaultTheme;
+    if (typeof window !== "undefined") {
+      const storedTheme = localStorage.getItem(storageKey);
+      return (storedTheme as Theme) || defaultTheme;
     }
     return defaultTheme;
   });

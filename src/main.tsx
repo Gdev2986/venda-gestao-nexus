@@ -18,7 +18,13 @@ const queryClient = new QueryClient({
   },
 });
 
-createRoot(document.getElementById("root")!).render(
+// Garantindo que estamos usando o React.StrictMode
+const rootElement = document.getElementById("root");
+if (!rootElement) throw new Error('Root element not found');
+
+const root = createRoot(rootElement);
+
+root.render(
   <BrowserRouter>
     <ThemeProvider defaultTheme="light" storageKey="vite-ui-theme">
       <QueryClientProvider client={queryClient}>
