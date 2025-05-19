@@ -1,4 +1,3 @@
-
 import React from "react";
 import { ColumnDef } from "@tanstack/react-table";
 import {
@@ -10,6 +9,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import TablePagination from "./table-pagination";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 // Updated interface to use ColumnDef
 interface DataTableProps<TData> {
@@ -29,13 +29,24 @@ export function DataTable<TData extends object>({
   onPageChange, 
   isLoading 
 }: DataTableProps<TData>) {
+  const isMobile = useIsMobile();
+  
+  // For mobile, show reduced columns
+  const visibleColumns = React.useMemo(() => {
+    if (isMobile) {
+      // Keep only the most important columns (first 2-3) on mobile
+      return columns.slice(0, Math.min(3, columns.length));
+    }
+    return columns;
+  }, [columns, isMobile]);
+
   return (
     <div className="rounded-md border w-full">
       <div className="overflow-x-auto">
         <Table>
           <TableHeader>
             <TableRow>
-              {columns.map((column) => {
+              {visibleColumns.map((column) => {
                 // Safely access column header
                 const headerValue = column.header 
                   ? typeof column.header === 'function' 
@@ -52,7 +63,7 @@ export function DataTable<TData extends object>({
           <TableBody>
             {isLoading ? (
               <TableRow>
-                <TableCell colSpan={columns.length} className="h-24 text-center">
+                <TableCell colSpan={visibleColumns.length} className="h-24 text-center">
                   <div className="flex justify-center items-center">
                     <div className="w-6 h-6 border-2 border-primary border-t-transparent rounded-full animate-spin"></div>
                     <span className="ml-2">Carregando...</span>
@@ -62,11 +73,11 @@ export function DataTable<TData extends object>({
             ) : data.length > 0 ? (
               data.map((row, rowIndex) => (
                 <TableRow key={rowIndex}>
-                  {columns.map((column) => {
+                  {visibleColumns.map((column) => {
                     const columnId = String(column.id);
                     
                     return (
-                      <TableCell key={`${rowIndex}-${columnId}`}>
+                      <TableCell key={`${rowIndex}-${columnId}`} className="py-2 px-3">
                         {column.cell 
                           ? typeof column.cell === 'function'
                             ? column.cell({ row: { original: row } } as any)
@@ -79,7 +90,7 @@ export function DataTable<TData extends object>({
               ))
             ) : (
               <TableRow>
-                <TableCell colSpan={columns.length} className="h-24 text-center">
+                <TableCell colSpan={visibleColumns.length} className="h-24 text-center">
                   Nenhum dado encontrado
                 </TableCell>
               </TableRow>

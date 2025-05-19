@@ -1,7 +1,8 @@
 
 import { useState } from "react";
+import { useToast } from "./use-toast";
 
-interface CepData {
+export interface CepData {
   cep: string;
   logradouro: string;
   complemento: string;
@@ -14,46 +15,60 @@ interface CepData {
   siafi: string;
 }
 
-export const useCepLookup = () => {
+export function useCepLookup() {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<Error | null>(null);
+  const { toast } = useToast();
 
   const lookupCep = async (cep: string): Promise<CepData | null> => {
+    // Remove any non-numeric characters
+    const cleanCep = cep.replace(/\D/g, "");
+
+    // Validate CEP length
+    if (cleanCep.length !== 8) {
+      setError(new Error("CEP inválido. O CEP deve conter 8 dígitos."));
+      return null;
+    }
+
     setIsLoading(true);
     setError(null);
-    
+
     try {
-      // Format CEP to remove any non-number characters
-      const formattedCep = cep.replace(/\D/g, '');
-      
-      if (formattedCep.length !== 8) {
-        throw new Error('CEP inválido. O CEP deve conter 8 dígitos.');
-      }
-      
-      const response = await fetch(`https://viacep.com.br/ws/${formattedCep}/json/`);
+      const response = await fetch(`https://viacep.com.br/ws/${cleanCep}/json/`);
       
       if (!response.ok) {
-        throw new Error('Falha ao buscar o CEP.');
+        throw new Error("Erro ao buscar CEP. Tente novamente.");
       }
       
       const data = await response.json();
       
       if (data.erro) {
-        throw new Error('CEP não encontrado.');
+        throw new Error("CEP não encontrado.");
       }
+      
+      // Show success toast
+      toast({
+        title: "CEP localizado",
+        description: `Endereço encontrado para o CEP ${cep}`,
+      });
       
       return data;
     } catch (err) {
-      setError(err instanceof Error ? err : new Error('Erro desconhecido ao buscar o CEP'));
+      const errorMessage = err instanceof Error ? err.message : "Erro desconhecido ao buscar CEP";
+      setError(new Error(errorMessage));
+      
+      // Show error toast
+      toast({
+        variant: "destructive",
+        title: "Erro ao buscar CEP",
+        description: errorMessage,
+      });
+      
       return null;
     } finally {
       setIsLoading(false);
     }
   };
 
-  return {
-    lookupCep,
-    isLoading,
-    error
-  };
-};
+  return { lookupCep, isLoading, error };
+}

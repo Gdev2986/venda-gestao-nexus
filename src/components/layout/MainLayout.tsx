@@ -1,6 +1,5 @@
 
 import { useState, useEffect } from "react";
-import { useLocation } from "react-router-dom";
 import { UserRole } from "@/types";
 import Sidebar from "./sidebar/Sidebar";
 import { Button } from "@/components/ui/button";
@@ -9,6 +8,7 @@ import { useIsMobile } from "@/hooks/use-mobile";
 import NotificationDropdown from "./NotificationDropdown";
 import ThemeToggle from "../theme/theme-toggle";
 import { useUserRole } from "@/hooks/use-user-role";
+import { AnimatePresence } from "framer-motion";
 
 type MainLayoutProps = {
   children: React.ReactNode;
@@ -40,15 +40,19 @@ const MainLayout = ({ children }: MainLayoutProps) => {
     }
   }, [sidebarOpen, isMobile]);
 
+  const toggleSidebar = () => setSidebarOpen(!sidebarOpen);
+
   return (
     <div className="flex h-screen overflow-hidden bg-background">
-      {/* Sidebar component */}
-      <Sidebar 
-        isOpen={sidebarOpen} 
-        isMobile={isMobile} 
-        onClose={() => setSidebarOpen(false)} 
-        userRole={userRole}
-      />
+      {/* Sidebar component with AnimatePresence for smooth animation */}
+      <AnimatePresence>
+        <Sidebar 
+          isOpen={sidebarOpen} 
+          isMobile={isMobile} 
+          onClose={() => setSidebarOpen(false)} 
+          userRole={userRole}
+        />
+      </AnimatePresence>
       
       {/* Main content */}
       <div 
@@ -62,7 +66,7 @@ const MainLayout = ({ children }: MainLayoutProps) => {
             <Button 
               variant="ghost" 
               size="sm" 
-              onClick={() => setSidebarOpen(!sidebarOpen)}
+              onClick={toggleSidebar}
               aria-label={sidebarOpen ? "Fechar menu" : "Abrir menu"}
               className="p-1"
             >
@@ -77,7 +81,7 @@ const MainLayout = ({ children }: MainLayoutProps) => {
           </div>
         </header>
         
-        {/* Main scrollable content */}
+        {/* Main scrollable content with improved padding for mobile */}
         <main className="flex-1 w-full overflow-y-auto overflow-x-hidden p-2 sm:p-4 md:p-6">
           <div className="mx-auto w-full">
             {children}
@@ -86,11 +90,6 @@ const MainLayout = ({ children }: MainLayoutProps) => {
       </div>
     </div>
   );
-};
-
-// Missing function import
-const cn = (...classes: any[]) => {
-  return classes.filter(Boolean).join(' ');
 };
 
 export default MainLayout;

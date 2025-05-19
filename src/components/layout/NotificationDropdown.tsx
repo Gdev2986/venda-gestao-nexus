@@ -100,7 +100,7 @@ const NotificationDropdown = () => {
         </DropdownMenuTrigger>
         <DropdownMenuContent
           align="end"
-          className="w-80"
+          className="w-[calc(100vw-1rem)] sm:w-80" 
           sideOffset={5}
         >
           <div className="flex items-center justify-between p-4">
@@ -112,14 +112,20 @@ const NotificationDropdown = () => {
                 variant="ghost"
                 size="sm"
                 className="h-auto px-2 py-1 text-xs"
-                onClick={markAllAsRead}
+                onClick={() => {
+                  markAllAsRead();
+                  // Add haptic feedback for mobile devices
+                  if (navigator.vibrate) {
+                    navigator.vibrate(100);
+                  }
+                }}
               >
                 Marcar todas como lidas
               </Button>
             )}
           </div>
           <DropdownMenuSeparator />
-          <div className="max-h-80 overflow-y-auto">
+          <div className="max-h-[60vh] sm:max-h-80 overflow-y-auto">
             <AnimatePresence>
               {recentNotifications.length === 0 ? (
                 <div className="p-4 text-center text-muted-foreground">
@@ -139,21 +145,27 @@ const NotificationDropdown = () => {
                         "flex flex-col items-start gap-1 p-4 focus:bg-accent/50",
                         notification.is_read ? "opacity-70" : ""
                       )}
-                      onClick={() => markAsRead(notification.id)}
+                      onClick={() => {
+                        markAsRead(notification.id);
+                        // Add haptic feedback for mobile devices
+                        if (navigator.vibrate) {
+                          navigator.vibrate(50);
+                        }
+                      }}
                     >
                       <div className="flex w-full justify-between">
                         <div className="flex items-center">
                           {getIcon(notification.type)}
-                          <span className="ml-2 font-medium">{notification.title}</span>
+                          <span className="ml-2 font-medium line-clamp-1">{notification.title}</span>
                         </div>
-                        <span className="text-xs text-muted-foreground">
+                        <span className="text-xs text-muted-foreground whitespace-nowrap">
                           {formatDistanceToNow(new Date(notification.created_at), {
                             addSuffix: true,
                             locale: ptBR
                           })}
                         </span>
                       </div>
-                      <span className="text-sm text-muted-foreground">
+                      <span className="text-sm text-muted-foreground line-clamp-2">
                         {notification.message}
                       </span>
                       {!notification.is_read && (
@@ -172,6 +184,7 @@ const NotificationDropdown = () => {
               size="sm" 
               className="w-full"
               asChild
+              onClick={() => setIsOpen(false)}
             >
               <Link to="/notifications">Ver todas notificações</Link>
             </Button>
@@ -180,6 +193,6 @@ const NotificationDropdown = () => {
       </DropdownMenu>
     </div>
   );
-};
+}
 
 export default NotificationDropdown;

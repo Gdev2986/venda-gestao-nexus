@@ -27,17 +27,21 @@ const Sidebar = memo(({ isOpen, isMobile, onClose, userRole }: SidebarProps) => 
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
           onClick={handleCloseClick}
+          aria-hidden="true"
         />
       )}
       
       {/* Sidebar with fixed position and animation */}
-      <div
+      <motion.div
         className={cn(
-          "fixed inset-y-0 left-0 z-50 flex flex-col w-64 text-sidebar-foreground transition-transform duration-200 ease-in-out h-full",
+          "fixed inset-y-0 left-0 z-50 flex flex-col w-[280px] md:w-64 text-sidebar-foreground transition-transform duration-200 ease-in-out h-full",
           isMobile ? "shadow-xl" : "border-r border-sidebar-border",
           isOpen ? "translate-x-0" : "-translate-x-full"
         )}
         style={{ backgroundColor: 'hsl(196, 70%, 20%)' }}
+        initial={{ x: isMobile ? -320 : 0 }}
+        animate={{ x: isOpen ? 0 : (isMobile ? -320 : -280) }}
+        transition={{ duration: 0.2, ease: "easeOut" }}
       >
         <div className="flex items-center justify-between h-14 md:h-16 px-4 border-b border-sidebar-border">
           <div className="flex items-center space-x-2">
@@ -53,6 +57,7 @@ const Sidebar = memo(({ isOpen, isMobile, onClose, userRole }: SidebarProps) => 
               size="sm"
               onClick={handleCloseClick}
               className="text-sidebar-foreground hover:text-white hover:bg-sidebar-accent p-1"
+              aria-label="Fechar menu"
             >
               <X className="h-4 w-4 md:h-5 md:w-5" />
             </Button>
@@ -65,7 +70,7 @@ const Sidebar = memo(({ isOpen, isMobile, onClose, userRole }: SidebarProps) => 
         </div>
 
         <SidebarUserProfile userRole={userRole} />
-      </div>
+      </motion.div>
     </>
   );
 });
