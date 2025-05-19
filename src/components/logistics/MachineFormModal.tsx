@@ -4,40 +4,23 @@ import {
   Dialog,
   DialogContent,
   DialogDescription,
-  DialogFooter,
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
-import {
-  Form,
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from "@/components/ui/form";
-import { Input } from "@/components/ui/input";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import * as z from "zod";
 import { useToast } from "@/hooks/use-toast";
 import { useClients } from "@/hooks/use-clients";
 import { saveMachine } from "@/hooks/use-machines";
+import { Form } from "@/components/ui/form";
 
-const formSchema = z.object({
-  serialNumber: z.string().min(1, "Número de série é obrigatório"),
-  model: z.string().min(1, "Modelo é obrigatório"),
-  status: z.string().min(1, "Status é obrigatório"),
-  clientId: z.string().optional(),
-});
+// Import refactored components
+import { machineFormSchema, MachineFormValues } from "./machine-form/MachineFormSchema";
+import { MachineSerialField } from "./machine-form/MachineSerialField";
+import { MachineModelField } from "./machine-form/MachineModelField";
+import { MachineStatusField } from "./machine-form/MachineStatusField";
+import { MachineClientField } from "./machine-form/MachineClientField";
+import { MachineFormActions } from "./machine-form/MachineFormActions";
 
 interface MachineFormModalProps {
   open: boolean;
@@ -49,10 +32,11 @@ interface MachineFormModalProps {
 const MachineFormModal = ({ open, onOpenChange, machine, onSave }: MachineFormModalProps) => {
   const { toast } = useToast();
   const { clients } = useClients();
+  const [isSubmitting, setIsSubmitting] = React.useState(false);
   
-  // Reset form when modal opens or closes
-  const form = useForm<z.infer<typeof formSchema>>({
-    resolver: zodResolver(formSchema),
+  // Initialize form with default values
+  const form = useForm<MachineFormValues>({
+    resolver: zodResolver(machineFormSchema),
     defaultValues: {
       serialNumber: machine?.serialNumber || "",
       model: machine?.model || "",
@@ -73,7 +57,8 @@ const MachineFormModal = ({ open, onOpenChange, machine, onSave }: MachineFormMo
     }
   }, [open, machine, form]);
   
-  const onSubmit = async (data: z.infer<typeof formSchema>) => {
+  const onSubmit = async (data: MachineFormValues) => {
+    setIsSubmitting(true);
     try {
       const savedMachine = await saveMachine(data);
       
@@ -91,6 +76,8 @@ const MachineFormModal = ({ open, onOpenChange, machine, onSave }: MachineFormMo
         description: "Ocorreu um erro ao salvar a máquina. Tente novamente.",
       });
       console.error(error);
+    } finally {
+      setIsSubmitting(false);
     }
   };
   
@@ -123,102 +110,11 @@ const MachineFormModal = ({ open, onOpenChange, machine, onSave }: MachineFormMo
         
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4 py-2">
-            <FormField
-              control={form.control}
-              name="serialNumber"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Número de Série/ID</FormLabel>
-                  <FormControl>
-                    <Input placeholder="Ex: SN1234567890" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            
-            <FormField
-              control={form.control}
-              name="model"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Modelo</FormLabel>
-                  <FormControl>
-                    <Input placeholder="Ex: Terminal Pro" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            
-            <FormField
-              control={form.control}
-              name="status"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Status</FormLabel>
-                  <Select
-                    onValueChange={field.onChange}
-                    defaultValue={field.value}
-                  >
-                    <FormControl>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Selecione o status" />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      <SelectItem value="ACTIVE">Operando</SelectItem>
-                      <SelectItem value="MAINTENANCE">Em Manutenção</SelectItem>
-                      <SelectItem value="INACTIVE">Parada</SelectItem>
-                      <SelectItem value="STOCK">Em Estoque</SelectItem>
-                      <SelectItem value="TRANSIT">Em Trânsito</SelectItem>
-                      <SelectItem value="BLOCKED">Bloqueada</SelectItem>
-                    </SelectContent>
-                  </Select>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            
-            <FormField
-              control={form.control}
-              name="clientId"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Cliente</FormLabel>
-                  <Select
-                    onValueChange={field.onChange}
-                    defaultValue={field.value}
-                  >
-                    <FormControl>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Selecione o cliente (opcional)" />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      <SelectItem value="stock">Nenhum (estoque)</SelectItem>
-                      {clients?.map((client: any) => (
-                        <SelectItem key={client.id} value={client.id}>
-                          {client.business_name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            
-            <DialogFooter className="pt-4">
-              <Button
-                type="button"
-                variant="outline"
-                onClick={handleCancel}
-              >
-                Cancelar
-              </Button>
-              <Button type="submit">Salvar</Button>
-            </DialogFooter>
+            <MachineSerialField />
+            <MachineModelField />
+            <MachineStatusField />
+            <MachineClientField clients={clients} />
+            <MachineFormActions onCancel={handleCancel} isSubmitting={isSubmitting} />
           </form>
         </Form>
       </DialogContent>
