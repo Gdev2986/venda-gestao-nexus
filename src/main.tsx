@@ -9,7 +9,7 @@ import { NotificationsProvider } from '@/contexts/NotificationsContext';
 import App from './App.tsx';
 import './index.css';
 
-// Create a client
+// Create a query client
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
@@ -55,7 +55,7 @@ function initializeApp() {
   }
 }
 
-// Handle both loading states to ensure initialization happens correctly
+// Only initialize when the DOM is fully loaded to avoid React null issues
 if (document.readyState === 'loading') {
   // DOM still loading, wait for it to complete
   document.addEventListener('DOMContentLoaded', initializeApp);
