@@ -12,17 +12,27 @@ const RootLayout = () => {
   const location = useLocation();
   const [showLoading, setShowLoading] = useState(true);
   
+  // Debug logging
+  useEffect(() => {
+    console.log("RootLayout render status:", {
+      isLoading,
+      isAuthenticated,
+      userRole,
+      path: location.pathname
+    });
+  }, [isLoading, isAuthenticated, userRole, location.pathname]);
+  
   // Add a slight delay for loading animation
   useEffect(() => {
     if (!isLoading) {
       const timer = setTimeout(() => {
         setShowLoading(false);
-      }, 500);
+      }, 500); // 0.5 second loading time
       
       return () => clearTimeout(timer);
     }
   }, [isLoading]);
-
+  
   // If still loading, show a spinner
   if (isLoading || showLoading) {
     return (
@@ -40,23 +50,21 @@ const RootLayout = () => {
     );
   }
   
-  // Simple redirection logic
-  if (isAuthenticated && userRole) {
-    const dashboardPath = getDashboardPath(userRole);
-    if (location.pathname === PATHS.LOGIN) {
+  // If authenticated, redirect to the role-specific dashboard
+  if (isAuthenticated && user && userRole) {
+    try {
+      const dashboardPath = getDashboardPath(userRole);
+      console.log(`User authenticated as ${userRole}, redirecting to ${dashboardPath}`);
       return <Navigate to={dashboardPath} replace />;
+    } catch (error) {
+      console.error("Error getting dashboard path:", error);
+      return <Navigate to={PATHS.LOGIN} replace />;
     }
-  } else if (!isAuthenticated && location.pathname !== PATHS.LOGIN) {
-    return <Navigate to={PATHS.LOGIN} replace />;
   }
   
-  // Show loading if we're still deciding where to redirect
-  return (
-    <div className="flex flex-col items-center justify-center h-screen bg-background">
-      <Spinner size="lg" />
-      <p className="mt-4 text-muted-foreground">Redirecionando...</p>
-    </div>
-  );
+  // If not authenticated, redirect to login
+  console.log("User not authenticated, redirecting to login");
+  return <Navigate to={PATHS.LOGIN} replace />;
 };
 
 export default RootLayout;

@@ -1,23 +1,59 @@
 
-import { Navigate, Outlet } from "react-router-dom";
+import { Navigate, Outlet, useLocation } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { Spinner } from "@/components/ui/spinner";
+import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import { PATHS } from "@/routes/paths";
 import { UserRole } from "@/types";
 import { useToast } from "@/hooks/use-toast";
+import { getDashboardPath } from "@/routes/routeUtils";
 
 interface RequireAuthProps {
   allowedRoles?: UserRole[];
   redirectTo?: string;
 }
 
+// Define route permissions globally
+const routePermissions: Record<string, UserRole[]> = {
+  '/admin': [UserRole.ADMIN],
+  '/financial': [UserRole.ADMIN, UserRole.FINANCIAL],
+  '/logistics': [UserRole.ADMIN, UserRole.LOGISTICS],
+  '/partner': [UserRole.PARTNER],
+  '/user': [UserRole.CLIENT],
+};
+
 const RequireAuth = ({ allowedRoles = [], redirectTo = PATHS.LOGIN }: RequireAuthProps) => {
   const { user, isLoading, isAuthenticated, userRole } = useAuth();
+  const location = useLocation();
   const { toast } = useToast();
+  const [showLoading, setShowLoading] = useState(true);
+  const [redirectPath, setRedirectPath] = useState("");
   
+  // Add a loading delay for better UX
+  useEffect(() => {
+    if (!isLoading) {
+      const timer = setTimeout(() => {
+        setShowLoading(false);
+      }, 500); // 0.5 second loading time
+      
+      return () => clearTimeout(timer);
+    }
+  }, [isLoading]);
+
+  // Debug information
+  useEffect(() => {
+    console.log("RequireAuth render status:", {
+      isLoading,
+      isAuthenticated,
+      userRole,
+      path: location.pathname,
+      allowedRoles
+    });
+  }, [isLoading, isAuthenticated, userRole, location.pathname, allowedRoles]);
+
   // If still loading, show a spinner
-  if (isLoading) {
+  if (isLoading || showLoading) {
     return (
       <div className="flex flex-col items-center justify-center h-screen bg-background">
         <motion.div
@@ -33,29 +69,49 @@ const RequireAuth = ({ allowedRoles = [], redirectTo = PATHS.LOGIN }: RequireAut
     );
   }
 
-  // If not authenticated, redirect to login
+  // If not authenticated and not loading, redirect to login
   if (!isAuthenticated || !user) {
-    // Save the intended path for post-login redirect
-    sessionStorage.setItem("redirectPath", window.location.pathname);
-    return <Navigate to={redirectTo} replace />;
+    console.log("User not authenticated, redirecting to login from", location.pathname);
+    // Store the current location for redirect after login
+    sessionStorage.setItem("redirectPath", location.pathname);
+    return <Navigate to={PATHS.LOGIN} state={{ from: location.pathname }} replace />;
   }
-  
-  // Check if user has permission to access this route
-  const hasPermission = allowedRoles.length === 0 || (userRole && allowedRoles.includes(userRole));
-  
-  // If no permission, show error and redirect
-  if (!hasPermission) {
+
+  // If we have a userRole, check permissions
+  if (userRole) {
+    // Check if user has permission to access this route
+    const hasPermission = allowedRoles.length === 0 || allowedRoles.includes(userRole);
+
+    // If no permission, redirect to appropriate dashboard
+    if (!hasPermission) {
+      console.log(`User with role ${userRole} not allowed to access ${location.pathname}`);
+      
+      toast({
+        title: "Acesso não autorizado",
+        description: "Você não tem permissão para acessar esta página",
+        variant: "destructive",
+      });
+      
+      try {
+        const dashboardPath = getDashboardPath(userRole);
+        return <Navigate to={dashboardPath} replace />;
+      } catch (error) {
+        console.error("Error getting dashboard path:", error);
+        return <Navigate to={PATHS.LOGIN} replace />;
+      }
+    }
+  } else {
+    // If no role but authenticated, there's something wrong with the user data
+    console.error("User is authenticated but has no role");
     toast({
-      title: "Acesso não autorizado",
-      description: "Você não tem permissão para acessar esta página",
+      title: "Erro de autenticação",
+      description: "Ocorreu um erro ao verificar suas permissões",
       variant: "destructive",
     });
-    
-    // Redirect to login
     return <Navigate to={PATHS.LOGIN} replace />;
   }
 
-  // If authenticated and has permission, render the protected content
+  // If authenticated and has the right role, render the protected content
   return <Outlet />;
 };
 
