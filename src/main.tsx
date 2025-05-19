@@ -53,11 +53,13 @@ function renderApp() {
   }
 }
 
-// Ensure DOM is ready before rendering
+// Make sure DOM is fully loaded before attempting to render
 if (document.readyState === 'loading') {
   document.addEventListener('DOMContentLoaded', () => {
-    renderApp();
+    // Add a small delay to ensure React is fully initialized
+    setTimeout(renderApp, 10);
   });
 } else {
-  renderApp();
+  // DOM already loaded, add slight delay to ensure React initialization
+  setTimeout(renderApp, 10);
 }
