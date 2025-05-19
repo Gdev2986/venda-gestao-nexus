@@ -1,7 +1,7 @@
 
 import { useState, useEffect, useRef } from "react";
 import { useNavigate, Link } from "react-router-dom";
-import LoginForm from "@/components/auth/LoginForm";
+import LoginContainer from "@/components/auth/login/LoginContainer";
 import { LayoutDashboard, CreditCard, FileText, Monitor } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { PATHS } from "@/routes/paths";
@@ -112,7 +112,7 @@ const Login = () => {
             </div>
           )}
           
-          <LoginForm />
+          <LoginContainer />
           <div className="mt-4 text-center">
             <p className="text-muted-foreground">
               Não tem uma conta?{" "}
