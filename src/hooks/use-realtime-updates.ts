@@ -75,11 +75,16 @@ export function useRealtimeUpdates({
     // Create a unique channel name based on table and event type
     const channelName = `realtime:${tableName}:${eventType}`;
     
-    // Create channel with the correct syntax for Supabase JS client
+    // Fix the type issue by using the correct signature for the on method
     const channel = supabase
       .channel(channelName)
-      .on('postgres_changes', 
-        { event: eventType, schema: 'public', table: tableName }, 
+      .on(
+        'postgres_changes', 
+        {
+          event: eventType,
+          schema: 'public',
+          table: tableName
+        },
         handleRealtimeChange
       )
       .subscribe();
