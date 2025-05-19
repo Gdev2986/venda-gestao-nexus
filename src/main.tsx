@@ -49,8 +49,11 @@ const initializeApp = () => {
 };
 
 // Ensure the DOM is ready before rendering
-if (document.readyState === "loading") {
-  document.addEventListener("DOMContentLoaded", initializeApp);
-} else {
+document.addEventListener("DOMContentLoaded", () => {
+  initializeApp();
+});
+
+// If the DOM is already loaded, initialize immediately
+if (document.readyState !== "loading") {
   initializeApp();
 }

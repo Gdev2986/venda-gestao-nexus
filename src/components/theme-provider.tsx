@@ -29,21 +29,21 @@ export function ThemeProvider({
   storageKey = "ui-theme",
   ...props
 }: ThemeProviderProps) {
-  // Initialize state with a function to properly handle browser environment
-  const [theme, setTheme] = React.useState<Theme>(() => {
-    // For safety, check if running in browser environment
-    if (typeof window !== "undefined") {
-      try {
-        const storedTheme = localStorage.getItem(storageKey);
-        if (storedTheme && ["dark", "light", "system"].includes(storedTheme as Theme)) {
-          return storedTheme as Theme;
-        }
-      } catch (error) {
-        console.error("Error accessing localStorage:", error);
+  const [theme, setTheme] = React.useState<Theme>(defaultTheme);
+  
+  // Load theme from localStorage on component mount
+  React.useEffect(() => {
+    if (typeof window === "undefined") return;
+    
+    try {
+      const savedTheme = localStorage.getItem(storageKey);
+      if (savedTheme && ["dark", "light", "system"].includes(savedTheme as Theme)) {
+        setTheme(savedTheme as Theme);
       }
+    } catch (error) {
+      console.error("Error accessing localStorage:", error);
     }
-    return defaultTheme;
-  });
+  }, [storageKey]);
 
   // Apply theme to document root element
   React.useEffect(() => {
@@ -62,22 +62,25 @@ export function ThemeProvider({
     }
   }, [theme]);
 
-  // Create the context value with memoization
+  // Save theme to localStorage when it changes
+  React.useEffect(() => {
+    if (typeof window === "undefined") return;
+    
+    try {
+      localStorage.setItem(storageKey, theme);
+    } catch (error) {
+      console.error("Error writing to localStorage:", error);
+    }
+  }, [theme, storageKey]);
+
   const value = React.useMemo(
     () => ({
       theme,
       setTheme: (newTheme: Theme) => {
-        if (typeof window !== "undefined") {
-          try {
-            localStorage.setItem(storageKey, newTheme);
-          } catch (error) {
-            console.error("Error writing to localStorage:", error);
-          }
-        }
         setTheme(newTheme);
       },
     }),
-    [theme, storageKey]
+    [theme]
   );
 
   return (
