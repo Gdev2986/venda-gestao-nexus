@@ -128,18 +128,18 @@ const AdminNotificationsTab = () => {
         throw new Error("No admin users found");
       }
       
-      // Insert test notification for all admins
-      const notificationsToInsert = adminProfiles.map(profile => ({
+      // Insert test notification for all admins - Fix: Need to use specific string literal for the type
+      const testNotifications = adminProfiles.map(profile => ({
         user_id: profile.id,
         title: "Notificação de Teste",
         message: "Esta é uma notificação de teste do painel de administração.",
-        type: NotificationType.SYSTEM,
+        type: "SYSTEM", // Use string literal instead of enum
         data: { isTest: true }
       }));
       
       const { error } = await supabase
         .from("notifications")
-        .insert(notificationsToInsert);
+        .insert(testNotifications);
 
       if (error) throw error;
 

@@ -43,7 +43,7 @@ export const NotificationsProvider: React.FC<{ children: React.ReactNode }> = ({
   const [unreadCount, setUnreadCount] = useState(0);
   const [isLoading, setIsLoading] = useState(false);
   const [soundEnabled, setSoundEnabled] = useState<boolean>(true);
-  const { user, profile } = useAuth();
+  const { user } = useAuth();
   const { toast } = useToast();
 
   // Load sound preference from localStorage on initial load
@@ -59,57 +59,86 @@ export const NotificationsProvider: React.FC<{ children: React.ReactNode }> = ({
     localStorage.setItem("notification_sound_enabled", soundEnabled.toString());
   }, [soundEnabled]);
 
+  // Get the user's role - without using profile property directly
+  const getUserRole = async (userId: string): Promise<string | null> => {
+    try {
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('role')
+        .eq('id', userId)
+        .single();
+      
+      if (error) {
+        console.error("Error fetching user role:", error);
+        return null;
+      }
+      
+      return data?.role || null;
+    } catch (err) {
+      console.error("Error in getUserRole:", err);
+      return null;
+    }
+  };
+
   useEffect(() => {
     if (user) {
       fetchNotifications();
 
       // Set up realtime subscription for new notifications
-      const userRole = profile?.role || '';
-      console.log('Setting up realtime notifications for user role:', userRole);
-      
-      const channel = supabase
-        .channel('public:notifications')
-        .on(
-          'postgres_changes',
-          {
-            event: '*',
-            schema: 'public',
-            table: 'notifications',
-            filter: `user_id=eq.${user.id}`,
-          },
-          (payload) => {
-            console.log('Notification change received!', payload);
-            
-            if (payload.eventType === 'INSERT') {
-              const newNotification = payload.new as Notification;
+      const setupRealtimeSubscription = async () => {
+        const userRole = await getUserRole(user.id);
+        console.log('Setting up realtime notifications for user role:', userRole);
+        
+        const channel = supabase
+          .channel('public:notifications')
+          .on(
+            'postgres_changes',
+            {
+              event: '*',
+              schema: 'public',
+              table: 'notifications',
+              filter: `user_id=eq.${user.id}`,
+            },
+            (payload) => {
+              console.log('Notification change received!', payload);
               
-              // Play sound based on notification type
-              playNotificationSoundIfEnabled(newNotification.type, soundEnabled);
-              
-              // Show toast notification
-              toast({
-                title: newNotification.title,
-                description: newNotification.message,
-              });
-              
-              // Update our notifications state
-              setNotifications(prev => [newNotification, ...prev]);
-            } else {
-              // For updates or deletions, just refresh the list
-              fetchNotifications();
+              if (payload.eventType === 'INSERT') {
+                const newNotification = payload.new as Notification;
+                
+                // Play sound based on notification type
+                playNotificationSoundIfEnabled(newNotification.type as NotificationType, soundEnabled);
+                
+                // Show toast notification
+                toast({
+                  title: newNotification.title,
+                  description: newNotification.message,
+                });
+                
+                // Update our notifications state
+                setNotifications(prev => [newNotification, ...prev]);
+              } else {
+                // For updates or deletions, just refresh the list
+                fetchNotifications();
+              }
             }
-          }
-        )
-        .subscribe((status) => {
-          console.log('Realtime subscription status:', status);
-        });
+          )
+          .subscribe((status) => {
+            console.log('Realtime subscription status:', status);
+          });
 
+        return channel;
+      };
+
+      const channel = setupRealtimeSubscription();
+      
       return () => {
         console.log('Cleaning up notification subscription');
-        supabase.removeChannel(channel);
+        channel.then(ch => {
+          if (ch) supabase.removeChannel(ch);
+        });
       };
     }
-  }, [user, profile?.role, soundEnabled]);
+  }, [user, soundEnabled]);
 
   // Update unread count whenever notifications change
   useEffect(() => {
@@ -256,7 +285,7 @@ export const NotificationsProvider: React.FC<{ children: React.ReactNode }> = ({
 
 export const useNotifications = () => {
   const context = useContext(NotificationsContext);
-  if (!context) {
+  if (context === undefined) {
     throw new Error(
       "useNotifications must be used within a NotificationsProvider"
     );
