@@ -74,7 +74,7 @@ function App() {
       {FinancialRoutes}
       {LogisticsRoutes}
 
-      {/* Shared Routes (accessible by all roles) - Now using MainLayout */}
+      {/* Shared Routes (accessible by all roles) - Using MainLayout */}
       <Route element={<MainLayout />}>
         <Route path="/notifications" element={<Notifications />} />
       </Route>

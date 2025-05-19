@@ -1,4 +1,3 @@
-
 import { useState, useRef, useEffect } from "react";
 import { cn } from "@/lib/utils";
 import { Bell, BellOff, Volume2, VolumeX } from "lucide-react";
@@ -58,9 +57,6 @@ const NotificationDropdown = () => {
       case NotificationType.SALE:
         return <ShoppingCart className="h-4 w-4 text-primary" />;
       case NotificationType.PAYMENT:
-      case NotificationType.PAYMENT_APPROVED:
-      case NotificationType.PAYMENT_REJECTED:
-      case NotificationType.PAYMENT_REQUEST:
         return <CreditCard className="h-4 w-4 text-primary" />;
       case NotificationType.MACHINE:
         return <Wrench className="h-4 w-4 text-primary" />;
