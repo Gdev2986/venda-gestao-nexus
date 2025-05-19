@@ -31,6 +31,7 @@ export function ThemeProvider({
 }: ThemeProviderProps) {
   const [theme, setTheme] = React.useState<Theme>(defaultTheme);
 
+  // Apply theme to document
   React.useEffect(() => {
     const root = window.document.documentElement;
     root.classList.remove("light", "dark");
@@ -47,6 +48,7 @@ export function ThemeProvider({
     root.classList.add(theme);
   }, [theme]);
 
+  // Load theme from localStorage only on client-side
   React.useEffect(() => {
     try {
       const storedTheme = localStorage.getItem(storageKey);
