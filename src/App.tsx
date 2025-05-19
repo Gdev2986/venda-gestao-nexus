@@ -1,3 +1,4 @@
+
 import { Routes, Route, Navigate } from "react-router-dom";
 import { PATHS } from "./routes/paths";
 import { useEffect, useState } from "react";
@@ -27,18 +28,30 @@ import { Spinner } from "./components/ui/spinner";
 
 function App() {
   const { userRole, isRoleLoading } = useUserRole();
-  const { session, isLoading } = useAuth();
+  const { session, isLoading, user, isAuthenticated } = useAuth();
   const { toast } = useToast();
   const [dashboardPath, setDashboardPath] = useState<string | null>(null);
   const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
   const [isRedirecting, setIsRedirecting] = useState(false);
 
-  // Log role changes for debugging
+  // Log user state for debugging
+  useEffect(() => {
+    console.log("App.tsx - Auth state:", {
+      isLoading,
+      isAuthenticated,
+      hasUser: !!user,
+      userEmail: user?.email,
+      userRole,
+      hasSession: !!session
+    });
+  }, [isLoading, isAuthenticated, user, userRole, session]);
+  
+  // Determine dashboard path
   useEffect(() => {
     if (!isRoleLoading && !isLoading) {
       console.log("App.tsx - Current user role:", userRole, "Session exists:", !!session);
       
-      if (session && userRole) {
+      if (session && user && userRole) {
         try {
           const dashPath = getDashboardPath(userRole);
           console.log("App.tsx - Will redirect to dashboard:", dashPath);
@@ -47,12 +60,16 @@ function App() {
           console.error("Error getting dashboard path:", error);
           setDashboardPath(PATHS.LOGIN);
         }
+      } else if (session && user) {
+        // Fallback if we have user but no role yet
+        console.log("App.tsx - Have user but no role yet, using generic dashboard");
+        setDashboardPath(PATHS.DASHBOARD);
       } else {
-        console.log("App.tsx - No session or role, no dashboard redirect");
+        console.log("App.tsx - No session or user, redirecting to login");
         setDashboardPath(PATHS.LOGIN);
       }
     }
-  }, [userRole, isRoleLoading, session, isLoading]);
+  }, [userRole, isRoleLoading, session, isLoading, user]);
 
   // Show loading state while determining the dashboard path
   if ((isLoading || isRoleLoading) && dashboardPath === null) {
@@ -78,7 +95,7 @@ function App() {
     <Routes>
       {/* Root path handling */}
       <Route path={PATHS.HOME} element={
-        dashboardPath && dashboardPath !== PATHS.LOGIN ? 
+        isAuthenticated && dashboardPath && dashboardPath !== PATHS.LOGIN ? 
           <Navigate to={dashboardPath} replace /> : 
           <Navigate to={PATHS.LOGIN} replace />
       } />
@@ -87,7 +104,7 @@ function App() {
       <Route 
         path={PATHS.DASHBOARD} 
         element={
-          dashboardPath && dashboardPath !== PATHS.LOGIN ? 
+          isAuthenticated && dashboardPath && dashboardPath !== PATHS.LOGIN ? 
             <Navigate to={dashboardPath} replace /> : 
             <Navigate to={PATHS.LOGIN} replace />
         } 
@@ -111,7 +128,7 @@ function App() {
       
       {/* Catch-all redirect to the appropriate dashboard or login */}
       <Route path="*" element={
-        dashboardPath ? 
+        isAuthenticated && dashboardPath ? 
           <Navigate to={dashboardPath} replace /> : 
           <Navigate to={PATHS.LOGIN} replace />
       } />

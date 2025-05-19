@@ -7,10 +7,11 @@ import { useAuth } from "@/contexts/AuthContext";
 import { PATHS } from "@/routes/paths";
 import { Spinner } from "@/components/ui/spinner";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { getDashboardPath } from "@/routes/routeUtils";
 
 const Login = () => {
   const navigate = useNavigate();
-  const { user, isLoading } = useAuth();
+  const { user, isLoading, userRole, isAuthenticated } = useAuth();
   const [redirecting, setRedirecting] = useState(false);
   const redirectAttemptedRef = useRef(false);
   const isMobileDevice = useIsMobile();
@@ -18,18 +19,24 @@ const Login = () => {
   // Handle auth redirection
   useEffect(() => {
     // Only redirect if we have a user and aren't already redirecting
-    if (user && !isLoading && !redirectAttemptedRef.current) {
+    if (user && !isLoading && isAuthenticated && !redirectAttemptedRef.current) {
       console.log("Login: User authenticated, redirecting to dashboard");
       console.log("Device type:", isMobileDevice ? "Mobile" : "Desktop");
+      console.log("User role:", userRole);
+      
       setRedirecting(true);
       redirectAttemptedRef.current = true;
       
+      // Get the appropriate dashboard path based on role
+      const dashboardPath = userRole ? getDashboardPath(userRole) : PATHS.DASHBOARD;
+      console.log("Selected dashboard path:", dashboardPath);
+      
       // Use window.location.href for more reliable redirect
       setTimeout(() => {
-        window.location.href = PATHS.DASHBOARD;
+        window.location.href = dashboardPath;
       }, 300);
     }
-  }, [user, isLoading, navigate, isMobileDevice]);
+  }, [user, isLoading, navigate, isMobileDevice, isAuthenticated, userRole]);
 
   // If redirecting or loading, show a spinner
   if (isLoading || redirecting) {

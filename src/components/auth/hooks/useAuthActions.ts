@@ -2,6 +2,9 @@
 import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { cleanupSupabaseState } from "@/contexts/AuthContext";
+import { UserRole } from "@/types";
+import { getDashboardPath } from "@/routes/routeUtils";
+import { useToast } from "@/hooks/use-toast";
 
 interface AuthResponse {
   success: boolean;
@@ -10,6 +13,7 @@ interface AuthResponse {
 
 export const useAuthActions = () => {
   const [isLoading, setIsLoading] = useState(false);
+  const { toast } = useToast();
 
   const handleEmailPasswordLogin = async (email: string, password: string): Promise<AuthResponse> => {
     try {
@@ -32,7 +36,7 @@ export const useAuthActions = () => {
       }
 
       console.log("Starting login process");
-      const { error } = await supabase.auth.signInWithPassword({
+      const { data, error } = await supabase.auth.signInWithPassword({
         email,
         password,
       });
@@ -42,12 +46,26 @@ export const useAuthActions = () => {
         throw error;
       }
 
-      console.log("Login successful, redirecting...");
+      console.log("Login successful, getting user role and redirecting...");
       
-      // Use window.location for more reliable redirect in mobile environments
+      // Get user role
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('role')
+        .eq('id', data.user.id)
+        .single();
+      
+      const role = profile?.role as UserRole;
+      console.log("User role:", role);
+      
+      // Determine dashboard path based on role
+      const dashboardPath = role ? getDashboardPath(role) : "/dashboard";
+      console.log("Redirecting to:", dashboardPath);
+      
+      // Use window.location for more reliable redirect
       setTimeout(() => {
-        window.location.href = "/dashboard";
-      }, 800);
+        window.location.href = dashboardPath;
+      }, 300);
       
       return { success: true, error: null };
     } catch (error: any) {

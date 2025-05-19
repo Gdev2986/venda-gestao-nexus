@@ -35,7 +35,7 @@ const RootLayout = () => {
     if (!isLoading) {
       const timer = setTimeout(() => {
         setShowLoading(false);
-      }, 500); // 0.5 second loading time
+      }, 300); // 0.3 second loading time for better UX
       
       return () => clearTimeout(timer);
     }
@@ -48,7 +48,7 @@ const RootLayout = () => {
         <motion.div
           initial={{ opacity: 0, scale: 0.8 }}
           animate={{ opacity: 1, scale: 1 }}
-          transition={{ duration: 0.5 }}
+          transition={{ duration: 0.3 }}
           className="flex flex-col items-center"
         >
           <Spinner size="lg" />
@@ -65,6 +65,7 @@ const RootLayout = () => {
   
   // Prevent infinite redirect loop
   if (redirectAttempted) {
+    console.log("Already attempted to redirect, going to login");
     return <Navigate to={PATHS.LOGIN} replace />;
   }
   
@@ -82,7 +83,7 @@ const RootLayout = () => {
       
       setRedirectAttempted(true);
       
-      // Use window.location for mobile devices
+      // Use window.location for mobile devices for more reliable redirect
       if (isMobile) {
         console.log("Mobile device detected, using window.location for redirect");
         window.location.href = dashboardPath;
@@ -105,9 +106,16 @@ const RootLayout = () => {
     }
   }
   
-  // If not authenticated, redirect to login
+  // If not authenticated or missing data, redirect to login
   console.log("User not authenticated, redirecting to login");
   setRedirectAttempted(true);
+  
+  // For mobile, use window.location for more reliable redirect
+  if (isMobile) {
+    window.location.href = PATHS.LOGIN;
+    return null;
+  }
+  
   return <Navigate to={PATHS.LOGIN} replace />;
 };
 

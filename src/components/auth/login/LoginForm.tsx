@@ -1,29 +1,27 @@
 
-import React, { useState } from "react";
-import { z } from "zod";
+import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { loginFormSchema } from "@/components/auth/schemas/authSchemas";
 import { Button } from "@/components/ui/button";
-import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Spinner } from "@/components/ui/spinner";
+import { Form } from "@/components/ui/form";
 import EmailField from "./EmailField";
 import PasswordField from "./PasswordField";
 import SocialLoginButtons from "./SocialLoginButtons";
 import { useAuthActions } from "../hooks/useAuthActions";
-import { loginFormSchema } from "../schemas/authSchemas";
+import { useToast } from "@/hooks/use-toast";
 
-type FormData = z.infer<typeof loginFormSchema>;
+type LoginFormValues = {
+  email: string;
+  password: string;
+};
 
 const LoginForm = () => {
-  const [authError, setAuthError] = useState<string | null>(null);
-  const [loginSuccess, setLoginSuccess] = useState(false);
-  const { handleEmailPasswordLogin } = useAuthActions();
+  const [error, setError] = useState<string | null>(null);
+  const { toast } = useToast();
+  const { handleEmailPasswordLogin, handleGoogleLogin, isLoading } = useAuthActions();
 
-  const {
-    register,
-    handleSubmit,
-    formState: { errors },
-  } = useForm<FormData>({
+  const form = useForm<LoginFormValues>({
     resolver: zodResolver(loginFormSchema),
     defaultValues: {
       email: "",
@@ -31,51 +29,68 @@ const LoginForm = () => {
     },
   });
 
-  const onSubmit = async (data: FormData) => {
+  const onSubmit = async (data: LoginFormValues) => {
+    setError(null);
+    
     try {
-      setAuthError(null);
-      const result = await handleEmailPasswordLogin(data.email, data.password);
+      const response = await handleEmailPasswordLogin(data.email, data.password);
       
-      if (result.success) {
-        setLoginSuccess(true);
+      if (!response.success) {
+        setError(response.error || "Ocorreu um erro durante o login.");
+        toast({
+          variant: "destructive",
+          title: "Erro de Login",
+          description: response.error || "Credenciais inválidas.",
+        });
       } else {
-        setAuthError(result.error || "Erro desconhecido durante o login");
+        toast({
+          title: "Login bem-sucedido",
+          description: "Redirecionando para o dashboard...",
+        });
       }
-    } catch (error: any) {
-      console.error("Error during login:", error);
-      setAuthError(error.message || "Ocorreu um erro inesperado durante o login");
+    } catch (err: any) {
+      console.error("Unexpected error during login:", err);
+      setError("Ocorreu um erro inesperado. Por favor, tente novamente.");
+      toast({
+        variant: "destructive",
+        title: "Erro",
+        description: "Ocorreu um erro inesperado. Por favor, tente novamente.",
+      });
     }
   };
 
   return (
-    <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-      <EmailField register={register} errors={errors} disabled={loginSuccess} />
-      <PasswordField register={register} errors={errors} disabled={loginSuccess} />
-
-      {authError && (
-        <Alert variant="destructive">
-          <AlertDescription>{authError}</AlertDescription>
-        </Alert>
-      )}
-      
-      {loginSuccess && (
-        <Alert>
-          <AlertDescription className="text-green-600">Login bem-sucedido. Redirecionando...</AlertDescription>
-        </Alert>
-      )}
-
-      <Button type="submit" className="w-full" disabled={loginSuccess}>
-        {loginSuccess ? (
-          <span className="flex items-center">
-            <Spinner size="sm" className="mr-2" /> Redirecionando...
-          </span>
-        ) : (
-          "Entrar"
+    <Form {...form}>
+      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+        <EmailField register={form.register} errors={form.formState.errors} disabled={isLoading} />
+        <PasswordField register={form.register} errors={form.formState.errors} disabled={isLoading} />
+        
+        {error && (
+          <div className="text-sm text-destructive">{error}</div>
         )}
-      </Button>
-      
-      <SocialLoginButtons disabled={loginSuccess} />
-    </form>
+        
+        <Button
+          type="submit"
+          className="w-full"
+          disabled={isLoading}
+        >
+          {isLoading ? "Entrando..." : "Entrar"}
+        </Button>
+        
+        <div className="relative my-4">
+          <div className="absolute inset-0 flex items-center">
+            <span className="w-full border-t" />
+          </div>
+          <div className="relative flex justify-center text-xs uppercase">
+            <span className="bg-card px-2 text-muted-foreground">
+              Ou continue com
+            </span>
+          </div>
+        </div>
+        
+        <SocialLoginButtons />
+      </form>
+    </Form>
   );
 };
 
