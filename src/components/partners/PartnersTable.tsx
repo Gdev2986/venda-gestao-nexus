@@ -1,32 +1,26 @@
 
-import { useState } from "react";
-import { Partner } from "@/types";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
-import { MoreHorizontal, Edit, Trash2, Eye } from "lucide-react";
+import { Partner } from "@/types";
+import { Edit, Trash2, MoreHorizontal } from "lucide-react";
+import { Skeleton } from "@/components/ui/skeleton";
+import { formatDate } from "@/lib/formatters";
+import { Badge } from "@/components/ui/badge";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 
 interface PartnersTableProps {
   partners: Partner[];
   isLoading: boolean;
-  onEdit?: (partner: Partner) => void;
-  onDelete?: (partner: Partner) => void;
+  onEdit: (partner: Partner) => void;
+  onDelete: (partner: Partner) => void;
   onView?: (partner: Partner) => void;
-  page?: number;
-  setPage?: (page: number) => void;
-  totalPages?: number;
 }
 
 const PartnersTable = ({
@@ -34,132 +28,145 @@ const PartnersTable = ({
   isLoading,
   onEdit,
   onDelete,
-  onView,
-  page = 1,
-  setPage,
-  totalPages = 1,
+  onView
 }: PartnersTableProps) => {
-  const formatCurrency = (value: number) => {
-    return new Intl.NumberFormat("pt-BR", {
-      style: "currency",
-      currency: "BRL",
-    }).format(value);
-  };
-
-  const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString("pt-BR");
-  };
-
   if (isLoading) {
     return (
-      <div className="flex justify-center items-center p-8">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+      <div className="space-y-3">
+        {Array(3).fill(0).map((_, i) => (
+          <div key={i} className="flex items-center space-x-4 p-4 border rounded-md">
+            <div className="space-y-2 flex-1">
+              <Skeleton className="h-4 w-[250px]" />
+              <Skeleton className="h-4 w-[200px]" />
+            </div>
+            <Skeleton className="h-10 w-10 rounded-full" />
+          </div>
+        ))}
+      </div>
+    );
+  }
+
+  if (partners.length === 0) {
+    return (
+      <div className="text-center py-10 text-muted-foreground">
+        Nenhum parceiro encontrado.
       </div>
     );
   }
 
   return (
-    <div className="space-y-4 w-full">
-      <div className="rounded-md border overflow-hidden">
-        <div className="overflow-x-auto">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Nome da Empresa</TableHead>
-                <TableHead>Contato</TableHead>
-                <TableHead>Taxa de Comissão</TableHead>
-                <TableHead>Data de Criação</TableHead>
-                <TableHead className="text-right">Ações</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {partners.length > 0 ? (
-                partners.map((partner) => (
-                  <TableRow key={partner.id}>
-                    <TableCell className="font-medium">{partner.company_name}</TableCell>
-                    <TableCell>
-                      {partner.contact_name && (
-                        <div className="space-y-1">
-                          <div>{partner.contact_name}</div>
-                          {partner.email && <div className="text-xs sm:text-sm text-muted-foreground">{partner.email}</div>}
-                          {partner.phone && <div className="text-xs sm:text-sm text-muted-foreground">{partner.phone}</div>}
-                        </div>
+    <div className="rounded-md border overflow-hidden">
+      <div className="overflow-x-auto">
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead>Nome da Empresa</TableHead>
+              <TableHead className="hidden md:table-cell">Contato</TableHead>
+              <TableHead className="hidden md:table-cell">Taxa de Comissão</TableHead>
+              <TableHead className="hidden md:table-cell">Status</TableHead>
+              <TableHead className="text-right">Ações</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {partners.map((partner) => (
+              <TableRow key={partner.id} className="group">
+                <TableCell className="font-medium">{partner.company_name}</TableCell>
+                <TableCell className="hidden md:table-cell">
+                  {partner.contact_name || "Não informado"}
+                </TableCell>
+                <TableCell className="hidden md:table-cell">
+                  {partner.commission_rate ? `${partner.commission_rate}%` : "Não definida"}
+                </TableCell>
+                <TableCell className="hidden md:table-cell">
+                  {partner.status === "active" ? (
+                    <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">
+                      Ativo
+                    </Badge>
+                  ) : (
+                    <Badge variant="outline" className="bg-red-50 text-red-700 border-red-200">
+                      Inativo
+                    </Badge>
+                  )}
+                </TableCell>
+                <TableCell className="text-right">
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button variant="ghost" size="icon" className="h-8 w-8">
+                        <MoreHorizontal className="h-4 w-4" />
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end">
+                      <DropdownMenuLabel>Ações</DropdownMenuLabel>
+                      <DropdownMenuSeparator />
+                      {onView && (
+                        <DropdownMenuItem onClick={() => onView(partner)}>
+                          Ver detalhes
+                        </DropdownMenuItem>
                       )}
-                    </TableCell>
-                    <TableCell>{partner.commission_rate}%</TableCell>
-                    <TableCell>{formatDate(partner.created_at)}</TableCell>
-                    <TableCell className="text-right">
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
-                            <span className="sr-only">Abrir menu</span>
-                            <MoreHorizontal className="h-4 w-4" />
-                          </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end">
-                          {onView && (
-                            <DropdownMenuItem onClick={() => onView(partner)}>
-                              <Eye className="mr-2 h-4 w-4" />
-                              <span>Visualizar</span>
-                            </DropdownMenuItem>
-                          )}
-                          {onEdit && (
-                            <DropdownMenuItem onClick={() => onEdit(partner)}>
-                              <Edit className="mr-2 h-4 w-4" />
-                              <span>Editar</span>
-                            </DropdownMenuItem>
-                          )}
-                          {onDelete && (
-                            <DropdownMenuItem 
-                              onClick={() => onDelete(partner)}
-                              className="text-destructive focus:text-destructive"
-                            >
-                              <Trash2 className="mr-2 h-4 w-4" />
-                              <span>Excluir</span>
-                            </DropdownMenuItem>
-                          )}
-                        </DropdownMenuContent>
-                      </DropdownMenu>
-                    </TableCell>
-                  </TableRow>
-                ))
-              ) : (
-                <TableRow>
-                  <TableCell colSpan={5} className="h-24 text-center">
-                    Nenhum parceiro encontrado.
-                  </TableCell>
-                </TableRow>
-              )}
-            </TableBody>
-          </Table>
-        </div>
+                      <DropdownMenuItem onClick={() => onEdit(partner)}>
+                        <Edit className="mr-2 h-4 w-4" />
+                        Editar
+                      </DropdownMenuItem>
+                      <DropdownMenuItem 
+                        onClick={() => onDelete(partner)}
+                        className="text-red-600 focus:text-red-600"
+                      >
+                        <Trash2 className="mr-2 h-4 w-4" />
+                        Excluir
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                </TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
       </div>
       
-      {setPage && totalPages > 1 && (
-        <div className="flex items-center justify-end space-x-2 py-4">
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => setPage(page - 1)}
-            disabled={page === 1}
-            className="text-xs"
-          >
-            Anterior
-          </Button>
-          <div className="text-xs sm:text-sm text-muted-foreground">
-            Página {page} de {totalPages}
+      {/* Mobile view - Card style */}
+      <div className="md:hidden">
+        {partners.map((partner) => (
+          <div key={partner.id} className="p-4 border-t">
+            <div className="flex justify-between items-start">
+              <div>
+                <h4 className="font-medium mb-1">{partner.company_name}</h4>
+                <p className="text-sm text-muted-foreground">{partner.contact_name || "Sem contato"}</p>
+                <p className="text-sm">
+                  {partner.commission_rate ? `Taxa: ${partner.commission_rate}%` : "Sem taxa definida"}
+                </p>
+                <div className="mt-1">
+                  {partner.status === "active" ? (
+                    <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">
+                      Ativo
+                    </Badge>
+                  ) : (
+                    <Badge variant="outline" className="bg-red-50 text-red-700 border-red-200">
+                      Inativo
+                    </Badge>
+                  )}
+                </div>
+              </div>
+              <div className="flex space-x-1">
+                <Button 
+                  variant="ghost" 
+                  size="sm" 
+                  onClick={() => onEdit(partner)}
+                >
+                  <Edit className="h-4 w-4" />
+                </Button>
+                <Button 
+                  variant="ghost" 
+                  size="sm" 
+                  className="text-red-600"
+                  onClick={() => onDelete(partner)}
+                >
+                  <Trash2 className="h-4 w-4" />
+                </Button>
+              </div>
+            </div>
           </div>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => setPage(page + 1)}
-            disabled={page === totalPages}
-            className="text-xs"
-          >
-            Próximo
-          </Button>
-        </div>
-      )}
+        ))}
+      </div>
     </div>
   );
 };

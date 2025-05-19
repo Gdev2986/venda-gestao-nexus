@@ -22,17 +22,28 @@ import {
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { PATHS } from "@/routes/paths";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { ArrowLeft } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 
 const AdminNotifications = () => {
+  const navigate = useNavigate();
+  
   return (
     <div className="space-y-6">
+      <div className="flex items-center space-x-2 md:hidden mb-4">
+        <Button variant="ghost" size="sm" onClick={() => navigate(-1)}>
+          <ArrowLeft className="h-4 w-4 mr-2" />
+          Voltar
+        </Button>
+      </div>
+      
       <PageHeader 
         title="Central de Notificações" 
         description="Envie e gerencie notificações do sistema"
       />
       
-      <Tabs defaultValue="new">
-        <TabsList className="mb-6">
+      <Tabs defaultValue="new" className="w-full">
+        <TabsList className="mb-6 w-full md:w-auto grid grid-cols-3 md:flex">
           <TabsTrigger value="new">Nova Notificação</TabsTrigger>
           <TabsTrigger value="history">Histórico</TabsTrigger>
           <TabsTrigger value="templates">Templates</TabsTrigger>
@@ -80,9 +91,9 @@ const AdminNotifications = () => {
                   />
                 </div>
                 
-                <div className="pt-4">
-                  <Button className="mr-2">Enviar Agora</Button>
-                  <Button variant="outline">Salvar Rascunho</Button>
+                <div className="pt-4 flex flex-col sm:flex-row gap-2">
+                  <Button className="w-full sm:w-auto">Enviar Agora</Button>
+                  <Button variant="outline" className="w-full sm:w-auto">Salvar Rascunho</Button>
                 </div>
               </div>
             </CardContent>
@@ -90,15 +101,15 @@ const AdminNotifications = () => {
         </TabsContent>
         
         <TabsContent value="history">
-          <PageWrapper>
+          <div className="overflow-x-auto rounded-md border">
             <Table>
               <TableHeader>
                 <TableRow>
                   <TableHead>Título</TableHead>
-                  <TableHead>Destinatários</TableHead>
-                  <TableHead>Data</TableHead>
+                  <TableHead className="hidden sm:table-cell">Destinatários</TableHead>
+                  <TableHead className="hidden sm:table-cell">Data</TableHead>
                   <TableHead>Status</TableHead>
-                  <TableHead className="w-[100px]">Ações</TableHead>
+                  <TableHead className="w-[80px]">Ações</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -110,9 +121,9 @@ const AdminNotifications = () => {
                   { title: "Atualização de Segurança", target: "Todos", date: "15/03/2025", status: "Enviado" },
                 ].map((notification, i) => (
                   <TableRow key={i}>
-                    <TableCell>{notification.title}</TableCell>
-                    <TableCell>{notification.target}</TableCell>
-                    <TableCell>{notification.date}</TableCell>
+                    <TableCell className="font-medium">{notification.title}</TableCell>
+                    <TableCell className="hidden sm:table-cell">{notification.target}</TableCell>
+                    <TableCell className="hidden sm:table-cell">{notification.date}</TableCell>
                     <TableCell>
                       <span className="inline-flex items-center rounded-full px-2 py-1 text-xs font-medium bg-green-50 text-green-700">
                         {notification.status}
@@ -125,12 +136,12 @@ const AdminNotifications = () => {
                 ))}
               </TableBody>
             </Table>
-          </PageWrapper>
+          </div>
         </TabsContent>
         
         <TabsContent value="templates">
-          <PageWrapper>
-            <div className="flex justify-between mb-6">
+          <div className="space-y-4">
+            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 mb-6">
               <h3 className="text-lg font-medium">Templates de Notificação</h3>
               <Button>Criar Template</Button>
             </div>
@@ -149,15 +160,15 @@ const AdminNotifications = () => {
                   </CardHeader>
                   <CardContent className="pt-0">
                     <p className="text-sm text-muted-foreground mb-4">Template para {template.toLowerCase()}</p>
-                    <div className="flex justify-end">
-                      <Button variant="outline" size="sm" className="mr-2">Editar</Button>
+                    <div className="flex justify-end gap-2">
+                      <Button variant="outline" size="sm">Editar</Button>
                       <Button size="sm">Usar</Button>
                     </div>
                   </CardContent>
                 </Card>
               ))}
             </div>
-          </PageWrapper>
+          </div>
         </TabsContent>
       </Tabs>
     </div>

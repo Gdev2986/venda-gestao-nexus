@@ -1,24 +1,29 @@
 
 import { useState, useEffect } from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { useToast } from "@/hooks/use-toast";
-import { supabase } from "@/integrations/supabase/client";
-import { 
-  Table, 
-  TableBody, 
-  TableCell, 
-  TableHead, 
-  TableHeader, 
-  TableRow 
+import { Search, Plus, MoreHorizontal, Edit, Trash2, UserPlus } from "lucide-react";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
 } from "@/components/ui/table";
-import { 
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { Badge } from "@/components/ui/badge";
+import { supabase } from "@/integrations/supabase/client";
+import { formatDate } from "@/lib/formatters";
+import { UserRole } from "@/types";
 
 interface ProfileData {
   id: string;
@@ -35,163 +40,156 @@ interface UsersTabProps {
   openRoleModal: (user: ProfileData) => void;
 }
 
-export const UsersTab = ({ openRoleModal }: UsersTabProps) => {
-  const [selectedRole, setSelectedRole] = useState<string>("all");
+export function UsersTab({ openRoleModal }: UsersTabProps) {
+  const [searchTerm, setSearchTerm] = useState("");
   const [users, setUsers] = useState<ProfileData[]>([]);
-  const [loading, setLoading] = useState(false);
-  const [currentPage, setCurrentPage] = useState(1);
-  const [totalPages, setTotalPages] = useState(1);
-  const [availableRoles, setAvailableRoles] = useState<string[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
 
-  const { toast } = useToast();
-  const itemsPerPage = 10;
-
-  // Fetch available roles from the profiles table
   useEffect(() => {
-    const fetchRoles = async () => {
+    const loadUsers = async () => {
+      setIsLoading(true);
+
       try {
         const { data, error } = await supabase
-          .from('profiles')
-          .select('role')
-          .not('role', 'is', null);
+          .from("profiles")
+          .select("*")
+          .order("created_at", { ascending: false });
 
-        if (error) throw error;
+        if (error) {
+          console.error("Error loading users:", error);
+          return;
+        }
 
-        // Extract unique roles
-        const uniqueRoles = Array.from(new Set(data.map(item => item.role)));
-        setAvailableRoles(uniqueRoles);
+        setUsers(data || []);
       } catch (error) {
-        console.error("Error fetching roles:", error);
+        console.error("Error:", error);
+      } finally {
+        setIsLoading(false);
       }
     };
 
-    fetchRoles();
+    loadUsers();
   }, []);
 
-  // Fetch users from Supabase
-  useEffect(() => {
-    fetchUsers();
-  }, [currentPage, selectedRole]);
-
-  const fetchUsers = async () => {
-    setLoading(true);
-    try {
-      let query = supabase
-        .from('profiles')
-        .select('*', { count: 'exact' });
-      
-      if (selectedRole !== 'all') {
-        query = query.eq('role', selectedRole as any);
-      }
-      
-      // Apply pagination
-      const startRange = (currentPage - 1) * itemsPerPage;
-      const endRange = startRange + itemsPerPage - 1;
-      
-      const { data, error, count } = await query
-        .range(startRange, endRange);
-      
-      if (error) throw error;
-      
-      // Calculate total pages
-      const total = count ? Math.ceil(count / itemsPerPage) : 0;
-      setTotalPages(total);
-      
-      setUsers(data as ProfileData[]);
-    } catch (error) {
-      console.error("Error fetching users:", error);
-      toast({
-        variant: "destructive",
-        title: "Erro ao carregar usuários",
-        description: "Não foi possível carregar a lista de usuários."
-      });
-    } finally {
-      setLoading(false);
+  // Role badge color
+  const getRoleBadgeColor = (role: string) => {
+    switch (role) {
+      case UserRole.ADMIN:
+        return "bg-red-100 text-red-800 border-red-200";
+      case UserRole.FINANCIAL:
+        return "bg-purple-100 text-purple-800 border-purple-200";
+      case UserRole.LOGISTICS:
+        return "bg-blue-100 text-blue-800 border-blue-200";
+      case UserRole.PARTNER:
+        return "bg-amber-100 text-amber-800 border-amber-200";
+      case UserRole.CLIENT:
+      default:
+        return "bg-green-100 text-green-800 border-green-200";
     }
   };
-  
+
+  const filteredUsers = searchTerm
+    ? users.filter(
+        (user) =>
+          user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          user.email.toLowerCase().includes(searchTerm.toLowerCase())
+      )
+    : users;
+
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>Gerenciar Usuários</CardTitle>
-      </CardHeader>
-      <CardContent>
-        <div className="mb-4">
-          <Select
-            value={selectedRole}
-            onValueChange={(value: string) => {
-              setSelectedRole(value);
-              setCurrentPage(1); // Reset to first page when role changes
-            }}
-          >
-            <SelectTrigger className="w-[200px]">
-              <SelectValue placeholder="Filtrar por função" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">Todas as funções</SelectItem>
-              {availableRoles.map((role) => (
-                <SelectItem key={role} value={role}>{role}</SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+    <div className="space-y-4">
+      <div className="flex flex-col sm:flex-row justify-between gap-2">
+        <div className="relative w-full sm:w-auto">
+          <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+          <Input
+            type="search"
+            placeholder="Buscar usuários..."
+            className="pl-8 w-full sm:w-[300px]"
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+          />
         </div>
-        
-        {loading ? (
-          <p>Carregando usuários...</p>
-        ) : (
-          <div className="border rounded-md overflow-hidden">
+        <Button className="w-full sm:w-auto">
+          <UserPlus className="mr-2 h-4 w-4" />
+          Novo Usuário
+        </Button>
+      </div>
+
+      <Card>
+        <CardContent className="p-0">
+          <div className="w-full overflow-auto">
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Nome</TableHead>
-                  <TableHead>E-mail</TableHead>
-                  <TableHead>Função</TableHead>
-                  <TableHead>Data de criação</TableHead>
-                  <TableHead>Ações</TableHead>
+                  <TableHead className="w-[200px]">Nome</TableHead>
+                  <TableHead className="min-w-[200px]">Email</TableHead>
+                  <TableHead className="hidden md:table-cell">Função</TableHead>
+                  <TableHead className="hidden md:table-cell">Data de Criação</TableHead>
+                  <TableHead className="text-right w-[80px]">Ações</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {users.map((user) => (
-                  <TableRow key={user.id}>
-                    <TableCell className="font-medium">{user.name}</TableCell>
-                    <TableCell>{user.email}</TableCell>
-                    <TableCell>{user.role}</TableCell>
-                    <TableCell>{new Date(user.created_at).toLocaleDateString('pt-BR')}</TableCell>
-                    <TableCell>
-                      <Button 
-                        variant="outline" 
-                        size="sm"
-                        onClick={() => openRoleModal(user)}
-                      >
-                        Alterar Função
-                      </Button>
+                {isLoading ? (
+                  <TableRow>
+                    <TableCell colSpan={5} className="text-center h-24">
+                      Carregando usuários...
                     </TableCell>
                   </TableRow>
-                ))}
+                ) : filteredUsers.length === 0 ? (
+                  <TableRow>
+                    <TableCell colSpan={5} className="text-center h-24">
+                      Nenhum usuário encontrado.
+                    </TableCell>
+                  </TableRow>
+                ) : (
+                  filteredUsers.map((user) => (
+                    <TableRow key={user.id}>
+                      <TableCell className="font-medium">{user.name}</TableCell>
+                      <TableCell>{user.email}</TableCell>
+                      <TableCell className="hidden md:table-cell">
+                        <Badge
+                          variant="outline"
+                          className={getRoleBadgeColor(user.role)}
+                        >
+                          {user.role.toUpperCase()}
+                        </Badge>
+                      </TableCell>
+                      <TableCell className="hidden md:table-cell">
+                        {formatDate(new Date(user.created_at))}
+                      </TableCell>
+                      <TableCell className="text-right">
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button variant="ghost" size="icon" className="h-8 w-8">
+                              <MoreHorizontal className="h-4 w-4" />
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end">
+                            <DropdownMenuLabel>Ações</DropdownMenuLabel>
+                            <DropdownMenuSeparator />
+                            <DropdownMenuItem
+                              onClick={() => {
+                                openRoleModal(user);
+                              }}
+                            >
+                              <Edit className="mr-2 h-4 w-4" />
+                              Alterar Função
+                            </DropdownMenuItem>
+                            <DropdownMenuItem>
+                              <Trash2 className="mr-2 h-4 w-4" />
+                              Excluir
+                            </DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                      </TableCell>
+                    </TableRow>
+                  ))
+                )}
               </TableBody>
             </Table>
           </div>
-        )}
-        
-        {/* Pagination Controls */}
-        <div className="flex justify-between items-center mt-4">
-          <Button
-            variant="outline"
-            onClick={() => setCurrentPage(currentPage - 1)}
-            disabled={currentPage === 1}
-          >
-            Anterior
-          </Button>
-          <span>Página {currentPage} de {totalPages}</span>
-          <Button
-            variant="outline"
-            onClick={() => setCurrentPage(currentPage + 1)}
-            disabled={currentPage === totalPages}
-          >
-            Próximo
-          </Button>
-        </div>
-      </CardContent>
-    </Card>
+        </CardContent>
+      </Card>
+    </div>
   );
-};
+}

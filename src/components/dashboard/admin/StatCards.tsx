@@ -1,6 +1,7 @@
 
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { ArrowDownIcon, ArrowUpIcon, DollarSign, ShoppingCart, AlertCircle, BarChart3 } from "lucide-react";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { ArrowDown, ArrowUp } from "lucide-react";
+import { Skeleton } from "@/components/ui/skeleton";
 import { formatCurrency } from "@/lib/utils";
 
 interface StatCardsProps {
@@ -9,92 +10,101 @@ interface StatCardsProps {
     grossSales: number;
     netSales: number;
     pendingRequests: number;
-    expenses: number;
+    expenses?: number;
     totalCommissions: number;
-    currentBalance: number;
+    currentBalance?: number;
     salesGrowth: number;
     isGrowthPositive: boolean;
   };
-  isLoading?: boolean;
+  isLoading: boolean;
 }
 
-const StatCards = ({ stats, isLoading = false }: StatCardsProps) => {
+const StatCards = ({ stats, isLoading }: StatCardsProps) => {
+  if (isLoading) {
+    return (
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+        {Array(4).fill(0).map((_, i) => (
+          <Card key={i}>
+            <CardHeader className="pb-2">
+              <Skeleton className="h-4 w-24" />
+              <Skeleton className="h-8 w-36 mt-2" />
+            </CardHeader>
+            <CardContent>
+              <Skeleton className="h-4 w-full" />
+            </CardContent>
+          </Card>
+        ))}
+      </div>
+    );
+  }
+
   return (
-    <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-4 gap-4">
-      {/* Total Sales Card */}
-      <Card className="col-span-2 md:col-span-1">
-        <CardHeader className="flex flex-row items-center justify-between pb-2 space-y-0">
-          <CardTitle className="text-sm font-medium">Vendas Totais</CardTitle>
-          <ShoppingCart className="h-4 w-4 text-muted-foreground" />
+    <div className="grid grid-cols-1 gap-4">
+      {/* Total Sales - Full width */}
+      <Card className="col-span-1">
+        <CardHeader className="pb-2">
+          <CardDescription>Faturamento do mês</CardDescription>
+          <CardTitle className="text-2xl md:text-3xl font-bold">
+            {formatCurrency(stats.totalSales)}
+          </CardTitle>
         </CardHeader>
         <CardContent>
-          {isLoading ? (
-            <div className="h-6 bg-muted animate-pulse rounded mb-2" />
-          ) : (
-            <>
-              <div className="text-xl sm:text-2xl font-bold">{formatCurrency(stats.totalSales)}</div>
-              <div className="flex items-center pt-1">
-                {stats.isGrowthPositive ? (
-                  <ArrowUpIcon className="h-3 w-3 text-success mr-1" />
-                ) : (
-                  <ArrowDownIcon className="h-3 w-3 text-danger mr-1" />
-                )}
-                <p className={`text-xs ${stats.isGrowthPositive ? 'text-success' : 'text-danger'}`}>
-                  {stats.salesGrowth}% em relação ao mês anterior
-                </p>
-              </div>
-            </>
-          )}
+          <div className="flex items-center text-sm">
+            <div className={`flex items-center ${stats.isGrowthPositive ? 'text-green-500' : 'text-red-500'}`}>
+              {stats.isGrowthPositive ? (
+                <ArrowUp className="h-4 w-4 mr-1" />
+              ) : (
+                <ArrowDown className="h-4 w-4 mr-1" />
+              )}
+              <span>{stats.salesGrowth}% em relação ao mês anterior</span>
+            </div>
+          </div>
         </CardContent>
       </Card>
-
-      {/* Gross Sales Card */}
-      <Card>
-        <CardHeader className="flex flex-row items-center justify-between pb-2 space-y-0">
-          <CardTitle className="text-sm font-medium">Valor Bruto</CardTitle>
-          <BarChart3 className="h-4 w-4 text-muted-foreground" />
+      
+      {/* Two cards side by side: Gross and Net Sales */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <Card>
+          <CardHeader className="pb-2">
+            <CardDescription>Valor Bruto</CardDescription>
+            <CardTitle className="text-xl md:text-2xl font-bold">
+              {formatCurrency(stats.grossSales)}
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="text-sm text-muted-foreground">
+              Valor total bruto
+            </div>
+          </CardContent>
+        </Card>
+        
+        <Card>
+          <CardHeader className="pb-2">
+            <CardDescription>Valor Líquido</CardDescription>
+            <CardTitle className="text-xl md:text-2xl font-bold">
+              {formatCurrency(stats.netSales)}
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="text-sm text-muted-foreground">
+              Margem de {((stats.netSales / stats.grossSales) * 100).toFixed(1)}%
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+      
+      {/* Office Commission - Full width */}
+      <Card className="col-span-1">
+        <CardHeader className="pb-2">
+          <CardDescription>Comissão Escritório</CardDescription>
+          <CardTitle className="text-2xl md:text-3xl font-bold">
+            {formatCurrency(stats.totalCommissions)}
+          </CardTitle>
         </CardHeader>
         <CardContent>
-          {isLoading ? (
-            <div className="h-6 bg-muted animate-pulse rounded" />
-          ) : (
-            <div className="text-xl sm:text-2xl font-bold">{formatCurrency(stats.grossSales)}</div>
-          )}
-          <p className="text-xs text-muted-foreground pt-1">Valor total bruto</p>
-        </CardContent>
-      </Card>
-
-      {/* Net Sales Card */}
-      <Card>
-        <CardHeader className="flex flex-row items-center justify-between pb-2 space-y-0">
-          <CardTitle className="text-sm font-medium">Valor Líquido</CardTitle>
-          <DollarSign className="h-4 w-4 text-muted-foreground" />
-        </CardHeader>
-        <CardContent>
-          {isLoading ? (
-            <div className="h-6 bg-muted animate-pulse rounded" />
-          ) : (
-            <div className="text-xl sm:text-2xl font-bold">{formatCurrency(stats.netSales)}</div>
-          )}
-          <p className="text-xs text-muted-foreground pt-1">
-            Margem de {((stats.netSales / stats.grossSales) * 100).toFixed(1)}%
-          </p>
-        </CardContent>
-      </Card>
-
-      {/* Pending Requests Card */}
-      <Card>
-        <CardHeader className="flex flex-row items-center justify-between pb-2 space-y-0">
-          <CardTitle className="text-sm font-medium">Solicitações Pendentes</CardTitle>
-          <AlertCircle className="h-4 w-4 text-muted-foreground" />
-        </CardHeader>
-        <CardContent>
-          {isLoading ? (
-            <div className="h-6 bg-muted animate-pulse rounded" />
-          ) : (
-            <div className="text-xl sm:text-2xl font-bold">{stats.pendingRequests}</div>
-          )}
-          <p className="text-xs text-muted-foreground pt-1">Aguardando aprovação</p>
+          <div className="text-sm text-muted-foreground">
+            Comissões do mês atual até o momento
+          </div>
         </CardContent>
       </Card>
     </div>
