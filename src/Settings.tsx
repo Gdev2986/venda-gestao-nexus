@@ -1,5 +1,6 @@
+
 import { useState } from "react";
-import { useToast } from "@/hooks/use-toast";
+import { useTheme } from "@/components/theme-provider";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -12,15 +13,16 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { useToast } from "@/hooks/use-toast";
 
 const Settings = () => {
-  const [theme, setTheme] = useState("light");
+  const { toast } = useToast();
+  const { theme, setTheme } = useTheme();
   const [language, setLanguage] = useState("pt-BR");
   const [notificationsEnabled, setNotificationsEnabled] = useState(true);
 
   const handleThemeChange = (newTheme: string) => {
-    setTheme(newTheme);
-    // Apply theme logic here
+    setTheme(newTheme as "light" | "dark" | "system");
   };
 
   const handleLanguageChange = (newLanguage: string) => {
@@ -35,7 +37,7 @@ const Settings = () => {
   const handleSaveProfile = (e: React.FormEvent) => {
     e.preventDefault();
     // Save profile settings
-    useToast().toast({
+    toast({
       title: "Perfil atualizado",
       description: "Suas informações de perfil foram salvas com sucesso."
     });
@@ -44,7 +46,7 @@ const Settings = () => {
   const handleSaveNotifications = (e: React.FormEvent) => {
     e.preventDefault();
     // Save notification settings
-    useToast().toast({
+    toast({
       title: "Configurações salvas",
       description: "Suas preferências de notificações foram atualizadas."
     });
@@ -53,7 +55,7 @@ const Settings = () => {
   const handleChangePassword = (e: React.FormEvent) => {
     e.preventDefault();
     // Change password logic
-    useToast().toast({
+    toast({
       title: "Senha alterada",
       description: "Sua senha foi alterada com sucesso."
     });
@@ -61,7 +63,7 @@ const Settings = () => {
 
   const handleManagePixKeys = () => {
     // Open PIX key management dialog
-    useToast().toast({
+    toast({
       title: "Gerenciamento de chaves PIX",
       description: "Funcionalidade em desenvolvimento."
     });
