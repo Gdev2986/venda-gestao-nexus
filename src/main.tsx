@@ -30,6 +30,7 @@ const initializeApp = () => {
 
   const root = createRoot(rootElement);
 
+  // Use StrictMode to highlight potential problems
   root.render(
     <React.StrictMode>
       <BrowserRouter>
