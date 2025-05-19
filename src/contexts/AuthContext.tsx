@@ -17,8 +17,6 @@ import { AuthContextType } from "./auth-types";
 // Function to clean up Supabase-related data
 export const cleanupSupabaseState = () => {
   try {
-    console.log("Starting auth state cleanup");
-    
     // Clear standard auth data
     localStorage.removeItem('supabase.auth.token');
     sessionStorage.removeItem('userRole');
@@ -28,7 +26,6 @@ export const cleanupSupabaseState = () => {
     // Clear all Supabase keys from localStorage
     Object.keys(localStorage).forEach((key) => {
       if (key.startsWith('supabase.auth.') || key.includes('sb-')) {
-        console.log(`Removing localStorage key: ${key}`);
         localStorage.removeItem(key);
       }
     });
@@ -36,7 +33,6 @@ export const cleanupSupabaseState = () => {
     // Clear from sessionStorage if being used
     Object.keys(sessionStorage).forEach((key) => {
       if (key.startsWith('supabase.auth.') || key.includes('sb-')) {
-        console.log(`Removing sessionStorage key: ${key}`);
         sessionStorage.removeItem(key);
       }
     });
@@ -59,9 +55,8 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const { toast } = useToast();
   const navigate = useNavigate();
-  const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
 
-  console.log("AuthProvider rendering - isLoading:", isLoading, "user:", user?.email, "userRole:", userRole, "isMobile:", isMobile);
+  console.log("AuthProvider rendering - isLoading:", isLoading, "user:", user?.email, "userRole:", userRole);
 
   useEffect(() => {
     console.log("Setting up auth listener");
@@ -94,7 +89,6 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
                 
                 if (error) {
                   console.error("Error fetching user role:", error);
-                  setUserRole(null);
                 } else {
                   // Normalize the role to match our UserRole enum
                   const normalizedRole = profile?.role?.toUpperCase() as UserRole;
@@ -103,7 +97,6 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
                 }
               } catch (err) {
                 console.error("Error in role fetching:", err);
-                setUserRole(null);
               }
               
               toast({
@@ -120,7 +113,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
           // Clear auth data immediately
           setSession(null);
           setUser(null);
-          setUserRole(null); // Explicitly set userRole to null
+          setUserRole(null);
           setIsAuthenticated(false);
           
           // Clean up all auth-related data
@@ -165,7 +158,6 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
             
             if (error) {
               console.error("Error fetching user role:", error);
-              setUserRole(null);
             } else {
               // Normalize the role to match our UserRole enum
               const normalizedRole = profile?.role?.toUpperCase() as UserRole;
@@ -174,11 +166,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
             }
           } catch (err) {
             console.error("Error in role fetching:", err);
-            setUserRole(null);
           }
-        } else {
-          // Explicitly set userRole to null when no session
-          setUserRole(null);
         }
       } catch (error) {
         console.error("Error during initial session check:", error);
@@ -220,7 +208,6 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       });
 
       if (error) {
-        console.error("Login error:", error);
         toast({
           title: "Erro de login",
           description: error.message,
@@ -234,17 +221,11 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         // Use setTimeout to avoid race conditions with onAuthStateChange
         setTimeout(() => {
           const redirectPath = sessionStorage.getItem('redirectPath');
-          
-          if (isMobile) {
-            console.log("Mobile device detected, using window.location");
-            window.location.href = redirectPath || PATHS.DASHBOARD;
+          if (redirectPath) {
+            sessionStorage.removeItem('redirectPath');
+            navigate(redirectPath);
           } else {
-            if (redirectPath) {
-              sessionStorage.removeItem('redirectPath');
-              navigate(redirectPath);
-            } else {
-              navigate(PATHS.DASHBOARD); // Will be handled by RootLayout
-            }
+            navigate(PATHS.DASHBOARD); // Will be handled by RootLayout
           }
         }, 0);
       }

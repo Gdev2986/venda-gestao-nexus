@@ -1,7 +1,7 @@
 
 import { useEffect } from "react";
 import { useNavigate, Link } from "react-router-dom";
-import LoginForm from "@/components/auth/login/LoginForm";
+import LoginForm from "@/components/auth/LoginForm";
 import { LayoutDashboard, CreditCard, FileText, Monitor } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
 

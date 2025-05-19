@@ -4,31 +4,27 @@ import { useAuth } from "@/contexts/AuthContext";
 import { Spinner } from "@/components/ui/spinner";
 import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
-import { PATHS } from "@/routes/paths";
 
 interface ProtectedRouteProps {
   children: React.ReactNode;
 }
 
 const ProtectedRoute = ({ children }: ProtectedRouteProps) => {
-  const { user, session, isLoading } = useAuth();
+  const { user, isLoading } = useAuth();
   const location = useLocation();
   const [shouldRedirect, setShouldRedirect] = useState(false);
   const [showLoading, setShowLoading] = useState(true);
   
   // Use effect to prevent immediate redirects that can cause loops
   useEffect(() => {
-    console.log("ProtectedRoute effect - isLoading:", isLoading, "user:", !!user, "session:", !!session);
+    console.log("ProtectedRoute effect - isLoading:", isLoading, "user:", !!user);
     
     // Only determine redirect after loading is complete
-    if (!isLoading) {
-      // Verify both user and session exist
-      if (!user || !session) {
-        console.log("Setting shouldRedirect to true - no user or session");
-        setShouldRedirect(true);
-      }
+    if (!isLoading && !user) {
+      console.log("Setting shouldRedirect to true");
+      setShouldRedirect(true);
     }
-  }, [isLoading, user, session]);
+  }, [isLoading, user]);
 
   // Add a slight delay for loading animation
   useEffect(() => {
@@ -43,7 +39,7 @@ const ProtectedRoute = ({ children }: ProtectedRouteProps) => {
 
   console.log("ProtectedRoute render - isLoading:", isLoading, "shouldRedirect:", shouldRedirect);
 
-  // If still loading or showing animation, show a spinner
+  // Se estiver carregando ou mostrando animação, mostre um spinner
   if (isLoading || showLoading) {
     return (
       <div className="flex flex-col items-center justify-center h-screen bg-background">
@@ -60,15 +56,15 @@ const ProtectedRoute = ({ children }: ProtectedRouteProps) => {
     );
   }
 
-  // If no user or session and not loading, redirect
+  // Se não houver usuário autenticado e não estiver carregando, redirecione
   if (shouldRedirect) {
-    console.log("Redirecting to login from", location.pathname);
+    console.log("Redirecting to / from", location.pathname);
     // Store the current location using sessionStorage for better security
     sessionStorage.setItem("redirectPath", location.pathname);
-    return <Navigate to={PATHS.LOGIN} state={{ from: location.pathname }} replace />;
+    return <Navigate to="/" state={{ from: location.pathname }} replace />;
   }
 
-  // If authenticated with both user and session, render the protected content
+  // Se estiver autenticado, renderize o conteúdo protegido
   return <>{children}</>;
 };
 

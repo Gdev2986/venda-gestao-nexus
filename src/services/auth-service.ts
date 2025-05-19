@@ -197,7 +197,6 @@ export const clearAuthData = (): void => {
 // Helper function to clear all auth data
 export const clearAllAuthData = (): void => {
   try {
-    // Clear session data
     sessionStorage.removeItem('userRole');
     sessionStorage.removeItem('redirectPath');
     localStorage.removeItem('userRole');

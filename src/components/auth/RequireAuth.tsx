@@ -24,12 +24,11 @@ const routePermissions: Record<string, UserRole[]> = {
 };
 
 const RequireAuth = ({ allowedRoles = [], redirectTo = PATHS.LOGIN }: RequireAuthProps) => {
-  const { user, session, isLoading, isAuthenticated, userRole } = useAuth();
+  const { user, isLoading, isAuthenticated, userRole } = useAuth();
   const location = useLocation();
   const { toast } = useToast();
   const [showLoading, setShowLoading] = useState(true);
-  const [redirectAttempted, setRedirectAttempted] = useState(false);
-  const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+  const [redirectPath, setRedirectPath] = useState("");
   
   // Add a loading delay for better UX
   useEffect(() => {
@@ -49,30 +48,9 @@ const RequireAuth = ({ allowedRoles = [], redirectTo = PATHS.LOGIN }: RequireAut
       isAuthenticated,
       userRole,
       path: location.pathname,
-      allowedRoles,
-      hasSession: !!session,
-      redirectAttempted,
-      isMobile,
-      userAgent: navigator.userAgent
+      allowedRoles
     });
-  }, [isLoading, isAuthenticated, userRole, location.pathname, allowedRoles, session, isMobile, redirectAttempted]);
-
-  // If already redirected, don't attempt again (prevents loops)
-  if (redirectAttempted) {
-    return (
-      <div className="flex flex-col items-center justify-center h-screen bg-background">
-        <motion.div
-          initial={{ opacity: 0, scale: 0.8 }}
-          animate={{ opacity: 1, scale: 1 }}
-          transition={{ duration: 0.5 }}
-          className="flex flex-col items-center"
-        >
-          <Spinner size="lg" />
-          <p className="mt-4 text-muted-foreground">Redirecionando...</p>
-        </motion.div>
-      </div>
-    );
-  }
+  }, [isLoading, isAuthenticated, userRole, location.pathname, allowedRoles]);
 
   // If still loading, show a spinner
   if (isLoading || showLoading) {
@@ -91,40 +69,12 @@ const RequireAuth = ({ allowedRoles = [], redirectTo = PATHS.LOGIN }: RequireAut
     );
   }
 
-  // If not authenticated or no session exists, redirect to login
-  if (!isAuthenticated || !session || !user) {
-    console.log("User not authenticated or no session, redirecting to login from", location.pathname);
+  // If not authenticated and not loading, redirect to login
+  if (!isAuthenticated || !user) {
+    console.log("User not authenticated, redirecting to login from", location.pathname);
     // Store the current location for redirect after login
     sessionStorage.setItem("redirectPath", location.pathname);
-    
-    setRedirectAttempted(true);
-    
-    if (isMobile) {
-      console.log("Mobile device detected, using window.location for redirect");
-      window.location.href = PATHS.LOGIN;
-      // Return null temporarily while redirecting (avoid rendering protected content)
-      return null;
-    } else {
-      return <Navigate to={PATHS.LOGIN} state={{ from: location.pathname }} replace />;
-    }
-  }
-
-  // If we have a session but no userRole yet, show loading
-  if (isAuthenticated && !userRole) {
-    console.log("User is authenticated but role is not yet loaded");
-    return (
-      <div className="flex flex-col items-center justify-center h-screen bg-background">
-        <motion.div
-          initial={{ opacity: 0, scale: 0.8 }}
-          animate={{ opacity: 1, scale: 1 }}
-          transition={{ duration: 0.5 }}
-          className="flex flex-col items-center"
-        >
-          <Spinner size="lg" />
-          <p className="mt-4 text-muted-foreground">Verificando permissões...</p>
-        </motion.div>
-      </div>
-    );
+    return <Navigate to={PATHS.LOGIN} state={{ from: location.pathname }} replace />;
   }
 
   // If we have a userRole, check permissions
@@ -142,18 +92,9 @@ const RequireAuth = ({ allowedRoles = [], redirectTo = PATHS.LOGIN }: RequireAut
         variant: "destructive",
       });
       
-      setRedirectAttempted(true);
-      
       try {
         const dashboardPath = getDashboardPath(userRole);
-        
-        if (isMobile) {
-          console.log("Mobile device detected, using window.location for redirect");
-          window.location.href = dashboardPath;
-          return null;
-        } else {
-          return <Navigate to={dashboardPath} replace />;
-        }
+        return <Navigate to={dashboardPath} replace />;
       } catch (error) {
         console.error("Error getting dashboard path:", error);
         return <Navigate to={PATHS.LOGIN} replace />;
@@ -167,15 +108,7 @@ const RequireAuth = ({ allowedRoles = [], redirectTo = PATHS.LOGIN }: RequireAut
       description: "Ocorreu um erro ao verificar suas permissões",
       variant: "destructive",
     });
-    
-    setRedirectAttempted(true);
-    
-    if (isMobile) {
-      window.location.href = PATHS.LOGIN;
-      return null;
-    } else {
-      return <Navigate to={PATHS.LOGIN} replace />;
-    }
+    return <Navigate to={PATHS.LOGIN} replace />;
   }
 
   // If authenticated and has the right role, render the protected content
