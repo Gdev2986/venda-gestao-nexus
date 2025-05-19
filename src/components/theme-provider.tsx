@@ -2,6 +2,7 @@
 "use client";
 
 import * as React from "react";
+import { createContext, useContext, useEffect, useState } from "react";
 
 type Theme = "dark" | "light" | "system";
 
@@ -21,7 +22,7 @@ const initialState: ThemeProviderState = {
   setTheme: () => null,
 };
 
-const ThemeProviderContext = React.createContext<ThemeProviderState>(initialState);
+const ThemeProviderContext = createContext<ThemeProviderState>(initialState);
 
 export function ThemeProvider({
   children,
@@ -29,77 +30,63 @@ export function ThemeProvider({
   storageKey = "sigmapay-theme",
   ...props
 }: ThemeProviderProps) {
-  // Use React namespace explicitly for hooks
-  const [theme, setTheme] = React.useState<Theme>(defaultTheme);
-  
-  // Initialize theme from localStorage on mount
-  React.useEffect(() => {
-    try {
-      const savedTheme = localStorage.getItem(storageKey);
-      if (savedTheme && ["dark", "light", "system"].includes(savedTheme)) {
-        setTheme(savedTheme as Theme);
-      }
-    } catch (error) {
-      console.error("Error reading from localStorage:", error);
-    }
-  }, [storageKey]);
+  const [theme, setTheme] = useState<Theme>(
+    () => (typeof window !== "undefined" ? 
+      (localStorage.getItem(storageKey) as Theme || defaultTheme) : 
+      defaultTheme)
+  );
 
-  // Update root classes when theme changes
-  React.useEffect(() => {
-    try {
-      const root = window.document.documentElement;
-      
-      root.classList.remove("light", "dark");
+  useEffect(() => {
+    const root = window.document.documentElement;
+    
+    root.classList.remove("light", "dark");
 
-      if (theme === "system") {
-        const systemTheme = window.matchMedia("(prefers-color-scheme: dark)").matches
-          ? "dark"
-          : "light";
-        root.classList.add(systemTheme);
-      } else {
-        root.classList.add(theme);
-      }
-    } catch (error) {
-      console.error("Error updating root classes:", error);
+    if (theme === "system") {
+      const systemTheme = window.matchMedia("(prefers-color-scheme: dark)").matches
+        ? "dark"
+        : "light";
+      root.classList.add(systemTheme);
+    } else {
+      root.classList.add(theme);
     }
   }, [theme]);
 
-  // Save theme to localStorage
-  React.useEffect(() => {
-    try {
-      localStorage.setItem(storageKey, theme);
-    } catch (error) {
-      console.error("Error writing to localStorage:", error);
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      try {
+        localStorage.setItem(storageKey, theme);
+      } catch (error) {
+        console.error("Error writing to localStorage:", error);
+      }
     }
   }, [theme, storageKey]);
 
-  // Listen for system theme changes
-  React.useEffect(() => {
-    if (theme !== "system") return;
+  useEffect(() => {
+    if (theme !== "system" || typeof window === "undefined") return;
     
-    try {
-      const mediaQuery = window.matchMedia("(prefers-color-scheme: dark)");
+    function handleChange() {
+      const root = window.document.documentElement;
+      const systemTheme = window.matchMedia("(prefers-color-scheme: dark)").matches
+        ? "dark"
+        : "light";
       
-      const handleChange = () => {
-        const root = window.document.documentElement;
-        const systemTheme = mediaQuery.matches ? "dark" : "light";
-        
-        root.classList.remove("light", "dark");
-        root.classList.add(systemTheme);
-      };
-      
-      mediaQuery.addEventListener("change", handleChange);
-      return () => mediaQuery.removeEventListener("change", handleChange);
-    } catch (error) {
-      console.error("Error setting up media query listener:", error);
+      root.classList.remove("light", "dark");
+      root.classList.add(systemTheme);
     }
+    
+    const mediaQuery = window.matchMedia("(prefers-color-scheme: dark)");
+    mediaQuery.addEventListener("change", handleChange);
+    
+    return () => mediaQuery.removeEventListener("change", handleChange);
   }, [theme]);
 
-  // Create the context value
-  const value = React.useMemo(() => ({
-    theme,
-    setTheme: (newTheme: Theme) => setTheme(newTheme),
-  }), [theme]);
+  const value = React.useMemo(
+    () => ({
+      theme,
+      setTheme: (t: Theme) => setTheme(t),
+    }),
+    [theme]
+  );
 
   return (
     <ThemeProviderContext.Provider {...props} value={value}>
@@ -109,7 +96,7 @@ export function ThemeProvider({
 }
 
 export const useTheme = (): ThemeProviderState => {
-  const context = React.useContext(ThemeProviderContext);
+  const context = useContext(ThemeProviderContext);
 
   if (context === undefined) {
     throw new Error("useTheme must be used within a ThemeProvider");

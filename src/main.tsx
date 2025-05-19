@@ -1,5 +1,5 @@
 
-import * as React from 'react';
+import React from 'react';
 import { createRoot } from 'react-dom/client';
 import { BrowserRouter } from 'react-router-dom';
 import { AuthProvider } from '@/contexts/AuthContext';
@@ -8,9 +8,6 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { NotificationsProvider } from '@/contexts/NotificationsContext';
 import App from './App.tsx';
 import './index.css';
-
-// Make React available globally (explicit assignment)
-window.React = React;
 
 // Create a query client
 const queryClient = new QueryClient({
@@ -32,14 +29,6 @@ function renderApp() {
   }
   
   try {
-    // Verify React is properly loaded
-    if (!window.React || !window.React.useState) {
-      console.error('React is not properly initialized, retrying in 50ms');
-      setTimeout(renderApp, 50);  // Retry with a longer delay
-      return;
-    }
-    
-    console.log('React successfully initialized, rendering application');
     const root = createRoot(rootElement);
     
     root.render(
@@ -64,15 +53,11 @@ function renderApp() {
   }
 }
 
-// Ensure DOM is ready before attempting to render
+// Ensure DOM is ready before rendering
 if (document.readyState === 'loading') {
   document.addEventListener('DOMContentLoaded', () => {
-    console.log('DOM content loaded, initializing app with delay');
-    // Increased delay to ensure React is fully initialized
-    setTimeout(renderApp, 50);
+    renderApp();
   });
 } else {
-  console.log('DOM already loaded, initializing app with delay');
-  // Increased delay for already loaded document
-  setTimeout(renderApp, 50);
+  renderApp();
 }
