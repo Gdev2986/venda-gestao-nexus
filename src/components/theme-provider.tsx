@@ -2,6 +2,7 @@
 "use client";
 
 import * as React from "react";
+import { createContext, useContext, useEffect, useState } from "react";
 
 type Theme = "dark" | "light" | "system";
 
@@ -16,11 +17,12 @@ type ThemeProviderState = {
   setTheme: (theme: Theme) => void;
 };
 
-// Create a context with a default value
-const ThemeProviderContext = React.createContext<ThemeProviderState>({
+const initialState: ThemeProviderState = {
   theme: "system",
   setTheme: () => null,
-});
+};
+
+const ThemeProviderContext = createContext<ThemeProviderState>(initialState);
 
 export function ThemeProvider({
   children,
@@ -28,25 +30,13 @@ export function ThemeProvider({
   storageKey = "sigmapay-theme",
   ...props
 }: ThemeProviderProps) {
-  // Initialize state with defaultTheme
-  const [theme, setTheme] = React.useState<Theme>(defaultTheme);
+  const [theme, setTheme] = useState<Theme>(
+    () => (localStorage?.getItem(storageKey) as Theme) || defaultTheme
+  );
 
-  // Load the saved theme from localStorage on mount
-  React.useEffect(() => {
-    const savedTheme = localStorage.getItem(storageKey);
-    if (savedTheme && ["dark", "light", "system"].includes(savedTheme as Theme)) {
-      setTheme(savedTheme as Theme);
-    }
-  }, [storageKey]);
-
-  // Update localStorage when theme changes
-  React.useEffect(() => {
-    localStorage.setItem(storageKey, theme);
-  }, [theme, storageKey]);
-
-  // Apply the theme to the document element
-  React.useEffect(() => {
-    const root = document.documentElement;
+  useEffect(() => {
+    const root = window.document.documentElement;
+    
     root.classList.remove("light", "dark");
 
     if (theme === "system") {
@@ -59,10 +49,18 @@ export function ThemeProvider({
     }
   }, [theme]);
 
+  useEffect(() => {
+    if (localStorage) {
+      localStorage.setItem(storageKey, theme);
+    }
+  }, [theme, storageKey]);
+
   const value = React.useMemo(
     () => ({
       theme,
-      setTheme,
+      setTheme: (t: Theme) => {
+        setTheme(t);
+      },
     }),
     [theme]
   );
@@ -75,7 +73,7 @@ export function ThemeProvider({
 }
 
 export const useTheme = () => {
-  const context = React.useContext(ThemeProviderContext);
+  const context = useContext(ThemeProviderContext);
 
   if (context === undefined) {
     throw new Error("useTheme must be used within a ThemeProvider");

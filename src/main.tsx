@@ -48,7 +48,7 @@ const initializeApp = () => {
   );
 };
 
-// Ensure DOM is ready before mounting React
+// Make sure DOM is fully loaded before mounting React
 if (document.readyState === 'loading') {
   document.addEventListener('DOMContentLoaded', initializeApp);
 } else {
