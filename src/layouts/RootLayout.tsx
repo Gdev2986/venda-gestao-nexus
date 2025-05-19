@@ -50,7 +50,7 @@ const RootLayout = () => {
     );
   }
   
-  // If authenticated, redirect to the role-specific dashboard
+  // If authenticated and we have a role, redirect to role-specific dashboard
   if (isAuthenticated && user && userRole) {
     try {
       const dashboardPath = getDashboardPath(userRole);

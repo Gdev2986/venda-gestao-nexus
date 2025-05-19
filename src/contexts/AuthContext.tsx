@@ -1,3 +1,4 @@
+
 import { createContext, useContext, useEffect, useState } from "react";
 import { Session, User } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
@@ -56,12 +57,11 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const { toast } = useToast();
   const navigate = useNavigate();
 
-  console.log("AuthProvider rendering - isLoading:", isLoading, "user:", user?.email, "userRole:", userRole);
-
+  // Set up auth state listener and check for existing session
   useEffect(() => {
     console.log("Setting up auth listener");
     
-    // Set up auth state listener FIRST
+    // Set up auth state listener FIRST - this prevents missing events
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, newSession) => {
         console.log("Auth state change event:", event);
@@ -73,11 +73,11 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
         // Handle auth events
         if (event === "SIGNED_IN") {
-          console.log("Signed in event detected");
+          console.log("Signed in event detected, session:", !!newSession);
           
           // Only fetch user role if we have a session
           if (newSession?.user) {
-            // Defer data fetching to prevent deadlocks
+            // Defer data fetching to prevent deadlocks on iOS
             setTimeout(async () => {
               try {
                 // Fetch user role from profiles table
@@ -94,20 +94,23 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
                   const normalizedRole = profile?.role?.toUpperCase() as UserRole;
                   console.log("User role fetched:", normalizedRole);
                   setUserRole(normalizedRole);
+                  
+                  // Toast only if we successfully got the role
+                  toast({
+                    title: "Login bem-sucedido",
+                    description: "Bem-vindo ao SigmaPay!",
+                  });
                 }
               } catch (err) {
                 console.error("Error in role fetching:", err);
+              } finally {
+                setIsLoading(false);
               }
-              
-              toast({
-                title: "Login bem-sucedido",
-                description: "Bem-vindo ao SigmaPay!",
-              });
             }, 0);
+          } else {
+            setIsLoading(false);
           }
-        }
-        
-        if (event === "SIGNED_OUT") {
+        } else if (event === "SIGNED_OUT") {
           console.log("Signed out event detected");
           
           // Clear auth data immediately
@@ -126,9 +129,11 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
               description: "Você foi desconectado com sucesso.",
             });
             
-            // Force page reload to clear state completely
-            window.location.href = PATHS.LOGIN;
+            // Navigate to login page
+            navigate(PATHS.LOGIN);
           }, 0);
+          
+          setIsLoading(false);
         }
       }
     );
@@ -138,7 +143,8 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       setIsLoading(true);
       try {
         console.log("Checking initial session");
-        const { data: { session } } = await supabase.auth.getSession();
+        const { data } = await supabase.auth.getSession();
+        const session = data.session;
         
         console.log("Initial session check complete:", !!session);
         
@@ -184,7 +190,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     return () => {
       subscription.unsubscribe();
     };
-  }, [toast]); // Only run on mount
+  }, [toast, navigate]); // Include navigate in dependencies
 
   const signIn = async (email: string, password: string) => {
     try {
@@ -208,6 +214,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       });
 
       if (error) {
+        setIsLoading(false);
         toast({
           title: "Erro de login",
           description: error.message,
@@ -217,28 +224,20 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       }
       
       if (data.user) {
-        console.log("Sign in successful, navigating to dashboard");
-        // Use setTimeout to avoid race conditions with onAuthStateChange
-        setTimeout(() => {
-          const redirectPath = sessionStorage.getItem('redirectPath');
-          if (redirectPath) {
-            sessionStorage.removeItem('redirectPath');
-            navigate(redirectPath);
-          } else {
-            navigate(PATHS.DASHBOARD); // Will be handled by RootLayout
-          }
-        }, 0);
+        console.log("Sign in successful");
+        // Let the auth state change listener handle redirects
+        return { user: data.user, error: null };
       }
       
+      setIsLoading(false);
       return { user: data.user, error: null };
     } catch (error: any) {
       console.error("Error during login:", error);
+      setIsLoading(false);
       return { 
         user: null, 
         error: error instanceof Error ? error : new Error("Unknown error during login") 
       };
-    } finally {
-      setIsLoading(false);
     }
   };
 
@@ -281,6 +280,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
           description: errorMessage,
           variant: "destructive",
         });
+        setIsLoading(false);
         return { user: null, error };
       }
       
@@ -290,15 +290,15 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       });
 
       navigate(PATHS.HOME);
+      setIsLoading(false);
       return { user: data?.user || null, error: null };
     } catch (error: any) {
       console.error("Error during registration:", error);
+      setIsLoading(false);
       return { 
         user: null, 
         error: error instanceof Error ? error : new Error("Unknown error during registration") 
       };
-    } finally {
-      setIsLoading(false);
     }
   };
 
@@ -320,22 +320,23 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         await supabase.auth.signOut({ scope: 'global' });
       } catch (error) {
         console.error("Error during logout:", error);
+      } finally {
+        setIsLoading(false);
       }
       
-      // Force complete page reload to clear all state
-      window.location.href = PATHS.HOME;
+      // Navigate to login page
+      navigate(PATHS.LOGIN);
       
       return { success: true, error: null };
     } catch (error: any) {
       console.error("Error during sign out:", error);
+      setIsLoading(false);
       toast({
         title: "Erro ao sair",
         description: error.message || "Ocorreu um erro ao tentar sair",
         variant: "destructive",
       });
       return { success: false, error };
-    } finally {
-      setIsLoading(false);
     }
   };
 

@@ -14,21 +14,11 @@ interface RequireAuthProps {
   redirectTo?: string;
 }
 
-// Define route permissions globally
-const routePermissions: Record<string, UserRole[]> = {
-  '/admin': [UserRole.ADMIN],
-  '/financial': [UserRole.ADMIN, UserRole.FINANCIAL],
-  '/logistics': [UserRole.ADMIN, UserRole.LOGISTICS],
-  '/partner': [UserRole.PARTNER],
-  '/user': [UserRole.CLIENT],
-};
-
 const RequireAuth = ({ allowedRoles = [], redirectTo = PATHS.LOGIN }: RequireAuthProps) => {
   const { user, isLoading, isAuthenticated, userRole } = useAuth();
   const location = useLocation();
   const { toast } = useToast();
   const [showLoading, setShowLoading] = useState(true);
-  const [redirectPath, setRedirectPath] = useState("");
   
   // Add a loading delay for better UX
   useEffect(() => {

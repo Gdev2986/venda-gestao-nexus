@@ -12,20 +12,8 @@ interface ProtectedRouteProps {
 const ProtectedRoute = ({ children }: ProtectedRouteProps) => {
   const { user, isLoading } = useAuth();
   const location = useLocation();
-  const [shouldRedirect, setShouldRedirect] = useState(false);
   const [showLoading, setShowLoading] = useState(true);
   
-  // Use effect to prevent immediate redirects that can cause loops
-  useEffect(() => {
-    console.log("ProtectedRoute effect - isLoading:", isLoading, "user:", !!user);
-    
-    // Only determine redirect after loading is complete
-    if (!isLoading && !user) {
-      console.log("Setting shouldRedirect to true");
-      setShouldRedirect(true);
-    }
-  }, [isLoading, user]);
-
   // Add a slight delay for loading animation
   useEffect(() => {
     if (!isLoading) {
@@ -37,9 +25,9 @@ const ProtectedRoute = ({ children }: ProtectedRouteProps) => {
     }
   }, [isLoading]);
 
-  console.log("ProtectedRoute render - isLoading:", isLoading, "shouldRedirect:", shouldRedirect);
+  console.log("ProtectedRoute render - isLoading:", isLoading, "user:", !!user);
 
-  // Se estiver carregando ou mostrando animação, mostre um spinner
+  // If still loading or showing animation, show a spinner
   if (isLoading || showLoading) {
     return (
       <div className="flex flex-col items-center justify-center h-screen bg-background">
@@ -56,15 +44,15 @@ const ProtectedRoute = ({ children }: ProtectedRouteProps) => {
     );
   }
 
-  // Se não houver usuário autenticado e não estiver carregando, redirecione
-  if (shouldRedirect) {
+  // If not authenticated and not loading, redirect
+  if (!user) {
     console.log("Redirecting to / from", location.pathname);
-    // Store the current location using sessionStorage for better security
+    // Store the current location for redirect after login
     sessionStorage.setItem("redirectPath", location.pathname);
     return <Navigate to="/" state={{ from: location.pathname }} replace />;
   }
 
-  // Se estiver autenticado, renderize o conteúdo protegido
+  // If authenticated, render the content
   return <>{children}</>;
 };
 
