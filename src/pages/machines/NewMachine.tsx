@@ -10,6 +10,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { PATHS } from "@/routes/paths";
+import { MachineStatus } from "@/types/machine.types";
 
 const NewMachine = () => {
   const navigate = useNavigate();
@@ -19,7 +20,7 @@ const NewMachine = () => {
   // Form state
   const [serialNumber, setSerialNumber] = useState("");
   const [model, setModel] = useState("");
-  const [status, setStatus] = useState("STOCK");
+  const [status, setStatus] = useState<MachineStatus>(MachineStatus.STOCK);
   const [notes, setNotes] = useState("");
   
   const handleSubmit = async (e: React.FormEvent) => {
@@ -37,16 +38,15 @@ const NewMachine = () => {
     setIsSubmitting(true);
     
     try {
+      // Note: We're sending a single object, not an array of objects
       const { data, error } = await supabase
         .from('machines')
-        .insert([
-          {
-            serial_number: serialNumber,
-            model: model,
-            status: status,
-            notes: notes
-          }
-        ])
+        .insert({
+          serial_number: serialNumber,
+          model: model,
+          status: status,
+          notes: notes
+        })
         .select();
       
       if (error) throw error;
@@ -108,15 +108,18 @@ const NewMachine = () => {
             
             <div className="space-y-2">
               <Label htmlFor="status">Status</Label>
-              <Select value={status} onValueChange={setStatus}>
+              <Select 
+                value={status} 
+                onValueChange={(value) => setStatus(value as MachineStatus)}
+              >
                 <SelectTrigger>
                   <SelectValue placeholder="Selecione o status" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="STOCK">Em Estoque</SelectItem>
-                  <SelectItem value="ACTIVE">Operando</SelectItem>
-                  <SelectItem value="MAINTENANCE">Em Manutenção</SelectItem>
-                  <SelectItem value="INACTIVE">Inativa</SelectItem>
+                  <SelectItem value={MachineStatus.STOCK}>Em Estoque</SelectItem>
+                  <SelectItem value={MachineStatus.ACTIVE}>Operando</SelectItem>
+                  <SelectItem value={MachineStatus.MAINTENANCE}>Em Manutenção</SelectItem>
+                  <SelectItem value={MachineStatus.INACTIVE}>Inativa</SelectItem>
                 </SelectContent>
               </Select>
             </div>
