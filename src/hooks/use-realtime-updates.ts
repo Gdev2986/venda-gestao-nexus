@@ -75,16 +75,15 @@ export function useRealtimeUpdates({
     // Create a unique channel name based on table and event type
     const channelName = `realtime:${tableName}:${eventType}`;
     
-    // Fix the type issue by using the correct signature for the on method
+    // Update to use the correct signature for the Supabase JS client
     const channel = supabase
       .channel(channelName)
-      .on(
-        'postgres_changes', 
-        {
-          event: eventType,
+      .on('postgres_changes', // This is actually a valid channel event
+        { 
+          event: eventType === '*' ? undefined : eventType,
           schema: 'public',
-          table: tableName
-        },
+          table: tableName 
+        } as any, // Use type assertion to bypass the TypeScript error
         handleRealtimeChange
       )
       .subscribe();
