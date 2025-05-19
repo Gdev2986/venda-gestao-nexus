@@ -8,7 +8,7 @@ import { useState, useEffect } from "react";
 import { getDashboardPath } from "@/routes/routeUtils";
 
 const RootLayout = () => {
-  const { user, isLoading, isAuthenticated, userRole } = useAuth();
+  const { user, session, isLoading, isAuthenticated, userRole } = useAuth();
   const location = useLocation();
   const [showLoading, setShowLoading] = useState(true);
   
@@ -18,9 +18,10 @@ const RootLayout = () => {
       isLoading,
       isAuthenticated,
       userRole,
+      hasSession: !!session,
       path: location.pathname
     });
-  }, [isLoading, isAuthenticated, userRole, location.pathname]);
+  }, [isLoading, isAuthenticated, userRole, session, location.pathname]);
   
   // Add a slight delay for loading animation
   useEffect(() => {
@@ -51,7 +52,7 @@ const RootLayout = () => {
   }
   
   // If authenticated, redirect to the role-specific dashboard
-  if (isAuthenticated && user && userRole) {
+  if (isAuthenticated && user && session && userRole) {
     try {
       const dashboardPath = getDashboardPath(userRole);
       console.log(`User authenticated as ${userRole}, redirecting to ${dashboardPath}`);

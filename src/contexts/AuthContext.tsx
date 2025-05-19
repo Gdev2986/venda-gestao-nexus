@@ -1,3 +1,4 @@
+
 import { createContext, useContext, useEffect, useState } from "react";
 import { Session, User } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
@@ -89,6 +90,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
                 
                 if (error) {
                   console.error("Error fetching user role:", error);
+                  setUserRole(null);
                 } else {
                   // Normalize the role to match our UserRole enum
                   const normalizedRole = profile?.role?.toUpperCase() as UserRole;
@@ -97,6 +99,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
                 }
               } catch (err) {
                 console.error("Error in role fetching:", err);
+                setUserRole(null);
               }
               
               toast({
@@ -113,7 +116,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
           // Clear auth data immediately
           setSession(null);
           setUser(null);
-          setUserRole(null);
+          setUserRole(null); // Explicitly set userRole to null
           setIsAuthenticated(false);
           
           // Clean up all auth-related data
@@ -158,6 +161,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
             
             if (error) {
               console.error("Error fetching user role:", error);
+              setUserRole(null);
             } else {
               // Normalize the role to match our UserRole enum
               const normalizedRole = profile?.role?.toUpperCase() as UserRole;
@@ -166,7 +170,11 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
             }
           } catch (err) {
             console.error("Error in role fetching:", err);
+            setUserRole(null);
           }
+        } else {
+          // Explicitly set userRole to null when no session
+          setUserRole(null);
         }
       } catch (error) {
         console.error("Error during initial session check:", error);

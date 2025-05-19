@@ -4,6 +4,7 @@ import { PATHS } from "./routes/paths";
 import { useEffect } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { useUserRole } from "./hooks/use-user-role";
+import { useAuth } from "@/contexts/AuthContext";
 import { UserRole } from "./types";
 
 // Route utils
@@ -26,26 +27,35 @@ import Notifications from "./pages/Notifications";
 
 function App() {
   const { userRole, isRoleLoading } = useUserRole();
+  const { session } = useAuth();
   const { toast } = useToast();
 
   // Log role changes for debugging
   useEffect(() => {
     if (!isRoleLoading) {
-      console.log("App.tsx - Current user role:", userRole);
+      console.log("App.tsx - Current user role:", userRole, "Session exists:", !!session);
       
-      try {
-        const dashPath = getDashboardPath(userRole);
-        console.log("App.tsx - Will redirect to dashboard:", dashPath);
-      } catch (error) {
-        console.error("Error getting dashboard path:", error);
+      if (session && userRole) {
+        try {
+          const dashPath = getDashboardPath(userRole);
+          console.log("App.tsx - Will redirect to dashboard:", dashPath);
+        } catch (error) {
+          console.error("Error getting dashboard path:", error);
+        }
+      } else {
+        console.log("App.tsx - No session or role, no dashboard redirect");
       }
     }
-  }, [userRole, isRoleLoading]);
+  }, [userRole, isRoleLoading, session]);
 
   // Get the dashboard path safely
   const getDashboardRedirectPath = () => {
     try {
-      return getDashboardPath(userRole);
+      // Only get dashboard path if we have both session and userRole
+      if (session && userRole) {
+        return getDashboardPath(userRole);
+      }
+      return PATHS.LOGIN;
     } catch (error) {
       console.error("Error in getDashboardRedirectPath:", error);
       return PATHS.LOGIN;

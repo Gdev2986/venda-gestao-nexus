@@ -24,11 +24,10 @@ const routePermissions: Record<string, UserRole[]> = {
 };
 
 const RequireAuth = ({ allowedRoles = [], redirectTo = PATHS.LOGIN }: RequireAuthProps) => {
-  const { user, isLoading, isAuthenticated, userRole } = useAuth();
+  const { user, session, isLoading, isAuthenticated, userRole } = useAuth();
   const location = useLocation();
   const { toast } = useToast();
   const [showLoading, setShowLoading] = useState(true);
-  const [redirectPath, setRedirectPath] = useState("");
   
   // Add a loading delay for better UX
   useEffect(() => {
@@ -48,9 +47,10 @@ const RequireAuth = ({ allowedRoles = [], redirectTo = PATHS.LOGIN }: RequireAut
       isAuthenticated,
       userRole,
       path: location.pathname,
-      allowedRoles
+      allowedRoles,
+      hasSession: !!session
     });
-  }, [isLoading, isAuthenticated, userRole, location.pathname, allowedRoles]);
+  }, [isLoading, isAuthenticated, userRole, location.pathname, allowedRoles, session]);
 
   // If still loading, show a spinner
   if (isLoading || showLoading) {
@@ -69,12 +69,30 @@ const RequireAuth = ({ allowedRoles = [], redirectTo = PATHS.LOGIN }: RequireAut
     );
   }
 
-  // If not authenticated and not loading, redirect to login
-  if (!isAuthenticated || !user) {
-    console.log("User not authenticated, redirecting to login from", location.pathname);
+  // If not authenticated or no session exists, redirect to login
+  if (!isAuthenticated || !session || !user) {
+    console.log("User not authenticated or no session, redirecting to login from", location.pathname);
     // Store the current location for redirect after login
     sessionStorage.setItem("redirectPath", location.pathname);
     return <Navigate to={PATHS.LOGIN} state={{ from: location.pathname }} replace />;
+  }
+
+  // If we have a session but no userRole yet, show loading
+  if (isAuthenticated && !userRole) {
+    console.log("User is authenticated but role is not yet loaded");
+    return (
+      <div className="flex flex-col items-center justify-center h-screen bg-background">
+        <motion.div
+          initial={{ opacity: 0, scale: 0.8 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ duration: 0.5 }}
+          className="flex flex-col items-center"
+        >
+          <Spinner size="lg" />
+          <p className="mt-4 text-muted-foreground">Verificando permissões...</p>
+        </motion.div>
+      </div>
+    );
   }
 
   // If we have a userRole, check permissions
