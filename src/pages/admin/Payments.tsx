@@ -86,7 +86,7 @@ const AdminPayments = () => {
           <AdminPaymentsList payments={payments || []} isLoading={isLoading} selectedStatus={statusFilter} onActionClick={handleActionClick} />
 
           {payments && payments.length > 0 && <Pagination>
-              <PaginationContent className="flex gap-10">
+              <PaginationContent className="flex gap-4">
                 <PaginationItem>
                   <Button variant="outline" onClick={() => handlePageChange(page - 1)} disabled={page === 1} className="h-9 w-9 px-[45px]">
                     <PaginationPrevious className="h-4 w-4" />
