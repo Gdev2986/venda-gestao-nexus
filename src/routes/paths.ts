@@ -4,6 +4,8 @@ export const PATHS = {
   LOGIN: "/login",
   REGISTER: "/register",
   RECOVER_PASSWORD: "/recover-password",
+  FORGOT_PASSWORD: "/forgot-password",
+  RESET_PASSWORD: "/reset-password",
   TERMS: "/terms",
   PRIVACY: "/privacy",
   CONTACT: "/contact",
@@ -43,6 +45,7 @@ export const PATHS = {
     SALES_NEW: "/admin/sales/new",
     REPORTS: "/admin/reports",
     FEES: "/admin/fees",
+    USER_MANAGEMENT: "/admin/users/management",
   },
   CLIENT: {
     DASHBOARD: "/client/dashboard",
