@@ -1,3 +1,4 @@
+
 import { createContext, useContext, useEffect, useState } from "react";
 import { Session, User } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
@@ -53,18 +54,110 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [userRole, setUserRole] = useState<UserRole | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
+  // Add a flag to prevent multiple redirects
+  const [isRedirecting, setIsRedirecting] = useState(false);
   const { toast } = useToast();
   const navigate = useNavigate();
 
-  console.log("AuthProvider rendering - isLoading:", isLoading, "user:", user?.email, "userRole:", userRole);
+  console.log("AuthProvider rendering - isLoading:", isLoading, "user:", user?.email, "userRole:", userRole, "isRedirecting:", isRedirecting);
 
+  // Function to fetch user role - extracted to avoid code duplication
+  const fetchUserRole = async (userId: string) => {
+    try {
+      console.log("Fetching user role for:", userId);
+      // Fetch user role from profiles table
+      const { data: profile, error } = await supabase
+        .from('profiles')
+        .select('role')
+        .eq('id', userId)
+        .single();
+      
+      if (error) {
+        console.error("Error fetching user role:", error);
+        return null;
+      } 
+      
+      // Normalize the role to match our UserRole enum
+      const normalizedRole = profile?.role?.toUpperCase() as UserRole;
+      console.log("User role fetched:", normalizedRole);
+      return normalizedRole;
+    } catch (err) {
+      console.error("Error in role fetching:", err);
+      return null;
+    }
+  };
+
+  // Handle redirects separately to avoid loops
   useEffect(() => {
-    console.log("Setting up auth listener");
+    const handleRedirect = async () => {
+      // Only redirect if we have all the required data and are not already redirecting
+      if (!isLoading && user && userRole && isAuthenticated && !isRedirecting) {
+        console.log("All conditions met for redirect - User and Role available");
+        
+        try {
+          setIsRedirecting(true);
+          const redirectPath = sessionStorage.getItem('redirectPath');
+          
+          if (redirectPath) {
+            console.log("Redirecting to saved path:", redirectPath);
+            sessionStorage.removeItem('redirectPath');
+            navigate(redirectPath);
+          } else {
+            const dashboardPath = PATHS.DASHBOARD; // Will be handled by RootLayout
+            console.log("Redirecting to dashboard:", dashboardPath);
+            navigate(dashboardPath);
+          }
+        } catch (error) {
+          console.error("Error during redirect:", error);
+          setIsRedirecting(false);
+        }
+      }
+    };
+
+    handleRedirect();
+  }, [isLoading, user, userRole, isAuthenticated, navigate, isRedirecting]);
+
+  // Set up auth state listener and initial session check
+  useEffect(() => {
+    console.log("Setting up auth listener and checking session");
+    setIsLoading(true);
     
-    // Set up auth state listener FIRST
+    // First, check for existing session to avoid flashing login screen
+    const initialSessionCheck = async () => {
+      try {
+        console.log("Performing initial session check");
+        const { data: { session } } = await supabase.auth.getSession();
+        
+        console.log("Initial session check complete:", !!session);
+        
+        // Update session state synchronously
+        setSession(session);
+        setUser(session?.user ?? null);
+        setIsAuthenticated(!!session);
+        
+        // Only fetch user role if we have a user
+        if (session?.user) {
+          // Wait for the role to be fetched before finishing loading
+          const role = await fetchUserRole(session.user.id);
+          setUserRole(role);
+        }
+        
+      } catch (error) {
+        console.error("Error during initial session check:", error);
+        setSession(null);
+        setUser(null);
+        setUserRole(null);
+        setIsAuthenticated(false);
+      } finally {
+        // Only set loading to false after we've fetched everything
+        setIsLoading(false);
+      }
+    };
+    
+    // Set up auth state listener AFTER initial check
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, newSession) => {
-        console.log("Auth state change event:", event);
+        console.log("Auth state change event:", event, "Session:", !!newSession);
         
         // Update session state synchronously first
         setSession(newSession);
@@ -77,32 +170,24 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
           
           // Only fetch user role if we have a session
           if (newSession?.user) {
-            // Defer data fetching to prevent deadlocks
+            // Set loading to true while we fetch the role
+            setIsLoading(true);
+            
+            // Wait for the role to be fetched using setTimeout to prevent potential deadlocks
             setTimeout(async () => {
               try {
-                // Fetch user role from profiles table
-                const { data: profile, error } = await supabase
-                  .from('profiles')
-                  .select('role')
-                  .eq('id', newSession.user.id)
-                  .single();
+                const role = await fetchUserRole(newSession.user.id);
+                setUserRole(role);
                 
-                if (error) {
-                  console.error("Error fetching user role:", error);
-                } else {
-                  // Normalize the role to match our UserRole enum
-                  const normalizedRole = profile?.role?.toUpperCase() as UserRole;
-                  console.log("User role fetched:", normalizedRole);
-                  setUserRole(normalizedRole);
-                }
+                toast({
+                  title: "Login bem-sucedido",
+                  description: "Bem-vindo ao SigmaPay!",
+                });
               } catch (err) {
-                console.error("Error in role fetching:", err);
+                console.error("Error in role fetching after sign in:", err);
+              } finally {
+                setIsLoading(false);
               }
-              
-              toast({
-                title: "Login bem-sucedido",
-                description: "Bem-vindo ao SigmaPay!",
-              });
             }, 0);
           }
         }
@@ -115,6 +200,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
           setUser(null);
           setUserRole(null);
           setIsAuthenticated(false);
+          setIsRedirecting(false);
           
           // Clean up all auth-related data
           cleanupSupabaseState();
@@ -126,65 +212,22 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
               description: "Você foi desconectado com sucesso.",
             });
             
-            // Force page reload to clear state completely
+            // Force page reload to clear state completely - using window.location for more reliable redirect
             window.location.href = PATHS.LOGIN;
           }, 0);
         }
       }
     );
 
-    // Check for existing session AFTER setting up listeners
-    const initialSessionCheck = async () => {
-      setIsLoading(true);
-      try {
-        console.log("Checking initial session");
-        const { data: { session } } = await supabase.auth.getSession();
-        
-        console.log("Initial session check complete:", !!session);
-        
-        setSession(session);
-        setUser(session?.user ?? null);
-        setIsAuthenticated(!!session);
-        
-        // Only fetch user role if we have a user
-        if (session?.user) {
-          try {
-            // Fetch user role from profiles table
-            const { data: profile, error } = await supabase
-              .from('profiles')
-              .select('role')
-              .eq('id', session.user.id)
-              .single();
-            
-            if (error) {
-              console.error("Error fetching user role:", error);
-            } else {
-              // Normalize the role to match our UserRole enum
-              const normalizedRole = profile?.role?.toUpperCase() as UserRole;
-              console.log("User role fetched:", normalizedRole);
-              setUserRole(normalizedRole);
-            }
-          } catch (err) {
-            console.error("Error in role fetching:", err);
-          }
-        }
-      } catch (error) {
-        console.error("Error during initial session check:", error);
-        setSession(null);
-        setUser(null);
-        setUserRole(null);
-        setIsAuthenticated(false);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
+    // Perform the initial session check
     initialSessionCheck();
 
+    // Clean up subscription on unmount
     return () => {
+      console.log("Cleaning up auth listener");
       subscription.unsubscribe();
     };
-  }, [toast]); // Only run on mount
+  }, []); // Only run on mount
 
   const signIn = async (email: string, password: string) => {
     try {
@@ -193,6 +236,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       
       console.log("Sign in attempt for:", email);
       setIsLoading(true);
+      setIsRedirecting(false);
       
       // Try global logout before login to ensure clean state
       try {
@@ -213,32 +257,26 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
           description: error.message,
           variant: "destructive",
         });
+        setIsLoading(false);
         return { user: null, error };
       }
       
       if (data.user) {
-        console.log("Sign in successful, navigating to dashboard");
-        // Use setTimeout to avoid race conditions with onAuthStateChange
-        setTimeout(() => {
-          const redirectPath = sessionStorage.getItem('redirectPath');
-          if (redirectPath) {
-            sessionStorage.removeItem('redirectPath');
-            navigate(redirectPath);
-          } else {
-            navigate(PATHS.DASHBOARD); // Will be handled by RootLayout
-          }
-        }, 0);
+        console.log("Sign in successful - waiting for auth state change to detect role");
+        // We'll let the onAuthStateChange handle the redirect after role is fetched
+        // The loading state will be managed there too
+      } else {
+        setIsLoading(false);
       }
       
       return { user: data.user, error: null };
     } catch (error: any) {
       console.error("Error during login:", error);
+      setIsLoading(false);
       return { 
         user: null, 
         error: error instanceof Error ? error : new Error("Unknown error during login") 
       };
-    } finally {
-      setIsLoading(false);
     }
   };
 
@@ -281,6 +319,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
           description: errorMessage,
           variant: "destructive",
         });
+        setIsLoading(false);
         return { user: null, error };
       }
       
@@ -289,16 +328,17 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         description: "Por favor, verifique seu email para confirmar sua conta.",
       });
 
+      // Reset loading since we're navigating away
+      setIsLoading(false);
       navigate(PATHS.HOME);
       return { user: data?.user || null, error: null };
     } catch (error: any) {
       console.error("Error during registration:", error);
+      setIsLoading(false);
       return { 
         user: null, 
         error: error instanceof Error ? error : new Error("Unknown error during registration") 
       };
-    } finally {
-      setIsLoading(false);
     }
   };
 
@@ -312,6 +352,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       setSession(null);
       setUserRole(null);
       setIsAuthenticated(false);
+      setIsRedirecting(false);
       
       // Clean up all auth data
       cleanupSupabaseState();
@@ -322,7 +363,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         console.error("Error during logout:", error);
       }
       
-      // Force complete page reload to clear all state
+      // Force complete page reload to clear all state - use window.location for more reliable redirect
       window.location.href = PATHS.HOME;
       
       return { success: true, error: null };
@@ -333,9 +374,8 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         description: error.message || "Ocorreu um erro ao tentar sair",
         variant: "destructive",
       });
-      return { success: false, error };
-    } finally {
       setIsLoading(false);
+      return { success: false, error };
     }
   };
 

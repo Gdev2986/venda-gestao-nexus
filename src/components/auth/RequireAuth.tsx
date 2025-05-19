@@ -28,19 +28,7 @@ const RequireAuth = ({ allowedRoles = [], redirectTo = PATHS.LOGIN }: RequireAut
   const location = useLocation();
   const { toast } = useToast();
   const [showLoading, setShowLoading] = useState(true);
-  const [redirectPath, setRedirectPath] = useState("");
   
-  // Add a loading delay for better UX
-  useEffect(() => {
-    if (!isLoading) {
-      const timer = setTimeout(() => {
-        setShowLoading(false);
-      }, 500); // 0.5 second loading time
-      
-      return () => clearTimeout(timer);
-    }
-  }, [isLoading]);
-
   // Debug information
   useEffect(() => {
     console.log("RequireAuth render status:", {
@@ -51,6 +39,17 @@ const RequireAuth = ({ allowedRoles = [], redirectTo = PATHS.LOGIN }: RequireAut
       allowedRoles
     });
   }, [isLoading, isAuthenticated, userRole, location.pathname, allowedRoles]);
+
+  // Add a loading delay for better UX
+  useEffect(() => {
+    if (!isLoading) {
+      const timer = setTimeout(() => {
+        setShowLoading(false);
+      }, 500); // 0.5 second loading time
+      
+      return () => clearTimeout(timer);
+    }
+  }, [isLoading]);
 
   // If still loading, show a spinner
   if (isLoading || showLoading) {
@@ -74,7 +73,17 @@ const RequireAuth = ({ allowedRoles = [], redirectTo = PATHS.LOGIN }: RequireAut
     console.log("User not authenticated, redirecting to login from", location.pathname);
     // Store the current location for redirect after login
     sessionStorage.setItem("redirectPath", location.pathname);
-    return <Navigate to={PATHS.LOGIN} state={{ from: location.pathname }} replace />;
+    
+    // Use window.location.href for more reliable mobile redirects
+    window.location.href = PATHS.LOGIN;
+    
+    // Return a loading component while redirecting
+    return (
+      <div className="flex flex-col items-center justify-center h-screen bg-background">
+        <Spinner size="lg" />
+        <p className="mt-4 text-muted-foreground">Redirecionando para login...</p>
+      </div>
+    );
   }
 
   // If we have a userRole, check permissions
@@ -94,10 +103,30 @@ const RequireAuth = ({ allowedRoles = [], redirectTo = PATHS.LOGIN }: RequireAut
       
       try {
         const dashboardPath = getDashboardPath(userRole);
-        return <Navigate to={dashboardPath} replace />;
+        
+        // Use window.location.href for more reliable mobile redirects
+        window.location.href = dashboardPath;
+        
+        // Return a loading component while redirecting
+        return (
+          <div className="flex flex-col items-center justify-center h-screen bg-background">
+            <Spinner size="lg" />
+            <p className="mt-4 text-muted-foreground">Redirecionando...</p>
+          </div>
+        );
       } catch (error) {
         console.error("Error getting dashboard path:", error);
-        return <Navigate to={PATHS.LOGIN} replace />;
+        
+        // Fallback to login page
+        window.location.href = PATHS.LOGIN;
+        
+        // Return a loading component while redirecting
+        return (
+          <div className="flex flex-col items-center justify-center h-screen bg-background">
+            <Spinner size="lg" />
+            <p className="mt-4 text-muted-foreground">Redirecionando...</p>
+          </div>
+        );
       }
     }
   } else {
@@ -108,7 +137,17 @@ const RequireAuth = ({ allowedRoles = [], redirectTo = PATHS.LOGIN }: RequireAut
       description: "Ocorreu um erro ao verificar suas permissões",
       variant: "destructive",
     });
-    return <Navigate to={PATHS.LOGIN} replace />;
+    
+    // Use window.location.href for more reliable mobile redirects
+    window.location.href = PATHS.LOGIN;
+    
+    // Return a loading component while redirecting
+    return (
+      <div className="flex flex-col items-center justify-center h-screen bg-background">
+        <Spinner size="lg" />
+        <p className="mt-4 text-muted-foreground">Redirecionando...</p>
+      </div>
+    );
   }
 
   // If authenticated and has the right role, render the protected content

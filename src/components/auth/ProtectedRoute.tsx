@@ -10,21 +10,21 @@ interface ProtectedRouteProps {
 }
 
 const ProtectedRoute = ({ children }: ProtectedRouteProps) => {
-  const { user, isLoading } = useAuth();
+  const { user, isLoading, userRole } = useAuth();
   const location = useLocation();
   const [shouldRedirect, setShouldRedirect] = useState(false);
   const [showLoading, setShowLoading] = useState(true);
   
   // Use effect to prevent immediate redirects that can cause loops
   useEffect(() => {
-    console.log("ProtectedRoute effect - isLoading:", isLoading, "user:", !!user);
+    console.log("ProtectedRoute effect - isLoading:", isLoading, "user:", !!user, "userRole:", userRole);
     
-    // Only determine redirect after loading is complete
-    if (!isLoading && !user) {
-      console.log("Setting shouldRedirect to true");
+    // Only determine redirect after loading is complete AND we have all necessary data
+    if (!isLoading && (!user || !userRole)) {
+      console.log("Setting shouldRedirect to true - missing user or role");
       setShouldRedirect(true);
     }
-  }, [isLoading, user]);
+  }, [isLoading, user, userRole]);
 
   // Add a slight delay for loading animation
   useEffect(() => {
@@ -56,15 +56,23 @@ const ProtectedRoute = ({ children }: ProtectedRouteProps) => {
     );
   }
 
-  // Se não houver usuário autenticado e não estiver carregando, redirecione
+  // Se não houver usuário autenticado OU userRole não estiver disponível, redirecione
   if (shouldRedirect) {
     console.log("Redirecting to / from", location.pathname);
     // Store the current location using sessionStorage for better security
     sessionStorage.setItem("redirectPath", location.pathname);
-    return <Navigate to="/" state={{ from: location.pathname }} replace />;
+    // Use window.location for mobile compatibility
+    window.location.href = "/";
+    // Return loading state while redirecting
+    return (
+      <div className="flex flex-col items-center justify-center h-screen bg-background">
+        <Spinner size="lg" />
+        <p className="mt-4 text-muted-foreground">Redirecionando...</p>
+      </div>
+    );
   }
 
-  // Se estiver autenticado, renderize o conteúdo protegido
+  // Se estiver autenticado E tivermos o userRole, renderize o conteúdo protegido
   return <>{children}</>;
 };
 
