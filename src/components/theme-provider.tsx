@@ -2,6 +2,7 @@
 "use client";
 
 import * as React from "react";
+import { createContext, useContext, useEffect, useState } from "react";
 
 type Theme = "dark" | "light" | "system";
 
@@ -21,7 +22,7 @@ const initialState: ThemeProviderState = {
   setTheme: () => null,
 };
 
-const ThemeProviderContext = React.createContext<ThemeProviderState>(initialState);
+const ThemeProviderContext = createContext<ThemeProviderState>(initialState);
 
 export function ThemeProvider({
   children,
@@ -29,12 +30,10 @@ export function ThemeProvider({
   storageKey = "ui-theme",
   ...props
 }: ThemeProviderProps) {
-  const [theme, setTheme] = React.useState<Theme>(
-    defaultTheme
-  );
+  const [theme, setTheme] = useState<Theme>(defaultTheme);
 
-  // First effect: Load theme from localStorage
-  React.useEffect(() => {
+  // First effect: Load theme from localStorage only on client-side
+  useEffect(() => {
     try {
       const storedTheme = localStorage.getItem(storageKey) as Theme | null;
       if (storedTheme && ["dark", "light", "system"].includes(storedTheme)) {
@@ -46,7 +45,7 @@ export function ThemeProvider({
   }, [storageKey]);
 
   // Second effect: Apply theme to document
-  React.useEffect(() => {
+  useEffect(() => {
     const root = window.document.documentElement;
     root.classList.remove("light", "dark");
 
@@ -85,7 +84,7 @@ export function ThemeProvider({
 }
 
 export const useTheme = () => {
-  const context = React.useContext(ThemeProviderContext);
+  const context = useContext(ThemeProviderContext);
 
   if (context === undefined)
     throw new Error("useTheme must be used within a ThemeProvider");
