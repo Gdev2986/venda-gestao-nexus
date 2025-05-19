@@ -12,6 +12,7 @@ const RootLayout = () => {
   const { user, session, isLoading, isAuthenticated, userRole } = useAuth();
   const location = useLocation();
   const [showLoading, setShowLoading] = useState(true);
+  const [redirectAttempted, setRedirectAttempted] = useState(false);
   const { toast } = useToast();
   
   // Debug logging
@@ -22,10 +23,11 @@ const RootLayout = () => {
       userRole,
       hasSession: !!session,
       path: location.pathname,
+      redirectAttempted,
       userAgent: navigator.userAgent,
       isMobile: /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)
     });
-  }, [isLoading, isAuthenticated, userRole, session, location.pathname]);
+  }, [isLoading, isAuthenticated, userRole, session, location.pathname, redirectAttempted]);
   
   // Add a slight delay for loading animation
   useEffect(() => {
@@ -55,6 +57,11 @@ const RootLayout = () => {
     );
   }
   
+  // Prevent infinite redirect loop
+  if (redirectAttempted) {
+    return <Navigate to={PATHS.LOGIN} replace />;
+  }
+  
   // If authenticated, redirect to the role-specific dashboard
   if (isAuthenticated && user && session && userRole) {
     try {
@@ -67,6 +74,7 @@ const RootLayout = () => {
         description: `Usuário: ${user.email}, Função: ${userRole}`,
       });
       
+      setRedirectAttempted(true);
       return <Navigate to={dashboardPath} replace />;
     } catch (error) {
       console.error("Error getting dashboard path:", error);
@@ -78,12 +86,14 @@ const RootLayout = () => {
         variant: "destructive",
       });
       
+      setRedirectAttempted(true);
       return <Navigate to={PATHS.LOGIN} replace />;
     }
   }
   
   // If not authenticated, redirect to login
   console.log("User not authenticated, redirecting to login");
+  setRedirectAttempted(true);
   return <Navigate to={PATHS.LOGIN} replace />;
 };
 

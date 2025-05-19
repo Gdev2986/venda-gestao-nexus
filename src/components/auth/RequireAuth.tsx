@@ -28,6 +28,7 @@ const RequireAuth = ({ allowedRoles = [], redirectTo = PATHS.LOGIN }: RequireAut
   const location = useLocation();
   const { toast } = useToast();
   const [showLoading, setShowLoading] = useState(true);
+  const [redirectAttempted, setRedirectAttempted] = useState(false);
   const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
   
   // Add a loading delay for better UX
@@ -50,10 +51,11 @@ const RequireAuth = ({ allowedRoles = [], redirectTo = PATHS.LOGIN }: RequireAut
       path: location.pathname,
       allowedRoles,
       hasSession: !!session,
+      redirectAttempted,
       isMobile,
       userAgent: navigator.userAgent
     });
-  }, [isLoading, isAuthenticated, userRole, location.pathname, allowedRoles, session, isMobile]);
+  }, [isLoading, isAuthenticated, userRole, location.pathname, allowedRoles, session, isMobile, redirectAttempted]);
 
   // If still loading, show a spinner
   if (isLoading || showLoading) {
@@ -72,18 +74,25 @@ const RequireAuth = ({ allowedRoles = [], redirectTo = PATHS.LOGIN }: RequireAut
     );
   }
 
+  // Prevent infinite redirect loops
+  if (redirectAttempted) {
+    // If we already attempted a redirect, go to login as a fallback
+    return <Navigate to={PATHS.LOGIN} replace />;
+  }
+  
   // If not authenticated or no session exists, redirect to login
   if (!isAuthenticated || !session || !user) {
     console.log("User not authenticated or no session, redirecting to login from", location.pathname);
     // Store the current location for redirect after login
     sessionStorage.setItem("redirectPath", location.pathname);
     
+    setRedirectAttempted(true);
+    
     if (isMobile) {
       console.log("Mobile device detected, using window.location for redirect");
-      // For mobile devices, use window.location for more reliable redirect
       window.location.href = PATHS.LOGIN;
-      // Return empty div while redirecting
-      return <div className="flex items-center justify-center h-screen"><Spinner size="lg" /></div>;
+      // Return null temporarily while redirecting (avoid rendering protected content)
+      return null;
     } else {
       return <Navigate to={PATHS.LOGIN} state={{ from: location.pathname }} replace />;
     }
@@ -122,13 +131,15 @@ const RequireAuth = ({ allowedRoles = [], redirectTo = PATHS.LOGIN }: RequireAut
         variant: "destructive",
       });
       
+      setRedirectAttempted(true);
+      
       try {
         const dashboardPath = getDashboardPath(userRole);
         
         if (isMobile) {
           console.log("Mobile device detected, using window.location for redirect");
           window.location.href = dashboardPath;
-          return <div className="flex items-center justify-center h-screen"><Spinner size="lg" /></div>;
+          return null;
         } else {
           return <Navigate to={dashboardPath} replace />;
         }
@@ -146,9 +157,11 @@ const RequireAuth = ({ allowedRoles = [], redirectTo = PATHS.LOGIN }: RequireAut
       variant: "destructive",
     });
     
+    setRedirectAttempted(true);
+    
     if (isMobile) {
       window.location.href = PATHS.LOGIN;
-      return <div className="flex items-center justify-center h-screen"><Spinner size="lg" /></div>;
+      return null;
     } else {
       return <Navigate to={PATHS.LOGIN} replace />;
     }

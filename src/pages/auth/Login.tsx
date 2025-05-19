@@ -1,5 +1,5 @@
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import LoginForm from "@/components/auth/LoginForm";
 import { LayoutDashboard, CreditCard, FileText, Monitor } from "lucide-react";
@@ -11,14 +11,16 @@ const Login = () => {
   const navigate = useNavigate();
   const { user, isLoading } = useAuth();
   const [redirecting, setRedirecting] = useState(false);
+  const redirectAttemptedRef = useRef(false);
   const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
 
   useEffect(() => {
     // If authenticated and finished loading, redirect to dashboard
-    if (user && !isLoading) {
+    if (user && !isLoading && !redirectAttemptedRef.current) {
       console.log("Login: User authenticated, redirecting to dashboard");
       console.log("Device type:", isMobile ? "Mobile" : "Desktop");
       setRedirecting(true);
+      redirectAttemptedRef.current = true;
       
       if (isMobile) {
         // For mobile devices, use window.location.href for more reliable redirect
