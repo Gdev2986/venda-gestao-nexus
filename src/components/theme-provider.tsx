@@ -27,14 +27,18 @@ export function ThemeProvider({
   storageKey = "ui-theme",
   ...props
 }: ThemeProviderProps) {
-  // Corrigir a inicialização do useState e verificação do ambiente
-  const [theme, setTheme] = useState<Theme>(() => {
+  // Fix: Safely initialize useState for server-side rendering
+  const [theme, setTheme] = useState<Theme>(defaultTheme);
+  
+  // Effect to load theme from localStorage only on client side
+  useEffect(() => {
     if (typeof window !== "undefined") {
       const storedTheme = localStorage.getItem(storageKey);
-      return (storedTheme as Theme) || defaultTheme;
+      if (storedTheme && (storedTheme === "dark" || storedTheme === "light" || storedTheme === "system")) {
+        setTheme(storedTheme as Theme);
+      }
     }
-    return defaultTheme;
-  });
+  }, [storageKey]);
 
   useEffect(() => {
     const root = window.document.documentElement;

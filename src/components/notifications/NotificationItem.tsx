@@ -2,7 +2,7 @@
 import { motion } from "framer-motion";
 import { formatDistanceToNow } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import { ShoppingCart, CreditCard, Wrench, LifeBuoy, Bell } from "lucide-react";
+import { ShoppingCart, CreditCard, Wrench, LifeBuoy, Bell, Trash2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Notification, NotificationType } from "@/types/notification.types";
 import { DropdownMenuItem, DropdownMenuSeparator } from "@/components/ui/dropdown-menu";
@@ -10,9 +10,10 @@ import { DropdownMenuItem, DropdownMenuSeparator } from "@/components/ui/dropdow
 interface NotificationItemProps {
   notification: Notification;
   onMarkAsRead: (id: string) => void;
+  onDelete?: (id: string) => void;
 }
 
-export const NotificationItem = ({ notification, onMarkAsRead }: NotificationItemProps) => {
+export const NotificationItem = ({ notification, onMarkAsRead, onDelete }: NotificationItemProps) => {
   // Função para retornar o ícone apropriado baseado no tipo de notificação
   const getIcon = (type: string) => {
     switch (type) {
@@ -29,6 +30,26 @@ export const NotificationItem = ({ notification, onMarkAsRead }: NotificationIte
     }
   };
 
+  const handleMarkAsRead = (e: React.MouseEvent) => {
+    onMarkAsRead(notification.id);
+    // Add haptic feedback for mobile devices
+    if (navigator.vibrate) {
+      navigator.vibrate(50);
+    }
+    e.stopPropagation();
+  };
+
+  const handleDelete = (e: React.MouseEvent) => {
+    if (onDelete) {
+      onDelete(notification.id);
+      // Add haptic feedback for mobile devices
+      if (navigator.vibrate) {
+        navigator.vibrate(100);
+      }
+      e.stopPropagation();
+    }
+  };
+
   return (
     <motion.div
       key={notification.id}
@@ -39,28 +60,30 @@ export const NotificationItem = ({ notification, onMarkAsRead }: NotificationIte
     >
       <DropdownMenuItem
         className={cn(
-          "flex flex-col items-start gap-1 p-4 focus:bg-accent/50",
+          "flex flex-col items-start gap-1 p-4 focus:bg-accent/50 relative",
           notification.is_read ? "opacity-70" : ""
         )}
-        onClick={() => {
-          onMarkAsRead(notification.id);
-          // Add haptic feedback for mobile devices
-          if (navigator.vibrate) {
-            navigator.vibrate(50);
-          }
-        }}
+        onClick={handleMarkAsRead}
       >
         <div className="flex w-full justify-between">
           <div className="flex items-center">
             {getIcon(notification.type)}
             <span className="ml-2 font-medium line-clamp-1">{notification.title}</span>
           </div>
-          <span className="text-xs text-muted-foreground whitespace-nowrap">
-            {formatDistanceToNow(new Date(notification.created_at), {
-              addSuffix: true,
-              locale: ptBR
-            })}
-          </span>
+          <div className="flex items-center gap-2">
+            <span className="text-xs text-muted-foreground whitespace-nowrap">
+              {formatDistanceToNow(new Date(notification.created_at), {
+                addSuffix: true,
+                locale: ptBR
+              })}
+            </span>
+            {onDelete && (
+              <Trash2 
+                className="h-4 w-4 text-destructive opacity-50 hover:opacity-100 cursor-pointer" 
+                onClick={handleDelete}
+              />
+            )}
+          </div>
         </div>
         <span className="text-sm text-muted-foreground line-clamp-2">
           {notification.message}

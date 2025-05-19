@@ -2,13 +2,29 @@
 import { AnimatePresence } from "framer-motion";
 import { Notification } from "@/types/notification.types";
 import { NotificationItem } from "./NotificationItem";
+import { Spinner } from "@/components/ui/spinner";
 
 interface NotificationListProps {
   notifications: Notification[];
   onMarkAsRead: (id: string) => void;
+  isLoading?: boolean;
+  onDelete?: (id: string) => void;
 }
 
-export const NotificationList = ({ notifications, onMarkAsRead }: NotificationListProps) => {
+export const NotificationList = ({ 
+  notifications, 
+  onMarkAsRead, 
+  isLoading = false, 
+  onDelete 
+}: NotificationListProps) => {
+  if (isLoading) {
+    return (
+      <div className="flex justify-center items-center p-8">
+        <Spinner size="lg" />
+      </div>
+    );
+  }
+
   return (
     <div className="max-h-[60vh] sm:max-h-80 overflow-y-auto">
       <AnimatePresence>
@@ -22,6 +38,7 @@ export const NotificationList = ({ notifications, onMarkAsRead }: NotificationLi
               key={notification.id}
               notification={notification}
               onMarkAsRead={onMarkAsRead}
+              onDelete={onDelete}
             />
           ))
         )}
