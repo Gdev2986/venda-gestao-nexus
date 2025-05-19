@@ -1,4 +1,3 @@
-
 import { createContext, useContext, useEffect, useState } from "react";
 import { Session, User } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
@@ -18,6 +17,8 @@ import { AuthContextType } from "./auth-types";
 // Function to clean up Supabase-related data
 export const cleanupSupabaseState = () => {
   try {
+    console.log("Starting auth state cleanup");
+    
     // Clear standard auth data
     localStorage.removeItem('supabase.auth.token');
     sessionStorage.removeItem('userRole');
@@ -27,6 +28,7 @@ export const cleanupSupabaseState = () => {
     // Clear all Supabase keys from localStorage
     Object.keys(localStorage).forEach((key) => {
       if (key.startsWith('supabase.auth.') || key.includes('sb-')) {
+        console.log(`Removing localStorage key: ${key}`);
         localStorage.removeItem(key);
       }
     });
@@ -34,6 +36,7 @@ export const cleanupSupabaseState = () => {
     // Clear from sessionStorage if being used
     Object.keys(sessionStorage).forEach((key) => {
       if (key.startsWith('supabase.auth.') || key.includes('sb-')) {
+        console.log(`Removing sessionStorage key: ${key}`);
         sessionStorage.removeItem(key);
       }
     });
@@ -56,8 +59,9 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const { toast } = useToast();
   const navigate = useNavigate();
+  const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
 
-  console.log("AuthProvider rendering - isLoading:", isLoading, "user:", user?.email, "userRole:", userRole);
+  console.log("AuthProvider rendering - isLoading:", isLoading, "user:", user?.email, "userRole:", userRole, "isMobile:", isMobile);
 
   useEffect(() => {
     console.log("Setting up auth listener");
@@ -216,6 +220,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       });
 
       if (error) {
+        console.error("Login error:", error);
         toast({
           title: "Erro de login",
           description: error.message,
@@ -229,11 +234,17 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         // Use setTimeout to avoid race conditions with onAuthStateChange
         setTimeout(() => {
           const redirectPath = sessionStorage.getItem('redirectPath');
-          if (redirectPath) {
-            sessionStorage.removeItem('redirectPath');
-            navigate(redirectPath);
+          
+          if (isMobile) {
+            console.log("Mobile device detected, using window.location");
+            window.location.href = redirectPath || PATHS.DASHBOARD;
           } else {
-            navigate(PATHS.DASHBOARD); // Will be handled by RootLayout
+            if (redirectPath) {
+              sessionStorage.removeItem('redirectPath');
+              navigate(redirectPath);
+            } else {
+              navigate(PATHS.DASHBOARD); // Will be handled by RootLayout
+            }
           }
         }, 0);
       }

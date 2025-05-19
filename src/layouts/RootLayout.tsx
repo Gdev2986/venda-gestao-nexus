@@ -6,11 +6,13 @@ import { PATHS } from "@/routes/paths";
 import { motion } from "framer-motion";
 import { useState, useEffect } from "react";
 import { getDashboardPath } from "@/routes/routeUtils";
+import { useToast } from "@/hooks/use-toast";
 
 const RootLayout = () => {
   const { user, session, isLoading, isAuthenticated, userRole } = useAuth();
   const location = useLocation();
   const [showLoading, setShowLoading] = useState(true);
+  const { toast } = useToast();
   
   // Debug logging
   useEffect(() => {
@@ -19,7 +21,9 @@ const RootLayout = () => {
       isAuthenticated,
       userRole,
       hasSession: !!session,
-      path: location.pathname
+      path: location.pathname,
+      userAgent: navigator.userAgent,
+      isMobile: /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)
     });
   }, [isLoading, isAuthenticated, userRole, session, location.pathname]);
   
@@ -56,9 +60,24 @@ const RootLayout = () => {
     try {
       const dashboardPath = getDashboardPath(userRole);
       console.log(`User authenticated as ${userRole}, redirecting to ${dashboardPath}`);
+      
+      // For development purposes, show a toast with authentication info
+      toast({
+        title: "Autenticado com sucesso",
+        description: `Usuário: ${user.email}, Função: ${userRole}`,
+      });
+      
       return <Navigate to={dashboardPath} replace />;
     } catch (error) {
       console.error("Error getting dashboard path:", error);
+      
+      // If we can't determine the dashboard path, redirect to login
+      toast({
+        title: "Erro de autenticação",
+        description: "Não foi possível determinar seu painel. Por favor, entre novamente.",
+        variant: "destructive",
+      });
+      
       return <Navigate to={PATHS.LOGIN} replace />;
     }
   }

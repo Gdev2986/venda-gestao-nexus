@@ -11,15 +11,23 @@ const Login = () => {
   const navigate = useNavigate();
   const { user, isLoading } = useAuth();
   const [redirecting, setRedirecting] = useState(false);
+  const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
 
   useEffect(() => {
     // If authenticated and finished loading, redirect to dashboard
     if (user && !isLoading) {
       console.log("Login: User authenticated, redirecting to dashboard");
+      console.log("Device type:", isMobile ? "Mobile" : "Desktop");
       setRedirecting(true);
-      navigate(PATHS.DASHBOARD); // This will be handled by the RootLayout component
+      
+      if (isMobile) {
+        // For mobile devices, use window.location.href for more reliable redirect
+        window.location.href = PATHS.DASHBOARD;
+      } else {
+        navigate(PATHS.DASHBOARD); // This will be handled by the RootLayout component
+      }
     }
-  }, [user, isLoading, navigate]);
+  }, [user, isLoading, navigate, isMobile]);
 
   // If redirecting or loading, show a spinner
   if (isLoading || redirecting) {
