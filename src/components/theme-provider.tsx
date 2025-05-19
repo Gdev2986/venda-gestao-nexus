@@ -16,47 +16,12 @@ type ThemeProviderState = {
   setTheme: (theme: Theme) => void;
 };
 
-// Create context with default values
-const ThemeProviderContext = React.createContext<ThemeProviderState>({
+const initialState: ThemeProviderState = {
   theme: "system",
   setTheme: () => null,
-});
-
-// Custom hook to safely access localStorage
-const useLocalStorage = (key: string, defaultValue: string): [string, (value: string) => void] => {
-  // Create a ref to track if component is mounted
-  const isMounted = React.useRef(false);
-  
-  // Initialize state with a function to safely access localStorage
-  const [value, setValue] = React.useState<string>(() => {
-    if (typeof window === "undefined") return defaultValue;
-    
-    try {
-      const item = window.localStorage.getItem(key);
-      return item || defaultValue;
-    } catch (error) {
-      console.error("Error reading from localStorage:", error);
-      return defaultValue;
-    }
-  });
-  
-  // Effect to update localStorage when value changes
-  React.useEffect(() => {
-    // Skip initial render
-    if (!isMounted.current) {
-      isMounted.current = true;
-      return;
-    }
-    
-    try {
-      window.localStorage.setItem(key, value);
-    } catch (error) {
-      console.error("Error writing to localStorage:", error);
-    }
-  }, [key, value]);
-  
-  return [value, setValue];
 };
+
+const ThemeProviderContext = React.createContext<ThemeProviderState>(initialState);
 
 export function ThemeProvider({
   children,
@@ -64,38 +29,44 @@ export function ThemeProvider({
   storageKey = "sigmapay-theme",
   ...props
 }: ThemeProviderProps) {
-  // Use our custom hook for localStorage
-  const [theme, setThemeValue] = useLocalStorage(storageKey, defaultTheme);
-  
-  // Validate that theme is a valid Theme type
-  const validTheme = (theme === "dark" || theme === "light" || theme === "system") 
-    ? theme as Theme 
-    : defaultTheme;
-  
-  // Handle theme changes
-  const setTheme = React.useCallback((theme: Theme) => {
-    setThemeValue(theme);
-  }, [setThemeValue]);
+  const [theme, setTheme] = React.useState<Theme>(() => {
+    if (typeof window === "undefined") return defaultTheme;
+    
+    try {
+      const storedTheme = window.localStorage.getItem(storageKey);
+      return (storedTheme as Theme) || defaultTheme;
+    } catch (error) {
+      console.error("Error reading from localStorage:", error);
+      return defaultTheme;
+    }
+  });
 
-  // Apply theme to document element
   React.useEffect(() => {
     const root = window.document.documentElement;
     
     root.classList.remove("light", "dark");
 
-    if (validTheme === "system") {
+    if (theme === "system") {
       const systemTheme = window.matchMedia("(prefers-color-scheme: dark)").matches
         ? "dark"
         : "light";
       root.classList.add(systemTheme);
     } else {
-      root.classList.add(validTheme);
+      root.classList.add(theme);
     }
-  }, [validTheme]);
+  }, [theme]);
+
+  React.useEffect(() => {
+    try {
+      localStorage.setItem(storageKey, theme);
+    } catch (error) {
+      console.error("Error writing to localStorage:", error);
+    }
+  }, [theme, storageKey]);
 
   // Listen for system theme changes
   React.useEffect(() => {
-    if (validTheme !== "system") return;
+    if (theme !== "system") return;
     
     const mediaQuery = window.matchMedia("(prefers-color-scheme: dark)");
     
@@ -109,14 +80,14 @@ export function ThemeProvider({
     
     mediaQuery.addEventListener("change", handleChange);
     return () => mediaQuery.removeEventListener("change", handleChange);
-  }, [validTheme]);
+  }, [theme]);
 
   const value = React.useMemo(
     () => ({
-      theme: validTheme,
+      theme,
       setTheme,
     }),
-    [validTheme, setTheme]
+    [theme]
   );
 
   return (

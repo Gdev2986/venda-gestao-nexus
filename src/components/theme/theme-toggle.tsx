@@ -9,12 +9,10 @@ import { useTheme } from "@/components/theme-provider";
 const ThemeToggle: React.FC = () => {
   const { theme, setTheme } = useTheme();
   
-  // Use useCallback to memoize the toggle function
   const toggleTheme = React.useCallback(() => {
     setTheme(theme === "dark" ? "light" : "dark");
   }, [theme, setTheme]);
 
-  // Defensive rendering to prevent flash of incorrect theme
   return (
     <Button
       variant="ghost"
