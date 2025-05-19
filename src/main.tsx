@@ -36,15 +36,15 @@ function initializeApp() {
     root.render(
       <React.StrictMode>
         <BrowserRouter>
-          <ThemeProvider defaultTheme="light" storageKey="sigmapay-theme">
-            <QueryClientProvider client={queryClient}>
-              <AuthProvider>
-                <NotificationsProvider>
+          <QueryClientProvider client={queryClient}>
+            <AuthProvider>
+              <NotificationsProvider>
+                <ThemeProvider defaultTheme="light" storageKey="sigmapay-theme">
                   <App />
-                </NotificationsProvider>
-              </AuthProvider>
-            </QueryClientProvider>
-          </ThemeProvider>
+                </ThemeProvider>
+              </NotificationsProvider>
+            </AuthProvider>
+          </QueryClientProvider>
         </BrowserRouter>
       </React.StrictMode>
     );

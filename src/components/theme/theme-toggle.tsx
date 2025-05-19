@@ -2,6 +2,7 @@
 "use client";
 
 import * as React from "react";
+import { useCallback } from "react";
 import { Moon, Sun } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useTheme } from "@/components/theme-provider";
@@ -9,7 +10,7 @@ import { useTheme } from "@/components/theme-provider";
 const ThemeToggle = () => {
   const { theme, setTheme } = useTheme();
   
-  const toggleTheme = React.useCallback(() => {
+  const toggleTheme = useCallback(() => {
     setTheme(theme === "dark" ? "light" : "dark");
   }, [theme, setTheme]);
 
