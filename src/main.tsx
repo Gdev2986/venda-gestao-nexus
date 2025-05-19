@@ -1,5 +1,5 @@
 
-import React from 'react';
+import * as React from 'react';
 import { createRoot } from 'react-dom/client';
 import { BrowserRouter } from 'react-router-dom';
 import { AuthProvider } from '@/contexts/AuthContext';
@@ -29,8 +29,10 @@ function renderApp() {
   }
   
   try {
+    // Create a fresh root
     const root = createRoot(rootElement);
     
+    // Render the application with all providers
     root.render(
       <React.StrictMode>
         <BrowserRouter>
@@ -53,13 +55,40 @@ function renderApp() {
   }
 }
 
+// Define a fallback mechanism if the main rendering fails
+function fallbackRender() {
+  try {
+    const rootElement = document.getElementById('root');
+    if (!rootElement) return;
+    
+    const message = document.createElement('div');
+    message.style.padding = '20px';
+    message.style.fontFamily = 'sans-serif';
+    message.innerHTML = '<h2>Error loading application</h2><p>Please try refreshing the page.</p>';
+    
+    rootElement.appendChild(message);
+  } catch (e) {
+    // Last resort logging
+    console.error('Critical rendering failure:', e);
+  }
+}
+
 // Ensure DOM is fully loaded before rendering
 if (document.readyState === 'loading') {
   document.addEventListener('DOMContentLoaded', () => {
     // Small delay to ensure React is fully initialized
-    setTimeout(renderApp, 50);
+    setTimeout(renderApp, 100);
   });
 } else {
-  // DOM already loaded, still use a small delay
-  setTimeout(renderApp, 50);
+  // DOM already loaded, still use a small delay to ensure proper initialization
+  setTimeout(renderApp, 100);
 }
+
+// Add global error handler as a safety net
+window.onerror = function(message, source, lineno, colno, error) {
+  console.error('Global error caught:', { message, source, lineno, colno, error });
+  if (source && source.includes('react')) {
+    fallbackRender();
+  }
+  return false;
+};

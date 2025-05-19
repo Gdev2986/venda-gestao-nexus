@@ -1,5 +1,5 @@
 
-import React from "react";
+import * as React from "react";
 
 type Theme = "dark" | "light" | "system";
 
@@ -28,42 +28,47 @@ export function ThemeProvider({
   ...props
 }: ThemeProviderProps) {
   // Safe access to localStorage with try/catch
-  const getThemeFromStorage = (): Theme | undefined => {
-    if (typeof window === "undefined") return undefined;
+  const getThemeFromStorage = React.useCallback((): Theme | null => {
+    if (typeof window === "undefined") return null;
     try {
-      return localStorage.getItem(storageKey) as Theme || undefined;
+      const storedTheme = window.localStorage.getItem(storageKey);
+      return (storedTheme as Theme) || null;
     } catch (e) {
       console.error("Error accessing localStorage:", e);
-      return undefined;
+      return null;
     }
-  };
+  }, [storageKey]);
   
   const [theme, setTheme] = React.useState<Theme>(
     () => getThemeFromStorage() || defaultTheme
   );
 
-  React.useEffect(() => {
+  const applyTheme = React.useCallback((newTheme: Theme) => {
     const root = window.document.documentElement;
     
     root.classList.remove("light", "dark");
 
-    if (theme === "system") {
+    if (newTheme === "system") {
       const systemTheme = window.matchMedia("(prefers-color-scheme: dark)").matches
         ? "dark"
         : "light";
       root.classList.add(systemTheme);
     } else {
-      root.classList.add(theme);
+      root.classList.add(newTheme);
     }
-  }, [theme]);
+  }, []);
 
   React.useEffect(() => {
-    if (typeof window !== "undefined") {
-      try {
-        localStorage.setItem(storageKey, theme);
-      } catch (error) {
-        console.error("Error writing to localStorage:", error);
-      }
+    applyTheme(theme);
+  }, [theme, applyTheme]);
+
+  React.useEffect(() => {
+    if (typeof window === "undefined") return;
+    
+    try {
+      window.localStorage.setItem(storageKey, theme);
+    } catch (error) {
+      console.error("Error writing to localStorage:", error);
     }
   }, [theme, storageKey]);
 
@@ -71,20 +76,14 @@ export function ThemeProvider({
     if (theme !== "system" || typeof window === "undefined") return;
     
     function handleChange() {
-      const root = window.document.documentElement;
-      const systemTheme = window.matchMedia("(prefers-color-scheme: dark)").matches
-        ? "dark"
-        : "light";
-      
-      root.classList.remove("light", "dark");
-      root.classList.add(systemTheme);
+      applyTheme("system");
     }
     
     const mediaQuery = window.matchMedia("(prefers-color-scheme: dark)");
     mediaQuery.addEventListener("change", handleChange);
     
     return () => mediaQuery.removeEventListener("change", handleChange);
-  }, [theme]);
+  }, [theme, applyTheme]);
 
   const value = React.useMemo(
     () => ({
