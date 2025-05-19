@@ -1,4 +1,3 @@
-
 // User roles
 export enum UserRole {
   ADMIN = "ADMIN",
@@ -53,14 +52,14 @@ export enum PaymentMethod {
   PIX = "pix"
 }
 
-// Machine status - using lowercase values to match database
+// Machine status - using uppercase values to match type definitions
 export enum MachineStatus {
-  ACTIVE = "active",
-  INACTIVE = "inactive",
-  MAINTENANCE = "maintenance",
-  BLOCKED = "blocked",
-  STOCK = "stock",
-  TRANSIT = "transit"
+  ACTIVE = "ACTIVE",
+  INACTIVE = "INACTIVE",
+  MAINTENANCE = "MAINTENANCE",
+  BLOCKED = "BLOCKED",
+  STOCK = "STOCK",
+  TRANSIT = "TRANSIT"
 }
 
 // Ticket status - adding missing statuses

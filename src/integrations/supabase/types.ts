@@ -756,7 +756,13 @@ export type Database = {
       }
     }
     Enums: {
-      machine_status: "ACTIVE" | "INACTIVE" | "MAINTENANCE" | "BLOCKED"
+      machine_status:
+        | "ACTIVE"
+        | "INACTIVE"
+        | "MAINTENANCE"
+        | "BLOCKED"
+        | "STOCK"
+        | "TRANSIT"
       notification_type:
         | "PAYMENT"
         | "BALANCE"
@@ -887,7 +893,14 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
-      machine_status: ["ACTIVE", "INACTIVE", "MAINTENANCE", "BLOCKED"],
+      machine_status: [
+        "ACTIVE",
+        "INACTIVE",
+        "MAINTENANCE",
+        "BLOCKED",
+        "STOCK",
+        "TRANSIT",
+      ],
       notification_type: [
         "PAYMENT",
         "BALANCE",

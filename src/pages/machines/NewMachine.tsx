@@ -38,7 +38,6 @@ const NewMachine = () => {
     setIsSubmitting(true);
     
     try {
-      // Note: We're sending a single object, not an array of objects
       const { data, error } = await supabase
         .from('machines')
         .insert({
@@ -120,6 +119,8 @@ const NewMachine = () => {
                   <SelectItem value={MachineStatus.ACTIVE}>Operando</SelectItem>
                   <SelectItem value={MachineStatus.MAINTENANCE}>Em Manutenção</SelectItem>
                   <SelectItem value={MachineStatus.INACTIVE}>Inativa</SelectItem>
+                  <SelectItem value={MachineStatus.TRANSIT}>Em Trânsito</SelectItem>
+                  <SelectItem value={MachineStatus.BLOCKED}>Bloqueada</SelectItem>
                 </SelectContent>
               </Select>
             </div>

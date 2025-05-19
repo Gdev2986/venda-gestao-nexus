@@ -1,298 +1,178 @@
 
-import { useState, useEffect } from "react";
-import { z } from "zod";
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { 
-  Dialog, 
-  DialogContent, 
-  DialogDescription, 
-  DialogFooter, 
-  DialogHeader, 
-  DialogTitle 
-} from "@/components/ui/dialog";
-import { 
-  Form, 
-  FormControl, 
-  FormDescription, 
-  FormField, 
-  FormItem, 
-  FormLabel, 
-  FormMessage 
-} from "@/components/ui/form";
-import { Input } from "@/components/ui/input";
+import { useState } from "react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { 
-  Select, 
-  SelectContent, 
-  SelectItem, 
-  SelectTrigger, 
-  SelectValue 
-} from "@/components/ui/select";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
-import { useMachines } from "@/hooks/logistics/use-machines";
-import { useClients } from "@/hooks/use-clients";
-import { Machine, MachineStatus, MachineCreateParams, MachineUpdateParams } from "@/types/machine.types";
-
-const machineFormSchema = z.object({
-  serial_number: z.string().min(1, "Número de série obrigatório"),
-  model: z.string().min(1, "Modelo obrigatório"),
-  client_id: z.string().optional(),
-  notes: z.string().optional(),
-});
+import { supabase } from "@/integrations/supabase/client";
+import { MachineStatus } from "@/types/machine.types";
 
 interface CreateMachineDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onSuccess?: () => void;
-  machine?: Machine; // Optional machine for editing
 }
 
-export type MachineFormValues = z.infer<typeof machineFormSchema>;
-
-const CreateMachineDialog = ({
-  open,
-  onOpenChange,
-  onSuccess,
-  machine,
-}: CreateMachineDialogProps) => {
+const CreateMachineDialog = ({ open, onOpenChange, onSuccess }: CreateMachineDialogProps) => {
   const { toast } = useToast();
-  const { addMachine, updateMachine } = useMachines({});
-  const { isLoading: isLoadingClients, clients } = useClients();
-  const [loading, setLoading] = useState(false);
-  const [availableClients, setAvailableClients] = useState<{ id: string; business_name: string }[]>([]);
-  const isEditMode = !!machine;
-
-  // Form setup
-  const form = useForm<MachineFormValues>({
-    resolver: zodResolver(machineFormSchema),
-    defaultValues: {
-      serial_number: machine?.serial_number || "",
-      model: machine?.model || "",
-      client_id: machine?.client_id || "",
-      notes: machine?.notes || "",
-    },
-  });
-
-  // Update form values when machine changes (for edit mode)
-  useEffect(() => {
-    if (machine) {
-      form.reset({
-        serial_number: machine.serial_number,
-        model: machine.model,
-        client_id: machine.client_id || "",
-        notes: machine.notes || "",
-      });
-    } else {
-      form.reset({
-        serial_number: "",
-        model: "",
-        client_id: "",
-        notes: "",
-      });
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  
+  // Form state
+  const [serialNumber, setSerialNumber] = useState("");
+  const [model, setModel] = useState("");
+  const [status, setStatus] = useState<MachineStatus>(MachineStatus.STOCK);
+  const [notes, setNotes] = useState("");
+  
+  const resetForm = () => {
+    setSerialNumber("");
+    setModel("");
+    setStatus(MachineStatus.STOCK);
+    setNotes("");
+  };
+  
+  const handleClose = () => {
+    if (!isSubmitting) {
+      resetForm();
+      onOpenChange(false);
     }
-  }, [machine, form, open]);
-
-  // Load clients for the dropdown
-  useEffect(() => {
-    if (clients && clients.length > 0) {
-      setAvailableClients(clients.map(client => ({
-        id: client.id,
-        business_name: client.business_name
-      })));
+  };
+  
+  const onSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (!serialNumber || !model) {
+      toast({
+        title: "Campos obrigatórios",
+        description: "Por favor, preencha o número de série e o modelo.",
+        variant: "destructive"
+      });
+      return;
     }
-  }, [clients]);
-
-  const onSubmit = async (values: MachineFormValues) => {
-    setLoading(true);
+    
+    setIsSubmitting(true);
     
     try {
-      // Determine machine status based on client selection
-      const status = values.client_id && values.client_id !== "none_stock"
-        ? MachineStatus.ACTIVE  // If client is selected, machine is active
-        : MachineStatus.STOCK;  // If no client, machine is in stock
+      const { data, error } = await supabase
+        .from('machines')
+        .insert({
+          serial_number: serialNumber,
+          model: model,
+          status: status,
+          notes: notes
+        })
+        .select();
       
-      // Fix the client_id value
-      const clientId = values.client_id === "none_stock" ? undefined : values.client_id;
-      
-      if (isEditMode && machine) {
-        // Update existing machine
-        const updateData: MachineUpdateParams = {
-          serial_number: values.serial_number,
-          model: values.model,
-          client_id: clientId || null,
-          status,
-          notes: values.notes
-        };
-        
-        await updateMachine(machine.id, updateData);
-        
-        toast({
-          title: "Máquina atualizada",
-          description: "As informações da máquina foram atualizadas com sucesso.",
-        });
-      } else {
-        // Create new machine
-        const createData: MachineCreateParams = {
-          serial_number: values.serial_number,
-          model: values.model,
-          client_id: clientId,
-          status,
-          notes: values.notes
-        };
-        
-        await addMachine(createData);
-        
-        toast({
-          title: "Máquina cadastrada",
-          description: "A máquina foi cadastrada com sucesso.",
-        });
+      if (error) {
+        throw error;
       }
       
-      // Close dialog and reset form
-      onOpenChange(false);
-      form.reset();
+      toast({
+        title: "Máquina cadastrada com sucesso",
+        description: `A máquina ${serialNumber} foi adicionada ao sistema.`
+      });
       
-      // Call success callback if provided
+      resetForm();
+      onOpenChange(false);
+      
       if (onSuccess) {
         onSuccess();
       }
+      
     } catch (error: any) {
       console.error("Error saving machine:", error);
+      
       toast({
-        title: "Erro",
-        description: error.message || "Ocorreu um erro ao salvar a máquina.",
-        variant: "destructive",
+        title: "Erro ao cadastrar máquina",
+        description: error.message || "Ocorreu um erro ao cadastrar a máquina.",
+        variant: "destructive"
       });
     } finally {
-      setLoading(false);
+      setIsSubmitting(false);
     }
   };
-
+  
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[550px]">
+    <Dialog open={open} onOpenChange={handleClose}>
+      <DialogContent className="sm:max-w-[500px]">
         <DialogHeader>
-          <DialogTitle>
-            {isEditMode ? "Editar Máquina" : "Cadastrar Nova Máquina"}
-          </DialogTitle>
-          <DialogDescription>
-            {isEditMode 
-              ? "Atualize as informações da máquina abaixo."
-              : "Preencha os dados para cadastrar uma nova máquina."}
-          </DialogDescription>
+          <DialogTitle>Nova Máquina</DialogTitle>
         </DialogHeader>
         
-        <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-            <FormField
-              control={form.control}
-              name="serial_number"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Número de Série *</FormLabel>
-                  <FormControl>
-                    <Input 
-                      placeholder="SN-000123" 
-                      {...field} 
-                    />
-                  </FormControl>
-                  <FormDescription>
-                    Número único que identifica a máquina
-                  </FormDescription>
-                  <FormMessage />
-                </FormItem>
-              )}
+        <form onSubmit={onSubmit} className="space-y-4">
+          <div className="space-y-2">
+            <Label htmlFor="serialNumber">Número de Série *</Label>
+            <Input
+              id="serialNumber"
+              value={serialNumber}
+              onChange={(e) => setSerialNumber(e.target.value)}
+              placeholder="Ex: SN-123456"
+              required
             />
-            
-            <FormField
-              control={form.control}
-              name="model"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Modelo *</FormLabel>
-                  <Select 
-                    onValueChange={field.onChange}
-                    defaultValue={field.value}
-                  >
-                    <FormControl>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Selecione o modelo" />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      <SelectItem value="Pro">Pro</SelectItem>
-                      <SelectItem value="Standard">Standard</SelectItem>
-                      <SelectItem value="Mini">Mini</SelectItem>
-                      <SelectItem value="Mobile">Mobile</SelectItem>
-                    </SelectContent>
-                  </Select>
-                  <FormMessage />
-                </FormItem>
-              )}
+          </div>
+          
+          <div className="space-y-2">
+            <Label htmlFor="model">Modelo *</Label>
+            <Select value={model} onValueChange={setModel}>
+              <SelectTrigger>
+                <SelectValue placeholder="Selecione o modelo" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="Terminal Pro">Terminal Pro</SelectItem>
+                <SelectItem value="Terminal Standard">Terminal Standard</SelectItem>
+                <SelectItem value="Terminal Mini">Terminal Mini</SelectItem>
+                <SelectItem value="Mobile">Mobile</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+          
+          <div className="space-y-2">
+            <Label htmlFor="status">Status</Label>
+            <Select
+              value={status}
+              onValueChange={(value) => setStatus(value as MachineStatus)}
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="Selecione o status" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value={MachineStatus.STOCK}>Em Estoque</SelectItem>
+                <SelectItem value={MachineStatus.ACTIVE}>Operando</SelectItem>
+                <SelectItem value={MachineStatus.MAINTENANCE}>Em Manutenção</SelectItem>
+                <SelectItem value={MachineStatus.INACTIVE}>Inativa</SelectItem>
+                <SelectItem value={MachineStatus.TRANSIT}>Em Trânsito</SelectItem>
+                <SelectItem value={MachineStatus.BLOCKED}>Bloqueada</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+          
+          <div className="space-y-2">
+            <Label htmlFor="notes">Observações</Label>
+            <Textarea
+              id="notes"
+              value={notes}
+              onChange={(e) => setNotes(e.target.value)}
+              placeholder="Informações adicionais sobre a máquina"
+              rows={3}
             />
-            
-            <FormField
-              control={form.control}
-              name="client_id"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Direcionar para</FormLabel>
-                  <Select 
-                    onValueChange={field.onChange}
-                    defaultValue={field.value}
-                  >
-                    <FormControl>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Selecione um cliente (opcional)" />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      <SelectItem value="none_stock">Em Estoque</SelectItem>
-                      {availableClients.map(client => (
-                        <SelectItem key={client.id} value={client.id}>
-                          {client.business_name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  <FormDescription>
-                    Se nenhum cliente for selecionado, a máquina será mantida em estoque
-                  </FormDescription>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            
-            <FormField
-              control={form.control}
-              name="notes"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Notas / Observações</FormLabel>
-                  <FormControl>
-                    <Textarea 
-                      placeholder="Informações relevantes sobre a máquina" 
-                      className="min-h-[80px]"
-                      {...field} 
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            
-            <DialogFooter>
-              <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
-                Cancelar
-              </Button>
-              <Button type="submit" disabled={loading}>
-                {loading ? "Salvando..." : isEditMode ? "Atualizar" : "Cadastrar"}
-              </Button>
-            </DialogFooter>
-          </form>
-        </Form>
+          </div>
+          
+          <div className="flex justify-end space-x-2 pt-2">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={handleClose}
+              disabled={isSubmitting}
+            >
+              Cancelar
+            </Button>
+            <Button type="submit" disabled={isSubmitting}>
+              {isSubmitting ? "Salvando..." : "Salvar"}
+            </Button>
+          </div>
+        </form>
       </DialogContent>
     </Dialog>
   );
