@@ -14,8 +14,8 @@ const Machines = () => {
       // Redirect to logistics machines page
       navigate(PATHS.LOGISTICS.MACHINES);
     } else {
-      // Redirect to user machines page for other roles
-      navigate(PATHS.USER.MACHINES);
+      // Redirect to client machines page for other roles
+      navigate(PATHS.CLIENT.MACHINES);
     }
   }, [navigate, userRole]);
   

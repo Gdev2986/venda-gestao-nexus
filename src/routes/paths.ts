@@ -1,3 +1,4 @@
+
 export const PATHS = {
   HOME: "/",
   LOGIN: "/login",
@@ -36,6 +37,12 @@ export const PATHS = {
     SETTINGS: "/admin/settings",
     LOGISTICS: "/admin/logistics",
     SUPPORT: "/admin/support",
+    SALES: "/admin/sales",
+    SALES_DETAILS: (id?: string) =>
+      id ? `/admin/sales/${id}` : "/admin/sales/:id",
+    SALES_NEW: "/admin/sales/new",
+    REPORTS: "/admin/reports",
+    FEES: "/admin/fees",
   },
   CLIENT: {
     DASHBOARD: "/client/dashboard",
@@ -47,6 +54,15 @@ export const PATHS = {
     SETTINGS: "/client/settings",
     PROFILE: "/client/profile",
     COMMISSIONS: "/client/commissions",
+    MACHINES: "/client/machines",
+  },
+  USER: {
+    DASHBOARD: "/user/dashboard",
+    PAYMENTS: "/user/payments",
+    SUPPORT: "/user/support",
+    SETTINGS: "/user/settings",
+    HELP: "/user/help",
+    MACHINES: "/user/machines",
   },
   PARTNER: {
     DASHBOARD: "/partner/dashboard",
@@ -63,6 +79,8 @@ export const PATHS = {
       id ? `/partner/payments/${id}` : "/partner/payments/:id",
     SUPPORT: "/partner/support",
     SETTINGS: "/partner/settings",
+    REPORTS: "/partner/reports",
+    HELP: "/partner/help",
   },
   FINANCIAL: {
     DASHBOARD: "/financial/dashboard",
@@ -79,6 +97,8 @@ export const PATHS = {
     CLIENTS: "/financial/clients",
     PARTNERS: "/financial/partners",
     SETTINGS: "/financial/settings",
+    REPORTS: "/financial/reports",
+    REQUESTS: "/financial/requests",
   },
   LOGISTICS: {
     DASHBOARD: "/logistics/dashboard",

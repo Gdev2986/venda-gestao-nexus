@@ -52,8 +52,9 @@ const RequestsCalendarView = () => {
           onSelect={setDate}
           className="rounded-md border max-w-full w-full lg:w-auto"
           components={{
-            Day: ({ day, ...props }) => {
-              const eventsForDay = getEventsForDay(day);
+            Day: ({ date: dayDate, ...props }: any) => {
+              // Correctly access the date from props
+              const eventsForDay = getEventsForDay(dayDate);
               const hasEvents = eventsForDay.length > 0;
               
               return (
@@ -64,7 +65,7 @@ const RequestsCalendarView = () => {
                       hasEvents && "relative after:absolute after:bottom-1 after:left-1/2 after:-translate-x-1/2 after:w-1 after:h-1 after:bg-blue-500 after:rounded-full"
                     )}
                   >
-                    {day.day}
+                    {dayDate.getDate()}
                   </div>
                 </div>
               );

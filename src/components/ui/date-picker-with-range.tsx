@@ -9,9 +9,10 @@ import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { CalendarIcon } from "lucide-react";
 
-interface DatePickerWithRangeProps extends React.HTMLAttributes<HTMLDivElement> {
+interface DatePickerWithRangeProps {
   value?: DateRange;
   onChange?: (date: DateRange | undefined) => void;
+  className?: string;
 }
 
 export function DatePickerWithRange({
