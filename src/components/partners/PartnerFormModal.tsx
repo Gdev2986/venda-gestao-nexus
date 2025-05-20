@@ -9,6 +9,7 @@ import {
   DialogHeader,
   DialogTitle,
   DialogFooter,
+  DialogDescription,
 } from "@/components/ui/dialog";
 import {
   Form,
@@ -101,6 +102,9 @@ export function PartnerFormModal({
           <DialogTitle>
             {mode === "create" ? "Adicionar Parceiro" : "Editar Parceiro"}
           </DialogTitle>
+          <DialogDescription>
+            Preencha os dados do parceiro abaixo.
+          </DialogDescription>
         </DialogHeader>
 
         <Form {...form}>
@@ -189,7 +193,7 @@ export function PartnerFormModal({
                         </div>
                       ) : (
                         <>
-                          <SelectItem value="">Plano Padrão</SelectItem>
+                          <SelectItem value="default">Plano Padrão</SelectItem>
                           {feePlans.map((plan) => (
                             <SelectItem key={plan.id} value={plan.id}>
                               {plan.name}

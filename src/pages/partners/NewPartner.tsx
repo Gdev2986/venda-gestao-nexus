@@ -157,7 +157,7 @@ const NewPartner = () => {
                       </div>
                     ) : (
                       <>
-                        <SelectItem value="">Plano Padrão</SelectItem>
+                        <SelectItem value="default">Plano Padrão</SelectItem>
                         {feePlans.map((plan) => (
                           <SelectItem key={plan.id} value={plan.id}>
                             {plan.name}

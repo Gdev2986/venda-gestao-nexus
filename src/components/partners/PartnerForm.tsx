@@ -80,7 +80,7 @@ const PartnerForm = ({
     contact_name: initialData?.contact_name || "",
     email: initialData?.email || "",
     phone: initialData?.phone || "",
-    fee_plan_id: initialData?.fee_plan_id || "",
+    fee_plan_id: initialData?.fee_plan_id || undefined,
   };
 
   const form = useForm<PartnerFormValues>({
@@ -190,7 +190,7 @@ const PartnerForm = ({
                     </div>
                   ) : (
                     <>
-                      <SelectItem value="">Plano Padrão</SelectItem>
+                      <SelectItem value="default">Plano Padrão</SelectItem>
                       {feePlans.map((plan) => (
                         <SelectItem key={plan.id} value={plan.id}>
                           {plan.name}
