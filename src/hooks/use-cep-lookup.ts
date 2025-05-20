@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { useToast } from "./use-toast";
 import { useDebounce } from "./use-debounce";
 
@@ -22,7 +22,7 @@ export function useCepLookup() {
   const { toast } = useToast();
   
   // Reference to store the current AbortController
-  const abortControllerRef = React.useRef<AbortController | null>(null);
+  const abortControllerRef = useRef<AbortController | null>(null);
 
   const lookupCep = async (cep: string): Promise<CepData | null> => {
     // Remove any non-numeric characters
