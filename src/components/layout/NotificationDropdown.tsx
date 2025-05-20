@@ -1,4 +1,3 @@
-
 import { useState, useRef, useEffect } from "react";
 import { Bell } from "lucide-react";
 import {
@@ -11,7 +10,7 @@ import { Button } from "@/components/ui/button";
 import { motion, AnimatePresence } from "framer-motion";
 import { useNotifications } from "@/contexts/notifications/NotificationsProvider";
 import { NotificationHeader } from "@/components/notifications/NotificationHeader";
-import { NotificationList } from "@/components/notifications/NotificationList.tsx";
+import { NotificationList } from "@/components/notifications/NotificationList";
 import { NotificationFooter } from "@/components/notifications/NotificationFooter";
 
 const NotificationDropdown = () => {
