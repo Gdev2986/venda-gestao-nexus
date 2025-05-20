@@ -25,6 +25,12 @@ export const useUserRole = () => {
         navigate(PATHS.LOGIN);
       }
     }
+    
+    // Additional check for null role after authentication is complete
+    if (!authLoading && user && !contextUserRole && !profile?.role) {
+      console.error("User is authenticated but has no role, redirecting to login");
+      navigate(PATHS.LOGIN);
+    }
   }, [profile, authLoading, contextUserRole, user, navigate]);
   
   return {

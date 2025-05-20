@@ -24,11 +24,16 @@ export function toPaymentStatus(status: string | PaymentStatus): PaymentStatus {
 export function toUserRole(role: string | UserRole): UserRole {
   if (typeof role === 'string') {
     const upperRole = role.toUpperCase();
-    // Verifica se o role existe no enum UserRole
-    if (Object.values(UserRole).includes(upperRole as UserRole)) {
-      return upperRole as UserRole;
-    }
-    // Default para CLIENT se não encontrado
+    // Map each possible role string to the enum
+    if (upperRole === 'ADMIN') return UserRole.ADMIN;
+    if (upperRole === 'CLIENT') return UserRole.CLIENT;
+    if (upperRole === 'FINANCIAL' || upperRole === 'FINANCE') return UserRole.FINANCIAL;
+    if (upperRole === 'LOGISTICS') return UserRole.LOGISTICS;
+    if (upperRole === 'PARTNER') return UserRole.PARTNER;
+    if (upperRole === 'USER') return UserRole.USER;
+    
+    // Default for unknown roles
+    console.warn(`Unknown role: ${role}, defaulting to CLIENT`);
     return UserRole.CLIENT;
   }
   return role;

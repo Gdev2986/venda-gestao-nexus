@@ -14,6 +14,7 @@ import {
   clearAuthData
 } from "@/services/auth-service";
 import { AuthContextType, UserProfile } from "./auth-types";
+import { toUserRole } from "@/lib/type-utils";
 
 // Function to clean up Supabase-related data
 export const cleanupSupabaseState = () => {
@@ -91,19 +92,29 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
                 if (error) {
                   console.error("Error fetching user profile:", error);
                 } else {
-                  // Update profile state
-                  setProfile(profileData);
-                  
-                  // Normalize the role to match our UserRole enum
-                  const normalizedRole = profileData?.role?.toUpperCase() as UserRole;
-                  console.log("User role fetched:", normalizedRole);
-                  setUserRole(normalizedRole);
-                  
-                  // Toast only if we successfully got the role
-                  toast({
-                    title: "Login bem-sucedido",
-                    description: "Bem-vindo ao SigmaPay!",
-                  });
+                  // Update profile state - Convert profileData to UserProfile type
+                  if (profileData) {
+                    const userProfile: UserProfile = {
+                      id: profileData.id,
+                      name: profileData.name,
+                      email: profileData.email,
+                      role: toUserRole(profileData.role), // Use the utility function to convert role
+                      avatar: profileData.avatar,
+                      phone: profileData.phone
+                    };
+                    setProfile(userProfile);
+                    
+                    // Normalize the role to match our UserRole enum
+                    const normalizedRole = toUserRole(profileData.role);
+                    console.log("User role fetched:", normalizedRole);
+                    setUserRole(normalizedRole);
+                    
+                    // Toast only if we successfully got the role
+                    toast({
+                      title: "Login bem-sucedido",
+                      description: "Bem-vindo ao SigmaPay!",
+                    });
+                  }
                 }
               } catch (err) {
                 console.error("Error in role fetching:", err);
@@ -158,19 +169,30 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         if (session?.user) {
           try {
             // Fetch user role from profiles table
-            const { data: profile, error } = await supabase
+            const { data: profileData, error } = await supabase
               .from('profiles')
-              .select('role')
+              .select('*')
               .eq('id', session.user.id)
               .single();
             
             if (error) {
               console.error("Error fetching user role:", error);
-            } else {
+            } else if (profileData) {
               // Normalize the role to match our UserRole enum
-              const normalizedRole = profile?.role?.toUpperCase() as UserRole;
+              const normalizedRole = toUserRole(profileData.role);
               console.log("User role fetched:", normalizedRole);
               setUserRole(normalizedRole);
+              
+              // Create a properly typed profile object
+              const userProfile: UserProfile = {
+                id: profileData.id,
+                name: profileData.name,
+                email: profileData.email,
+                role: normalizedRole,
+                avatar: profileData.avatar,
+                phone: profileData.phone
+              };
+              setProfile(userProfile);
             }
           } catch (err) {
             console.error("Error in role fetching:", err);

@@ -13,12 +13,11 @@ export async function createSupportRequest(request: SupportRequest): Promise<{ d
   const { data, error } = await supabase
     .from('support_requests')
     .insert({
-      id,
       client_id: request.client_id,
       technician_id: request.technician_id,
-      type: request.type as unknown as string,
-      status: request.status as unknown as string,
-      priority: request.priority as unknown as string,
+      type: request.type,
+      status: request.status,
+      priority: request.priority,
       title: request.title,
       description: request.description,
       scheduled_date: request.scheduled_date,
@@ -67,9 +66,9 @@ export async function getSupportRequestById(id: string): Promise<{ data: any, er
 }
 
 export async function getSupportRequests(filters?: {
-  status?: string;
-  type?: string;
-  priority?: string;
+  status?: TicketStatus;
+  type?: TicketType;
+  priority?: TicketPriority;
   client_id?: string;
   technician_id?: string;
   date_from?: string;
@@ -114,8 +113,8 @@ async function createRequestNotification(request: SupportRequest, requestId: str
           .insert({
             user_id: user.id,
             title: 'Nova Solicitação Técnica',
-            message: `${request.title} - ${request.priority.toUpperCase()}`,
-            type: 'SUPPORT', // Cast to string as notification_type is a string enum
+            message: `${request.title} - ${request.priority}`,
+            type: 'SUPPORT' as NotificationType, // Cast to NotificationType
             data: { 
               request_id: requestId,
               type: request.type,
@@ -141,8 +140,8 @@ async function createRequestNotification(request: SupportRequest, requestId: str
           .insert({
             user_id: user.id,
             title: 'Nova Solicitação Técnica',
-            message: `${request.title} - ${request.priority.toUpperCase()}`,
-            type: 'SUPPORT', // Use the string version that matches the database enum
+            message: `${request.title} - ${request.priority}`,
+            type: 'SUPPORT' as NotificationType, // Cast to NotificationType
             data: { 
               request_id: requestId,
               type: request.type,
@@ -179,7 +178,7 @@ async function createStatusUpdateNotification(requestId: string, updates: Partia
           user_id: clientData.user_id,
           title: 'Atualização de Solicitação',
           message: `Sua solicitação "${request.title}" foi atualizada para ${updates.status}`,
-          type: 'SUPPORT', // Use the string version that matches the database enum
+          type: 'SUPPORT' as NotificationType, // Cast to NotificationType
           data: { request_id: requestId, new_status: updates.status },
           is_read: false,
           created_at: new Date().toISOString()
@@ -194,7 +193,7 @@ async function createStatusUpdateNotification(requestId: string, updates: Partia
           user_id: updates.technician_id,
           title: 'Nova Solicitação Atribuída',
           message: `Você foi atribuído à solicitação "${request.title}"`,
-          type: 'SUPPORT', // Use the string version that matches the database enum
+          type: 'SUPPORT' as NotificationType, // Cast to NotificationType
           data: { request_id: requestId },
           is_read: false,
           created_at: new Date().toISOString()
