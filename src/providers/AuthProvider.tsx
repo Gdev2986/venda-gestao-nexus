@@ -2,7 +2,7 @@
 import { createContext, useContext, useEffect, useState } from "react";
 import { Session, User } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
-import { toast } from "sonner"; // Direct import from sonner
+import { toast } from "sonner"; // Direct import from sonner to avoid circular dependencies
 import { useNavigate } from "react-router-dom";
 import { PATHS } from "@/routes/paths";
 import { UserRole } from "@/types";
@@ -34,8 +34,8 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       });
       
       if (error) {
-        toast("Erro ao fazer login", {
-          description: error.message,
+        toast(error.message, {
+          description: "Erro ao fazer login",
         });
         return { error };
       }
@@ -43,8 +43,8 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       return { error: null };
     } catch (error: any) {
       console.error("Error during sign in:", error);
-      toast("Erro ao fazer login", {
-        description: error?.message || "Ocorreu um erro durante o login",
+      toast("Ocorreu um erro durante o login", {
+        description: error?.message || "Tente novamente mais tarde",
       });
       return { error };
     } finally {
@@ -66,21 +66,21 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       });
       
       if (error) {
-        toast("Erro ao criar conta", {
-          description: error.message,
+        toast(error.message, {
+          description: "Erro ao criar conta",
         });
         return { data: null, error };
       }
       
-      toast("Conta criada com sucesso", {
+      toast("Verificação necessária", {
         description: "Verifique seu email para confirmar sua conta",
       });
       
       return { data, error: null };
     } catch (error: any) {
       console.error("Error during sign up:", error);
-      toast("Erro ao criar conta", {
-        description: error?.message || "Ocorreu um erro ao criar sua conta",
+      toast("Ocorreu um erro ao criar sua conta", {
+        description: error?.message || "Tente novamente mais tarde",
       });
       return { data: null, error };
     } finally {

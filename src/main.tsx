@@ -33,9 +33,9 @@ function renderApp() {
     // Create a fresh root
     const root = createRoot(rootElement);
     
-    // Render the application with all providers
-    // Critical: The order of providers matters - BrowserRouter must be first, then QueryClientProvider,
-    // ThemeProvider, followed by AuthProvider, then NotificationsProvider, and finally the App with Toaster
+    // CRITICAL: The order of providers has been fixed to prevent React context issues
+    // BrowserRouter must be outside, followed by QueryClientProvider and ThemeProvider
+    // Then AuthProvider, and finally NotificationsProvider
     root.render(
       <React.StrictMode>
         <BrowserRouter>
@@ -79,13 +79,10 @@ function fallbackRender() {
 
 // Ensure DOM is fully loaded before rendering
 if (document.readyState === 'loading') {
-  document.addEventListener('DOMContentLoaded', () => {
-    // Small delay to ensure React is fully initialized
-    setTimeout(renderApp, 100);
-  });
+  document.addEventListener('DOMContentLoaded', renderApp);
 } else {
-  // DOM already loaded, still use a small delay to ensure proper initialization
-  setTimeout(renderApp, 100);
+  // DOM already loaded, render immediately
+  renderApp();
 }
 
 // Add global error handler as a safety net

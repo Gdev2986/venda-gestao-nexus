@@ -1,15 +1,17 @@
 
-// This file re-exports toast functionality from sonner as well as implementing a React hook interface
+// This file implements a custom toast hook that works with sonner
 import * as React from "react";
-import { toast, Toast, ToastT } from "sonner";
+import { toast as sonnerToast } from "sonner";
 
 const TOAST_LIMIT = 20;
-export type ToasterToast = ToastT & {
+export type ToasterToast = {
   id: string;
   title?: React.ReactNode;
   description?: React.ReactNode;
   action?: React.ReactNode;
   variant?: "default" | "destructive";
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
 };
 
 const actionTypes = {
@@ -123,6 +125,7 @@ function dispatch(action: Action) {
 
 type ToastProps = Omit<ToasterToast, "id">;
 
+// Define and export our toast function that also calls sonner's toast
 function toast({ ...props }: ToastProps) {
   const id = genId();
 
@@ -133,6 +136,11 @@ function toast({ ...props }: ToastProps) {
     });
     
   const dismiss = () => dispatch({ type: actionTypes.DISMISS_TOAST, toastId: id });
+
+  // Also call sonner toast to display the actual notification
+  sonnerToast(props.title as string, {
+    description: props.description as string,
+  });
 
   dispatch({
     type: actionTypes.ADD_TOAST,

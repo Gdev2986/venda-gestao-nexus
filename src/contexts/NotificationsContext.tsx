@@ -2,7 +2,7 @@
 import React, { createContext, useContext, useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "./AuthContext";
-import { useToast } from "@/hooks/use-toast";
+import { toast } from "sonner"; // Direct import from sonner
 import { NotificationType } from "@/types/notification.types";
 import { playNotificationSoundIfEnabled } from "@/services/notificationSoundService";
 import { UserRole } from "@/types";
@@ -44,7 +44,6 @@ export const NotificationsProvider: React.FC<{ children: React.ReactNode }> = ({
   const [isLoading, setIsLoading] = useState(false);
   const [soundEnabled, setSoundEnabled] = useState<boolean>(true);
   const { user } = useAuth();
-  const { toast } = useToast();
 
   // Load sound preference from localStorage on initial load
   useEffect(() => {
@@ -109,8 +108,7 @@ export const NotificationsProvider: React.FC<{ children: React.ReactNode }> = ({
                 playNotificationSoundIfEnabled(newNotification.type as NotificationType, soundEnabled);
                 
                 // Show toast notification
-                toast({
-                  title: newNotification.title,
+                toast(newNotification.title, {
                   description: newNotification.message,
                 });
                 
@@ -168,10 +166,8 @@ export const NotificationsProvider: React.FC<{ children: React.ReactNode }> = ({
       })));
     } catch (error: any) {
       console.error("Error fetching notifications:", error);
-      toast({
-        title: "Error fetching notifications",
+      toast("Error fetching notifications", {
         description: error.message || "Failed to load notifications.",
-        variant: "destructive",
       });
     } finally {
       setIsLoading(false);
@@ -198,11 +194,8 @@ export const NotificationsProvider: React.FC<{ children: React.ReactNode }> = ({
       );
     } catch (error: any) {
       console.error("Error marking notification as read:", error);
-      toast({
-        title: "Error",
-        description:
-          error.message || "Failed to mark notification as read. Try again.",
-        variant: "destructive",
+      toast("Error", {
+        description: error.message || "Failed to mark notification as read. Try again.",
       });
     }
   };
@@ -225,12 +218,8 @@ export const NotificationsProvider: React.FC<{ children: React.ReactNode }> = ({
       );
     } catch (error: any) {
       console.error("Error marking all notifications as read:", error);
-      toast({
-        title: "Error",
-        description:
-          error.message ||
-          "Failed to mark all notifications as read. Please try again.",
-        variant: "destructive",
+      toast("Error", {
+        description: error.message || "Failed to mark all notifications as read. Please try again.",
       });
     }
   };
@@ -251,16 +240,19 @@ export const NotificationsProvider: React.FC<{ children: React.ReactNode }> = ({
       );
     } catch (error: any) {
       console.error("Error deleting notification:", error);
-      toast({
-        title: "Error",
+      toast("Error", {
         description: error.message || "Failed to delete notification.",
-        variant: "destructive",
       });
     }
   };
 
   const refreshNotifications = async () => {
     await fetchNotifications();
+  };
+
+  // Define the toggle function for soundEnabled
+  const toggleSoundEnabled = (enabled: boolean) => {
+    setSoundEnabled(enabled);
   };
 
   const value: NotificationsContextProps = {
@@ -273,7 +265,7 @@ export const NotificationsProvider: React.FC<{ children: React.ReactNode }> = ({
     deleteNotification,
     refreshNotifications,
     soundEnabled,
-    setSoundEnabled
+    setSoundEnabled: toggleSoundEnabled
   };
 
   return (
