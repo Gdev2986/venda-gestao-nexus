@@ -1,5 +1,5 @@
 
-import * as React from "react";
+import React, { useState } from "react"
 
 type Theme = "dark" | "light" | "system";
 
