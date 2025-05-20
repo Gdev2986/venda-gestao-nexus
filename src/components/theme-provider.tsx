@@ -1,4 +1,6 @@
 
+"use client";
+
 import * as React from "react";
 
 type Theme = "dark" | "light" | "system";
@@ -27,22 +29,21 @@ export function ThemeProvider({
   storageKey = "sigmapay-theme",
   ...props
 }: ThemeProviderProps) {
-  // Use React's useState hook properly with correct initialization
-  const [theme, setTheme] = React.useState<Theme>(() => {
-    // Safe access to localStorage with try/catch
-    if (typeof window !== "undefined") {
-      try {
-        const storedTheme = window.localStorage.getItem(storageKey);
-        return (storedTheme as Theme) || defaultTheme;
-      } catch (e) {
-        console.error("Error accessing localStorage:", e);
-        return defaultTheme;
+  const [theme, setTheme] = React.useState<Theme>(
+    () => {
+      if (typeof window !== "undefined") {
+        try {
+          const storedTheme = window.localStorage.getItem(storageKey);
+          return (storedTheme as Theme) || defaultTheme;
+        } catch (e) {
+          console.error("Error accessing localStorage:", e);
+          return defaultTheme;
+        }
       }
+      return defaultTheme;
     }
-    return defaultTheme;
-  });
+  );
 
-  // Apply theme effect
   React.useEffect(() => {
     const root = window.document.documentElement;
     
@@ -58,7 +59,6 @@ export function ThemeProvider({
     }
   }, [theme]);
 
-  // Save theme to localStorage
   React.useEffect(() => {
     if (typeof window !== "undefined") {
       try {
@@ -68,26 +68,6 @@ export function ThemeProvider({
       }
     }
   }, [theme, storageKey]);
-
-  // Listen for system theme changes
-  React.useEffect(() => {
-    if (theme !== "system" || typeof window === "undefined") return;
-    
-    function handleChange() {
-      const root = window.document.documentElement;
-      const systemTheme = window.matchMedia("(prefers-color-scheme: dark)").matches
-        ? "dark"
-        : "light";
-      
-      root.classList.remove("light", "dark");
-      root.classList.add(systemTheme);
-    }
-    
-    const mediaQuery = window.matchMedia("(prefers-color-scheme: dark)");
-    mediaQuery.addEventListener("change", handleChange);
-    
-    return () => mediaQuery.removeEventListener("change", handleChange);
-  }, [theme]);
 
   const value = React.useMemo(
     () => ({

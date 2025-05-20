@@ -2,7 +2,7 @@
 import { ReactNode } from "react";
 
 declare module "sonner" {
-  export interface ToastOptions {
+  export interface ToastT {
     title?: string;
     description?: string;
     action?: ReactNode;
@@ -11,12 +11,10 @@ declare module "sonner" {
     position?: "top-left" | "top-right" | "top-center" | "bottom-left" | "bottom-right" | "bottom-center";
   }
   
-  type Toast = (
+  export function toast(
     message: string,
-    options?: ToastOptions
-  ) => void;
-
-  export const toast: Toast;
+    options?: ToastT
+  ): void;
 
   export function Toaster(props: {
     position?: "top-left" | "top-right" | "top-center" | "bottom-left" | "bottom-right" | "bottom-center";

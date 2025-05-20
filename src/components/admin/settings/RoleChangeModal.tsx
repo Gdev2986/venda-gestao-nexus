@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
@@ -10,7 +9,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { useToast } from "@/hooks/use-toast";
+import { toast } from "@/hooks/use-toast";
 import { UserRole } from "@/types/enums";
 
 interface ProfileData {
@@ -60,10 +59,9 @@ export const RoleChangeModal = ({
         setAvailableRoles(uniqueRoles);
       } catch (error) {
         console.error("Error fetching roles:", error);
-        toast({
-          variant: "destructive",
-          title: "Error",
-          description: "Failed to load available roles"
+        toast("Error", {
+          description: "Failed to load available roles",
+          variant: "destructive"
         });
       } finally {
         setLoading(false);
@@ -85,17 +83,15 @@ export const RoleChangeModal = ({
 
       if (error) throw error;
       
-      toast({
-        title: "Role updated",
-        description: `User ${user.name} role changed to ${newRole}`,
+      toast("Role updated", {
+        description: `User ${user.name} role changed to ${newRole}`
       });
       onClose();
     } catch (error) {
       console.error("Error updating role:", error);
-      toast({
-        variant: "destructive",
-        title: "Error",
-        description: "Failed to update user role"
+      toast("Error", {
+        description: "Failed to update user role",
+        variant: "destructive"
       });
     } finally {
       setLoading(false);

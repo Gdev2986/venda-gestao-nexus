@@ -1,10 +1,10 @@
 
-import * as React from 'react';
+import React from 'react';
 import { createRoot } from 'react-dom/client';
 import { BrowserRouter } from 'react-router-dom';
+import { Toaster } from 'sonner';
 import { ThemeProvider } from '@/components/theme-provider';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { Toaster } from 'sonner';
 import { AuthProvider } from '@/providers/AuthProvider';
 import { NotificationsProvider } from '@/contexts/NotificationsContext';
 import App from './App.tsx';
@@ -33,7 +33,6 @@ function renderApp() {
     // Create a fresh root
     const root = createRoot(rootElement);
     
-    // Make sure React is properly initialized before using hooks
     root.render(
       <React.StrictMode>
         <BrowserRouter>

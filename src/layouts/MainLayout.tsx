@@ -1,4 +1,3 @@
-
 import { Outlet } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import MainSidebar from "./MainSidebar";
@@ -9,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Menu } from "lucide-react";
 import NotificationDropdown from "@/components/layout/NotificationDropdown";
 import ThemeToggle from "@/components/theme/theme-toggle";
-import { Toaster } from "@/components/ui/toaster";
+import { Toaster } from "sonner";
 
 const MainLayout = () => {
   // Use localStorage to persist sidebar state
@@ -82,7 +81,7 @@ const MainLayout = () => {
       </div>
       
       {/* Toast notifications */}
-      <Toaster />
+      <Toaster position="top-right" />
     </div>
   );
 };
