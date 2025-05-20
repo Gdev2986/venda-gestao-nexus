@@ -1,7 +1,7 @@
 
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { SupportRequest } from "@/types/support-request";
+import { SupportRequest, SupportRequestStatus, SupportRequestType, SupportRequestPriority } from "@/types/support-request.types";
 import { toast } from "sonner"; // Direct import from sonner
 import { useAuth } from "@/contexts/AuthContext";
 
@@ -22,7 +22,7 @@ export function useSupportRequests() {
       const { data, error } = await supabase
         .from("support_requests")
         .select("*")
-        .eq("user_id", user?.id)
+        .eq("client_id", user?.id)
         .order("created_at", { ascending: false });
 
       if (error) {
@@ -31,7 +31,8 @@ export function useSupportRequests() {
           description: "Não foi possível carregar as solicitações",
         });
       } else {
-        setSupportRequests(data || []);
+        // Ensure we're handling the data correctly
+        setSupportRequests(data as SupportRequest[] || []);
       }
     } catch (error: any) {
       console.error("Unexpected error fetching support requests:", error);

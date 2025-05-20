@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -22,7 +22,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { CheckCircle, Clock, Filter, Plus, RefreshCw, Wrench } from "lucide-react";
 import { format } from "date-fns";
 import { useSupportRequests } from "@/hooks/logistics/use-support-requests";
-import { SupportRequest, SupportRequestStatus } from "@/types/support-request";
+import { SupportRequest, SupportRequestStatus } from "@/types/support-request.types";
 
 interface ServiceListProps {
   onOpenServiceForm?: () => void;
@@ -46,7 +46,7 @@ const ServiceList: React.FC<ServiceListProps> = ({
   });
 
   // Function to get the appropriate badge color based on status
-  const getStatusBadge = (status: string) => {
+  const getStatusBadge = (status: SupportRequestStatus) => {
     switch (status) {
       case SupportRequestStatus.PENDING:
         return <Badge variant="outline" className="bg-yellow-100 text-yellow-800">Pendente</Badge>;
@@ -133,17 +133,17 @@ const ServiceList: React.FC<ServiceListProps> = ({
                   </TableHeader>
                   <TableBody>
                     {filteredRequests.map((request) => (
-                      <TableRow key={String(request.id)}>
+                      <TableRow key={request.id}>
                         <TableCell className="font-mono text-xs">
-                          {String(request.id).substring(0, 8)}
+                          {request.id.substring(0, 8)}
                         </TableCell>
-                        <TableCell>{String(request.title)}</TableCell>
+                        <TableCell>{request.title}</TableCell>
                         <TableCell className="hidden md:table-cell">
                           {request.created_at && format(new Date(request.created_at), 'dd/MM/yyyy')}
                         </TableCell>
                         <TableCell className="hidden md:table-cell">
                           {/* This would normally display client name */}
-                          Cliente #{String(request.client_id).substring(0, 5)}
+                          Cliente #{request.client_id.substring(0, 5)}
                         </TableCell>
                         <TableCell>
                           {getStatusBadge(request.status)}
