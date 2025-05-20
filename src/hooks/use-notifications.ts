@@ -20,7 +20,11 @@ export function useNotifications() {
 
   // Save sound preference when it changes
   useEffect(() => {
-    localStorage.setItem("notification-sound", String(soundEnabled));
+    try {
+      localStorage.setItem("notification-sound", String(soundEnabled));
+    } catch (error) {
+      console.error("Failed to save notification sound preference:", error);
+    }
   }, [soundEnabled]);
 
   // Toggle sound function

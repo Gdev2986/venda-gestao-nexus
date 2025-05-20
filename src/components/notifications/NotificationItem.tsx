@@ -15,7 +15,6 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Notification, NotificationType } from "@/types/notification.types";
-import { DropdownMenuItem, DropdownMenuSeparator } from "@/components/ui/dropdown-menu";
 
 interface NotificationItemProps {
   notification: Notification;
@@ -77,42 +76,38 @@ export const NotificationItem = ({ notification, onMarkAsRead, onDelete }: Notif
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, height: 0 }}
       transition={{ duration: 0.2 }}
+      className={cn(
+        "flex flex-col items-start gap-1 p-4 hover:bg-accent/50 relative border-b border-border last:border-b-0",
+        notification.is_read ? "opacity-70" : ""
+      )}
+      onClick={handleMarkAsRead}
     >
-      <DropdownMenuItem
-        className={cn(
-          "flex flex-col items-start gap-1 p-4 focus:bg-accent/50 relative",
-          notification.is_read ? "opacity-70" : ""
-        )}
-        onClick={handleMarkAsRead}
-      >
-        <div className="flex w-full justify-between">
-          <div className="flex items-center">
-            {getIcon(notification.type)}
-            <span className="ml-2 font-medium line-clamp-1">{notification.title}</span>
-          </div>
-          <div className="flex items-center gap-2">
-            <span className="text-xs text-muted-foreground whitespace-nowrap">
-              {formatDistanceToNow(new Date(notification.created_at), {
-                addSuffix: true,
-                locale: ptBR
-              })}
-            </span>
-            {onDelete && (
-              <Trash2 
-                className="h-4 w-4 text-destructive opacity-50 hover:opacity-100 cursor-pointer" 
-                onClick={handleDelete}
-              />
-            )}
-          </div>
+      <div className="flex w-full justify-between">
+        <div className="flex items-center">
+          {getIcon(notification.type)}
+          <span className="ml-2 font-medium line-clamp-1">{notification.title}</span>
         </div>
-        <span className="text-sm text-muted-foreground line-clamp-2">
-          {notification.message}
-        </span>
-        {!notification.is_read && (
-          <div className="mt-1 h-2 w-2 rounded-full bg-primary" />
-        )}
-      </DropdownMenuItem>
-      <DropdownMenuSeparator />
+        <div className="flex items-center gap-2">
+          <span className="text-xs text-muted-foreground whitespace-nowrap">
+            {formatDistanceToNow(new Date(notification.created_at), {
+              addSuffix: true,
+              locale: ptBR
+            })}
+          </span>
+          {onDelete && (
+            <Trash2 
+              className="h-4 w-4 text-destructive opacity-50 hover:opacity-100 cursor-pointer" 
+              onClick={handleDelete}
+            />
+          )}
+        </div>
+      </div>
+      <span className="text-sm text-muted-foreground line-clamp-2">
+        {notification.message}
+      </span>
+      {!notification.is_read && (
+        <div className="mt-1 h-2 w-2 rounded-full bg-primary" />
+      )}
     </motion.div>
   );
 };
