@@ -7,30 +7,34 @@ import { TicketType, TicketPriority, TicketStatus, SupportTicket } from "@/types
 export type SupportRequest = SupportTicket;
 
 export async function createSupportRequest(request: SupportRequest): Promise<{ data: any, error: any }> {
+  // Generate ID but don't include it directly in the insert values
   const id = await generateUuid();
   
-  // Need to use explicit typing for the insert due to database schema changes
+  // Create an insert object with the correct types and without including id in the values
+  const insertData = {
+    client_id: request.client_id,
+    technician_id: request.technician_id,
+    type: request.type as unknown as string, // Cast to string for database compatibility
+    status: request.status as unknown as string, // Cast to string for database compatibility
+    priority: request.priority as unknown as string, // Cast to string for database compatibility
+    title: request.title,
+    description: request.description,
+    scheduled_date: request.scheduled_date,
+    resolution: request.resolution,
+    created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString()
+  };
+  
+  // Perform the insert with the correct structure
   const { data, error } = await supabase
     .from('support_requests')
-    .insert({
-      id,
-      client_id: request.client_id,
-      technician_id: request.technician_id,
-      type: request.type as unknown as string, // Cast to string for database compatibility
-      status: request.status as unknown as string, // Cast to string for database compatibility
-      priority: request.priority as unknown as string, // Cast to string for database compatibility
-      title: request.title,
-      description: request.description,
-      scheduled_date: request.scheduled_date,
-      resolution: request.resolution,
-      created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString()
-    })
+    .insert(insertData)
     .select();
 
-  if (!error) {
-    // Create notification for logistics team
-    await createRequestNotification(request, id);
+  if (!error && data) {
+    // Create notification for logistics team using the returned ID from the insert
+    const newRequestId = data[0]?.id;
+    await createRequestNotification(request, newRequestId);
   }
 
   return { data, error };
@@ -85,9 +89,9 @@ export async function getSupportRequests(filters?: {
     .order('created_at', { ascending: false });
 
   if (filters) {
-    if (filters.status) query = query.eq('status', filters.status as any);
-    if (filters.type) query = query.eq('type', filters.type as any);
-    if (filters.priority) query = query.eq('priority', filters.priority as any);
+    if (filters.status) query = query.eq('status', filters.status);
+    if (filters.type) query = query.eq('type', filters.type);
+    if (filters.priority) query = query.eq('priority', filters.priority);
     if (filters.client_id) query = query.eq('client_id', filters.client_id);
     if (filters.technician_id) query = query.eq('technician_id', filters.technician_id);
     if (filters.date_from) query = query.gte('created_at', filters.date_from);
