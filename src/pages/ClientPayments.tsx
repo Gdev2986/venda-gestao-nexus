@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { BalanceCards } from "@/components/payments/BalanceCards";
 import { PaymentHistoryCard } from "@/components/payments/PaymentHistoryCard";
@@ -93,7 +92,7 @@ const ClientPayments = () => {
         throw error;
       }
       
-      // Transform the data to match the expected Payment interface
+      // Function to transform the data to match the expected Payment interface
       const formattedPayments: Payment[] = data ? data.map(request => ({
         id: request.id,
         amount: request.amount,
@@ -109,7 +108,9 @@ const ClientPayments = () => {
           id: request.pix_key.id,
           key: request.pix_key.key,
           type: request.pix_key.type,
-          owner_name: request.pix_key.name // Use name as owner_name
+          name: request.pix_key.name || request.pix_key.owner_name || '',  // Ensure name is defined
+          owner_name: request.pix_key.name || '', // Use name as owner_name
+          user_id: request.pix_key.user_id || '' // Provide user_id 
         } : undefined
       })) : [];
       
