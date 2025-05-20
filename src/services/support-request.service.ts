@@ -3,6 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { generateUuid } from "@/lib/supabase-utils";
 import { NotificationType } from "@/types/notification.types";
 import { SupportTicket } from "@/types/support-ticket.types";
+import { SupportRequestType, SupportRequestStatus, SupportRequestPriority } from "@/types/support-request.types";
 
 export type SupportRequest = SupportTicket;
 
@@ -11,9 +12,9 @@ export async function createSupportRequest(request: SupportRequest): Promise<{ d
   const insertData = {
     client_id: request.client_id,
     technician_id: request.technician_id,
-    type: String(request.type),  // Convert enum to string
-    status: String(request.status),  // Convert enum to string
-    priority: String(request.priority),  // Convert enum to string
+    type: String(request.type) as "MAINTENANCE" | "INSTALLATION" | "OTHER" | "REMOVAL" | "REPLACEMENT" | "SUPPLIES",
+    status: String(request.status) as "PENDING" | "IN_PROGRESS" | "COMPLETED" | "CANCELED",
+    priority: String(request.priority) as "LOW" | "MEDIUM" | "HIGH",
     title: request.title,
     description: request.description,
     scheduled_date: request.scheduled_date,
@@ -39,11 +40,11 @@ export async function createSupportRequest(request: SupportRequest): Promise<{ d
 
 export async function updateSupportRequest(id: string, updates: Partial<SupportRequest>): Promise<{ data: any, error: any }> {
   // Convert enum values to strings for database compatibility
-  const processedUpdates = {
+  const processedUpdates: any = {
     ...updates,
-    type: updates.type ? String(updates.type) : undefined,
-    status: updates.status ? String(updates.status) : undefined, 
-    priority: updates.priority ? String(updates.priority) : undefined,
+    type: updates.type ? String(updates.type) as "MAINTENANCE" | "INSTALLATION" | "OTHER" | "REMOVAL" | "REPLACEMENT" | "SUPPLIES" : undefined,
+    status: updates.status ? String(updates.status) as "PENDING" | "IN_PROGRESS" | "COMPLETED" | "CANCELED" : undefined,
+    priority: updates.priority ? String(updates.priority) as "LOW" | "MEDIUM" | "HIGH" : undefined,
     updated_at: new Date().toISOString()
   };
 
@@ -92,10 +93,10 @@ export async function getSupportRequests(filters?: {
     .order('created_at', { ascending: false });
 
   if (filters) {
-    // Cast the string filters to match expected enum types
-    if (filters.status) query = query.eq('status', filters.status as TicketStatus);
-    if (filters.type) query = query.eq('type', filters.type as TicketType);
-    if (filters.priority) query = query.eq('priority', filters.priority as TicketPriority);
+    // Cast the string filters to match expected types
+    if (filters.status) query = query.eq('status', filters.status);
+    if (filters.type) query = query.eq('type', filters.type);
+    if (filters.priority) query = query.eq('priority', filters.priority);
     if (filters.client_id) query = query.eq('client_id', filters.client_id);
     if (filters.technician_id) query = query.eq('technician_id', filters.technician_id);
     if (filters.date_from) query = query.gte('created_at', filters.date_from);
@@ -122,7 +123,7 @@ async function createRequestNotification(request: SupportRequest, requestId: str
           .insert({
             user_id: user.id,
             title: 'Nova Solicitação Técnica',
-            message: `${request.title} - ${request.priority.toUpperCase()}`,
+            message: `${request.title} - ${request.priority}`,
             type: "SUPPORT", // Use string literal instead of enum
             data: { 
               request_id: requestId,
@@ -149,7 +150,7 @@ async function createRequestNotification(request: SupportRequest, requestId: str
           .insert({
             user_id: user.id,
             title: 'Nova Solicitação Técnica',
-            message: `${request.title} - ${request.priority.toUpperCase()}`,
+            message: `${request.title} - ${request.priority}`,
             type: "SUPPORT", // Use string literal instead of enum
             data: { 
               request_id: requestId,

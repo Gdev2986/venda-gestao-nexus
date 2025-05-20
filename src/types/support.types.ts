@@ -25,4 +25,31 @@ export interface SupportTicket {
   scheduled_date?: string | null;
   client?: any;
   machine?: any;
+  user_id?: string;
+  assigned_to?: string;
+}
+
+export interface CreateSupportTicketParams {
+  title: string;
+  description: string;
+  type: TicketType;
+  priority: TicketPriority;
+  client_id: string;
+  user_id?: string;
+  machine_id?: string;
+  scheduled_date?: string;
+}
+
+export interface UpdateSupportTicketParams {
+  title?: string;
+  description?: string;
+  type?: TicketType;
+  status?: TicketStatus;
+  priority?: TicketPriority;
+  assignee_id?: string;
+  resolution?: string;
+  client_id?: string;
+  machine_id?: string;
+  scheduled_date?: string;
+  assigned_to?: string;
 }

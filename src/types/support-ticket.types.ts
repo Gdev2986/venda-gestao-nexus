@@ -18,7 +18,7 @@ export interface SupportTicket {
   updated_at: string;
   client_id: string;
   assignee_id?: string;
-  technician_id?: string; // Add this field to match usage in service
+  technician_id?: string;
   resolution?: string;
   client_name?: string;
   assignee_name?: string;
@@ -26,4 +26,5 @@ export interface SupportTicket {
   scheduled_date?: string | null;
   client?: any;
   machine?: any;
+  user_id?: string; // Added for support.service.ts
 }

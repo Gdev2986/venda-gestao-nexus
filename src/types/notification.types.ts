@@ -20,5 +20,5 @@ export interface Notification {
   data?: Record<string, any>;
   is_read: boolean;
   created_at: string;
-  recipient_roles?: string[]; // Added this field
+  recipient_roles?: string[];
 }

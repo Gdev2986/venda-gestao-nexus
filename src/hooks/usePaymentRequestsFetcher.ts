@@ -75,7 +75,7 @@ export const usePaymentRequestsFetcher = (initialBalance: number = 15000) => {
           receipt_url,
           pix_key_id,
           client_id,
-          pix_key:pix_keys(id, key, type, name)
+          pix_key:pix_keys(id, key, type, name, user_id)
         `)
         .eq('client_id', clientId)
         .order('created_at', { ascending: false });
@@ -104,8 +104,8 @@ export const usePaymentRequestsFetcher = (initialBalance: number = 15000) => {
           key: request.pix_key.key,
           type: request.pix_key.type,
           name: request.pix_key.name,
-          owner_name: request.pix_key.name, // Use name field for owner_name
-          user_id: user.id // Use current user id
+          user_id: request.pix_key.user_id,
+          owner_name: request.pix_key.name // Use name for owner_name
         } : undefined
       })) : [];
       

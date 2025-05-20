@@ -24,7 +24,6 @@ const ClientDetails = () => {
           
         if (error) throw error;
         
-        // Ensure we include the updated_at field
         setClient({
           id: data.id,
           business_name: data.business_name,

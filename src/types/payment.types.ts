@@ -7,9 +7,9 @@ export interface PixKey {
   id: string;
   key: string;
   type: string;
-  name: string;       // Required
-  owner_name: string; // Required
-  user_id: string;    // Required
+  name: string;
+  owner_name: string;
+  user_id: string;
   is_default?: boolean;
   is_active?: boolean;
   bank_name?: string;

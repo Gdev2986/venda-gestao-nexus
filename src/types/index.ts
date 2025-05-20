@@ -51,7 +51,9 @@ export {
 
 // Re-export from support.types 
 export {
-  type SupportTicket
+  type SupportTicket,
+  type CreateSupportTicketParams,
+  type UpdateSupportTicketParams
 } from './support.types';
 
 // Re-export from support-ticket.types

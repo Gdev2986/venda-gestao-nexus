@@ -1,4 +1,3 @@
-
 import * as React from "react";
 import { motion } from "framer-motion";
 import { formatDistanceToNow } from "date-fns";
@@ -42,10 +41,10 @@ export const NotificationItem = ({ notification, onMarkAsRead, onDelete }: Notif
         return <CreditCard className="h-4 w-4 text-primary" />;
       case NotificationType.BALANCE:
         return <CreditCard className="h-4 w-4 text-primary" />;
-      case NotificationType.ADMIN_NOTIFICATION:
-        return <Bell className="h-4 w-4 text-primary" />;
       case NotificationType.LOGISTICS:
         return <TruckIcon className="h-4 w-4 text-primary" />;
+      case NotificationType.SYSTEM:
+        return <Bell className="h-4 w-4 text-primary" />;
       default:
         return <MessageSquare className="h-4 w-4 text-primary" />;
     }

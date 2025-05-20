@@ -1,7 +1,7 @@
 
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { SupportRequest, SupportRequestStatus, SupportRequestType, SupportRequestPriority } from "@/types/support-request";
+import { SupportRequest, SupportRequestStatus, SupportRequestType, SupportRequestPriority } from "@/types/support-request.types";
 import { toast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
 
@@ -43,16 +43,16 @@ export function useSupportRequests() {
   const createSupportRequest = async (newRequest: Omit<SupportRequest, 'id' | 'created_at'>) => {
     setIsLoading(true);
     try {
-      // Check Supabase schema to match enum values exactly as strings
+      // Convert enum values to string literals
       const insertData = {
         client_id: newRequest.client_id,
         technician_id: newRequest.technician_id,
         title: newRequest.title,
         description: newRequest.description,
-        // Convert enums to string literals expected by the database
-        type: String(newRequest.type),
-        status: String(newRequest.status),
-        priority: String(newRequest.priority),
+        // Convert enum values to string literals
+        type: String(newRequest.type) as "MAINTENANCE" | "INSTALLATION" | "REPAIR" | "TRAINING" | "SUPPORT" | "OTHER",
+        status: String(newRequest.status) as "PENDING" | "IN_PROGRESS" | "COMPLETED" | "CANCELED",
+        priority: String(newRequest.priority) as "LOW" | "MEDIUM" | "HIGH",
         scheduled_date: newRequest.scheduled_date,
         resolution: newRequest.resolution
       };

@@ -1,183 +1,114 @@
-
 import { useState } from "react";
-import { useToast } from "@/hooks/use-toast";
-import { Payment, PaymentStatus, PaymentType, PixKey } from "@/types";
 import { supabase } from "@/integrations/supabase/client";
+import { PixKey, Payment, PaymentStatus, PaymentType } from "@/types";
+import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
+import { generateUuid } from "@/lib/supabase-utils";
 
 export const usePaymentRequestManager = (
   pixKeys: PixKey[],
   paymentRequests: Payment[],
   setPaymentRequests: React.Dispatch<React.SetStateAction<Payment[]>>
 ) => {
-  const { toast } = useToast();
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [selectedPixKey, setSelectedPixKey] = useState<PixKey | null>(null);
+  const { toast } = useToast();
   const { user } = useAuth();
 
-  // Handler for requesting a payment
-  const handleRequestPayment = async (
-    amount: string,
-    description: string,
-    pixKeyId: string | null
-  ) => {
-    if (!pixKeyId) {
-      toast({
-        variant: "destructive",
-        title: "Chave PIX não selecionada",
-        description: "Por favor, selecione uma chave PIX para continuar.",
-      });
-      return false;
-    }
+// Fix the handleRequestPayment function to include the required properties for PixKey
+const handleRequestPayment = async (values: {
+  amount: number;
+  pixKeyId: string;
+  description?: string;
+}) => {
+  if (!selectedPixKey) {
+    toast({
+      title: "Chave Pix não selecionada",
+      description: "Selecione uma chave Pix para realizar a solicitação",
+      variant: "destructive",
+    });
+    return;
+  }
 
-    if (!user) {
-      toast({
-        variant: "destructive",
-        title: "Usuário não autenticado",
-        description: "Por favor, faça login para continuar.",
-      });
-      return false;
-    }
-    
-    const parsedAmount = parseFloat(amount);
-    const selectedPixKey = pixKeys.find(key => key.id === pixKeyId);
-    
-    if (!selectedPixKey) {
-      toast({
-        variant: "destructive",
-        title: "Chave PIX inválida",
-        description: "A chave PIX selecionada não é válida.",
-      });
-      return false;
-    }
-    
-    try {
-      console.log("Attempting to create payment request with:", {
-        amount: parsedAmount,
-        pixKeyId,
-        userId: user.id
-      });
-      
-      // Get the client ID for the current user
-      const { data: clientData, error: clientError } = await supabase
-        .from('user_client_access')
-        .select('client_id')
-        .eq('user_id', user.id)
-        .limit(1)
-        .single();
-        
-      if (clientError) {
-        console.error("Error fetching client ID:", clientError);
-        toast({
-          variant: "destructive",
-          title: "Erro ao criar solicitação",
-          description: "Não foi possível identificar seu cliente. Por favor, contate o suporte."
-        });
-        return false;
-      }
-      
-      if (!clientData?.client_id) {
-        toast({
-          variant: "destructive",
-          title: "Erro ao criar solicitação",
-          description: "Seu usuário não está vinculado a nenhum cliente. Por favor, contate o suporte."
-        });
-        return false;
-      }
-      
-      console.log("Creating payment request for client:", clientData.client_id);
-      
-      // Create payment request in Supabase with string status instead of enum
-      const { data, error } = await supabase
-        .from('payment_requests')
-        .insert({
-          amount: parsedAmount,
-          status: "PENDING", // Use string literal instead of enum
-          pix_key_id: pixKeyId,
-          client_id: clientData.client_id,
-          description: description || 'Solicitação de pagamento via PIX'
-        })
-        .select(`
-          id,
-          amount,
-          description,
-          status,
-          created_at,
-          updated_at,
-          rejection_reason,
-          receipt_url,
-          pix_key_id,
-          client_id,
-          pix_key:pix_keys(id, key, type, name)
-        `)
-        .single();
-      
-      if (error) {
-        console.error("Erro ao criar solicitação de pagamento:", error);
-        toast({
-          variant: "destructive",
-          title: "Erro ao criar solicitação",
-          description: error.message || "Não foi possível criar a solicitação de pagamento."
-        });
-        return false;
-      }
+  // Find the selected pix key
+  const pixKey = pixKeys.find((key) => key.id === values.pixKeyId);
+  
+  if (!pixKey) {
+    toast({
+      title: "Chave Pix não encontrada",
+      description: "A chave Pix selecionada não foi encontrada",
+      variant: "destructive",
+    });
+    return;
+  }
 
-      if (!data) {
-        toast({
-          variant: "destructive", 
-          title: "Erro ao criar solicitação",
-          description: "Não foi possível criar a solicitação de pagamento."
-        });
-        return false;
+  if (!values.amount) {
+    toast({
+      title: "Valor inválido",
+      description: "Informe um valor para a solicitação",
+      variant: "destructive",
+    });
+    return;
+  }
+
+  try {
+    // Create the payment request
+    const { data, error } = await supabase.from("payment_requests").insert([
+      {
+        amount: values.amount,
+        description: values.description || "Solicitação de pagamento",
+        pix_key_id: values.pixKeyId,
+        client_id: user?.id,
+        status: "PENDING",
+      },
+    ]);
+
+    if (error) throw error;
+
+    // Create formatted payment for UI
+    const newPayment: Payment = {
+      id: data?.[0]?.id || generateUuid(),
+      amount: values.amount,
+      description: values.description || "Solicitação de pagamento",
+      status: PaymentStatus.PENDING,
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+      rejection_reason: null,
+      client_id: user?.id || "",
+      receipt_url: "",
+      payment_type: PaymentType.PIX,
+      pix_key: {
+        id: pixKey.id,
+        key: pixKey.key,
+        type: pixKey.type,
+        name: pixKey.name,
+        user_id: pixKey.user_id,
+        owner_name: pixKey.owner_name
       }
+    };
 
-      console.log("Created payment request:", data);
-
-      // Create a new payment request object for the UI with proper types
-      const newPaymentRequest: Payment = {
-        id: data.id,
-        amount: data.amount,
-        status: data.status as PaymentStatus,
-        created_at: data.created_at,
-        updated_at: data.updated_at,
-        client_id: data.client_id,
-        description: data.description,
-        payment_type: PaymentType.PIX,
-        pix_key: data.pix_key ? {
-          id: data.pix_key.id,
-          key: data.pix_key.key,
-          type: data.pix_key.type,
-          name: data.pix_key.name,
-          owner_name: data.pix_key.name, // Use name as owner_name
-          user_id: user.id // Use current user's ID
-        } : undefined,
-        rejection_reason: null
-      };
-      
-      // Add the new payment request to the list
-      setPaymentRequests(prev => [newPaymentRequest, ...prev]);
-      
-      toast({
-        title: "Solicitação enviada",
-        description: "Sua solicitação de pagamento foi enviada com sucesso",
-      });
-      
-      // Close the dialog
-      setIsDialogOpen(false);
-      return true;
-    } catch (err) {
-      console.error('Erro ao criar solicitação de pagamento:', err);
-      toast({
-        variant: "destructive",
-        title: "Erro ao criar solicitação",
-        description: err instanceof Error ? err.message : "Não foi possível criar a solicitação de pagamento."
-      });
-      return false;
-    }
-  };
+    setPaymentRequests([...paymentRequests, newPayment]);
+    setIsDialogOpen(false);
+    toast({
+      title: "Solicitação enviada!",
+      description: "Aguarde a confirmação do pagamento",
+    });
+  } catch (error: any) {
+    console.error("Error requesting payment:", error);
+    toast({
+      title: "Erro ao solicitar pagamento",
+      description:
+        error.message || "Ocorreu um erro ao solicitar o pagamento. Tente novamente.",
+      variant: "destructive",
+    });
+  }
+};
 
   return {
     isDialogOpen,
     setIsDialogOpen,
-    handleRequestPayment
+    handleRequestPayment,
+    selectedPixKey,
+    setSelectedPixKey
   };
 };
