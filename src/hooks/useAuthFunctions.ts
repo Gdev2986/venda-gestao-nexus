@@ -1,156 +1,110 @@
 
-import { useCallback } from "react";
+import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/hooks/use-toast";
 import { NavigateFunction } from "react-router-dom";
 import { PATHS } from "@/routes/paths";
-import { cleanupSupabaseState } from "@/utils/auth-cleanup";
 
-type UseAuthFunctionsProps = {
+interface UseAuthFunctionsProps {
   setIsLoading: (isLoading: boolean) => void;
-  toast: any;
+  toast: ReturnType<typeof useToast>["toast"];
   navigate: NavigateFunction;
-};
+}
 
 export const useAuthFunctions = ({ setIsLoading, toast, navigate }: UseAuthFunctionsProps) => {
-  const signIn = useCallback(async (email: string, password: string) => {
+  // Sign in function
+  const signIn = async (email: string, password: string) => {
+    setIsLoading(true);
+    
     try {
-      // Clean up any existing auth data before attempting login
-      cleanupSupabaseState();
-      
-      console.log("Sign in attempt for:", email);
-      setIsLoading(true);
-      
-      // Try global logout before login to ensure clean state
-      try {
-        await supabase.auth.signOut({ scope: 'global' });
-      } catch (err) {
-        // Continue even if this fails
-        console.log("Failed to perform global logout before login, continuing...");
-      }
-      
       const { data, error } = await supabase.auth.signInWithPassword({
         email,
         password,
       });
-
+      
       if (error) {
-        setIsLoading(false);
         toast({
-          title: "Erro de login",
+          title: "Erro ao fazer login",
           description: error.message,
           variant: "destructive",
         });
         return { error };
       }
       
-      if (data.user) {
-        console.log("Sign in successful");
-        // Let the auth state change listener handle redirects
-        return { error: null };
-      }
-      
-      setIsLoading(false);
       return { error: null };
     } catch (error: any) {
-      console.error("Error during login:", error);
+      console.error("Error during sign in:", error);
+      toast({
+        title: "Erro ao fazer login",
+        description: error?.message || "Ocorreu um erro durante o login",
+        variant: "destructive",
+      });
+      return { error };
+    } finally {
       setIsLoading(false);
-      return { 
-        error: error instanceof Error ? error : new Error("Unknown error during login") 
-      };
     }
-  }, [setIsLoading, toast]);
-
-  const signUp = useCallback(async (email: string, password: string, metadata?: { name?: string }) => {
+  };
+  
+  // Sign up function
+  const signUp = async (email: string, password: string, metadata?: { name?: string }) => {
+    setIsLoading(true);
+    
     try {
-      // Clean up any existing auth data before attempting signup
-      cleanupSupabaseState();
-      
-      console.log("Sign up attempt for:", email);
-      setIsLoading(true);
-      
-      // Try global logout before signup to ensure clean state
-      try {
-        await supabase.auth.signOut({ scope: 'global' });
-      } catch (err) {
-        // Continue even if this fails
-      }
-      
-      const { error, data } = await supabase.auth.signUp({
+      const { data, error } = await supabase.auth.signUp({
         email,
         password,
         options: {
-          data: {
-            name: metadata?.name,
-          },
-          emailRedirectTo: `${window.location.origin}/dashboard`,
+          data: metadata,
         },
       });
-
+      
       if (error) {
-        let errorMessage = "Ocorreu um erro durante o cadastro";
-        
-        if (error.message.includes("already registered")) {
-          errorMessage = "Este email já está registrado. Tente fazer login.";
-        }
-        
         toast({
-          title: "Erro de registro",
-          description: errorMessage,
+          title: "Erro ao criar conta",
+          description: error.message,
           variant: "destructive",
         });
-        setIsLoading(false);
         return { data: null, error };
       }
       
       toast({
-        title: "Registro bem-sucedido",
-        description: "Por favor, verifique seu email para confirmar sua conta.",
+        title: "Conta criada com sucesso",
+        description: "Verifique seu email para confirmar sua conta",
       });
-
-      navigate(PATHS.HOME);
-      setIsLoading(false);
-      return { data: data?.user || null, error: null };
+      
+      return { data, error: null };
     } catch (error: any) {
-      console.error("Error during registration:", error);
-      setIsLoading(false);
-      return { 
-        data: null,
-        error: error instanceof Error ? error : new Error("Unknown error during registration") 
-      };
-    }
-  }, [setIsLoading, toast, navigate]);
-
-  const signOut = useCallback(async () => {
-    try {
-      console.log("Sign out attempt");
-      setIsLoading(true);
-      
-      // Clear local state immediately for better UX
-      
-      // Clean up all auth data
-      cleanupSupabaseState();
-      
-      try {
-        await supabase.auth.signOut({ scope: 'global' });
-      } catch (error) {
-        console.error("Error during logout:", error);
-      } finally {
-        setIsLoading(false);
-      }
-      
-      // Navigate to login page
-      navigate(PATHS.LOGIN);
-    } catch (error: any) {
-      console.error("Error during sign out:", error);
-      setIsLoading(false);
+      console.error("Error during sign up:", error);
       toast({
-        title: "Erro ao sair",
-        description: error.message || "Ocorreu um erro ao tentar sair",
+        title: "Erro ao criar conta",
+        description: error?.message || "Ocorreu um erro ao criar sua conta",
         variant: "destructive",
       });
+      return { data: null, error };
+    } finally {
+      setIsLoading(false);
     }
-  }, [setIsLoading, toast, navigate]);
-
+  };
+  
+  // Sign out function
+  const signOut = async () => {
+    setIsLoading(true);
+    
+    try {
+      await supabase.auth.signOut();
+      navigate(PATHS.LOGIN);
+    } catch (error) {
+      console.error("Error during sign out:", error);
+      toast({
+        title: "Erro ao sair",
+        description: "Ocorreu um erro ao encerrar sua sessão",
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+  
   return {
     signIn,
     signUp,

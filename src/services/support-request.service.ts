@@ -85,9 +85,9 @@ export async function getSupportRequests(filters?: {
     .order('created_at', { ascending: false });
 
   if (filters) {
-    if (filters.status) query = query.eq('status', filters.status);
-    if (filters.type) query = query.eq('type', filters.type);
-    if (filters.priority) query = query.eq('priority', filters.priority);
+    if (filters.status) query = query.eq('status', filters.status as any);
+    if (filters.type) query = query.eq('type', filters.type as any);
+    if (filters.priority) query = query.eq('priority', filters.priority as any);
     if (filters.client_id) query = query.eq('client_id', filters.client_id);
     if (filters.technician_id) query = query.eq('technician_id', filters.technician_id);
     if (filters.date_from) query = query.gte('created_at', filters.date_from);
@@ -115,7 +115,7 @@ async function createRequestNotification(request: SupportRequest, requestId: str
             user_id: user.id,
             title: 'Nova Solicitação Técnica',
             message: `${request.title} - ${request.priority.toUpperCase()}`,
-            type: 'SUPPORT' as NotificationType, // Use proper type casting
+            type: 'SUPPORT', // Use string literal instead of enum
             data: { 
               request_id: requestId,
               type: request.type,
@@ -142,7 +142,7 @@ async function createRequestNotification(request: SupportRequest, requestId: str
             user_id: user.id,
             title: 'Nova Solicitação Técnica',
             message: `${request.title} - ${request.priority.toUpperCase()}`,
-            type: 'SUPPORT' as NotificationType, // Use proper type casting
+            type: 'SUPPORT', // Use string literal instead of enum
             data: { 
               request_id: requestId,
               type: request.type,
@@ -179,7 +179,7 @@ async function createStatusUpdateNotification(requestId: string, updates: Partia
           user_id: clientData.user_id,
           title: 'Atualização de Solicitação',
           message: `Sua solicitação "${request.title}" foi atualizada para ${updates.status}`,
-          type: 'SUPPORT' as NotificationType, // Use proper type casting
+          type: 'SUPPORT', // Use string literal instead of enum
           data: { request_id: requestId, new_status: updates.status },
           is_read: false,
           created_at: new Date().toISOString()
@@ -194,7 +194,7 @@ async function createStatusUpdateNotification(requestId: string, updates: Partia
           user_id: updates.technician_id,
           title: 'Nova Solicitação Atribuída',
           message: `Você foi atribuído à solicitação "${request.title}"`,
-          type: 'SUPPORT' as NotificationType, // Use proper type casting
+          type: 'SUPPORT', // Use string literal instead of enum
           data: { request_id: requestId },
           is_read: false,
           created_at: new Date().toISOString()
@@ -203,65 +203,4 @@ async function createStatusUpdateNotification(requestId: string, updates: Partia
   } catch (error) {
     console.error('Error creating status update notification:', error);
   }
-}
-
-export async function updateSupportRequest(id: string, updates: Partial<SupportRequest>): Promise<{ data: any, error: any }> {
-  const { data, error } = await supabase
-    .from('support_requests')
-    .update({
-      ...updates,
-      updated_at: new Date().toISOString()
-    })
-    .eq('id', id)
-    .select();
-
-  if (!error && updates.status) {
-    // Create status update notification
-    await createStatusUpdateNotification(id, updates);
-  }
-
-  return { data, error };
-}
-
-export async function getSupportRequestById(id: string): Promise<{ data: any, error: any }> {
-  return await supabase
-    .from('support_requests')
-    .select(`
-      *,
-      client:client_id(id, business_name, contact_name, phone, address, city, state, zip),
-      technician:technician_id(id, name, email, phone)
-    `)
-    .eq('id', id)
-    .single();
-}
-
-export async function getSupportRequests(filters?: {
-  status?: string;
-  type?: string;
-  priority?: string;
-  client_id?: string;
-  technician_id?: string;
-  date_from?: string;
-  date_to?: string;
-}): Promise<{ data: any, error: any }> {
-  let query = supabase
-    .from('support_requests')
-    .select(`
-      *,
-      client:client_id(id, business_name, contact_name, phone, address, city, state, zip),
-      technician:technician_id(id, name, email, phone)
-    `)
-    .order('created_at', { ascending: false });
-
-  if (filters) {
-    if (filters.status) query = query.eq('status', filters.status);
-    if (filters.type) query = query.eq('type', filters.type);
-    if (filters.priority) query = query.eq('priority', filters.priority);
-    if (filters.client_id) query = query.eq('client_id', filters.client_id);
-    if (filters.technician_id) query = query.eq('technician_id', filters.technician_id);
-    if (filters.date_from) query = query.gte('created_at', filters.date_from);
-    if (filters.date_to) query = query.lte('created_at', filters.date_to);
-  }
-
-  return await query;
 }
