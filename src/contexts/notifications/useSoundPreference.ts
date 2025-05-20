@@ -1,33 +1,30 @@
 
-import { useState, useEffect } from "react";
+import { useState, useEffect } from 'react';
+
+const SOUND_PREF_KEY = 'sigmapay-notifications-sound';
 
 export const useSoundPreference = (): [boolean, (enabled: boolean) => void] => {
-  const [soundEnabled, setSoundEnabled] = useState<boolean>(true);
-
-  // Load sound preference from localStorage on initial load
-  useEffect(() => {
+  // Get initial value from localStorage or default to true
+  const getInitialState = (): boolean => {
     try {
-      const savedSoundPreference = localStorage.getItem("notification_sound_enabled");
-      if (savedSoundPreference !== null) {
-        setSoundEnabled(savedSoundPreference === "true");
-      }
+      const savedPreference = localStorage.getItem(SOUND_PREF_KEY);
+      return savedPreference !== null ? JSON.parse(savedPreference) : true;
     } catch (error) {
-      console.error("Failed to load sound preference:", error);
+      console.error('Failed to read sound preference from localStorage:', error);
+      return true;
     }
-  }, []);
+  };
 
-  // Save sound preference to localStorage when changed
+  const [soundEnabled, setSoundEnabled] = useState<boolean>(getInitialState);
+
+  // Save to localStorage whenever the preference changes
   useEffect(() => {
     try {
-      localStorage.setItem("notification_sound_enabled", soundEnabled.toString());
+      localStorage.setItem(SOUND_PREF_KEY, JSON.stringify(soundEnabled));
     } catch (error) {
-      console.error("Failed to save sound preference:", error);
+      console.error('Failed to save sound preference to localStorage:', error);
     }
   }, [soundEnabled]);
 
-  const toggleSoundEnabled = (enabled: boolean) => {
-    setSoundEnabled(enabled);
-  };
-
-  return [soundEnabled, toggleSoundEnabled];
+  return [soundEnabled, setSoundEnabled];
 };
