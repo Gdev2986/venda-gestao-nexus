@@ -1,12 +1,11 @@
 
 import { supabase } from "@/integrations/supabase/client";
-import { useToast } from "@/hooks/use-toast";
 import { NavigateFunction } from "react-router-dom";
 import { PATHS } from "@/routes/paths";
 
 interface UseAuthFunctionsProps {
   setIsLoading: (isLoading: boolean) => void;
-  toast: ReturnType<typeof useToast>["toast"];
+  toast: any; // Changed from useToast to direct toast function
   navigate: NavigateFunction;
 }
 

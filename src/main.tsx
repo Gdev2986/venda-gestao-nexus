@@ -2,9 +2,10 @@
 import * as React from 'react';
 import { createRoot } from 'react-dom/client';
 import { BrowserRouter } from 'react-router-dom';
-import { AuthProvider } from '@/providers/AuthProvider';
 import { ThemeProvider } from '@/components/theme-provider';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { Toaster } from 'sonner'; // Add direct import from sonner
+import { AuthProvider } from '@/providers/AuthProvider';
 import { NotificationsProvider } from '@/contexts/NotificationsContext';
 import App from './App.tsx';
 import './index.css';
@@ -33,6 +34,7 @@ function renderApp() {
     const root = createRoot(rootElement);
     
     // Render the application with all providers
+    // Ensure proper nesting order: BrowserRouter -> QueryClientProvider -> ThemeProvider -> Toaster -> AuthProvider -> NotificationsProvider
     root.render(
       <React.StrictMode>
         <BrowserRouter>
@@ -41,6 +43,7 @@ function renderApp() {
               <AuthProvider>
                 <NotificationsProvider>
                   <App />
+                  <Toaster />
                 </NotificationsProvider>
               </AuthProvider>
             </ThemeProvider>

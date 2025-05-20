@@ -2,7 +2,7 @@
 import { createContext, useContext, useEffect, useState } from "react";
 import { Session, User } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
-import { useToast } from "@/hooks/use-toast";
+import { toast } from "sonner"; // Import toast directly from sonner instead
 import { useNavigate } from "react-router-dom";
 import { PATHS } from "@/routes/paths";
 import { UserRole } from "@/types";
@@ -21,11 +21,14 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [isLoading, setIsLoading] = useState(true);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [profile, setProfile] = useState<UserProfile | null>(null);
-  const { toast } = useToast();
   const navigate = useNavigate();
 
   // Import auth service functions
-  const { signIn, signUp, signOut } = useAuthFunctions({ setIsLoading, toast, navigate });
+  const { signIn, signUp, signOut } = useAuthFunctions({ 
+    setIsLoading, 
+    toast, // Pass toast directly, not from useToast 
+    navigate 
+  });
 
   // Set up auth state listener and check for existing session
   useEffect(() => {
