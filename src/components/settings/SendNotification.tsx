@@ -10,7 +10,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
-import { NotificationType } from "@/types/notification.types";
+import { NotificationType } from "@/types";
 
 const notificationFormSchema = z.object({
   title: z.string().min(3, {
@@ -88,8 +88,8 @@ export function SendNotification() {
           .insert({
             title: data.title,
             message: data.message,
-            type: data.type,
-            user_id: 'ALL', // We'll handle this value in a database trigger or create a separate endpoint
+            type: data.type as string,
+            user_id: 'ALL' // We'll handle this value in a database trigger or create a separate endpoint
           });
         
         if (error) throw error;
@@ -111,8 +111,8 @@ export function SendNotification() {
             .insert({
               title: data.title,
               message: data.message,
-              type: data.type,
-              user_id: clientData.id,
+              type: data.type as string,
+              user_id: clientData.id
             });
           
           if (error) throw error;

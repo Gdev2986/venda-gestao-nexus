@@ -83,39 +83,7 @@ export interface Partner {
   fee_plan_id?: string; // Added for fee plan relationship
 }
 
-// Added Client interface to ensure type safety
-export interface Client {
-  id: string;
-  business_name: string;
-  email?: string;
-  phone?: string;
-  status?: string;
-  balance?: number;
-  partner_id?: string;
-  created_at?: string;
-  updated_at?: string;
-  contact_name?: string;
-  address?: string;
-  city?: string;
-  state?: string;
-  zip?: string;
-  document?: string;
-  fee_plan_id?: string;
-  company_name?: string;
-}
-
-export interface FilterValues {
-  search?: string;
-  status?: string;
-  category?: string;
-  dateRange?: {
-    from: Date;
-    to?: Date;
-  };
-  searchTerm?: string;
-  commissionRange?: [number, number];
-}
-
+// Sale interface
 export interface Sale {
   id: string;
   code: string;
@@ -133,6 +101,18 @@ export interface Sale {
   partner_id?: string;
   machine_id?: string;
   processing_status?: string;
+}
+
+export interface FilterValues {
+  search?: string;
+  status?: string;
+  category?: string;
+  dateRange?: {
+    from: Date;
+    to?: Date;
+  };
+  searchTerm?: string;
+  commissionRange?: [number, number];
 }
 
 export interface SalesFilterParams {
