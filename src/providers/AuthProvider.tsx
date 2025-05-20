@@ -2,7 +2,7 @@
 import { createContext, useContext, useEffect, useState } from "react";
 import { Session, User } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
-import { toast } from "sonner"; // Import toast directly from sonner instead
+import { toast } from "sonner"; // Import toast directly from sonner
 import { useNavigate } from "react-router-dom";
 import { PATHS } from "@/routes/paths";
 import { UserRole } from "@/types";
@@ -26,7 +26,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   // Import auth service functions
   const { signIn, signUp, signOut } = useAuthFunctions({ 
     setIsLoading, 
-    toast, // Pass toast directly, not from useToast 
+    toast, // Pass toast directly
     navigate 
   });
 
@@ -72,9 +72,8 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
                   setUserRole(normalizedRole);
                   
                   // Toast only if we successfully got the role
-                  toast({
-                    title: "Login bem-sucedido",
-                    description: "Bem-vindo ao SigmaPay!",
+                  toast("Login bem-sucedido", {
+                    description: "Bem-vindo ao SigmaPay!"
                   });
                 }
               } catch (err) {
@@ -99,9 +98,8 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
           
           // Use setTimeout to avoid calling toast inside the callback
           setTimeout(() => {
-            toast({
-              title: "Sessão encerrada",
-              description: "Você foi desconectado com sucesso.",
+            toast("Sessão encerrada", {
+              description: "Você foi desconectado com sucesso."
             });
             
             // Navigate to login page
@@ -169,7 +167,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     return () => {
       subscription.unsubscribe();
     };
-  }, [toast, navigate]);
+  }, [navigate]);
 
   return (
     <AuthContext.Provider

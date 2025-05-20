@@ -34,7 +34,7 @@ function renderApp() {
     const root = createRoot(rootElement);
     
     // Render the application with all providers
-    // Ensure proper nesting order: BrowserRouter -> QueryClientProvider -> ThemeProvider -> Toaster -> AuthProvider -> NotificationsProvider
+    // Ensure proper nesting order: BrowserRouter -> QueryClientProvider -> ThemeProvider -> AuthProvider -> NotificationsProvider -> App -> Toaster
     root.render(
       <React.StrictMode>
         <BrowserRouter>
