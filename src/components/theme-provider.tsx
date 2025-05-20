@@ -29,21 +29,21 @@ export function ThemeProvider({
   storageKey = "sigmapay-theme",
   ...props
 }: ThemeProviderProps) {
-  const [theme, setTheme] = React.useState<Theme>(
-    () => {
-      if (typeof window !== "undefined") {
-        try {
-          const storedTheme = localStorage.getItem(storageKey)
-          return storedTheme ? (storedTheme as Theme) : defaultTheme
-        } catch (error) {
-          console.warn("Error reading theme from localStorage:", error)
-          return defaultTheme
-        }
+  // Using React.useState explicitly
+  const [theme, setTheme] = React.useState<Theme>(() => {
+    if (typeof window !== "undefined") {
+      try {
+        const storedTheme = localStorage.getItem(storageKey)
+        return storedTheme ? (storedTheme as Theme) : defaultTheme
+      } catch (error) {
+        console.warn("Error reading theme from localStorage:", error)
+        return defaultTheme
       }
-      return defaultTheme
     }
-  )
+    return defaultTheme
+  })
 
+  // Using React.useEffect explicitly
   React.useEffect(() => {
     if (typeof window === "undefined") return
     
@@ -61,6 +61,7 @@ export function ThemeProvider({
     }
   }, [theme])
 
+  // Using React.useEffect explicitly
   React.useEffect(() => {
     if (typeof window === "undefined") return
     
@@ -71,6 +72,7 @@ export function ThemeProvider({
     }
   }, [theme, storageKey])
 
+  // Using React.useMemo explicitly
   const value = React.useMemo(
     () => ({
       theme,

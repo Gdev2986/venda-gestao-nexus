@@ -34,21 +34,34 @@ function renderApp() {
     const root = createRoot(rootElement);
     
     // Proper provider nesting order - this is critical
+    // Using React.createElement to ensure React is properly referenced
     root.render(
-      <React.StrictMode>
-        <BrowserRouter>
-          <QueryClientProvider client={queryClient}>
-            <ThemeProvider defaultTheme="light" storageKey="sigmapay-theme">
-              <AuthProvider>
-                <NotificationsProvider>
-                  <App />
-                  <Toaster />
-                </NotificationsProvider>
-              </AuthProvider>
-            </ThemeProvider>
-          </QueryClientProvider>
-        </BrowserRouter>
-      </React.StrictMode>
+      React.createElement(
+        React.StrictMode,
+        null,
+        React.createElement(
+          BrowserRouter,
+          null,
+          React.createElement(
+            QueryClientProvider,
+            { client: queryClient },
+            React.createElement(
+              ThemeProvider,
+              { defaultTheme: "light", storageKey: "sigmapay-theme" },
+              React.createElement(
+                AuthProvider,
+                null,
+                React.createElement(
+                  NotificationsProvider,
+                  null,
+                  React.createElement(App, null),
+                  React.createElement(Toaster, null)
+                )
+              )
+            )
+          )
+        )
+      )
     );
     
     console.log('Application rendered successfully');
