@@ -34,18 +34,14 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       });
       
       if (error) {
-        toast(error.message, {
-          description: "Erro ao fazer login",
-        });
+        toast(error.message);
         return { error };
       }
       
       return { error: null };
     } catch (error: any) {
       console.error("Error during sign in:", error);
-      toast("Ocorreu um erro durante o login", {
-        description: error?.message || "Tente novamente mais tarde",
-      });
+      toast("Ocorreu um erro durante o login");
       return { error };
     } finally {
       setIsLoading(false);
@@ -66,22 +62,16 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       });
       
       if (error) {
-        toast(error.message, {
-          description: "Erro ao criar conta",
-        });
+        toast(error.message);
         return { data: null, error };
       }
       
-      toast("Verificação necessária", {
-        description: "Verifique seu email para confirmar sua conta",
-      });
+      toast("Verificação necessária");
       
       return { data, error: null };
     } catch (error: any) {
       console.error("Error during sign up:", error);
-      toast("Ocorreu um erro ao criar sua conta", {
-        description: error?.message || "Tente novamente mais tarde",
-      });
+      toast("Ocorreu um erro ao criar sua conta");
       return { data: null, error };
     } finally {
       setIsLoading(false);
@@ -97,9 +87,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       navigate(PATHS.LOGIN);
     } catch (error) {
       console.error("Error during sign out:", error);
-      toast("Erro ao sair", {
-        description: "Ocorreu um erro ao encerrar sua sessão",
-      });
+      toast("Erro ao sair");
     } finally {
       setIsLoading(false);
     }
@@ -147,9 +135,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
                   setUserRole(normalizedRole);
                   
                   // Toast only if we successfully got the role
-                  toast("Login bem-sucedido", {
-                    description: "Bem-vindo ao SigmaPay!"
-                  });
+                  toast("Login bem-sucedido");
                 }
               } catch (err) {
                 console.error("Error in role fetching:", err);
@@ -173,9 +159,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
           
           // Use setTimeout to avoid calling toast inside the callback
           setTimeout(() => {
-            toast("Sessão encerrada", {
-              description: "Você foi desconectado com sucesso."
-            });
+            toast("Sessão encerrada");
             
             // Navigate to login page
             navigate(PATHS.LOGIN);

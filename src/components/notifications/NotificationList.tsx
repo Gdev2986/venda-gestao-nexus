@@ -3,11 +3,6 @@ import { AnimatePresence } from "framer-motion";
 import { Notification } from "@/types/notification.types";
 import { NotificationItem } from "./NotificationItem";
 import { Spinner } from "@/components/ui/spinner";
-import { 
-  DropdownMenuGroup, 
-  DropdownMenu,
-  DropdownMenuContent
-} from "@/components/ui/dropdown-menu";
 
 interface NotificationListProps {
   notifications: Notification[];

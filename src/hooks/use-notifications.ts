@@ -14,8 +14,12 @@ export function useNotifications() {
   
   // Load sound preference from localStorage on mount
   useEffect(() => {
-    const savedPreference = localStorage.getItem("notification-sound");
-    setSoundEnabled(savedPreference !== "false");
+    try {
+      const savedPreference = localStorage.getItem("notification-sound");
+      setSoundEnabled(savedPreference !== "false");
+    } catch (error) {
+      console.error("Failed to load notification sound preference:", error);
+    }
   }, []);
 
   // Save sound preference when it changes

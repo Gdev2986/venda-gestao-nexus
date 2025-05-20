@@ -47,15 +47,23 @@ export const NotificationsProvider: React.FC<{ children: React.ReactNode }> = ({
 
   // Load sound preference from localStorage on initial load
   useEffect(() => {
-    const savedSoundPreference = localStorage.getItem("notification_sound_enabled");
-    if (savedSoundPreference !== null) {
-      setSoundEnabled(savedSoundPreference === "true");
+    try {
+      const savedSoundPreference = localStorage.getItem("notification_sound_enabled");
+      if (savedSoundPreference !== null) {
+        setSoundEnabled(savedSoundPreference === "true");
+      }
+    } catch (error) {
+      console.error("Failed to load sound preference:", error);
     }
   }, []);
 
   // Save sound preference to localStorage when changed
   useEffect(() => {
-    localStorage.setItem("notification_sound_enabled", soundEnabled.toString());
+    try {
+      localStorage.setItem("notification_sound_enabled", soundEnabled.toString());
+    } catch (error) {
+      console.error("Failed to save sound preference:", error);
+    }
   }, [soundEnabled]);
 
   // Get the user's role - without using profile property directly
