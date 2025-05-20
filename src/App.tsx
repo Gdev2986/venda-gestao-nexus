@@ -2,7 +2,6 @@
 import * as React from "react";
 import { Routes, Route, Navigate } from "react-router-dom";
 import { PATHS } from "./routes/paths";
-import { useEffect } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { useUserRole } from "./hooks/use-user-role";
 import { UserRole } from "./types";
