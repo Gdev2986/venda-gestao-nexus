@@ -1,23 +1,18 @@
+
 import React, { createContext, useContext, useState, useEffect } from "react";
-import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "./AuthContext";
 import { useToast } from "@/hooks/use-toast";
-import { NotificationType, Notification } from "@/types/notification.types";
-import { playNotificationSoundIfEnabled } from "@/services/notificationSoundService";
-import { UserRole } from "@/types";
-
-interface NotificationsContextProps {
-  notifications: Notification[];
-  unreadCount: number;
-  fetchNotifications: () => Promise<void>;
-  markAsRead: (notificationId: string) => Promise<void>;
-  markAllAsRead: () => Promise<void>;
-  isLoading?: boolean;
-  deleteNotification?: (notificationId: string) => Promise<void>;
-  refreshNotifications?: () => Promise<void>;
-  soundEnabled: boolean;
-  setSoundEnabled: (enabled: boolean) => void;
-}
+import { Notification } from "@/types/notification.types";
+import { NotificationsContextProps } from "@/types/notification-context.types";
+import { useNotificationStorage } from "@/hooks/use-notification-storage";
+import { 
+  fetchUserNotifications, 
+  markNotificationAsRead, 
+  markAllNotificationsAsRead, 
+  deleteUserNotification,
+  subscribeToNotifications
+} from "@/services/notifications.service";
+import { supabase } from "@/integrations/supabase/client";
 
 const NotificationsContext = createContext<NotificationsContextProps | undefined>(
   undefined
@@ -29,22 +24,10 @@ export const NotificationsProvider: React.FC<{ children: React.ReactNode }> = ({
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [unreadCount, setUnreadCount] = useState(0);
   const [isLoading, setIsLoading] = useState(false);
-  const [soundEnabled, setSoundEnabled] = useState<boolean>(true);
+  
+  const { soundEnabled, setSoundEnabled } = useNotificationStorage(true);
   const { user, profile } = useAuth();
   const { toast } = useToast();
-
-  // Load sound preference from localStorage on initial load
-  useEffect(() => {
-    const savedSoundPreference = localStorage.getItem("notification_sound_enabled");
-    if (savedSoundPreference !== null) {
-      setSoundEnabled(savedSoundPreference === "true");
-    }
-  }, []);
-
-  // Save sound preference to localStorage when changed
-  useEffect(() => {
-    localStorage.setItem("notification_sound_enabled", soundEnabled.toString());
-  }, [soundEnabled]);
 
   // Get the user's role directly from the profile object
   const userRole = profile?.role;
@@ -55,60 +38,27 @@ export const NotificationsProvider: React.FC<{ children: React.ReactNode }> = ({
 
       // Set up realtime subscription for new notifications
       const setupRealtimeSubscription = async () => {
-        console.log('Setting up realtime notifications for user role:', userRole);
-        
-        const channel = supabase
-          .channel('public:notifications')
-          .on(
-            'postgres_changes',
-            {
-              event: '*',
-              schema: 'public',
-              table: 'notifications',
-              filter: `user_id=eq.${user.id}`,
-            },
-            (payload) => {
-              console.log('Notification change received!', payload);
-              
-              if (payload.eventType === 'INSERT') {
-                const newNotification = payload.new as Notification;
-                
-                // Check if this notification is intended for the user's role
-                const isForUserRole = !newNotification.recipient_roles || 
-                  newNotification.recipient_roles.length === 0 || 
-                  (userRole && newNotification.recipient_roles.includes(userRole as string));
-                
-                if (isForUserRole) {
-                  // Play sound based on notification type and sound preference
-                  playNotificationSoundIfEnabled(newNotification.type as NotificationType, soundEnabled);
-                  
-                  // Show toast notification
-                  toast({
-                    title: newNotification.title,
-                    description: newNotification.message,
-                  });
-                  
-                  // Update our notifications state
-                  setNotifications(prev => [newNotification, ...prev]);
-                }
-              } else {
-                // For updates or deletions, just refresh the list
-                fetchNotifications();
-              }
-            }
-          )
-          .subscribe((status) => {
-            console.log('Realtime subscription status:', status);
+        const handleNewNotification = (newNotification: Notification) => {
+          // Show toast notification
+          toast({
+            title: newNotification.title,
+            description: newNotification.message,
           });
-
+          
+          // Update our notifications state
+          setNotifications(prev => [newNotification, ...prev]);
+        };
+        
+        const channel = subscribeToNotifications(user.id, userRole, handleNewNotification, soundEnabled);
+        
         return channel;
       };
 
-      const channel = setupRealtimeSubscription();
+      const channelPromise = setupRealtimeSubscription();
       
       return () => {
         console.log('Cleaning up notification subscription');
-        channel.then(ch => {
+        channelPromise.then(ch => {
           if (ch) supabase.removeChannel(ch);
         });
       };
@@ -126,37 +76,8 @@ export const NotificationsProvider: React.FC<{ children: React.ReactNode }> = ({
     setIsLoading(true);
 
     try {
-      // Fetch notifications specifically for this user
-      const { data, error } = await supabase
-        .from("notifications")
-        .select("*")
-        .eq("user_id", user.id)
-        .order("created_at", { ascending: false });
-
-      if (error) {
-        throw error;
-      }
-
-      // Filter notifications based on recipient roles if specified
-      let filteredData = data || [];
-      
-      if (userRole) {
-        filteredData = filteredData.filter((notification: Notification) => {
-          // If recipient_roles is null or empty array, show to everyone
-          if (!notification.recipient_roles || notification.recipient_roles.length === 0) {
-            return true;
-          }
-          // Otherwise, check if user's role is in recipient_roles
-          return notification.recipient_roles.includes(userRole as string);
-        });
-      }
-
-      // Fix the type casting to ensure compatibility
-      setNotifications(filteredData.map((item: any) => ({
-        ...item,
-        type: item.type as NotificationType,
-        recipient_roles: item.recipient_roles || []
-      })));
+      const data = await fetchUserNotifications(user.id, userRole);
+      setNotifications(data);
     } catch (error: any) {
       console.error("Error fetching notifications:", error);
       toast({
@@ -171,15 +92,8 @@ export const NotificationsProvider: React.FC<{ children: React.ReactNode }> = ({
 
   const markAsRead = async (notificationId: string) => {
     try {
-      const { error } = await supabase
-        .from("notifications")
-        .update({ is_read: true })
-        .eq("id", notificationId);
-
-      if (error) {
-        throw error;
-      }
-
+      await markNotificationAsRead(notificationId);
+      
       setNotifications((prevNotifications) =>
         prevNotifications.map((notification) =>
           notification.id === notificationId
@@ -202,14 +116,7 @@ export const NotificationsProvider: React.FC<{ children: React.ReactNode }> = ({
     if (!user) return;
 
     try {
-      const { error } = await supabase
-        .from("notifications")
-        .update({ is_read: true })
-        .eq("user_id", user.id);
-
-      if (error) {
-        throw error;
-      }
+      await markAllNotificationsAsRead(user.id);
 
       setNotifications((prevNotifications) =>
         prevNotifications.map((notification) => ({ ...notification, is_read: true }))
@@ -228,14 +135,7 @@ export const NotificationsProvider: React.FC<{ children: React.ReactNode }> = ({
 
   const deleteNotification = async (notificationId: string) => {
     try {
-      const { error } = await supabase
-        .from("notifications")
-        .delete()
-        .eq("id", notificationId);
-
-      if (error) {
-        throw error;
-      }
+      await deleteUserNotification(notificationId);
 
       setNotifications((prevNotifications) =>
         prevNotifications.filter((notification) => notification.id !== notificationId)
