@@ -1,9 +1,26 @@
 
-// This file is only for backwards compatibility
-// The actual Toaster is being rendered in main.tsx using the sonner component
+"use client";
+
 import React from "react";
+import { Toaster as SonnerToaster } from "sonner";
+import { useTheme } from "@/components/theme-provider";
 
 export function Toaster() {
-  // This component doesn't render anything since we use sonner Toaster now
-  return null;
+  const { theme } = useTheme();
+  
+  return (
+    <SonnerToaster 
+      theme={theme as "dark" | "light" | "system"}
+      position="top-right" 
+      closeButton
+      toastOptions={{
+        classNames: {
+          toast: "bg-background border-border",
+          description: "text-muted-foreground",
+          actionButton: "bg-primary text-primary-foreground",
+          cancelButton: "bg-muted text-muted-foreground",
+        }
+      }}
+    />
+  );
 }
