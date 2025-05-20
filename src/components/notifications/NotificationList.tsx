@@ -1,4 +1,5 @@
 
+import * as React from "react";
 import { AnimatePresence } from "framer-motion";
 import { Notification } from "@/contexts/notifications/types";
 import { NotificationItem } from "./NotificationItem";

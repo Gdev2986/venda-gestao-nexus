@@ -1,5 +1,5 @@
 
-import { useState, useRef, useEffect } from "react";
+import * as React from "react";
 import { Bell } from "lucide-react";
 import {
   DropdownMenu,
@@ -16,8 +16,8 @@ import { NotificationFooter } from "@/components/notifications/NotificationFoote
 
 const NotificationDropdown = () => {
   
-  const [isOpen, setIsOpen] = useState(false);
-  const dropdownRef = useRef<HTMLDivElement>(null);
+  const [isOpen, setIsOpen] = React.useState(false);
+  const dropdownRef = React.useRef<HTMLDivElement>(null);
   
   const {
     notifications,
@@ -32,7 +32,7 @@ const NotificationDropdown = () => {
   const recentNotifications = notifications.slice(0, 5);
 
   // Fechar dropdown quando clicar fora
-  useEffect(() => {
+  React.useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (
         dropdownRef.current &&
