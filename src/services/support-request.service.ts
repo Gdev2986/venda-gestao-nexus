@@ -7,16 +7,13 @@ import { TicketType, TicketPriority, TicketStatus, SupportTicket } from "@/types
 export type SupportRequest = SupportTicket;
 
 export async function createSupportRequest(request: SupportRequest): Promise<{ data: any, error: any }> {
-  // Generate ID but don't include it directly in the insert values
-  const id = await generateUuid();
-  
   // Create an insert object with the correct types and without including id in the values
   const insertData = {
     client_id: request.client_id,
     technician_id: request.technician_id,
-    type: request.type as unknown as string, // Cast to string for database compatibility
-    status: request.status as unknown as string, // Cast to string for database compatibility
-    priority: request.priority as unknown as string, // Cast to string for database compatibility
+    type: request.type,  // Using enum directly
+    status: request.status,  // Using enum directly
+    priority: request.priority,  // Using enum directly
     title: request.title,
     description: request.description,
     scheduled_date: request.scheduled_date,
@@ -89,9 +86,10 @@ export async function getSupportRequests(filters?: {
     .order('created_at', { ascending: false });
 
   if (filters) {
-    if (filters.status) query = query.eq('status', filters.status);
-    if (filters.type) query = query.eq('type', filters.type);
-    if (filters.priority) query = query.eq('priority', filters.priority);
+    // Cast the string filters to match expected enum types
+    if (filters.status) query = query.eq('status', filters.status as TicketStatus);
+    if (filters.type) query = query.eq('type', filters.type as TicketType);
+    if (filters.priority) query = query.eq('priority', filters.priority as TicketPriority);
     if (filters.client_id) query = query.eq('client_id', filters.client_id);
     if (filters.technician_id) query = query.eq('technician_id', filters.technician_id);
     if (filters.date_from) query = query.gte('created_at', filters.date_from);
@@ -119,7 +117,7 @@ async function createRequestNotification(request: SupportRequest, requestId: str
             user_id: user.id,
             title: 'Nova Solicitação Técnica',
             message: `${request.title} - ${request.priority.toUpperCase()}`,
-            type: 'SUPPORT', // Use string literal instead of enum
+            type: "SUPPORT", // Use string literal instead of enum
             data: { 
               request_id: requestId,
               type: request.type,
@@ -146,7 +144,7 @@ async function createRequestNotification(request: SupportRequest, requestId: str
             user_id: user.id,
             title: 'Nova Solicitação Técnica',
             message: `${request.title} - ${request.priority.toUpperCase()}`,
-            type: 'SUPPORT', // Use string literal instead of enum
+            type: "SUPPORT", // Use string literal instead of enum
             data: { 
               request_id: requestId,
               type: request.type,
@@ -183,7 +181,7 @@ async function createStatusUpdateNotification(requestId: string, updates: Partia
           user_id: clientData.user_id,
           title: 'Atualização de Solicitação',
           message: `Sua solicitação "${request.title}" foi atualizada para ${updates.status}`,
-          type: 'SUPPORT', // Use string literal instead of enum
+          type: "SUPPORT", // Use string literal instead of enum
           data: { request_id: requestId, new_status: updates.status },
           is_read: false,
           created_at: new Date().toISOString()
@@ -198,7 +196,7 @@ async function createStatusUpdateNotification(requestId: string, updates: Partia
           user_id: updates.technician_id,
           title: 'Nova Solicitação Atribuída',
           message: `Você foi atribuído à solicitação "${request.title}"`,
-          type: 'SUPPORT', // Use string literal instead of enum
+          type: "SUPPORT", // Use string literal instead of enum
           data: { request_id: requestId },
           is_read: false,
           created_at: new Date().toISOString()
