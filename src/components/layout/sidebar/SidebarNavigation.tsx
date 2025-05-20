@@ -6,7 +6,8 @@ import {
   userItems, 
   partnerItems, 
   financialItems, 
-  logisticsItems
+  logisticsItems,
+  notificationsItem 
 } from "./navigation-items";
 
 interface SidebarNavigationProps {
@@ -16,20 +17,34 @@ interface SidebarNavigationProps {
 const SidebarNavigation = ({ userRole }: SidebarNavigationProps) => {
   // Get items based on user role
   const getSidebarItems = () => {
+    let items;
+    
     switch (userRole) {
       case UserRole.ADMIN:
-        return adminItems;
+        items = [...adminItems];
+        break;
       case UserRole.CLIENT:
-        return userItems;
+        items = [...userItems];
+        break;
       case UserRole.PARTNER:
-        return partnerItems;
+        items = [...partnerItems];
+        break;
       case UserRole.FINANCIAL:
-        return financialItems;
+        items = [...financialItems];
+        break;
       case UserRole.LOGISTICS:
-        return logisticsItems;
+        items = [...logisticsItems];
+        break;
       default:
-        return userItems; // Default to user items
+        items = [...userItems]; // Default to user items
     }
+    
+    // Add notifications item to all navigation sets if it's not already included
+    if (!items.some(item => item.href === notificationsItem.href)) {
+      items.push(notificationsItem);
+    }
+    
+    return items;
   };
 
   const sidebarItems = getSidebarItems();
