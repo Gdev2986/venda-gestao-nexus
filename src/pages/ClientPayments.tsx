@@ -150,7 +150,20 @@ const ClientPayments = () => {
         throw error;
       }
       
-      setPixKeys(data || []);
+      // Ensure each pix key has the owner_name property
+      const formattedPixKeys: PixKey[] = (data || []).map(key => ({
+        id: key.id,
+        key: key.key,
+        type: key.type,
+        name: key.name || '',
+        owner_name: key.name || '', // Set owner_name to name if not present
+        user_id: key.user_id,
+        is_default: key.is_default || false,
+        created_at: key.created_at || new Date().toISOString(),
+        updated_at: key.updated_at || new Date().toISOString()
+      }));
+      
+      setPixKeys(formattedPixKeys);
     } catch (error) {
       console.error("Error fetching PIX keys:", error);
     } finally {
