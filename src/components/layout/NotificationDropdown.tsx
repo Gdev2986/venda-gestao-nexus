@@ -1,4 +1,3 @@
-
 import { useState, useRef, useEffect } from "react";
 import { Bell } from "lucide-react";
 import {
@@ -15,6 +14,7 @@ import { NotificationList } from "@/components/notifications/NotificationList";
 import { NotificationFooter } from "@/components/notifications/NotificationFooter";
 
 const NotificationDropdown = () => {
+  
   const [isOpen, setIsOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
   
