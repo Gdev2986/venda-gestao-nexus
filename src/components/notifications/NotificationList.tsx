@@ -3,6 +3,7 @@ import { AnimatePresence } from "framer-motion";
 import { Notification } from "@/types/notification.types";
 import { NotificationItem } from "./NotificationItem";
 import { Spinner } from "@/components/ui/spinner";
+import { DropdownMenuGroup } from "@/components/ui/dropdown-menu";
 
 interface NotificationListProps {
   notifications: Notification[];
@@ -33,14 +34,16 @@ export const NotificationList = ({
             Nenhuma notificação
           </div>
         ) : (
-          notifications.map((notification: Notification) => (
-            <NotificationItem
-              key={notification.id}
-              notification={notification}
-              onMarkAsRead={onMarkAsRead}
-              onDelete={onDelete}
-            />
-          ))
+          <DropdownMenuGroup>
+            {notifications.map((notification: Notification) => (
+              <NotificationItem
+                key={notification.id}
+                notification={notification}
+                onMarkAsRead={onMarkAsRead}
+                onDelete={onDelete}
+              />
+            ))}
+          </DropdownMenuGroup>
         )}
       </AnimatePresence>
     </div>
