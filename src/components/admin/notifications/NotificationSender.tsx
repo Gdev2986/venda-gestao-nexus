@@ -43,19 +43,19 @@ export const NotificationSender = ({ user }: NotificationSenderProps) => {
         }
         
         // Create one notification for each user
-        const notificationsToInsert = profiles.map(profile => ({
-          user_id: profile.id,
-          title: notification.title,
-          message: notification.message,
-          type: notification.type as NotificationType,
-          data: notification.data || {}
-        }));
-        
-        const { error: insertError } = await supabase
-          .from("notifications")
-          .insert(notificationsToInsert);
-          
-        if (insertError) throw insertError;
+        for (const profile of profiles) {
+          const { error: insertError } = await supabase
+            .from("notifications")
+            .insert({
+              user_id: profile.id,
+              title: notification.title,
+              message: notification.message,
+              type: notification.type,
+              data: notification.data || {}
+            });
+            
+          if (insertError) throw insertError;
+        }
       } else {
         // Handle 'all' users case
         const { data: profiles, error: profilesError } = await supabase
@@ -74,19 +74,19 @@ export const NotificationSender = ({ user }: NotificationSenderProps) => {
         }
         
         // Create one notification for each user
-        const notificationsToInsert = profiles.map(profile => ({
-          user_id: profile.id,
-          title: notification.title,
-          message: notification.message,
-          type: notification.type as NotificationType,
-          data: notification.data || {}
-        }));
-        
-        const { error: insertError } = await supabase
-          .from("notifications")
-          .insert(notificationsToInsert);
-          
-        if (insertError) throw insertError;
+        for (const profile of profiles) {
+          const { error: insertError } = await supabase
+            .from("notifications")
+            .insert({
+              user_id: profile.id,
+              title: notification.title,
+              message: notification.message,
+              type: notification.type,
+              data: notification.data || {}
+            });
+            
+          if (insertError) throw insertError;
+        }
       }
       
       toast({

@@ -17,7 +17,7 @@ export interface Notification {
   user_id: string;
   title: string;
   message: string;
-  type: NotificationType;
+  type: NotificationType | string;  // Updated to accept string as well for compatibility
   data?: any;
   is_read?: boolean;
   created_at: string;

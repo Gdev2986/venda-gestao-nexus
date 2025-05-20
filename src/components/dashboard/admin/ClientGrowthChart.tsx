@@ -31,7 +31,6 @@ export const ClientGrowthChart = ({ data }: ClientGrowthChartProps) => {
           xAxisKey="name"
           dataKey="clients"
           margin={{ top: 5, right: 10, left: 10, bottom: 0 }}
-          showGrid={true}
         />
       </CardContent>
     </Card>
