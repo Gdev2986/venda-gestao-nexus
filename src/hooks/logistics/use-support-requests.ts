@@ -4,11 +4,11 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { 
-  SupportRequest, 
+  SupportRequest,
   createSupportRequest,
   updateSupportRequest,
   getSupportRequests
-} from "@/services/support-request.service";
+} from "@/services/support-request";
 import { UserRole } from "@/types";
 import { playNotificationSoundIfEnabled } from "@/services/notificationSoundService";
 import { NotificationType } from "@/types/notification.types";
