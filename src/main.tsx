@@ -10,6 +10,9 @@ import { Toaster } from '@/components/ui/sonner';
 import App from './App.tsx';
 import './index.css';
 
+// Ensure React is globally available
+window.React = React;
+
 // Create a query client with default options
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -32,9 +35,6 @@ function renderApp() {
   
   try {
     console.log('Attempting to render application...');
-    
-    // Setup global React error boundary before rendering
-    window.React = React;
     
     // Create a fresh root
     const root = createRoot(rootElement);

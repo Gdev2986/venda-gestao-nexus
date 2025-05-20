@@ -1,5 +1,5 @@
 
-import { createContext, useContext, useEffect, useState } from "react";
+import React, { createContext, useContext, useEffect, useState } from "react";
 import { Session, User } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
@@ -45,7 +45,7 @@ export const cleanupSupabaseState = () => {
   }
 };
 
-// Create a context for authentication
+// Create a context for authentication - ensure React is properly referenced
 export const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 // Provider component that wraps the app and makes auth object available to any child component that calls useAuth()
