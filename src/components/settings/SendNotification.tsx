@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -9,6 +10,13 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
+import { NotificationType } from "@/types/notification.types";
+
+// Define valid notification types
+const notificationTypes = [
+  "SYSTEM", "PAYMENT", "BALANCE", "MACHINE", 
+  "COMMISSION", "GENERAL", "SALE", "SUPPORT", "LOGISTICS"
+] as const;
 
 const notificationFormSchema = z.object({
   title: z.string().min(3, {
@@ -19,7 +27,7 @@ const notificationFormSchema = z.object({
   }),
   targetType: z.enum(["all", "specific"]),
   targetId: z.string().optional(),
-  type: z.enum(["SYSTEM", "PAYMENT", "BALANCE", "MACHINE", "COMMISSION", "GENERAL", "SALE", "SUPPORT", "LOGISTICS"])
+  type: z.enum(notificationTypes)
 });
 
 type NotificationFormValues = z.infer<typeof notificationFormSchema>;
@@ -86,7 +94,7 @@ export function SendNotification() {
           .insert({
             title: data.title,
             message: data.message,
-            type: data.type, // Removed ADMIN_NOTIFICATION from the enum
+            type: data.type,
             user_id: 'ALL' // We'll handle this value in a database trigger or create a separate endpoint
           });
         
@@ -109,7 +117,7 @@ export function SendNotification() {
             .insert({
               title: data.title,
               message: data.message,
-              type: data.type, // Removed ADMIN_NOTIFICATION from the enum
+              type: data.type,
               user_id: clientData.id
             });
           
@@ -179,7 +187,6 @@ export function SendNotification() {
                   <SelectItem value="MACHINE">Máquina</SelectItem>
                   <SelectItem value="BALANCE">Saldo</SelectItem>
                   <SelectItem value="COMMISSION">Comissão</SelectItem>
-                  <SelectItem value="ADMIN_NOTIFICATION">Admin</SelectItem>
                 </SelectContent>
               </Select>
               <FormMessage />

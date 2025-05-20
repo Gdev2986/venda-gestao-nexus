@@ -18,6 +18,7 @@ export interface SupportTicket {
   updated_at: string;
   client_id: string;
   assignee_id?: string;
+  technician_id?: string; // Add this field to match usage in service
   resolution?: string;
   client_name?: string;
   assignee_name?: string;

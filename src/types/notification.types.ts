@@ -8,8 +8,7 @@ export enum NotificationType {
   GENERAL = "GENERAL",
   SALE = "SALE",
   SUPPORT = "SUPPORT",
-  LOGISTICS = "LOGISTICS",
-  ADMIN_NOTIFICATION = "ADMIN_NOTIFICATION"
+  LOGISTICS = "LOGISTICS"
 }
 
 export interface Notification {
@@ -21,4 +20,5 @@ export interface Notification {
   data?: Record<string, any>;
   is_read: boolean;
   created_at: string;
+  recipient_roles?: string[]; // Added this field
 }

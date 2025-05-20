@@ -1,19 +1,19 @@
 
-import { adminRoutes } from "./adminRoutes";
-import { authRoutes } from "./authRoutes";
-import { clientRoutes } from "./clientRoutes";
-import { financialRoutes } from "./financialRoutes";
-import { logisticsRoutes } from "./logisticsRoutes";
-import { partnerRoutes } from "./partnerRoutes";
+import { AdminRoutes } from "./adminRoutes";
+import { AuthRoutes } from "./authRoutes";
+import { ClientRoutes } from "./clientRoutes";
+import { FinancialRoutes } from "./financialRoutes";
+import { LogisticsRoutes } from "./logisticsRoutes";
+import { PartnerRoutes } from "./partnerRoutes";
 
 // Combine all routes into a single array
 const routes = [
-  ...adminRoutes,
-  ...authRoutes,
-  ...clientRoutes,
-  ...financialRoutes,
-  ...logisticsRoutes,
-  ...partnerRoutes
+  ...AdminRoutes,
+  ...AuthRoutes,
+  ...ClientRoutes,
+  ...FinancialRoutes,
+  ...LogisticsRoutes,
+  ...PartnerRoutes
 ];
 
 export default routes;

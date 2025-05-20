@@ -2,18 +2,18 @@
 import { supabase } from "@/integrations/supabase/client";
 import { generateUuid } from "@/lib/supabase-utils";
 import { NotificationType } from "@/types/notification.types";
-import { TicketType, TicketPriority, TicketStatus, SupportTicket } from "@/types/support-ticket.types";
+import { SupportTicket } from "@/types/support-ticket.types";
 
 export type SupportRequest = SupportTicket;
 
 export async function createSupportRequest(request: SupportRequest): Promise<{ data: any, error: any }> {
-  // Create an insert object with the correct types and without including id in the values
+  // Create an insert object with the correct string types
   const insertData = {
     client_id: request.client_id,
     technician_id: request.technician_id,
-    type: request.type,  // Using enum directly
-    status: request.status,  // Using enum directly
-    priority: request.priority,  // Using enum directly
+    type: String(request.type),  // Convert enum to string
+    status: String(request.status),  // Convert enum to string
+    priority: String(request.priority),  // Convert enum to string
     title: request.title,
     description: request.description,
     scheduled_date: request.scheduled_date,
@@ -38,12 +38,18 @@ export async function createSupportRequest(request: SupportRequest): Promise<{ d
 }
 
 export async function updateSupportRequest(id: string, updates: Partial<SupportRequest>): Promise<{ data: any, error: any }> {
+  // Convert enum values to strings for database compatibility
+  const processedUpdates = {
+    ...updates,
+    type: updates.type ? String(updates.type) : undefined,
+    status: updates.status ? String(updates.status) : undefined, 
+    priority: updates.priority ? String(updates.priority) : undefined,
+    updated_at: new Date().toISOString()
+  };
+
   const { data, error } = await supabase
     .from('support_requests')
-    .update({
-      ...updates,
-      updated_at: new Date().toISOString()
-    })
+    .update(processedUpdates)
     .eq('id', id)
     .select();
 

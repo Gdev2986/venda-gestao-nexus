@@ -73,7 +73,12 @@ export const SendNotificationForm = ({ onSendNotification }: SendNotificationFor
 
       // Add recipient roles if not sending to all
       if (recipientType === "roles") {
-        notificationData.recipient_roles = selectedRoles as unknown as string[];
+        // Convert roles to string array for the database
+        const roleStrings = selectedRoles.map(role => String(role));
+        notificationData.data = {
+          ...notificationData.data,
+          recipient_roles: roleStrings
+        };
       }
       
       await onSendNotification(notificationData);

@@ -1,10 +1,9 @@
 
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { SupportRequest } from "@/types/support-request.types";
+import { SupportRequest, SupportRequestStatus, SupportRequestType, SupportRequestPriority } from "@/types/support-request";
 import { toast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
-import { SupportRequestStatus, SupportRequestType, SupportRequestPriority } from "@/types/support-request";
 
 export function useSupportRequests() {
   const [supportRequests, setSupportRequests] = useState<SupportRequest[]>([]);
@@ -44,16 +43,16 @@ export function useSupportRequests() {
   const createSupportRequest = async (newRequest: Omit<SupportRequest, 'id' | 'created_at'>) => {
     setIsLoading(true);
     try {
-      // Check Supabase schema to match enum values exactly
+      // Check Supabase schema to match enum values exactly as strings
       const insertData = {
         client_id: newRequest.client_id,
         technician_id: newRequest.technician_id,
         title: newRequest.title,
         description: newRequest.description,
-        // Convert enums to the exact string literals expected by the database
-        type: newRequest.type,
-        status: newRequest.status,
-        priority: newRequest.priority,
+        // Convert enums to string literals expected by the database
+        type: String(newRequest.type),
+        status: String(newRequest.status),
+        priority: String(newRequest.priority),
         scheduled_date: newRequest.scheduled_date,
         resolution: newRequest.resolution
       };

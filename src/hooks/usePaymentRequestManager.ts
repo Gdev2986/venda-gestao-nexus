@@ -132,11 +132,11 @@ export const usePaymentRequestManager = (
 
       console.log("Created payment request:", data);
 
-      // Create a new payment request object for the UI
+      // Create a new payment request object for the UI with proper types
       const newPaymentRequest: Payment = {
         id: data.id,
         amount: data.amount,
-        status: data.status as PaymentStatus, // Cast status
+        status: data.status as PaymentStatus,
         created_at: data.created_at,
         updated_at: data.updated_at,
         client_id: data.client_id,
@@ -146,7 +146,9 @@ export const usePaymentRequestManager = (
           id: data.pix_key.id,
           key: data.pix_key.key,
           type: data.pix_key.type,
-          owner_name: data.pix_key.name
+          name: data.pix_key.name,
+          owner_name: data.pix_key.name, // Use name as owner_name
+          user_id: user.id // Use current user's ID
         } : undefined,
         rejection_reason: null
       };
