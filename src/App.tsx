@@ -1,7 +1,6 @@
 
 import { useEffect } from 'react';
-import { useNavigate, useLocation } from 'react-router-dom';
-import { Routes, Route } from 'react-router-dom';
+import { useNavigate, useLocation, Routes, Route } from 'react-router-dom';
 import routes from './routes';
 import { useAuth } from './hooks/use-auth';
 import { Toaster } from './components/ui/toaster';
