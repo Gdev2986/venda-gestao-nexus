@@ -1,4 +1,3 @@
-
 import { useCallback, useEffect, useState } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
@@ -34,6 +33,15 @@ export function useSupportRequests(options: UseSupportRequestsOptions = {}) {
   const [error, setError] = useState<string | null>(null);
   const { user, profile } = useAuth();
   const { toast } = useToast();
+  const [soundEnabled, setSoundEnabled] = useState<boolean>(true);
+  
+  // Load sound preference from localStorage on initial load
+  useEffect(() => {
+    const savedSoundPreference = localStorage.getItem("notification_sound_enabled");
+    if (savedSoundPreference !== null) {
+      setSoundEnabled(savedSoundPreference === "true");
+    }
+  }, []);
   
   const fetchRequests = useCallback(async (filters = options.filters) => {
     if (!user) return;
@@ -110,7 +118,7 @@ export function useSupportRequests(options: UseSupportRequestsOptions = {}) {
             });
             
             // Play notification sound
-            playNotificationSoundIfEnabled(NotificationType.SUPPORT);
+            playNotificationSoundIfEnabled(NotificationType.SUPPORT, soundEnabled);
           }
         }
       )
@@ -119,7 +127,7 @@ export function useSupportRequests(options: UseSupportRequestsOptions = {}) {
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [user, fetchRequests, options.enableRealtime, toast]);
+  }, [user, fetchRequests, options.enableRealtime, toast, soundEnabled]);
   
   // Function to create a new support request
   const createRequest = async (request: Omit<SupportRequest, 'id'>) => {

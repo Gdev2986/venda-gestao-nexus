@@ -23,7 +23,7 @@ const audioCache: Record<string, HTMLAudioElement> = {};
  * @param type NotificationType
  * @param soundEnabled boolean flag to control if sound should be played
  */
-export const playNotificationSoundIfEnabled = (type: NotificationType, soundEnabled: boolean) => {
+export const playNotificationSoundIfEnabled = (type: NotificationType, soundEnabled: boolean = true) => {
   if (!soundEnabled) return;
   
   // When running on server, return early

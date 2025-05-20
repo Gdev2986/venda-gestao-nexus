@@ -21,5 +21,5 @@ export interface Notification {
   data?: any;
   is_read?: boolean;
   created_at: string;
-  recipient_roles?: string[]; // Optional field for sending notifications to specific roles
+  recipient_roles?: string[]; // Property that was missing in the error
 }

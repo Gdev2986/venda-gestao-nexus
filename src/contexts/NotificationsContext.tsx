@@ -2,21 +2,9 @@ import React, { createContext, useContext, useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "./AuthContext";
 import { useToast } from "@/hooks/use-toast";
-import { NotificationType } from "@/types/notification.types";
+import { NotificationType, Notification } from "@/types/notification.types";
 import { playNotificationSoundIfEnabled } from "@/services/notificationSoundService";
 import { UserRole } from "@/types";
-
-interface Notification {
-  id: string;
-  user_id: string;
-  title: string;
-  message: string;
-  type: NotificationType;
-  data?: any;
-  is_read: boolean;
-  created_at: string;
-  recipient_roles?: string[]; // Array of roles this notification is for
-}
 
 interface NotificationsContextProps {
   notifications: Notification[];
@@ -125,7 +113,7 @@ export const NotificationsProvider: React.FC<{ children: React.ReactNode }> = ({
         });
       };
     }
-  }, [user, soundEnabled, userRole]);
+  }, [user, soundEnabled, userRole, toast]);
 
   // Update unread count whenever notifications change
   useEffect(() => {
