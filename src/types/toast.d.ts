@@ -20,5 +20,6 @@ declare module "sonner" {
     position?: "top-left" | "top-right" | "top-center" | "bottom-left" | "bottom-right" | "bottom-center";
     duration?: number;
     closeButton?: boolean;
+    theme?: "light" | "dark" | "system";
   }): JSX.Element;
 }

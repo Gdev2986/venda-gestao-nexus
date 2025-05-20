@@ -1,5 +1,5 @@
 
-import { toast as sonnerToast } from "sonner";
+import { toast as sonnerToast, type ToastT } from "sonner";
 
 export type ToastProps = {
   title?: string;
@@ -7,10 +7,22 @@ export type ToastProps = {
   action?: React.ReactNode;
   variant?: "default" | "destructive";
   duration?: number;
+  position?: "top-left" | "top-right" | "top-center" | "bottom-left" | "bottom-right" | "bottom-center";
 };
 
-export function toast(message: string, options?: ToastProps) {
-  return sonnerToast(message, options);
+// Overload for string message
+export function toast(message: string): void;
+// Overload for object message
+export function toast(props: ToastProps): void;
+// Implementation that handles both
+export function toast(messageOrProps: string | ToastProps): void {
+  if (typeof messageOrProps === 'string') {
+    sonnerToast(messageOrProps);
+  } else {
+    // Extract props to match sonner's expected format
+    const { title, description, ...rest } = messageOrProps;
+    sonnerToast(title || "", { description, ...rest });
+  }
 }
 
 export function useToast() {

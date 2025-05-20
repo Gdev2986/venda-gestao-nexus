@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
@@ -40,7 +41,6 @@ export const RoleChangeModal = ({
   const [loading, setLoading] = useState(true);
   const [newRole, setNewRole] = useState(user.role);
   const isModalOpen = open || isOpen; // Support both props
-  const { toast } = useToast();
 
   // Fetch available roles from the profiles table
   useEffect(() => {
@@ -59,7 +59,8 @@ export const RoleChangeModal = ({
         setAvailableRoles(uniqueRoles);
       } catch (error) {
         console.error("Error fetching roles:", error);
-        toast("Error", {
+        toast({
+          title: "Error",
           description: "Failed to load available roles",
           variant: "destructive"
         });
@@ -71,7 +72,7 @@ export const RoleChangeModal = ({
     if (isModalOpen) {
       fetchRoles();
     }
-  }, [isModalOpen, toast]);
+  }, [isModalOpen]);
 
   const onSave = async () => {
     setLoading(true);
@@ -83,13 +84,15 @@ export const RoleChangeModal = ({
 
       if (error) throw error;
       
-      toast("Role updated", {
+      toast({
+        title: "Role updated",
         description: `User ${user.name} role changed to ${newRole}`
       });
       onClose();
     } catch (error) {
       console.error("Error updating role:", error);
-      toast("Error", {
+      toast({
+        title: "Error",
         description: "Failed to update user role",
         variant: "destructive"
       });
