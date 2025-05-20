@@ -1,19 +1,32 @@
 
 import { toast as sonnerToast } from "sonner";
 
-// Define options type for our toast functions
+// Define a ToastOptions type that matches the sonner toast API
 type ToastOptions = {
-  title?: string;
   description?: string;
-  variant?: "default" | "destructive";
   action?: React.ReactNode;
   duration?: number;
+  variant?: "default" | "destructive";
+  position?: "top-left" | "top-right" | "top-center" | "bottom-left" | "bottom-right" | "bottom-center";
 };
 
-// Export toast directly for standalone usage
-export const toast = sonnerToast;
+/**
+ * Toast function for standalone usage
+ * @param message The main toast message
+ * @param options Additional toast options
+ */
+export function toast(message: string, options?: ToastOptions) {
+  return sonnerToast(message, options);
+}
 
-// Export useToast hook
-export const useToast = () => {
-  return { toast: sonnerToast };
-};
+/**
+ * Hook that provides the toast function
+ * This follows the standard hook pattern but simply returns the toast function
+ */
+export function useToast() {
+  return {
+    toast: (message: string, options?: ToastOptions) => {
+      return sonnerToast(message, options);
+    }
+  };
+}

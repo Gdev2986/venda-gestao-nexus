@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { useTheme } from "@/components/theme-provider";
 import { Button } from "@/components/ui/button";
@@ -13,10 +12,9 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { useToast } from "@/hooks/use-toast";
+import { toast } from "@/hooks/use-toast";
 
 const Settings = () => {
-  const { toast } = useToast();
   const { theme, setTheme } = useTheme();
   const [language, setLanguage] = useState("pt-BR");
   const [notificationsEnabled, setNotificationsEnabled] = useState(true);
@@ -38,8 +36,7 @@ const Settings = () => {
   const handleSaveProfile = (e: React.FormEvent) => {
     e.preventDefault();
     // Save profile settings
-    toast({
-      title: "Perfil atualizado",
+    toast("Perfil atualizado", {
       description: "Suas informações de perfil foram salvas com sucesso."
     });
   };
@@ -47,8 +44,7 @@ const Settings = () => {
   const handleSaveNotifications = (e: React.FormEvent) => {
     e.preventDefault();
     // Save notification settings
-    toast({
-      title: "Configurações salvas",
+    toast("Configurações salvas", {
       description: "Suas preferências de notificações foram atualizadas."
     });
   };
@@ -56,16 +52,14 @@ const Settings = () => {
   const handleChangePassword = (e: React.FormEvent) => {
     e.preventDefault();
     // Change password logic
-    toast({
-      title: "Senha alterada",
+    toast("Senha alterada", {
       description: "Sua senha foi alterada com sucesso."
     });
   };
 
   const handleManagePixKeys = () => {
     // Open PIX key management dialog
-    toast({
-      title: "Gerenciamento de chaves PIX",
+    toast("Gerenciamento de chaves PIX", {
       description: "Funcionalidade em desenvolvimento."
     });
   };

@@ -33,7 +33,7 @@ function renderApp() {
     // Create a fresh root
     const root = createRoot(rootElement);
     
-    // The order of providers has been adjusted to prevent React context issues
+    // Make sure React is properly initialized before using hooks
     root.render(
       <React.StrictMode>
         <BrowserRouter>
@@ -42,7 +42,7 @@ function renderApp() {
               <AuthProvider>
                 <NotificationsProvider>
                   <App />
-                  <Toaster />
+                  <Toaster position="top-right" />
                 </NotificationsProvider>
               </AuthProvider>
             </ThemeProvider>

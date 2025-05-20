@@ -27,63 +27,67 @@ export function ThemeProvider({
   storageKey = "sigmapay-theme",
   ...props
 }: ThemeProviderProps) {
-  // Safe access to localStorage with try/catch
-  const getThemeFromStorage = React.useCallback((): Theme | null => {
-    if (typeof window === "undefined") return null;
-    try {
-      const storedTheme = window.localStorage.getItem(storageKey);
-      return (storedTheme as Theme) || null;
-    } catch (e) {
-      console.error("Error accessing localStorage:", e);
-      return null;
+  // Use React's useState hook properly with correct initialization
+  const [theme, setTheme] = React.useState<Theme>(() => {
+    // Safe access to localStorage with try/catch
+    if (typeof window !== "undefined") {
+      try {
+        const storedTheme = window.localStorage.getItem(storageKey);
+        return (storedTheme as Theme) || defaultTheme;
+      } catch (e) {
+        console.error("Error accessing localStorage:", e);
+        return defaultTheme;
+      }
     }
-  }, [storageKey]);
-  
-  const [theme, setTheme] = React.useState<Theme>(
-    () => getThemeFromStorage() || defaultTheme
-  );
+    return defaultTheme;
+  });
 
-  const applyTheme = React.useCallback((newTheme: Theme) => {
+  // Apply theme effect
+  React.useEffect(() => {
     const root = window.document.documentElement;
     
     root.classList.remove("light", "dark");
 
-    if (newTheme === "system") {
+    if (theme === "system") {
       const systemTheme = window.matchMedia("(prefers-color-scheme: dark)").matches
         ? "dark"
         : "light";
       root.classList.add(systemTheme);
     } else {
-      root.classList.add(newTheme);
+      root.classList.add(theme);
     }
-  }, []);
+  }, [theme]);
 
+  // Save theme to localStorage
   React.useEffect(() => {
-    applyTheme(theme);
-  }, [theme, applyTheme]);
-
-  React.useEffect(() => {
-    if (typeof window === "undefined") return;
-    
-    try {
-      window.localStorage.setItem(storageKey, theme);
-    } catch (error) {
-      console.error("Error writing to localStorage:", error);
+    if (typeof window !== "undefined") {
+      try {
+        window.localStorage.setItem(storageKey, theme);
+      } catch (error) {
+        console.error("Error writing to localStorage:", error);
+      }
     }
   }, [theme, storageKey]);
 
+  // Listen for system theme changes
   React.useEffect(() => {
     if (theme !== "system" || typeof window === "undefined") return;
     
     function handleChange() {
-      applyTheme("system");
+      const root = window.document.documentElement;
+      const systemTheme = window.matchMedia("(prefers-color-scheme: dark)").matches
+        ? "dark"
+        : "light";
+      
+      root.classList.remove("light", "dark");
+      root.classList.add(systemTheme);
     }
     
     const mediaQuery = window.matchMedia("(prefers-color-scheme: dark)");
     mediaQuery.addEventListener("change", handleChange);
     
     return () => mediaQuery.removeEventListener("change", handleChange);
-  }, [theme, applyTheme]);
+  }, [theme]);
 
   const value = React.useMemo(
     () => ({
