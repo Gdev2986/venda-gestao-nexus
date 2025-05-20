@@ -1,7 +1,7 @@
 
 import { useState, useEffect } from "react";
 import { toast } from "@/hooks/use-toast"; 
-import { Notification } from "@/types/notification.types";
+import { Notification, NotificationType } from "@/types/notification.types";
 
 export function useNotifications() {
   const [soundEnabled, setSoundEnabled] = useState<boolean>(() => {
@@ -55,7 +55,7 @@ export function useNotifications() {
           user_id: "1",
           title: "Novo pagamento recebido",
           message: "Você recebeu um novo pagamento de R$ 150,00",
-          type: "PAYMENT",
+          type: NotificationType.PAYMENT,
           is_read: false,
           created_at: new Date().toISOString()
         },
@@ -64,7 +64,7 @@ export function useNotifications() {
           user_id: "1",
           title: "Atualização do sistema",
           message: "O sistema será atualizado hoje às 22:00",
-          type: "SYSTEM",
+          type: NotificationType.SYSTEM,
           is_read: true,
           created_at: new Date(Date.now() - 86400000).toISOString() // 1 day ago
         },
@@ -73,7 +73,7 @@ export function useNotifications() {
           user_id: "1",
           title: "Nova máquina disponível",
           message: "Um novo modelo de máquina está disponível para solicitação",
-          type: "MACHINE",
+          type: NotificationType.MACHINE,
           is_read: false,
           created_at: new Date(Date.now() - 172800000).toISOString() // 2 days ago
         }
@@ -113,6 +113,14 @@ export function useNotifications() {
     });
   };
   
+  const deleteNotification = (id: string) => {
+    setNotifications(prev => prev.filter(n => n.id !== id));
+    toast({
+      title: "Notificação removida",
+      description: "A notificação foi removida com sucesso"
+    });
+  };
+  
   return {
     soundEnabled,
     setSoundEnabled: toggleSound,
@@ -121,6 +129,7 @@ export function useNotifications() {
     markAsRead,
     markAllAsRead,
     fetchNotifications,
+    deleteNotification,
     isLoading
   };
 }

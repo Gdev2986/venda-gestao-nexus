@@ -65,17 +65,16 @@ function App() {
       />
 
       {/* Auth Routes */}
-      {AuthRoutes}
-
-      {/* Protected Routes by Role */}
-      {AdminRoutes}
-      {ClientRoutes}
-      {PartnerRoutes}
-      {FinancialRoutes}
-      {LogisticsRoutes}
+      <Route>{AuthRoutes}</Route>
 
       {/* Shared Routes (accessible by all roles) - Using MainLayout */}
       <Route element={<MainLayout />}>
+        {/* Protected Routes by Role */}
+        {AdminRoutes}
+        {ClientRoutes}
+        {PartnerRoutes}
+        {FinancialRoutes}
+        {LogisticsRoutes}
         <Route path="/notifications" element={<Notifications />} />
       </Route>
 
