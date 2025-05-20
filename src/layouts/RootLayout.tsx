@@ -11,6 +11,7 @@ const RootLayout = () => {
   const { user, isLoading, isAuthenticated, userRole } = useAuth();
   const location = useLocation();
   const [showLoading, setShowLoading] = useState(true);
+  const [error, setError] = useState<Error | null>(null);
   
   // Debug logging
   useEffect(() => {
@@ -48,6 +49,12 @@ const RootLayout = () => {
         </motion.div>
       </div>
     );
+  }
+  
+  // Handle any errors that occurred during routing or authentication
+  if (error) {
+    console.error("Error in RootLayout:", error);
+    return <Navigate to={PATHS.LOGIN} replace />;
   }
   
   // If authenticated and we have a role, redirect to role-specific dashboard

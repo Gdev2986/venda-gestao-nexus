@@ -52,6 +52,7 @@ function renderApp() {
     console.log('Application rendered successfully');
   } catch (error) {
     console.error('Failed to render application:', error);
+    fallbackRender();
   }
 }
 
@@ -64,9 +65,14 @@ function fallbackRender() {
     const message = document.createElement('div');
     message.style.padding = '20px';
     message.style.fontFamily = 'sans-serif';
-    message.innerHTML = '<h2>Error loading application</h2><p>Please try refreshing the page.</p>';
+    message.innerHTML = '<h2>Erro ao carregar aplicação</h2><p>Redirecionando para login...</p>';
     
     rootElement.appendChild(message);
+    
+    // Redirect to login page after a brief delay
+    setTimeout(() => {
+      window.location.href = '/login';
+    }, 2000);
   } catch (e) {
     // Last resort logging
     console.error('Critical rendering failure:', e);

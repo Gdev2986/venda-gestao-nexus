@@ -1,16 +1,21 @@
 
 "use client"
 
-import { useState, useCallback } from "react";
+import { useCallback } from "react";
 import { Moon, Sun } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useTheme } from "@/components/theme-provider";
 
 const ThemeToggle: React.FC = () => {
+  // Wrap the hook usage in a try-catch to handle potential errors
   const { theme, setTheme } = useTheme();
   
   const toggleTheme = useCallback(() => {
-    setTheme(theme === "dark" ? "light" : "dark");
+    try {
+      setTheme(theme === "dark" ? "light" : "dark");
+    } catch (error) {
+      console.error("Error toggling theme:", error);
+    }
   }, [theme, setTheme]);
 
   return (

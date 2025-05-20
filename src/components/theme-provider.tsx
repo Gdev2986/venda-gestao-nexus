@@ -2,7 +2,8 @@
 "use client"
 
 import * as React from "react";
-import { createContext, useContext, useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { PATHS } from "@/routes/paths";
 
 type Theme = "dark" | "light" | "system";
 
@@ -22,7 +23,7 @@ const initialState: ThemeProviderState = {
   setTheme: () => null,
 };
 
-const ThemeProviderContext = createContext<ThemeProviderState>(initialState);
+const ThemeProviderContext = React.createContext<ThemeProviderState>(initialState);
 
 export function ThemeProvider({
   children,
@@ -30,92 +31,106 @@ export function ThemeProvider({
   storageKey = "sigmapay-theme",
   ...props
 }: ThemeProviderProps) {
-  // Safe access to localStorage with try/catch
-  const getThemeFromStorage = (): Theme | null => {
-    if (typeof window === "undefined") return null;
-    try {
-      const storedTheme = window.localStorage.getItem(storageKey);
-      return (storedTheme as Theme) || null;
-    } catch (e) {
-      console.error("Error accessing localStorage:", e);
-      return null;
-    }
-  };
-  
-  const [theme, setTheme] = useState<Theme>(
-    () => getThemeFromStorage() || defaultTheme
-  );
-
-  const applyTheme = (newTheme: Theme) => {
-    const root = window.document.documentElement;
+  try {
+    // Safe access to localStorage with try/catch
+    const getThemeFromStorage = (): Theme | null => {
+      if (typeof window === "undefined") return null;
+      try {
+        const storedTheme = window.localStorage.getItem(storageKey);
+        return (storedTheme as Theme) || null;
+      } catch (e) {
+        console.error("Error accessing localStorage:", e);
+        return null;
+      }
+    };
     
-    root.classList.remove("light", "dark");
+    const [theme, setTheme] = React.useState<Theme>(
+      () => getThemeFromStorage() || defaultTheme
+    );
 
-    if (newTheme === "system") {
-      const systemTheme = window.matchMedia("(prefers-color-scheme: dark)").matches
-        ? "dark"
-        : "light";
-      root.classList.add(systemTheme);
-    } else {
-      root.classList.add(newTheme);
-    }
-  };
+    const applyTheme = (newTheme: Theme) => {
+      const root = window.document.documentElement;
+      
+      root.classList.remove("light", "dark");
 
-  useEffect(() => {
-    applyTheme(theme);
-  }, [theme]);
+      if (newTheme === "system") {
+        const systemTheme = window.matchMedia("(prefers-color-scheme: dark)").matches
+          ? "dark"
+          : "light";
+        root.classList.add(systemTheme);
+      } else {
+        root.classList.add(newTheme);
+      }
+    };
 
-  useEffect(() => {
-    if (typeof window === "undefined") return;
-    
-    try {
-      window.localStorage.setItem(storageKey, theme);
-    } catch (error) {
-      console.error("Error writing to localStorage:", error);
-    }
-  }, [theme, storageKey]);
+    React.useEffect(() => {
+      applyTheme(theme);
+    }, [theme]);
 
-  useEffect(() => {
-    if (theme !== "system" || typeof window === "undefined") return;
-    
-    function handleChange() {
-      applyTheme("system");
-    }
-    
-    const mediaQuery = window.matchMedia("(prefers-color-scheme: dark)");
-    
-    // Use the correct event listener based on browser support
-    if (mediaQuery.addEventListener) {
-      mediaQuery.addEventListener("change", handleChange);
-      return () => mediaQuery.removeEventListener("change", handleChange);
-    } else {
-      // Fallback for older browsers
-      mediaQuery.addListener(handleChange);
-      return () => mediaQuery.removeListener(handleChange);
-    }
-  }, [theme]);
+    React.useEffect(() => {
+      if (typeof window === "undefined") return;
+      
+      try {
+        window.localStorage.setItem(storageKey, theme);
+      } catch (error) {
+        console.error("Error writing to localStorage:", error);
+      }
+    }, [theme, storageKey]);
 
-  const value = React.useMemo(
-    () => ({
-      theme,
-      setTheme: (t: Theme) => setTheme(t),
-    }),
-    [theme]
-  );
+    React.useEffect(() => {
+      if (theme !== "system" || typeof window === "undefined") return;
+      
+      function handleChange() {
+        applyTheme("system");
+      }
+      
+      const mediaQuery = window.matchMedia("(prefers-color-scheme: dark)");
+      
+      // Use the correct event listener based on browser support
+      if (mediaQuery.addEventListener) {
+        mediaQuery.addEventListener("change", handleChange);
+        return () => mediaQuery.removeEventListener("change", handleChange);
+      } else {
+        // Fallback for older browsers
+        mediaQuery.addListener(handleChange);
+        return () => mediaQuery.removeListener(handleChange);
+      }
+    }, [theme]);
 
-  return (
-    <ThemeProviderContext.Provider {...props} value={value}>
-      {children}
-    </ThemeProviderContext.Provider>
-  );
+    const value = React.useMemo(
+      () => ({
+        theme,
+        setTheme: (t: Theme) => setTheme(t),
+      }),
+      [theme]
+    );
+
+    return (
+      <ThemeProviderContext.Provider {...props} value={value}>
+        {children}
+      </ThemeProviderContext.Provider>
+    );
+  } catch (error) {
+    console.error("Error in ThemeProvider:", error);
+    // If there's an error during ThemeProvider initialization, render children without the provider
+    return <>{children}</>;
+  }
 }
 
 export const useTheme = (): ThemeProviderState => {
-  const context = useContext(ThemeProviderContext);
+  try {
+    const context = React.useContext(ThemeProviderContext);
 
-  if (context === undefined) {
-    throw new Error("useTheme must be used within a ThemeProvider");
+    if (context === undefined) {
+      console.warn("useTheme must be used within a ThemeProvider");
+      // Return a fallback instead of throwing
+      return initialState;
+    }
+
+    return context;
+  } catch (error) {
+    console.error("Error in useTheme hook:", error);
+    // Return the initial state as fallback
+    return initialState;
   }
-
-  return context;
 };
