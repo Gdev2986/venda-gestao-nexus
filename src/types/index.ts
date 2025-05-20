@@ -1,86 +1,40 @@
-export enum UserRole {
-  ADMIN = "ADMIN",
-  CLIENT = "CLIENT", 
-  FINANCIAL = "FINANCIAL",
-  PARTNER = "PARTNER",
-  LOGISTICS = "LOGISTICS",
-  MANAGER = "MANAGER",
-  FINANCE = "FINANCE",
-  SUPPORT = "SUPPORT",
-  USER = "USER"
-}
 
-export enum PaymentStatus {
-  PENDING = "PENDING",
-  APPROVED = "APPROVED",
-  REJECTED = "REJECTED",
-  PAID = "PAID"
-}
+// Re-export from enums
+export {
+  UserRole,
+  PaymentStatus,
+  PaymentType,
+  ClientStatus,
+  PaymentMethod,
+  MachineStatus,
+  TicketStatus,
+  TicketType,
+  PaymentAction
+} from './enums';
 
-export enum PaymentType {
-  PIX = "PIX",
-  TED = "TED",
-  BOLETO = "BOLETO"
-}
+// Re-export from notification.types
+export {
+  NotificationType,
+  type Notification
+} from './notification.types';
 
-// Added ClientStatus enum for the ClientStatus component
-export enum ClientStatus {
-  ACTIVE = "active",
-  INACTIVE = "inactive",
-  PENDING = "pending"
-}
+// Re-export from payment.types
+export {
+  type PixKey,
+  type Payment,
+  type PaymentRequest,
+  type PaymentRequestStatus,
+  type PixKeyType
+} from './payment.types';
 
-export enum PaymentMethod {
-  CREDIT = "credit",
-  DEBIT = "debit",
-  PIX = "pix"
-}
+// Re-export from client.ts
+export {
+  type SupabaseClientRow,
+  type ClientCreate,
+  type ClientUpdate
+} from './client';
 
-// Updated to match database notification_type enum
-export enum NotificationType {
-  PAYMENT = "PAYMENT",
-  BALANCE = "BALANCE", 
-  MACHINE = "MACHINE",
-  COMMISSION = "COMMISSION",
-  SYSTEM = "SYSTEM",
-  GENERAL = "GENERAL",
-  SALE = "SALE",
-  SUPPORT = "SUPPORT"
-}
-
-export interface Payment {
-  id: string;
-  created_at: string;
-  updated_at: string;
-  amount: number;
-  status: PaymentStatus | string;
-  client_id: string;
-  approved_at?: string; 
-  receipt_url?: string;
-  client_name?: string;
-  rejection_reason: string | null;
-  payment_type?: PaymentType | string;
-  bank_info?: {
-    bank_name?: string;
-    account_number?: string;
-    branch_number?: string;
-    account_holder?: string;
-  };
-  document_url?: string;
-  due_date?: string;
-  pix_key?: {
-    id: string;
-    key: string;
-    type: string;
-    owner_name: string;
-  };
-  // Add these to make compatible with PaymentRequest interface
-  client?: any;
-  description?: string;
-  approved_by?: string | null;
-}
-
-// Types for partners
+// Define interfaces
 export interface Partner {
   id: string;
   company_name: string;
@@ -96,6 +50,7 @@ export interface Partner {
   address?: string; // Added for completeness
   total_sales?: number;
   total_commission?: number;
+  fee_plan_id?: string; // Added for fee plan relationship
 }
 
 // Added Client interface to ensure type safety
@@ -127,23 +82,8 @@ export interface FilterValues {
     from: Date;
     to?: Date;
   };
-  searchTerm?: string; // Add searchTerm to fix errors
-  commissionRange?: [number, number]; // Add property for partner filtering
-}
-
-export interface PixKey {
-  id: string;
-  key: string;
-  type: string;
-  name: string;
-  owner_name?: string;
-  is_default?: boolean;
-  user_id?: string;
-  created_at?: string;
-  updated_at?: string;
-  bank_name?: string;
-  key_type?: string;
-  is_active?: boolean;
+  searchTerm?: string;
+  commissionRange?: [number, number];
 }
 
 export interface Sale {
@@ -180,7 +120,7 @@ export interface UserData {
   id: string;
   name: string;
   email: string;
-  role: UserRole | string; // Allow string role from database
+  role: UserRole | string; 
   created_at: string;
   status: string;
 }
@@ -190,7 +130,6 @@ export interface SalesChartData {
   value: number;
 }
 
-// Add Machine interface to fix missing type errors
 export interface Machine {
   id: string;
   serial_number: string;
@@ -204,13 +143,48 @@ export interface Machine {
   serialNumber?: string;
 }
 
-// Add a Notification interface
-export interface Notification {
-  id: string;
-  title: string;
-  message: string;
-  type: NotificationType;
-  read: boolean;
-  timestamp: Date;
-  data?: any;
-}
+/**
+ * Format a number as Brazilian currency (BRL)
+ * @param value The value to format
+ * @returns Formatted currency string
+ */
+export const formatCurrency = (value: number): string => {
+  return new Intl.NumberFormat('pt-BR', {
+    style: 'currency',
+    currency: 'BRL',
+  }).format(value);
+};
+
+/**
+ * Format a number with thousand separators
+ * @param value The value to format
+ * @returns Formatted number string with thousand separators
+ */
+export const formatNumber = (value: number): string => {
+  return new Intl.NumberFormat('pt-BR').format(value);
+};
+
+/**
+ * Format a percentage value
+ * @param value The value to format (e.g. 0.12 for 12%)
+ * @param showPlusSign Whether to show a plus sign for positive values
+ * @returns Formatted percentage string
+ */
+export const formatPercentage = (value: number, showPlusSign = false): string => {
+  const formatted = new Intl.NumberFormat('pt-BR', {
+    style: 'percent',
+    minimumFractionDigits: 1,
+    maximumFractionDigits: 1,
+  }).format(value);
+  
+  return value > 0 && showPlusSign ? `+${formatted}` : formatted;
+};
+
+/**
+ * Format a commission block/plan name for display
+ * @param name The name of the commission block/plan
+ * @returns Formatted commission block/plan name
+ */
+export const formatCommissionPlan = (name: string): string => {
+  return name || 'Plano Padrão';
+};

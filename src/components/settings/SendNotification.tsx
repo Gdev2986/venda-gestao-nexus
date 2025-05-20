@@ -106,16 +106,18 @@ export function SendNotification() {
         if (clientError) throw clientError;
         
         // Then insert the notification for this specific client
-        const { error } = await supabase
-          .from('notifications')
-          .insert({
-            title: data.title,
-            message: data.message,
-            type: data.type,
-            user_id: clientData.id,
-          });
-        
-        if (error) throw error;
+        if (clientData && clientData.id) {
+          const { error } = await supabase
+            .from('notifications')
+            .insert({
+              title: data.title,
+              message: data.message,
+              type: data.type,
+              user_id: clientData.id,
+            });
+          
+          if (error) throw error;
+        }
       }
       
       toast({
