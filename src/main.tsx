@@ -33,6 +33,8 @@ function renderApp() {
     // Create a fresh root
     const root = createRoot(rootElement);
     
+    // Important: React context providers must be in the correct order
+    // ThemeProvider needs to be nested inside React.StrictMode
     root.render(
       <React.StrictMode>
         <BrowserRouter>

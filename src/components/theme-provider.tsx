@@ -29,9 +29,10 @@ export function ThemeProvider({
   storageKey = "sigmapay-theme",
   ...props
 }: ThemeProviderProps) {
+  // Initialize state with defaultTheme first
   const [theme, setTheme] = React.useState<Theme>(defaultTheme);
   
-  // Initialize theme from localStorage when component mounts
+  // Then update from localStorage when component mounts
   React.useEffect(() => {
     const savedTheme = localStorage?.getItem(storageKey) as Theme | null;
     if (savedTheme) {
@@ -57,8 +58,10 @@ export function ThemeProvider({
 
   // Save theme to localStorage
   React.useEffect(() => {
-    if (typeof localStorage !== 'undefined') {
+    try {
       localStorage.setItem(storageKey, theme);
+    } catch (error) {
+      console.error("Failed to save theme preference:", error);
     }
   }, [theme, storageKey]);
 
