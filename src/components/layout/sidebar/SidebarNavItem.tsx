@@ -1,6 +1,6 @@
 
 import { useState, useEffect } from "react";
-import { Link, useLocation } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { ChevronDown, ChevronRight } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { motion } from "framer-motion";
@@ -13,6 +13,7 @@ interface SidebarNavItemProps {
 }
 
 const SidebarNavItem = ({ item, userRole }: SidebarNavItemProps) => {
+  const navigate = useNavigate();
   const location = useLocation();
   const [expanded, setExpanded] = useState(false);
 
@@ -38,6 +39,11 @@ const SidebarNavItem = ({ item, userRole }: SidebarNavItemProps) => {
     setExpanded(prev => !prev);
   };
 
+  const handleItemClick = (e: React.MouseEvent, href: string) => {
+    e.preventDefault(); // Prevent default browser navigation
+    navigate(href); // Use React Router navigation
+  };
+
   // Button animation variants
   const buttonAnimationVariants = {
     initial: { backgroundColor: "transparent" },
@@ -48,7 +54,9 @@ const SidebarNavItem = ({ item, userRole }: SidebarNavItemProps) => {
   if (item.subItems) {
     return (
       <div className="mb-1">
-        <motion.div
+        <motion.a
+          href={item.href}
+          onClick={toggleExpanded}
           initial="initial"
           whileHover="hover"
           whileTap="active"
@@ -59,8 +67,6 @@ const SidebarNavItem = ({ item, userRole }: SidebarNavItemProps) => {
               ? "bg-sidebar-accent text-white font-medium"
               : "text-sidebar-foreground hover:bg-sidebar-accent/70 hover:text-white"
           )}
-          onClick={toggleExpanded}
-          style={{ cursor: "pointer" }}
         >
           <div className="flex items-center">
             <item.icon className="h-5 w-5 mr-3 flex-shrink-0" />
@@ -76,7 +82,7 @@ const SidebarNavItem = ({ item, userRole }: SidebarNavItemProps) => {
               <ChevronRight className="h-4 w-4" />
             )}
           </motion.div>
-        </motion.div>
+        </motion.a>
         
         <motion.div
           initial={{ height: 0, opacity: 0 }}
@@ -89,18 +95,23 @@ const SidebarNavItem = ({ item, userRole }: SidebarNavItemProps) => {
         >
           {item.subItems.map((subItem) => (
             subItem.roles.includes(userRole) && (
-              <Link
+              <motion.a
                 key={subItem.title}
-                to={subItem.href}
+                href={subItem.href}
+                onClick={(e) => handleItemClick(e, subItem.href)}
+                initial="initial"
+                whileHover="hover"
+                whileTap="active"
+                variants={buttonAnimationVariants}
                 className={cn(
-                  "flex items-center w-full pl-11 pr-3 py-2 text-sm rounded-md transition-colors mt-1 block",
+                  "flex items-center w-full pl-11 pr-3 py-2 text-sm rounded-md transition-colors mt-1",
                   isActiveRoute(subItem.href)
                     ? "bg-sidebar-accent text-white font-medium"
                     : "text-sidebar-foreground hover:bg-sidebar-accent/70 hover:text-white"
                 )}
               >
                 <span>{subItem.title}</span>
-              </Link>
+              </motion.a>
             )
           ))}
         </motion.div>
@@ -109,10 +120,15 @@ const SidebarNavItem = ({ item, userRole }: SidebarNavItemProps) => {
   }
 
   return (
-    <Link
-      to={item.href}
+    <motion.a
+      href={item.href}
+      onClick={(e) => handleItemClick(e, item.href)}
+      initial="initial"
+      whileHover="hover"
+      whileTap="active"
+      variants={buttonAnimationVariants}
       className={cn(
-        "flex items-center w-full px-3 py-2 text-sm rounded-md transition-colors block",
+        "flex items-center w-full px-3 py-2 text-sm rounded-md transition-colors",
         isActiveRoute(item.href)
           ? "bg-sidebar-accent text-white font-medium"
           : "text-sidebar-foreground hover:bg-sidebar-accent/70 hover:text-white"
@@ -120,7 +136,7 @@ const SidebarNavItem = ({ item, userRole }: SidebarNavItemProps) => {
     >
       <item.icon className="h-5 w-5 mr-3 flex-shrink-0" />
       <span>{item.title}</span>
-    </Link>
+    </motion.a>
   );
 };
 

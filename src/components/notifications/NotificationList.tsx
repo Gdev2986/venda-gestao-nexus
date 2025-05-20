@@ -1,5 +1,5 @@
 
-import { AnimatePresence, motion } from "framer-motion";
+import { AnimatePresence } from "framer-motion";
 import { Notification } from "@/types/notification.types";
 import { NotificationItem } from "./NotificationItem";
 import { Spinner } from "@/components/ui/spinner";
@@ -11,7 +11,6 @@ interface NotificationListProps {
   onDelete?: (id: string) => void;
 }
 
-// Changed to 'export const' instead of just 'export' to make this a named export
 export const NotificationList = ({ 
   notifications, 
   onMarkAsRead, 
@@ -28,17 +27,11 @@ export const NotificationList = ({
 
   return (
     <div className="max-h-[60vh] sm:max-h-80 overflow-y-auto">
-      <AnimatePresence initial={false}>
+      <AnimatePresence>
         {notifications.length === 0 ? (
-          <motion.div
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -10 }}
-            transition={{ duration: 0.2 }}
-            className="p-4 text-center text-muted-foreground"
-          >
+          <div className="p-4 text-center text-muted-foreground">
             Nenhuma notificação
-          </motion.div>
+          </div>
         ) : (
           notifications.map((notification: Notification) => (
             <NotificationItem
