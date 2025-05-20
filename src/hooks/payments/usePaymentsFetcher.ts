@@ -1,3 +1,4 @@
+
 import { useState, useEffect, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Payment, PaymentStatus } from "@/types/payment.types";
@@ -81,12 +82,9 @@ export const usePaymentsFetcher = ({
 
       // Apply status filter
       if (statusFilter !== 'ALL') {
-        // Fix for the type error by checking the exact type of statusFilter
-        if (typeof statusFilter === 'string') {
-          query = query.eq('status', statusFilter);
-        } else {
-          query = query.eq('status', statusFilter as PaymentStatus);
-        }
+        // Convert statusFilter to a string to avoid type issues
+        const statusString = String(statusFilter);
+        query = query.eq('status', statusString);
       }
 
       // Apply search filter on client name
