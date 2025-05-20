@@ -1,5 +1,5 @@
 
-import React, { useEffect } from "react";
+import * as React from "react";
 import { PageHeader } from "@/components/page/PageHeader";
 import { PageWrapper } from "@/components/page/PageWrapper";
 import { Button } from "@/components/ui/button";

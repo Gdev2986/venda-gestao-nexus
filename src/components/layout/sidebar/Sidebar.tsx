@@ -1,4 +1,5 @@
 
+import * as React from "react";
 import { memo, useCallback } from "react";
 import { motion } from "framer-motion";
 import { X } from "lucide-react";
