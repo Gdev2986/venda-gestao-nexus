@@ -1,6 +1,6 @@
 
 import { AnimatePresence } from "framer-motion";
-import { Notification } from "@/contexts/notifications/types";
+import { Notification } from "@/types/notification.types";
 import { NotificationItem } from "./NotificationItem";
 import { Spinner } from "@/components/ui/spinner";
 
@@ -11,7 +11,7 @@ interface NotificationListProps {
   onDelete?: (id: string) => void;
 }
 
-const NotificationList = ({ 
+export const NotificationList = ({ 
   notifications, 
   onMarkAsRead, 
   isLoading = false, 
@@ -46,5 +46,3 @@ const NotificationList = ({
     </div>
   );
 };
-
-export default NotificationList;

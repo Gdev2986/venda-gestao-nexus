@@ -1,5 +1,5 @@
 
-import React, { useState } from "react"
+import * as React from "react";
 
 type Theme = "dark" | "light" | "system";
 
@@ -27,49 +27,71 @@ export function ThemeProvider({
   storageKey = "sigmapay-theme",
   ...props
 }: ThemeProviderProps) {
-  const [theme, setTheme] = React.useState<Theme>(defaultTheme);
-  
-  // Update from localStorage when component mounts
-  React.useEffect(() => {
+  // Safe access to localStorage with try/catch
+  const getThemeFromStorage = React.useCallback((): Theme | null => {
+    if (typeof window === "undefined") return null;
     try {
-      const savedTheme = localStorage?.getItem(storageKey) as Theme | null;
-      if (savedTheme) {
-        setTheme(savedTheme);
-      }
-    } catch (error) {
-      console.error("Failed to load theme preference:", error);
+      const storedTheme = window.localStorage.getItem(storageKey);
+      return (storedTheme as Theme) || null;
+    } catch (e) {
+      console.error("Error accessing localStorage:", e);
+      return null;
     }
   }, [storageKey]);
   
-  // Update document classes when theme changes
-  React.useEffect(() => {
+  const [theme, setTheme] = React.useState<Theme>(
+    () => getThemeFromStorage() || defaultTheme
+  );
+
+  const applyTheme = React.useCallback((newTheme: Theme) => {
     const root = window.document.documentElement;
     
     root.classList.remove("light", "dark");
 
-    if (theme === "system") {
+    if (newTheme === "system") {
       const systemTheme = window.matchMedia("(prefers-color-scheme: dark)").matches
         ? "dark"
         : "light";
       root.classList.add(systemTheme);
     } else {
-      root.classList.add(theme);
+      root.classList.add(newTheme);
     }
-  }, [theme]);
+  }, []);
 
-  // Save theme to localStorage
   React.useEffect(() => {
+    applyTheme(theme);
+  }, [theme, applyTheme]);
+
+  React.useEffect(() => {
+    if (typeof window === "undefined") return;
+    
     try {
-      localStorage.setItem(storageKey, theme);
+      window.localStorage.setItem(storageKey, theme);
     } catch (error) {
-      console.error("Failed to save theme preference:", error);
+      console.error("Error writing to localStorage:", error);
     }
   }, [theme, storageKey]);
 
-  const value = React.useMemo(() => ({
-    theme,
-    setTheme: (t: Theme) => setTheme(t),
-  }), [theme]);
+  React.useEffect(() => {
+    if (theme !== "system" || typeof window === "undefined") return;
+    
+    function handleChange() {
+      applyTheme("system");
+    }
+    
+    const mediaQuery = window.matchMedia("(prefers-color-scheme: dark)");
+    mediaQuery.addEventListener("change", handleChange);
+    
+    return () => mediaQuery.removeEventListener("change", handleChange);
+  }, [theme, applyTheme]);
+
+  const value = React.useMemo(
+    () => ({
+      theme,
+      setTheme: (t: Theme) => setTheme(t),
+    }),
+    [theme]
+  );
 
   return (
     <ThemeProviderContext.Provider {...props} value={value}>
@@ -78,7 +100,7 @@ export function ThemeProvider({
   );
 }
 
-export function useTheme(): ThemeProviderState {
+export const useTheme = (): ThemeProviderState => {
   const context = React.useContext(ThemeProviderContext);
 
   if (context === undefined) {
@@ -86,4 +108,4 @@ export function useTheme(): ThemeProviderState {
   }
 
   return context;
-}
+};

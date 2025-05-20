@@ -9,9 +9,9 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/button";
 import { motion, AnimatePresence } from "framer-motion";
-import { useNotifications } from "@/contexts/notifications";
+import { useNotifications } from "@/hooks/use-notifications";
 import { NotificationHeader } from "@/components/notifications/NotificationHeader";
-import NotificationList from "@/components/notifications/NotificationList";
+import { NotificationList } from "@/components/notifications/NotificationList";
 import { NotificationFooter } from "@/components/notifications/NotificationFooter";
 
 const NotificationDropdown = () => {
@@ -46,6 +46,10 @@ const NotificationDropdown = () => {
       document.removeEventListener("mousedown", handleClickOutside);
     };
   }, []);
+
+  const toggleSound = () => {
+    setSoundEnabled(!soundEnabled);
+  };
 
   return (
     <div ref={dropdownRef}>
@@ -85,7 +89,7 @@ const NotificationDropdown = () => {
           <NotificationHeader 
             unreadCount={unreadCount}
             soundEnabled={soundEnabled}
-            toggleSound={() => setSoundEnabled(!soundEnabled)}
+            toggleSound={toggleSound}
             markAllAsRead={markAllAsRead}
           />
           <DropdownMenuSeparator />

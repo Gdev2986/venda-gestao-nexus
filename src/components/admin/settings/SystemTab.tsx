@@ -3,7 +3,7 @@ import { useState } from "react";
 import { Card, CardHeader, CardTitle, CardContent, CardDescription } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
-import { toast } from "@/hooks/use-toast";
+import { useToast } from "@/hooks/use-toast";
 import { Separator } from "@/components/ui/separator";
 
 export const SystemTab = () => {
@@ -11,6 +11,7 @@ export const SystemTab = () => {
   const [notificationsEnabled, setNotificationsEnabled] = useState(true);
   const [debugMode, setDebugMode] = useState(false);
   const [autoBackup, setAutoBackup] = useState(true);
+  const { toast } = useToast();
   
   const toggleMaintenance = () => {
     setMaintenance(!maintenance);

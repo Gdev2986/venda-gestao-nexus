@@ -1,7 +1,7 @@
 
-import * as React from "react";
 import { Routes, Route, Navigate } from "react-router-dom";
 import { PATHS } from "./routes/paths";
+import { useEffect } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { useUserRole } from "./hooks/use-user-role";
 import { UserRole } from "./types";
@@ -30,7 +30,7 @@ function App() {
   const { toast } = useToast();
 
   // Log role changes for debugging
-  React.useEffect(() => {
+  useEffect(() => {
     if (!isRoleLoading) {
       console.log("App.tsx - Current user role:", userRole);
       

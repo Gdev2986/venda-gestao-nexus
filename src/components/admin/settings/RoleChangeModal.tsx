@@ -10,7 +10,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { toast } from "@/hooks/use-toast";
+import { useToast } from "@/hooks/use-toast";
 import { UserRole } from "@/types/enums";
 
 interface ProfileData {
@@ -41,6 +41,7 @@ export const RoleChangeModal = ({
   const [loading, setLoading] = useState(true);
   const [newRole, setNewRole] = useState(user.role);
   const isModalOpen = open || isOpen; // Support both props
+  const { toast } = useToast();
 
   // Fetch available roles from the profiles table
   useEffect(() => {
@@ -60,9 +61,9 @@ export const RoleChangeModal = ({
       } catch (error) {
         console.error("Error fetching roles:", error);
         toast({
+          variant: "destructive",
           title: "Error",
-          description: "Failed to load available roles",
-          variant: "destructive"
+          description: "Failed to load available roles"
         });
       } finally {
         setLoading(false);
@@ -72,7 +73,7 @@ export const RoleChangeModal = ({
     if (isModalOpen) {
       fetchRoles();
     }
-  }, [isModalOpen]);
+  }, [isModalOpen, toast]);
 
   const onSave = async () => {
     setLoading(true);
@@ -86,15 +87,15 @@ export const RoleChangeModal = ({
       
       toast({
         title: "Role updated",
-        description: `User ${user.name} role changed to ${newRole}`
+        description: `User ${user.name} role changed to ${newRole}`,
       });
       onClose();
     } catch (error) {
       console.error("Error updating role:", error);
       toast({
+        variant: "destructive",
         title: "Error",
-        description: "Failed to update user role",
-        variant: "destructive"
+        description: "Failed to update user role"
       });
     } finally {
       setLoading(false);

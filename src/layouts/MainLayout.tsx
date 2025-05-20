@@ -1,19 +1,19 @@
 
-import * as React from "react";
 import { Outlet } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import MainSidebar from "./MainSidebar";
+import { useState, useEffect } from "react";
 import { useUserRole } from "@/hooks/use-user-role";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { Button } from "@/components/ui/button";
 import { Menu } from "lucide-react";
 import NotificationDropdown from "@/components/layout/NotificationDropdown";
 import ThemeToggle from "@/components/theme/theme-toggle";
-import { Toaster } from "@/components/ui/sonner";
+import { Toaster } from "@/components/ui/toaster";
 
 const MainLayout = () => {
   // Use localStorage to persist sidebar state
-  const [sidebarOpen, setSidebarOpen] = React.useState(() => {
+  const [sidebarOpen, setSidebarOpen] = useState(() => {
     const saved = localStorage.getItem("sidebar-state");
     return saved !== null ? JSON.parse(saved) : true;
   });
@@ -23,14 +23,14 @@ const MainLayout = () => {
   const { user } = useAuth();
 
   // Close sidebar on mobile by default
-  React.useEffect(() => {
+  useEffect(() => {
     if (isMobile) {
       setSidebarOpen(false);
     }
   }, [isMobile]);
 
   // Save sidebar state to localStorage when it changes
-  React.useEffect(() => {
+  useEffect(() => {
     if (!isMobile) { // Only save state for desktop
       localStorage.setItem("sidebar-state", JSON.stringify(sidebarOpen));
     }
@@ -80,6 +80,9 @@ const MainLayout = () => {
           </div>
         </main>
       </div>
+      
+      {/* Toast notifications */}
+      <Toaster />
     </div>
   );
 };

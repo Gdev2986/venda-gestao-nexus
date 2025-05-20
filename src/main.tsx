@@ -2,11 +2,10 @@
 import * as React from 'react';
 import { createRoot } from 'react-dom/client';
 import { BrowserRouter } from 'react-router-dom';
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { AuthProvider } from '@/contexts/AuthContext';
 import { ThemeProvider } from '@/components/theme-provider';
-import { AuthProvider } from '@/providers/AuthProvider';
-import { NotificationsProvider } from '@/contexts/notifications';
-import { Toaster } from '@/components/ui/sonner';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { NotificationsProvider } from '@/contexts/NotificationsContext';
 import App from './App.tsx';
 import './index.css';
 
@@ -33,19 +32,18 @@ function renderApp() {
     // Create a fresh root
     const root = createRoot(rootElement);
     
-    // Proper provider nesting order - this is critical
+    // Render the application with all providers
     root.render(
       <React.StrictMode>
         <BrowserRouter>
           <QueryClientProvider client={queryClient}>
-            <ThemeProvider defaultTheme="light" storageKey="sigmapay-theme">
-              <AuthProvider>
+            <AuthProvider>
+              <ThemeProvider defaultTheme="light" storageKey="sigmapay-theme">
                 <NotificationsProvider>
                   <App />
-                  <Toaster />
                 </NotificationsProvider>
-              </AuthProvider>
-            </ThemeProvider>
+              </ThemeProvider>
+            </AuthProvider>
           </QueryClientProvider>
         </BrowserRouter>
       </React.StrictMode>
@@ -57,16 +55,40 @@ function renderApp() {
   }
 }
 
+// Define a fallback mechanism if the main rendering fails
+function fallbackRender() {
+  try {
+    const rootElement = document.getElementById('root');
+    if (!rootElement) return;
+    
+    const message = document.createElement('div');
+    message.style.padding = '20px';
+    message.style.fontFamily = 'sans-serif';
+    message.innerHTML = '<h2>Error loading application</h2><p>Please try refreshing the page.</p>';
+    
+    rootElement.appendChild(message);
+  } catch (e) {
+    // Last resort logging
+    console.error('Critical rendering failure:', e);
+  }
+}
+
 // Ensure DOM is fully loaded before rendering
 if (document.readyState === 'loading') {
-  document.addEventListener('DOMContentLoaded', renderApp);
+  document.addEventListener('DOMContentLoaded', () => {
+    // Small delay to ensure React is fully initialized
+    setTimeout(renderApp, 100);
+  });
 } else {
-  // DOM already loaded, render immediately
-  renderApp();
+  // DOM already loaded, still use a small delay to ensure proper initialization
+  setTimeout(renderApp, 100);
 }
 
 // Add global error handler as a safety net
 window.onerror = function(message, source, lineno, colno, error) {
   console.error('Global error caught:', { message, source, lineno, colno, error });
+  if (source && source.includes('react')) {
+    fallbackRender();
+  }
   return false;
 };

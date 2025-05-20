@@ -1,6 +1,6 @@
 
-import * as React from "react";
 import { Outlet } from "react-router-dom";
+import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import MainSidebar from "./MainSidebar";
 import { useUserRole } from "@/hooks/use-user-role";
@@ -9,36 +9,36 @@ import { Button } from "@/components/ui/button";
 import { Menu } from "lucide-react";
 import NotificationDropdown from "@/components/layout/NotificationDropdown";
 import ThemeToggle from "@/components/theme/theme-toggle";
-import { Toaster } from "@/components/ui/sonner";
+import { Toaster } from "@/components/ui/toaster";
 import { Spinner } from "@/components/ui/spinner";
 
 const AdminLayout = () => {
   // Use localStorage to persist sidebar state
-  const [sidebarOpen, setSidebarOpen] = React.useState(() => {
+  const [sidebarOpen, setSidebarOpen] = useState(() => {
     const saved = localStorage.getItem("sidebar-state");
     return saved !== null ? JSON.parse(saved) : true;
   });
   
   const isMobile = useIsMobile();
   const { userRole } = useUserRole();
-  const [isLoading, setIsLoading] = React.useState(true);
+  const [isLoading, setIsLoading] = useState(true);
 
   // Close sidebar on mobile by default
-  React.useEffect(() => {
+  useEffect(() => {
     if (isMobile) {
       setSidebarOpen(false);
     }
   }, [isMobile]);
 
   // Save sidebar state to localStorage when it changes
-  React.useEffect(() => {
+  useEffect(() => {
     if (!isMobile) { // Only save state for desktop
       localStorage.setItem("sidebar-state", JSON.stringify(sidebarOpen));
     }
   }, [sidebarOpen, isMobile]);
 
   // Add loading animation
-  React.useEffect(() => {
+  useEffect(() => {
     // Simulate loading for smoother transitions
     setIsLoading(true);
     const timer = setTimeout(() => {
@@ -108,6 +108,9 @@ const AdminLayout = () => {
           </div>
         </main>
       </div>
+      
+      {/* Toast notifications */}
+      <Toaster />
     </div>
   );
 };
