@@ -16,6 +16,7 @@ import {
 } from "@/components/ui/select";
 import { AlertCircle } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { ClientSelect, Client } from "@/components/clients/ClientSelect";
 
 // Payment type constants
 const PAYMENT_TYPES = ["PIX", "DÉBITO", "CRÉDITO"];
@@ -27,7 +28,31 @@ const MAX_INSTALLMENTS = {
   CRÉDITO: 21
 };
 
+// Example tax rates data structure (in production, this would come from Supabase)
+interface TaxRate {
+  id: string;
+  paymentType: string;
+  installments: number;
+  baseRate: number;
+  partnerRate: number;
+  totalRate: number;
+  clients: string[];
+}
+
 const TaxRatesManager = () => {
+  // Mock data for client selection demo
+  const [selectedClientIds, setSelectedClientIds] = useState<string[]>([]);
+  const [mockClients, setMockClients] = useState<Client[]>([
+    { id: "1", business_name: "Empresa A" },
+    { id: "2", business_name: "Empresa B" },
+    { id: "3", business_name: "Empresa C" },
+    { id: "4", business_name: "Empresa D" },
+    { id: "5", business_name: "Empresa E" },
+  ]);
+
+  // Track existing tax rates (mock data - would be from Supabase in production)
+  const [existingRates, setExistingRates] = useState<TaxRate[]>([]);
+  
   const [selectedTab, setSelectedTab] = useState("pix");
   const [baseRate, setBaseRate] = useState(0.99);
   const [partnerRate, setPartnerRate] = useState(1.5);
@@ -46,8 +71,44 @@ const TaxRatesManager = () => {
     }
   }, [selectedTab]);
   
+  // Generate options for installment selection based on payment type
+  const getInstallmentOptions = () => {
+    const maxInstallments = selectedTab === "credit" 
+      ? MAX_INSTALLMENTS.CRÉDITO 
+      : MAX_INSTALLMENTS.PIX; // PIX and DÉBITO are both 1
+      
+    return Array.from({ length: maxInstallments }, (_, i) => i + 1);
+  };
+  
+  // Validate that there are no duplicate installment values for the same payment type
+  const validateUniqueInstallments = () => {
+    const paymentTypeMap = {
+      "pix": "PIX",
+      "debit": "DÉBITO",
+      "credit": "CRÉDITO"
+    };
+    
+    const currentPaymentType = paymentTypeMap[selectedTab as keyof typeof paymentTypeMap];
+    
+    const rateWithSameInstallments = existingRates.find(
+      rate => rate.paymentType === currentPaymentType && rate.installments === installments
+    );
+    
+    if (rateWithSameInstallments) {
+      return `Já existe uma taxa cadastrada para ${currentPaymentType} em ${installments}x.`;
+    }
+    
+    return "";
+  };
+  
   const handleSave = () => {
-    // Validation
+    // Validate client selection
+    if (selectedClientIds.length === 0) {
+      setValidationError("Selecione pelo menos um cliente para associar a este bloco de taxas.");
+      return;
+    }
+    
+    // Validate payment type specific rules
     if (selectedTab === "pix" || selectedTab === "debit") {
       if (installments !== 1) {
         setValidationError(`${selectedTab.toUpperCase()} só pode ter 1 parcela.`);
@@ -60,16 +121,50 @@ const TaxRatesManager = () => {
       }
     }
     
+    // Validate tax rates are not negative
     if (baseRate < 0 || partnerRate < 0 || totalRate < 0) {
       setValidationError("Taxas não podem ser negativas.");
       return;
     }
     
+    // Validate unique installments
+    const duplicateError = validateUniqueInstallments();
+    if (duplicateError) {
+      setValidationError(duplicateError);
+      return;
+    }
+    
+    // Clear validation errors
     setValidationError("");
+    
+    // Convert payment type for storage
+    const paymentTypeMap = {
+      "pix": "PIX",
+      "debit": "DÉBITO",
+      "credit": "CRÉDITO"
+    };
+    
+    // Mock saving the rate (would be a Supabase insert in production)
+    const newRate: TaxRate = {
+      id: Date.now().toString(), // Just for mock data
+      paymentType: paymentTypeMap[selectedTab as keyof typeof paymentTypeMap],
+      installments,
+      baseRate,
+      partnerRate,
+      totalRate,
+      clients: [...selectedClientIds]
+    };
+    
+    // Add to existing rates
+    setExistingRates([...existingRates, newRate]);
+    
     toast({
       title: "Taxa salva",
-      description: `Taxa para ${selectedTab.toUpperCase()} em ${installments}x foi salva com sucesso.`
+      description: `Taxa para ${selectedTab.toUpperCase()} em ${installments}x associada a ${selectedClientIds.length} cliente(s) foi salva com sucesso.`
     });
+    
+    // Reset form
+    setSelectedClientIds([]);
   };
 
   // Only show installment selection for credit
@@ -84,12 +179,24 @@ const TaxRatesManager = () => {
             <p className="text-sm text-muted-foreground mt-1">Bloco: Padrão</p>
           </div>
           <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
-            <Button className="w-full sm:w-auto">Associar Clientes</Button>
-            <Button className="w-full sm:w-auto">Adicionar</Button>
+            <Button className="w-full sm:w-auto" variant="outline">Adicionar</Button>
           </div>
         </div>
       </CardHeader>
       <CardContent>
+        <div className="mb-6 space-y-4">
+          <Label>Clientes Associados</Label>
+          <ClientSelect
+            clients={mockClients}
+            selectedClientIds={selectedClientIds}
+            onSelectedChange={setSelectedClientIds}
+            placeholder="Selecione os clientes para este bloco de taxas..."
+          />
+          <p className="text-sm text-muted-foreground">
+            {selectedClientIds.length} cliente(s) selecionado(s)
+          </p>
+        </div>
+      
         <Tabs value={selectedTab} onValueChange={setSelectedTab} className="w-full">
           <TabsList className="grid grid-cols-3 mb-6">
             <TabsTrigger value="pix">PIX</TabsTrigger>
@@ -116,7 +223,7 @@ const TaxRatesManager = () => {
                     <SelectValue placeholder="Selecione o número de parcelas" />
                   </SelectTrigger>
                   <SelectContent>
-                    {Array.from({ length: MAX_INSTALLMENTS.CRÉDITO }, (_, i) => i + 1).map(num => (
+                    {getInstallmentOptions().map(num => (
                       <SelectItem key={num} value={String(num)}>{num}x</SelectItem>
                     ))}
                   </SelectContent>
