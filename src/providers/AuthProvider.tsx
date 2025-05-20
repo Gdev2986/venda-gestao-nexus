@@ -22,26 +22,46 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const navigate = useNavigate();
 
-  // Simple auth functions to avoid circular dependencies
   // Sign in function
   const signIn = async (email: string, password: string) => {
     setIsLoading(true);
     
     try {
+      // Clean up existing auth data before sign in
+      cleanupSupabaseState();
+      
+      // Attempt to sign out globally first - this helps clear any stale sessions
+      try {
+        await supabase.auth.signOut({ scope: 'global' });
+      } catch (err) {
+        // Continue even if this fails
+        console.log("Pre-signIn signOut failed, continuing anyway:", err);
+      }
+      
       const { data, error } = await supabase.auth.signInWithPassword({
         email,
         password,
       });
       
       if (error) {
-        toast(error.message);
+        console.error("Sign in error:", error);
+        toast({
+          title: "Erro ao entrar",
+          description: error.message,
+          variant: "destructive"
+        });
         return { error };
       }
       
+      // Success toast will be shown by auth state change handler
       return { error: null };
     } catch (error: any) {
       console.error("Error during sign in:", error);
-      toast("Ocorreu um erro durante o login");
+      toast({
+        title: "Erro inesperado",
+        description: "Ocorreu um erro durante o login",
+        variant: "destructive"
+      });
       return { error };
     } finally {
       setIsLoading(false);
@@ -53,6 +73,9 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     setIsLoading(true);
     
     try {
+      // Clean up existing auth data before sign up
+      cleanupSupabaseState();
+      
       const { data, error } = await supabase.auth.signUp({
         email,
         password,
@@ -62,32 +85,80 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       });
       
       if (error) {
-        toast(error.message);
+        toast({
+          title: "Erro ao criar conta",
+          description: error.message,
+          variant: "destructive"
+        });
         return { data: null, error };
       }
       
-      toast("Verificação necessária");
+      toast({
+        title: "Verificação necessária",
+        description: "Verifique seu email para confirmar sua conta"
+      });
       
       return { data, error: null };
     } catch (error: any) {
       console.error("Error during sign up:", error);
-      toast("Ocorreu um erro ao criar sua conta");
+      toast({
+        title: "Erro inesperado",
+        description: "Ocorreu um erro ao criar sua conta",
+        variant: "destructive"
+      });
       return { data: null, error };
     } finally {
       setIsLoading(false);
     }
   };
   
-  // Sign out function
+  // Sign out function - completely revised for reliability
   const signOut = async () => {
     setIsLoading(true);
     
     try {
-      await supabase.auth.signOut();
-      navigate(PATHS.LOGIN);
+      console.log("Starting logout process");
+      
+      // First, clear all auth data in local storage
+      cleanupSupabaseState();
+      
+      // Immediately clear auth state in the app
+      setSession(null);
+      setUser(null);
+      setUserRole(null);
+      setIsAuthenticated(false);
+      setProfile(null);
+      
+      // Then attempt global sign out with Supabase
+      const { error } = await supabase.auth.signOut({ scope: 'global' });
+      
+      if (error) {
+        console.error("Error during sign out with Supabase:", error);
+        toast({
+          title: "Aviso",
+          description: "Sessão encerrada localmente, mas houve um erro no servidor"
+        });
+      } else {
+        console.log("Supabase signOut successful");
+        toast({
+          title: "Sessão encerrada",
+          description: "Você saiu com sucesso"
+        });
+      }
+      
+      // Force a redirect to login page and refresh
+      window.location.href = PATHS.LOGIN;
+      
+      return;
     } catch (error) {
-      console.error("Error during sign out:", error);
-      toast("Erro ao sair");
+      console.error("Exception during sign out:", error);
+      toast({
+        title: "Erro ao sair",
+        description: "Ocorreu um erro ao encerrar sua sessão"
+      });
+      
+      // Even if there's an error, redirect to login
+      navigate(PATHS.LOGIN);
     } finally {
       setIsLoading(false);
     }
@@ -135,7 +206,10 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
                   setUserRole(normalizedRole);
                   
                   // Toast only if we successfully got the role
-                  toast("Login bem-sucedido");
+                  toast({
+                    title: "Login bem-sucedido",
+                    description: `Bem-vindo, ${profileData?.name || 'usuário'}`
+                  });
                 }
               } catch (err) {
                 console.error("Error in role fetching:", err);
@@ -159,10 +233,10 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
           
           // Use setTimeout to avoid calling toast inside the callback
           setTimeout(() => {
-            toast("Sessão encerrada");
-            
-            // Navigate to login page
-            navigate(PATHS.LOGIN);
+            toast({
+              title: "Sessão encerrada",
+              description: "Você saiu com sucesso"
+            });
           }, 0);
           
           setIsLoading(false);
