@@ -4,6 +4,7 @@ import { Notification } from './types';
 import { notificationsService } from './notificationsService';
 import { useRealtimeNotifications } from './useRealtimeNotifications';
 import { useSoundPreference } from './useSoundPreference';
+import { toast } from '@/hooks/use-toast';
 
 // Create the context
 interface NotificationsContextType {
@@ -23,7 +24,7 @@ export const NotificationsProvider: React.FC<{ children: React.ReactNode }> = ({
   const [soundEnabled, setSoundEnabled] = useSoundPreference();
 
   // Calculate unread count
-  const unreadCount = notifications.filter(notification => !notification.read).length;
+  const unreadCount = notifications.filter(notification => !notification.is_read).length;
 
   // Fetch notifications on mount
   useEffect(() => {
@@ -43,9 +44,15 @@ export const NotificationsProvider: React.FC<{ children: React.ReactNode }> = ({
   useRealtimeNotifications((newNotification) => {
     setNotifications(prev => [newNotification, ...prev]);
     
+    // Show toast notification
+    toast({
+      title: newNotification.title,
+      description: newNotification.message,
+    });
+    
     // Play sound if enabled
     if (soundEnabled) {
-      // This would typically play a sound based on notification type
+      // Get the appropriate sound file based on notification type
       const audioFile = getNotificationSoundFile(newNotification.type);
       const audio = new Audio(audioFile);
       audio.play().catch(err => console.error('Error playing notification sound:', err));
@@ -55,9 +62,9 @@ export const NotificationsProvider: React.FC<{ children: React.ReactNode }> = ({
   // Helper to get the appropriate sound file
   const getNotificationSoundFile = (type: string) => {
     switch (type) {
-      case 'support':
+      case 'SUPPORT':
         return '/sounds/notification-support.mp3';
-      case 'logistics':
+      case 'LOGISTICS':
         return '/sounds/notification-logistics.mp3';
       default:
         return '/sounds/notification-general.mp3';
@@ -71,12 +78,17 @@ export const NotificationsProvider: React.FC<{ children: React.ReactNode }> = ({
       setNotifications(prev => 
         prev.map(notification => 
           notification.id === notificationId 
-            ? { ...notification, read: true } 
+            ? { ...notification, is_read: true } 
             : notification
         )
       );
     } catch (error) {
       console.error('Failed to mark notification as read:', error);
+      toast({
+        title: "Erro",
+        description: "Não foi possível marcar a notificação como lida.",
+        variant: "destructive"
+      });
     }
   };
 
@@ -85,10 +97,15 @@ export const NotificationsProvider: React.FC<{ children: React.ReactNode }> = ({
     try {
       await notificationsService.markAllAsRead();
       setNotifications(prev => 
-        prev.map(notification => ({ ...notification, read: true }))
+        prev.map(notification => ({ ...notification, is_read: true }))
       );
     } catch (error) {
       console.error('Failed to mark all notifications as read:', error);
+      toast({
+        title: "Erro",
+        description: "Não foi possível marcar todas as notificações como lidas.",
+        variant: "destructive"
+      });
     }
   };
 
@@ -101,6 +118,11 @@ export const NotificationsProvider: React.FC<{ children: React.ReactNode }> = ({
       );
     } catch (error) {
       console.error('Failed to delete notification:', error);
+      toast({
+        title: "Erro",
+        description: "Não foi possível excluir a notificação.",
+        variant: "destructive"
+      });
     }
   };
 

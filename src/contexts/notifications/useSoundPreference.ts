@@ -1,25 +1,27 @@
 
-import * as React from "react";
+import { useState, useEffect } from 'react';
 
 export const useSoundPreference = (): [boolean, (enabled: boolean) => void] => {
-  const [soundEnabled, setSoundEnabled] = React.useState<boolean>(true);
-  
+  const [soundEnabled, setSoundEnabled] = useState<boolean>(
+    localStorage.getItem('notification-sound') !== 'false'
+  );
+
   // Load sound preference from localStorage on mount
-  React.useEffect(() => {
+  useEffect(() => {
     try {
-      const savedPreference = localStorage.getItem("notification-sound");
-      setSoundEnabled(savedPreference !== "false");
+      const savedPreference = localStorage.getItem('notification-sound');
+      setSoundEnabled(savedPreference !== 'false');
     } catch (error) {
-      console.error("Failed to load notification sound preference:", error);
+      console.error('Failed to load notification sound preference:', error);
     }
   }, []);
 
   // Save sound preference when it changes
-  React.useEffect(() => {
+  useEffect(() => {
     try {
-      localStorage.setItem("notification-sound", String(soundEnabled));
+      localStorage.setItem('notification-sound', String(soundEnabled));
     } catch (error) {
-      console.error("Failed to save notification sound preference:", error);
+      console.error('Failed to save notification sound preference:', error);
     }
   }, [soundEnabled]);
 

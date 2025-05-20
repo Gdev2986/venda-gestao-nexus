@@ -16,20 +16,20 @@ const AdminNotificationsTab = () => {
 
   const sendNotification = async (notification: any) => {
     if (!user) {
-      toast("You must be logged in to send notifications");
+      toast({
+        title: "Erro",
+        description: "Você precisa estar logado para enviar notificações",
+        variant: "destructive"
+      });
       return false;
     }
 
     try {
       console.log("Preparing to send notification:", notification);
 
-      let query;
-      
+      // Check if we're sending to specific roles
       if (notification.recipient_roles && notification.recipient_roles.length > 0) {
-        // Send to specific roles
-        console.log("Sending to specific roles:", notification.recipient_roles);
-        
-        // First, get users with the specified roles
+        // Get users with the specified roles
         const { data: profiles, error: profilesError } = await supabase
           .from("profiles")
           .select("id")
@@ -38,11 +38,14 @@ const AdminNotificationsTab = () => {
         if (profilesError) throw profilesError;
         
         if (!profiles || profiles.length === 0) {
-          toast("Nenhum destinatário encontrado - Não há usuários com as funções selecionadas");
+          toast({
+            title: "Aviso",
+            description: "Nenhum destinatário encontrado - Não há usuários com as funções selecionadas"
+          });
           return false;
         }
         
-        // Then, insert notifications for each user
+        // Create one notification for each user
         const notificationsToInsert = profiles.map(profile => ({
           user_id: profile.id,
           title: notification.title,
@@ -58,16 +61,22 @@ const AdminNotificationsTab = () => {
         if (insertError) throw insertError;
       } else {
         // Handle 'all' users case
-        console.log("Sending to all users");
-        
-        // Get all profiles (potentially with role filtering in the future)
         const { data: profiles, error: profilesError } = await supabase
           .from("profiles")
           .select("id");
           
         if (profilesError) throw profilesError;
         
-        // Create a notification for each user
+        if (!profiles || profiles.length === 0) {
+          toast({
+            title: "Erro",
+            description: "Não foram encontrados usuários para enviar notificações",
+            variant: "destructive"
+          });
+          return false;
+        }
+        
+        // Create one notification for each user
         const notificationsToInsert = profiles.map(profile => ({
           user_id: profile.id,
           title: notification.title,
@@ -91,8 +100,8 @@ const AdminNotificationsTab = () => {
     } catch (error: any) {
       console.error("Error sending notification:", error);
       toast({
-        title: "Error",
-        description: `Failed to send notification: ${error.message}`,
+        title: "Erro",
+        description: `Falha ao enviar notificação: ${error.message}`,
         variant: "destructive"
       });
       return false;
@@ -104,7 +113,7 @@ const AdminNotificationsTab = () => {
 
     try {
       if (!user) {
-        throw new Error("User not authenticated");
+        throw new Error("Usuário não autenticado");
       }
       
       // Get all admin users to send test to
@@ -116,15 +125,15 @@ const AdminNotificationsTab = () => {
       if (adminError) throw adminError;
       
       if (!adminProfiles || adminProfiles.length === 0) {
-        throw new Error("No admin users found");
+        throw new Error("Nenhum usuário administrador encontrado");
       }
       
-      // Insert test notification for all admins - Make sure to use a valid literal type
+      // Insert test notification for all admins
       const testNotifications = adminProfiles.map(profile => ({
         user_id: profile.id,
         title: "Notificação de Teste",
         message: "Esta é uma notificação de teste do painel de administração.",
-        type: "SYSTEM" as const, // Use string literal with "as const" to satisfy TypeScript
+        type: "SYSTEM",
         data: { isTest: true }
       }));
       
