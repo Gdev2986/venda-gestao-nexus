@@ -1,4 +1,3 @@
-
 export enum TicketStatus {
   PENDING = "PENDING",
   IN_PROGRESS = "IN_PROGRESS",
@@ -84,4 +83,15 @@ export interface UpdateSupportTicketParams {
   type?: TicketType;
   assigned_to?: string;
   user_id?: string;
+}
+
+// Make sure we have this type definition for our components
+export interface SupportRequest {
+  id: string;
+  subject: string;
+  message: string;
+  type: "MACHINE" | "SUPPLIES" | "PAYMENT" | "OTHER";
+  status: "OPEN" | "IN_PROGRESS" | "RESOLVED";
+  created_at: string;
+  response?: string;
 }
