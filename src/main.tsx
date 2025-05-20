@@ -33,29 +33,21 @@ function renderApp() {
     // Create a fresh root
     const root = createRoot(rootElement);
     
-    // Proper provider nesting order - this is critical
-    // Using React.createElement to ensure React is properly referenced
+    // Ensure React is correctly imported and used
     root.render(
-      React.createElement(
-        React.StrictMode,
-        null,
-        React.createElement(
-          BrowserRouter,
-          null,
-          React.createElement(
-            QueryClientProvider,
-            { client: queryClient },
-            React.createElement(
-              ThemeProvider,
-              { defaultTheme: "light", storageKey: "sigmapay-theme" },
-              React.createElement(
-                AuthProvider,
-                null,
-                React.createElement(
-                  NotificationsProvider,
-                  null,
-                  React.createElement(App, null),
-                  React.createElement(Toaster, null)
+      React.createElement(React.StrictMode, null,
+        React.createElement(BrowserRouter, null,
+          React.createElement(QueryClientProvider, { client: queryClient },
+            React.createElement(ThemeProvider, { 
+              defaultTheme: "light", 
+              storageKey: "sigmapay-theme" 
+            },
+              React.createElement(AuthProvider, null,
+                React.createElement(NotificationsProvider, null,
+                  React.createElement(React.Fragment, null,
+                    React.createElement(App, null),
+                    React.createElement(Toaster, null)
+                  )
                 )
               )
             )
