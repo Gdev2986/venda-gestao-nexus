@@ -111,13 +111,16 @@ export function ClientSelect({
       </PopoverTrigger>
       <PopoverContent className="w-[--radix-popover-trigger-width] p-0" align="start">
         <Command>
-          <CommandInput 
-            placeholder="Buscar cliente..." 
-            value={searchQuery}
-            onValueChange={setSearchQuery}
-            onKeyDown={handleKeyDown}
-            startIcon={<Search className="h-4 w-4" />}
-          />
+          <div className="flex items-center border-b px-3">
+            <Search className="h-4 w-4 shrink-0 opacity-50 mr-2" />
+            <CommandInput 
+              placeholder="Buscar cliente..." 
+              value={searchQuery}
+              onValueChange={setSearchQuery}
+              onKeyDown={handleKeyDown}
+              className="flex-1 py-2 outline-none border-0 focus:ring-0"
+            />
+          </div>
           <CommandEmpty>{emptyMessage}</CommandEmpty>
           <CommandGroup className="max-h-[300px] overflow-y-auto">
             {filteredClients.map(client => (

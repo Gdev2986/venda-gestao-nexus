@@ -20,6 +20,7 @@ import { LogisticsRoutes } from "./routes/logisticsRoutes";
 // Layouts
 import RootLayout from "./layouts/RootLayout";
 import MainLayout from "./layouts/MainLayout";
+import PersistentLayout from "./layouts/PersistentLayout";
 
 // Pages
 import NotFound from "./pages/NotFound";
@@ -64,18 +65,19 @@ function App() {
         element={<Navigate to={getDashboardRedirectPath()} replace />} 
       />
 
-      {/* Auth Routes */}
+      {/* Auth Routes - outside of persistent layout */}
       {AuthRoutes}
 
-      {/* Protected Routes by Role */}
-      {AdminRoutes}
-      {ClientRoutes}
-      {PartnerRoutes}
-      {FinancialRoutes}
-      {LogisticsRoutes}
+      {/* Persistent Layout for all protected routes */}
+      <Route element={<PersistentLayout />}>
+        {/* Protected Routes by Role */}
+        {AdminRoutes}
+        {ClientRoutes}
+        {PartnerRoutes}
+        {FinancialRoutes}
+        {LogisticsRoutes}
 
-      {/* Shared Routes (accessible by all roles) - Using MainLayout */}
-      <Route element={<MainLayout />}>
+        {/* Shared Routes (accessible by all roles) */}
         <Route path="/notifications" element={<Notifications />} />
       </Route>
 
