@@ -47,5 +47,5 @@ export const NotificationList = ({
   );
 };
 
-// Make sure we're exporting both ways so any import style works
+// Export both ways to ensure compatibility with any import style
 export default NotificationList;
