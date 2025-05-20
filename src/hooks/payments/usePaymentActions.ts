@@ -4,6 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
 import { PaymentAction, PaymentStatus } from "@/types/enums";
+import { NotificationType } from "@/types";
 
 export const usePaymentActions = () => {
   const [isLoading, setIsLoading] = useState(false);
@@ -69,7 +70,7 @@ export const usePaymentActions = () => {
             user_id: user.id, // This should be the client user ID in a real implementation
             title: "Pagamento Aprovado",
             message: "Seu pagamento foi aprovado com sucesso",
-            type: "PAYMENT_STATUS",
+            type: "PAYMENT" as NotificationType, // Use existing valid notification type
             data: { payment_id: paymentId, status: "APPROVED" }
           });
 
@@ -106,7 +107,7 @@ export const usePaymentActions = () => {
             user_id: user.id, // This should be the client user ID in a real implementation
             title: "Pagamento Rejeitado",
             message: comment || "Seu pagamento foi rejeitado",
-            type: "PAYMENT_STATUS",
+            type: "PAYMENT" as NotificationType, // Use existing valid notification type
             data: { payment_id: paymentId, status: "REJECTED", reason: comment }
           });
 
@@ -148,7 +149,7 @@ export const usePaymentActions = () => {
             user_id: user.id, // This should be the client user ID in a real implementation
             title: "Comprovante Enviado",
             message: "O comprovante do seu pagamento foi enviado",
-            type: "PAYMENT_RECEIPT",
+            type: "PAYMENT" as NotificationType, // Use existing valid notification type
             data: { payment_id: paymentId, status: "PAID" }
           });
 

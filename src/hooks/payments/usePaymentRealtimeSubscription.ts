@@ -66,15 +66,19 @@ export const usePaymentRealtimeSubscription = (
           // Show notification if enabled
           if (options.notifyOnUpdates) {
             const eventType = payload.eventType;
-            const newRecord = payload.new;
-            const oldRecord = payload.old;
+            const newRecord = payload.new || {};
+            const oldRecord = payload.old || {};
             
             if (eventType === 'INSERT') {
+              const amount = typeof newRecord === 'object' && 'amount' in newRecord ? newRecord.amount : 'N/A';
               toast({
                 title: 'Novo pagamento',
-                description: `Um novo pagamento de R$${newRecord.amount} foi criado`,
+                description: `Um novo pagamento de R$${amount} foi criado`,
               });
-            } else if (eventType === 'UPDATE' && oldRecord.status !== newRecord.status) {
+            } else if (eventType === 'UPDATE' && 
+                      typeof oldRecord === 'object' && typeof newRecord === 'object' && 
+                      'status' in oldRecord && 'status' in newRecord &&
+                      oldRecord.status !== newRecord.status) {
               const statusMessages: {[key: string]: string} = {
                 'PENDING': 'aguardando aprovação',
                 'APPROVED': 'aprovado',
@@ -82,9 +86,12 @@ export const usePaymentRealtimeSubscription = (
                 'PAID': 'pago'
               };
               
+              const newStatus = typeof newRecord === 'object' && 'status' in newRecord ? 
+                statusMessages[newRecord.status as string] || newRecord.status as string : 'desconhecido';
+              
               toast({
                 title: 'Status do pagamento alterado',
-                description: `Pagamento agora está ${statusMessages[newRecord.status] || newRecord.status}`,
+                description: `Pagamento agora está ${newStatus}`,
               });
             } else if (eventType === 'DELETE') {
               toast({

@@ -82,7 +82,9 @@ export const usePaymentsFetcher = ({
 
       // Apply status filter
       if (statusFilter !== 'ALL') {
-        query = query.eq('status', statusFilter);
+        // Convert enum value to string if needed
+        const statusValue = typeof statusFilter === 'string' ? statusFilter : String(statusFilter);
+        query = query.eq('status', statusValue);
       }
 
       // Apply search filter on client name
