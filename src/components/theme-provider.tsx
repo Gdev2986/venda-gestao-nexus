@@ -2,6 +2,7 @@
 "use client";
 
 import * as React from "react";
+import { createContext, useState, useContext, useEffect } from "react";
 
 type Theme = "dark" | "light" | "system";
 
@@ -21,7 +22,7 @@ const initialState: ThemeProviderState = {
   setTheme: () => null,
 };
 
-const ThemeProviderContext = React.createContext<ThemeProviderState>(initialState);
+const ThemeProviderContext = createContext<ThemeProviderState>(initialState);
 
 export function ThemeProvider({
   children,
@@ -30,18 +31,22 @@ export function ThemeProvider({
   ...props
 }: ThemeProviderProps) {
   // Initialize state with defaultTheme first
-  const [theme, setTheme] = React.useState<Theme>(defaultTheme);
+  const [theme, setTheme] = useState<Theme>(defaultTheme);
   
   // Then update from localStorage when component mounts
-  React.useEffect(() => {
-    const savedTheme = localStorage?.getItem(storageKey) as Theme | null;
-    if (savedTheme) {
-      setTheme(savedTheme);
+  useEffect(() => {
+    try {
+      const savedTheme = localStorage?.getItem(storageKey) as Theme | null;
+      if (savedTheme) {
+        setTheme(savedTheme);
+      }
+    } catch (error) {
+      console.error("Failed to load theme preference:", error);
     }
   }, [storageKey]);
   
   // Update document classes when theme changes
-  React.useEffect(() => {
+  useEffect(() => {
     const root = window.document.documentElement;
     
     root.classList.remove("light", "dark");
@@ -57,7 +62,7 @@ export function ThemeProvider({
   }, [theme]);
 
   // Save theme to localStorage
-  React.useEffect(() => {
+  useEffect(() => {
     try {
       localStorage.setItem(storageKey, theme);
     } catch (error) {
@@ -65,13 +70,10 @@ export function ThemeProvider({
     }
   }, [theme, storageKey]);
 
-  const value = React.useMemo(
-    () => ({
-      theme,
-      setTheme: (t: Theme) => setTheme(t),
-    }),
-    [theme]
-  );
+  const value = {
+    theme,
+    setTheme: (t: Theme) => setTheme(t),
+  };
 
   return (
     <ThemeProviderContext.Provider {...props} value={value}>
@@ -80,8 +82,8 @@ export function ThemeProvider({
   );
 }
 
-export const useTheme = (): ThemeProviderState => {
-  const context = React.useContext(ThemeProviderContext);
+export const useTheme = () => {
+  const context = useContext(ThemeProviderContext);
 
   if (context === undefined) {
     throw new Error("useTheme must be used within a ThemeProvider");
