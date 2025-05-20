@@ -1,14 +1,15 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { PageHeader } from "@/components/page/PageHeader";
 import { useToast } from "@/hooks/use-toast";
 import { DATE_FILTER_PRESETS, DateRangeFilters } from "@/components/dashboard/admin/DateRangeFilters";
 import { QuickLinks } from "@/components/dashboard/admin/QuickLinks";
 import { ChartsSection } from "@/components/dashboard/admin/ChartsSection";
 import StatCards from "@/components/dashboard/admin/StatCards";
+import PaymentTypesTable, { PaymentTypeData } from "@/components/dashboard/admin/PaymentTypesTable";
 import { subDays } from "date-fns";
 
-// Dashboard mock data - Ensure all data properties are properly initialized as arrays
+// Dashboard mock data
 const MOCK_DATA = {
   stats: {
     totalSales: 125750.50,
@@ -49,8 +50,45 @@ const MOCK_DATA = {
     { name: "Abr", clients: 42 },
     { name: "Mai", clients: 48 },
     { name: "Jun", clients: 53 }
+  ],
+  paymentTypesByInstallment: [
+    { type: "PIX", installments: 1, totalAmount: 19750, salesCount: 65 },
+    { type: "Débito", installments: 1, totalAmount: 37500, salesCount: 120 },
+    { type: "Crédito", installments: 1, totalAmount: 8500, salesCount: 28 },
+    { type: "Crédito", installments: 2, totalAmount: 9200, salesCount: 18 },
+    { type: "Crédito", installments: 3, totalAmount: 12500, salesCount: 25 },
+    { type: "Crédito", installments: 4, totalAmount: 6800, salesCount: 17 },
+    { type: "Crédito", installments: 6, totalAmount: 15000, salesCount: 20 },
+    { type: "Crédito", installments: 10, totalAmount: 5500, salesCount: 11 },
+    { type: "Crédito", installments: 12, totalAmount: 11000, salesCount: 15 }
   ]
 };
+
+// Generate mock data for all installments from 1 to 21 for credit
+function generateMockPaymentTypeData(): PaymentTypeData[] {
+  // Start with the fixed payment types
+  const result: PaymentTypeData[] = [
+    { type: "PIX", installments: 1, totalAmount: 19750, salesCount: 65 },
+    { type: "Débito", installments: 1, totalAmount: 37500, salesCount: 120 },
+  ];
+  
+  // Generate data for credit from 1x to 21x
+  for (let i = 1; i <= 21; i++) {
+    // Base amount that decreases with more installments to simulate real-world behavior
+    const baseAmount = 25000 / (1 + i/10);
+    // Random variation +/- 20%
+    const variation = 0.8 + Math.random() * 0.4;
+    
+    result.push({
+      type: "Crédito",
+      installments: i,
+      totalAmount: Math.round(baseAmount * variation),
+      salesCount: Math.round(30 * variation / (1 + i/5)),
+    });
+  }
+  
+  return result;
+}
 
 const AdminDashboard = () => {
   const [isLoading, setIsLoading] = useState(false);
@@ -59,13 +97,18 @@ const AdminDashboard = () => {
     from: subDays(new Date(), 30),
     to: new Date()
   });
+  const [paymentTypeData, setPaymentTypeData] = useState<PaymentTypeData[]>(
+    generateMockPaymentTypeData()
+  );
   const { toast } = useToast();
   
-  // Function to simulate data refresh
+  // Function to simulate data refresh based on date range
   const handleRefresh = () => {
     setIsLoading(true);
-    // Simulate API call
+    // Simulate API call with different data based on selected date range
     setTimeout(() => {
+      // Generate slightly different data for each refresh to simulate real data changes
+      setPaymentTypeData(generateMockPaymentTypeData());
       setIsLoading(false);
       toast({
         title: "Dados atualizados",
@@ -74,11 +117,10 @@ const AdminDashboard = () => {
     }, 1500);
   };
 
-  // Ensure data is properly initialized
-  const salesData = MOCK_DATA.dailySales || [];
-  const paymentMethodsData = MOCK_DATA.paymentMethods || [];
-  const partnersData = MOCK_DATA.topPartners || [];
-  const clientGrowthData = MOCK_DATA.clientGrowth || [];
+  // Effect to refresh data when date range changes
+  useEffect(() => {
+    handleRefresh();
+  }, [dateRange.from, dateRange.to]);
 
   return (
     <div className="space-y-4 md:space-y-6">
@@ -105,12 +147,21 @@ const AdminDashboard = () => {
           <QuickLinks />
         </div>
         
+        {/* Payment Types Table (New Component) */}
+        <div className="mt-6">
+          <PaymentTypesTable 
+            data={paymentTypeData} 
+            isLoading={isLoading} 
+            dateRange={dateRange}
+          />
+        </div>
+        
         {/* Charts Grid */}
         <ChartsSection 
-          salesData={salesData}
-          paymentMethodsData={paymentMethodsData}
-          partnersData={partnersData}
-          clientGrowthData={clientGrowthData}
+          salesData={MOCK_DATA.dailySales}
+          paymentMethodsData={MOCK_DATA.paymentMethods}
+          partnersData={MOCK_DATA.topPartners}
+          clientGrowthData={MOCK_DATA.clientGrowth}
           isLoading={isLoading}
         />
       </div>
