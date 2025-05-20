@@ -82,9 +82,9 @@ export const usePaymentsFetcher = ({
 
       // Apply status filter
       if (statusFilter !== 'ALL') {
-        // Convert statusFilter to a string to avoid type issues
-        const statusString = String(statusFilter);
-        query = query.eq('status', statusString);
+        // Use the statusFilter value as is, since it should already match the PaymentStatus enum values
+        // Type assertion to PaymentStatus is safer than converting to string
+        query = query.eq('status', statusFilter as PaymentStatus);
       }
 
       // Apply search filter on client name
