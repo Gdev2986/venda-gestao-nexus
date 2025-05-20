@@ -36,7 +36,7 @@ const UserPayments = () => {
   
   // Adapter function to match expected interface
   const handleRequestPayment = (amount: string, description: string, pixKeyId: string) => {
-    originalHandleRequestPayment({
+    return originalHandleRequestPayment({
       amount: parseFloat(amount),
       description,
       pixKeyId

@@ -68,7 +68,7 @@ export const usePaymentRequestManager = (
 
       // Create formatted payment for UI
       const newPayment: Payment = {
-        id: data?.[0]?.id || generateUuid(),
+        id: data?.[0]?.id || generateUuid(), // Use a proper string value
         amount: values.amount,
         description: values.description || "Solicitação de pagamento",
         status: PaymentStatus.PENDING,
@@ -82,7 +82,7 @@ export const usePaymentRequestManager = (
           id: pixKey.id,
           key: pixKey.key,
           type: pixKey.type,
-          name: pixKey.name || "", 
+          name: pixKey.name || "",
           owner_name: pixKey.owner_name || pixKey.name || "", 
           user_id: pixKey.user_id || ""
         }

@@ -29,6 +29,7 @@ export function ThemeProvider({
   storageKey = "sigmapay-theme",
   ...props
 }: ThemeProviderProps) {
+  // Use explicit React import for useState
   const [theme, setTheme] = React.useState<Theme>(() => {
     if (typeof window !== "undefined") {
       try {
