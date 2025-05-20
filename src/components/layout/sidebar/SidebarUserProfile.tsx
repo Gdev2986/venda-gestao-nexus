@@ -5,7 +5,7 @@ import { useAuth } from "@/hooks/use-auth";
 import { supabase } from "@/integrations/supabase/client";
 
 interface SidebarUserProfileProps {
-  userRole: UserRole;
+  userRole: UserRole | null;
 }
 
 const SidebarUserProfile = ({ userRole }: SidebarUserProfileProps) => {
@@ -41,12 +41,26 @@ const SidebarUserProfile = ({ userRole }: SidebarUserProfileProps) => {
     fetchUserProfile();
   }, [user]);
 
-  // Iniciais do nome para o avatar
+  // Iniciais do nome para o avatar - com verificação para userRole null
   const getInitials = () => {
     if (profileName) {
       return profileName.charAt(0).toUpperCase();
     }
-    return userRole.charAt(0);
+    return userRole ? userRole.charAt(0).toUpperCase() : "U"; // Return 'U' for unknown if userRole is null
+  };
+
+  // Role display name with null check
+  const getRoleDisplayName = () => {
+    if (!userRole) return "Usuário";
+    
+    switch (userRole) {
+      case UserRole.ADMIN: return "Administrador";
+      case UserRole.CLIENT: return "Cliente";
+      case UserRole.FINANCIAL: return "Financeiro";
+      case UserRole.PARTNER: return "Parceiro";
+      case UserRole.LOGISTICS: return "Logística";
+      default: return "Usuário";
+    }
   };
 
   return (
@@ -64,12 +78,9 @@ const SidebarUserProfile = ({ userRole }: SidebarUserProfileProps) => {
           )}
         </div>
         <div className="ml-3">
-          <p className="text-sm font-medium truncate">{profileName || `Conta ${userRole}`}</p>
+          <p className="text-sm font-medium truncate">{profileName || `Conta ${userRole || 'Usuário'}`}</p>
           <p className="text-xs text-sidebar-foreground/70 truncate">
-            {userRole === UserRole.ADMIN && "Administrador"}
-            {userRole === UserRole.CLIENT && "Cliente"}
-            {userRole === UserRole.FINANCIAL && "Financeiro"}
-            {userRole === UserRole.PARTNER && "Parceiro"}
+            {getRoleDisplayName()}
           </p>
         </div>
       </div>

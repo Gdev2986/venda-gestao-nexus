@@ -11,7 +11,7 @@ import {
 } from "./navigation-items";
 
 interface SidebarNavigationProps {
-  userRole: UserRole;
+  userRole: UserRole | null;
 }
 
 const SidebarNavigation = ({ userRole }: SidebarNavigationProps) => {
@@ -36,7 +36,7 @@ const SidebarNavigation = ({ userRole }: SidebarNavigationProps) => {
         items = [...logisticsItems];
         break;
       default:
-        items = [...userItems]; // Default to user items
+        items = [...userItems]; // Default to user items when userRole is null or unrecognized
     }
     
     // Add notifications item to all navigation sets if it's not already included
@@ -53,7 +53,7 @@ const SidebarNavigation = ({ userRole }: SidebarNavigationProps) => {
     <nav className="space-y-1">
       {sidebarItems.map((item) => (
         <div key={item.title}>
-          <SidebarNavItem item={item} userRole={userRole} />
+          <SidebarNavItem item={item} userRole={userRole || UserRole.CLIENT} />
         </div>
       ))}
     </nav>

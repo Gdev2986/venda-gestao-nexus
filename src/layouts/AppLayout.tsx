@@ -38,6 +38,11 @@ const AppLayout = () => {
     }
   }, [sidebarOpen, isMobile]);
 
+  // Log user role for debugging
+  useEffect(() => {
+    console.log("AppLayout - Current user role:", userRole);
+  }, [userRole]);
+
   return (
     <div className="flex h-screen overflow-hidden bg-background">
       {/* Sidebar component - mounted always but conditionally shown */}
