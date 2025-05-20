@@ -15,8 +15,6 @@ export const useRealtimeNotifications = (
 
   // Set up realtime subscription
   useEffect(() => {
-    const { data: authData } = supabase.auth.getSession();
-    
     console.log('Setting up realtime notifications subscription');
     
     // Create channel name based on table and event type

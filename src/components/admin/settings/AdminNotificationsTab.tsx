@@ -1,162 +1,13 @@
 
-import React, { useState } from "react";
-import { Card, CardContent } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
+import React from "react";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
-import { SendNotificationForm } from "@/components/admin/notifications/SendNotificationForm";
-import { supabase } from "@/integrations/supabase/client";
-import { toast } from "@/hooks/use-toast";
-import { UserRole } from "@/types/enums";
-import { NotificationType } from "@/types/notification.types";
+import { NotificationSender } from "@/components/admin/notifications/NotificationSender";
+import { TemplatesTab } from "@/components/admin/notifications/TemplatesTab";
+import { TestNotificationSection } from "@/components/admin/notifications/TestNotificationSection";
 import { useAuth } from "@/contexts/AuthContext";
 
 const AdminNotificationsTab = () => {
-  const [isTestLoading, setIsTestLoading] = useState(false);
   const { user } = useAuth();
-
-  const sendNotification = async (notification: any) => {
-    if (!user) {
-      toast({
-        title: "Erro",
-        description: "Você precisa estar logado para enviar notificações",
-        variant: "destructive"
-      });
-      return false;
-    }
-
-    try {
-      console.log("Preparing to send notification:", notification);
-
-      // Check if we're sending to specific roles
-      if (notification.recipient_roles && notification.recipient_roles.length > 0) {
-        // Get users with the specified roles
-        const { data: profiles, error: profilesError } = await supabase
-          .from("profiles")
-          .select("id")
-          .in("role", notification.recipient_roles);
-          
-        if (profilesError) throw profilesError;
-        
-        if (!profiles || profiles.length === 0) {
-          toast({
-            title: "Aviso",
-            description: "Nenhum destinatário encontrado - Não há usuários com as funções selecionadas"
-          });
-          return false;
-        }
-        
-        // Create one notification for each user
-        const notificationsToInsert = profiles.map(profile => ({
-          user_id: profile.id,
-          title: notification.title,
-          message: notification.message,
-          type: notification.type,
-          data: notification.data || {}
-        }));
-        
-        const { error: insertError } = await supabase
-          .from("notifications")
-          .insert(notificationsToInsert);
-          
-        if (insertError) throw insertError;
-      } else {
-        // Handle 'all' users case
-        const { data: profiles, error: profilesError } = await supabase
-          .from("profiles")
-          .select("id");
-          
-        if (profilesError) throw profilesError;
-        
-        if (!profiles || profiles.length === 0) {
-          toast({
-            title: "Erro",
-            description: "Não foram encontrados usuários para enviar notificações",
-            variant: "destructive"
-          });
-          return false;
-        }
-        
-        // Create one notification for each user
-        const notificationsToInsert = profiles.map(profile => ({
-          user_id: profile.id,
-          title: notification.title,
-          message: notification.message,
-          type: notification.type,
-          data: notification.data || {}
-        }));
-        
-        const { error: insertError } = await supabase
-          .from("notifications")
-          .insert(notificationsToInsert);
-          
-        if (insertError) throw insertError;
-      }
-      
-      toast({
-        title: "Notificação enviada",
-        description: "Sua notificação foi enviada com sucesso"
-      });
-      return true;
-    } catch (error: any) {
-      console.error("Error sending notification:", error);
-      toast({
-        title: "Erro",
-        description: `Falha ao enviar notificação: ${error.message}`,
-        variant: "destructive"
-      });
-      return false;
-    }
-  };
-
-  const sendTestNotification = async () => {
-    setIsTestLoading(true);
-
-    try {
-      if (!user) {
-        throw new Error("Usuário não autenticado");
-      }
-      
-      // Get all admin users to send test to
-      const { data: adminProfiles, error: adminError } = await supabase
-        .from("profiles")
-        .select("id")
-        .eq("role", UserRole.ADMIN);
-
-      if (adminError) throw adminError;
-      
-      if (!adminProfiles || adminProfiles.length === 0) {
-        throw new Error("Nenhum usuário administrador encontrado");
-      }
-      
-      // Insert test notification for all admins
-      const testNotifications = adminProfiles.map(profile => ({
-        user_id: profile.id,
-        title: "Notificação de Teste",
-        message: "Esta é uma notificação de teste do painel de administração.",
-        type: "SYSTEM",
-        data: { isTest: true }
-      }));
-      
-      const { error } = await supabase
-        .from("notifications")
-        .insert(testNotifications);
-
-      if (error) throw error;
-
-      toast({
-        title: "Notificação de teste enviada",
-        description: "Uma notificação de teste foi enviada para todos os administradores."
-      });
-    } catch (error: any) {
-      toast({
-        title: "Erro",
-        description: `Falha ao enviar notificação de teste: ${error.message}`,
-        variant: "destructive"
-      });
-    } finally {
-      setIsTestLoading(false);
-    }
-  };
 
   return (
     <div className="space-y-6">
@@ -168,46 +19,15 @@ const AdminNotificationsTab = () => {
         </TabsList>
         
         <TabsContent value="send" className="space-y-4 pt-4">
-          <Card>
-            <CardContent className="pt-6">
-              <SendNotificationForm onSendNotification={sendNotification} />
-            </CardContent>
-          </Card>
+          <NotificationSender user={user} />
         </TabsContent>
         
         <TabsContent value="templates" className="space-y-4 pt-4">
-          <Card>
-            <CardContent className="pt-6">
-              <h3 className="text-lg font-medium">Templates de Notificação</h3>
-              <p className="text-muted-foreground">
-                Configure templates para diferentes tipos de notificação.
-              </p>
-              
-              <div className="border rounded-lg p-4 mt-4 bg-muted/30">
-                <p className="text-sm text-muted-foreground">
-                  Funcionalidade em desenvolvimento. Os templates serão disponibilizados em breve.
-                </p>
-              </div>
-            </CardContent>
-          </Card>
+          <TemplatesTab />
         </TabsContent>
         
         <TabsContent value="settings" className="space-y-4 pt-4">
-          <Card>
-            <CardContent className="pt-6">
-              <h3 className="text-lg font-medium">Testar Notificações</h3>
-              <p className="text-muted-foreground mb-4">
-                Envie uma notificação de teste para validar o sistema.
-              </p>
-              
-              <Button 
-                onClick={sendTestNotification} 
-                disabled={isTestLoading}
-              >
-                {isTestLoading ? "Enviando..." : "Enviar Notificação de Teste"}
-              </Button>
-            </CardContent>
-          </Card>
+          <TestNotificationSection />
         </TabsContent>
       </Tabs>
     </div>
