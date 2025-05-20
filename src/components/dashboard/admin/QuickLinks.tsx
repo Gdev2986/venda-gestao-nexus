@@ -1,5 +1,6 @@
 
-import { useState } from "react";
+import * as React from "react";
+import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { 
@@ -14,6 +15,7 @@ import { useToast } from "@/hooks/use-toast";
 
 export function QuickLinks() {
   const { toast } = useToast();
+  const navigate = useNavigate();
   
   // Function to generate quick links
   const links = [
@@ -28,8 +30,8 @@ export function QuickLinks() {
       title: `Navegando para ${name}`,
       description: `Redirecionando para a área de ${name.toLowerCase()}.`
     });
-    // In a real app, this would use router navigation
-    window.location.href = path;
+    // Use React Router navigation instead of window.location
+    navigate(path);
   };
 
   return (

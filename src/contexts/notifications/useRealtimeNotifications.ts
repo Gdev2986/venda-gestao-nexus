@@ -1,20 +1,20 @@
 
-import { useEffect, useRef } from 'react';
+import * as React from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { Notification } from './types';
 
 export const useRealtimeNotifications = (
   callback: (notification: Notification) => void
 ) => {
-  const callbackRef = useRef(callback);
+  const callbackRef = React.useRef(callback);
 
   // Update the callback ref when the callback changes
-  useEffect(() => {
+  React.useEffect(() => {
     callbackRef.current = callback;
   }, [callback]);
 
   // Set up realtime subscription
-  useEffect(() => {
+  React.useEffect(() => {
     console.log('Setting up realtime notifications subscription');
     
     // Create channel name based on table and event type

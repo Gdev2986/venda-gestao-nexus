@@ -1,5 +1,5 @@
 
-import { useState, useEffect } from "react";
+import * as React from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { ChevronDown, ChevronRight } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -15,7 +15,7 @@ interface SidebarNavItemProps {
 const SidebarNavItem = ({ item, userRole }: SidebarNavItemProps) => {
   const navigate = useNavigate();
   const location = useLocation();
-  const [expanded, setExpanded] = useState(false);
+  const [expanded, setExpanded] = React.useState(false);
 
   const isActiveRoute = (href: string) => {
     return location.pathname === href || location.pathname.startsWith(`${href}/`);
@@ -28,7 +28,7 @@ const SidebarNavItem = ({ item, userRole }: SidebarNavItemProps) => {
   };
 
   // Set expanded state initially and when route changes
-  useEffect(() => {
+  React.useEffect(() => {
     if (item.subItems && isActiveParent(item)) {
       setExpanded(true);
     }
@@ -54,8 +54,7 @@ const SidebarNavItem = ({ item, userRole }: SidebarNavItemProps) => {
   if (item.subItems) {
     return (
       <div className="mb-1">
-        <motion.a
-          href={item.href}
+        <motion.button
           onClick={toggleExpanded}
           initial="initial"
           whileHover="hover"
@@ -82,7 +81,7 @@ const SidebarNavItem = ({ item, userRole }: SidebarNavItemProps) => {
               <ChevronRight className="h-4 w-4" />
             )}
           </motion.div>
-        </motion.a>
+        </motion.button>
         
         <motion.div
           initial={{ height: 0, opacity: 0 }}
@@ -95,9 +94,8 @@ const SidebarNavItem = ({ item, userRole }: SidebarNavItemProps) => {
         >
           {item.subItems.map((subItem) => (
             subItem.roles.includes(userRole) && (
-              <motion.a
+              <motion.button
                 key={subItem.title}
-                href={subItem.href}
                 onClick={(e) => handleItemClick(e, subItem.href)}
                 initial="initial"
                 whileHover="hover"
@@ -111,7 +109,7 @@ const SidebarNavItem = ({ item, userRole }: SidebarNavItemProps) => {
                 )}
               >
                 <span>{subItem.title}</span>
-              </motion.a>
+              </motion.button>
             )
           ))}
         </motion.div>
@@ -120,8 +118,7 @@ const SidebarNavItem = ({ item, userRole }: SidebarNavItemProps) => {
   }
 
   return (
-    <motion.a
-      href={item.href}
+    <motion.button
       onClick={(e) => handleItemClick(e, item.href)}
       initial="initial"
       whileHover="hover"
@@ -136,7 +133,7 @@ const SidebarNavItem = ({ item, userRole }: SidebarNavItemProps) => {
     >
       <item.icon className="h-5 w-5 mr-3 flex-shrink-0" />
       <span>{item.title}</span>
-    </motion.a>
+    </motion.button>
   );
 };
 

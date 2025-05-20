@@ -1,5 +1,5 @@
 
-import React, { createContext, useState, useContext, useEffect } from 'react';
+import * as React from 'react';
 import { Notification } from './types';
 import { notificationsService } from './notificationsService';
 import { useRealtimeNotifications } from './useRealtimeNotifications';
@@ -17,17 +17,17 @@ interface NotificationsContextType {
   setSoundEnabled: (enabled: boolean) => void;
 }
 
-const NotificationsContext = createContext<NotificationsContextType | undefined>(undefined);
+const NotificationsContext = React.createContext<NotificationsContextType | undefined>(undefined);
 
 export const NotificationsProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [notifications, setNotifications] = useState<Notification[]>([]);
+  const [notifications, setNotifications] = React.useState<Notification[]>([]);
   const [soundEnabled, setSoundEnabled] = useSoundPreference();
 
   // Calculate unread count
   const unreadCount = notifications.filter(notification => !notification.is_read).length;
 
   // Fetch notifications on mount
-  useEffect(() => {
+  React.useEffect(() => {
     const fetchNotifications = async () => {
       try {
         const userNotifications = await notificationsService.getUserNotifications();
@@ -145,7 +145,7 @@ export const NotificationsProvider: React.FC<{ children: React.ReactNode }> = ({
 
 // Hook for using the notifications context
 export const useNotifications = () => {
-  const context = useContext(NotificationsContext);
+  const context = React.useContext(NotificationsContext);
   if (context === undefined) {
     throw new Error('useNotifications must be used within a NotificationsProvider');
   }
