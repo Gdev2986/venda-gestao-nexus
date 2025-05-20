@@ -25,17 +25,18 @@ export {
 // Re-export from payment.types
 export {
   type PixKey,
+  type PixKeyType,
   type Payment,
   type PaymentRequest,
-  type PaymentRequestStatus,
-  type PixKeyType
+  type PaymentRequestStatus
 } from './payment.types';
 
 // Re-export from client.ts
 export {
   type SupabaseClientRow,
   type ClientCreate,
-  type ClientUpdate
+  type ClientUpdate,
+  type Client
 } from './client';
 
 // Re-export from machine.types

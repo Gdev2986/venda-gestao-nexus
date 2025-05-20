@@ -10,7 +10,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
-import { NotificationType } from "@/types";
+import { NotificationType } from "@/types/notification.types";
 
 const notificationFormSchema = z.object({
   title: z.string().min(3, {
@@ -85,12 +85,12 @@ export function SendNotification() {
         // Send to all clients
         const { error } = await supabase
           .from('notifications')
-          .insert([{
+          .insert({
             title: data.title,
             message: data.message,
             type: data.type,
             user_id: 'ALL', // We'll handle this value in a database trigger or create a separate endpoint
-          }]);
+          });
         
         if (error) throw error;
       } else if (data.targetType === "specific" && data.targetId) {
@@ -108,12 +108,12 @@ export function SendNotification() {
         if (clientData && clientData.id) {
           const { error } = await supabase
             .from('notifications')
-            .insert([{
+            .insert({
               title: data.title,
               message: data.message,
               type: data.type,
               user_id: clientData.id,
-            }]);
+            });
           
           if (error) throw error;
         }
@@ -229,7 +229,7 @@ export function SendNotification() {
             render={({ field }) => (
               <FormItem>
                 <FormLabel>Cliente</FormLabel>
-                <Select onValueChange={field.onChange} value={field.value}>
+                <Select onValueChange={field.onChange} value={field.value || ""}>
                   <FormControl>
                     <SelectTrigger>
                       <SelectValue placeholder="Selecione um cliente" />
