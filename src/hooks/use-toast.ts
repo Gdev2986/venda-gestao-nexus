@@ -21,12 +21,16 @@ export function toast(messageOrProps: string | ToastProps): void {
   } else {
     // Extract props to match sonner's expected format
     const { title, description, ...rest } = messageOrProps;
-    sonnerToast(title || "", { description, ...rest });
+    if (title) {
+      sonnerToast(title, { description, ...rest });
+    } else if (description) {
+      sonnerToast(description);
+    } else {
+      sonnerToast("Notification");
+    }
   }
 }
 
 export function useToast() {
-  return {
-    toast
-  };
+  return { toast };
 }

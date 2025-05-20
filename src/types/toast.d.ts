@@ -3,8 +3,9 @@ import { ReactNode } from "react";
 
 declare module "sonner" {
   export interface ToastT {
+    id?: string;
     title?: string;
-    description?: string;
+    description?: string | ReactNode;
     action?: ReactNode;
     variant?: "default" | "destructive";
     duration?: number;
@@ -12,14 +13,18 @@ declare module "sonner" {
   }
   
   export function toast(
-    message: string,
-    options?: ToastT
+    message: string | ToastT,
+    options?: Partial<ToastT>
   ): void;
 
-  export function Toaster(props: {
+  export interface ToasterProps {
     position?: "top-left" | "top-right" | "top-center" | "bottom-left" | "bottom-right" | "bottom-center";
     duration?: number;
     closeButton?: boolean;
     theme?: "light" | "dark" | "system";
-  }): JSX.Element;
+    className?: string;
+    toastOptions?: object;
+  }
+  
+  export function Toaster(props: ToasterProps): JSX.Element;
 }

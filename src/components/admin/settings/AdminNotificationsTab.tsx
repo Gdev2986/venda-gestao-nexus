@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { SendNotificationForm } from "@/components/admin/notifications/SendNotificationForm";
 import { supabase } from "@/integrations/supabase/client";
-import { toast } from "sonner"; // Direct import from sonner
+import { toast } from "@/hooks/use-toast";
 import { UserRole } from "@/types/enums";
 import { NotificationType } from "@/types/notification.types";
 import { useAuth } from "@/contexts/AuthContext";
@@ -16,9 +16,7 @@ const AdminNotificationsTab = () => {
 
   const sendNotification = async (notification: any) => {
     if (!user) {
-      toast("Error", {
-        description: "You must be logged in to send notifications",
-      });
+      toast("You must be logged in to send notifications");
       return false;
     }
 
@@ -40,9 +38,7 @@ const AdminNotificationsTab = () => {
         if (profilesError) throw profilesError;
         
         if (!profiles || profiles.length === 0) {
-          toast("Nenhum destinatário encontrado", {
-            description: "Não há usuários com as funções selecionadas"
-          });
+          toast("Nenhum destinatário encontrado - Não há usuários com as funções selecionadas");
           return false;
         }
         
@@ -87,14 +83,17 @@ const AdminNotificationsTab = () => {
         if (insertError) throw insertError;
       }
       
-      toast("Notificação enviada", {
-        description: "Sua notificação foi enviada com sucesso",
+      toast({
+        title: "Notificação enviada",
+        description: "Sua notificação foi enviada com sucesso"
       });
       return true;
     } catch (error: any) {
       console.error("Error sending notification:", error);
-      toast("Error", {
+      toast({
+        title: "Error",
         description: `Failed to send notification: ${error.message}`,
+        variant: "destructive"
       });
       return false;
     }
@@ -135,12 +134,15 @@ const AdminNotificationsTab = () => {
 
       if (error) throw error;
 
-      toast("Notificação de teste enviada", {
-        description: "Uma notificação de teste foi enviada para todos os administradores.",
+      toast({
+        title: "Notificação de teste enviada",
+        description: "Uma notificação de teste foi enviada para todos os administradores."
       });
     } catch (error: any) {
-      toast("Erro", {
+      toast({
+        title: "Erro",
         description: `Falha ao enviar notificação de teste: ${error.message}`,
+        variant: "destructive"
       });
     } finally {
       setIsTestLoading(false);
