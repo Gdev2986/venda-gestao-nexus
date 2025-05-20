@@ -30,7 +30,7 @@ export function QuickLinks() {
       title: `Navegando para ${name}`,
       description: `Redirecionando para a área de ${name.toLowerCase()}.`
     });
-    // Use React Router navigation instead of window.location
+    // Use React Router navigation
     navigate(path);
   };
 
