@@ -1,3 +1,4 @@
+
 import { useState, useEffect, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Payment, PaymentStatus } from "@/types/payment.types";
@@ -81,7 +82,7 @@ export const usePaymentsFetcher = ({
 
       // Apply status filter
       if (statusFilter !== 'ALL') {
-        // Fix: Use a more explicit type assertion that matches the expected database values
+        // Use a more explicit type assertion that matches the expected database values
         query = query.eq('status', statusFilter as "PENDING" | "APPROVED" | "PAID" | "REJECTED");
       }
 
