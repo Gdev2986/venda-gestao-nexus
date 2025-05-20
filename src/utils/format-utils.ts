@@ -35,3 +35,12 @@ export const formatPercentage = (value: number, showPlusSign = false): string =>
   
   return value > 0 && showPlusSign ? `+${formatted}` : formatted;
 };
+
+/**
+ * Format a commission block/plan name for display
+ * @param name The name of the commission block/plan
+ * @returns Formatted commission block/plan name
+ */
+export const formatCommissionPlan = (name: string): string => {
+  return name || 'Plano Padrão';
+};

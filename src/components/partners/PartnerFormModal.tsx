@@ -17,10 +17,20 @@ import {
   FormItem,
   FormLabel,
   FormMessage,
+  FormDescription,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Partner } from "@/types";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { useFeePlans } from "@/hooks/use-fee-plans";
+import { Loader2 } from "lucide-react";
 
 // Form schema
 const formSchema = z.object({
@@ -28,7 +38,7 @@ const formSchema = z.object({
   contact_name: z.string().optional(),
   email: z.string().email("Email inválido").optional(),
   phone: z.string().optional(),
-  commission_rate: z.coerce.number().min(0).max(100).optional(),
+  fee_plan_id: z.string().optional(),
 });
 
 export type PartnerFormValues = z.infer<typeof formSchema>;
@@ -51,6 +61,7 @@ export function PartnerFormModal({
   mode = "create",
 }: PartnerFormModalProps) {
   const [submitError, setSubmitError] = useState<string | null>(null);
+  const { feePlans, isLoading: isLoadingFeePlans } = useFeePlans();
 
   const form = useForm<PartnerFormValues>({
     resolver: zodResolver(formSchema),
@@ -60,14 +71,14 @@ export function PartnerFormModal({
           contact_name: defaultValues.contact_name || "",
           email: defaultValues.email || "",
           phone: defaultValues.phone || "",
-          commission_rate: defaultValues.commission_rate || 0,
+          fee_plan_id: defaultValues.fee_plan_id || "",
         }
       : {
           company_name: "",
           contact_name: "",
           email: "",
           phone: "",
-          commission_rate: 0,
+          fee_plan_id: "",
         },
   });
 
@@ -157,19 +168,40 @@ export function PartnerFormModal({
 
             <FormField
               control={form.control}
-              name="commission_rate"
+              name="fee_plan_id"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Taxa de Comissão (%)</FormLabel>
-                  <FormControl>
-                    <Input
-                      type="number"
-                      min="0"
-                      max="100"
-                      step="0.1"
-                      {...field}
-                    />
-                  </FormControl>
+                  <FormLabel>Plano de Taxas</FormLabel>
+                  <Select
+                    value={field.value || ""}
+                    onValueChange={field.onChange}
+                  >
+                    <FormControl>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Selecione um plano de taxas" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      {isLoadingFeePlans ? (
+                        <div className="flex items-center justify-center py-2">
+                          <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                          <span>Carregando planos...</span>
+                        </div>
+                      ) : (
+                        <>
+                          <SelectItem value="">Plano Padrão</SelectItem>
+                          {feePlans.map((plan) => (
+                            <SelectItem key={plan.id} value={plan.id}>
+                              {plan.name}
+                            </SelectItem>
+                          ))}
+                        </>
+                      )}
+                    </SelectContent>
+                  </Select>
+                  <FormDescription>
+                    O plano de taxas determinará as comissões aplicadas aos clientes deste parceiro.
+                  </FormDescription>
                   <FormMessage />
                 </FormItem>
               )}

@@ -13,23 +13,31 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { usePartners } from "@/hooks/use-partners";
+import { useFeePlans } from "@/hooks/use-fee-plans";
 import { PATHS } from "@/routes/paths";
 import { Partner } from "@/types";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Loader2 } from "lucide-react";
 
 const NewPartner = () => {
   const [companyName, setCompanyName] = useState("");
   const [contactName, setContactName] = useState("");
   const [email, setEmail] = useState("");
   const [phone, setPhone] = useState("");
-  const [commissionRate, setCommissionRate] = useState<number>(0);
+  const [feePlanId, setFeePlanId] = useState<string>("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   
   const navigate = useNavigate();
   const { toast } = useToast();
   const { createPartner } = usePartners();
+  const { feePlans, isLoading: isLoadingFeePlans } = useFeePlans();
   
-  const [filteredPartners, setFilteredPartners] = useState<Partner[]>([]);
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
@@ -50,7 +58,7 @@ const NewPartner = () => {
         contact_name: contactName || undefined,
         email: email || undefined,
         phone: phone || undefined,
-        commission_rate: commissionRate
+        fee_plan_id: feePlanId || undefined
       });
       
       toast({
@@ -133,16 +141,32 @@ const NewPartner = () => {
               </div>
               
               <div className="space-y-2">
-                <Label htmlFor="commission-rate">Taxa de Comissão (%)</Label>
-                <Input 
-                  id="commission-rate" 
-                  type="number" 
-                  min="0" 
-                  max="100" 
-                  step="0.1" 
-                  value={commissionRate} 
-                  onChange={(e) => setCommissionRate(parseFloat(e.target.value))} 
-                />
+                <Label htmlFor="fee-plan">Plano de Taxas</Label>
+                <Select
+                  value={feePlanId}
+                  onValueChange={setFeePlanId}
+                >
+                  <SelectTrigger id="fee-plan">
+                    <SelectValue placeholder="Selecione um plano de taxas" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {isLoadingFeePlans ? (
+                      <div className="flex items-center justify-center py-2">
+                        <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                        <span>Carregando planos...</span>
+                      </div>
+                    ) : (
+                      <>
+                        <SelectItem value="">Plano Padrão</SelectItem>
+                        {feePlans.map((plan) => (
+                          <SelectItem key={plan.id} value={plan.id}>
+                            {plan.name}
+                          </SelectItem>
+                        ))}
+                      </>
+                    )}
+                  </SelectContent>
+                </Select>
               </div>
               
               <div className="flex justify-end space-x-4 pt-4">
@@ -168,10 +192,10 @@ const NewPartner = () => {
           <CardContent>
             <div className="space-y-4">
               <div>
-                <h3 className="font-medium">Comissões</h3>
+                <h3 className="font-medium">Planos de Taxas</h3>
                 <p className="text-muted-foreground text-sm mt-1">
-                  A taxa de comissão define a porcentagem que o parceiro recebe 
-                  das vendas realizadas pelos clientes associados a ele.
+                  O plano de taxas define as comissões que serão aplicadas às vendas
+                  realizadas pelos clientes associados a este parceiro.
                 </p>
               </div>
               
