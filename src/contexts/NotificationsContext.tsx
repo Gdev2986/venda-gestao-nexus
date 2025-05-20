@@ -2,7 +2,7 @@
 import React, { createContext, useContext, useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "./AuthContext";
-import { toast } from "sonner"; // Direct import from sonner
+import { toast } from "@/hooks/use-toast"; // Use our wrapper instead of direct sonner import
 import { NotificationType } from "@/types/notification.types";
 import { playNotificationSoundIfEnabled } from "@/services/notificationSoundService";
 import { UserRole } from "@/types";

@@ -10,8 +10,8 @@ export type ToastProps = {
   position?: "top-left" | "top-right" | "top-center" | "bottom-left" | "bottom-right" | "bottom-center";
 };
 
-// Implementation that doesn't require useState
-export function toast(message: string | ToastProps): void {
+// Simple direct implementation without React hooks
+export const toast = (message: string | ToastProps): void => {
   if (typeof message === 'string') {
     sonnerToast(message);
   } else {
@@ -25,9 +25,9 @@ export function toast(message: string | ToastProps): void {
       sonnerToast("Notification");
     }
   }
-}
+};
 
-// A simplified hook that doesn't use useState
+// A simplified hook that just returns the toast function
 export function useToast() {
   return { toast };
 }
