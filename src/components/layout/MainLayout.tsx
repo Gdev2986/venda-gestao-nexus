@@ -9,6 +9,7 @@ import NotificationDropdown from "./NotificationDropdown";
 import ThemeToggle from "../theme/theme-toggle";
 import { useUserRole } from "@/hooks/use-user-role";
 import { AnimatePresence } from "framer-motion";
+import { useLocation } from "react-router-dom";
 
 type MainLayoutProps = {
   children: React.ReactNode;
@@ -22,6 +23,7 @@ const MainLayout = ({ children }: MainLayoutProps) => {
   });
   
   const isMobile = useIsMobile();
+  const location = useLocation();
   
   // Get user role from custom hook
   const { userRole } = useUserRole();
@@ -45,8 +47,9 @@ const MainLayout = ({ children }: MainLayoutProps) => {
   return (
     <div className="flex h-screen overflow-hidden bg-background">
       {/* Sidebar component with AnimatePresence for smooth animation */}
-      <AnimatePresence>
+      <AnimatePresence mode="wait">
         <Sidebar 
+          key="sidebar"
           isOpen={sidebarOpen} 
           isMobile={isMobile} 
           onClose={() => setSidebarOpen(false)} 

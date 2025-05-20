@@ -1,4 +1,3 @@
-
 import React, { createContext, useContext, useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "./AuthContext";
@@ -77,10 +76,10 @@ export const NotificationsProvider: React.FC<{ children: React.ReactNode }> = ({
                 // Check if this notification is intended for the user's role
                 const isForUserRole = !newNotification.recipient_roles || 
                   newNotification.recipient_roles.length === 0 || 
-                  (userRole && newNotification.recipient_roles.includes(userRole));
+                  (userRole && newNotification.recipient_roles.includes(userRole as string));
                 
                 if (isForUserRole) {
-                  // Play sound based on notification type
+                  // Play sound based on notification type and sound preference
                   playNotificationSoundIfEnabled(newNotification.type as NotificationType, soundEnabled);
                   
                   // Show toast notification
@@ -142,13 +141,13 @@ export const NotificationsProvider: React.FC<{ children: React.ReactNode }> = ({
       let filteredData = data || [];
       
       if (userRole) {
-        filteredData = filteredData.filter((notification: any) => {
+        filteredData = filteredData.filter((notification: Notification) => {
           // If recipient_roles is null or empty array, show to everyone
           if (!notification.recipient_roles || notification.recipient_roles.length === 0) {
             return true;
           }
           // Otherwise, check if user's role is in recipient_roles
-          return notification.recipient_roles.includes(userRole);
+          return notification.recipient_roles.includes(userRole as string);
         });
       }
 
