@@ -37,13 +37,13 @@ function renderApp() {
       <React.StrictMode>
         <BrowserRouter>
           <QueryClientProvider client={queryClient}>
-            <AuthProvider>
-              <ThemeProvider defaultTheme="light" storageKey="sigmapay-theme">
+            <ThemeProvider defaultTheme="light" storageKey="sigmapay-theme">
+              <AuthProvider>
                 <NotificationsProvider>
                   <App />
                 </NotificationsProvider>
-              </ThemeProvider>
-            </AuthProvider>
+              </AuthProvider>
+            </ThemeProvider>
           </QueryClientProvider>
         </BrowserRouter>
       </React.StrictMode>

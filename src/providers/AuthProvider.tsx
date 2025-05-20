@@ -1,4 +1,3 @@
-
 import { createContext, useContext, useEffect, useState } from "react";
 import { Session, User } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
@@ -23,6 +22,9 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const { toast } = useToast();
   const navigate = useNavigate();
+
+  // Import auth service functions
+  const { signIn, signUp, signOut } = useAuthFunctions({ setIsLoading, toast, navigate });
 
   // Set up auth state listener and check for existing session
   useEffect(() => {
@@ -164,9 +166,6 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       subscription.unsubscribe();
     };
   }, [toast, navigate]);
-
-  // Import auth service functions
-  const { signIn, signUp, signOut } = useAuthFunctions({ setIsLoading, toast, navigate });
 
   return (
     <AuthContext.Provider
