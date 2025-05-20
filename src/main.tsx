@@ -35,7 +35,7 @@ function renderApp() {
     
     // Render the application with all providers
     // Critical: The order of providers matters - BrowserRouter must be first, then QueryClientProvider,
-    // ThemeProvider, followed by AuthProvider, then NotificationsProvider, and finally the App
+    // ThemeProvider, followed by AuthProvider, then NotificationsProvider, and finally the App with Toaster
     root.render(
       <React.StrictMode>
         <BrowserRouter>

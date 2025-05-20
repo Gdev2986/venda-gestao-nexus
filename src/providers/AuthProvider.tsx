@@ -2,16 +2,109 @@
 import { createContext, useContext, useEffect, useState } from "react";
 import { Session, User } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
-import { toast } from "sonner"; // Import toast directly from sonner
+import { toast } from "sonner"; // Direct import from sonner
 import { useNavigate } from "react-router-dom";
 import { PATHS } from "@/routes/paths";
 import { UserRole } from "@/types";
 import { AuthContextType, UserProfile } from "@/contexts/auth-types";
 import { cleanupSupabaseState } from "@/utils/auth-cleanup";
-import { useAuthFunctions } from "@/hooks/useAuthFunctions";
 
 // Create a context for authentication
 export const AuthContext = createContext<AuthContextType | undefined>(undefined);
+
+// Simple auth functions to avoid circular dependencies
+const useSimpleAuthFunctions = (
+  setIsLoading: (value: boolean) => void,
+  navigate: ReturnType<typeof useNavigate>
+) => {
+  // Sign in function
+  const signIn = async (email: string, password: string) => {
+    setIsLoading(true);
+    
+    try {
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      });
+      
+      if (error) {
+        toast("Erro ao fazer login", {
+          description: error.message,
+        });
+        return { error };
+      }
+      
+      return { error: null };
+    } catch (error: any) {
+      console.error("Error during sign in:", error);
+      toast("Erro ao fazer login", {
+        description: error?.message || "Ocorreu um erro durante o login",
+      });
+      return { error };
+    } finally {
+      setIsLoading(false);
+    }
+  };
+  
+  // Sign up function
+  const signUp = async (email: string, password: string, metadata?: { name?: string }) => {
+    setIsLoading(true);
+    
+    try {
+      const { data, error } = await supabase.auth.signUp({
+        email,
+        password,
+        options: {
+          data: metadata,
+        },
+      });
+      
+      if (error) {
+        toast("Erro ao criar conta", {
+          description: error.message,
+        });
+        return { data: null, error };
+      }
+      
+      toast("Conta criada com sucesso", {
+        description: "Verifique seu email para confirmar sua conta",
+      });
+      
+      return { data, error: null };
+    } catch (error: any) {
+      console.error("Error during sign up:", error);
+      toast("Erro ao criar conta", {
+        description: error?.message || "Ocorreu um erro ao criar sua conta",
+      });
+      return { data: null, error };
+    } finally {
+      setIsLoading(false);
+    }
+  };
+  
+  // Sign out function
+  const signOut = async () => {
+    setIsLoading(true);
+    
+    try {
+      await supabase.auth.signOut();
+      navigate(PATHS.LOGIN);
+    } catch (error) {
+      console.error("Error during sign out:", error);
+      toast("Erro ao sair", {
+        description: "Ocorreu um erro ao encerrar sua sessão",
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+  
+  return {
+    signIn,
+    signUp,
+    signOut,
+  };
+};
 
 // Provider component that wraps the app and makes auth object available to any child component that calls useAuth()
 export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
@@ -23,12 +116,8 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const navigate = useNavigate();
 
-  // Import auth service functions with direct toast import
-  const { signIn, signUp, signOut } = useAuthFunctions({ 
-    setIsLoading, 
-    toast, // Pass toast directly
-    navigate 
-  });
+  // Use the simple auth functions directly
+  const { signIn, signUp, signOut } = useSimpleAuthFunctions(setIsLoading, navigate);
 
   // Set up auth state listener and check for existing session
   useEffect(() => {
