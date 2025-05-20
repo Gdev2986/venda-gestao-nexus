@@ -47,4 +47,5 @@ export const NotificationList = ({
   );
 };
 
+// Add default export to ensure both named and default export are available
 export default NotificationList;

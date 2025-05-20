@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Payment, PaymentStatus } from "@/types/payment.types";
@@ -82,9 +81,9 @@ export const usePaymentsFetcher = ({
 
       // Apply status filter
       if (statusFilter !== 'ALL') {
-        // Use the statusFilter value as is, since it should already match the PaymentStatus enum values
-        // Type assertion to PaymentStatus is safer than converting to string
-        query = query.eq('status', statusFilter as PaymentStatus);
+        // Use proper type casting to fix the TypeScript error
+        // The database expects a specific string value that matches PaymentStatus
+        query = query.eq('status', String(statusFilter) as "PENDING" | "APPROVED" | "PAID" | "REJECTED");
       }
 
       // Apply search filter on client name
@@ -133,7 +132,6 @@ export const usePaymentsFetcher = ({
           key: payment.pix_key.key,
           type: payment.pix_key.type,
           name: payment.pix_key.name,
-          owner_name: payment.pix_key.name, // Using name as owner_name
           user_id: payment.pix_key.user_id
         } : undefined
       }));
