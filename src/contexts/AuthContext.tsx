@@ -1,3 +1,4 @@
+
 import { createContext, useContext, useEffect, useState } from "react";
 import { Session, User } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
@@ -87,29 +88,30 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
                   .eq('id', newSession.user.id)
                   .single();
               
-              if (error) {
-                console.error("Error fetching user profile:", error);
-              } else {
-                // Update profile state
-                setProfile(profileData);
-                
-                // Normalize the role to match our UserRole enum
-                const normalizedRole = profileData?.role?.toUpperCase() as UserRole;
-                console.log("User role fetched:", normalizedRole);
-                setUserRole(normalizedRole);
-                
-                // Toast only if we successfully got the role
-                toast({
-                  title: "Login bem-sucedido",
-                  description: "Bem-vindo ao SigmaPay!",
-                });
+                if (error) {
+                  console.error("Error fetching user profile:", error);
+                } else {
+                  // Update profile state
+                  setProfile(profileData);
+                  
+                  // Normalize the role to match our UserRole enum
+                  const normalizedRole = profileData?.role?.toUpperCase() as UserRole;
+                  console.log("User role fetched:", normalizedRole);
+                  setUserRole(normalizedRole);
+                  
+                  // Toast only if we successfully got the role
+                  toast({
+                    title: "Login bem-sucedido",
+                    description: "Bem-vindo ao SigmaPay!",
+                  });
+                }
+              } catch (err) {
+                console.error("Error in role fetching:", err);
+              } finally {
+                setIsLoading(false);
               }
-            } catch (err) {
-              console.error("Error in role fetching:", err);
-            } finally {
-              setIsLoading(false);
-            }
-          }, 0);
+            }, 0);
+          }
         } else if (event === "SIGNED_OUT") {
           console.log("Signed out event detected");
           
