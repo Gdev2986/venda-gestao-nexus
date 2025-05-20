@@ -1,3 +1,4 @@
+
 import React, { createContext, useContext, useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "./AuthContext";
@@ -141,7 +142,7 @@ export const NotificationsProvider: React.FC<{ children: React.ReactNode }> = ({
       let filteredData = data || [];
       
       if (userRole) {
-        filteredData = filteredData.filter((notification) => {
+        filteredData = filteredData.filter((notification: any) => {
           // If recipient_roles is null or empty array, show to everyone
           if (!notification.recipient_roles || notification.recipient_roles.length === 0) {
             return true;
@@ -152,9 +153,10 @@ export const NotificationsProvider: React.FC<{ children: React.ReactNode }> = ({
       }
 
       // Fix the type casting to ensure compatibility
-      setNotifications(filteredData.map(item => ({
+      setNotifications(filteredData.map((item: any) => ({
         ...item,
-        type: item.type as NotificationType
+        type: item.type as NotificationType,
+        recipient_roles: item.recipient_roles || []
       })));
     } catch (error: any) {
       console.error("Error fetching notifications:", error);
