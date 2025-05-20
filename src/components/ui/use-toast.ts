@@ -1,5 +1,5 @@
 
-// Simply re-export from hooks/use-toast
+// Re-export from hooks/use-toast
 import { useToast, toast } from "@/hooks/use-toast";
 
 export { useToast, toast };

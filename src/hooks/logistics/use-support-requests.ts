@@ -1,7 +1,8 @@
+
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { SupportRequest } from "@/types/support-request";
-import { toast } from "@/hooks/use-toast"; // Corrected import
+import { toast } from "sonner"; // Direct import from sonner
 import { useAuth } from "@/contexts/AuthContext";
 
 export function useSupportRequests() {
@@ -26,8 +27,7 @@ export function useSupportRequests() {
 
       if (error) {
         console.error("Error fetching support requests:", error);
-        toast({
-          title: "Erro",
+        toast("Erro", {
           description: "Não foi possível carregar as solicitações",
         });
       } else {
@@ -35,8 +35,7 @@ export function useSupportRequests() {
       }
     } catch (error: any) {
       console.error("Unexpected error fetching support requests:", error);
-      toast({
-        title: "Erro",
+      toast("Erro", {
         description: error.message || "Erro inesperado ao carregar as solicitações",
       });
     } finally {
@@ -54,21 +53,18 @@ export function useSupportRequests() {
 
       if (error) {
         console.error("Error creating support request:", error);
-        toast({
-          title: "Erro",
+        toast("Erro", {
           description: "Não foi possível criar a solicitação de suporte",
         });
       } else {
         setSupportRequests(prevRequests => [...prevRequests, ...(data as SupportRequest[])]);
-        toast({
-          title: "Sucesso",
+        toast("Sucesso", {
           description: "Solicitação de suporte criada com sucesso!",
         });
       }
     } catch (error: any) {
       console.error("Unexpected error creating support request:", error);
-      toast({
-        title: "Erro",
+      toast("Erro", {
         description: error.message || "Erro inesperado ao criar a solicitação de suporte",
       });
     } finally {

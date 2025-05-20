@@ -33,7 +33,7 @@ function renderApp() {
     // Create a fresh root
     const root = createRoot(rootElement);
     
-    // CRITICAL: The order of providers has been adjusted to prevent React context issues
+    // The order of providers has been adjusted to prevent React context issues
     root.render(
       <React.StrictMode>
         <BrowserRouter>
