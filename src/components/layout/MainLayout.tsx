@@ -1,4 +1,5 @@
 
+import * as React from "react";
 import { useState, useEffect } from "react";
 import { UserRole } from "@/types";
 import Sidebar from "./sidebar/Sidebar";
@@ -16,7 +17,7 @@ type MainLayoutProps = {
 
 const MainLayout = ({ children }: MainLayoutProps) => {
   // Use localStorage to persist sidebar state
-  const [sidebarOpen, setSidebarOpen] = useState(() => {
+  const [sidebarOpen, setSidebarOpen] = React.useState(() => {
     const saved = localStorage.getItem("sidebar-state");
     return saved !== null ? JSON.parse(saved) : true;
   });
@@ -27,14 +28,14 @@ const MainLayout = ({ children }: MainLayoutProps) => {
   const { userRole } = useUserRole();
 
   // Close sidebar on mobile by default
-  useEffect(() => {
+  React.useEffect(() => {
     if (isMobile) {
       setSidebarOpen(false);
     }
   }, [isMobile]);
 
   // Save sidebar state to localStorage when it changes
-  useEffect(() => {
+  React.useEffect(() => {
     if (!isMobile) { // Only save state for desktop
       localStorage.setItem("sidebar-state", JSON.stringify(sidebarOpen));
     }
