@@ -8,6 +8,7 @@ import { PATHS } from "@/routes/paths";
 import { UserRole } from "@/types";
 import { AuthContextType, UserProfile } from "@/contexts/auth-types";
 import { cleanupSupabaseState } from "@/utils/auth-cleanup";
+import { useAuthFunctions } from "@/hooks/useAuthFunctions";
 
 // Create a context for authentication
 export const AuthContext = createContext<AuthContextType | undefined>(undefined);
