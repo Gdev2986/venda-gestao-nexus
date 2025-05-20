@@ -8,12 +8,12 @@ import { PartnerRoutes } from "./partnerRoutes";
 
 // Combine all routes into a single array
 const routes = [
-  ...AdminRoutes,
-  ...AuthRoutes,
-  ...ClientRoutes,
-  ...FinancialRoutes,
-  ...LogisticsRoutes,
-  ...PartnerRoutes
-];
+  AdminRoutes,
+  AuthRoutes,
+  ClientRoutes,
+  FinancialRoutes,
+  LogisticsRoutes,
+  PartnerRoutes
+].flat();
 
 export default routes;

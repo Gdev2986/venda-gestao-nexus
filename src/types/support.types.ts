@@ -27,6 +27,7 @@ export interface SupportTicket {
   machine?: any;
   user_id?: string;
   assigned_to?: string;
+  technician_id?: string;
 }
 
 export interface CreateSupportTicketParams {
@@ -38,6 +39,8 @@ export interface CreateSupportTicketParams {
   user_id?: string;
   machine_id?: string;
   scheduled_date?: string;
+  status?: TicketStatus;
+  assigned_to?: string;
 }
 
 export interface UpdateSupportTicketParams {
@@ -52,4 +55,5 @@ export interface UpdateSupportTicketParams {
   machine_id?: string;
   scheduled_date?: string;
   assigned_to?: string;
+  technician_id?: string;
 }

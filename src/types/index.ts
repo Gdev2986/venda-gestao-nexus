@@ -1,4 +1,3 @@
-
 // Re-export from enums
 export {
   UserRole,
@@ -95,7 +94,7 @@ export interface Sale {
   gross_amount: number;
   net_amount: number;
   date: string;
-  payment_method: PaymentMethod | string;
+  payment_method: string;
   client_id: string;
   created_at: string;
   updated_at: string;
@@ -133,7 +132,7 @@ export interface UserData {
   id: string;
   name: string;
   email: string;
-  role: UserRole | string; 
+  role: string; 
   created_at: string;
   status: string;
 }

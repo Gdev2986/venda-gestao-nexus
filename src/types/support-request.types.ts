@@ -1,26 +1,10 @@
 
-// Define and export enums
-export enum SupportRequestStatus {
-  PENDING = "PENDING",
-  IN_PROGRESS = "IN_PROGRESS",
-  COMPLETED = "COMPLETED", 
-  CANCELED = "CANCELED"
-}
-
-export enum SupportRequestType {
-  MAINTENANCE = "MAINTENANCE",
-  INSTALLATION = "INSTALLATION",
-  REPAIR = "REPAIR",
-  TRAINING = "TRAINING",
-  SUPPORT = "SUPPORT",
-  OTHER = "OTHER"
-}
-
-export enum SupportRequestPriority {
-  LOW = "LOW",
-  MEDIUM = "MEDIUM",
-  HIGH = "HIGH"
-}
+// Export enums
+export { 
+  SupportRequestStatus, 
+  SupportRequestType, 
+  SupportRequestPriority 
+} from './enums';
 
 export interface SupportRequest {
   id: string;

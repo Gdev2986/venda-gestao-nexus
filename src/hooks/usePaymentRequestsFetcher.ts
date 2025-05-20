@@ -105,7 +105,7 @@ export const usePaymentRequestsFetcher = (initialBalance: number = 15000) => {
           type: request.pix_key.type,
           name: request.pix_key.name,
           user_id: request.pix_key.user_id,
-          owner_name: request.pix_key.name // Use name for owner_name
+          owner_name: request.pix_key.name || '' // Use name for owner_name
         } : undefined
       })) : [];
       

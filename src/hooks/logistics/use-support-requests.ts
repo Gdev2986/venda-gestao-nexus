@@ -43,16 +43,22 @@ export function useSupportRequests() {
   const createSupportRequest = async (newRequest: Omit<SupportRequest, 'id' | 'created_at'>) => {
     setIsLoading(true);
     try {
-      // Convert enum values to string literals
+      // Convert enum values to string literals for database compatibility
       const insertData = {
         client_id: newRequest.client_id,
         technician_id: newRequest.technician_id,
         title: newRequest.title,
         description: newRequest.description,
-        // Convert enum values to string literals
-        type: String(newRequest.type) as "MAINTENANCE" | "INSTALLATION" | "REPAIR" | "TRAINING" | "SUPPORT" | "OTHER",
-        status: String(newRequest.status) as "PENDING" | "IN_PROGRESS" | "COMPLETED" | "CANCELED",
-        priority: String(newRequest.priority) as "LOW" | "MEDIUM" | "HIGH",
+        // Map values to appropriate string literals expected by the database
+        type: newRequest.type === SupportRequestType.REPAIR ? 
+              SupportRequestType.MAINTENANCE : // Map REPAIR to MAINTENANCE
+              newRequest.type === SupportRequestType.TRAINING ? 
+              SupportRequestType.OTHER : // Map TRAINING to OTHER
+              newRequest.type === SupportRequestType.SUPPORT ? 
+              SupportRequestType.OTHER : // Map SUPPORT to OTHER
+              newRequest.type, // Keep other values as is
+        status: newRequest.status,
+        priority: newRequest.priority,
         scheduled_date: newRequest.scheduled_date,
         resolution: newRequest.resolution
       };

@@ -75,7 +75,7 @@ export enum TicketStatus {
   OPEN = "OPEN"
 }
 
-// Ticket types - adding missing types
+// Ticket types - making sure this matches the database accepted values
 export enum TicketType {
   TECHNICAL = "TECHNICAL",
   BILLING = "BILLING",
@@ -102,7 +102,7 @@ export enum TicketPriority {
   URGENT = "URGENT"
 }
 
-// Support request statuses
+// Support request statuses - these values must match what's expected in the database
 export enum SupportRequestStatus {
   PENDING = "PENDING",
   IN_PROGRESS = "IN_PROGRESS",
@@ -110,14 +110,14 @@ export enum SupportRequestStatus {
   CANCELED = "CANCELED"
 }
 
-// Support request types
+// Support request types - aligning with database expectations
 export enum SupportRequestType {
   MAINTENANCE = "MAINTENANCE",
   INSTALLATION = "INSTALLATION",
-  REPAIR = "REPAIR",
-  TRAINING = "TRAINING",
-  SUPPORT = "SUPPORT",
-  OTHER = "OTHER"
+  OTHER = "OTHER",
+  REPLACEMENT = "REPLACEMENT",
+  SUPPLIES = "SUPPLIES",
+  REMOVAL = "REMOVAL"
 }
 
 // Support request priorities

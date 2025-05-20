@@ -1,20 +1,27 @@
-
 import { supabase } from "@/integrations/supabase/client";
 import { generateUuid } from "@/lib/supabase-utils";
 import { NotificationType } from "@/types/notification.types";
-import { SupportTicket } from "@/types/support-ticket.types";
 import { SupportRequestType, SupportRequestStatus, SupportRequestPriority } from "@/types/support-request.types";
+import { SupportTicket } from "@/types/support.types";
 
 export type SupportRequest = SupportTicket;
 
 export async function createSupportRequest(request: SupportRequest): Promise<{ data: any, error: any }> {
+  // Map ticket types to support request types expected by the database
+  const mapType = (type: string): "MAINTENANCE" | "INSTALLATION" | "OTHER" | "REMOVAL" | "REPLACEMENT" | "SUPPLIES" => {
+    if (type === "SUPPORT" || type === "REPAIR" || type === "TRAINING") {
+      return "OTHER";
+    }
+    return type as "MAINTENANCE" | "INSTALLATION" | "OTHER" | "REMOVAL" | "REPLACEMENT" | "SUPPLIES";
+  };
+
   // Create an insert object with the correct string types
   const insertData = {
     client_id: request.client_id,
     technician_id: request.technician_id,
-    type: String(request.type) as "MAINTENANCE" | "INSTALLATION" | "OTHER" | "REMOVAL" | "REPLACEMENT" | "SUPPLIES",
-    status: String(request.status) as "PENDING" | "IN_PROGRESS" | "COMPLETED" | "CANCELED",
-    priority: String(request.priority) as "LOW" | "MEDIUM" | "HIGH",
+    type: mapType(request.type),
+    status: request.status as "PENDING" | "IN_PROGRESS" | "COMPLETED" | "CANCELED",
+    priority: request.priority as "LOW" | "MEDIUM" | "HIGH",
     title: request.title,
     description: request.description,
     scheduled_date: request.scheduled_date,
@@ -39,12 +46,21 @@ export async function createSupportRequest(request: SupportRequest): Promise<{ d
 }
 
 export async function updateSupportRequest(id: string, updates: Partial<SupportRequest>): Promise<{ data: any, error: any }> {
+  // Map ticket types to support request types expected by the database
+  const mapType = (type?: string): "MAINTENANCE" | "INSTALLATION" | "OTHER" | "REMOVAL" | "REPLACEMENT" | "SUPPLIES" | undefined => {
+    if (!type) return undefined;
+    if (type === "SUPPORT" || type === "REPAIR" || type === "TRAINING") {
+      return "OTHER";
+    }
+    return type as "MAINTENANCE" | "INSTALLATION" | "OTHER" | "REMOVAL" | "REPLACEMENT" | "SUPPLIES";
+  };
+
   // Convert enum values to strings for database compatibility
   const processedUpdates: any = {
     ...updates,
-    type: updates.type ? String(updates.type) as "MAINTENANCE" | "INSTALLATION" | "OTHER" | "REMOVAL" | "REPLACEMENT" | "SUPPLIES" : undefined,
-    status: updates.status ? String(updates.status) as "PENDING" | "IN_PROGRESS" | "COMPLETED" | "CANCELED" : undefined,
-    priority: updates.priority ? String(updates.priority) as "LOW" | "MEDIUM" | "HIGH" : undefined,
+    type: updates.type ? mapType(updates.type) : undefined,
+    status: updates.status ? (updates.status as "PENDING" | "IN_PROGRESS" | "COMPLETED" | "CANCELED") : undefined,
+    priority: updates.priority ? (updates.priority as "LOW" | "MEDIUM" | "HIGH") : undefined,
     updated_at: new Date().toISOString()
   };
 
