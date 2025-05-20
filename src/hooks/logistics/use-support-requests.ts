@@ -1,198 +1,85 @@
-
-import { useCallback, useEffect, useState } from "react";
-import { useAuth } from "@/contexts/AuthContext";
-import { useToast } from "@/hooks/use-toast";
+import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { 
-  SupportRequest, 
-  createSupportRequest,
-  updateSupportRequest,
-  getSupportRequests
-} from "@/services/support-request.service";
-import { UserRole } from "@/types";
-import { playNotificationSoundIfEnabled } from "@/services/notificationSoundService";
-import { NotificationType } from "@/types/notification.types";
+import { SupportRequest } from "@/types/support-request";
+import { toast } from "@/hooks/use-toast"; // Corrected import
+import { useAuth } from "@/contexts/AuthContext";
 
-interface UseSupportRequestsOptions {
-  enableRealtime?: boolean;
-  initialFetch?: boolean;
-  filters?: {
-    status?: string;
-    type?: string;
-    priority?: string;
-    client_id?: string;
-    technician_id?: string;
-    date_from?: string;
-    date_to?: string;
-  };
-}
-
-export function useSupportRequests(options: UseSupportRequestsOptions = {}) {
-  const [requests, setRequests] = useState<SupportRequest[]>([]);
+export function useSupportRequests() {
+  const [supportRequests, setSupportRequests] = useState<SupportRequest[]>([]);
   const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const { user, profile } = useAuth();
-  const { toast } = useToast();
-  
-  const fetchRequests = useCallback(async (filters = options.filters) => {
-    if (!user) return;
-    
+  const { user } = useAuth();
+
+  useEffect(() => {
+    if (user) {
+      fetchSupportRequests();
+    }
+  }, [user]);
+
+  const fetchSupportRequests = async () => {
     setIsLoading(true);
-    setError(null);
-    
     try {
-      let requestFilters = { ...filters };
-      
-      // If user is a client, only show their requests
-      if (profile?.role === UserRole.CLIENT) {
-        const { data: clientData } = await supabase
-          .from('user_client_access')
-          .select('client_id')
-          .eq('user_id', user.id)
-          .single();
-          
-        if (clientData) {
-          requestFilters.client_id = clientData.client_id;
-        }
+      const { data, error } = await supabase
+        .from("support_requests")
+        .select("*")
+        .eq("user_id", user?.id)
+        .order("created_at", { ascending: false });
+
+      if (error) {
+        console.error("Error fetching support requests:", error);
+        toast({
+          title: "Erro",
+          description: "Não foi possível carregar as solicitações",
+        });
+      } else {
+        setSupportRequests(data || []);
       }
-      
-      const { data, error } = await getSupportRequests(requestFilters);
-      
-      if (error) throw error;
-      
-      setRequests(data || []);
-    } catch (err: any) {
-      console.error('Error fetching support requests:', err);
-      setError(err.message || 'Failed to fetch support requests');
+    } catch (error: any) {
+      console.error("Unexpected error fetching support requests:", error);
       toast({
-        title: 'Error',
-        description: 'Failed to fetch support requests',
-        variant: 'destructive',
+        title: "Erro",
+        description: error.message || "Erro inesperado ao carregar as solicitações",
       });
-    } finally {
-      setIsLoading(false);
-    }
-  }, [user, profile, options.filters, toast]);
-  
-  // Initial fetch
-  useEffect(() => {
-    if (options.initialFetch) {
-      fetchRequests();
-    }
-  }, [fetchRequests, options.initialFetch]);
-  
-  // Set up realtime subscription
-  useEffect(() => {
-    if (!options.enableRealtime || !user) return;
-    
-    const channel = supabase
-      .channel('support-requests-changes')
-      .on(
-        'postgres_changes',
-        { 
-          event: '*', 
-          schema: 'public', 
-          table: 'support_requests'
-        },
-        (payload) => {
-          console.log('Support request change received:', payload);
-          
-          // Refresh the list when there's any change
-          fetchRequests();
-          
-          // Show toast notifications for new requests
-          if (payload.eventType === 'INSERT') {
-            toast({
-              title: 'Nova Solicitação',
-              description: 'Uma nova solicitação técnica foi criada',
-              variant: 'default',
-            });
-            
-            // Play notification sound
-            playNotificationSoundIfEnabled(NotificationType.SUPPORT);
-          }
-        }
-      )
-      .subscribe();
-      
-    return () => {
-      supabase.removeChannel(channel);
-    };
-  }, [user, fetchRequests, options.enableRealtime, toast]);
-  
-  // Function to create a new support request
-  const createRequest = async (request: Omit<SupportRequest, 'id'>) => {
-    setIsLoading(true);
-    setError(null);
-    
-    try {
-      const { data, error } = await createSupportRequest(request as SupportRequest);
-      
-      if (error) throw error;
-      
-      toast({
-        title: 'Solicitação Criada',
-        description: 'Sua solicitação foi criada com sucesso',
-      });
-      
-      fetchRequests();
-      return data;
-    } catch (err: any) {
-      console.error('Error creating support request:', err);
-      setError(err.message || 'Failed to create support request');
-      toast({
-        title: 'Error',
-        description: 'Failed to create support request',
-        variant: 'destructive',
-      });
-      return null;
     } finally {
       setIsLoading(false);
     }
   };
-  
-  // Function to update a support request
-  const updateRequest = async (id: string, updates: Partial<SupportRequest>) => {
+
+  const createSupportRequest = async (newRequest: Omit<SupportRequest, 'id' | 'created_at'>) => {
     setIsLoading(true);
-    setError(null);
-    
     try {
-      const { data, error } = await updateSupportRequest(id, updates);
-      
-      if (error) throw error;
-      
+      const { data, error } = await supabase
+        .from("support_requests")
+        .insert([newRequest])
+        .select();
+
+      if (error) {
+        console.error("Error creating support request:", error);
+        toast({
+          title: "Erro",
+          description: "Não foi possível criar a solicitação de suporte",
+        });
+      } else {
+        setSupportRequests(prevRequests => [...prevRequests, ...(data as SupportRequest[])]);
+        toast({
+          title: "Sucesso",
+          description: "Solicitação de suporte criada com sucesso!",
+        });
+      }
+    } catch (error: any) {
+      console.error("Unexpected error creating support request:", error);
       toast({
-        title: 'Solicitação Atualizada',
-        description: 'A solicitação foi atualizada com sucesso',
+        title: "Erro",
+        description: error.message || "Erro inesperado ao criar a solicitação de suporte",
       });
-      
-      fetchRequests();
-      return data;
-    } catch (err: any) {
-      console.error('Error updating support request:', err);
-      setError(err.message || 'Failed to update support request');
-      toast({
-        title: 'Error',
-        description: 'Failed to update support request',
-        variant: 'destructive',
-      });
-      return null;
     } finally {
       setIsLoading(false);
     }
   };
-  
-  const getPendingRequestsCount = useCallback(() => {
-    return requests.filter(r => r.status === 'PENDING' || r.status === 'IN_PROGRESS').length;
-  }, [requests]);
-  
+
   return {
-    requests,
+    supportRequests,
     isLoading,
-    error,
-    fetchRequests,
-    createRequest,
-    updateRequest,
-    getPendingRequestsCount
+    fetchSupportRequests,
+    createSupportRequest,
   };
 }

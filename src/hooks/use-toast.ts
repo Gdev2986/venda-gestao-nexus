@@ -1,9 +1,11 @@
 
-// This file implements a custom toast hook that works with sonner
 import * as React from "react";
 import { toast as sonnerToast } from "sonner";
 
+// Constants
 const TOAST_LIMIT = 20;
+
+// Types
 export type ToasterToast = {
   id: string;
   title?: React.ReactNode;
@@ -14,6 +16,7 @@ export type ToasterToast = {
   onOpenChange?: (open: boolean) => void;
 };
 
+// Action types
 const actionTypes = {
   ADD_TOAST: "ADD_TOAST",
   UPDATE_TOAST: "UPDATE_TOAST",
@@ -21,8 +24,8 @@ const actionTypes = {
   REMOVE_TOAST: "REMOVE_TOAST",
 } as const;
 
+// Helper functions
 let count = 0;
-
 function genId() {
   count = (count + 1) % Number.MAX_VALUE;
   return count.toString();
@@ -31,29 +34,20 @@ function genId() {
 type ActionType = typeof actionTypes;
 
 type Action =
-  | {
-      type: ActionType["ADD_TOAST"];
-      toast: ToasterToast;
-    }
-  | {
-      type: ActionType["UPDATE_TOAST"];
-      toast: Partial<ToasterToast>;
-    }
-  | {
-      type: ActionType["DISMISS_TOAST"];
-      toastId?: string;
-    }
-  | {
-      type: ActionType["REMOVE_TOAST"];
-      toastId?: string;
-    };
+  | { type: ActionType["ADD_TOAST"]; toast: ToasterToast }
+  | { type: ActionType["UPDATE_TOAST"]; toast: Partial<ToasterToast> }
+  | { type: ActionType["DISMISS_TOAST"]; toastId?: string }
+  | { type: ActionType["REMOVE_TOAST"]; toastId?: string };
 
 interface State {
   toasts: ToasterToast[];
 }
 
-const toastTimeouts = new Map<string, ReturnType<typeof setTimeout>>();
+// Create our global state
+const memoryState: State = { toasts: [] };
+const listeners: Array<(state: State) => void> = [];
 
+// Reducer function
 const reducer = (state: State, action: Action): State => {
   switch (action.type) {
     case actionTypes.ADD_TOAST:
@@ -72,38 +66,23 @@ const reducer = (state: State, action: Action): State => {
 
     case actionTypes.DISMISS_TOAST: {
       const { toastId } = action;
-
-      if (toastId === undefined) {
-        return {
-          ...state,
-          toasts: state.toasts.map((t) => ({
-            ...t,
-            open: false,
-          })),
-        };
-      }
-      
       return {
         ...state,
         toasts: state.toasts.map((t) =>
-          t.id === toastId ? { ...t, open: false } : t
+          toastId === undefined || t.id === toastId
+            ? { ...t, open: false }
+            : t
         ),
       };
     }
 
     case actionTypes.REMOVE_TOAST: {
       const { toastId } = action;
-
-      if (toastId === undefined) {
-        return {
-          ...state,
-          toasts: [],
-        };
-      }
-      
       return {
         ...state,
-        toasts: state.toasts.filter((t) => t.id !== toastId),
+        toasts: toastId
+          ? state.toasts.filter((t) => t.id !== toastId)
+          : [],
       };
     }
 
@@ -112,10 +91,7 @@ const reducer = (state: State, action: Action): State => {
   }
 };
 
-const listeners: Array<(state: State) => void> = [];
-
-let memoryState: State = { toasts: [] };
-
+// Utility to dispatch actions
 function dispatch(action: Action) {
   memoryState = reducer(memoryState, action);
   listeners.forEach((listener) => {
@@ -123,10 +99,11 @@ function dispatch(action: Action) {
   });
 }
 
+// Our public toast function
 type ToastProps = Omit<ToasterToast, "id">;
 
-// Define and export our toast function that also calls sonner's toast
-function toast({ ...props }: ToastProps) {
+// Export the toast function
+export function toast(props: ToastProps) {
   const id = genId();
 
   const update = (props: ToastProps) =>
@@ -134,14 +111,16 @@ function toast({ ...props }: ToastProps) {
       type: actionTypes.UPDATE_TOAST,
       toast: { ...props, id },
     });
-    
-  const dismiss = () => dispatch({ type: actionTypes.DISMISS_TOAST, toastId: id });
 
-  // Also call sonner toast to display the actual notification
+  const dismiss = () =>
+    dispatch({ type: actionTypes.DISMISS_TOAST, toastId: id });
+
+  // Show the toast with Sonner (which is what's actually displayed)
   sonnerToast(props.title as string, {
     description: props.description as string,
   });
 
+  // Also update our internal state
   dispatch({
     type: actionTypes.ADD_TOAST,
     toast: {
@@ -161,7 +140,9 @@ function toast({ ...props }: ToastProps) {
   };
 }
 
-function useToast() {
+// Hook for React components
+export function useToast() {
+  // NOTE: We import React fully at the top to make sure we have useState available
   const [state, setState] = React.useState<State>(memoryState);
 
   React.useEffect(() => {
@@ -177,9 +158,9 @@ function useToast() {
   return {
     ...state,
     toast,
-    dismiss: (toastId?: string) => dispatch({ type: actionTypes.DISMISS_TOAST, toastId }),
-    remove: (toastId?: string) => dispatch({ type: actionTypes.REMOVE_TOAST, toastId }),
+    dismiss: (toastId?: string) =>
+      dispatch({ type: actionTypes.DISMISS_TOAST, toastId }),
+    remove: (toastId?: string) =>
+      dispatch({ type: actionTypes.REMOVE_TOAST, toastId }),
   };
 }
-
-export { useToast, toast };

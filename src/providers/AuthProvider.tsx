@@ -2,7 +2,7 @@
 import { createContext, useContext, useEffect, useState } from "react";
 import { Session, User } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
-import { toast } from "sonner"; // Direct import from sonner to avoid circular dependencies
+import { toast } from "sonner"; // Direct import from sonner
 import { useNavigate } from "react-router-dom";
 import { PATHS } from "@/routes/paths";
 import { UserRole } from "@/types";
@@ -125,7 +125,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
           
           // Only fetch user role if we have a session
           if (newSession?.user) {
-            // Defer data fetching to prevent deadlocks on iOS
+            // Defer data fetching to prevent deadlocks
             setTimeout(async () => {
               try {
                 // Fetch user profile from profiles table

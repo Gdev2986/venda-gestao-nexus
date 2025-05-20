@@ -33,9 +33,7 @@ function renderApp() {
     // Create a fresh root
     const root = createRoot(rootElement);
     
-    // CRITICAL: The order of providers has been fixed to prevent React context issues
-    // BrowserRouter must be outside, followed by QueryClientProvider and ThemeProvider
-    // Then AuthProvider, and finally NotificationsProvider
+    // CRITICAL: The order of providers has been adjusted to prevent React context issues
     root.render(
       <React.StrictMode>
         <BrowserRouter>
@@ -59,24 +57,6 @@ function renderApp() {
   }
 }
 
-// Define a fallback mechanism if the main rendering fails
-function fallbackRender() {
-  try {
-    const rootElement = document.getElementById('root');
-    if (!rootElement) return;
-    
-    const message = document.createElement('div');
-    message.style.padding = '20px';
-    message.style.fontFamily = 'sans-serif';
-    message.innerHTML = '<h2>Error loading application</h2><p>Please try refreshing the page.</p>';
-    
-    rootElement.appendChild(message);
-  } catch (e) {
-    // Last resort logging
-    console.error('Critical rendering failure:', e);
-  }
-}
-
 // Ensure DOM is fully loaded before rendering
 if (document.readyState === 'loading') {
   document.addEventListener('DOMContentLoaded', renderApp);
@@ -88,8 +68,5 @@ if (document.readyState === 'loading') {
 // Add global error handler as a safety net
 window.onerror = function(message, source, lineno, colno, error) {
   console.error('Global error caught:', { message, source, lineno, colno, error });
-  if (source && source.includes('react')) {
-    fallbackRender();
-  }
   return false;
 };
