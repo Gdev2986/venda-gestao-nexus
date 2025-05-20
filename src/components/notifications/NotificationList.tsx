@@ -47,4 +47,5 @@ export const NotificationList = ({
   );
 };
 
+// Explicitly export as default as well
 export default NotificationList;
