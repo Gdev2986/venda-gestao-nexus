@@ -29,10 +29,15 @@ export function ThemeProvider({
   storageKey = "sigmapay-theme",
   ...props
 }: ThemeProviderProps) {
-  // Use React.useState to ensure we're using React's useState
-  const [theme, setTheme] = React.useState<Theme>(
-    () => (localStorage?.getItem(storageKey) as Theme) || defaultTheme
-  );
+  const [theme, setTheme] = React.useState<Theme>(defaultTheme);
+  
+  // Initialize theme from localStorage when component mounts
+  React.useEffect(() => {
+    const savedTheme = localStorage?.getItem(storageKey) as Theme | null;
+    if (savedTheme) {
+      setTheme(savedTheme);
+    }
+  }, [storageKey]);
   
   // Update document classes when theme changes
   React.useEffect(() => {

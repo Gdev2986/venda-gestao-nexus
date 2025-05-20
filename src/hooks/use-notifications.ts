@@ -28,7 +28,8 @@ export function useNotifications() {
     const newValue = !soundEnabled;
     setSoundEnabled(newValue);
     
-    toast(newValue ? "Som ativado" : "Som desativado", {
+    toast({
+      title: newValue ? "Som ativado" : "Som desativado",
       description: newValue ? 
         "Você receberá notificações sonoras" : 
         "Notificações sonoras foram desativadas",

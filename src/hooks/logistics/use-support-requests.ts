@@ -27,18 +27,14 @@ export function useSupportRequests() {
 
       if (error) {
         console.error("Error fetching support requests:", error);
-        toast("Erro", {
-          description: "Não foi possível carregar as solicitações",
-        });
+        toast("Erro: Não foi possível carregar as solicitações");
       } else {
         // Ensure we're handling the data correctly
         setSupportRequests(data as SupportRequest[] || []);
       }
     } catch (error: any) {
       console.error("Unexpected error fetching support requests:", error);
-      toast("Erro", {
-        description: error.message || "Erro inesperado ao carregar as solicitações",
-      });
+      toast("Erro: " + (error.message || "Erro inesperado ao carregar as solicitações"));
     } finally {
       setIsLoading(false);
     }
@@ -47,27 +43,22 @@ export function useSupportRequests() {
   const createSupportRequest = async (newRequest: Omit<SupportRequest, 'id' | 'created_at'>) => {
     setIsLoading(true);
     try {
+      // Fix: Pass the object directly, not as an array
       const { data, error } = await supabase
         .from("support_requests")
-        .insert([newRequest])
+        .insert(newRequest)
         .select();
 
       if (error) {
         console.error("Error creating support request:", error);
-        toast("Erro", {
-          description: "Não foi possível criar a solicitação de suporte",
-        });
+        toast("Erro: Não foi possível criar a solicitação de suporte");
       } else {
         setSupportRequests(prevRequests => [...prevRequests, ...(data as SupportRequest[])]);
-        toast("Sucesso", {
-          description: "Solicitação de suporte criada com sucesso!",
-        });
+        toast("Sucesso: Solicitação de suporte criada com sucesso!");
       }
     } catch (error: any) {
       console.error("Unexpected error creating support request:", error);
-      toast("Erro", {
-        description: error.message || "Erro inesperado ao criar a solicitação de suporte",
-      });
+      toast("Erro: " + (error.message || "Erro inesperado ao criar a solicitação de suporte"));
     } finally {
       setIsLoading(false);
     }
