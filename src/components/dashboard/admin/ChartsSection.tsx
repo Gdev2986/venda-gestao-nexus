@@ -1,8 +1,8 @@
 
 import React from 'react';
-import { SalesChart } from './SalesChart';
-import { PaymentMethodsChart } from './PaymentMethodsChart';
-import { TopPartnersChart } from './TopPartnersChart';
+import SalesChart from './SalesChart';
+import PaymentMethodsChart from './PaymentMethodsChart';
+import TopPartnersChart from './TopPartnersChart';
 import { ClientGrowthChart } from './ClientGrowthChart';
 
 export const ChartsSection = ({ salesData, clientData, partnersData, paymentsData }: any) => {
