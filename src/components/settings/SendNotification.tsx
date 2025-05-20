@@ -83,15 +83,14 @@ export function SendNotification() {
     try {
       if (data.targetType === "all") {
         // Send to all clients
-        // Since the RPC function isn't available, we'll insert notifications directly
         const { error } = await supabase
           .from('notifications')
-          .insert({
+          .insert([{
             title: data.title,
             message: data.message,
             type: data.type,
             user_id: 'ALL', // We'll handle this value in a database trigger or create a separate endpoint
-          });
+          }]);
         
         if (error) throw error;
       } else if (data.targetType === "specific" && data.targetId) {
@@ -109,12 +108,12 @@ export function SendNotification() {
         if (clientData && clientData.id) {
           const { error } = await supabase
             .from('notifications')
-            .insert({
+            .insert([{
               title: data.title,
               message: data.message,
               type: data.type,
               user_id: clientData.id,
-            });
+            }]);
           
           if (error) throw error;
         }

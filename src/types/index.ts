@@ -9,7 +9,11 @@ export {
   MachineStatus,
   TicketStatus,
   TicketType,
-  PaymentAction
+  PaymentAction,
+  SupportRequestStatus,
+  SupportRequestType,
+  SupportRequestPriority,
+  TicketPriority
 } from './enums';
 
 // Re-export from notification.types
@@ -33,6 +37,31 @@ export {
   type ClientCreate,
   type ClientUpdate
 } from './client';
+
+// Re-export from machine.types
+export {
+  type Machine,
+  type MachineStats,
+  type MachineTransfer,
+  type MachineTransferParams,
+  type MachineCreateParams,
+  type MachineUpdateParams
+} from './machine.types';
+
+// Re-export from support.types 
+export {
+  type SupportTicket
+} from './support.types';
+
+// Re-export from support-ticket.types
+export {
+  type SupportTicket as SupportTicketType
+} from './support-ticket.types';
+
+// Re-export from support-request.types
+export {
+  type SupportRequest
+} from './support-request.types';
 
 // Define interfaces
 export interface Partner {
@@ -128,19 +157,6 @@ export interface UserData {
 export interface SalesChartData {
   name: string;
   value: number;
-}
-
-export interface Machine {
-  id: string;
-  serial_number: string;
-  model: string;
-  status: string;
-  client_id?: string;
-  created_at?: string;
-  updated_at?: string;
-  name?: string;
-  client_name?: string;
-  serialNumber?: string;
 }
 
 /**
