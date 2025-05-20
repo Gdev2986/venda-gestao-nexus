@@ -1,6 +1,6 @@
 
 import { Navigate, useLocation } from "react-router-dom";
-import { useAuth } from "@/contexts/AuthContext";
+import { useAuth } from "@/hooks/use-auth";
 import { Spinner } from "@/components/ui/spinner";
 import { PATHS } from "@/routes/paths";
 import { motion } from "framer-motion";
@@ -62,8 +62,8 @@ const RootLayout = () => {
     }
   }
   
-  // If not authenticated, redirect to login
-  console.log("User not authenticated, redirecting to login");
+  // If not authenticated or no role, redirect to login
+  console.log("User not authenticated or missing role, redirecting to login");
   return <Navigate to={PATHS.LOGIN} replace />;
 };
 

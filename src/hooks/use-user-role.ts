@@ -1,12 +1,15 @@
 
 import { useState, useEffect } from "react";
-import { useAuth } from "@/contexts/AuthContext";
+import { useAuth } from "@/hooks/use-auth";
 import { UserRole } from "@/types";
+import { useNavigate } from "react-router-dom";
+import { PATHS } from "@/routes/paths";
 
 export const useUserRole = () => {
   const { user, profile, userRole: contextUserRole, isLoading: authLoading } = useAuth();
   const [isRoleLoading, setIsRoleLoading] = useState<boolean>(authLoading);
   const [userRole, setUserRole] = useState<UserRole | null>(contextUserRole);
+  const navigate = useNavigate();
 
   useEffect(() => {
     if (contextUserRole) {
@@ -17,8 +20,12 @@ export const useUserRole = () => {
       setIsRoleLoading(false);
     } else if (!authLoading && !profile) {
       setIsRoleLoading(false);
+      // If no user role and we've finished loading auth, redirect to login
+      if (!user) {
+        navigate(PATHS.LOGIN);
+      }
     }
-  }, [profile, authLoading, contextUserRole]);
+  }, [profile, authLoading, contextUserRole, user, navigate]);
   
   return {
     userRole,

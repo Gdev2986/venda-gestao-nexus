@@ -34,11 +34,15 @@ function App() {
     if (!isRoleLoading) {
       console.log("App.tsx - Current user role:", userRole);
       
-      try {
-        const dashPath = getDashboardPath(userRole);
-        console.log("App.tsx - Will redirect to dashboard:", dashPath);
-      } catch (error) {
-        console.error("Error getting dashboard path:", error);
+      if (userRole) {
+        try {
+          const dashPath = getDashboardPath(userRole);
+          console.log("App.tsx - Will redirect to dashboard:", dashPath);
+        } catch (error) {
+          console.error("Error getting dashboard path:", error);
+        }
+      } else {
+        console.log("App.tsx - No user role found, will redirect to login");
       }
     }
   }, [userRole, isRoleLoading]);
@@ -46,7 +50,7 @@ function App() {
   // Get the dashboard path safely
   const getDashboardRedirectPath = () => {
     try {
-      return getDashboardPath(userRole);
+      return userRole ? getDashboardPath(userRole) : PATHS.LOGIN;
     } catch (error) {
       console.error("Error in getDashboardRedirectPath:", error);
       return PATHS.LOGIN;
