@@ -1,6 +1,6 @@
 
 import { useState, useEffect } from "react";
-import { toast } from "@/hooks/use-toast";
+import { toast } from "sonner"; // Direct import from sonner
 import { Notification } from "@/types/notification.types";
 
 // This is a simplified hook that doesn't actually fetch real notifications

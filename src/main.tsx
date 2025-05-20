@@ -33,7 +33,7 @@ function renderApp() {
     // Create a fresh root
     const root = createRoot(rootElement);
     
-    // Important: React context providers must be in the correct order
+    // Ensure React is initialized correctly with proper provider nesting order
     root.render(
       <React.StrictMode>
         <BrowserRouter>

@@ -10,7 +10,7 @@ export type ToastProps = {
   position?: "top-left" | "top-right" | "top-center" | "bottom-left" | "bottom-right" | "bottom-center";
 };
 
-// Implementation for both string and object API
+// Implementation that doesn't require useState
 export function toast(message: string | ToastProps): void {
   if (typeof message === 'string') {
     sonnerToast(message);
@@ -27,6 +27,7 @@ export function toast(message: string | ToastProps): void {
   }
 }
 
+// A simplified hook that doesn't use useState
 export function useToast() {
   return { toast };
 }
