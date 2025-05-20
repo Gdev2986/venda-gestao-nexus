@@ -1,5 +1,5 @@
 
-import * as React from 'react';
+import React from 'react';
 import { createRoot } from 'react-dom/client';
 import { BrowserRouter } from 'react-router-dom';
 import { AuthProvider } from '@/contexts/AuthContext';
@@ -76,12 +76,11 @@ function fallbackRender() {
 // Ensure DOM is fully loaded before rendering
 if (document.readyState === 'loading') {
   document.addEventListener('DOMContentLoaded', () => {
-    // Small delay to ensure React is fully initialized
-    setTimeout(renderApp, 100);
+    renderApp();
   });
 } else {
-  // DOM already loaded, still use a small delay to ensure proper initialization
-  setTimeout(renderApp, 100);
+  // DOM already loaded
+  renderApp();
 }
 
 // Add global error handler as a safety net

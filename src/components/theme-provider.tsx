@@ -1,5 +1,5 @@
 
-import * as React from "react";
+import React from "react";
 
 type Theme = "dark" | "light" | "system";
 
@@ -80,9 +80,16 @@ export function ThemeProvider({
     }
     
     const mediaQuery = window.matchMedia("(prefers-color-scheme: dark)");
-    mediaQuery.addEventListener("change", handleChange);
     
-    return () => mediaQuery.removeEventListener("change", handleChange);
+    // Use the correct event listener based on browser support
+    if (mediaQuery.addEventListener) {
+      mediaQuery.addEventListener("change", handleChange);
+      return () => mediaQuery.removeEventListener("change", handleChange);
+    } else {
+      // Fallback for older browsers
+      mediaQuery.addListener(handleChange);
+      return () => mediaQuery.removeListener(handleChange);
+    }
   }, [theme, applyTheme]);
 
   const value = React.useMemo(

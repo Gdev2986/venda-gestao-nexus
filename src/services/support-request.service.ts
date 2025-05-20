@@ -7,8 +7,6 @@ import { TicketType, TicketPriority, TicketStatus, SupportTicket } from "@/types
 export type SupportRequest = SupportTicket;
 
 export async function createSupportRequest(request: SupportRequest): Promise<{ data: any, error: any }> {
-  const id = await generateUuid();
-  
   // Need to use explicit typing for the insert due to database schema changes
   const { data, error } = await supabase
     .from('support_requests')
@@ -27,9 +25,9 @@ export async function createSupportRequest(request: SupportRequest): Promise<{ d
     })
     .select();
 
-  if (!error) {
+  if (!error && data) {
     // Create notification for logistics team
-    await createRequestNotification(request, id);
+    await createRequestNotification(request, data[0]?.id || '');
   }
 
   return { data, error };
@@ -45,7 +43,7 @@ export async function updateSupportRequest(id: string, updates: Partial<SupportR
     .eq('id', id)
     .select();
 
-  if (!error && updates.status) {
+  if (!error && updates.status && data) {
     // Create status update notification
     await createStatusUpdateNotification(id, updates);
   }
@@ -114,7 +112,7 @@ async function createRequestNotification(request: SupportRequest, requestId: str
             user_id: user.id,
             title: 'Nova Solicitação Técnica',
             message: `${request.title} - ${request.priority}`,
-            type: 'SUPPORT' as NotificationType, // Cast to NotificationType
+            type: NotificationType.SUPPORT,
             data: { 
               request_id: requestId,
               type: request.type,
@@ -141,7 +139,7 @@ async function createRequestNotification(request: SupportRequest, requestId: str
             user_id: user.id,
             title: 'Nova Solicitação Técnica',
             message: `${request.title} - ${request.priority}`,
-            type: 'SUPPORT' as NotificationType, // Cast to NotificationType
+            type: NotificationType.SUPPORT,
             data: { 
               request_id: requestId,
               type: request.type,
@@ -178,7 +176,7 @@ async function createStatusUpdateNotification(requestId: string, updates: Partia
           user_id: clientData.user_id,
           title: 'Atualização de Solicitação',
           message: `Sua solicitação "${request.title}" foi atualizada para ${updates.status}`,
-          type: 'SUPPORT' as NotificationType, // Cast to NotificationType
+          type: NotificationType.SUPPORT,
           data: { request_id: requestId, new_status: updates.status },
           is_read: false,
           created_at: new Date().toISOString()
@@ -193,7 +191,7 @@ async function createStatusUpdateNotification(requestId: string, updates: Partia
           user_id: updates.technician_id,
           title: 'Nova Solicitação Atribuída',
           message: `Você foi atribuído à solicitação "${request.title}"`,
-          type: 'SUPPORT' as NotificationType, // Cast to NotificationType
+          type: NotificationType.SUPPORT,
           data: { request_id: requestId },
           is_read: false,
           created_at: new Date().toISOString()

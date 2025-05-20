@@ -18,18 +18,20 @@ export const useUserRole = () => {
     } else if (profile) {
       setUserRole(profile.role);
       setIsRoleLoading(false);
-    } else if (!authLoading && !profile) {
+    } else if (!authLoading) {
       setIsRoleLoading(false);
-      // If no user role and we've finished loading auth, redirect to login
+      
+      // If authentication is complete but we have no user, redirect to login
       if (!user) {
+        console.log("No user found, redirecting to login");
         navigate(PATHS.LOGIN);
       }
-    }
-    
-    // Additional check for null role after authentication is complete
-    if (!authLoading && user && !contextUserRole && !profile?.role) {
-      console.error("User is authenticated but has no role, redirecting to login");
-      navigate(PATHS.LOGIN);
+      
+      // If authentication is complete, we have a user but no role, redirect to login
+      if (user && !contextUserRole && !profile?.role) {
+        console.error("User is authenticated but has no role, redirecting to login");
+        navigate(PATHS.LOGIN);
+      }
     }
   }, [profile, authLoading, contextUserRole, user, navigate]);
   

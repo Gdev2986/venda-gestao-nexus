@@ -12,14 +12,15 @@ import {
 import { UserRole } from "@/types";
 import { playNotificationSoundIfEnabled } from "@/services/notificationSoundService";
 import { NotificationType } from "@/types/notification.types";
+import { TicketStatus, TicketType, TicketPriority } from "@/types/support-ticket.types";
 
 interface UseSupportRequestsOptions {
   enableRealtime?: boolean;
   initialFetch?: boolean;
   filters?: {
-    status?: string;
-    type?: string;
-    priority?: string;
+    status?: TicketStatus;
+    type?: TicketType;
+    priority?: TicketPriority;
     client_id?: string;
     technician_id?: string;
     date_from?: string;
