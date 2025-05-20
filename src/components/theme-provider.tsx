@@ -2,26 +2,27 @@
 "use client"
 
 import * as React from "react"
+import { createContext, useContext, useEffect, useState } from "react"
 
-type Theme = "dark" | "light" | "system";
+type Theme = "dark" | "light" | "system"
 
 type ThemeProviderProps = {
-  children: React.ReactNode;
-  defaultTheme?: Theme;
-  storageKey?: string;
-};
+  children: React.ReactNode
+  defaultTheme?: Theme
+  storageKey?: string
+}
 
 type ThemeProviderState = {
-  theme: Theme;
-  setTheme: (theme: Theme) => void;
-};
+  theme: Theme
+  setTheme: (theme: Theme) => void
+}
 
 const initialState: ThemeProviderState = {
   theme: "system",
   setTheme: () => null,
-};
+}
 
-const ThemeProviderContext = React.createContext<ThemeProviderState>(initialState);
+const ThemeProviderContext = createContext<ThemeProviderState>(initialState)
 
 export function ThemeProvider({
   children,
@@ -29,63 +30,57 @@ export function ThemeProvider({
   storageKey = "sigmapay-theme",
   ...props
 }: ThemeProviderProps) {
-  const [theme, setTheme] = React.useState<Theme>(defaultTheme);
-  
-  // Update from localStorage when component mounts
-  React.useEffect(() => {
-    try {
-      const savedTheme = localStorage?.getItem(storageKey) as Theme | null;
-      if (savedTheme) {
-        setTheme(savedTheme);
-      }
-    } catch (error) {
-      console.error("Failed to load theme preference:", error);
-    }
-  }, [storageKey]);
-  
-  // Update document classes when theme changes
-  React.useEffect(() => {
-    const root = window.document.documentElement;
+  const [theme, setTheme] = useState<Theme>(defaultTheme)
+
+  useEffect(() => {
+    const storedTheme = localStorage.getItem(storageKey) as Theme | null
     
-    root.classList.remove("light", "dark");
+    if (storedTheme) {
+      setTheme(storedTheme)
+    }
+  }, [storageKey])
+
+  useEffect(() => {
+    const root = window.document.documentElement
+
+    root.classList.remove("light", "dark")
 
     if (theme === "system") {
       const systemTheme = window.matchMedia("(prefers-color-scheme: dark)").matches
         ? "dark"
-        : "light";
-      root.classList.add(systemTheme);
+        : "light"
+      root.classList.add(systemTheme)
     } else {
-      root.classList.add(theme);
+      root.classList.add(theme)
     }
-  }, [theme]);
+  }, [theme])
 
-  // Save theme to localStorage
-  React.useEffect(() => {
+  useEffect(() => {
     try {
-      localStorage.setItem(storageKey, theme);
+      localStorage.setItem(storageKey, theme)
     } catch (error) {
-      console.error("Failed to save theme preference:", error);
+      console.error("Failed to save theme preference:", error)
     }
-  }, [theme, storageKey]);
+  }, [theme, storageKey])
 
-  const value = React.useMemo(() => ({
+  const value = {
     theme,
-    setTheme: (t: Theme) => setTheme(t),
-  }), [theme]);
+    setTheme,
+  }
 
   return (
     <ThemeProviderContext.Provider {...props} value={value}>
       {children}
     </ThemeProviderContext.Provider>
-  );
+  )
 }
 
 export function useTheme(): ThemeProviderState {
-  const context = React.useContext(ThemeProviderContext);
+  const context = useContext(ThemeProviderContext)
 
   if (context === undefined) {
-    throw new Error("useTheme must be used within a ThemeProvider");
+    throw new Error("useTheme must be used within a ThemeProvider")
   }
 
-  return context;
+  return context
 }

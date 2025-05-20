@@ -1,15 +1,17 @@
 
-import * as React from "react";
-import { Moon, Sun } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { useTheme } from "@/components/theme-provider";
+"use client"
+
+import * as React from "react"
+import { Moon, Sun } from "lucide-react"
+import { Button } from "@/components/ui/button"
+import { useTheme } from "@/components/theme-provider"
 
 const ThemeToggle: React.FC = () => {
-  const { theme, setTheme } = useTheme();
+  const { theme, setTheme } = useTheme()
   
   const toggleTheme = React.useCallback(() => {
-    setTheme(theme === "dark" ? "light" : "dark");
-  }, [theme, setTheme]);
+    setTheme(theme === "dark" ? "light" : "dark")
+  }, [theme, setTheme])
 
   return (
     <Button
@@ -25,7 +27,7 @@ const ThemeToggle: React.FC = () => {
       )}
       <span className="sr-only">Alternar tema</span>
     </Button>
-  );
-};
+  )
+}
 
-export default ThemeToggle;
+export default ThemeToggle
