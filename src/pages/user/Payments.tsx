@@ -19,7 +19,7 @@ const UserPayments = () => {
     paymentRequests,
     isDialogOpen,
     setIsDialogOpen,
-    handleRequestPayment,
+    handleRequestPayment: originalHandleRequestPayment,
     loadPaymentRequests
   } = usePaymentRequests();
 
@@ -33,6 +33,15 @@ const UserPayments = () => {
     notifyUser: true, 
     filterByClientId: clientId 
   });
+  
+  // Adapter function to match expected interface
+  const handleRequestPayment = (amount: string, description: string, pixKeyId: string) => {
+    originalHandleRequestPayment({
+      amount: parseFloat(amount),
+      description,
+      pixKeyId
+    });
+  };
   
   // Log some debugging info
   useEffect(() => {

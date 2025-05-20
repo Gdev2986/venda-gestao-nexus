@@ -62,7 +62,7 @@ const handleRequestPayment = async (values: {
         client_id: user?.id,
         status: "PENDING",
       },
-    ]);
+    ]).select();
 
     if (error) throw error;
 
@@ -82,8 +82,8 @@ const handleRequestPayment = async (values: {
         id: pixKey.id,
         key: pixKey.key,
         type: pixKey.type,
-        name: pixKey.name,
-        user_id: pixKey.user_id,
+        name: pixKey.name || "", // Provide empty string as fallback
+        user_id: pixKey.user_id || "", // Provide empty string as fallback
         owner_name: pixKey.owner_name
       }
     };

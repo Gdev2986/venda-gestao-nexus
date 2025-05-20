@@ -50,13 +50,17 @@ export function useSupportRequests() {
         title: newRequest.title,
         description: newRequest.description,
         // Map values to appropriate string literals expected by the database
-        type: newRequest.type === SupportRequestType.REPAIR ? 
-              SupportRequestType.MAINTENANCE : // Map REPAIR to MAINTENANCE
-              newRequest.type === SupportRequestType.TRAINING ? 
-              SupportRequestType.OTHER : // Map TRAINING to OTHER
-              newRequest.type === SupportRequestType.SUPPORT ? 
-              SupportRequestType.OTHER : // Map SUPPORT to OTHER
-              newRequest.type, // Keep other values as is
+        type: newRequest.type === SupportRequestType.MAINTENANCE ? 
+              SupportRequestType.MAINTENANCE : // Map MAINTENANCE to MAINTENANCE
+              newRequest.type === SupportRequestType.INSTALLATION ? 
+              SupportRequestType.INSTALLATION : // Map INSTALLATION to INSTALLATION
+              newRequest.type === SupportRequestType.OTHER ? 
+              SupportRequestType.OTHER : // Keep OTHER as OTHER
+              newRequest.type === SupportRequestType.REPLACEMENT ? 
+              SupportRequestType.REPLACEMENT : // Keep REPLACEMENT
+              newRequest.type === SupportRequestType.SUPPLIES ? 
+              SupportRequestType.SUPPLIES : // Keep SUPPLIES
+              SupportRequestType.OTHER, // Default to OTHER for any unexpected type
         status: newRequest.status,
         priority: newRequest.priority,
         scheduled_date: newRequest.scheduled_date,
