@@ -4,7 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { LineChart } from '@/components/charts';
 
 interface ClientGrowthChartProps {
-  data: {
+  data?: {
     name: string;
     clients: number;
   }[];
@@ -12,7 +12,7 @@ interface ClientGrowthChartProps {
 
 export const ClientGrowthChart = ({ data }: ClientGrowthChartProps) => {
   // Ensure we have default data if none is provided
-  const chartData = data?.length > 0 
+  const chartData = data && data.length > 0 
     ? data 
     : [
         { name: 'Jan', clients: 0 },

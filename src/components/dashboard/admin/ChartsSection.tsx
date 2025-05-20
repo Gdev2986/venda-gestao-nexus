@@ -5,13 +5,27 @@ import PaymentMethodsChart from './PaymentMethodsChart';
 import TopPartnersChart from './TopPartnersChart';
 import { ClientGrowthChart } from './ClientGrowthChart';
 
-export const ChartsSection = ({ salesData, clientData, partnersData, paymentsData }: any) => {
+interface ChartsSectionProps {
+  salesData?: any[];
+  clientGrowthData?: any[];  // Renamed for consistency
+  partnersData?: any[];
+  paymentMethodsData?: any[];  // Renamed for consistency
+  isLoading?: boolean;
+}
+
+export const ChartsSection = ({ 
+  salesData = [], 
+  clientGrowthData = [], 
+  partnersData = [], 
+  paymentMethodsData = [],
+  isLoading = false
+}: ChartsSectionProps) => {
   return (
     <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mt-6">
-      <SalesChart data={salesData} />
-      <ClientGrowthChart data={clientData} />
-      <PaymentMethodsChart data={paymentsData} />
-      <TopPartnersChart data={partnersData} />
+      <SalesChart data={salesData} isLoading={isLoading} />
+      <ClientGrowthChart data={clientGrowthData} />
+      <PaymentMethodsChart data={paymentMethodsData} isLoading={isLoading} />
+      <TopPartnersChart data={partnersData} isLoading={isLoading} />
     </div>
   );
 };

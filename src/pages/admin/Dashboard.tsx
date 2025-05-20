@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { PageHeader } from "@/components/page/PageHeader";
 import { useToast } from "@/hooks/use-toast";
@@ -99,11 +98,11 @@ const AdminDashboard = () => {
           <QuickLinks />
         </div>
         
-        {/* Charts Grid */}
+        {/* Charts Grid - Updated prop names for consistency */}
         <ChartsSection 
           salesData={MOCK_DATA.dailySales}
           paymentMethodsData={MOCK_DATA.paymentMethods}
-          topPartnersData={MOCK_DATA.topPartners}
+          partnersData={MOCK_DATA.topPartners}
           clientGrowthData={MOCK_DATA.clientGrowth}
           isLoading={isLoading}
         />
