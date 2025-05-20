@@ -33,28 +33,22 @@ function renderApp() {
     // Create a fresh root
     const root = createRoot(rootElement);
     
-    // Ensure React is correctly imported and used
+    // Render the application with proper provider hierarchy
     root.render(
-      React.createElement(React.StrictMode, null,
-        React.createElement(BrowserRouter, null,
-          React.createElement(QueryClientProvider, { client: queryClient },
-            React.createElement(ThemeProvider, { 
-              defaultTheme: "light", 
-              storageKey: "sigmapay-theme",
-              children: React.createElement(React.Fragment, null,
-                React.createElement(AuthProvider, null,
-                  React.createElement(NotificationsProvider, null,
-                    React.createElement(React.Fragment, null,
-                      React.createElement(App, null),
-                      React.createElement(Toaster, null)
-                    )
-                  )
-                )
-              )
-            })
-          )
-        )
-      )
+      <React.StrictMode>
+        <BrowserRouter>
+          <QueryClientProvider client={queryClient}>
+            <ThemeProvider defaultTheme="light" storageKey="sigmapay-theme">
+              <AuthProvider>
+                <NotificationsProvider>
+                  <App />
+                  <Toaster />
+                </NotificationsProvider>
+              </AuthProvider>
+            </ThemeProvider>
+          </QueryClientProvider>
+        </BrowserRouter>
+      </React.StrictMode>
     );
     
     console.log('Application rendered successfully');
