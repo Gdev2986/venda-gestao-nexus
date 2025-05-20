@@ -40,17 +40,18 @@ function renderApp() {
           React.createElement(QueryClientProvider, { client: queryClient },
             React.createElement(ThemeProvider, { 
               defaultTheme: "light", 
-              storageKey: "sigmapay-theme" 
-            },
-              React.createElement(AuthProvider, null,
-                React.createElement(NotificationsProvider, null,
-                  React.createElement(React.Fragment, null,
-                    React.createElement(App, null),
-                    React.createElement(Toaster, null)
+              storageKey: "sigmapay-theme",
+              children: React.createElement(React.Fragment, null,
+                React.createElement(AuthProvider, null,
+                  React.createElement(NotificationsProvider, null,
+                    React.createElement(React.Fragment, null,
+                      React.createElement(App, null),
+                      React.createElement(Toaster, null)
+                    )
                   )
                 )
               )
-            )
+            })
           )
         )
       )
