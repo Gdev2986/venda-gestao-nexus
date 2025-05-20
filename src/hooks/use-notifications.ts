@@ -1,19 +1,19 @@
 
-import { useState, useEffect } from "react";
+import * as React from "react";
 import { toast } from "@/hooks/use-toast"; // Direct import from our hook
 import { Notification } from "@/types/notification.types";
 
 // This is a simplified hook that doesn't actually fetch real notifications
 // The real functionality is in NotificationsContext
 export function useNotifications() {
-  const [soundEnabled, setSoundEnabled] = useState<boolean>(
+  const [soundEnabled, setSoundEnabled] = React.useState<boolean>(
     localStorage.getItem("notification-sound") !== "false"
   );
-  const [notifications, setNotifications] = useState<Notification[]>([]);
-  const [unreadCount, setUnreadCount] = useState(0);
+  const [notifications, setNotifications] = React.useState<Notification[]>([]);
+  const [unreadCount, setUnreadCount] = React.useState(0);
   
   // Load sound preference from localStorage on mount
-  useEffect(() => {
+  React.useEffect(() => {
     try {
       const savedPreference = localStorage.getItem("notification-sound");
       setSoundEnabled(savedPreference !== "false");
@@ -23,7 +23,7 @@ export function useNotifications() {
   }, []);
 
   // Save sound preference when it changes
-  useEffect(() => {
+  React.useEffect(() => {
     try {
       localStorage.setItem("notification-sound", String(soundEnabled));
     } catch (error) {
