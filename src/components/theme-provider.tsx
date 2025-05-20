@@ -21,7 +21,7 @@ const initialState: ThemeProviderState = {
   setTheme: () => null,
 };
 
-const ThemeProviderContext = React.createContext<ThemeProviderState>(initialState);
+export const ThemeProviderContext = React.createContext<ThemeProviderState>(initialState);
 
 export function ThemeProvider({
   children,
@@ -29,10 +29,8 @@ export function ThemeProvider({
   storageKey = "sigmapay-theme",
   ...props
 }: ThemeProviderProps) {
-  // Initialize state with defaultTheme first
   const [theme, setTheme] = React.useState<Theme>(defaultTheme);
   
-  // Then update from localStorage when component mounts
   React.useEffect(() => {
     try {
       const savedTheme = localStorage?.getItem(storageKey) as Theme | null;
@@ -44,7 +42,6 @@ export function ThemeProvider({
     }
   }, [storageKey]);
   
-  // Update document classes when theme changes
   React.useEffect(() => {
     const root = window.document.documentElement;
     
@@ -60,7 +57,6 @@ export function ThemeProvider({
     }
   }, [theme]);
 
-  // Save theme to localStorage
   React.useEffect(() => {
     try {
       localStorage.setItem(storageKey, theme);
