@@ -1,5 +1,5 @@
 
-import * as React from 'react';
+import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
 import { BrowserRouter } from 'react-router-dom';
 import { AuthProvider } from '@/contexts/AuthContext';
@@ -34,7 +34,7 @@ function renderApp() {
     
     // Render the application with all providers
     root.render(
-      <React.StrictMode>
+      <StrictMode>
         <BrowserRouter>
           <QueryClientProvider client={queryClient}>
             <AuthProvider>
@@ -46,7 +46,7 @@ function renderApp() {
             </AuthProvider>
           </QueryClientProvider>
         </BrowserRouter>
-      </React.StrictMode>
+      </StrictMode>
     );
     
     console.log('Application rendered successfully');

@@ -1,5 +1,8 @@
 
+"use client"
+
 import * as React from "react";
+import { createContext, useContext, useEffect, useState } from "react";
 
 type Theme = "dark" | "light" | "system";
 
@@ -19,7 +22,7 @@ const initialState: ThemeProviderState = {
   setTheme: () => null,
 };
 
-const ThemeProviderContext = React.createContext<ThemeProviderState>(initialState);
+const ThemeProviderContext = createContext<ThemeProviderState>(initialState);
 
 export function ThemeProvider({
   children,
@@ -28,7 +31,7 @@ export function ThemeProvider({
   ...props
 }: ThemeProviderProps) {
   // Safe access to localStorage with try/catch
-  const getThemeFromStorage = React.useCallback((): Theme | null => {
+  const getThemeFromStorage = (): Theme | null => {
     if (typeof window === "undefined") return null;
     try {
       const storedTheme = window.localStorage.getItem(storageKey);
@@ -37,13 +40,13 @@ export function ThemeProvider({
       console.error("Error accessing localStorage:", e);
       return null;
     }
-  }, [storageKey]);
+  };
   
-  const [theme, setTheme] = React.useState<Theme>(
+  const [theme, setTheme] = useState<Theme>(
     () => getThemeFromStorage() || defaultTheme
   );
 
-  const applyTheme = React.useCallback((newTheme: Theme) => {
+  const applyTheme = (newTheme: Theme) => {
     const root = window.document.documentElement;
     
     root.classList.remove("light", "dark");
@@ -56,13 +59,13 @@ export function ThemeProvider({
     } else {
       root.classList.add(newTheme);
     }
-  }, []);
+  };
 
-  React.useEffect(() => {
+  useEffect(() => {
     applyTheme(theme);
-  }, [theme, applyTheme]);
+  }, [theme]);
 
-  React.useEffect(() => {
+  useEffect(() => {
     if (typeof window === "undefined") return;
     
     try {
@@ -72,7 +75,7 @@ export function ThemeProvider({
     }
   }, [theme, storageKey]);
 
-  React.useEffect(() => {
+  useEffect(() => {
     if (theme !== "system" || typeof window === "undefined") return;
     
     function handleChange() {
@@ -90,7 +93,7 @@ export function ThemeProvider({
       mediaQuery.addListener(handleChange);
       return () => mediaQuery.removeListener(handleChange);
     }
-  }, [theme, applyTheme]);
+  }, [theme]);
 
   const value = React.useMemo(
     () => ({
@@ -108,7 +111,7 @@ export function ThemeProvider({
 }
 
 export const useTheme = (): ThemeProviderState => {
-  const context = React.useContext(ThemeProviderContext);
+  const context = useContext(ThemeProviderContext);
 
   if (context === undefined) {
     throw new Error("useTheme must be used within a ThemeProvider");
