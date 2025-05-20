@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -57,7 +56,8 @@ const AdminNotificationsTab = () => {
           title: notification.title,
           message: notification.message,
           type: notification.type,
-          data: notification.data || {}
+          data: notification.data || {},
+          recipient_roles: notification.recipient_roles
         }));
         
         const { error: insertError } = await supabase
@@ -82,7 +82,8 @@ const AdminNotificationsTab = () => {
           title: notification.title,
           message: notification.message,
           type: notification.type,
-          data: notification.data || {}
+          data: notification.data || {},
+          recipient_roles: [] // Empty array means no role filtering
         }));
         
         const { error: insertError } = await supabase
@@ -134,7 +135,8 @@ const AdminNotificationsTab = () => {
         title: "Notificação de Teste",
         message: "Esta é uma notificação de teste do painel de administração.",
         type: "SYSTEM" as const, // Use string literal with "as const" to satisfy TypeScript
-        data: { isTest: true }
+        data: { isTest: true },
+        recipient_roles: [UserRole.ADMIN] // Explicitly send to ADMIN role
       }));
       
       const { error } = await supabase

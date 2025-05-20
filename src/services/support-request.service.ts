@@ -2,6 +2,7 @@
 import { supabase } from "@/integrations/supabase/client";
 import { generateUuid } from "@/lib/supabase-utils";
 import { NotificationType } from "@/types/notification.types";
+import { UserRole } from "@/types";
 import { TicketType, TicketPriority, TicketStatus, SupportTicket } from "@/types/support-ticket.types";
 
 export type SupportRequest = SupportTicket;
@@ -101,7 +102,7 @@ async function createRequestNotification(request: SupportRequest, requestId: str
     const { data: logisticsUsers } = await supabase
       .from('profiles')
       .select('id')
-      .eq('role', 'LOGISTICS');
+      .eq('role', UserRole.LOGISTICS);
 
     if (logisticsUsers && logisticsUsers.length > 0) {
       // Create notifications for each logistics user
@@ -120,7 +121,8 @@ async function createRequestNotification(request: SupportRequest, requestId: str
               client_id: request.client_id
             },
             is_read: false,
-            created_at: new Date().toISOString()
+            created_at: new Date().toISOString(),
+            recipient_roles: [UserRole.LOGISTICS] // Explicitly set roles
           });
       }
     }
@@ -129,7 +131,7 @@ async function createRequestNotification(request: SupportRequest, requestId: str
     const { data: adminUsers } = await supabase
       .from('profiles')
       .select('id')
-      .eq('role', 'ADMIN');
+      .eq('role', UserRole.ADMIN);
       
     if (adminUsers && adminUsers.length > 0) {
       for (const user of adminUsers) {
@@ -147,7 +149,8 @@ async function createRequestNotification(request: SupportRequest, requestId: str
               client_id: request.client_id
             },
             is_read: false,
-            created_at: new Date().toISOString()
+            created_at: new Date().toISOString(),
+            recipient_roles: [UserRole.ADMIN] // Explicitly set roles
           });
       }
     }
@@ -179,7 +182,8 @@ async function createStatusUpdateNotification(requestId: string, updates: Partia
           type: NotificationType.SUPPORT,
           data: { request_id: requestId, new_status: updates.status },
           is_read: false,
-          created_at: new Date().toISOString()
+          created_at: new Date().toISOString(),
+          recipient_roles: [UserRole.CLIENT] // Explicitly set roles
         });
     }
     
@@ -194,7 +198,8 @@ async function createStatusUpdateNotification(requestId: string, updates: Partia
           type: NotificationType.SUPPORT,
           data: { request_id: requestId },
           is_read: false,
-          created_at: new Date().toISOString()
+          created_at: new Date().toISOString(),
+          recipient_roles: [UserRole.LOGISTICS] // Explicitly set roles
         });
     }
   } catch (error) {

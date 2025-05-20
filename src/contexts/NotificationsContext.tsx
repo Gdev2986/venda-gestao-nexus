@@ -1,4 +1,3 @@
-
 import React, { createContext, useContext, useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "./AuthContext";
@@ -43,7 +42,7 @@ export const NotificationsProvider: React.FC<{ children: React.ReactNode }> = ({
   const [unreadCount, setUnreadCount] = useState(0);
   const [isLoading, setIsLoading] = useState(false);
   const [soundEnabled, setSoundEnabled] = useState<boolean>(true);
-  const { user } = useAuth();
+  const { user, profile } = useAuth();
   const { toast } = useToast();
 
   // Load sound preference from localStorage on initial load
@@ -59,26 +58,8 @@ export const NotificationsProvider: React.FC<{ children: React.ReactNode }> = ({
     localStorage.setItem("notification_sound_enabled", soundEnabled.toString());
   }, [soundEnabled]);
 
-  // Get the user's role - without using profile property directly
-  const getUserRole = async (userId: string): Promise<string | null> => {
-    try {
-      const { data, error } = await supabase
-        .from('profiles')
-        .select('role')
-        .eq('id', userId)
-        .single();
-      
-      if (error) {
-        console.error("Error fetching user role:", error);
-        return null;
-      }
-      
-      return data?.role || null;
-    } catch (err) {
-      console.error("Error in getUserRole:", err);
-      return null;
-    }
-  };
+  // Get the user's role directly from the profile object
+  const userRole = profile?.role;
 
   useEffect(() => {
     if (user) {
@@ -86,7 +67,6 @@ export const NotificationsProvider: React.FC<{ children: React.ReactNode }> = ({
 
       // Set up realtime subscription for new notifications
       const setupRealtimeSubscription = async () => {
-        const userRole = await getUserRole(user.id);
         console.log('Setting up realtime notifications for user role:', userRole);
         
         const channel = supabase
@@ -105,17 +85,24 @@ export const NotificationsProvider: React.FC<{ children: React.ReactNode }> = ({
               if (payload.eventType === 'INSERT') {
                 const newNotification = payload.new as Notification;
                 
-                // Play sound based on notification type
-                playNotificationSoundIfEnabled(newNotification.type as NotificationType, soundEnabled);
+                // Check if this notification is intended for the user's role
+                const isForUserRole = !newNotification.recipient_roles || 
+                  newNotification.recipient_roles.length === 0 || 
+                  (userRole && newNotification.recipient_roles.includes(userRole));
                 
-                // Show toast notification
-                toast({
-                  title: newNotification.title,
-                  description: newNotification.message,
-                });
-                
-                // Update our notifications state
-                setNotifications(prev => [newNotification, ...prev]);
+                if (isForUserRole) {
+                  // Play sound based on notification type
+                  playNotificationSoundIfEnabled(newNotification.type as NotificationType, soundEnabled);
+                  
+                  // Show toast notification
+                  toast({
+                    title: newNotification.title,
+                    description: newNotification.message,
+                  });
+                  
+                  // Update our notifications state
+                  setNotifications(prev => [newNotification, ...prev]);
+                }
               } else {
                 // For updates or deletions, just refresh the list
                 fetchNotifications();
@@ -138,7 +125,7 @@ export const NotificationsProvider: React.FC<{ children: React.ReactNode }> = ({
         });
       };
     }
-  }, [user, soundEnabled]);
+  }, [user, soundEnabled, userRole]);
 
   // Update unread count whenever notifications change
   useEffect(() => {
@@ -151,6 +138,7 @@ export const NotificationsProvider: React.FC<{ children: React.ReactNode }> = ({
     setIsLoading(true);
 
     try {
+      // Fetch notifications specifically for this user
       const { data, error } = await supabase
         .from("notifications")
         .select("*")
@@ -161,8 +149,22 @@ export const NotificationsProvider: React.FC<{ children: React.ReactNode }> = ({
         throw error;
       }
 
+      // Filter notifications based on recipient roles if specified
+      let filteredData = data || [];
+      
+      if (userRole) {
+        filteredData = filteredData.filter((notification) => {
+          // If recipient_roles is null or empty array, show to everyone
+          if (!notification.recipient_roles || notification.recipient_roles.length === 0) {
+            return true;
+          }
+          // Otherwise, check if user's role is in recipient_roles
+          return notification.recipient_roles.includes(userRole);
+        });
+      }
+
       // Fix the type casting to ensure compatibility
-      setNotifications((data || []).map(item => ({
+      setNotifications(filteredData.map(item => ({
         ...item,
         type: item.type as NotificationType
       })));
