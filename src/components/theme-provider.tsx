@@ -21,6 +21,7 @@ const initialState: ThemeProviderState = {
   setTheme: () => null,
 }
 
+// Create the context with the initial state
 const ThemeProviderContext = React.createContext<ThemeProviderState>(initialState)
 
 export function ThemeProvider({
@@ -29,16 +30,23 @@ export function ThemeProvider({
   storageKey = "sigmapay-theme",
   ...props
 }: ThemeProviderProps) {
+  // Use React.useState instead of useState
   const [theme, setTheme] = React.useState<Theme>(defaultTheme)
 
+  // Load stored theme
   React.useEffect(() => {
-    const storedTheme = localStorage.getItem(storageKey) as Theme | null
-    
-    if (storedTheme) {
-      setTheme(storedTheme)
+    try {
+      const storedTheme = localStorage.getItem(storageKey) as Theme | null
+      
+      if (storedTheme) {
+        setTheme(storedTheme)
+      }
+    } catch (error) {
+      console.warn("Error reading theme from localStorage:", error)
     }
   }, [storageKey])
 
+  // Apply theme to document
   React.useEffect(() => {
     const root = window.document.documentElement
 
@@ -54,6 +62,7 @@ export function ThemeProvider({
     }
   }, [theme])
 
+  // Store theme in localStorage
   React.useEffect(() => {
     try {
       localStorage.setItem(storageKey, theme)
@@ -62,10 +71,13 @@ export function ThemeProvider({
     }
   }, [theme, storageKey])
 
-  const value = {
-    theme,
-    setTheme,
-  }
+  const value = React.useMemo(
+    () => ({
+      theme,
+      setTheme,
+    }),
+    [theme]
+  )
 
   return (
     <ThemeProviderContext.Provider {...props} value={value}>
