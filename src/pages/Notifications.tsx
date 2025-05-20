@@ -1,82 +1,122 @@
 
-import React, { useEffect, useState } from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import NotificationList from "@/components/notifications/NotificationList";
-import NotificationFilters from "@/components/notifications/NotificationFilters";
-import { useNotifications } from "@/contexts/notifications";
+import React, { useEffect } from "react";
 import { PageHeader } from "@/components/page/PageHeader";
-import { NotificationType } from "@/types";
+import { PageWrapper } from "@/components/page/PageWrapper";
+import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { useNotifications } from "@/contexts/notifications/NotificationsProvider";
+import { NotificationItem } from "@/components/notifications/NotificationItem";
+import { Notification } from "@/contexts/notifications/types";
 
-const Notifications = () => {
-  const [typeFilter, setTypeFilter] = useState<string>("all");
-  const [statusFilter, setStatusFilter] = useState<string>("all");
-  
-  const {
-    notifications,
-    markAsRead,
-    markAllAsRead,
-    fetchNotifications,
-    isLoading,
-    deleteNotification,
-    refreshNotifications = fetchNotifications
+export default function NotificationsPage() {
+  const { 
+    notifications, 
+    markAsRead, 
+    markAllAsRead, 
+    deleteNotification 
   } = useNotifications();
 
-  useEffect(() => {
-    refreshNotifications();
-  }, [refreshNotifications]);
-
-  // Filter notifications based on current filters
-  const filteredNotifications = notifications.filter(notification => {
-    // Filter by type
-    if (typeFilter !== 'all' && notification.type.toLowerCase() !== typeFilter.toLowerCase()) {
-      return false;
-    }
-    
-    // Filter by status
-    if (statusFilter === 'read' && !notification.is_read) {
-      return false;
-    }
-    if (statusFilter === 'unread' && notification.is_read) {
-      return false;
-    }
-    
-    return true;
-  });
+  const readNotifications = notifications.filter((notification) => notification.read);
+  const unreadNotifications = notifications.filter((notification) => !notification.read);
 
   return (
-    <div className="container py-6">
-      <PageHeader
-        title="Notificações"
-        description="Gerencie suas notificações"
+    <div className="space-y-6">
+      <PageHeader 
+        title="Notificações" 
+        description="Gerencie suas notificações do sistema"
       />
 
-      <div className="grid gap-6">
-        <Card>
-          <CardHeader className="flex flex-row items-center">
-            <div className="flex-1">
-              <CardTitle>Suas Notificações</CardTitle>
+      <div className="flex items-center justify-between">
+        <Tabs defaultValue="unread" className="w-full">
+          <div className="flex items-center justify-between mb-4">
+            <TabsList>
+              <TabsTrigger value="unread">
+                Não lidas ({unreadNotifications.length})
+              </TabsTrigger>
+              <TabsTrigger value="read">
+                Lidas ({readNotifications.length})
+              </TabsTrigger>
+              <TabsTrigger value="all">
+                Todas ({notifications.length})
+              </TabsTrigger>
+            </TabsList>
+
+            <div className="space-x-2">
+              <Button 
+                variant="outline" 
+                onClick={() => markAllAsRead()}
+                disabled={unreadNotifications.length === 0}
+              >
+                Marcar todas como lidas
+              </Button>
             </div>
-            <NotificationFilters 
-              typeFilter={typeFilter}
-              statusFilter={statusFilter}
-              onTypeChange={setTypeFilter}
-              onStatusChange={setStatusFilter}
-              onMarkAllAsRead={() => markAllAsRead()}
-              onRefresh={() => refreshNotifications()}
-            />
-          </CardHeader>
-          <CardContent>
-            <NotificationList 
-              notifications={filteredNotifications}
-              onMarkAsRead={markAsRead}
-              isLoading={isLoading}
-              onDelete={deleteNotification}
-            />
-          </CardContent>
-        </Card>
+          </div>
+
+          <TabsContent value="unread">
+            <Card>
+              {unreadNotifications.length === 0 ? (
+                <div className="p-4 text-center text-muted-foreground">
+                  Não há notificações não lidas.
+                </div>
+              ) : (
+                <div className="divide-y divide-border">
+                  {unreadNotifications.map((notification: Notification) => (
+                    <NotificationItem
+                      key={notification.id}
+                      notification={notification}
+                      onMarkAsRead={markAsRead}
+                      onDelete={deleteNotification}
+                    />
+                  ))}
+                </div>
+              )}
+            </Card>
+          </TabsContent>
+
+          <TabsContent value="read">
+            <Card>
+              {readNotifications.length === 0 ? (
+                <div className="p-4 text-center text-muted-foreground">
+                  Não há notificações lidas.
+                </div>
+              ) : (
+                <div className="divide-y divide-border">
+                  {readNotifications.map((notification) => (
+                    <NotificationItem
+                      key={notification.id}
+                      notification={notification}
+                      onMarkAsRead={markAsRead}
+                      onDelete={deleteNotification}
+                    />
+                  ))}
+                </div>
+              )}
+            </Card>
+          </TabsContent>
+
+          <TabsContent value="all">
+            <Card>
+              {notifications.length === 0 ? (
+                <div className="p-4 text-center text-muted-foreground">
+                  Não há notificações.
+                </div>
+              ) : (
+                <div className="divide-y divide-border">
+                  {notifications.map((notification) => (
+                    <NotificationItem
+                      key={notification.id}
+                      notification={notification}
+                      onMarkAsRead={markAsRead}
+                      onDelete={deleteNotification}
+                    />
+                  ))}
+                </div>
+              )}
+            </Card>
+          </TabsContent>
+        </Tabs>
       </div>
     </div>
   );
-};
-
-export default Notifications;
+}

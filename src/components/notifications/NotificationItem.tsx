@@ -79,7 +79,7 @@ export const NotificationItem = ({ notification, onMarkAsRead, onDelete }: Notif
       transition={{ duration: 0.2 }}
       className={cn(
         "flex flex-col items-start gap-1 p-4 hover:bg-accent/50 relative border-b border-border last:border-b-0",
-        notification.is_read ? "opacity-70" : ""
+        !notification.read ? "" : "opacity-70"
       )}
       onClick={handleMarkAsRead}
     >
@@ -90,7 +90,7 @@ export const NotificationItem = ({ notification, onMarkAsRead, onDelete }: Notif
         </div>
         <div className="flex items-center gap-2">
           <span className="text-xs text-muted-foreground whitespace-nowrap">
-            {formatDistanceToNow(new Date(notification.created_at), {
+            {formatDistanceToNow(new Date(notification.createdAt), {
               addSuffix: true,
               locale: ptBR
             })}
@@ -106,7 +106,7 @@ export const NotificationItem = ({ notification, onMarkAsRead, onDelete }: Notif
       <span className="text-sm text-muted-foreground line-clamp-2">
         {notification.message}
       </span>
-      {!notification.is_read && (
+      {!notification.read && (
         <div className="mt-1 h-2 w-2 rounded-full bg-primary" />
       )}
     </motion.div>
