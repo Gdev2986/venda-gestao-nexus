@@ -1,11 +1,12 @@
 
-import { StrictMode } from 'react';
+import * as React from 'react';
 import { createRoot } from 'react-dom/client';
 import { BrowserRouter } from 'react-router-dom';
 import { AuthProvider } from '@/contexts/AuthContext';
 import { ThemeProvider } from '@/components/theme-provider';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { NotificationsProvider } from '@/contexts/NotificationsContext';
+import { Toaster } from '@/components/ui/toaster';
 import App from './App.tsx';
 import './index.css';
 
@@ -34,19 +35,20 @@ function renderApp() {
     
     // Render the application with all providers
     root.render(
-      <StrictMode>
+      <React.StrictMode>
         <BrowserRouter>
           <QueryClientProvider client={queryClient}>
             <AuthProvider>
               <ThemeProvider defaultTheme="light" storageKey="sigmapay-theme">
                 <NotificationsProvider>
                   <App />
+                  <Toaster />
                 </NotificationsProvider>
               </ThemeProvider>
             </AuthProvider>
           </QueryClientProvider>
         </BrowserRouter>
-      </StrictMode>
+      </React.StrictMode>
     );
     
     console.log('Application rendered successfully');
@@ -79,6 +81,19 @@ function fallbackRender() {
   }
 }
 
+// Add global error boundary
+window.addEventListener('error', (event) => {
+  console.error('Global error caught:', event.error);
+  if (event.error && event.error.message && 
+      (event.error.message.includes("useState") || 
+       event.error.message.includes("Cannot read properties of null"))) {
+    fallbackRender();
+    event.preventDefault();
+    return true;
+  }
+  return false;
+});
+
 // Ensure DOM is fully loaded before rendering
 if (document.readyState === 'loading') {
   document.addEventListener('DOMContentLoaded', () => {
@@ -94,6 +109,7 @@ window.onerror = function(message, source, lineno, colno, error) {
   console.error('Global error caught:', { message, source, lineno, colno, error });
   if (source && source.includes('react')) {
     fallbackRender();
+    return true;
   }
   return false;
 };

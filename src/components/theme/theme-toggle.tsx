@@ -1,16 +1,26 @@
 
 "use client"
 
-import { useCallback } from "react";
+import * as React from "react";
 import { Moon, Sun } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useTheme } from "@/components/theme-provider";
 
 const ThemeToggle: React.FC = () => {
-  // Wrap the hook usage in a try-catch to handle potential errors
-  const { theme, setTheme } = useTheme();
+  // Safely access the theme hook
+  let themeContext = { theme: "light", setTheme: (_: string) => {} };
   
-  const toggleTheme = useCallback(() => {
+  try {
+    themeContext = useTheme();
+  } catch (error) {
+    console.error("Error accessing theme context:", error);
+    // Return null or fallback UI if theme context can't be accessed
+    return null;
+  }
+  
+  const { theme, setTheme } = themeContext;
+  
+  const toggleTheme = React.useCallback(() => {
     try {
       setTheme(theme === "dark" ? "light" : "dark");
     } catch (error) {
