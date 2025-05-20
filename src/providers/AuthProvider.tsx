@@ -12,11 +12,17 @@ import { cleanupSupabaseState } from "@/utils/auth-cleanup";
 // Create a context for authentication
 export const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-// Simple auth functions to avoid circular dependencies
-const useSimpleAuthFunctions = (
-  setIsLoading: (value: boolean) => void,
-  navigate: ReturnType<typeof useNavigate>
-) => {
+// Provider component that wraps the app and makes auth object available to any child component that calls useAuth()
+export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
+  const [session, setSession] = useState<Session | null>(null);
+  const [user, setUser] = useState<User | null>(null);
+  const [userRole, setUserRole] = useState<UserRole | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [profile, setProfile] = useState<UserProfile | null>(null);
+  const navigate = useNavigate();
+
+  // Simple auth functions to avoid circular dependencies
   // Sign in function
   const signIn = async (email: string, password: string) => {
     setIsLoading(true);
@@ -98,26 +104,6 @@ const useSimpleAuthFunctions = (
       setIsLoading(false);
     }
   };
-  
-  return {
-    signIn,
-    signUp,
-    signOut,
-  };
-};
-
-// Provider component that wraps the app and makes auth object available to any child component that calls useAuth()
-export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
-  const [session, setSession] = useState<Session | null>(null);
-  const [user, setUser] = useState<User | null>(null);
-  const [userRole, setUserRole] = useState<UserRole | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [profile, setProfile] = useState<UserProfile | null>(null);
-  const navigate = useNavigate();
-
-  // Use the simple auth functions directly
-  const { signIn, signUp, signOut } = useSimpleAuthFunctions(setIsLoading, navigate);
 
   // Set up auth state listener and check for existing session
   useEffect(() => {
