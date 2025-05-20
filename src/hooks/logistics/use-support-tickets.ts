@@ -1,6 +1,7 @@
 
 import { useState, useEffect } from "react";
-import { SupportTicket, TicketPriority, TicketStatus, TicketType } from "@/types/support.types";
+import { SupportTicket } from "@/types/support.types";
+import { TicketPriority, TicketStatus, TicketType } from "@/types/enums";
 import { v4 as uuidv4 } from 'uuid';
 
 // Mock data generator
@@ -56,7 +57,7 @@ const generateMockTickets = (count: number): SupportTicket[] => {
       updated_at: createdDate.toISOString(),
       client: mockClients[clientIndex],
       machine: mockMachines[machineIndex]
-    };
+    } as SupportTicket;
   });
 };
 
@@ -92,16 +93,14 @@ export const useSupportTickets = (options: UseSupportTicketsOptions = {}) => {
           id: uuidv4(),
           title: ticketData.title || '',
           client_id: ticketData.client_id!,
-          machine_id: ticketData.machine_id,
-          user_id: 'current_user', // Changed from created_by to user_id
-          type: ticketData.type || TicketType.OTHER,
-          status: TicketStatus.PENDING,
-          priority: ticketData.priority || TicketPriority.MEDIUM,
           description: ticketData.description || '',
-          scheduled_date: ticketData.scheduled_date,
+          status: ticketData.status || TicketStatus.PENDING,
+          type: ticketData.type || TicketType.OTHER,
+          priority: ticketData.priority || TicketPriority.MEDIUM,
           created_at: new Date().toISOString(),
           updated_at: new Date().toISOString(),
-          // Add client and machine info if available
+          machine_id: ticketData.machine_id,
+          scheduled_date: ticketData.scheduled_date,
           client: ticketData.client,
           machine: ticketData.machine
         };

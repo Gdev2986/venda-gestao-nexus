@@ -59,7 +59,7 @@ export const createClient = async (clientData: Omit<Client, "id" | "created_at" 
       .from("clients")
       .insert([{
         id: newClient.id,
-        business_name: newClient.business_name || newClient.company_name,
+        business_name: newClient.business_name || newClient.company_name || "",
         document: newClient.document,
         // Add other fields as needed based on your Supabase schema
       } as SupabaseClientRow]);
@@ -87,7 +87,7 @@ export const updateClient = async (id: string, clientData: Partial<Client>): Pro
     const { error } = await supabase
       .from("clients")
       .update({
-        business_name: clientData.business_name || clientData.company_name,
+        business_name: clientData.business_name || clientData.company_name || undefined,
         document: clientData.document,
         // Add other fields as needed based on your Supabase schema
         updated_at: new Date().toISOString(),

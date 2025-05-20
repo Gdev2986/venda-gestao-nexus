@@ -10,6 +10,7 @@ export interface PixKey {
   name: string;
   owner_name: string;  // Required
   is_default?: boolean;
+  is_active?: boolean;
   bank_name?: string;
   key_type?: string;   // Added to match usage in the code
   user_id: string;     // Required to fix the errors
@@ -41,6 +42,7 @@ export interface Payment {
   client_name?: string; // Add missing property used in PaymentListTable
   due_date?: string; // Add missing property used in PaymentForm
   pix_key?: PixKey;
+  pix_key_id?: string;
   bank_info?: {
     bank_name?: string;
     account_number?: string;

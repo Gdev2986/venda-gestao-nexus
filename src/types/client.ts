@@ -62,4 +62,11 @@ export interface Client extends SupabaseClientRow {
     company_name: string;
     commission_rate?: number;
   };
+  // Add missing properties for ClientFormModal
+  company_name?: string; // Alias for business_name
+  cnpj?: string; // Alias for document
+  initial_balance?: number; // Alias for balance
+  address_number?: string;
+  neighborhood?: string;
+  zip_code?: string; // Alias for zip
 }

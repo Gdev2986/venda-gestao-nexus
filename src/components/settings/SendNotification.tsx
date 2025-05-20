@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -20,7 +19,7 @@ const notificationFormSchema = z.object({
   }),
   targetType: z.enum(["all", "specific"]),
   targetId: z.string().optional(),
-  type: z.enum(["SYSTEM", "PAYMENT", "BALANCE", "MACHINE", "COMMISSION", "GENERAL", "SALE", "SUPPORT", "LOGISTICS", "ADMIN_NOTIFICATION"])
+  type: z.enum(["SYSTEM", "PAYMENT", "BALANCE", "MACHINE", "COMMISSION", "GENERAL", "SALE", "SUPPORT", "LOGISTICS"])
 });
 
 type NotificationFormValues = z.infer<typeof notificationFormSchema>;
@@ -87,7 +86,7 @@ export function SendNotification() {
           .insert({
             title: data.title,
             message: data.message,
-            type: data.type,
+            type: data.type, // Removed ADMIN_NOTIFICATION from the enum
             user_id: 'ALL' // We'll handle this value in a database trigger or create a separate endpoint
           });
         
@@ -110,7 +109,7 @@ export function SendNotification() {
             .insert({
               title: data.title,
               message: data.message,
-              type: data.type,
+              type: data.type, // Removed ADMIN_NOTIFICATION from the enum
               user_id: clientData.id
             });
           
