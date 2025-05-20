@@ -10,7 +10,7 @@ export type ToastProps = {
   position?: "top-left" | "top-right" | "top-center" | "bottom-left" | "bottom-right" | "bottom-center";
 };
 
-// Simple function without React hooks - fixes the useState issue
+// Simple function that doesn't use React hooks
 export const toast = (props: string | ToastProps): void => {
   if (typeof props === 'string') {
     sonnerToast(props);
@@ -28,7 +28,7 @@ export const toast = (props: string | ToastProps): void => {
   }
 };
 
-// Simple object that returns the toast function
+// Export a simple object, not a hook
 export const useToast = () => {
   return { toast };
 };

@@ -2,7 +2,7 @@
 import { createContext, useContext, useEffect, useState } from "react";
 import { Session, User } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
-import { toast } from "@/hooks/use-toast"; // Use our wrapper instead of direct sonner import
+import { toast } from "@/hooks/use-toast"; // Direct import of the toast function, not the hook
 import { useNavigate } from "react-router-dom";
 import { PATHS } from "@/routes/paths";
 import { UserRole } from "@/types";
