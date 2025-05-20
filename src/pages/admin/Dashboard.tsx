@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { PageHeader } from "@/components/page/PageHeader";
 import { useToast } from "@/hooks/use-toast";
@@ -7,7 +8,7 @@ import { ChartsSection } from "@/components/dashboard/admin/ChartsSection";
 import StatCards from "@/components/dashboard/admin/StatCards";
 import { subDays } from "date-fns";
 
-// Dashboard mock data
+// Dashboard mock data - Ensure all data properties are properly initialized as arrays
 const MOCK_DATA = {
   stats: {
     totalSales: 125750.50,
@@ -73,6 +74,12 @@ const AdminDashboard = () => {
     }, 1500);
   };
 
+  // Ensure data is properly initialized
+  const salesData = MOCK_DATA.dailySales || [];
+  const paymentMethodsData = MOCK_DATA.paymentMethods || [];
+  const partnersData = MOCK_DATA.topPartners || [];
+  const clientGrowthData = MOCK_DATA.clientGrowth || [];
+
   return (
     <div className="space-y-4 md:space-y-6">
       <PageHeader
@@ -98,12 +105,12 @@ const AdminDashboard = () => {
           <QuickLinks />
         </div>
         
-        {/* Charts Grid - Updated prop names for consistency */}
+        {/* Charts Grid */}
         <ChartsSection 
-          salesData={MOCK_DATA.dailySales}
-          paymentMethodsData={MOCK_DATA.paymentMethods}
-          partnersData={MOCK_DATA.topPartners}
-          clientGrowthData={MOCK_DATA.clientGrowth}
+          salesData={salesData}
+          paymentMethodsData={paymentMethodsData}
+          partnersData={partnersData}
+          clientGrowthData={clientGrowthData}
           isLoading={isLoading}
         />
       </div>

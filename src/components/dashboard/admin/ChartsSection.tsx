@@ -7,9 +7,9 @@ import { ClientGrowthChart } from './ClientGrowthChart';
 
 interface ChartsSectionProps {
   salesData?: any[];
-  clientGrowthData?: any[];  // Renamed for consistency
+  clientGrowthData?: any[];  
   partnersData?: any[];
-  paymentMethodsData?: any[];  // Renamed for consistency
+  paymentMethodsData?: any[];  
   isLoading?: boolean;
 }
 
@@ -20,12 +20,18 @@ export const ChartsSection = ({
   paymentMethodsData = [],
   isLoading = false
 }: ChartsSectionProps) => {
+  // Ensure all data props are arrays, even if they come in as undefined
+  const safeSalesData = Array.isArray(salesData) ? salesData : [];
+  const safeClientData = Array.isArray(clientGrowthData) ? clientGrowthData : [];
+  const safePartnersData = Array.isArray(partnersData) ? partnersData : [];
+  const safePaymentData = Array.isArray(paymentMethodsData) ? paymentMethodsData : [];
+  
   return (
     <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mt-6">
-      <SalesChart data={salesData} isLoading={isLoading} />
-      <ClientGrowthChart data={clientGrowthData} />
-      <PaymentMethodsChart data={paymentMethodsData} isLoading={isLoading} />
-      <TopPartnersChart data={partnersData} isLoading={isLoading} />
+      <SalesChart data={safeSalesData} isLoading={isLoading} />
+      <ClientGrowthChart data={safeClientData} />
+      <PaymentMethodsChart data={safePaymentData} isLoading={isLoading} />
+      <TopPartnersChart data={safePartnersData} isLoading={isLoading} />
     </div>
   );
 };
