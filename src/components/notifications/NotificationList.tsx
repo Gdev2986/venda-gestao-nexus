@@ -1,5 +1,5 @@
 
-import { AnimatePresence } from "framer-motion";
+import { AnimatePresence, motion } from "framer-motion";
 import { Notification } from "@/types/notification.types";
 import { NotificationItem } from "./NotificationItem";
 import { Spinner } from "@/components/ui/spinner";
@@ -27,11 +27,17 @@ export const NotificationList = ({
 
   return (
     <div className="max-h-[60vh] sm:max-h-80 overflow-y-auto">
-      <AnimatePresence>
+      <AnimatePresence initial={false}>
         {notifications.length === 0 ? (
-          <div className="p-4 text-center text-muted-foreground">
+          <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -10 }}
+            transition={{ duration: 0.2 }}
+            className="p-4 text-center text-muted-foreground"
+          >
             Nenhuma notificação
-          </div>
+          </motion.div>
         ) : (
           notifications.map((notification: Notification) => (
             <NotificationItem

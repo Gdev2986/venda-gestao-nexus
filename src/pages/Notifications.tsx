@@ -1,10 +1,11 @@
 
-import React, { useEffect, useState } from "react";
+import React, { useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { NotificationList } from "@/components/notifications/NotificationList";
 import NotificationFilters from "@/components/notifications/NotificationFilters";
 import { useNotifications } from "@/contexts/NotificationsContext";
 import { PageHeader } from "@/components/page/PageHeader";
+import { useState } from "react";
 import { NotificationType } from "@/types";
 
 const Notifications = () => {
@@ -21,18 +22,20 @@ const Notifications = () => {
     refreshNotifications = fetchNotifications
   } = useNotifications();
 
+  // Garantir que as notificações são carregadas ao montar o componente
   useEffect(() => {
+    console.log("Carregando notificações...");
     refreshNotifications();
   }, [refreshNotifications]);
 
-  // Filter notifications based on current filters
+  // Filtrar notificações baseado nos filtros atuais
   const filteredNotifications = notifications.filter(notification => {
-    // Filter by type
+    // Filtrar por tipo
     if (typeFilter !== 'all' && notification.type.toLowerCase() !== typeFilter.toLowerCase()) {
       return false;
     }
     
-    // Filter by status
+    // Filtrar por status
     if (statusFilter === 'read' && !notification.is_read) {
       return false;
     }
@@ -42,6 +45,8 @@ const Notifications = () => {
     
     return true;
   });
+
+  console.log("Notificações filtradas:", filteredNotifications);
 
   return (
     <div className="container py-6">
@@ -61,8 +66,8 @@ const Notifications = () => {
               statusFilter={statusFilter}
               onTypeChange={setTypeFilter}
               onStatusChange={setStatusFilter}
-              onMarkAllAsRead={() => markAllAsRead()}
-              onRefresh={() => refreshNotifications()}
+              onMarkAllAsRead={markAllAsRead}
+              onRefresh={refreshNotifications}
             />
           </CardHeader>
           <CardContent>
