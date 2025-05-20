@@ -18,6 +18,12 @@ interface MainSidebarProps {
 
 // Memoize the Sidebar component to prevent unnecessary re-renders
 const MainSidebar = memo(({ isOpen, isMobile, onClose, userRole }: MainSidebarProps) => {
+  // Define animation variants for smooth transitions
+  const sidebarVariants = {
+    open: { x: 0, transition: { type: "spring", stiffness: 300, damping: 30 } },
+    closed: { x: "-100%", transition: { type: "spring", stiffness: 300, damping: 30 } }
+  };
+
   return (
     <>
       {/* Mobile backdrop with animation */}
@@ -31,14 +37,16 @@ const MainSidebar = memo(({ isOpen, isMobile, onClose, userRole }: MainSidebarPr
         />
       )}
       
-      {/* Sidebar with fixed position and animation only for position */}
-      <div
+      {/* Sidebar with fixed position */}
+      <motion.div
         className={cn(
-          "fixed inset-y-0 left-0 z-50 flex flex-col w-64 text-sidebar-foreground transition-transform duration-200 ease-in-out",
-          isMobile ? "shadow-xl" : "border-r border-sidebar-border",
-          isOpen ? "translate-x-0" : "-translate-x-full"
+          "fixed inset-y-0 left-0 z-50 flex flex-col w-64 text-sidebar-foreground h-screen",
+          isMobile ? "shadow-xl" : "border-r border-sidebar-border"
         )}
         style={{ backgroundColor: 'hsl(196, 70%, 20%)' }}
+        initial="closed"
+        animate={isOpen ? "open" : "closed"}
+        variants={sidebarVariants}
       >
         <div className="flex items-center justify-between h-14 md:h-16 px-4 border-b border-sidebar-border">
           <div className="flex items-center space-x-2">
@@ -66,7 +74,7 @@ const MainSidebar = memo(({ isOpen, isMobile, onClose, userRole }: MainSidebarPr
         </div>
 
         <SidebarUserProfile userRole={userRole} />
-      </div>
+      </motion.div>
     </>
   );
 });

@@ -12,6 +12,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { UserRole } from "@/types";
 import { useNavigate } from "react-router-dom";
 import { PATHS } from "@/routes/paths";
+import { AnimatePresence, motion } from "framer-motion";
 
 // SSR-safe check
 const isBrowser = typeof window !== 'undefined';
@@ -82,6 +83,25 @@ const MainLayout = () => {
     }
   }, [sidebarOpen, isMobile]);
 
+  // Handle window resize for responsive behavior
+  useEffect(() => {
+    if (!isBrowser) return;
+    
+    const handleResize = () => {
+      const isNowMobile = window.innerWidth < 768;
+      if (isNowMobile !== isMobile) {
+        if (isNowMobile) {
+          setSidebarOpen(false);
+        }
+        // Update isMobile state via React's state mechanism would happen here
+        // but since we're calculating it on render for simplicity, we don't need to
+      }
+    };
+
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, [isMobile]);
+
   // Handle critical errors with an emergency fallback UI
   if (!isBrowser || !user) {
     return (
@@ -96,21 +116,26 @@ const MainLayout = () => {
 
   return (
     <div className="flex h-screen overflow-hidden bg-background">
-      {/* Sidebar component - mounted always but conditionally shown */}
+      {/* Sidebar component - mounted always and position fixed */}
       {safeUserRole && (
-        <MainSidebar 
-          isOpen={sidebarOpen} 
-          isMobile={isMobile} 
-          onClose={() => setSidebarOpen(false)} 
-          userRole={safeUserRole}
-        />
+        <AnimatePresence>
+          <MainSidebar 
+            isOpen={sidebarOpen} 
+            isMobile={isMobile} 
+            onClose={() => setSidebarOpen(false)} 
+            userRole={safeUserRole}
+          />
+        </AnimatePresence>
       )}
       
       {/* Main content */}
-      <div 
+      <motion.div 
         className={`flex-1 flex flex-col transition-all duration-300 ease-in-out ${
           sidebarOpen && !isMobile && safeUserRole ? 'ml-64' : 'ml-0'
         } max-w-full`}
+        initial={{ opacity: 0.8 }}
+        animate={{ opacity: 1 }}
+        transition={{ duration: 0.2 }}
       >
         {/* Header */}
         <header className="h-14 md:h-16 border-b border-border flex items-center justify-between px-4 bg-background sticky top-0 z-10">
@@ -135,13 +160,19 @@ const MainLayout = () => {
           </div>
         </header>
         
-        {/* Main scrollable content - updated for mobile spacing */}
-        <main className="flex-1 w-full overflow-y-auto overflow-x-hidden p-4 md:p-6 lg:p-8">
+        {/* Main scrollable content with page transition animation */}
+        <motion.main 
+          className="flex-1 w-full overflow-y-auto overflow-x-hidden p-4 md:p-6 lg:p-8"
+          key={location.pathname}
+          initial={{ opacity: 0.9, y: 5 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.2 }}
+        >
           <div className="mx-auto w-full">
             <Outlet />
           </div>
-        </main>
-      </div>
+        </motion.main>
+      </motion.div>
       
       {/* Toast notifications */}
       <Toaster />
