@@ -14,7 +14,8 @@ import {
   TruckIcon
 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { Notification, NotificationType } from "@/types/notification.types";
+import { NotificationType } from "@/types";
+import { Notification } from "@/contexts/notifications/types";
 
 interface NotificationItemProps {
   notification: Notification;

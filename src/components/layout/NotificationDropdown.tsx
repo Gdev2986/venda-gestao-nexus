@@ -9,9 +9,9 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/button";
 import { motion, AnimatePresence } from "framer-motion";
-import { useNotifications } from "@/contexts/NotificationsContext";
+import { useNotifications } from "@/contexts/notifications";
 import { NotificationHeader } from "@/components/notifications/NotificationHeader";
-import { NotificationList } from "@/components/notifications/NotificationList";
+import NotificationList from "@/components/notifications/NotificationList";
 import { NotificationFooter } from "@/components/notifications/NotificationFooter";
 
 const NotificationDropdown = () => {

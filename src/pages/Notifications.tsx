@@ -1,9 +1,9 @@
 
 import React, { useEffect, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { NotificationList } from "@/components/notifications/NotificationList";
+import NotificationList from "@/components/notifications/NotificationList";
 import NotificationFilters from "@/components/notifications/NotificationFilters";
-import { useNotifications } from "@/contexts/NotificationsContext";
+import { useNotifications } from "@/contexts/notifications";
 import { PageHeader } from "@/components/page/PageHeader";
 import { NotificationType } from "@/types";
 
