@@ -4,7 +4,7 @@ import { createRoot } from 'react-dom/client';
 import { BrowserRouter } from 'react-router-dom';
 import { ThemeProvider } from '@/components/theme-provider';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { Toaster } from 'sonner'; // Add direct import from sonner
+import { Toaster } from 'sonner'; // Use direct import from sonner
 import { AuthProvider } from '@/providers/AuthProvider';
 import { NotificationsProvider } from '@/contexts/NotificationsContext';
 import App from './App.tsx';
@@ -34,7 +34,7 @@ function renderApp() {
     const root = createRoot(rootElement);
     
     // Render the application with all providers
-    // Ensure proper nesting order: BrowserRouter -> QueryClientProvider -> ThemeProvider -> AuthProvider -> NotificationsProvider -> App -> Toaster
+    // Important: Toaster must be a direct child of App, not wrapped inside other providers
     root.render(
       <React.StrictMode>
         <BrowserRouter>

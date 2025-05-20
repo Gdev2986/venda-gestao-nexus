@@ -2,10 +2,11 @@
 import { supabase } from "@/integrations/supabase/client";
 import { NavigateFunction } from "react-router-dom";
 import { PATHS } from "@/routes/paths";
+import { toast as ToastFunction } from "sonner";
 
 interface UseAuthFunctionsProps {
   setIsLoading: (isLoading: boolean) => void;
-  toast: any; // Changed from useToast to direct toast function
+  toast: typeof ToastFunction; // Use specific type for toast function
   navigate: NavigateFunction;
 }
 
@@ -21,10 +22,8 @@ export const useAuthFunctions = ({ setIsLoading, toast, navigate }: UseAuthFunct
       });
       
       if (error) {
-        toast({
-          title: "Erro ao fazer login",
+        toast("Erro ao fazer login", {
           description: error.message,
-          variant: "destructive",
         });
         return { error };
       }
@@ -32,10 +31,8 @@ export const useAuthFunctions = ({ setIsLoading, toast, navigate }: UseAuthFunct
       return { error: null };
     } catch (error: any) {
       console.error("Error during sign in:", error);
-      toast({
-        title: "Erro ao fazer login",
+      toast("Erro ao fazer login", {
         description: error?.message || "Ocorreu um erro durante o login",
-        variant: "destructive",
       });
       return { error };
     } finally {
@@ -57,26 +54,21 @@ export const useAuthFunctions = ({ setIsLoading, toast, navigate }: UseAuthFunct
       });
       
       if (error) {
-        toast({
-          title: "Erro ao criar conta",
+        toast("Erro ao criar conta", {
           description: error.message,
-          variant: "destructive",
         });
         return { data: null, error };
       }
       
-      toast({
-        title: "Conta criada com sucesso",
+      toast("Conta criada com sucesso", {
         description: "Verifique seu email para confirmar sua conta",
       });
       
       return { data, error: null };
     } catch (error: any) {
       console.error("Error during sign up:", error);
-      toast({
-        title: "Erro ao criar conta",
+      toast("Erro ao criar conta", {
         description: error?.message || "Ocorreu um erro ao criar sua conta",
-        variant: "destructive",
       });
       return { data: null, error };
     } finally {
@@ -93,10 +85,8 @@ export const useAuthFunctions = ({ setIsLoading, toast, navigate }: UseAuthFunct
       navigate(PATHS.LOGIN);
     } catch (error) {
       console.error("Error during sign out:", error);
-      toast({
-        title: "Erro ao sair",
+      toast("Erro ao sair", {
         description: "Ocorreu um erro ao encerrar sua sessão",
-        variant: "destructive",
       });
     } finally {
       setIsLoading(false);
