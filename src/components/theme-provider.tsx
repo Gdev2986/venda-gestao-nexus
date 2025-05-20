@@ -1,7 +1,7 @@
 
 "use client"
 
-import * as React from "react"
+import React from "react"
 
 type Theme = "dark" | "light" | "system"
 
@@ -21,7 +21,6 @@ const initialState: ThemeProviderState = {
   setTheme: () => null,
 }
 
-// Create the context with the initial state
 const ThemeProviderContext = React.createContext<ThemeProviderState>(initialState)
 
 export function ThemeProvider({
@@ -30,24 +29,24 @@ export function ThemeProvider({
   storageKey = "sigmapay-theme",
   ...props
 }: ThemeProviderProps) {
-  // Use React.useState instead of useState
-  const [theme, setTheme] = React.useState<Theme>(defaultTheme)
-
-  // Load stored theme
-  React.useEffect(() => {
-    try {
-      const storedTheme = localStorage.getItem(storageKey) as Theme | null
-      
-      if (storedTheme) {
-        setTheme(storedTheme)
+  const [theme, setTheme] = React.useState<Theme>(
+    () => {
+      if (typeof window !== "undefined") {
+        try {
+          const storedTheme = localStorage.getItem(storageKey)
+          return storedTheme ? (storedTheme as Theme) : defaultTheme
+        } catch (error) {
+          console.warn("Error reading theme from localStorage:", error)
+          return defaultTheme
+        }
       }
-    } catch (error) {
-      console.warn("Error reading theme from localStorage:", error)
+      return defaultTheme
     }
-  }, [storageKey])
+  )
 
-  // Apply theme to document
   React.useEffect(() => {
+    if (typeof window === "undefined") return
+    
     const root = window.document.documentElement
 
     root.classList.remove("light", "dark")
@@ -62,8 +61,9 @@ export function ThemeProvider({
     }
   }, [theme])
 
-  // Store theme in localStorage
   React.useEffect(() => {
+    if (typeof window === "undefined") return
+    
     try {
       localStorage.setItem(storageKey, theme)
     } catch (error) {
@@ -74,7 +74,9 @@ export function ThemeProvider({
   const value = React.useMemo(
     () => ({
       theme,
-      setTheme,
+      setTheme: (newTheme: Theme) => {
+        setTheme(newTheme)
+      },
     }),
     [theme]
   )
