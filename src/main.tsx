@@ -34,28 +34,26 @@ function renderApp() {
     console.log('Attempting to render application...');
     
     // Setup global React error boundary before rendering
-    window.React = React; // Ensure React is globally available
+    window.React = React;
     
     // Create a fresh root
     const root = createRoot(rootElement);
     
-    // Render the application with all providers, with error boundaries
+    // Render the application with all providers
     root.render(
       <React.StrictMode>
-        <ErrorBoundary fallback={<FallbackComponent />}>
-          <BrowserRouter>
-            <QueryClientProvider client={queryClient}>
-              <AuthProvider>
-                <ThemeProvider defaultTheme="light" storageKey="sigmapay-theme">
-                  <NotificationsProvider>
-                    <App />
-                    <Toaster />
-                  </NotificationsProvider>
-                </ThemeProvider>
-              </AuthProvider>
-            </QueryClientProvider>
-          </BrowserRouter>
-        </ErrorBoundary>
+        <BrowserRouter>
+          <QueryClientProvider client={queryClient}>
+            <AuthProvider>
+              <ThemeProvider defaultTheme="light" storageKey="sigmapay-theme">
+                <NotificationsProvider>
+                  <App />
+                  <Toaster />
+                </NotificationsProvider>
+              </ThemeProvider>
+            </AuthProvider>
+          </QueryClientProvider>
+        </BrowserRouter>
       </React.StrictMode>
     );
     
@@ -119,7 +117,7 @@ function FallbackComponent() {
   );
 }
 
-// Simple ErrorBoundary component
+// Simple ErrorBoundary class component
 class ErrorBoundary extends React.Component {
   constructor(props) {
     super(props);
@@ -136,7 +134,7 @@ class ErrorBoundary extends React.Component {
 
   render() {
     if (this.state.hasError) {
-      return this.props.fallback;
+      return <FallbackComponent />;
     }
     return this.props.children;
   }
@@ -146,8 +144,9 @@ class ErrorBoundary extends React.Component {
 window.addEventListener('error', (event) => {
   console.error('Global error caught:', event.error);
   if (event.error && event.error.message && 
-      (event.error.message.includes("useState") || 
-       event.error.message.includes("Cannot read properties of null"))) {
+      (typeof event.error.message === 'string' && 
+       (event.error.message.includes("useState") || 
+        event.error.message.includes("Cannot read properties of null")))) {
     fallbackRender();
     event.preventDefault();
     return true;
@@ -168,7 +167,8 @@ if (document.readyState === 'loading') {
 // Add global error handler as a safety net
 window.onerror = function(message, source, lineno, colno, error) {
   console.error('Global error caught:', { message, source, lineno, colno, error });
-  if (source && source.includes('react') || (message && message.includes('useState'))) {
+  if ((source && typeof source === 'string' && source.includes('react')) || 
+      (typeof message === 'string' && message.includes('useState'))) {
     fallbackRender();
     return true;
   }
