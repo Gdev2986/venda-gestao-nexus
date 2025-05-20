@@ -12,7 +12,7 @@ import {
   signOutUser, 
   clearAuthData
 } from "@/services/auth-service";
-import { AuthContextType } from "./auth-types";
+import { AuthContextType, UserProfile } from "./auth-types";
 
 // Function to clean up Supabase-related data
 export const cleanupSupabaseState = () => {
@@ -53,6 +53,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [userRole, setUserRole] = useState<UserRole | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [profile, setProfile] = useState<UserProfile | null>(null);
   const { toast } = useToast();
   const navigate = useNavigate();
 
@@ -79,36 +80,36 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
             // Defer data fetching to prevent deadlocks on iOS
             setTimeout(async () => {
               try {
-                // Fetch user role from profiles table
-                const { data: profile, error } = await supabase
+                // Fetch user profile from profiles table
+                const { data: profileData, error } = await supabase
                   .from('profiles')
-                  .select('role')
+                  .select('*')
                   .eq('id', newSession.user.id)
                   .single();
+              
+              if (error) {
+                console.error("Error fetching user profile:", error);
+              } else {
+                // Update profile state
+                setProfile(profileData);
                 
-                if (error) {
-                  console.error("Error fetching user role:", error);
-                } else {
-                  // Normalize the role to match our UserRole enum
-                  const normalizedRole = profile?.role?.toUpperCase() as UserRole;
-                  console.log("User role fetched:", normalizedRole);
-                  setUserRole(normalizedRole);
-                  
-                  // Toast only if we successfully got the role
-                  toast({
-                    title: "Login bem-sucedido",
-                    description: "Bem-vindo ao SigmaPay!",
-                  });
-                }
-              } catch (err) {
-                console.error("Error in role fetching:", err);
-              } finally {
-                setIsLoading(false);
+                // Normalize the role to match our UserRole enum
+                const normalizedRole = profileData?.role?.toUpperCase() as UserRole;
+                console.log("User role fetched:", normalizedRole);
+                setUserRole(normalizedRole);
+                
+                // Toast only if we successfully got the role
+                toast({
+                  title: "Login bem-sucedido",
+                  description: "Bem-vindo ao SigmaPay!",
+                });
               }
-            }, 0);
-          } else {
-            setIsLoading(false);
-          }
+            } catch (err) {
+              console.error("Error in role fetching:", err);
+            } finally {
+              setIsLoading(false);
+            }
+          }, 0);
         } else if (event === "SIGNED_OUT") {
           console.log("Signed out event detected");
           
@@ -341,6 +342,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         session,
         isLoading,
         isAuthenticated,
+        profile,
         userRole,
         signIn,
         signUp,
