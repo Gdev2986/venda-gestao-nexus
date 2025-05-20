@@ -1,10 +1,11 @@
+
 import { useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { Routes, Route } from 'react-router-dom';
 import routes from './routes';
 import { useAuth } from './hooks/use-auth';
 import { Toaster } from './components/ui/toaster';
-import { UserRole } from '@/types'; // Changed from './types' to '@/types'
+import { UserRole } from './types/enums'; 
 import { PATHS } from './routes/paths';
 
 function App() {
@@ -26,19 +27,19 @@ function App() {
       // Redirect based on role after login
       switch (user?.role) {
         case UserRole.ADMIN:
-          navigate(PATHS.ADMIN_DASHBOARD);
+          navigate(PATHS.ADMIN.DASHBOARD);
           break;
         case UserRole.FINANCIAL:
-          navigate(PATHS.FINANCIAL_DASHBOARD);
+          navigate(PATHS.FINANCIAL.DASHBOARD);
           break;
         case UserRole.LOGISTICS:
-          navigate(PATHS.LOGISTICS_DASHBOARD);
+          navigate(PATHS.LOGISTICS.DASHBOARD);
           break;
         case UserRole.PARTNER:
-          navigate(PATHS.PARTNER_DASHBOARD);
+          navigate(PATHS.PARTNER.DASHBOARD);
           break;
         case UserRole.CLIENT:
-          navigate(PATHS.CLIENT_DASHBOARD);
+          navigate(PATHS.CLIENT.DASHBOARD);
           break;
         default:
           navigate(PATHS.DASHBOARD);

@@ -1,5 +1,3 @@
 
-// This file is deprecated, please import types from the '@/types' directory
-// Re-exports for backward compatibility
-export * from '@/types';
-
+// This file re-exports all types from the types directory
+export * from './types/index';

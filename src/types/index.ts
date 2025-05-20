@@ -64,7 +64,7 @@ export {
   type SupportRequest
 } from './support-request.types';
 
-// Define interfaces
+// Define Partner interface
 export interface Partner {
   id: string;
   company_name: string;

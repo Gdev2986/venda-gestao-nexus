@@ -3,11 +3,11 @@ import React from 'react';
 import { createRoot } from 'react-dom/client';
 import { BrowserRouter } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { ThemeProvider } from '@/components/theme-provider';
-import { AuthProvider } from '@/providers/AuthProvider';
-import { NotificationsProvider } from '@/contexts/notifications';
-import { Toaster } from '@/components/ui/toaster';
-import App from './App.tsx';
+import { ThemeProvider } from './components/theme-provider';
+import { AuthProvider } from './providers/AuthProvider';
+import { NotificationsProvider } from './contexts/notifications';
+import { Toaster } from './components/ui/toaster';
+import App from './App';
 import './index.css';
 
 // Create a query client with default options
@@ -64,9 +64,3 @@ if (document.readyState === 'loading') {
   // DOM already loaded, render immediately
   renderApp();
 }
-
-// Add global error handler as a safety net
-window.onerror = function(message, source, lineno, colno, error) {
-  console.error('Global error caught:', { message, source, lineno, colno, error });
-  return false;
-};

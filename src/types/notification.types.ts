@@ -17,9 +17,9 @@ export interface Notification {
   user_id: string;
   title: string;
   message: string;
-  type: NotificationType | string;  // Updated to accept string as well for compatibility
+  type: NotificationType | string;
   data?: any;
   is_read?: boolean;
   created_at: string;
-  recipient_roles?: string[]; // Optional field for sending notifications to specific roles
+  recipient_roles?: string[];
 }

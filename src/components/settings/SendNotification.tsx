@@ -10,7 +10,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
-import { NotificationType } from "@/types";
+import { NotificationType } from "@/types/notification.types";
 
 const notificationFormSchema = z.object({
   title: z.string().min(3, {
@@ -21,7 +21,7 @@ const notificationFormSchema = z.object({
   }),
   targetType: z.enum(["all", "specific"]),
   targetId: z.string().optional(),
-  type: z.nativeEnum(NotificationType)
+  type: z.enum(["SYSTEM", "PAYMENT", "BALANCE", "MACHINE", "COMMISSION", "GENERAL", "SALE", "SUPPORT", "LOGISTICS", "ADMIN_NOTIFICATION"])
 });
 
 type NotificationFormValues = z.infer<typeof notificationFormSchema>;
@@ -67,7 +67,7 @@ export function SendNotification() {
       message: "",
       targetType: "all",
       targetId: "",
-      type: NotificationType.SYSTEM
+      type: "SYSTEM"
     },
   });
 
@@ -88,7 +88,7 @@ export function SendNotification() {
           .insert({
             title: data.title,
             message: data.message,
-            type: data.type as string,
+            type: data.type,
             user_id: 'ALL' // We'll handle this value in a database trigger or create a separate endpoint
           });
         
@@ -111,7 +111,7 @@ export function SendNotification() {
             .insert({
               title: data.title,
               message: data.message,
-              type: data.type as string,
+              type: data.type,
               user_id: clientData.id
             });
           
@@ -162,18 +162,26 @@ export function SendNotification() {
           render={({ field }) => (
             <FormItem>
               <FormLabel>Tipo de Notificação</FormLabel>
-              <Select onValueChange={field.onChange} defaultValue={field.value}>
+              <Select 
+                onValueChange={field.onChange} 
+                defaultValue={field.value}
+              >
                 <FormControl>
                   <SelectTrigger>
                     <SelectValue placeholder="Selecione o tipo" />
                   </SelectTrigger>
                 </FormControl>
                 <SelectContent>
-                  <SelectItem value={NotificationType.SYSTEM}>Sistema</SelectItem>
-                  <SelectItem value={NotificationType.GENERAL}>Geral</SelectItem>
-                  <SelectItem value={NotificationType.PAYMENT}>Pagamento</SelectItem>
-                  <SelectItem value={NotificationType.SALE}>Venda</SelectItem>
-                  <SelectItem value={NotificationType.SUPPORT}>Suporte</SelectItem>
+                  <SelectItem value="SYSTEM">Sistema</SelectItem>
+                  <SelectItem value="GENERAL">Geral</SelectItem>
+                  <SelectItem value="PAYMENT">Pagamento</SelectItem>
+                  <SelectItem value="SALE">Venda</SelectItem>
+                  <SelectItem value="SUPPORT">Suporte</SelectItem>
+                  <SelectItem value="LOGISTICS">Logística</SelectItem>
+                  <SelectItem value="MACHINE">Máquina</SelectItem>
+                  <SelectItem value="BALANCE">Saldo</SelectItem>
+                  <SelectItem value="COMMISSION">Comissão</SelectItem>
+                  <SelectItem value="ADMIN_NOTIFICATION">Admin</SelectItem>
                 </SelectContent>
               </Select>
               <FormMessage />
