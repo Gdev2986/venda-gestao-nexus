@@ -11,7 +11,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
 import MachineTransferForm from '@/components/machines/MachineTransferForm';
-import { Machine } from '@/types';
+import { Machine, MachineStatus } from '@/types';
 
 export interface MachineTransferDialogProps {
   open: boolean;
@@ -71,7 +71,7 @@ const MachineTransferDialog = ({
     id: machineId, 
     serial_number: machineName || '', 
     model: '',
-    status: 'active',
+    status: MachineStatus.ACTIVE,
     client_id: currentClientId,
     name: machineName,
     client_name: currentClientName,

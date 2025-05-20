@@ -78,6 +78,7 @@ export interface Partner {
   email?: string; // Added for consistency with filtering
   phone?: string; // Added for consistency with filtering
   address?: string; // Added for completeness
+  status?: string; // Added to fix type error in PartnersTable
   total_sales?: number;
   total_commission?: number;
   fee_plan_id?: string; // Added for fee plan relationship

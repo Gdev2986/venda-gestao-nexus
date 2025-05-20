@@ -1,37 +1,19 @@
 
-export enum SupportRequestStatus {
-  PENDING = "PENDING",
-  IN_PROGRESS = "IN_PROGRESS",
-  COMPLETED = "COMPLETED",
-  CANCELED = "CANCELED"
-}
-
-export enum SupportRequestType {
-  MAINTENANCE = "MAINTENANCE",
-  INSTALLATION = "INSTALLATION",
-  REPAIR = "REPAIR",
-  TRAINING = "TRAINING",
-  SUPPORT = "SUPPORT",
-  OTHER = "OTHER"
-}
-
-export enum SupportRequestPriority {
-  LOW = "LOW",
-  MEDIUM = "MEDIUM",
-  HIGH = "HIGH"
-}
+import { SupportRequestStatus, SupportRequestType, SupportRequestPriority } from './enums';
 
 export interface SupportRequest {
   id: string;
-  client_id: string;
-  technician_id?: string;
-  type: SupportRequestType;
-  status: SupportRequestStatus;
-  priority: SupportRequestPriority;
-  scheduled_date?: string;
-  created_at: string;
-  updated_at?: string;
   title: string;
   description: string;
+  status: SupportRequestStatus;
+  type: SupportRequestType;
+  priority: SupportRequestPriority;
+  created_at: string;
+  updated_at: string;
+  client_id: string;
+  technician_id?: string;
+  scheduled_date?: string;
   resolution?: string;
+  client_name?: string;
+  technician_name?: string;
 }

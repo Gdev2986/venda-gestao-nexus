@@ -1,21 +1,65 @@
 
-import { Client } from "@/types";
+import { ClientStatus } from './enums';
 
-// Define the SupabaseClientRow type based on the database schema
-export type SupabaseClientRow = {
+export interface SupabaseClientRow {
   id: string;
+  partner_id?: string;
+  created_at: string;
+  updated_at: string;
+  fee_plan_id?: string;
+  balance?: number;
   business_name: string;
   document?: string;
+  contact_name?: string;
+  email?: string;
+  phone?: string;
+  address?: string;
+  city?: string;
+  state?: string;
+  zip?: string;
+  status?: ClientStatus | string;
+}
+
+export interface ClientCreate {
+  business_name: string;
+  document?: string;
+  contact_name?: string;
+  email?: string;
+  phone?: string;
+  address?: string;
+  city?: string;
+  state?: string;
+  zip?: string;
   partner_id?: string;
-  created_at?: string;
-  updated_at?: string;
-  status?: string;
-  balance?: number;
   fee_plan_id?: string;
-};
+  balance?: number;
+  status?: ClientStatus | string;
+}
 
-// Type for client creation without ID and timestamps
-export type ClientCreate = Omit<Client, "id" | "created_at" | "updated_at" | "status">;
+export interface ClientUpdate {
+  business_name?: string;
+  document?: string;
+  contact_name?: string;
+  email?: string;
+  phone?: string;
+  address?: string;
+  city?: string;
+  state?: string;
+  zip?: string;
+  partner_id?: string;
+  fee_plan_id?: string;
+  balance?: number;
+  status?: ClientStatus | string;
+}
 
-// Type for client updates
-export type ClientUpdate = Partial<Client>;
+export interface Client extends SupabaseClientRow {
+  total_sales?: number;
+  total_machines?: number;
+  last_sale_date?: string;
+  partner_name?: string;
+  partner?: {
+    id: string;
+    company_name: string;
+    commission_rate?: number;
+  };
+}

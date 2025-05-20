@@ -70,7 +70,7 @@ export const usePaymentActions = () => {
             user_id: user.id, // This should be the client user ID in a real implementation
             title: "Pagamento Aprovado",
             message: "Seu pagamento foi aprovado com sucesso",
-            type: "PAYMENT" as NotificationType, // Use existing valid notification type
+            type: "PAYMENT", // Use string literal instead of enum
             data: { payment_id: paymentId, status: "APPROVED" }
           });
 
@@ -107,7 +107,7 @@ export const usePaymentActions = () => {
             user_id: user.id, // This should be the client user ID in a real implementation
             title: "Pagamento Rejeitado",
             message: comment || "Seu pagamento foi rejeitado",
-            type: "PAYMENT" as NotificationType, // Use existing valid notification type
+            type: "PAYMENT", // Use string literal instead of enum
             data: { payment_id: paymentId, status: "REJECTED", reason: comment }
           });
 
@@ -149,7 +149,7 @@ export const usePaymentActions = () => {
             user_id: user.id, // This should be the client user ID in a real implementation
             title: "Comprovante Enviado",
             message: "O comprovante do seu pagamento foi enviado",
-            type: "PAYMENT" as NotificationType, // Use existing valid notification type
+            type: "PAYMENT", // Use string literal instead of enum
             data: { payment_id: paymentId, status: "PAID" }
           });
 

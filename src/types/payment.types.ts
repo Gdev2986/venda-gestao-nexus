@@ -35,7 +35,11 @@ export interface Payment {
     business_name: string;
     email?: string;
     phone?: string;
+    balance?: number; // Adding balance to fix type error
   };
+  document_url?: string; // Add missing property
+  client_name?: string; // Add missing property used in PaymentListTable
+  due_date?: string; // Add missing property used in PaymentForm
   pix_key?: PixKey;
   bank_info?: {
     bank_name?: string;

@@ -38,7 +38,7 @@ function App() {
           navigate(PATHS.PARTNER.DASHBOARD);
           break;
         case UserRole.CLIENT:
-          navigate(PATHS.CLIENT.DASHBOARD);
+          navigate(PATHS.CLIENT.DASHBOARD());
           break;
         default:
           navigate(PATHS.DASHBOARD);

@@ -26,9 +26,8 @@ export function useClientPayments(clientId: string) {
             amount: 1000,
             status: PaymentStatus.PENDING,
             client_id: clientId,
-            client_name: "Cliente Demo",
-            payment_type: PaymentType.PIX,
-            rejection_reason: null
+            rejection_reason: null,
+            payment_type: PaymentType.PIX
           },
           {
             id: "2",
@@ -37,9 +36,8 @@ export function useClientPayments(clientId: string) {
             amount: 2000,
             status: PaymentStatus.APPROVED,
             client_id: clientId,
-            client_name: "Cliente Demo",
-            payment_type: PaymentType.PIX,
             rejection_reason: null,
+            payment_type: PaymentType.PIX,
             approved_at: new Date(Date.now() - 86400000).toISOString()
           }
         ];
@@ -74,7 +72,6 @@ export function useClientPayments(clientId: string) {
           owner_name: "Cliente Demo",
           user_id: "user1",
           is_default: true,
-          is_active: true,
           created_at: new Date().toISOString(),
           updated_at: new Date().toISOString(),
           bank_name: "Banco Demo"
@@ -88,7 +85,6 @@ export function useClientPayments(clientId: string) {
           owner_name: "Cliente Demo",
           user_id: "user1",
           is_default: false,
-          is_active: true,
           created_at: new Date().toISOString(),
           updated_at: new Date().toISOString(),
           bank_name: "Banco Demo"
@@ -113,9 +109,8 @@ export function useClientPayments(clientId: string) {
         amount,
         status: PaymentStatus.PENDING,
         client_id: clientId,
-        client_name: "Cliente Demo",
-        payment_type: PaymentType.PIX,
         rejection_reason: null,
+        payment_type: PaymentType.PIX,
         description
       };
       
