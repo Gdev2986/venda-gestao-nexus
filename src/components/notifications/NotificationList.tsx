@@ -11,7 +11,6 @@ interface NotificationListProps {
   onDelete?: (id: string) => void;
 }
 
-// Changed from 'export const NotificationList' to 'export default function NotificationList'
 export default function NotificationList({ 
   notifications, 
   onMarkAsRead, 
