@@ -4,7 +4,7 @@ import { Toaster } from "@/components/ui/sonner";
 
 const AuthLayout = () => {
   return (
-    <div className="min-h-screen bg-background text-foreground">
+    <div className="min-h-screen bg-muted/20">
       <Toaster />
       <Outlet />
     </div>
