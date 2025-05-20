@@ -117,18 +117,27 @@ function FallbackComponent() {
   );
 }
 
-// Simple ErrorBoundary class component
-class ErrorBoundary extends React.Component {
-  constructor(props) {
+// Define proper interface for ErrorBoundary props and state
+interface ErrorBoundaryProps {
+  children?: React.ReactNode;
+}
+
+interface ErrorBoundaryState {
+  hasError: boolean;
+}
+
+// Simple ErrorBoundary class component with proper TypeScript types
+class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoundaryState> {
+  constructor(props: ErrorBoundaryProps) {
     super(props);
     this.state = { hasError: false };
   }
 
-  static getDerivedStateFromError() {
+  static getDerivedStateFromError(): ErrorBoundaryState {
     return { hasError: true };
   }
 
-  componentDidCatch(error, errorInfo) {
+  componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
     console.error("Application error caught by boundary:", error, errorInfo);
   }
 
