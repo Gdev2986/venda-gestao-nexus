@@ -116,7 +116,8 @@ export const NotificationsProvider: React.FC<{ children: React.ReactNode }> = ({
                 playNotificationSoundIfEnabled(newNotification.type as NotificationType, soundEnabled);
                 
                 // Show toast notification
-                toast(newNotification.title, {
+                toast({
+                  title: newNotification.title,
                   description: newNotification.message,
                 });
                 
@@ -174,8 +175,9 @@ export const NotificationsProvider: React.FC<{ children: React.ReactNode }> = ({
       })));
     } catch (error: any) {
       console.error("Error fetching notifications:", error);
-      toast("Error fetching notifications", {
-        description: error.message || "Failed to load notifications.",
+      toast({
+        title: "Error",
+        description: error.message || "Failed to load notifications."
       });
     } finally {
       setIsLoading(false);
@@ -202,8 +204,9 @@ export const NotificationsProvider: React.FC<{ children: React.ReactNode }> = ({
       );
     } catch (error: any) {
       console.error("Error marking notification as read:", error);
-      toast("Error", {
-        description: error.message || "Failed to mark notification as read. Try again.",
+      toast({
+        title: "Error",
+        description: error.message || "Failed to mark notification as read. Try again."
       });
     }
   };
@@ -226,8 +229,9 @@ export const NotificationsProvider: React.FC<{ children: React.ReactNode }> = ({
       );
     } catch (error: any) {
       console.error("Error marking all notifications as read:", error);
-      toast("Error", {
-        description: error.message || "Failed to mark all notifications as read. Please try again.",
+      toast({
+        title: "Error",
+        description: error.message || "Failed to mark all notifications as read. Please try again."
       });
     }
   };
@@ -248,8 +252,9 @@ export const NotificationsProvider: React.FC<{ children: React.ReactNode }> = ({
       );
     } catch (error: any) {
       console.error("Error deleting notification:", error);
-      toast("Error", {
-        description: error.message || "Failed to delete notification.",
+      toast({
+        title: "Error",
+        description: error.message || "Failed to delete notification."
       });
     }
   };

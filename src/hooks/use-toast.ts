@@ -10,24 +10,25 @@ export type ToastProps = {
   position?: "top-left" | "top-right" | "top-center" | "bottom-left" | "bottom-right" | "bottom-center";
 };
 
-// Simple direct implementation without React hooks
-export const toast = (message: string | ToastProps): void => {
-  if (typeof message === 'string') {
-    sonnerToast(message);
+// Simple function without React hooks - fixes the useState issue
+export const toast = (props: string | ToastProps): void => {
+  if (typeof props === 'string') {
+    sonnerToast(props);
   } else {
-    // Extract props to match sonner's expected format
-    const { title, description, ...rest } = message;
-    if (title) {
+    const { title, description, ...rest } = props;
+    if (title && description) {
       sonnerToast(title, { description, ...rest });
+    } else if (title) {
+      sonnerToast(title, rest);
     } else if (description) {
-      sonnerToast(description);
+      sonnerToast(description, rest);
     } else {
       sonnerToast("Notification");
     }
   }
 };
 
-// A simplified hook that just returns the toast function
-export function useToast() {
+// Simple object that returns the toast function
+export const useToast = () => {
   return { toast };
-}
+};
