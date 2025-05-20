@@ -1,7 +1,7 @@
 
 import React, { useEffect, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import NotificationList from "@/components/notifications/NotificationList";
+import { NotificationList } from "@/components/notifications/NotificationList";
 import NotificationFilters from "@/components/notifications/NotificationFilters";
 import { useNotifications } from "@/contexts/NotificationsContext";
 import { PageHeader } from "@/components/page/PageHeader";
@@ -44,40 +44,38 @@ const Notifications = () => {
   });
 
   return (
-    <main className="flex-1 w-full overflow-y-auto overflow-x-hidden p-4 md:p-6 lg:p-8">
-      <div className="container py-6">
-        <PageHeader
-          title="Notificações"
-          description="Gerencie suas notificações"
-        />
+    <div className="container py-6">
+      <PageHeader
+        title="Notificações"
+        description="Gerencie suas notificações"
+      />
 
-        <div className="grid gap-6">
-          <Card>
-            <CardHeader className="flex flex-row items-center">
-              <div className="flex-1">
-                <CardTitle>Suas Notificações</CardTitle>
-              </div>
-              <NotificationFilters 
-                typeFilter={typeFilter}
-                statusFilter={statusFilter}
-                onTypeChange={setTypeFilter}
-                onStatusChange={setStatusFilter}
-                onMarkAllAsRead={() => markAllAsRead()}
-                onRefresh={() => refreshNotifications()}
-              />
-            </CardHeader>
-            <CardContent>
-              <NotificationList 
-                notifications={filteredNotifications}
-                onMarkAsRead={markAsRead}
-                isLoading={isLoading}
-                onDelete={deleteNotification}
-              />
-            </CardContent>
-          </Card>
-        </div>
+      <div className="grid gap-6">
+        <Card>
+          <CardHeader className="flex flex-row items-center">
+            <div className="flex-1">
+              <CardTitle>Suas Notificações</CardTitle>
+            </div>
+            <NotificationFilters 
+              typeFilter={typeFilter}
+              statusFilter={statusFilter}
+              onTypeChange={setTypeFilter}
+              onStatusChange={setStatusFilter}
+              onMarkAllAsRead={() => markAllAsRead()}
+              onRefresh={() => refreshNotifications()}
+            />
+          </CardHeader>
+          <CardContent>
+            <NotificationList 
+              notifications={filteredNotifications}
+              onMarkAsRead={markAsRead}
+              isLoading={isLoading}
+              onDelete={deleteNotification}
+            />
+          </CardContent>
+        </Card>
       </div>
-    </main>
+    </div>
   );
 };
 

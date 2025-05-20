@@ -13,7 +13,7 @@ interface MainSidebarProps {
   isOpen: boolean;
   isMobile: boolean;
   onClose: () => void;
-  userRole: UserRole | null;
+  userRole: UserRole;
 }
 
 // Memoize the Sidebar component to prevent unnecessary re-renders

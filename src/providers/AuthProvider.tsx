@@ -1,5 +1,5 @@
 
-import { createContext, useContext, useEffect, useState, useCallback, useMemo } from "react";
+import { createContext, useContext, useEffect, useState } from "react";
 import { Session, User } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast"; // Direct import of the toast function, not the hook
@@ -20,39 +20,9 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [isLoading, setIsLoading] = useState(true);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [profile, setProfile] = useState<UserProfile | null>(null);
-  const [isInitialized, setIsInitialized] = useState(false);
   const navigate = useNavigate();
 
-  // Memoized fetch profile function to avoid recreating it on each render
-  const fetchUserProfile = useCallback(async (userId: string) => {
-    try {
-      console.log("Fetching user profile for:", userId);
-      // Fetch user profile from profiles table
-      const { data: profileData, error } = await supabase
-        .from('profiles')
-        .select('*')
-        .eq('id', userId)
-        .single();
-    
-      if (error) {
-        console.error("Error fetching user profile:", error);
-        return null;
-      } else {
-        // Normalize the role to match our UserRole enum
-        const normalizedRole = profileData?.role?.toUpperCase() as UserRole;
-        console.log("User role fetched:", normalizedRole);
-        
-        return {
-          profile: profileData as UserProfile,
-          role: normalizedRole
-        };
-      }
-    } catch (err) {
-      console.error("Error in fetchUserProfile:", err);
-      return null;
-    }
-  }, []);
-
+  // Simple auth functions to avoid circular dependencies
   // Sign in function
   const signIn = async (email: string, password: string) => {
     setIsLoading(true);
@@ -114,13 +84,6 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     
     try {
       await supabase.auth.signOut();
-      // Clean up auth data
-      setSession(null);
-      setUser(null);
-      setUserRole(null);
-      setIsAuthenticated(false);
-      setProfile(null);
-      cleanupSupabaseState();
       navigate(PATHS.LOGIN);
     } catch (error) {
       console.error("Error during sign out:", error);
@@ -130,75 +93,82 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     }
   };
 
-  // Handle auth state change
-  const handleAuthStateChange = useCallback(async (event: string, newSession: Session | null) => {
-    console.log("Auth state change event:", event);
-    
-    // Update session state synchronously first
-    setSession(newSession);
-    setUser(newSession?.user ?? null);
-    setIsAuthenticated(!!newSession);
-
-    // Handle auth events
-    if (event === "SIGNED_IN") {
-      console.log("Signed in event detected, session:", !!newSession);
-      
-      // Only fetch user role if we have a session
-      if (newSession?.user) {
-        // Defer data fetching to prevent deadlocks
-        setTimeout(async () => {
-          try {
-            const userData = await fetchUserProfile(newSession.user.id);
-            
-            if (userData) {
-              // Update profile state
-              setProfile(userData.profile);
-              setUserRole(userData.role);
-              
-              // Toast only if we successfully got the role
-              toast("Login bem-sucedido");
-            }
-          } catch (err) {
-            console.error("Error processing sign in:", err);
-          } finally {
-            setIsLoading(false);
-          }
-        }, 0);
-      }
-    } else if (event === "SIGNED_OUT") {
-      console.log("Signed out event detected");
-      
-      // Clear auth data immediately
-      setSession(null);
-      setUser(null);
-      setUserRole(null);
-      setIsAuthenticated(false);
-      setProfile(null);
-      
-      // Clean up all auth-related data
-      cleanupSupabaseState();
-      
-      // Use setTimeout to avoid calling toast inside the callback
-      setTimeout(() => {
-        toast("Sessão encerrada");
-        
-        // Navigate to login page
-        navigate(PATHS.LOGIN);
-      }, 0);
-      
-      setIsLoading(false);
-    }
-  }, [fetchUserProfile, navigate]);
-
   // Set up auth state listener and check for existing session
   useEffect(() => {
-    // Only run initialization once
-    if (isInitialized) return;
-    
     console.log("Setting up auth listener");
     
     // Set up auth state listener FIRST - this prevents missing events
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(handleAuthStateChange);
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      async (event, newSession) => {
+        console.log("Auth state change event:", event);
+        
+        // Update session state synchronously first
+        setSession(newSession);
+        setUser(newSession?.user ?? null);
+        setIsAuthenticated(!!newSession);
+
+        // Handle auth events
+        if (event === "SIGNED_IN") {
+          console.log("Signed in event detected, session:", !!newSession);
+          
+          // Only fetch user role if we have a session
+          if (newSession?.user) {
+            // Defer data fetching to prevent deadlocks
+            setTimeout(async () => {
+              try {
+                // Fetch user profile from profiles table
+                const { data: profileData, error } = await supabase
+                  .from('profiles')
+                  .select('*')
+                  .eq('id', newSession.user.id)
+                  .single();
+              
+                if (error) {
+                  console.error("Error fetching user profile:", error);
+                } else {
+                  // Update profile state
+                  setProfile(profileData as UserProfile);
+                  
+                  // Normalize the role to match our UserRole enum
+                  const normalizedRole = profileData?.role?.toUpperCase() as UserRole;
+                  console.log("User role fetched:", normalizedRole);
+                  setUserRole(normalizedRole);
+                  
+                  // Toast only if we successfully got the role
+                  toast("Login bem-sucedido");
+                }
+              } catch (err) {
+                console.error("Error in role fetching:", err);
+              } finally {
+                setIsLoading(false);
+              }
+            }, 0);
+          }
+        } else if (event === "SIGNED_OUT") {
+          console.log("Signed out event detected");
+          
+          // Clear auth data immediately
+          setSession(null);
+          setUser(null);
+          setUserRole(null);
+          setIsAuthenticated(false);
+          setProfile(null);
+          
+          // Clean up all auth-related data
+          cleanupSupabaseState();
+          
+          // Use setTimeout to avoid calling toast inside the callback
+          setTimeout(() => {
+            toast("Sessão encerrada");
+            
+            // Navigate to login page
+            navigate(PATHS.LOGIN);
+          }, 0);
+          
+          setIsLoading(false);
+        }
+      }
+    );
 
     // Check for existing session AFTER setting up listeners
     const initialSessionCheck = async () => {
@@ -210,28 +180,34 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         
         console.log("Initial session check complete:", !!session);
         
+        setSession(session);
+        setUser(session?.user ?? null);
+        setIsAuthenticated(!!session);
+        
+        // Only fetch user role if we have a user
         if (session?.user) {
-          setSession(session);
-          setUser(session.user);
-          setIsAuthenticated(true);
-          
           try {
-            const userData = await fetchUserProfile(session.user.id);
+            // Fetch user profile from profiles table
+            const { data: profileData, error } = await supabase
+              .from('profiles')
+              .select('*')
+              .eq('id', session.user.id)
+              .single();
             
-            if (userData) {
-              setProfile(userData.profile);
-              setUserRole(userData.role);
+            if (error) {
+              console.error("Error fetching user profile:", error);
+            } else {
+              // Set profile
+              setProfile(profileData as UserProfile);
+              
+              // Normalize the role to match our UserRole enum
+              const normalizedRole = profileData?.role?.toUpperCase() as UserRole;
+              console.log("User role fetched:", normalizedRole);
+              setUserRole(normalizedRole);
             }
           } catch (err) {
-            console.error("Error in initial profile fetching:", err);
+            console.error("Error in role fetching:", err);
           }
-        } else {
-          // No session, clear everything
-          setSession(null);
-          setUser(null);
-          setUserRole(null);
-          setIsAuthenticated(false);
-          setProfile(null);
         }
       } catch (error) {
         console.error("Error during initial session check:", error);
@@ -242,7 +218,6 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         setProfile(null);
       } finally {
         setIsLoading(false);
-        setIsInitialized(true);
       }
     };
 
@@ -251,23 +226,22 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     return () => {
       subscription.unsubscribe();
     };
-  }, [isInitialized, fetchUserProfile, handleAuthStateChange]);
-
-  // Memoize the context value to prevent unnecessary re-renders
-  const contextValue = useMemo(() => ({
-    user,
-    session,
-    isLoading,
-    isAuthenticated,
-    profile,
-    userRole,
-    signIn,
-    signUp,
-    signOut,
-  }), [user, session, isLoading, isAuthenticated, profile, userRole]);
+  }, [navigate]);
 
   return (
-    <AuthContext.Provider value={contextValue}>
+    <AuthContext.Provider
+      value={{
+        user,
+        session,
+        isLoading,
+        isAuthenticated,
+        profile,
+        userRole,
+        signIn,
+        signUp,
+        signOut,
+      }}
+    >
       {children}
     </AuthContext.Provider>
   );

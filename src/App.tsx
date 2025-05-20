@@ -19,7 +19,7 @@ import { LogisticsRoutes } from "./routes/logisticsRoutes";
 
 // Layouts
 import RootLayout from "./layouts/RootLayout";
-import AppLayout from "./layouts/AppLayout";
+import MainLayout from "./layouts/MainLayout";
 
 // Pages
 import NotFound from "./pages/NotFound";
@@ -67,16 +67,15 @@ function App() {
       {/* Auth Routes */}
       {AuthRoutes}
 
-      {/* AppLayout wraps all authenticated routes */}
-      <Route element={<AppLayout />}>
-        {/* Protected Routes by Role */}
-        {AdminRoutes}
-        {ClientRoutes}
-        {PartnerRoutes}
-        {FinancialRoutes}
-        {LogisticsRoutes}
+      {/* Protected Routes by Role */}
+      {AdminRoutes}
+      {ClientRoutes}
+      {PartnerRoutes}
+      {FinancialRoutes}
+      {LogisticsRoutes}
 
-        {/* Shared Routes (accessible by all roles) */}
+      {/* Shared Routes (accessible by all roles) - Using MainLayout */}
+      <Route element={<MainLayout />}>
         <Route path="/notifications" element={<Notifications />} />
       </Route>
 

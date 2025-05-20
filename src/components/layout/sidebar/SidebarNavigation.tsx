@@ -6,45 +6,30 @@ import {
   userItems, 
   partnerItems, 
   financialItems, 
-  logisticsItems,
-  notificationsItem 
+  logisticsItems
 } from "./navigation-items";
 
 interface SidebarNavigationProps {
-  userRole: UserRole | null;
+  userRole: UserRole;
 }
 
 const SidebarNavigation = ({ userRole }: SidebarNavigationProps) => {
   // Get items based on user role
   const getSidebarItems = () => {
-    let items;
-    
     switch (userRole) {
       case UserRole.ADMIN:
-        items = [...adminItems];
-        break;
+        return adminItems;
       case UserRole.CLIENT:
-        items = [...userItems];
-        break;
+        return userItems;
       case UserRole.PARTNER:
-        items = [...partnerItems];
-        break;
+        return partnerItems;
       case UserRole.FINANCIAL:
-        items = [...financialItems];
-        break;
+        return financialItems;
       case UserRole.LOGISTICS:
-        items = [...logisticsItems];
-        break;
+        return logisticsItems;
       default:
-        items = [...userItems]; // Default to user items when userRole is null or unrecognized
+        return userItems; // Default to user items
     }
-    
-    // Add notifications item to all navigation sets if it's not already included
-    if (!items.some(item => item.href === notificationsItem.href)) {
-      items.push(notificationsItem);
-    }
-    
-    return items;
   };
 
   const sidebarItems = getSidebarItems();
@@ -53,7 +38,7 @@ const SidebarNavigation = ({ userRole }: SidebarNavigationProps) => {
     <nav className="space-y-1">
       {sidebarItems.map((item) => (
         <div key={item.title}>
-          <SidebarNavItem item={item} userRole={userRole || UserRole.CLIENT} />
+          <SidebarNavItem item={item} userRole={userRole} />
         </div>
       ))}
     </nav>
