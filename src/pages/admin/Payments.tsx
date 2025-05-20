@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useCallback } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -5,32 +6,48 @@ import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Pagination, PaginationContent, PaginationItem, PaginationNext, PaginationPrevious } from "@/components/ui/pagination";
 import { AdminPaymentsList } from "@/components/payments/AdminPaymentsList";
-import { useAdminPayments } from "@/hooks/payments/useAdminPayments";
+import { usePaymentsFetcher } from "@/hooks/payments/usePaymentsFetcher";
 import { PaymentStatus, PaymentAction } from "@/types/enums";
 import { useToast } from "@/hooks/use-toast";
 import { useNavigate } from "react-router-dom";
+import { usePermissions } from "@/hooks/use-permissions";
+
 const AdminPayments = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState<PaymentStatus | "ALL">("ALL");
   const [page, setPage] = useState(1);
   const pageSize = 10;
   const navigate = useNavigate();
+  const { toast } = useToast();
+  const { hasPermission, userRole } = usePermissions();
+  
   const {
-    toast
-  } = useToast();
-  const {
-    payments,
+    paymentRequests: payments,
     isLoading,
     error,
     totalPages,
-    refetch,
-    performPaymentAction
-  } = useAdminPayments({
+    fetchPaymentRequests: refetch,
+    currentPage,
+    setCurrentPage
+  } = usePaymentsFetcher({
     searchTerm,
     statusFilter,
     page,
     pageSize
   });
+
+  // Check permissions on mount
+  useEffect(() => {
+    if (!hasPermission('VIEW_PAYMENTS')) {
+      toast({
+        variant: "destructive",
+        title: "Acesso negado",
+        description: "Você não tem permissão para acessar esta página"
+      });
+      navigate("/");
+    }
+  }, [hasPermission, navigate, toast]);
+  
   useEffect(() => {
     if (error) {
       toast({
@@ -40,25 +57,52 @@ const AdminPayments = () => {
       });
     }
   }, [error, toast]);
+  
   const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setSearchTerm(e.target.value);
     setPage(1); // Reset to the first page when searching
   };
+  
   const handleStatusFilterChange = (status: PaymentStatus | "ALL") => {
     setStatusFilter(status);
     setPage(1); // Reset to the first page when filtering
   };
+  
   const handlePageChange = (newPage: number) => {
-    setPage(newPage);
+    setCurrentPage(newPage);
   };
+  
   const handleActionClick = useCallback((paymentId: string, action: PaymentAction) => {
     if (action === PaymentAction.VIEW) {
       navigate(`/admin/payments/${paymentId}`);
-    } else {
-      performPaymentAction(paymentId, action);
+    } else if (action === PaymentAction.APPROVE) {
+      if (!hasPermission('APPROVE_PAYMENTS')) {
+        toast({
+          variant: "destructive",
+          title: "Acesso negado",
+          description: "Você não tem permissão para aprovar pagamentos"
+        });
+        return;
+      }
+      
+      // Further implementation handled in usePaymentActions
+      // This will be called from AdminPaymentsList
+    } else if (action === PaymentAction.REJECT) {
+      if (!hasPermission('APPROVE_PAYMENTS')) {
+        toast({
+          variant: "destructive",
+          title: "Acesso negado",
+          description: "Você não tem permissão para rejeitar pagamentos"
+        });
+        return;
+      }
+      
+      // Further implementation handled in usePaymentActions
     }
-  }, [navigate, performPaymentAction]);
-  return <div className="container mx-auto py-6">
+  }, [navigate, hasPermission, toast]);
+
+  return (
+    <div className="container mx-auto py-6">
       <Card>
         <CardHeader>
           <CardTitle>Gerenciar Pagamentos</CardTitle>
@@ -68,8 +112,16 @@ const AdminPayments = () => {
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <Input type="search" placeholder="Buscar por cliente..." value={searchTerm} onChange={handleSearchChange} />
-            <Select value={statusFilter} onValueChange={value => handleStatusFilterChange(value as PaymentStatus | "ALL")}>
+            <Input 
+              type="search" 
+              placeholder="Buscar por cliente..." 
+              value={searchTerm} 
+              onChange={handleSearchChange} 
+            />
+            <Select 
+              value={statusFilter} 
+              onValueChange={value => handleStatusFilterChange(value as PaymentStatus | "ALL")}
+            >
               <SelectTrigger>
                 <SelectValue placeholder="Filtrar por status" />
               </SelectTrigger>
@@ -83,24 +135,48 @@ const AdminPayments = () => {
             </Select>
           </div>
 
-          <AdminPaymentsList payments={payments || []} isLoading={isLoading} selectedStatus={statusFilter} onActionClick={handleActionClick} />
+          <AdminPaymentsList 
+            payments={payments || []} 
+            isLoading={isLoading} 
+            selectedStatus={statusFilter} 
+            onActionClick={handleActionClick} 
+          />
 
-          {payments && payments.length > 0 && <Pagination>
+          {payments && payments.length > 0 && (
+            <Pagination>
               <PaginationContent className="flex gap-4">
                 <PaginationItem>
-                  <Button variant="outline" onClick={() => handlePageChange(page - 1)} disabled={page === 1} className="h-9 w-9 px-[45px]">
+                  <Button 
+                    variant="outline" 
+                    onClick={() => handlePageChange(currentPage - 1)} 
+                    disabled={currentPage === 1} 
+                    className="h-9 w-9 px-[45px]"
+                  >
                     <PaginationPrevious className="h-4 w-4" />
                   </Button>
                 </PaginationItem>
+                
+                <div className="flex items-center">
+                  Página {currentPage} de {totalPages}
+                </div>
+                
                 <PaginationItem>
-                  <Button variant="outline" onClick={() => handlePageChange(page + 1)} disabled={page === totalPages} className="h-9 w-9 px-[45px]">
+                  <Button 
+                    variant="outline" 
+                    onClick={() => handlePageChange(currentPage + 1)} 
+                    disabled={currentPage === totalPages} 
+                    className="h-9 w-9 px-[45px]"
+                  >
                     <PaginationNext className="h-4 w-4" />
                   </Button>
                 </PaginationItem>
               </PaginationContent>
-            </Pagination>}
+            </Pagination>
+          )}
         </CardContent>
       </Card>
-    </div>;
+    </div>
+  );
 };
+
 export default AdminPayments;

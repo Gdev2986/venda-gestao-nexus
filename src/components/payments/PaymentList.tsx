@@ -18,6 +18,7 @@ import { PaymentStatus, PaymentAction } from "@/types/enums";
 import { Payment } from "@/types/payment.types";
 import { usePaymentActions } from "@/hooks/payments/usePaymentActions";
 import { useToast } from "@/hooks/use-toast";
+import { usePermissions } from "@/hooks/use-permissions";
 
 interface PaymentListProps {
   payments: Payment[];
@@ -28,8 +29,37 @@ export function PaymentList({ payments, onUpdate }: PaymentListProps) {
   const { toast } = useToast();
   const { approvePayment, rejectPayment, deletePayment, sendReceipt, isLoading } = usePaymentActions();
   const [selectedPaymentId, setSelectedPaymentId] = useState<string | null>(null);
+  const { hasPermission } = usePermissions();
   
   const handleAction = async (paymentId: string, action: PaymentAction) => {
+    // Check permissions first
+    if (action === PaymentAction.APPROVE && !hasPermission('APPROVE_PAYMENTS')) {
+      toast({
+        variant: "destructive",
+        title: "Acesso negado",
+        description: "Você não tem permissão para aprovar pagamentos"
+      });
+      return;
+    }
+    
+    if (action === PaymentAction.REJECT && !hasPermission('APPROVE_PAYMENTS')) {
+      toast({
+        variant: "destructive",
+        title: "Acesso negado",
+        description: "Você não tem permissão para rejeitar pagamentos"
+      });
+      return;
+    }
+    
+    if (action === PaymentAction.DELETE && !hasPermission('MANAGE_PAYMENTS')) {
+      toast({
+        variant: "destructive",
+        title: "Acesso negado",
+        description: "Você não tem permissão para excluir pagamentos"
+      });
+      return;
+    }
+
     setSelectedPaymentId(paymentId);
     try {
       let success = false;
@@ -160,7 +190,21 @@ export function PaymentList({ payments, onUpdate }: PaymentListProps) {
                     Ver detalhes
                   </DropdownMenuItem>
                   
-                  {payment.status === "APPROVED" && (
+                  {payment.status === PaymentStatus.PENDING && hasPermission('APPROVE_PAYMENTS') && (
+                    <>
+                      <DropdownMenuSeparator />
+                      <DropdownMenuItem onClick={() => handleAction(payment.id, PaymentAction.APPROVE)}>
+                        <FileCheck className="mr-2 h-4 w-4 text-green-500" />
+                        Aprovar
+                      </DropdownMenuItem>
+                      <DropdownMenuItem onClick={() => handleAction(payment.id, PaymentAction.REJECT)}>
+                        <AlertOctagon className="mr-2 h-4 w-4 text-red-500" />
+                        Rejeitar
+                      </DropdownMenuItem>
+                    </>
+                  )}
+
+                  {payment.status === PaymentStatus.APPROVED && hasPermission('APPROVE_PAYMENTS') && (
                     <>
                       <DropdownMenuSeparator />
                       <DropdownMenuItem onClick={() => handleAction(payment.id, PaymentAction.SEND_RECEIPT)}>
@@ -170,14 +214,18 @@ export function PaymentList({ payments, onUpdate }: PaymentListProps) {
                     </>
                   )}
                   
-                  <DropdownMenuSeparator />
-                  <DropdownMenuItem 
-                    onClick={() => handleAction(payment.id, PaymentAction.DELETE)}
-                    className="text-red-600"
-                  >
-                    <AlertOctagon className="mr-2 h-4 w-4" />
-                    Excluir
-                  </DropdownMenuItem>
+                  {hasPermission('MANAGE_PAYMENTS') && (
+                    <>
+                      <DropdownMenuSeparator />
+                      <DropdownMenuItem 
+                        onClick={() => handleAction(payment.id, PaymentAction.DELETE)}
+                        className="text-red-600"
+                      >
+                        <AlertOctagon className="mr-2 h-4 w-4" />
+                        Excluir
+                      </DropdownMenuItem>
+                    </>
+                  )}
                 </DropdownMenuContent>
               </DropdownMenu>
             </div>

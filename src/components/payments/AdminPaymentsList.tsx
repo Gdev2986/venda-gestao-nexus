@@ -4,8 +4,11 @@ import { Button } from "@/components/ui/button";
 import { formatCurrency } from "@/lib/utils";
 import { formatDate } from "@/lib/formatters";
 import { PaymentStatus, PaymentAction } from "@/types/enums";
-import { Eye, CheckCircle, XCircle } from "lucide-react";
+import { Eye, CheckCircle, XCircle, FileText } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
+import { useState } from "react";
+import { usePermissions } from "@/hooks/use-permissions";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 interface Payment {
   id: string;
@@ -14,6 +17,7 @@ interface Payment {
   status: PaymentStatus;
   created_at: string;
   client_id?: string;
+  updated_at?: string;
 }
 
 interface AdminPaymentsListProps {
@@ -60,6 +64,21 @@ export function AdminPaymentsList({
   selectedStatus,
   onActionClick,
 }: AdminPaymentsListProps) {
+  const { hasPermission } = usePermissions();
+  const [lastUpdated, setLastUpdated] = useState<{[key: string]: string}>({});
+  
+  // Track real-time updates on payments
+  const isRecentlyUpdated = (payment: Payment) => {
+    if (!payment.updated_at || !lastUpdated[payment.id]) return false;
+    
+    // Consider updated in the last 5 seconds as "recent"
+    const now = new Date();
+    const updated = new Date(payment.updated_at);
+    const diff = Math.abs(now.getTime() - updated.getTime()) / 1000;
+    
+    return diff < 5; // 5 seconds
+  };
+
   if (isLoading) {
     return <div className="text-center py-8">Carregando pagamentos...</div>;
   }
@@ -87,7 +106,10 @@ export function AdminPaymentsList({
         </TableHeader>
         <TableBody>
           {payments.map((payment) => (
-            <TableRow key={payment.id}>
+            <TableRow 
+              key={payment.id} 
+              className={isRecentlyUpdated(payment) ? 'bg-yellow-50 transition-colors duration-1000' : ''}
+            >
               <TableCell className="font-mono text-xs">
                 {payment.id.substring(0, 8)}...
               </TableCell>
@@ -103,37 +125,76 @@ export function AdminPaymentsList({
               </TableCell>
               <TableCell className="text-right">
                 <div className="flex justify-end gap-1">
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    onClick={() => onActionClick(payment.id, PaymentAction.VIEW)}
-                    title="Ver detalhes"
-                  >
-                    <Eye className="h-4 w-4" />
-                  </Button>
+                  <TooltipProvider>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => onActionClick(payment.id, PaymentAction.VIEW)}
+                        >
+                          <Eye className="h-4 w-4" />
+                        </Button>
+                      </TooltipTrigger>
+                      <TooltipContent>
+                        <p>Ver detalhes</p>
+                      </TooltipContent>
+                    </Tooltip>
                   
-                  {payment.status === PaymentStatus.PENDING && (
-                    <>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="text-green-600 hidden sm:inline-flex"
-                        onClick={() => onActionClick(payment.id, PaymentAction.APPROVE)}
-                        title="Aprovar"
-                      >
-                        <CheckCircle className="h-4 w-4" />
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="text-red-600 hidden sm:inline-flex"
-                        onClick={() => onActionClick(payment.id, PaymentAction.REJECT)}
-                        title="Rejeitar"
-                      >
-                        <XCircle className="h-4 w-4" />
-                      </Button>
-                    </>
-                  )}
+                    {payment.status === PaymentStatus.PENDING && hasPermission('APPROVE_PAYMENTS') && (
+                      <>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="text-green-600"
+                              onClick={() => onActionClick(payment.id, PaymentAction.APPROVE)}
+                            >
+                              <CheckCircle className="h-4 w-4" />
+                            </Button>
+                          </TooltipTrigger>
+                          <TooltipContent>
+                            <p>Aprovar pagamento</p>
+                          </TooltipContent>
+                        </Tooltip>
+                        
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="text-red-600"
+                              onClick={() => onActionClick(payment.id, PaymentAction.REJECT)}
+                            >
+                              <XCircle className="h-4 w-4" />
+                            </Button>
+                          </TooltipTrigger>
+                          <TooltipContent>
+                            <p>Rejeitar pagamento</p>
+                          </TooltipContent>
+                        </Tooltip>
+                      </>
+                    )}
+                    
+                    {payment.status === PaymentStatus.APPROVED && hasPermission('APPROVE_PAYMENTS') && (
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="text-blue-600"
+                            onClick={() => onActionClick(payment.id, PaymentAction.SEND_RECEIPT)}
+                          >
+                            <FileText className="h-4 w-4" />
+                          </Button>
+                        </TooltipTrigger>
+                        <TooltipContent>
+                          <p>Enviar comprovante</p>
+                        </TooltipContent>
+                      </Tooltip>
+                    )}
+                  </TooltipProvider>
                 </div>
               </TableCell>
             </TableRow>
