@@ -1,17 +1,79 @@
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Slider } from "@/components/ui/slider";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { useToast } from "@/hooks/use-toast";
+import { 
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { AlertCircle } from "lucide-react";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+
+// Payment type constants
+const PAYMENT_TYPES = ["PIX", "DÉBITO", "CRÉDITO"];
+
+// Maximum installments based on payment type
+const MAX_INSTALLMENTS = {
+  PIX: 1,
+  DÉBITO: 1,
+  CRÉDITO: 21
+};
 
 const TaxRatesManager = () => {
   const [selectedTab, setSelectedTab] = useState("pix");
   const [baseRate, setBaseRate] = useState(0.99);
   const [partnerRate, setPartnerRate] = useState(1.5);
   const [totalRate, setTotalRate] = useState(1.99);
+  const [installments, setInstallments] = useState(1);
+  const [validationError, setValidationError] = useState("");
+  const { toast } = useToast();
+  
+  // Reset validation error when tab changes
+  useEffect(() => {
+    setValidationError("");
+    
+    // Set installments to 1 when switching to PIX or Debit
+    if (selectedTab === "pix" || selectedTab === "debit") {
+      setInstallments(1);
+    }
+  }, [selectedTab]);
+  
+  const handleSave = () => {
+    // Validation
+    if (selectedTab === "pix" || selectedTab === "debit") {
+      if (installments !== 1) {
+        setValidationError(`${selectedTab.toUpperCase()} só pode ter 1 parcela.`);
+        return;
+      }
+    } else if (selectedTab === "credit") {
+      if (installments < 1 || installments > MAX_INSTALLMENTS.CRÉDITO) {
+        setValidationError(`Crédito deve ter entre 1 e ${MAX_INSTALLMENTS.CRÉDITO} parcelas.`);
+        return;
+      }
+    }
+    
+    if (baseRate < 0 || partnerRate < 0 || totalRate < 0) {
+      setValidationError("Taxas não podem ser negativas.");
+      return;
+    }
+    
+    setValidationError("");
+    toast({
+      title: "Taxa salva",
+      description: `Taxa para ${selectedTab.toUpperCase()} em ${installments}x foi salva com sucesso.`
+    });
+  };
+
+  // Only show installment selection for credit
+  const showInstallmentSelection = selectedTab === "credit";
   
   return (
     <Card>
@@ -35,7 +97,33 @@ const TaxRatesManager = () => {
             <TabsTrigger value="credit">CRÉDITO</TabsTrigger>
           </TabsList>
           
-          <TabsContent value="pix" className="space-y-4">
+          {validationError && (
+            <Alert variant="destructive" className="mb-4">
+              <AlertCircle className="h-4 w-4" />
+              <AlertDescription>{validationError}</AlertDescription>
+            </Alert>
+          )}
+          
+          <div className="space-y-4">
+            {showInstallmentSelection && (
+              <div className="space-y-2">
+                <Label>Parcelas</Label>
+                <Select 
+                  value={String(installments)} 
+                  onValueChange={(value) => setInstallments(parseInt(value))}
+                >
+                  <SelectTrigger className="w-full">
+                    <SelectValue placeholder="Selecione o número de parcelas" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {Array.from({ length: MAX_INSTALLMENTS.CRÉDITO }, (_, i) => i + 1).map(num => (
+                      <SelectItem key={num} value={String(num)}>{num}x</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
+            
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div className="space-y-2">
                 <Label>Taxa Base (%) <span className="font-bold">{baseRate.toFixed(2)}%</span></Label>
@@ -74,7 +162,7 @@ const TaxRatesManager = () => {
                 />
               </div>
               <div className="space-y-2">
-                <Label>Taxa Total <span className="font-bold">{totalRate.toFixed(2)}%</span></Label>
+                <Label>Taxa Final <span className="font-bold">{totalRate.toFixed(2)}%</span></Label>
                 <Slider 
                   defaultValue={[totalRate]} 
                   max={10} 
@@ -92,89 +180,13 @@ const TaxRatesManager = () => {
                 />
               </div>
             </div>
-          </TabsContent>
-          
-          <TabsContent value="debit" className="space-y-4">
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <div className="space-y-2">
-                <Label>Taxa Base (%) <span className="font-bold">1.49%</span></Label>
-                <Slider defaultValue={[1.49]} max={5} step={0.01} />
-                <Input 
-                  type="number" 
-                  value={1.49} 
-                  step={0.01}
-                  min={0}
-                  max={5}
-                  className="mt-2"
-                />
-              </div>
-              <div className="space-y-2">
-                <Label>Taxa Parceiro (%) <span className="font-bold">1.75%</span></Label>
-                <Slider defaultValue={[1.75]} max={5} step={0.01} />
-                <Input 
-                  type="number" 
-                  value={1.75} 
-                  step={0.01}
-                  min={0}
-                  max={5}
-                  className="mt-2"
-                />
-              </div>
-              <div className="space-y-2">
-                <Label>Taxa Total <span className="font-bold">2.49%</span></Label>
-                <Slider defaultValue={[2.49]} max={10} step={0.01} />
-                <Input 
-                  type="number" 
-                  value={2.49} 
-                  step={0.01}
-                  min={0}
-                  max={10}
-                  className="mt-2"
-                />
-              </div>
+            
+            <div className="flex justify-end mt-4">
+              <Button onClick={handleSave}>
+                Salvar Taxa
+              </Button>
             </div>
-          </TabsContent>
-          
-          <TabsContent value="credit" className="space-y-4">
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <div className="space-y-2">
-                <Label>Taxa Base (%) <span className="font-bold">2.99%</span></Label>
-                <Slider defaultValue={[2.99]} max={10} step={0.01} />
-                <Input 
-                  type="number" 
-                  value={2.99} 
-                  step={0.01}
-                  min={0}
-                  max={10}
-                  className="mt-2"
-                />
-              </div>
-              <div className="space-y-2">
-                <Label>Taxa Parceiro (%) <span className="font-bold">2.50%</span></Label>
-                <Slider defaultValue={[2.50]} max={10} step={0.01} />
-                <Input 
-                  type="number" 
-                  value={2.50} 
-                  step={0.01}
-                  min={0}
-                  max={10}
-                  className="mt-2"
-                />
-              </div>
-              <div className="space-y-2">
-                <Label>Taxa Total <span className="font-bold">3.99%</span></Label>
-                <Slider defaultValue={[3.99]} max={15} step={0.01} />
-                <Input 
-                  type="number" 
-                  value={3.99} 
-                  step={0.01}
-                  min={0}
-                  max={15}
-                  className="mt-2"
-                />
-              </div>
-            </div>
-          </TabsContent>
+          </div>
         </Tabs>
       </CardContent>
     </Card>
