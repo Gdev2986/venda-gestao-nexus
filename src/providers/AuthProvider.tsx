@@ -23,7 +23,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const navigate = useNavigate();
 
-  // Import auth service functions
+  // Import auth service functions with direct toast import
   const { signIn, signUp, signOut } = useAuthFunctions({ 
     setIsLoading, 
     toast, // Pass toast directly
