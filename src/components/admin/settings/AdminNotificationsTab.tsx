@@ -5,21 +5,18 @@ import { Button } from "@/components/ui/button";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { SendNotificationForm } from "@/components/admin/notifications/SendNotificationForm";
 import { supabase } from "@/integrations/supabase/client";
-import { useToast } from "@/hooks/use-toast";
+import { toast } from "sonner"; // Direct import from sonner
 import { UserRole } from "@/types/enums";
 import { NotificationType } from "@/types/notification.types";
 import { useAuth } from "@/contexts/AuthContext";
 
 const AdminNotificationsTab = () => {
   const [isTestLoading, setIsTestLoading] = useState(false);
-  const { toast } = useToast();
   const { user } = useAuth();
 
   const sendNotification = async (notification: any) => {
     if (!user) {
-      toast({
-        variant: "destructive",
-        title: "Error",
+      toast("Error", {
         description: "You must be logged in to send notifications",
       });
       return false;
@@ -43,9 +40,7 @@ const AdminNotificationsTab = () => {
         if (profilesError) throw profilesError;
         
         if (!profiles || profiles.length === 0) {
-          toast({
-            variant: "destructive",
-            title: "Nenhum destinatário encontrado",
+          toast("Nenhum destinatário encontrado", {
             description: "Não há usuários com as funções selecionadas"
           });
           return false;
@@ -92,16 +87,13 @@ const AdminNotificationsTab = () => {
         if (insertError) throw insertError;
       }
       
-      toast({
-        title: "Notificação enviada",
+      toast("Notificação enviada", {
         description: "Sua notificação foi enviada com sucesso",
       });
       return true;
     } catch (error: any) {
       console.error("Error sending notification:", error);
-      toast({
-        variant: "destructive",
-        title: "Error",
+      toast("Error", {
         description: `Failed to send notification: ${error.message}`,
       });
       return false;
@@ -143,14 +135,11 @@ const AdminNotificationsTab = () => {
 
       if (error) throw error;
 
-      toast({
-        title: "Notificação de teste enviada",
+      toast("Notificação de teste enviada", {
         description: "Uma notificação de teste foi enviada para todos os administradores.",
       });
     } catch (error: any) {
-      toast({
-        variant: "destructive",
-        title: "Erro",
+      toast("Erro", {
         description: `Falha ao enviar notificação de teste: ${error.message}`,
       });
     } finally {

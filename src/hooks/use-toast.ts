@@ -1,12 +1,44 @@
+import * as React from "react";
+import { toast as sonnerToast, type ToastT } from "sonner";
 
-import { toast as sonnerToast } from "sonner";
+// Define options type for our toast functions
+type ToastOptions = {
+  title?: string;
+  description?: string;
+  variant?: "default" | "destructive";
+  action?: React.ReactNode;
+  duration?: number;
+};
 
-// Simple re-export of the toast function from sonner
-export const toast = sonnerToast;
+// Modified toast function that accepts our custom options
+const toast = ({ title, description, variant, action, ...props }: ToastOptions) => {
+  return sonnerToast(title, {
+    description,
+    // Custom className based on variant
+    className: variant === "destructive" ? "destructive" : undefined,
+    action,
+    ...props,
+  });
+};
 
-// A simplified useToast hook that returns the toast function
-export function useToast() {
+// Simple string shortcut
+toast.success = (message: string, options?: Omit<ToastOptions, "title">) => {
+  return toast({ title: message, ...options });
+};
+
+toast.error = (message: string, options?: Omit<ToastOptions, "title" | "variant">) => {
+  return toast({ title: message, variant: "destructive", ...options });
+};
+
+// Keep compatibility with direct sonner usage
+toast.promise = sonnerToast.promise;
+toast.dismiss = sonnerToast.dismiss;
+toast.custom = sonnerToast.custom;
+
+export { toast };
+
+export const useToast = () => {
   return {
-    toast
+    toast,
   };
-}
+};
