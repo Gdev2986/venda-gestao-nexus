@@ -1,6 +1,6 @@
 
 import { Navigate, Outlet, useLocation } from "react-router-dom";
-import { useAuth } from "@/hooks/use-auth";
+import { useAuth } from "@/contexts/AuthContext";
 import { Spinner } from "@/components/ui/spinner";
 import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
@@ -91,7 +91,7 @@ const RequireAuth = ({ allowedRoles = [], redirectTo = PATHS.LOGIN }: RequireAut
       }
     }
   } else {
-    // If no role but authenticated, redirect to login page
+    // If no role but authenticated, there's something wrong with the user data
     console.error("User is authenticated but has no role");
     toast({
       title: "Erro de autenticação",

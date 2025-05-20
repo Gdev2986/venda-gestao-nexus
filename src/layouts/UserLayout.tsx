@@ -9,7 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Menu } from "lucide-react";
 import NotificationDropdown from "@/components/layout/NotificationDropdown";
 import ThemeToggle from "@/components/theme/theme-toggle";
-import { Toaster } from "@/components/ui/toaster";
+import { Toaster } from "@/components/ui/sonner";
 import { Spinner } from "@/components/ui/spinner";
 
 const UserLayout = () => {

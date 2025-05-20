@@ -1,26 +1,22 @@
+
 import React, { useState } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { SendNotificationForm } from "@/components/admin/notifications/SendNotificationForm";
 import { supabase } from "@/integrations/supabase/client";
-import { useToast } from "@/hooks/use-toast";
+import { toast } from "@/hooks/use-toast";
 import { UserRole } from "@/types/enums";
 import { NotificationType } from "@/types/notification.types";
 import { useAuth } from "@/contexts/AuthContext";
 
 const AdminNotificationsTab = () => {
   const [isTestLoading, setIsTestLoading] = useState(false);
-  const { toast } = useToast();
   const { user } = useAuth();
 
   const sendNotification = async (notification: any) => {
     if (!user) {
-      toast({
-        variant: "destructive",
-        title: "Error",
-        description: "You must be logged in to send notifications",
-      });
+      toast("You must be logged in to send notifications");
       return false;
     }
 
@@ -42,11 +38,7 @@ const AdminNotificationsTab = () => {
         if (profilesError) throw profilesError;
         
         if (!profiles || profiles.length === 0) {
-          toast({
-            variant: "destructive",
-            title: "Nenhum destinatário encontrado",
-            description: "Não há usuários com as funções selecionadas"
-          });
+          toast("Nenhum destinatário encontrado - Não há usuários com as funções selecionadas");
           return false;
         }
         
@@ -56,8 +48,7 @@ const AdminNotificationsTab = () => {
           title: notification.title,
           message: notification.message,
           type: notification.type,
-          data: notification.data || {},
-          recipient_roles: notification.recipient_roles
+          data: notification.data || {}
         }));
         
         const { error: insertError } = await supabase
@@ -82,8 +73,7 @@ const AdminNotificationsTab = () => {
           title: notification.title,
           message: notification.message,
           type: notification.type,
-          data: notification.data || {},
-          recipient_roles: [] // Empty array means no role filtering
+          data: notification.data || {}
         }));
         
         const { error: insertError } = await supabase
@@ -95,15 +85,15 @@ const AdminNotificationsTab = () => {
       
       toast({
         title: "Notificação enviada",
-        description: "Sua notificação foi enviada com sucesso",
+        description: "Sua notificação foi enviada com sucesso"
       });
       return true;
     } catch (error: any) {
       console.error("Error sending notification:", error);
       toast({
-        variant: "destructive",
         title: "Error",
         description: `Failed to send notification: ${error.message}`,
+        variant: "destructive"
       });
       return false;
     }
@@ -135,8 +125,7 @@ const AdminNotificationsTab = () => {
         title: "Notificação de Teste",
         message: "Esta é uma notificação de teste do painel de administração.",
         type: "SYSTEM" as const, // Use string literal with "as const" to satisfy TypeScript
-        data: { isTest: true },
-        recipient_roles: [UserRole.ADMIN] // Explicitly send to ADMIN role
+        data: { isTest: true }
       }));
       
       const { error } = await supabase
@@ -147,13 +136,13 @@ const AdminNotificationsTab = () => {
 
       toast({
         title: "Notificação de teste enviada",
-        description: "Uma notificação de teste foi enviada para todos os administradores.",
+        description: "Uma notificação de teste foi enviada para todos os administradores."
       });
     } catch (error: any) {
       toast({
-        variant: "destructive",
         title: "Erro",
         description: `Falha ao enviar notificação de teste: ${error.message}`,
+        variant: "destructive"
       });
     } finally {
       setIsTestLoading(false);

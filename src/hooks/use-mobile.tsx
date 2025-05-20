@@ -1,16 +1,10 @@
 
 import { useState, useEffect } from "react";
 
-// Safe checking to prevent SSR issues
-const isBrowser = typeof window !== 'undefined';
-
 export const useIsMobile = () => {
-  // SSR-safe initialization
   const [isMobile, setIsMobile] = useState(false);
 
   useEffect(() => {
-    if (!isBrowser) return;
-    
     const checkIfMobile = () => {
       setIsMobile(window.innerWidth < 768);
     };
@@ -36,8 +30,6 @@ export const useBreakpoint = () => {
   const [breakpoint, setBreakpoint] = useState("xs");
 
   useEffect(() => {
-    if (!isBrowser) return;
-    
     const getBreakpoint = () => {
       const width = window.innerWidth;
       if (width < 640) return "xs";
@@ -63,19 +55,6 @@ export const useBreakpoint = () => {
   }, []);
 
   return breakpoint;
-};
-
-// Create a safe version of useIsMobile that doesn't throw
-export const useSafeIsMobile = () => {
-  // Default to false for SSR
-  if (!isBrowser) return false;
-  
-  try {
-    return useIsMobile();
-  } catch (error) {
-    console.error("Failed to use isMobile hook:", error);
-    return false;
-  }
 };
 
 export default useIsMobile;

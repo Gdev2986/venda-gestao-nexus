@@ -1,6 +1,6 @@
 
+import * as React from "react";
 import { Outlet, useLocation } from "react-router-dom";
-import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import MainSidebar from "./MainSidebar";
 import { useUserRole } from "@/hooks/use-user-role";
@@ -9,43 +9,43 @@ import { Button } from "@/components/ui/button";
 import { Menu } from "lucide-react";
 import NotificationDropdown from "@/components/layout/NotificationDropdown";
 import ThemeToggle from "@/components/theme/theme-toggle";
-import { Toaster } from "@/components/ui/toaster";
+import { Toaster } from "@/components/ui/sonner";
 import { Spinner } from "@/components/ui/spinner";
 
 const LogisticsLayout = () => {
   // Use localStorage to persist sidebar state
-  const [sidebarOpen, setSidebarOpen] = useState(() => {
+  const [sidebarOpen, setSidebarOpen] = React.useState(() => {
     const saved = localStorage.getItem("sidebar-state");
     return saved !== null ? JSON.parse(saved) : true;
   });
   
   const isMobile = useIsMobile();
   const { userRole } = useUserRole();
-  const [isLoading, setIsLoading] = useState(true);
+  const [isLoading, setIsLoading] = React.useState(true);
   const location = useLocation();
 
   // Log for debugging
-  useEffect(() => {
+  React.useEffect(() => {
     console.log("LogisticsLayout rendering at path:", location.pathname);
     console.log("LogisticsLayout - userRole:", userRole);
   }, [location.pathname, userRole]);
 
   // Close sidebar on mobile by default
-  useEffect(() => {
+  React.useEffect(() => {
     if (isMobile) {
       setSidebarOpen(false);
     }
   }, [isMobile]);
 
   // Save sidebar state to localStorage when it changes
-  useEffect(() => {
+  React.useEffect(() => {
     if (!isMobile) { // Only save state for desktop
       localStorage.setItem("sidebar-state", JSON.stringify(sidebarOpen));
     }
   }, [sidebarOpen, isMobile]);
 
   // Add loading animation with shorter duration
-  useEffect(() => {
+  React.useEffect(() => {
     // Simulate loading for smoother transitions
     setIsLoading(true);
     const timer = setTimeout(() => {

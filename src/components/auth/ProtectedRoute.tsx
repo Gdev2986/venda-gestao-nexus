@@ -13,7 +13,6 @@ const ProtectedRoute = ({ children }: ProtectedRouteProps) => {
   const { user, isLoading } = useAuth();
   const location = useLocation();
   const [showLoading, setShowLoading] = useState(true);
-  const [error, setError] = useState<Error | null>(null);
   
   // Add a slight delay for loading animation
   useEffect(() => {
@@ -27,12 +26,6 @@ const ProtectedRoute = ({ children }: ProtectedRouteProps) => {
   }, [isLoading]);
 
   console.log("ProtectedRoute render - isLoading:", isLoading, "user:", !!user);
-
-  // Handle any errors in component initialization
-  if (error) {
-    console.error("Error in ProtectedRoute:", error);
-    return <Navigate to="/" state={{ from: location.pathname }} replace />;
-  }
 
   // If still loading or showing animation, show a spinner
   if (isLoading || showLoading) {
@@ -55,11 +48,7 @@ const ProtectedRoute = ({ children }: ProtectedRouteProps) => {
   if (!user) {
     console.log("Redirecting to / from", location.pathname);
     // Store the current location for redirect after login
-    try {
-      sessionStorage.setItem("redirectPath", location.pathname);
-    } catch (err) {
-      console.error("Error setting redirectPath:", err);
-    }
+    sessionStorage.setItem("redirectPath", location.pathname);
     return <Navigate to="/" state={{ from: location.pathname }} replace />;
   }
 

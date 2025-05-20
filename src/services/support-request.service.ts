@@ -2,33 +2,36 @@
 import { supabase } from "@/integrations/supabase/client";
 import { generateUuid } from "@/lib/supabase-utils";
 import { NotificationType } from "@/types/notification.types";
-import { UserRole } from "@/types";
 import { TicketType, TicketPriority, TicketStatus, SupportTicket } from "@/types/support-ticket.types";
 
 export type SupportRequest = SupportTicket;
 
 export async function createSupportRequest(request: SupportRequest): Promise<{ data: any, error: any }> {
-  // Need to use explicit typing for the insert due to database schema changes
+  // Create an insert object with the correct types and without including id in the values
+  const insertData = {
+    client_id: request.client_id,
+    technician_id: request.technician_id,
+    type: request.type,  // Using enum directly
+    status: request.status,  // Using enum directly
+    priority: request.priority,  // Using enum directly
+    title: request.title,
+    description: request.description,
+    scheduled_date: request.scheduled_date,
+    resolution: request.resolution,
+    created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString()
+  };
+  
+  // Perform the insert with the correct structure
   const { data, error } = await supabase
     .from('support_requests')
-    .insert({
-      client_id: request.client_id,
-      technician_id: request.technician_id,
-      type: request.type,
-      status: request.status,
-      priority: request.priority,
-      title: request.title,
-      description: request.description,
-      scheduled_date: request.scheduled_date,
-      resolution: request.resolution,
-      created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString()
-    })
+    .insert(insertData)
     .select();
 
   if (!error && data) {
-    // Create notification for logistics team
-    await createRequestNotification(request, data[0]?.id || '');
+    // Create notification for logistics team using the returned ID from the insert
+    const newRequestId = data[0]?.id;
+    await createRequestNotification(request, newRequestId);
   }
 
   return { data, error };
@@ -44,7 +47,7 @@ export async function updateSupportRequest(id: string, updates: Partial<SupportR
     .eq('id', id)
     .select();
 
-  if (!error && updates.status && data) {
+  if (!error && updates.status) {
     // Create status update notification
     await createStatusUpdateNotification(id, updates);
   }
@@ -65,9 +68,9 @@ export async function getSupportRequestById(id: string): Promise<{ data: any, er
 }
 
 export async function getSupportRequests(filters?: {
-  status?: TicketStatus;
-  type?: TicketType;
-  priority?: TicketPriority;
+  status?: string;
+  type?: string;
+  priority?: string;
   client_id?: string;
   technician_id?: string;
   date_from?: string;
@@ -83,9 +86,10 @@ export async function getSupportRequests(filters?: {
     .order('created_at', { ascending: false });
 
   if (filters) {
-    if (filters.status) query = query.eq('status', filters.status);
-    if (filters.type) query = query.eq('type', filters.type);
-    if (filters.priority) query = query.eq('priority', filters.priority);
+    // Cast the string filters to match expected enum types
+    if (filters.status) query = query.eq('status', filters.status as TicketStatus);
+    if (filters.type) query = query.eq('type', filters.type as TicketType);
+    if (filters.priority) query = query.eq('priority', filters.priority as TicketPriority);
     if (filters.client_id) query = query.eq('client_id', filters.client_id);
     if (filters.technician_id) query = query.eq('technician_id', filters.technician_id);
     if (filters.date_from) query = query.gte('created_at', filters.date_from);
@@ -102,7 +106,7 @@ async function createRequestNotification(request: SupportRequest, requestId: str
     const { data: logisticsUsers } = await supabase
       .from('profiles')
       .select('id')
-      .eq('role', UserRole.LOGISTICS);
+      .eq('role', 'LOGISTICS');
 
     if (logisticsUsers && logisticsUsers.length > 0) {
       // Create notifications for each logistics user
@@ -112,8 +116,8 @@ async function createRequestNotification(request: SupportRequest, requestId: str
           .insert({
             user_id: user.id,
             title: 'Nova Solicitação Técnica',
-            message: `${request.title} - ${request.priority}`,
-            type: NotificationType.SUPPORT,
+            message: `${request.title} - ${request.priority.toUpperCase()}`,
+            type: "SUPPORT", // Use string literal instead of enum
             data: { 
               request_id: requestId,
               type: request.type,
@@ -121,8 +125,7 @@ async function createRequestNotification(request: SupportRequest, requestId: str
               client_id: request.client_id
             },
             is_read: false,
-            created_at: new Date().toISOString(),
-            recipient_roles: [UserRole.LOGISTICS] // Explicitly set roles
+            created_at: new Date().toISOString()
           });
       }
     }
@@ -131,7 +134,7 @@ async function createRequestNotification(request: SupportRequest, requestId: str
     const { data: adminUsers } = await supabase
       .from('profiles')
       .select('id')
-      .eq('role', UserRole.ADMIN);
+      .eq('role', 'ADMIN');
       
     if (adminUsers && adminUsers.length > 0) {
       for (const user of adminUsers) {
@@ -140,8 +143,8 @@ async function createRequestNotification(request: SupportRequest, requestId: str
           .insert({
             user_id: user.id,
             title: 'Nova Solicitação Técnica',
-            message: `${request.title} - ${request.priority}`,
-            type: NotificationType.SUPPORT,
+            message: `${request.title} - ${request.priority.toUpperCase()}`,
+            type: "SUPPORT", // Use string literal instead of enum
             data: { 
               request_id: requestId,
               type: request.type,
@@ -149,8 +152,7 @@ async function createRequestNotification(request: SupportRequest, requestId: str
               client_id: request.client_id
             },
             is_read: false,
-            created_at: new Date().toISOString(),
-            recipient_roles: [UserRole.ADMIN] // Explicitly set roles
+            created_at: new Date().toISOString()
           });
       }
     }
@@ -179,11 +181,10 @@ async function createStatusUpdateNotification(requestId: string, updates: Partia
           user_id: clientData.user_id,
           title: 'Atualização de Solicitação',
           message: `Sua solicitação "${request.title}" foi atualizada para ${updates.status}`,
-          type: NotificationType.SUPPORT,
+          type: "SUPPORT", // Use string literal instead of enum
           data: { request_id: requestId, new_status: updates.status },
           is_read: false,
-          created_at: new Date().toISOString(),
-          recipient_roles: [UserRole.CLIENT] // Explicitly set roles
+          created_at: new Date().toISOString()
         });
     }
     
@@ -195,11 +196,10 @@ async function createStatusUpdateNotification(requestId: string, updates: Partia
           user_id: updates.technician_id,
           title: 'Nova Solicitação Atribuída',
           message: `Você foi atribuído à solicitação "${request.title}"`,
-          type: NotificationType.SUPPORT,
+          type: "SUPPORT", // Use string literal instead of enum
           data: { request_id: requestId },
           is_read: false,
-          created_at: new Date().toISOString(),
-          recipient_roles: [UserRole.LOGISTICS] // Explicitly set roles
+          created_at: new Date().toISOString()
         });
     }
   } catch (error) {

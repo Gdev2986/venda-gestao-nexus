@@ -13,10 +13,9 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { useToast } from "@/hooks/use-toast";
+import { toast } from "@/hooks/use-toast";
 
 const Settings = () => {
-  const { toast } = useToast();
   const { theme, setTheme } = useTheme();
   const [language, setLanguage] = useState("pt-BR");
   const [notificationsEnabled, setNotificationsEnabled] = useState(true);

@@ -1,48 +1,34 @@
 
-import { toast as sonnerToast } from "sonner"
+import { toast as sonnerToast } from "sonner";
 
-type ToastProps = {
-  title?: string
-  description?: string
-  variant?: "default" | "destructive"
-  duration?: number
-  action?: {
-    label: string
-    onClick: () => void
+export type ToastProps = {
+  title?: string;
+  description?: string;
+  action?: React.ReactNode;
+  variant?: "default" | "destructive";
+  duration?: number;
+  position?: "top-left" | "top-right" | "top-center" | "bottom-left" | "bottom-right" | "bottom-center";
+};
+
+// Simple function that doesn't use React hooks
+export const toast = (props: string | ToastProps): void => {
+  if (typeof props === 'string') {
+    sonnerToast(props);
+  } else {
+    const { title, description, ...rest } = props;
+    if (title && description) {
+      sonnerToast(title, { description, ...rest });
+    } else if (title) {
+      sonnerToast(title, rest);
+    } else if (description) {
+      sonnerToast(description, rest);
+    } else {
+      sonnerToast("Notification");
+    }
   }
-  id?: string
-}
+};
 
-export function toast({
-  title,
-  description,
-  variant = "default",
-  duration = 5000,
-  action,
-  id,
-}: ToastProps) {
-  // Map our internal toast API to sonner's API
-  const options = {
-    id,
-    duration,
-    className: variant === "destructive" ? "destructive" : undefined,
-    action: action
-      ? {
-          label: action.label,
-          onClick: action.onClick,
-        }
-      : undefined,
-  }
-
-  return sonnerToast(title || "", {
-    ...options,
-    description,
-  })
-}
-
-export function useToast() {
-  return {
-    toast,
-    dismiss: sonnerToast.dismiss,
-  }
-}
+// Export a simple object, not a hook
+export const useToast = () => {
+  return { toast };
+};

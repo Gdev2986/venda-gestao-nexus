@@ -1,4 +1,5 @@
 
+import * as React from "react";
 import { useState, useEffect } from "react";
 import { UserRole } from "@/types";
 import Sidebar from "./sidebar/Sidebar";
@@ -9,7 +10,6 @@ import NotificationDropdown from "./NotificationDropdown";
 import ThemeToggle from "../theme/theme-toggle";
 import { useUserRole } from "@/hooks/use-user-role";
 import { AnimatePresence } from "framer-motion";
-import { useLocation } from "react-router-dom";
 
 type MainLayoutProps = {
   children: React.ReactNode;
@@ -17,26 +17,25 @@ type MainLayoutProps = {
 
 const MainLayout = ({ children }: MainLayoutProps) => {
   // Use localStorage to persist sidebar state
-  const [sidebarOpen, setSidebarOpen] = useState(() => {
+  const [sidebarOpen, setSidebarOpen] = React.useState(() => {
     const saved = localStorage.getItem("sidebar-state");
     return saved !== null ? JSON.parse(saved) : true;
   });
   
   const isMobile = useIsMobile();
-  const location = useLocation();
   
   // Get user role from custom hook
   const { userRole } = useUserRole();
 
   // Close sidebar on mobile by default
-  useEffect(() => {
+  React.useEffect(() => {
     if (isMobile) {
       setSidebarOpen(false);
     }
   }, [isMobile]);
 
   // Save sidebar state to localStorage when it changes
-  useEffect(() => {
+  React.useEffect(() => {
     if (!isMobile) { // Only save state for desktop
       localStorage.setItem("sidebar-state", JSON.stringify(sidebarOpen));
     }
@@ -47,9 +46,8 @@ const MainLayout = ({ children }: MainLayoutProps) => {
   return (
     <div className="flex h-screen overflow-hidden bg-background">
       {/* Sidebar component with AnimatePresence for smooth animation */}
-      <AnimatePresence mode="wait">
+      <AnimatePresence>
         <Sidebar 
-          key="sidebar"
           isOpen={sidebarOpen} 
           isMobile={isMobile} 
           onClose={() => setSidebarOpen(false)} 

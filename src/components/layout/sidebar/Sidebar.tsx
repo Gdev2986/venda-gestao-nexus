@@ -1,4 +1,6 @@
-import { memo, useCallback, useRef } from "react";
+
+import * as React from "react";
+import { memo, useCallback } from "react";
 import { motion } from "framer-motion";
 import { X } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -11,9 +13,6 @@ import { SidebarProps } from "./types";
 
 // Memoize the Sidebar component to prevent unnecessary re-renders
 const Sidebar = memo(({ isOpen, isMobile, onClose, userRole }: SidebarProps) => {
-  // Keep a ref to the sidebar DOM element
-  const sidebarRef = useRef<HTMLDivElement>(null);
-  
   // Optimize button animation by memoizing the click handler
   const handleCloseClick = useCallback(() => {
     onClose();
@@ -28,7 +27,6 @@ const Sidebar = memo(({ isOpen, isMobile, onClose, userRole }: SidebarProps) => 
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
-          transition={{ duration: 0.2 }}
           onClick={handleCloseClick}
           aria-hidden="true"
         />
@@ -36,18 +34,15 @@ const Sidebar = memo(({ isOpen, isMobile, onClose, userRole }: SidebarProps) => 
       
       {/* Sidebar with fixed position and animation */}
       <motion.div
-        ref={sidebarRef}
         className={cn(
           "fixed inset-y-0 left-0 z-50 flex flex-col w-[280px] md:w-64 text-sidebar-foreground transition-transform duration-200 ease-in-out h-full",
           isMobile ? "shadow-xl" : "border-r border-sidebar-border",
           isOpen ? "translate-x-0" : "-translate-x-full"
         )}
         style={{ backgroundColor: 'hsl(196, 70%, 20%)' }}
-        initial={false}
-        animate={{ 
-          x: isOpen ? 0 : (isMobile ? -320 : -280),
-          transition: { duration: 0.2, ease: "easeOut" }
-        }}
+        initial={{ x: isMobile ? -320 : 0 }}
+        animate={{ x: isOpen ? 0 : (isMobile ? -320 : -280) }}
+        transition={{ duration: 0.2, ease: "easeOut" }}
       >
         <div className="flex items-center justify-between h-14 md:h-16 px-4 border-b border-sidebar-border">
           <div className="flex items-center space-x-2">

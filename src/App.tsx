@@ -1,7 +1,7 @@
 
+import * as React from "react";
 import { Routes, Route, Navigate } from "react-router-dom";
 import { PATHS } from "./routes/paths";
-import { useEffect } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { useUserRole } from "./hooks/use-user-role";
 import { UserRole } from "./types";
@@ -30,19 +30,15 @@ function App() {
   const { toast } = useToast();
 
   // Log role changes for debugging
-  useEffect(() => {
+  React.useEffect(() => {
     if (!isRoleLoading) {
       console.log("App.tsx - Current user role:", userRole);
       
-      if (userRole) {
-        try {
-          const dashPath = getDashboardPath(userRole);
-          console.log("App.tsx - Will redirect to dashboard:", dashPath);
-        } catch (error) {
-          console.error("Error getting dashboard path:", error);
-        }
-      } else {
-        console.log("App.tsx - No user role found, will redirect to login");
+      try {
+        const dashPath = getDashboardPath(userRole);
+        console.log("App.tsx - Will redirect to dashboard:", dashPath);
+      } catch (error) {
+        console.error("Error getting dashboard path:", error);
       }
     }
   }, [userRole, isRoleLoading]);
@@ -50,7 +46,7 @@ function App() {
   // Get the dashboard path safely
   const getDashboardRedirectPath = () => {
     try {
-      return userRole ? getDashboardPath(userRole) : PATHS.LOGIN;
+      return getDashboardPath(userRole);
     } catch (error) {
       console.error("Error in getDashboardRedirectPath:", error);
       return PATHS.LOGIN;

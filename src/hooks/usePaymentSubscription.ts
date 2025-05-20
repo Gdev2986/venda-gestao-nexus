@@ -1,6 +1,6 @@
 
 import { useEffect } from "react";
-import { useToast } from "@/hooks/use-toast";
+import { toast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { PaymentStatus } from "@/types/enums";
@@ -13,7 +13,6 @@ interface SubscriptionOptions {
 }
 
 export const usePaymentSubscription = (callback: SubscriptionCallback, options?: SubscriptionOptions) => {
-  const { toast } = useToast();
   const { user } = useAuth();
   const notifyUser = options?.notifyUser !== false; // Default to true
 
@@ -117,5 +116,5 @@ export const usePaymentSubscription = (callback: SubscriptionCallback, options?:
       supabase.removeChannel(updateChannel);
       supabase.removeChannel(deleteChannel);
     };
-  }, [callback, toast, notifyUser, options?.filterByClientId, user]);
+  }, [callback, notifyUser, options?.filterByClientId, user]);
 };

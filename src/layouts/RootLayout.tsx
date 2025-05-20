@@ -1,20 +1,19 @@
 
+import * as React from "react";
 import { Navigate, useLocation } from "react-router-dom";
-import { useAuth } from "@/hooks/use-auth";
+import { useAuth } from "@/contexts/AuthContext";
 import { Spinner } from "@/components/ui/spinner";
 import { PATHS } from "@/routes/paths";
 import { motion } from "framer-motion";
-import { useState, useEffect } from "react";
 import { getDashboardPath } from "@/routes/routeUtils";
 
 const RootLayout = () => {
   const { user, isLoading, isAuthenticated, userRole } = useAuth();
   const location = useLocation();
-  const [showLoading, setShowLoading] = useState(true);
-  const [error, setError] = useState<Error | null>(null);
+  const [showLoading, setShowLoading] = React.useState(true);
   
   // Debug logging
-  useEffect(() => {
+  React.useEffect(() => {
     console.log("RootLayout render status:", {
       isLoading,
       isAuthenticated,
@@ -24,7 +23,7 @@ const RootLayout = () => {
   }, [isLoading, isAuthenticated, userRole, location.pathname]);
   
   // Add a slight delay for loading animation
-  useEffect(() => {
+  React.useEffect(() => {
     if (!isLoading) {
       const timer = setTimeout(() => {
         setShowLoading(false);
@@ -51,12 +50,6 @@ const RootLayout = () => {
     );
   }
   
-  // Handle any errors that occurred during routing or authentication
-  if (error) {
-    console.error("Error in RootLayout:", error);
-    return <Navigate to={PATHS.LOGIN} replace />;
-  }
-  
   // If authenticated and we have a role, redirect to role-specific dashboard
   if (isAuthenticated && user && userRole) {
     try {
@@ -69,8 +62,8 @@ const RootLayout = () => {
     }
   }
   
-  // If not authenticated or no role, redirect to login
-  console.log("User not authenticated or missing role, redirecting to login");
+  // If not authenticated, redirect to login
+  console.log("User not authenticated, redirecting to login");
   return <Navigate to={PATHS.LOGIN} replace />;
 };
 

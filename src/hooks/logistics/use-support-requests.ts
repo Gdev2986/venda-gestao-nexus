@@ -1,207 +1,86 @@
-import { useCallback, useEffect, useState } from "react";
-import { useAuth } from "@/contexts/AuthContext";
-import { useToast } from "@/hooks/use-toast";
+
+import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { 
-  SupportRequest,
-  createSupportRequest,
-  updateSupportRequest,
-  getSupportRequests
-} from "@/services/support-request";
-import { UserRole } from "@/types";
-import { playNotificationSoundIfEnabled } from "@/services/notificationSoundService";
-import { NotificationType } from "@/types/notification.types";
-import { TicketStatus, TicketType, TicketPriority } from "@/types/support-ticket.types";
+import { SupportRequest, SupportRequestStatus, SupportRequestType, SupportRequestPriority } from "@/types/support-request.types";
+import { toast } from "@/hooks/use-toast";
+import { useAuth } from "@/contexts/AuthContext";
 
-interface UseSupportRequestsOptions {
-  enableRealtime?: boolean;
-  initialFetch?: boolean;
-  filters?: {
-    status?: TicketStatus;
-    type?: TicketType;
-    priority?: TicketPriority;
-    client_id?: string;
-    technician_id?: string;
-    date_from?: string;
-    date_to?: string;
-  };
-}
-
-export function useSupportRequests(options: UseSupportRequestsOptions = {}) {
-  const [requests, setRequests] = useState<SupportRequest[]>([]);
+export function useSupportRequests() {
+  const [supportRequests, setSupportRequests] = useState<SupportRequest[]>([]);
   const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const { user, profile } = useAuth();
-  const { toast } = useToast();
-  const [soundEnabled, setSoundEnabled] = useState<boolean>(true);
-  
-  // Load sound preference from localStorage on initial load
+  const { user } = useAuth();
+
   useEffect(() => {
-    const savedSoundPreference = localStorage.getItem("notification_sound_enabled");
-    if (savedSoundPreference !== null) {
-      setSoundEnabled(savedSoundPreference === "true");
+    if (user) {
+      fetchSupportRequests();
     }
-  }, []);
-  
-  const fetchRequests = useCallback(async (filters = options.filters) => {
-    if (!user) return;
-    
+  }, [user]);
+
+  const fetchSupportRequests = async () => {
     setIsLoading(true);
-    setError(null);
-    
     try {
-      let requestFilters = { ...filters };
-      
-      // If user is a client, only show their requests
-      if (profile?.role === UserRole.CLIENT) {
-        const { data: clientData } = await supabase
-          .from('user_client_access')
-          .select('client_id')
-          .eq('user_id', user.id)
-          .single();
-          
-        if (clientData) {
-          requestFilters.client_id = clientData.client_id;
-        }
+      const { data, error } = await supabase
+        .from("support_requests")
+        .select("*")
+        .eq("client_id", user?.id)
+        .order("created_at", { ascending: false });
+
+      if (error) {
+        console.error("Error fetching support requests:", error);
+        toast("Erro: Não foi possível carregar as solicitações");
+      } else {
+        // Ensure we're handling the data correctly
+        setSupportRequests(data as SupportRequest[] || []);
       }
-      
-      const { data, error } = await getSupportRequests(requestFilters);
-      
-      if (error) throw error;
-      
-      setRequests(data || []);
-    } catch (err: any) {
-      console.error('Error fetching support requests:', err);
-      setError(err.message || 'Failed to fetch support requests');
-      toast({
-        title: 'Error',
-        description: 'Failed to fetch support requests',
-        variant: 'destructive',
-      });
-    } finally {
-      setIsLoading(false);
-    }
-  }, [user, profile, options.filters, toast]);
-  
-  // Initial fetch
-  useEffect(() => {
-    if (options.initialFetch) {
-      fetchRequests();
-    }
-  }, [fetchRequests, options.initialFetch]);
-  
-  // Set up realtime subscription
-  useEffect(() => {
-    if (!options.enableRealtime || !user) return;
-    
-    const channel = supabase
-      .channel('support-requests-changes')
-      .on(
-        'postgres_changes',
-        { 
-          event: '*', 
-          schema: 'public', 
-          table: 'support_requests'
-        },
-        (payload) => {
-          console.log('Support request change received:', payload);
-          
-          // Refresh the list when there's any change
-          fetchRequests();
-          
-          // Show toast notifications for new requests
-          if (payload.eventType === 'INSERT') {
-            toast({
-              title: 'Nova Solicitação',
-              description: 'Uma nova solicitação técnica foi criada',
-              variant: 'default',
-            });
-            
-            // Play notification sound
-            playNotificationSoundIfEnabled(NotificationType.SUPPORT, soundEnabled);
-          }
-        }
-      )
-      .subscribe();
-      
-    return () => {
-      supabase.removeChannel(channel);
-    };
-  }, [user, fetchRequests, options.enableRealtime, toast, soundEnabled]);
-  
-  // Function to create a new support request
-  const createRequest = async (request: Omit<SupportRequest, 'id'>) => {
-    setIsLoading(true);
-    setError(null);
-    
-    try {
-      const { data, error } = await createSupportRequest(request as SupportRequest);
-      
-      if (error) throw error;
-      
-      toast({
-        title: 'Solicitação Criada',
-        description: 'Sua solicitação foi criada com sucesso',
-      });
-      
-      fetchRequests();
-      return data;
-    } catch (err: any) {
-      console.error('Error creating support request:', err);
-      setError(err.message || 'Failed to create support request');
-      toast({
-        title: 'Error',
-        description: 'Failed to create support request',
-        variant: 'destructive',
-      });
-      return null;
+    } catch (error: any) {
+      console.error("Unexpected error fetching support requests:", error);
+      toast("Erro: " + (error.message || "Erro inesperado ao carregar as solicitações"));
     } finally {
       setIsLoading(false);
     }
   };
-  
-  // Function to update a support request
-  const updateRequest = async (id: string, updates: Partial<SupportRequest>) => {
+
+  const createSupportRequest = async (newRequest: Omit<SupportRequest, 'id' | 'created_at'>) => {
     setIsLoading(true);
-    setError(null);
-    
     try {
-      const { data, error } = await updateSupportRequest(id, updates);
-      
-      if (error) throw error;
-      
-      toast({
-        title: 'Solicitação Atualizada',
-        description: 'A solicitação foi atualizada com sucesso',
-      });
-      
-      fetchRequests();
-      return data;
-    } catch (err: any) {
-      console.error('Error updating support request:', err);
-      setError(err.message || 'Failed to update support request');
-      toast({
-        title: 'Error',
-        description: 'Failed to update support request',
-        variant: 'destructive',
-      });
-      return null;
+      // Check Supabase schema to match enum values exactly
+      const insertData = {
+        client_id: newRequest.client_id,
+        technician_id: newRequest.technician_id,
+        title: newRequest.title,
+        description: newRequest.description,
+        // Convert enums to the exact string literals expected by the database
+        type: newRequest.type as unknown as "MAINTENANCE" | "INSTALLATION" | "REPLACEMENT" | "SUPPLIES" | "REMOVAL" | "OTHER",
+        status: newRequest.status,
+        priority: newRequest.priority,
+        scheduled_date: newRequest.scheduled_date,
+        resolution: newRequest.resolution
+      };
+
+      const { data, error } = await supabase
+        .from("support_requests")
+        .insert(insertData)
+        .select();
+
+      if (error) {
+        console.error("Error creating support request:", error);
+        toast("Erro: Não foi possível criar a solicitação de suporte");
+      } else {
+        setSupportRequests(prevRequests => [...prevRequests, ...(data as SupportRequest[])]);
+        toast("Sucesso: Solicitação de suporte criada com sucesso!");
+      }
+    } catch (error: any) {
+      console.error("Unexpected error creating support request:", error);
+      toast("Erro: " + (error.message || "Erro inesperado ao criar a solicitação de suporte"));
     } finally {
       setIsLoading(false);
     }
   };
-  
-  const getPendingRequestsCount = useCallback(() => {
-    return requests.filter(r => r.status === 'PENDING' || r.status === 'IN_PROGRESS').length;
-  }, [requests]);
-  
+
   return {
-    requests,
+    supportRequests,
     isLoading,
-    error,
-    fetchRequests,
-    createRequest,
-    updateRequest,
-    getPendingRequestsCount
+    fetchSupportRequests,
+    createSupportRequest,
   };
 }

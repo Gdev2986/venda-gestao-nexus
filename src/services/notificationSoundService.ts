@@ -1,75 +1,34 @@
 
 import { NotificationType } from "@/types/notification.types";
 
-// Map of notification types to sound file paths
-const notificationSounds: Record<NotificationType | string, string> = {
-  SYSTEM: "/sounds/notification-general.mp3",
-  PAYMENT: "/sounds/notification-general.mp3",
-  BALANCE: "/sounds/notification-general.mp3",
-  MACHINE: "/sounds/notification-general.mp3",
-  COMMISSION: "/sounds/notification-general.mp3", 
-  GENERAL: "/sounds/notification-general.mp3",
-  SALE: "/sounds/notification-general.mp3",
-  SUPPORT: "/sounds/notification-support.mp3",
-  ADMIN_NOTIFICATION: "/sounds/notification-general.mp3",
-  LOGISTICS: "/sounds/notification-logistics.mp3"
+const NOTIFICATION_SOUNDS = {
+  [NotificationType.GENERAL]: "/sounds/notification-general.mp3",
+  [NotificationType.SYSTEM]: "/sounds/notification-general.mp3",
+  [NotificationType.PAYMENT]: "/sounds/notification-general.mp3",
+  [NotificationType.BALANCE]: "/sounds/notification-general.mp3",
+  [NotificationType.MACHINE]: "/sounds/notification-general.mp3",
+  [NotificationType.COMMISSION]: "/sounds/notification-general.mp3",
+  [NotificationType.SALE]: "/sounds/notification-general.mp3",
+  [NotificationType.SUPPORT]: "/sounds/notification-support.mp3",
+  [NotificationType.ADMIN_NOTIFICATION]: "/sounds/notification-general.mp3",
+  [NotificationType.LOGISTICS]: "/sounds/notification-logistics.mp3",
 };
 
-// Cache audio objects to prevent recreation
-const audioCache: Record<string, HTMLAudioElement> = {};
-
 /**
- * Play notification sound based on notification type
- * @param type NotificationType
- * @param soundEnabled boolean flag to control if sound should be played
+ * Plays a notification sound based on the notification type if sounds are enabled
  */
-export const playNotificationSoundIfEnabled = (type: NotificationType, soundEnabled: boolean = true) => {
+export function playNotificationSoundIfEnabled(type: NotificationType, soundEnabled: boolean): void {
   if (!soundEnabled) return;
   
-  // When running on server, return early
-  if (typeof window === 'undefined') return;
-  
   try {
-    const soundPath = notificationSounds[type] || notificationSounds.GENERAL;
-    
-    // Create or use cached audio object
-    if (!audioCache[soundPath]) {
-      audioCache[soundPath] = new Audio(soundPath);
-    }
-    
-    // Play the sound
-    const audio = audioCache[soundPath];
-    audio.volume = 0.5; // Set volume to 50%
-    audio.currentTime = 0; // Reset to start
-    
-    // Use promise to handle playback
-    const playPromise = audio.play();
-    
-    if (playPromise !== undefined) {
-      playPromise.catch(error => {
-        console.error('Error playing notification sound:', error);
-      });
-    }
-  } catch (error) {
-    console.error('Failed to play notification sound:', error);
-  }
-};
-
-/**
- * Preload all notification sounds
- */
-export const preloadNotificationSounds = () => {
-  // When running on server, return early
-  if (typeof window === 'undefined') return;
-  
-  try {
-    // Create audio objects for each sound
-    Object.values(notificationSounds).forEach(soundPath => {
-      if (!audioCache[soundPath]) {
-        audioCache[soundPath] = new Audio(soundPath);
-      }
+    const soundUrl = NOTIFICATION_SOUNDS[type] || NOTIFICATION_SOUNDS[NotificationType.GENERAL];
+    const audio = new Audio(soundUrl);
+    audio.volume = 0.5;
+    audio.play().catch(error => {
+      // Most browsers require a user interaction before playing audio
+      console.log("Could not play notification sound:", error);
     });
   } catch (error) {
-    console.error('Failed to preload notification sounds:', error);
+    console.error("Error playing notification sound:", error);
   }
-};
+}
