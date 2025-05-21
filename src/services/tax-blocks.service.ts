@@ -1,3 +1,4 @@
+
 import { supabase } from "@/integrations/supabase/client";
 import { PaymentMethod } from "@/types/enums";
 
@@ -119,7 +120,7 @@ export const TaxBlocksService = {
     try {
       console.log("Creating tax block:", block);
       
-      // Removida a propriedade rates que estava causando o erro
+      // Inserir apenas os campos name e description
       const { data, error } = await supabase
         .from('tax_blocks')
         .insert({

@@ -34,7 +34,8 @@ const PAYMENT_METHODS = [
   { id: 'PIX', label: 'PIX' }
 ];
 
-const DEFAULT_INSTALLMENTS = [1, 2, 3, 6, 12];
+// Modificado para incluir todas as parcelas de 1 a 21
+const DEFAULT_INSTALLMENTS = Array.from({ length: 21 }, (_, i) => i + 1);
 
 const TaxBlockEditor: React.FC<TaxBlockEditorProps> = ({ 
   block,
@@ -57,7 +58,7 @@ const TaxBlockEditor: React.FC<TaxBlockEditorProps> = ({
       // Initialize with default empty rates
       const initialRates = [];
       
-      // For CREDIT, add standard installment counts
+      // For CREDIT, add all installment counts from 1 to 21
       for (const installment of DEFAULT_INSTALLMENTS) {
         initialRates.push({
           payment_method: 'CREDIT',
