@@ -3,6 +3,7 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { PageHeader } from "@/components/page/PageHeader";
 import { PATHS } from "@/routes/paths";
+import { Button } from "@/components/ui/button";
 import CompanyExpensesComponent from "@/components/admin/company/CompanyExpenses";
 
 const CompanyExpensesPage = () => {
@@ -13,11 +14,17 @@ const CompanyExpensesPage = () => {
       <PageHeader
         title="Despesas da Empresa"
         description="Gerenciamento de todas as despesas fixas e variáveis da empresa"
-        backButton={{
-          label: "Voltar para Empresa",
-          onClick: () => navigate(PATHS.ADMIN.COMPANY)
-        }}
       />
+      
+      <div className="mt-4">
+        <Button 
+          variant="outline" 
+          size="sm" 
+          onClick={() => navigate(PATHS.ADMIN.COMPANY)}
+        >
+          Voltar para Empresa
+        </Button>
+      </div>
       
       <CompanyExpensesComponent />
     </div>

@@ -1,840 +1,501 @@
 
-import { useState, useEffect } from "react";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import React, { useState } from "react";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+  CardFooter,
+} from "@/components/ui/card";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { 
-  Dialog, 
-  DialogContent, 
-  DialogHeader, 
-  DialogTitle, 
-  DialogTrigger,
-  DialogFooter,
-  DialogClose
-} from "@/components/ui/dialog";
-import { Badge } from "@/components/ui/badge";
 import { DatePicker } from "@/components/ui/date-picker";
-import { DoughnutChart } from "@/components/charts";
-import { 
-  Calendar,
-  Plus,
-  Pencil,
-  Trash2,
-  Save,
-  Tag,
-  DollarSign, 
-  ArrowUpDown
-} from "lucide-react";
-import { useToast } from "@/hooks/use-toast";
-import { ScrollArea } from "@/components/ui/scroll-area";
-import { format, addDays, subDays, subMonths } from "date-fns";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { BarChart, PieChart } from "@/components/charts";
+import { MoreHorizontal, Plus, Filter, Download, Pencil, Trash2 } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import { format } from "date-fns";
 
-// Tipos de dados
-interface Expense {
-  id: string;
-  description: string;
-  amount: number;
-  date: Date;
-  category: string;
-  recurrence: "fixed" | "variable";
-}
+// Mock data for expenses
+const mockExpenses = [
+  {
+    id: "1",
+    description: "Aluguel do Escritório",
+    category: "Aluguel",
+    amount: 3500,
+    date: "2023-06-10",
+    recurring: true,
+    frequency: "Mensal",
+  },
+  {
+    id: "2",
+    description: "Folha de Pagamento",
+    category: "Pessoal",
+    amount: 12000,
+    date: "2023-06-05",
+    recurring: true,
+    frequency: "Mensal",
+  },
+  {
+    id: "3",
+    description: "Material de Escritório",
+    category: "Suprimentos",
+    amount: 450,
+    date: "2023-06-15",
+    recurring: false,
+    frequency: null,
+  },
+  {
+    id: "4",
+    description: "Contas de Serviços (Água, Luz, Internet)",
+    category: "Utilidades",
+    amount: 850,
+    date: "2023-06-20",
+    recurring: true,
+    frequency: "Mensal",
+  },
+  {
+    id: "5",
+    description: "Manutenção de Equipamentos",
+    category: "Manutenção",
+    amount: 1200,
+    date: "2023-06-25",
+    recurring: false,
+    frequency: null,
+  },
+];
 
-interface Category {
-  id: string;
-  name: string;
-  color: string;
-}
+// Expense categories for dropdown
+const expenseCategories = [
+  "Aluguel",
+  "Pessoal",
+  "Suprimentos",
+  "Utilidades",
+  "Manutenção",
+  "Marketing",
+  "Viagem",
+  "Impostos",
+  "Outros",
+];
 
-const CompanyExpenses = () => {
-  const { toast } = useToast();
-  const [activeTab, setActiveTab] = useState<string>("all");
-  const [searchTerm, setSearchTerm] = useState<string>("");
-  const [expenses, setExpenses] = useState<Expense[]>([]);
-  const [categories, setCategories] = useState<Category[]>([]);
-  const [isLoading, setIsLoading] = useState(false);
-  const [chartData, setChartData] = useState<any[]>([]);
+// Frequency options
+const frequencyOptions = [
+  "Diário",
+  "Semanal",
+  "Mensal",
+  "Trimestral",
+  "Semestral",
+  "Anual",
+];
+
+// Chart data calculation
+const getChartData = (expenses) => {
+  const categoryMap = {};
   
-  // Diálogos e formulários
-  const [showExpenseDialog, setShowExpenseDialog] = useState(false);
-  const [showCategoryDialog, setShowCategoryDialog] = useState(false);
-  const [currentExpense, setCurrentExpense] = useState<Expense | null>(null);
-  const [currentCategory, setCurrentCategory] = useState<Category | null>(null);
-  
-  // Formulário de despesa
-  const [expenseForm, setExpenseForm] = useState({
-    description: "",
-    amount: "",
-    date: new Date(),
-    category: "",
-    recurrence: "variable" as "fixed" | "variable"
-  });
-  
-  // Formulário de categoria
-  const [categoryForm, setcategoryForm] = useState({
-    name: "",
-    color: "#4ade80"
-  });
-  
-  // Ordenação
-  const [sortField, setSortField] = useState<string>("date");
-  const [sortDirection, setSortDirection] = useState<"asc" | "desc">("desc");
-  
-  // Dados iniciais simulados
-  useEffect(() => {
-    setIsLoading(true);
-    
-    // Simular carregamento de categorias
-    const initialCategories = [
-      { id: "1", name: "Aluguel", color: "#f97316" },
-      { id: "2", name: "Salários", color: "#60a5fa" },
-      { id: "3", name: "Marketing", color: "#8B5CF6" },
-      { id: "4", name: "Impostos", color: "#f43f5e" },
-      { id: "5", name: "Serviços", color: "#4ade80" },
-      { id: "6", name: "Outros", color: "#a78bfa" }
-    ];
-    
-    // Simular carregamento de despesas
-    const initialExpenses = [
-      { 
-        id: "1", 
-        description: "Aluguel do escritório", 
-        amount: 3500, 
-        date: new Date(2023, 5, 5), 
-        category: "1",
-        recurrence: "fixed" as "fixed" | "variable"
-      },
-      { 
-        id: "2", 
-        description: "Salários equipe administrativa", 
-        amount: 12000, 
-        date: new Date(2023, 5, 10), 
-        category: "2",
-        recurrence: "fixed" as "fixed" | "variable"
-      },
-      { 
-        id: "3", 
-        description: "Campanha de marketing digital", 
-        amount: 2500, 
-        date: new Date(2023, 5, 15), 
-        category: "3",
-        recurrence: "variable" as "fixed" | "variable"
-      },
-      { 
-        id: "4", 
-        description: "Imposto municipal", 
-        amount: 1800, 
-        date: new Date(2023, 5, 20), 
-        category: "4",
-        recurrence: "fixed" as "fixed" | "variable"
-      },
-      { 
-        id: "5", 
-        description: "Serviço de limpeza", 
-        amount: 800, 
-        date: new Date(2023, 5, 25), 
-        category: "5",
-        recurrence: "fixed" as "fixed" | "variable"
-      },
-      { 
-        id: "6", 
-        description: "Material de escritório", 
-        amount: 350, 
-        date: new Date(2023, 5, 28), 
-        category: "6",
-        recurrence: "variable" as "fixed" | "variable"
-      }
-    ];
-    
-    setCategories(initialCategories);
-    setExpenses(initialExpenses);
-    
-    setTimeout(() => {
-      setIsLoading(false);
-    }, 1000);
-  }, []);
-  
-  // Preparar dados para o gráfico
-  useEffect(() => {
-    if (categories.length && expenses.length) {
-      const expensesByCategory = categories.map(category => {
-        const totalAmount = expenses
-          .filter(expense => expense.category === category.id)
-          .reduce((sum, expense) => sum + expense.amount, 0);
-          
-        return {
-          name: category.name,
-          value: totalAmount,
-          color: category.color
-        };
-      }).filter(item => item.value > 0);
-      
-      setChartData(expensesByCategory);
+  // Group by category
+  expenses.forEach((expense) => {
+    if (!categoryMap[expense.category]) {
+      categoryMap[expense.category] = 0;
     }
-  }, [expenses, categories]);
-  
-  // Funções de manipulação de dados
-  const handleSort = (field: string) => {
-    if (field === sortField) {
-      setSortDirection(sortDirection === "asc" ? "desc" : "asc");
-    } else {
-      setSortField(field);
-      setSortDirection("asc");
-    }
-  };
-  
-  const sortedExpenses = [...expenses].sort((a, b) => {
-    if (sortField === "date") {
-      return sortDirection === "asc" 
-        ? new Date(a.date).getTime() - new Date(b.date).getTime()
-        : new Date(b.date).getTime() - new Date(a.date).getTime();
-    } else if (sortField === "amount") {
-      return sortDirection === "asc" 
-        ? a.amount - b.amount
-        : b.amount - a.amount;
-    } else if (sortField === "description") {
-      return sortDirection === "asc"
-        ? a.description.localeCompare(b.description)
-        : b.description.localeCompare(a.description);
-    } else {
-      return 0;
-    }
+    categoryMap[expense.category] += expense.amount;
   });
   
-  // Filtrar despesas
-  const filteredExpenses = sortedExpenses.filter(expense => {
-    const matchesTab = activeTab === "all" || 
-                      (activeTab === "fixed" && expense.recurrence === "fixed") || 
-                      (activeTab === "variable" && expense.recurrence === "variable");
-                      
-    const matchesSearch = expense.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                          getCategoryName(expense.category).toLowerCase().includes(searchTerm.toLowerCase());
-                          
-    return matchesTab && matchesSearch;
-  });
-  
-  // Funções auxiliares
-  const getCategoryName = (id: string) => {
-    const category = categories.find(cat => cat.id === id);
-    return category ? category.name : "Sem categoria";
-  };
-  
-  const getCategoryColor = (id: string) => {
-    const category = categories.find(cat => cat.id === id);
-    return category ? category.color : "#cccccc";
-  };
-  
-  const formatCurrency = (value: number) => {
-    return new Intl.NumberFormat('pt-BR', { 
-      style: 'currency', 
-      currency: 'BRL' 
-    }).format(value);
-  };
-  
-  const totalExpenses = filteredExpenses.reduce((sum, expense) => sum + expense.amount, 0);
-  
-  // Manipulação de formulários
-  const resetExpenseForm = () => {
-    setExpenseForm({
+  // Convert to array format for charts
+  return Object.entries(categoryMap).map(([name, value]) => ({
+    name,
+    value,
+  }));
+};
+
+const ExpenseForm = ({ onClose, initialData = null }) => {
+  const [formData, setFormData] = useState(
+    initialData || {
       description: "",
+      category: "",
       amount: "",
       date: new Date(),
-      category: "",
-      recurrence: "variable"
-    });
-    setCurrentExpense(null);
-  };
-  
-  const resetCategoryForm = () => {
-    setcategoryForm({
-      name: "",
-      color: "#4ade80"
-    });
-    setCurrentCategory(null);
-  };
-  
-  const openExpenseDialog = (expense?: Expense) => {
-    if (expense) {
-      setCurrentExpense(expense);
-      setExpenseForm({
-        description: expense.description,
-        amount: expense.amount.toString(),
-        date: expense.date,
-        category: expense.category,
-        recurrence: expense.recurrence
-      });
-    } else {
-      resetExpenseForm();
+      recurring: false,
+      frequency: "",
     }
-    setShowExpenseDialog(true);
-  };
-  
-  const openCategoryDialog = (category?: Category) => {
-    if (category) {
-      setCurrentCategory(category);
-      setcategoryForm({
-        name: category.name,
-        color: category.color
-      });
-    } else {
-      resetCategoryForm();
-    }
-    setShowCategoryDialog(true);
-  };
-  
-  const handleSaveExpense = () => {
-    // Validação básica
-    if (!expenseForm.description || !expenseForm.amount || !expenseForm.category) {
-      toast({
-        title: "Erro ao salvar",
-        description: "Preencha todos os campos obrigatórios",
-        variant: "destructive"
-      });
-      return;
-    }
-    
-    const amount = parseFloat(expenseForm.amount.replace(',', '.'));
-    
-    if (isNaN(amount) || amount <= 0) {
-      toast({
-        title: "Valor inválido",
-        description: "O valor da despesa deve ser maior que zero",
-        variant: "destructive"
-      });
-      return;
-    }
-    
-    if (currentExpense) {
-      // Atualizar despesa existente
-      const updatedExpenses = expenses.map(exp => 
-        exp.id === currentExpense.id ? {
-          ...exp,
-          description: expenseForm.description,
-          amount: amount,
-          date: expenseForm.date,
-          category: expenseForm.category,
-          recurrence: expenseForm.recurrence
-        } : exp
-      );
-      
-      setExpenses(updatedExpenses);
-      toast({
-        title: "Despesa atualizada",
-        description: "A despesa foi atualizada com sucesso"
-      });
-    } else {
-      // Adicionar nova despesa
-      const newExpense: Expense = {
-        id: Date.now().toString(),
-        description: expenseForm.description,
-        amount: amount,
-        date: expenseForm.date,
-        category: expenseForm.category,
-        recurrence: expenseForm.recurrence
-      };
-      
-      setExpenses([...expenses, newExpense]);
-      toast({
-        title: "Despesa adicionada",
-        description: "A nova despesa foi adicionada com sucesso"
-      });
-    }
-    
-    setShowExpenseDialog(false);
-    resetExpenseForm();
-  };
-  
-  const handleSaveCategory = () => {
-    // Validação básica
-    if (!categoryForm.name) {
-      toast({
-        title: "Erro ao salvar",
-        description: "O nome da categoria é obrigatório",
-        variant: "destructive"
-      });
-      return;
-    }
-    
-    if (currentCategory) {
-      // Atualizar categoria existente
-      const updatedCategories = categories.map(cat => 
-        cat.id === currentCategory.id ? {
-          ...cat,
-          name: categoryForm.name,
-          color: categoryForm.color
-        } : cat
-      );
-      
-      setCategories(updatedCategories);
-      toast({
-        title: "Categoria atualizada",
-        description: "A categoria foi atualizada com sucesso"
-      });
-    } else {
-      // Adicionar nova categoria
-      const newCategory: Category = {
-        id: Date.now().toString(),
-        name: categoryForm.name,
-        color: categoryForm.color
-      };
-      
-      setCategories([...categories, newCategory]);
-      toast({
-        title: "Categoria adicionada",
-        description: "A nova categoria foi adicionada com sucesso"
-      });
-    }
-    
-    setShowCategoryDialog(false);
-    resetCategoryForm();
-  };
-  
-  const handleDeleteExpense = (expense: Expense) => {
-    const updatedExpenses = expenses.filter(exp => exp.id !== expense.id);
-    setExpenses(updatedExpenses);
-    toast({
-      title: "Despesa removida",
-      description: "A despesa foi removida com sucesso"
+  );
+
+  const handleChange = (e) => {
+    const { name, value, type, checked } = e.target;
+    setFormData({
+      ...formData,
+      [name]: type === "checkbox" ? checked : value,
     });
   };
-  
-  const handleDeleteCategory = (category: Category) => {
-    // Verificar se há despesas usando esta categoria
-    const hasExpensesWithCategory = expenses.some(exp => exp.category === category.id);
-    
-    if (hasExpensesWithCategory) {
-      toast({
-        title: "Não é possível remover",
-        description: "Existem despesas associadas a esta categoria",
-        variant: "destructive"
-      });
-      return;
-    }
-    
-    const updatedCategories = categories.filter(cat => cat.id !== category.id);
-    setCategories(updatedCategories);
-    toast({
-      title: "Categoria removida",
-      description: "A categoria foi removida com sucesso"
+
+  const handleDateChange = (date) => {
+    setFormData({
+      ...formData,
+      date,
     });
+  };
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    console.log("Form submitted:", formData);
+    onClose();
   };
 
   return (
+    <form onSubmit={handleSubmit} className="space-y-4">
+      <div className="grid gap-3">
+        <div className="grid gap-2">
+          <Label htmlFor="description">Descrição</Label>
+          <Input
+            id="description"
+            name="description"
+            value={formData.description}
+            onChange={handleChange}
+            required
+          />
+        </div>
+
+        <div className="grid gap-2">
+          <Label htmlFor="category">Categoria</Label>
+          <Select
+            name="category"
+            value={formData.category}
+            onValueChange={(value) =>
+              setFormData({ ...formData, category: value })
+            }
+          >
+            <SelectTrigger>
+              <SelectValue placeholder="Selecione uma categoria" />
+            </SelectTrigger>
+            <SelectContent>
+              {expenseCategories.map((category) => (
+                <SelectItem key={category} value={category}>
+                  {category}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+
+        <div className="grid gap-2">
+          <Label htmlFor="amount">Valor (R$)</Label>
+          <Input
+            id="amount"
+            name="amount"
+            type="number"
+            step="0.01"
+            value={formData.amount}
+            onChange={handleChange}
+            required
+          />
+        </div>
+
+        <div className="grid gap-2">
+          <Label htmlFor="date">Data</Label>
+          <DatePicker
+            selected={
+              formData.date instanceof Date
+                ? formData.date
+                : new Date(formData.date)
+            }
+            onSelect={handleDateChange}
+            placeholder="Selecione uma data"
+          />
+        </div>
+
+        <div className="flex items-center gap-2 pt-2">
+          <input
+            type="checkbox"
+            id="recurring"
+            name="recurring"
+            checked={formData.recurring}
+            onChange={handleChange}
+            className="h-4 w-4 rounded border-gray-300"
+          />
+          <Label htmlFor="recurring" className="text-sm font-normal">
+            Despesa Recorrente
+          </Label>
+        </div>
+
+        {formData.recurring && (
+          <div className="grid gap-2">
+            <Label htmlFor="frequency">Frequência</Label>
+            <Select
+              name="frequency"
+              value={formData.frequency}
+              onValueChange={(value) =>
+                setFormData({ ...formData, frequency: value })
+              }
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="Selecione a frequência" />
+              </SelectTrigger>
+              <SelectContent>
+                {frequencyOptions.map((frequency) => (
+                  <SelectItem key={frequency} value={frequency}>
+                    {frequency}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+        )}
+      </div>
+
+      <DialogFooter>
+        <Button type="button" variant="outline" onClick={onClose}>
+          Cancelar
+        </Button>
+        <Button type="submit">Salvar</Button>
+      </DialogFooter>
+    </form>
+  );
+};
+
+const ExpenseItem = ({ expense }) => {
+  const formattedDate = new Date(expense.date).toLocaleDateString("pt-BR");
+
+  return (
+    <TableRow>
+      <TableCell className="font-medium">{expense.description}</TableCell>
+      <TableCell>
+        <Badge variant="outline">{expense.category}</Badge>
+      </TableCell>
+      <TableCell>{formattedDate}</TableCell>
+      <TableCell>
+        {expense.recurring ? (
+          <Badge variant="secondary">{expense.frequency}</Badge>
+        ) : (
+          <Badge variant="outline">Única</Badge>
+        )}
+      </TableCell>
+      <TableCell className="text-right font-mono">
+        R$ {expense.amount.toFixed(2)}
+      </TableCell>
+      <TableCell className="text-right">
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button variant="ghost" className="h-8 w-8 p-0">
+              <span className="sr-only">Abrir menu</span>
+              <MoreHorizontal className="h-4 w-4" />
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end">
+            <DropdownMenuItem>
+              <Pencil className="mr-2 h-4 w-4" />
+              <span>Editar</span>
+            </DropdownMenuItem>
+            <DropdownMenuItem className="text-destructive">
+              <Trash2 className="mr-2 h-4 w-4" />
+              <span>Excluir</span>
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
+      </TableCell>
+    </TableRow>
+  );
+};
+
+const CompanyExpenses = () => {
+  const [showAddExpense, setShowAddExpense] = useState(false);
+  const [filter, setFilter] = useState("all"); // all, recurring, one-time
+  const [expenses, setExpenses] = useState(mockExpenses);
+  const [selectedMonth, setSelectedMonth] = useState(new Date());
+
+  // Filter expenses based on selected filter
+  const filteredExpenses = expenses.filter((expense) => {
+    if (filter === "all") return true;
+    if (filter === "recurring") return expense.recurring;
+    if (filter === "one-time") return !expense.recurring;
+    return true;
+  });
+
+  // Calculate totals
+  const totalAmount = filteredExpenses.reduce(
+    (sum, expense) => sum + expense.amount,
+    0
+  );
+
+  // Calculate chart data
+  const chartData = getChartData(filteredExpenses);
+
+  return (
     <div className="space-y-6">
-      {/* Tabs e Controles de filtros */}
       <Card>
-        <CardContent className="p-6">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 items-center">
+        <CardHeader className="pb-2">
+          <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
             <div>
-              <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-                <TabsList>
-                  <TabsTrigger value="all">Todas</TabsTrigger>
-                  <TabsTrigger value="fixed">Fixas</TabsTrigger>
-                  <TabsTrigger value="variable">Variáveis</TabsTrigger>
-                </TabsList>
-              </Tabs>
+              <CardTitle>Despesas da Empresa</CardTitle>
+              <CardDescription>
+                Gerenciamento de despesas fixas e variáveis
+              </CardDescription>
             </div>
-            <div className="flex items-center gap-2">
-              <Input
-                placeholder="Buscar despesas..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="flex-1"
-              />
-              <Dialog open={showExpenseDialog} onOpenChange={setShowExpenseDialog}>
+            <div className="flex flex-wrap gap-2">
+              <Dialog open={showAddExpense} onOpenChange={setShowAddExpense}>
                 <DialogTrigger asChild>
-                  <Button onClick={() => openExpenseDialog()}>
-                    <Plus className="h-4 w-4 mr-2" />
-                    Nova Despesa
+                  <Button>
+                    <Plus className="mr-2 h-4 w-4" /> Nova Despesa
                   </Button>
                 </DialogTrigger>
-                <DialogContent>
+                <DialogContent className="sm:max-w-[425px]">
                   <DialogHeader>
-                    <DialogTitle>
-                      {currentExpense ? "Editar Despesa" : "Nova Despesa"}
-                    </DialogTitle>
+                    <DialogTitle>Adicionar Nova Despesa</DialogTitle>
+                    <DialogDescription>
+                      Preencha os detalhes da despesa abaixo.
+                    </DialogDescription>
                   </DialogHeader>
-                  <div className="space-y-4 py-4">
-                    <div className="space-y-2">
-                      <Label htmlFor="description">Descrição</Label>
-                      <Input
-                        id="description"
-                        placeholder="Ex: Aluguel do escritório"
-                        value={expenseForm.description}
-                        onChange={(e) => setExpenseForm(prev => ({ ...prev, description: e.target.value }))}
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="amount">Valor (R$)</Label>
-                      <Input
-                        id="amount"
-                        placeholder="Ex: 1500,00"
-                        value={expenseForm.amount}
-                        onChange={(e) => setExpenseForm(prev => ({ ...prev, amount: e.target.value }))}
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="date">Data</Label>
-                      <DatePicker 
-                        selected={expenseForm.date} 
-                        onSelect={(date) => date && setExpenseForm(prev => ({ ...prev, date }))}
-                        showMonthDropdown
-                        showYearDropdown
-                        dropdownMode="select"
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="category">Categoria</Label>
-                      <Select 
-                        value={expenseForm.category} 
-                        onValueChange={(value) => setExpenseForm(prev => ({ ...prev, category: value }))}
-                      >
-                        <SelectTrigger>
-                          <SelectValue placeholder="Selecione uma categoria" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {categories.map((category) => (
-                            <SelectItem key={category.id} value={category.id}>
-                              <div className="flex items-center">
-                                <div
-                                  className="h-3 w-3 rounded-full mr-2"
-                                  style={{ backgroundColor: category.color }}
-                                />
-                                {category.name}
-                              </div>
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </div>
-                    <div className="space-y-2">
-                      <Label>Recorrência</Label>
-                      <div className="flex space-x-4">
-                        <label className="flex items-center space-x-2 cursor-pointer">
-                          <input
-                            type="radio"
-                            className="h-4 w-4 text-primary"
-                            checked={expenseForm.recurrence === "fixed"}
-                            onChange={() => setExpenseForm(prev => ({ ...prev, recurrence: "fixed" }))}
-                          />
-                          <span>Fixa</span>
-                        </label>
-                        <label className="flex items-center space-x-2 cursor-pointer">
-                          <input
-                            type="radio"
-                            className="h-4 w-4 text-primary"
-                            checked={expenseForm.recurrence === "variable"}
-                            onChange={() => setExpenseForm(prev => ({ ...prev, recurrence: "variable" }))}
-                          />
-                          <span>Variável</span>
-                        </label>
-                      </div>
-                    </div>
-                  </div>
-                  <DialogFooter>
-                    <DialogClose asChild>
-                      <Button variant="outline">Cancelar</Button>
-                    </DialogClose>
-                    <Button onClick={handleSaveExpense}>
-                      <Save className="mr-2 h-4 w-4" />
-                      Salvar
-                    </Button>
-                  </DialogFooter>
+                  <ExpenseForm onClose={() => setShowAddExpense(false)} />
                 </DialogContent>
               </Dialog>
-              
-              <Dialog open={showCategoryDialog} onOpenChange={setShowCategoryDialog}>
-                <DialogTrigger asChild>
+
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
                   <Button variant="outline">
-                    <Tag className="h-4 w-4 mr-2" />
-                    Categorias
+                    <Filter className="mr-2 h-4 w-4" /> Filtrar
                   </Button>
-                </DialogTrigger>
-                <DialogContent>
-                  <DialogHeader>
-                    <DialogTitle>
-                      {currentCategory ? "Editar Categoria" : "Gerenciar Categorias"}
-                    </DialogTitle>
-                  </DialogHeader>
-                  {currentCategory ? (
-                    <div className="space-y-4 py-4">
-                      <div className="space-y-2">
-                        <Label htmlFor="category-name">Nome</Label>
-                        <Input
-                          id="category-name"
-                          placeholder="Ex: Aluguel"
-                          value={categoryForm.name}
-                          onChange={(e) => setcategoryForm(prev => ({ ...prev, name: e.target.value }))}
-                        />
-                      </div>
-                      <div className="space-y-2">
-                        <Label htmlFor="category-color">Cor</Label>
-                        <div className="flex items-center space-x-2">
-                          <input
-                            type="color"
-                            className="h-8 w-8 border rounded"
-                            value={categoryForm.color}
-                            onChange={(e) => setcategoryForm(prev => ({ ...prev, color: e.target.value }))}
-                          />
-                          <Input
-                            id="category-color"
-                            value={categoryForm.color}
-                            onChange={(e) => setcategoryForm(prev => ({ ...prev, color: e.target.value }))}
-                            className="flex-1"
-                          />
-                        </div>
-                      </div>
-                      <DialogFooter>
-                        <Button variant="outline" onClick={() => setCurrentCategory(null)}>
-                          Voltar
-                        </Button>
-                        <Button onClick={handleSaveCategory}>
-                          <Save className="mr-2 h-4 w-4" />
-                          Salvar
-                        </Button>
-                      </DialogFooter>
-                    </div>
-                  ) : (
-                    <>
-                      <div className="py-4">
-                        <Button 
-                          onClick={() => openCategoryDialog()}
-                          className="mb-4 w-full"
-                        >
-                          <Plus className="mr-2 h-4 w-4" />
-                          Nova Categoria
-                        </Button>
-                        
-                        <ScrollArea className="h-[300px]">
-                          <div className="space-y-1">
-                            {categories.map((category) => (
-                              <div 
-                                key={category.id}
-                                className="flex items-center justify-between p-2 rounded-md hover:bg-muted"
-                              >
-                                <div className="flex items-center">
-                                  <div
-                                    className="h-4 w-4 rounded-full mr-2"
-                                    style={{ backgroundColor: category.color }}
-                                  />
-                                  <span>{category.name}</span>
-                                </div>
-                                <div>
-                                  <Button
-                                    variant="ghost"
-                                    size="sm"
-                                    onClick={() => openCategoryDialog(category)}
-                                  >
-                                    <Pencil className="h-4 w-4" />
-                                  </Button>
-                                  <Button
-                                    variant="ghost"
-                                    size="sm"
-                                    onClick={() => handleDeleteCategory(category)}
-                                  >
-                                    <Trash2 className="h-4 w-4" />
-                                  </Button>
-                                </div>
-                              </div>
-                            ))}
-                          </div>
-                        </ScrollArea>
-                      </div>
-                      <DialogFooter>
-                        <DialogClose asChild>
-                          <Button variant="outline">Fechar</Button>
-                        </DialogClose>
-                      </DialogFooter>
-                    </>
-                  )}
-                </DialogContent>
-              </Dialog>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                  <DropdownMenuItem onClick={() => setFilter("all")}>
+                    Todas as Despesas
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => setFilter("recurring")}>
+                    Apenas Despesas Recorrentes
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => setFilter("one-time")}>
+                    Apenas Despesas Únicas
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+
+              <Button variant="outline">
+                <Download className="mr-2 h-4 w-4" /> Exportar
+              </Button>
             </div>
           </div>
+        </CardHeader>
+        <CardContent>
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
+            <Card className="col-span-1">
+              <CardHeader className="pb-2">
+                <CardTitle className="text-lg">Total de Despesas</CardTitle>
+                <CardDescription>
+                  {format(selectedMonth, "MMMM 'de' yyyy", { locale: ptBR })}
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="text-3xl font-bold text-primary">
+                  R$ {totalAmount.toFixed(2)}
+                </div>
+                <div className="text-xs text-muted-foreground mt-1">
+                  {filteredExpenses.length} despesas no total
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card className="col-span-1 lg:col-span-2">
+              <CardHeader className="pb-2">
+                <CardTitle className="text-lg">
+                  Despesas por Categoria
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="flex justify-center items-center h-[200px]">
+                {chartData.length > 0 ? (
+                  <PieChart
+                    data={chartData}
+                    nameKey="name"
+                    dataKey="value"
+                    colors={[
+                      "#8b5cf6",
+                      "#3b82f6",
+                      "#10b981",
+                      "#f59e0b",
+                      "#ef4444",
+                      "#ec4899",
+                    ]}
+                    height={180}
+                  />
+                ) : (
+                  <div className="text-muted-foreground">
+                    Sem dados para exibir
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </div>
+
+          <div className="rounded-md border">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Descrição</TableHead>
+                  <TableHead>Categoria</TableHead>
+                  <TableHead>Data</TableHead>
+                  <TableHead>Frequência</TableHead>
+                  <TableHead className="text-right">Valor</TableHead>
+                  <TableHead className="text-right"></TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {filteredExpenses.map((expense) => (
+                  <ExpenseItem key={expense.id} expense={expense} />
+                ))}
+
+                {filteredExpenses.length === 0 && (
+                  <TableRow>
+                    <TableCell
+                      colSpan={6}
+                      className="h-24 text-center text-muted-foreground"
+                    >
+                      Nenhuma despesa encontrada
+                    </TableCell>
+                  </TableRow>
+                )}
+              </TableBody>
+            </Table>
+          </div>
+
+          {filteredExpenses.length > 0 && (
+            <div className="flex justify-end mt-4">
+              <div className="bg-muted px-4 py-2 rounded-md">
+                <span className="mr-2 font-medium">Total:</span>
+                <span className="font-bold">
+                  R$ {totalAmount.toFixed(2)}
+                </span>
+              </div>
+            </div>
+          )}
         </CardContent>
       </Card>
-      
-      {/* Resumo e gráfico das despesas */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Gráfico de distribuição */}
-        <Card className="lg:col-span-1">
-          <CardHeader>
-            <CardTitle>Distribuição por Categoria</CardTitle>
-            <CardDescription>
-              Total: {formatCurrency(totalExpenses)}
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            {isLoading ? (
-              <div className="h-[300px] flex items-center justify-center">
-                <div className="animate-spin h-8 w-8 border-4 border-primary border-t-transparent rounded-full"></div>
-              </div>
-            ) : chartData.length > 0 ? (
-              <div className="h-[300px]">
-                <DoughnutChart 
-                  data={chartData}
-                  dataKey="value"
-                />
-                <div className="mt-4">
-                  {chartData.map((item, index) => (
-                    <div key={index} className="flex items-center justify-between mb-1">
-                      <div className="flex items-center">
-                        <div 
-                          className="h-3 w-3 rounded-full mr-2"
-                          style={{ backgroundColor: item.color }}
-                        />
-                        <span className="text-sm">{item.name}</span>
-                      </div>
-                      <div>
-                        <span className="text-sm font-medium">
-                          {formatCurrency(item.value)}
-                        </span>
-                        <span className="text-xs text-muted-foreground ml-2">
-                          ({Math.round((item.value / totalExpenses) * 100)}%)
-                        </span>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            ) : (
-              <div className="h-[300px] flex items-center justify-center">
-                <p className="text-muted-foreground">Sem dados para exibir</p>
-              </div>
-            )}
-          </CardContent>
-        </Card>
-        
-        {/* Listagem de despesas */}
-        <Card className="lg:col-span-2">
-          <CardHeader>
-            <CardTitle>Despesas {activeTab === "fixed" ? "Fixas" : activeTab === "variable" ? "Variáveis" : ""}</CardTitle>
-            <CardDescription>
-              {filteredExpenses.length} despesas encontradas
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            {isLoading ? (
-              <div className="h-[300px] flex items-center justify-center">
-                <div className="animate-spin h-8 w-8 border-4 border-primary border-t-transparent rounded-full"></div>
-              </div>
-            ) : filteredExpenses.length > 0 ? (
-              <div className="rounded-md border">
-                <table className="w-full text-sm">
-                  <thead>
-                    <tr className="border-b bg-muted/50">
-                      <th 
-                        className="py-3 px-4 text-left font-medium cursor-pointer"
-                        onClick={() => handleSort("description")}
-                      >
-                        <div className="flex items-center">
-                          Descrição
-                          {sortField === "description" && (
-                            <ArrowUpDown className="ml-1 h-4 w-4" />
-                          )}
-                        </div>
-                      </th>
-                      <th className="py-3 px-4 text-left font-medium">Categoria</th>
-                      <th 
-                        className="py-3 px-4 text-right font-medium cursor-pointer"
-                        onClick={() => handleSort("amount")}
-                      >
-                        <div className="flex items-center justify-end">
-                          Valor
-                          {sortField === "amount" && (
-                            <ArrowUpDown className="ml-1 h-4 w-4" />
-                          )}
-                        </div>
-                      </th>
-                      <th 
-                        className="py-3 px-4 text-center font-medium cursor-pointer"
-                        onClick={() => handleSort("date")}
-                      >
-                        <div className="flex items-center justify-center">
-                          Data
-                          {sortField === "date" && (
-                            <ArrowUpDown className="ml-1 h-4 w-4" />
-                          )}
-                        </div>
-                      </th>
-                      <th className="py-3 px-4 text-right font-medium">Ações</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {filteredExpenses.map((expense) => (
-                      <tr key={expense.id} className="border-b hover:bg-muted/50">
-                        <td className="py-3 px-4">{expense.description}</td>
-                        <td className="py-3 px-4">
-                          <div className="flex items-center">
-                            <div
-                              className="h-3 w-3 rounded-full mr-2"
-                              style={{ backgroundColor: getCategoryColor(expense.category) }}
-                            />
-                            {getCategoryName(expense.category)}
-                          </div>
-                        </td>
-                        <td className="py-3 px-4 text-right font-medium">
-                          {formatCurrency(expense.amount)}
-                        </td>
-                        <td className="py-3 px-4 text-center">
-                          <div className="flex items-center justify-center">
-                            <Badge variant={expense.recurrence === "fixed" ? "secondary" : "outline"} className="mr-2">
-                              {expense.recurrence === "fixed" ? "Fixa" : "Variável"}
-                            </Badge>
-                            {format(expense.date, 'dd/MM/yyyy')}
-                          </div>
-                        </td>
-                        <td className="py-3 px-4 text-right">
-                          <div className="flex justify-end gap-2">
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => openExpenseDialog(expense)}
-                            >
-                              <Pencil className="h-4 w-4" />
-                            </Button>
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => handleDeleteExpense(expense)}
-                            >
-                              <Trash2 className="h-4 w-4" />
-                            </Button>
-                          </div>
-                        </td>
-                      </tr>
-                    ))}
-                    {/* Linha de total */}
-                    <tr className="bg-muted/20 font-medium">
-                      <td className="py-3 px-4" colSpan={2}>
-                        Total
-                      </td>
-                      <td className="py-3 px-4 text-right">
-                        {formatCurrency(totalExpenses)}
-                      </td>
-                      <td colSpan={2}></td>
-                    </tr>
-                  </tbody>
-                </table>
-              </div>
-            ) : (
-              <div className="h-[300px] flex items-center justify-center">
-                <div className="text-center">
-                  <p className="text-muted-foreground mb-4">Nenhuma despesa encontrada</p>
-                  <Button 
-                    onClick={() => openExpenseDialog()}
-                  >
-                    <Plus className="mr-2 h-4 w-4" />
-                    Adicionar Despesa
-                  </Button>
-                </div>
-              </div>
-            )}
-          </CardContent>
-        </Card>
-      </div>
     </div>
   );
 };

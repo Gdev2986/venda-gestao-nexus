@@ -1,5 +1,6 @@
 
 import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { 
   Card, 
   CardContent, 
@@ -15,13 +16,17 @@ import { usePartners } from "@/hooks/use-partners";
 import PartnersTable from "@/components/partners/PartnersTable";
 import { PartnerFormModal } from "@/components/partners/PartnerFormModal";
 import { PartnersFilterCard } from "@/components/partners/PartnersFilterCard";
+import { PageHeader } from "@/components/page/PageHeader";
+import { PATHS } from "@/routes/paths";
 
 const Partners = () => {
+  const navigate = useNavigate();
   const [searchTerm, setSearchTerm] = useState("");
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
   const [selectedPartner, setSelectedPartner] = useState<Partner | null>(null);
   const [filteredPartners, setFilteredPartners] = useState<Partner[]>([]);
+  const [activeTab, setActiveTab] = useState<string>("list");
 
   const { 
     partners, 
@@ -45,7 +50,6 @@ const Partners = () => {
 
   const handleCreatePartner = async (data: Partial<Partner>) => {
     try {
-      // Use mutateAsync from the hook instead of calling directly
       await createPartner.mutateAsync(data);
       setShowCreateModal(false);
       return true;
@@ -59,7 +63,6 @@ const Partners = () => {
     if (!selectedPartner) return false;
     
     try {
-      // Use mutateAsync from the hook
       await updatePartner.mutateAsync({
         ...data,
         id: selectedPartner.id
@@ -76,7 +79,6 @@ const Partners = () => {
 
   const handleDeletePartner = async (partnerId: string) => {
     try {
-      // Use mutateAsync from the hook
       await deletePartner.mutateAsync(partnerId);
       return true;
     } catch (error) {
@@ -90,14 +92,26 @@ const Partners = () => {
     setShowEditModal(true);
   };
 
+  const handleViewClients = () => {
+    navigate(PATHS.ADMIN.PARTNERS + "/clients");
+  };
+
   return (
     <div className="container mx-auto py-10">
-      <div className="flex justify-between items-center mb-6">
-        <div>
-          <h1 className="text-2xl font-bold">Parceiros</h1>
-          <p className="text-muted-foreground">Gerenciar parceiros e comissões</p>
-        </div>
-        <Button onClick={() => setShowCreateModal(true)}>Novo Parceiro</Button>
+      <PageHeader
+        title="Parceiros"
+        description="Gerenciar parceiros e comissões"
+      />
+
+      <div className="mt-6 mb-4">
+        <Tabs value={activeTab} onValueChange={setActiveTab}>
+          <TabsList>
+            <TabsTrigger value="list">Lista de Parceiros</TabsTrigger>
+            <TabsTrigger value="clients" onClick={handleViewClients}>
+              Parceiros e Clientes
+            </TabsTrigger>
+          </TabsList>
+        </Tabs>
       </div>
 
       {/* Error display */}
@@ -106,6 +120,10 @@ const Partners = () => {
           Erro ao carregar parceiros: {error.message}
         </div>
       )}
+
+      <div className="flex justify-end mb-4">
+        <Button onClick={() => setShowCreateModal(true)}>Novo Parceiro</Button>
+      </div>
 
       <div className="grid gap-6 md:grid-cols-6">
         {/* Left column - filters */}

@@ -13,11 +13,17 @@ const CompanyReportsPage = () => {
       <PageHeader
         title="Relatórios da Empresa"
         description="Análise detalhada dos dados financeiros e desempenho da empresa"
-        backButton={{
-          label: "Voltar para Empresa",
-          onClick: () => navigate(PATHS.ADMIN.COMPANY)
-        }}
       />
+      
+      <div className="mt-4">
+        <Button 
+          variant="outline" 
+          size="sm" 
+          onClick={() => navigate(PATHS.ADMIN.COMPANY)}
+        >
+          Voltar para Empresa
+        </Button>
+      </div>
       
       <CompanyReportsComponent />
     </div>

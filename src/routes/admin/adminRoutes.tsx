@@ -7,26 +7,37 @@ import AdminLayout from "../../layouts/AdminLayout";
 
 // Pages
 const Dashboard = lazy(() => import("../../pages/admin/Dashboard"));
-const ClientsList = lazy(() => import("../../pages/admin/clients/ClientsList"));
-const ClientDetails = lazy(() => import("../../pages/admin/clients/ClientDetails"));
-const ClientNew = lazy(() => import("../../pages/admin/clients/ClientNew"));
 const Reports = lazy(() => import("../../pages/admin/Reports"));
 const Company = lazy(() => import("../../pages/admin/Company"));
 const CompanyReports = lazy(() => import("../../pages/admin/company/CompanyReports"));
 const CompanyExpenses = lazy(() => import("../../pages/admin/company/CompanyExpenses"));
 const Sales = lazy(() => import("../../pages/admin/Sales"));
-const SalesDetails = lazy(() => import("../../pages/admin/SalesDetails"));
-const SalesNew = lazy(() => import("../../pages/admin/SalesNew"));
-const SalesImport = lazy(() => import("../../pages/admin/SalesImport"));
 const Partners = lazy(() => import("../../pages/admin/Partners"));
-const PartnerDetails = lazy(() => import("../../pages/admin/PartnerDetails"));
-const PartnerNew = lazy(() => import("../../pages/admin/PartnerNew"));
+const PartnerClients = lazy(() => import("../../pages/admin/PartnerClients"));
 const Support = lazy(() => import("../../pages/admin/Support"));
 const Payments = lazy(() => import("../../pages/admin/Payments"));
-const PaymentDetails = lazy(() => import("../../pages/admin/PaymentDetails"));
-const PaymentNew = lazy(() => import("../../pages/admin/PaymentNew"));
 const Settings = lazy(() => import("../../pages/admin/Settings"));
-const Logistics = lazy(() => import("../../pages/admin/Logistics"));
+
+// Client Pages
+const ClientsList = lazy(() => import("../../pages/admin/Clients"));
+const ClientDetails = lazy(() => import("../../pages/clients/ClientDetails"));
+const ClientNew = lazy(() => import("../../pages/clients/NewClient"));
+
+// Sales Pages
+const SalesDetails = lazy(() => import("../../pages/sales/SaleDetails"));
+const SalesNew = lazy(() => import("../../pages/sales/NewSale"));
+const SalesImport = lazy(() => import("../../pages/sales/Sales"));
+
+// Partner Pages
+const PartnerDetails = lazy(() => import("../../pages/partners/PartnerDetails"));
+const PartnerNew = lazy(() => import("../../pages/partners/NewPartner"));
+
+// Payment Pages
+const PaymentDetails = lazy(() => import("../../pages/payments/Payments"));
+const PaymentNew = lazy(() => import("../../pages/payments/Payments"));
+
+// Other Pages
+const Logistics = lazy(() => import("../../pages/logistics/Dashboard"));
 
 export const adminRoutes = (
   <Route path={PATHS.ADMIN.ROOT} element={<AdminLayout />}>
@@ -61,6 +72,7 @@ export const adminRoutes = (
     {/* Partners */}
     <Route path="partners">
       <Route index element={<Partners />} />
+      <Route path="clients" element={<PartnerClients />} />
       <Route path=":id" element={<PartnerDetails />} />
       <Route path="new" element={<PartnerNew />} />
     </Route>

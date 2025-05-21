@@ -54,9 +54,6 @@ export function DatePicker({
           onSelect={onSelect}
           initialFocus
           locale={ptBR}
-          showMonthDropdown={showMonthDropdown}
-          showYearDropdown={showYearDropdown}
-          dropdownMode={dropdownMode}
           className={cn("p-3 pointer-events-auto")}
         />
       </PopoverContent>

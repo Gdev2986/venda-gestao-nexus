@@ -1,385 +1,473 @@
 
-import { useState, useEffect } from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import React, { useState } from "react";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { DatePicker } from "@/components/ui/date-picker";
 import { BarChart, LineChart } from "@/components/charts";
-import { 
-  BarChart3, 
-  DollarSign, 
-  Download, 
-  Calendar, 
-  TrendingUp,
-  FileText 
-} from "lucide-react";
-import { useToast } from "@/hooks/use-toast";
-import { format, addDays, subDays, subMonths, startOfMonth, endOfMonth } from "date-fns";
+import { PieChart } from "recharts";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import { addMonths, format, subMonths } from "date-fns";
 import { ptBR } from "date-fns/locale";
 
-const CompanyReports = () => {
-  const { toast } = useToast();
-  const [reportType, setReportType] = useState<string>("overview");
-  const [dateRange, setDateRange] = useState<{
-    from: Date;
-    to: Date;
-  }>({
-    from: subMonths(new Date(), 1),
-    to: new Date()
-  });
-  const [isLoading, setIsLoading] = useState(false);
-  const [cashBalance, setCashBalance] = useState(125000);
-  const [projectedCash, setProjectedCash] = useState(178500);
-  const [outstandingBalance, setOutstandingBalance] = useState(42800);
-  const [officeCommission, setOfficeCommission] = useState(15600);
-  
-  // Dados dos gráficos (simulados)
-  const [cashFlowData, setCashFlowData] = useState([
-    { name: "Jan", entrada: 42000, saida: 28000, saldo: 14000 },
-    { name: "Fev", entrada: 38000, saida: 30000, saldo: 8000 },
-    { name: "Mar", entrada: 45000, saida: 28500, saldo: 16500 },
-    { name: "Abr", entrada: 40000, saida: 27000, saldo: 13000 },
-    { name: "Mai", entrada: 52000, saida: 31000, saldo: 21000 },
-    { name: "Jun", entrada: 48000, saida: 29000, saldo: 19000 }
-  ]);
-  
-  const [clientBalanceData, setClientBalanceData] = useState([
-    { name: "Jan", pendente: 35000, recebido: 120000 },
-    { name: "Fev", pendente: 38000, recebido: 118000 },
-    { name: "Mar", pendente: 42000, recebido: 125000 },
-    { name: "Abr", pendente: 40000, recebido: 130000 },
-    { name: "Mai", pendente: 37000, recebido: 140000 },
-    { name: "Jun", pendente: 42800, recebido: 142000 }
-  ]);
+// Mock data for demonstration
+const mockData = {
+  cashFlow: [
+    { name: "Jan", entrada: 12000, saida: 8000, saldo: 4000 },
+    { name: "Fev", entrada: 15000, saida: 10000, saldo: 5000 },
+    { name: "Mar", entrada: 18000, saida: 12000, saldo: 6000 },
+    { name: "Abr", entrada: 16000, saida: 14000, saldo: 2000 },
+    { name: "Mai", entrada: 20000, saida: 15000, saldo: 5000 },
+    { name: "Jun", entrada: 22000, saida: 16000, saldo: 6000 },
+  ],
+  clientBalance: [
+    { name: "Jan", pendente: 5000, recebido: 15000 },
+    { name: "Fev", pendente: 6000, recebido: 18000 },
+    { name: "Mar", pendente: 4500, recebido: 20000 },
+    { name: "Abr", pendente: 7000, recebido: 19000 },
+    { name: "Mai", pendente: 6500, recebido: 22000 },
+    { name: "Jun", pendente: 8000, recebido: 24000 },
+  ],
+  commission: [
+    { name: "Jan", comissao: 1200 },
+    { name: "Fev", comissao: 1500 },
+    { name: "Mar", comissao: 1800 },
+    { name: "Abr", comissao: 1600 },
+    { name: "Mai", comissao: 2000 },
+    { name: "Jun", comissao: 2200 },
+  ],
+  expenses: [
+    { category: "Aluguel", valor: 4000 },
+    { category: "Folha de Pagamento", valor: 12000 },
+    { category: "Marketing", valor: 3000 },
+    { category: "Sistemas", valor: 2000 },
+    { category: "Outros", valor: 1500 },
+  ],
+  detailedData: [
+    {
+      id: "1",
+      data: "01/06/2023",
+      descricao: "Pagamento Cliente A",
+      tipo: "Entrada",
+      valor: 5000,
+    },
+    {
+      id: "2",
+      data: "03/06/2023",
+      descricao: "Aluguel",
+      tipo: "Saída",
+      valor: -4000,
+    },
+    {
+      id: "3",
+      data: "05/06/2023",
+      descricao: "Pagamento Cliente B",
+      tipo: "Entrada",
+      valor: 3500,
+    },
+    {
+      id: "4",
+      data: "10/06/2023",
+      descricao: "Folha de Pagamento",
+      tipo: "Saída",
+      valor: -12000,
+    },
+    {
+      id: "5",
+      data: "15/06/2023",
+      descricao: "Comissão Parceiro X",
+      tipo: "Saída",
+      valor: -1200,
+    },
+  ],
+};
 
-  const handleDatePreset = (preset: string) => {
-    const today = new Date();
-    
-    switch (preset) {
-      case "today":
-        setDateRange({ from: today, to: today });
-        break;
-      case "yesterday":
-        const yesterday = subDays(today, 1);
-        setDateRange({ from: yesterday, to: yesterday });
-        break;
-      case "last7days":
-        setDateRange({ from: subDays(today, 6), to: today });
-        break;
-      case "last30days":
-        setDateRange({ from: subDays(today, 29), to: today });
-        break;
-      case "thisMonth":
-        setDateRange({ from: startOfMonth(today), to: today });
-        break;
-      case "lastMonth":
-        const firstDayLastMonth = startOfMonth(subMonths(today, 1));
-        const lastDayLastMonth = endOfMonth(firstDayLastMonth);
-        setDateRange({ from: firstDayLastMonth, to: lastDayLastMonth });
-        break;
-      default:
-        break;
-    }
+const CompanyReports = () => {
+  const [dateRange, setDateRange] = useState<{
+    start: Date;
+    end: Date;
+  }>({
+    start: subMonths(new Date(), 6),
+    end: new Date(),
+  });
+
+  const [activeTab, setActiveTab] = useState("overview");
+
+  const handleStartDateChange = (date: Date) => {
+    setDateRange((prev) => ({ ...prev, start: date }));
   };
-  
-  const formatCurrency = (value: number) => {
-    return new Intl.NumberFormat('pt-BR', { 
-      style: 'currency', 
-      currency: 'BRL' 
-    }).format(value);
+
+  const handleEndDateChange = (date: Date) => {
+    setDateRange((prev) => ({ ...prev, end: date }));
   };
-  
-  const fetchReportData = () => {
-    setIsLoading(true);
-    
-    // Simulação de carregamento de dados (seria substituído por chamada à API)
-    setTimeout(() => {
-      setIsLoading(false);
-      toast({
-        title: "Relatório atualizado",
-        description: `Dados atualizados para o período de ${format(dateRange.from, 'dd/MM/yyyy')} a ${format(dateRange.to, 'dd/MM/yyyy')}`
-      });
-    }, 1000);
-  };
-  
-  const handleExportReport = (format: string) => {
-    toast({
-      title: `Exportando relatório em ${format}`,
-      description: "O download começará em instantes..."
+
+  const handlePredefinedRange = (months: number) => {
+    setDateRange({
+      start: subMonths(new Date(), months),
+      end: new Date(),
     });
   };
-  
-  useEffect(() => {
-    fetchReportData();
-  }, [dateRange]);
+
+  // Calculate summary data
+  const currentBalance = 45000; // Mock current balance
+  const provisionalBalance = 12000; // Mock provisional balance
+  const pendingBalance = 22000; // Mock client pending balance
+  const totalCommission = 10200; // Mock total commission
 
   return (
     <div className="space-y-6">
-      {/* Filtros e controles */}
+      {/* Date Filter Controls */}
       <Card>
-        <CardContent className="p-6">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div className="space-y-2">
-              <h3 className="text-sm font-medium">Tipo de Relatório</h3>
-              <Select value={reportType} onValueChange={setReportType}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Selecione um relatório" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="overview">Visão Geral</SelectItem>
-                  <SelectItem value="cashflow">Fluxo de Caixa</SelectItem>
-                  <SelectItem value="clients">Saldo de Clientes</SelectItem>
-                  <SelectItem value="commission">Comissões</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            
-            <div className="space-y-2">
-              <h3 className="text-sm font-medium">Período</h3>
-              <div className="flex items-center space-x-2">
-                <DatePicker 
-                  selected={dateRange.from}
-                  onSelect={(date) => date && setDateRange(prev => ({ ...prev, from: date }))}
+        <CardHeader className="pb-3">
+          <CardTitle>Filtro por Período</CardTitle>
+          <CardDescription>
+            Selecione o intervalo de datas para os relatórios
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="flex flex-col sm:flex-row gap-4 mb-4">
+            <div className="grid gap-2">
+              <div className="flex items-center">
+                <span className="text-sm font-medium mr-2">De:</span>
+                <DatePicker
+                  selected={dateRange.start}
+                  onSelect={handleStartDateChange}
                   showMonthDropdown
                   showYearDropdown
                   dropdownMode="select"
-                  placeholderText="Data inicial"
-                />
-                <span>até</span>
-                <DatePicker 
-                  selected={dateRange.to}
-                  onSelect={(date) => date && setDateRange(prev => ({ ...prev, to: date }))}
-                  showMonthDropdown
-                  showYearDropdown
-                  dropdownMode="select"
-                  placeholderText="Data final"
+                  placeholder="Data inicial"
                 />
               </div>
             </div>
-            
-            <div className="space-y-2">
-              <h3 className="text-sm font-medium">Predefinições</h3>
-              <div className="flex flex-wrap gap-2">
-                <Button variant="outline" size="sm" onClick={() => handleDatePreset("today")}>
-                  Hoje
-                </Button>
-                <Button variant="outline" size="sm" onClick={() => handleDatePreset("last7days")}>
-                  7 dias
-                </Button>
-                <Button variant="outline" size="sm" onClick={() => handleDatePreset("thisMonth")}>
-                  Este mês
-                </Button>
-                <Button variant="outline" size="sm" onClick={() => handleDatePreset("lastMonth")}>
-                  Mês passado
-                </Button>
+            <div className="grid gap-2">
+              <div className="flex items-center">
+                <span className="text-sm font-medium mr-2">Até:</span>
+                <DatePicker
+                  selected={dateRange.end}
+                  onSelect={handleEndDateChange}
+                  showMonthDropdown
+                  showYearDropdown
+                  dropdownMode="select"
+                  placeholder="Data final"
+                />
               </div>
             </div>
           </div>
-          
-          <div className="flex justify-end mt-6">
-            <Button variant="outline" className="mr-2" onClick={() => handleExportReport("csv")}>
-              <FileText className="mr-2 h-4 w-4" /> Exportar CSV
+
+          <div className="flex flex-wrap gap-2 mt-4">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => handlePredefinedRange(1)}
+            >
+              Último mês
             </Button>
-            <Button variant="outline" onClick={() => handleExportReport("pdf")}>
-              <Download className="mr-2 h-4 w-4" /> Exportar PDF
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => handlePredefinedRange(3)}
+            >
+              Últimos 3 meses
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => handlePredefinedRange(6)}
+            >
+              Últimos 6 meses
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => handlePredefinedRange(12)}
+            >
+              Último ano
             </Button>
           </div>
         </CardContent>
       </Card>
-      
-      {/* Indicadores principais */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <Card className="bg-white">
+
+      {/* Summary Cards */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        <Card>
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">Saldo de Caixa</CardTitle>
+            <CardDescription>Saldo de Caixa</CardDescription>
+            <CardTitle className="text-2xl text-emerald-600">
+              R$ {currentBalance.toLocaleString("pt-BR")}
+            </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="flex items-center">
-              <DollarSign className="h-5 w-5 text-green-500 mr-2" />
-              <div className="text-2xl font-bold text-green-500">{formatCurrency(cashBalance)}</div>
+            <div className="text-sm text-muted-foreground">
+              Disponível atualmente
             </div>
-            <p className="text-xs text-muted-foreground mt-1">Atualizado hoje</p>
           </CardContent>
         </Card>
-        
-        <Card className="bg-white">
+
+        <Card>
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">Provisão de Caixa</CardTitle>
+            <CardDescription>Provisão de Caixa</CardDescription>
+            <CardTitle className="text-2xl text-amber-600">
+              R$ {provisionalBalance.toLocaleString("pt-BR")}
+            </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="flex items-center">
-              <Calendar className="h-5 w-5 text-blue-500 mr-2" />
-              <div className="text-2xl font-bold text-blue-500">{formatCurrency(projectedCash)}</div>
+            <div className="text-sm text-muted-foreground">
+              Valores agendados futuros
             </div>
-            <p className="text-xs text-muted-foreground mt-1">Projeção para 30 dias</p>
           </CardContent>
         </Card>
-        
-        <Card className="bg-white">
+
+        <Card>
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">Saldo Clientes</CardTitle>
+            <CardDescription>Saldo de Clientes</CardDescription>
+            <CardTitle className="text-2xl text-blue-600">
+              R$ {pendingBalance.toLocaleString("pt-BR")}
+            </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="flex items-center">
-              <BarChart3 className="h-5 w-5 text-orange-500 mr-2" />
-              <div className="text-2xl font-bold text-orange-500">{formatCurrency(outstandingBalance)}</div>
+            <div className="text-sm text-muted-foreground">
+              Pendente de recebimento
             </div>
-            <p className="text-xs text-muted-foreground mt-1">Pendente de recebimento</p>
           </CardContent>
         </Card>
-        
-        <Card className="bg-white">
+
+        <Card>
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">Comissão Escritório</CardTitle>
+            <CardDescription>Comissão do Escritório</CardDescription>
+            <CardTitle className="text-2xl text-purple-600">
+              R$ {totalCommission.toLocaleString("pt-BR")}
+            </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="flex items-center">
-              <TrendingUp className="h-5 w-5 text-purple-500 mr-2" />
-              <div className="text-2xl font-bold text-purple-500">{formatCurrency(officeCommission)}</div>
+            <div className="text-sm text-muted-foreground">
+              Comissão total acumulada
             </div>
-            <p className="text-xs text-muted-foreground mt-1">No período selecionado</p>
           </CardContent>
         </Card>
       </div>
-      
-      {/* Conteúdo do relatório */}
-      <Card>
-        <CardHeader>
-          <CardTitle>
-            {reportType === "overview" && "Visão Geral da Empresa"}
-            {reportType === "cashflow" && "Fluxo de Caixa"}
-            {reportType === "clients" && "Saldo de Clientes"}
-            {reportType === "commission" && "Comissões do Escritório"}
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          {isLoading ? (
-            <div className="h-[400px] flex items-center justify-center">
-              <div className="flex flex-col items-center">
-                <div className="animate-spin h-8 w-8 border-4 border-primary border-t-transparent rounded-full"></div>
-                <p className="mt-4 text-sm text-muted-foreground">Carregando dados...</p>
+
+      {/* Tabs for Different Reports */}
+      <Tabs
+        defaultValue="overview"
+        value={activeTab}
+        onValueChange={setActiveTab}
+        className="w-full"
+      >
+        <TabsList className="grid grid-cols-2 md:grid-cols-4 mb-4">
+          <TabsTrigger value="overview">Visão Geral</TabsTrigger>
+          <TabsTrigger value="cashflow">Fluxo de Caixa</TabsTrigger>
+          <TabsTrigger value="clients">Saldos de Clientes</TabsTrigger>
+          <TabsTrigger value="commission">Comissões</TabsTrigger>
+        </TabsList>
+
+        {/* Overview Tab Content */}
+        <TabsContent value="overview" className="space-y-6">
+          <Card>
+            <CardHeader>
+              <CardTitle>Fluxo de Caixa</CardTitle>
+              <CardDescription>
+                Entradas, saídas e saldo do período
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <LineChart
+                data={mockData.cashFlow}
+                xAxisKey="name"
+                yAxisKey={["entrada", "saida", "saldo"]}
+                colors={["#10b981", "#ef4444", "#6366f1"]}
+                labels={["Entradas", "Saídas", "Saldo"]}
+                height={300}
+              />
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <CardTitle>Pendências e Recebimentos</CardTitle>
+              <CardDescription>
+                Valores pendentes vs. recebidos no período
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <BarChart
+                data={mockData.clientBalance}
+                xAxisKey="name"
+                yAxisKey={["pendente", "recebido"]}
+                colors={["#f59e0b", "#10b981"]}
+                labels={["Pendente", "Recebido"]}
+                height={300}
+              />
+            </CardContent>
+          </Card>
+
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <Card>
+              <CardHeader>
+                <CardTitle>Comissões</CardTitle>
+                <CardDescription>
+                  Comissões geradas no período
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <BarChart
+                  data={mockData.commission}
+                  xAxisKey="name"
+                  yAxisKey={["comissao"]}
+                  colors={["#8b5cf6"]}
+                  labels={["Comissão"]}
+                  height={300}
+                />
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader>
+                <CardTitle>Distribuição de Despesas</CardTitle>
+                <CardDescription>
+                  Proporção por categoria
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="flex justify-center">
+                {/* Placeholder for Pie Chart - use specific chart library as needed */}
+                <div className="h-[300px] w-full flex items-center justify-center text-muted-foreground">
+                  Gráfico de distribuição de despesas aqui
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        </TabsContent>
+
+        {/* Cash Flow Tab Content */}
+        <TabsContent value="cashflow" className="space-y-6">
+          <Card>
+            <CardHeader>
+              <CardTitle>Detalhamento do Fluxo de Caixa</CardTitle>
+              <CardDescription>
+                Análise detalhada de entradas e saídas
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="overflow-x-auto">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Data</TableHead>
+                      <TableHead>Descrição</TableHead>
+                      <TableHead>Tipo</TableHead>
+                      <TableHead className="text-right">Valor</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {mockData.detailedData.map((item) => (
+                      <TableRow key={item.id}>
+                        <TableCell>{item.data}</TableCell>
+                        <TableCell>{item.descricao}</TableCell>
+                        <TableCell>
+                          <span
+                            className={
+                              item.tipo === "Entrada"
+                                ? "text-emerald-600"
+                                : "text-destructive"
+                            }
+                          >
+                            {item.tipo}
+                          </span>
+                        </TableCell>
+                        <TableCell
+                          className={`text-right ${
+                            item.valor > 0
+                              ? "text-emerald-600"
+                              : "text-destructive"
+                          }`}
+                        >
+                          R$ {Math.abs(item.valor).toLocaleString("pt-BR")}
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
               </div>
-            </div>
-          ) : (
-            <div>
-              {reportType === "overview" || reportType === "cashflow" ? (
-                <div className="h-[400px]">
-                  <LineChart 
-                    data={cashFlowData}
-                    xAxisKey="name"
-                    series={[
-                      { dataKey: "entrada", name: "Entradas", color: "#4ade80" },
-                      { dataKey: "saida", name: "Saídas", color: "#f43f5e" },
-                      { dataKey: "saldo", name: "Saldo", color: "#8B5CF6" }
-                    ]}
-                  />
-                </div>
-              ) : null}
-              
-              {reportType === "clients" && (
-                <div className="h-[400px]">
-                  <BarChart
-                    data={clientBalanceData}
-                    xAxisKey="name"
-                    series={[
-                      { dataKey: "pendente", name: "Pendente", color: "#f97316" },
-                      { dataKey: "recebido", name: "Recebido", color: "#4ade80" }
-                    ]}
-                  />
-                </div>
-              )}
-              
-              {reportType === "commission" && (
-                <div className="h-[400px]">
-                  <BarChart
-                    data={clientBalanceData.map(item => ({
-                      name: item.name,
-                      comissao: item.recebido * 0.11
-                    }))}
-                    xAxisKey="name"
-                    series={[
-                      { dataKey: "comissao", name: "Comissão", color: "#9b87f5" }
-                    ]}
-                  />
-                </div>
-              )}
-              
-              {/* Tabela detalhada abaixo do gráfico */}
-              <div className="mt-8">
-                <h3 className="text-lg font-medium mb-4">Dados Detalhados</h3>
-                <div className="border rounded-md">
-                  <table className="w-full">
-                    <thead>
-                      <tr className="border-b">
-                        <th className="px-4 py-2 text-left">Período</th>
-                        {reportType === "overview" || reportType === "cashflow" ? (
-                          <>
-                            <th className="px-4 py-2 text-right">Entradas</th>
-                            <th className="px-4 py-2 text-right">Saídas</th>
-                            <th className="px-4 py-2 text-right">Saldo</th>
-                          </>
-                        ) : reportType === "clients" ? (
-                          <>
-                            <th className="px-4 py-2 text-right">Pendente</th>
-                            <th className="px-4 py-2 text-right">Recebido</th>
-                            <th className="px-4 py-2 text-right">Total</th>
-                          </>
-                        ) : (
-                          <>
-                            <th className="px-4 py-2 text-right">Faturamento</th>
-                            <th className="px-4 py-2 text-right">Taxa</th>
-                            <th className="px-4 py-2 text-right">Comissão</th>
-                          </>
-                        )}
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {(reportType === "overview" || reportType === "cashflow") && 
-                        cashFlowData.map((item, index) => (
-                          <tr key={index} className="border-b">
-                            <td className="px-4 py-2">{item.name}</td>
-                            <td className="px-4 py-2 text-right text-green-600">{formatCurrency(item.entrada)}</td>
-                            <td className="px-4 py-2 text-right text-red-600">{formatCurrency(item.saida)}</td>
-                            <td className="px-4 py-2 text-right font-medium">{formatCurrency(item.saldo)}</td>
-                          </tr>
-                        ))
-                      }
-                      
-                      {reportType === "clients" && 
-                        clientBalanceData.map((item, index) => (
-                          <tr key={index} className="border-b">
-                            <td className="px-4 py-2">{item.name}</td>
-                            <td className="px-4 py-2 text-right text-orange-500">{formatCurrency(item.pendente)}</td>
-                            <td className="px-4 py-2 text-right text-green-600">{formatCurrency(item.recebido)}</td>
-                            <td className="px-4 py-2 text-right font-medium">{formatCurrency(item.pendente + item.recebido)}</td>
-                          </tr>
-                        ))
-                      }
-                      
-                      {reportType === "commission" && 
-                        clientBalanceData.map((item, index) => {
-                          const taxRate = 0.11;
-                          const commission = item.recebido * taxRate;
-                          
-                          return (
-                            <tr key={index} className="border-b">
-                              <td className="px-4 py-2">{item.name}</td>
-                              <td className="px-4 py-2 text-right">{formatCurrency(item.recebido)}</td>
-                              <td className="px-4 py-2 text-right">{(taxRate * 100).toFixed(1)}%</td>
-                              <td className="px-4 py-2 text-right text-purple-600 font-medium">{formatCurrency(commission)}</td>
-                            </tr>
-                          );
-                        })
-                      }
-                    </tbody>
-                  </table>
-                </div>
+
+              <div className="mt-6">
+                <LineChart
+                  data={mockData.cashFlow}
+                  xAxisKey="name"
+                  yAxisKey={["entrada", "saida", "saldo"]}
+                  colors={["#10b981", "#ef4444", "#6366f1"]}
+                  labels={["Entradas", "Saídas", "Saldo"]}
+                  height={350}
+                />
               </div>
-            </div>
-          )}
-        </CardContent>
-      </Card>
+
+              <div className="mt-6 flex justify-end">
+                <Button variant="outline">Exportar para CSV</Button>
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        {/* Additional tabs for Clients and Commission would follow a similar pattern */}
+        <TabsContent value="clients" className="space-y-6">
+          <Card>
+            <CardHeader>
+              <CardTitle>Evolução de Saldos de Clientes</CardTitle>
+              <CardDescription>Análise por período</CardDescription>
+            </CardHeader>
+            <CardContent>
+              {/* Client balance content goes here */}
+              <div className="mb-6">
+                <BarChart
+                  data={mockData.clientBalance}
+                  xAxisKey="name"
+                  yAxisKey={["pendente", "recebido"]}
+                  colors={["#f59e0b", "#10b981"]}
+                  labels={["Pendente", "Recebido"]}
+                  height={350}
+                />
+              </div>
+
+              {/* Detailed client data table would go here */}
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="commission" className="space-y-6">
+          <Card>
+            <CardHeader>
+              <CardTitle>Análise de Comissões</CardTitle>
+              <CardDescription>Por período e parceiro</CardDescription>
+            </CardHeader>
+            <CardContent>
+              {/* Commission content goes here */}
+              <div className="mb-6">
+                <BarChart
+                  data={mockData.commission}
+                  xAxisKey="name"
+                  yAxisKey={["comissao"]}
+                  colors={["#8b5cf6"]}
+                  labels={["Comissão"]}
+                  height={350}
+                />
+              </div>
+
+              {/* Detailed commission data table would go here */}
+            </CardContent>
+          </Card>
+        </TabsContent>
+      </Tabs>
     </div>
   );
 };

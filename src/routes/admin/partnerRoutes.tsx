@@ -4,6 +4,7 @@ import { PATHS } from "../paths";
 
 // Partner pages
 import AdminPartners from "../../pages/admin/Partners";
+import PartnerClients from "../../pages/admin/PartnerClients"; 
 import PartnerDetails from "../../pages/partners/PartnerDetails";
 import NewPartner from "../../pages/partners/NewPartner";
 
@@ -13,6 +14,11 @@ export const partnerRoutes = [
     key="admin-partners" 
     path={PATHS.ADMIN.PARTNERS} 
     element={<AdminPartners />} 
+  />,
+  <Route 
+    key="admin-partner-clients"
+    path={PATHS.ADMIN.PARTNERS + "/clients"}
+    element={<PartnerClients />}
   />,
   <Route 
     key="admin-partner-details" 
