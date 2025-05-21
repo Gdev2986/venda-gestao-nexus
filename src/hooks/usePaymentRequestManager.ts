@@ -66,12 +66,12 @@ export const usePaymentRequestManager = (
 
       if (error) throw error;
 
-      // Create a UUID synchronously instead of using a Promise
+      // Generate a UUID synchronously
       const paymentId = data?.[0]?.id || generateUuid();
 
       // Create formatted payment for UI
       const newPayment: Payment = {
-        id: paymentId, // Use the resolved string value
+        id: paymentId,
         amount: values.amount,
         description: values.description || "Solicitação de pagamento",
         status: PaymentStatus.PENDING,
