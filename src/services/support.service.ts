@@ -1,12 +1,12 @@
 
 import { supabase } from "@/integrations/supabase/client";
 import { SupportTicket, CreateTicketParams, UpdateTicketParams, SupportMessage } from "@/types/support.types";
-import { TicketStatus, NotificationType } from "@/types/enums";
+import { TicketStatus, NotificationType, TicketPriority, TicketType } from "@/types/enums";
 
 // Create a new support ticket
 export async function createSupportTicket(ticket: CreateTicketParams): Promise<{ data: SupportTicket | null, error: any }> {
   const { data, error } = await supabase
-    .from('support_tickets')
+    .from('support_requests')
     .insert({
       client_id: ticket.client_id,
       machine_id: ticket.machine_id,
@@ -22,16 +22,16 @@ export async function createSupportTicket(ticket: CreateTicketParams): Promise<{
     .single();
   
   if (!error && data) {
-    await createTicketNotification(data);
+    await createTicketNotification(data as unknown as SupportTicket);
   }
   
-  return { data, error };
+  return { data: data as unknown as SupportTicket, error };
 }
 
 // Update an existing ticket
 export async function updateSupportTicket(id: string, updates: UpdateTicketParams): Promise<{ data: any, error: any }> {
   const { data, error } = await supabase
-    .from('support_tickets')
+    .from('support_requests')
     .update({
       ...updates,
       updated_at: new Date().toISOString()
@@ -49,8 +49,8 @@ export async function updateSupportTicket(id: string, updates: UpdateTicketParam
 
 // Get a single ticket by ID
 export async function getSupportTicketById(id: string): Promise<{ data: SupportTicket | null, error: any }> {
-  return await supabase
-    .from('support_tickets')
+  const { data, error } = await supabase
+    .from('support_requests')
     .select(`
       *,
       client:client_id(*),
@@ -58,6 +58,8 @@ export async function getSupportTicketById(id: string): Promise<{ data: SupportT
     `)
     .eq('id', id)
     .single();
+    
+  return { data: data as unknown as SupportTicket, error };
 }
 
 // Get all tickets with optional filters
@@ -72,7 +74,7 @@ export async function getSupportTickets(filters?: {
   date_to?: string;
 }): Promise<{ data: SupportTicket[] | null, error: any }> {
   let query = supabase
-    .from('support_tickets')
+    .from('support_requests')
     .select(`
       *,
       client:client_id(*),
@@ -105,25 +107,30 @@ export async function getSupportTickets(filters?: {
     if (filters.date_to) query = query.lte('created_at', filters.date_to);
   }
 
-  return await query;
+  const { data, error } = await query;
+  return { data: data as unknown as SupportTicket[], error };
 }
 
 // Get tickets for a client
 export async function getClientSupportTickets(clientId: string): Promise<{ data: SupportTicket[] | null, error: any }> {
-  return await supabase
-    .from('support_tickets')
+  const { data, error } = await supabase
+    .from('support_requests')
     .select('*, client:client_id(*), machine:machine_id(*)')
     .eq('client_id', clientId)
     .order('created_at', { ascending: false });
+    
+  return { data: data as unknown as SupportTicket[], error };
 }
 
 // Get messages for a ticket
 export async function getTicketMessages(ticketId: string): Promise<{ data: SupportMessage[] | null, error: any }> {
-  return await supabase
+  const { data, error } = await supabase
     .from('support_messages')
     .select('*, user:user_id(id, name, role)')
     .eq('ticket_id', ticketId)
     .order('created_at', { ascending: true });
+    
+  return { data, error };
 }
 
 // Add a message to a ticket
@@ -140,7 +147,7 @@ export async function addTicketMessage(ticketId: string, userId: string, message
   if (!error) {
     // Also update the ticket's updated_at timestamp
     await supabase
-      .from('support_tickets')
+      .from('support_requests')
       .update({ updated_at: new Date().toISOString() })
       .eq('id', ticketId);
       

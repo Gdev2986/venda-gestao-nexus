@@ -1,6 +1,11 @@
 
 import { useState, useEffect } from "react";
-import { SupportTicket, TicketPriority, TicketStatus, TicketType } from "@/types/support.types";
+import { 
+  SupportTicket, 
+  TicketStatus, 
+  TicketPriority, 
+  TicketType 
+} from "@/types/support.types";
 import { v4 as uuidv4 } from 'uuid';
 
 // Mock data generator
@@ -43,14 +48,14 @@ const generateMockTickets = (count: number): SupportTicket[] => {
     
     return {
       id: uuidv4(),
-      title: `Ticket de ${types[typeIndex].toLowerCase()} para ${mockClients[clientIndex].business_name}`,
+      title: `Ticket de ${types[typeIndex].toString().toLowerCase()} para ${mockClients[clientIndex].business_name}`,
       client_id: mockClients[clientIndex].id,
       machine_id: mockMachines[machineIndex].id,
-      user_id: 'system', // Changed from created_by to user_id
+      user_id: 'system',
       type: types[typeIndex],
       status: statuses[statusIndex],
       priority: priorities[priorityIndex],
-      description: `Detalhes do ticket de ${types[typeIndex].toLowerCase()} para ${mockClients[clientIndex].business_name}`,
+      description: `Detalhes do ticket de ${types[typeIndex].toString().toLowerCase()} para ${mockClients[clientIndex].business_name}`,
       scheduled_date: scheduledDate.toISOString(),
       created_at: createdDate.toISOString(),
       updated_at: createdDate.toISOString(),
@@ -93,7 +98,7 @@ export const useSupportTickets = (options: UseSupportTicketsOptions = {}) => {
           title: ticketData.title || '',
           client_id: ticketData.client_id!,
           machine_id: ticketData.machine_id,
-          user_id: 'current_user', // Changed from created_by to user_id
+          user_id: 'current_user',
           type: ticketData.type || TicketType.OTHER,
           status: TicketStatus.PENDING,
           priority: ticketData.priority || TicketPriority.MEDIUM,
@@ -101,7 +106,6 @@ export const useSupportTickets = (options: UseSupportTicketsOptions = {}) => {
           scheduled_date: ticketData.scheduled_date,
           created_at: new Date().toISOString(),
           updated_at: new Date().toISOString(),
-          // Add client and machine info if available
           client: ticketData.client,
           machine: ticketData.machine
         };

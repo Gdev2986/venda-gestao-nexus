@@ -67,3 +67,6 @@ export interface UpdateTicketParams {
   resolution?: string;
   scheduled_date?: string;
 }
+
+// Export the enums to fix the "locally declared but not exported" errors
+export { TicketStatus, TicketPriority, TicketType };
