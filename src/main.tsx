@@ -1,6 +1,5 @@
 
-// Import React explicitly without destructuring to maintain a single instance
-import React from 'react';
+import * as React from 'react';
 import { createRoot } from 'react-dom/client';
 import { BrowserRouter } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
@@ -37,7 +36,6 @@ function renderApp() {
     const root = createRoot(rootElement);
     
     // Render the application with proper provider hierarchy
-    // Important: Use React.StrictMode with direct React reference
     root.render(
       <React.StrictMode>
         <BrowserRouter>

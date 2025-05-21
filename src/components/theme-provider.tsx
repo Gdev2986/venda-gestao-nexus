@@ -1,8 +1,7 @@
 
 "use client"
 
-// Explicitly import React as a namespace to ensure consistent usage
-import React from "react"
+import * as React from "react"
 
 type Theme = "dark" | "light" | "system"
 
@@ -22,7 +21,6 @@ const initialState: ThemeProviderState = {
   setTheme: () => null,
 }
 
-// Create context using the direct React reference
 const ThemeProviderContext = React.createContext<ThemeProviderState>(initialState)
 
 export function ThemeProvider({
@@ -31,7 +29,6 @@ export function ThemeProvider({
   storageKey = "sigmapay-theme",
   ...props
 }: ThemeProviderProps) {
-  // Use direct React reference for useState to avoid dependency issues
   const [theme, setTheme] = React.useState<Theme>(() => {
     if (typeof window === "undefined") return defaultTheme;
     
@@ -44,7 +41,6 @@ export function ThemeProvider({
     }
   })
 
-  // Use direct React reference for useEffect
   React.useEffect(() => {
     if (typeof window === "undefined") return
     
@@ -72,7 +68,6 @@ export function ThemeProvider({
     }
   }, [theme, storageKey])
 
-  // Use direct React reference for useMemo
   const value = React.useMemo(
     () => ({
       theme,
@@ -91,7 +86,6 @@ export function ThemeProvider({
 }
 
 export const useTheme = (): ThemeProviderState => {
-  // Use direct React reference for useContext
   const context = React.useContext(ThemeProviderContext)
 
   if (context === undefined) {
