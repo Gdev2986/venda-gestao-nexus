@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -98,10 +99,9 @@ const MachineTransferForm: React.FC<MachineTransferFormProps> = ({ onSubmit, onC
           render={() => (
             <FormItem>
               <FormLabel>Transfer Date</FormLabel>
-              {/* Changed: Fix the DatePicker usage on line 143 */}
               <DatePicker
                 selected={date}
-                onSelect={(newDate) => newDate && setDate(newDate)}
+                onSelect={handleDateChange}
                 className="w-full"
               />
               <FormMessage />

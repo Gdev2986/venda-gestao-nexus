@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { 
   Dialog,
@@ -7,7 +6,7 @@ import {
   DialogTitle,
   DialogDescription,
 } from '@/components/ui/dialog';
-import { MachineTransferForm } from '@/components/logistics/machines/MachineTransferForm';
+import MachineTransferForm from '@/components/logistics/machines/MachineTransferForm';
 
 export interface MachineTransferDialogProps {
   open: boolean;

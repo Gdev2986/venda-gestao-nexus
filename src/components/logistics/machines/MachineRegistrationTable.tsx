@@ -12,7 +12,7 @@ import { Badge } from "@/components/ui/badge";
 import { Link } from "react-router-dom";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { useMediaQuery } from "@/hooks/use-media-query";
-import { MachineTransferForm } from "@/components/logistics/machines/MachineTransferForm";
+import MachineTransferForm from "@/components/logistics/machines/MachineTransferForm";
 import { supabase } from "@/integrations/supabase/client";
 
 export default function MachineRegistrationTable() {
