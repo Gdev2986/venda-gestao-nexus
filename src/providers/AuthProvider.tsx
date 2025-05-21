@@ -76,14 +76,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           id: data.id,
           email: data.email,
           name: data.name,
-          role: data.role,
+          role: data.role as UserRole,
           phone: data.phone,
           created_at: data.created_at,
           status: data.status
         };
         
         setProfile(userProfile);
-        setUserRole(data.role);
+        setUserRole(data.role as UserRole);
       }
     } catch (error) {
       console.error("Error loading user profile:", error);
