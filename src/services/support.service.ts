@@ -195,12 +195,12 @@ export async function getTicketMessages(ticketId: string): Promise<{ data: Suppo
       }
       
       // Transform data to match SupportMessage interface
-      const transformedData = altData.map(msg => messageTransformer(msg));
+      const transformedData = (altData || []).map(msg => messageTransformer(msg));
       return { data: transformedData, error: null };
     }
     
     // Process standard response
-    const transformedData = data.map(msg => messageTransformer(msg));
+    const transformedData = (data || []).map(msg => messageTransformer(msg));
     return { data: transformedData, error: null };
   } catch (err) {
     console.error("Error in getTicketMessages:", err);
@@ -218,7 +218,7 @@ function messageTransformer(msg: any): SupportMessage {
   
   // Safely access user properties
   if (msg.user && typeof msg.user === 'object') {
-    const userAny = msg.user;
+    const userAny = msg.user as any;
     if (userAny && !userAny.error) {
       userObj.id = userAny.id || '';
       userObj.name = userAny.name || '';

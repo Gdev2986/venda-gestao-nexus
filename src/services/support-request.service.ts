@@ -146,7 +146,11 @@ export const SupportRequestService = {
       // Transform data to match SupportMessage interface
       const messages = (data || []).map(msg => {
         // Initialize default user data
-        const userData = {
+        const userObj: {
+          id: string;
+          name: string;
+          role: string;
+        } = {
           id: '',
           name: '',
           role: ''
@@ -154,13 +158,14 @@ export const SupportRequestService = {
         
         // Safely access user properties
         if (msg.user && typeof msg.user === 'object') {
-          // Use direct property access
-          const userObj = msg.user;
+          // Type assertion for safety - we know it's an object
+          const userAny = msg.user as any;
           
-          if (userObj && !userObj.error) {
-            userData.id = userObj.id || '';
-            userData.name = userObj.name || '';
-            userData.role = userObj.role || '';
+          // Check if it's not an error object
+          if (userAny && !userAny.error) {
+            userObj.id = userAny.id || '';
+            userObj.name = userAny.name || '';
+            userObj.role = userAny.role || '';
           }
         }
         
@@ -171,7 +176,7 @@ export const SupportRequestService = {
           user_id: msg.user_id,
           message: msg.message,
           created_at: msg.created_at,
-          user: userData
+          user: userObj
         };
       });
 
