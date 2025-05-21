@@ -41,7 +41,8 @@ export const useNotificationsState = (userId: string | undefined, soundEnabled: 
         data: item.data ? item.data as Record<string, any> : undefined,
         is_read: item.is_read,
         created_at: item.created_at,
-        recipient_roles: item.recipient_roles
+        // Only add recipient_roles if it exists in the data
+        ...(item.recipient_roles && { recipient_roles: item.recipient_roles })
       }));
 
       setNotifications(typedNotifications);
