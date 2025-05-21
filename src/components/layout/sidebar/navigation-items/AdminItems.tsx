@@ -48,9 +48,9 @@ export const adminItems: SidebarItem[] = [
     roles: [UserRole.ADMIN],
   },
   {
-    title: "Relatórios",
-    icon: BarChart3,
-    href: PATHS.ADMIN.REPORTS,
+    title: "Empresa",
+    icon: Building2,
+    href: PATHS.ADMIN.COMPANY,
     roles: [UserRole.ADMIN],
   },
   {
