@@ -122,6 +122,7 @@ export const SupportRequestService = {
 
       if (error) throw error;
 
+      // Fix: Use simple type assertion to avoid deep instantiation
       return data as SupportRequest[];
     } catch (error) {
       console.error("Error fetching support requests:", error);
@@ -142,8 +143,8 @@ export const SupportRequestService = {
 
       if (error) throw error;
 
-      // Transform data to match SupportMessage interface with proper type handling
-      const messages = data.map(msg => {
+      // Transform data to match SupportMessage interface
+      const messages = (data || []).map(msg => {
         // Initialize default user data
         const userData = {
           id: '',
@@ -153,8 +154,8 @@ export const SupportRequestService = {
         
         // Safely access user properties
         if (msg.user && typeof msg.user === 'object') {
-          // Use type assertion to access properties
-          const userObj = msg.user as any;
+          // Use direct property access
+          const userObj = msg.user;
           
           if (userObj && !userObj.error) {
             userData.id = userObj.id || '';

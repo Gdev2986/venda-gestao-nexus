@@ -1,3 +1,4 @@
+
 import { supabase } from "@/integrations/supabase/client";
 import { SupportTicket, CreateTicketParams, UpdateTicketParams, SupportMessage } from "@/types/support.types";
 import { TicketStatus, NotificationType, TicketPriority, TicketType, UserRole } from "@/types/enums";
@@ -73,7 +74,7 @@ export async function getSupportTicketById(id: string): Promise<{ data: SupportT
     .eq('id', id)
     .single();
     
-  return { data: data as unknown as SupportTicket, error };
+  return { data: data as any, error };
 }
 
 // Get all tickets with optional filters
@@ -149,11 +150,8 @@ export async function getSupportTickets(filters?: {
   // Execute the query
   const { data, error } = await query;
   
-  // Return with simplified type casting to avoid deep type instantiation
-  return { 
-    data: data as unknown as SupportTicket[], 
-    error 
-  };
+  // Fix: Simplify type casting to avoid deep instantiation
+  return { data: data as any, error };
 }
 
 // Get tickets for a client
@@ -164,45 +162,50 @@ export async function getClientSupportTickets(clientId: string): Promise<{ data:
     .eq('client_id', clientId)
     .order('created_at', { ascending: false });
     
-  return { data: data as unknown as SupportTicket[], error };
+  return { data: data as any, error };
 }
 
 // Get messages for a ticket
 export async function getTicketMessages(ticketId: string): Promise<{ data: SupportMessage[] | null, error: any }> {
-  // Try with conversation_id (our standardized approach)
-  const { data, error } = await supabase
-    .from('support_messages')
-    .select('*, user:user_id(id, name, role)')
-    .eq('conversation_id', ticketId)
-    .order('created_at', { ascending: true });
-    
-  if (error) {
-    return { data: null, error };
-  }
-  
-  if (!data || data.length === 0) {
-    // If no results, it could be using a different column name
-    // This is a fallback mechanism for backward compatibility
-    const { data: altData, error: altError } = await supabase
+  // Fix: Simplify the code to avoid excessive type instantiation
+  try {
+    const { data, error } = await supabase
       .from('support_messages')
       .select('*, user:user_id(id, name, role)')
-      .eq('ticket_id', ticketId)
+      .eq('conversation_id', ticketId)
       .order('created_at', { ascending: true });
       
-    if (altError) return { data: null, error: altError };
-      
-    if (!altData || altData.length === 0) {
-      return { data: [], error: null };
+    if (error) {
+      return { data: null, error };
     }
     
-    // Transform data to match SupportMessage interface
-    const transformedData = altData.map(messageTransformer);
+    if (!data || data.length === 0) {
+      // If no results, it could be using a different column name
+      // This is a fallback mechanism for backward compatibility
+      const { data: altData, error: altError } = await supabase
+        .from('support_messages')
+        .select('*, user:user_id(id, name, role)')
+        .eq('ticket_id', ticketId)
+        .order('created_at', { ascending: true });
+        
+      if (altError) return { data: null, error: altError };
+        
+      if (!altData || altData.length === 0) {
+        return { data: [], error: null };
+      }
+      
+      // Transform data to match SupportMessage interface
+      const transformedData = altData.map(msg => messageTransformer(msg));
+      return { data: transformedData, error: null };
+    }
+    
+    // Process standard response
+    const transformedData = data.map(msg => messageTransformer(msg));
     return { data: transformedData, error: null };
+  } catch (err) {
+    console.error("Error in getTicketMessages:", err);
+    return { data: null, error: err };
   }
-  
-  // Process standard response
-  const transformedData = data.map(messageTransformer);
-  return { data: transformedData, error: null };
 }
 
 // Helper function to transform message data consistently
@@ -215,7 +218,7 @@ function messageTransformer(msg: any): SupportMessage {
   
   // Safely access user properties
   if (msg.user && typeof msg.user === 'object') {
-    const userAny = msg.user as any;
+    const userAny = msg.user;
     if (userAny && !userAny.error) {
       userObj.id = userAny.id || '';
       userObj.name = userAny.name || '';

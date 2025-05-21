@@ -1,4 +1,3 @@
-
 import { supabase } from "@/integrations/supabase/client";
 import { PaymentMethod } from "@/types/enums";
 
@@ -305,30 +304,19 @@ export const TaxBlocksService = {
   // Get clients without tax block associations
   async getClientsWithoutTaxBlock(): Promise<{id: string, name: string}[]> {
     try {
-      const { data, error } = await supabase.rpc(
-        'get_clients_without_tax_block'
-      );
+      // Fix: Don't use RPC for a custom function since it causes type errors
+      // Instead use direct SQL query with proper type handling
+      const { data, error } = await supabase
+        .from('clients')
+        .select('id, business_name')
+        .not('id', 'in', 
+          supabase.from('client_tax_blocks')
+            .select('client_id')
+        );
       
-      if (error) {
-        // If RPC fails, fall back to client-side filtering
-        const { data: allClients } = await supabase
-          .from('clients')
-          .select('id, business_name');
-          
-        const { data: associations } = await supabase
-          .from('client_tax_blocks')
-          .select('client_id');
-          
-        const associatedIds = new Set((associations || []).map(a => a.client_id));
-        
-        return (allClients || [])
-          .filter(client => !associatedIds.has(client.id))
-          .map(client => ({
-            id: client.id,
-            name: client.business_name
-          }));
-      }
+      if (error) throw error;
       
+      // Ensure data is an array before mapping
       return (data || []).map(client => ({
         id: client.id,
         name: client.business_name
