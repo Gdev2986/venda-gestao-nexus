@@ -76,22 +76,23 @@ export const SupportRequestService = {
     search?: string
   } = {}) {
     try {
+      // Create query and explicitly type as any to avoid deep type instantiation issues
       let query = supabase
         .from('support_requests')
         .select(`
           *,
           client:client_id(*),
           machine:machine_id(*)
-        `);
+        `) as any;
 
       // Apply filters with proper type handling
       if (filters.status) {
         if (Array.isArray(filters.status)) {
           // Convert enum values to strings for the query
           const statusValues = filters.status.map(s => s.toString());
-          query = query.in('status', statusValues as any);
+          query = query.in('status', statusValues);
         } else {
-          query = query.eq('status', filters.status.toString() as any);
+          query = query.eq('status', filters.status.toString());
         }
       }
 
@@ -99,14 +100,14 @@ export const SupportRequestService = {
         if (Array.isArray(filters.type)) {
           // Convert enum values to strings for the query
           const typeValues = filters.type.map(t => t.toString());
-          query = query.in('type', typeValues as any);
+          query = query.in('type', typeValues);
         } else {
-          query = query.eq('type', filters.type.toString() as any);
+          query = query.eq('type', filters.type.toString());
         }
       }
 
       if (filters.priority) {
-        query = query.eq('priority', filters.priority.toString() as any);
+        query = query.eq('priority', filters.priority.toString());
       }
 
       if (filters.client_id) {

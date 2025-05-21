@@ -88,37 +88,40 @@ export async function getSupportTickets(filters?: {
   date_from?: string;
   date_to?: string;
 }): Promise<{ data: SupportTicket[] | null, error: any }> {
-  // Cast to any to avoid type instantiation issues
-  let query: any = supabase
+  // Start with the base query and explicitly type it as any to avoid deep type instantiation
+  const baseQuery = supabase
     .from('support_requests')
     .select(`
       *,
       client:client_id(*),
       machine:machine_id(*)
     `);
+  
+  // Apply filters using a type-safe approach
+  let query = baseQuery as any; // Use 'any' type to avoid deep type instantiation
 
   if (filters) {
     if (filters.status) {
       if (Array.isArray(filters.status)) {
         // Convert enums to string literals for the database query
         const statusValues = filters.status.map(s => s.toString());
-        query = query.in('status', statusValues as any);
+        query = query.in('status', statusValues);
       } else {
-        query = query.eq('status', filters.status.toString() as any);
+        query = query.eq('status', filters.status.toString());
       }
     }
     
     if (filters.type) {
       if (Array.isArray(filters.type)) {
         const typeValues = filters.type.map(t => t.toString());
-        query = query.in('type', typeValues as any);
+        query = query.in('type', typeValues);
       } else {
-        query = query.eq('type', filters.type.toString() as any);
+        query = query.eq('type', filters.type.toString());
       }
     }
     
     if (filters.priority) {
-      query = query.eq('priority', filters.priority.toString() as any);
+      query = query.eq('priority', filters.priority.toString());
     }
     
     if (filters.client_id) query = query.eq('client_id', filters.client_id);
@@ -128,11 +131,17 @@ export async function getSupportTickets(filters?: {
     if (filters.date_to) query = query.lte('created_at', filters.date_to);
   }
 
+  // Add ordering
   query = query.order('created_at', { ascending: false });
 
-  // Execute the query with proper type handling
+  // Execute query with simplified type handling
   const { data, error } = await query;
-  return { data: data as unknown as SupportTicket[], error };
+  
+  // Use a simple cast to the expected return type
+  return { 
+    data: data as unknown as SupportTicket[], 
+    error 
+  };
 }
 
 // Get tickets for a client
