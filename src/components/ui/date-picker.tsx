@@ -17,9 +17,6 @@ interface DatePickerProps {
   selected?: Date
   onSelect?: (date?: Date) => void
   placeholder?: string
-  showMonthDropdown?: boolean
-  showYearDropdown?: boolean
-  dropdownMode?: "select" | "scroll"
   className?: string
 }
 
@@ -27,9 +24,6 @@ export function DatePicker({
   selected,
   onSelect,
   placeholder = "Selecionar data",
-  showMonthDropdown = false,
-  showYearDropdown = false,
-  dropdownMode = "select",
   className,
 }: DatePickerProps) {
   return (

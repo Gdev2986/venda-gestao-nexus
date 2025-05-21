@@ -143,9 +143,6 @@ const CompanyReports = () => {
                 <DatePicker
                   selected={dateRange.start}
                   onSelect={handleStartDateChange}
-                  showMonthDropdown
-                  showYearDropdown
-                  dropdownMode="select"
                   placeholder="Data inicial"
                 />
               </div>
@@ -156,9 +153,6 @@ const CompanyReports = () => {
                 <DatePicker
                   selected={dateRange.end}
                   onSelect={handleEndDateChange}
-                  showMonthDropdown
-                  showYearDropdown
-                  dropdownMode="select"
                   placeholder="Data final"
                 />
               </div>
@@ -286,7 +280,6 @@ const CompanyReports = () => {
                 xAxisKey="name"
                 dataKey={["entrada", "saida", "saldo"]}
                 colors={["#10b981", "#ef4444", "#6366f1"]}
-                labels={["Entradas", "Saídas", "Saldo"]}
                 height={300}
               />
             </CardContent>
@@ -305,7 +298,6 @@ const CompanyReports = () => {
                 xAxisKey="name"
                 dataKey={["pendente", "recebido"]}
                 colors={["#f59e0b", "#10b981"]}
-                labels={["Pendente", "Recebido"]}
                 height={300}
               />
             </CardContent>
@@ -325,7 +317,6 @@ const CompanyReports = () => {
                   xAxisKey="name"
                   dataKey={["comissao"]}
                   colors={["#8b5cf6"]}
-                  labels={["Comissão"]}
                   height={300}
                 />
               </CardContent>
