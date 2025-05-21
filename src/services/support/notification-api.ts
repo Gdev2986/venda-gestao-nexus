@@ -1,51 +1,61 @@
 
-import { supabase } from "@/integrations/supabase/client";
+import { supabase } from "@/lib/supabase";
+import { SupportTicket } from "./types";
 
-// Send notifications to support agents about new tickets
-export async function notifySupportAgents(ticketId: string, title: string, message: string) {
+// Notify relevant staff about a new support ticket
+export const notifyNewTicket = async (ticket: SupportTicket): Promise<void> => {
   try {
-    // Get all users with SUPPORT or ADMIN role
-    const { data: supportUsers } = await supabase
+    // Get all admin and logistics users who should be notified
+    const { data: staffUsers, error: staffError } = await supabase
       .from("profiles")
       .select("id")
-      .in("role", ["SUPPORT", "ADMIN"]);
-    
-    if (!supportUsers || supportUsers.length === 0) {
-      return { success: false, error: "No support agents found" };
-    }
-    
-    // Create notifications for each support agent
-    const notifications = supportUsers.map(user => ({
-      user_id: user.id,
-      title,
-      message,
-      type: "SUPPORT_TICKET",
-      data: { ticket_id: ticketId }
-    }));
-    
-    const { error } = await supabase
-      .from("notifications")
-      .insert(notifications);
-    
-    return { success: !error, error };
-  } catch (error) {
-    console.error("Error notifying support agents:", error);
-    return { success: false, error };
-  }
-}
+      .in("role", ["ADMIN", "LOGISTICS"]);
 
-// Mark ticket notifications as read
-export async function markTicketNotificationsAsRead(userId: string, ticketId: string) {
+    if (staffError) {
+      console.error("Error fetching staff users:", staffError);
+      throw staffError;
+    }
+
+    // Create notifications for each staff member
+    const notifications = staffUsers.map(user => ({
+      user_id: user.id,
+      title: "Nova Solicitação de Suporte",
+      message: `Nova solicitação: ${ticket.title}`,
+      type: "SUPPORT" as const,
+      data: { ticket_id: ticket.id }
+    }));
+
+    // Insert all notifications
+    if (notifications.length > 0) {
+      const { error: notifyError } = await supabase
+        .from("notifications")
+        .insert(notifications);
+
+      if (notifyError) {
+        console.error("Error creating notifications:", notifyError);
+        throw notifyError;
+      }
+    }
+  } catch (error) {
+    console.error("Failed to send notifications:", error);
+    // Don't throw here, we want the ticket creation to succeed even if notifications fail
+  }
+};
+
+// Mark notification as read
+export const markNotificationAsRead = async (notificationId: string): Promise<void> => {
   try {
     const { error } = await supabase
       .from("notifications")
-      .update({ read: true })
-      .eq("user_id", userId)
-      .eq("data->ticket_id", ticketId);
-    
-    return { success: !error, error };
+      .update({ is_read: true })
+      .eq("id", notificationId);
+
+    if (error) {
+      console.error("Error marking notification as read:", error);
+      throw error;
+    }
   } catch (error) {
-    console.error("Error marking notifications as read:", error);
-    return { success: false, error };
+    console.error("Failed to mark notification as read:", error);
+    throw error;
   }
-}
+};

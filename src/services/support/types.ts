@@ -34,10 +34,11 @@ export interface SupportTicket {
 
 export interface SupportMessage {
   id: string;
-  ticket_id: string;
+  conversation_id: string; // Changed from ticket_id to match database schema
   user_id: string;
   message: string;
   created_at: string;
+  is_read?: boolean;
   user?: {
     id: string;
     name: string;
@@ -50,9 +51,9 @@ export interface CreateTicketParams {
   description: string;
   client_id: string;
   machine_id?: string;
-  type: TicketType;
-  priority: TicketPriority;
-  status?: TicketStatus;
+  type: "MAINTENANCE" | "INSTALLATION" | "REPLACEMENT" | "SUPPLIES" | "REMOVAL" | "OTHER";
+  priority: "LOW" | "MEDIUM" | "HIGH";
+  status?: "PENDING" | "IN_PROGRESS" | "COMPLETED" | "CANCELED";
   scheduled_date?: string;
   user_id?: string;
 }
@@ -60,9 +61,9 @@ export interface CreateTicketParams {
 export interface UpdateTicketParams {
   title?: string;
   description?: string;
-  status?: TicketStatus;
-  priority?: TicketPriority;
-  type?: TicketType;
+  status?: "PENDING" | "IN_PROGRESS" | "COMPLETED" | "CANCELED";
+  priority?: "LOW" | "MEDIUM" | "HIGH";
+  type?: "MAINTENANCE" | "INSTALLATION" | "REPLACEMENT" | "SUPPLIES" | "REMOVAL" | "OTHER";
   assigned_to?: string;
   resolution?: string;
   scheduled_date?: string;

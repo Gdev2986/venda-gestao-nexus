@@ -1,60 +1,96 @@
 
-import { supabase } from "@/integrations/supabase/client";
+import { supabase } from "@/lib/supabase";
 import { SupportMessage } from "./types";
 
-// Get messages for a specific support ticket
-export async function getTicketMessages(ticketId: string) {
+// Get all messages for a conversation
+export const getMessages = async (conversationId: string): Promise<SupportMessage[]> => {
   try {
-    const response = await supabase
+    const { data, error } = await supabase
       .from("support_messages")
       .select(`
         *,
-        user:user_id (id, name, role)
+        user:user_id (
+          id, name, role
+        )
       `)
-      .eq("ticket_id", ticketId)
+      .eq("conversation_id", conversationId)
       .order("created_at", { ascending: true });
-    
-    return { 
-      data: response.data as SupportMessage[], 
-      error: response.error 
-    };
-  } catch (error) {
-    console.error("Error fetching ticket messages:", error);
-    return { data: null, error };
-  }
-}
 
-// Add a new message to a support ticket
-export async function addTicketMessage(ticketId: string, userId: string, message: string) {
+    if (error) {
+      console.error("Error fetching messages:", error);
+      throw error;
+    }
+
+    // Make sure we're adapting the response to match our expected SupportMessage interface
+    return data.map((msg: any) => ({
+      id: msg.id,
+      conversation_id: msg.conversation_id,
+      user_id: msg.user_id,
+      message: msg.message,
+      created_at: msg.created_at,
+      is_read: msg.is_read,
+      user: msg.user
+    })) as SupportMessage[];
+  } catch (error) {
+    console.error("Failed to fetch messages:", error);
+    throw error;
+  }
+};
+
+// Send a new message
+export const sendMessage = async (
+  conversationId: string,
+  userId: string,
+  message: string
+): Promise<SupportMessage> => {
   try {
-    const response = await supabase
+    const { data, error } = await supabase
       .from("support_messages")
       .insert({
-        ticket_id: ticketId,
+        conversation_id: conversationId,
         user_id: userId,
         message
       })
       .select()
       .single();
-    
-    return { data: response.data as SupportMessage, error: response.error };
-  } catch (error) {
-    console.error("Error adding ticket message:", error);
-    return { data: null, error };
-  }
-}
 
-// Delete a support message
-export async function deleteTicketMessage(messageId: string) {
-  try {
-    const response = await supabase
-      .from("support_messages")
-      .delete()
-      .eq("id", messageId);
-    
-    return { error: response.error };
+    if (error) {
+      console.error("Error sending message:", error);
+      throw error;
+    }
+
+    return {
+      id: data.id,
+      conversation_id: data.conversation_id,
+      user_id: data.user_id,
+      message: data.message,
+      created_at: data.created_at,
+      is_read: data.is_read
+    } as SupportMessage;
   } catch (error) {
-    console.error("Error deleting ticket message:", error);
-    return { error };
+    console.error("Failed to send message:", error);
+    throw error;
   }
-}
+};
+
+// Mark messages as read
+export const markMessagesAsRead = async (
+  conversationId: string,
+  userId: string
+): Promise<void> => {
+  try {
+    const { error } = await supabase
+      .from("support_messages")
+      .update({ is_read: true })
+      .eq("conversation_id", conversationId)
+      .neq("user_id", userId);
+
+    if (error) {
+      console.error("Error marking messages as read:", error);
+      throw error;
+    }
+  } catch (error) {
+    console.error("Failed to mark messages as read:", error);
+    throw error;
+  }
+};
