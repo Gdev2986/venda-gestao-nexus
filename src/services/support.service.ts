@@ -14,9 +14,9 @@ export async function createSupportTicket(ticket: CreateTicketParams): Promise<{
       user_id: ticket.user_id,
       title: ticket.title,
       description: ticket.description,
-      type: ticket.type,
-      priority: ticket.priority,
-      status: (ticket.status || TicketStatus.OPEN),
+      type: ticket.type as string,
+      priority: ticket.priority as string,
+      status: (ticket.status || TicketStatus.OPEN) as string,
       scheduled_date: ticket.scheduled_date
     })
     .select('*, client:client_id(*), machine:machine_id(*)')
@@ -39,9 +39,9 @@ export async function updateSupportTicket(id: string, updates: UpdateTicketParam
   // Only update fields that are provided
   if (updates.title) updateData.title = updates.title;
   if (updates.description) updateData.description = updates.description;
-  if (updates.status) updateData.status = updates.status;
-  if (updates.priority) updateData.priority = updates.priority;
-  if (updates.type) updateData.type = updates.type;
+  if (updates.status) updateData.status = updates.status as string;
+  if (updates.priority) updateData.priority = updates.priority as string;
+  if (updates.type) updateData.type = updates.type as string;
   if (updates.assigned_to) updateData.assigned_to = updates.assigned_to;
   if (updates.resolution) updateData.resolution = updates.resolution;
   if (updates.scheduled_date) updateData.scheduled_date = updates.scheduled_date;
@@ -98,22 +98,23 @@ export async function getSupportTickets(filters?: {
   if (filters) {
     if (filters.status) {
       if (Array.isArray(filters.status)) {
-        query = query.in('status', filters.status);
+        // Convert enums to string literals for the database query
+        query = query.in('status', filters.status.map(s => s as unknown as string));
       } else {
-        query = query.eq('status', filters.status);
+        query = query.eq('status', filters.status as unknown as string);
       }
     }
     
     if (filters.type) {
       if (Array.isArray(filters.type)) {
-        query = query.in('type', filters.type);
+        query = query.in('type', filters.type.map(t => t as unknown as string));
       } else {
-        query = query.eq('type', filters.type);
+        query = query.eq('type', filters.type as unknown as string);
       }
     }
     
     if (filters.priority) {
-      query = query.eq('priority', filters.priority);
+      query = query.eq('priority', filters.priority as unknown as string);
     }
     
     if (filters.client_id) query = query.eq('client_id', filters.client_id);
@@ -146,26 +147,44 @@ export async function getTicketMessages(ticketId: string): Promise<{ data: Suppo
     .eq('ticket_id', ticketId)
     .order('created_at', { ascending: true });
     
-  // Handle any data transformation here if needed
-  let messages: SupportMessage[] | null = null;
+  if (error) {
+    return { data: null, error };
+  }
   
-  if (data) {
-    messages = data.map(msg => ({
+  // If the ticket_id field doesn't exist, try with conversation_id
+  if (!data || data.length === 0) {
+    const { data: altData, error: altError } = await supabase
+      .from('support_messages')
+      .select('*, user:user_id(id, name, role)')
+      .eq('conversation_id', ticketId)
+      .order('created_at', { ascending: true });
+      
+    if (altError) return { data: null, error: altError };
+      
+    // Transform data to match SupportMessage interface
+    const transformedData = altData.map(msg => ({
       id: msg.id,
-      ticket_id: msg.ticket_id || msg.conversation_id, // Handle both field names
+      ticket_id: msg.conversation_id, // Map conversation_id to ticket_id
       user_id: msg.user_id,
       message: msg.message,
       created_at: msg.created_at,
-      user: msg.user
+      user: {
+        id: msg.user?.id || '',
+        name: msg.user?.name || '',
+        role: msg.user?.role || ''
+      }
     }));
+    
+    return { data: transformedData as SupportMessage[], error: null };
   }
     
-  return { data: messages as SupportMessage[] | null, error };
+  return { data: data as unknown as SupportMessage[], error };
 }
 
 // Add a message to a ticket
 export async function addTicketMessage(ticketId: string, userId: string, message: string): Promise<{ data: any, error: any }> {
-  const { data, error } = await supabase
+  // Try with ticket_id first
+  let { data, error } = await supabase
     .from('support_messages')
     .insert({
       ticket_id: ticketId,
@@ -173,6 +192,21 @@ export async function addTicketMessage(ticketId: string, userId: string, message
       message: message
     })
     .select();
+    
+  // If error, try with conversation_id
+  if (error) {
+    const result = await supabase
+      .from('support_messages')
+      .insert({
+        conversation_id: ticketId,
+        user_id: userId,
+        message: message
+      })
+      .select();
+      
+    data = result.data;
+    error = result.error;
+  }
 
   if (!error) {
     // Also update the ticket's updated_at timestamp
@@ -195,14 +229,14 @@ async function createTicketNotification(ticket: SupportTicket) {
     const { data: staffUsers } = await supabase
       .from('profiles')
       .select('id')
-      .in('role', [UserRole.ADMIN, UserRole.FINANCIAL, UserRole.SUPPORT, UserRole.LOGISTICS]);
+      .in('role', [UserRole.ADMIN, UserRole.FINANCIAL, UserRole.SUPPORT, UserRole.LOGISTICS].map(r => r as unknown as string));
       
     if (staffUsers && staffUsers.length > 0) {
       const notifications = staffUsers.map(user => ({
         user_id: user.id,
         title: 'Novo Chamado de Suporte',
         message: `${ticket.title} - ${ticket.priority}`,
-        type: NotificationType.SUPPORT,
+        type: NotificationType.SUPPORT as unknown as string,
         data: JSON.stringify({ ticket_id: ticket.id, priority: ticket.priority }),
         is_read: false
       }));
@@ -233,7 +267,7 @@ async function createStatusUpdateNotification(ticketId: string, updates: UpdateT
           user_id: userData.user_id,
           title: 'Atualização de Chamado',
           message: `Seu chamado "${ticket.title}" foi atualizado para ${updates.status}`,
-          type: NotificationType.SUPPORT,
+          type: NotificationType.SUPPORT as unknown as string,
           data: JSON.stringify({ ticket_id: ticketId, new_status: updates.status }),
           is_read: false
         });
@@ -247,7 +281,7 @@ async function createStatusUpdateNotification(ticketId: string, updates: UpdateT
           user_id: updates.assigned_to,
           title: 'Chamado Atribuído',
           message: `Você foi designado para o chamado "${ticket.title}"`,
-          type: NotificationType.SUPPORT,
+          type: NotificationType.SUPPORT as unknown as string,
           data: JSON.stringify({ ticket_id: ticketId }),
           is_read: false
         });
@@ -272,7 +306,7 @@ async function createMessageNotification(ticketId: string, senderId: string, mes
       .eq('id', senderId)
       .single();
     
-    if (sender && sender.role === UserRole.CLIENT) {
+    if (sender && sender.role === UserRole.CLIENT as unknown as string) {
       // Notify assigned staff or all support staff if unassigned
       if (ticket.assigned_to) {
         recipientIds.push(ticket.assigned_to);
@@ -280,7 +314,7 @@ async function createMessageNotification(ticketId: string, senderId: string, mes
         const { data: staffUsers } = await supabase
           .from('profiles')
           .select('id')
-          .in('role', [UserRole.ADMIN, UserRole.FINANCIAL, UserRole.SUPPORT]);
+          .in('role', [UserRole.ADMIN, UserRole.FINANCIAL, UserRole.SUPPORT].map(r => r as unknown as string));
         
         if (staffUsers) {
           recipientIds = staffUsers.map(user => user.id);
@@ -307,7 +341,7 @@ async function createMessageNotification(ticketId: string, senderId: string, mes
           user_id: userId,
           title: 'Nova Mensagem de Suporte',
           message: `Nova mensagem no chamado "${ticket.title}"`,
-          type: NotificationType.SUPPORT,
+          type: NotificationType.SUPPORT as unknown as string,
           data: JSON.stringify({ ticket_id: ticketId }),
           is_read: false
         }));

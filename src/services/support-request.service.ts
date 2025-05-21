@@ -19,9 +19,9 @@ export const SupportRequestService = {
           description: ticketData.description,
           client_id: ticketData.client_id,
           technician_id: ticketData.technician_id,
-          type: ticketData.type,
-          status: (ticketData.status || SupportRequestStatus.PENDING),
-          priority: ticketData.priority,
+          type: ticketData.type as unknown as string,
+          status: (ticketData.status || SupportRequestStatus.PENDING) as unknown as string,
+          priority: ticketData.priority as unknown as string,
           scheduled_date: ticketData.scheduled_date
         })
         .select()
@@ -42,9 +42,9 @@ export const SupportRequestService = {
       
       if (updateData.title !== undefined) updatePayload.title = updateData.title;
       if (updateData.description !== undefined) updatePayload.description = updateData.description;
-      if (updateData.status !== undefined) updatePayload.status = updateData.status;
-      if (updateData.priority !== undefined) updatePayload.priority = updateData.priority;
-      if (updateData.type !== undefined) updatePayload.type = updateData.type;
+      if (updateData.status !== undefined) updatePayload.status = updateData.status as string;
+      if (updateData.priority !== undefined) updatePayload.priority = updateData.priority as string;
+      if (updateData.type !== undefined) updatePayload.type = updateData.type as string;
       if (updateData.technician_id !== undefined) updatePayload.technician_id = updateData.technician_id;
       if (updateData.resolution !== undefined) updatePayload.resolution = updateData.resolution;
       if (updateData.scheduled_date !== undefined) updatePayload.scheduled_date = updateData.scheduled_date;
@@ -87,23 +87,23 @@ export const SupportRequestService = {
       // Apply filters with proper type handling
       if (filters.status) {
         if (Array.isArray(filters.status)) {
-          // Use 'in' operator for array values
-          query = query.in('status', filters.status);
+          // Use 'in' operator for array values with type casting
+          query = query.in('status', filters.status.map(s => s as unknown as string));
         } else {
-          query = query.eq('status', filters.status);
+          query = query.eq('status', filters.status as unknown as string);
         }
       }
 
       if (filters.type) {
         if (Array.isArray(filters.type)) {
-          query = query.in('type', filters.type);
+          query = query.in('type', filters.type.map(t => t as unknown as string));
         } else {
-          query = query.eq('type', filters.type);
+          query = query.eq('type', filters.type as unknown as string);
         }
       }
 
       if (filters.priority) {
-        query = query.eq('priority', filters.priority);
+        query = query.eq('priority', filters.priority as unknown as string);
       }
 
       if (filters.client_id) {
@@ -142,14 +142,14 @@ export const SupportRequestService = {
 
       if (error) throw error;
 
-      // Transform to match SupportMessage interface with explicit type assertion
+      // Transform to match SupportMessage interface by mapping conversation_id to ticket_id
       const messages = data.map(msg => ({
         id: msg.id,
         ticket_id: msg.conversation_id, // Map conversation_id to ticket_id
         user_id: msg.user_id,
         message: msg.message,
         created_at: msg.created_at,
-        user: msg.user as any // Force type assertion
+        user: msg.user || undefined // Handle potential error with fallback
       })) as SupportMessage[];
 
       return messages;
@@ -199,10 +199,11 @@ export const SupportRequestService = {
       // Count tickets by type
       const typeCounts: Record<string, number> = {};
       tickets.forEach(ticket => {
-        if (!typeCounts[ticket.type]) {
-          typeCounts[ticket.type] = 0;
+        const typeKey = ticket.type as string;
+        if (!typeCounts[typeKey]) {
+          typeCounts[typeKey] = 0;
         }
-        typeCounts[ticket.type]++;
+        typeCounts[typeKey]++;
       });
       
       return {
