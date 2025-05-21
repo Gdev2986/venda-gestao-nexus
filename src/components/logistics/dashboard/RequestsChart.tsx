@@ -2,7 +2,8 @@
 import React, { useState } from "react";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
 import { LineChart } from "@/components/charts";
-import { Select, SelectContent, SelectGroup, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Button } from "@/components/ui/button";
+import { motion, AnimatePresence } from "framer-motion";
 
 interface RequestsChartProps {
   data: Array<{ name: string; value: number; total: number }>;
@@ -26,28 +27,50 @@ const RequestsChart: React.FC<RequestsChartProps> = ({ data }) => {
             <CardTitle className="text-lg">Solicitações Mensais</CardTitle>
             <CardDescription>Tendência dos últimos 6 meses</CardDescription>
           </div>
-          <Select value={requestType} onValueChange={setRequestType}>
-            <SelectTrigger className="h-8 w-[180px]">
-              <SelectValue placeholder="Filtrar por tipo" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectGroup>
-                <SelectItem value="all">Todos os Tipos</SelectItem>
-                {requestTypes.map((type) => (
-                  <SelectItem key={type} value={type.toLowerCase()}>
-                    {type}
-                  </SelectItem>
-                ))}
-              </SelectGroup>
-            </SelectContent>
-          </Select>
+          <div className="bg-muted/40 rounded-lg p-0.5 flex flex-wrap">
+            <Button 
+              variant={requestType === "all" ? "secondary" : "ghost"} 
+              size="sm"
+              onClick={() => setRequestType("all")}
+              className="h-8 text-xs"
+            >
+              Todos
+            </Button>
+            {requestTypes.map((type) => (
+              <Button 
+                key={type} 
+                variant={requestType === type.toLowerCase() ? "secondary" : "ghost"} 
+                size="sm"
+                onClick={() => setRequestType(type.toLowerCase())}
+                className="h-8 text-xs"
+              >
+                {type}
+              </Button>
+            ))}
+          </div>
         </div>
       </CardHeader>
-      <CardContent className="pt-4 h-80">
-        <LineChart 
-          data={filteredData}
-          color="#f59e0b" // Cor âmbar para solicitações
-        />
+      <CardContent className="pt-4">
+        <AnimatePresence mode="wait">
+          <motion.div 
+            className="h-80"
+            key={requestType}
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.4 }}
+          >
+            <LineChart 
+              data={filteredData}
+              color="#f59e0b" // Cor âmbar para solicitações
+              gradientFrom="#f59e0b"
+              gradientTo="#fef3c7"
+              strokeWidth={3}
+              showArea={true}
+              showPoints={true}
+            />
+          </motion.div>
+        </AnimatePresence>
       </CardContent>
     </Card>
   );

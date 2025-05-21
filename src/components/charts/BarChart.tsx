@@ -39,6 +39,7 @@ export const BarChart = ({
           height={60}
           stroke="hsl(var(--muted-foreground))"
           tickLine={false}
+          axisLine={{ stroke: 'hsl(var(--border))' }}
         />
         <YAxis 
           tickFormatter={(value) => formatter ? formatter(value) : 

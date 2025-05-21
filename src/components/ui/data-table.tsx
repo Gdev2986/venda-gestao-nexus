@@ -43,7 +43,7 @@ export function DataTable<TData extends object>({
   }, [columns, isMobile]);
 
   return (
-    <div className="rounded-md border overflow-hidden">
+    <div className="rounded-md border overflow-hidden shadow-sm">
       <div className="overflow-x-auto">
         <Table>
           <TableHeader className="bg-muted/30">
@@ -81,7 +81,7 @@ export function DataTable<TData extends object>({
                   initial={{ opacity: 0, y: 10 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ duration: 0.2, delay: rowIndex * 0.03 }}
-                  className="odd:bg-card even:bg-muted/20 hover:bg-muted/40 transition-colors"
+                  className={rowIndex % 2 === 0 ? "bg-card" : "bg-muted/20 hover:bg-muted/40 transition-colors"}
                 >
                   {visibleColumns.map((column) => {
                     const columnId = String(column.id);
@@ -110,7 +110,7 @@ export function DataTable<TData extends object>({
       </div>
       
       {totalPages && totalPages > 1 && currentPage && onPageChange && (
-        <div className="px-4 py-3 border-t flex justify-center bg-card">
+        <div className="px-4 py-2 border-t flex justify-center bg-card">
           <TablePagination 
             currentPage={currentPage} 
             totalPages={totalPages} 
