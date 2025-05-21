@@ -35,18 +35,29 @@ const formSchema = z.object({
   notes: z.string().optional(),
 });
 
-interface MachineTransferFormProps {
-  onSubmit: (values: z.infer<typeof formSchema>) => void;
-  onCancel: () => void;
+export interface MachineTransferFormProps {
+  machineId?: string;
+  machineName?: string;
+  currentClientId?: string;
+  onSubmit?: (values: z.infer<typeof formSchema>) => void;
+  onCancel?: () => void;
+  onTransferComplete?: () => void;
 }
 
-const MachineTransferForm: React.FC<MachineTransferFormProps> = ({ onSubmit, onCancel }) => {
+const MachineTransferForm: React.FC<MachineTransferFormProps> = ({ 
+  machineId = "", 
+  machineName = "", 
+  currentClientId,
+  onSubmit,
+  onCancel = () => {},
+  onTransferComplete = () => {}
+}) => {
   const [date, setDate] = useState<Date>(new Date());
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      machineId: "",
+      machineId: machineId || "",
       newLocation: "",
       transferDate: date,
       notes: "",
@@ -61,7 +72,13 @@ const MachineTransferForm: React.FC<MachineTransferFormProps> = ({ onSubmit, onC
   };
 
   const submitHandler = (values: z.infer<typeof formSchema>) => {
-    onSubmit(values);
+    if (onSubmit) {
+      onSubmit(values);
+    } else {
+      // If no onSubmit is provided, we'll just call onTransferComplete
+      console.log("Form submitted with values:", values);
+      onTransferComplete();
+    }
   };
 
   return (
@@ -74,7 +91,7 @@ const MachineTransferForm: React.FC<MachineTransferFormProps> = ({ onSubmit, onC
             <FormItem>
               <FormLabel>Machine ID</FormLabel>
               <FormControl>
-                <Input placeholder="Enter machine ID" {...field} />
+                <Input placeholder="Enter machine ID" {...field} disabled={!!machineId} />
               </FormControl>
               <FormMessage />
             </FormItem>

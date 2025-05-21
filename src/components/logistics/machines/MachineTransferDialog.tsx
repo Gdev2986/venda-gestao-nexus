@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { 
   Dialog,
@@ -41,6 +42,7 @@ export const MachineTransferDialog: React.FC<MachineTransferDialogProps> = ({
           machineId={machineId}
           machineName={machineName || machineId}
           currentClientId={currentClientId}
+          onCancel={() => onOpenChange(false)}
           onTransferComplete={() => {
             onTransferComplete();
             onOpenChange(false);

@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -273,6 +272,7 @@ export default function MachineRegistrationTable() {
               machineId={selectedMachine.id}
               machineName={selectedMachine.serial_number}
               currentClientId={selectedMachine.client_id}
+              onCancel={() => setOpenTransferDialog(false)}
               onTransferComplete={() => {
                 setOpenTransferDialog(false);
                 loadMachines();
