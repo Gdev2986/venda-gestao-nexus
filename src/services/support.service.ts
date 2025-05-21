@@ -1,3 +1,4 @@
+
 import { supabase } from "@/integrations/supabase/client";
 import { SupportTicket, CreateTicketParams, UpdateTicketParams, SupportMessage } from "@/types/support.types";
 import { TicketStatus, NotificationType, TicketPriority, TicketType, UserRole } from "@/types/enums";
@@ -87,50 +88,48 @@ export async function getSupportTickets(filters?: {
   date_from?: string;
   date_to?: string;
 }): Promise<{ data: SupportTicket[] | null, error: any }> {
-  // Explicitly use any typing to avoid deep type instantiation issues
-  const query: any = supabase
-    .from('support_requests');
-  
-  // Add select statement separately to avoid type issues
-  query.select(`
-    *,
-    client:client_id(*),
-    machine:machine_id(*)
-  `);
+  // Create a query without type constraints to avoid deep type instantiation
+  let query = supabase
+    .from('support_requests')
+    .select(`
+      *,
+      client:client_id(*),
+      machine:machine_id(*)
+    `);
   
   // Apply filters
   if (filters) {
     if (filters.status) {
       if (Array.isArray(filters.status)) {
         const statusValues = filters.status.map(s => s.toString());
-        query.in('status', statusValues);
+        query = query.in('status', statusValues);
       } else {
-        query.eq('status', filters.status.toString());
+        query = query.eq('status', filters.status.toString());
       }
     }
     
     if (filters.type) {
       if (Array.isArray(filters.type)) {
         const typeValues = filters.type.map(t => t.toString());
-        query.in('type', typeValues);
+        query = query.in('type', typeValues);
       } else {
-        query.eq('type', filters.type.toString());
+        query = query.eq('type', filters.type.toString());
       }
     }
     
     if (filters.priority) {
-      query.eq('priority', filters.priority.toString());
+      query = query.eq('priority', filters.priority.toString());
     }
     
-    if (filters.client_id) query.eq('client_id', filters.client_id);
-    if (filters.assigned_to) query.eq('assigned_to', filters.assigned_to);
-    if (filters.user_id) query.eq('user_id', filters.user_id);
-    if (filters.date_from) query.gte('created_at', filters.date_from);
-    if (filters.date_to) query.lte('created_at', filters.date_to);
+    if (filters.client_id) query = query.eq('client_id', filters.client_id);
+    if (filters.assigned_to) query = query.eq('assigned_to', filters.assigned_to);
+    if (filters.user_id) query = query.eq('user_id', filters.user_id);
+    if (filters.date_from) query = query.gte('created_at', filters.date_from);
+    if (filters.date_to) query = query.lte('created_at', filters.date_to);
   }
 
   // Add ordering
-  query.order('created_at', { ascending: false });
+  query = query.order('created_at', { ascending: false });
 
   // Execute the query
   const { data, error } = await query;
@@ -155,6 +154,7 @@ export async function getClientSupportTickets(clientId: string): Promise<{ data:
 
 // Get messages for a ticket
 export async function getTicketMessages(ticketId: string): Promise<{ data: SupportMessage[] | null, error: any }> {
+  // Try with ticket_id first
   const { data, error } = await supabase
     .from('support_messages')
     .select('*, user:user_id(id, name, role)')
@@ -167,6 +167,7 @@ export async function getTicketMessages(ticketId: string): Promise<{ data: Suppo
   
   // If the ticket_id field doesn't exist, try with conversation_id
   if (!data || data.length === 0) {
+    // Use a more direct query without complex joins to avoid type errors
     const { data: altData, error: altError } = await supabase
       .from('support_messages')
       .select('*, user:user_id(id, name, role)')
@@ -175,18 +176,16 @@ export async function getTicketMessages(ticketId: string): Promise<{ data: Suppo
       
     if (altError) return { data: null, error: altError };
       
-    // Transform data to match SupportMessage interface with proper error handling
+    // Transform data to match SupportMessage interface
     const transformedData = altData.map(msg => {
-      // Create a default user object for fallback
       const userObj = {
         id: '',
         name: '',
         role: ''
       };
       
-      // Safely access user properties after checking it exists and is an object
+      // Safely access user properties
       if (msg.user && typeof msg.user === 'object') {
-        // Cast to any to bypass TypeScript's strict checking
         const userAny = msg.user as any;
         if (userAny && !userAny.error) {
           userObj.id = userAny.id || '';
@@ -208,18 +207,16 @@ export async function getTicketMessages(ticketId: string): Promise<{ data: Suppo
     return { data: transformedData as SupportMessage[], error: null };
   }
     
-  // Process standard response with proper error handling
+  // Process standard response
   const transformedData = data.map(msg => {
-    // Create a default user object for fallback
     const userObj = {
       id: '',
       name: '',
       role: ''
     };
     
-    // Safely access user properties after checking it exists and is an object
+    // Safely access user properties
     if (msg.user && typeof msg.user === 'object') {
-      // Cast to any to bypass TypeScript's strict checking
       const userAny = msg.user as any;
       if (userAny && !userAny.error) {
         userObj.id = userAny.id || '';
@@ -229,7 +226,7 @@ export async function getTicketMessages(ticketId: string): Promise<{ data: Suppo
     }
     
     // Ensure we have a ticket_id property, falling back to conversation_id if needed
-    const messageTicketId = 'ticket_id' in msg ? msg.ticket_id : msg.conversation_id;
+    const messageTicketId = msg.ticket_id || msg.conversation_id;
     
     return {
       id: msg.id,

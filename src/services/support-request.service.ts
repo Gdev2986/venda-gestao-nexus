@@ -76,12 +76,12 @@ export const SupportRequestService = {
     search?: string
   } = {}) {
     try {
-      // Create query and explicitly type as any to avoid deep type instantiation issues
-      const query: any = supabase
+      // Create query without type constraints
+      let query = supabase
         .from('support_requests');
       
       // Add select statement separately to avoid type issues
-      query.select(`
+      query = query.select(`
         *,
         client:client_id(*),
         machine:machine_id(*)
@@ -92,9 +92,9 @@ export const SupportRequestService = {
         if (Array.isArray(filters.status)) {
           // Convert enum values to strings for the query
           const statusValues = filters.status.map(s => s.toString());
-          query.in('status', statusValues);
+          query = query.in('status', statusValues);
         } else {
-          query.eq('status', filters.status.toString());
+          query = query.eq('status', filters.status.toString());
         }
       }
 
@@ -102,29 +102,29 @@ export const SupportRequestService = {
         if (Array.isArray(filters.type)) {
           // Convert enum values to strings for the query
           const typeValues = filters.type.map(t => t.toString());
-          query.in('type', typeValues);
+          query = query.in('type', typeValues);
         } else {
-          query.eq('type', filters.type.toString());
+          query = query.eq('type', filters.type.toString());
         }
       }
 
       if (filters.priority) {
-        query.eq('priority', filters.priority.toString());
+        query = query.eq('priority', filters.priority.toString());
       }
 
       if (filters.client_id) {
-        query.eq('client_id', filters.client_id);
+        query = query.eq('client_id', filters.client_id);
       }
 
       if (filters.technician_id) {
-        query.eq('technician_id', filters.technician_id);
+        query = query.eq('technician_id', filters.technician_id);
       }
 
       if (filters.search) {
-        query.or(`title.ilike.%${filters.search}%,description.ilike.%${filters.search}%`);
+        query = query.or(`title.ilike.%${filters.search}%,description.ilike.%${filters.search}%`);
       }
 
-      query.order('created_at', { ascending: false });
+      query = query.order('created_at', { ascending: false });
       
       const { data, error } = await query;
 
@@ -150,26 +150,24 @@ export const SupportRequestService = {
 
       if (error) throw error;
 
-      // Transform to match SupportMessage interface with proper null checks
+      // Transform data to match SupportMessage interface with proper type handling
       const messages = data.map(msg => {
         // Initialize default user data
-        let userData = {
+        const userData = {
           id: '',
           name: '',
           role: ''
         };
         
-        // Safely access user properties after checking it exists and is an object
+        // Safely access user properties
         if (msg.user && typeof msg.user === 'object') {
-          // Cast to any to bypass TypeScript's strict checking
+          // Use type assertion to access properties
           const userObj = msg.user as any;
           
           if (userObj && !userObj.error) {
-            userData = {
-              id: userObj.id || '',
-              name: userObj.name || '',
-              role: userObj.role || ''
-            };
+            userData.id = userObj.id || '';
+            userData.name = userObj.name || '';
+            userData.role = userObj.role || '';
           }
         }
         
@@ -182,9 +180,9 @@ export const SupportRequestService = {
           created_at: msg.created_at,
           user: userData
         };
-      }) as SupportMessage[];
+      });
 
-      return messages;
+      return messages as SupportMessage[];
     } catch (error) {
       console.error("Error fetching ticket messages:", error);
       return [];
