@@ -7,6 +7,7 @@ export enum PaymentMethod {
 
 export enum PaymentStatus {
   PENDING = "PENDING",
+  PROCESSING = "PROCESSING",
   APPROVED = "APPROVED", 
   REJECTED = "REJECTED",
   PAID = "PAID"
@@ -22,7 +23,8 @@ export enum UserRole {
   ADMIN = "ADMIN",
   CLIENT = "CLIENT",
   PARTNER = "PARTNER",
-  FINANCIAL = "FINANCIAL"
+  FINANCIAL = "FINANCIAL",
+  FINANCE = "FINANCE"
 }
 
 export enum NotificationType {
@@ -31,4 +33,12 @@ export enum NotificationType {
   MACHINE = "MACHINE",
   COMMISSION = "COMMISSION",
   SYSTEM = "SYSTEM"
+}
+
+export enum PaymentAction {
+  VIEW = "VIEW",
+  APPROVE = "APPROVE",
+  REJECT = "REJECT",
+  DELETE = "DELETE",
+  SEND_RECEIPT = "SEND_RECEIPT"
 }
