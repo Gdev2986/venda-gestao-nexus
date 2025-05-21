@@ -1,10 +1,10 @@
+
 import { useState, useEffect } from "react";
 import { PageHeader } from "@/components/page/PageHeader";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { UserRole } from "@/types/enums";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
@@ -75,7 +75,7 @@ const AdminSupport = () => {
         setReportData({
           pendingRequests: stats.pendingRequests,
           highPriorityRequests: stats.highPriorityRequests,
-          typeCounts: stats.typeCounts || {} as Record<string, number>
+          typeCounts: stats.typeCounts || {}
         });
       } catch (error) {
         console.error("Error fetching support stats:", error);
@@ -119,8 +119,6 @@ const AdminSupport = () => {
 
   
   return (
-    
-
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4">
         <div>

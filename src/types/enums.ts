@@ -1,3 +1,4 @@
+
 export enum PaymentMethod {
   CREDIT = "CREDIT",
   DEBIT = "DEBIT",
@@ -24,7 +25,7 @@ export enum UserRole {
   PARTNER = "PARTNER",
   FINANCIAL = "FINANCIAL",
   FINANCE = "FINANCE",
-  SUPPORT = "SUPPORT",  // Ensure SUPPORT is included
+  SUPPORT = "SUPPORT",
   LOGISTICS = "LOGISTICS"
 }
 

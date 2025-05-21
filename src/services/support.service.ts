@@ -1,3 +1,4 @@
+
 import { supabase } from "@/integrations/supabase/client";
 import { SupportTicket, CreateTicketParams, UpdateTicketParams, SupportMessage } from "@/types/support.types";
 import { TicketStatus, NotificationType, TicketPriority, TicketType, UserRole } from "@/types/enums";
@@ -13,9 +14,9 @@ export async function createSupportTicket(ticket: CreateTicketParams): Promise<{
       user_id: ticket.user_id,
       title: ticket.title,
       description: ticket.description,
-      type: ticket.type as string, // Cast enum to string
-      priority: ticket.priority as string, // Cast enum to string
-      status: (ticket.status || TicketStatus.OPEN) as string, // Cast enum to string
+      type: ticket.type as unknown as string, // Cast enum to string
+      priority: ticket.priority as unknown as string, // Cast enum to string
+      status: (ticket.status || TicketStatus.OPEN) as unknown as string, // Cast enum to string
       scheduled_date: ticket.scheduled_date
     })
     .select('*, client:client_id(*), machine:machine_id(*)')
@@ -31,15 +32,19 @@ export async function createSupportTicket(ticket: CreateTicketParams): Promise<{
 // Update an existing ticket
 export async function updateSupportTicket(id: string, updates: UpdateTicketParams): Promise<{ data: any, error: any }> {
   // Prepare updates ensuring it matches database schema
-  const updateData: any = {
-    ...updates,
+  const updateData: Record<string, any> = {
     updated_at: new Date().toISOString()
   };
   
-  // Use enum values as strings
-  if (updates.status) updateData.status = updates.status as string;
-  if (updates.priority) updateData.priority = updates.priority as string;
-  if (updates.type) updateData.type = updates.type as string;
+  // Only update fields that are provided
+  if (updates.title) updateData.title = updates.title;
+  if (updates.description) updateData.description = updates.description;
+  if (updates.status) updateData.status = updates.status as unknown as string;
+  if (updates.priority) updateData.priority = updates.priority as unknown as string;
+  if (updates.type) updateData.type = updates.type as unknown as string;
+  if (updates.assigned_to) updateData.assigned_to = updates.assigned_to;
+  if (updates.resolution) updateData.resolution = updates.resolution;
+  if (updates.scheduled_date) updateData.scheduled_date = updates.scheduled_date;
 
   const { data, error } = await supabase
     .from('support_requests')
@@ -94,28 +99,28 @@ export async function getSupportTickets(filters?: {
     if (filters.status) {
       if (Array.isArray(filters.status)) {
         // Cast enum values to strings
-        const statusValues = filters.status.map(s => s as string);
-        query = query.in('status', statusValues);
+        const statusValues = filters.status.map(s => s as unknown as string);
+        query = query.in('status', statusValues as any);
       } else {
         // Cast enum value to string
-        query = query.eq('status', filters.status as string);
+        query = query.eq('status', filters.status as unknown as string);
       }
     }
     
     if (filters.type) {
       if (Array.isArray(filters.type)) {
         // Cast enum values to strings
-        const typeValues = filters.type.map(t => t as string);
-        query = query.in('type', typeValues);
+        const typeValues = filters.type.map(t => t as unknown as string);
+        query = query.in('type', typeValues as any);
       } else {
         // Cast enum value to string
-        query = query.eq('type', filters.type as string);
+        query = query.eq('type', filters.type as unknown as string);
       }
     }
     
     if (filters.priority) {
       // Cast enum value to string
-      query = query.eq('priority', filters.priority as string);
+      query = query.eq('priority', filters.priority as unknown as string);
     }
     
     if (filters.client_id) query = query.eq('client_id', filters.client_id);
@@ -149,14 +154,18 @@ export async function getTicketMessages(ticketId: string): Promise<{ data: Suppo
     .order('created_at', { ascending: true });
     
   // Handle any data transformation here if needed
-  const messages = data ? data.map(msg => ({
-    id: msg.id,
-    ticket_id: msg.ticket_id || msg.conversation_id, // Handle both field names
-    user_id: msg.user_id,
-    message: msg.message,
-    created_at: msg.created_at,
-    user: msg.user
-  } as SupportMessage)) : null;
+  let messages: SupportMessage[] | null = null;
+  
+  if (data) {
+    messages = data.map(msg => ({
+      id: msg.id,
+      ticket_id: msg.ticket_id || msg.conversation_id, // Handle both field names
+      user_id: msg.user_id,
+      message: msg.message,
+      created_at: msg.created_at,
+      user: msg.user
+    })) as unknown as SupportMessage[];
+  }
     
   return { data: messages, error };
 }
@@ -193,14 +202,14 @@ async function createTicketNotification(ticket: SupportTicket) {
     const { data: staffUsers } = await supabase
       .from('profiles')
       .select('id')
-      .in('role', ['ADMIN', 'FINANCIAL', 'SUPPORT', 'LOGISTICS']);
+      .in('role', [UserRole.ADMIN, UserRole.FINANCIAL, UserRole.SUPPORT, UserRole.LOGISTICS] as unknown as string[]);
       
     if (staffUsers && staffUsers.length > 0) {
       const notifications = staffUsers.map(user => ({
         user_id: user.id,
         title: 'Novo Chamado de Suporte',
         message: `${ticket.title} - ${ticket.priority}`,
-        type: NotificationType.SUPPORT,
+        type: NotificationType.SUPPORT as unknown as string,
         data: { ticket_id: ticket.id, priority: ticket.priority },
         is_read: false
       }));
@@ -231,7 +240,7 @@ async function createStatusUpdateNotification(ticketId: string, updates: UpdateT
           user_id: userData.user_id,
           title: 'Atualização de Chamado',
           message: `Seu chamado "${ticket.title}" foi atualizado para ${updates.status}`,
-          type: NotificationType.SUPPORT,
+          type: NotificationType.SUPPORT as unknown as string,
           data: { ticket_id: ticketId, new_status: updates.status },
           is_read: false
         });
@@ -245,7 +254,7 @@ async function createStatusUpdateNotification(ticketId: string, updates: UpdateT
           user_id: updates.assigned_to,
           title: 'Chamado Atribuído',
           message: `Você foi designado para o chamado "${ticket.title}"`,
-          type: NotificationType.SUPPORT,
+          type: NotificationType.SUPPORT as unknown as string,
           data: { ticket_id: ticketId },
           is_read: false
         });
@@ -270,7 +279,7 @@ async function createMessageNotification(ticketId: string, senderId: string, mes
       .eq('id', senderId)
       .single();
     
-    if (sender && sender.role === 'CLIENT') {
+    if (sender && sender.role === UserRole.CLIENT) {
       // Notify assigned staff or all support staff if unassigned
       if (ticket.assigned_to) {
         recipientIds.push(ticket.assigned_to);
@@ -278,7 +287,7 @@ async function createMessageNotification(ticketId: string, senderId: string, mes
         const { data: staffUsers } = await supabase
           .from('profiles')
           .select('id')
-          .in('role', ['ADMIN', 'FINANCIAL']);
+          .in('role', [UserRole.ADMIN, UserRole.FINANCIAL, UserRole.SUPPORT] as unknown as string[]);
         
         if (staffUsers) {
           recipientIds = staffUsers.map(user => user.id);
@@ -305,7 +314,7 @@ async function createMessageNotification(ticketId: string, senderId: string, mes
           user_id: userId,
           title: 'Nova Mensagem de Suporte',
           message: `Nova mensagem no chamado "${ticket.title}"`,
-          type: NotificationType.SUPPORT,
+          type: NotificationType.SUPPORT as unknown as string,
           data: { ticket_id: ticketId },
           is_read: false
         }));

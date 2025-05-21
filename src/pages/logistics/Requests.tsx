@@ -43,11 +43,10 @@ const LogisticsRequests = () => {
     const fetchData = async () => {
       try {
         const stats = await SupportRequestService.getStats();
-        // Make sure we're setting stats in the correct format
         setReportData({
           pendingRequests: stats.pendingRequests,
           highPriorityRequests: stats.highPriorityRequests,
-          typeCounts: stats.typeCounts || {} as Record<string, number>
+          typeCounts: stats.typeCounts || {}
         });
       } catch (error) {
         console.error("Error fetching support request stats:", error);
