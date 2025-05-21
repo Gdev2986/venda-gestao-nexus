@@ -1,6 +1,6 @@
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { ArrowDown, ArrowUp } from "lucide-react";
+import { ArrowDown, ArrowUp, TrendingUp } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { formatCurrency } from "@/lib/utils";
 
@@ -22,65 +22,45 @@ interface StatCardsProps {
 const StatCards = ({ stats, isLoading }: StatCardsProps) => {
   if (isLoading) {
     return (
-      <div className="grid grid-cols-1 gap-4">
-        {/* Full width card for Total Sales */}
-        <Skeleton className="h-28" />
-        
-        {/* Two cards in one row for Gross and Net */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <Skeleton className="h-24" />
-          <Skeleton className="h-24" />
-        </div>
-        
-        {/* Full width card for Office Commission */}
-        <Skeleton className="h-28" />
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
+        {Array.from({ length: 4 }).map((_, index) => (
+          <Skeleton key={index} className="h-32" />
+        ))}
       </div>
     );
   }
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-      {/* Total Sales - Full width on mobile, 25% width on desktop */}
-      <Card className="col-span-1 md:col-span-4">
+    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
+      {/* Gross Sales */}
+      <Card className="border-l-4 border-l-blue-500">
         <CardHeader className="pb-2">
-          <CardDescription>Faturamento do mês</CardDescription>
-          <CardTitle className="text-2xl md:text-3xl font-bold">
-            {formatCurrency(stats.totalSales)}
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="flex items-center text-sm">
-            <div className={`flex items-center ${stats.isGrowthPositive ? 'text-green-500' : 'text-red-500'}`}>
-              {stats.isGrowthPositive ? (
-                <ArrowUp className="h-4 w-4 mr-1" />
-              ) : (
-                <ArrowDown className="h-4 w-4 mr-1" />
-              )}
-              <span>{stats.salesGrowth}% em relação ao mês anterior</span>
+          <div className="flex justify-between items-center">
+            <CardDescription>Valor Bruto</CardDescription>
+            <div className="p-2 bg-blue-50 dark:bg-blue-900/20 rounded-full">
+              <TrendingUp className="h-4 w-4 text-blue-500" />
             </div>
           </div>
-        </CardContent>
-      </Card>
-      
-      {/* Gross Sales - 50% width on desktop, full width on mobile */}
-      <Card className="col-span-1 md:col-span-2">
-        <CardHeader className="pb-2">
-          <CardDescription>Valor Bruto</CardDescription>
           <CardTitle className="text-xl md:text-2xl font-bold">
             {formatCurrency(stats.grossSales)}
           </CardTitle>
         </CardHeader>
         <CardContent>
           <div className="text-sm text-muted-foreground">
-            Valor total bruto
+            Total transacionado
           </div>
         </CardContent>
       </Card>
       
-      {/* Net Sales - 50% width on desktop, full width on mobile */}
-      <Card className="col-span-1 md:col-span-2">
+      {/* Net Sales */}
+      <Card className="border-l-4 border-l-green-500">
         <CardHeader className="pb-2">
-          <CardDescription>Valor Líquido</CardDescription>
+          <div className="flex justify-between items-center">
+            <CardDescription>Valor Líquido</CardDescription>
+            <div className="p-2 bg-green-50 dark:bg-green-900/20 rounded-full">
+              <TrendingUp className="h-4 w-4 text-green-500" />
+            </div>
+          </div>
           <CardTitle className="text-xl md:text-2xl font-bold">
             {formatCurrency(stats.netSales)}
           </CardTitle>
@@ -92,17 +72,42 @@ const StatCards = ({ stats, isLoading }: StatCardsProps) => {
         </CardContent>
       </Card>
       
-      {/* Office Commission - Full width on mobile, 25% width on desktop */}
-      <Card className="col-span-1 md:col-span-4">
+      {/* Pending Requests */}
+      <Card className="border-l-4 border-l-orange-500">
         <CardHeader className="pb-2">
-          <CardDescription>Comissão Escritório</CardDescription>
-          <CardTitle className="text-2xl md:text-3xl font-bold">
-            {formatCurrency(stats.totalCommissions)}
+          <div className="flex justify-between items-center">
+            <CardDescription>Solicitações Pendentes</CardDescription>
+            <div className="p-2 bg-orange-50 dark:bg-orange-900/20 rounded-full">
+              <TrendingUp className="h-4 w-4 text-orange-500" />
+            </div>
+          </div>
+          <CardTitle className="text-xl md:text-2xl font-bold">
+            {stats.pendingRequests}
           </CardTitle>
         </CardHeader>
         <CardContent>
           <div className="text-sm text-muted-foreground">
-            Comissões do mês atual até o momento
+            Aguardando atendimento
+          </div>
+        </CardContent>
+      </Card>
+      
+      {/* Expenses or Current Balance */}
+      <Card className="border-l-4 border-l-purple-500">
+        <CardHeader className="pb-2">
+          <div className="flex justify-between items-center">
+            <CardDescription>{stats.expenses ? "Despesas" : "Saldo Atual"}</CardDescription>
+            <div className="p-2 bg-purple-50 dark:bg-purple-900/20 rounded-full">
+              <TrendingUp className="h-4 w-4 text-purple-500" />
+            </div>
+          </div>
+          <CardTitle className="text-xl md:text-2xl font-bold">
+            {formatCurrency(stats.expenses || stats.currentBalance || 0)}
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="text-sm text-muted-foreground">
+            {stats.expenses ? "Total de despesas" : "Disponível"}
           </div>
         </CardContent>
       </Card>
