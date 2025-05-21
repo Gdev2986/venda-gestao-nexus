@@ -65,14 +65,18 @@ const AdminSupport = () => {
       MAINTENANCE: 6,
       REPLACEMENT: 2,
       OTHER: 3
-    }
+    } as Record<string, number>
   });
   
   useEffect(() => {
     const fetchStats = async () => {
       try {
         const stats = await SupportRequestService.getStats();
-        setReportData(stats);
+        setReportData({
+          pendingRequests: stats.pendingRequests,
+          highPriorityRequests: stats.highPriorityRequests,
+          typeCounts: stats.typeCounts || {} as Record<string, number>
+        });
       } catch (error) {
         console.error("Error fetching support stats:", error);
       }

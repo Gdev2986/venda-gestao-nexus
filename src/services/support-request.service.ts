@@ -18,9 +18,9 @@ export const SupportRequestService = {
           description: ticketData.description,
           client_id: ticketData.client_id,
           technician_id: ticketData.technician_id,
-          type: ticketData.type as string,  // Cast to string
-          status: (ticketData.status || SupportRequestStatus.PENDING) as string,  // Cast to string
-          priority: ticketData.priority as string,  // Cast to string
+          type: ticketData.type,  // Enum value will be converted to string 
+          status: (ticketData.status || SupportRequestStatus.PENDING),  // Enum value
+          priority: ticketData.priority,  // Enum value
           scheduled_date: ticketData.scheduled_date
         }])
         .select()
@@ -40,9 +40,9 @@ export const SupportRequestService = {
       const updatePayload: any = {
         title: updateData.title,
         description: updateData.description,
-        status: updateData.status as string,  // Cast to string
-        priority: updateData.priority as string,  // Cast to string
-        type: updateData.type as string,  // Cast to string
+        status: updateData.status,  // Enum value
+        priority: updateData.priority,  // Enum value
+        type: updateData.type,  // Enum value
         technician_id: updateData.technician_id,
         resolution: updateData.resolution,
         scheduled_date: updateData.scheduled_date,
@@ -81,32 +81,32 @@ export const SupportRequestService = {
           machine:machine_id(*)
         `);
 
-      // Apply filters - with proper type casting
+      // Apply filters with proper handling of enum values
       if (filters.status) {
         if (Array.isArray(filters.status)) {
-          // Cast each status to string
-          const statusValues = filters.status.map(s => s as unknown as string);
+          // Convert enum array to string array for the query
+          const statusValues = filters.status;
           query = query.in('status', statusValues);
         } else {
-          // Cast single status to string
-          query = query.eq('status', filters.status as unknown as string);
+          // Use the enum value directly
+          query = query.eq('status', filters.status);
         }
       }
 
       if (filters.type) {
         if (Array.isArray(filters.type)) {
-          // Cast each type to string
-          const typeValues = filters.type.map(t => t as unknown as string);
+          // Convert enum array to string array for the query
+          const typeValues = filters.type;
           query = query.in('type', typeValues);
         } else {
-          // Cast single type to string
-          query = query.eq('type', filters.type as unknown as string);
+          // Use the enum value directly
+          query = query.eq('type', filters.type);
         }
       }
 
       if (filters.priority) {
-        // Cast priority to string
-        query = query.eq('priority', filters.priority as unknown as string);
+        // Use the enum value directly
+        query = query.eq('priority', filters.priority);
       }
 
       if (filters.client_id) {
@@ -155,7 +155,7 @@ export const SupportRequestService = {
         user: msg.user as any
       }));
 
-      return messages as unknown as SupportMessage[];
+      return messages as SupportMessage[];
     } catch (error) {
       console.error("Error fetching ticket messages:", error);
       return [];
@@ -218,7 +218,7 @@ export const SupportRequestService = {
       return {
         pendingRequests: 0,
         highPriorityRequests: 0,
-        typeCounts: {}
+        typeCounts: {} as Record<string, number>
       };
     }
   }

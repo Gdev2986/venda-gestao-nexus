@@ -1,7 +1,6 @@
-
 import { supabase } from "@/integrations/supabase/client";
 import { SupportTicket, CreateTicketParams, UpdateTicketParams, SupportMessage } from "@/types/support.types";
-import { TicketStatus, NotificationType, TicketPriority, TicketType } from "@/types/enums";
+import { TicketStatus, NotificationType, TicketPriority, TicketType, UserRole } from "@/types/enums";
 
 // Create a new support ticket
 export async function createSupportTicket(ticket: CreateTicketParams): Promise<{ data: SupportTicket | null, error: any }> {
@@ -14,9 +13,9 @@ export async function createSupportTicket(ticket: CreateTicketParams): Promise<{
       user_id: ticket.user_id,
       title: ticket.title,
       description: ticket.description,
-      type: ticket.type as string, // Cast to string for database
-      priority: ticket.priority as string, // Cast to string for database
-      status: (ticket.status || TicketStatus.OPEN) as string, // Cast to string for database
+      type: ticket.type, // Enum value
+      priority: ticket.priority, // Enum value
+      status: (ticket.status || TicketStatus.OPEN), // Enum value
       scheduled_date: ticket.scheduled_date
     })
     .select('*, client:client_id(*), machine:machine_id(*)')
@@ -37,10 +36,10 @@ export async function updateSupportTicket(id: string, updates: UpdateTicketParam
     updated_at: new Date().toISOString()
   };
   
-  // Cast enum values to strings for database
-  if (updates.status) updateData.status = updates.status as string;
-  if (updates.priority) updateData.priority = updates.priority as string;
-  if (updates.type) updateData.type = updates.type as string;
+  // Use enum values directly
+  if (updates.status) updateData.status = updates.status;
+  if (updates.priority) updateData.priority = updates.priority;
+  if (updates.type) updateData.type = updates.type;
 
   const { data, error } = await supabase
     .from('support_requests')
@@ -94,29 +93,27 @@ export async function getSupportTickets(filters?: {
   if (filters) {
     if (filters.status) {
       if (Array.isArray(filters.status)) {
-        // Cast array of enums to array of strings
-        const statusValues = filters.status.map(s => s as unknown as string);
-        query = query.in('status', statusValues);
+        // Use enum values directly
+        query = query.in('status', filters.status);
       } else {
-        // Cast single enum to string
-        query = query.eq('status', filters.status as unknown as string);
+        // Use enum value directly
+        query = query.eq('status', filters.status);
       }
     }
     
     if (filters.type) {
       if (Array.isArray(filters.type)) {
-        // Cast array of enums to array of strings
-        const typeValues = filters.type.map(t => t as unknown as string);
-        query = query.in('type', typeValues);
+        // Use enum values directly
+        query = query.in('type', filters.type);
       } else {
-        // Cast single enum to string
-        query = query.eq('type', filters.type as unknown as string);
+        // Use enum value directly
+        query = query.eq('type', filters.type);
       }
     }
     
     if (filters.priority) {
-      // Cast enum to string
-      query = query.eq('priority', filters.priority as unknown as string);
+      // Use enum value directly
+      query = query.eq('priority', filters.priority);
     }
     
     if (filters.client_id) query = query.eq('client_id', filters.client_id);
@@ -159,7 +156,7 @@ export async function getTicketMessages(ticketId: string): Promise<{ data: Suppo
     user: msg.user
   })) : null;
     
-  return { data: messages as unknown as SupportMessage[] | null, error };
+  return { data: messages as SupportMessage[] | null, error };
 }
 
 // Add a message to a ticket

@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { PageHeader } from "@/components/page/PageHeader";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -35,7 +34,7 @@ const LogisticsRequests = () => {
       SUPPLIES: 1,
       REMOVAL: 1,
       OTHER: 2
-    }
+    } as Record<string, number>
   });
   
   // We can fetch real data when the component mounts
@@ -47,15 +46,7 @@ const LogisticsRequests = () => {
         setReportData({
           pendingRequests: stats.pendingRequests,
           highPriorityRequests: stats.highPriorityRequests,
-          typeCounts: stats.typeCounts || {
-            INSTALLATION: 0,
-            MAINTENANCE: 0,
-            REPLACEMENT: 0,
-            SUPPLIES: 0,
-            REMOVAL: 0,
-            OTHER: 0,
-            ...stats.typeCounts
-          }
+          typeCounts: stats.typeCounts || {} as Record<string, number>
         });
       } catch (error) {
         console.error("Error fetching support request stats:", error);
