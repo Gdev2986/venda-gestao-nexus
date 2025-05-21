@@ -19,6 +19,7 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { BlockWithRates } from "@/services/tax-blocks.service";
+import { ScrollArea } from "@/components/ui/scroll-area";
 
 interface TaxBlockEditorProps {
   block?: BlockWithRates;
@@ -176,57 +177,59 @@ const TaxBlockEditor: React.FC<TaxBlockEditorProps> = ({
             {/* Crédito */}
             <div className="space-y-2">
               <h3 className="font-medium text-lg">Crédito</h3>
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Parcelas</TableHead>
-                    <TableHead>Taxa Raíz (%)</TableHead>
-                    <TableHead>Taxa de Repasse (%)</TableHead>
-                    <TableHead>Taxa Final (%)</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {creditRates.map((rate, index) => {
-                    const rateIndex = rates.findIndex(r => 
-                      r.payment_method === rate.payment_method && 
-                      r.installment === rate.installment
-                    );
-                    
-                    return (
-                      <TableRow key={`credit-${rate.installment}`}>
-                        <TableCell>{rate.installment}x</TableCell>
-                        <TableCell>
-                          <Input
-                            type="number"
-                            step="0.01"
-                            value={rate.root_rate}
-                            onChange={(e) => handleRateChange(rateIndex, 'root_rate', parseFloat(e.target.value))}
-                            className="w-24"
-                          />
-                        </TableCell>
-                        <TableCell>
-                          <Input
-                            type="number"
-                            step="0.01"
-                            value={rate.forwarding_rate}
-                            onChange={(e) => handleRateChange(rateIndex, 'forwarding_rate', parseFloat(e.target.value))}
-                            className="w-24"
-                          />
-                        </TableCell>
-                        <TableCell>
-                          <Input
-                            type="number"
-                            step="0.01"
-                            value={rate.final_rate}
-                            onChange={(e) => handleRateChange(rateIndex, 'final_rate', parseFloat(e.target.value))}
-                            className="w-24"
-                          />
-                        </TableCell>
-                      </TableRow>
-                    );
-                  })}
-                </TableBody>
-              </Table>
+              <ScrollArea className="h-[400px] rounded-md border">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Parcelas</TableHead>
+                      <TableHead>Taxa Raíz (%)</TableHead>
+                      <TableHead>Taxa de Repasse (%)</TableHead>
+                      <TableHead>Taxa Final (%)</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {creditRates.map((rate, index) => {
+                      const rateIndex = rates.findIndex(r => 
+                        r.payment_method === rate.payment_method && 
+                        r.installment === rate.installment
+                      );
+                      
+                      return (
+                        <TableRow key={`credit-${rate.installment}`}>
+                          <TableCell>{rate.installment}x</TableCell>
+                          <TableCell>
+                            <Input
+                              type="number"
+                              step="0.01"
+                              value={rate.root_rate}
+                              onChange={(e) => handleRateChange(rateIndex, 'root_rate', parseFloat(e.target.value))}
+                              className="w-24"
+                            />
+                          </TableCell>
+                          <TableCell>
+                            <Input
+                              type="number"
+                              step="0.01"
+                              value={rate.forwarding_rate}
+                              onChange={(e) => handleRateChange(rateIndex, 'forwarding_rate', parseFloat(e.target.value))}
+                              className="w-24"
+                            />
+                          </TableCell>
+                          <TableCell>
+                            <Input
+                              type="number"
+                              step="0.01"
+                              value={rate.final_rate}
+                              onChange={(e) => handleRateChange(rateIndex, 'final_rate', parseFloat(e.target.value))}
+                              className="w-24"
+                            />
+                          </TableCell>
+                        </TableRow>
+                      );
+                    })}
+                  </TableBody>
+                </Table>
+              </ScrollArea>
             </div>
             
             {/* Débito */}

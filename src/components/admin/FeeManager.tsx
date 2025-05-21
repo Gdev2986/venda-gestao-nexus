@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
@@ -23,6 +24,7 @@ import {
 } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
 import { PaymentMethod } from "@/types";
+import { ScrollArea } from "@/components/ui/scroll-area";
 
 // Schema para validação do formulário
 const feeFormSchema = z.object({
@@ -224,17 +226,19 @@ export function FeeManager({ clients, existingFees, onSave }: FeeManagerProps) {
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        {availableInstallments.length > 0 ? (
-                          availableInstallments.map(installment => (
-                            <SelectItem key={installment} value={installment}>
-                              {installment}x
+                        <ScrollArea className="h-[200px]">
+                          {availableInstallments.length > 0 ? (
+                            availableInstallments.map(installment => (
+                              <SelectItem key={installment} value={installment}>
+                                {installment}x
+                              </SelectItem>
+                            ))
+                          ) : (
+                            <SelectItem value="1" disabled>
+                              Não há parcelas disponíveis
                             </SelectItem>
-                          ))
-                        ) : (
-                          <SelectItem value="1" disabled>
-                            Não há parcelas disponíveis
-                          </SelectItem>
-                        )}
+                          )}
+                        </ScrollArea>
                       </SelectContent>
                     </Select>
                     <FormDescription>
