@@ -1,7 +1,6 @@
 
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { SupportRequestType } from "@/types/support-request.types";
 
 export interface RequestsReportViewProps {
   pendingRequests: number;

@@ -13,9 +13,9 @@ export async function createSupportTicket(ticket: CreateTicketParams): Promise<{
       user_id: ticket.user_id,
       title: ticket.title,
       description: ticket.description,
-      type: ticket.type, // Enum value
-      priority: ticket.priority, // Enum value
-      status: (ticket.status || TicketStatus.OPEN), // Enum value
+      type: ticket.type as string, // Cast enum to string
+      priority: ticket.priority as string, // Cast enum to string
+      status: (ticket.status || TicketStatus.OPEN) as string, // Cast enum to string
       scheduled_date: ticket.scheduled_date
     })
     .select('*, client:client_id(*), machine:machine_id(*)')
@@ -36,10 +36,10 @@ export async function updateSupportTicket(id: string, updates: UpdateTicketParam
     updated_at: new Date().toISOString()
   };
   
-  // Use enum values directly
-  if (updates.status) updateData.status = updates.status;
-  if (updates.priority) updateData.priority = updates.priority;
-  if (updates.type) updateData.type = updates.type;
+  // Use enum values as strings
+  if (updates.status) updateData.status = updates.status as string;
+  if (updates.priority) updateData.priority = updates.priority as string;
+  if (updates.type) updateData.type = updates.type as string;
 
   const { data, error } = await supabase
     .from('support_requests')
@@ -93,27 +93,29 @@ export async function getSupportTickets(filters?: {
   if (filters) {
     if (filters.status) {
       if (Array.isArray(filters.status)) {
-        // Use enum values directly
-        query = query.in('status', filters.status);
+        // Cast enum values to strings
+        const statusValues = filters.status.map(s => s as string);
+        query = query.in('status', statusValues);
       } else {
-        // Use enum value directly
-        query = query.eq('status', filters.status);
+        // Cast enum value to string
+        query = query.eq('status', filters.status as string);
       }
     }
     
     if (filters.type) {
       if (Array.isArray(filters.type)) {
-        // Use enum values directly
-        query = query.in('type', filters.type);
+        // Cast enum values to strings
+        const typeValues = filters.type.map(t => t as string);
+        query = query.in('type', typeValues);
       } else {
-        // Use enum value directly
-        query = query.eq('type', filters.type);
+        // Cast enum value to string
+        query = query.eq('type', filters.type as string);
       }
     }
     
     if (filters.priority) {
-      // Use enum value directly
-      query = query.eq('priority', filters.priority);
+      // Cast enum value to string
+      query = query.eq('priority', filters.priority as string);
     }
     
     if (filters.client_id) query = query.eq('client_id', filters.client_id);
@@ -154,9 +156,9 @@ export async function getTicketMessages(ticketId: string): Promise<{ data: Suppo
     message: msg.message,
     created_at: msg.created_at,
     user: msg.user
-  })) : null;
+  } as SupportMessage)) : null;
     
-  return { data: messages as SupportMessage[] | null, error };
+  return { data: messages, error };
 }
 
 // Add a message to a ticket

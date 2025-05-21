@@ -18,9 +18,9 @@ export const SupportRequestService = {
           description: ticketData.description,
           client_id: ticketData.client_id,
           technician_id: ticketData.technician_id,
-          type: ticketData.type,  // Enum value will be converted to string 
-          status: (ticketData.status || SupportRequestStatus.PENDING),  // Enum value
-          priority: ticketData.priority,  // Enum value
+          type: ticketData.type as string,  // Cast enum to string
+          status: (ticketData.status || SupportRequestStatus.PENDING) as string,  // Cast enum to string
+          priority: ticketData.priority as string,  // Cast enum to string
           scheduled_date: ticketData.scheduled_date
         }])
         .select()
@@ -40,9 +40,9 @@ export const SupportRequestService = {
       const updatePayload: any = {
         title: updateData.title,
         description: updateData.description,
-        status: updateData.status,  // Enum value
-        priority: updateData.priority,  // Enum value
-        type: updateData.type,  // Enum value
+        status: updateData.status as string,  // Cast enum to string
+        priority: updateData.priority as string,  // Cast enum to string
+        type: updateData.type as string,  // Cast enum to string
         technician_id: updateData.technician_id,
         resolution: updateData.resolution,
         scheduled_date: updateData.scheduled_date,
@@ -85,28 +85,28 @@ export const SupportRequestService = {
       if (filters.status) {
         if (Array.isArray(filters.status)) {
           // Convert enum array to string array for the query
-          const statusValues = filters.status;
+          const statusValues = filters.status.map(s => s as string);
           query = query.in('status', statusValues);
         } else {
-          // Use the enum value directly
-          query = query.eq('status', filters.status);
+          // Use the enum value as string
+          query = query.eq('status', filters.status as string);
         }
       }
 
       if (filters.type) {
         if (Array.isArray(filters.type)) {
           // Convert enum array to string array for the query
-          const typeValues = filters.type;
+          const typeValues = filters.type.map(t => t as string);
           query = query.in('type', typeValues);
         } else {
-          // Use the enum value directly
-          query = query.eq('type', filters.type);
+          // Use the enum value as string
+          query = query.eq('type', filters.type as string);
         }
       }
 
       if (filters.priority) {
-        // Use the enum value directly
-        query = query.eq('priority', filters.priority);
+        // Use the enum value as string
+        query = query.eq('priority', filters.priority as string);
       }
 
       if (filters.client_id) {
