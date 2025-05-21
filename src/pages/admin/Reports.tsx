@@ -10,13 +10,25 @@ import { FileDown, PieChart, BarChart3 } from "lucide-react";
 import { useState } from "react";
 import RequestsReportView from "@/components/logistics/reports/RequestsReportView";
 import { BarChart as RechartBarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
+import { DateRange } from "react-day-picker";
 
 const AdminReports = () => {
   const [reportType, setReportType] = useState("sales");
-  const [dateRange, setDateRange] = useState({
+  const [dateRange, setDateRange] = useState<DateRange>({
     from: new Date(new Date().setDate(new Date().getDate() - 30)),
     to: new Date(),
   });
+
+  // Handler for DateRange changes that ensures type compatibility
+  const handleDateRangeChange = (range: DateRange | undefined) => {
+    if (range) {
+      // Ensure the 'to' property exists, otherwise use 'from' as fallback
+      setDateRange({
+        from: range.from || new Date(),
+        to: range.to || range.from || new Date(),
+      });
+    }
+  };
 
   // Mock data para os gráficos
   const salesData = [
@@ -67,7 +79,7 @@ const AdminReports = () => {
                   <DatePickerWithRange 
                     className="w-full mt-1" 
                     value={dateRange}
-                    onChange={setDateRange}
+                    onChange={handleDateRangeChange}
                   />
                 </div>
                 
@@ -127,7 +139,7 @@ const AdminReports = () => {
                   <DatePickerWithRange 
                     className="w-full mt-1" 
                     value={dateRange}
-                    onChange={setDateRange}
+                    onChange={handleDateRangeChange}
                   />
                 </div>
                 
@@ -178,7 +190,7 @@ const AdminReports = () => {
                   <DatePickerWithRange 
                     className="w-full mt-1" 
                     value={dateRange}
-                    onChange={setDateRange}
+                    onChange={handleDateRangeChange}
                   />
                 </div>
                 
