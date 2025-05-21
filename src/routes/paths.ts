@@ -34,9 +34,12 @@ export const PATHS = {
     SALES_NEW: "/admin/sales/new",
     SALES_IMPORT: "/admin/sales/import",
     PARTNERS: "/admin/partners",
+    PARTNER_DETAILS: (id?: string) => `/admin/partners/${id || ':id'}`,
+    PARTNER_NEW: "/admin/partners/new",
     SUPPORT: "/admin/support",
     FEES: "/admin/fees",
     SETTINGS: "/admin/settings",
+    LOGISTICS: "/admin/logistics",
   },
   
   // Client Routes
@@ -58,6 +61,7 @@ export const PATHS = {
     SUPPORT: "/user/support",
     HELP: "/user/help",
     SETTINGS: "/user/settings",
+    MACHINES: "/user/machines",
   },
   
   // Partner Routes
@@ -65,6 +69,7 @@ export const PATHS = {
     ROOT: "/partner",
     DASHBOARD: "/partner/dashboard",
     CLIENTS: "/partner/clients",
+    CLIENT_DETAILS: (id?: string) => `/partner/clients/${id || ':id'}`,
     SALES: "/partner/sales",
     COMMISSIONS: "/partner/commissions",
     PROFILE: "/partner/profile",
@@ -92,6 +97,8 @@ export const PATHS = {
     PAYMENT_REQUESTS: "/financial/payment-requests",
     REPORTS: "/financial/reports",
     SETTINGS: "/financial/settings",
+    CLIENTS: "/financial/clients", // Added as it's referenced in Dashboard
+    REQUESTS: "/financial/requests", // Added as it's referenced in Dashboard
   },
   
   // Logistics Routes
@@ -101,11 +108,13 @@ export const PATHS = {
     CLIENTS: "/logistics/clients",
     MACHINES: "/logistics/machines",
     MACHINE_DETAILS: (id?: string) => `/logistics/machines/${id || ':id'}`,
+    MACHINE_NEW: "/logistics/machines/new",
     SUPPORT_REQUESTS: "/logistics/support-requests",
     OPERATIONS: "/logistics/operations",
     REQUESTS: "/logistics/requests",
     REPORTS: "/logistics/reports",
     SETTINGS: "/logistics/settings",
+    INVENTORY: "/logistics/inventory", // Added as it's referenced in routes
   },
   
   // Support Routes
