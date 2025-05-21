@@ -1,9 +1,9 @@
 
-// This file is for backward compatibility
-// Re-export AuthContext and useAuth from the provider
-import { AuthContext, useAuth } from "@/providers/AuthProvider";
+import * as React from "react";
+import { AuthContext, useAuth, AuthProvider } from "@/providers/AuthProvider";
 
-export { AuthContext, useAuth };
+// Re-export AuthContext and useAuth from the provider
+export { AuthContext, useAuth, AuthProvider };
 
 // Re-export auth types
 export * from "./auth-types";
