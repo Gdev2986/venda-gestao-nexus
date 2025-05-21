@@ -1,5 +1,6 @@
 
-import * as React from 'react';
+// Import React explicitly without destructuring to maintain a single instance
+import React from 'react';
 import { createRoot } from 'react-dom/client';
 import { BrowserRouter } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
@@ -10,21 +11,7 @@ import { Toaster } from './components/ui/toaster';
 import App from './App';
 import './index.css';
 
-// Enhanced React verification with detailed error messaging
-if (!React) {
-  console.error('CRITICAL ERROR: React is not defined - application will not work correctly');
-  // Add visible error to the DOM
-  document.body.innerHTML = '<div style="color: red; padding: 20px; border: 1px solid red; margin: 20px;">React initialization failed. Please check for multiple React instances or incorrect imports.</div>';
-} else if (typeof React.createElement !== 'function' || typeof React.useState !== 'function') {
-  console.error('CRITICAL ERROR: React API is incomplete - missing core functionality', {
-    createElement: typeof React.createElement,
-    useState: typeof React.useState,
-    useEffect: typeof React.useEffect
-  });
-  document.body.innerHTML = '<div style="color: red; padding: 20px; border: 1px solid red; margin: 20px;">React API is incomplete. Please check your React installation.</div>';
-}
-
-// Create a query client with default options
+// Create a query client for React Query
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
@@ -50,6 +37,7 @@ function renderApp() {
     const root = createRoot(rootElement);
     
     // Render the application with proper provider hierarchy
+    // Important: Use React.StrictMode with direct React reference
     root.render(
       <React.StrictMode>
         <BrowserRouter>

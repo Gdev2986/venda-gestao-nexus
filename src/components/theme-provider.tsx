@@ -1,7 +1,8 @@
 
 "use client"
 
-import * as React from "react"
+// Explicitly import React as a namespace to ensure consistent usage
+import React from "react"
 
 type Theme = "dark" | "light" | "system"
 
@@ -21,7 +22,7 @@ const initialState: ThemeProviderState = {
   setTheme: () => null,
 }
 
-// Create context with proper React instance
+// Create context using the direct React reference
 const ThemeProviderContext = React.createContext<ThemeProviderState>(initialState)
 
 export function ThemeProvider({
@@ -30,17 +31,7 @@ export function ThemeProvider({
   storageKey = "sigmapay-theme",
   ...props
 }: ThemeProviderProps) {
-  // Defensive initialization check
-  if (!React || typeof React.useState !== 'function') {
-    console.error('React is not properly initialized in ThemeProvider');
-    return (
-      <div className="p-4 text-red-500 border border-red-500 rounded">
-        Error: React initialization failed. Please check browser console for details.
-        {children}
-      </div>
-    );
-  }
-
+  // Use direct React reference for useState to avoid dependency issues
   const [theme, setTheme] = React.useState<Theme>(() => {
     if (typeof window === "undefined") return defaultTheme;
     
@@ -53,6 +44,7 @@ export function ThemeProvider({
     }
   })
 
+  // Use direct React reference for useEffect
   React.useEffect(() => {
     if (typeof window === "undefined") return
     
@@ -80,6 +72,7 @@ export function ThemeProvider({
     }
   }, [theme, storageKey])
 
+  // Use direct React reference for useMemo
   const value = React.useMemo(
     () => ({
       theme,
@@ -98,12 +91,7 @@ export function ThemeProvider({
 }
 
 export const useTheme = (): ThemeProviderState => {
-  // Defensive check before accessing context
-  if (!React || typeof React.useContext !== 'function') {
-    console.error('React is not properly initialized in useTheme hook');
-    return initialState;
-  }
-  
+  // Use direct React reference for useContext
   const context = React.useContext(ThemeProviderContext)
 
   if (context === undefined) {
