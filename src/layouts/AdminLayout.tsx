@@ -2,7 +2,7 @@
 import { Outlet } from "react-router-dom";
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
-import MainSidebar from "./MainSidebar";
+import Sidebar from "@/components/layout/sidebar/Sidebar";
 import { useUserRole } from "@/hooks/use-user-role";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { Button } from "@/components/ui/button";
@@ -11,6 +11,7 @@ import NotificationDropdown from "@/components/layout/NotificationDropdown";
 import ThemeToggle from "@/components/theme/theme-toggle";
 import { Toaster } from "@/components/ui/sonner";
 import { Spinner } from "@/components/ui/spinner";
+import { AnimatePresence } from "framer-motion";
 
 const AdminLayout = () => {
   // Use localStorage to persist sidebar state
@@ -66,13 +67,15 @@ const AdminLayout = () => {
 
   return (
     <div className="flex h-screen overflow-hidden bg-background">
-      {/* Sidebar component - mounted always but conditionally shown */}
-      <MainSidebar 
-        isOpen={sidebarOpen} 
-        isMobile={isMobile} 
-        onClose={() => setSidebarOpen(false)} 
-        userRole={userRole}
-      />
+      {/* Sidebar component with AnimatePresence for smooth animation */}
+      <AnimatePresence>
+        <Sidebar 
+          isOpen={sidebarOpen} 
+          isMobile={isMobile} 
+          onClose={() => setSidebarOpen(false)} 
+          userRole={userRole}
+        />
+      </AnimatePresence>
       
       {/* Main content */}
       <div 
@@ -87,7 +90,7 @@ const AdminLayout = () => {
               variant="ghost" 
               size="sm" 
               onClick={() => setSidebarOpen(!sidebarOpen)}
-              aria-label={sidebarOpen ? "Close menu" : "Open menu"}
+              aria-label={sidebarOpen ? "Fechar menu" : "Abrir menu"}
               className="p-1"
             >
               <Menu className="h-4 w-4 md:h-5 md:w-5" />

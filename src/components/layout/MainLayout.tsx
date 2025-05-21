@@ -9,12 +9,9 @@ import NotificationDropdown from "./NotificationDropdown";
 import ThemeToggle from "../theme/theme-toggle";
 import { useUserRole } from "@/hooks/use-user-role";
 import { AnimatePresence } from "framer-motion";
+import { Outlet } from "react-router-dom";
 
-type MainLayoutProps = {
-  children: React.ReactNode;
-};
-
-const MainLayout = ({ children }: MainLayoutProps) => {
+const MainLayout = () => {
   // Use localStorage to persist sidebar state
   const [sidebarOpen, setSidebarOpen] = useState(() => {
     const saved = localStorage.getItem("sidebar-state");
@@ -81,10 +78,10 @@ const MainLayout = ({ children }: MainLayoutProps) => {
           </div>
         </header>
         
-        {/* Main scrollable content with improved padding for mobile */}
+        {/* Main scrollable content - alterado para usar Outlet */}
         <main className="flex-1 w-full overflow-y-auto overflow-x-hidden p-2 sm:p-4 md:p-6">
           <div className="mx-auto w-full">
-            {children}
+            <Outlet />
           </div>
         </main>
       </div>

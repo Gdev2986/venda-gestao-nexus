@@ -1,39 +1,13 @@
 
 import { Route } from "react-router-dom";
-import { PATHS } from "../paths";
+import AdminSettings from "@/pages/admin/Settings";
+import UserManagement from "@/pages/settings/UserManagement";
+import AdminNotifications from "@/pages/admin/Notifications";
 
-// Settings pages
-import AdminSettings from "../../pages/admin/Settings";
-import UserManagement from "../../pages/settings/UserManagement";
-import Fees from "../../pages/Fees";
-import AdminReports from "../../pages/admin/Reports";
-import AdminSupport from "../../pages/admin/Support";
-
-// Settings and Other Routes for Admin Module
-export const settingsRoutes = [
-  <Route 
-    key="admin-settings" 
-    path={PATHS.ADMIN.SETTINGS} 
-    element={<AdminSettings />} 
-  />,
-  <Route 
-    key="admin-user-management" 
-    path={PATHS.ADMIN.USER_MANAGEMENT} 
-    element={<UserManagement />} 
-  />,
-  <Route 
-    key="admin-fees" 
-    path={PATHS.ADMIN.FEES} 
-    element={<Fees />} 
-  />,
-  <Route 
-    key="admin-reports" 
-    path={PATHS.ADMIN.REPORTS} 
-    element={<AdminReports />} 
-  />,
-  <Route 
-    key="admin-support" 
-    path={PATHS.ADMIN.SUPPORT} 
-    element={<AdminSupport />} 
-  />
-];
+export const settingsRoutes = (
+  <>
+    <Route path="/admin/settings" element={<AdminSettings />} />
+    <Route path="/admin/settings/users" element={<UserManagement />} />
+    <Route path="/admin/notifications" element={<AdminNotifications />} />
+  </>
+);

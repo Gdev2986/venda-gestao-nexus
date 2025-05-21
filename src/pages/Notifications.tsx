@@ -46,10 +46,8 @@ const Notifications = () => {
     return true;
   });
 
-  console.log("Notificações filtradas:", filteredNotifications);
-
   return (
-    <div className="container py-6">
+    <div className="py-6">
       <PageHeader
         title="Notificações"
         description="Gerencie suas notificações"
