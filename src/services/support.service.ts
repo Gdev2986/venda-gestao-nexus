@@ -1,4 +1,3 @@
-
 import { supabase } from "@/integrations/supabase/client";
 import { SupportTicket, CreateTicketParams, UpdateTicketParams, SupportMessage } from "@/types/support.types";
 import { TicketStatus, NotificationType, TicketPriority, TicketType, UserRole } from "@/types/enums";
@@ -101,31 +100,47 @@ export async function getSupportTickets(filters?: {
   if (filters) {
     if (filters.status) {
       if (Array.isArray(filters.status)) {
+        // Convert enum values to strings to avoid type errors
         const statusValues = filters.status.map(s => s.toString());
-        query = query.in('status', statusValues);
+        query = query.in('status', statusValues as any);
       } else {
-        query = query.eq('status', filters.status.toString());
+        query = query.eq('status', filters.status.toString() as any);
       }
     }
     
     if (filters.type) {
       if (Array.isArray(filters.type)) {
+        // Convert enum values to strings to avoid type errors
         const typeValues = filters.type.map(t => t.toString());
-        query = query.in('type', typeValues);
+        query = query.in('type', typeValues as any);
       } else {
-        query = query.eq('type', filters.type.toString());
+        query = query.eq('type', filters.type.toString() as any);
       }
     }
     
     if (filters.priority) {
-      query = query.eq('priority', filters.priority.toString());
+      query = query.eq('priority', filters.priority.toString() as any);
     }
     
-    if (filters.client_id) query = query.eq('client_id', filters.client_id);
-    if (filters.assigned_to) query = query.eq('assigned_to', filters.assigned_to);
-    if (filters.user_id) query = query.eq('user_id', filters.user_id);
-    if (filters.date_from) query = query.gte('created_at', filters.date_from);
-    if (filters.date_to) query = query.lte('created_at', filters.date_to);
+    if (filters.client_id) {
+      query = query.eq('client_id', filters.client_id);
+    }
+    
+    if (filters.assigned_to) {
+      query = query.eq('assigned_to', filters.assigned_to);
+    }
+    
+    if (filters.user_id) {
+      query = query.eq('user_id', filters.user_id);
+    }
+    
+    if (filters.date_from) {
+      query = query.gte('created_at', filters.date_from);
+    }
+    
+    if (filters.date_to) {
+      query = query.lte('created_at', filters.date_to);
+    }
   }
 
   // Add ordering
@@ -134,9 +149,9 @@ export async function getSupportTickets(filters?: {
   // Execute the query
   const { data, error } = await query;
   
-  // Return with simplified type casting
+  // Return with simplified type casting to avoid deep type instantiation
   return { 
-    data: data as SupportTicket[], 
+    data: data as unknown as SupportTicket[], 
     error 
   };
 }
@@ -154,120 +169,85 @@ export async function getClientSupportTickets(clientId: string): Promise<{ data:
 
 // Get messages for a ticket
 export async function getTicketMessages(ticketId: string): Promise<{ data: SupportMessage[] | null, error: any }> {
-  // Try with ticket_id first
+  // Try with conversation_id (our standardized approach)
   const { data, error } = await supabase
     .from('support_messages')
     .select('*, user:user_id(id, name, role)')
-    .eq('ticket_id', ticketId)
+    .eq('conversation_id', ticketId)
     .order('created_at', { ascending: true });
     
   if (error) {
     return { data: null, error };
   }
   
-  // If the ticket_id field doesn't exist, try with conversation_id
   if (!data || data.length === 0) {
-    // Use a more direct query without complex joins to avoid type errors
+    // If no results, it could be using a different column name
+    // This is a fallback mechanism for backward compatibility
     const { data: altData, error: altError } = await supabase
       .from('support_messages')
       .select('*, user:user_id(id, name, role)')
-      .eq('conversation_id', ticketId)
+      .eq('ticket_id', ticketId)
       .order('created_at', { ascending: true });
       
     if (altError) return { data: null, error: altError };
       
-    // Transform data to match SupportMessage interface
-    const transformedData = altData.map(msg => {
-      const userObj = {
-        id: '',
-        name: '',
-        role: ''
-      };
-      
-      // Safely access user properties
-      if (msg.user && typeof msg.user === 'object') {
-        const userAny = msg.user as any;
-        if (userAny && !userAny.error) {
-          userObj.id = userAny.id || '';
-          userObj.name = userAny.name || '';
-          userObj.role = userAny.role || '';
-        }
-      }
-      
-      return {
-        id: msg.id,
-        ticket_id: msg.conversation_id, // Map conversation_id to ticket_id
-        user_id: msg.user_id,
-        message: msg.message,
-        created_at: msg.created_at,
-        user: userObj
-      };
-    });
-    
-    return { data: transformedData as SupportMessage[], error: null };
-  }
-    
-  // Process standard response
-  const transformedData = data.map(msg => {
-    const userObj = {
-      id: '',
-      name: '',
-      role: ''
-    };
-    
-    // Safely access user properties
-    if (msg.user && typeof msg.user === 'object') {
-      const userAny = msg.user as any;
-      if (userAny && !userAny.error) {
-        userObj.id = userAny.id || '';
-        userObj.name = userAny.name || '';
-        userObj.role = userAny.role || '';
-      }
+    if (!altData || altData.length === 0) {
+      return { data: [], error: null };
     }
     
-    // Ensure we have a ticket_id property, falling back to conversation_id if needed
-    const messageTicketId = msg.ticket_id || msg.conversation_id;
-    
-    return {
-      id: msg.id,
-      ticket_id: messageTicketId, // Use the determined ticket ID
-      user_id: msg.user_id,
-      message: msg.message,
-      created_at: msg.created_at,
-      user: userObj
-    };
-  });
+    // Transform data to match SupportMessage interface
+    const transformedData = altData.map(messageTransformer);
+    return { data: transformedData, error: null };
+  }
   
-  return { data: transformedData as SupportMessage[], error: null };
+  // Process standard response
+  const transformedData = data.map(messageTransformer);
+  return { data: transformedData, error: null };
+}
+
+// Helper function to transform message data consistently
+function messageTransformer(msg: any): SupportMessage {
+  const userObj = {
+    id: '',
+    name: '',
+    role: ''
+  };
+  
+  // Safely access user properties
+  if (msg.user && typeof msg.user === 'object') {
+    const userAny = msg.user as any;
+    if (userAny && !userAny.error) {
+      userObj.id = userAny.id || '';
+      userObj.name = userAny.name || '';
+      userObj.role = userAny.role || '';
+    }
+  }
+  
+  // Ensure we have a ticket_id property, falling back to conversation_id if needed
+  const messageTicketId = msg.ticket_id || msg.conversation_id;
+  
+  return {
+    id: msg.id,
+    ticket_id: messageTicketId,
+    user_id: msg.user_id,
+    message: msg.message,
+    created_at: msg.created_at,
+    user: userObj
+  };
 }
 
 // Add a message to a ticket
 export async function addTicketMessage(ticketId: string, userId: string, message: string): Promise<{ data: any, error: any }> {
-  // Try with ticket_id first
-  let { data, error } = await supabase
+  // Always use conversation_id for consistency
+  const { data, error } = await supabase
     .from('support_messages')
     .insert({
-      ticket_id: ticketId,
+      conversation_id: ticketId,
       user_id: userId,
       message: message
     } as any)
     .select();
-    
-  // If error, try with conversation_id
-  if (error) {
-    const result = await supabase
-      .from('support_messages')
-      .insert({
-        conversation_id: ticketId,
-        user_id: userId,
-        message: message
-      } as any)
-      .select();
-      
-    data = result.data;
-    error = result.error;
-  }
-
+  
   if (!error) {
     // Also update the ticket's updated_at timestamp
     await supabase

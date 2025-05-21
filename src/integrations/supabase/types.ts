@@ -80,6 +80,42 @@ export type Database = {
           },
         ]
       }
+      client_tax_blocks: {
+        Row: {
+          block_id: string
+          client_id: string
+          created_at: string | null
+          id: string
+        }
+        Insert: {
+          block_id: string
+          client_id: string
+          created_at?: string | null
+          id?: string
+        }
+        Update: {
+          block_id?: string
+          client_id?: string
+          created_at?: string | null
+          id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "client_tax_blocks_block_id_fkey"
+            columns: ["block_id"]
+            isOneToOne: false
+            referencedRelation: "tax_blocks"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "client_tax_blocks_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: true
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       clients: {
         Row: {
           address: string | null
@@ -770,6 +806,74 @@ export type Database = {
             columns: ["technician_id"]
             isOneToOne: false
             referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      tax_blocks: {
+        Row: {
+          created_at: string | null
+          description: string | null
+          id: string
+          name: string
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          name: string
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          name?: string
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
+      tax_rates: {
+        Row: {
+          block_id: string
+          created_at: string | null
+          final_rate: number
+          forwarding_rate: number
+          id: string
+          installment: number
+          payment_method: string
+          root_rate: number
+          updated_at: string | null
+        }
+        Insert: {
+          block_id: string
+          created_at?: string | null
+          final_rate: number
+          forwarding_rate: number
+          id?: string
+          installment: number
+          payment_method: string
+          root_rate: number
+          updated_at?: string | null
+        }
+        Update: {
+          block_id?: string
+          created_at?: string | null
+          final_rate?: number
+          forwarding_rate?: number
+          id?: string
+          installment?: number
+          payment_method?: string
+          root_rate?: number
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tax_rates_block_id_fkey"
+            columns: ["block_id"]
+            isOneToOne: false
+            referencedRelation: "tax_blocks"
             referencedColumns: ["id"]
           },
         ]

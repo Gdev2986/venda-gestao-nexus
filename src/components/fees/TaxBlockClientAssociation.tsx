@@ -1,15 +1,7 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { 
-  Table, 
-  TableBody, 
-  TableCell, 
-  TableHead, 
-  TableHeader, 
-  TableRow 
-} from "@/components/ui/table";
+import { Label } from "@/components/ui/label";
 import { 
   Select, 
   SelectContent, 
@@ -17,159 +9,206 @@ import {
   SelectTrigger, 
   SelectValue 
 } from "@/components/ui/select";
-import { Switch } from "@/components/ui/switch";
-import { Label } from "@/components/ui/label";
-import { Check, X } from "lucide-react";
-
-// Mock clients data
-const mockClients = [
-  { id: "1", name: "Cliente Premium", blockId: "2" },
-  { id: "2", name: "Cliente Padrão", blockId: "1" },
-  { id: "3", name: "Cliente Novo", blockId: "3" },
-  { id: "4", name: "Cliente A", blockId: null },
-  { id: "5", name: "Cliente B", blockId: null },
-  { id: "6", name: "Cliente C", blockId: null },
-];
+import { BlockWithRates, TaxBlocksService } from "@/services/tax-blocks.service";
+import { useToast } from "@/components/ui/use-toast";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Input } from "@/components/ui/input";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Loader2 } from "lucide-react";
 
 type TaxBlockClientAssociationProps = {
-  blocks: { id: string; name: string; description: string }[];
+  blocks: BlockWithRates[];
   onClose: () => void;
 };
 
 const TaxBlockClientAssociation = ({ blocks, onClose }: TaxBlockClientAssociationProps) => {
-  const [clients, setClients] = useState(mockClients);
+  const [selectedClient, setSelectedClient] = useState("");
+  const [selectedBlock, setSelectedBlock] = useState("");
   const [searchTerm, setSearchTerm] = useState("");
-  const [onlyAssigned, setOnlyAssigned] = useState(false);
-  const [onlyUnassigned, setOnlyUnassigned] = useState(false);
+  const [activeTab, setActiveTab] = useState<"assign" | "view">("assign");
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
 
-  // Filter clients based on search and filters
-  const filteredClients = clients.filter(client => {
-    const matchesSearch = client.name.toLowerCase().includes(searchTerm.toLowerCase());
-    
-    if (onlyAssigned && !client.blockId) return false;
-    if (onlyUnassigned && client.blockId) return false;
-    
-    return matchesSearch;
+  // Fetch clients without tax block associations
+  const { data: clientsWithoutBlock = [], isLoading: isLoadingClients } = useQuery({
+    queryKey: ['clientsWithoutTaxBlock'],
+    queryFn: () => TaxBlocksService.getClientsWithoutTaxBlock(),
+    enabled: activeTab === "assign"
   });
 
-  // Update client block association
-  const updateClientBlock = (clientId: string, blockId: string | null) => {
-    setClients(
-      clients.map(client =>
-        client.id === clientId ? { ...client, blockId } : client
-      )
-    );
-  };
+  // Fetch existing client-block associations
+  const { data: associations = [], isLoading: isLoadingAssociations } = useQuery({
+    queryKey: ['clientTaxBlockAssociations'],
+    queryFn: () => TaxBlocksService.getClientTaxBlockAssociations(),
+    enabled: activeTab === "view"
+  });
 
-  const handleSaveChanges = () => {
-    console.log("Saving client-block associations:", clients);
-    onClose();
+  // Filter associations based on search term
+  const filteredAssociations = associations.filter(assoc => 
+    assoc.clientName.toLowerCase().includes(searchTerm.toLowerCase()) || 
+    assoc.blockName.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+
+  // Associate block with client mutation
+  const associateMutation = useMutation({
+    mutationFn: ({ blockId, clientId }: { blockId: string; clientId: string }) => 
+      TaxBlocksService.associateBlockWithClient(blockId, clientId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['clientsWithoutTaxBlock'] });
+      queryClient.invalidateQueries({ queryKey: ['clientTaxBlockAssociations'] });
+      toast({
+        title: "Associação realizada",
+        description: "Cliente associado ao bloco de taxas com sucesso",
+      });
+      setSelectedClient("");
+      setSelectedBlock("");
+    },
+    onError: (error) => {
+      toast({
+        title: "Erro",
+        description: `Erro ao associar cliente: ${error}`,
+        variant: "destructive",
+      });
+    }
+  });
+
+  const handleAssociate = () => {
+    if (!selectedClient || !selectedBlock) {
+      toast({
+        title: "Seleção necessária",
+        description: "Selecione um cliente e um bloco de taxas",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    associateMutation.mutate({ blockId: selectedBlock, clientId: selectedClient });
   };
 
   return (
     <div className="space-y-4">
-      <div className="flex flex-col sm:flex-row justify-between gap-4">
-        <div className="relative flex-1">
-          <Input
-            placeholder="Buscar clientes..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            className="pl-10"
-          />
-          <span className="absolute left-3 top-2.5 text-muted-foreground">
-            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
-          </span>
-        </div>
-        <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
-          <div className="flex items-center space-x-2">
-            <Switch 
-              id="filter-assigned" 
-              checked={onlyAssigned} 
-              onCheckedChange={(checked) => {
-                setOnlyAssigned(checked);
-                if (checked) setOnlyUnassigned(false);
-              }}
-            />
-            <Label htmlFor="filter-assigned">Somente com bloco</Label>
-          </div>
-          <div className="flex items-center space-x-2">
-            <Switch 
-              id="filter-unassigned" 
-              checked={onlyUnassigned} 
-              onCheckedChange={(checked) => {
-                setOnlyUnassigned(checked);
-                if (checked) setOnlyAssigned(false);
-              }}
-            />
-            <Label htmlFor="filter-unassigned">Somente sem bloco</Label>
-          </div>
-        </div>
-      </div>
+      <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as "assign" | "view")}>
+        <TabsList className="mb-4">
+          <TabsTrigger value="assign">Associar Cliente</TabsTrigger>
+          <TabsTrigger value="view">Visualizar Associações</TabsTrigger>
+        </TabsList>
 
-      <div className="border rounded-md">
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>Cliente</TableHead>
-              <TableHead>Bloco de Taxas</TableHead>
-              <TableHead className="w-24">Ações</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {filteredClients.map((client) => (
-              <TableRow key={client.id}>
-                <TableCell>{client.name}</TableCell>
-                <TableCell>
-                  <Select
-                    value={client.blockId || "none"}
-                    onValueChange={(value) => updateClientBlock(client.id, value === "none" ? null : value)}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Selecionar bloco..." />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="none">Nenhum bloco</SelectItem>
-                      {blocks.map((block) => (
-                        <SelectItem key={block.id} value={block.id}>
-                          {block.name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </TableCell>
-                <TableCell>
-                  <div className="flex space-x-1">
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      onClick={() => updateClientBlock(client.id, null)}
-                      disabled={!client.blockId}
-                    >
-                      <X className="h-4 w-4" />
-                    </Button>
-                  </div>
-                </TableCell>
-              </TableRow>
-            ))}
-            {filteredClients.length === 0 && (
-              <TableRow>
-                <TableCell colSpan={3} className="text-center py-8 text-muted-foreground">
-                  Nenhum cliente encontrado com os filtros aplicados.
-                </TableCell>
-              </TableRow>
+        <TabsContent value="assign">
+          <div className="space-y-4">
+            <div>
+              <Label htmlFor="client-select">Cliente</Label>
+              <Select
+                value={selectedClient}
+                onValueChange={setSelectedClient}
+                disabled={isLoadingClients || associateMutation.isPending}
+              >
+                <SelectTrigger id="client-select" className="mt-1">
+                  <SelectValue placeholder="Selecione um cliente" />
+                </SelectTrigger>
+                <SelectContent>
+                  {clientsWithoutBlock.map((client) => (
+                    <SelectItem key={client.id} value={client.id}>
+                      {client.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div>
+              <Label htmlFor="block-select">Bloco de Taxas</Label>
+              <Select
+                value={selectedBlock}
+                onValueChange={setSelectedBlock}
+                disabled={associateMutation.isPending}
+              >
+                <SelectTrigger id="block-select" className="mt-1">
+                  <SelectValue placeholder="Selecione um bloco de taxas" />
+                </SelectTrigger>
+                <SelectContent>
+                  {blocks.map((block) => (
+                    <SelectItem key={block.id} value={block.id}>
+                      {block.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="flex justify-end space-x-2 mt-6">
+              <Button variant="outline" onClick={onClose} disabled={associateMutation.isPending}>
+                Cancelar
+              </Button>
+              <Button 
+                onClick={handleAssociate} 
+                disabled={!selectedClient || !selectedBlock || associateMutation.isPending}
+              >
+                {associateMutation.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                Associar
+              </Button>
+            </div>
+          </div>
+        </TabsContent>
+
+        <TabsContent value="view">
+          <div className="space-y-4">
+            <div className="relative">
+              <Input
+                placeholder="Buscar associações..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="pl-10"
+              />
+              <span className="absolute left-3 top-2.5 text-muted-foreground">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+              </span>
+            </div>
+
+            {isLoadingAssociations ? (
+              <div className="flex justify-center items-center p-12">
+                <Loader2 className="h-8 w-8 animate-spin text-primary" />
+                <span className="ml-2">Carregando associações...</span>
+              </div>
+            ) : (
+              <div className="border rounded-md">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Cliente</TableHead>
+                      <TableHead>Bloco de Taxas</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {filteredAssociations.length === 0 ? (
+                      <TableRow>
+                        <TableCell colSpan={2} className="text-center py-6">
+                          {searchTerm 
+                            ? "Nenhuma associação corresponde à sua pesquisa." 
+                            : "Nenhuma associação encontrada."}
+                        </TableCell>
+                      </TableRow>
+                    ) : (
+                      filteredAssociations.map((assoc, index) => (
+                        <TableRow key={index}>
+                          <TableCell>{assoc.clientName}</TableCell>
+                          <TableCell>{assoc.blockName}</TableCell>
+                        </TableRow>
+                      ))
+                    )}
+                  </TableBody>
+                </Table>
+              </div>
             )}
-          </TableBody>
-        </Table>
-      </div>
 
-      <div className="flex justify-end space-x-2 mt-4">
-        <Button variant="outline" onClick={onClose}>
-          Cancelar
-        </Button>
-        <Button onClick={handleSaveChanges}>
-          Salvar Associações
-        </Button>
-      </div>
+            <div className="flex justify-end space-x-2 mt-6">
+              <Button variant="outline" onClick={onClose}>
+                Fechar
+              </Button>
+            </div>
+          </div>
+        </TabsContent>
+      </Tabs>
     </div>
   );
 };

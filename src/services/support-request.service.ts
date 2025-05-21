@@ -23,7 +23,7 @@ export const SupportRequestService = {
           status: (ticketData.status || SupportRequestStatus.PENDING),
           priority: ticketData.priority,
           scheduled_date: ticketData.scheduled_date
-        } as any) // Use 'as any' to bypass TypeScript's strict checking
+        } as any)
         .select()
         .single();
 
@@ -76,40 +76,32 @@ export const SupportRequestService = {
     search?: string
   } = {}) {
     try {
-      // Create query without type constraints
-      let query = supabase
-        .from('support_requests');
-      
-      // Add select statement separately to avoid type issues
-      query = query.select(`
+      // Start with the base query
+      let query = supabase.from('support_requests').select(`
         *,
         client:client_id(*),
         machine:machine_id(*)
       `);
-
-      // Apply filters with proper type handling
+      
+      // Apply filters
       if (filters.status) {
         if (Array.isArray(filters.status)) {
-          // Convert enum values to strings for the query
-          const statusValues = filters.status.map(s => s.toString());
-          query = query.in('status', statusValues);
+          query = query.in('status', filters.status as any);
         } else {
-          query = query.eq('status', filters.status.toString());
+          query = query.eq('status', filters.status as any);
         }
       }
 
       if (filters.type) {
         if (Array.isArray(filters.type)) {
-          // Convert enum values to strings for the query
-          const typeValues = filters.type.map(t => t.toString());
-          query = query.in('type', typeValues);
+          query = query.in('type', filters.type as any);
         } else {
-          query = query.eq('type', filters.type.toString());
+          query = query.eq('type', filters.type as any);
         }
       }
 
       if (filters.priority) {
-        query = query.eq('priority', filters.priority.toString());
+        query = query.eq('priority', filters.priority as any);
       }
 
       if (filters.client_id) {
