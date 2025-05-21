@@ -1,4 +1,3 @@
-
 import { supabase } from "@/integrations/supabase/client";
 import { PaymentMethod } from "@/types/enums";
 
@@ -115,14 +114,18 @@ export const TaxBlocksService = {
     }
   },
 
-  // Create a new tax block
+  // Create a new tax block - CORRIGIDO
   async createTaxBlock(block: Omit<TaxBlock, 'id' | 'created_at' | 'updated_at'>): Promise<TaxBlock | null> {
     try {
       console.log("Creating tax block:", block);
       
+      // Removida a propriedade rates que estava causando o erro
       const { data, error } = await supabase
         .from('tax_blocks')
-        .insert(block)
+        .insert({
+          name: block.name,
+          description: block.description
+        })
         .select()
         .single();
 
