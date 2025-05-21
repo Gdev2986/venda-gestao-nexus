@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -16,8 +15,8 @@ import {
   Users 
 } from "lucide-react";
 import DoughnutChart from "@/components/charts/DoughnutChart";
-import BarChart from "@/components/charts/BarChart";
-import LineChart from "@/components/charts/LineChart";
+import { BarChart } from "@/components/charts/BarChart";
+import { LineChart } from "@/components/charts/LineChart";
 
 const AdminReports = () => {
   const { toast } = useToast();
