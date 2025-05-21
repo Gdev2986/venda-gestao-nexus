@@ -30,19 +30,25 @@ export function ThemeProvider({
   storageKey = "sigmapay-theme",
   ...props
 }: ThemeProviderProps) {
-  const [theme, setTheme] = React.useState<Theme>(
-    () => {
-      try {
-        const storedTheme = localStorage.getItem(storageKey) as Theme | null;
-        return storedTheme || defaultTheme || "system";
-      } catch (error) {
-        return defaultTheme || "system";
-      }
+  // Fix the useState initialization to be more robust
+  const [theme, setTheme] = React.useState<Theme>(() => {
+    if (typeof window === 'undefined') {
+      return defaultTheme;
     }
-  );
+    
+    try {
+      const storedTheme = localStorage.getItem(storageKey);
+      return (storedTheme as Theme) || defaultTheme;
+    } catch (error) {
+      console.error("Failed to read theme from localStorage:", error);
+      return defaultTheme;
+    }
+  });
   
   // Effect to update document classes
   React.useEffect(() => {
+    if (typeof window === 'undefined') return;
+    
     const root = window.document.documentElement;
     
     root.classList.remove("light", "dark");
@@ -59,6 +65,8 @@ export function ThemeProvider({
 
   // Effect to save theme in localStorage
   React.useEffect(() => {
+    if (typeof window === 'undefined') return;
+    
     try {
       localStorage.setItem(storageKey, theme);
     } catch (error) {
@@ -66,6 +74,7 @@ export function ThemeProvider({
     }
   }, [theme, storageKey]);
 
+  // Memoize context value to prevent unnecessary re-renders
   const value = React.useMemo(
     () => ({
       theme,
@@ -81,11 +90,13 @@ export function ThemeProvider({
   );
 }
 
-// Custom hook to use the theme context
+// Custom hook to use the theme context with better error handling
 export const useTheme = () => {
   const context = React.useContext(ThemeProviderContext);
+  
   if (context === undefined) {
     throw new Error("useTheme must be used within a ThemeProvider");
   }
+  
   return context;
 };
