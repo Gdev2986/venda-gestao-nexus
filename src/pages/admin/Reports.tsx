@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -150,8 +151,7 @@ const AdminReports = () => {
                 ) : (
                   <LineChart 
                     data={reportsData.monthlySales}
-                    xAxis="name"
-                    yAxis="value"
+                    xAxisKey="name"
                     dataKey="value"
                   />
                 )}
@@ -168,8 +168,7 @@ const AdminReports = () => {
                 ) : (
                   <BarChart 
                     data={reportsData.clientAcquisition}
-                    xAxis="name"
-                    yAxis="value"
+                    xAxisKey="name"
                     dataKey="value"
                   />
                 )}
@@ -191,8 +190,7 @@ const AdminReports = () => {
                 <div className="h-80">
                   <LineChart 
                     data={reportsData.monthlySales}
-                    xAxis="name"
-                    yAxis="value"
+                    xAxisKey="name"
                     dataKey="value"
                   />
                 </div>
@@ -214,8 +212,7 @@ const AdminReports = () => {
                 <div className="h-80">
                   <BarChart 
                     data={reportsData.clientAcquisition}
-                    xAxis="name"
-                    yAxis="value"
+                    xAxisKey="name"
                     dataKey="value"
                   />
                 </div>
