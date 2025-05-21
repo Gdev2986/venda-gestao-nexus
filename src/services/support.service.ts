@@ -1,152 +1,285 @@
 
-// This is a mock implementation of the support service that uses mock data
-// In a production environment, this would use actual API calls
+import { supabase } from "@/integrations/supabase/client";
+import { SupportTicket, CreateTicketParams, UpdateTicketParams, SupportMessage } from "@/types/support.types";
+import { TicketStatus, NotificationType } from "@/types/enums";
 
-import { TicketStatus, TicketPriority, TicketType, SupportTicket, CreateSupportTicketParams, UpdateSupportTicketParams } from "@/types/support.types";
+// Create a new support ticket
+export async function createSupportTicket(ticket: CreateTicketParams): Promise<{ data: SupportTicket | null, error: any }> {
+  const { data, error } = await supabase
+    .from('support_tickets')
+    .insert({
+      client_id: ticket.client_id,
+      machine_id: ticket.machine_id,
+      user_id: ticket.user_id,
+      title: ticket.title,
+      description: ticket.description,
+      type: ticket.type,
+      priority: ticket.priority,
+      status: ticket.status || TicketStatus.OPEN,
+      scheduled_date: ticket.scheduled_date
+    })
+    .select('*, client:client_id(*), machine:machine_id(*)')
+    .single();
+  
+  if (!error && data) {
+    await createTicketNotification(data);
+  }
+  
+  return { data, error };
+}
 
-// Mock data for support tickets
-const mockTickets: SupportTicket[] = [
-  {
-    id: "1",
-    title: "Problema na máquina",
-    client_id: "c1",
-    type: TicketType.TECHNICAL,
-    status: TicketStatus.PENDING,
-    priority: TicketPriority.MEDIUM,
-    description: "A máquina está apresentando falhas intermitentes.",
-    created_at: new Date().toISOString(),
-    updated_at: new Date().toISOString(),
-    user_id: "u1",
-    client: {
-      id: "c1",
-      business_name: "Comércio Exemplo"
+// Update an existing ticket
+export async function updateSupportTicket(id: string, updates: UpdateTicketParams): Promise<{ data: any, error: any }> {
+  const { data, error } = await supabase
+    .from('support_tickets')
+    .update({
+      ...updates,
+      updated_at: new Date().toISOString()
+    })
+    .eq('id', id)
+    .select();
+
+  if (!error && updates.status) {
+    // Create status update notification
+    await createStatusUpdateNotification(id, updates);
+  }
+
+  return { data, error };
+}
+
+// Get a single ticket by ID
+export async function getSupportTicketById(id: string): Promise<{ data: SupportTicket | null, error: any }> {
+  return await supabase
+    .from('support_tickets')
+    .select(`
+      *,
+      client:client_id(*),
+      machine:machine_id(*)
+    `)
+    .eq('id', id)
+    .single();
+}
+
+// Get all tickets with optional filters
+export async function getSupportTickets(filters?: {
+  status?: TicketStatus | TicketStatus[];
+  type?: TicketType | TicketType[];
+  priority?: TicketPriority;
+  client_id?: string;
+  assigned_to?: string;
+  user_id?: string;
+  date_from?: string;
+  date_to?: string;
+}): Promise<{ data: SupportTicket[] | null, error: any }> {
+  let query = supabase
+    .from('support_tickets')
+    .select(`
+      *,
+      client:client_id(*),
+      machine:machine_id(*)
+    `)
+    .order('created_at', { ascending: false });
+
+  if (filters) {
+    if (filters.status) {
+      if (Array.isArray(filters.status)) {
+        query = query.in('status', filters.status);
+      } else {
+        query = query.eq('status', filters.status);
+      }
     }
-  },
-  {
-    id: "2",
-    title: "Precisa de manutenção",
-    client_id: "c2",
-    machine_id: "m1",
-    type: TicketType.MAINTENANCE,
-    status: TicketStatus.IN_PROGRESS,
-    priority: TicketPriority.HIGH,
-    description: "Máquina precisa de manutenção preventiva.",
-    created_at: new Date(Date.now() - 86400000).toISOString(),
-    updated_at: new Date(Date.now() - 43200000).toISOString(),
-    user_id: "u2",
-    client: {
-      id: "c2",
-      business_name: "Loja Teste"
-    },
-    machine: {
-      id: "m1",
-      serial_number: "SN123456",
-      model: "ModelX"
+    
+    if (filters.type) {
+      if (Array.isArray(filters.type)) {
+        query = query.in('type', filters.type);
+      } else {
+        query = query.eq('type', filters.type);
+      }
     }
-  }
-];
-
-/**
- * Gets a list of all support tickets with optional filtering
- */
-export const getSupportTickets = async (
-  filters?: { clientId?: string; status?: TicketStatus; type?: TicketType; }
-): Promise<SupportTicket[]> => {
-  // Apply filters to mock data
-  let filteredTickets = [...mockTickets];
-  
-  if (filters?.clientId) {
-    filteredTickets = filteredTickets.filter(ticket => ticket.client_id === filters.clientId);
-  }
-  
-  if (filters?.status) {
-    filteredTickets = filteredTickets.filter(ticket => ticket.status === filters.status);
+    
+    if (filters.priority) query = query.eq('priority', filters.priority);
+    if (filters.client_id) query = query.eq('client_id', filters.client_id);
+    if (filters.assigned_to) query = query.eq('assigned_to', filters.assigned_to);
+    if (filters.user_id) query = query.eq('user_id', filters.user_id);
+    if (filters.date_from) query = query.gte('created_at', filters.date_from);
+    if (filters.date_to) query = query.lte('created_at', filters.date_to);
   }
 
-  if (filters?.type) {
-    filteredTickets = filteredTickets.filter(ticket => ticket.type === filters.type);
+  return await query;
+}
+
+// Get tickets for a client
+export async function getClientSupportTickets(clientId: string): Promise<{ data: SupportTicket[] | null, error: any }> {
+  return await supabase
+    .from('support_tickets')
+    .select('*, client:client_id(*), machine:machine_id(*)')
+    .eq('client_id', clientId)
+    .order('created_at', { ascending: false });
+}
+
+// Get messages for a ticket
+export async function getTicketMessages(ticketId: string): Promise<{ data: SupportMessage[] | null, error: any }> {
+  return await supabase
+    .from('support_messages')
+    .select('*, user:user_id(id, name, role)')
+    .eq('ticket_id', ticketId)
+    .order('created_at', { ascending: true });
+}
+
+// Add a message to a ticket
+export async function addTicketMessage(ticketId: string, userId: string, message: string): Promise<{ data: any, error: any }> {
+  const { data, error } = await supabase
+    .from('support_messages')
+    .insert({
+      ticket_id: ticketId,
+      user_id: userId,
+      message: message
+    })
+    .select();
+
+  if (!error) {
+    // Also update the ticket's updated_at timestamp
+    await supabase
+      .from('support_tickets')
+      .update({ updated_at: new Date().toISOString() })
+      .eq('id', ticketId);
+      
+    // Create notification for the message
+    await createMessageNotification(ticketId, userId, message);
   }
 
-  return Promise.resolve(filteredTickets);
-};
+  return { data, error };
+}
 
-/**
- * Gets support tickets by client ID
- */
-export const getClientSupportTickets = async (clientId: string): Promise<SupportTicket[]> => {
-  return getSupportTickets({ clientId });
-};
-
-/**
- * Gets support tickets by type
- */
-export const getSupportTicketsByType = async (type: TicketType): Promise<SupportTicket[]> => {
-  return getSupportTickets({ type });
-};
-
-/**
- * Gets a single support ticket by ID
- */
-export const getSupportTicketById = async (id: string): Promise<SupportTicket | null> => {
-  const ticket = mockTickets.find(ticket => ticket.id === id);
-  return Promise.resolve(ticket || null);
-};
-
-/**
- * Creates a new support ticket
- */
-export const createSupportTicket = async (ticket: CreateSupportTicketParams): Promise<SupportTicket> => {
-  const newTicket: SupportTicket = {
-    id: `ticket-${Date.now()}`,
-    title: ticket.title,
-    description: ticket.description,
-    client_id: ticket.client_id,
-    machine_id: ticket.machine_id,
-    user_id: ticket.user_id || "unknown-user",
-    type: ticket.type,
-    status: ticket.status || TicketStatus.PENDING,
-    priority: ticket.priority,
-    created_at: new Date().toISOString(),
-    updated_at: new Date().toISOString(),
-    created_by: ticket.created_by,
-    assigned_to: ticket.assigned_to,
-    client: {
-      id: ticket.client_id,
-      business_name: "Cliente Mock"
+// Notification helpers
+async function createTicketNotification(ticket: SupportTicket) {
+  try {
+    // Notify support staff and admins
+    const { data: staffUsers } = await supabase
+      .from('profiles')
+      .select('id')
+      .in('role', ['ADMIN', 'SUPPORT']);
+      
+    if (staffUsers && staffUsers.length > 0) {
+      const notifications = staffUsers.map(user => ({
+        user_id: user.id,
+        title: 'Novo Chamado de Suporte',
+        message: `${ticket.title} - ${ticket.priority}`,
+        type: NotificationType.SUPPORT,
+        data: { ticket_id: ticket.id, priority: ticket.priority },
+        is_read: false
+      }));
+      
+      await supabase.from('notifications').insert(notifications);
     }
-  };
-  
-  // In a real implementation, we would add this to the database
-  mockTickets.push(newTicket);
-  
-  return Promise.resolve(newTicket);
-};
-
-/**
- * Updates an existing support ticket
- */
-export const updateSupportTicket = async (id: string, updates: UpdateSupportTicketParams): Promise<SupportTicket | null> => {
-  const ticketIndex = mockTickets.findIndex(ticket => ticket.id === id);
-  
-  if (ticketIndex === -1) {
-    return Promise.resolve(null);
+  } catch (error) {
+    console.error('Error creating ticket notification:', error);
   }
-  
-  const existingTicket = mockTickets[ticketIndex];
-  
-  const updatedTicket: SupportTicket = {
-    ...existingTicket,
-    title: updates.title !== undefined ? updates.title : existingTicket.title,
-    description: updates.description !== undefined ? updates.description : existingTicket.description,
-    status: updates.status !== undefined ? updates.status : existingTicket.status,
-    priority: updates.priority !== undefined ? updates.priority : existingTicket.priority,
-    type: updates.type !== undefined ? updates.type : existingTicket.type,
-    assigned_to: updates.assigned_to !== undefined ? updates.assigned_to : existingTicket.assigned_to,
-    updated_at: new Date().toISOString()
-  };
-  
-  // In a real implementation, we would update the database
-  mockTickets[ticketIndex] = updatedTicket;
-  
-  return Promise.resolve(updatedTicket);
-};
+}
+
+async function createStatusUpdateNotification(ticketId: string, updates: UpdateTicketParams) {
+  try {
+    const { data: ticket } = await getSupportTicketById(ticketId);
+    if (!ticket) return;
+    
+    // Get the ticket creator to notify them
+    const { data: userData } = await supabase
+      .from('user_client_access')
+      .select('user_id')
+      .eq('client_id', ticket.client_id)
+      .single();
+    
+    if (userData) {
+      await supabase
+        .from('notifications')
+        .insert({
+          user_id: userData.user_id,
+          title: 'Atualização de Chamado',
+          message: `Seu chamado "${ticket.title}" foi atualizado para ${updates.status}`,
+          type: NotificationType.SUPPORT,
+          data: { ticket_id: ticketId, new_status: updates.status },
+          is_read: false
+        });
+    }
+    
+    // If ticket is assigned to someone, notify them as well
+    if (updates.assigned_to) {
+      await supabase
+        .from('notifications')
+        .insert({
+          user_id: updates.assigned_to,
+          title: 'Chamado Atribuído',
+          message: `Você foi designado para o chamado "${ticket.title}"`,
+          type: NotificationType.SUPPORT,
+          data: { ticket_id: ticketId },
+          is_read: false
+        });
+    }
+  } catch (error) {
+    console.error('Error creating status update notification:', error);
+  }
+}
+
+async function createMessageNotification(ticketId: string, senderId: string, message: string) {
+  try {
+    const { data: ticket } = await getSupportTicketById(ticketId);
+    if (!ticket) return;
+    
+    // Determine who should be notified (not the sender)
+    let recipientIds: string[] = [];
+    
+    // If sender is client, notify support staff
+    const { data: sender } = await supabase
+      .from('profiles')
+      .select('role')
+      .eq('id', senderId)
+      .single();
+    
+    if (sender && sender.role === 'CLIENT') {
+      // Notify assigned staff or all support staff if unassigned
+      if (ticket.assigned_to) {
+        recipientIds.push(ticket.assigned_to);
+      } else {
+        const { data: staffUsers } = await supabase
+          .from('profiles')
+          .select('id')
+          .in('role', ['ADMIN', 'SUPPORT']);
+        
+        if (staffUsers) {
+          recipientIds = staffUsers.map(user => user.id);
+        }
+      }
+    } else {
+      // If sender is staff, notify client
+      const { data: clientUser } = await supabase
+        .from('user_client_access')
+        .select('user_id')
+        .eq('client_id', ticket.client_id)
+        .single();
+      
+      if (clientUser) {
+        recipientIds.push(clientUser.user_id);
+      }
+    }
+    
+    // Create notifications for all recipients
+    if (recipientIds.length > 0) {
+      const notifications = recipientIds
+        .filter(id => id !== senderId) // Don't notify the sender
+        .map(userId => ({
+          user_id: userId,
+          title: 'Nova Mensagem de Suporte',
+          message: `Nova mensagem no chamado "${ticket.title}"`,
+          type: NotificationType.SUPPORT,
+          data: { ticket_id: ticketId },
+          is_read: false
+        }));
+      
+      if (notifications.length > 0) {
+        await supabase.from('notifications').insert(notifications);
+      }
+    }
+  } catch (error) {
+    console.error('Error creating message notification:', error);
+  }
+}

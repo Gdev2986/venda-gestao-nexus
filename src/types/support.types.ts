@@ -1,59 +1,29 @@
 
-export enum TicketStatus {
-  PENDING = "PENDING",
-  IN_PROGRESS = "IN_PROGRESS",
-  RESOLVED = "RESOLVED",
-  CLOSED = "CLOSED",
-  REJECTED = "REJECTED",
-  COMPLETED = "COMPLETED",
-  CANCELED = "CANCELED",
-  OPEN = "OPEN"
-}
+import { TicketStatus, TicketPriority, TicketType } from "./enums";
 
-export enum TicketPriority {
-  LOW = "LOW",
-  MEDIUM = "MEDIUM",
-  HIGH = "HIGH",
-  CRITICAL = "CRITICAL",
-  URGENT = "URGENT"
-}
-
-export enum TicketType {
-  TECHNICAL = "TECHNICAL",
-  BILLING = "BILLING",
-  INQUIRY = "INQUIRY",
-  MACHINE = "MACHINE",
-  OTHER = "OTHER",
-  INSTALLATION = "INSTALLATION",
-  MAINTENANCE = "MAINTENANCE",
-  REMOVAL = "REMOVAL",
-  REPLACEMENT = "REPLACEMENT",
-  SUPPLIES = "SUPPLIES",
-  PAPER = "PAPER",
-  GENERAL = "GENERAL",
-  FEATURE = "FEATURE",
-  BUG = "BUG"
-}
-
-// Support ticket interface
 export interface SupportTicket {
   id: string;
   title: string;
   client_id: string;
   machine_id?: string;
-  user_id?: string; // Made optional
+  user_id?: string;
+  assigned_to?: string;
   type: TicketType;
   status: TicketStatus;
   priority: TicketPriority;
   description: string;
   scheduled_date?: string;
+  resolution?: string;
   created_at: string;
-  updated_at: string;
-  created_by?: string; // Added for backward compatibility
-  assigned_to?: string; // Added for compatibility
+  updated_at?: string;
   client?: {
     id: string;
     business_name: string;
+    contact_name?: string;
+    phone?: string;
+    address?: string;
+    city?: string;
+    state?: string;
   };
   machine?: {
     id: string;
@@ -62,8 +32,20 @@ export interface SupportTicket {
   };
 }
 
-// Create and update params for support tickets
-export interface CreateSupportTicketParams {
+export interface SupportMessage {
+  id: string;
+  ticket_id: string;
+  user_id: string;
+  message: string;
+  created_at: string;
+  user?: {
+    id: string;
+    name: string;
+    role: string;
+  };
+}
+
+export interface CreateTicketParams {
   title: string;
   description: string;
   client_id: string;
@@ -71,17 +53,17 @@ export interface CreateSupportTicketParams {
   type: TicketType;
   priority: TicketPriority;
   status?: TicketStatus;
-  assigned_to?: string;
-  created_by?: string;
+  scheduled_date?: string;
   user_id?: string;
 }
 
-export interface UpdateSupportTicketParams {
+export interface UpdateTicketParams {
   title?: string;
   description?: string;
   status?: TicketStatus;
   priority?: TicketPriority;
   type?: TicketType;
   assigned_to?: string;
-  user_id?: string;
+  resolution?: string;
+  scheduled_date?: string;
 }

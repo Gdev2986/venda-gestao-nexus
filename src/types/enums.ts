@@ -32,7 +32,8 @@ export enum NotificationType {
   BALANCE = "BALANCE",
   MACHINE = "MACHINE",
   COMMISSION = "COMMISSION",
-  SYSTEM = "SYSTEM"
+  SYSTEM = "SYSTEM",
+  SUPPORT = "SUPPORT"
 }
 
 export enum PaymentAction {
@@ -41,4 +42,50 @@ export enum PaymentAction {
   REJECT = "REJECT",
   DELETE = "DELETE",
   SEND_RECEIPT = "SEND_RECEIPT"
+}
+
+export enum TicketStatus {
+  OPEN = "OPEN",
+  PENDING = "PENDING",
+  IN_PROGRESS = "IN_PROGRESS",
+  RESOLVED = "RESOLVED",
+  COMPLETED = "COMPLETED",
+  CLOSED = "CLOSED",
+  REJECTED = "REJECTED",
+  CANCELED = "CANCELED"
+}
+
+export enum TicketPriority {
+  LOW = "LOW",
+  MEDIUM = "MEDIUM",
+  HIGH = "HIGH",
+  CRITICAL = "CRITICAL",
+  URGENT = "URGENT"
+}
+
+export enum TicketType {
+  TECHNICAL = "TECHNICAL",
+  BILLING = "BILLING",
+  INQUIRY = "INQUIRY",
+  MACHINE = "MACHINE",
+  INSTALLATION = "INSTALLATION",
+  MAINTENANCE = "MAINTENANCE",
+  REMOVAL = "REMOVAL",
+  REPLACEMENT = "REPLACEMENT",
+  SUPPLIES = "SUPPLIES",
+  PAPER = "PAPER",
+  GENERAL = "GENERAL",
+  FEATURE = "FEATURE",
+  BUG = "BUG",
+  OTHER = "OTHER"
+}
+
+export enum TicketAction {
+  VIEW = "VIEW",
+  REPLY = "REPLY",
+  ASSIGN = "ASSIGN",
+  RESOLVE = "RESOLVE",
+  REOPEN = "REOPEN",
+  CLOSE = "CLOSE",
+  CANCEL = "CANCEL"
 }
