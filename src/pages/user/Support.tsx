@@ -38,25 +38,13 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { format } from "date-fns";
 import { Loader2, MessageCircle, Plus, RefreshCw, SendHorizontal } from "lucide-react";
-import { 
-  getSupportTickets, 
-  getSupportTicketById,
-  createSupportTicket, 
-  addTicketMessage,
-  getTicketMessages
-} from "@/services/support.service";
-import { SupportTicket, SupportMessage } from "@/types/support.types";
+import { useSupportTickets } from "@/hooks/use-support-tickets";
+import { supabase } from "@/integrations/supabase/client";
 import { TicketType, TicketPriority, TicketStatus } from "@/types/enums";
 
 const UserSupport = () => {
   const { toast } = useToast();
   const { user } = useAuth();
-  
-  // States for tickets
-  const [tickets, setTickets] = useState<SupportTicket[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [selectedTicket, setSelectedTicket] = useState<SupportTicket | null>(null);
-  const [ticketMessages, setTicketMessages] = useState<SupportMessage[]>([]);
   
   // States for dialogs
   const [showTicketDialog, setShowTicketDialog] = useState(false);
@@ -72,11 +60,24 @@ const UserSupport = () => {
   
   // States for reply
   const [reply, setReply] = useState("");
-  const [isSending, setIsSending] = useState(false);
   
   // User client info
   const [clientId, setClientId] = useState<string>("");
   const [machines, setMachines] = useState<any[]>([]);
+  
+  // Use the hook
+  const {
+    tickets,
+    selectedTicket,
+    ticketMessages,
+    isLoading,
+    isSaving,
+    fetchTickets,
+    getTicket,
+    addTicket,
+    sendMessage,
+    setSelectedTicket
+  } = useSupportTickets({ clientId, initialFetch: false });
   
   // Fetch client ID for the current user
   useEffect(() => {
@@ -122,65 +123,6 @@ const UserSupport = () => {
     }
   };
   
-  // Fetch tickets
-  const fetchTickets = async () => {
-    setIsLoading(true);
-    try {
-      if (!clientId) return;
-      
-      const { data, error } = await getSupportTickets({
-        client_id: clientId
-      });
-      
-      if (error) {
-        toast({
-          title: "Erro ao carregar chamados",
-          description: error.message,
-          variant: "destructive",
-        });
-      } else if (data) {
-        setTickets(data);
-      }
-    } catch (error: any) {
-      toast({
-        title: "Erro inesperado",
-        description: error.message || "Ocorreu um erro ao carregar os chamados",
-        variant: "destructive",
-      });
-    } finally {
-      setIsLoading(false);
-    }
-  };
-  
-  // Fetch ticket details
-  const fetchTicketDetails = async (ticketId: string) => {
-    try {
-      const { data, error } = await getSupportTicketById(ticketId);
-      
-      if (error) {
-        toast({
-          title: "Erro ao carregar detalhes do chamado",
-          description: error.message,
-          variant: "destructive",
-        });
-      } else if (data) {
-        setSelectedTicket(data);
-        
-        // Also fetch messages for this ticket
-        const messagesResult = await getTicketMessages(ticketId);
-        if (messagesResult.data) {
-          setTicketMessages(messagesResult.data);
-        }
-      }
-    } catch (error: any) {
-      toast({
-        title: "Erro inesperado",
-        description: error.message || "Ocorreu um erro ao carregar os detalhes do chamado",
-        variant: "destructive",
-      });
-    }
-  };
-  
   // Load tickets when client ID is available
   useEffect(() => {
     if (clientId) {
@@ -202,34 +144,19 @@ const UserSupport = () => {
     setIsSubmitting(true);
     
     try {
-      const { data, error } = await createSupportTicket({
+      await addTicket({
         title: subject,
         description,
-        client_id: clientId,
         machine_id: selectedMachine || undefined,
         type: selectedType,
         priority: selectedPriority,
-        user_id: user?.id
       });
-      
-      if (error) {
-        throw error;
-      }
       
       setShowNewTicketDialog(false);
       resetNewTicketForm();
-      fetchTickets();
       
-      toast({
-        title: "Chamado enviado",
-        description: "Seu chamado foi enviado com sucesso!",
-      });
-    } catch (error: any) {
-      toast({
-        title: "Erro ao criar chamado",
-        description: error.message || "Ocorreu um erro ao enviar seu chamado. Tente novamente.",
-        variant: "destructive",
-      });
+    } catch (error) {
+      console.error("Error creating ticket:", error);
     } finally {
       setIsSubmitting(false);
     }
@@ -237,40 +164,12 @@ const UserSupport = () => {
   
   // Send reply to ticket
   const handleSendReply = async () => {
-    if (!reply.trim() || !selectedTicket || !user) {
+    if (!reply.trim() || !selectedTicket) {
       return;
     }
     
-    setIsSending(true);
-    
-    try {
-      const { error } = await addTicketMessage(selectedTicket.id, user.id, reply);
-      
-      if (error) {
-        throw error;
-      }
-      
-      setReply("");
-      
-      // Refresh messages
-      const messagesResult = await getTicketMessages(selectedTicket.id);
-      if (messagesResult.data) {
-        setTicketMessages(messagesResult.data);
-      }
-      
-      toast({
-        title: "Mensagem enviada",
-        description: "Sua mensagem foi enviada com sucesso!",
-      });
-    } catch (error: any) {
-      toast({
-        title: "Erro ao enviar mensagem",
-        description: error.message || "Ocorreu um erro ao enviar sua mensagem. Tente novamente.",
-        variant: "destructive",
-      });
-    } finally {
-      setIsSending(false);
-    }
+    await sendMessage(selectedTicket.id, reply);
+    setReply("");
   };
   
   // Reset new ticket form
@@ -284,7 +183,7 @@ const UserSupport = () => {
   
   // View ticket details
   const handleViewTicket = async (ticketId: string) => {
-    await fetchTicketDetails(ticketId);
+    await getTicket(ticketId);
     setShowTicketDialog(true);
   };
   
@@ -733,9 +632,9 @@ const UserSupport = () => {
                         <Button 
                           className="self-end"
                           onClick={handleSendReply}
-                          disabled={!reply.trim() || isSending}
+                          disabled={!reply.trim() || isSaving}
                         >
-                          {isSending ? (
+                          {isSaving ? (
                             <Loader2 className="h-4 w-4 animate-spin" />
                           ) : (
                             <SendHorizontal className="h-4 w-4" />

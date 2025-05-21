@@ -158,7 +158,7 @@ async function createTicketNotification(ticket: SupportTicket) {
     const { data: staffUsers } = await supabase
       .from('profiles')
       .select('id')
-      .in('role', ['ADMIN', 'SUPPORT']);
+      .in('role', ['ADMIN', 'FINANCIAL']);
       
     if (staffUsers && staffUsers.length > 0) {
       const notifications = staffUsers.map(user => ({
@@ -243,7 +243,7 @@ async function createMessageNotification(ticketId: string, senderId: string, mes
         const { data: staffUsers } = await supabase
           .from('profiles')
           .select('id')
-          .in('role', ['ADMIN', 'SUPPORT']);
+          .in('role', ['ADMIN', 'FINANCIAL']);
         
         if (staffUsers) {
           recipientIds = staffUsers.map(user => user.id);
