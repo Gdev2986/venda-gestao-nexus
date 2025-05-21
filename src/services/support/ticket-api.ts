@@ -97,16 +97,29 @@ export const getClientTickets = async (clientId: string): Promise<ApiResponse<Su
 // Create a new support ticket - handle the type conversion explicitly
 export const createTicket = async (ticket: CreateTicketParams): Promise<ApiResponse<SupportTicket>> => {
   try {
-    // Convert enum values to strings explicitly for the database
-    const ticketData = {
+    // Define explicit type for database fields
+    type TicketData = {
+      title: string;
+      description: string;
+      client_id: string;
+      machine_id?: string;
+      technician_id?: string;
+      type: "MAINTENANCE" | "INSTALLATION" | "REPLACEMENT" | "SUPPLIES" | "REMOVAL" | "OTHER";
+      priority: "LOW" | "MEDIUM" | "HIGH";
+      status: "PENDING" | "IN_PROGRESS" | "COMPLETED" | "CANCELED";
+      scheduled_date?: string;
+    };
+
+    // Map and cast values to match database schema
+    const ticketData: TicketData = {
       title: ticket.title,
       description: ticket.description,
       client_id: ticket.client_id,
       machine_id: ticket.machine_id,
-      // For these fields, explicitly convert to string to match the database schema
-      type: ticket.type.toString(),
-      priority: ticket.priority.toString(),
-      status: (ticket.status || TicketStatus.PENDING).toString(),
+      // For these fields, explicitly cast to the correct database types
+      type: ticket.type.toString() as "MAINTENANCE" | "INSTALLATION" | "REPLACEMENT" | "SUPPLIES" | "REMOVAL" | "OTHER",
+      priority: ticket.priority.toString() as "LOW" | "MEDIUM" | "HIGH",
+      status: (ticket.status || TicketStatus.PENDING).toString() as "PENDING" | "IN_PROGRESS" | "COMPLETED" | "CANCELED",
       scheduled_date: ticket.scheduled_date,
       technician_id: ticket.user_id // Map user_id to technician_id for compatibility
     };
@@ -135,14 +148,36 @@ export const updateTicket = async (
   updates: UpdateTicketParams
 ): Promise<ApiResponse<SupportTicket>> => {
   try {
-    // Convert enum values to strings explicitly for the database
-    const ticketUpdates = {
-      ...updates,
-      // For these fields, explicitly convert to string to match the database schema
-      type: updates.type ? updates.type.toString() : undefined,
-      priority: updates.priority ? updates.priority.toString() : undefined,
-      status: updates.status ? updates.status.toString() : undefined,
-      technician_id: updates.assigned_to, // Map assigned_to to technician_id
+    // Define explicit type for database fields
+    type TicketUpdates = {
+      title?: string;
+      description?: string;
+      technician_id?: string;
+      resolution?: string;
+      scheduled_date?: string;
+      type?: "MAINTENANCE" | "INSTALLATION" | "REPLACEMENT" | "SUPPLIES" | "REMOVAL" | "OTHER";
+      priority?: "LOW" | "MEDIUM" | "HIGH";
+      status?: "PENDING" | "IN_PROGRESS" | "COMPLETED" | "CANCELED";
+      updated_at: string;
+    };
+
+    // Map and cast values to match database schema
+    const ticketUpdates: TicketUpdates = {
+      title: updates.title,
+      description: updates.description,
+      resolution: updates.resolution,
+      scheduled_date: updates.scheduled_date,
+      // For these fields, explicitly cast to the correct database types
+      type: updates.type ? 
+        updates.type.toString() as "MAINTENANCE" | "INSTALLATION" | "REPLACEMENT" | "SUPPLIES" | "REMOVAL" | "OTHER" : 
+        undefined,
+      priority: updates.priority ? 
+        updates.priority.toString() as "LOW" | "MEDIUM" | "HIGH" : 
+        undefined,
+      status: updates.status ? 
+        updates.status.toString() as "PENDING" | "IN_PROGRESS" | "COMPLETED" | "CANCELED" : 
+        undefined,
+      technician_id: updates.assigned_to,
       updated_at: new Date().toISOString()
     };
 

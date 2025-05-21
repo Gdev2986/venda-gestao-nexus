@@ -6,6 +6,7 @@ import { PATHS } from "../paths";
 import AdminDashboard from "../../pages/admin/Dashboard";
 import AdminFees from "../../pages/admin/Fees";
 import AdminReports from "../../pages/admin/Reports";
+import AdminSupport from "../../pages/admin/Support";
 
 // Dashboard Route for Admin Module
 export const dashboardRoute = (
@@ -24,6 +25,11 @@ export const dashboardRoute = (
       key="admin-reports"
       path={PATHS.ADMIN.REPORTS}
       element={<AdminReports />}
+    />
+    <Route 
+      key="admin-support"
+      path={PATHS.ADMIN.SUPPORT}
+      element={<AdminSupport />}
     />
   </>
 );

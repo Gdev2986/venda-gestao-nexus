@@ -3,9 +3,10 @@ import { useState, useEffect } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { UserRole } from "@/types/enums";
-import SupportRequestService from "@/services/support-request.service";
+import SupportRequestService from "@/services/support-request";
 import SupportHeader from "@/components/admin/support/SupportHeader";
 import SupportTabs from "@/components/admin/support/SupportTabs";
+import DoughnutChart from "@/components/charts/DoughnutChart";
 
 const AdminSupport = () => {
   const [activeTab, setActiveTab] = useState<string>("tickets");
@@ -75,6 +76,13 @@ const AdminSupport = () => {
     }
   };
 
+  // Prepare chart data
+  const typesChartData = Object.entries(reportData.typeCounts).map(([type, value]) => ({
+    name: type,
+    value: value,
+    color: '#' + Math.floor(Math.random()*16777215).toString(16) // Generate random colors
+  }));
+
   return (
     <div className="space-y-6">
       <SupportHeader
@@ -91,6 +99,15 @@ const AdminSupport = () => {
           reportData={reportData}
         />
       </div>
+
+      {activeTab === "reports" && (
+        <div className="w-full">
+          <DoughnutChart
+            data={typesChartData}
+            dataKey="value"
+          />
+        </div>
+      )}
     </div>
   );
 };
