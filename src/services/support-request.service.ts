@@ -154,13 +154,18 @@ export const SupportRequestService = {
           role: ''
         };
         
-        // Only try to access user properties if user exists and is not null
-        if (msg.user && typeof msg.user === 'object' && !('error' in (msg.user || {}))) {
-          userData = {
-            id: (msg.user && 'id' in msg.user) ? (msg.user.id || '') : '',
-            name: (msg.user && 'name' in msg.user) ? (msg.user.name || '') : '',
-            role: (msg.user && 'role' in msg.user) ? (msg.user.role || '') : ''
-          };
+        // Safely access user properties after checking it exists and is an object
+        if (msg.user && typeof msg.user === 'object') {
+          // Cast to any to bypass TypeScript's strict checking
+          const userObj = msg.user as any;
+          
+          if (userObj && !userObj.error) {
+            userData = {
+              id: userObj.id || '',
+              name: userObj.name || '',
+              role: userObj.role || ''
+            };
+          }
         }
         
         // Return properly formatted message object

@@ -88,13 +88,14 @@ export async function getSupportTickets(filters?: {
   date_from?: string;
   date_to?: string;
 }): Promise<{ data: SupportTicket[] | null, error: any }> {
-  let query = supabase
+  // Cast to any to avoid type instantiation issues
+  let query: any = supabase
     .from('support_requests')
     .select(`
       *,
       client:client_id(*),
       machine:machine_id(*)
-    `) as any;
+    `);
 
   if (filters) {
     if (filters.status) {
@@ -129,7 +130,7 @@ export async function getSupportTickets(filters?: {
 
   query = query.order('created_at', { ascending: false });
 
-  // Use a simple type assertion to avoid excessive type calculations
+  // Execute the query with proper type handling
   const { data, error } = await query;
   return { data: data as unknown as SupportTicket[], error };
 }
@@ -176,11 +177,15 @@ export async function getTicketMessages(ticketId: string): Promise<{ data: Suppo
         role: ''
       };
       
-      // Only try to access user properties if user exists and is not null
-      if (msg.user && typeof msg.user === 'object' && !('error' in (msg.user || {}))) {
-        userObj.id = (msg.user && 'id' in msg.user) ? (msg.user.id || '') : '';
-        userObj.name = (msg.user && 'name' in msg.user) ? (msg.user.name || '') : '';
-        userObj.role = (msg.user && 'role' in msg.user) ? (msg.user.role || '') : '';
+      // Safely access user properties after checking it exists and is an object
+      if (msg.user && typeof msg.user === 'object') {
+        // Cast to any to bypass TypeScript's strict checking
+        const userAny = msg.user as any;
+        if (userAny && !userAny.error) {
+          userObj.id = userAny.id || '';
+          userObj.name = userAny.name || '';
+          userObj.role = userAny.role || '';
+        }
       }
       
       return {
@@ -205,16 +210,23 @@ export async function getTicketMessages(ticketId: string): Promise<{ data: Suppo
       role: ''
     };
     
-    // Only try to access user properties if user exists and is not null
-    if (msg.user && typeof msg.user === 'object' && !('error' in (msg.user || {}))) {
-      userObj.id = (msg.user && 'id' in msg.user) ? (msg.user.id || '') : '';
-      userObj.name = (msg.user && 'name' in msg.user) ? (msg.user.name || '') : '';
-      userObj.role = (msg.user && 'role' in msg.user) ? (msg.user.role || '') : '';
+    // Safely access user properties after checking it exists and is an object
+    if (msg.user && typeof msg.user === 'object') {
+      // Cast to any to bypass TypeScript's strict checking
+      const userAny = msg.user as any;
+      if (userAny && !userAny.error) {
+        userObj.id = userAny.id || '';
+        userObj.name = userAny.name || '';
+        userObj.role = userAny.role || '';
+      }
     }
+    
+    // Ensure we have a ticket_id property, falling back to conversation_id if needed
+    const messageTicketId = 'ticket_id' in msg ? msg.ticket_id : msg.conversation_id;
     
     return {
       id: msg.id,
-      ticket_id: msg.ticket_id || msg.conversation_id, // Handle either property name
+      ticket_id: messageTicketId, // Use the determined ticket ID
       user_id: msg.user_id,
       message: msg.message,
       created_at: msg.created_at,
