@@ -1,3 +1,4 @@
+
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent } from "@/components/ui/card";
 import SupportAgentsList from "./SupportAgentsList";
@@ -21,7 +22,6 @@ interface SupportTabsProps {
 }
 
 import SupportTicketsList from "./SupportTicketsList";
-import SupportChatInterface from "./SupportChatInterface";
 
 const SupportTabs = ({ 
   activeTab, 

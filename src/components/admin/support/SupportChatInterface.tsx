@@ -12,7 +12,7 @@ import { getTicketMessages, addMessage } from "@/services/support-request/messag
 import { getRequestById } from "@/services/support-request/ticket-api";
 import { SupportRequestStatus } from "@/types/support-request.types";
 import { useToast } from "@/hooks/use-toast";
-import { PaperPlaneIcon, PlusCircledIcon } from "@radix-ui/react-icons";
+import { PlusCircle, Send } from "lucide-react"; // Using Lucide icons instead
 import { supabase } from "@/integrations/supabase/client";
 
 interface Message {
@@ -115,7 +115,7 @@ const SupportChatInterface: React.FC<SupportChatInterfaceProps> = ({
         })
       );
       
-      setMessages(messagesWithUserInfo);
+      setMessages(messagesWithUserInfo as Message[]);
     } catch (error) {
       console.error("Error fetching messages:", error);
       toast({
@@ -165,12 +165,14 @@ const SupportChatInterface: React.FC<SupportChatInterfaceProps> = ({
               const newMessageWithUser = {
                 ...payload.new,
                 user: userData
-              };
+              } as Message;
               
               setMessages(prev => [...prev, newMessageWithUser]);
             } catch (error) {
               console.error("Error fetching user info for real-time message:", error);
-              setMessages(prev => [...prev, payload.new]);
+              // Make sure we add a complete Message object
+              const newMessage = payload.new as Message;
+              setMessages(prev => [...prev, newMessage]);
             }
           };
           
@@ -239,7 +241,7 @@ const SupportChatInterface: React.FC<SupportChatInterfaceProps> = ({
       <Card className="w-full h-[500px] flex items-center justify-center">
         <div className="text-center p-6">
           <div className="bg-muted rounded-full p-4 w-16 h-16 mx-auto mb-4 flex items-center justify-center">
-            <PlusCircledIcon className="h-8 w-8 text-muted-foreground" />
+            <PlusCircle className="h-8 w-8 text-muted-foreground" />
           </div>
           <h3 className="text-lg font-medium">Nenhum ticket selecionado</h3>
           <p className="text-sm text-muted-foreground mt-2">
@@ -352,7 +354,7 @@ const SupportChatInterface: React.FC<SupportChatInterfaceProps> = ({
             {isSending ? (
               <div className="animate-spin h-4 w-4 border-2 border-current rounded-full border-t-transparent" />
             ) : (
-              <PaperPlaneIcon className="h-4 w-4" />
+              <Send className="h-4 w-4" />
             )}
           </Button>
         </div>

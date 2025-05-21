@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useRef } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
@@ -11,7 +10,7 @@ import { getTicketMessages, addMessage } from "@/services/support-request/messag
 import { getRequestById } from "@/services/support-request/ticket-api";
 import { SupportRequestStatus } from "@/types/support-request.types";
 import { useToast } from "@/hooks/use-toast";
-import { PaperPlaneIcon } from "@radix-ui/react-icons";
+import { Send } from "lucide-react"; // Using Lucide icons instead
 import { supabase } from "@/integrations/supabase/client";
 
 interface SupportChatProps {
@@ -305,7 +304,7 @@ const SupportChat: React.FC<SupportChatProps> = ({ ticketId }) => {
             {isSending ? (
               <div className="animate-spin h-4 w-4 border-2 border-current rounded-full border-t-transparent" />
             ) : (
-              <PaperPlaneIcon className="h-4 w-4" />
+              <Send className="h-4 w-4" />
             )}
           </Button>
         </div>
