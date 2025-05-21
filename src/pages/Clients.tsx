@@ -2,7 +2,6 @@ import { useState, useEffect } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "react-router-dom";
-import MainLayout from "@/components/layout/MainLayout";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
@@ -230,57 +229,56 @@ const Clients = () => {
   );
   
   return (
-    <MainLayout>
-      <div className="space-y-4">
-        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-          <h2 className="text-3xl font-bold tracking-tight">Clientes</h2>
-          <div className="flex flex-wrap gap-2">
-            <Button variant="outline" onClick={exportToCSV}>
-              <Download className="mr-2 h-4 w-4" />
-              Exportar
-            </Button>
-            <Button onClick={handleCreateClick}>
-              <UserPlus className="mr-2 h-4 w-4" />
-              Novo Cliente
-            </Button>
-          </div>
+    <div className="space-y-4">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+        <h2 className="text-3xl font-bold tracking-tight">Clientes</h2>
+        <div className="flex flex-wrap gap-2">
+          <Button variant="outline" onClick={exportToCSV}>
+            <Download className="mr-2 h-4 w-4" />
+            Exportar
+          </Button>
+          <Button onClick={handleCreateClick}>
+            <UserPlus className="mr-2 h-4 w-4" />
+            Novo Cliente
+          </Button>
         </div>
-        
-        <Card>
-          <CardHeader>
-            <CardTitle>Lista de Clientes</CardTitle>
-            <CardDescription>Listagem completa de clientes cadastrados no sistema.</CardDescription>
-            
-            <div className="mt-4 flex flex-col md:flex-row gap-4">
-              <div className="relative flex-grow">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                <Input 
-                  placeholder="Buscar por nome, contato, email ou documento..." 
-                  className="pl-9"
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                />
-              </div>
-              
-              <div className="flex-shrink-0 w-full md:w-64">
-                <Select value={filterPartner} onValueChange={setFilterPartner}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Filtrar por parceiro" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">Todos os parceiros</SelectItem>
-                    {partners.map(partner => (
-                      <SelectItem key={partner.id} value={partner.id}>
-                        {partner.business_name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
+      </div>
+      
+      <Card>
+        <CardHeader>
+          <CardTitle>Lista de Clientes</CardTitle>
+          <CardDescription>Listagem completa de clientes cadastrados no sistema.</CardDescription>
+          
+          <div className="mt-4 flex flex-col md:flex-row gap-4">
+            <div className="relative flex-grow">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Input 
+                placeholder="Buscar por nome, contato, email ou documento..." 
+                className="pl-9"
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+              />
             </div>
-          </CardHeader>
-          <CardContent>
-            {isLoading ? (
+            
+            <div className="flex-shrink-0 w-full md:w-64">
+              <Select value={filterPartner} onValueChange={setFilterPartner}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Filtrar por parceiro" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Todos os parceiros</SelectItem>
+                  {partners.map(partner => (
+                    <SelectItem key={partner.id} value={partner.id}>
+                      {partner.business_name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+        </CardHeader>
+        <CardContent>
+          {isLoading ? (
               <div className="space-y-2">
                 {Array.from({ length: 5 }).map((_, index) => (
                   <div key={index} className="flex space-x-4">
@@ -362,7 +360,7 @@ const Clients = () => {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
-    </MainLayout>
+    </div>
   );
 };
 

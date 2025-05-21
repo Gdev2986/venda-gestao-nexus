@@ -1,6 +1,4 @@
-
 import { useState, useEffect } from "react";
-import MainLayout from "@/components/layout/MainLayout";
 import { Sale, SalesFilterParams } from "@/types";
 import { useToast } from "@/hooks/use-toast";
 import SalesFilters from "@/components/sales/SalesFilters";
@@ -127,7 +125,7 @@ const Sales = () => {
   };
 
   return (
-    <MainLayout>
+    <div>
       <div className="mb-6 flex flex-col sm:flex-row justify-between items-start sm:items-center">
         <div>
           <h1 className="text-2xl font-bold tracking-tight">Vendas</h1>
@@ -174,7 +172,7 @@ const Sales = () => {
           onOpenChange={setShowImportDialog}
         />
       </div>
-    </MainLayout>
+    </div>
   );
 };
 

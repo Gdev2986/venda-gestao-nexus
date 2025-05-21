@@ -11,7 +11,11 @@ import { useUserRole } from "@/hooks/use-user-role";
 import { AnimatePresence } from "framer-motion";
 import { Outlet } from "react-router-dom";
 
-const MainLayout = () => {
+interface MainLayoutProps {
+  children?: React.ReactNode;
+}
+
+const MainLayout = ({ children }: MainLayoutProps) => {
   // Use localStorage to persist sidebar state
   const [sidebarOpen, setSidebarOpen] = useState(() => {
     const saved = localStorage.getItem("sidebar-state");
@@ -78,10 +82,10 @@ const MainLayout = () => {
           </div>
         </header>
         
-        {/* Main scrollable content - alterado para usar Outlet */}
+        {/* Main scrollable content */}
         <main className="flex-1 w-full overflow-y-auto overflow-x-hidden p-2 sm:p-4 md:p-6">
           <div className="mx-auto w-full">
-            <Outlet />
+            {children || <Outlet />}
           </div>
         </main>
       </div>

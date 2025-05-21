@@ -13,7 +13,11 @@ import { Toaster } from "@/components/ui/sonner";
 import { Spinner } from "@/components/ui/spinner";
 import { AnimatePresence } from "framer-motion";
 
-const AdminLayout = () => {
+interface AdminLayoutProps {
+  children?: React.ReactNode;
+}
+
+const AdminLayout = ({ children }: AdminLayoutProps) => {
   // Use localStorage to persist sidebar state
   const [sidebarOpen, setSidebarOpen] = useState(() => {
     const saved = localStorage.getItem("sidebar-state");
@@ -107,7 +111,7 @@ const AdminLayout = () => {
         {/* Main scrollable content - updated for mobile spacing */}
         <main className="flex-1 w-full overflow-y-auto overflow-x-hidden p-4 md:p-6 lg:p-8">
           <div className="mx-auto w-full">
-            <Outlet />
+            {children || <Outlet />}
           </div>
         </main>
       </div>
