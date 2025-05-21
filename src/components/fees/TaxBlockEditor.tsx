@@ -11,9 +11,9 @@ import { PaymentMethod } from "@/types/enums";
 
 type TaxRate = {
   installment: number;
-  baseRate: number;
-  partnerRate: number;
-  totalRate: number;
+  rootRate: number;      // Taxa raiz cobrada pela empresa de adquirência
+  forwardingRate: number; // Taxa de repasse para o parceiro
+  finalRate: number;     // Taxa final cobrada do cliente
 };
 
 type TaxRatesByMethod = {
@@ -37,21 +37,21 @@ const TaxBlockEditor = ({ block, onSave, onCancel, onDelete }: TaxBlockEditorPro
   const [taxRates, setTaxRates] = useState<TaxRatesByMethod>({
     [PaymentMethod.CREDIT]: Array.from({ length: 21 }, (_, i) => ({
       installment: i + 1,
-      baseRate: 2.99 + (i * 0.5),
-      partnerRate: 1.5 + (i * 0.2),
-      totalRate: 3.99 + (i * 0.7),
+      rootRate: 1.99 + (i * 0.3),
+      forwardingRate: 2.49 + (i * 0.4),
+      finalRate: 2.99 + (i * 0.5),
     })),
     [PaymentMethod.DEBIT]: [{
       installment: 1,
-      baseRate: 1.49,
-      partnerRate: 0.75,
-      totalRate: 1.99,
+      rootRate: 0.99,
+      forwardingRate: 1.29,
+      finalRate: 1.49,
     }],
     [PaymentMethod.PIX]: [{
       installment: 1,
-      baseRate: 0.99,
-      partnerRate: 0.5,
-      totalRate: 1.29,
+      rootRate: 0.59,
+      forwardingRate: 0.79,
+      finalRate: 0.99,
     }]
   });
 
@@ -72,16 +72,16 @@ const TaxBlockEditor = ({ block, onSave, onCancel, onDelete }: TaxBlockEditorPro
     const ratesForMethod = taxRates[activeTab];
     return ratesForMethod.find(r => r.installment === selectedInstallment) || {
       installment: selectedInstallment,
-      baseRate: 0,
-      partnerRate: 0,
-      totalRate: 0,
+      rootRate: 0,
+      forwardingRate: 0,
+      finalRate: 0,
     };
   };
   
   const currentRates = getCurrentRates();
   
   // Update a specific rate
-  const updateRate = (rateType: 'baseRate' | 'partnerRate' | 'totalRate', value: number) => {
+  const updateRate = (rateType: 'rootRate' | 'forwardingRate' | 'finalRate', value: number) => {
     const updatedRates = { ...taxRates };
     const index = updatedRates[activeTab].findIndex(r => r.installment === selectedInstallment);
     
@@ -93,6 +93,19 @@ const TaxBlockEditor = ({ block, onSave, onCancel, onDelete }: TaxBlockEditorPro
       setTaxRates(updatedRates);
     }
   };
+
+  // Calculate commissions based on rates
+  const calculateCommissions = () => {
+    const officeCommission = currentRates.forwardingRate - currentRates.rootRate;
+    const partnerCommission = currentRates.finalRate - currentRates.forwardingRate;
+    
+    return {
+      officeCommission: officeCommission.toFixed(2),
+      partnerCommission: partnerCommission.toFixed(2)
+    };
+  };
+
+  const commissions = calculateCommissions();
 
   const handleSave = () => {
     if (name.trim() === "") return;
@@ -162,75 +175,84 @@ const TaxBlockEditor = ({ block, onSave, onCancel, onDelete }: TaxBlockEditorPro
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div className="space-y-3">
-                <Label>Taxa Base (%)</Label>
+                <Label>Taxa Raiz (%)</Label>
                 <div className="flex items-center justify-between">
                   <span className="text-sm">0%</span>
-                  <span className="font-bold">{currentRates.baseRate.toFixed(2)}%</span>
+                  <span className="font-bold">{currentRates.rootRate.toFixed(2)}%</span>
                   <span className="text-sm">10%</span>
                 </div>
                 <Slider
-                  value={[currentRates.baseRate]}
+                  value={[currentRates.rootRate]}
                   min={0}
                   max={10}
                   step={0.01}
-                  onValueChange={([value]) => updateRate('baseRate', value)}
+                  onValueChange={([value]) => updateRate('rootRate', value)}
                 />
                 <Input
                   type="number"
-                  value={currentRates.baseRate}
-                  onChange={(e) => updateRate('baseRate', parseFloat(e.target.value) || 0)}
+                  value={currentRates.rootRate}
+                  onChange={(e) => updateRate('rootRate', parseFloat(e.target.value) || 0)}
                   step={0.01}
                   min={0}
                   className="mt-2"
                 />
+                <p className="text-xs text-muted-foreground">
+                  Custo base cobrado pela processadora
+                </p>
               </div>
               
               <div className="space-y-3">
-                <Label>Taxa Parceiro (%)</Label>
+                <Label>Taxa de Repasse (%)</Label>
                 <div className="flex items-center justify-between">
                   <span className="text-sm">0%</span>
-                  <span className="font-bold">{currentRates.partnerRate.toFixed(2)}%</span>
-                  <span className="text-sm">10%</span>
-                </div>
-                <Slider
-                  value={[currentRates.partnerRate]}
-                  min={0}
-                  max={10}
-                  step={0.01}
-                  onValueChange={([value]) => updateRate('partnerRate', value)}
-                />
-                <Input
-                  type="number"
-                  value={currentRates.partnerRate}
-                  onChange={(e) => updateRate('partnerRate', parseFloat(e.target.value) || 0)}
-                  step={0.01}
-                  min={0}
-                  className="mt-2"
-                />
-              </div>
-              
-              <div className="space-y-3">
-                <Label>Taxa Total (%)</Label>
-                <div className="flex items-center justify-between">
-                  <span className="text-sm">0%</span>
-                  <span className="font-bold">{currentRates.totalRate.toFixed(2)}%</span>
+                  <span className="font-bold">{currentRates.forwardingRate.toFixed(2)}%</span>
                   <span className="text-sm">15%</span>
                 </div>
                 <Slider
-                  value={[currentRates.totalRate]}
+                  value={[currentRates.forwardingRate]}
                   min={0}
                   max={15}
                   step={0.01}
-                  onValueChange={([value]) => updateRate('totalRate', value)}
+                  onValueChange={([value]) => updateRate('forwardingRate', value)}
                 />
                 <Input
                   type="number"
-                  value={currentRates.totalRate}
-                  onChange={(e) => updateRate('totalRate', parseFloat(e.target.value) || 0)}
+                  value={currentRates.forwardingRate}
+                  onChange={(e) => updateRate('forwardingRate', parseFloat(e.target.value) || 0)}
                   step={0.01}
                   min={0}
                   className="mt-2"
                 />
+                <p className="text-xs text-muted-foreground">
+                  Taxa repassada ao parceiro (comissão escritório: {commissions.officeCommission}%)
+                </p>
+              </div>
+              
+              <div className="space-y-3">
+                <Label>Taxa Final (%)</Label>
+                <div className="flex items-center justify-between">
+                  <span className="text-sm">0%</span>
+                  <span className="font-bold">{currentRates.finalRate.toFixed(2)}%</span>
+                  <span className="text-sm">20%</span>
+                </div>
+                <Slider
+                  value={[currentRates.finalRate]}
+                  min={0}
+                  max={20}
+                  step={0.01}
+                  onValueChange={([value]) => updateRate('finalRate', value)}
+                />
+                <Input
+                  type="number"
+                  value={currentRates.finalRate}
+                  onChange={(e) => updateRate('finalRate', parseFloat(e.target.value) || 0)}
+                  step={0.01}
+                  min={0}
+                  className="mt-2"
+                />
+                <p className="text-xs text-muted-foreground">
+                  Taxa cobrada do cliente final (comissão parceiro: {commissions.partnerCommission}%)
+                </p>
               </div>
             </div>
           </TabsContent>
