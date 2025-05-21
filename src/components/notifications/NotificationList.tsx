@@ -11,6 +11,7 @@ interface NotificationListProps {
   onDelete?: (id: string) => void;
 }
 
+// Change from const NotificationList to export const NotificationList
 export const NotificationList = ({ 
   notifications, 
   onMarkAsRead, 
