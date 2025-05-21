@@ -1,24 +1,18 @@
 
 import { supabase } from "@/integrations/supabase/client";
-import { 
-  SupportTicket, 
-  UpdateTicketParams, 
-  NotificationType, 
-  UserRole,
-  NotificationData
-} from "./types";
+import { NotificationType, UserRole } from "./types";
 import { Json } from "@/integrations/supabase/types";
 import { getSupportTicketById } from "./ticket-api";
 
 // Notification for new ticket
-export async function createTicketNotification(ticket: SupportTicket) {
+export async function createTicketNotification(ticket: any) {
   try {
     // Convert UserRole enum values to strings
     const roles = [
-      UserRole.ADMIN.toString(), 
-      UserRole.FINANCIAL.toString(), 
-      UserRole.SUPPORT.toString(), 
-      UserRole.LOGISTICS.toString()
+      'ADMIN', 
+      'FINANCIAL', 
+      'SUPPORT', 
+      'LOGISTICS'
     ];
     
     const { data: staffUsers } = await supabase
@@ -32,7 +26,7 @@ export async function createTicketNotification(ticket: SupportTicket) {
         user_id: user.id,
         title: 'Novo Chamado de Suporte',
         message: `${ticket.title} - ${ticket.priority}`,
-        type: NotificationType.SUPPORT,
+        type: 'SUPPORT',
         data: JSON.stringify({ 
           ticket_id: ticket.id, 
           priority: ticket.priority 
@@ -51,7 +45,7 @@ export async function createTicketNotification(ticket: SupportTicket) {
 }
 
 // Notification for status update
-export async function createStatusUpdateNotification(ticketId: string, updates: UpdateTicketParams) {
+export async function createStatusUpdateNotification(ticketId: string, updates: any) {
   try {
     const { data: ticket } = await getSupportTicketById(ticketId);
     if (!ticket) return;
@@ -70,7 +64,7 @@ export async function createStatusUpdateNotification(ticketId: string, updates: 
           user_id: userData.user_id,
           title: 'Atualização de Chamado',
           message: `Seu chamado "${ticket.title}" foi atualizado para ${updates.status}`,
-          type: NotificationType.SUPPORT,
+          type: 'SUPPORT',
           data: JSON.stringify({ 
             ticket_id: ticketId, 
             new_status: updates.status 
@@ -87,7 +81,7 @@ export async function createStatusUpdateNotification(ticketId: string, updates: 
           user_id: updates.assigned_to,
           title: 'Chamado Atribuído',
           message: `Você foi designado para o chamado "${ticket.title}"`,
-          type: NotificationType.SUPPORT,
+          type: 'SUPPORT',
           data: JSON.stringify({ ticket_id: ticketId }) as Json,
           is_read: false
         } as any);
@@ -113,16 +107,16 @@ export async function createMessageNotification(ticketId: string, senderId: stri
       .eq('id', senderId)
       .single();
     
-    if (sender && sender.role === UserRole.CLIENT.toString()) {
+    if (sender && sender.role === 'CLIENT') {
       // Notify assigned staff or all support staff if unassigned
       if (ticket.assigned_to) {
         recipientIds.push(ticket.assigned_to);
       } else {
         // Convert UserRole enum values to strings
         const roles = [
-          UserRole.ADMIN.toString(), 
-          UserRole.FINANCIAL.toString(), 
-          UserRole.SUPPORT.toString()
+          'ADMIN', 
+          'FINANCIAL', 
+          'SUPPORT'
         ];
         
         const { data: staffUsers } = await supabase
@@ -155,7 +149,7 @@ export async function createMessageNotification(ticketId: string, senderId: stri
           user_id: userId,
           title: 'Nova Mensagem de Suporte',
           message: `Nova mensagem no chamado "${ticket.title}"`,
-          type: NotificationType.SUPPORT,
+          type: 'SUPPORT',
           data: JSON.stringify({ ticket_id: ticketId }) as Json,
           is_read: false
         }));

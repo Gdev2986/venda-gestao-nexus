@@ -2,20 +2,26 @@
 import { Database } from "@/integrations/supabase/types";
 import { Json } from "@/integrations/supabase/types";
 import { 
-  TicketStatus, 
-  TicketPriority, 
-  TicketType, 
-  NotificationType, 
-  UserRole 
+  TicketStatus as TicketStatusEnum, 
+  TicketPriority as TicketPriorityEnum, 
+  TicketType as TicketTypeEnum, 
+  NotificationType as NotificationTypeEnum, 
+  UserRole as UserRoleEnum 
 } from "@/types/enums";
 
-// Re-export enums
+// Re-export enums for direct use
+export const TicketStatus = TicketStatusEnum;
+export const TicketPriority = TicketPriorityEnum;
+export const TicketType = TicketTypeEnum;
+export const NotificationType = NotificationTypeEnum;
+export const UserRole = UserRoleEnum;
+
 export type { 
-  TicketStatus, 
-  TicketPriority, 
-  TicketType, 
-  NotificationType,
-  UserRole
+  TicketStatusEnum as TicketStatus, 
+  TicketPriorityEnum as TicketPriority, 
+  TicketTypeEnum as TicketType, 
+  NotificationTypeEnum as NotificationType,
+  UserRoleEnum as UserRole
 };
 
 export interface SupportTicket {

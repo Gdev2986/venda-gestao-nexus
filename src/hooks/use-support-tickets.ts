@@ -17,7 +17,7 @@ import {
   updateSupportTicket,
   addTicketMessage, 
   getTicketMessages
-} from "@/services/support.service";
+} from "@/services/support";
 
 interface UseSupportTicketsOptions {
   clientId?: string;

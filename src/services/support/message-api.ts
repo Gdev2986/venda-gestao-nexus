@@ -1,10 +1,9 @@
 
 import { supabase } from "@/integrations/supabase/client";
-import { SupportMessage } from "./types";
 import { createMessageNotification } from "./notification-api";
 
 // Helper function to transform message data consistently
-function messageTransformer(msg: any): SupportMessage {
+function messageTransformer(msg: any) {
   const userObj = {
     id: '',
     name: '',
@@ -35,7 +34,7 @@ function messageTransformer(msg: any): SupportMessage {
 }
 
 // Get messages for a ticket
-export async function getTicketMessages(ticketId: string): Promise<{ data: SupportMessage[] | null, error: any }> {
+export async function getTicketMessages(ticketId: string) {
   // Fix: Simplify the code to avoid excessive type instantiation
   try {
     const { data, error } = await supabase
@@ -78,7 +77,7 @@ export async function getTicketMessages(ticketId: string): Promise<{ data: Suppo
 }
 
 // Add a message to a ticket
-export async function addTicketMessage(ticketId: string, userId: string, message: string): Promise<{ data: any, error: any }> {
+export async function addTicketMessage(ticketId: string, userId: string, message: string) {
   // Always use conversation_id for consistency
   const { data, error } = await supabase
     .from('support_messages')

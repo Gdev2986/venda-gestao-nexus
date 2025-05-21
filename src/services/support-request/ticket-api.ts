@@ -1,15 +1,11 @@
 
 import { supabase } from "@/integrations/supabase/client";
-import { 
-  SupportRequest,
-  SupportRequestStatus,
-  TicketFilters
-} from "./types";
+import { TicketFilters } from "./types";
 
 /**
  * Create a new support ticket
  */
-export async function createTicket(ticketData: Omit<SupportRequest, 'id' | 'created_at' | 'updated_at'>) {
+export async function createTicket(ticketData: any) {
   try {
     // Create a single object with specific property typing
     const { data, error } = await supabase
@@ -20,7 +16,7 @@ export async function createTicket(ticketData: Omit<SupportRequest, 'id' | 'crea
         client_id: ticketData.client_id,
         technician_id: ticketData.technician_id,
         type: ticketData.type,
-        status: (ticketData.status || SupportRequestStatus.PENDING),
+        status: (ticketData.status || 'PENDING'),
         priority: ticketData.priority,
         scheduled_date: ticketData.scheduled_date
       } as any)
@@ -28,7 +24,7 @@ export async function createTicket(ticketData: Omit<SupportRequest, 'id' | 'crea
       .single();
 
     if (error) throw error;
-    return data as SupportRequest;
+    return data;
   } catch (error) {
     console.error("Error creating support request:", error);
     throw error;
@@ -38,7 +34,7 @@ export async function createTicket(ticketData: Omit<SupportRequest, 'id' | 'crea
 /**
  * Update an existing ticket
  */
-export async function updateTicket(id: string, updateData: Partial<SupportRequest>) {
+export async function updateTicket(id: string, updateData: any) {
   try {
     // Prepare updates ensuring it matches database schema
     const updatePayload: Record<string, any> = {};
@@ -63,7 +59,7 @@ export async function updateTicket(id: string, updateData: Partial<SupportReques
       .single();
 
     if (error) throw error;
-    return data as SupportRequest;
+    return data;
   } catch (error) {
     console.error("Error updating support request:", error);
     throw error;
@@ -85,22 +81,22 @@ export async function getTickets(filters: TicketFilters = {}) {
     // Apply filters
     if (filters.status) {
       if (Array.isArray(filters.status)) {
-        query = query.in('status', filters.status as any);
+        query = query.in('status', filters.status);
       } else {
-        query = query.eq('status', filters.status as any);
+        query = query.eq('status', filters.status);
       }
     }
 
     if (filters.type) {
       if (Array.isArray(filters.type)) {
-        query = query.in('type', filters.type as any);
+        query = query.in('type', filters.type);
       } else {
-        query = query.eq('type', filters.type as any);
+        query = query.eq('type', filters.type);
       }
     }
 
     if (filters.priority) {
-      query = query.eq('priority', filters.priority as any);
+      query = query.eq('priority', filters.priority);
     }
 
     if (filters.client_id) {
@@ -121,8 +117,7 @@ export async function getTickets(filters: TicketFilters = {}) {
 
     if (error) throw error;
 
-    // Fix: Use simple type assertion to avoid deep instantiation
-    return data as any[];
+    return data;
   } catch (error) {
     console.error("Error fetching support requests:", error);
     return [];
