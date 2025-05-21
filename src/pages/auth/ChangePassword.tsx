@@ -1,203 +1,152 @@
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import { z } from "zod";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
+import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
 import { AuthService } from "@/services/auth.service";
-import { useAuth } from "@/contexts/AuthContext";
-import { Spinner } from "@/components/ui/spinner";
-import { Alert, AlertDescription } from "@/components/ui/alert";
-import { AlertCircle, CheckCircle } from "lucide-react";
 import { PATHS } from "@/routes/paths";
+import { Spinner } from "@/components/ui/spinner";
+import { getDashboardPath } from "@/routes/routeUtils";
+
+// Form schema
+const changePasswordSchema = z.object({
+  newPassword: z.string()
+    .min(8, { message: "A senha deve ter pelo menos 8 caracteres" })
+    .regex(/[A-Z]/, { message: "A senha deve conter pelo menos uma letra maiúscula" })
+    .regex(/[a-z]/, { message: "A senha deve conter pelo menos uma letra minúscula" })
+    .regex(/[0-9]/, { message: "A senha deve conter pelo menos um número" }),
+  confirmPassword: z.string(),
+}).refine((data) => data.newPassword === data.confirmPassword, {
+  message: "As senhas não conferem",
+  path: ["confirmPassword"],
+});
+
+type ChangePasswordFormValues = z.infer<typeof changePasswordSchema>;
 
 const ChangePassword = () => {
-  const [newPassword, setNewPassword] = useState("");
-  const [confirmPassword, setConfirmPassword] = useState("");
-  const [passwordError, setPasswordError] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [isLoading, setIsLoading] = useState(true);
-  const [needsChange, setNeedsChange] = useState(false);
-  const { user, refreshSession } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
-  
-  // Check if user needs to change password
-  useEffect(() => {
-    const checkPasswordStatus = async () => {
-      if (!user) {
-        navigate(PATHS.LOGIN);
-        return;
-      }
-      
-      setIsLoading(true);
-      try {
-        const needsPasswordChange = await AuthService.needsPasswordChange();
-        setNeedsChange(needsPasswordChange);
-        
-        if (!needsPasswordChange) {
-          // Redirect to dashboard if password change not needed
-          navigate(PATHS.DASHBOARD);
-        }
-      } catch (error) {
-        console.error("Error checking password status:", error);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-    
-    checkPasswordStatus();
-  }, [user, navigate]);
-  
-  const validatePassword = () => {
-    setPasswordError("");
-    
-    if (newPassword.length < 8) {
-      setPasswordError("A senha deve ter pelo menos 8 caracteres");
-      return false;
-    }
-    
-    if (newPassword !== confirmPassword) {
-      setPasswordError("As senhas não coincidem");
-      return false;
-    }
-    
-    return true;
-  };
-  
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    
-    if (!validatePassword()) {
-      return;
-    }
-    
+  const { userRole } = useAuth();
+
+  const form = useForm<ChangePasswordFormValues>({
+    resolver: zodResolver(changePasswordSchema),
+    defaultValues: {
+      newPassword: "",
+      confirmPassword: "",
+    },
+  });
+
+  const onSubmit = async (values: ChangePasswordFormValues) => {
     setIsSubmitting(true);
+
     try {
-      const success = await AuthService.changePasswordAndActivate(newPassword);
-      
+      const success = await AuthService.changePasswordAndActivate(values.newPassword);
+
       if (success) {
         toast({
           title: "Senha alterada com sucesso",
-          description: "Sua conta foi ativada. Você pode acessar o sistema agora.",
+          description: "Sua conta foi ativada e você pode acessar o sistema normalmente agora.",
         });
         
-        // Refresh session to update user status
-        await refreshSession();
-        
-        // Redirect to dashboard
-        navigate(PATHS.DASHBOARD);
+        // Redirect to the appropriate dashboard based on user role
+        const dashboardPath = userRole ? getDashboardPath(userRole) : PATHS.DASHBOARD;
+        navigate(dashboardPath);
       } else {
         toast({
           variant: "destructive",
           title: "Erro ao alterar senha",
-          description: "Não foi possível alterar sua senha. Tente novamente mais tarde.",
+          description: "Ocorreu um erro ao alterar sua senha. Por favor, tente novamente.",
         });
       }
-    } catch (error) {
-      console.error("Error changing password:", error);
+    } catch (error: any) {
       toast({
         variant: "destructive",
-        title: "Erro ao alterar senha",
-        description: "Ocorreu um erro durante a alteração da senha.",
+        title: "Erro",
+        description: error.message || "Ocorreu um erro ao processar sua solicitação.",
       });
     } finally {
       setIsSubmitting(false);
     }
   };
-  
-  if (isLoading) {
-    return (
-      <div className="flex flex-col items-center justify-center min-h-screen p-4">
-        <Spinner size="lg" />
-        <p className="mt-4 text-muted-foreground">Verificando conta...</p>
-      </div>
-    );
-  }
-  
-  if (!needsChange) {
-    return (
-      <div className="flex flex-col items-center justify-center min-h-screen p-4">
-        <Alert className="max-w-md">
-          <CheckCircle className="h-5 w-5 text-primary" />
-          <AlertDescription>
-            Sua senha já foi alterada. Redirecionando para o painel...
-          </AlertDescription>
-        </Alert>
-      </div>
-    );
-  }
-  
+
   return (
-    <div className="flex flex-col items-center justify-center min-h-screen p-4 bg-gradient-to-b from-primary-50 to-white">
+    <div className="flex justify-center items-center min-h-screen p-4 bg-muted/20">
       <Card className="w-full max-w-md">
         <CardHeader className="space-y-1">
-          <CardTitle className="text-2xl font-bold text-center">Primeiro Acesso</CardTitle>
-          <CardDescription className="text-center">
+          <CardTitle className="text-2xl font-bold">Alterar Senha</CardTitle>
+          <CardDescription>
             Para ativar sua conta, é necessário criar uma nova senha.
           </CardDescription>
         </CardHeader>
-        
-        <form onSubmit={handleSubmit}>
-          <CardContent className="space-y-4">
-            {passwordError && (
-              <Alert variant="destructive">
-                <AlertCircle className="h-4 w-4" />
-                <AlertDescription>
-                  {passwordError}
-                </AlertDescription>
-              </Alert>
-            )}
-            
-            <div className="space-y-2">
-              <Label htmlFor="new-password">Nova Senha</Label>
-              <Input 
-                id="new-password" 
-                type="password" 
-                value={newPassword}
-                onChange={(e) => setNewPassword(e.target.value)}
-                placeholder="••••••••"
-                required
-                minLength={8}
+        <Form {...form}>
+          <form onSubmit={form.handleSubmit(onSubmit)}>
+            <CardContent className="space-y-4">
+              <FormField
+                control={form.control}
+                name="newPassword"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Nova Senha</FormLabel>
+                    <FormControl>
+                      <Input
+                        type="password"
+                        placeholder="••••••••"
+                        {...field}
+                        disabled={isSubmitting}
+                      />
+                    </FormControl>
+                    <FormDescription>
+                      A senha deve conter pelo menos 8 caracteres, incluindo letras maiúsculas, minúsculas e números.
+                    </FormDescription>
+                    <FormMessage />
+                  </FormItem>
+                )}
               />
-              <p className="text-xs text-muted-foreground">
-                A senha deve ter pelo menos 8 caracteres
-              </p>
-            </div>
-            
-            <div className="space-y-2">
-              <Label htmlFor="confirm-password">Confirmar Nova Senha</Label>
-              <Input 
-                id="confirm-password" 
-                type="password"
-                value={confirmPassword}
-                onChange={(e) => setConfirmPassword(e.target.value)}
-                placeholder="••••••••"
-                required
-                minLength={8}
+              <FormField
+                control={form.control}
+                name="confirmPassword"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Confirmar Senha</FormLabel>
+                    <FormControl>
+                      <Input
+                        type="password"
+                        placeholder="••••••••"
+                        {...field}
+                        disabled={isSubmitting}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
               />
-            </div>
-          </CardContent>
-          
-          <CardFooter>
-            <Button 
-              type="submit" 
-              className="w-full" 
-              disabled={isSubmitting}
-            >
-              {isSubmitting ? (
-                <>
-                  <Spinner className="mr-2 h-4 w-4" />
-                  Alterando senha...
-                </>
-              ) : (
-                "Confirmar e Ativar Conta"
-              )}
-            </Button>
-          </CardFooter>
-        </form>
+            </CardContent>
+            <CardFooter>
+              <Button
+                type="submit"
+                className="w-full"
+                disabled={isSubmitting}
+              >
+                {isSubmitting ? (
+                  <>
+                    <Spinner className="mr-2 h-4 w-4" />
+                    Alterando senha...
+                  </>
+                ) : (
+                  "Alterar Senha e Ativar Conta"
+                )}
+              </Button>
+            </CardFooter>
+          </form>
+        </Form>
       </Card>
     </div>
   );

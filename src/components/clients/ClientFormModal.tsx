@@ -153,7 +153,7 @@ const ClientFormModal = ({
         
         {tempPassword ? (
           <div className="space-y-4">
-            <Alert variant="success" className="bg-green-50 border-green-200">
+            <Alert className="bg-green-50 border-green-200">
               <InfoIcon className="h-5 w-5 text-green-600" />
               <AlertTitle>Cliente criado com sucesso!</AlertTitle>
               <AlertDescription>

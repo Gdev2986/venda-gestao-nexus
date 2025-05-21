@@ -9,6 +9,7 @@ export interface UserProfile {
   role: UserRole;
   phone?: string;
   created_at?: string;
+  status?: string;
 }
 
 export interface AuthContextType {
@@ -18,7 +19,9 @@ export interface AuthContextType {
   isAuthenticated: boolean;
   profile: UserProfile | null;
   userRole: UserRole | null;
-  signIn: (email: string, password: string) => Promise<{ error: Error | null }>;
+  needsPasswordChange: boolean;
+  signIn: (email: string, password: string) => Promise<{ data: any; error: Error | null }>;
   signUp: (email: string, password: string, metadata?: { name?: string }) => Promise<{ data: any; error: Error | null }>;
-  signOut: () => Promise<void>;
+  signOut: () => Promise<{ error: Error | null }>;
+  changePasswordAndActivate: (newPassword: string) => Promise<boolean>;
 }
