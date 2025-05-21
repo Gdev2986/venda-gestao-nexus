@@ -31,11 +31,20 @@ export const useNotificationsState = (userId: string | undefined, soundEnabled: 
         throw error;
       }
 
-      // Fix the type casting to ensure compatibility
-      setNotifications((data || []).map(item => ({
-        ...item,
-        type: item.type as NotificationType
-      })));
+      // Transform the data to ensure it matches our Notification type
+      const typedNotifications: Notification[] = (data || []).map(item => ({
+        id: item.id,
+        user_id: item.user_id,
+        title: item.title,
+        message: item.message,
+        type: item.type as NotificationType,
+        data: item.data ? item.data as Record<string, any> : undefined,
+        is_read: item.is_read,
+        created_at: item.created_at,
+        recipient_roles: item.recipient_roles
+      }));
+
+      setNotifications(typedNotifications);
     } catch (error: any) {
       console.error("Error fetching notifications:", error);
       toast({

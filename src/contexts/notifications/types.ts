@@ -7,7 +7,7 @@ export interface Notification {
   title: string;
   message: string;
   type: NotificationType;
-  data?: any;
+  data?: Record<string, any>;
   is_read: boolean;
   created_at: string;
   recipient_roles?: string[]; // Array of roles this notification is for
