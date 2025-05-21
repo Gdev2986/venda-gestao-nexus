@@ -121,14 +121,14 @@ const TaxBlockClientAssociation = ({ blocks, onClose }: TaxBlockClientAssociatio
                 <TableCell>{client.name}</TableCell>
                 <TableCell>
                   <Select
-                    value={client.blockId || ""}
-                    onValueChange={(value) => updateClientBlock(client.id, value || null)}
+                    value={client.blockId || "none"}
+                    onValueChange={(value) => updateClientBlock(client.id, value === "none" ? null : value)}
                   >
                     <SelectTrigger>
                       <SelectValue placeholder="Selecionar bloco..." />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="">Nenhum bloco</SelectItem>
+                      <SelectItem value="none">Nenhum bloco</SelectItem>
                       {blocks.map((block) => (
                         <SelectItem key={block.id} value={block.id}>
                           {block.name}

@@ -16,11 +16,13 @@ type ThemeProviderState = {
   setTheme: (theme: Theme) => void;
 };
 
-// Mudança importante aqui: garantindo que o contexto não seja null
-const ThemeProviderContext = React.createContext<ThemeProviderState>({
+// Creating context with a default value to avoid null
+const initialState: ThemeProviderState = {
   theme: "system",
   setTheme: () => null,
-});
+};
+
+const ThemeProviderContext = React.createContext<ThemeProviderState>(initialState);
 
 export function ThemeProvider({
   children,
@@ -28,7 +30,6 @@ export function ThemeProvider({
   storageKey = "sigmapay-theme",
   ...props
 }: ThemeProviderProps) {
-  // Usando React.useState explicitamente
   const [theme, setTheme] = React.useState<Theme>(defaultTheme);
   
   // Efeito para carregar o tema salvo
@@ -83,13 +84,8 @@ export function ThemeProvider({
   );
 }
 
-// Ajuste no hook useTheme para garantir que o contexto não seja null
+// Ensure context is never null by providing default values
 export const useTheme = (): ThemeProviderState => {
   const context = React.useContext(ThemeProviderContext);
-  
-  if (!context) {
-    throw new Error("useTheme must be used within a ThemeProvider");
-  }
-  
   return context;
 };
