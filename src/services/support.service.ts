@@ -88,70 +88,75 @@ export async function getSupportTickets(filters?: {
   date_from?: string;
   date_to?: string;
 }): Promise<{ data: SupportTicket[] | null, error: any }> {
-  // Create a query without type constraints to avoid deep type instantiation
-  let query = supabase
-    .from('support_requests')
-    .select(`
-      *,
-      client:client_id(*),
-      machine:machine_id(*)
-    `);
-  
-  // Apply filters
-  if (filters) {
-    if (filters.status) {
-      if (Array.isArray(filters.status)) {
-        // Convert enum values to strings to avoid type errors
-        const statusValues = filters.status.map(s => s.toString());
-        query = query.in('status', statusValues as any);
-      } else {
-        query = query.eq('status', filters.status.toString() as any);
+  try {
+    // Create a query without type constraints to avoid deep type instantiation
+    let query = supabase
+      .from('support_requests')
+      .select(`
+        *,
+        client:client_id(*),
+        machine:machine_id(*)
+      `);
+    
+    // Apply filters
+    if (filters) {
+      if (filters.status) {
+        if (Array.isArray(filters.status)) {
+          // Convert enum values to strings to avoid type errors
+          const statusValues = filters.status.map(s => s.toString());
+          query = query.in('status', statusValues as any);
+        } else {
+          query = query.eq('status', filters.status.toString() as any);
+        }
+      }
+      
+      if (filters.type) {
+        if (Array.isArray(filters.type)) {
+          // Convert enum values to strings to avoid type errors
+          const typeValues = filters.type.map(t => t.toString());
+          query = query.in('type', typeValues as any);
+        } else {
+          query = query.eq('type', filters.type.toString() as any);
+        }
+      }
+      
+      if (filters.priority) {
+        query = query.eq('priority', filters.priority.toString() as any);
+      }
+      
+      if (filters.client_id) {
+        query = query.eq('client_id', filters.client_id);
+      }
+      
+      if (filters.assigned_to) {
+        query = query.eq('assigned_to', filters.assigned_to);
+      }
+      
+      if (filters.user_id) {
+        query = query.eq('user_id', filters.user_id);
+      }
+      
+      if (filters.date_from) {
+        query = query.gte('created_at', filters.date_from);
+      }
+      
+      if (filters.date_to) {
+        query = query.lte('created_at', filters.date_to);
       }
     }
+
+    // Add ordering
+    query = query.order('created_at', { ascending: false });
+
+    // Execute the query
+    const { data, error } = await query;
     
-    if (filters.type) {
-      if (Array.isArray(filters.type)) {
-        // Convert enum values to strings to avoid type errors
-        const typeValues = filters.type.map(t => t.toString());
-        query = query.in('type', typeValues as any);
-      } else {
-        query = query.eq('type', filters.type.toString() as any);
-      }
-    }
-    
-    if (filters.priority) {
-      query = query.eq('priority', filters.priority.toString() as any);
-    }
-    
-    if (filters.client_id) {
-      query = query.eq('client_id', filters.client_id);
-    }
-    
-    if (filters.assigned_to) {
-      query = query.eq('assigned_to', filters.assigned_to);
-    }
-    
-    if (filters.user_id) {
-      query = query.eq('user_id', filters.user_id);
-    }
-    
-    if (filters.date_from) {
-      query = query.gte('created_at', filters.date_from);
-    }
-    
-    if (filters.date_to) {
-      query = query.lte('created_at', filters.date_to);
-    }
+    // Fix: Simplify type casting to avoid deep instantiation
+    return { data: data as any, error };
+  } catch (error) {
+    console.error("Error in getSupportTickets:", error);
+    return { data: null, error };
   }
-
-  // Add ordering
-  query = query.order('created_at', { ascending: false });
-
-  // Execute the query
-  const { data, error } = await query;
-  
-  // Fix: Simplify type casting to avoid deep instantiation
-  return { data: data as any, error };
 }
 
 // Get tickets for a client
@@ -194,14 +199,14 @@ export async function getTicketMessages(ticketId: string): Promise<{ data: Suppo
         return { data: [], error: null };
       }
       
-      // Transform data to match SupportMessage interface
-      const transformedData = (altData || []).map(msg => messageTransformer(msg));
-      return { data: transformedData, error: null };
+      // Process alternative response
+      const messages = altData.map(msg => messageTransformer(msg as any));
+      return { data: messages, error: null };
     }
     
     // Process standard response
-    const transformedData = (data || []).map(msg => messageTransformer(msg));
-    return { data: transformedData, error: null };
+    const messages = data.map(msg => messageTransformer(msg as any));
+    return { data: messages, error: null };
   } catch (err) {
     console.error("Error in getTicketMessages:", err);
     return { data: null, error: err };
@@ -268,7 +273,7 @@ export async function addTicketMessage(ticketId: string, userId: string, message
 // Notification helpers
 async function createTicketNotification(ticket: SupportTicket) {
   try {
-    // Notify support staff and admins - convert UserRole enum values to strings
+    // Convert UserRole enum values to strings
     const roles = [
       UserRole.ADMIN.toString(), 
       UserRole.FINANCIAL.toString(), 

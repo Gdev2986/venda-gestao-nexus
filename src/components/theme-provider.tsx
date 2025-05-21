@@ -32,19 +32,19 @@ export function ThemeProvider({
 }: ThemeProviderProps) {
   const [theme, setTheme] = React.useState<Theme>(defaultTheme);
   
-  // Efeito para carregar o tema salvo
+  // Effect to load saved theme
   React.useEffect(() => {
     try {
-      const savedTheme = localStorage?.getItem(storageKey) as Theme | null;
-      if (savedTheme) {
-        setTheme(savedTheme);
+      const storedTheme = localStorage.getItem(storageKey) as Theme | null;
+      if (storedTheme) {
+        setTheme(storedTheme);
       }
     } catch (error) {
       console.error("Failed to load theme preference:", error);
     }
   }, [storageKey]);
   
-  // Efeito para atualizar classes do documento
+  // Effect to update document classes
   React.useEffect(() => {
     const root = window.document.documentElement;
     
@@ -60,7 +60,7 @@ export function ThemeProvider({
     }
   }, [theme]);
 
-  // Efeito para salvar tema no localStorage
+  // Effect to save theme in localStorage
   React.useEffect(() => {
     try {
       localStorage.setItem(storageKey, theme);
@@ -87,5 +87,8 @@ export function ThemeProvider({
 // Ensure context is never null by providing default values
 export const useTheme = (): ThemeProviderState => {
   const context = React.useContext(ThemeProviderContext);
+  if (!context) {
+    throw new Error("useTheme must be used within a ThemeProvider");
+  }
   return context;
 };

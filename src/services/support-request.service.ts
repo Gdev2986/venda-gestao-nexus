@@ -146,11 +146,7 @@ export const SupportRequestService = {
       // Transform data to match SupportMessage interface
       const messages = (data || []).map(msg => {
         // Initialize default user data
-        const userObj: {
-          id: string;
-          name: string;
-          role: string;
-        } = {
+        const userObj = {
           id: '',
           name: '',
           role: ''
