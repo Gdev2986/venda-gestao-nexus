@@ -39,12 +39,9 @@ const ClientGrowthChart = ({ data, isLoading = false }: ClientGrowthChartProps) 
           >
             <LineChart 
               data={chartData}
-              color="#10b981" // Cor verde para indicar crescimento
+              colors={["#10b981"]} // Changed from color to colors as an array
               margin={{ top: 10, right: 10, left: 0, bottom: 20 }}
-              strokeWidth={3}
-              showPoints={true}
-              gradientFrom="#10b981"
-              gradientTo="#dcfce7"
+              dataKey={["total"]} // Ensure dataKey is properly passed as an array
             />
           </motion.div>
         )}

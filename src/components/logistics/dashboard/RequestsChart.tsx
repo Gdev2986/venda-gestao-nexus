@@ -62,12 +62,8 @@ const RequestsChart: React.FC<RequestsChartProps> = ({ data }) => {
           >
             <LineChart 
               data={filteredData}
-              color="#f59e0b" // Cor âmbar para solicitações
-              strokeWidth={3}
-              showArea={true}
-              showPoints={true}
-              gradientFrom="#f59e0b"
-              gradientTo="#fef3c7"
+              colors={["#f59e0b"]} // Changed from color to colors as an array
+              dataKey={["value"]} // Ensure dataKey is properly passed as an array
             />
           </motion.div>
         </AnimatePresence>

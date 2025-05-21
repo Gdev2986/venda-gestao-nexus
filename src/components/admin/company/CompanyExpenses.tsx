@@ -119,9 +119,20 @@ const frequencyOptions = [
   "Anual",
 ];
 
-// Chart data calculation
+// Update the getChartData function to include color in each data point
 const getChartData = (expenses) => {
   const categoryMap = {};
+  const categoryColors = {
+    "Aluguel": "#8b5cf6",    // Purple
+    "Pessoal": "#3b82f6",    // Blue
+    "Suprimentos": "#10b981", // Green
+    "Utilidades": "#f59e0b",  // Yellow
+    "Manutenção": "#ef4444",  // Red
+    "Marketing": "#ec4899",   // Pink
+    "Viagem": "#6366f1",      // Indigo
+    "Impostos": "#0ea5e9",    // Light Blue
+    "Outros": "#8b5cf6",      // Purple (fallback)
+  };
   
   // Group by category
   expenses.forEach((expense) => {
@@ -131,10 +142,11 @@ const getChartData = (expenses) => {
     categoryMap[expense.category] += expense.amount;
   });
   
-  // Convert to array format for charts with typed values
+  // Convert to array format for charts with typed values and colors
   return Object.entries(categoryMap).map(([name, value]) => ({
     name,
     value: Number(value),
+    color: categoryColors[name] || "#8b5cf6", // Use predefined color or fallback to purple
   }));
 };
 
@@ -434,14 +446,6 @@ const CompanyExpenses = () => {
                     data={chartData}
                     nameKey="name"
                     dataKey="value"
-                    colors={[
-                      "#8b5cf6",
-                      "#3b82f6",
-                      "#10b981",
-                      "#f59e0b",
-                      "#ef4444",
-                      "#ec4899",
-                    ]}
                     height={180}
                   />
                 ) : (
