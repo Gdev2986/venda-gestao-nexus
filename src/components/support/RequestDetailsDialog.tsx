@@ -4,6 +4,8 @@ import { Button } from "@/components/ui/button";
 import RequestTypeIcon from "./RequestTypeIcon";
 import StatusBadge from "./StatusBadge";
 import { formatDate } from "@/utils/format";
+import SupportChat from "./SupportChat";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 interface SupportRequest {
   id: string;
@@ -26,7 +28,7 @@ const RequestDetailsDialog = ({ request, open, onOpenChange }: RequestDetailsDia
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-lg">
+      <DialogContent className="sm:max-w-2xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <RequestTypeIcon type={request.type} />
@@ -42,31 +44,42 @@ const RequestDetailsDialog = ({ request, open, onOpenChange }: RequestDetailsDia
           </div>
         </DialogHeader>
         
-        <div className="space-y-4 py-4">
-          <div>
-            <h4 className="text-sm font-medium mb-2">Detalhes da Solicitação</h4>
-            <div className="bg-muted p-3 rounded-md">
-              <p className="whitespace-pre-wrap text-sm">{request.message}</p>
-            </div>
-          </div>
+        <Tabs defaultValue="details" className="pt-2">
+          <TabsList className="grid w-full grid-cols-2">
+            <TabsTrigger value="details">Detalhes</TabsTrigger>
+            <TabsTrigger value="chat">Chat de Suporte</TabsTrigger>
+          </TabsList>
           
-          {request.response && (
+          <TabsContent value="details" className="space-y-4 py-4">
             <div>
-              <h4 className="text-sm font-medium mb-2">Resposta da Equipe</h4>
-              <div className="bg-primary/10 p-3 rounded-md">
-                <p className="whitespace-pre-wrap text-sm">{request.response}</p>
+              <h4 className="text-sm font-medium mb-2">Detalhes da Solicitação</h4>
+              <div className="bg-muted p-3 rounded-md">
+                <p className="whitespace-pre-wrap text-sm">{request.message}</p>
               </div>
             </div>
-          )}
+            
+            {request.response && (
+              <div>
+                <h4 className="text-sm font-medium mb-2">Resposta da Equipe</h4>
+                <div className="bg-primary/10 p-3 rounded-md">
+                  <p className="whitespace-pre-wrap text-sm">{request.response}</p>
+                </div>
+              </div>
+            )}
+            
+            {request.status === "OPEN" && (
+              <div className="bg-yellow-50 p-3 rounded-md">
+                <p className="text-sm text-yellow-800">
+                  Sua solicitação será analisada em breve por nossa equipe de suporte.
+                </p>
+              </div>
+            )}
+          </TabsContent>
           
-          {request.status === "OPEN" && (
-            <div className="bg-yellow-50 p-3 rounded-md">
-              <p className="text-sm text-yellow-800">
-                Sua solicitação será analisada em breve por nossa equipe de suporte.
-              </p>
-            </div>
-          )}
-        </div>
+          <TabsContent value="chat" className="py-4">
+            <SupportChat ticketId={request.id} />
+          </TabsContent>
+        </Tabs>
         
         <DialogFooter>
           <Button 

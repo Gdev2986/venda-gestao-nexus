@@ -4,44 +4,24 @@ import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Input } from "@/components/ui/input";
-import { ScrollArea } from "@/components/ui/scroll-area";
 import { Textarea } from "@/components/ui/textarea";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
 import { getTicketMessages, addMessage } from "@/services/support-request/message-api";
 import { getRequestById } from "@/services/support-request/ticket-api";
 import { SupportRequestStatus } from "@/types/support-request.types";
 import { useToast } from "@/hooks/use-toast";
-import { PaperPlaneIcon, PlusCircledIcon } from "@radix-ui/react-icons";
+import { PaperPlaneIcon } from "@radix-ui/react-icons";
 import { supabase } from "@/integrations/supabase/client";
 
-interface Message {
-  id: string;
-  user_id: string;
-  message: string;
-  created_at: string;
-  conversation_id?: string;
-  user?: {
-    name?: string;
-    email?: string;
-    role?: string;
-  };
+interface SupportChatProps {
+  ticketId: string;
 }
 
-interface SupportChatInterfaceProps {
-  ticketId?: string;
-  clientId?: string;
-  isAdmin?: boolean;
-}
-
-const SupportChatInterface: React.FC<SupportChatInterfaceProps> = ({ 
-  ticketId, 
-  clientId, 
-  isAdmin = false 
-}) => {
-  const [messages, setMessages] = useState<Message[]>([]);
+const SupportChat: React.FC<SupportChatProps> = ({ ticketId }) => {
+  const [messages, setMessages] = useState<any[]>([]);
   const [newMessage, setNewMessage] = useState("");
-  const [isLoading, setIsLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
   const [isSending, setIsSending] = useState(false);
   const [ticket, setTicket] = useState<any>(null);
   const { user } = useAuth();
@@ -62,30 +42,26 @@ const SupportChatInterface: React.FC<SupportChatInterfaceProps> = ({
   
   // Fetch ticket details
   useEffect(() => {
-    if (ticketId) {
-      const fetchTicket = async () => {
-        try {
-          const { data, error } = await getRequestById(ticketId);
-          if (error) throw error;
-          setTicket(data);
-        } catch (error) {
-          console.error("Error fetching ticket:", error);
-          toast({
-            title: "Erro",
-            description: "Não foi possível carregar os detalhes do ticket",
-            variant: "destructive",
-          });
-        }
-      };
-      
-      fetchTicket();
-    }
+    const fetchTicket = async () => {
+      try {
+        const { data, error } = await getRequestById(ticketId);
+        if (error) throw error;
+        setTicket(data);
+      } catch (error) {
+        console.error("Error fetching ticket:", error);
+        toast({
+          title: "Erro",
+          description: "Não foi possível carregar os detalhes do ticket",
+          variant: "destructive",
+        });
+      }
+    };
+    
+    fetchTicket();
   }, [ticketId, toast]);
   
   // Fetch messages
   const fetchMessages = async () => {
-    if (!ticketId) return;
-    
     setIsLoading(true);
     try {
       const { data, error } = await getTicketMessages(ticketId);
@@ -130,15 +106,11 @@ const SupportChatInterface: React.FC<SupportChatInterfaceProps> = ({
   
   // Initial fetch
   useEffect(() => {
-    if (ticketId) {
-      fetchMessages();
-    }
+    fetchMessages();
   }, [ticketId]);
   
   // Subscribe to message updates
   useEffect(() => {
-    if (!ticketId) return;
-    
     // Create a real-time subscription
     const channel = supabase
       .channel(`ticket-messages-${ticketId}`)
@@ -192,7 +164,7 @@ const SupportChatInterface: React.FC<SupportChatInterfaceProps> = ({
   
   // Send a message
   const sendMessage = async () => {
-    if (!newMessage.trim() || !user || !ticketId) return;
+    if (!newMessage.trim() || !user) return;
     
     setIsSending(true);
     try {
@@ -221,37 +193,21 @@ const SupportChatInterface: React.FC<SupportChatInterfaceProps> = ({
     }
   };
   
-  // Show loading state
   if (isLoading && messages.length === 0) {
     return (
-      <Card className="w-full h-[500px] flex items-center justify-center">
-        <div className="text-center space-y-2">
-          <div className="animate-spin h-8 w-8 border-2 border-primary rounded-full border-t-transparent mx-auto"></div>
-          <p className="text-sm text-muted-foreground">Carregando mensagens...</p>
-        </div>
-      </Card>
-    );
-  }
-  
-  // Show empty state if no ticket is selected
-  if (!ticketId) {
-    return (
-      <Card className="w-full h-[500px] flex items-center justify-center">
-        <div className="text-center p-6">
-          <div className="bg-muted rounded-full p-4 w-16 h-16 mx-auto mb-4 flex items-center justify-center">
-            <PlusCircledIcon className="h-8 w-8 text-muted-foreground" />
+      <Card className="w-full">
+        <CardContent className="p-6 flex items-center justify-center min-h-[300px]">
+          <div className="text-center space-y-2">
+            <div className="animate-spin h-8 w-8 border-2 border-primary rounded-full border-t-transparent mx-auto"></div>
+            <p className="text-sm text-muted-foreground">Carregando mensagens...</p>
           </div>
-          <h3 className="text-lg font-medium">Nenhum ticket selecionado</h3>
-          <p className="text-sm text-muted-foreground mt-2">
-            Selecione um ticket para ver e enviar mensagens
-          </p>
-        </div>
+        </CardContent>
       </Card>
     );
   }
   
   return (
-    <Card className="flex flex-col h-[500px]">
+    <Card className="w-full">
       <CardHeader className="pb-2">
         <div className="flex justify-between items-center">
           <CardTitle>
@@ -262,10 +218,7 @@ const SupportChatInterface: React.FC<SupportChatInterfaceProps> = ({
           </div>
         </div>
         {ticket && (
-          <div className="flex justify-between items-center mt-1">
-            <div className="text-sm text-muted-foreground">
-              Cliente: {clientId || ticket.client_id}
-            </div>
+          <div className="flex items-center gap-2 mt-1">
             <div className={`px-2 py-1 rounded-full text-xs font-medium 
               ${ticket.status === SupportRequestStatus.PENDING ? "bg-yellow-100 text-yellow-800" : 
                 ticket.status === SupportRequestStatus.IN_PROGRESS ? "bg-blue-100 text-blue-800" : 
@@ -277,11 +230,14 @@ const SupportChatInterface: React.FC<SupportChatInterfaceProps> = ({
                 ticket.status === SupportRequestStatus.COMPLETED ? "Concluído" : 
                 "Cancelado"}
             </div>
+            <span className="text-sm text-muted-foreground">
+              Criado em: {new Date(ticket.created_at).toLocaleDateString()}
+            </span>
           </div>
         )}
       </CardHeader>
       <Separator />
-      <CardContent className="flex-grow overflow-auto py-4">
+      <CardContent className="pt-4 pb-2 h-[300px]">
         <ScrollArea className="h-full pr-4">
           {messages.length === 0 ? (
             <div className="text-center py-8">
@@ -314,10 +270,7 @@ const SupportChatInterface: React.FC<SupportChatInterfaceProps> = ({
                           <p className="whitespace-pre-wrap break-words">{message.message}</p>
                         </div>
                         <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                          <span>
-                            {message.user?.name || "Usuário"}
-                            {message.user?.role && isAdmin && ` (${message.user.role})`}
-                          </span>
+                          <span>{message.user?.name || "Usuário"}</span>
                           <span>•</span>
                           <span>{formatTimestamp(message.created_at)}</span>
                         </div>
@@ -331,8 +284,8 @@ const SupportChatInterface: React.FC<SupportChatInterfaceProps> = ({
           )}
         </ScrollArea>
       </CardContent>
-      <Separator />
-      <CardFooter className="pt-4">
+      <Separator className="my-2" />
+      <CardFooter className="pt-2">
         <div className="flex w-full gap-2">
           <Textarea
             placeholder="Digite sua mensagem..."
@@ -341,11 +294,11 @@ const SupportChatInterface: React.FC<SupportChatInterfaceProps> = ({
             onKeyDown={handleKeyDown}
             className="resize-none"
             rows={2}
-            disabled={isSending}
+            disabled={isSending || ticket?.status === SupportRequestStatus.COMPLETED || ticket?.status === SupportRequestStatus.CANCELED}
           />
           <Button
             onClick={sendMessage}
-            disabled={!newMessage.trim() || isSending}
+            disabled={!newMessage.trim() || isSending || ticket?.status === SupportRequestStatus.COMPLETED || ticket?.status === SupportRequestStatus.CANCELED}
             size="icon"
             className="h-auto"
           >
@@ -361,4 +314,4 @@ const SupportChatInterface: React.FC<SupportChatInterfaceProps> = ({
   );
 };
 
-export default SupportChatInterface;
+export default SupportChat;

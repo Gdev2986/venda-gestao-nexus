@@ -1,12 +1,10 @@
-
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent } from "@/components/ui/card";
-import SupportTicketsList from "./SupportTicketsList";
 import SupportAgentsList from "./SupportAgentsList";
 import SupportChatInterface from "./SupportChatInterface";
 import SupportSearch from "./SupportSearch";
 import RequestsReportView from "@/components/logistics/reports/RequestsReportView";
-import React from "react";
+import React, { useState } from "react";
 
 interface SupportTabsProps {
   activeTab: string;
@@ -22,6 +20,9 @@ interface SupportTabsProps {
   };
 }
 
+import SupportTicketsList from "./SupportTicketsList";
+import SupportChatInterface from "./SupportChatInterface";
+
 const SupportTabs = ({ 
   activeTab, 
   setActiveTab, 
@@ -29,6 +30,14 @@ const SupportTabs = ({
   setSearchTerm, 
   reportData 
 }: SupportTabsProps) => {
+  const [selectedTicketId, setSelectedTicketId] = useState<string | null>(null);
+  const [selectedClientId, setSelectedClientId] = useState<string | null>(null);
+  
+  const handleSelectTicket = (ticketId: string, clientId: string) => {
+    setSelectedTicketId(ticketId);
+    setSelectedClientId(clientId);
+  };
+  
   return (
     <Tabs 
       defaultValue="tickets" 
@@ -50,19 +59,18 @@ const SupportTabs = ({
       </div>
       
       <TabsContent value="tickets">
-        <Card>
-          <CardContent className="p-6">
-            <SupportTicketsList />
-          </CardContent>
-        </Card>
+        <SupportTicketsList 
+          onSelectTicket={handleSelectTicket}
+          searchTerm={searchTerm}
+        />
       </TabsContent>
       
       <TabsContent value="chat">
-        <Card>
-          <CardContent className="p-6">
-            <SupportChatInterface />
-          </CardContent>
-        </Card>
+        <SupportChatInterface 
+          ticketId={selectedTicketId || undefined}
+          clientId={selectedClientId || undefined}
+          isAdmin={true}
+        />
       </TabsContent>
       
       <TabsContent value="agents">
