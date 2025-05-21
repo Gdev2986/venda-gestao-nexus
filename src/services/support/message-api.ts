@@ -2,8 +2,14 @@
 import { supabase } from "@/integrations/supabase/client";
 import { SupportMessage } from "./types";
 
+// API response interface to match hook expectations
+interface ApiResponse<T> {
+  data: T | null;
+  error: Error | null;
+}
+
 // Get all messages for a conversation
-export const getMessages = async (conversationId: string): Promise<SupportMessage[]> => {
+export const getMessages = async (conversationId: string): Promise<ApiResponse<SupportMessage[]>> => {
   try {
     const { data, error } = await supabase
       .from("support_messages")
@@ -18,27 +24,30 @@ export const getMessages = async (conversationId: string): Promise<SupportMessag
 
     if (error) {
       console.error("Error fetching messages:", error);
-      throw error;
+      return { data: null, error };
     }
 
     // Make sure we're adapting the response to match our expected SupportMessage interface
-    return data.map((msg: any) => ({
-      id: msg.id,
-      conversation_id: msg.conversation_id,
-      user_id: msg.user_id,
-      message: msg.message,
-      created_at: msg.created_at,
-      is_read: msg.is_read,
-      user: msg.user
-    })) as SupportMessage[];
+    return { 
+      data: data.map((msg: any) => ({
+        id: msg.id,
+        conversation_id: msg.conversation_id,
+        user_id: msg.user_id,
+        message: msg.message,
+        created_at: msg.created_at,
+        is_read: msg.is_read,
+        user: msg.user
+      })) as SupportMessage[],
+      error: null
+    };
   } catch (error) {
     console.error("Failed to fetch messages:", error);
-    throw error;
+    return { data: null, error: error instanceof Error ? error : new Error(String(error)) };
   }
 };
 
 // Get messages for a ticket - alias for getMessages
-export const getTicketMessages = async (ticketId: string): Promise<SupportMessage[]> => {
+export const getTicketMessages = async (ticketId: string): Promise<ApiResponse<SupportMessage[]>> => {
   return getMessages(ticketId);
 };
 
@@ -47,7 +56,7 @@ export const sendMessage = async (
   conversationId: string,
   userId: string,
   message: string
-): Promise<SupportMessage> => {
+): Promise<ApiResponse<SupportMessage>> => {
   try {
     const { data, error } = await supabase
       .from("support_messages")
@@ -61,20 +70,23 @@ export const sendMessage = async (
 
     if (error) {
       console.error("Error sending message:", error);
-      throw error;
+      return { data: null, error };
     }
 
     return {
-      id: data.id,
-      conversation_id: data.conversation_id,
-      user_id: data.user_id,
-      message: data.message,
-      created_at: data.created_at,
-      is_read: data.is_read
-    } as SupportMessage;
+      data: {
+        id: data.id,
+        conversation_id: data.conversation_id,
+        user_id: data.user_id,
+        message: data.message,
+        created_at: data.created_at,
+        is_read: data.is_read
+      } as SupportMessage,
+      error: null
+    };
   } catch (error) {
     console.error("Failed to send message:", error);
-    throw error;
+    return { data: null, error: error instanceof Error ? error : new Error(String(error)) };
   }
 };
 
@@ -83,7 +95,7 @@ export const addTicketMessage = async (
   ticketId: string,
   userId: string,
   message: string
-): Promise<SupportMessage> => {
+): Promise<ApiResponse<SupportMessage>> => {
   return sendMessage(ticketId, userId, message);
 };
 
@@ -91,7 +103,7 @@ export const addTicketMessage = async (
 export const markMessagesAsRead = async (
   conversationId: string,
   userId: string
-): Promise<void> => {
+): Promise<ApiResponse<void>> => {
   try {
     const { error } = await supabase
       .from("support_messages")
@@ -101,10 +113,12 @@ export const markMessagesAsRead = async (
 
     if (error) {
       console.error("Error marking messages as read:", error);
-      throw error;
+      return { data: null, error };
     }
+    
+    return { data: null, error: null };
   } catch (error) {
     console.error("Failed to mark messages as read:", error);
-    throw error;
+    return { data: null, error: error instanceof Error ? error : new Error(String(error)) };
   }
 };

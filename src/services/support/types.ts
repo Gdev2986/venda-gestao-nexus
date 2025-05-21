@@ -46,14 +46,15 @@ export interface SupportMessage {
   };
 }
 
+// Make these type definitions use the enums directly
 export interface CreateTicketParams {
   title: string;
   description: string;
   client_id: string;
   machine_id?: string;
-  type: "MAINTENANCE" | "INSTALLATION" | "REPLACEMENT" | "SUPPLIES" | "REMOVAL" | "OTHER";
-  priority: "LOW" | "MEDIUM" | "HIGH";
-  status?: "PENDING" | "IN_PROGRESS" | "COMPLETED" | "CANCELED";
+  type: TicketType;
+  priority: TicketPriority;
+  status?: TicketStatus;
   scheduled_date?: string;
   user_id?: string;
 }
@@ -61,10 +62,13 @@ export interface CreateTicketParams {
 export interface UpdateTicketParams {
   title?: string;
   description?: string;
-  status?: "PENDING" | "IN_PROGRESS" | "COMPLETED" | "CANCELED";
-  priority?: "LOW" | "MEDIUM" | "HIGH";
-  type?: "MAINTENANCE" | "INSTALLATION" | "REPLACEMENT" | "SUPPLIES" | "REMOVAL" | "OTHER";
+  status?: TicketStatus;
+  priority?: TicketPriority;
+  type?: TicketType;
   assigned_to?: string;
   resolution?: string;
   scheduled_date?: string;
 }
+
+// Export the enums for convenience
+export { TicketStatus, TicketPriority, TicketType };
