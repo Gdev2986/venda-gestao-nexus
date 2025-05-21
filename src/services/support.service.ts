@@ -1,3 +1,4 @@
+
 import { supabase } from "@/integrations/supabase/client";
 import { SupportTicket, CreateTicketParams, UpdateTicketParams, SupportMessage } from "@/types/support.types";
 import { TicketStatus, NotificationType, TicketPriority, TicketType, UserRole } from "@/types/enums";
@@ -93,8 +94,7 @@ export async function getSupportTickets(filters?: {
       *,
       client:client_id(*),
       machine:machine_id(*)
-    `)
-    .order('created_at', { ascending: false });
+    `) as any;
 
   if (filters) {
     if (filters.status) {
@@ -127,8 +127,10 @@ export async function getSupportTickets(filters?: {
     if (filters.date_to) query = query.lte('created_at', filters.date_to);
   }
 
+  query = query.order('created_at', { ascending: false });
+
   // Use a simple type assertion to avoid excessive type calculations
-  const { data, error } = await query as any;
+  const { data, error } = await query;
   return { data: data as unknown as SupportTicket[], error };
 }
 
@@ -175,10 +177,10 @@ export async function getTicketMessages(ticketId: string): Promise<{ data: Suppo
       };
       
       // Only try to access user properties if user exists and is not null
-      if (msg.user && typeof msg.user === 'object' && !('error' in msg.user)) {
-        userObj.id = msg.user?.id || '';
-        userObj.name = msg.user?.name || '';
-        userObj.role = msg.user?.role || '';
+      if (msg.user && typeof msg.user === 'object' && !('error' in (msg.user || {}))) {
+        userObj.id = (msg.user && 'id' in msg.user) ? (msg.user.id || '') : '';
+        userObj.name = (msg.user && 'name' in msg.user) ? (msg.user.name || '') : '';
+        userObj.role = (msg.user && 'role' in msg.user) ? (msg.user.role || '') : '';
       }
       
       return {
@@ -204,15 +206,15 @@ export async function getTicketMessages(ticketId: string): Promise<{ data: Suppo
     };
     
     // Only try to access user properties if user exists and is not null
-    if (msg.user && typeof msg.user === 'object' && !('error' in msg.user)) {
-      userObj.id = msg.user?.id || '';
-      userObj.name = msg.user?.name || '';
-      userObj.role = msg.user?.role || '';
+    if (msg.user && typeof msg.user === 'object' && !('error' in (msg.user || {}))) {
+      userObj.id = (msg.user && 'id' in msg.user) ? (msg.user.id || '') : '';
+      userObj.name = (msg.user && 'name' in msg.user) ? (msg.user.name || '') : '';
+      userObj.role = (msg.user && 'role' in msg.user) ? (msg.user.role || '') : '';
     }
     
     return {
       id: msg.id,
-      ticket_id: msg.ticket_id,
+      ticket_id: msg.ticket_id || msg.conversation_id, // Handle either property name
       user_id: msg.user_id,
       message: msg.message,
       created_at: msg.created_at,

@@ -155,11 +155,11 @@ export const SupportRequestService = {
         };
         
         // Only try to access user properties if user exists and is not null
-        if (msg.user && typeof msg.user === 'object' && !('error' in msg.user)) {
+        if (msg.user && typeof msg.user === 'object' && !('error' in (msg.user || {}))) {
           userData = {
-            id: msg.user?.id || '',
-            name: msg.user?.name || '',
-            role: msg.user?.role || ''
+            id: (msg.user && 'id' in msg.user) ? (msg.user.id || '') : '',
+            name: (msg.user && 'name' in msg.user) ? (msg.user.name || '') : '',
+            role: (msg.user && 'role' in msg.user) ? (msg.user.role || '') : ''
           };
         }
         
