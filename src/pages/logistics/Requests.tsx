@@ -1,5 +1,4 @@
-
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { PageHeader } from "@/components/page/PageHeader";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
@@ -18,11 +17,12 @@ import {
   BreadcrumbSeparator,
 } from "@/components/ui/breadcrumb";
 import { PATHS } from "@/routes/paths";
+import SupportRequestService from "@/services/support-request.service";
 
-// Dummy RequestsReportView component with mock data
+// Update the RequestsReportView component to provide the required props
 const RequestsReportView = () => {
-  // Mock data for the report
-  const mockData = {
+  // Get real data from the support service
+  const [reportData, setReportData] = useState({
     pendingRequests: 8,
     highPriorityRequests: 3,
     typeCounts: {
@@ -33,26 +33,40 @@ const RequestsReportView = () => {
       REMOVAL: 1,
       OTHER: 2
     }
-  };
+  });
+
+  // We can fetch real data when the component mounts
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const stats = await SupportRequestService.getStats();
+        setReportData(stats);
+      } catch (error) {
+        console.error("Error fetching support request stats:", error);
+      }
+    };
+    
+    fetchData();
+  }, []);
 
   return (
     <div className="space-y-6">
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <Card>
           <CardContent className="p-6">
-            <div className="text-2xl font-bold">{mockData.pendingRequests}</div>
+            <div className="text-2xl font-bold">{reportData.pendingRequests}</div>
             <p className="text-sm text-muted-foreground">Solicitações Pendentes</p>
           </CardContent>
         </Card>
         <Card>
           <CardContent className="p-6">
-            <div className="text-2xl font-bold">{mockData.highPriorityRequests}</div>
+            <div className="text-2xl font-bold">{reportData.highPriorityRequests}</div>
             <p className="text-sm text-muted-foreground">Alta Prioridade</p>
           </CardContent>
         </Card>
         <Card>
           <CardContent className="p-6">
-            <div className="text-2xl font-bold">{Object.values(mockData.typeCounts).reduce((a, b) => a + b, 0)}</div>
+            <div className="text-2xl font-bold">{Object.values(reportData.typeCounts).reduce((a, b) => a + b, 0)}</div>
             <p className="text-sm text-muted-foreground">Total de Solicitações</p>
           </CardContent>
         </Card>
@@ -62,7 +76,7 @@ const RequestsReportView = () => {
         <CardContent className="p-6">
           <h3 className="text-lg font-medium mb-4">Tipos de Solicitações</h3>
           <div className="space-y-2">
-            {Object.entries(mockData.typeCounts).map(([type, count]) => (
+            {Object.entries(reportData.typeCounts).map(([type, count]) => (
               <div key={type} className="flex justify-between items-center">
                 <span>{type}</span>
                 <span className="font-medium">{count}</span>
@@ -131,7 +145,18 @@ const LogisticsRequests = () => {
         </TabsContent>
         
         <TabsContent value="reports" className="pt-4">
-          <RequestsReportView />
+          <RequestsReportView 
+          pendingRequests={8}
+          highPriorityRequests={3}
+          typeCounts={{
+            INSTALLATION: 3,
+            MAINTENANCE: 4,
+            REPLACEMENT: 2,
+            SUPPLIES: 1,
+            REMOVAL: 1,
+            OTHER: 2
+          }}
+        />
         </TabsContent>
       </Tabs>
       

@@ -35,3 +35,16 @@ export interface SupportRequest {
   description: string;
   resolution?: string;
 }
+
+export interface SupportMessage {
+  id: string;
+  ticket_id: string;
+  user_id: string;
+  message: string;
+  created_at: string;
+  user?: {
+    id: string;
+    name: string;
+    role: string;
+  }
+}

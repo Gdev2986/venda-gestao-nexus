@@ -11,14 +11,19 @@ export enum TicketType {
 export enum TicketPriority {
   LOW = "LOW",
   MEDIUM = "MEDIUM",
-  HIGH = "HIGH"
+  HIGH = "HIGH",
+  CRITICAL = "CRITICAL",
+  URGENT = "URGENT"
 }
 
 export enum TicketStatus {
   PENDING = "PENDING",
   IN_PROGRESS = "IN_PROGRESS",
   COMPLETED = "COMPLETED",
-  CANCELED = "CANCELED"
+  CANCELED = "CANCELED",
+  OPEN = "OPEN",
+  CLOSED = "CLOSED",
+  RESOLVED = "RESOLVED"
 }
 
 export interface SupportTicket {

@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { PageHeader } from "@/components/page/PageHeader";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -9,6 +8,8 @@ import { Label } from "@/components/ui/label";
 import { UserRole } from "@/types/enums";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import RequestsReportView from "@/components/logistics/reports/RequestsReportView";
+import SupportRequestService from "@/services/support-request.service";
 
 // Mock component for demonstration
 const SupportTicketsList = () => {
@@ -52,10 +53,11 @@ const SupportChatInterface = () => {
   );
 };
 
-// Dummy RequestsReportView component with mock data
-const RequestsReportView = () => {
-  // Mock data for the report
-  const mockData = {
+const AdminSupport = () => {
+  const [activeTab, setActiveTab] = useState<string>("tickets");
+  const [searchTerm, setSearchTerm] = useState<string>("");
+  const { toast } = useToast();
+  const [reportData, setReportData] = useState({
     pendingRequests: 12,
     highPriorityRequests: 5,
     typeCounts: {
@@ -64,52 +66,22 @@ const RequestsReportView = () => {
       REPLACEMENT: 2,
       OTHER: 3
     }
-  };
-
-  return (
-    <div className="space-y-6">
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <Card>
-          <CardContent className="p-6">
-            <div className="text-2xl font-bold">{mockData.pendingRequests}</div>
-            <p className="text-sm text-muted-foreground">Solicitações Pendentes</p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="p-6">
-            <div className="text-2xl font-bold">{mockData.highPriorityRequests}</div>
-            <p className="text-sm text-muted-foreground">Alta Prioridade</p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="p-6">
-            <div className="text-2xl font-bold">{Object.values(mockData.typeCounts).reduce((a, b) => a + b, 0)}</div>
-            <p className="text-sm text-muted-foreground">Total de Solicitações</p>
-          </CardContent>
-        </Card>
-      </div>
-      
-      <Card>
-        <CardContent className="p-6">
-          <h3 className="text-lg font-medium mb-4">Tipos de Solicitações</h3>
-          <div className="space-y-2">
-            {Object.entries(mockData.typeCounts).map(([type, count]) => (
-              <div key={type} className="flex justify-between items-center">
-                <span>{type}</span>
-                <span className="font-medium">{count}</span>
-              </div>
-            ))}
-          </div>
-        </CardContent>
-      </Card>
-    </div>
-  );
-};
-
-const AdminSupport = () => {
-  const [activeTab, setActiveTab] = useState<string>("tickets");
-  const [searchTerm, setSearchTerm] = useState<string>("");
-  const { toast } = useToast();
+  });
+  
+  useEffect(() => {
+    const fetchStats = async () => {
+      try {
+        const stats = await SupportRequestService.getStats();
+        setReportData(stats);
+      } catch (error) {
+        console.error("Error fetching support stats:", error);
+      }
+    };
+    
+    if (activeTab === "reports") {
+      fetchStats();
+    }
+  }, [activeTab]);
   
   const handleSupportAgentCreate = async () => {
     try {
@@ -141,7 +113,10 @@ const AdminSupport = () => {
     }
   };
 
+  
   return (
+    
+
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4">
         <div>
@@ -225,7 +200,11 @@ const AdminSupport = () => {
           </TabsContent>
           
           <TabsContent value="reports">
-            <RequestsReportView />
+            <RequestsReportView 
+              pendingRequests={reportData.pendingRequests}
+              highPriorityRequests={reportData.highPriorityRequests}
+              typeCounts={reportData.typeCounts}
+            />
           </TabsContent>
         </Tabs>
       </div>

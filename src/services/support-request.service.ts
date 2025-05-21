@@ -1,10 +1,10 @@
 
 import { supabase } from "@/integrations/supabase/client";
-import { SupportTicket, SupportMessage } from "@/types/support-request.types";
-import { TicketPriority, TicketStatus, TicketType, UserRole } from "@/types/enums";
+import { SupportRequest, SupportMessage, SupportRequestStatus, SupportRequestType, SupportRequestPriority } from "@/types/support-request.types";
+import { TicketPriority, TicketStatus, TicketType } from "@/types/enums";
 
 export const SupportRequestService = {
-  async createTicket(ticketData: Omit<SupportTicket, 'id' | 'created_at' | 'updated_at'>) {
+  async createTicket(ticketData: Omit<SupportRequest, 'id' | 'created_at' | 'updated_at'>) {
     try {
       const { data, error } = await supabase
         .from('support_requests')
@@ -14,7 +14,7 @@ export const SupportRequestService = {
           client_id: ticketData.client_id,
           technician_id: ticketData.technician_id,
           type: ticketData.type,
-          status: ticketData.status || TicketStatus.PENDING,
+          status: ticketData.status || SupportRequestStatus.PENDING,
           priority: ticketData.priority,
           scheduled_date: ticketData.scheduled_date
         }])
@@ -22,14 +22,14 @@ export const SupportRequestService = {
         .single();
 
       if (error) throw error;
-      return data as SupportTicket;
+      return data as SupportRequest;
     } catch (error) {
       console.error("Error creating support request:", error);
       throw error;
     }
   },
 
-  async updateTicket(id: string, updateData: Partial<SupportTicket>) {
+  async updateTicket(id: string, updateData: Partial<SupportRequest>) {
     try {
       const { data, error } = await supabase
         .from('support_requests')
@@ -49,7 +49,7 @@ export const SupportRequestService = {
         .single();
 
       if (error) throw error;
-      return data as SupportTicket;
+      return data as SupportRequest;
     } catch (error) {
       console.error("Error updating support request:", error);
       throw error;
@@ -57,11 +57,11 @@ export const SupportRequestService = {
   },
 
   async getTickets(filters: {
-    status?: TicketStatus | TicketStatus[],
+    status?: SupportRequestStatus | SupportRequestStatus[],
     client_id?: string,
     technician_id?: string,
-    type?: TicketType | TicketType[],
-    priority?: TicketPriority,
+    type?: SupportRequestType | SupportRequestType[],
+    priority?: SupportRequestPriority,
     search?: string
   } = {}) {
     try {
@@ -76,21 +76,26 @@ export const SupportRequestService = {
       // Apply filters
       if (filters.status) {
         if (Array.isArray(filters.status)) {
+          // Cast to string[] when using array of enum values
           query = query.in('status', filters.status as string[]);
         } else {
+          // Cast to string when using a single enum value
           query = query.eq('status', filters.status as string);
         }
       }
 
       if (filters.type) {
         if (Array.isArray(filters.type)) {
+          // Cast to string[] when using array of enum values
           query = query.in('type', filters.type as string[]);
         } else {
+          // Cast to string when using a single enum value
           query = query.eq('type', filters.type as string);
         }
       }
 
       if (filters.priority) {
+        // Cast to string when using a single enum value
         query = query.eq('priority', filters.priority as string);
       }
 
@@ -110,7 +115,7 @@ export const SupportRequestService = {
 
       if (error) throw error;
 
-      return data as SupportTicket[];
+      return data as SupportRequest[];
     } catch (error) {
       console.error("Error fetching support requests:", error);
       return [];
@@ -140,7 +145,7 @@ export const SupportRequestService = {
         user: msg.user as any
       }));
 
-      return messages as unknown as SupportMessage[];
+      return messages as SupportMessage[];
     } catch (error) {
       console.error("Error fetching ticket messages:", error);
       return [];
@@ -175,11 +180,13 @@ export const SupportRequestService = {
     try {
       const tickets = await this.getTickets();
       
-      const pendingCount = tickets.filter(t => t.status === TicketStatus.PENDING || t.status === TicketStatus.OPEN).length;
+      const pendingCount = tickets.filter(t => 
+        t.status === SupportRequestStatus.PENDING || 
+        t.status === SupportRequestStatus.IN_PROGRESS
+      ).length;
+      
       const highPriorityCount = tickets.filter(t => 
-        t.priority === TicketPriority.HIGH || 
-        t.priority === TicketPriority.CRITICAL || 
-        t.priority === TicketPriority.URGENT
+        t.priority === SupportRequestPriority.HIGH
       ).length;
       
       // Count tickets by type
