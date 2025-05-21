@@ -8,7 +8,7 @@ import {
 } from "@/types/support-request.types";
 
 // Re-export types for convenience
-export {
+export type {
   SupportRequest,
   SupportMessage,
   SupportRequestStatus,
