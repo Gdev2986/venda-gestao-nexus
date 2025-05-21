@@ -1,7 +1,12 @@
 
 import { supabase } from "@/integrations/supabase/client";
-import { SupportRequest, SupportMessage, SupportRequestStatus, SupportRequestType, SupportRequestPriority } from "@/types/support-request.types";
-import { TicketPriority, TicketStatus, TicketType } from "@/types/enums";
+import { 
+  SupportRequest, 
+  SupportMessage, 
+  SupportRequestStatus, 
+  SupportRequestType, 
+  SupportRequestPriority 
+} from "@/types/support-request.types";
 
 export const SupportRequestService = {
   async createTicket(ticketData: Omit<SupportRequest, 'id' | 'created_at' | 'updated_at'>) {
@@ -13,9 +18,9 @@ export const SupportRequestService = {
           description: ticketData.description,
           client_id: ticketData.client_id,
           technician_id: ticketData.technician_id,
-          type: ticketData.type,
-          status: ticketData.status || SupportRequestStatus.PENDING,
-          priority: ticketData.priority,
+          type: ticketData.type as string,  // Cast to string
+          status: (ticketData.status || SupportRequestStatus.PENDING) as string,  // Cast to string
+          priority: ticketData.priority as string,  // Cast to string
           scheduled_date: ticketData.scheduled_date
         }])
         .select()
@@ -31,19 +36,22 @@ export const SupportRequestService = {
 
   async updateTicket(id: string, updateData: Partial<SupportRequest>) {
     try {
+      // Prepare updates ensuring it matches database schema
+      const updatePayload: any = {
+        title: updateData.title,
+        description: updateData.description,
+        status: updateData.status as string,  // Cast to string
+        priority: updateData.priority as string,  // Cast to string
+        type: updateData.type as string,  // Cast to string
+        technician_id: updateData.technician_id,
+        resolution: updateData.resolution,
+        scheduled_date: updateData.scheduled_date,
+        updated_at: new Date().toISOString()
+      };
+
       const { data, error } = await supabase
         .from('support_requests')
-        .update({
-          title: updateData.title,
-          description: updateData.description,
-          status: updateData.status,
-          priority: updateData.priority,
-          type: updateData.type,
-          technician_id: updateData.technician_id,
-          resolution: updateData.resolution,
-          scheduled_date: updateData.scheduled_date,
-          updated_at: new Date().toISOString()
-        })
+        .update(updatePayload)
         .eq('id', id)
         .select()
         .single();
@@ -73,30 +81,32 @@ export const SupportRequestService = {
           machine:machine_id(*)
         `);
 
-      // Apply filters
+      // Apply filters - with proper type casting
       if (filters.status) {
         if (Array.isArray(filters.status)) {
-          // Cast to string[] when using array of enum values
-          query = query.in('status', filters.status as string[]);
+          // Cast each status to string
+          const statusValues = filters.status.map(s => s as unknown as string);
+          query = query.in('status', statusValues);
         } else {
-          // Cast to string when using a single enum value
-          query = query.eq('status', filters.status as string);
+          // Cast single status to string
+          query = query.eq('status', filters.status as unknown as string);
         }
       }
 
       if (filters.type) {
         if (Array.isArray(filters.type)) {
-          // Cast to string[] when using array of enum values
-          query = query.in('type', filters.type as string[]);
+          // Cast each type to string
+          const typeValues = filters.type.map(t => t as unknown as string);
+          query = query.in('type', typeValues);
         } else {
-          // Cast to string when using a single enum value
-          query = query.eq('type', filters.type as string);
+          // Cast single type to string
+          query = query.eq('type', filters.type as unknown as string);
         }
       }
 
       if (filters.priority) {
-        // Cast to string when using a single enum value
-        query = query.eq('priority', filters.priority as string);
+        // Cast priority to string
+        query = query.eq('priority', filters.priority as unknown as string);
       }
 
       if (filters.client_id) {
@@ -138,14 +148,14 @@ export const SupportRequestService = {
       // Transform to match SupportMessage interface
       const messages = data.map(msg => ({
         id: msg.id,
-        ticket_id: msg.conversation_id,
+        ticket_id: msg.conversation_id, // Map conversation_id to ticket_id
         user_id: msg.user_id,
         message: msg.message,
         created_at: msg.created_at,
         user: msg.user as any
       }));
 
-      return messages as SupportMessage[];
+      return messages as unknown as SupportMessage[];
     } catch (error) {
       console.error("Error fetching ticket messages:", error);
       return [];
@@ -161,7 +171,7 @@ export const SupportRequestService = {
       const { data, error } = await supabase
         .from('support_messages')
         .insert([{
-          conversation_id: message.ticket_id,
+          conversation_id: message.ticket_id,  // Map ticket_id to conversation_id
           user_id: message.user_id,
           message: message.message
         }])

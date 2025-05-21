@@ -18,7 +18,7 @@ interface DoughnutChartProps {
 
 const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884d8', '#82ca9d'];
 
-const DoughnutChart: React.FC<DoughnutChartProps> = ({
+export const DoughnutChart: React.FC<DoughnutChartProps> = ({
   data,
   title,
   innerRadius = 60,

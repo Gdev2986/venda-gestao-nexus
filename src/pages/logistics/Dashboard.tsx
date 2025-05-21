@@ -1,59 +1,41 @@
 import React from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { DoughnutChart } from '@/components/charts/DoughnutChart';
-import { TicketStatus, TicketPriority } from "@/types/enums";
+import { PageHeader } from "@/components/page/PageHeader";
+import DoughnutChart from "@/components/charts/DoughnutChart";
 
 const LogisticsDashboard = () => {
-  const ticketData = [
-    { name: 'Open', value: 40, color: '#4ade80' },
-    { name: 'Pending', value: 25, color: '#facc15' },
-    { name: 'In Progress', value: 15, color: '#3b82f6' },
-    { name: 'Resolved', value: 20, color: '#a855f7' },
-  ];
-
-  const priorityData = [
-    { name: 'High', value: 35, color: '#f43f5e' },
-    { name: 'Medium', value: 45, color: '#fbbf24' },
-    { name: 'Low', value: 20, color: '#34d399' },
+  // Mock data for the doughnut chart
+  const chartData = [
+    { name: 'Instalação', value: 400 },
+    { name: 'Manutenção', value: 300 },
+    { name: 'Reparo', value: 300 },
+    { name: 'Outros', value: 200 },
   ];
 
   return (
-    <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-      <Card>
-        <CardHeader>
-          <CardTitle>Tickets by Status</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <DoughnutChart data={ticketData} />
-        </CardContent>
-      </Card>
+    <div className="space-y-4">
+      <PageHeader
+        title="Painel de Logística"
+        description="Visão geral das operações de logística"
+      />
 
-      <Card>
-        <CardHeader>
-          <CardTitle>Tickets by Priority</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <DoughnutChart data={priorityData} />
-        </CardContent>
-      </Card>
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        {/* Example Card */}
+        <div className="bg-white rounded-lg shadow-md p-4">
+          <h3 className="text-lg font-semibold mb-2">Solicitações de Serviço</h3>
+          <DoughnutChart data={chartData} title="Tipos de Solicitações" />
+        </div>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>Total Active Machines</CardTitle>
-        </CardHeader>
-        <CardContent className="text-2xl font-bold">
-          35
-        </CardContent>
-      </Card>
+        {/* Add more cards/components here to display relevant logistics data */}
+        <div className="bg-white rounded-lg shadow-md p-4">
+          <h3 className="text-lg font-semibold mb-2">Próximas Operações</h3>
+          <p className="text-gray-600">Nenhuma operação agendada para hoje.</p>
+        </div>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>Average Delivery Time</CardTitle>
-        </CardHeader>
-        <CardContent className="text-2xl font-bold">
-          2.5 days
-        </CardContent>
-      </Card>
+        <div className="bg-white rounded-lg shadow-md p-4">
+          <h3 className="text-lg font-semibold mb-2">Níveis de Estoque</h3>
+          <p className="text-gray-600">Estoque atualizado.</p>
+        </div>
+      </div>
     </div>
   );
 };

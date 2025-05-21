@@ -1,11 +1,12 @@
+
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { TicketPriority, TicketType } from "@/types/enums";
+import { SupportRequestType } from "@/types/support-request.types";
 
-interface RequestsReportViewProps {
+export interface RequestsReportViewProps {
   pendingRequests: number;
   highPriorityRequests: number;
-  typeCounts: { [key in TicketType]?: number };
+  typeCounts: Record<string, number>;
 }
 
 const RequestsReportView: React.FC<RequestsReportViewProps> = ({

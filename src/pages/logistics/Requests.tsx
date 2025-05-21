@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { PageHeader } from "@/components/page/PageHeader";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -18,10 +19,12 @@ import {
 } from "@/components/ui/breadcrumb";
 import { PATHS } from "@/routes/paths";
 import SupportRequestService from "@/services/support-request.service";
+import RequestsReportView from "@/components/logistics/reports/RequestsReportView";
 
-// Update the RequestsReportView component to provide the required props
-const RequestsReportView = () => {
-  // Get real data from the support service
+const LogisticsRequests = () => {
+  const [activeTab, setActiveTab] = useState<string>("list");
+  const [isNewRequestOpen, setIsNewRequestOpen] = useState(false);
+  const isMobile = useMediaQuery("(max-width: 768px)");
   const [reportData, setReportData] = useState({
     pendingRequests: 8,
     highPriorityRequests: 3,
@@ -34,13 +37,26 @@ const RequestsReportView = () => {
       OTHER: 2
     }
   });
-
+  
   // We can fetch real data when the component mounts
   useEffect(() => {
     const fetchData = async () => {
       try {
         const stats = await SupportRequestService.getStats();
-        setReportData(stats);
+        // Make sure we're setting stats in the correct format
+        setReportData({
+          pendingRequests: stats.pendingRequests,
+          highPriorityRequests: stats.highPriorityRequests,
+          typeCounts: stats.typeCounts || {
+            INSTALLATION: 0,
+            MAINTENANCE: 0,
+            REPLACEMENT: 0,
+            SUPPLIES: 0,
+            REMOVAL: 0,
+            OTHER: 0,
+            ...stats.typeCounts
+          }
+        });
       } catch (error) {
         console.error("Error fetching support request stats:", error);
       }
@@ -48,51 +64,6 @@ const RequestsReportView = () => {
     
     fetchData();
   }, []);
-
-  return (
-    <div className="space-y-6">
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <Card>
-          <CardContent className="p-6">
-            <div className="text-2xl font-bold">{reportData.pendingRequests}</div>
-            <p className="text-sm text-muted-foreground">Solicitações Pendentes</p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="p-6">
-            <div className="text-2xl font-bold">{reportData.highPriorityRequests}</div>
-            <p className="text-sm text-muted-foreground">Alta Prioridade</p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="p-6">
-            <div className="text-2xl font-bold">{Object.values(reportData.typeCounts).reduce((a, b) => a + b, 0)}</div>
-            <p className="text-sm text-muted-foreground">Total de Solicitações</p>
-          </CardContent>
-        </Card>
-      </div>
-      
-      <Card>
-        <CardContent className="p-6">
-          <h3 className="text-lg font-medium mb-4">Tipos de Solicitações</h3>
-          <div className="space-y-2">
-            {Object.entries(reportData.typeCounts).map(([type, count]) => (
-              <div key={type} className="flex justify-between items-center">
-                <span>{type}</span>
-                <span className="font-medium">{count}</span>
-              </div>
-            ))}
-          </div>
-        </CardContent>
-      </Card>
-    </div>
-  );
-};
-
-const LogisticsRequests = () => {
-  const [activeTab, setActiveTab] = useState<string>("list");
-  const [isNewRequestOpen, setIsNewRequestOpen] = useState(false);
-  const isMobile = useMediaQuery("(max-width: 768px)");
   
   const handleRefresh = () => {
     // Add refresh logic here (will be implemented with Supabase realtime)
@@ -146,17 +117,10 @@ const LogisticsRequests = () => {
         
         <TabsContent value="reports" className="pt-4">
           <RequestsReportView 
-          pendingRequests={8}
-          highPriorityRequests={3}
-          typeCounts={{
-            INSTALLATION: 3,
-            MAINTENANCE: 4,
-            REPLACEMENT: 2,
-            SUPPLIES: 1,
-            REMOVAL: 1,
-            OTHER: 2
-          }}
-        />
+            pendingRequests={reportData.pendingRequests}
+            highPriorityRequests={reportData.highPriorityRequests}
+            typeCounts={reportData.typeCounts}
+          />
         </TabsContent>
       </Tabs>
       

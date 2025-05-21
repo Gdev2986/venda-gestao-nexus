@@ -1,3 +1,4 @@
+
 import { supabase } from "@/integrations/supabase/client";
 import { SupportTicket, CreateTicketParams, UpdateTicketParams, SupportMessage } from "@/types/support.types";
 import { TicketStatus, NotificationType, TicketPriority, TicketType } from "@/types/enums";
@@ -15,7 +16,7 @@ export async function createSupportTicket(ticket: CreateTicketParams): Promise<{
       description: ticket.description,
       type: ticket.type as string, // Cast to string for database
       priority: ticket.priority as string, // Cast to string for database
-      status: ticket.status || TicketStatus.OPEN as string, // Cast to string for database
+      status: (ticket.status || TicketStatus.OPEN) as string, // Cast to string for database
       scheduled_date: ticket.scheduled_date
     })
     .select('*, client:client_id(*), machine:machine_id(*)')
@@ -94,28 +95,28 @@ export async function getSupportTickets(filters?: {
     if (filters.status) {
       if (Array.isArray(filters.status)) {
         // Cast array of enums to array of strings
-        const statusValues = filters.status.map(s => s as string);
+        const statusValues = filters.status.map(s => s as unknown as string);
         query = query.in('status', statusValues);
       } else {
         // Cast single enum to string
-        query = query.eq('status', filters.status as string);
+        query = query.eq('status', filters.status as unknown as string);
       }
     }
     
     if (filters.type) {
       if (Array.isArray(filters.type)) {
         // Cast array of enums to array of strings
-        const typeValues = filters.type.map(t => t as string);
+        const typeValues = filters.type.map(t => t as unknown as string);
         query = query.in('type', typeValues);
       } else {
         // Cast single enum to string
-        query = query.eq('type', filters.type as string);
+        query = query.eq('type', filters.type as unknown as string);
       }
     }
     
     if (filters.priority) {
       // Cast enum to string
-      query = query.eq('priority', filters.priority as string);
+      query = query.eq('priority', filters.priority as unknown as string);
     }
     
     if (filters.client_id) query = query.eq('client_id', filters.client_id);
@@ -151,14 +152,14 @@ export async function getTicketMessages(ticketId: string): Promise<{ data: Suppo
   // Handle any data transformation here if needed
   const messages = data ? data.map(msg => ({
     id: msg.id,
-    ticket_id: msg.ticket_id,
+    ticket_id: msg.ticket_id || msg.conversation_id, // Handle both field names
     user_id: msg.user_id,
     message: msg.message,
     created_at: msg.created_at,
     user: msg.user
   })) : null;
     
-  return { data: messages as SupportMessage[] | null, error };
+  return { data: messages as unknown as SupportMessage[] | null, error };
 }
 
 // Add a message to a ticket
@@ -193,7 +194,7 @@ async function createTicketNotification(ticket: SupportTicket) {
     const { data: staffUsers } = await supabase
       .from('profiles')
       .select('id')
-      .in('role', ['ADMIN', 'FINANCIAL', 'SUPPORT']);
+      .in('role', ['ADMIN', 'FINANCIAL', 'SUPPORT', 'LOGISTICS']);
       
     if (staffUsers && staffUsers.length > 0) {
       const notifications = staffUsers.map(user => ({
