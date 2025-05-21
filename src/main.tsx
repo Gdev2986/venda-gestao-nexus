@@ -10,6 +10,11 @@ import { Toaster } from './components/ui/toaster';
 import App from './App';
 import './index.css';
 
+// Ensure React is defined and has expected methods
+if (!React || typeof React.createElement !== 'function' || typeof React.useState !== 'function') {
+  console.error('React is not properly initialized. Check for multiple React instances or incorrect imports.');
+}
+
 // Create a query client with default options
 const queryClient = new QueryClient({
   defaultOptions: {

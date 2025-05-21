@@ -23,13 +23,18 @@ const initialState: ThemeProviderState = {
 
 const ThemeProviderContext = React.createContext<ThemeProviderState>(initialState)
 
+// Ensure React is available before attempting to use hooks
+if (!React || typeof React.useState !== 'function') {
+  console.error('React is not properly loaded. This may be due to multiple React instances or incorrect imports.');
+}
+
 export function ThemeProvider({
   children,
   defaultTheme = "system",
   storageKey = "sigmapay-theme",
   ...props
 }: ThemeProviderProps) {
-  // Use explicit React import for useState
+  // Use explicit React import for useState to avoid issues with React resolution
   const [theme, setTheme] = React.useState<Theme>(() => {
     if (typeof window !== "undefined") {
       try {
@@ -81,7 +86,7 @@ export function ThemeProvider({
   )
 
   return (
-    <ThemeProviderContext.Provider value={value}>
+    <ThemeProviderContext.Provider value={value} {...props}>
       {children}
     </ThemeProviderContext.Provider>
   )

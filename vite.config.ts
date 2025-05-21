@@ -17,11 +17,13 @@ export default defineConfig(({ mode }) => ({
   resolve: {
     alias: {
       "@": path.resolve(__dirname, "./src"),
+      // Explicitly force single React instance resolution
       "react": path.resolve(__dirname, "./node_modules/react"),
       "react-dom": path.resolve(__dirname, "./node_modules/react-dom"),
     },
   },
   optimizeDeps: {
+    // Force include React to ensure it's pre-bundled correctly
     include: ["react", "react-dom"],
   },
   build: {
