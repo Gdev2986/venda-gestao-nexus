@@ -1,10 +1,8 @@
 
-"use client"
-
 import * as React from "react"
 import { format } from "date-fns"
+import { Calendar as CalendarIcon } from "lucide-react"
 import { ptBR } from "date-fns/locale"
-import { CalendarIcon } from "lucide-react"
 
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
@@ -16,41 +14,50 @@ import {
 } from "@/components/ui/popover"
 
 interface DatePickerProps {
-  date: Date | undefined;
-  setDate: (date: Date | undefined) => void;
-  className?: string;
-  placeholder?: string;
+  selected?: Date
+  onSelect?: (date?: Date) => void
+  placeholder?: string
+  showMonthDropdown?: boolean
+  showYearDropdown?: boolean
+  dropdownMode?: "select" | "scroll"
+  className?: string
 }
 
 export function DatePicker({
-  date,
-  setDate,
+  selected,
+  onSelect,
+  placeholder = "Selecionar data",
+  showMonthDropdown = false,
+  showYearDropdown = false,
+  dropdownMode = "select",
   className,
-  placeholder = "Selecionar data"
 }: DatePickerProps) {
   return (
     <Popover>
       <PopoverTrigger asChild>
         <Button
-          variant="outline"
+          variant={"outline"}
           className={cn(
             "w-full justify-start text-left font-normal",
-            !date && "text-muted-foreground",
+            !selected && "text-muted-foreground",
             className
           )}
         >
           <CalendarIcon className="mr-2 h-4 w-4" />
-          {date ? format(date, "dd/MM/yyyy", { locale: ptBR }) : <span>{placeholder}</span>}
+          {selected ? format(selected, "PPP", { locale: ptBR }) : <span>{placeholder}</span>}
         </Button>
       </PopoverTrigger>
       <PopoverContent className="w-auto p-0" align="start">
         <Calendar
           mode="single"
-          selected={date}
-          onSelect={setDate}
+          selected={selected}
+          onSelect={onSelect}
           initialFocus
           locale={ptBR}
-          className="pointer-events-auto"
+          showMonthDropdown={showMonthDropdown}
+          showYearDropdown={showYearDropdown}
+          dropdownMode={dropdownMode}
+          className={cn("p-3 pointer-events-auto")}
         />
       </PopoverContent>
     </Popover>

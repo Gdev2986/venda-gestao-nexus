@@ -1,15 +1,27 @@
 
-import { BarChart3, FileText } from "lucide-react";
+import { Building2, BarChart3, FileText, Receipt } from "lucide-react";
 import { SidebarItem } from "../types";
 import { UserRole } from "@/types";
 import { PATHS } from "@/routes/paths";
 
 export const reportItems: SidebarItem[] = [
   {
-    title: "Relatórios",
-    icon: BarChart3,
-    href: PATHS.ADMIN.REPORTS,
+    title: "Empresa",
+    icon: Building2,
+    href: PATHS.ADMIN.COMPANY,
     roles: [UserRole.ADMIN, UserRole.FINANCIAL],
+    subItems: [
+      {
+        title: "Relatórios",
+        href: PATHS.ADMIN.COMPANY_REPORTS,
+        roles: [UserRole.ADMIN, UserRole.FINANCIAL],
+      },
+      {
+        title: "Despesas",
+        href: PATHS.ADMIN.COMPANY_EXPENSES,
+        roles: [UserRole.ADMIN, UserRole.FINANCIAL],
+      }
+    ]
   },
   {
     title: "Relatórios Financeiros",

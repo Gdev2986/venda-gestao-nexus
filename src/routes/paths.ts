@@ -28,7 +28,10 @@ export const PATHS = {
     PAYMENT_NEW: "/admin/payments/new",
     USERS: "/admin/users",
     TAX_BLOCKS: "/admin/tax-blocks",
-    REPORTS: "/admin/reports",
+    REPORTS: "/admin/reports", // Mantém para compatibilidade
+    COMPANY: "/admin/company", // Nova rota principal para empresa
+    COMPANY_REPORTS: "/admin/company/reports", // Nova subrota para relatórios
+    COMPANY_EXPENSES: "/admin/company/expenses", // Nova subrota para despesas
     SALES: "/admin/sales",
     SALES_DETAILS: (id?: string) => `/admin/sales/${id || ':id'}`,
     SALES_NEW: "/admin/sales/new",
