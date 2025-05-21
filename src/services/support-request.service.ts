@@ -145,7 +145,7 @@ export const SupportRequestService = {
 
       if (error) throw error;
 
-      // Transform to match SupportMessage interface with proper fallbacks and null checks
+      // Transform to match SupportMessage interface with proper null checks
       const messages = data.map(msg => {
         // Initialize default user data
         let userData = {

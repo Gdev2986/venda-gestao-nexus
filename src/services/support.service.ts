@@ -1,4 +1,3 @@
-
 import { supabase } from "@/integrations/supabase/client";
 import { SupportTicket, CreateTicketParams, UpdateTicketParams, SupportMessage } from "@/types/support.types";
 import { TicketStatus, NotificationType, TicketPriority, TicketType, UserRole } from "@/types/enums";
@@ -128,7 +127,8 @@ export async function getSupportTickets(filters?: {
     if (filters.date_to) query = query.lte('created_at', filters.date_to);
   }
 
-  const { data, error } = await query;
+  // Use a simple type assertion to avoid excessive type calculations
+  const { data, error } = await query as any;
   return { data: data as unknown as SupportTicket[], error };
 }
 
@@ -194,7 +194,33 @@ export async function getTicketMessages(ticketId: string): Promise<{ data: Suppo
     return { data: transformedData as SupportMessage[], error: null };
   }
     
-  return { data: data as unknown as SupportMessage[], error };
+  // Process standard response with proper error handling
+  const transformedData = data.map(msg => {
+    // Create a default user object for fallback
+    const userObj = {
+      id: '',
+      name: '',
+      role: ''
+    };
+    
+    // Only try to access user properties if user exists and is not null
+    if (msg.user && typeof msg.user === 'object' && !('error' in msg.user)) {
+      userObj.id = msg.user?.id || '';
+      userObj.name = msg.user?.name || '';
+      userObj.role = msg.user?.role || '';
+    }
+    
+    return {
+      id: msg.id,
+      ticket_id: msg.ticket_id,
+      user_id: msg.user_id,
+      message: msg.message,
+      created_at: msg.created_at,
+      user: userObj
+    };
+  });
+  
+  return { data: transformedData as SupportMessage[], error: null };
 }
 
 // Add a message to a ticket
