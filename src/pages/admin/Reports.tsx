@@ -3,7 +3,7 @@ import { useState, useEffect } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { UserRole } from "@/types/enums";
-import SupportRequestService from "@/services/support-request.service";
+import SupportRequestService from "@/services/support-request";
 import SupportHeader from "@/components/admin/support/SupportHeader";
 import SupportTabs from "@/components/admin/support/SupportTabs";
 import DoughnutChart from "@/components/charts/DoughnutChart";

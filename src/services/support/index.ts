@@ -6,7 +6,13 @@ export * from "./message-api";
 export * from "./notification-api";
 
 // Export functions with renamed aliases for compatibility with existing imports
-import { getTickets, getTicketById, getClientTickets, createTicket, updateTicket } from "./ticket-api";
+import { 
+  getTickets, 
+  getTicketById, 
+  getClientTickets, 
+  createTicket, 
+  updateTicket 
+} from "./ticket-api";
 
 export {
   getTickets as getSupportTickets,

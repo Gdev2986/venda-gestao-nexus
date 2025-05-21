@@ -94,20 +94,21 @@ export const getClientTickets = async (clientId: string): Promise<ApiResponse<Su
   }
 };
 
-// Create a new support ticket
+// Create a new support ticket - handle the type conversion explicitly
 export const createTicket = async (ticket: CreateTicketParams): Promise<ApiResponse<SupportTicket>> => {
   try {
-    // Convert the enum types to strings for the database
+    // Convert enum values to strings explicitly for the database
     const ticketData = {
       title: ticket.title,
       description: ticket.description,
       client_id: ticket.client_id,
       machine_id: ticket.machine_id,
+      // For these fields, explicitly convert to string to match the database schema
       type: ticket.type.toString(),
       priority: ticket.priority.toString(),
       status: (ticket.status || TicketStatus.PENDING).toString(),
       scheduled_date: ticket.scheduled_date,
-      user_id: ticket.user_id
+      technician_id: ticket.user_id // Map user_id to technician_id for compatibility
     };
 
     const { data, error } = await supabase
@@ -134,12 +135,14 @@ export const updateTicket = async (
   updates: UpdateTicketParams
 ): Promise<ApiResponse<SupportTicket>> => {
   try {
-    // Convert enum types to strings for the database
+    // Convert enum values to strings explicitly for the database
     const ticketUpdates = {
       ...updates,
+      // For these fields, explicitly convert to string to match the database schema
       type: updates.type ? updates.type.toString() : undefined,
       priority: updates.priority ? updates.priority.toString() : undefined,
       status: updates.status ? updates.status.toString() : undefined,
+      technician_id: updates.assigned_to, // Map assigned_to to technician_id
       updated_at: new Date().toISOString()
     };
 

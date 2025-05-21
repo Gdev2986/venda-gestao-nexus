@@ -3,7 +3,9 @@
 export * from './types';
 export * from './ticket-api';
 export * from './message-api';
-export * from './stats';
+// We need to rename getRequestStats to avoid the ambiguity
+import { getRequestStats as getTicketStats } from './stats';
+export { getTicketStats };
 
 // Export a unified service object (legacy format)
 import { createRequest, updateRequest, getAllRequests } from './ticket-api';
