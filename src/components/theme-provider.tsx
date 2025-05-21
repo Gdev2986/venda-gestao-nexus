@@ -1,7 +1,7 @@
 
 "use client"
 
-import React from "react"
+import React, { useState, useEffect, useMemo, useContext, createContext } from "react"
 
 type Theme = "dark" | "light" | "system"
 
@@ -21,7 +21,7 @@ const initialState: ThemeProviderState = {
   setTheme: () => null,
 }
 
-const ThemeProviderContext = React.createContext<ThemeProviderState>(initialState)
+const ThemeProviderContext = createContext<ThemeProviderState>(initialState)
 
 export function ThemeProvider({
   children,
@@ -29,10 +29,10 @@ export function ThemeProvider({
   storageKey = "sigmapay-theme",
   ...props
 }: ThemeProviderProps) {
-  const [theme, setTheme] = React.useState<Theme>(defaultTheme);
+  const [theme, setTheme] = useState<Theme>(defaultTheme);
   
   // Set initial theme after mount
-  React.useEffect(() => {
+  useEffect(() => {
     if (typeof window !== "undefined") {
       try {
         const storedTheme = localStorage.getItem(storageKey);
@@ -46,7 +46,7 @@ export function ThemeProvider({
   }, [storageKey]);
 
   // Apply theme class
-  React.useEffect(() => {
+  useEffect(() => {
     if (typeof window === "undefined") return;
     
     const root = window.document.documentElement;
@@ -63,7 +63,7 @@ export function ThemeProvider({
   }, [theme]);
 
   // Save theme to localStorage
-  React.useEffect(() => {
+  useEffect(() => {
     if (typeof window === "undefined") return;
     
     try {
@@ -73,7 +73,7 @@ export function ThemeProvider({
     }
   }, [theme, storageKey]);
 
-  const value = React.useMemo(
+  const value = useMemo(
     () => ({
       theme,
       setTheme,
@@ -89,7 +89,7 @@ export function ThemeProvider({
 }
 
 export const useTheme = (): ThemeProviderState => {
-  const context = React.useContext(ThemeProviderContext);
+  const context = useContext(ThemeProviderContext);
   
   if (context === undefined) {
     throw new Error("useTheme must be used within a ThemeProvider");
