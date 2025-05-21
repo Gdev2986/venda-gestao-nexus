@@ -1,405 +1,271 @@
 
-import { useState } from "react";
+import React, { useState } from "react";
 import { PageHeader } from "@/components/page/PageHeader";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Button } from "@/components/ui/button";
-import { DatePickerWithRange } from "@/components/ui/date-picker-with-range";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { 
-  FileDown, 
-  BarChart2, 
-  PieChart, 
-  Calendar, 
-  FileText,
-  Users,
-  Truck,
-  Box
-} from "lucide-react";
-import { DateRange } from "react-day-picker";
-import { subDays, format } from "date-fns";
-import { BarChart } from "@/components/charts/BarChart";
-import { PieChart as CustomPieChart } from "@/components/charts/PieChart";
-import { LineChart } from "@/components/charts/LineChart";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { useToast } from "@/hooks/use-toast";
-import { formatCurrency } from "@/utils/format";
-
-// Sample data for service types
-const serviceTypesData = [
-  { name: "Instalação", value: 35, color: "#4CAF50" },
-  { name: "Manutenção", value: 45, color: "#2196F3" },
-  { name: "Retirada", value: 10, color: "#FF5722" },
-  { name: "Suprimentos", value: 10, color: "#9C27B0" }
-];
-
-// Sample data for service by technician
-const technicianServiceData = [
-  { name: "Técnico A", value: 28 },
-  { name: "Técnico B", value: 22 },
-  { name: "Técnico C", value: 19 },
-  { name: "Técnico D", value: 15 },
-  { name: "Técnico E", value: 12 }
-];
-
-// Sample data for service completion time
-const completionTimeData = [
-  { name: "Segunda", value: 4.2 },
-  { name: "Terça", value: 3.8 },
-  { name: "Quarta", value: 5.1 },
-  { name: "Quinta", value: 4.5 },
-  { name: "Sexta", value: 3.9 },
-  { name: "Sábado", value: 2.5 }
-];
-
-// Sample data for machine installations
-const installationsData = [
-  { month: "Jan", value: 12 },
-  { month: "Fev", value: 15 },
-  { month: "Mar", value: 18 },
-  { month: "Abr", value: 14 },
-  { month: "Mai", value: 21 },
-  { month: "Jun", value: 19 }
-];
-
-// Sample data for detailed service reports
-const detailedServiceData = [
-  { id: "1", date: "2025-05-15", client: "Empresa ABC", type: "Instalação", technician: "Técnico A", time: "3.5h", status: "Concluído" },
-  { id: "2", date: "2025-05-14", client: "Comércio XYZ", type: "Manutenção", technician: "Técnico B", time: "2.0h", status: "Concluído" },
-  { id: "3", date: "2025-05-13", client: "Restaurante DEF", type: "Retirada", technician: "Técnico A", time: "1.5h", status: "Concluído" },
-  { id: "4", date: "2025-05-12", client: "Loja GHI", type: "Suprimentos", technician: "Técnico C", time: "1.0h", status: "Concluído" },
-  { id: "5", date: "2025-05-11", client: "Farmácia JKL", type: "Manutenção", technician: "Técnico D", time: "4.0h", status: "Concluído" }
-];
-
-// Sample data for detailed machine reports
-const machineReportsData = [
-  { id: "1", serial: "SP0012345", model: "SigmaPay S920", client: "Empresa ABC", status: "Ativo", instDate: "2025-02-15", lastMaint: "2025-05-10" },
-  { id: "2", serial: "SP0012346", model: "SigmaPay Mini", client: "Comércio XYZ", status: "Ativo", instDate: "2025-03-01", lastMaint: "2025-05-08" },
-  { id: "3", serial: "SP0012347", model: "SigmaPay Pro", client: "Restaurante DEF", status: "Inativo", instDate: "2025-01-10", lastMaint: "2025-04-15" },
-  { id: "4", serial: "SP0012348", model: "SigmaPay S920", client: "Loja GHI", status: "Ativo", instDate: "2025-04-05", lastMaint: "2025-05-12" },
-  { id: "5", serial: "SP0012349", model: "SigmaPay Mini", client: "Farmácia JKL", status: "Ativo", instDate: "2025-04-20", lastMaint: "2025-05-05" }
-];
+import { Button } from "@/components/ui/button";
+import { CalendarRange, ChevronDown, Download, FileDown, Filter, RefreshCcw } from "lucide-react";
+import { Separator } from "@/components/ui/separator";
+import RequestsDataTable from "@/components/logistics/reports/RequestsDataTable";
+import RequestsReportView from "@/components/logistics/reports/RequestsReportView";
+import RequestsPieChart from "@/components/logistics/reports/RequestsPieChart";
+import { DoughnutChart } from "@/components/charts/DoughnutChart";
+import { BarChart } from "@/components/charts";
 
 const LogisticsReports = () => {
-  const [reportType, setReportType] = useState("services");
-  const [activeTab, setActiveTab] = useState("chart");
-  const { toast } = useToast();
-  const [dateRange, setDateRange] = useState<DateRange>({
-    from: subDays(new Date(), 30),
-    to: new Date(),
-  });
-
-  const handleExport = () => {
-    toast({
-      title: "Exportando relatório",
-      description: "Seu relatório está sendo gerado e será baixado em instantes."
-    });
+  const [activeTab, setActiveTab] = useState("requests");
+  const [dateRange, setDateRange] = useState("30d");
+  
+  // Mock data for request statistics
+  const requestStats = {
+    pendingRequests: 18,
+    highPriorityRequests: 7,
+    typeCounts: {
+      INSTALLATION: 12,
+      MAINTENANCE: 23,
+      REPLACEMENT: 5,
+      SUPPLIES: 8,
+      OTHER: 4
+    }
   };
-
+  
+  // Mock data for charts
+  const requestTypeChartData = [
+    { name: "Manutenção", value: 23, color: "#3B82F6" },
+    { name: "Instalação", value: 12, color: "#10B981" },
+    { name: "Substituição", value: 5, color: "#F59E0B" },
+    { name: "Suprimentos", value: 8, color: "#8B5CF6" },
+    { name: "Outros", value: 4, color: "#6B7280" }
+  ];
+  
+  const slaPerformanceData = [
+    { name: "Dentro do prazo", value: 42, color: "#10B981" },
+    { name: "Fora do prazo", value: 10, color: "#EF4444" }
+  ];
+  
+  const technicianPerformanceData = [
+    { name: "João Silva", value: 95 },
+    { name: "Maria Oliveira", value: 88 },
+    { name: "Pedro Santos", value: 92 },
+    { name: "Ana Costa", value: 97 },
+    { name: "Carlos Lima", value: 85 }
+  ];
+  
   return (
     <div className="space-y-6">
       <PageHeader 
         title="Relatórios de Logística" 
-        description="Análise detalhada de serviços, máquinas e operações"
+        description="Visualize e analise dados de operações, equipamentos e solicitações"
       />
-
-      {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-        <Card>
-          <CardHeader className="pb-2">
-            <CardDescription>Total de Serviços</CardDescription>
-            <CardTitle className="text-2xl">158</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className="text-xs text-muted-foreground">
-              Últimos 30 dias
-            </p>
-          </CardContent>
-        </Card>
-        
-        <Card>
-          <CardHeader className="pb-2">
-            <CardDescription>Tempo Médio de Atendimento</CardDescription>
-            <CardTitle className="text-2xl">3.7h</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className="text-xs text-muted-foreground">
-              Últimos 30 dias
-            </p>
-          </CardContent>
-        </Card>
-        
-        <Card>
-          <CardHeader className="pb-2">
-            <CardDescription>Serviços em Aberto</CardDescription>
-            <CardTitle className="text-2xl">12</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className="text-xs text-muted-foreground">
-              Atualmente
-            </p>
-          </CardContent>
-        </Card>
-        
-        <Card>
-          <CardHeader className="pb-2">
-            <CardDescription>Instalações</CardDescription>
-            <CardTitle className="text-2xl">34</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className="text-xs text-muted-foreground">
-              Últimos 30 dias
-            </p>
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Filters and Export */}
-      <Card>
-        <CardHeader className="pb-2">
-          <CardTitle>Filtros do Relatório</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div>
-              <DatePickerWithRange 
-                value={dateRange}
-                onChange={setDateRange}
-              />
-            </div>
+      
+      <div className="flex items-center justify-between">
+        <Tabs 
+          defaultValue={activeTab} 
+          value={activeTab} 
+          onValueChange={setActiveTab}
+          className="w-full"
+        >
+          <div className="flex items-center justify-between">
+            <TabsList>
+              <TabsTrigger value="requests">Solicitações</TabsTrigger>
+              <TabsTrigger value="machines">Equipamentos</TabsTrigger>
+              <TabsTrigger value="technicians">Técnicos</TabsTrigger>
+              <TabsTrigger value="inventory">Estoque</TabsTrigger>
+            </TabsList>
             
-            <div>
-              <Select value={reportType} onValueChange={setReportType}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Tipo de relatório" />
+            <div className="flex gap-2">
+              <Select value={dateRange} onValueChange={setDateRange}>
+                <SelectTrigger className="w-[180px]">
+                  <SelectValue placeholder="Período" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="services">Serviços</SelectItem>
-                  <SelectItem value="technicians">Técnicos</SelectItem>
-                  <SelectItem value="machines">Máquinas</SelectItem>
-                  <SelectItem value="clients">Clientes</SelectItem>
+                  <SelectItem value="7d">Últimos 7 dias</SelectItem>
+                  <SelectItem value="30d">Últimos 30 dias</SelectItem>
+                  <SelectItem value="90d">Últimos 3 meses</SelectItem>
+                  <SelectItem value="year">Este ano</SelectItem>
+                  <SelectItem value="custom">Personalizado</SelectItem>
                 </SelectContent>
               </Select>
-            </div>
-            
-            <div className="flex items-end">
-              <Button className="w-full" variant="outline" onClick={handleExport}>
-                <FileDown className="mr-2 h-4 w-4" />
-                Exportar Relatório
+              
+              <Button variant="outline" size="icon">
+                <RefreshCcw className="h-4 w-4" />
               </Button>
             </div>
           </div>
-        </CardContent>
-      </Card>
-
-      {/* Report Content */}
-      <Tabs value={activeTab} onValueChange={setActiveTab}>
-        <TabsList>
-          <TabsTrigger value="chart">
-            <BarChart2 className="mr-2 h-4 w-4" />
-            Gráficos
-          </TabsTrigger>
-          <TabsTrigger value="table">
-            <FileText className="mr-2 h-4 w-4" />
-            Dados
-          </TabsTrigger>
-        </TabsList>
-        
-        <TabsContent value="chart" className="space-y-6">
-          {reportType === "services" && (
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          
+          <TabsContent value="requests" className="space-y-6 mt-6">
+            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
               <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center">
-                    <PieChart className="mr-2 h-5 w-5" />
-                    Tipos de Serviço
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                  <CardTitle className="text-sm font-medium">
+                    Total de Solicitações
                   </CardTitle>
-                  <CardDescription>Distribuição por categoria</CardDescription>
                 </CardHeader>
-                <CardContent className="h-[300px]">
-                  <CustomPieChart data={serviceTypesData} />
+                <CardContent>
+                  <div className="text-2xl font-bold">52</div>
+                  <p className="text-xs text-muted-foreground">
+                    +8 em relação ao período anterior
+                  </p>
                 </CardContent>
               </Card>
-              
               <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center">
-                    <Calendar className="mr-2 h-5 w-5" />
-                    Tempo de Conclusão
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                  <CardTitle className="text-sm font-medium">
+                    Solicitações Pendentes
                   </CardTitle>
-                  <CardDescription>Tempo médio por dia da semana (horas)</CardDescription>
                 </CardHeader>
-                <CardContent className="h-[300px]">
-                  <BarChart 
-                    data={completionTimeData} 
-                    height={300}
-                    color="#2196F3"
-                  />
+                <CardContent>
+                  <div className="text-2xl font-bold">{requestStats.pendingRequests}</div>
+                  <p className="text-xs text-muted-foreground">
+                    {requestStats.highPriorityRequests} de alta prioridade
+                  </p>
+                </CardContent>
+              </Card>
+              <Card>
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                  <CardTitle className="text-sm font-medium">
+                    Tempo Médio de Resolução
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold">2,5 dias</div>
+                  <p className="text-xs text-muted-foreground">
+                    -0,3 dias que o período anterior
+                  </p>
+                </CardContent>
+              </Card>
+              <Card>
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                  <CardTitle className="text-sm font-medium">
+                    Taxa de SLA
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold">94%</div>
+                  <p className="text-xs text-muted-foreground">
+                    +2% em relação ao período anterior
+                  </p>
                 </CardContent>
               </Card>
             </div>
-          )}
-          
-          {reportType === "technicians" && (
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center">
-                  <Users className="mr-2 h-5 w-5" />
-                  Serviços por Técnico
-                </CardTitle>
-                <CardDescription>Total de atendimentos</CardDescription>
-              </CardHeader>
-              <CardContent className="h-[300px]">
-                <BarChart
-                  data={technicianServiceData}
-                  height={300}
-                  color="#4CAF50"
+            
+            <div className="grid gap-4 grid-cols-1 md:grid-cols-3">
+              <div className="md:col-span-1">
+                <RequestsReportView 
+                  pendingRequests={requestStats.pendingRequests}
+                  highPriorityRequests={requestStats.highPriorityRequests}
+                  typeCounts={requestStats.typeCounts}
                 />
-              </CardContent>
-            </Card>
-          )}
-          
-          {reportType === "machines" && (
+              </div>
+              
+              <div className="md:col-span-2">
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Distribuição por Tipo</CardTitle>
+                    <CardDescription>Total de solicitações por categoria</CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <DoughnutChart
+                        data={requestTypeChartData}
+                        dataKey="value"
+                        height={250}
+                      />
+                      <DoughnutChart
+                        data={slaPerformanceData}
+                        title="Performance SLA"
+                        dataKey="value"
+                        height={250}
+                      />
+                    </div>
+                  </CardContent>
+                </Card>
+              </div>
+            </div>
+            
             <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center">
-                  <Box className="mr-2 h-5 w-5" />
-                  Instalações de Máquinas
-                </CardTitle>
-                <CardDescription>Por mês</CardDescription>
-              </CardHeader>
-              <CardContent className="h-[300px]">
-                <LineChart
-                  data={installationsData}
-                  xAxisKey="month"
-                  height={300}
-                />
-              </CardContent>
-            </Card>
-          )}
-          
-          {reportType === "clients" && (
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center">
-                  <Truck className="mr-2 h-5 w-5" />
-                  Serviços por Cliente
-                </CardTitle>
-                <CardDescription>Top 5 clientes com mais solicitações</CardDescription>
-              </CardHeader>
-              <CardContent className="h-[300px]">
-                <BarChart
-                  data={[
-                    { name: "Empresa ABC", value: 15 },
-                    { name: "Comércio XYZ", value: 12 },
-                    { name: "Restaurante DEF", value: 10 },
-                    { name: "Loja GHI", value: 8 },
-                    { name: "Farmácia JKL", value: 7 }
-                  ]}
-                  height={300}
-                  color="#9C27B0"
-                />
-              </CardContent>
-            </Card>
-          )}
-        </TabsContent>
-        
-        <TabsContent value="table">
-          {reportType === "services" || reportType === "technicians" ? (
-            <Card>
-              <CardHeader>
-                <CardTitle>Relatório Detalhado de Serviços</CardTitle>
-                <CardDescription>
-                  {dateRange.from && dateRange.to ? (
-                    `${format(dateRange.from, "dd/MM/yyyy")} - ${format(dateRange.to, "dd/MM/yyyy")}`
-                  ) : "Todos os registros"}
-                </CardDescription>
+              <CardHeader className="flex flex-row items-center justify-between">
+                <div>
+                  <CardTitle>Performance de Técnicos</CardTitle>
+                  <CardDescription>
+                    Taxa de SLA por técnico (% de solicitações resolvidas dentro do prazo)
+                  </CardDescription>
+                </div>
+                <Button variant="outline" size="sm">
+                  <FileDown className="h-4 w-4 mr-2" />
+                  Exportar
+                </Button>
               </CardHeader>
               <CardContent>
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Data</TableHead>
-                      <TableHead>Cliente</TableHead>
-                      <TableHead>Tipo</TableHead>
-                      <TableHead>Técnico</TableHead>
-                      <TableHead>Tempo</TableHead>
-                      <TableHead>Status</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {detailedServiceData.map((service) => (
-                      <TableRow key={service.id}>
-                        <TableCell>
-                          {format(new Date(service.date), "dd/MM/yyyy")}
-                        </TableCell>
-                        <TableCell>{service.client}</TableCell>
-                        <TableCell>{service.type}</TableCell>
-                        <TableCell>{service.technician}</TableCell>
-                        <TableCell>{service.time}</TableCell>
-                        <TableCell>
-                          <span className="px-2 py-1 rounded-full text-xs bg-green-100 text-green-800">
-                            {service.status}
-                          </span>
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
+                <BarChart data={technicianPerformanceData} />
               </CardContent>
             </Card>
-          ) : (
+            
             <Card>
-              <CardHeader>
-                <CardTitle>Relatório Detalhado de Máquinas</CardTitle>
-                <CardDescription>
-                  {dateRange.from && dateRange.to ? (
-                    `${format(dateRange.from, "dd/MM/yyyy")} - ${format(dateRange.to, "dd/MM/yyyy")}`
-                  ) : "Todos os registros"}
-                </CardDescription>
+              <CardHeader className="flex flex-row items-center justify-between">
+                <div>
+                  <CardTitle>Histórico de Solicitações</CardTitle>
+                  <CardDescription>
+                    Lista detalhada de todas as solicitações no período
+                  </CardDescription>
+                </div>
               </CardHeader>
               <CardContent>
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Série</TableHead>
-                      <TableHead>Modelo</TableHead>
-                      <TableHead>Cliente</TableHead>
-                      <TableHead>Status</TableHead>
-                      <TableHead>Instalação</TableHead>
-                      <TableHead>Última Manutenção</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {machineReportsData.map((machine) => (
-                      <TableRow key={machine.id}>
-                        <TableCell>{machine.serial}</TableCell>
-                        <TableCell>{machine.model}</TableCell>
-                        <TableCell>{machine.client}</TableCell>
-                        <TableCell>
-                          <span className={`px-2 py-1 rounded-full text-xs ${
-                            machine.status === "Ativo" 
-                              ? "bg-green-100 text-green-800" 
-                              : "bg-gray-100 text-gray-800"
-                          }`}>
-                            {machine.status}
-                          </span>
-                        </TableCell>
-                        <TableCell>
-                          {format(new Date(machine.instDate), "dd/MM/yyyy")}
-                        </TableCell>
-                        <TableCell>
-                          {format(new Date(machine.lastMaint), "dd/MM/yyyy")}
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
+                <RequestsDataTable />
               </CardContent>
             </Card>
-          )}
-        </TabsContent>
-      </Tabs>
+          </TabsContent>
+          
+          <TabsContent value="machines" className="mt-6">
+            <Card>
+              <CardHeader>
+                <CardTitle>Relatório de Equipamentos</CardTitle>
+                <CardDescription>
+                  Análise de performance e status de equipamentos
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="py-10">
+                <p className="text-center text-muted-foreground">
+                  Conteúdo do relatório de equipamentos
+                </p>
+              </CardContent>
+            </Card>
+          </TabsContent>
+          
+          <TabsContent value="technicians" className="mt-6">
+            <Card>
+              <CardHeader>
+                <CardTitle>Relatório de Técnicos</CardTitle>
+                <CardDescription>
+                  Performance e produtividade da equipe técnica
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="py-10">
+                <p className="text-center text-muted-foreground">
+                  Conteúdo do relatório de técnicos
+                </p>
+              </CardContent>
+            </Card>
+          </TabsContent>
+          
+          <TabsContent value="inventory" className="mt-6">
+            <Card>
+              <CardHeader>
+                <CardTitle>Relatório de Estoque</CardTitle>
+                <CardDescription>
+                  Análise de inventário e consumo de materiais
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="py-10">
+                <p className="text-center text-muted-foreground">
+                  Conteúdo do relatório de estoque
+                </p>
+              </CardContent>
+            </Card>
+          </TabsContent>
+        </Tabs>
+      </div>
     </div>
   );
 };

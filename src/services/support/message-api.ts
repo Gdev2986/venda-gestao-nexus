@@ -1,5 +1,5 @@
 
-import { supabase } from "@/lib/supabase";
+import { supabase } from "@/integrations/supabase/client";
 import { SupportMessage } from "./types";
 
 // Get all messages for a conversation
@@ -37,6 +37,11 @@ export const getMessages = async (conversationId: string): Promise<SupportMessag
   }
 };
 
+// Get messages for a ticket - alias for getMessages
+export const getTicketMessages = async (ticketId: string): Promise<SupportMessage[]> => {
+  return getMessages(ticketId);
+};
+
 // Send a new message
 export const sendMessage = async (
   conversationId: string,
@@ -71,6 +76,15 @@ export const sendMessage = async (
     console.error("Failed to send message:", error);
     throw error;
   }
+};
+
+// Add a message to a ticket - alias for sendMessage
+export const addTicketMessage = async (
+  ticketId: string,
+  userId: string,
+  message: string
+): Promise<SupportMessage> => {
+  return sendMessage(ticketId, userId, message);
 };
 
 // Mark messages as read

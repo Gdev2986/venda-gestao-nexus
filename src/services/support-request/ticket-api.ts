@@ -39,7 +39,16 @@ export async function getRequestsByStatus(status: SupportRequestStatus) {
 }
 
 // Create a new support request
-export async function createRequest(requestData: Omit<SupportRequest, "id" | "created_at" | "updated_at">) {
+export async function createRequest(requestData: {
+  title: string;
+  description: string;
+  client_id: string;
+  technician_id?: string;
+  type: "MAINTENANCE" | "INSTALLATION" | "REPLACEMENT" | "SUPPLIES" | "REMOVAL" | "OTHER";
+  priority: "LOW" | "MEDIUM" | "HIGH";
+  status?: "PENDING" | "IN_PROGRESS" | "COMPLETED" | "CANCELED";
+  scheduled_date?: string;
+}) {
   try {
     const response = await supabase
       .from("support_requests")
@@ -55,7 +64,16 @@ export async function createRequest(requestData: Omit<SupportRequest, "id" | "cr
 }
 
 // Update an existing support request
-export async function updateRequest(id: string, updateData: Partial<SupportRequest>) {
+export async function updateRequest(id: string, updateData: {
+  title?: string;
+  description?: string;
+  status?: "PENDING" | "IN_PROGRESS" | "COMPLETED" | "CANCELED";
+  priority?: "LOW" | "MEDIUM" | "HIGH";
+  type?: "MAINTENANCE" | "INSTALLATION" | "REPLACEMENT" | "SUPPLIES" | "REMOVAL" | "OTHER";
+  technician_id?: string;
+  resolution?: string;
+  scheduled_date?: string;
+}) {
   try {
     const response = await supabase
       .from("support_requests")
@@ -97,12 +115,12 @@ export async function getRequestStats() {
     if (error) throw error;
     
     const pendingRequests = requests.filter(
-      req => req.status === SupportRequestStatus.PENDING || 
-             req.status === SupportRequestStatus.IN_PROGRESS
+      req => req.status === "PENDING" || 
+             req.status === "IN_PROGRESS"
     ).length;
     
     const highPriorityRequests = requests.filter(
-      req => req.priority === SupportRequestPriority.HIGH
+      req => req.priority === "HIGH"
     ).length;
     
     // Count requests by type

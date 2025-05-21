@@ -14,6 +14,7 @@ interface DoughnutChartProps {
   showLegend?: boolean;
   showTooltip?: boolean;
   height?: number;
+  dataKey: string; // Added required dataKey property
 }
 
 const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884d8', '#82ca9d'];
@@ -26,6 +27,7 @@ export const DoughnutChart: React.FC<DoughnutChartProps> = ({
   showLegend = true,
   showTooltip = true,
   height = 300,
+  dataKey = "value"
 }) => {
   // Ensure data has colors
   const dataWithColors = data.map((item, index) => ({
@@ -46,7 +48,7 @@ export const DoughnutChart: React.FC<DoughnutChartProps> = ({
             innerRadius={innerRadius}
             outerRadius={outerRadius}
             fill="#8884d8"
-            dataKey="value"
+            dataKey={dataKey}
             nameKey="name"
             label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(0)}%`}
           >

@@ -1,5 +1,5 @@
 
-import { supabase } from "@/lib/supabase";
+import { supabase } from "@/integrations/supabase/client";
 import { SupportTicket } from "./types";
 
 // Notify relevant staff about a new support ticket

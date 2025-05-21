@@ -6,18 +6,18 @@ export * from './message-api';
 export * from './stats';
 
 // Export a unified service object (legacy format)
-import { createTicket, updateTicket, getTickets } from './ticket-api';
+import { createRequest, updateRequest, getAllRequests } from './ticket-api';
 import { getTicketMessages, addMessage } from './message-api';
-import { getStats } from './stats';
+import { getRequestStats } from './stats';
 
 // This provides a drop-in replacement for the old service object
 export const SupportRequestService = {
-  createTicket,
-  updateTicket,
-  getTickets,
+  createTicket: createRequest,
+  updateTicket: updateRequest,
+  getTickets: getAllRequests,
   getTicketMessages,
   addMessage,
-  getStats
+  getStats: getRequestStats
 };
 
 export default SupportRequestService;

@@ -10,13 +10,13 @@ import {
   UpdateTicketParams
 } from "@/types/support.types";
 import { 
-  getSupportTickets, 
-  getSupportTicketById, 
-  getClientSupportTickets,
-  createSupportTicket,
-  updateSupportTicket,
-  addTicketMessage, 
-  getTicketMessages
+  getTickets as getSupportTickets, 
+  getTicketById as getSupportTicketById, 
+  getClientTickets as getClientSupportTickets,
+  createTicket as createSupportTicket,
+  updateTicket as updateSupportTicket,
+  getTicketMessages,
+  sendMessage as addTicketMessage
 } from "@/services/support";
 
 interface UseSupportTicketsOptions {
