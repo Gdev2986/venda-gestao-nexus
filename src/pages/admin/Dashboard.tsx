@@ -153,7 +153,7 @@ const AdminDashboard = () => {
 
       <div className="space-y-4 md:space-y-6">
         {/* Stats Cards - These change based on the date filter */}
-        <StatCards stats={stats || MOCK_DATA.stats} isLoading={isLoading} />
+        <StatCards stats={stats || {}} isLoading={isLoading} />
         
         {/* Quick Links */}
         <div className="mt-4">
@@ -172,7 +172,7 @@ const AdminDashboard = () => {
         <ChartsSection 
           salesData={MOCK_DATA.dailySales}
           paymentMethodsData={MOCK_DATA.paymentMethods}
-          topPartnersData={MOCK_DATA.topPartnersData || MOCK_DATA.topPartners}
+          topPartnersData={MOCK_DATA.topPartners}
           clientGrowthData={MOCK_DATA.clientGrowth}
           isLoading={isLoading}
         />
