@@ -1,7 +1,7 @@
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { PieChart } from "@/components/charts";
 import { formatCurrency } from "@/lib/utils";
+import { PieChart } from "@/components/charts";
 
 interface PaymentMethodsChartProps {
   data: Array<{
@@ -22,13 +22,13 @@ const PaymentMethodsChart = ({ data, isLoading = false }: PaymentMethodsChartPro
   }));
 
   return (
-    <Card>
-      <CardHeader>
+    <Card className="overflow-hidden">
+      <CardHeader className="pb-0">
         <CardTitle className="text-base sm:text-lg">Métodos de Pagamento</CardTitle>
       </CardHeader>
-      <CardContent>
+      <CardContent className="pt-4">
         {isLoading ? (
-          <div className="h-64 bg-muted animate-pulse rounded flex items-center justify-center">
+          <div className="h-64 bg-muted animate-pulse rounded-lg flex items-center justify-center">
             <p className="text-muted-foreground">Carregando dados...</p>
           </div>
         ) : (
@@ -39,20 +39,21 @@ const PaymentMethodsChart = ({ data, isLoading = false }: PaymentMethodsChartPro
                 data={chartData} 
                 dataKey="value"
                 formatter={(value) => formatCurrency(value)}
-                innerRadius={0}
+                innerRadius={50}
                 outerRadius={80}
+                paddingAngle={3}
               />
             </div>
             
-            {/* Legend - Optimized for mobile */}
-            <div className="flex flex-wrap justify-center gap-4 mt-2 text-sm">
+            {/* Legend - Optimized for mobile with better visual design */}
+            <div className="flex flex-wrap justify-center gap-x-6 gap-y-2 mt-2 mb-2">
               {data.map((item, index) => (
                 <div key={index} className="flex items-center">
                   <div 
-                    className="w-3 h-3 mr-1 rounded-sm" 
+                    className="w-3 h-3 mr-1.5 rounded-full" 
                     style={{ backgroundColor: item.color }}
                   />
-                  <span>{item.name}: {item.percent}%</span>
+                  <span className="text-xs font-medium">{item.name}: <span className="font-bold">{item.percent}%</span></span>
                 </div>
               ))}
             </div>

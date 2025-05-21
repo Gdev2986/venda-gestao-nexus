@@ -1,3 +1,4 @@
+
 import React from "react";
 import { ColumnDef } from "@tanstack/react-table";
 import {
@@ -10,6 +11,7 @@ import {
 } from "@/components/ui/table";
 import TablePagination from "./table-pagination";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { motion } from "framer-motion";
 
 // Updated interface to use ColumnDef
 interface DataTableProps<TData> {
@@ -41,10 +43,10 @@ export function DataTable<TData extends object>({
   }, [columns, isMobile]);
 
   return (
-    <div className="rounded-md border w-full">
+    <div className="rounded-md border overflow-hidden">
       <div className="overflow-x-auto">
         <Table>
-          <TableHeader>
+          <TableHeader className="bg-muted/30">
             <TableRow>
               {visibleColumns.map((column) => {
                 // Safely access column header
@@ -55,7 +57,9 @@ export function DataTable<TData extends object>({
                   : '';
                 
                 return (
-                  <TableHead key={String(column.id)}>{String(headerValue)}</TableHead>
+                  <TableHead key={String(column.id)} className="font-semibold text-foreground/90">
+                    {String(headerValue)}
+                  </TableHead>
                 );
               })}
             </TableRow>
@@ -72,12 +76,18 @@ export function DataTable<TData extends object>({
               </TableRow>
             ) : data.length > 0 ? (
               data.map((row, rowIndex) => (
-                <TableRow key={rowIndex}>
+                <motion.tr
+                  key={rowIndex}
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.2, delay: rowIndex * 0.03 }}
+                  className="odd:bg-card even:bg-muted/20 hover:bg-muted/40 transition-colors"
+                >
                   {visibleColumns.map((column) => {
                     const columnId = String(column.id);
                     
                     return (
-                      <TableCell key={`${rowIndex}-${columnId}`} className="py-2 px-3">
+                      <TableCell key={`${rowIndex}-${columnId}`} className="py-3 px-4">
                         {column.cell 
                           ? typeof column.cell === 'function'
                             ? column.cell({ row: { original: row } } as any)
@@ -86,11 +96,11 @@ export function DataTable<TData extends object>({
                       </TableCell>
                     );
                   })}
-                </TableRow>
+                </motion.tr>
               ))
             ) : (
               <TableRow>
-                <TableCell colSpan={visibleColumns.length} className="h-24 text-center">
+                <TableCell colSpan={visibleColumns.length} className="h-24 text-center text-muted-foreground">
                   Nenhum dado encontrado
                 </TableCell>
               </TableRow>
@@ -100,7 +110,7 @@ export function DataTable<TData extends object>({
       </div>
       
       {totalPages && totalPages > 1 && currentPage && onPageChange && (
-        <div className="px-2 py-2 sm:px-4 sm:py-2 flex justify-center">
+        <div className="px-4 py-3 border-t flex justify-center bg-card">
           <TablePagination 
             currentPage={currentPage} 
             totalPages={totalPages} 

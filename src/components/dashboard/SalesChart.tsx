@@ -50,16 +50,16 @@ const SalesChart = ({ data, isLoading = false, className }: SalesChartProps) => 
   const CustomTooltip = ({ active, payload }: any) => {
     if (active && payload && payload.length) {
       return (
-        <div className="bg-white dark:bg-gray-800 p-4 border rounded-md shadow-md">
-          <p className="font-medium">{payload[0].payload.name}</p>
-          <p className="text-sm text-gray-500 dark:text-gray-300">
+        <div className="bg-background border border-border rounded-lg p-3 shadow-lg">
+          <p className="font-medium text-sm">{payload[0].payload.name}</p>
+          <p className="text-sm text-muted-foreground mt-1">
             {new Intl.NumberFormat('pt-BR', { 
               style: 'currency', 
               currency: 'BRL' 
             }).format(payload[0].value)}
           </p>
-          <p className="text-xs text-gray-400 dark:text-gray-400">
-            {payload[0].payload.percentage}% do total
+          <p className="text-xs mt-1 text-muted-foreground">
+            <span className="font-semibold">{payload[0].payload.percentage}%</span> do total
           </p>
         </div>
       );
@@ -68,13 +68,13 @@ const SalesChart = ({ data, isLoading = false, className }: SalesChartProps) => 
   };
 
   return (
-    <Card className={cn("col-span-1", className)}>
-      <CardHeader>
+    <Card className={cn("col-span-1 overflow-hidden", className)}>
+      <CardHeader className="pb-0">
         <CardTitle className="text-lg">Vendas por Forma de Pagamento</CardTitle>
       </CardHeader>
-      <CardContent>
+      <CardContent className="pt-4">
         {isLoading ? (
-          <div className="h-[250px] md:h-[300px] bg-muted animate-pulse rounded" />
+          <div className="h-[250px] md:h-[300px] bg-muted animate-pulse rounded-lg" />
         ) : (
           <div className="h-[250px] md:h-[300px]">
             <ResponsiveContainer width="100%" height="100%">
@@ -82,8 +82,28 @@ const SalesChart = ({ data, isLoading = false, className }: SalesChartProps) => 
                 data={chartData}
                 margin={{ top: 20, right: 30, left: 20, bottom: 5 }}
               >
-                <CartesianGrid strokeDasharray="3 3" vertical={false} />
-                <XAxis dataKey="name" />
+                <defs>
+                  {data.map((item, index) => (
+                    <linearGradient 
+                      key={`gradient-${index}`} 
+                      id={`gradient-${item.method}`} 
+                      x1="0" 
+                      y1="0" 
+                      x2="0" 
+                      y2="1"
+                    >
+                      <stop offset="0%" stopColor={getPaymentMethodColor(item.method)} stopOpacity={0.8} />
+                      <stop offset="95%" stopColor={getPaymentMethodColor(item.method)} stopOpacity={0.3} />
+                    </linearGradient>
+                  ))}
+                </defs>
+                <CartesianGrid strokeDasharray="3 3" vertical={false} opacity={0.2} />
+                <XAxis 
+                  dataKey="name" 
+                  tick={{ fontSize: 12 }}
+                  axisLine={{ stroke: 'hsl(var(--border))' }}
+                  tickLine={false}
+                />
                 <YAxis
                   tickFormatter={(value) =>
                     new Intl.NumberFormat("pt-BR", {
@@ -91,14 +111,31 @@ const SalesChart = ({ data, isLoading = false, className }: SalesChartProps) => 
                       compactDisplay: "short",
                     }).format(value)
                   }
+                  tick={{ fontSize: 12 }}
+                  axisLine={false}
+                  tickLine={false}
                 />
-                <Tooltip content={<CustomTooltip />} />
-                <Legend />
-                <Bar dataKey="value" name="Valor">
+                <Tooltip 
+                  content={<CustomTooltip />}
+                  cursor={{ opacity: 0.1 }} 
+                />
+                <Legend 
+                  iconType="circle"
+                  iconSize={8}
+                  wrapperStyle={{ fontSize: '12px', paddingTop: '10px' }}
+                />
+                <Bar 
+                  dataKey="value" 
+                  name="Valor" 
+                  radius={[4, 4, 0, 0]}
+                  barSize={40}
+                  animationDuration={1500}
+                  animationEasing="ease-in-out"
+                >
                   {chartData.map((entry, index) => (
                     <Cell
                       key={`cell-${index}`}
-                      fill={getPaymentMethodColor(data[index].method)}
+                      fill={`url(#gradient-${data[index].method})`}
                     />
                   ))}
                 </Bar>

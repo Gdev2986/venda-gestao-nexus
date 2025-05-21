@@ -19,10 +19,13 @@ const RequestsChart: React.FC<RequestsChartProps> = ({ data }) => {
     : data.filter(item => item.name.toLowerCase().includes(requestType.toLowerCase()));
 
   return (
-    <Card>
+    <Card className="overflow-hidden">
       <CardHeader className="space-y-0 pb-2">
         <div className="flex items-center justify-between">
-          <CardTitle className="text-lg">Solicitações Mensais</CardTitle>
+          <div>
+            <CardTitle className="text-lg">Solicitações Mensais</CardTitle>
+            <CardDescription>Tendência dos últimos 6 meses</CardDescription>
+          </div>
           <Select value={requestType} onValueChange={setRequestType}>
             <SelectTrigger className="h-8 w-[180px]">
               <SelectValue placeholder="Filtrar por tipo" />
@@ -39,10 +42,12 @@ const RequestsChart: React.FC<RequestsChartProps> = ({ data }) => {
             </SelectContent>
           </Select>
         </div>
-        <CardDescription>Tendência dos últimos 6 meses</CardDescription>
       </CardHeader>
-      <CardContent className="h-80">
-        <LineChart data={filteredData} />
+      <CardContent className="pt-4 h-80">
+        <LineChart 
+          data={filteredData}
+          color="#f59e0b" // Cor âmbar para solicitações
+        />
       </CardContent>
     </Card>
   );

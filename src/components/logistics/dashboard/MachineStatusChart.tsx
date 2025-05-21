@@ -30,10 +30,13 @@ const MachineStatusChart: React.FC<MachineStatusChartProps> = ({ data }) => {
   }));
 
   return (
-    <Card>
+    <Card className="overflow-hidden">
       <CardHeader className="space-y-0 pb-2">
         <div className="flex items-center justify-between">
-          <CardTitle className="text-lg">Status das Máquinas</CardTitle>
+          <div>
+            <CardTitle className="text-lg">Status das Máquinas</CardTitle>
+            <CardDescription>Distribuição por status atual</CardDescription>
+          </div>
           <Select value={selectedStatus} onValueChange={setSelectedStatus}>
             <SelectTrigger className="h-8 w-[180px]">
               <SelectValue placeholder="Filtrar por status" />
@@ -50,10 +53,15 @@ const MachineStatusChart: React.FC<MachineStatusChartProps> = ({ data }) => {
             </SelectContent>
           </Select>
         </div>
-        <CardDescription>Distribuição por status atual</CardDescription>
       </CardHeader>
-      <CardContent className="h-80">
-        <PieChart data={chartData} dataKey="value" />
+      <CardContent className="pt-4 h-80">
+        <PieChart 
+          data={chartData} 
+          dataKey="value"
+          innerRadius={60}
+          outerRadius={90}
+          paddingAngle={3}
+        />
       </CardContent>
     </Card>
   );

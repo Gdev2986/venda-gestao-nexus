@@ -21,10 +21,13 @@ const SLAChart: React.FC<SLAChartProps> = ({ data }) => {
         : data;
 
   return (
-    <Card>
+    <Card className="overflow-hidden">
       <CardHeader className="space-y-0 pb-2">
         <div className="flex items-center justify-between">
-          <CardTitle className="text-lg">Performance SLA</CardTitle>
+          <div>
+            <CardTitle className="text-lg">Performance SLA</CardTitle>
+            <CardDescription>% de solicitações atendidas dentro do prazo</CardDescription>
+          </div>
           <Select value={performanceFilter} onValueChange={setPerformanceFilter}>
             <SelectTrigger className="h-8 w-[180px]">
               <SelectValue placeholder="Filtrar por performance" />
@@ -38,10 +41,13 @@ const SLAChart: React.FC<SLAChartProps> = ({ data }) => {
             </SelectContent>
           </Select>
         </div>
-        <CardDescription>% de solicitações atendidas dentro do prazo</CardDescription>
       </CardHeader>
-      <CardContent className="h-80">
-        <BarChart data={filteredData} />
+      <CardContent className="pt-4 h-80">
+        <BarChart 
+          data={filteredData} 
+          color="#3b82f6" // Azul para SLA
+          margin={{ top: 10, right: 10, left: 0, bottom: 10 }}
+        />
       </CardContent>
     </Card>
   );

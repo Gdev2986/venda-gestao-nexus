@@ -16,21 +16,29 @@ export const BarChart = ({
   dataKey = "value",
   xAxisKey = "name",
   height = 300,
-  color = "#3b82f6",
+  color = "hsl(var(--primary))",
   formatter,
   margin = { top: 10, right: 30, left: 20, bottom: 20 }
 }: BarChartProps) => {
   return (
     <ResponsiveContainer width="100%" height={height}>
       <RechartsBarChart data={data} margin={margin}>
-        <CartesianGrid strokeDasharray="3 3" vertical={false} />
+        <defs>
+          <linearGradient id="barGradient" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stopColor={color} stopOpacity={0.9} />
+            <stop offset="95%" stopColor={color} stopOpacity={0.3} />
+          </linearGradient>
+        </defs>
+        <CartesianGrid strokeDasharray="3 3" vertical={false} opacity={0.2} />
         <XAxis 
           dataKey={xAxisKey} 
-          tick={{ fontSize: 12 }} // Smaller font for mobile
-          interval={0} // Show all labels
-          angle={-45} // Angle labels for better fit on mobile
-          textAnchor="end" // Align labels
-          height={60} // More space for angled labels
+          tick={{ fontSize: 12 }}
+          interval={0}
+          angle={-45}
+          textAnchor="end"
+          height={60}
+          stroke="hsl(var(--muted-foreground))"
+          tickLine={false}
         />
         <YAxis 
           tickFormatter={(value) => formatter ? formatter(value) : 
@@ -39,8 +47,11 @@ export const BarChart = ({
               compactDisplay: "short",
             }).format(value)
           }
-          tick={{ fontSize: 12 }} // Smaller font for mobile
-          width={40} // Smaller width for mobile
+          tick={{ fontSize: 12 }}
+          width={40}
+          stroke="hsl(var(--muted-foreground))"
+          tickLine={false}
+          axisLine={false}
         />
         <Tooltip 
           formatter={(value: any) => formatter ? formatter(value) : 
@@ -49,14 +60,27 @@ export const BarChart = ({
               currency: "BRL",
             }).format(value)
           }
-          contentStyle={{ fontSize: '12px' }} // Smaller tooltip for mobile
+          contentStyle={{ 
+            fontSize: '12px',
+            backgroundColor: 'hsl(var(--background))',
+            borderRadius: '8px',
+            border: '1px solid hsl(var(--border))',
+            boxShadow: '0 4px 12px rgba(0, 0, 0, 0.1)',
+            padding: '8px 12px'
+          }}
+          cursor={{ fill: 'rgba(0, 0, 0, 0.04)' }}
         />
-        <Legend wrapperStyle={{ fontSize: '12px' }} /> {/* Smaller legend for mobile */}
+        <Legend 
+          wrapperStyle={{ fontSize: '12px', paddingTop: '15px' }}
+          iconType="circle"
+        />
         <Bar 
           dataKey={dataKey} 
-          fill={color} 
-          radius={[4, 4, 0, 0]} // Rounded corners
-          maxBarSize={50} // Limit max width for aesthetic reasons
+          fill="url(#barGradient)" 
+          radius={[4, 4, 0, 0]}
+          maxBarSize={50}
+          animationDuration={1500}
+          animationEasing="ease-in-out"
         />
       </RechartsBarChart>
     </ResponsiveContainer>

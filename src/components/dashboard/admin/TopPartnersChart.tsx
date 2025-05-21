@@ -20,13 +20,13 @@ const TopPartnersChart = ({ data, isLoading = false }: TopPartnersChartProps) =>
   }));
 
   return (
-    <Card>
-      <CardHeader>
+    <Card className="overflow-hidden">
+      <CardHeader className="pb-0">
         <CardTitle className="text-base sm:text-lg">Top 5 Parceiros por Comissão</CardTitle>
       </CardHeader>
-      <CardContent>
+      <CardContent className="pt-4">
         {isLoading ? (
-          <div className="h-64 bg-muted animate-pulse rounded flex items-center justify-center">
+          <div className="h-64 bg-muted animate-pulse rounded-lg flex items-center justify-center">
             <p className="text-muted-foreground">Carregando dados...</p>
           </div>
         ) : (
@@ -36,8 +36,8 @@ const TopPartnersChart = ({ data, isLoading = false }: TopPartnersChartProps) =>
               xAxisKey="name"
               dataKey="value"
               formatter={(value) => formatCurrency(value)}
-              // Set smaller margins for mobile
-              margin={{ top: 10, right: 10, left: 10, bottom: 20 }}
+              color="#8b5cf6" // Cor roxa para destacar
+              margin={{ top: 10, right: 10, left: 0, bottom: 20 }}
             />
           </div>
         )}

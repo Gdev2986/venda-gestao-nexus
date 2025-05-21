@@ -18,21 +18,21 @@ const ClientGrowthChart = ({ data, isLoading = false }: ClientGrowthChartProps) 
   }));
 
   return (
-    <Card>
-      <CardHeader>
+    <Card className="overflow-hidden">
+      <CardHeader className="pb-0">
         <CardTitle className="text-base sm:text-lg">Crescimento de Clientes</CardTitle>
       </CardHeader>
-      <CardContent>
+      <CardContent className="pt-4">
         {isLoading ? (
-          <div className="h-64 bg-muted animate-pulse rounded flex items-center justify-center">
+          <div className="h-64 bg-muted animate-pulse rounded-lg flex items-center justify-center">
             <p className="text-muted-foreground">Carregando dados...</p>
           </div>
         ) : (
           <div className="h-64 sm:h-72 md:h-80">
             <LineChart 
               data={chartData}
-              // Use smaller margins on mobile
-              margin={{ top: 10, right: 10, left: 10, bottom: 20 }}
+              color="#10b981" // Cor verde para indicar crescimento
+              margin={{ top: 10, right: 10, left: 0, bottom: 20 }}
             />
           </div>
         )}
