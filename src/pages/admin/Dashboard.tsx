@@ -132,8 +132,8 @@ const AdminDashboard = () => {
         <ChartsSection 
           salesData={MOCK_DATA.dailySales}
           paymentMethodsData={MOCK_DATA.paymentMethods}
-          topPartnersData={MOCK_DATA.topPartnersData}
-          clientGrowthData={MOCK_DATA.clientGrowthData}
+          topPartnersData={MOCK_DATA.topPartners}
+          clientGrowthData={MOCK_DATA.clientGrowth}
           isLoading={isLoading}
         />
       </div>
