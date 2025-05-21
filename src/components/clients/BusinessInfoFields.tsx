@@ -11,7 +11,6 @@ import {
 import { UseFormReturn } from "react-hook-form";
 import { FormMaskedInput } from "./FormMaskedInput";
 import { usePartnersSelect } from "@/hooks/use-partners-select";
-import { useFeePlans } from "@/hooks/use-fee-plans";
 import { Loader2 } from "lucide-react";
 
 interface BusinessInfoFieldsProps {
@@ -20,7 +19,6 @@ interface BusinessInfoFieldsProps {
 
 const BusinessInfoFields = ({ form }: BusinessInfoFieldsProps) => {
   const { partners, isLoading: isLoadingPartners } = usePartnersSelect();
-  const { feePlans, isLoading: isLoadingFeePlans } = useFeePlans();
 
   return (
     <>
@@ -71,40 +69,6 @@ const BusinessInfoFields = ({ form }: BusinessInfoFieldsProps) => {
                   partners.map((partner) => (
                     <SelectItem key={partner.id} value={partner.id}>
                       {partner.company_name}
-                    </SelectItem>
-                  ))
-                )}
-              </SelectContent>
-            </Select>
-            <FormMessage />
-          </FormItem>
-        )}
-      />
-      
-      <FormField
-        control={form.control}
-        name="fee_plan_id"
-        render={({ field }) => (
-          <FormItem>
-            <FormLabel>Plano de Taxas</FormLabel>
-            <Select 
-              onValueChange={field.onChange} 
-              value={field.value}
-            >
-              <FormControl>
-                <SelectTrigger>
-                  <SelectValue placeholder="Selecione um plano de taxas" />
-                </SelectTrigger>
-              </FormControl>
-              <SelectContent>
-                {isLoadingFeePlans ? (
-                  <div className="flex justify-center p-2">
-                    <Loader2 className="h-4 w-4 animate-spin" />
-                  </div>
-                ) : (
-                  feePlans.map((plan) => (
-                    <SelectItem key={plan.id} value={plan.id}>
-                      {plan.name}
                     </SelectItem>
                   ))
                 )}

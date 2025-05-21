@@ -1,5 +1,4 @@
 
-// Export enums
 export enum SupportRequestStatus {
   PENDING = "PENDING",
   IN_PROGRESS = "IN_PROGRESS",
@@ -10,10 +9,10 @@ export enum SupportRequestStatus {
 export enum SupportRequestType {
   MAINTENANCE = "MAINTENANCE",
   INSTALLATION = "INSTALLATION",
-  OTHER = "OTHER",
-  REPLACEMENT = "REPLACEMENT",
-  SUPPLIES = "SUPPLIES",
-  REMOVAL = "REMOVAL"
+  REPAIR = "REPAIR",
+  TRAINING = "TRAINING",
+  SUPPORT = "SUPPORT",
+  OTHER = "OTHER"
 }
 
 export enum SupportRequestPriority {

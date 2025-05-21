@@ -1,184 +1,162 @@
-
-import { useEffect, useState } from "react";
-import { format, subDays, startOfMonth, endOfMonth, startOfQuarter, endOfQuarter } from "date-fns";
-import { ptBR } from "date-fns/locale";
-import { CalendarIcon, RefreshCcwIcon } from "lucide-react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
 import { Calendar } from "@/components/ui/calendar";
-import {
+import { 
   Popover,
   PopoverContent,
-  PopoverTrigger,
+  PopoverTrigger, 
 } from "@/components/ui/popover";
+import { 
+  CalendarIcon, 
+  RefreshCw
+} from "lucide-react";
 import { cn } from "@/lib/utils";
+import { format, subDays, startOfMonth, endOfMonth, startOfQuarter, endOfQuarter } from "date-fns";
+import { pt } from "date-fns/locale";
 
+// Dashboard date filter presets
 export const DATE_FILTER_PRESETS = {
   LAST_7_DAYS: "last_7_days",
   LAST_30_DAYS: "last_30_days",
-  CURRENT_MONTH: "current_month", 
-  CURRENT_QUARTER: "current_quarter",
-  CUSTOM: "custom",
+  CURRENT_MONTH: "current_month",
+  QUARTER: "quarter",
+  CUSTOM: "custom"
 };
 
 interface DateRangeFiltersProps {
-  dateRange: { from: Date; to?: Date };
-  setDateRange: (range: { from: Date; to?: Date }) => void;
+  dateRange: {from: Date; to?: Date};
+  setDateRange: (range: {from: Date; to?: Date}) => void;
   activeFilter: string;
   setActiveFilter: (filter: string) => void;
-  isLoading?: boolean;
-  onRefresh?: () => void;
+  isLoading: boolean;
+  onRefresh: () => void;
 }
 
-export const DateRangeFilters = ({
+export function DateRangeFilters({
   dateRange,
   setDateRange,
   activeFilter,
   setActiveFilter,
-  isLoading = false,
-  onRefresh,
-}: DateRangeFiltersProps) => {
-  // Apply preset date filters
-  const applyDatePreset = (preset: string) => {
-    const now = new Date();
-    let from: Date;
-    let to: Date = now;
+  isLoading,
+  onRefresh
+}: DateRangeFiltersProps) {
+  // Function to handle filter changes
+  const handleFilterChange = (filter: string) => {
+    setActiveFilter(filter);
     
-    switch (preset) {
+    const now = new Date();
+    switch(filter) {
       case DATE_FILTER_PRESETS.LAST_7_DAYS:
-        from = subDays(now, 7);
+        setDateRange({
+          from: subDays(now, 7),
+          to: now
+        });
         break;
       case DATE_FILTER_PRESETS.LAST_30_DAYS:
-        from = subDays(now, 30);
+        setDateRange({
+          from: subDays(now, 30),
+          to: now
+        });
         break;
       case DATE_FILTER_PRESETS.CURRENT_MONTH:
-        from = startOfMonth(now);
-        to = endOfMonth(now);
+        setDateRange({
+          from: startOfMonth(now),
+          to: endOfMonth(now)
+        });
         break;
-      case DATE_FILTER_PRESETS.CURRENT_QUARTER:
-        from = startOfQuarter(now);
-        to = endOfQuarter(now);
+      case DATE_FILTER_PRESETS.QUARTER:
+        setDateRange({
+          from: startOfQuarter(now),
+          to: endOfQuarter(now)
+        });
         break;
-      default:
-        return; // Don't change dates for custom
+      // Custom remains unchanged as it's set directly by the calendar
     }
-    
-    setDateRange({ from, to });
-    setActiveFilter(preset);
   };
-
-  // Format date range as text
-  const formatDateRange = () => {
-    if (!dateRange?.from) {
-      return "Selecionar período";
-    }
-    
-    return dateRange.to
-      ? `${format(dateRange.from, "dd/MM/yyyy", { locale: ptBR })} - ${format(
-          dateRange.to,
-          "dd/MM/yyyy",
-          { locale: ptBR }
-        )}`
-      : format(dateRange.from, "dd/MM/yyyy", { locale: ptBR });
-  };
-
-  // Detect if custom date range is applied
-  useEffect(() => {
-    if (dateRange?.from && activeFilter === DATE_FILTER_PRESETS.CUSTOM) {
-      // Leave as custom
-    } else if (!dateRange?.from) {
-      applyDatePreset(DATE_FILTER_PRESETS.LAST_30_DAYS);
-    }
-  }, [dateRange]);
 
   return (
-    <div className="flex flex-wrap gap-2">
-      <Popover>
-        <PopoverTrigger asChild>
-          <Button
-            variant="outline"
-            className={cn(
-              "w-full sm:w-auto justify-start text-left font-normal",
-              !dateRange && "text-muted-foreground"
-            )}
-          >
-            <CalendarIcon className="mr-2 h-4 w-4" />
-            {formatDateRange()}
-          </Button>
-        </PopoverTrigger>
-        <PopoverContent className="w-auto p-0" align="end">
-          <div className="p-2 border-b flex justify-between items-center">
-            <span className="text-sm font-medium">Selecionar período</span>
-          </div>
-          <Calendar
-            initialFocus
-            mode="range"
-            defaultMonth={dateRange?.from}
-            selected={dateRange}
-            onSelect={(range) => {
-              if (range) {
-                setDateRange(range);
-                setActiveFilter(DATE_FILTER_PRESETS.CUSTOM);
-              }
-            }}
-            numberOfMonths={1}
-            locale={ptBR}
-            className="pointer-events-auto"
-          />
-        </PopoverContent>
-      </Popover>
-      
-      <DropdownMenu>
-        <DropdownMenuTrigger asChild>
-          <Button variant="outline" className="w-full sm:w-auto">
-            Filtros rápidos
-          </Button>
-        </DropdownMenuTrigger>
-        <DropdownMenuContent align="end">
-          <DropdownMenuItem 
-            onClick={() => applyDatePreset(DATE_FILTER_PRESETS.LAST_7_DAYS)}
-            className={cn(activeFilter === DATE_FILTER_PRESETS.LAST_7_DAYS && "bg-accent")}
-          >
-            Últimos 7 dias
-          </DropdownMenuItem>
-          <DropdownMenuItem 
-            onClick={() => applyDatePreset(DATE_FILTER_PRESETS.LAST_30_DAYS)}
-            className={cn(activeFilter === DATE_FILTER_PRESETS.LAST_30_DAYS && "bg-accent")}
-          >
-            Últimos 30 dias
-          </DropdownMenuItem>
-          <DropdownMenuItem 
-            onClick={() => applyDatePreset(DATE_FILTER_PRESETS.CURRENT_MONTH)}
-            className={cn(activeFilter === DATE_FILTER_PRESETS.CURRENT_MONTH && "bg-accent")}
-          >
-            Mês atual
-          </DropdownMenuItem>
-          <DropdownMenuItem 
-            onClick={() => applyDatePreset(DATE_FILTER_PRESETS.CURRENT_QUARTER)}
-            className={cn(activeFilter === DATE_FILTER_PRESETS.CURRENT_QUARTER && "bg-accent")}
-          >
-            Trimestre
-          </DropdownMenuItem>
-        </DropdownMenuContent>
-      </DropdownMenu>
-      
-      {onRefresh && (
-        <Button
-          variant="outline"
-          size="icon"
-          onClick={onRefresh}
-          disabled={isLoading}
-          title="Atualizar dados"
-          aria-label="Atualizar dados"
+    <div className="flex flex-col sm:flex-row sm:items-center gap-3 mt-3 sm:mt-0">
+      {/* Date filter - scrollable on mobile */}
+      <div className="flex flex-nowrap overflow-x-auto w-full pb-1 sm:pb-0 sm:w-auto gap-0 shadow-sm rounded-md">
+        <Button 
+          variant={activeFilter === DATE_FILTER_PRESETS.LAST_7_DAYS ? "default" : "outline"}
+          onClick={() => handleFilterChange(DATE_FILTER_PRESETS.LAST_7_DAYS)}
+          className="rounded-r-none flex-shrink-0"
+          size="sm"
         >
-          <RefreshCcwIcon className={cn("h-4 w-4", isLoading && "animate-spin")} />
+          7 dias
         </Button>
-      )}
+        <Button 
+          variant={activeFilter === DATE_FILTER_PRESETS.LAST_30_DAYS ? "default" : "outline"}
+          onClick={() => handleFilterChange(DATE_FILTER_PRESETS.LAST_30_DAYS)}
+          className="rounded-none border-l-0 border-r-0 flex-shrink-0"
+          size="sm"
+        >
+          30 dias
+        </Button>
+        <Button 
+          variant={activeFilter === DATE_FILTER_PRESETS.CURRENT_MONTH ? "default" : "outline"}
+          onClick={() => handleFilterChange(DATE_FILTER_PRESETS.CURRENT_MONTH)}
+          className="rounded-none border-r-0 flex-shrink-0"
+          size="sm"
+        >
+          Mês
+        </Button>
+        <Button 
+          variant={activeFilter === DATE_FILTER_PRESETS.QUARTER ? "default" : "outline"}
+          onClick={() => handleFilterChange(DATE_FILTER_PRESETS.QUARTER)}
+          className="rounded-l-none flex-shrink-0"
+          size="sm"
+        >
+          Trimestre
+        </Button>
+      </div>
+      
+      <div className="flex items-center gap-2 w-full sm:w-auto mt-3 sm:mt-0">
+        {/* Calendar picker */}
+        <Popover>
+          <PopoverTrigger asChild>
+            <Button variant="outline" size="sm" className="flex items-center gap-2 w-full sm:w-auto">
+              <CalendarIcon size={16} />
+              <span className="truncate text-xs sm:text-sm">
+                {dateRange.from && dateRange.to ? (
+                  <>
+                    {format(dateRange.from, "dd/MM/yy")} - {format(dateRange.to, "dd/MM/yy")}
+                  </>
+                ) : (
+                  "Período"
+                )}
+              </span>
+            </Button>
+          </PopoverTrigger>
+          <PopoverContent className="w-auto p-0" align="start">
+            <Calendar
+              locale={pt}
+              mode="range"
+              defaultMonth={dateRange.from}
+              selected={dateRange}
+              onSelect={(range) => {
+                if (range?.from) {
+                  setDateRange(range);
+                  setActiveFilter(DATE_FILTER_PRESETS.CUSTOM);
+                }
+              }}
+              numberOfMonths={1}
+              className={cn("p-3 pointer-events-auto")}
+            />
+          </PopoverContent>
+        </Popover>
+
+        <Button 
+          variant="outline" 
+          onClick={onRefresh} 
+          disabled={isLoading}
+          size="icon"
+          className="h-8 w-8 p-0"
+        >
+          <RefreshCw className={`h-4 w-4 ${isLoading ? 'animate-spin' : ''}`} />
+        </Button>
+      </div>
     </div>
   );
-};
+}

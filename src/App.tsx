@@ -1,65 +1,90 @@
 
-import { useEffect } from 'react';
-import { useNavigate, useLocation, Routes, Route } from 'react-router-dom';
-import routes from './routes';
-import { useAuth } from './hooks/use-auth';
-import { Toaster } from './components/ui/toaster';
-import { UserRole } from './types/enums'; 
-import { PATHS } from './routes/paths';
+import { Routes, Route, Navigate } from "react-router-dom";
+import { PATHS } from "./routes/paths";
+import { useEffect } from "react";
+import { useToast } from "@/hooks/use-toast";
+import { useUserRole } from "./hooks/use-user-role";
+import { UserRole } from "./types";
+
+// Route utils
+import { getDashboardPath } from "./routes/routeUtils";
+
+// Route groups
+import { AuthRoutes } from "./routes/authRoutes";
+import { AdminRoutes } from "./routes/adminRoutes";
+import { ClientRoutes } from "./routes/clientRoutes";
+import { PartnerRoutes } from "./routes/partnerRoutes";
+import { FinancialRoutes } from "./routes/financialRoutes";
+import { LogisticsRoutes } from "./routes/logisticsRoutes";
+
+// Layouts
+import RootLayout from "./layouts/RootLayout";
+import MainLayout from "./layouts/MainLayout";
+
+// Pages
+import NotFound from "./pages/NotFound";
+import Notifications from "./pages/Notifications";
 
 function App() {
-  const { user, isAuthenticated, isLoading } = useAuth();
-  const navigate = useNavigate();
-  const location = useLocation();
+  const { userRole, isRoleLoading } = useUserRole();
+  const { toast } = useToast();
 
+  // Log role changes for debugging
   useEffect(() => {
-    if (isLoading) {
-      return;
-    }
-
-    const publicRoutes = [PATHS.LOGIN, PATHS.REGISTER, PATHS.FORGOT_PASSWORD, PATHS.RESET_PASSWORD];
-    const isPublicRoute = publicRoutes.includes(location.pathname);
-
-    if (!isAuthenticated && !isPublicRoute) {
-      navigate(PATHS.LOGIN);
-    } else if (isAuthenticated && location.pathname === PATHS.LOGIN) {
-      // Redirect based on role after login
-      switch (user?.role) {
-        case UserRole.ADMIN:
-          navigate(PATHS.ADMIN.DASHBOARD);
-          break;
-        case UserRole.FINANCIAL:
-          navigate(PATHS.FINANCIAL.DASHBOARD);
-          break;
-        case UserRole.LOGISTICS:
-          navigate(PATHS.LOGISTICS.DASHBOARD);
-          break;
-        case UserRole.PARTNER:
-          navigate(PATHS.PARTNER.DASHBOARD);
-          break;
-        case UserRole.CLIENT:
-          navigate(PATHS.CLIENT.DASHBOARD());
-          break;
-        default:
-          navigate(PATHS.DASHBOARD);
-          break;
+    if (!isRoleLoading) {
+      console.log("App.tsx - Current user role:", userRole);
+      
+      try {
+        const dashPath = getDashboardPath(userRole);
+        console.log("App.tsx - Will redirect to dashboard:", dashPath);
+      } catch (error) {
+        console.error("Error getting dashboard path:", error);
       }
     }
-  }, [isAuthenticated, user, navigate, location, isLoading]);
+  }, [userRole, isRoleLoading]);
+
+  // Get the dashboard path safely
+  const getDashboardRedirectPath = () => {
+    try {
+      return getDashboardPath(userRole);
+    } catch (error) {
+      console.error("Error in getDashboardRedirectPath:", error);
+      return PATHS.LOGIN;
+    }
+  };
 
   return (
-    <>
-      <Routes>
-        {routes.map((route, index) => (
-          <Route
-            key={index}
-            path={route.path}
-            element={<route.component />}
-          />
-        ))}
-      </Routes>
-      <Toaster />
-    </>
+    <Routes>
+      {/* Root path handling */}
+      <Route path={PATHS.HOME} element={<RootLayout />} />
+      
+      {/* Generic dashboard route */}
+      <Route 
+        path={PATHS.DASHBOARD} 
+        element={<Navigate to={getDashboardRedirectPath()} replace />} 
+      />
+
+      {/* Auth Routes */}
+      {AuthRoutes}
+
+      {/* Protected Routes by Role */}
+      {AdminRoutes}
+      {ClientRoutes}
+      {PartnerRoutes}
+      {FinancialRoutes}
+      {LogisticsRoutes}
+
+      {/* Shared Routes (accessible by all roles) - Using MainLayout */}
+      <Route element={<MainLayout />}>
+        <Route path="/notifications" element={<Notifications />} />
+      </Route>
+
+      {/* 404 */}
+      <Route path={PATHS.NOT_FOUND} element={<NotFound />} />
+      
+      {/* Catch-all redirect to the appropriate dashboard */}
+      <Route path="*" element={<Navigate to={PATHS.DASHBOARD} replace />} />
+    </Routes>
   );
 }
 

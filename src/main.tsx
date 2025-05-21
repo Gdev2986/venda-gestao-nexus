@@ -1,19 +1,16 @@
 
-import * as React from 'react';
+import React from 'react';
 import { createRoot } from 'react-dom/client';
 import { BrowserRouter } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { ThemeProvider } from './components/theme-provider';
-import { AuthProvider } from './providers/AuthProvider';
-import { NotificationsProvider } from './contexts/notifications';
-import { Toaster } from './components/ui/toaster';
-import App from './App';
+import { ThemeProvider } from '@/components/theme-provider';
+import { AuthProvider } from '@/providers/AuthProvider';
+import { NotificationsProvider } from '@/contexts/NotificationsContext';
+import { Toaster } from '@/components/ui/sonner';
+import App from './App.tsx';
 import './index.css';
 
-// Add a console log to check React version
-console.log('React version:', React.version);
-
-// Create a query client for React Query
+// Create a query client with default options
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
@@ -33,12 +30,10 @@ function renderApp() {
   }
   
   try {
-    console.log('Starting application render');
-    
     // Create a fresh root
     const root = createRoot(rootElement);
     
-    // Render the application with proper provider hierarchy
+    // Proper provider nesting order - this is critical
     root.render(
       <React.StrictMode>
         <BrowserRouter>
@@ -59,14 +54,6 @@ function renderApp() {
     console.log('Application rendered successfully');
   } catch (error) {
     console.error('Failed to render application:', error);
-    // Add visible error message
-    if (rootElement) {
-      rootElement.innerHTML = `<div style="color: red; padding: 20px; border: 1px solid red; margin: 20px;">
-        <h2>Failed to render application</h2>
-        <p>${error instanceof Error ? error.message : String(error)}</p>
-        <p>Please check the console for more details.</p>
-      </div>`;
-    }
   }
 }
 
@@ -77,3 +64,9 @@ if (document.readyState === 'loading') {
   // DOM already loaded, render immediately
   renderApp();
 }
+
+// Add global error handler as a safety net
+window.onerror = function(message, source, lineno, colno, error) {
+  console.error('Global error caught:', { message, source, lineno, colno, error });
+  return false;
+};

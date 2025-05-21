@@ -10,13 +10,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
-import { NotificationType } from "@/types/notification.types";
-
-// Define valid notification types
-const notificationTypes = [
-  "SYSTEM", "PAYMENT", "BALANCE", "MACHINE", 
-  "COMMISSION", "GENERAL", "SALE", "SUPPORT", "LOGISTICS"
-] as const;
+import { NotificationType } from "@/types";
 
 const notificationFormSchema = z.object({
   title: z.string().min(3, {
@@ -27,7 +21,7 @@ const notificationFormSchema = z.object({
   }),
   targetType: z.enum(["all", "specific"]),
   targetId: z.string().optional(),
-  type: z.enum(notificationTypes)
+  type: z.nativeEnum(NotificationType)
 });
 
 type NotificationFormValues = z.infer<typeof notificationFormSchema>;
@@ -73,7 +67,7 @@ export function SendNotification() {
       message: "",
       targetType: "all",
       targetId: "",
-      type: "SYSTEM"
+      type: NotificationType.SYSTEM
     },
   });
 
@@ -89,13 +83,14 @@ export function SendNotification() {
     try {
       if (data.targetType === "all") {
         // Send to all clients
+        // Since the RPC function isn't available, we'll insert notifications directly
         const { error } = await supabase
           .from('notifications')
           .insert({
             title: data.title,
             message: data.message,
             type: data.type,
-            user_id: 'ALL' // We'll handle this value in a database trigger or create a separate endpoint
+            user_id: 'ALL', // We'll handle this value in a database trigger or create a separate endpoint
           });
         
         if (error) throw error;
@@ -111,18 +106,16 @@ export function SendNotification() {
         if (clientError) throw clientError;
         
         // Then insert the notification for this specific client
-        if (clientData && clientData.id) {
-          const { error } = await supabase
-            .from('notifications')
-            .insert({
-              title: data.title,
-              message: data.message,
-              type: data.type,
-              user_id: clientData.id
-            });
-          
-          if (error) throw error;
-        }
+        const { error } = await supabase
+          .from('notifications')
+          .insert({
+            title: data.title,
+            message: data.message,
+            type: data.type,
+            user_id: clientData.id,
+          });
+        
+        if (error) throw error;
       }
       
       toast({
@@ -168,25 +161,18 @@ export function SendNotification() {
           render={({ field }) => (
             <FormItem>
               <FormLabel>Tipo de Notificação</FormLabel>
-              <Select 
-                onValueChange={field.onChange} 
-                defaultValue={field.value}
-              >
+              <Select onValueChange={field.onChange} defaultValue={field.value}>
                 <FormControl>
                   <SelectTrigger>
                     <SelectValue placeholder="Selecione o tipo" />
                   </SelectTrigger>
                 </FormControl>
                 <SelectContent>
-                  <SelectItem value="SYSTEM">Sistema</SelectItem>
-                  <SelectItem value="GENERAL">Geral</SelectItem>
-                  <SelectItem value="PAYMENT">Pagamento</SelectItem>
-                  <SelectItem value="SALE">Venda</SelectItem>
-                  <SelectItem value="SUPPORT">Suporte</SelectItem>
-                  <SelectItem value="LOGISTICS">Logística</SelectItem>
-                  <SelectItem value="MACHINE">Máquina</SelectItem>
-                  <SelectItem value="BALANCE">Saldo</SelectItem>
-                  <SelectItem value="COMMISSION">Comissão</SelectItem>
+                  <SelectItem value={NotificationType.SYSTEM}>Sistema</SelectItem>
+                  <SelectItem value={NotificationType.GENERAL}>Geral</SelectItem>
+                  <SelectItem value={NotificationType.PAYMENT}>Pagamento</SelectItem>
+                  <SelectItem value={NotificationType.SALE}>Venda</SelectItem>
+                  <SelectItem value={NotificationType.SUPPORT}>Suporte</SelectItem>
                 </SelectContent>
               </Select>
               <FormMessage />
@@ -242,7 +228,7 @@ export function SendNotification() {
             render={({ field }) => (
               <FormItem>
                 <FormLabel>Cliente</FormLabel>
-                <Select onValueChange={field.onChange} value={field.value || ""}>
+                <Select onValueChange={field.onChange} value={field.value}>
                   <FormControl>
                     <SelectTrigger>
                       <SelectValue placeholder="Selecione um cliente" />

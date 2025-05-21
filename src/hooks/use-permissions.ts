@@ -16,7 +16,6 @@ const PERMISSIONS: Record<string, Permission> = {
   EDIT_MACHINES: { name: 'edit_machines', roles: [UserRole.ADMIN, UserRole.LOGISTICS] },
   VIEW_PAYMENTS: { name: 'view_payments', roles: [UserRole.ADMIN, UserRole.FINANCIAL, UserRole.CLIENT] },
   APPROVE_PAYMENTS: { name: 'approve_payments', roles: [UserRole.ADMIN, UserRole.FINANCIAL] },
-  MANAGE_PAYMENTS: { name: 'manage_payments', roles: [UserRole.ADMIN, UserRole.FINANCIAL] },
   VIEW_SALES: { name: 'view_sales', roles: [UserRole.ADMIN, UserRole.FINANCIAL, UserRole.CLIENT] },
   EDIT_SALES: { name: 'edit_sales', roles: [UserRole.ADMIN, UserRole.FINANCIAL] },
   MANAGE_USERS: { name: 'manage_users', roles: [UserRole.ADMIN] },

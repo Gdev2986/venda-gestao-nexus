@@ -1,5 +1,5 @@
 
-import * as React from "react";
+import { useState, useRef, useEffect } from "react";
 import { Bell } from "lucide-react";
 import {
   DropdownMenu,
@@ -9,15 +9,14 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/button";
 import { motion, AnimatePresence } from "framer-motion";
-import { useNotifications } from "@/contexts/notifications/NotificationsProvider";
+import { useNotifications } from "@/contexts/NotificationsContext";
 import { NotificationHeader } from "@/components/notifications/NotificationHeader";
-import NotificationList from "@/components/notifications/NotificationList";
+import { NotificationList } from "@/components/notifications/NotificationList";
 import { NotificationFooter } from "@/components/notifications/NotificationFooter";
 
 const NotificationDropdown = () => {
-  
-  const [isOpen, setIsOpen] = React.useState(false);
-  const dropdownRef = React.useRef<HTMLDivElement>(null);
+  const [isOpen, setIsOpen] = useState(false);
+  const dropdownRef = useRef<HTMLDivElement>(null);
   
   const {
     notifications,
@@ -32,7 +31,7 @@ const NotificationDropdown = () => {
   const recentNotifications = notifications.slice(0, 5);
 
   // Fechar dropdown quando clicar fora
-  React.useEffect(() => {
+  useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (
         dropdownRef.current &&

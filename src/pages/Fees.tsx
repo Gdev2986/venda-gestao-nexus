@@ -29,26 +29,10 @@ import {
   TooltipProvider,
   TooltipTrigger, 
 } from "@/components/ui/tooltip";
-import { 
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { Alert, AlertDescription } from "@/components/ui/alert";
-import { AlertCircle } from "lucide-react";
-import { ClientSelect } from "@/components/clients/ClientSelect";
 
 // Define fee types for different payment methods
 const PAYMENT_TYPES = ["PIX", "DÉBITO", "CRÉDITO"];
-
-// Maximum installments based on payment type
-const MAX_INSTALLMENTS = {
-  PIX: 1,
-  DÉBITO: 1,
-  CRÉDITO: 21
-};
+const INSTALLMENT_OPTIONS = Array.from({ length: 21 }, (_, i) => i + 1); // 1 to 21
 
 interface FeeBlock {
   id: string;
@@ -111,7 +95,6 @@ const Fees = () => {
   const [blockToDelete, setBlockToDelete] = useState<string | null>(null);
   const [changeHistory, setChangeHistory] = useState<ChangeLog[]>([]);
   const [isAdmin, setIsAdmin] = useState(true); // Simulating admin role
-  const [validationError, setValidationError] = useState("");
   
   const [newFee, setNewFee] = useState({
     paymentMethod: "PIX",
@@ -143,16 +126,6 @@ const Fees = () => {
       calculateKPIs();
     }
   }, [feeBlocks]);
-
-  // Reset validation error when tab changes
-  useEffect(() => {
-    setValidationError("");
-    
-    // Set installments to 1 when switching to PIX or Debit
-    if (activeTab === "PIX" || activeTab === "DÉBITO") {
-      setNewFee(prev => ({...prev, installments: 1}));
-    }
-  }, [activeTab]);
 
   const calculateKPIs = () => {
     // Total blocks
@@ -238,26 +211,9 @@ const Fees = () => {
         }
       ];
       
-      // Clean up any invalid data based on payment type rules
-      const cleanedBlocks = mockFeeBlocks.map(block => {
-        const cleanedFees = block.fees.filter(fee => {
-          if (fee.paymentMethod === "PIX" || fee.paymentMethod === "DÉBITO") {
-            return fee.installments === 1;
-          } else if (fee.paymentMethod === "CRÉDITO") {
-            return fee.installments >= 1 && fee.installments <= MAX_INSTALLMENTS.CRÉDITO;
-          }
-          return false;
-        });
-        
-        return {
-          ...block,
-          fees: cleanedFees
-        };
-      });
-      
-      setFeeBlocks(cleanedBlocks);
-      if (cleanedBlocks.length > 0) {
-        setSelectedBlock(cleanedBlocks[0].id);
+      setFeeBlocks(mockFeeBlocks);
+      if (mockFeeBlocks.length > 0) {
+        setSelectedBlock(mockFeeBlocks[0].id);
       }
     } catch (error) {
       console.error("Erro ao carregar taxas:", error);
@@ -349,32 +305,25 @@ const Fees = () => {
       return;
     }
 
-    // Validate payment type rules
-    if (newFee.paymentMethod === "PIX" || newFee.paymentMethod === "DÉBITO") {
-      if (newFee.installments !== 1) {
-        setValidationError(`${newFee.paymentMethod} só pode ter 1 parcela.`);
-        return;
-      }
-    } else if (newFee.paymentMethod === "CRÉDITO") {
-      if (newFee.installments < 1 || newFee.installments > MAX_INSTALLMENTS.CRÉDITO) {
-        setValidationError(`Crédito deve ter entre 1 e ${MAX_INSTALLMENTS.CRÉDITO} parcelas.`);
-        return;
-      }
-    }
-
     // Validate inputs
     if (newFee.baseRate < 0 || newFee.partnerRate < 0 || newFee.finalRate < 0) {
-      setValidationError("As taxas não podem ser negativas.");
+      toast({
+        variant: "destructive",
+        title: "Valores inválidos",
+        description: "As taxas não podem ser negativas.",
+      });
       return;
     }
 
     if (newFee.baseRate > 100 || newFee.partnerRate > 100 || newFee.finalRate > 100) {
-      setValidationError("As taxas não podem ser maiores que 100%.");
+      toast({
+        variant: "destructive",
+        title: "Valores inválidos",
+        description: "As taxas não podem ser maiores que 100%.",
+      });
       return;
     }
 
-    setValidationError("");
-    
     const blockToUpdate = feeBlocks.find(block => block.id === selectedBlock);
     if (!blockToUpdate) return;
 
@@ -504,23 +453,13 @@ const Fees = () => {
     const blockToDuplicate = feeBlocks.find(block => block.id === blockId);
     if (!blockToDuplicate) return;
     
-    // Filter out any invalid fees based on payment type rules
-    const validFees = blockToDuplicate.fees.filter(fee => {
-      if (fee.paymentMethod === "PIX" || fee.paymentMethod === "DÉBITO") {
-        return fee.installments === 1;
-      } else if (fee.paymentMethod === "CRÉDITO") {
-        return fee.installments >= 1 && fee.installments <= MAX_INSTALLMENTS.CRÉDITO;
-      }
-      return false;
-    });
-    
     const newId = Math.random().toString();
     const newBlockData: FeeBlock = {
       id: newId,
       name: `${blockToDuplicate.name} (Cópia)`,
       color: blockToDuplicate.color,
       clients: [],
-      fees: validFees.map(fee => ({
+      fees: blockToDuplicate.fees.map(fee => ({
         ...fee,
         id: Math.random().toString()
       }))
@@ -544,16 +483,6 @@ const Fees = () => {
 
   const handleAssignClients = () => {
     if (!selectedBlock) return;
-    
-    // Validate client selection
-    if (selectedClients.length === 0) {
-      toast({
-        variant: "destructive",
-        title: "Nenhum cliente selecionado",
-        description: "Selecione pelo menos um cliente para este bloco de taxas.",
-      });
-      return;
-    }
     
     // Keep previous values for change log
     const blockToUpdate = feeBlocks.find(block => block.id === selectedBlock);
@@ -703,6 +632,14 @@ const Fees = () => {
     setShowHistoryDialog(true);
   };
 
+  const toggleClient = (clientId: string) => {
+    if (selectedClients.includes(clientId)) {
+      setSelectedClients(selectedClients.filter(id => id !== clientId));
+    } else {
+      setSelectedClients([...selectedClients, clientId]);
+    }
+  };
+
   const resetNewFee = () => {
     setNewFee({
       paymentMethod: activeTab,
@@ -711,7 +648,6 @@ const Fees = () => {
       partnerRate: 0,
       finalRate: 0,
     });
-    setValidationError("");
   };
 
   const handleExport = (format: 'csv' | 'pdf') => {
@@ -773,16 +709,6 @@ const Fees = () => {
       hour: '2-digit',
       minute: '2-digit'
     });
-  };
-
-  // Check if adding new fees is allowed for the current payment type
-  const canAddNewFee = () => {
-    if (activeTab === "PIX" || activeTab === "DÉBITO") {
-      // For PIX and DÉBITO, only allow adding if there are no fees yet
-      return getSelectedBlockFees().length === 0;
-    }
-    // For CRÉDITO, allow adding up to 21 installments
-    return true;
   };
 
   return (
@@ -993,7 +919,7 @@ const Fees = () => {
                 <Button variant="outline" onClick={openAssignClientsDialog}>
                   Associar Clientes
                 </Button>
-                {isAdmin && canAddNewFee() && (
+                {isAdmin && (
                   <Button onClick={() => {
                     resetNewFee();
                     setEditingFee(null);
@@ -1019,24 +945,8 @@ const Fees = () => {
                   ))}
                 </TabsList>
 
-                {validationError && (
-                  <Alert variant="destructive" className="mb-4">
-                    <AlertCircle className="h-4 w-4" />
-                    <AlertDescription>{validationError}</AlertDescription>
-                  </Alert>
-                )}
-
                 {PAYMENT_TYPES.map(type => (
                   <TabsContent key={type} value={type} className="mt-0">
-                    {(type === "PIX" || type === "DÉBITO") && (
-                      <div className="mb-4 p-3 bg-slate-50 dark:bg-slate-900 rounded-md border">
-                        <p className="text-sm flex items-center">
-                          <InfoIcon className="h-4 w-4 mr-2 text-blue-500" />
-                          {type} aceita somente pagamento à vista (1x)
-                        </p>
-                      </div>
-                    )}
-                    
                     <Table>
                       <TableHeader>
                         <TableRow>
@@ -1173,15 +1083,7 @@ const Fees = () => {
                     id="paymentMethod"
                     className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
                     value={newFee.paymentMethod}
-                    onChange={(e) => {
-                      const method = e.target.value;
-                      setNewFee({
-                        ...newFee, 
-                        paymentMethod: method,
-                        // Reset installments to 1 for PIX and DÉBITO
-                        installments: method === "PIX" || method === "DÉBITO" ? 1 : newFee.installments
-                      });
-                    }}
+                    onChange={(e) => setNewFee({...newFee, paymentMethod: e.target.value})}
                   >
                     {PAYMENT_TYPES.map(type => (
                       <option key={type} value={type}>{type}</option>
@@ -1198,19 +1100,10 @@ const Fees = () => {
                       value={newFee.installments}
                       onChange={(e) => setNewFee({...newFee, installments: parseInt(e.target.value)})}
                     >
-                      {Array.from({ length: MAX_INSTALLMENTS.CRÉDITO }, (_, i) => i + 1).map(num => (
+                      {INSTALLMENT_OPTIONS.map(num => (
                         <option key={num} value={num}>{num}x</option>
                       ))}
                     </select>
-                  </div>
-                )}
-                
-                {(newFee.paymentMethod === "PIX" || newFee.paymentMethod === "DÉBITO") && (
-                  <div>
-                    <Label htmlFor="installments">Parcelas</Label>
-                    <div className="flex h-10 w-full rounded-md border border-input bg-slate-50 dark:bg-slate-900 px-3 py-2 text-sm items-center">
-                      1x (à vista)
-                    </div>
                   </div>
                 )}
               </div>
@@ -1296,7 +1189,6 @@ const Fees = () => {
             <Button variant="outline" onClick={() => {
               setShowAddFeeDialog(false);
               setEditingFee(null);
-              setValidationError("");
             }}>Cancelar</Button>
             <Button onClick={handleAddFee}>{editingFee ? "Salvar" : "Adicionar"}</Button>
           </DialogFooter>
@@ -1364,24 +1256,30 @@ const Fees = () => {
             </DialogDescription>
           </DialogHeader>
           
-          <div className="py-4">
+          <div className="py-4 max-h-[300px] overflow-y-auto">
             {clients.length === 0 ? (
               <p className="text-center text-muted-foreground py-4">
                 Nenhum cliente encontrado.
               </p>
             ) : (
-              <div className="space-y-4">
-                <ClientSelect
-                  clients={clients}
-                  selectedClientIds={selectedClients}
-                  onSelectedChange={setSelectedClients}
-                  placeholder="Selecione os clientes para este bloco..."
-                  emptyMessage="Nenhum cliente encontrado."
-                />
-                
-                <p className="text-sm text-muted-foreground">
-                  {selectedClients.length} cliente(s) selecionado(s)
-                </p>
+              <div className="space-y-2">
+                {clients.map(client => (
+                  <div 
+                    key={client.id} 
+                    className={`flex items-center p-2 rounded-md ${
+                      selectedClients.includes(client.id) ? 'bg-primary/10' : ''
+                    } hover:bg-secondary/50 cursor-pointer`}
+                    onClick={() => toggleClient(client.id)}
+                  >
+                    <input 
+                      type="checkbox" 
+                      checked={selectedClients.includes(client.id)}
+                      onChange={() => toggleClient(client.id)}
+                      className="mr-3"
+                    />
+                    <span>{client.business_name}</span>
+                  </div>
+                ))}
               </div>
             )}
           </div>

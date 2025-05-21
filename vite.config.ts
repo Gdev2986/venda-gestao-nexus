@@ -1,4 +1,3 @@
-
 import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react-swc";
 import path from "path";
@@ -11,26 +10,13 @@ export default defineConfig(({ mode }) => ({
     port: 8080,
   },
   plugins: [
-    react({
-      jsxImportSource: "react"
-    }),
-    mode === 'development' && componentTagger(),
+    react(),
+    mode === 'development' &&
+    componentTagger(),
   ].filter(Boolean),
   resolve: {
-    dedupe: ['react', 'react-dom'],
     alias: {
       "@": path.resolve(__dirname, "./src"),
-      "react": path.resolve(__dirname, "./node_modules/react"),
-      "react-dom": path.resolve(__dirname, "./node_modules/react-dom"),
-    },
-  },
-  optimizeDeps: {
-    include: ["react", "react-dom"],
-    force: true
-  },
-  build: {
-    commonjsOptions: {
-      include: [/node_modules/],
     },
   },
 }));

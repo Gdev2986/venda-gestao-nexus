@@ -19,7 +19,6 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { Spinner } from "@/components/ui/spinner";
-import { cleanupSupabaseState } from "@/utils/auth-cleanup";
 
 const formSchema = z.object({
   email: z
@@ -49,17 +48,12 @@ const LoginForm = () => {
     },
   });
 
-  // Clean up any stale auth data when the component mounts
-  React.useEffect(() => {
-    cleanupSupabaseState();
-  }, []);
-
   const onSubmit = async (data: z.infer<typeof formSchema>) => {
     try {
       setAuthError(null);
       await signIn(data.email, data.password);
     } catch (error: any) {
-      // Specific error handling
+      // Tratamento de erros específicos
       if (error.message && error.message.includes("Database error")) {
         setAuthError("Erro de conexão com o servidor. Por favor, tente novamente mais tarde.");
       } else if (error.message && error.message.includes("Invalid login credentials")) {
@@ -73,9 +67,6 @@ const LoginForm = () => {
   const handleGoogleLogin = async () => {
     try {
       setAuthError(null);
-      
-      // Clean up auth state before Google login
-      cleanupSupabaseState();
       
       const { error } = await supabase.auth.signInWithOAuth({
         provider: 'google',

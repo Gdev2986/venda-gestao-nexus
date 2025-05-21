@@ -8,12 +8,11 @@ export interface PixKey {
   key: string;
   type: string;
   name: string;
-  owner_name: string;
-  user_id: string;
+  owner_name: string;  // Required
   is_default?: boolean;
-  is_active?: boolean;
   bank_name?: string;
-  key_type?: string;
+  key_type?: string;   // Added to match usage in the code
+  user_id: string;     // Required to fix the errors
   created_at?: string;
   updated_at?: string;
 }
@@ -29,20 +28,15 @@ export interface Payment {
   updated_at: string;
   receipt_url?: string;
   description?: string;
-  rejection_reason: string | null;
+  rejection_reason: string | null; // Required with null
   payment_type?: EnumsPaymentType;
   client?: {
     id: string;
     business_name: string;
     email?: string;
     phone?: string;
-    balance?: number;
   };
-  document_url?: string;
-  client_name?: string;
-  due_date?: string;
   pix_key?: PixKey;
-  pix_key_id?: string;
   bank_info?: {
     bank_name?: string;
     account_number?: string;
@@ -57,4 +51,5 @@ export interface PaymentRequest extends Payment {
 
 export type PaymentRequestStatus = EnumsPaymentStatus;
 
+// PixKey types used in forms and components
 export type PixKeyType = 'CPF' | 'CNPJ' | 'EMAIL' | 'PHONE' | 'EVP';

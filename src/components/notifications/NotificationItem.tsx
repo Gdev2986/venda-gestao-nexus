@@ -1,4 +1,4 @@
-import * as React from "react";
+
 import { motion } from "framer-motion";
 import { formatDistanceToNow } from "date-fns";
 import { ptBR } from "date-fns/locale";
@@ -14,8 +14,7 @@ import {
   TruckIcon
 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { NotificationType } from "@/types/notification.types";
-import { Notification } from "@/contexts/notifications/types";
+import { Notification, NotificationType } from "@/types/notification.types";
 
 interface NotificationItemProps {
   notification: Notification;
@@ -41,10 +40,10 @@ export const NotificationItem = ({ notification, onMarkAsRead, onDelete }: Notif
         return <CreditCard className="h-4 w-4 text-primary" />;
       case NotificationType.BALANCE:
         return <CreditCard className="h-4 w-4 text-primary" />;
+      case NotificationType.ADMIN_NOTIFICATION:
+        return <Bell className="h-4 w-4 text-primary" />;
       case NotificationType.LOGISTICS:
         return <TruckIcon className="h-4 w-4 text-primary" />;
-      case NotificationType.SYSTEM:
-        return <Bell className="h-4 w-4 text-primary" />;
       default:
         return <MessageSquare className="h-4 w-4 text-primary" />;
     }
@@ -79,7 +78,7 @@ export const NotificationItem = ({ notification, onMarkAsRead, onDelete }: Notif
       transition={{ duration: 0.2 }}
       className={cn(
         "flex flex-col items-start gap-1 p-4 hover:bg-accent/50 relative border-b border-border last:border-b-0",
-        !notification.is_read ? "" : "opacity-70"
+        notification.is_read ? "opacity-70" : ""
       )}
       onClick={handleMarkAsRead}
     >

@@ -1,11 +1,10 @@
 
 /**
- * Comprehensive utilities for cleaning up Supabase auth state
+ * Utility functions for cleaning up Supabase auth state
  */
 
 /**
- * Thoroughly cleans up all Supabase authentication related data from storage
- * Should be called before login attempts and after logout
+ * Cleans up all Supabase authentication related data from storage
  */
 export const cleanupSupabaseState = () => {
   try {

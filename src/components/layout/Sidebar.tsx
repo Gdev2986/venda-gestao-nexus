@@ -1,5 +1,5 @@
 
-import * as React from "react";
+import React from "react";
 import SidebarComponent from "./sidebar/Sidebar";
 import { useMediaQuery } from "@/hooks/use-media-query";
 import { UserRole } from "@/types";

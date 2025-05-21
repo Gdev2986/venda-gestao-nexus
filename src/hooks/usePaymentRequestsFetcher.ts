@@ -75,7 +75,7 @@ export const usePaymentRequestsFetcher = (initialBalance: number = 15000) => {
           receipt_url,
           pix_key_id,
           client_id,
-          pix_key:pix_keys(id, key, type, name, user_id)
+          pix_key:pix_keys(id, key, type, name)
         `)
         .eq('client_id', clientId)
         .order('created_at', { ascending: false });
@@ -87,7 +87,7 @@ export const usePaymentRequestsFetcher = (initialBalance: number = 15000) => {
       
       console.log("Fetched payment requests:", requestsData);
       
-      // Transform the data to match the expected Payment interface with all required fields
+      // Transform the data to match the expected Payment interface
       const formattedRequests: Payment[] = requestsData ? requestsData.map(request => ({
         id: request.id,
         amount: request.amount,
@@ -98,15 +98,13 @@ export const usePaymentRequestsFetcher = (initialBalance: number = 15000) => {
         rejection_reason: request.rejection_reason,
         receipt_url: request.receipt_url,
         client_id: request.client_id,
-        payment_type: PaymentType.PIX,
+        payment_type: PaymentType.PIX, // Using enum value instead of string "PIX"
         pix_key: request.pix_key ? {
           id: request.pix_key.id,
           key: request.pix_key.key,
           type: request.pix_key.type,
-          name: request.pix_key.name,
-          user_id: request.pix_key.user_id,
-          owner_name: request.pix_key.name || '' // Use name for owner_name
-        } : undefined
+          owner_name: request.pix_key.name // Use name as owner_name
+        } : null
       })) : [];
       
       setPaymentRequests(formattedRequests);

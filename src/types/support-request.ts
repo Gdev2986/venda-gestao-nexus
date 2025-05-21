@@ -1,5 +1,4 @@
 
-// Define and export enums
 export enum SupportRequestStatus {
   PENDING = "PENDING",
   IN_PROGRESS = "IN_PROGRESS",

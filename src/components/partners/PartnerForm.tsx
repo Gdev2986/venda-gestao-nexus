@@ -15,15 +15,6 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Partner } from "@/types";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { useFeePlans } from "@/hooks/use-fee-plans";
-import { Loader2 } from "lucide-react";
 
 // Define form schema
 const formSchema = z.object({
@@ -42,7 +33,7 @@ const formSchema = z.object({
   phone: z.string().min(10, {
     message: "O telefone deve ter pelo menos 10 caracteres.",
   }).optional(),
-  fee_plan_id: z.string().optional(),
+  commission_rate: z.coerce.number().min(0).max(100).optional(),
 });
 
 export type PartnerFormValues = z.infer<typeof formSchema>;
@@ -58,10 +49,11 @@ export interface PartnerFormProps {
     contact_name?: string;
     email?: string;
     phone?: string;
-    fee_plan_id?: string;
+    commission_rate?: number;
   };
   title?: string;
   isSubmitting?: boolean;
+  hideCommissionRate?: boolean;
 }
 
 const PartnerForm = ({
@@ -71,16 +63,15 @@ const PartnerForm = ({
   initialData,
   title = "Novo Parceiro",
   isSubmitting = false,
+  hideCommissionRate = false,
 }: PartnerFormProps) => {
-  const { feePlans, isLoading: isLoadingFeePlans } = useFeePlans();
-  
   const defaultValues: Partial<PartnerFormValues> = {
     company_name: initialData?.company_name || "",
     business_name: initialData?.business_name || "",
     contact_name: initialData?.contact_name || "",
     email: initialData?.email || "",
     phone: initialData?.phone || "",
-    fee_plan_id: initialData?.fee_plan_id || undefined,
+    commission_rate: initialData?.commission_rate || 0,
   };
 
   const form = useForm<PartnerFormValues>({
@@ -167,46 +158,31 @@ const PartnerForm = ({
           />
         </div>
 
-        <FormField
-          control={form.control}
-          name="fee_plan_id"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Plano de Taxas</FormLabel>
-              <Select
-                value={field.value || ""}
-                onValueChange={field.onChange}
-              >
+        {!hideCommissionRate && (
+          <FormField
+            control={form.control}
+            name="commission_rate"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Taxa de Comissão (%)</FormLabel>
                 <FormControl>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Selecione um plano de taxas" />
-                  </SelectTrigger>
+                  <Input
+                    type="number"
+                    min="0"
+                    max="100"
+                    step="0.1"
+                    placeholder="0.0"
+                    {...field}
+                  />
                 </FormControl>
-                <SelectContent>
-                  {isLoadingFeePlans ? (
-                    <div className="flex items-center justify-center py-2">
-                      <Loader2 className="h-4 w-4 animate-spin mr-2" />
-                      <span>Carregando planos...</span>
-                    </div>
-                  ) : (
-                    <>
-                      <SelectItem value="default">Plano Padrão</SelectItem>
-                      {feePlans.map((plan) => (
-                        <SelectItem key={plan.id} value={plan.id}>
-                          {plan.name}
-                        </SelectItem>
-                      ))}
-                    </>
-                  )}
-                </SelectContent>
-              </Select>
-              <FormDescription>
-                O plano de taxas determinará as comissões aplicadas aos clientes deste parceiro.
-              </FormDescription>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
+                <FormDescription>
+                  Porcentagem de comissão sobre as vendas (0-100%)
+                </FormDescription>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        )}
 
         <div className="flex justify-end space-x-2 pt-4">
           <Button

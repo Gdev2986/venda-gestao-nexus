@@ -1,71 +1,86 @@
-// Re-export from enums
-export {
-  UserRole,
-  PaymentStatus,
-  PaymentType,
-  ClientStatus,
-  PaymentMethod,
-  MachineStatus,
-  TicketStatus,
-  TicketType,
-  PaymentAction,
-  SupportRequestStatus,
-  SupportRequestType,
-  SupportRequestPriority,
-  TicketPriority
-} from './enums';
+export enum UserRole {
+  ADMIN = "ADMIN",
+  CLIENT = "CLIENT", 
+  FINANCIAL = "FINANCIAL",
+  PARTNER = "PARTNER",
+  LOGISTICS = "LOGISTICS",
+  MANAGER = "MANAGER",
+  FINANCE = "FINANCE",
+  SUPPORT = "SUPPORT",
+  USER = "USER"
+}
 
-// Re-export from notification.types
-export {
-  NotificationType,
-  type Notification
-} from './notification.types';
+export enum PaymentStatus {
+  PENDING = "PENDING",
+  APPROVED = "APPROVED",
+  REJECTED = "REJECTED",
+  PAID = "PAID"
+}
 
-// Re-export from payment.types
-export {
-  type PixKey,
-  type PixKeyType,
-  type Payment,
-  type PaymentRequest,
-  type PaymentRequestStatus
-} from './payment.types';
+export enum PaymentType {
+  PIX = "PIX",
+  TED = "TED",
+  BOLETO = "BOLETO"
+}
 
-// Re-export from client.ts
-export {
-  type SupabaseClientRow,
-  type ClientCreate,
-  type ClientUpdate,
-  type Client
-} from './client';
+// Added ClientStatus enum for the ClientStatus component
+export enum ClientStatus {
+  ACTIVE = "active",
+  INACTIVE = "inactive",
+  PENDING = "pending"
+}
 
-// Re-export from machine.types
-export {
-  type Machine,
-  type MachineStats,
-  type MachineTransfer,
-  type MachineTransferParams,
-  type MachineCreateParams,
-  type MachineUpdateParams
-} from './machine.types';
+export enum PaymentMethod {
+  CREDIT = "credit",
+  DEBIT = "debit",
+  PIX = "pix"
+}
 
-// Re-export from support.types 
-export {
-  type SupportTicket,
-  type CreateSupportTicketParams,
-  type UpdateSupportTicketParams
-} from './support.types';
+// Updated to match database notification_type enum
+export enum NotificationType {
+  PAYMENT = "PAYMENT",
+  BALANCE = "BALANCE", 
+  MACHINE = "MACHINE",
+  COMMISSION = "COMMISSION",
+  SYSTEM = "SYSTEM",
+  GENERAL = "GENERAL",
+  SALE = "SALE",
+  SUPPORT = "SUPPORT"
+}
 
-// Re-export from support-ticket.types
-export {
-  type SupportTicket as SupportTicketType
-} from './support-ticket.types';
+export interface Payment {
+  id: string;
+  created_at: string;
+  updated_at: string;
+  amount: number;
+  status: PaymentStatus | string;
+  client_id: string;
+  approved_at?: string; 
+  receipt_url?: string;
+  client_name?: string;
+  rejection_reason: string | null;
+  payment_type?: PaymentType | string;
+  bank_info?: {
+    bank_name?: string;
+    account_number?: string;
+    branch_number?: string;
+    account_holder?: string;
+  };
+  document_url?: string;
+  due_date?: string;
+  pix_key?: {
+    id: string;
+    key: string;
+    type: string;
+    owner_name: string;
+  };
+  // Add these to make compatible with PaymentRequest interface
+  client?: any;
+  description?: string;
+  approved_by?: string | null;
+}
 
-// Re-export from support-request.types
-export {
-  type SupportRequest
-} from './support-request.types';
-
-// Define Partner interface
+// Types for partners
 export interface Partner {
   id: string;
   company_name: string;
@@ -79,30 +94,29 @@ export interface Partner {
   email?: string; // Added for consistency with filtering
   phone?: string; // Added for consistency with filtering
   address?: string; // Added for completeness
-  status?: string; // Added to fix type error in PartnersTable
   total_sales?: number;
   total_commission?: number;
-  fee_plan_id?: string; // Added for fee plan relationship
 }
 
-// Sale interface
-export interface Sale {
+// Added Client interface to ensure type safety
+export interface Client {
   id: string;
-  code: string;
-  terminal: string;
-  client_name: string;
-  gross_amount: number;
-  net_amount: number;
-  date: string;
-  payment_method: string;
-  client_id: string;
-  created_at: string;
-  updated_at: string;
-  amount?: number;
+  business_name: string;
+  email?: string;
+  phone?: string;
   status?: string;
+  balance?: number;
   partner_id?: string;
-  machine_id?: string;
-  processing_status?: string;
+  created_at?: string;
+  updated_at?: string;
+  contact_name?: string;
+  address?: string;
+  city?: string;
+  state?: string;
+  zip?: string;
+  document?: string;
+  fee_plan_id?: string;
+  company_name?: string;
 }
 
 export interface FilterValues {
@@ -113,8 +127,42 @@ export interface FilterValues {
     from: Date;
     to?: Date;
   };
-  searchTerm?: string;
-  commissionRange?: [number, number];
+  searchTerm?: string; // Add searchTerm to fix errors
+  commissionRange?: [number, number]; // Add property for partner filtering
+}
+
+export interface PixKey {
+  id: string;
+  key: string;
+  type: string;
+  name: string;
+  owner_name?: string;
+  is_default?: boolean;
+  user_id?: string;
+  created_at?: string;
+  updated_at?: string;
+  bank_name?: string;
+  key_type?: string;
+  is_active?: boolean;
+}
+
+export interface Sale {
+  id: string;
+  code: string;
+  terminal: string;
+  client_name: string;
+  gross_amount: number;
+  net_amount: number;
+  date: string;
+  payment_method: PaymentMethod | string;
+  client_id: string;
+  created_at: string;
+  updated_at: string;
+  amount?: number;
+  status?: string;
+  partner_id?: string;
+  machine_id?: string;
+  processing_status?: string;
 }
 
 export interface SalesFilterParams {
@@ -132,7 +180,7 @@ export interface UserData {
   id: string;
   name: string;
   email: string;
-  role: string; 
+  role: UserRole | string; // Allow string role from database
   created_at: string;
   status: string;
 }
@@ -142,48 +190,27 @@ export interface SalesChartData {
   value: number;
 }
 
-/**
- * Format a number as Brazilian currency (BRL)
- * @param value The value to format
- * @returns Formatted currency string
- */
-export const formatCurrency = (value: number): string => {
-  return new Intl.NumberFormat('pt-BR', {
-    style: 'currency',
-    currency: 'BRL',
-  }).format(value);
-};
+// Add Machine interface to fix missing type errors
+export interface Machine {
+  id: string;
+  serial_number: string;
+  model: string;
+  status: string;
+  client_id?: string;
+  created_at?: string;
+  updated_at?: string;
+  name?: string;
+  client_name?: string;
+  serialNumber?: string;
+}
 
-/**
- * Format a number with thousand separators
- * @param value The value to format
- * @returns Formatted number string with thousand separators
- */
-export const formatNumber = (value: number): string => {
-  return new Intl.NumberFormat('pt-BR').format(value);
-};
-
-/**
- * Format a percentage value
- * @param value The value to format (e.g. 0.12 for 12%)
- * @param showPlusSign Whether to show a plus sign for positive values
- * @returns Formatted percentage string
- */
-export const formatPercentage = (value: number, showPlusSign = false): string => {
-  const formatted = new Intl.NumberFormat('pt-BR', {
-    style: 'percent',
-    minimumFractionDigits: 1,
-    maximumFractionDigits: 1,
-  }).format(value);
-  
-  return value > 0 && showPlusSign ? `+${formatted}` : formatted;
-};
-
-/**
- * Format a commission block/plan name for display
- * @param name The name of the commission block/plan
- * @returns Formatted commission block/plan name
- */
-export const formatCommissionPlan = (name: string): string => {
-  return name || 'Plano Padrão';
-};
+// Add a Notification interface
+export interface Notification {
+  id: string;
+  title: string;
+  message: string;
+  type: NotificationType;
+  read: boolean;
+  timestamp: Date;
+  data?: any;
+}

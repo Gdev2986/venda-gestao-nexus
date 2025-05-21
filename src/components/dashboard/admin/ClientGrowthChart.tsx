@@ -1,38 +1,44 @@
 
-import React from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { LineChart } from '@/components/charts';
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { LineChart } from "@/components/charts";
 
 interface ClientGrowthChartProps {
-  data?: {
+  data: Array<{
     name: string;
     clients: number;
-  }[];
+  }>;
+  isLoading?: boolean;
 }
 
-export const ClientGrowthChart = ({ data }: ClientGrowthChartProps) => {
-  // Ensure we have default data if none is provided
-  const chartData = data && data.length > 0 
-    ? data 
-    : [
-        { name: 'Jan', clients: 0 },
-        { name: 'Fev', clients: 0 },
-        { name: 'Mar', clients: 0 },
-      ];
+const ClientGrowthChart = ({ data, isLoading = false }: ClientGrowthChartProps) => {
+  // Format data for the chart - shorten month names for mobile
+  const chartData = data.map(item => ({
+    name: item.name.substring(0, 3), // Use only first 3 letters of month names
+    total: item.clients
+  }));
 
   return (
-    <Card className="col-span-2">
-      <CardHeader className="pb-0">
-        <CardTitle>Crescimento de Clientes</CardTitle>
+    <Card>
+      <CardHeader>
+        <CardTitle className="text-base sm:text-lg">Crescimento de Clientes</CardTitle>
       </CardHeader>
-      <CardContent className="pt-4 h-[300px] flex items-center">
-        <LineChart 
-          data={chartData}
-          xAxisKey="name"
-          dataKey="clients"
-          margin={{ top: 5, right: 10, left: 10, bottom: 0 }}
-        />
+      <CardContent>
+        {isLoading ? (
+          <div className="h-64 bg-muted animate-pulse rounded flex items-center justify-center">
+            <p className="text-muted-foreground">Carregando dados...</p>
+          </div>
+        ) : (
+          <div className="h-64 sm:h-72 md:h-80">
+            <LineChart 
+              data={chartData}
+              // Use smaller margins on mobile
+              margin={{ top: 10, right: 10, left: 10, bottom: 20 }}
+            />
+          </div>
+        )}
       </CardContent>
     </Card>
   );
 };
+
+export default ClientGrowthChart;

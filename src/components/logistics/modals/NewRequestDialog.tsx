@@ -16,8 +16,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
 import { useMachines } from "@/hooks/logistics/use-machines";
 import { cn } from "@/lib/utils";
-import { SupportTicket } from "@/types/support.types";
-import { TicketType, TicketPriority, TicketStatus } from "@/types/enums";
+import { TicketType, TicketPriority, TicketStatus, SupportTicket } from "@/types/support-ticket.types"; 
 
 interface NewRequestDialogProps {
   open: boolean;
@@ -104,16 +103,15 @@ const NewRequestDialog = ({ open, onOpenChange, onSuccess }: NewRequestDialogPro
     
     try {
       // Create the support request
-      const newRequest = {
+      const newRequest: SupportTicket = {
         client_id: clientId,
         title: title,
         type: type,
         priority: priority,
         status: TicketStatus.PENDING,
         description: description,
-        machine_id: machineId || undefined,
-        scheduled_date: scheduledDate ? scheduledDate.toISOString() : undefined
-      } as SupportTicket;
+        scheduled_date: scheduledDate ? scheduledDate.toISOString() : null,
+      };
       
       // Here we would typically save the request to the database
       console.log('Creating support request:', newRequest);

@@ -4,7 +4,6 @@ import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
 import { PaymentAction, PaymentStatus } from "@/types/enums";
-import { NotificationType } from "@/types";
 
 export const usePaymentActions = () => {
   const [isLoading, setIsLoading] = useState(false);
@@ -28,28 +27,8 @@ export const usePaymentActions = () => {
     setIsLoading(true);
 
     try {
-      // Get payment details first to check its current state
-      const { data: paymentData, error: fetchError } = await supabase
-        .from("payment_requests")
-        .select("status, client_id")
-        .eq("id", paymentId)
-        .single();
-      
-      if (fetchError) {
-        throw new Error(`Erro ao buscar detalhes do pagamento: ${fetchError.message}`);
-      }
-
       // Update the payment status based on the action
       if (action === PaymentAction.APPROVE) {
-        // Don't approve if already approved
-        if (paymentData.status === 'APPROVED') {
-          toast({
-            title: "Aviso",
-            description: "Este pagamento já foi aprovado anteriormente",
-          });
-          return false;
-        }
-
         const { error: updateError } = await supabase
           .from("payment_requests")
           .update({ 
@@ -63,31 +42,11 @@ export const usePaymentActions = () => {
           throw new Error(`Erro ao aprovar pagamento: ${updateError.message}`);
         }
 
-        // Notify the client about approval
-        await supabase
-          .from("notifications")
-          .insert({
-            user_id: user.id, // This should be the client user ID in a real implementation
-            title: "Pagamento Aprovado",
-            message: "Seu pagamento foi aprovado com sucesso",
-            type: "PAYMENT", // Use string literal instead of enum
-            data: { payment_id: paymentId, status: "APPROVED" }
-          });
-
         toast({
           title: "Pagamento aprovado",
           description: "O pagamento foi aprovado com sucesso",
         });
       } else if (action === PaymentAction.REJECT) {
-        // Don't reject if already rejected
-        if (paymentData.status === 'REJECTED') {
-          toast({
-            title: "Aviso",
-            description: "Este pagamento já foi rejeitado anteriormente",
-          });
-          return false;
-        }
-
         const { error: updateError } = await supabase
           .from("payment_requests")
           .update({ 
@@ -99,17 +58,6 @@ export const usePaymentActions = () => {
         if (updateError) {
           throw new Error(`Erro ao rejeitar pagamento: ${updateError.message}`);
         }
-
-        // Notify the client about rejection
-        await supabase
-          .from("notifications")
-          .insert({
-            user_id: user.id, // This should be the client user ID in a real implementation
-            title: "Pagamento Rejeitado",
-            message: comment || "Seu pagamento foi rejeitado",
-            type: "PAYMENT", // Use string literal instead of enum
-            data: { payment_id: paymentId, status: "REJECTED", reason: comment }
-          });
 
         toast({
           title: "Pagamento rejeitado",
@@ -131,6 +79,7 @@ export const usePaymentActions = () => {
         });
       } else if (action === PaymentAction.SEND_RECEIPT) {
         // In a real app, here you would handle uploading receipt or sending receipt
+        // For now, just mark as paid
         const { error: updateError } = await supabase
           .from("payment_requests")
           .update({ 
@@ -141,17 +90,6 @@ export const usePaymentActions = () => {
         if (updateError) {
           throw new Error(`Erro ao atualizar pagamento: ${updateError.message}`);
         }
-
-        // Notify the client about payment confirmation
-        await supabase
-          .from("notifications")
-          .insert({
-            user_id: user.id, // This should be the client user ID in a real implementation
-            title: "Comprovante Enviado",
-            message: "O comprovante do seu pagamento foi enviado",
-            type: "PAYMENT", // Use string literal instead of enum
-            data: { payment_id: paymentId, status: "PAID" }
-          });
 
         toast({
           title: "Comprovante enviado",

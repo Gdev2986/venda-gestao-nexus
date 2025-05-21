@@ -1,6 +1,8 @@
 
-import { TicketStatus, TicketType, TicketPriority } from '@/types/enums';
-import { SupportTicket, CreateSupportTicketParams, UpdateSupportTicketParams } from '@/types/support.types';
+// This is a mock implementation of the support service that uses mock data
+// In a production environment, this would use actual API calls
+
+import { TicketStatus, TicketPriority, TicketType, SupportTicket, CreateSupportTicketParams, UpdateSupportTicketParams } from "@/types/support.types";
 
 // Mock data for support tickets
 const mockTickets: SupportTicket[] = [
@@ -106,6 +108,7 @@ export const createSupportTicket = async (ticket: CreateSupportTicketParams): Pr
     priority: ticket.priority,
     created_at: new Date().toISOString(),
     updated_at: new Date().toISOString(),
+    created_by: ticket.created_by,
     assigned_to: ticket.assigned_to,
     client: {
       id: ticket.client_id,
@@ -139,7 +142,6 @@ export const updateSupportTicket = async (id: string, updates: UpdateSupportTick
     priority: updates.priority !== undefined ? updates.priority : existingTicket.priority,
     type: updates.type !== undefined ? updates.type : existingTicket.type,
     assigned_to: updates.assigned_to !== undefined ? updates.assigned_to : existingTicket.assigned_to,
-    technician_id: updates.technician_id !== undefined ? updates.technician_id : existingTicket.technician_id,
     updated_at: new Date().toISOString()
   };
   

@@ -10,6 +10,7 @@ const NOTIFICATION_SOUNDS = {
   [NotificationType.COMMISSION]: "/sounds/notification-general.mp3",
   [NotificationType.SALE]: "/sounds/notification-general.mp3",
   [NotificationType.SUPPORT]: "/sounds/notification-support.mp3",
+  [NotificationType.ADMIN_NOTIFICATION]: "/sounds/notification-general.mp3",
   [NotificationType.LOGISTICS]: "/sounds/notification-logistics.mp3",
 };
 

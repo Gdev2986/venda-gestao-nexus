@@ -8,6 +8,7 @@ export enum NotificationType {
   GENERAL = "GENERAL",
   SALE = "SALE",
   SUPPORT = "SUPPORT",
+  ADMIN_NOTIFICATION = "ADMIN_NOTIFICATION",
   LOGISTICS = "LOGISTICS"
 }
 
@@ -17,8 +18,8 @@ export interface Notification {
   title: string;
   message: string;
   type: NotificationType;
-  data?: Record<string, any>;
-  is_read: boolean;
+  data?: any;
+  is_read?: boolean;
   created_at: string;
-  recipient_roles?: string[];
+  recipient_roles?: string[]; // Optional field for sending notifications to specific roles
 }

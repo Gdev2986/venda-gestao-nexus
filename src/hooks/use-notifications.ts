@@ -1,29 +1,25 @@
 
-import * as React from "react";
-import { toast } from "@/hooks/use-toast"; // Direct import from our hook
+import { useState, useEffect } from "react";
+import { toast } from "@/hooks/use-toast"; 
 import { Notification } from "@/types/notification.types";
 
-// This is a simplified hook that doesn't actually fetch real notifications
-// The real functionality is in NotificationsContext
 export function useNotifications() {
-  const [soundEnabled, setSoundEnabled] = React.useState<boolean>(
-    localStorage.getItem("notification-sound") !== "false"
-  );
-  const [notifications, setNotifications] = React.useState<Notification[]>([]);
-  const [unreadCount, setUnreadCount] = React.useState(0);
-  
-  // Load sound preference from localStorage on mount
-  React.useEffect(() => {
+  const [soundEnabled, setSoundEnabled] = useState<boolean>(() => {
     try {
       const savedPreference = localStorage.getItem("notification-sound");
-      setSoundEnabled(savedPreference !== "false");
+      return savedPreference !== "false";
     } catch (error) {
       console.error("Failed to load notification sound preference:", error);
+      return true; // Default to enabled
     }
-  }, []);
-
+  });
+  
+  const [notifications, setNotifications] = useState<Notification[]>([]);
+  const [unreadCount, setUnreadCount] = useState(0);
+  const [isLoading, setIsLoading] = useState(false);
+  
   // Save sound preference when it changes
-  React.useEffect(() => {
+  useEffect(() => {
     try {
       localStorage.setItem("notification-sound", String(soundEnabled));
     } catch (error) {
@@ -44,7 +40,61 @@ export function useNotifications() {
     });
   };
 
-  // Mock functions for standalone usage without the context
+  // Mock fetchNotifications function for standalone usage
+  const fetchNotifications = async () => {
+    setIsLoading(true);
+    
+    try {
+      // Simular atraso de rede para demonstração
+      await new Promise(resolve => setTimeout(resolve, 500));
+      
+      // Dados mockados para teste
+      const mockData: Notification[] = [
+        {
+          id: "1",
+          user_id: "1",
+          title: "Novo pagamento recebido",
+          message: "Você recebeu um novo pagamento de R$ 150,00",
+          type: "PAYMENT",
+          is_read: false,
+          created_at: new Date().toISOString()
+        },
+        {
+          id: "2",
+          user_id: "1",
+          title: "Atualização do sistema",
+          message: "O sistema será atualizado hoje às 22:00",
+          type: "SYSTEM",
+          is_read: true,
+          created_at: new Date(Date.now() - 86400000).toISOString() // 1 day ago
+        },
+        {
+          id: "3",
+          user_id: "1",
+          title: "Nova máquina disponível",
+          message: "Um novo modelo de máquina está disponível para solicitação",
+          type: "MACHINE",
+          is_read: false,
+          created_at: new Date(Date.now() - 172800000).toISOString() // 2 days ago
+        }
+      ];
+      
+      setNotifications(mockData);
+      
+      // Atualizar contador de não lidas
+      const unread = mockData.filter(n => !n.is_read).length;
+      setUnreadCount(unread);
+      
+      return mockData;
+    } catch (error) {
+      console.error("Erro ao buscar notificações:", error);
+      toast("Erro ao buscar notificações");
+      return [];
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   const markAsRead = (id: string) => {
     setNotifications(prev => 
       prev.map(n => n.id === id ? {...n, is_read: true} : n)
@@ -57,6 +107,10 @@ export function useNotifications() {
       prev.map(n => ({...n, is_read: true}))
     );
     setUnreadCount(0);
+    toast({
+      title: "Notificações lidas",
+      description: "Todas as notificações foram marcadas como lidas"
+    });
   };
   
   return {
@@ -66,5 +120,7 @@ export function useNotifications() {
     unreadCount,
     markAsRead,
     markAllAsRead,
+    fetchNotifications,
+    isLoading
   };
 }

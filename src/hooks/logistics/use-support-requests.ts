@@ -43,24 +43,14 @@ export function useSupportRequests() {
   const createSupportRequest = async (newRequest: Omit<SupportRequest, 'id' | 'created_at'>) => {
     setIsLoading(true);
     try {
-      // Convert enum values to string literals for database compatibility
+      // Check Supabase schema to match enum values exactly
       const insertData = {
         client_id: newRequest.client_id,
         technician_id: newRequest.technician_id,
         title: newRequest.title,
         description: newRequest.description,
-        // Map values to appropriate string literals expected by the database
-        type: newRequest.type === SupportRequestType.MAINTENANCE ? 
-              SupportRequestType.MAINTENANCE : // Map MAINTENANCE to MAINTENANCE
-              newRequest.type === SupportRequestType.INSTALLATION ? 
-              SupportRequestType.INSTALLATION : // Map INSTALLATION to INSTALLATION
-              newRequest.type === SupportRequestType.OTHER ? 
-              SupportRequestType.OTHER : // Keep OTHER as OTHER
-              newRequest.type === SupportRequestType.REPLACEMENT ? 
-              SupportRequestType.REPLACEMENT : // Keep REPLACEMENT
-              newRequest.type === SupportRequestType.SUPPLIES ? 
-              SupportRequestType.SUPPLIES : // Keep SUPPLIES
-              SupportRequestType.OTHER, // Default to OTHER for any unexpected type
+        // Convert enums to the exact string literals expected by the database
+        type: newRequest.type as unknown as "MAINTENANCE" | "INSTALLATION" | "REPLACEMENT" | "SUPPLIES" | "REMOVAL" | "OTHER",
         status: newRequest.status,
         priority: newRequest.priority,
         scheduled_date: newRequest.scheduled_date,

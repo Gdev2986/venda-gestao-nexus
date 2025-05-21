@@ -1,30 +1,53 @@
 
-import { TicketStatus, TicketType, TicketPriority } from './enums';
+export enum TicketType {
+  INSTALLATION = "INSTALLATION",
+  MAINTENANCE = "MAINTENANCE",
+  REPLACEMENT = "REPLACEMENT",
+  SUPPLIES = "SUPPLIES",
+  REMOVAL = "REMOVAL",
+  OTHER = "OTHER"
+}
 
-export {
-  TicketStatus,
-  TicketType,
-  TicketPriority
-};
+export enum TicketPriority {
+  LOW = "LOW",
+  MEDIUM = "MEDIUM",
+  HIGH = "HIGH"
+}
+
+export enum TicketStatus {
+  PENDING = "PENDING",
+  IN_PROGRESS = "IN_PROGRESS",
+  COMPLETED = "COMPLETED",
+  CANCELED = "CANCELED"
+}
 
 export interface SupportTicket {
-  id: string;
+  id?: string;
+  client_id: string;
+  technician_id?: string;
+  type: TicketType;
+  status: TicketStatus;
+  priority: TicketPriority;
   title: string;
   description: string;
-  status: TicketStatus;
-  type: TicketType;
-  priority: TicketPriority;
-  created_at: string;
-  updated_at: string;
-  client_id: string;
-  assignee_id?: string;
-  technician_id?: string;
-  resolution?: string;
-  client_name?: string;
-  assignee_name?: string;
-  machine_id?: string;
   scheduled_date?: string | null;
-  client?: any;
-  machine?: any;
-  user_id?: string; // Added for support.service.ts
+  resolution?: string | null;
+  created_at?: string;
+  updated_at?: string;
+  client?: {
+    id: string;
+    business_name: string;
+    contact_name?: string;
+    phone?: string;
+    address?: string;
+    city?: string;
+    state?: string;
+    zip?: string;
+  };
+  technician?: {
+    id: string;
+    name: string;
+    email?: string;
+    phone?: string;
+  };
 }

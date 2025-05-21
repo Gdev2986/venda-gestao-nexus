@@ -7,7 +7,7 @@ import { ClientPaymentsHeader } from "@/components/payments/ClientPaymentsHeader
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
-import { Payment, PaymentStatus, PaymentType, PixKey } from "@/types";
+import { Payment, PaymentStatus, PaymentType } from "@/types";
 import { usePaymentSubscription } from "@/hooks/usePaymentSubscription";
 
 const ClientPayments = () => {
@@ -15,7 +15,7 @@ const ClientPayments = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [payments, setPayments] = useState<Payment[]>([]);
   const [clientBalance, setClientBalance] = useState(15000);
-  const [pixKeys, setPixKeys] = useState<PixKey[]>([]);
+  const [pixKeys, setPixKeys] = useState([]);
   const [isLoadingPixKeys, setIsLoadingPixKeys] = useState(true);
   const [clientId, setClientId] = useState<string | null>(null);
   
@@ -93,33 +93,25 @@ const ClientPayments = () => {
         throw error;
       }
       
-      // Function to transform the data to match the expected Payment interface
-      const formattedPayments: Payment[] = data ? data.map(request => {
-        // Create a proper PixKey object with all required fields
-        const pixKeyData = request.pix_key ? {
+      // Transform the data to match the expected Payment interface
+      const formattedPayments: Payment[] = data ? data.map(request => ({
+        id: request.id,
+        amount: request.amount,
+        description: request.description || '',
+        status: request.status as PaymentStatus,
+        created_at: request.created_at,
+        updated_at: request.updated_at,
+        rejection_reason: request.rejection_reason,
+        receipt_url: request.receipt_url,
+        client_id: request.client_id,
+        payment_type: PaymentType.PIX,
+        pix_key: request.pix_key ? {
           id: request.pix_key.id,
           key: request.pix_key.key,
           type: request.pix_key.type,
-          name: request.pix_key.name || '',
-          // Add required fields that might be missing
-          owner_name: request.pix_key.name || '',
-          user_id: ''  // Default value for required field
-        } : undefined;
-        
-        return {
-          id: request.id,
-          amount: request.amount,
-          description: request.description || '',
-          status: request.status as PaymentStatus,
-          created_at: request.created_at,
-          updated_at: request.updated_at,
-          rejection_reason: request.rejection_reason,
-          receipt_url: request.receipt_url,
-          client_id: request.client_id,
-          payment_type: PaymentType.PIX,
-          pix_key: pixKeyData
-        };
-      }) : [];
+          owner_name: request.pix_key.name // Use name as owner_name
+        } : undefined
+      })) : [];
       
       setPayments(formattedPayments);
     } catch (error) {
@@ -150,20 +142,7 @@ const ClientPayments = () => {
         throw error;
       }
       
-      // Ensure each pix key has the owner_name property
-      const formattedPixKeys: PixKey[] = (data || []).map(key => ({
-        id: key.id,
-        key: key.key,
-        type: key.type,
-        name: key.name || '',
-        owner_name: key.name || '', // Set owner_name to name if not present
-        user_id: key.user_id,
-        is_default: key.is_default || false,
-        created_at: key.created_at || new Date().toISOString(),
-        updated_at: key.updated_at || new Date().toISOString()
-      }));
-      
-      setPixKeys(formattedPixKeys);
+      setPixKeys(data || []);
     } catch (error) {
       console.error("Error fetching PIX keys:", error);
     } finally {

@@ -1,6 +1,5 @@
 
-import * as React from "react";
-import { memo, useCallback } from "react";
+import { memo, useCallback, useEffect } from "react";
 import { motion } from "framer-motion";
 import { X } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -18,6 +17,20 @@ const Sidebar = memo(({ isOpen, isMobile, onClose, userRole }: SidebarProps) => 
     onClose();
   }, [onClose]);
 
+  // Garantir que o sidebar seja renderizado mesmo quando fechado (para animações)
+  useEffect(() => {
+    // Prevenção de scroll na página quando o sidebar mobile estiver aberto
+    if (isMobile && isOpen) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = '';
+    }
+    
+    return () => {
+      document.body.style.overflow = '';
+    };
+  }, [isMobile, isOpen]);
+
   return (
     <>
       {/* Mobile backdrop with animation */}
@@ -27,22 +40,22 @@ const Sidebar = memo(({ isOpen, isMobile, onClose, userRole }: SidebarProps) => 
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
+          transition={{ duration: 0.2 }}
           onClick={handleCloseClick}
           aria-hidden="true"
         />
       )}
       
       {/* Sidebar with fixed position and animation */}
-      <motion.div
+      <motion.aside
         className={cn(
-          "fixed inset-y-0 left-0 z-50 flex flex-col w-[280px] md:w-64 text-sidebar-foreground transition-transform duration-200 ease-in-out h-full",
-          isMobile ? "shadow-xl" : "border-r border-sidebar-border",
-          isOpen ? "translate-x-0" : "-translate-x-full"
+          "fixed inset-y-0 left-0 z-50 flex flex-col w-[280px] md:w-64 text-sidebar-foreground h-full",
+          isMobile ? "shadow-xl" : "border-r border-sidebar-border"
         )}
         style={{ backgroundColor: 'hsl(196, 70%, 20%)' }}
-        initial={{ x: isMobile ? -320 : 0 }}
+        initial={{ x: isMobile ? -320 : isOpen ? 0 : -280 }}
         animate={{ x: isOpen ? 0 : (isMobile ? -320 : -280) }}
-        transition={{ duration: 0.2, ease: "easeOut" }}
+        transition={{ duration: 0.3, ease: "easeOut" }}
       >
         <div className="flex items-center justify-between h-14 md:h-16 px-4 border-b border-sidebar-border">
           <div className="flex items-center space-x-2">
@@ -71,7 +84,7 @@ const Sidebar = memo(({ isOpen, isMobile, onClose, userRole }: SidebarProps) => 
         </div>
 
         <SidebarUserProfile userRole={userRole} />
-      </motion.div>
+      </motion.aside>
     </>
   );
 });

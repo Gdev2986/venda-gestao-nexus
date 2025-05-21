@@ -1,4 +1,3 @@
-
 // User roles
 export enum UserRole {
   ADMIN = "ADMIN",
@@ -71,11 +70,10 @@ export enum TicketStatus {
   CLOSED = "CLOSED",
   REJECTED = "REJECTED",
   COMPLETED = "COMPLETED",
-  CANCELED = "CANCELED",
-  OPEN = "OPEN"
+  CANCELED = "CANCELED"
 }
 
-// Ticket types - making sure this matches the database accepted values
+// Ticket types - adding missing types
 export enum TicketType {
   TECHNICAL = "TECHNICAL",
   BILLING = "BILLING",
@@ -87,42 +85,5 @@ export enum TicketType {
   REMOVAL = "REMOVAL",
   REPLACEMENT = "REPLACEMENT",
   SUPPLIES = "SUPPLIES",
-  PAPER = "PAPER",
-  GENERAL = "GENERAL",
-  FEATURE = "FEATURE",
-  BUG = "BUG"
-}
-
-// Ticket priority
-export enum TicketPriority {
-  LOW = "LOW",
-  MEDIUM = "MEDIUM",
-  HIGH = "HIGH",
-  CRITICAL = "CRITICAL",
-  URGENT = "URGENT"
-}
-
-// Support request statuses - these values must match what's expected in the database
-export enum SupportRequestStatus {
-  PENDING = "PENDING",
-  IN_PROGRESS = "IN_PROGRESS",
-  COMPLETED = "COMPLETED",
-  CANCELED = "CANCELED"
-}
-
-// Support request types - aligning with database expectations
-export enum SupportRequestType {
-  MAINTENANCE = "MAINTENANCE",
-  INSTALLATION = "INSTALLATION",
-  OTHER = "OTHER",
-  REPLACEMENT = "REPLACEMENT",
-  SUPPLIES = "SUPPLIES",
-  REMOVAL = "REMOVAL"
-}
-
-// Support request priorities
-export enum SupportRequestPriority {
-  LOW = "LOW",
-  MEDIUM = "MEDIUM",
-  HIGH = "HIGH"
+  PAPER = "PAPER"
 }

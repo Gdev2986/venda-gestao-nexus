@@ -1,6 +1,7 @@
 
 import { useEffect, useState } from "react";
 import { PageHeader } from "@/components/page/PageHeader";
+import { PageWrapper } from "@/components/page/PageWrapper";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
@@ -11,7 +12,6 @@ import { PATHS } from "@/routes/paths";
 import SidebarContent from "@/components/dashboard/client/SidebarContent";
 import StatsCards from "@/components/dashboard/client/StatsCards";
 import MainOverviewTabs from "@/components/dashboard/client/MainOverviewTabs";
-import ClientPaymentTypesTable from "@/components/dashboard/client/PaymentTypesTable";
 import { useRealtimeUpdates } from "@/hooks/use-realtime-updates";
 import { useDevice } from "@/hooks/use-device";
 import { AnimatePresence, motion } from "framer-motion";
@@ -60,14 +60,7 @@ const mockData = {
       status: 'Ativo',
       created_at: '2023-02-15'
     },
-  ],
-  paymentTypeData: [
-    { type: "PIX", installments: 1, totalAmount: 750, salesCount: 3 },
-    { type: "Débito", installments: 1, totalAmount: 850, salesCount: 5 },
-    { type: "Crédito", installments: 1, totalAmount: 200, salesCount: 1 },
-    { type: "Crédito", installments: 2, totalAmount: 300, salesCount: 1 },
-    { type: "Crédito", installments: 3, totalAmount: 400, salesCount: 2 },
-  ],
+  ]
 };
 
 const UserDashboard = () => {
@@ -127,11 +120,6 @@ const UserDashboard = () => {
     refreshData();
   }, []);
 
-  // Generate period text for empty state messaging
-  const periodText = period === "week" ? "semana" : 
-                    period === "month" ? "mês" : 
-                    period === "year" ? "ano" : "período";
-
   return (
     <div className="space-y-4 md:space-y-6">
       <PageHeader 
@@ -175,7 +163,7 @@ const UserDashboard = () => {
           />
         </motion.div>
         
-        {(!isMobile && !isTablet) && (
+        {(!isMobile || !isTablet) && (
           <motion.div 
             className="space-y-6"
             initial={{ opacity: 0, x: 20 }}
@@ -187,25 +175,12 @@ const UserDashboard = () => {
         )}
       </div>
       
-      {/* Payment Types Table - New Component */}
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.3, delay: 0.2 }}
-      >
-        <ClientPaymentTypesTable 
-          data={data.paymentTypeData}
-          isLoading={isLoading}
-          period={periodText}
-        />
-      </motion.div>
-      
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.3, delay: 0.3 }}
       >
-        <Card>
+        <PageWrapper>
           <CardHeader className="flex flex-row items-center justify-between">
             <CardTitle className="text-xl">Minhas Máquinas</CardTitle>
             <Button 
@@ -251,7 +226,7 @@ const UserDashboard = () => {
               </Button>
             </div>
           </CardContent>
-        </Card>
+        </PageWrapper>
       </motion.div>
 
       {/* Mobile-only sidebar content */}

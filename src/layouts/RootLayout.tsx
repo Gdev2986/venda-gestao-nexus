@@ -1,19 +1,19 @@
 
-import * as React from "react";
 import { Navigate, useLocation } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { Spinner } from "@/components/ui/spinner";
 import { PATHS } from "@/routes/paths";
 import { motion } from "framer-motion";
+import { useState, useEffect } from "react";
 import { getDashboardPath } from "@/routes/routeUtils";
 
 const RootLayout = () => {
   const { user, isLoading, isAuthenticated, userRole } = useAuth();
   const location = useLocation();
-  const [showLoading, setShowLoading] = React.useState(true);
+  const [showLoading, setShowLoading] = useState(true);
   
   // Debug logging
-  React.useEffect(() => {
+  useEffect(() => {
     console.log("RootLayout render status:", {
       isLoading,
       isAuthenticated,
@@ -23,7 +23,7 @@ const RootLayout = () => {
   }, [isLoading, isAuthenticated, userRole, location.pathname]);
   
   // Add a slight delay for loading animation
-  React.useEffect(() => {
+  useEffect(() => {
     if (!isLoading) {
       const timer = setTimeout(() => {
         setShowLoading(false);

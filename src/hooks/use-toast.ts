@@ -1,6 +1,5 @@
 
-import * as React from "react";
-import { toast as sonnerToast, type Toast } from "sonner";
+import { toast as sonnerToast } from "sonner";
 
 export type ToastProps = {
   title?: string;
@@ -16,26 +15,20 @@ export const toast = (props: string | ToastProps): void => {
   if (typeof props === 'string') {
     sonnerToast(props);
   } else {
-    const { title, description, variant, ...rest } = props;
-    
-    // Apply variant-specific styling
-    const styling = variant === "destructive" ? { style: { backgroundColor: "var(--destructive)", color: "var(--destructive-foreground)" } } : {};
-    
+    const { title, description, ...rest } = props;
     if (title && description) {
-      sonnerToast(title, { description, ...styling, ...rest });
+      sonnerToast(title, { description, ...rest });
     } else if (title) {
-      sonnerToast(title, { ...styling, ...rest });
+      sonnerToast(title, rest);
     } else if (description) {
-      sonnerToast(description, { ...styling, ...rest });
+      sonnerToast(description, rest);
     } else {
-      sonnerToast("Notification", { ...styling, ...rest });
+      sonnerToast("Notification");
     }
   }
 };
 
-// Export a simple object with the toast function
+// Export a simple object, not a hook
 export const useToast = () => {
   return { toast };
 };
-
-export type { Toast as ToastType };

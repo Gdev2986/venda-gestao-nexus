@@ -5,13 +5,11 @@ import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/use-auth";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { Button } from "@/components/ui/button";
 
 const SidebarFooter = () => {
   const { toast } = useToast();
   const { signOut, user } = useAuth();
   const [userName, setUserName] = useState<string>("");
-  const [isLoggingOut, setIsLoggingOut] = useState(false);
 
   useEffect(() => {
     const fetchUserProfile = async () => {
@@ -22,7 +20,7 @@ const SidebarFooter = () => {
           .from('profiles')
           .select('name')
           .eq('id', user.id)
-          .maybeSingle(); // Use maybeSingle instead of single to avoid errors
+          .single();
 
         if (error) {
           console.error('Erro ao buscar nome do usuário:', error);
@@ -41,20 +39,7 @@ const SidebarFooter = () => {
   }, [user]);
 
   const handleLogout = async () => {
-    try {
-      setIsLoggingOut(true);
-      console.log("Logout requested");
-      await signOut();
-      // Note: No need for redirect here as it's handled in the AuthProvider
-    } catch (error) {
-      console.error("Error in handleLogout:", error);
-      toast({
-        title: "Erro ao sair",
-        description: "Não foi possível encerrar sua sessão",
-        variant: "destructive"
-      });
-      setIsLoggingOut(false);
-    }
+    await signOut();
   };
 
   return (
@@ -70,15 +55,13 @@ const SidebarFooter = () => {
       )}
 
       <div className="space-y-1">
-        <Button
-          variant="ghost"
-          className="flex w-full items-center justify-start px-3 py-2 text-sm rounded-md text-sidebar-foreground hover:bg-sidebar-accent/70 hover:text-white transition-colors"
+        <button
           onClick={handleLogout}
-          disabled={isLoggingOut}
+          className="flex items-center w-full px-3 py-2 text-sm rounded-md text-sidebar-foreground hover:bg-sidebar-accent/70 hover:text-white transition-colors"
         >
           <LogOut className="h-5 w-5 mr-3 flex-shrink-0" />
-          <span>{isLoggingOut ? "Saindo..." : "Sair"}</span>
-        </Button>
+          <span>Sair</span>
+        </button>
       </div>
     </>
   );

@@ -18,24 +18,9 @@ import {
   TabsList, 
   TabsTrigger 
 } from "@/components/ui/tabs";
-import TaxRatesManager from "@/components/fees/TaxRatesManager";
-import { ClientSelect } from "@/components/clients/ClientSelect";
-import { useState } from "react";
+import { PATHS } from "@/routes/paths";
 
 const AdminFees = () => {
-  // Mock data for client selection demo
-  const [selectedClientIds, setSelectedClientIds] = useState<string[]>([]);
-  const mockClients = [
-    { id: "1", business_name: "Empresa A" },
-    { id: "2", business_name: "Empresa B" },
-    { id: "3", business_name: "Empresa C" },
-    { id: "4", business_name: "Empresa D" },
-    { id: "5", business_name: "Empresa E" },
-    { id: "6", business_name: "Empresa F" },
-    { id: "7", business_name: "Empresa G" },
-    { id: "8", business_name: "Empresa H" },
-  ];
-
   return (
     <div className="space-y-6">
       <PageHeader 
@@ -50,25 +35,7 @@ const AdminFees = () => {
           <TabsTrigger value="service-fees">Taxas de Serviço</TabsTrigger>
         </TabsList>
         
-        <TabsContent value="transaction-fees" className="space-y-6">
-          {/* Example of client multi-select integration */}
-          <Card className="p-6">
-            <h3 className="text-lg font-medium mb-4">Associar Clientes ao Bloco</h3>
-            <div className="max-w-2xl">
-              <ClientSelect
-                clients={mockClients}
-                selectedClientIds={selectedClientIds}
-                onSelectedChange={setSelectedClientIds}
-                placeholder="Selecione os clientes para este bloco..."
-              />
-              <p className="text-sm text-muted-foreground mt-2">
-                {selectedClientIds.length} cliente(s) selecionado(s)
-              </p>
-            </div>
-          </Card>
-          
-          <TaxRatesManager />
-          
+        <TabsContent value="transaction-fees">
           <Card>
             <CardContent className="p-6">
               <div className="flex items-center justify-between mb-6">

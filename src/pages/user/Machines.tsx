@@ -1,6 +1,4 @@
 
-import * as React from "react";
-import { Link } from "react-router-dom";
 import { PageHeader } from "@/components/page/PageHeader";
 import { PageWrapper } from "@/components/page/PageWrapper";
 import { Button } from "@/components/ui/button";
@@ -94,7 +92,7 @@ const UserMachines = () => {
               Se você precisar de suporte técnico ou manutenção, nosso time está a disposição para ajudar.
             </p>
             <Button asChild>
-              <Link to={PATHS.USER.SUPPORT}>Solicitar Suporte</Link>
+              <a href={PATHS.USER.SUPPORT}>Solicitar Suporte</a>
             </Button>
           </CardContent>
         </Card>

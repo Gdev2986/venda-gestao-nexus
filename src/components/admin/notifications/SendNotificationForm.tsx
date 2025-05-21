@@ -2,6 +2,15 @@
 import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { 
   Card,
   CardContent,
@@ -10,11 +19,14 @@ import {
 import { NotificationType } from "@/types/notification.types";
 import { Notification } from "@/types/notification.types";
 import { UserRole } from "@/types";
+import { 
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from "@/components/ui/accordion";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
-import { NotificationContentFields } from "./NotificationContentFields";
-import { NotificationTypeSelector } from "./NotificationTypeSelector";
-import { RecipientSelector } from "./RecipientSelector";
 
 interface SendNotificationFormProps {
   onSendNotification: (notification: Partial<Notification>) => Promise<any>;
@@ -73,12 +85,7 @@ export const SendNotificationForm = ({ onSendNotification }: SendNotificationFor
 
       // Add recipient roles if not sending to all
       if (recipientType === "roles") {
-        // Convert roles to string array for the database
-        const roleStrings = selectedRoles.map(role => String(role));
-        notificationData.data = {
-          ...notificationData.data,
-          recipient_roles: roleStrings
-        };
+        notificationData.recipient_roles = selectedRoles as unknown as string[];
       }
       
       await onSendNotification(notificationData);
@@ -110,24 +117,132 @@ export const SendNotificationForm = ({ onSendNotification }: SendNotificationFor
     <Card>
       <form onSubmit={handleSubmit}>
         <CardContent className="space-y-4 pt-4">
-          <NotificationContentFields 
-            title={title}
-            message={message}
-            onTitleChange={setTitle}
-            onMessageChange={setMessage}
-          />
+          <div>
+            <Label htmlFor="title">
+              Título
+            </Label>
+            <Input
+              id="title"
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
+              placeholder="Título da notificação"
+              required
+            />
+          </div>
 
-          <NotificationTypeSelector 
-            type={type}
-            onTypeChange={setType}
-          />
+          <div>
+            <Label htmlFor="message">
+              Mensagem
+            </Label>
+            <Textarea
+              id="message"
+              value={message}
+              onChange={(e) => setMessage(e.target.value)}
+              placeholder="Conteúdo da notificação"
+              className="min-h-[120px]"
+              required
+            />
+          </div>
 
-          <RecipientSelector
-            recipientType={recipientType}
-            selectedRoles={selectedRoles}
-            onRecipientTypeChange={setRecipientType}
-            onRoleToggle={handleRoleToggle}
-          />
+          <div>
+            <Label htmlFor="type">
+              Tipo
+            </Label>
+            <Select
+              value={type}
+              onValueChange={(value) => setType(value as NotificationType)}
+            >
+              <SelectTrigger id="type">
+                <SelectValue placeholder="Selecione o tipo" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value={NotificationType.SYSTEM}>Sistema</SelectItem>
+                <SelectItem value={NotificationType.PAYMENT}>Pagamento</SelectItem>
+                <SelectItem value={NotificationType.MACHINE}>Máquinas</SelectItem>
+                <SelectItem value={NotificationType.GENERAL}>Geral</SelectItem>
+                <SelectItem value={NotificationType.SUPPORT}>Suporte</SelectItem>
+                <SelectItem value={NotificationType.SALE}>Vendas</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div>
+            <Label htmlFor="recipientType">
+              Destinatários
+            </Label>
+            <Select
+              value={recipientType}
+              onValueChange={(value: "all" | "roles") => setRecipientType(value)}
+            >
+              <SelectTrigger id="recipientType">
+                <SelectValue placeholder="Selecione os destinatários" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Todos os usuários</SelectItem>
+                <SelectItem value="roles">Funções específicas</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
+          {recipientType === "roles" && (
+            <div className="space-y-2 border rounded-md p-3">
+              <Label className="block mb-2">Selecione as funções:</Label>
+              <div className="grid grid-cols-2 gap-3">
+                <div className="space-y-2">
+                  <div className="flex items-center space-x-2">
+                    <Checkbox 
+                      id="role-admin" 
+                      checked={selectedRoles.includes(UserRole.ADMIN)}
+                      onCheckedChange={() => handleRoleToggle(UserRole.ADMIN)}
+                    />
+                    <Label htmlFor="role-admin">Admin</Label>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <Checkbox 
+                      id="role-client" 
+                      checked={selectedRoles.includes(UserRole.CLIENT)}
+                      onCheckedChange={() => handleRoleToggle(UserRole.CLIENT)}
+                    />
+                    <Label htmlFor="role-client">Cliente</Label>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <Checkbox 
+                      id="role-financial" 
+                      checked={selectedRoles.includes(UserRole.FINANCIAL)}
+                      onCheckedChange={() => handleRoleToggle(UserRole.FINANCIAL)}
+                    />
+                    <Label htmlFor="role-financial">Financeiro</Label>
+                  </div>
+                </div>
+                <div className="space-y-2">
+                  <div className="flex items-center space-x-2">
+                    <Checkbox 
+                      id="role-partner" 
+                      checked={selectedRoles.includes(UserRole.PARTNER)}
+                      onCheckedChange={() => handleRoleToggle(UserRole.PARTNER)}
+                    />
+                    <Label htmlFor="role-partner">Parceiro</Label>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <Checkbox 
+                      id="role-logistics" 
+                      checked={selectedRoles.includes(UserRole.LOGISTICS)}
+                      onCheckedChange={() => handleRoleToggle(UserRole.LOGISTICS)}
+                    />
+                    <Label htmlFor="role-logistics">Logística</Label>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <Checkbox 
+                      id="role-user" 
+                      checked={selectedRoles.includes(UserRole.USER)}
+                      onCheckedChange={() => handleRoleToggle(UserRole.USER)}
+                    />
+                    <Label htmlFor="role-user">Usuário</Label>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
           
           <div className="flex items-center space-x-2">
             <Checkbox 
