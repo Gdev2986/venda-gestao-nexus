@@ -1,5 +1,5 @@
 
-import { PaymentStatus as EnumsPaymentStatus, PaymentType as EnumsPaymentType } from './enums';
+import { PaymentStatus as EnumsPaymentStatus, PaymentType as EnumsPaymentType, PaymentMethod } from './enums';
 
 export { EnumsPaymentStatus as PaymentStatus, EnumsPaymentType as PaymentType };
 
@@ -53,3 +53,27 @@ export type PaymentRequestStatus = EnumsPaymentStatus;
 
 // PixKey types used in forms and components
 export type PixKeyType = 'CPF' | 'CNPJ' | 'EMAIL' | 'PHONE' | 'EVP';
+
+// Transaction fee calculation interfaces
+export interface TransactionFeeParams {
+  clientId: string;
+  paymentMethod: PaymentMethod;
+  installments: number;
+  amount: number;
+}
+
+export interface TransactionFeeResult {
+  originalAmount: number;
+  feeAmount: number;
+  netAmount: number;
+  feePercentage: number;
+  // Detailed breakdown of fees
+  rootFee: number;
+  forwardingFee: number;
+  finalFee: number;
+  // Information about the tax block used
+  taxBlockInfo?: {
+    blockId: string;
+    blockName: string;
+  };
+}
