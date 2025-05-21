@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
@@ -118,7 +117,7 @@ const AdminSupport = () => {
         const { data, error } = await supabase
           .from('profiles')
           .select('id, name')
-          .in('role', ['ADMIN', 'SUPPORT']);
+          .in('role', ['ADMIN', 'SUPPORT', 'FINANCIAL']);
         
         if (error) {
           throw error;

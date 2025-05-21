@@ -24,7 +24,9 @@ export enum UserRole {
   CLIENT = "CLIENT",
   PARTNER = "PARTNER",
   FINANCIAL = "FINANCIAL",
-  FINANCE = "FINANCE"
+  FINANCE = "FINANCE",
+  SUPPORT = "SUPPORT",
+  LOGISTICS = "LOGISTICS"
 }
 
 export enum NotificationType {

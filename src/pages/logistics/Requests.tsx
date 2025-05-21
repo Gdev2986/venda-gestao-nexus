@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { PageHeader } from "@/components/page/PageHeader";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -76,7 +75,18 @@ const LogisticsRequests = () => {
         </TabsContent>
         
         <TabsContent value="reports" className="pt-4">
-          <RequestsReportView />
+          <RequestsReportView 
+            pendingRequests={8}  // Mock data
+            highPriorityRequests={3}  // Mock data
+            typeCounts={{
+              INSTALLATION: 3,
+              MAINTENANCE: 4,
+              REPLACEMENT: 2,
+              SUPPLIES: 1,
+              REMOVAL: 1,
+              OTHER: 2
+            }}
+          />
         </TabsContent>
       </Tabs>
       

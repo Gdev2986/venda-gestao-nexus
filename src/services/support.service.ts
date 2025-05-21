@@ -1,10 +1,10 @@
-
 import { supabase } from "@/integrations/supabase/client";
 import { SupportTicket, CreateTicketParams, UpdateTicketParams, SupportMessage } from "@/types/support.types";
 import { TicketStatus, NotificationType, TicketPriority, TicketType } from "@/types/enums";
 
 // Create a new support ticket
 export async function createSupportTicket(ticket: CreateTicketParams): Promise<{ data: SupportTicket | null, error: any }> {
+  // Insert into support_requests table (matching the database schema)
   const { data, error } = await supabase
     .from('support_requests')
     .insert({
@@ -13,9 +13,9 @@ export async function createSupportTicket(ticket: CreateTicketParams): Promise<{
       user_id: ticket.user_id,
       title: ticket.title,
       description: ticket.description,
-      type: ticket.type,
-      priority: ticket.priority,
-      status: ticket.status || TicketStatus.OPEN,
+      type: ticket.type as string, // Cast to string for database
+      priority: ticket.priority as string, // Cast to string for database
+      status: ticket.status || TicketStatus.OPEN as string, // Cast to string for database
       scheduled_date: ticket.scheduled_date
     })
     .select('*, client:client_id(*), machine:machine_id(*)')
@@ -30,12 +30,20 @@ export async function createSupportTicket(ticket: CreateTicketParams): Promise<{
 
 // Update an existing ticket
 export async function updateSupportTicket(id: string, updates: UpdateTicketParams): Promise<{ data: any, error: any }> {
+  // Prepare updates ensuring it matches database schema
+  const updateData: any = {
+    ...updates,
+    updated_at: new Date().toISOString()
+  };
+  
+  // Cast enum values to strings for database
+  if (updates.status) updateData.status = updates.status as string;
+  if (updates.priority) updateData.priority = updates.priority as string;
+  if (updates.type) updateData.type = updates.type as string;
+
   const { data, error } = await supabase
     .from('support_requests')
-    .update({
-      ...updates,
-      updated_at: new Date().toISOString()
-    })
+    .update(updateData)
     .eq('id', id)
     .select();
 
@@ -85,21 +93,31 @@ export async function getSupportTickets(filters?: {
   if (filters) {
     if (filters.status) {
       if (Array.isArray(filters.status)) {
-        query = query.in('status', filters.status);
+        // Cast array of enums to array of strings
+        const statusValues = filters.status.map(s => s as string);
+        query = query.in('status', statusValues);
       } else {
-        query = query.eq('status', filters.status);
+        // Cast single enum to string
+        query = query.eq('status', filters.status as string);
       }
     }
     
     if (filters.type) {
       if (Array.isArray(filters.type)) {
-        query = query.in('type', filters.type);
+        // Cast array of enums to array of strings
+        const typeValues = filters.type.map(t => t as string);
+        query = query.in('type', typeValues);
       } else {
-        query = query.eq('type', filters.type);
+        // Cast single enum to string
+        query = query.eq('type', filters.type as string);
       }
     }
     
-    if (filters.priority) query = query.eq('priority', filters.priority);
+    if (filters.priority) {
+      // Cast enum to string
+      query = query.eq('priority', filters.priority as string);
+    }
+    
     if (filters.client_id) query = query.eq('client_id', filters.client_id);
     if (filters.assigned_to) query = query.eq('assigned_to', filters.assigned_to);
     if (filters.user_id) query = query.eq('user_id', filters.user_id);
@@ -130,7 +148,17 @@ export async function getTicketMessages(ticketId: string): Promise<{ data: Suppo
     .eq('ticket_id', ticketId)
     .order('created_at', { ascending: true });
     
-  return { data, error };
+  // Handle any data transformation here if needed
+  const messages = data ? data.map(msg => ({
+    id: msg.id,
+    ticket_id: msg.ticket_id,
+    user_id: msg.user_id,
+    message: msg.message,
+    created_at: msg.created_at,
+    user: msg.user
+  })) : null;
+    
+  return { data: messages as SupportMessage[] | null, error };
 }
 
 // Add a message to a ticket
@@ -165,7 +193,7 @@ async function createTicketNotification(ticket: SupportTicket) {
     const { data: staffUsers } = await supabase
       .from('profiles')
       .select('id')
-      .in('role', ['ADMIN', 'FINANCIAL']);
+      .in('role', ['ADMIN', 'FINANCIAL', 'SUPPORT']);
       
     if (staffUsers && staffUsers.length > 0) {
       const notifications = staffUsers.map(user => ({

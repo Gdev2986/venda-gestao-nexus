@@ -1,4 +1,3 @@
-
 import { PageHeader } from "@/components/page/PageHeader";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -112,7 +111,16 @@ const AdminReports = () => {
         </TabsContent>
         
         <TabsContent value="requests">
-          <RequestsReportView />
+          <RequestsReportView 
+            pendingRequests={12}  // Mock data
+            highPriorityRequests={5}  // Mock data
+            typeCounts={{
+              INSTALLATION: 4,
+              MAINTENANCE: 6,
+              REPLACEMENT: 2,
+              OTHER: 3
+            }}
+          />
         </TabsContent>
         
         <TabsContent value="financial" className="space-y-6">
