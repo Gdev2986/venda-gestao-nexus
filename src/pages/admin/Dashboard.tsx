@@ -77,6 +77,17 @@ const AdminDashboard = () => {
     ]
   };
 
+  // Default stats with the expected shape
+  const defaultStats = {
+    totalSales: 0,
+    grossSales: 0,
+    netSales: 0,
+    pendingRequests: 0,
+    totalCommissions: 0,
+    salesGrowth: 0,
+    isGrowthPositive: false
+  };
+
   return (
     <div className="space-y-4 md:space-y-6">
       <PageHeader
@@ -153,7 +164,7 @@ const AdminDashboard = () => {
 
       <div className="space-y-4 md:space-y-6">
         {/* Stats Cards - These change based on the date filter */}
-        <StatCards stats={stats || {}} isLoading={isLoading} />
+        <StatCards stats={stats || defaultStats} isLoading={isLoading} />
         
         {/* Quick Links */}
         <div className="mt-4">
