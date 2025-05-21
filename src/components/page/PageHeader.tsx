@@ -12,6 +12,7 @@ interface PageHeaderProps {
   action?: React.ReactNode;
   children?: React.ReactNode;
   breadcrumbs?: { label: string; href: string }[];
+  icon?: ReactNode; // Add this new prop
 }
 
 export function PageHeader({
@@ -23,11 +24,18 @@ export function PageHeader({
   action,
   children,
   breadcrumbs,
+  icon, // Add this to the destructuring
 }: PageHeaderProps) {
   return (
     <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between mb-6">
       <div>
-        <h2 className="text-2xl font-bold tracking-tight">{title}</h2>
+        {icon && title && (
+          <div className="flex items-center gap-2 mb-1">
+            {icon}
+            <h2 className="text-2xl font-bold tracking-tight">{title}</h2>
+          </div>
+        )}
+        {!icon && <h2 className="text-2xl font-bold tracking-tight">{title}</h2>}
         {description && (
           <p className="text-muted-foreground">{description}</p>
         )}

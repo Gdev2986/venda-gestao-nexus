@@ -17,14 +17,14 @@ const AdminSupport = () => {
   const [reportData, setReportData] = useState<{
     pendingRequests: number;
     highPriorityRequests: number;
-    resolvedRequests: number;
-    supportAgents: number;
+    resolvedRequests: number; // Add this property
+    supportAgents: number; // Add this property
     typeCounts: Record<string, number>;
   }>({
     pendingRequests: 12,
     highPriorityRequests: 5,
-    resolvedRequests: 24,
-    supportAgents: 3,
+    resolvedRequests: 24, // Initialize with a default value
+    supportAgents: 3, // Initialize with a default value
     typeCounts: {
       INSTALLATION: 4,
       MAINTENANCE: 6,
@@ -40,8 +40,8 @@ const AdminSupport = () => {
         setReportData({
           pendingRequests: stats.pendingRequests,
           highPriorityRequests: stats.highPriorityRequests,
-          resolvedRequests: stats.resolvedRequests || 24,
-          supportAgents: stats.supportAgents || 3,
+          resolvedRequests: stats.resolvedRequests || 24, // Add default fallback
+          supportAgents: stats.supportAgents || 3, // Add default fallback
           typeCounts: stats.typeCounts || {}
         });
       } catch (error) {

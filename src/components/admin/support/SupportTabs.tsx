@@ -16,6 +16,8 @@ interface SupportTabsProps {
   reportData: {
     pendingRequests: number;
     highPriorityRequests: number;
+    resolvedRequests: number; // Add this
+    supportAgents: number; // Add this
     typeCounts: Record<string, number>;
   };
 }
