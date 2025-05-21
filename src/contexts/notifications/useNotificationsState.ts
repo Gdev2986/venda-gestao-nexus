@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Notification, NotificationType } from "@/types/notification.types";
 import { toast } from "@/hooks/use-toast";
@@ -41,8 +40,8 @@ export const useNotificationsState = (userId: string | undefined, soundEnabled: 
         data: item.data ? item.data as Record<string, any> : undefined,
         is_read: item.is_read,
         created_at: item.created_at,
-        // Only add recipient_roles if it exists in the data
-        ...(item.recipient_roles && { recipient_roles: item.recipient_roles })
+        // We need to handle recipient_roles differently since it may not exist
+        // in the database schema but is defined in our Notification type
       }));
 
       setNotifications(typedNotifications);

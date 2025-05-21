@@ -10,7 +10,7 @@ export interface Notification {
   data?: Record<string, any>;
   is_read: boolean;
   created_at: string;
-  recipient_roles?: string[]; // Array of roles this notification is for
+  recipient_roles?: string[]; // Define as optional since it might not exist in all notifications
 }
 
 export interface NotificationsContextProps {
