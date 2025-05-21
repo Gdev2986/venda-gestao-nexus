@@ -1,7 +1,6 @@
 
 "use client";
 
-import { createContext, useState, useContext, useEffect } from "react";
 import * as React from "react";
 
 type Theme = "dark" | "light" | "system";
@@ -17,12 +16,11 @@ type ThemeProviderState = {
   setTheme: (theme: Theme) => void;
 };
 
-const initialState: ThemeProviderState = {
+// Mudança importante aqui: garantindo que o contexto não seja null
+const ThemeProviderContext = React.createContext<ThemeProviderState>({
   theme: "system",
   setTheme: () => null,
-};
-
-const ThemeProviderContext = createContext<ThemeProviderState>(initialState);
+});
 
 export function ThemeProvider({
   children,
@@ -30,11 +28,11 @@ export function ThemeProvider({
   storageKey = "sigmapay-theme",
   ...props
 }: ThemeProviderProps) {
-  // Initialize state with defaultTheme first
-  const [theme, setTheme] = useState<Theme>(defaultTheme);
+  // Usando React.useState explicitamente
+  const [theme, setTheme] = React.useState<Theme>(defaultTheme);
   
-  // Then update from localStorage when component mounts
-  useEffect(() => {
+  // Efeito para carregar o tema salvo
+  React.useEffect(() => {
     try {
       const savedTheme = localStorage?.getItem(storageKey) as Theme | null;
       if (savedTheme) {
@@ -45,8 +43,8 @@ export function ThemeProvider({
     }
   }, [storageKey]);
   
-  // Update document classes when theme changes
-  useEffect(() => {
+  // Efeito para atualizar classes do documento
+  React.useEffect(() => {
     const root = window.document.documentElement;
     
     root.classList.remove("light", "dark");
@@ -61,8 +59,8 @@ export function ThemeProvider({
     }
   }, [theme]);
 
-  // Save theme to localStorage
-  useEffect(() => {
+  // Efeito para salvar tema no localStorage
+  React.useEffect(() => {
     try {
       localStorage.setItem(storageKey, theme);
     } catch (error) {
@@ -70,10 +68,13 @@ export function ThemeProvider({
     }
   }, [theme, storageKey]);
 
-  const value = {
-    theme,
-    setTheme: (t: Theme) => setTheme(t),
-  };
+  const value = React.useMemo(
+    () => ({
+      theme,
+      setTheme: (t: Theme) => setTheme(t),
+    }),
+    [theme]
+  );
 
   return (
     <ThemeProviderContext.Provider {...props} value={value}>
@@ -82,12 +83,13 @@ export function ThemeProvider({
   );
 }
 
-export const useTheme = () => {
-  const context = useContext(ThemeProviderContext);
-
-  if (context === undefined) {
+// Ajuste no hook useTheme para garantir que o contexto não seja null
+export const useTheme = (): ThemeProviderState => {
+  const context = React.useContext(ThemeProviderContext);
+  
+  if (!context) {
     throw new Error("useTheme must be used within a ThemeProvider");
   }
-
+  
   return context;
 };

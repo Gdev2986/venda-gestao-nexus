@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { PageHeader } from "@/components/page/PageHeader";
 import { useToast } from "@/hooks/use-toast";
 import { DATE_FILTER_PRESETS, DateRangeFilters } from "@/components/dashboard/admin/DateRangeFilters";
@@ -7,6 +7,8 @@ import { QuickLinks } from "@/components/dashboard/admin/QuickLinks";
 import { ChartsSection } from "@/components/dashboard/admin/ChartsSection";
 import StatCards from "@/components/dashboard/admin/StatCards";
 import { subDays } from "date-fns";
+import PaymentMethodsBreakdown from "@/components/dashboard/admin/PaymentMethodsBreakdown";
+import { PaymentMethod } from "@/types";
 
 // Dashboard mock data
 const MOCK_DATA = {
@@ -34,6 +36,25 @@ const MOCK_DATA = {
     { name: "Crédito", value: 68500, color: "#3b82f6", percent: 55 },
     { name: "Débito", value: 37500, color: "#22c55e", percent: 30 },
     { name: "Pix", value: 19750, color: "#f59e0b", percent: 15 }
+  ],
+  paymentMethodsDetail: [
+    { 
+      method: PaymentMethod.CREDIT, 
+      count: 456, 
+      amount: 68500, 
+      percentage: 55,
+      installments: [
+        { installments: "1", count: 120, amount: 18500, percentage: 27 },
+        { installments: "2", count: 95, amount: 15300, percentage: 22 },
+        { installments: "3", count: 85, amount: 12800, percentage: 19 },
+        { installments: "4", count: 65, amount: 9700, percentage: 14 },
+        { installments: "5", count: 40, amount: 6200, percentage: 9 },
+        { installments: "6", count: 35, amount: 4300, percentage: 6 },
+        { installments: "12", count: 16, amount: 1700, percentage: 3 }
+      ]
+    },
+    { method: PaymentMethod.DEBIT, count: 320, amount: 37500, percentage: 30 },
+    { method: PaymentMethod.PIX, count: 215, amount: 19750, percentage: 15 }
   ],
   topPartners: [
     { name: "Parceiro A", value: 15200, commission: 1520 },
@@ -99,12 +120,20 @@ const AdminDashboard = () => {
           <QuickLinks />
         </div>
         
+        {/* Payment Methods Breakdown - Nova seção */}
+        <div className="grid grid-cols-1 gap-4">
+          <PaymentMethodsBreakdown 
+            data={MOCK_DATA.paymentMethodsDetail} 
+            isLoading={isLoading} 
+          />
+        </div>
+        
         {/* Charts Grid */}
         <ChartsSection 
           salesData={MOCK_DATA.dailySales}
           paymentMethodsData={MOCK_DATA.paymentMethods}
-          topPartnersData={MOCK_DATA.topPartners}
-          clientGrowthData={MOCK_DATA.clientGrowth}
+          topPartnersData={MOCK_DATA.topPartnersData}
+          clientGrowthData={MOCK_DATA.clientGrowthData}
           isLoading={isLoading}
         />
       </div>

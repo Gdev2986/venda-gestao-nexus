@@ -1,15 +1,11 @@
 
 export enum NotificationType {
-  SYSTEM = "SYSTEM",
   PAYMENT = "PAYMENT",
-  BALANCE = "BALANCE",
+  SYSTEM = "SYSTEM",
   MACHINE = "MACHINE",
-  COMMISSION = "COMMISSION",
-  GENERAL = "GENERAL",
-  SALE = "SALE",
-  SUPPORT = "SUPPORT",
-  ADMIN_NOTIFICATION = "ADMIN_NOTIFICATION",
-  LOGISTICS = "LOGISTICS"
+  PAYMENT_APPROVED = "PAYMENT_APPROVED",
+  PAYMENT_REJECTED = "PAYMENT_REJECTED",
+  PAYMENT_REQUEST = "PAYMENT_REQUEST"
 }
 
 export interface Notification {
@@ -18,8 +14,7 @@ export interface Notification {
   title: string;
   message: string;
   type: NotificationType;
-  data?: any;
-  is_read?: boolean;
+  is_read: boolean;
   created_at: string;
-  recipient_roles?: string[]; // Optional field for sending notifications to specific roles
+  data?: Record<string, any>;
 }
