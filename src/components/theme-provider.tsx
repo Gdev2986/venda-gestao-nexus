@@ -21,12 +21,8 @@ const initialState: ThemeProviderState = {
   setTheme: () => null,
 }
 
+// Create context with proper React instance
 const ThemeProviderContext = React.createContext<ThemeProviderState>(initialState)
-
-// Ensure React is available before attempting to use hooks
-if (!React || typeof React.useState !== 'function') {
-  console.error('React is not properly loaded. This may be due to multiple React instances or incorrect imports.');
-}
 
 export function ThemeProvider({
   children,
@@ -34,18 +30,29 @@ export function ThemeProvider({
   storageKey = "sigmapay-theme",
   ...props
 }: ThemeProviderProps) {
-  // Use explicit React import for useState to avoid issues with React resolution
+  // Defensive check for React availability
+  if (typeof React === 'undefined' || React === null || typeof React.useState !== 'function') {
+    console.error('React is not available in ThemeProvider - this may indicate multiple React instances');
+    // Return fallback UI instead of throwing an error
+    return (
+      <div className="p-4 text-red-500 border border-red-500 rounded">
+        Error: React initialization failed. Check console for details.
+        {children}
+      </div>
+    );
+  }
+
+  // Using React.useState explicitly to avoid any potential issues
   const [theme, setTheme] = React.useState<Theme>(() => {
-    if (typeof window !== "undefined") {
-      try {
-        const storedTheme = localStorage.getItem(storageKey)
-        return storedTheme ? (storedTheme as Theme) : defaultTheme
-      } catch (error) {
-        console.warn("Error reading theme from localStorage:", error)
-        return defaultTheme
-      }
+    if (typeof window === "undefined") return defaultTheme;
+    
+    try {
+      const storedTheme = localStorage.getItem(storageKey)
+      return storedTheme ? (storedTheme as Theme) : defaultTheme
+    } catch (error) {
+      console.warn("Error reading theme from localStorage:", error)
+      return defaultTheme
     }
-    return defaultTheme
   })
 
   React.useEffect(() => {
@@ -93,6 +100,13 @@ export function ThemeProvider({
 }
 
 export const useTheme = (): ThemeProviderState => {
+  // Defensive check before accessing context
+  if (typeof React === 'undefined' || React === null || typeof React.useContext !== 'function') {
+    console.error('React is not available in useTheme - this may indicate multiple React instances');
+    // Return a fallback state object
+    return initialState;
+  }
+  
   const context = React.useContext(ThemeProviderContext)
 
   if (context === undefined) {

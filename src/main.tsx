@@ -10,9 +10,18 @@ import { Toaster } from './components/ui/toaster';
 import App from './App';
 import './index.css';
 
-// Ensure React is defined and has expected methods
-if (!React || typeof React.createElement !== 'function' || typeof React.useState !== 'function') {
-  console.error('React is not properly initialized. Check for multiple React instances or incorrect imports.');
+// Enhanced React verification with detailed error messaging
+if (!React) {
+  console.error('CRITICAL ERROR: React is not defined - application will not work correctly');
+  // Add visible error to the DOM
+  document.body.innerHTML = '<div style="color: red; padding: 20px; border: 1px solid red; margin: 20px;">React initialization failed. Please check for multiple React instances or incorrect imports.</div>';
+} else if (typeof React.createElement !== 'function' || typeof React.useState !== 'function') {
+  console.error('CRITICAL ERROR: React API is incomplete - missing core functionality', {
+    createElement: typeof React.createElement,
+    useState: typeof React.useState,
+    useEffect: typeof React.useEffect
+  });
+  document.body.innerHTML = '<div style="color: red; padding: 20px; border: 1px solid red; margin: 20px;">React API is incomplete. Please check your React installation.</div>';
 }
 
 // Create a query client with default options
@@ -35,6 +44,8 @@ function renderApp() {
   }
   
   try {
+    console.log('Starting application render with React version:', React.version);
+    
     // Create a fresh root
     const root = createRoot(rootElement);
     
@@ -59,6 +70,14 @@ function renderApp() {
     console.log('Application rendered successfully');
   } catch (error) {
     console.error('Failed to render application:', error);
+    // Add visible error message
+    if (rootElement) {
+      rootElement.innerHTML = `<div style="color: red; padding: 20px; border: 1px solid red; margin: 20px;">
+        <h2>Failed to render application</h2>
+        <p>${error instanceof Error ? error.message : String(error)}</p>
+        <p>Please check the console for more details.</p>
+      </div>`;
+    }
   }
 }
 
