@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { PageHeader } from "@/components/page/PageHeader";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -6,7 +7,6 @@ import { Plus } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import ServiceList from "@/components/logistics/ServiceList";
 import NewRequestDialog from "@/components/logistics/modals/NewRequestDialog";
-import RequestsReportView from "@/components/logistics/reports/RequestsReportView";
 import RequestsCalendarView from "@/components/logistics/RequestsCalendarView";
 import { useMediaQuery } from "@/hooks/use-media-query";
 import {
@@ -18,6 +18,62 @@ import {
   BreadcrumbSeparator,
 } from "@/components/ui/breadcrumb";
 import { PATHS } from "@/routes/paths";
+
+// Dummy RequestsReportView component with mock data
+const RequestsReportView = () => {
+  // Mock data for the report
+  const mockData = {
+    pendingRequests: 8,
+    highPriorityRequests: 3,
+    typeCounts: {
+      INSTALLATION: 3,
+      MAINTENANCE: 4,
+      REPLACEMENT: 2,
+      SUPPLIES: 1,
+      REMOVAL: 1,
+      OTHER: 2
+    }
+  };
+
+  return (
+    <div className="space-y-6">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <Card>
+          <CardContent className="p-6">
+            <div className="text-2xl font-bold">{mockData.pendingRequests}</div>
+            <p className="text-sm text-muted-foreground">Solicitações Pendentes</p>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="p-6">
+            <div className="text-2xl font-bold">{mockData.highPriorityRequests}</div>
+            <p className="text-sm text-muted-foreground">Alta Prioridade</p>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="p-6">
+            <div className="text-2xl font-bold">{Object.values(mockData.typeCounts).reduce((a, b) => a + b, 0)}</div>
+            <p className="text-sm text-muted-foreground">Total de Solicitações</p>
+          </CardContent>
+        </Card>
+      </div>
+      
+      <Card>
+        <CardContent className="p-6">
+          <h3 className="text-lg font-medium mb-4">Tipos de Solicitações</h3>
+          <div className="space-y-2">
+            {Object.entries(mockData.typeCounts).map(([type, count]) => (
+              <div key={type} className="flex justify-between items-center">
+                <span>{type}</span>
+                <span className="font-medium">{count}</span>
+              </div>
+            ))}
+          </div>
+        </CardContent>
+      </Card>
+    </div>
+  );
+};
 
 const LogisticsRequests = () => {
   const [activeTab, setActiveTab] = useState<string>("list");
@@ -75,18 +131,7 @@ const LogisticsRequests = () => {
         </TabsContent>
         
         <TabsContent value="reports" className="pt-4">
-          <RequestsReportView 
-            pendingRequests={8}  // Mock data
-            highPriorityRequests={3}  // Mock data
-            typeCounts={{
-              INSTALLATION: 3,
-              MAINTENANCE: 4,
-              REPLACEMENT: 2,
-              SUPPLIES: 1,
-              REMOVAL: 1,
-              OTHER: 2
-            }}
-          />
+          <RequestsReportView />
         </TabsContent>
       </Tabs>
       
