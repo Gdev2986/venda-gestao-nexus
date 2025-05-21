@@ -30,19 +30,17 @@ export function ThemeProvider({
   storageKey = "sigmapay-theme",
   ...props
 }: ThemeProviderProps) {
-  // Defensive check for React availability
-  if (typeof React === 'undefined' || React === null || typeof React.useState !== 'function') {
-    console.error('React is not available in ThemeProvider - this may indicate multiple React instances');
-    // Return fallback UI instead of throwing an error
+  // Defensive initialization check
+  if (!React || typeof React.useState !== 'function') {
+    console.error('React is not properly initialized in ThemeProvider');
     return (
       <div className="p-4 text-red-500 border border-red-500 rounded">
-        Error: React initialization failed. Check console for details.
+        Error: React initialization failed. Please check browser console for details.
         {children}
       </div>
     );
   }
 
-  // Using React.useState explicitly to avoid any potential issues
   const [theme, setTheme] = React.useState<Theme>(() => {
     if (typeof window === "undefined") return defaultTheme;
     
@@ -101,9 +99,8 @@ export function ThemeProvider({
 
 export const useTheme = (): ThemeProviderState => {
   // Defensive check before accessing context
-  if (typeof React === 'undefined' || React === null || typeof React.useContext !== 'function') {
-    console.error('React is not available in useTheme - this may indicate multiple React instances');
-    // Return a fallback state object
+  if (!React || typeof React.useContext !== 'function') {
+    console.error('React is not properly initialized in useTheme hook');
     return initialState;
   }
   

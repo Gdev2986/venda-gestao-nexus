@@ -12,8 +12,8 @@ export default defineConfig(({ mode }) => ({
   },
   plugins: [
     react({
-      // Configure the React plugin to use a single React instance
-      jsxRuntime: 'automatic',
+      // Use proper options that are recognized by TypeScript types
+      jsxImportSource: 'react',
     }),
     mode === 'development' && componentTagger(),
   ].filter(Boolean),
