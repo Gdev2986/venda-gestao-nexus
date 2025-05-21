@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { subDays } from "date-fns";
@@ -8,6 +9,10 @@ import DateRangeFilter, { DateRange } from "@/components/dashboard/client/DateRa
 import StatsCards from "@/components/dashboard/client/StatsCards";
 import MainOverviewTabs from "@/components/dashboard/client/MainOverviewTabs";
 import SidebarContent from "@/components/dashboard/client/SidebarContent";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { WalletIcon } from "lucide-react";
+import { formatCurrency } from "@/lib/utils";
+import { BalanceCards } from "@/components/payments/BalanceCards";
 
 const ClientDashboard = () => {
   const { toast } = useToast();
@@ -21,7 +26,7 @@ const ClientDashboard = () => {
     totalSales: 0,
     pendingPayments: 0,
     completedPayments: 0,
-    clientBalance: 15000, // Changed from averageTicket to clientBalance with mock value
+    clientBalance: 15000, // Mock client balance value
   });
   const [dateRange, setDateRange] = useState<DateRange>({
     from: subDays(new Date(), 30),
@@ -159,12 +164,23 @@ const ClientDashboard = () => {
     <div className="flex flex-col gap-5 w-full">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center">
         <h1 className="text-3xl font-bold tracking-tight">Dashboard</h1>
-        <DateRangeFilter 
-          dateRange={dateRange}
-          onDateRangeChange={handleDateRangeChange}
-        />
       </div>
       
+      {/* Always visible Balance Card */}
+      <BalanceCards clientBalance={stats.clientBalance} />
+      
+      {/* Date range filter after the balance cards */}
+      <Card className="p-4">
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center">
+          <h2 className="text-lg font-semibold mb-2 sm:mb-0">Filtrar Dados</h2>
+          <DateRangeFilter 
+            dateRange={dateRange}
+            onDateRangeChange={handleDateRangeChange}
+          />
+        </div>
+      </Card>
+      
+      {/* Filtered Stats Cards - These change based on the date filter */}
       <StatsCards stats={stats} loading={loading} />
       
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
