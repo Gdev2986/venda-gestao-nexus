@@ -11,7 +11,6 @@ interface NotificationListProps {
   onDelete?: (id: string) => void;
 }
 
-// Change from const NotificationList to export const NotificationList
 export const NotificationList = ({ 
   notifications, 
   onMarkAsRead, 
@@ -53,3 +52,6 @@ export const NotificationList = ({
     </div>
   );
 };
+
+// Add a default export to ensure compatibility with different import syntaxes
+export default NotificationList;
