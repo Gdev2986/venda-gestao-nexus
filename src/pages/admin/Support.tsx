@@ -57,7 +57,11 @@ const AdminSupport = () => {
   const [activeTab, setActiveTab] = useState<string>("tickets");
   const [searchTerm, setSearchTerm] = useState<string>("");
   const { toast } = useToast();
-  const [reportData, setReportData] = useState({
+  const [reportData, setReportData] = useState<{
+    pendingRequests: number;
+    highPriorityRequests: number;
+    typeCounts: Record<string, number>;
+  }>({
     pendingRequests: 12,
     highPriorityRequests: 5,
     typeCounts: {
@@ -65,7 +69,7 @@ const AdminSupport = () => {
       MAINTENANCE: 6,
       REPLACEMENT: 2,
       OTHER: 3
-    } as Record<string, number>
+    }
   });
   
   useEffect(() => {

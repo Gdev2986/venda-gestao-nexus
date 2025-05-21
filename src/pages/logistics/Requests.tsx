@@ -25,7 +25,11 @@ const LogisticsRequests = () => {
   const [activeTab, setActiveTab] = useState<string>("list");
   const [isNewRequestOpen, setIsNewRequestOpen] = useState(false);
   const isMobile = useMediaQuery("(max-width: 768px)");
-  const [reportData, setReportData] = useState({
+  const [reportData, setReportData] = useState<{
+    pendingRequests: number;
+    highPriorityRequests: number;
+    typeCounts: Record<string, number>;
+  }>({
     pendingRequests: 8,
     highPriorityRequests: 3,
     typeCounts: {
@@ -35,7 +39,7 @@ const LogisticsRequests = () => {
       SUPPLIES: 1,
       REMOVAL: 1,
       OTHER: 2
-    } as Record<string, number>
+    }
   });
   
   // We can fetch real data when the component mounts
