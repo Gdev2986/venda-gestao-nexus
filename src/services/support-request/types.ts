@@ -5,20 +5,21 @@ export interface CreateSupportRequestParams {
   title: string;
   description: string;
   client_id: string;
-  type: SupportRequestType;
-  priority: SupportRequestPriority;
+  type: string;  // Changed from SupportRequestType to string
+  priority: string;  // Changed from SupportRequestPriority to string
   scheduled_date?: string | null;
 }
 
 export interface UpdateSupportRequestParams {
   title?: string;
   description?: string;
-  status?: SupportRequestStatus;
-  priority?: SupportRequestPriority;
-  type?: SupportRequestType;
+  status?: string;  // Changed from SupportRequestStatus to string
+  priority?: string;  // Changed from SupportRequestPriority to string
+  type?: string;  // Changed from SupportRequestType to string
   technician_id?: string | null;
   resolution?: string | null;
   scheduled_date?: string | null;
 }
 
+// Re-export the enum types for convenience
 export { SupportRequestType, SupportRequestStatus, SupportRequestPriority };

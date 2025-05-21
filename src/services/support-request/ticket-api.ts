@@ -1,6 +1,6 @@
 
 import { supabase } from "@/integrations/supabase/client";
-import { SupportRequestType, SupportRequestStatus, SupportRequestPriority } from "@/types/support-request.types";
+import { SupportRequestStatus, SupportRequestType, SupportRequestPriority } from "@/types/support-request.types";
 
 // GET all requests
 export const getAllRequests = async () => {
@@ -32,8 +32,8 @@ export const getRequestById = async (id: string) => {
 export const createRequest = async (data: {
   title: string;
   description: string;
-  type: SupportRequestType;
-  priority: SupportRequestPriority;
+  type: string;  // Changed from SupportRequestType to string
+  priority: string;  // Changed from SupportRequestPriority to string
   client_id: string;
   scheduled_date?: string | null;
 }) => {
@@ -41,7 +41,7 @@ export const createRequest = async (data: {
     .from("support_requests")
     .insert({
       ...data,
-      status: SupportRequestStatus.PENDING
+      status: SupportRequestStatus.PENDING as string  // Cast to string
     })
     .select()
     .single();
@@ -53,9 +53,9 @@ export const updateRequest = async (
   data: {
     title?: string;
     description?: string;
-    type?: SupportRequestType;
-    status?: SupportRequestStatus;
-    priority?: SupportRequestPriority;
+    type?: string;  // Changed from SupportRequestType to string
+    status?: string;  // Changed from SupportRequestStatus to string
+    priority?: string;  // Changed from SupportRequestPriority to string
     scheduled_date?: string | null;
     resolution?: string | null;
     technician_id?: string | null;

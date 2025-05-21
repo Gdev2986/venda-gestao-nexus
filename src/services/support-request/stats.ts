@@ -7,7 +7,7 @@ export const getRequestStats = async () => {
     const { count: pendingCount, error: pendingError } = await supabase
       .from('support_requests')
       .select('*', { count: 'exact', head: true })
-      .in('status', ['PENDING', 'OPEN']);
+      .in('status', ['PENDING', 'IN_PROGRESS']);
 
     if (pendingError) throw pendingError;
 
