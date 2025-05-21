@@ -1,125 +1,130 @@
 
 import { supabase } from "@/integrations/supabase/client";
-import { TicketFilters } from "./types";
+import { 
+  SupportRequest, 
+  SupportRequestStatus, 
+  SupportRequestType, 
+  SupportRequestPriority 
+} from "@/types/support-request.types";
 
-/**
- * Create a new support ticket
- */
-export async function createTicket(ticketData: any) {
+// Get all support requests
+export async function getAllRequests() {
   try {
-    // Create a single object with specific property typing
-    const { data, error } = await supabase
-      .from('support_requests')
-      .insert({
-        title: ticketData.title,
-        description: ticketData.description,
-        client_id: ticketData.client_id,
-        technician_id: ticketData.technician_id,
-        type: ticketData.type,
-        status: (ticketData.status || 'PENDING'),
-        priority: ticketData.priority,
-        scheduled_date: ticketData.scheduled_date
-      } as any)
-      .select()
-      .single();
-
-    if (error) throw error;
-    return data;
-  } catch (error) {
-    console.error("Error creating support request:", error);
-    throw error;
-  }
-}
-
-/**
- * Update an existing ticket
- */
-export async function updateTicket(id: string, updateData: any) {
-  try {
-    // Prepare updates ensuring it matches database schema
-    const updatePayload: Record<string, any> = {};
+    const response = await supabase
+      .from("support_requests")
+      .select("*")
+      .order("created_at", { ascending: false });
     
-    if (updateData.title !== undefined) updatePayload.title = updateData.title;
-    if (updateData.description !== undefined) updatePayload.description = updateData.description;
-    if (updateData.status !== undefined) updatePayload.status = updateData.status;
-    if (updateData.priority !== undefined) updatePayload.priority = updateData.priority;
-    if (updateData.type !== undefined) updatePayload.type = updateData.type;
-    if (updateData.technician_id !== undefined) updatePayload.technician_id = updateData.technician_id;
-    if (updateData.resolution !== undefined) updatePayload.resolution = updateData.resolution;
-    if (updateData.scheduled_date !== undefined) updatePayload.scheduled_date = updateData.scheduled_date;
-    
-    // Always update the updated_at timestamp
-    updatePayload.updated_at = new Date().toISOString();
-
-    const { data, error } = await supabase
-      .from('support_requests')
-      .update(updatePayload)
-      .eq('id', id)
-      .select()
-      .single();
-
-    if (error) throw error;
-    return data;
-  } catch (error) {
-    console.error("Error updating support request:", error);
-    throw error;
-  }
-}
-
-/**
- * Get tickets with optional filters
- */
-export async function getTickets(filters: TicketFilters = {}) {
-  try {
-    // Start with the base query
-    let query = supabase.from('support_requests').select(`
-      *,
-      client:client_id(*),
-      machine:machine_id(*)
-    `);
-    
-    // Apply filters
-    if (filters.status) {
-      if (Array.isArray(filters.status)) {
-        query = query.in('status', filters.status);
-      } else {
-        query = query.eq('status', filters.status);
-      }
-    }
-
-    if (filters.type) {
-      if (Array.isArray(filters.type)) {
-        query = query.in('type', filters.type);
-      } else {
-        query = query.eq('type', filters.type);
-      }
-    }
-
-    if (filters.priority) {
-      query = query.eq('priority', filters.priority);
-    }
-
-    if (filters.client_id) {
-      query = query.eq('client_id', filters.client_id);
-    }
-
-    if (filters.technician_id) {
-      query = query.eq('technician_id', filters.technician_id);
-    }
-
-    if (filters.search) {
-      query = query.or(`title.ilike.%${filters.search}%,description.ilike.%${filters.search}%`);
-    }
-
-    query = query.order('created_at', { ascending: false });
-    
-    const { data, error } = await query;
-
-    if (error) throw error;
-
-    return data;
+    return { data: response.data as SupportRequest[] || [], error: response.error };
   } catch (error) {
     console.error("Error fetching support requests:", error);
-    return [];
+    return { data: [], error };
+  }
+}
+
+// Get support requests by status
+export async function getRequestsByStatus(status: SupportRequestStatus) {
+  try {
+    const response = await supabase
+      .from("support_requests")
+      .select("*")
+      .eq("status", status)
+      .order("created_at", { ascending: false });
+    
+    return { data: response.data as SupportRequest[] || [], error: response.error };
+  } catch (error) {
+    console.error(`Error fetching ${status} support requests:`, error);
+    return { data: [], error };
+  }
+}
+
+// Create a new support request
+export async function createRequest(requestData: Omit<SupportRequest, "id" | "created_at" | "updated_at">) {
+  try {
+    const response = await supabase
+      .from("support_requests")
+      .insert(requestData)
+      .select()
+      .single();
+    
+    return { data: response.data as SupportRequest, error: response.error };
+  } catch (error) {
+    console.error("Error creating support request:", error);
+    return { data: null, error };
+  }
+}
+
+// Update an existing support request
+export async function updateRequest(id: string, updateData: Partial<SupportRequest>) {
+  try {
+    const response = await supabase
+      .from("support_requests")
+      .update({ ...updateData, updated_at: new Date().toISOString() })
+      .eq("id", id)
+      .select()
+      .single();
+    
+    return { data: response.data as SupportRequest, error: response.error };
+  } catch (error) {
+    console.error("Error updating support request:", error);
+    return { data: null, error };
+  }
+}
+
+// Delete a support request
+export async function deleteRequest(id: string) {
+  try {
+    const response = await supabase
+      .from("support_requests")
+      .delete()
+      .eq("id", id);
+    
+    return { success: !response.error, error: response.error };
+  } catch (error) {
+    console.error("Error deleting support request:", error);
+    return { success: false, error };
+  }
+}
+
+// Get support request statistics
+export async function getRequestStats() {
+  try {
+    // Get all requests to calculate stats
+    const { data: requests, error } = await supabase
+      .from("support_requests")
+      .select("*");
+    
+    if (error) throw error;
+    
+    const pendingRequests = requests.filter(
+      req => req.status === SupportRequestStatus.PENDING || 
+             req.status === SupportRequestStatus.IN_PROGRESS
+    ).length;
+    
+    const highPriorityRequests = requests.filter(
+      req => req.priority === SupportRequestPriority.HIGH
+    ).length;
+    
+    // Count requests by type
+    const typeCounts = requests.reduce((counts: Record<string, number>, req) => {
+      const type = req.type as string;
+      counts[type] = (counts[type] || 0) + 1;
+      return counts;
+    }, {});
+    
+    return {
+      pendingRequests,
+      highPriorityRequests,
+      typeCounts,
+      totalRequests: requests.length
+    };
+  } catch (error) {
+    console.error("Error getting support request stats:", error);
+    return {
+      pendingRequests: 0,
+      highPriorityRequests: 0,
+      typeCounts: {},
+      totalRequests: 0
+    };
   }
 }

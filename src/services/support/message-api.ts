@@ -1,103 +1,60 @@
 
 import { supabase } from "@/integrations/supabase/client";
-import { createMessageNotification } from "./notification-api";
+import { SupportMessage } from "./types";
 
-// Helper function to transform message data consistently
-function messageTransformer(msg: any) {
-  const userObj = {
-    id: '',
-    name: '',
-    role: ''
-  };
-  
-  // Safely access user properties
-  if (msg.user && typeof msg.user === 'object') {
-    const userAny = msg.user;
-    if (userAny && !userAny.error) {
-      userObj.id = userAny.id || '';
-      userObj.name = userAny.name || '';
-      userObj.role = userAny.role || '';
-    }
-  }
-  
-  // Ensure we have a ticket_id property, falling back to conversation_id if needed
-  const messageTicketId = msg.ticket_id || msg.conversation_id;
-  
-  return {
-    id: msg.id,
-    ticket_id: messageTicketId,
-    user_id: msg.user_id,
-    message: msg.message,
-    created_at: msg.created_at,
-    user: userObj
-  };
-}
-
-// Get messages for a ticket
+// Get messages for a specific support ticket
 export async function getTicketMessages(ticketId: string) {
-  // Fix: Simplify the code to avoid excessive type instantiation
   try {
-    const { data, error } = await supabase
-      .from('support_messages')
-      .select('*, user:user_id(id, name, role)')
-      .eq('conversation_id', ticketId)
-      .order('created_at', { ascending: true });
-      
-    if (error) {
-      return { data: null, error };
-    }
+    const response = await supabase
+      .from("support_messages")
+      .select(`
+        *,
+        user:user_id (id, name, role)
+      `)
+      .eq("ticket_id", ticketId)
+      .order("created_at", { ascending: true });
     
-    if (!data || data.length === 0) {
-      // If no results, it could be using a different column name
-      // This is a fallback mechanism for backward compatibility
-      const { data: altData, error: altError } = await supabase
-        .from('support_messages')
-        .select('*, user:user_id(id, name, role)')
-        .eq('ticket_id', ticketId)
-        .order('created_at', { ascending: true });
-        
-      if (altError) return { data: null, error: altError };
-        
-      if (!altData || altData.length === 0) {
-        return { data: [], error: null };
-      }
-      
-      // Process alternative response
-      const messages = altData.map(msg => messageTransformer(msg));
-      return { data: messages, error: null };
-    }
-    
-    // Process standard response
-    const messages = data.map(msg => messageTransformer(msg));
-    return { data: messages, error: null };
-  } catch (err) {
-    console.error("Error in getTicketMessages:", err);
-    return { data: null, error: err };
+    return { 
+      data: response.data as SupportMessage[], 
+      error: response.error 
+    };
+  } catch (error) {
+    console.error("Error fetching ticket messages:", error);
+    return { data: null, error };
   }
 }
 
-// Add a message to a ticket
+// Add a new message to a support ticket
 export async function addTicketMessage(ticketId: string, userId: string, message: string) {
-  // Always use conversation_id for consistency
-  const { data, error } = await supabase
-    .from('support_messages')
-    .insert({
-      conversation_id: ticketId,
-      user_id: userId,
-      message: message
-    } as any)
-    .select();
-  
-  if (!error) {
-    // Also update the ticket's updated_at timestamp
-    await supabase
-      .from('support_requests')
-      .update({ updated_at: new Date().toISOString() })
-      .eq('id', ticketId);
-      
-    // Create notification for the message
-    await createMessageNotification(ticketId, userId, message);
+  try {
+    const response = await supabase
+      .from("support_messages")
+      .insert({
+        ticket_id: ticketId,
+        user_id: userId,
+        message
+      })
+      .select()
+      .single();
+    
+    return { data: response.data as SupportMessage, error: response.error };
+  } catch (error) {
+    console.error("Error adding ticket message:", error);
+    return { data: null, error };
   }
+}
 
-  return { data, error };
+// Delete a support message
+export async function deleteTicketMessage(messageId: string) {
+  try {
+    const response = await supabase
+      .from("support_messages")
+      .delete()
+      .eq("id", messageId);
+    
+    return { error: response.error };
+  } catch (error) {
+    console.error("Error deleting ticket message:", error);
+    return { error };
+  }
 }

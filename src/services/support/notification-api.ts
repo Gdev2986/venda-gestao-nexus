@@ -1,165 +1,51 @@
 
 import { supabase } from "@/integrations/supabase/client";
-import { NotificationType, UserRole } from "./types";
-import { Json } from "@/integrations/supabase/types";
-import { getSupportTicketById } from "./ticket-api";
 
-// Notification for new ticket
-export async function createTicketNotification(ticket: any) {
+// Send notifications to support agents about new tickets
+export async function notifySupportAgents(ticketId: string, title: string, message: string) {
   try {
-    // Convert UserRole enum values to strings
-    const roles = [
-      'ADMIN', 
-      'FINANCIAL', 
-      'SUPPORT', 
-      'LOGISTICS'
-    ];
+    // Get all users with SUPPORT or ADMIN role
+    const { data: supportUsers } = await supabase
+      .from("profiles")
+      .select("id")
+      .in("role", ["SUPPORT", "ADMIN"]);
     
-    const { data: staffUsers } = await supabase
-      .from('profiles')
-      .select('id')
-      .in('role', roles as any);
-      
-    if (staffUsers && staffUsers.length > 0) {
-      // Create notification objects for each staff user
-      const notifications = staffUsers.map(user => ({
-        user_id: user.id,
-        title: 'Novo Chamado de Suporte',
-        message: `${ticket.title} - ${ticket.priority}`,
-        type: 'SUPPORT',
-        data: JSON.stringify({ 
-          ticket_id: ticket.id, 
-          priority: ticket.priority 
-        }) as Json,
-        is_read: false
-      }));
-      
-      // Insert notifications one by one to avoid array type issues
-      for (const notification of notifications) {
-        await supabase.from('notifications').insert(notification as any);
-      }
+    if (!supportUsers || supportUsers.length === 0) {
+      return { success: false, error: "No support agents found" };
     }
+    
+    // Create notifications for each support agent
+    const notifications = supportUsers.map(user => ({
+      user_id: user.id,
+      title,
+      message,
+      type: "SUPPORT_TICKET",
+      data: { ticket_id: ticketId }
+    }));
+    
+    const { error } = await supabase
+      .from("notifications")
+      .insert(notifications);
+    
+    return { success: !error, error };
   } catch (error) {
-    console.error('Error creating ticket notification:', error);
+    console.error("Error notifying support agents:", error);
+    return { success: false, error };
   }
 }
 
-// Notification for status update
-export async function createStatusUpdateNotification(ticketId: string, updates: any) {
+// Mark ticket notifications as read
+export async function markTicketNotificationsAsRead(userId: string, ticketId: string) {
   try {
-    const { data: ticket } = await getSupportTicketById(ticketId);
-    if (!ticket) return;
+    const { error } = await supabase
+      .from("notifications")
+      .update({ read: true })
+      .eq("user_id", userId)
+      .eq("data->ticket_id", ticketId);
     
-    // Get the ticket creator to notify them
-    const { data: userData } = await supabase
-      .from('user_client_access')
-      .select('user_id')
-      .eq('client_id', ticket.client_id)
-      .single();
-    
-    if (userData) {
-      await supabase
-        .from('notifications')
-        .insert({
-          user_id: userData.user_id,
-          title: 'Atualização de Chamado',
-          message: `Seu chamado "${ticket.title}" foi atualizado para ${updates.status}`,
-          type: 'SUPPORT',
-          data: JSON.stringify({ 
-            ticket_id: ticketId, 
-            new_status: updates.status 
-          }) as Json,
-          is_read: false
-        } as any);
-    }
-    
-    // If ticket is assigned to someone, notify them as well
-    if (updates.assigned_to) {
-      await supabase
-        .from('notifications')
-        .insert({
-          user_id: updates.assigned_to,
-          title: 'Chamado Atribuído',
-          message: `Você foi designado para o chamado "${ticket.title}"`,
-          type: 'SUPPORT',
-          data: JSON.stringify({ ticket_id: ticketId }) as Json,
-          is_read: false
-        } as any);
-    }
+    return { success: !error, error };
   } catch (error) {
-    console.error('Error creating status update notification:', error);
-  }
-}
-
-// Notification for new message
-export async function createMessageNotification(ticketId: string, senderId: string, message: string) {
-  try {
-    const { data: ticket } = await getSupportTicketById(ticketId);
-    if (!ticket) return;
-    
-    // Determine who should be notified (not the sender)
-    let recipientIds: string[] = [];
-    
-    // If sender is client, notify support staff
-    const { data: sender } = await supabase
-      .from('profiles')
-      .select('role')
-      .eq('id', senderId)
-      .single();
-    
-    if (sender && sender.role === 'CLIENT') {
-      // Notify assigned staff or all support staff if unassigned
-      if (ticket.assigned_to) {
-        recipientIds.push(ticket.assigned_to);
-      } else {
-        // Convert UserRole enum values to strings
-        const roles = [
-          'ADMIN', 
-          'FINANCIAL', 
-          'SUPPORT'
-        ];
-        
-        const { data: staffUsers } = await supabase
-          .from('profiles')
-          .select('id')
-          .in('role', roles as any);
-        
-        if (staffUsers) {
-          recipientIds = staffUsers.map(user => user.id);
-        }
-      }
-    } else {
-      // If sender is staff, notify client
-      const { data: clientUser } = await supabase
-        .from('user_client_access')
-        .select('user_id')
-        .eq('client_id', ticket.client_id)
-        .single();
-      
-      if (clientUser) {
-        recipientIds.push(clientUser.user_id);
-      }
-    }
-    
-    // Create notifications for all recipients
-    if (recipientIds.length > 0) {
-      const notifications = recipientIds
-        .filter(id => id !== senderId) // Don't notify the sender
-        .map(userId => ({
-          user_id: userId,
-          title: 'Nova Mensagem de Suporte',
-          message: `Nova mensagem no chamado "${ticket.title}"`,
-          type: 'SUPPORT',
-          data: JSON.stringify({ ticket_id: ticketId }) as Json,
-          is_read: false
-        }));
-      
-      // Insert notifications one by one to avoid array type issues
-      for (const notification of notifications) {
-        await supabase.from('notifications').insert(notification as any);
-      }
-    }
-  } catch (error) {
-    console.error('Error creating message notification:', error);
+    console.error("Error marking notifications as read:", error);
+    return { success: false, error };
   }
 }

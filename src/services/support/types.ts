@@ -1,28 +1,5 @@
 
-import { Database } from "@/integrations/supabase/types";
-import { Json } from "@/integrations/supabase/types";
-import { 
-  TicketStatus as TicketStatusEnum, 
-  TicketPriority as TicketPriorityEnum, 
-  TicketType as TicketTypeEnum, 
-  NotificationType as NotificationTypeEnum, 
-  UserRole as UserRoleEnum 
-} from "@/types/enums";
-
-// Re-export enums for direct use
-export const TicketStatus = TicketStatusEnum;
-export const TicketPriority = TicketPriorityEnum;
-export const TicketType = TicketTypeEnum;
-export const NotificationType = NotificationTypeEnum;
-export const UserRole = UserRoleEnum;
-
-export type { 
-  TicketStatusEnum as TicketStatus, 
-  TicketPriorityEnum as TicketPriority, 
-  TicketTypeEnum as TicketType, 
-  NotificationTypeEnum as NotificationType,
-  UserRoleEnum as UserRole
-};
+import { TicketStatus, TicketPriority, TicketType } from "@/types/enums";
 
 export interface SupportTicket {
   id: string;
@@ -89,21 +66,4 @@ export interface UpdateTicketParams {
   assigned_to?: string;
   resolution?: string;
   scheduled_date?: string;
-}
-
-export interface TicketFilters {
-  status?: TicketStatus | TicketStatus[];
-  type?: TicketType | TicketType[];
-  priority?: TicketPriority;
-  client_id?: string;
-  assigned_to?: string;
-  user_id?: string;
-  date_from?: string;
-  date_to?: string;
-}
-
-export interface NotificationData {
-  ticket_id: string;
-  priority?: TicketPriority;
-  new_status?: TicketStatus;
 }
