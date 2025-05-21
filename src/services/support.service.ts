@@ -2,6 +2,8 @@
 import { supabase } from "@/integrations/supabase/client";
 import { SupportTicket, CreateTicketParams, UpdateTicketParams, SupportMessage } from "@/types/support.types";
 import { TicketStatus, NotificationType, TicketPriority, TicketType, UserRole } from "@/types/enums";
+import { Database } from "@/integrations/supabase/types";
+import { Json } from "@/integrations/supabase/types";
 
 // Create a new support ticket
 export async function createSupportTicket(ticket: CreateTicketParams): Promise<{ data: SupportTicket | null, error: any }> {
@@ -99,22 +101,24 @@ export async function getSupportTickets(filters?: {
     if (filters.status) {
       if (Array.isArray(filters.status)) {
         // Convert enums to string literals for the database query
-        query = query.in('status', filters.status.map(s => s as unknown as string));
+        const statusValues = filters.status.map(s => s.toString());
+        query = query.in('status', statusValues as any);
       } else {
-        query = query.eq('status', filters.status as unknown as string);
+        query = query.eq('status', filters.status.toString() as any);
       }
     }
     
     if (filters.type) {
       if (Array.isArray(filters.type)) {
-        query = query.in('type', filters.type.map(t => t as unknown as string));
+        const typeValues = filters.type.map(t => t.toString());
+        query = query.in('type', typeValues as any);
       } else {
-        query = query.eq('type', filters.type as unknown as string);
+        query = query.eq('type', filters.type.toString() as any);
       }
     }
     
     if (filters.priority) {
-      query = query.eq('priority', filters.priority as unknown as string);
+      query = query.eq('priority', filters.priority.toString() as any);
     }
     
     if (filters.client_id) query = query.eq('client_id', filters.client_id);
@@ -161,19 +165,31 @@ export async function getTicketMessages(ticketId: string): Promise<{ data: Suppo
       
     if (altError) return { data: null, error: altError };
       
-    // Transform data to match SupportMessage interface
-    const transformedData = altData.map(msg => ({
-      id: msg.id,
-      ticket_id: msg.conversation_id, // Map conversation_id to ticket_id
-      user_id: msg.user_id,
-      message: msg.message,
-      created_at: msg.created_at,
-      user: {
-        id: msg.user?.id || '',
-        name: msg.user?.name || '',
-        role: msg.user?.role || ''
+    // Transform data to match SupportMessage interface with proper error handling
+    const transformedData = altData.map(msg => {
+      // Create a default user object for fallback
+      const userObj = {
+        id: '',
+        name: '',
+        role: ''
+      };
+      
+      // Only try to access user properties if it exists and is not an error
+      if (msg.user && typeof msg.user === 'object' && !('error' in msg.user)) {
+        userObj.id = msg.user.id || '';
+        userObj.name = msg.user.name || '';
+        userObj.role = msg.user.role || '';
       }
-    }));
+      
+      return {
+        id: msg.id,
+        ticket_id: msg.conversation_id, // Map conversation_id to ticket_id
+        user_id: msg.user_id,
+        message: msg.message,
+        created_at: msg.created_at,
+        user: userObj
+      };
+    });
     
     return { data: transformedData as SupportMessage[], error: null };
   }
@@ -225,22 +241,34 @@ export async function addTicketMessage(ticketId: string, userId: string, message
 // Notification helpers
 async function createTicketNotification(ticket: SupportTicket) {
   try {
-    // Notify support staff and admins
+    // Notify support staff and admins - convert UserRole enum values to strings
+    const roles = [
+      UserRole.ADMIN.toString(), 
+      UserRole.FINANCIAL.toString(), 
+      UserRole.SUPPORT.toString(), 
+      UserRole.LOGISTICS.toString()
+    ];
+    
     const { data: staffUsers } = await supabase
       .from('profiles')
       .select('id')
-      .in('role', [UserRole.ADMIN, UserRole.FINANCIAL, UserRole.SUPPORT, UserRole.LOGISTICS].map(r => r as unknown as string));
+      .in('role', roles as any);
       
     if (staffUsers && staffUsers.length > 0) {
+      // Create notification objects for each staff user
       const notifications = staffUsers.map(user => ({
         user_id: user.id,
         title: 'Novo Chamado de Suporte',
         message: `${ticket.title} - ${ticket.priority}`,
-        type: NotificationType.SUPPORT as unknown as string,
-        data: JSON.stringify({ ticket_id: ticket.id, priority: ticket.priority }),
+        type: NotificationType.SUPPORT.toString() as any,
+        data: JSON.stringify({ 
+          ticket_id: ticket.id, 
+          priority: ticket.priority 
+        }) as Json,
         is_read: false
       }));
       
+      // Insert notifications
       await supabase.from('notifications').insert(notifications);
     }
   } catch (error) {
@@ -267,8 +295,11 @@ async function createStatusUpdateNotification(ticketId: string, updates: UpdateT
           user_id: userData.user_id,
           title: 'Atualização de Chamado',
           message: `Seu chamado "${ticket.title}" foi atualizado para ${updates.status}`,
-          type: NotificationType.SUPPORT as unknown as string,
-          data: JSON.stringify({ ticket_id: ticketId, new_status: updates.status }),
+          type: NotificationType.SUPPORT.toString() as any,
+          data: JSON.stringify({ 
+            ticket_id: ticketId, 
+            new_status: updates.status 
+          }) as Json,
           is_read: false
         });
     }
@@ -281,8 +312,8 @@ async function createStatusUpdateNotification(ticketId: string, updates: UpdateT
           user_id: updates.assigned_to,
           title: 'Chamado Atribuído',
           message: `Você foi designado para o chamado "${ticket.title}"`,
-          type: NotificationType.SUPPORT as unknown as string,
-          data: JSON.stringify({ ticket_id: ticketId }),
+          type: NotificationType.SUPPORT.toString() as any,
+          data: JSON.stringify({ ticket_id: ticketId }) as Json,
           is_read: false
         });
     }
@@ -306,15 +337,22 @@ async function createMessageNotification(ticketId: string, senderId: string, mes
       .eq('id', senderId)
       .single();
     
-    if (sender && sender.role === UserRole.CLIENT as unknown as string) {
+    if (sender && sender.role === UserRole.CLIENT.toString()) {
       // Notify assigned staff or all support staff if unassigned
       if (ticket.assigned_to) {
         recipientIds.push(ticket.assigned_to);
       } else {
+        // Convert UserRole enum values to strings
+        const roles = [
+          UserRole.ADMIN.toString(), 
+          UserRole.FINANCIAL.toString(), 
+          UserRole.SUPPORT.toString()
+        ];
+        
         const { data: staffUsers } = await supabase
           .from('profiles')
           .select('id')
-          .in('role', [UserRole.ADMIN, UserRole.FINANCIAL, UserRole.SUPPORT].map(r => r as unknown as string));
+          .in('role', roles as any);
         
         if (staffUsers) {
           recipientIds = staffUsers.map(user => user.id);
@@ -341,8 +379,8 @@ async function createMessageNotification(ticketId: string, senderId: string, mes
           user_id: userId,
           title: 'Nova Mensagem de Suporte',
           message: `Nova mensagem no chamado "${ticket.title}"`,
-          type: NotificationType.SUPPORT as unknown as string,
-          data: JSON.stringify({ ticket_id: ticketId }),
+          type: NotificationType.SUPPORT.toString() as any,
+          data: JSON.stringify({ ticket_id: ticketId }) as Json,
           is_read: false
         }));
       

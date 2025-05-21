@@ -19,9 +19,9 @@ export const SupportRequestService = {
           description: ticketData.description,
           client_id: ticketData.client_id,
           technician_id: ticketData.technician_id,
-          type: ticketData.type as unknown as string,
-          status: (ticketData.status || SupportRequestStatus.PENDING) as unknown as string,
-          priority: ticketData.priority as unknown as string,
+          type: ticketData.type as string,
+          status: (ticketData.status || SupportRequestStatus.PENDING) as string,
+          priority: ticketData.priority as string,
           scheduled_date: ticketData.scheduled_date
         })
         .select()
@@ -87,23 +87,26 @@ export const SupportRequestService = {
       // Apply filters with proper type handling
       if (filters.status) {
         if (Array.isArray(filters.status)) {
-          // Use 'in' operator for array values with type casting
-          query = query.in('status', filters.status.map(s => s as unknown as string));
+          // Convert enum values to strings for the query
+          const statusValues = filters.status.map(s => s.toString());
+          query = query.in('status', statusValues as any);
         } else {
-          query = query.eq('status', filters.status as unknown as string);
+          query = query.eq('status', filters.status.toString() as any);
         }
       }
 
       if (filters.type) {
         if (Array.isArray(filters.type)) {
-          query = query.in('type', filters.type.map(t => t as unknown as string));
+          // Convert enum values to strings for the query
+          const typeValues = filters.type.map(t => t.toString());
+          query = query.in('type', typeValues as any);
         } else {
-          query = query.eq('type', filters.type as unknown as string);
+          query = query.eq('type', filters.type.toString() as any);
         }
       }
 
       if (filters.priority) {
-        query = query.eq('priority', filters.priority as unknown as string);
+        query = query.eq('priority', filters.priority.toString() as any);
       }
 
       if (filters.client_id) {
@@ -142,15 +145,34 @@ export const SupportRequestService = {
 
       if (error) throw error;
 
-      // Transform to match SupportMessage interface by mapping conversation_id to ticket_id
-      const messages = data.map(msg => ({
-        id: msg.id,
-        ticket_id: msg.conversation_id, // Map conversation_id to ticket_id
-        user_id: msg.user_id,
-        message: msg.message,
-        created_at: msg.created_at,
-        user: msg.user || undefined // Handle potential error with fallback
-      })) as SupportMessage[];
+      // Transform to match SupportMessage interface with proper fallbacks
+      const messages = data.map(msg => {
+        // Handle potential missing user data
+        let userData = {
+          id: '',
+          name: '',
+          role: ''
+        };
+        
+        // Only try to access user properties if they exist
+        if (msg.user && typeof msg.user === 'object' && !('error' in msg.user)) {
+          userData = {
+            id: msg.user.id || '',
+            name: msg.user.name || '',
+            role: msg.user.role || ''
+          };
+        }
+        
+        // Return properly formatted message object
+        return {
+          id: msg.id,
+          ticket_id: msg.conversation_id, // Map conversation_id to ticket_id
+          user_id: msg.user_id,
+          message: msg.message,
+          created_at: msg.created_at,
+          user: userData
+        };
+      }) as SupportMessage[];
 
       return messages;
     } catch (error) {
@@ -199,7 +221,7 @@ export const SupportRequestService = {
       // Count tickets by type
       const typeCounts: Record<string, number> = {};
       tickets.forEach(ticket => {
-        const typeKey = ticket.type as string;
+        const typeKey = ticket.type.toString();
         if (!typeCounts[typeKey]) {
           typeCounts[typeKey] = 0;
         }
