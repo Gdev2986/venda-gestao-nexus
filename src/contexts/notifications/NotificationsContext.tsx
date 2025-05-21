@@ -34,11 +34,6 @@ export const NotificationsProvider: React.FC<{ children: React.ReactNode }> = ({
     fetchNotifications
   );
 
-  // Define the toggle function for soundEnabled
-  const toggleSoundEnabled = (enabled: boolean) => {
-    setSoundEnabled(enabled);
-  };
-
   const value: NotificationsContextProps = {
     notifications,
     unreadCount,
@@ -49,7 +44,7 @@ export const NotificationsProvider: React.FC<{ children: React.ReactNode }> = ({
     deleteNotification,
     refreshNotifications,
     soundEnabled,
-    setSoundEnabled: toggleSoundEnabled
+    setSoundEnabled
   };
 
   return (

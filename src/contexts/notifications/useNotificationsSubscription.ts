@@ -52,8 +52,9 @@ export const useNotificationsSubscription = (
       const userRole = await getUserRole(userId);
       console.log('Setting up realtime notifications for user role:', userRole);
       
-      const channel = supabase
-        .channel('public:notifications')
+      // Subscribe to personal notifications
+      const personalChannel = supabase
+        .channel('personal-notifications')
         .on(
           'postgres_changes',
           {
@@ -63,33 +64,61 @@ export const useNotificationsSubscription = (
             filter: `user_id=eq.${userId}`,
           },
           (payload) => {
-            console.log('Notification change received!', payload);
-            
-            if (payload.eventType === 'INSERT') {
-              const newNotification = payload.new as Notification;
-              
-              // Play sound based on notification type
-              playNotificationSoundIfEnabled(newNotification.type as NotificationType, soundEnabled);
-              
-              // Show toast notification
-              toast({
-                title: newNotification.title,
-                description: newNotification.message,
-              });
-              
-              // Update our notifications state
-              setNotifications(prev => [newNotification, ...prev]);
-            } else {
-              // For updates or deletions, just refresh the list
-              fetchNotifications();
-            }
+            console.log('Personal notification change received!', payload);
+            handleNotificationChange(payload);
           }
         )
         .subscribe((status) => {
-          console.log('Realtime subscription status:', status);
+          console.log('Personal realtime subscription status:', status);
         });
+      
+      // Subscribe to role-specific notifications if the user is an admin or logistics
+      let roleChannel;
+      if (userRole === 'ADMIN' || userRole === 'LOGISTICS') {
+        roleChannel = supabase
+          .channel('role-notifications')
+          .on(
+            'postgres_changes',
+            {
+              event: 'INSERT',
+              schema: 'public',
+              table: 'notifications',
+              filter: `data->>'recipient_roles'?'${userRole}'`,
+            },
+            (payload) => {
+              console.log('Role-based notification received!', payload);
+              handleNotificationChange(payload);
+            }
+          )
+          .subscribe((status) => {
+            console.log('Role-based realtime subscription status:', status);
+          });
+      }
 
-      return channel;
+      // Return both channels for cleanup
+      return { personalChannel, roleChannel };
+    };
+
+    // Function to handle notification changes
+    const handleNotificationChange = (payload: any) => {
+      if (payload.eventType === 'INSERT') {
+        const newNotification = payload.new as Notification;
+        
+        // Play sound based on notification type
+        playNotificationSoundIfEnabled(newNotification.type as NotificationType, soundEnabled);
+        
+        // Show toast notification
+        toast({
+          title: newNotification.title,
+          description: newNotification.message,
+        });
+        
+        // Update our notifications state
+        setNotifications(prev => [newNotification, ...prev]);
+      } else {
+        // For updates or deletions, just refresh the list
+        fetchNotifications();
+      }
     };
 
     // Set up the subscription
@@ -98,8 +127,9 @@ export const useNotificationsSubscription = (
     // Cleanup function
     return () => {
       console.log('Cleaning up notification subscription');
-      setupPromise.then(channel => {
-        if (channel) supabase.removeChannel(channel);
+      setupPromise.then(channels => {
+        if (channels.personalChannel) supabase.removeChannel(channels.personalChannel);
+        if (channels.roleChannel) supabase.removeChannel(channels.roleChannel);
         // Reset the ref when unmounting
         subscriptionSetupRef.current = false;
       });

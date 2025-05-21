@@ -1,43 +1,24 @@
 
-import { 
-  SupportRequest, 
-  SupportMessage, 
-  SupportRequestStatus, 
-  SupportRequestType, 
-  SupportRequestPriority 
-} from "@/types/support-request.types";
+import { SupportRequestType, SupportRequestStatus, SupportRequestPriority } from "@/types/support-request.types";
 
-// Re-export types for convenience
-export type {
-  SupportRequest,
-  SupportMessage,
-  SupportRequestStatus,
-  SupportRequestType,
-  SupportRequestPriority
-};
+export interface CreateSupportRequestParams {
+  title: string;
+  description: string;
+  client_id: string;
+  type: SupportRequestType;
+  priority: SupportRequestPriority;
+  scheduled_date?: string | null;
+}
 
-// Define filter interfaces
-export interface TicketFilters {
-  status?: SupportRequestStatus | SupportRequestStatus[];
-  client_id?: string;
-  technician_id?: string;
-  type?: SupportRequestType | SupportRequestType[];
+export interface UpdateSupportRequestParams {
+  title?: string;
+  description?: string;
+  status?: SupportRequestStatus;
   priority?: SupportRequestPriority;
-  search?: string;
+  type?: SupportRequestType;
+  technician_id?: string | null;
+  resolution?: string | null;
+  scheduled_date?: string | null;
 }
 
-export interface TicketStats {
-  pendingRequests: number;
-  highPriorityRequests: number;
-  typeCounts: Record<string, number>;
-  totalRequests?: number; 
-  // Os campos a seguir não são retornados pelo serviço:
-  resolvedRequests?: number;
-  supportAgents?: number;
-}
-
-export interface MessageData {
-  ticket_id: string;
-  user_id: string;
-  message: string;
-}
+export { SupportRequestType, SupportRequestStatus, SupportRequestPriority };
