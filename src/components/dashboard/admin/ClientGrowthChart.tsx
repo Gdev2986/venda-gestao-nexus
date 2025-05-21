@@ -41,10 +41,10 @@ const ClientGrowthChart = ({ data, isLoading = false }: ClientGrowthChartProps) 
               data={chartData}
               color="#10b981" // Cor verde para indicar crescimento
               margin={{ top: 10, right: 10, left: 0, bottom: 20 }}
-              gradientFrom="#10b981"
-              gradientTo="#dcfce7"
               strokeWidth={3}
               showPoints={true}
+              gradientFrom="#10b981"
+              gradientTo="#dcfce7"
             />
           </motion.div>
         )}

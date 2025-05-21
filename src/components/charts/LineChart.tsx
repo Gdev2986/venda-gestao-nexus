@@ -9,6 +9,11 @@ interface LineChartProps {
   color?: string;
   formatter?: (value: number) => string;
   margin?: { top: number; right: number; left: number; bottom: number };
+  gradientFrom?: string;
+  gradientTo?: string;
+  strokeWidth?: number;
+  showPoints?: boolean;
+  showArea?: boolean;
 }
 
 export const LineChart = ({
@@ -18,15 +23,24 @@ export const LineChart = ({
   height = 300,
   color = "hsl(var(--primary))",
   formatter,
-  margin = { top: 10, right: 30, left: 20, bottom: 20 }
+  margin = { top: 10, right: 30, left: 20, bottom: 20 },
+  gradientFrom,
+  gradientTo,
+  strokeWidth = 2.5,
+  showPoints = false,
+  showArea = false
 }: LineChartProps) => {
+  // Use provided gradient colors or fall back to calculated ones
+  const areaGradientFrom = gradientFrom || color;
+  const areaGradientTo = gradientTo || `${color}33`; // Add transparency to color
+
   return (
     <ResponsiveContainer width="100%" height={height}>
       <RechartsLineChart data={data} margin={margin}>
         <defs>
           <linearGradient id="colorGradient" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="5%" stopColor={color} stopOpacity={0.3} />
-            <stop offset="95%" stopColor={color} stopOpacity={0.05} />
+            <stop offset="5%" stopColor={areaGradientFrom} stopOpacity={0.3} />
+            <stop offset="95%" stopColor={areaGradientTo} stopOpacity={0.05} />
           </linearGradient>
         </defs>
         <CartesianGrid strokeDasharray="3 3" vertical={false} opacity={0.2} />
@@ -70,25 +84,27 @@ export const LineChart = ({
           wrapperStyle={{ fontSize: '12px', paddingTop: '10px' }}
           iconType="circle"  
         />
-        <Area 
-          type="monotone" 
-          dataKey={dataKey} 
-          stroke={color} 
-          strokeWidth={2.5}
-          fillOpacity={1}
-          fill="url(#colorGradient)"
-          activeDot={{ r: 6, strokeWidth: 0 }}
-          dot={{ r: 0 }}
-          animationDuration={1500}
-          animationEasing="ease-in-out"
-        />
+        {showArea && (
+          <Area 
+            type="monotone" 
+            dataKey={dataKey} 
+            stroke={color} 
+            strokeWidth={strokeWidth}
+            fillOpacity={1}
+            fill="url(#colorGradient)"
+            activeDot={{ r: 6, strokeWidth: 0 }}
+            dot={{ r: 0 }}
+            animationDuration={1500}
+            animationEasing="ease-in-out"
+          />
+        )}
         <Line
           type="monotone"
           dataKey={dataKey}
           stroke={color}
-          strokeWidth={3}
+          strokeWidth={strokeWidth}
           activeDot={{ r: 6, fill: color, strokeWidth: 2, stroke: 'white' }}
-          dot={{ r: 0 }}
+          dot={showPoints ? { r: 4, fill: color, strokeWidth: 2, stroke: 'white' } : { r: 0 }}
           animationDuration={1500}
           animationEasing="ease-in-out"
         />

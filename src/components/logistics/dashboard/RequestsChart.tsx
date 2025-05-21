@@ -63,11 +63,11 @@ const RequestsChart: React.FC<RequestsChartProps> = ({ data }) => {
             <LineChart 
               data={filteredData}
               color="#f59e0b" // Cor âmbar para solicitações
-              gradientFrom="#f59e0b"
-              gradientTo="#fef3c7"
               strokeWidth={3}
               showArea={true}
               showPoints={true}
+              gradientFrom="#f59e0b"
+              gradientTo="#fef3c7"
             />
           </motion.div>
         </AnimatePresence>
