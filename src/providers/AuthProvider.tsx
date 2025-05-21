@@ -1,5 +1,5 @@
 
-import React, { createContext, useState, useEffect, useCallback, useContext } from "react";
+import * as React from "react";
 import { Session, User } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
 import { UserRole } from "@/types";
@@ -22,7 +22,7 @@ interface AuthContextType {
   changePasswordAndActivate: (newPassword: string) => Promise<boolean>;
 }
 
-export const AuthContext = createContext<AuthContextType>({
+export const AuthContext = React.createContext<AuthContextType>({
   user: null,
   session: null,
   isLoading: true,
@@ -37,18 +37,18 @@ export const AuthContext = createContext<AuthContextType>({
   changePasswordAndActivate: async () => false,
 });
 
-export const useAuth = () => useContext(AuthContext);
+export const useAuth = () => React.useContext(AuthContext);
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [user, setUser] = useState<User | null>(null);
-  const [session, setSession] = useState<Session | null>(null);
-  const [isLoading, setIsLoading] = useState<boolean>(true);
-  const [userRole, setUserRole] = useState<UserRole | null>(null);
-  const [needsPasswordChange, setNeedsPasswordChange] = useState<boolean>(false);
-  const [profile, setProfile] = useState<UserProfile | null>(null);
+  const [user, setUser] = React.useState<User | null>(null);
+  const [session, setSession] = React.useState<Session | null>(null);
+  const [isLoading, setIsLoading] = React.useState<boolean>(true);
+  const [userRole, setUserRole] = React.useState<UserRole | null>(null);
+  const [needsPasswordChange, setNeedsPasswordChange] = React.useState<boolean>(false);
+  const [profile, setProfile] = React.useState<UserProfile | null>(null);
 
   // Check if current user needs password change
-  const checkPasswordChangeStatus = useCallback(async (userId: string) => {
+  const checkPasswordChangeStatus = React.useCallback(async (userId: string) => {
     try {
       const needsChange = await AuthService.needsPasswordChange();
       setNeedsPasswordChange(needsChange);
@@ -60,7 +60,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   }, []);
 
   // Fetch user profile and role
-  const loadUserProfile = useCallback(async (userId: string) => {
+  const loadUserProfile = React.useCallback(async (userId: string) => {
     try {
       // Fetch profile data
       const { data, error } = await supabase
@@ -91,20 +91,20 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   }, []);
 
   // Refresh session data
-  const refreshSession = useCallback(async () => {
+  const refreshSession = React.useCallback(async () => {
     try {
       const { data, error } = await supabase.auth.getSession();
       if (error) throw error;
       
-      const session = data.session;
-      setSession(session);
-      setUser(session?.user || null);
+      const currentSession = data.session;
+      setSession(currentSession);
+      setUser(currentSession?.user || null);
       
-      if (session?.user) {
+      if (currentSession?.user) {
         // Use setTimeout to defer these calls and prevent deadlocks
         setTimeout(async () => {
-          await loadUserProfile(session.user.id);
-          await checkPasswordChangeStatus(session.user.id);
+          await loadUserProfile(currentSession.user.id);
+          await checkPasswordChangeStatus(currentSession.user.id);
         }, 0);
       } else {
         setProfile(null);
@@ -116,7 +116,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   }, [loadUserProfile, checkPasswordChangeStatus]);
 
-  useEffect(() => {
+  React.useEffect(() => {
     // Set up auth state change listener first
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, newSession) => {
