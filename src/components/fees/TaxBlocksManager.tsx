@@ -3,14 +3,17 @@ import { useEffect, useState } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Plus, Link, Settings, Loader2 } from "lucide-react";
+import { Plus, Link, Settings, Loader2, AlertCircle } from "lucide-react";
 import { 
   Dialog, 
   DialogContent, 
   DialogHeader, 
   DialogTitle, 
-  DialogTrigger 
+  DialogTrigger,
+  DialogDescription
 } from "@/components/ui/dialog";
+import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
+
 import TaxBlockEditor from "./TaxBlockEditor";
 import TaxBlockClientAssociation from "./TaxBlockClientAssociation";
 import { TaxBlocksService, BlockWithRates } from "@/services/tax-blocks.service";
@@ -22,11 +25,17 @@ const TaxBlocksManager = () => {
   const [selectedBlock, setSelectedBlock] = useState<BlockWithRates | null>(null);
   const [isCreating, setIsCreating] = useState(false);
   const [isAssociating, setIsAssociating] = useState(false);
+  const [saveError, setSaveError] = useState<string | null>(null);
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
   // Fetch tax blocks
-  const { data: blocks = [], isLoading, error } = useQuery({
+  const { 
+    data: blocks = [], 
+    isLoading, 
+    error,
+    refetch 
+  } = useQuery({
     queryKey: ['taxBlocks'],
     queryFn: () => TaxBlocksService.getTaxBlocks()
   });
@@ -39,8 +48,21 @@ const TaxBlocksManager = () => {
 
   // Create tax block mutation
   const createBlockMutation = useMutation({
-    mutationFn: (block: { name: string; description: string | null }) => 
-      TaxBlocksService.createTaxBlock(block),
+    mutationFn: async (block: { name: string; description: string | null }) => {
+      // Create the tax block
+      const createdBlock = await TaxBlocksService.createTaxBlock(block);
+      if (!createdBlock) {
+        throw new Error("Failed to create tax block");
+      }
+      
+      // Verify the block was created
+      const verified = await TaxBlocksService.verifyTaxBlockSave(createdBlock);
+      if (!verified) {
+        throw new Error("Tax block created but verification failed");
+      }
+      
+      return createdBlock;
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['taxBlocks'] });
       toast({
@@ -48,11 +70,14 @@ const TaxBlocksManager = () => {
         description: "Bloco de taxas criado com sucesso",
       });
       setIsCreating(false);
+      setSaveError(null);
     },
     onError: (error) => {
+      const errorMessage = error instanceof Error ? error.message : "Erro desconhecido";
+      setSaveError(`Erro ao criar bloco: ${errorMessage}`);
       toast({
         title: "Erro",
-        description: `Erro ao criar bloco: ${error}`,
+        description: `Erro ao criar bloco: ${errorMessage}`,
         variant: "destructive",
       });
     }
@@ -60,8 +85,36 @@ const TaxBlocksManager = () => {
 
   // Update tax block mutation
   const updateBlockMutation = useMutation({
-    mutationFn: ({ id, updates }: { id: string; updates: Partial<BlockWithRates> }) =>
-      TaxBlocksService.updateTaxBlock(id, updates),
+    mutationFn: async ({ id, updates, rates }: { 
+      id: string; 
+      updates: Partial<BlockWithRates>;
+      rates?: any[]
+    }) => {
+      console.log("Updating block:", id, updates);
+      console.log("With rates:", rates);
+      
+      // Update the block info
+      const updatedBlock = await TaxBlocksService.updateTaxBlock(id, updates);
+      if (!updatedBlock) {
+        throw new Error("Failed to update tax block");
+      }
+      
+      // Then update the rates if they exist
+      if (rates && rates.length > 0) {
+        const ratesSaved = await TaxBlocksService.saveTaxRates(id, rates);
+        if (!ratesSaved) {
+          throw new Error("Failed to save tax rates");
+        }
+        
+        // Verify everything was saved correctly
+        const verified = await TaxBlocksService.verifyTaxBlockSave(updatedBlock);
+        if (!verified) {
+          throw new Error("Updates made but verification failed");
+        }
+      }
+      
+      return { success: true };
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['taxBlocks'] });
       toast({
@@ -69,11 +122,15 @@ const TaxBlocksManager = () => {
         description: "Bloco de taxas atualizado com sucesso",
       });
       setSelectedBlock(null);
+      setSaveError(null);
+      refetch(); // Force refetch to ensure we have the latest data
     },
     onError: (error) => {
+      const errorMessage = error instanceof Error ? error.message : "Erro desconhecido";
+      setSaveError(`Erro ao atualizar bloco: ${errorMessage}`);
       toast({
         title: "Erro",
-        description: `Erro ao atualizar bloco: ${error}`,
+        description: `Erro ao atualizar bloco: ${errorMessage}`,
         variant: "destructive",
       });
     }
@@ -104,49 +161,65 @@ const TaxBlocksManager = () => {
   };
 
   const handleEditBlock = (updatedBlock: BlockWithRates) => {
-    if (!updatedBlock.id) return;
+    if (!updatedBlock.id) {
+      toast({
+        title: "Erro",
+        description: "ID do bloco não encontrado",
+        variant: "destructive",
+      });
+      return;
+    }
     
-    // First update the block info
+    console.log("Saving updated block:", updatedBlock);
+    
+    // Extract rates to save
+    const rates = updatedBlock.rates?.map(rate => ({
+      payment_method: rate.payment_method,
+      installment: rate.installment,
+      root_rate: rate.root_rate,
+      forwarding_rate: rate.forwarding_rate,
+      final_rate: rate.final_rate
+    }));
+    
+    // Update the block
     updateBlockMutation.mutate({ 
       id: updatedBlock.id, 
       updates: {
         name: updatedBlock.name,
         description: updatedBlock.description
-      }
+      },
+      rates
     });
-    
-    // Then update the rates if they exist
-    if (updatedBlock.rates && updatedBlock.rates.length > 0) {
-      const ratesToSave = updatedBlock.rates.map(rate => ({
-        payment_method: rate.payment_method,
-        installment: rate.installment,
-        root_rate: rate.root_rate,
-        forwarding_rate: rate.forwarding_rate,
-        final_rate: rate.final_rate
-      }));
-      
-      TaxBlocksService.saveTaxRates(updatedBlock.id, ratesToSave)
-        .then(() => {
-          queryClient.invalidateQueries({ queryKey: ['taxBlocks'] });
-        })
-        .catch(error => {
-          toast({
-            title: "Erro",
-            description: `Erro ao salvar taxas: ${error}`,
-            variant: "destructive",
-          });
-        });
-    }
   };
 
   const handleDeleteBlock = (blockId: string) => {
     deleteBlockMutation.mutate(blockId);
   };
 
+  // Monitor save operations
+  const isSaving = createBlockMutation.isPending || updateBlockMutation.isPending || deleteBlockMutation.isPending;
+
+  // Clear error when dialog closes
+  useEffect(() => {
+    if (!isCreating && !selectedBlock) {
+      setSaveError(null);
+    }
+  }, [isCreating, selectedBlock]);
+
   if (error) {
     return (
-      <div className="p-8 text-center">
-        <p className="text-red-500">Erro ao carregar blocos de taxas. Por favor, tente novamente.</p>
+      <div className="p-8">
+        <Alert variant="destructive">
+          <AlertCircle className="h-4 w-4" />
+          <AlertTitle>Erro</AlertTitle>
+          <AlertDescription>
+            Erro ao carregar blocos de taxas. Por favor, tente novamente.
+            {error instanceof Error ? `: ${error.message}` : ""}
+          </AlertDescription>
+        </Alert>
+        <Button className="mt-4" onClick={() => refetch()}>
+          Tentar novamente
+        </Button>
       </div>
     );
   }
@@ -168,24 +241,35 @@ const TaxBlocksManager = () => {
         <div className="flex space-x-2 w-full sm:w-auto">
           <Dialog open={isCreating} onOpenChange={setIsCreating}>
             <DialogTrigger asChild>
-              <Button className="w-full sm:w-auto">
-                <Plus className="h-4 w-4 mr-1" /> Novo Bloco
+              <Button className="w-full sm:w-auto" disabled={isSaving}>
+                {createBlockMutation.isPending ? (
+                  <><Loader2 className="h-4 w-4 mr-1 animate-spin" /> Criando...</>
+                ) : (
+                  <><Plus className="h-4 w-4 mr-1" /> Novo Bloco</>
+                )}
               </Button>
             </DialogTrigger>
             <DialogContent>
               <DialogHeader>
                 <DialogTitle>Criar Novo Bloco de Taxas</DialogTitle>
+                {saveError && (
+                  <Alert variant="destructive" className="mt-2">
+                    <AlertCircle className="h-4 w-4" />
+                    <AlertDescription>{saveError}</AlertDescription>
+                  </Alert>
+                )}
               </DialogHeader>
               <TaxBlockEditor 
                 onSave={handleCreateBlock} 
                 onCancel={() => setIsCreating(false)} 
+                isSubmitting={createBlockMutation.isPending}
               />
             </DialogContent>
           </Dialog>
           
           <Dialog open={isAssociating} onOpenChange={setIsAssociating}>
             <DialogTrigger asChild>
-              <Button variant="outline" className="w-full sm:w-auto">
+              <Button variant="outline" className="w-full sm:w-auto" disabled={isSaving || blocks.length === 0}>
                 <Link className="h-4 w-4 mr-1" /> Associar Clientes
               </Button>
             </DialogTrigger>
@@ -231,6 +315,7 @@ const TaxBlocksManager = () => {
                         variant="outline" 
                         size="sm"
                         onClick={() => setSelectedBlock(block)}
+                        disabled={isSaving}
                       >
                         <Settings className="h-4 w-4 mr-1" /> Configurar Taxas
                       </Button>
@@ -238,12 +323,19 @@ const TaxBlocksManager = () => {
                     <DialogContent className="max-w-4xl">
                       <DialogHeader>
                         <DialogTitle>Configurar Taxas - {block.name}</DialogTitle>
+                        {saveError && (
+                          <Alert variant="destructive" className="mt-2">
+                            <AlertCircle className="h-4 w-4" />
+                            <AlertDescription>{saveError}</AlertDescription>
+                          </Alert>
+                        )}
                       </DialogHeader>
                       <TaxBlockEditor 
                         block={block} 
                         onSave={handleEditBlock} 
                         onCancel={() => setSelectedBlock(null)}
                         onDelete={() => handleDeleteBlock(block.id)}
+                        isSubmitting={updateBlockMutation.isPending || deleteBlockMutation.isPending}
                       />
                     </DialogContent>
                   </Dialog>

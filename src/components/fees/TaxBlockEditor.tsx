@@ -7,6 +7,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Textarea } from "@/components/ui/textarea";
 import { Slider } from "@/components/ui/slider";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Loader2, AlertCircle } from "lucide-react";
 import { PaymentMethod } from "@/types/enums";
 import { BlockWithRates, TaxRate } from "@/services/tax-blocks.service";
 
@@ -15,13 +17,21 @@ type TaxBlockEditorProps = {
   onSave: (block: BlockWithRates) => void;
   onCancel: () => void;
   onDelete?: () => void;
+  isSubmitting?: boolean;
 };
 
-const TaxBlockEditor = ({ block, onSave, onCancel, onDelete }: TaxBlockEditorProps) => {
+const TaxBlockEditor = ({ 
+  block, 
+  onSave, 
+  onCancel, 
+  onDelete,
+  isSubmitting = false 
+}: TaxBlockEditorProps) => {
   const [name, setName] = useState(block?.name || "");
   const [description, setDescription] = useState(block?.description || "");
   const [activeTab, setActiveTab] = useState<PaymentMethod>(PaymentMethod.CREDIT);
   const [selectedInstallment, setSelectedInstallment] = useState(1);
+  const [validationError, setValidationError] = useState<string | null>(null);
   
   // Initialize tax rates with default values or existing values
   const [taxRates, setTaxRates] = useState<Record<string, TaxRate[]>>({
@@ -118,6 +128,7 @@ const TaxBlockEditor = ({ block, onSave, onCancel, onDelete }: TaxBlockEditorPro
         }];
       }
       
+      console.log("Setting tax rates:", ratesByMethod);
       setTaxRates(ratesByMethod);
     }
   }, [block]);
@@ -152,6 +163,40 @@ const TaxBlockEditor = ({ block, onSave, onCancel, onDelete }: TaxBlockEditorPro
   
   // Update a specific rate
   const updateRate = (rateType: 'root_rate' | 'forwarding_rate' | 'final_rate', value: number) => {
+    setValidationError(null);
+    
+    if (isNaN(value)) {
+      setValidationError("O valor da taxa deve ser um número");
+      return;
+    }
+    
+    if (value < 0) {
+      setValidationError("O valor da taxa não pode ser negativo");
+      return;
+    }
+    
+    // Validate rate hierarchy
+    if (rateType === 'root_rate' && value > currentRates.forwarding_rate) {
+      setValidationError("Taxa raiz não pode ser maior que a taxa de repasse");
+      return;
+    }
+    
+    if (rateType === 'forwarding_rate') {
+      if (value < currentRates.root_rate) {
+        setValidationError("Taxa de repasse não pode ser menor que a taxa raiz");
+        return;
+      }
+      if (value > currentRates.final_rate) {
+        setValidationError("Taxa de repasse não pode ser maior que a taxa final");
+        return;
+      }
+    }
+    
+    if (rateType === 'final_rate' && value < currentRates.forwarding_rate) {
+      setValidationError("Taxa final não pode ser menor que a taxa de repasse");
+      return;
+    }
+    
     const updatedRates = { ...taxRates };
     const methodRates = updatedRates[activeTab] || [];
     const index = methodRates.findIndex(r => r.installment === selectedInstallment);
@@ -178,8 +223,33 @@ const TaxBlockEditor = ({ block, onSave, onCancel, onDelete }: TaxBlockEditorPro
 
   const commissions = calculateCommissions();
 
+  const validateForm = (): boolean => {
+    if (name.trim() === "") {
+      setValidationError("O nome do bloco é obrigatório");
+      return false;
+    }
+    
+    // Check for any issues with the rate hierarchy
+    for (const method in taxRates) {
+      for (const rate of taxRates[method]) {
+        if (rate.root_rate > rate.forwarding_rate) {
+          setValidationError(`Taxa raiz maior que taxa de repasse em ${method} ${rate.installment}x`);
+          return false;
+        }
+        if (rate.forwarding_rate > rate.final_rate) {
+          setValidationError(`Taxa de repasse maior que taxa final em ${method} ${rate.installment}x`);
+          return false;
+        }
+      }
+    }
+    
+    return true;
+  };
+
   const handleSave = () => {
-    if (name.trim() === "") return;
+    if (!validateForm()) {
+      return;
+    }
     
     // Flatten tax rates from all payment methods
     const allRates: TaxRate[] = [
@@ -187,6 +257,8 @@ const TaxBlockEditor = ({ block, onSave, onCancel, onDelete }: TaxBlockEditorPro
       ...(taxRates[PaymentMethod.DEBIT] || []),
       ...(taxRates[PaymentMethod.PIX] || [])
     ];
+    
+    console.log("Saving block with rates:", allRates);
     
     onSave({
       id: block?.id || "",
@@ -204,8 +276,12 @@ const TaxBlockEditor = ({ block, onSave, onCancel, onDelete }: TaxBlockEditorPro
           <Input
             id="block-name"
             value={name}
-            onChange={(e) => setName(e.target.value)}
+            onChange={(e) => {
+              setName(e.target.value);
+              setValidationError(null);
+            }}
             className="mt-1"
+            disabled={isSubmitting}
           />
         </div>
         <div>
@@ -215,13 +291,22 @@ const TaxBlockEditor = ({ block, onSave, onCancel, onDelete }: TaxBlockEditorPro
             value={description}
             onChange={(e) => setDescription(e.target.value)}
             className="mt-1"
+            disabled={isSubmitting}
           />
         </div>
       </div>
       
+      {validationError && (
+        <Alert variant="destructive">
+          <AlertCircle className="h-4 w-4" />
+          <AlertDescription>{validationError}</AlertDescription>
+        </Alert>
+      )}
+      
       <Tabs value={activeTab} onValueChange={(value) => {
         setActiveTab(value as PaymentMethod);
         setSelectedInstallment(1); // Reset to first installment when switching tabs
+        setValidationError(null);
       }}>
         <TabsList className="mb-4">
           <TabsTrigger value={PaymentMethod.CREDIT}>Crédito</TabsTrigger>
@@ -235,8 +320,11 @@ const TaxBlockEditor = ({ block, onSave, onCancel, onDelete }: TaxBlockEditorPro
               <Label className="min-w-28">Parcelas:</Label>
               <Select 
                 value={selectedInstallment.toString()} 
-                onValueChange={value => setSelectedInstallment(parseInt(value))}
-                disabled={method !== PaymentMethod.CREDIT}
+                onValueChange={value => {
+                  setSelectedInstallment(parseInt(value));
+                  setValidationError(null);
+                }}
+                disabled={method !== PaymentMethod.CREDIT || isSubmitting}
               >
                 <SelectTrigger className="w-24">
                   <SelectValue placeholder="Selecione" />
@@ -265,6 +353,7 @@ const TaxBlockEditor = ({ block, onSave, onCancel, onDelete }: TaxBlockEditorPro
                   max={10}
                   step={0.01}
                   onValueChange={([value]) => updateRate('root_rate', value)}
+                  disabled={isSubmitting}
                 />
                 <Input
                   type="number"
@@ -273,6 +362,7 @@ const TaxBlockEditor = ({ block, onSave, onCancel, onDelete }: TaxBlockEditorPro
                   step={0.01}
                   min={0}
                   className="mt-2"
+                  disabled={isSubmitting}
                 />
                 <p className="text-xs text-muted-foreground">
                   Custo base cobrado pela processadora
@@ -292,6 +382,7 @@ const TaxBlockEditor = ({ block, onSave, onCancel, onDelete }: TaxBlockEditorPro
                   max={15}
                   step={0.01}
                   onValueChange={([value]) => updateRate('forwarding_rate', value)}
+                  disabled={isSubmitting}
                 />
                 <Input
                   type="number"
@@ -300,6 +391,7 @@ const TaxBlockEditor = ({ block, onSave, onCancel, onDelete }: TaxBlockEditorPro
                   step={0.01}
                   min={0}
                   className="mt-2"
+                  disabled={isSubmitting}
                 />
                 <p className="text-xs text-muted-foreground">
                   Taxa repassada ao parceiro (comissão escritório: {commissions.officeCommission}%)
@@ -319,6 +411,7 @@ const TaxBlockEditor = ({ block, onSave, onCancel, onDelete }: TaxBlockEditorPro
                   max={20}
                   step={0.01}
                   onValueChange={([value]) => updateRate('final_rate', value)}
+                  disabled={isSubmitting}
                 />
                 <Input
                   type="number"
@@ -327,6 +420,7 @@ const TaxBlockEditor = ({ block, onSave, onCancel, onDelete }: TaxBlockEditorPro
                   step={0.01}
                   min={0}
                   className="mt-2"
+                  disabled={isSubmitting}
                 />
                 <p className="text-xs text-muted-foreground">
                   Taxa cobrada do cliente final (comissão parceiro: {commissions.partnerCommission}%)
@@ -339,20 +433,55 @@ const TaxBlockEditor = ({ block, onSave, onCancel, onDelete }: TaxBlockEditorPro
       
       <div className="flex justify-end space-x-2 mt-4">
         {onDelete && (
-          <Button variant="destructive" onClick={onDelete}>
-            Excluir Bloco
+          <Button 
+            variant="destructive" 
+            onClick={onDelete} 
+            disabled={isSubmitting}
+          >
+            {deleteButtonContent()}
           </Button>
         )}
         <div className="flex-1"></div>
-        <Button variant="outline" onClick={onCancel}>
+        <Button 
+          variant="outline" 
+          onClick={onCancel} 
+          disabled={isSubmitting}
+        >
           Cancelar
         </Button>
-        <Button onClick={handleSave}>
-          Salvar
+        <Button 
+          onClick={handleSave} 
+          disabled={isSubmitting}
+        >
+          {saveButtonContent()}
         </Button>
       </div>
     </div>
   );
+
+  function saveButtonContent() {
+    if (isSubmitting) {
+      return (
+        <>
+          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+          Salvando...
+        </>
+      );
+    }
+    return "Salvar";
+  }
+
+  function deleteButtonContent() {
+    if (isSubmitting) {
+      return (
+        <>
+          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+          Excluindo...
+        </>
+      );
+    }
+    return "Excluir Bloco";
+  }
 };
 
 export default TaxBlockEditor;

@@ -1,3 +1,4 @@
+
 import { supabase } from "@/integrations/supabase/client";
 import { PaymentMethod } from "@/types/enums";
 
@@ -41,7 +42,10 @@ export const TaxBlocksService = {
         .select('*')
         .order('name');
 
-      if (error) throw error;
+      if (error) {
+        console.error("Error fetching tax blocks:", error);
+        throw error;
+      }
 
       // Get rates for all blocks
       const blocksWithRates: BlockWithRates[] = [];
@@ -70,7 +74,11 @@ export const TaxBlocksService = {
         .eq('id', id)
         .single();
 
-      if (error) throw error;
+      if (error) {
+        console.error(`Error fetching tax block ${id}:`, error);
+        throw error;
+      }
+      
       if (!data) return null;
 
       const rates = await this.getTaxRatesForBlock(id);
@@ -95,7 +103,11 @@ export const TaxBlocksService = {
         .order('payment_method')
         .order('installment');
 
-      if (error) throw error;
+      if (error) {
+        console.error(`Error fetching tax rates for block ${blockId}:`, error);
+        throw error;
+      }
+      
       return data || [];
     } catch (error) {
       console.error(`Error fetching tax rates for block ${blockId}:`, error);
@@ -106,13 +118,20 @@ export const TaxBlocksService = {
   // Create a new tax block
   async createTaxBlock(block: Omit<TaxBlock, 'id' | 'created_at' | 'updated_at'>): Promise<TaxBlock | null> {
     try {
+      console.log("Creating tax block:", block);
+      
       const { data, error } = await supabase
         .from('tax_blocks')
         .insert(block)
         .select()
         .single();
 
-      if (error) throw error;
+      if (error) {
+        console.error("Error creating tax block:", error);
+        throw error;
+      }
+      
+      console.log("Tax block created successfully:", data);
       return data;
     } catch (error) {
       console.error("Error creating tax block:", error);
@@ -123,6 +142,8 @@ export const TaxBlocksService = {
   // Update an existing tax block
   async updateTaxBlock(id: string, updates: Partial<TaxBlock>): Promise<TaxBlock | null> {
     try {
+      console.log("Updating tax block:", id, updates);
+      
       const { data, error } = await supabase
         .from('tax_blocks')
         .update({
@@ -134,7 +155,12 @@ export const TaxBlocksService = {
         .select()
         .single();
 
-      if (error) throw error;
+      if (error) {
+        console.error(`Error updating tax block ${id}:`, error);
+        throw error;
+      }
+      
+      console.log("Tax block updated successfully:", data);
       return data;
     } catch (error) {
       console.error(`Error updating tax block ${id}:`, error);
@@ -145,12 +171,31 @@ export const TaxBlocksService = {
   // Delete a tax block (this will cascade delete all associated rates due to FK constraints)
   async deleteTaxBlock(id: string): Promise<boolean> {
     try {
-      const { error } = await supabase
+      console.log("Deleting tax block:", id);
+      
+      // First delete all tax rates associated with this block
+      const { error: ratesError } = await supabase
+        .from('tax_rates')
+        .delete()
+        .eq('block_id', id);
+        
+      if (ratesError) {
+        console.error(`Error deleting tax rates for block ${id}:`, ratesError);
+        throw ratesError;
+      }
+      
+      // Then delete the block itself
+      const { error: blockError } = await supabase
         .from('tax_blocks')
         .delete()
         .eq('id', id);
 
-      if (error) throw error;
+      if (blockError) {
+        console.error(`Error deleting tax block ${id}:`, blockError);
+        throw blockError;
+      }
+      
+      console.log("Tax block deleted successfully");
       return true;
     } catch (error) {
       console.error(`Error deleting tax block ${id}:`, error);
@@ -161,8 +206,13 @@ export const TaxBlocksService = {
   // Create or update tax rates for a block
   async saveTaxRates(blockId: string, rates: Omit<TaxRate, 'id' | 'block_id' | 'created_at' | 'updated_at'>[]): Promise<boolean> {
     try {
+      console.log("Saving tax rates for block:", blockId, rates);
+      
       // First get existing rates
       const existingRates = await this.getTaxRatesForBlock(blockId);
+      
+      // Track all operations to ensure they all complete successfully
+      const operations = [];
       
       // For each rate, either update existing or create new
       for (const rate of rates) {
@@ -172,30 +222,46 @@ export const TaxBlocksService = {
         
         if (existingRate) {
           // Update existing rate
-          await supabase
-            .from('tax_rates')
-            .update({
-              root_rate: rate.root_rate,
-              forwarding_rate: rate.forwarding_rate,
-              final_rate: rate.final_rate,
-              updated_at: new Date().toISOString()
-            })
-            .eq('id', existingRate.id);
+          operations.push(
+            supabase
+              .from('tax_rates')
+              .update({
+                root_rate: rate.root_rate,
+                forwarding_rate: rate.forwarding_rate,
+                final_rate: rate.final_rate,
+                updated_at: new Date().toISOString()
+              })
+              .eq('id', existingRate.id)
+          );
         } else {
           // Create new rate
-          await supabase
-            .from('tax_rates')
-            .insert({
-              block_id: blockId,
-              payment_method: rate.payment_method,
-              installment: rate.installment,
-              root_rate: rate.root_rate,
-              forwarding_rate: rate.forwarding_rate,
-              final_rate: rate.final_rate
-            });
+          operations.push(
+            supabase
+              .from('tax_rates')
+              .insert({
+                block_id: blockId,
+                payment_method: rate.payment_method,
+                installment: rate.installment,
+                root_rate: rate.root_rate,
+                forwarding_rate: rate.forwarding_rate,
+                final_rate: rate.final_rate
+              })
+          );
         }
       }
       
+      // Execute all operations
+      const results = await Promise.all(operations);
+      
+      // Check for any errors
+      for (const result of results) {
+        if (result.error) {
+          console.error("Error saving tax rates:", result.error);
+          return false;
+        }
+      }
+      
+      console.log("All tax rates saved successfully");
       return true;
     } catch (error) {
       console.error(`Error saving tax rates for block ${blockId}:`, error);
@@ -206,6 +272,8 @@ export const TaxBlocksService = {
   // Associate a tax block with a client
   async associateBlockWithClient(blockId: string, clientId: string): Promise<boolean> {
     try {
+      console.log("Associating block with client:", blockId, clientId);
+      
       // First check if there's an existing association
       const { data: existing } = await supabase
         .from('client_tax_blocks')
@@ -220,16 +288,23 @@ export const TaxBlocksService = {
           .update({ block_id: blockId })
           .eq('client_id', clientId);
           
-        if (error) throw error;
+        if (error) {
+          console.error("Error updating client tax block association:", error);
+          throw error;
+        }
       } else {
         // Create new association
         const { error } = await supabase
           .from('client_tax_blocks')
           .insert({ client_id: clientId, block_id: blockId });
           
-        if (error) throw error;
+        if (error) {
+          console.error("Error creating client tax block association:", error);
+          throw error;
+        }
       }
       
+      console.log("Client-block association created/updated successfully");
       return true;
     } catch (error) {
       console.error(`Error associating block ${blockId} with client ${clientId}:`, error);
@@ -247,7 +322,11 @@ export const TaxBlocksService = {
         .eq('client_id', clientId)
         .maybeSingle();
       
-      if (error) throw error;
+      if (error) {
+        console.error(`Error getting tax block association for client ${clientId}:`, error);
+        throw error;
+      }
+      
       if (!association) return null;
       
       // Then get the block details with rates
@@ -287,7 +366,10 @@ export const TaxBlocksService = {
           blocks:block_id(name)
         `);
       
-      if (error) throw error;
+      if (error) {
+        console.error("Error fetching client tax block associations:", error);
+        throw error;
+      }
       
       return (data || []).map(item => ({
         clientId: item.client_id,
@@ -304,8 +386,6 @@ export const TaxBlocksService = {
   // Get clients without tax block associations
   async getClientsWithoutTaxBlock(): Promise<{id: string, name: string}[]> {
     try {
-      // Fix: Don't use RPC for a custom function since it causes type errors
-      // Instead use direct SQL query with proper type handling
       const { data, error } = await supabase
         .from('clients')
         .select('id, business_name')
@@ -314,7 +394,10 @@ export const TaxBlocksService = {
             .select('client_id')
         );
       
-      if (error) throw error;
+      if (error) {
+        console.error("Error getting clients without tax block:", error);
+        throw error;
+      }
       
       // Ensure data is an array before mapping
       return (data || []).map(client => ({
@@ -324,6 +407,47 @@ export const TaxBlocksService = {
     } catch (error) {
       console.error("Error getting clients without tax block:", error);
       return [];
+    }
+  },
+  
+  // New method to verify tax block creation and update
+  async verifyTaxBlockSave(block: TaxBlock, rates?: TaxRate[]): Promise<boolean> {
+    try {
+      // First verify that the block exists
+      const { data, error } = await supabase
+        .from('tax_blocks')
+        .select('*')
+        .eq('id', block.id)
+        .single();
+        
+      if (error || !data) {
+        console.error("Tax block verification failed:", error);
+        return false;
+      }
+      
+      // If rates are provided, verify they exist too
+      if (rates && rates.length > 0) {
+        const blockId = block.id;
+        const { data: ratesData, error: ratesError } = await supabase
+          .from('tax_rates')
+          .select('*')
+          .eq('block_id', blockId);
+          
+        if (ratesError) {
+          console.error("Tax rates verification failed:", ratesError);
+          return false;
+        }
+        
+        if (!ratesData || ratesData.length === 0) {
+          console.error("No tax rates found for block:", blockId);
+          return false;
+        }
+      }
+      
+      return true;
+    } catch (error) {
+      console.error("Error verifying tax block save:", error);
+      return false;
     }
   }
 };
