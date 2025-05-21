@@ -8,13 +8,14 @@ import {
   SupportMessage, 
   CreateTicketParams,
   UpdateTicketParams
-} from "@/types/support.types";
+} from "@/services/support/types";
+
 import { 
-  getTickets as getSupportTickets, 
-  getTicketById as getSupportTicketById, 
-  getClientTickets as getClientSupportTickets,
-  createTicket as createSupportTicket,
-  updateTicket as updateSupportTicket,
+  getSupportTickets, 
+  getSupportTicketById, 
+  getClientSupportTickets,
+  createSupportTicket,
+  updateSupportTicket,
   getTicketMessages,
   sendMessage as addTicketMessage
 } from "@/services/support";
@@ -119,7 +120,7 @@ export function useSupportTickets(options: UseSupportTicketsOptions = {}) {
         ...params,
         client_id: clientId,
         user_id: user?.id
-      });
+      } as CreateTicketParams);
       
       if (error) {
         throw error;
@@ -201,7 +202,12 @@ export function useSupportTickets(options: UseSupportTicketsOptions = {}) {
       }
       
       if (data) {
-        setTicketMessages(data);
+        // Add ticket_id to each message if it doesn't exist for compatibility
+        const messagesWithTicketId = data.map(msg => ({
+          ...msg,
+          ticket_id: msg.ticket_id || msg.conversation_id
+        }));
+        setTicketMessages(messagesWithTicketId as any);
       }
       
       return data;

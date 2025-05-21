@@ -1,6 +1,6 @@
 
 import { supabase } from "@/integrations/supabase/client";
-import { SupportTicket, CreateTicketParams, UpdateTicketParams, TicketStatus, TicketType, TicketPriority } from "./types";
+import { SupportTicket, CreateTicketParams, UpdateTicketParams, TicketStatus } from "./types";
 
 // Return type that matches what the hook expects
 interface ApiResponse<T> {
@@ -97,12 +97,17 @@ export const getClientTickets = async (clientId: string): Promise<ApiResponse<Su
 // Create a new support ticket
 export const createTicket = async (ticket: CreateTicketParams): Promise<ApiResponse<SupportTicket>> => {
   try {
-    // Convert the TicketType to string to match the database enum
+    // Convert the enum types to strings for the database
     const ticketData = {
-      ...ticket,
-      type: ticket.type as unknown as string,
-      priority: ticket.priority as unknown as string,
-      status: ticket.status as unknown as string || 'PENDING'
+      title: ticket.title,
+      description: ticket.description,
+      client_id: ticket.client_id,
+      machine_id: ticket.machine_id,
+      type: ticket.type.toString(),
+      priority: ticket.priority.toString(),
+      status: (ticket.status || TicketStatus.PENDING).toString(),
+      scheduled_date: ticket.scheduled_date,
+      user_id: ticket.user_id
     };
 
     const { data, error } = await supabase
@@ -132,9 +137,9 @@ export const updateTicket = async (
     // Convert enum types to strings for the database
     const ticketUpdates = {
       ...updates,
-      type: updates.type as unknown as string,
-      priority: updates.priority as unknown as string,
-      status: updates.status as unknown as string,
+      type: updates.type ? updates.type.toString() : undefined,
+      priority: updates.priority ? updates.priority.toString() : undefined,
+      status: updates.status ? updates.status.toString() : undefined,
       updated_at: new Date().toISOString()
     };
 

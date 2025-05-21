@@ -8,7 +8,7 @@ export * from './stats';
 // Export a unified service object (legacy format)
 import { createRequest, updateRequest, getAllRequests } from './ticket-api';
 import { getTicketMessages, addMessage } from './message-api';
-import { getRequestStats as getStatsFunction } from './stats';
+import { getRequestStats } from './stats';
 
 // This provides a drop-in replacement for the old service object
 export const SupportRequestService = {
@@ -17,7 +17,7 @@ export const SupportRequestService = {
   getTickets: getAllRequests,
   getTicketMessages,
   addMessage,
-  getStats: getStatsFunction
+  getStats: getRequestStats
 };
 
 export default SupportRequestService;

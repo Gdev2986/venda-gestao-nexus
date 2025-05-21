@@ -32,6 +32,7 @@ export const getMessages = async (conversationId: string): Promise<ApiResponse<S
       data: data.map((msg: any) => ({
         id: msg.id,
         conversation_id: msg.conversation_id,
+        ticket_id: msg.conversation_id, // Map conversation_id to ticket_id for compatibility
         user_id: msg.user_id,
         message: msg.message,
         created_at: msg.created_at,
@@ -77,6 +78,7 @@ export const sendMessage = async (
       data: {
         id: data.id,
         conversation_id: data.conversation_id,
+        ticket_id: data.conversation_id, // Map for compatibility
         user_id: data.user_id,
         message: data.message,
         created_at: data.created_at,

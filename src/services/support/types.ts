@@ -34,7 +34,8 @@ export interface SupportTicket {
 
 export interface SupportMessage {
   id: string;
-  conversation_id: string; // Changed from ticket_id to match database schema
+  conversation_id: string; // This matches the database schema
+  ticket_id?: string;      // Added for compatibility with types.support.ts
   user_id: string;
   message: string;
   created_at: string;
