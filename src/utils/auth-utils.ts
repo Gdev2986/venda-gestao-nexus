@@ -87,3 +87,27 @@ export const fetchUserRole = async (userId: string): Promise<UserRole | null> =>
 export const hasRole = (userRole: UserRole, allowedRoles: UserRole[]): boolean => {
   return allowedRoles.includes(userRole);
 };
+
+/**
+ * Clean up auth state to prevent limbo states
+ */
+export const cleanupAuthState = () => {
+  // Remove standard auth tokens
+  localStorage.removeItem('supabase.auth.token');
+  
+  // Remove all Supabase auth keys from localStorage
+  Object.keys(localStorage).forEach((key) => {
+    if (key.startsWith('supabase.auth.') || key.includes('sb-')) {
+      localStorage.removeItem(key);
+    }
+  });
+  
+  // Remove from sessionStorage if in use
+  if (typeof window !== "undefined" && window.sessionStorage) {
+    Object.keys(sessionStorage).forEach((key) => {
+      if (key.startsWith('supabase.auth.') || key.includes('sb-')) {
+        sessionStorage.removeItem(key);
+      }
+    });
+  }
+};

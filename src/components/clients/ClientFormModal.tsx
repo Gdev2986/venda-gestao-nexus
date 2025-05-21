@@ -17,6 +17,10 @@ import { ClientFormCompanyInfo } from "./form/ClientFormCompanyInfo";
 import { ClientFormContactInfo } from "./form/ClientFormContactInfo";
 import { ClientFormAddressInfo } from "./form/ClientFormAddressInfo";
 import { ClientFormActions } from "./form/ClientFormActions";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { InfoIcon } from "lucide-react";
+import { Card } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
 
 interface ClientFormModalProps {
   isOpen: boolean;
@@ -34,6 +38,7 @@ const ClientFormModal = ({
   onSubmit,
 }: ClientFormModalProps) => {
   const [isLoading, setIsLoading] = useState(false);
+  const [tempPassword, setTempPassword] = useState<string | null>(null);
   const { toast } = useToast();
   
   const form = useForm<ClientFormValues>({
@@ -99,11 +104,19 @@ const ClientFormModal = ({
           return;
         }
         
+        // Calculate the temporary password (firstname + last 4 digits of phone)
+        const firstName = formData.contact_name.split(' ')[0];
+        const phoneDigits = formData.phone.replace(/\D/g, '');
+        const lastFourDigits = phoneDigits.slice(-4);
+        const calculatedPassword = firstName + lastFourDigits;
+        
+        // Save temp password to display to admin
+        setTempPassword(calculatedPassword);
+        
         toast({
           title: "Cliente criado",
-          description: "O cliente foi criado com sucesso.",
+          description: "O cliente foi criado com sucesso e um usuário foi criado.",
         });
-        onClose();
       }
     } catch (error: any) {
       toast({
@@ -115,22 +128,72 @@ const ClientFormModal = ({
       setIsLoading(false);
     }
   };
+
+  const copyPasswordToClipboard = () => {
+    if (tempPassword) {
+      navigator.clipboard.writeText(tempPassword);
+      toast({
+        title: "Copiado!",
+        description: "Senha temporária copiada para a área de transferência.",
+      });
+    }
+  };
+  
+  const closeModalAndReset = () => {
+    setTempPassword(null);
+    onClose();
+  };
   
   return (
-    <Dialog open={isOpen} onOpenChange={onClose}>
+    <Dialog open={isOpen} onOpenChange={tempPassword ? undefined : onClose}>
       <DialogContent className="max-w-[95%] sm:max-w-[80%] md:max-w-[800px] max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>{title}</DialogTitle>
         </DialogHeader>
         
-        <Form {...form}>
-          <form onSubmit={form.handleSubmit(handleSubmitForm)} className="space-y-6">
-            <ClientFormCompanyInfo form={form} />
-            <ClientFormContactInfo form={form} />
-            <ClientFormAddressInfo form={form} />
-            <ClientFormActions onCancel={onClose} isLoading={isLoading} />
-          </form>
-        </Form>
+        {tempPassword ? (
+          <div className="space-y-4">
+            <Alert variant="success" className="bg-green-50 border-green-200">
+              <InfoIcon className="h-5 w-5 text-green-600" />
+              <AlertTitle>Cliente criado com sucesso!</AlertTitle>
+              <AlertDescription>
+                Um usuário foi criado com acesso temporário de 24 horas. O cliente precisará
+                alterar a senha no primeiro acesso.
+              </AlertDescription>
+            </Alert>
+            
+            <Card className="p-4 border border-yellow-200 bg-yellow-50">
+              <div className="space-y-2">
+                <div className="font-medium">Credenciais de acesso temporário:</div>
+                <div><span className="font-medium">Email:</span> {form.getValues("email")}</div>
+                <div><span className="font-medium">Senha temporária:</span> {tempPassword}</div>
+                <div className="text-sm text-muted-foreground">
+                  Compartilhe estas credenciais com o cliente para o primeiro acesso ao sistema.
+                </div>
+              </div>
+              <div className="flex gap-2 mt-4">
+                <Button size="sm" onClick={copyPasswordToClipboard}>
+                  Copiar senha
+                </Button>
+              </div>
+            </Card>
+            
+            <div className="flex justify-end">
+              <Button onClick={closeModalAndReset}>
+                Fechar
+              </Button>
+            </div>
+          </div>
+        ) : (
+          <Form {...form}>
+            <form onSubmit={form.handleSubmit(handleSubmitForm)} className="space-y-6">
+              <ClientFormCompanyInfo form={form} />
+              <ClientFormContactInfo form={form} />
+              <ClientFormAddressInfo form={form} />
+              <ClientFormActions onCancel={onClose} isLoading={isLoading} />
+            </form>
+          </Form>
+        )}
       </DialogContent>
     </Dialog>
   );

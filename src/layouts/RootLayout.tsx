@@ -8,7 +8,7 @@ import { useState, useEffect } from "react";
 import { getDashboardPath } from "@/routes/routeUtils";
 
 const RootLayout = () => {
-  const { user, isLoading, isAuthenticated, userRole } = useAuth();
+  const { user, isLoading, isAuthenticated, userRole, needsPasswordChange } = useAuth();
   const location = useLocation();
   const [showLoading, setShowLoading] = useState(true);
   
@@ -18,9 +18,10 @@ const RootLayout = () => {
       isLoading,
       isAuthenticated,
       userRole,
+      needsPasswordChange,
       path: location.pathname
     });
-  }, [isLoading, isAuthenticated, userRole, location.pathname]);
+  }, [isLoading, isAuthenticated, userRole, needsPasswordChange, location.pathname]);
   
   // Add a slight delay for loading animation
   useEffect(() => {
@@ -48,6 +49,12 @@ const RootLayout = () => {
         </motion.div>
       </div>
     );
+  }
+  
+  // If authenticated and needs password change, redirect to password change page
+  if (isAuthenticated && user && needsPasswordChange) {
+    console.log("User needs to change password, redirecting to password change page");
+    return <Navigate to={PATHS.CHANGE_PASSWORD} replace />;
   }
   
   // If authenticated and we have a role, redirect to role-specific dashboard

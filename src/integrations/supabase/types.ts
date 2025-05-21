@@ -578,8 +578,11 @@ export type Database = {
           email: string
           id: string
           name: string
+          password_reset_required: boolean
           phone: string | null
           role: Database["public"]["Enums"]["user_role"]
+          status: string
+          temp_access_expires_at: string | null
           updated_at: string | null
         }
         Insert: {
@@ -588,8 +591,11 @@ export type Database = {
           email: string
           id: string
           name: string
+          password_reset_required?: boolean
           phone?: string | null
           role?: Database["public"]["Enums"]["user_role"]
+          status?: string
+          temp_access_expires_at?: string | null
           updated_at?: string | null
         }
         Update: {
@@ -598,8 +604,11 @@ export type Database = {
           email?: string
           id?: string
           name?: string
+          password_reset_required?: boolean
           phone?: string | null
           role?: Database["public"]["Enums"]["user_role"]
+          status?: string
+          temp_access_expires_at?: string | null
           updated_at?: string | null
         }
         Relationships: []
@@ -907,6 +916,30 @@ export type Database = {
           },
         ]
       }
+      user_first_login: {
+        Row: {
+          created_at: string | null
+          first_login_at: string | null
+          id: string
+          password_changed_at: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          first_login_at?: string | null
+          id?: string
+          password_changed_at?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          first_login_at?: string | null
+          id?: string
+          password_changed_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       user_sessions: {
         Row: {
           created_at: string
@@ -959,6 +992,14 @@ export type Database = {
       get_user_role: {
         Args: { user_id: string }
         Returns: string
+      }
+      update_user_after_password_change: {
+        Args: { user_uuid: string }
+        Returns: undefined
+      }
+      user_needs_password_change: {
+        Args: { user_uuid: string }
+        Returns: boolean
       }
     }
     Enums: {
