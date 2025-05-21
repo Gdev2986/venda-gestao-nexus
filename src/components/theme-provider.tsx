@@ -31,20 +31,15 @@ export function ThemeProvider({
   ...props
 }: ThemeProviderProps) {
   const [theme, setTheme] = React.useState<Theme>(
-    () => (defaultTheme as Theme) || "system"
-  );
-  
-  // Effect to load saved theme
-  React.useEffect(() => {
-    try {
-      const storedTheme = localStorage.getItem(storageKey) as Theme | null;
-      if (storedTheme) {
-        setTheme(storedTheme);
+    () => {
+      try {
+        const storedTheme = localStorage.getItem(storageKey) as Theme | null;
+        return storedTheme || defaultTheme || "system";
+      } catch (error) {
+        return defaultTheme || "system";
       }
-    } catch (error) {
-      console.error("Failed to load theme preference:", error);
     }
-  }, [storageKey]);
+  );
   
   // Effect to update document classes
   React.useEffect(() => {

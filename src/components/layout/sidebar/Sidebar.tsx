@@ -1,5 +1,5 @@
 
-import { memo, useCallback, useEffect } from "react";
+import { memo, useCallback, useEffect, useMemo } from "react";
 import { motion } from "framer-motion";
 import { X } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -30,6 +30,11 @@ const Sidebar = memo(({ isOpen, isMobile, onClose, userRole }: SidebarProps) => 
       document.body.style.overflow = '';
     };
   }, [isMobile, isOpen]);
+
+  // Memoize navigation components to prevent re-renders
+  const navigationComponent = useMemo(() => <SidebarNavigation userRole={userRole} />, [userRole]);
+  const footerComponent = useMemo(() => <SidebarFooter />, []);
+  const userProfileComponent = useMemo(() => <SidebarUserProfile userRole={userRole} />, [userRole]);
 
   return (
     <>
@@ -79,11 +84,11 @@ const Sidebar = memo(({ isOpen, isMobile, onClose, userRole }: SidebarProps) => 
         </div>
 
         <div className="flex-1 overflow-y-auto py-2 md:py-4 px-2 md:px-3">
-          <SidebarNavigation userRole={userRole} />
-          <SidebarFooter />
+          {navigationComponent}
+          {footerComponent}
         </div>
 
-        <SidebarUserProfile userRole={userRole} />
+        {userProfileComponent}
       </motion.aside>
     </>
   );

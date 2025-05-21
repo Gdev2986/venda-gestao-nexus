@@ -1,6 +1,6 @@
 
 import { Outlet } from "react-router-dom";
-import { useState, useEffect } from "react";
+import { useState, useEffect, memo } from "react";
 import { motion } from "framer-motion";
 import Sidebar from "@/components/layout/sidebar/Sidebar";
 import { useUserRole } from "@/hooks/use-user-role";
@@ -12,6 +12,9 @@ import ThemeToggle from "@/components/theme/theme-toggle";
 import { Toaster } from "@/components/ui/sonner";
 import { Spinner } from "@/components/ui/spinner";
 import { AnimatePresence } from "framer-motion";
+
+// Memoize the Sidebar component to prevent unnecessary re-renders
+const MemoizedSidebar = memo(Sidebar);
 
 interface AdminLayoutProps {
   children?: React.ReactNode;
@@ -71,9 +74,9 @@ const AdminLayout = ({ children }: AdminLayoutProps) => {
 
   return (
     <div className="flex h-screen overflow-hidden bg-background">
-      {/* Sidebar component with AnimatePresence for smooth animation */}
-      <AnimatePresence>
-        <Sidebar 
+      {/* Use MemoizedSidebar to prevent re-renders */}
+      <AnimatePresence mode="wait">
+        <MemoizedSidebar 
           isOpen={sidebarOpen} 
           isMobile={isMobile} 
           onClose={() => setSidebarOpen(false)} 
