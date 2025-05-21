@@ -1,6 +1,4 @@
 
-"use client"
-
 import React from "react"
 
 type Theme = "dark" | "light" | "system"
