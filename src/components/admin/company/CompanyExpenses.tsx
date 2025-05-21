@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import {
   Card,
@@ -46,6 +45,7 @@ import { BarChart, PieChart } from "@/components/charts";
 import { MoreHorizontal, Plus, Filter, Download, Pencil, Trash2 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { format } from "date-fns";
+import { ptBR } from "date-fns/locale";
 
 // Mock data for expenses
 const mockExpenses = [
@@ -131,10 +131,10 @@ const getChartData = (expenses) => {
     categoryMap[expense.category] += expense.amount;
   });
   
-  // Convert to array format for charts
+  // Convert to array format for charts with typed values
   return Object.entries(categoryMap).map(([name, value]) => ({
     name,
-    value,
+    value: Number(value),
   }));
 };
 
@@ -346,7 +346,7 @@ const CompanyExpenses = () => {
     0
   );
 
-  // Calculate chart data
+  // Calculate chart data with proper typing
   const chartData = getChartData(filteredExpenses);
 
   return (

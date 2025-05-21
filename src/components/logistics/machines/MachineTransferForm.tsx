@@ -140,8 +140,8 @@ export const MachineTransferForm: React.FC<MachineTransferFormProps> = ({
       <div className="space-y-2">
         <Label>Data de Corte</Label>
         <DatePicker
-          date={cutoffDate}
-          setDate={setCutoffDate}
+          selected={cutoffDate}
+          onSelect={setCutoffDate}
           className="w-full"
         />
         <p className="text-xs text-muted-foreground">

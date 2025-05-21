@@ -1,54 +1,41 @@
 
-import { ResponsiveContainer, LineChart as RechartsLineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, Area } from "recharts";
+import { ResponsiveContainer, LineChart as RechartsLineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend } from "recharts";
 
 interface LineChartProps {
   data: any[];
-  dataKey?: string;
+  dataKey?: string | string[];
   xAxisKey?: string;
   height?: number;
-  color?: string;
+  colors?: string[];
   formatter?: (value: number) => string;
+  labels?: string[];
   margin?: { top: number; right: number; left: number; bottom: number };
-  gradientFrom?: string;
-  gradientTo?: string;
-  strokeWidth?: number;
-  showPoints?: boolean;
-  showArea?: boolean;
 }
 
 export const LineChart = ({
   data,
-  dataKey = "total",
+  dataKey = "value",
   xAxisKey = "name",
   height = 300,
-  color = "hsl(var(--primary))",
+  colors = ["hsl(var(--primary))", "#10b981", "#ef4444"],
   formatter,
-  margin = { top: 10, right: 30, left: 20, bottom: 20 },
-  gradientFrom,
-  gradientTo,
-  strokeWidth = 2.5,
-  showPoints = false,
-  showArea = false
+  labels,
+  margin = { top: 10, right: 30, left: 20, bottom: 20 }
 }: LineChartProps) => {
-  // Use provided gradient colors or fall back to calculated ones
-  const areaGradientFrom = gradientFrom || color;
-  const areaGradientTo = gradientTo || `${color}33`; // Add transparency to color
+  // Handle both single dataKey string and array of dataKeys
+  const dataKeys = Array.isArray(dataKey) ? dataKey : [dataKey];
+  const labelTexts = labels || dataKeys;
 
   return (
     <ResponsiveContainer width="100%" height={height}>
       <RechartsLineChart data={data} margin={margin}>
-        <defs>
-          <linearGradient id="colorGradient" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="5%" stopColor={areaGradientFrom} stopOpacity={0.3} />
-            <stop offset="95%" stopColor={areaGradientTo} stopOpacity={0.05} />
-          </linearGradient>
-        </defs>
         <CartesianGrid strokeDasharray="3 3" vertical={false} opacity={0.2} />
         <XAxis 
           dataKey={xAxisKey} 
-          tick={{ fontSize: 12 }}
+          tick={{ fontSize: 12 }} 
           stroke="hsl(var(--muted-foreground))"
           tickLine={false}
+          axisLine={{ stroke: 'hsl(var(--border))' }}
         />
         <YAxis 
           tickFormatter={(value) => formatter ? formatter(value) : 
@@ -58,7 +45,6 @@ export const LineChart = ({
             }).format(value)
           }
           tick={{ fontSize: 12 }}
-          width={35}
           stroke="hsl(var(--muted-foreground))"
           tickLine={false}
           axisLine={false}
@@ -78,36 +64,25 @@ export const LineChart = ({
             boxShadow: '0 4px 12px rgba(0, 0, 0, 0.1)',
             padding: '8px 12px'
           }}
-          cursor={{ stroke: 'hsl(var(--muted-foreground))', strokeWidth: 1, strokeDasharray: '3 3' }}
         />
         <Legend 
-          wrapperStyle={{ fontSize: '12px', paddingTop: '10px' }}
-          iconType="circle"  
+          wrapperStyle={{ fontSize: '12px', marginTop: '10px' }}
+          iconType="circle"
         />
-        {showArea && (
-          <Area 
-            type="monotone" 
-            dataKey={dataKey} 
-            stroke={color} 
-            strokeWidth={strokeWidth}
-            fillOpacity={1}
-            fill="url(#colorGradient)"
-            activeDot={{ r: 6, strokeWidth: 0 }}
-            dot={{ r: 0 }}
+        {dataKeys.map((key, index) => (
+          <Line
+            key={key}
+            type="monotone"
+            dataKey={key}
+            name={labelTexts[index] || key}
+            stroke={colors[index % colors.length]}
+            activeDot={{ r: 6 }}
+            strokeWidth={2}
+            dot={{ strokeWidth: 2, r: 3 }}
             animationDuration={1500}
             animationEasing="ease-in-out"
           />
-        )}
-        <Line
-          type="monotone"
-          dataKey={dataKey}
-          stroke={color}
-          strokeWidth={strokeWidth}
-          activeDot={{ r: 6, fill: color, strokeWidth: 2, stroke: 'white' }}
-          dot={showPoints ? { r: 4, fill: color, strokeWidth: 2, stroke: 'white' } : { r: 0 }}
-          animationDuration={1500}
-          animationEasing="ease-in-out"
-        />
+        ))}
       </RechartsLineChart>
     </ResponsiveContainer>
   );

@@ -3,11 +3,13 @@ import { ResponsiveContainer, BarChart as RechartsBarChart, Bar, XAxis, YAxis, C
 
 interface BarChartProps {
   data: any[];
-  dataKey?: string;
+  dataKey?: string | string[];
   xAxisKey?: string;
   height?: number;
   color?: string;
+  colors?: string[];
   formatter?: (value: number) => string;
+  labels?: string[];
   margin?: { top: number; right: number; left: number; bottom: number };
 }
 
@@ -17,17 +19,33 @@ export const BarChart = ({
   xAxisKey = "name",
   height = 300,
   color = "hsl(var(--primary))",
+  colors,
   formatter,
+  labels,
   margin = { top: 10, right: 30, left: 20, bottom: 20 }
 }: BarChartProps) => {
+  // Handle both single dataKey string and array of dataKeys
+  const dataKeys = Array.isArray(dataKey) ? dataKey : [dataKey];
+  const barColors = colors || [color];
+  const labelTexts = labels || dataKeys;
+
   return (
     <ResponsiveContainer width="100%" height={height}>
       <RechartsBarChart data={data} margin={margin}>
         <defs>
-          <linearGradient id="barGradient" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0%" stopColor={color} stopOpacity={0.9} />
-            <stop offset="95%" stopColor={color} stopOpacity={0.3} />
-          </linearGradient>
+          {barColors.map((color, index) => (
+            <linearGradient
+              key={`barGradient-${index}`}
+              id={`barGradient-${index}`}
+              x1="0"
+              y1="0"
+              x2="0"
+              y2="1"
+            >
+              <stop offset="0%" stopColor={color} stopOpacity={0.9} />
+              <stop offset="95%" stopColor={color} stopOpacity={0.3} />
+            </linearGradient>
+          ))}
         </defs>
         <CartesianGrid strokeDasharray="3 3" vertical={false} opacity={0.2} />
         <XAxis 
@@ -75,14 +93,18 @@ export const BarChart = ({
           wrapperStyle={{ fontSize: '12px', paddingTop: '15px' }}
           iconType="circle"
         />
-        <Bar 
-          dataKey={dataKey} 
-          fill="url(#barGradient)" 
-          radius={[4, 4, 0, 0]}
-          maxBarSize={50}
-          animationDuration={1500}
-          animationEasing="ease-in-out"
-        />
+        {dataKeys.map((key, index) => (
+          <Bar
+            key={key}
+            dataKey={key}
+            name={labelTexts[index] || key}
+            fill={`url(#barGradient-${index})`}
+            radius={[4, 4, 0, 0]}
+            maxBarSize={50}
+            animationDuration={1500}
+            animationEasing="ease-in-out"
+          />
+        ))}
       </RechartsBarChart>
     </ResponsiveContainer>
   );

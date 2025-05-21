@@ -3,6 +3,7 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { PageHeader } from "@/components/page/PageHeader";
 import { PATHS } from "@/routes/paths";
+import { Button } from "@/components/ui/button";
 import CompanyReportsComponent from "@/components/admin/company/CompanyReports";
 
 const CompanyReportsPage = () => {

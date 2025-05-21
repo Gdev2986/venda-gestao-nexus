@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import {
   Card,
@@ -11,7 +10,6 @@ import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { DatePicker } from "@/components/ui/date-picker";
 import { BarChart, LineChart } from "@/components/charts";
-import { PieChart } from "recharts";
 import {
   Table,
   TableBody,
@@ -286,7 +284,7 @@ const CompanyReports = () => {
               <LineChart
                 data={mockData.cashFlow}
                 xAxisKey="name"
-                yAxisKey={["entrada", "saida", "saldo"]}
+                dataKey={["entrada", "saida", "saldo"]}
                 colors={["#10b981", "#ef4444", "#6366f1"]}
                 labels={["Entradas", "Saídas", "Saldo"]}
                 height={300}
@@ -305,7 +303,7 @@ const CompanyReports = () => {
               <BarChart
                 data={mockData.clientBalance}
                 xAxisKey="name"
-                yAxisKey={["pendente", "recebido"]}
+                dataKey={["pendente", "recebido"]}
                 colors={["#f59e0b", "#10b981"]}
                 labels={["Pendente", "Recebido"]}
                 height={300}
@@ -325,7 +323,7 @@ const CompanyReports = () => {
                 <BarChart
                   data={mockData.commission}
                   xAxisKey="name"
-                  yAxisKey={["comissao"]}
+                  dataKey={["comissao"]}
                   colors={["#8b5cf6"]}
                   labels={["Comissão"]}
                   height={300}
@@ -405,7 +403,7 @@ const CompanyReports = () => {
                 <LineChart
                   data={mockData.cashFlow}
                   xAxisKey="name"
-                  yAxisKey={["entrada", "saida", "saldo"]}
+                  dataKey={["entrada", "saida", "saldo"]}
                   colors={["#10b981", "#ef4444", "#6366f1"]}
                   labels={["Entradas", "Saídas", "Saldo"]}
                   height={350}
@@ -419,7 +417,7 @@ const CompanyReports = () => {
           </Card>
         </TabsContent>
 
-        {/* Additional tabs for Clients and Commission would follow a similar pattern */}
+        {/* Client Balance Tab */}
         <TabsContent value="clients" className="space-y-6">
           <Card>
             <CardHeader>
@@ -432,7 +430,7 @@ const CompanyReports = () => {
                 <BarChart
                   data={mockData.clientBalance}
                   xAxisKey="name"
-                  yAxisKey={["pendente", "recebido"]}
+                  dataKey={["pendente", "recebido"]}
                   colors={["#f59e0b", "#10b981"]}
                   labels={["Pendente", "Recebido"]}
                   height={350}
@@ -444,6 +442,7 @@ const CompanyReports = () => {
           </Card>
         </TabsContent>
 
+        {/* Commission Tab */}
         <TabsContent value="commission" className="space-y-6">
           <Card>
             <CardHeader>
@@ -456,7 +455,7 @@ const CompanyReports = () => {
                 <BarChart
                   data={mockData.commission}
                   xAxisKey="name"
-                  yAxisKey={["comissao"]}
+                  dataKey={["comissao"]}
                   colors={["#8b5cf6"]}
                   labels={["Comissão"]}
                   height={350}
