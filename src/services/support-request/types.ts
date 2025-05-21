@@ -30,6 +30,7 @@ export interface TicketStats {
   pendingRequests: number;
   highPriorityRequests: number;
   typeCounts: Record<string, number>;
+  // Note: resolvedRequests and supportAgents are not part of the service response
 }
 
 export interface MessageData {

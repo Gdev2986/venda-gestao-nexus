@@ -5,12 +5,16 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 export interface RequestsReportViewProps {
   pendingRequests: number;
   highPriorityRequests: number;
+  resolvedRequests?: number; // Make this optional
+  supportAgents?: number; // Make this optional
   typeCounts: Record<string, number>;
 }
 
 const RequestsReportView: React.FC<RequestsReportViewProps> = ({
   pendingRequests,
   highPriorityRequests,
+  resolvedRequests = 0, // Provide default
+  supportAgents = 0, // Provide default
   typeCounts,
 }) => {
   return (
@@ -31,6 +35,20 @@ const RequestsReportView: React.FC<RequestsReportViewProps> = ({
           <p className="text-2xl font-bold">{highPriorityRequests}</p>
           <span className="text-sm text-muted-foreground">
             Número de chamados marcados como alta prioridade.
+          </span>
+        </div>
+        <div>
+          <p className="text-sm font-medium leading-none">Chamados Resolvidos</p>
+          <p className="text-2xl font-bold">{resolvedRequests}</p>
+          <span className="text-sm text-muted-foreground">
+            Número de chamados já resolvidos.
+          </span>
+        </div>
+        <div>
+          <p className="text-sm font-medium leading-none">Agentes de Suporte</p>
+          <p className="text-2xl font-bold">{supportAgents}</p>
+          <span className="text-sm text-muted-foreground">
+            Número de agentes disponíveis.
           </span>
         </div>
         <div>

@@ -17,14 +17,14 @@ const AdminSupport = () => {
   const [reportData, setReportData] = useState<{
     pendingRequests: number;
     highPriorityRequests: number;
-    resolvedRequests: number; // Add this property
-    supportAgents: number; // Add this property
+    resolvedRequests: number;
+    supportAgents: number;
     typeCounts: Record<string, number>;
   }>({
     pendingRequests: 12,
     highPriorityRequests: 5,
-    resolvedRequests: 24, // Initialize with a default value
-    supportAgents: 3, // Initialize with a default value
+    resolvedRequests: 24,
+    supportAgents: 3,
     typeCounts: {
       INSTALLATION: 4,
       MAINTENANCE: 6,
@@ -37,11 +37,13 @@ const AdminSupport = () => {
     const fetchStats = async () => {
       try {
         const stats = await SupportRequestService.getStats();
+        // Create a new object with the existing stats and add our custom properties
         setReportData({
           pendingRequests: stats.pendingRequests,
           highPriorityRequests: stats.highPriorityRequests,
-          resolvedRequests: stats.resolvedRequests || 24, // Add default fallback
-          supportAgents: stats.supportAgents || 3, // Add default fallback
+          // Add our own properties with default fallbacks
+          resolvedRequests: 24, // Use a default value since it doesn't exist in stats
+          supportAgents: 3, // Use a default value since it doesn't exist in stats
           typeCounts: stats.typeCounts || {}
         });
       } catch (error) {

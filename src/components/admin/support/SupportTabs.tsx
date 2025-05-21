@@ -16,8 +16,8 @@ interface SupportTabsProps {
   reportData: {
     pendingRequests: number;
     highPriorityRequests: number;
-    resolvedRequests: number; // Add this
-    supportAgents: number; // Add this
+    resolvedRequests?: number; // Make optional
+    supportAgents?: number; // Make optional
     typeCounts: Record<string, number>;
   };
 }
@@ -77,6 +77,8 @@ const SupportTabs = ({
         <RequestsReportView 
           pendingRequests={reportData.pendingRequests}
           highPriorityRequests={reportData.highPriorityRequests}
+          resolvedRequests={reportData.resolvedRequests}
+          supportAgents={reportData.supportAgents}
           typeCounts={reportData.typeCounts}
         />
       </TabsContent>
