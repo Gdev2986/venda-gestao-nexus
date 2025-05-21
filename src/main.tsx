@@ -1,5 +1,5 @@
 
-import * as React from 'react';
+import React from 'react';
 import { createRoot } from 'react-dom/client';
 import { BrowserRouter } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
@@ -30,7 +30,7 @@ function renderApp() {
   }
   
   try {
-    console.log('Starting application render with React version:', React.version);
+    console.log('Starting application render');
     
     // Create a fresh root
     const root = createRoot(rootElement);
@@ -40,7 +40,7 @@ function renderApp() {
       <React.StrictMode>
         <BrowserRouter>
           <QueryClientProvider client={queryClient}>
-            <ThemeProvider defaultTheme="light" storageKey="sigmapay-theme">
+            <ThemeProvider defaultTheme="light">
               <AuthProvider>
                 <NotificationsProvider>
                   <App />

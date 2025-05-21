@@ -1,7 +1,7 @@
 
 "use client"
 
-import * as React from "react"
+import React from "react"
 
 type Theme = "dark" | "light" | "system"
 
@@ -29,68 +29,71 @@ export function ThemeProvider({
   storageKey = "sigmapay-theme",
   ...props
 }: ThemeProviderProps) {
-  const [theme, setTheme] = React.useState<Theme>(() => {
-    if (typeof window === "undefined") return defaultTheme;
-    
-    try {
-      const storedTheme = localStorage.getItem(storageKey)
-      return storedTheme ? (storedTheme as Theme) : defaultTheme
-    } catch (error) {
-      console.warn("Error reading theme from localStorage:", error)
-      return defaultTheme
-    }
-  })
-
+  const [theme, setTheme] = React.useState<Theme>(defaultTheme);
+  
+  // Set initial theme after mount
   React.useEffect(() => {
-    if (typeof window === "undefined") return
-    
-    const root = window.document.documentElement
+    if (typeof window !== "undefined") {
+      try {
+        const storedTheme = localStorage.getItem(storageKey);
+        if (storedTheme) {
+          setTheme(storedTheme as Theme);
+        }
+      } catch (error) {
+        console.warn("Error reading theme from localStorage:", error);
+      }
+    }
+  }, [storageKey]);
 
-    root.classList.remove("light", "dark")
+  // Apply theme class
+  React.useEffect(() => {
+    if (typeof window === "undefined") return;
+    
+    const root = window.document.documentElement;
+    root.classList.remove("light", "dark");
 
     if (theme === "system") {
       const systemTheme = window.matchMedia("(prefers-color-scheme: dark)").matches
         ? "dark"
-        : "light"
-      root.classList.add(systemTheme)
+        : "light";
+      root.classList.add(systemTheme);
     } else {
-      root.classList.add(theme)
+      root.classList.add(theme);
     }
-  }, [theme])
+  }, [theme]);
 
+  // Save theme to localStorage
   React.useEffect(() => {
-    if (typeof window === "undefined") return
+    if (typeof window === "undefined") return;
     
     try {
-      localStorage.setItem(storageKey, theme)
+      localStorage.setItem(storageKey, theme);
     } catch (error) {
-      console.error("Failed to save theme preference:", error)
+      console.error("Failed to save theme preference:", error);
     }
-  }, [theme, storageKey])
+  }, [theme, storageKey]);
 
   const value = React.useMemo(
     () => ({
       theme,
-      setTheme: (newTheme: Theme) => {
-        setTheme(newTheme)
-      },
+      setTheme,
     }),
     [theme]
-  )
+  );
 
   return (
     <ThemeProviderContext.Provider value={value} {...props}>
       {children}
     </ThemeProviderContext.Provider>
-  )
+  );
 }
 
 export const useTheme = (): ThemeProviderState => {
-  const context = React.useContext(ThemeProviderContext)
-
+  const context = React.useContext(ThemeProviderContext);
+  
   if (context === undefined) {
-    throw new Error("useTheme must be used within a ThemeProvider")
+    throw new Error("useTheme must be used within a ThemeProvider");
   }
 
-  return context
+  return context;
 }

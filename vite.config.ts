@@ -11,13 +11,17 @@ export default defineConfig(({ mode }) => ({
     port: 8080,
   },
   plugins: [
-    react(),
+    react({
+      // Add this to ensure React in use is consistent
+      jsxRuntime: "automatic"
+    }),
     mode === 'development' && componentTagger(),
   ].filter(Boolean),
   resolve: {
     dedupe: ['react', 'react-dom'],
     alias: {
       "@": path.resolve(__dirname, "./src"),
+      // Make sure React is always resolved to same instance
       "react": path.resolve(__dirname, "./node_modules/react"),
       "react-dom": path.resolve(__dirname, "./node_modules/react-dom"),
     },
