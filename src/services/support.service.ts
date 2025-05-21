@@ -1,4 +1,3 @@
-
 import { supabase } from "@/integrations/supabase/client";
 import { SupportTicket, CreateTicketParams, UpdateTicketParams, SupportMessage } from "@/types/support.types";
 import { TicketStatus, NotificationType, TicketPriority, TicketType, UserRole } from "@/types/enums";
@@ -88,58 +87,57 @@ export async function getSupportTickets(filters?: {
   date_from?: string;
   date_to?: string;
 }): Promise<{ data: SupportTicket[] | null, error: any }> {
-  // Start with the base query and explicitly type it as any to avoid deep type instantiation
-  const baseQuery = supabase
-    .from('support_requests')
-    .select(`
-      *,
-      client:client_id(*),
-      machine:machine_id(*)
-    `);
+  // Explicitly use any typing to avoid deep type instantiation issues
+  const query: any = supabase
+    .from('support_requests');
   
-  // Apply filters using a type-safe approach
-  let query = baseQuery as any; // Use 'any' type to avoid deep type instantiation
-
+  // Add select statement separately to avoid type issues
+  query.select(`
+    *,
+    client:client_id(*),
+    machine:machine_id(*)
+  `);
+  
+  // Apply filters
   if (filters) {
     if (filters.status) {
       if (Array.isArray(filters.status)) {
-        // Convert enums to string literals for the database query
         const statusValues = filters.status.map(s => s.toString());
-        query = query.in('status', statusValues);
+        query.in('status', statusValues);
       } else {
-        query = query.eq('status', filters.status.toString());
+        query.eq('status', filters.status.toString());
       }
     }
     
     if (filters.type) {
       if (Array.isArray(filters.type)) {
         const typeValues = filters.type.map(t => t.toString());
-        query = query.in('type', typeValues);
+        query.in('type', typeValues);
       } else {
-        query = query.eq('type', filters.type.toString());
+        query.eq('type', filters.type.toString());
       }
     }
     
     if (filters.priority) {
-      query = query.eq('priority', filters.priority.toString());
+      query.eq('priority', filters.priority.toString());
     }
     
-    if (filters.client_id) query = query.eq('client_id', filters.client_id);
-    if (filters.assigned_to) query = query.eq('assigned_to', filters.assigned_to);
-    if (filters.user_id) query = query.eq('user_id', filters.user_id);
-    if (filters.date_from) query = query.gte('created_at', filters.date_from);
-    if (filters.date_to) query = query.lte('created_at', filters.date_to);
+    if (filters.client_id) query.eq('client_id', filters.client_id);
+    if (filters.assigned_to) query.eq('assigned_to', filters.assigned_to);
+    if (filters.user_id) query.eq('user_id', filters.user_id);
+    if (filters.date_from) query.gte('created_at', filters.date_from);
+    if (filters.date_to) query.lte('created_at', filters.date_to);
   }
 
   // Add ordering
-  query = query.order('created_at', { ascending: false });
+  query.order('created_at', { ascending: false });
 
-  // Execute query with simplified type handling
+  // Execute the query
   const { data, error } = await query;
   
-  // Use a simple cast to the expected return type
+  // Return with simplified type casting
   return { 
-    data: data as unknown as SupportTicket[], 
+    data: data as SupportTicket[], 
     error 
   };
 }

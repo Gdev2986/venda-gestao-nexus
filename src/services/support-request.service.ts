@@ -77,22 +77,24 @@ export const SupportRequestService = {
   } = {}) {
     try {
       // Create query and explicitly type as any to avoid deep type instantiation issues
-      let query = supabase
-        .from('support_requests')
-        .select(`
-          *,
-          client:client_id(*),
-          machine:machine_id(*)
-        `) as any;
+      const query: any = supabase
+        .from('support_requests');
+      
+      // Add select statement separately to avoid type issues
+      query.select(`
+        *,
+        client:client_id(*),
+        machine:machine_id(*)
+      `);
 
       // Apply filters with proper type handling
       if (filters.status) {
         if (Array.isArray(filters.status)) {
           // Convert enum values to strings for the query
           const statusValues = filters.status.map(s => s.toString());
-          query = query.in('status', statusValues);
+          query.in('status', statusValues);
         } else {
-          query = query.eq('status', filters.status.toString());
+          query.eq('status', filters.status.toString());
         }
       }
 
@@ -100,29 +102,31 @@ export const SupportRequestService = {
         if (Array.isArray(filters.type)) {
           // Convert enum values to strings for the query
           const typeValues = filters.type.map(t => t.toString());
-          query = query.in('type', typeValues);
+          query.in('type', typeValues);
         } else {
-          query = query.eq('type', filters.type.toString());
+          query.eq('type', filters.type.toString());
         }
       }
 
       if (filters.priority) {
-        query = query.eq('priority', filters.priority.toString());
+        query.eq('priority', filters.priority.toString());
       }
 
       if (filters.client_id) {
-        query = query.eq('client_id', filters.client_id);
+        query.eq('client_id', filters.client_id);
       }
 
       if (filters.technician_id) {
-        query = query.eq('technician_id', filters.technician_id);
+        query.eq('technician_id', filters.technician_id);
       }
 
       if (filters.search) {
-        query = query.or(`title.ilike.%${filters.search}%,description.ilike.%${filters.search}%`);
+        query.or(`title.ilike.%${filters.search}%,description.ilike.%${filters.search}%`);
       }
 
-      const { data, error } = await query.order('created_at', { ascending: false });
+      query.order('created_at', { ascending: false });
+      
+      const { data, error } = await query;
 
       if (error) throw error;
 
