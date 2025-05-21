@@ -7,6 +7,8 @@ import SupportRequestService from "@/services/support-request";
 import SupportHeader from "@/components/admin/support/SupportHeader";
 import SupportTabs from "@/components/admin/support/SupportTabs";
 import DoughnutChart from "@/components/charts/DoughnutChart";
+import { StyledCard } from "@/components/ui/styled-card";
+import { HelpCircle, AlertTriangle, CheckCircle, Users } from "lucide-react";
 
 const AdminSupport = () => {
   const [activeTab, setActiveTab] = useState<string>("tickets");
@@ -15,10 +17,14 @@ const AdminSupport = () => {
   const [reportData, setReportData] = useState<{
     pendingRequests: number;
     highPriorityRequests: number;
+    resolvedRequests: number;
+    supportAgents: number;
     typeCounts: Record<string, number>;
   }>({
     pendingRequests: 12,
     highPriorityRequests: 5,
+    resolvedRequests: 24,
+    supportAgents: 3,
     typeCounts: {
       INSTALLATION: 4,
       MAINTENANCE: 6,
@@ -34,6 +40,8 @@ const AdminSupport = () => {
         setReportData({
           pendingRequests: stats.pendingRequests,
           highPriorityRequests: stats.highPriorityRequests,
+          resolvedRequests: stats.resolvedRequests || 24,
+          supportAgents: stats.supportAgents || 3,
           typeCounts: stats.typeCounts || {}
         });
       } catch (error) {
@@ -90,23 +98,61 @@ const AdminSupport = () => {
         onCreateAgent={handleSupportAgentCreate}
       />
       
-      <div className="flex justify-between items-center">
-        <SupportTabs
-          activeTab={activeTab}
-          setActiveTab={setActiveTab}
-          searchTerm={searchTerm}
-          setSearchTerm={setSearchTerm}
-          reportData={reportData}
-        />
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
+        <StyledCard
+          title="Solicitações Pendentes"
+          icon={<HelpCircle className="h-4 w-4 text-orange-500" />}
+          borderColor="border-orange-500"
+        >
+          <div className="text-2xl font-bold">{reportData.pendingRequests}</div>
+          <p className="text-sm text-muted-foreground">Aguardando atendimento</p>
+        </StyledCard>
+        
+        <StyledCard
+          title="Alta Prioridade"
+          icon={<AlertTriangle className="h-4 w-4 text-red-500" />}
+          borderColor="border-red-500"
+        >
+          <div className="text-2xl font-bold">{reportData.highPriorityRequests}</div>
+          <p className="text-sm text-muted-foreground">Requerem atenção imediata</p>
+        </StyledCard>
+        
+        <StyledCard
+          title="Resolvidas"
+          icon={<CheckCircle className="h-4 w-4 text-green-500" />}
+          borderColor="border-green-500"
+        >
+          <div className="text-2xl font-bold">{reportData.resolvedRequests}</div>
+          <p className="text-sm text-muted-foreground">Solicitações atendidas</p>
+        </StyledCard>
+        
+        <StyledCard
+          title="Agentes de Suporte"
+          icon={<Users className="h-4 w-4 text-blue-500" />}
+          borderColor="border-blue-500"
+        >
+          <div className="text-2xl font-bold">{reportData.supportAgents}</div>
+          <p className="text-sm text-muted-foreground">Equipe disponível</p>
+        </StyledCard>
       </div>
+      
+      <SupportTabs
+        activeTab={activeTab}
+        setActiveTab={setActiveTab}
+        searchTerm={searchTerm}
+        setSearchTerm={setSearchTerm}
+        reportData={reportData}
+      />
 
       {activeTab === "reports" && (
-        <div className="w-full">
-          <DoughnutChart
-            data={typesChartData}
-            dataKey="value"
-          />
-        </div>
+        <StyledCard title="Distribuição de Solicitações" borderColor="border-gray-200">
+          <div className="w-full h-80">
+            <DoughnutChart
+              data={typesChartData}
+              dataKey="value"
+            />
+          </div>
+        </StyledCard>
       )}
     </div>
   );

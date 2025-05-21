@@ -1,12 +1,13 @@
 
 import React, { useEffect } from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { NotificationList } from "@/components/notifications/NotificationList";
 import NotificationFilters from "@/components/notifications/NotificationFilters";
 import { useNotifications } from "@/contexts/NotificationsContext";
 import { PageHeader } from "@/components/page/PageHeader";
 import { useState } from "react";
 import { NotificationType } from "@/types";
+import { StyledCard } from "@/components/ui/styled-card";
+import { Bell } from "lucide-react";
 
 const Notifications = () => {
   const [typeFilter, setTypeFilter] = useState<string>("all");
@@ -46,38 +47,66 @@ const Notifications = () => {
     return true;
   });
 
+  // Contar notificações não lidas
+  const unreadCount = notifications.filter(n => !n.is_read).length;
+
   return (
-    <div className="py-6">
+    <div className="space-y-6 py-6">
       <PageHeader
         title="Notificações"
         description="Gerencie suas notificações"
       />
 
-      <div className="grid gap-6">
-        <Card>
-          <CardHeader className="flex flex-row items-center">
-            <div className="flex-1">
-              <CardTitle>Suas Notificações</CardTitle>
-            </div>
-            <NotificationFilters 
-              typeFilter={typeFilter}
-              statusFilter={statusFilter}
-              onTypeChange={setTypeFilter}
-              onStatusChange={setStatusFilter}
-              onMarkAllAsRead={markAllAsRead}
-              onRefresh={refreshNotifications}
-            />
-          </CardHeader>
-          <CardContent>
-            <NotificationList 
-              notifications={filteredNotifications}
-              onMarkAsRead={markAsRead}
-              isLoading={isLoading}
-              onDelete={deleteNotification}
-            />
-          </CardContent>
-        </Card>
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <StyledCard 
+          title="Notificações" 
+          icon={<Bell className="h-4 w-4 text-primary" />}
+          borderColor="border-primary"
+        >
+          <div className="text-2xl font-bold">{notifications.length}</div>
+          <p className="text-sm text-muted-foreground">Total de notificações</p>
+        </StyledCard>
+        
+        <StyledCard 
+          title="Não Lidas" 
+          icon={<Bell className="h-4 w-4 text-orange-500" />}
+          borderColor="border-orange-500"
+        >
+          <div className="text-2xl font-bold">{unreadCount}</div>
+          <p className="text-sm text-muted-foreground">Notificações não lidas</p>
+        </StyledCard>
+        
+        <StyledCard 
+          title="Lidas" 
+          icon={<Bell className="h-4 w-4 text-green-500" />}
+          borderColor="border-green-500"
+        >
+          <div className="text-2xl font-bold">{notifications.length - unreadCount}</div>
+          <p className="text-sm text-muted-foreground">Notificações lidas</p>
+        </StyledCard>
       </div>
+
+      <StyledCard 
+        borderColor="border-gray-200"
+        title="Suas Notificações"
+      >
+        <div className="mb-4">
+          <NotificationFilters 
+            typeFilter={typeFilter}
+            statusFilter={statusFilter}
+            onTypeChange={setTypeFilter}
+            onStatusChange={setStatusFilter}
+            onMarkAllAsRead={markAllAsRead}
+            onRefresh={refreshNotifications}
+          />
+        </div>
+        <NotificationList 
+          notifications={filteredNotifications}
+          onMarkAsRead={markAsRead}
+          isLoading={isLoading}
+          onDelete={deleteNotification}
+        />
+      </StyledCard>
     </div>
   );
 };
