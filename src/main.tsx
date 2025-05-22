@@ -20,6 +20,20 @@ const queryClient = new QueryClient({
   },
 });
 
+// Register service worker for PWA support and notifications
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker
+      .register('/service-worker.js')
+      .then((registration) => {
+        console.log('Service Worker registered with scope:', registration.scope);
+      })
+      .catch((error) => {
+        console.error('Service Worker registration failed:', error);
+      });
+  });
+}
+
 // Function to safely render the app
 function renderApp() {
   const rootElement = document.getElementById('root');

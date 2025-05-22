@@ -8,7 +8,11 @@ const ASSETS_TO_CACHE = [
   '/index.html',
   '/manifest.json',
   '/assets/index.js',
-  '/assets/index.css'
+  '/assets/index.css',
+  '/sounds/notification.mp3',
+  '/sounds/payment-notification.mp3',
+  '/sounds/system-notification.mp3',
+  '/sounds/machine-notification.mp3'
 ];
 
 // Install event - cache assets
@@ -91,59 +95,6 @@ self.addEventListener('fetch', (event) => {
       })
   );
 });
-
-// Handle background sync for offline forms
-self.addEventListener('sync', (event) => {
-  if (event.tag === 'sync-forms') {
-    event.waitUntil(syncForms());
-  }
-});
-
-// Function to sync stored forms data when back online
-async function syncForms() {
-  try {
-    const db = await openDB();
-    const forms = await db.getAll('offlineForms');
-    
-    for (const form of forms) {
-      try {
-        const response = await fetch(form.url, {
-          method: form.method,
-          headers: form.headers,
-          body: form.body
-        });
-        
-        if (response.ok) {
-          await db.delete('offlineForms', form.id);
-        }
-      } catch (error) {
-        console.error('Error syncing form:', error);
-      }
-    }
-  } catch (error) {
-    console.error('Error opening IndexedDB:', error);
-  }
-}
-
-// IndexedDB helper
-async function openDB() {
-  return new Promise((resolve, reject) => {
-    const request = indexedDB.open('SigmaPayOfflineDB', 1);
-    
-    request.onupgradeneeded = (event) => {
-      const db = event.target.result;
-      db.createObjectStore('offlineForms', { keyPath: 'id', autoIncrement: true });
-    };
-    
-    request.onsuccess = (event) => {
-      resolve(event.target.result);
-    };
-    
-    request.onerror = (event) => {
-      reject(event.target.error);
-    };
-  });
-}
 
 // Push notification handling
 self.addEventListener('push', (event) => {

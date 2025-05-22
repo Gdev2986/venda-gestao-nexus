@@ -1,2 +1,7 @@
 
-# Notification sounds go here
+# Este diretório contém os sons para as notificações.
+# Adicione os arquivos de áudio:
+# - notification.mp3
+# - payment-notification.mp3
+# - system-notification.mp3
+# - machine-notification.mp3

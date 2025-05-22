@@ -1,34 +1,38 @@
 
 import { NotificationType } from "@/types/notification.types";
 
-const NOTIFICATION_SOUNDS = {
-  [NotificationType.GENERAL]: "/sounds/notification-general.mp3",
-  [NotificationType.SYSTEM]: "/sounds/notification-general.mp3",
-  [NotificationType.PAYMENT]: "/sounds/notification-general.mp3",
-  [NotificationType.BALANCE]: "/sounds/notification-general.mp3",
-  [NotificationType.MACHINE]: "/sounds/notification-general.mp3",
-  [NotificationType.COMMISSION]: "/sounds/notification-general.mp3",
-  [NotificationType.SALE]: "/sounds/notification-general.mp3",
-  [NotificationType.SUPPORT]: "/sounds/notification-support.mp3",
-  [NotificationType.ADMIN_NOTIFICATION]: "/sounds/notification-general.mp3",
-  [NotificationType.LOGISTICS]: "/sounds/notification-logistics.mp3",
-};
-
-/**
- * Plays a notification sound based on the notification type if sounds are enabled
- */
-export function playNotificationSoundIfEnabled(type: NotificationType, soundEnabled: boolean): void {
+// Função para reproduzir som com base no tipo de notificação
+export const playNotificationSoundIfEnabled = (
+  type: NotificationType,
+  soundEnabled: boolean
+) => {
   if (!soundEnabled) return;
-  
+
   try {
-    const soundUrl = NOTIFICATION_SOUNDS[type] || NOTIFICATION_SOUNDS[NotificationType.GENERAL];
-    const audio = new Audio(soundUrl);
-    audio.volume = 0.5;
+    const audio = new Audio();
+    
+    // Definir sons diferentes para diferentes tipos de notificações
+    switch (type) {
+      case NotificationType.PAYMENT:
+        audio.src = "/sounds/payment-notification.mp3";
+        break;
+      case NotificationType.SYSTEM:
+        audio.src = "/sounds/system-notification.mp3";
+        break;
+      case NotificationType.MACHINE:
+        audio.src = "/sounds/machine-notification.mp3";
+        break;
+      default:
+        audio.src = "/sounds/notification.mp3";
+        break;
+    }
+    
+    // Reproduzir o som
     audio.play().catch(error => {
-      // Most browsers require a user interaction before playing audio
-      console.log("Could not play notification sound:", error);
+      // Erros de autoplay são comuns devido a políticas dos navegadores
+      console.error("Error playing notification sound:", error);
     });
   } catch (error) {
-    console.error("Error playing notification sound:", error);
+    console.error("Failed to play notification sound:", error);
   }
-}
+};

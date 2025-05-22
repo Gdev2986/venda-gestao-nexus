@@ -1,10 +1,11 @@
 
-import React, { createContext, useContext } from "react";
+import React, { createContext, useContext, useEffect } from "react";
 import { useAuth } from "../AuthContext";
 import { useNotificationsState } from "./useNotificationsState";
 import { useNotificationsSubscription } from "./useNotificationsSubscription";
 import { useNotificationSound } from "./useNotificationSound";
 import { NotificationsContextProps } from "./types";
+import { requestNotificationPermission } from "@/components/notifications/NotificationToast";
 
 const NotificationsContext = createContext<NotificationsContextProps | undefined>(undefined);
 
@@ -25,6 +26,11 @@ export const NotificationsProvider: React.FC<{ children: React.ReactNode }> = ({
     deleteNotification,
     refreshNotifications
   } = useNotificationsState(user?.id, soundEnabled);
+
+  // Solicitar permissão para notificações quando o provedor for montado
+  useEffect(() => {
+    requestNotificationPermission();
+  }, []);
 
   // Set up realtime subscription
   useNotificationsSubscription(

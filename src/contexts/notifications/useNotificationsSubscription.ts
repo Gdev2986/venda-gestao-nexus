@@ -2,7 +2,7 @@
 import { useEffect, useRef } from "react";
 import { UserRole } from "@/types";
 import { supabase } from "@/integrations/supabase/client";
-import { toast } from "@/hooks/use-toast";
+import { showNotificationToast } from "@/components/notifications/NotificationToast";
 import { playNotificationSoundIfEnabled } from "@/services/notificationSoundService";
 import { Notification, NotificationType } from "@/types/notification.types";
 
@@ -107,10 +107,11 @@ export const useNotificationsSubscription = (
         // Play sound based on notification type
         playNotificationSoundIfEnabled(newNotification.type as NotificationType, soundEnabled);
         
-        // Show toast notification
-        toast({
+        // Show toast AND browser notification
+        showNotificationToast({
           title: newNotification.title,
-          description: newNotification.message,
+          message: newNotification.message,
+          type: newNotification.type as NotificationType
         });
         
         // Update our notifications state
