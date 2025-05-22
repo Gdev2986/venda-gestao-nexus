@@ -16,6 +16,7 @@ import { salesRoutes } from "./admin/salesRoutes";
 import { partnerRoutes } from "./admin/partnerRoutes";
 import { paymentRoutes } from "./admin/paymentRoutes";
 import { settingsRoutes } from "./admin/settingsRoutes";
+import { companyRoutes } from "./admin/companyRoutes";
 
 // Combine all admin routes
 export const AdminRoutes = (
@@ -38,6 +39,9 @@ export const AdminRoutes = (
       
       {/* Partner Routes */}
       {partnerRoutes}
+      
+      {/* Company Routes */}
+      {companyRoutes}
       
       {/* Settings and Other Routes */}
       {settingsRoutes}
