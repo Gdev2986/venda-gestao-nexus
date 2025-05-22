@@ -12,6 +12,7 @@ import { Bell } from "lucide-react";
 const Notifications = () => {
   const [typeFilter, setTypeFilter] = useState<string>("all");
   const [statusFilter, setStatusFilter] = useState<string>("all");
+  const [isFirstLoad, setIsFirstLoad] = useState(true);
   
   const {
     notifications,
@@ -23,11 +24,14 @@ const Notifications = () => {
     refreshNotifications = fetchNotifications
   } = useNotifications();
 
-  // Garantir que as notificações são carregadas ao montar o componente
+  // Garantir que as notificações são carregadas apenas uma vez ao montar o componente
   useEffect(() => {
-    console.log("Carregando notificações...");
-    refreshNotifications();
-  }, [refreshNotifications]);
+    if (isFirstLoad) {
+      console.log("Carregando notificações...");
+      refreshNotifications();
+      setIsFirstLoad(false);
+    }
+  }, [refreshNotifications, isFirstLoad]);
 
   // Filtrar notificações baseado nos filtros atuais
   const filteredNotifications = notifications.filter(notification => {
