@@ -30,16 +30,18 @@ export function showNotificationToast(notification: {
   message: string;
   type: NotificationType;
 }) {
-  toast.custom((id) => (
+  // Instead of using toast.custom, use the standard toast method with JSX
+  toast(
     <NotificationToast
       title={notification.title}
       message={notification.message}
       type={notification.type}
-    />
-  ), {
-    duration: 5000,
-    position: 'top-right',
-  });
+    />,
+    {
+      duration: 5000,
+      position: 'top-right',
+    }
+  );
 
   // Tenta enviar uma notificação nativa do navegador se permitido
   if ('Notification' in window && Notification.permission === 'granted') {
