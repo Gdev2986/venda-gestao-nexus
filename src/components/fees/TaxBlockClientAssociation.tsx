@@ -20,10 +20,11 @@ import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
 
 type TaxBlockClientAssociationProps = {
   blocks: BlockWithRates[];
+  selectedBlockId?: string | null;
   onClose: () => void;
 };
 
-const TaxBlockClientAssociation = ({ blocks, onClose }: TaxBlockClientAssociationProps) => {
+const TaxBlockClientAssociation = ({ blocks, selectedBlockId, onClose }: TaxBlockClientAssociationProps) => {
   const [selectedClient, setSelectedClient] = useState("");
   const [selectedBlock, setSelectedBlock] = useState("");
   const [searchTerm, setSearchTerm] = useState("");
@@ -31,6 +32,13 @@ const TaxBlockClientAssociation = ({ blocks, onClose }: TaxBlockClientAssociatio
   const [error, setError] = useState<string | null>(null);
   const { toast } = useToast();
   const queryClient = useQueryClient();
+
+  // Set the selected block if provided
+  useEffect(() => {
+    if (selectedBlockId) {
+      setSelectedBlock(selectedBlockId);
+    }
+  }, [selectedBlockId]);
 
   // Fetch clients without tax block associations
   const { 
@@ -56,11 +64,13 @@ const TaxBlockClientAssociation = ({ blocks, onClose }: TaxBlockClientAssociatio
     enabled: activeTab === "view"
   });
 
-  // Filter associations based on search term
-  const filteredAssociations = associations.filter(assoc => 
-    assoc.clientName.toLowerCase().includes(searchTerm.toLowerCase()) || 
-    assoc.blockName.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  // Filter associations based on search term and/or selected block
+  const filteredAssociations = associations.filter(assoc => {
+    const searchMatch = assoc.clientName.toLowerCase().includes(searchTerm.toLowerCase()) || 
+                       assoc.blockName.toLowerCase().includes(searchTerm.toLowerCase());
+    const blockMatch = selectedBlockId ? assoc.blockId === selectedBlockId : true;
+    return searchMatch && blockMatch;
+  });
 
   // Set error message if any queries failed
   useEffect(() => {
@@ -93,7 +103,6 @@ const TaxBlockClientAssociation = ({ blocks, onClose }: TaxBlockClientAssociatio
         description: "Cliente associado ao bloco de taxas com sucesso",
       });
       setSelectedClient("");
-      setSelectedBlock("");
       setError(null);
       
       // Force refetch to ensure we have the latest data
@@ -184,7 +193,7 @@ const TaxBlockClientAssociation = ({ blocks, onClose }: TaxBlockClientAssociatio
                   setSelectedBlock(value);
                   setError(null);
                 }}
-                disabled={associateMutation.isPending}
+                disabled={associateMutation.isPending || !!selectedBlockId}
               >
                 <SelectTrigger id="block-select" className="mt-1">
                   <SelectValue placeholder="Selecione um bloco de taxas" />
@@ -252,8 +261,8 @@ const TaxBlockClientAssociation = ({ blocks, onClose }: TaxBlockClientAssociatio
                     {filteredAssociations.length === 0 ? (
                       <TableRow>
                         <TableCell colSpan={2} className="text-center py-6">
-                          {searchTerm 
-                            ? "Nenhuma associação corresponde à sua pesquisa." 
+                          {searchTerm || selectedBlockId
+                            ? "Nenhuma associação corresponde ao filtro." 
                             : "Nenhuma associação encontrada."}
                         </TableCell>
                       </TableRow>

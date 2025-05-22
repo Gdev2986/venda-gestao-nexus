@@ -25,6 +25,7 @@ const TaxBlocksManager = () => {
   const [selectedBlock, setSelectedBlock] = useState<BlockWithRates | null>(null);
   const [isCreating, setIsCreating] = useState(false);
   const [isAssociating, setIsAssociating] = useState(false);
+  const [associatingBlockId, setAssociatingBlockId] = useState<string | null>(null);
   const [saveError, setSaveError] = useState<string | null>(null);
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -196,6 +197,11 @@ const TaxBlocksManager = () => {
     deleteBlockMutation.mutate(blockId);
   };
 
+  const handleOpenAssociateDialog = (blockId: string) => {
+    setAssociatingBlockId(blockId);
+    setIsAssociating(true);
+  };
+
   // Monitor save operations
   const isSaving = createBlockMutation.isPending || updateBlockMutation.isPending || deleteBlockMutation.isPending;
 
@@ -238,52 +244,56 @@ const TaxBlocksManager = () => {
             <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
           </span>
         </div>
-        <div className="flex space-x-2 w-full sm:w-auto">
-          <Dialog open={isCreating} onOpenChange={setIsCreating}>
-            <DialogTrigger asChild>
-              <Button className="w-full sm:w-auto" disabled={isSaving}>
-                {createBlockMutation.isPending ? (
-                  <><Loader2 className="h-4 w-4 mr-1 animate-spin" /> Criando...</>
-                ) : (
-                  <><Plus className="h-4 w-4 mr-1" /> Novo Bloco</>
-                )}
-              </Button>
-            </DialogTrigger>
-            <DialogContent>
-              <DialogHeader>
-                <DialogTitle>Criar Novo Bloco de Taxas</DialogTitle>
-                {saveError && (
-                  <Alert variant="destructive" className="mt-2">
-                    <AlertCircle className="h-4 w-4" />
-                    <AlertDescription>{saveError}</AlertDescription>
-                  </Alert>
-                )}
-              </DialogHeader>
-              <TaxBlockEditor 
-                onSave={handleCreateBlock} 
-                onCancel={() => setIsCreating(false)} 
-                isSubmitting={createBlockMutation.isPending}
-              />
-            </DialogContent>
-          </Dialog>
+        <Dialog open={isCreating} onOpenChange={setIsCreating}>
+          <DialogTrigger asChild>
+            <Button className="w-full sm:w-auto" disabled={isSaving}>
+              {createBlockMutation.isPending ? (
+                <><Loader2 className="h-4 w-4 mr-1 animate-spin" /> Criando...</>
+              ) : (
+                <><Plus className="h-4 w-4 mr-1" /> Novo Bloco</>
+              )}
+            </Button>
+          </DialogTrigger>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Criar Novo Bloco de Taxas</DialogTitle>
+              {saveError && (
+                <Alert variant="destructive" className="mt-2">
+                  <AlertCircle className="h-4 w-4" />
+                  <AlertDescription>{saveError}</AlertDescription>
+                </Alert>
+              )}
+            </DialogHeader>
+            <TaxBlockEditor 
+              onSave={handleCreateBlock} 
+              onCancel={() => setIsCreating(false)} 
+              isSubmitting={createBlockMutation.isPending}
+            />
+          </DialogContent>
+        </Dialog>
           
-          <Dialog open={isAssociating} onOpenChange={setIsAssociating}>
-            <DialogTrigger asChild>
-              <Button variant="outline" className="w-full sm:w-auto" disabled={isSaving || blocks.length === 0}>
-                <Link className="h-4 w-4 mr-1" /> Associar Clientes
-              </Button>
-            </DialogTrigger>
-            <DialogContent className="max-w-3xl">
-              <DialogHeader>
-                <DialogTitle>Associar Blocos a Clientes</DialogTitle>
-              </DialogHeader>
-              <TaxBlockClientAssociation 
-                blocks={blocks} 
-                onClose={() => setIsAssociating(false)} 
-              />
-            </DialogContent>
-          </Dialog>
-        </div>
+        <Dialog open={isAssociating} onOpenChange={(open) => {
+          setIsAssociating(open);
+          if (!open) setAssociatingBlockId(null);
+        }}>
+          <DialogContent className="max-w-3xl">
+            <DialogHeader>
+              <DialogTitle>
+                {associatingBlockId 
+                  ? `Associar Clientes ao Bloco: ${blocks.find(b => b.id === associatingBlockId)?.name || ''}`
+                  : 'Associar Clientes a Blocos'}
+              </DialogTitle>
+            </DialogHeader>
+            <TaxBlockClientAssociation 
+              blocks={blocks} 
+              selectedBlockId={associatingBlockId}
+              onClose={() => {
+                setIsAssociating(false);
+                setAssociatingBlockId(null);
+              }} 
+            />
+          </DialogContent>
+        </Dialog>
       </div>
 
       {isLoading ? (
@@ -308,7 +318,16 @@ const TaxBlocksManager = () => {
                   <h3 className="font-semibold text-lg">{block.name}</h3>
                   <p className="text-sm text-muted-foreground mt-1">{block.description}</p>
                 </div>
-                <div className="p-4 pt-2 flex gap-2 justify-end">
+                <div className="p-4 pt-2 flex flex-wrap gap-2 justify-end">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => handleOpenAssociateDialog(block.id)}
+                    disabled={isSaving}
+                  >
+                    <Link className="h-4 w-4 mr-1" /> Associar Clientes
+                  </Button>
+                  
                   <Dialog>
                     <DialogTrigger asChild>
                       <Button 
