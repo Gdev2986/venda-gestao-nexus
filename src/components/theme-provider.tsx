@@ -31,45 +31,46 @@ export function ThemeProvider({
   ...props
 }: ThemeProviderProps) {
   const [theme, setTheme] = React.useState<Theme>(() => {
-    if (typeof window === "undefined") {
-      return defaultTheme;
+    // Only access localStorage on client side
+    if (typeof window !== "undefined") {
+      try {
+        const storedTheme = localStorage.getItem(storageKey);
+        return storedTheme ? (storedTheme as Theme) : defaultTheme;
+      } catch (error) {
+        console.error("Failed to read theme from localStorage:", error);
+        return defaultTheme;
+      }
     }
     
-    try {
-      const storedTheme = localStorage.getItem(storageKey);
-      return storedTheme ? (storedTheme as Theme) : defaultTheme;
-    } catch (error) {
-      console.error("Failed to read theme from localStorage:", error);
-      return defaultTheme;
-    }
+    return defaultTheme;
   });
   
   // Effect to update document classes
   React.useEffect(() => {
-    if (typeof window === "undefined") return;
-    
-    const root = window.document.documentElement;
-    
-    root.classList.remove("light", "dark");
-
-    if (theme === "system") {
-      const systemTheme = window.matchMedia("(prefers-color-scheme: dark)").matches
-        ? "dark"
-        : "light";
-      root.classList.add(systemTheme);
-    } else {
-      root.classList.add(theme);
+    if (typeof window !== "undefined") {
+      const root = window.document.documentElement;
+      
+      root.classList.remove("light", "dark");
+  
+      if (theme === "system") {
+        const systemTheme = window.matchMedia("(prefers-color-scheme: dark)").matches
+          ? "dark"
+          : "light";
+        root.classList.add(systemTheme);
+      } else {
+        root.classList.add(theme);
+      }
     }
   }, [theme]);
 
   // Effect to save theme in localStorage
   React.useEffect(() => {
-    if (typeof window === "undefined") return;
-    
-    try {
-      localStorage.setItem(storageKey, theme);
-    } catch (error) {
-      console.error("Failed to save theme preference:", error);
+    if (typeof window !== "undefined") {
+      try {
+        localStorage.setItem(storageKey, theme);
+      } catch (error) {
+        console.error("Failed to save theme preference:", error);
+      }
     }
   }, [theme, storageKey]);
 
