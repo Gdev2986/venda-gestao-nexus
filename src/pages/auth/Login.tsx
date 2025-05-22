@@ -1,12 +1,12 @@
 
 import { useState, useEffect } from "react";
 import { useNavigate, Link } from "react-router-dom";
-import LoginForm from "@/components/auth/LoginForm";
-import { LayoutDashboard, CreditCard, FileText, Monitor } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { PATHS } from "@/routes/paths";
 import { Spinner } from "@/components/ui/spinner";
 import { useMediaQuery } from "@/hooks/use-media-query";
+import LoginForm from "@/components/auth/LoginForm";
+import { LayoutDashboard, CreditCard, FileText, Monitor } from "lucide-react";
 
 const Login = () => {
   const navigate = useNavigate();
@@ -15,15 +15,13 @@ const Login = () => {
   const isMobile = useMediaQuery("(max-width: 767px)");
 
   useEffect(() => {
-    // If authenticated and finished loading, redirect to dashboard
     if (user && !isLoading) {
       console.log("Login: User authenticated, redirecting to dashboard");
       setRedirecting(true);
-      navigate(PATHS.DASHBOARD); // This will be handled by the RootLayout component
+      navigate(PATHS.DASHBOARD);
     }
   }, [user, isLoading, navigate]);
 
-  // If redirecting or loading, show a spinner
   if (isLoading || redirecting) {
     return (
       <div className="flex flex-col items-center justify-center h-screen bg-background">
@@ -35,11 +33,22 @@ const Login = () => {
     );
   }
 
-  // If still loading or the user is not authenticated, show the login page
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-b from-background/50 to-background p-4 dark:from-background dark:to-background/80">
-      <div className="flex flex-col md:flex-row items-center justify-center max-w-5xl w-full">
-        {/* Left side - features description (hidden on mobile) */}
+    <div className="flex flex-col items-center justify-center w-full">
+      <div className="flex flex-col md:flex-row items-center justify-center w-full max-w-5xl">
+        {/* Logo for mobile */}
+        {isMobile && (
+          <div className="mb-6 text-center">
+            <div className="flex items-center justify-center mb-2">
+              <div className="w-12 h-12 bg-primary rounded-lg flex items-center justify-center text-white text-xl font-bold mr-2">
+                SP
+              </div>
+              <h1 className="text-2xl font-bold">SigmaPay</h1>
+            </div>
+          </div>
+        )}
+        
+        {/* Left side content - hidden on mobile */}
         {!isMobile && (
           <div className="w-full md:w-1/2 md:pr-8 text-center md:text-left mb-6 md:mb-0">
             <div className="flex items-center justify-center md:justify-start mb-4">
@@ -93,29 +102,9 @@ const Login = () => {
           </div>
         )}
         
-        {/* Mobile only - just show the logo and app name */}
-        {isMobile && (
-          <div className="mb-6 text-center">
-            <div className="flex items-center justify-center mb-4">
-              <div className="w-12 h-12 bg-primary rounded-lg flex items-center justify-center text-white text-xl font-bold mr-3">
-                SP
-              </div>
-              <h1 className="text-3xl font-bold tracking-tight">SigmaPay</h1>
-            </div>
-          </div>
-        )}
-        
         {/* Right side - login form (full width on mobile) */}
-        <div className="w-full md:w-1/2">
+        <div className={`w-full ${isMobile ? "" : "md:w-1/2"} max-w-md`}>
           <LoginForm />
-          <div className="mt-4 text-center">
-            <p className="text-muted-foreground">
-              Não tem uma conta?{" "}
-              <Link to={PATHS.REGISTER} className="text-primary hover:underline font-medium">
-                Cadastre-se
-              </Link>
-            </p>
-          </div>
         </div>
       </div>
     </div>

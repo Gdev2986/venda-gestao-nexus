@@ -1,6 +1,6 @@
 
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -9,6 +9,8 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
 import { PATHS } from "@/routes/paths";
 import { Spinner } from "@/components/ui/spinner";
+import { Lock, Mail } from "lucide-react";
+import { useMediaQuery } from "@/hooks/use-media-query";
 
 const LoginForm = () => {
   const [email, setEmail] = useState("");
@@ -17,6 +19,7 @@ const LoginForm = () => {
   const { signIn, needsPasswordChange } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
+  const isMobile = useMediaQuery("(max-width: 767px)");
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -42,19 +45,16 @@ const LoginForm = () => {
         return;
       }
 
-      // Check if user needs to change password (first login)
       if (data && needsPasswordChange) {
         navigate(PATHS.CHANGE_PASSWORD);
         return;
       }
 
-      // Regular login success
       toast({
         title: "Login realizado com sucesso",
         description: "Bem-vindo de volta!",
       });
       
-      // Force a full page refresh to ensure clean state
       window.location.href = PATHS.DASHBOARD;
     } catch (error: any) {
       toast({
@@ -68,46 +68,54 @@ const LoginForm = () => {
   };
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle className="text-xl">Login</CardTitle>
-        <CardDescription>
+    <Card className="border-0 shadow-md">
+      <CardHeader className={isMobile ? "pb-2" : ""}>
+        <CardTitle className="text-xl text-center">Login</CardTitle>
+        <CardDescription className="text-center">
           Entre com suas credenciais para acessar o sistema
         </CardDescription>
       </CardHeader>
       <form onSubmit={handleSubmit}>
-        <CardContent className="space-y-4">
+        <CardContent className={`space-y-4 ${isMobile ? "pt-2 pb-2" : ""}`}>
           <div className="space-y-2">
             <Label htmlFor="email">E-mail</Label>
-            <Input
-              id="email"
-              type="email"
-              placeholder="seu@email.com"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              required
-              disabled={isSubmitting}
-            />
+            <div className="relative">
+              <Mail className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+              <Input
+                id="email"
+                type="email"
+                placeholder="seu@email.com"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                className="pl-10"
+                required
+                disabled={isSubmitting}
+              />
+            </div>
           </div>
           <div className="space-y-2">
             <div className="flex items-center justify-between">
               <Label htmlFor="password">Senha</Label>
-              <a
-                href={PATHS.FORGOT_PASSWORD}
+              <Link
+                to={PATHS.FORGOT_PASSWORD}
                 className="text-xs text-primary hover:underline"
               >
                 Esqueceu a senha?
-              </a>
+              </Link>
             </div>
-            <Input
-              id="password"
-              type="password"
-              placeholder="••••••••"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              required
-              disabled={isSubmitting}
-            />
+            <div className="relative">
+              <Lock className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+              <Input
+                id="password"
+                type="password"
+                placeholder="••••••••"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                className="pl-10"
+                required
+                disabled={isSubmitting}
+              />
+            </div>
           </div>
         </CardContent>
         <CardFooter className="flex flex-col space-y-4">
@@ -127,12 +135,12 @@ const LoginForm = () => {
           </Button>
           <div className="text-center text-sm">
             Não tem uma conta?{" "}
-            <a
-              href={PATHS.REGISTER}
+            <Link
+              to={PATHS.REGISTER}
               className="text-primary hover:underline font-medium"
             >
               Cadastre-se
-            </a>
+            </Link>
           </div>
         </CardFooter>
       </form>
