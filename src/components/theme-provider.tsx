@@ -30,15 +30,14 @@ export function ThemeProvider({
   storageKey = "sigmapay-theme",
   ...props
 }: ThemeProviderProps) {
-  // Fix the useState initialization to be more robust
   const [theme, setTheme] = React.useState<Theme>(() => {
-    if (typeof window === 'undefined') {
+    if (typeof window === "undefined") {
       return defaultTheme;
     }
     
     try {
       const storedTheme = localStorage.getItem(storageKey);
-      return (storedTheme as Theme) || defaultTheme;
+      return storedTheme ? (storedTheme as Theme) : defaultTheme;
     } catch (error) {
       console.error("Failed to read theme from localStorage:", error);
       return defaultTheme;
@@ -47,7 +46,7 @@ export function ThemeProvider({
   
   // Effect to update document classes
   React.useEffect(() => {
-    if (typeof window === 'undefined') return;
+    if (typeof window === "undefined") return;
     
     const root = window.document.documentElement;
     
@@ -65,7 +64,7 @@ export function ThemeProvider({
 
   // Effect to save theme in localStorage
   React.useEffect(() => {
-    if (typeof window === 'undefined') return;
+    if (typeof window === "undefined") return;
     
     try {
       localStorage.setItem(storageKey, theme);
@@ -91,7 +90,7 @@ export function ThemeProvider({
 }
 
 // Custom hook to use the theme context with better error handling
-export const useTheme = () => {
+export const useTheme = (): ThemeProviderState => {
   const context = React.useContext(ThemeProviderContext);
   
   if (context === undefined) {
