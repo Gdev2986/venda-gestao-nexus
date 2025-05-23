@@ -1,119 +1,89 @@
 
-// Import types
-import { NormalizedSale } from "@/pages/admin/Sales";
+import { v4 as uuidv4 } from "uuid";
 import { Sale } from "@/types";
+import { NormalizedSale, formatDateStandard } from './sales-processor';
+import { formatCurrency } from "@/lib/formatters";
 
-// Function to generate random sales data for testing
-export const generateMockSalesData = (count: number = 50): NormalizedSale[] => {
-  const paymentTypes = ["Cartão de Crédito", "Cartão de Débito", "Pix"];
-  const statuses = ["Aprovada", "Pendente", "Rejeitada"];
-  const terminals = ["T100", "T101", "T102", "T103", "T104", "T105"];
-  const brands = ["Visa", "Mastercard", "Elo", "Pix", "Amex"];
-  const sources = ["PagSeguro", "Rede Cartão", "Rede Pix", "Sigma"];
+export const generateMockSalesData = (count = 10): NormalizedSale[] => {
+  const sources = ['Rede Cartão', 'Rede Pix', 'PagSeguro', 'Sigma'];
+  const paymentTypes = ['Cartão de Crédito', 'Cartão de Débito', 'Pix'];
+  const statuses = ['Aprovada', 'Rejeitada', 'Pendente', 'Cancelada'];
+  const brands = ['Visa', 'Mastercard', 'Elo', 'Amex', 'Pix'];
+  const terminals = ['TERM001', 'TERM002', 'TERM003', 'TERM004', 'TERM005'];
   
-  const mockData: NormalizedSale[] = [];
+  const result: NormalizedSale[] = [];
   
   for (let i = 0; i < count; i++) {
-    // Choose random payment type
-    const paymentType = paymentTypes[Math.floor(Math.random() * paymentTypes.length)];
+    const source = sources[Math.floor(Math.random() * sources.length)];
+    const payment_type = paymentTypes[Math.floor(Math.random() * paymentTypes.length)];
     
-    // Determine brand and installments based on payment type
-    let brand = brands[Math.floor(Math.random() * (brands.length - 1))]; // Exclude "Pix" by default
-    let installments = Math.floor(Math.random() * 12) + 1;
+    // Make sure Pix is always paid in full with Pix brand
+    let brand = payment_type === 'Pix' 
+      ? 'Pix' 
+      : brands[Math.floor(Math.random() * (brands.length - 1))]; // Exclude Pix from cards
     
-    // Override for Pix
-    if (paymentType === "Pix") {
-      brand = "Pix";
-      installments = 1;
-    }
+    const installments = payment_type === 'Pix' || payment_type === 'Cartão de Débito'
+      ? 1
+      : Math.floor(Math.random() * 12) + 1; // 1-12 installments for credit card
     
-    // Generate random date between 90 days ago and now
-    const now = new Date();
-    const pastDate = new Date(now.getTime() - Math.random() * 90 * 24 * 60 * 60 * 1000);
+    const date = new Date();
+    date.setDate(date.getDate() - Math.floor(Math.random() * 30)); // Random date in the last 30 days
     
-    mockData.push({
-      id: `mock-${i}`,
-      status: statuses[Math.floor(Math.random() * statuses.length)],
-      payment_type: paymentType,
-      gross_amount: Math.floor(Math.random() * 1000000) / 100, // Random amount between 0 and 10,000
-      transaction_date: pastDate,
-      installments: installments,
-      terminal: terminals[Math.floor(Math.random() * terminals.length)],
-      brand: brand,
-      source: sources[Math.floor(Math.random() * sources.length)]
-    });
-  }
-  
-  return mockData;
-};
-
-// Alias for backward compatibility
-export const generateMockSales = generateMockSalesData;
-
-// Function to generate daily sales data for charts
-export const generateDailySalesData = (days: number = 30) => {
-  const result = [];
-  const now = new Date();
-  
-  for (let i = days - 1; i >= 0; i--) {
-    const date = new Date(now);
-    date.setDate(now.getDate() - i);
+    const gross_amount = Number((Math.random() * 1000 + 50).toFixed(2));
     
     result.push({
-      date: date.toISOString().split('T')[0],
-      amount: Math.random() * 10000 + 1000
+      id: `mock-${i}`,
+      status: statuses[Math.floor(Math.random() * statuses.length)],
+      payment_type,
+      gross_amount,
+      transaction_date: formatDateStandard(date.toISOString().split('T')[0]),
+      installments,
+      terminal: terminals[Math.floor(Math.random() * terminals.length)],
+      brand,
+      source,
+      formatted_amount: formatCurrency(gross_amount)
     });
   }
   
   return result;
 };
 
-// Function to generate payment methods breakdown data
-export const generatePaymentMethodsData = () => {
-  return [
-    { name: "Crédito", value: Math.floor(Math.random() * 5000) + 3000 },
-    { name: "Débito", value: Math.floor(Math.random() * 3000) + 1000 },
-    { name: "Pix", value: Math.floor(Math.random() * 2000) + 500 },
-  ];
-};
-
-// Function to calculate sales totals
 export const calculateSalesTotals = (sales: NormalizedSale[]) => {
+  const totalAmount = sales.reduce((sum, sale) => sum + sale.gross_amount, 0);
+  const averageAmount = sales.length > 0 ? totalAmount / sales.length : 0;
+  const uniqueTerminals = new Set(sales.map(sale => sale.terminal)).size;
+  
   return {
-    grossAmount: sales.reduce((sum, sale) => sum + sale.gross_amount, 0),
-    netAmount: sales.reduce((sum, sale) => {
-      // Calculate a simulated net amount (gross minus ~3% fee)
-      const fee = sale.gross_amount * 0.03;
-      return sum + (sale.gross_amount - fee);
-    }, 0),
+    totalAmount,
+    averageAmount,
+    uniqueTerminals
   };
 };
 
-// Function to convert NormalizedSale to Sale type
-export const convertNormalizedSaleToSale = (normalizedSale: NormalizedSale): Sale => {
-  return {
-    id: normalizedSale.id || "",
-    code: normalizedSale.id || "",
-    terminal: normalizedSale.terminal,
-    client_name: "Cliente", // Default value
-    gross_amount: normalizedSale.gross_amount,
-    net_amount: normalizedSale.gross_amount * 0.97, // 3% fee
-    date: typeof normalizedSale.transaction_date === 'string' 
-      ? normalizedSale.transaction_date 
-      : normalizedSale.transaction_date.toISOString(),
-    payment_method: normalizedSale.payment_type.toLowerCase().includes('crédito') 
-      ? "credit" 
-      : normalizedSale.payment_type.toLowerCase().includes('débito') 
-        ? "debit" 
-        : "pix",
-    client_id: "",
-    created_at: new Date().toISOString(),
-    updated_at: new Date().toISOString(),
-    status: normalizedSale.status,
-  };
-};
-
-// Function to convert array of NormalizedSale to array of Sale
 export const convertNormalizedSalesToSales = (normalizedSales: NormalizedSale[]): Sale[] => {
-  return normalizedSales.map(convertNormalizedSaleToSale);
+  return normalizedSales.map(sale => {
+    // Calculate net amount (simple example: 97% of gross amount)
+    const net_amount = sale.gross_amount * 0.97;
+    
+    return {
+      id: sale.id || uuidv4(),
+      code: sale.id || uuidv4().split('-')[0],
+      terminal: sale.terminal,
+      client_name: "Cliente", // Default value
+      client_id: "",
+      gross_amount: sale.gross_amount,
+      net_amount: net_amount,
+      date: typeof sale.transaction_date === 'string' 
+        ? sale.transaction_date 
+        : sale.transaction_date.toISOString(),
+      payment_method: sale.payment_type.toLowerCase().includes('crédito') || sale.payment_type.toLowerCase().includes('credito')
+        ? "credit" 
+        : sale.payment_type.toLowerCase().includes('débito') || sale.payment_type.toLowerCase().includes('debito')
+          ? "debit" 
+          : "pix",
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+      status: sale.status
+    };
+  });
 };

@@ -1,447 +1,548 @@
 
-// Normalization and data processing utilities for sales imports
+// Utility functions for processing sales data from CSV files
 
-import { NormalizedSale } from "@/pages/admin/Sales";
-
-// Types for file sources
-export type FileSource = "PagSeguro" | "Rede Cartão" | "Rede Pix" | "Sigma" | "Desconhecido";
-
-// Types for normalization results
-export interface NormalizationResult {
-  data: NormalizedSale[];
-  warnings: Array<{
-    row: number;
-    message: string;
-    original?: any;
-  }>;
-}
-
-// Function to normalize text (remove accents, convert to lowercase)
-export function normalizeText(text: string): string {
-  if (!text) return "";
-  
-  return text.normalize("NFD")
-    .replace(/[\u0300-\u036f]/g, "") // Remove accents
+/**
+ * Normalizes text: removes accents, converts to lowercase and trims
+ */
+export function normalizeText(text: string | undefined | null): string {
+  if (!text) return '';
+  return String(text)
+    .trim()
     .toLowerCase()
-    .trim();
+    // remove accents
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '');
 }
 
-// Function to convert string currency values to number
-export function toNumber(value: string | number): number {
-  if (typeof value === "number") return value;
-  if (!value) return 0;
-  
-  // Remove non-numeric chars except decimal separators
-  const normalized = String(value)
-    .replace(/[^\d.,]/g, '')
-    .replace(/,/g, '.');
-  
-  // Handle numbers with multiple dots (use last as decimal)
-  const parts = normalized.split('.');
-  if (parts.length > 2) {
-    const decimal = parts.pop() || '0';
-    const integer = parts.join('');
-    return parseFloat(`${integer}.${decimal}`);
+/**
+ * Converts a value to number
+ */
+export function toNumber(v: string | number): number {
+  if (typeof v === 'string') {
+    return parseFloat(v.replace(/\./g, '').replace(',', '.')) || 0;
+  }
+  return Number(v) || 0;
+}
+
+/**
+ * Gets a value from an object using multiple possible keys
+ */
+export function getValue(row: Record<string, any>, possibleKeys: string[], defaultValue: any = ''): any {
+  // First try exact keys
+  for (const key of possibleKeys) {
+    if (row[key] !== undefined) return row[key];
   }
   
-  return parseFloat(normalized) || 0;
-}
-
-// Function to get a value from multiple possible column names
-export function getValue(
-  row: any, 
-  keys: string[], 
-  defaultValue: any = null
-): any {
-  for (const key of keys) {
-    if (row[key] !== undefined && row[key] !== null && row[key] !== '') {
+  // Then try normalized keys
+  const normalizedKeys = possibleKeys.map(k => normalizeText(k));
+  const rowKeys = Object.keys(row);
+  
+  for (const key of rowKeys) {
+    const normalizedKey = normalizeText(key);
+    if (normalizedKeys.includes(normalizedKey)) {
       return row[key];
     }
   }
+  
   return defaultValue;
 }
 
-// Function to format date in standard format DD/MM/YYYY HH:MM
-export function formatDateStandard(date: Date): string {
-  if (!date) return "";
-  
-  const day = date.getDate().toString().padStart(2, '0');
-  const month = (date.getMonth() + 1).toString().padStart(2, '0');
-  const year = date.getFullYear();
-  const hours = date.getHours().toString().padStart(2, '0');
-  const minutes = date.getMinutes().toString().padStart(2, '0');
-  
-  return `${day}/${month}/${year} ${hours}:${minutes}`;
+/**
+ * Formats date to standard DD/MM/YYYY HH:MM format
+ */
+export function formatDateStandard(dateInput: string, timeInput: string = ''): string {
+  try {
+    if (!dateInput) return '01/01/2000 00:00';
+
+    let dateStr = dateInput;
+    let timeStr = timeInput;
+
+    // If timeInput is not provided but dateInput has a space
+    if (!timeInput && dateInput.includes(' ')) {
+      timeStr = dateInput.split(' ')[1]?.substring(0, 5) || '';
+      dateStr = dateInput.split(' ')[0];
+    }
+
+    const dateParts = dateStr.split(/[-\/]/);
+    let day, month, year;
+
+    if (dateStr.includes('-')) {  // ISO
+      [year, month, day] = dateParts;
+    } else {  // Brazilian
+      [day, month, year] = dateParts;
+    }
+
+    return `${day?.padStart(2,'0')}/${month?.padStart(2,'0')}/${year || '2000'} ${timeStr || '00:00'}`;
+  } catch (e) {
+    console.error('Error formatting date:', e);
+    return '01/01/2000 00:00';
+  }
 }
 
-// Function to parse date from various formats
-export function parseDate(dateStr: string, timeStr?: string): Date | null {
+/**
+ * Parses a date string to Date object
+ */
+export function parseDate(dateStr: string): Date | null {
   if (!dateStr) return null;
   
-  // Try to extract date components
-  let day, month, year, hours = 0, minutes = 0;
-  
-  // Check different date formats
-  const dateParts = dateStr.split(/[\/.-]/);
-  
-  if (dateParts.length === 3) {
-    // Handle DD/MM/YYYY or YYYY-MM-DD
-    if (dateParts[0].length === 4) {
-      // YYYY-MM-DD format
-      year = parseInt(dateParts[0], 10);
-      month = parseInt(dateParts[1], 10) - 1;
-      day = parseInt(dateParts[2], 10);
-    } else {
-      // DD/MM/YYYY format
-      day = parseInt(dateParts[0], 10);
-      month = parseInt(dateParts[1], 10) - 1;
-      year = parseInt(dateParts[2], 10);
+  try {
+    // Try different formats
+    if (dateStr.includes('/')) {
+      // Format DD/MM/YYYY or DD/MM/YYYY HH:MM
+      const parts = dateStr.split(' ')[0].split('/');
+      const timeParts = dateStr.split(' ')[1]?.split(':') || [0, 0];
       
-      // Handle two-digit year
-      if (year < 100) {
-        year += 2000;
+      if (parts.length >= 3) {
+        return new Date(
+          parseInt(parts[2]), // Year
+          parseInt(parts[1]) - 1, // Month (0-11)
+          parseInt(parts[0]), // Day
+          parseInt(timeParts[0] || 0), // Hour
+          parseInt(timeParts[1] || 0) // Minute
+        );
       }
     }
     
-    // Process time if provided
-    if (timeStr) {
-      const timeParts = timeStr.split(':');
-      if (timeParts.length >= 2) {
-        hours = parseInt(timeParts[0], 10);
-        minutes = parseInt(timeParts[1], 10);
-      }
-    } else {
-      // Check if date string has time portion
-      const dateTimeParts = dateStr.split(' ');
-      if (dateTimeParts.length > 1) {
-        const timeStr = dateTimeParts[1];
-        const timeParts = timeStr.split(':');
-        if (timeParts.length >= 2) {
-          hours = parseInt(timeParts[0], 10);
-          minutes = parseInt(timeParts[1], 10);
-        }
-      }
-    }
-    
-    // Create date object
-    const date = new Date(year, month, day, hours, minutes);
-    
-    // Validate date
-    if (isNaN(date.getTime())) {
-      return null;
-    }
-    
-    return date;
+    // Last resort, try with native Date constructor
+    return new Date(dateStr);
+  } catch (e) {
+    console.error('Error converting date string:', e);
+    return null;
   }
-  
-  // Try standard JS date parsing as fallback
-  const fallbackDate = new Date(dateStr);
-  if (!isNaN(fallbackDate.getTime())) {
-    return fallbackDate;
-  }
-  
-  return null;
 }
 
-// Function to detect source by headers
-export function detectSourceByHeaders(headers: string[]): FileSource {
-  if (!headers || headers.length === 0) {
-    return "Desconhecido";
-  }
-  
-  // Normalize headers for case-insensitive comparison
-  const normalizedHeaders = headers.map(normalizeText);
-  
-  // Check for PagSeguro
-  if (
-    normalizedHeaders.some(h => h.includes("forma de pagamento")) &&
-    normalizedHeaders.some(h => h.includes("identificacao da maquininha") || h.includes("serial_leitor"))
-  ) {
-    return "PagSeguro";
-  }
-  
-  // Check for Rede Cartão
-  if (
-    normalizedHeaders.some(h => h.includes("modalidade")) &&
-    normalizedHeaders.some(h => h.includes("numero de parcelas") || h.includes("parcelas")) &&
-    !normalizedHeaders.some(h => h.toLowerCase() === "pix")
-  ) {
-    return "Rede Cartão";
-  }
-  
-  // Check for Rede Pix
-  if (
-    normalizedHeaders.some(h => h.includes("modalidade") && h.includes("pix")) ||
-    (
-      normalizedHeaders.some(h => h.includes("modalidade")) &&
-      normalizedHeaders.some(h => h.includes("codigo da maquininha")) &&
-      normalizedHeaders.some(h => h === "pix" || h.includes("tipo pix"))
-    )
-  ) {
-    return "Rede Pix";
-  }
-  
-  // Check for Sigma
-  if (
-    normalizedHeaders.some(h => h === "modalidade" || h === "tipo") &&
-    normalizedHeaders.some(h => h.includes("valor venda") || h === "valor")
-  ) {
-    return "Sigma";
-  }
-  
-  return "Desconhecido";
+/**
+ * Formats a number as currency
+ */
+export function formatCurrency(value: number | string): string {
+  return new Intl.NumberFormat('pt-BR', {
+    style: 'currency',
+    currency: 'BRL'
+  }).format(toNumber(value) || 0);
 }
 
-// Function to normalize data based on detected source
-export function normalizeData(data: any[], source: FileSource): NormalizationResult {
+/**
+ * Detects source type based on CSV headers
+ */
+export function detectSourceByHeaders(data: Array<Record<string, any>>): string {
+  if (!data || !data.length) return 'Desconhecido';
+  
+  const keys = Object.keys(data[0]).map(k => normalizeText(k));
+  
+  if (keys.includes('forma de pagamento') && keys.includes('identificacao da maquininha'))
+    return 'PagSeguro';
+    
+  if (keys.includes('modalidade') && keys.includes('numero de parcelas'))
+    return 'Rede Cartão';
+    
+  if (keys.includes('modalidade') && keys.includes('codigo da maquininha') &&
+      data.some(r => normalizeText(getValue(r, ['modalidade', 'Modalidade', 'MODALIDADE'])) === 'pix'))
+    return 'Rede Pix';
+    
+  if (keys.some(k => k.includes('modalidade')) && keys.some(k => k.includes('valor venda')))
+    return 'Sigma';
+    
+  return 'Desconhecido';
+}
+
+export interface NormalizedSale {
+  status: string;
+  payment_type: string;
+  gross_amount: number;
+  transaction_date: string | Date;
+  installments: number;
+  terminal: string;
+  brand: string;
+  source: string;
+  id?: string;
+  formatted_amount?: string;
+}
+
+interface NormalizeResult {
+  data: NormalizedSale[];
+  warnings: Array<{
+    rowIndex: number;
+    message: string;
+  }>;
+}
+
+/**
+ * Normalizes data based on source
+ */
+export function normalizeData(data: Array<Record<string, any>>, source: string): NormalizeResult {
+  console.log(`Normalizing data for: ${source}`, data.length, 'records');
+  
   const normalizedData: NormalizedSale[] = [];
-  const warnings: any[] = [];
+  const warnings: Array<{rowIndex: number; message: string}> = [];
   
-  // Skip processing if source is unknown or data is empty
-  if (source === "Desconhecido" || !data || data.length === 0) {
-    return { data: [], warnings: [{ row: 0, message: "Formato desconhecido ou dados vazios" }] };
-  }
-  
-  // Process each row
   data.forEach((row, index) => {
+    // Check if row has data
+    if (!row || Object.keys(row).length === 0) {
+      warnings.push({
+        rowIndex: index,
+        message: 'Empty row, skipping'
+      });
+      return; // Skip empty rows
+    }
+    
+    let normalizedRow: NormalizedSale = {
+      status: 'Aprovada',  // Default for all
+      payment_type: '',
+      gross_amount: 0,
+      transaction_date: '',
+      installments: 1,     // Default 1 for all
+      terminal: '',
+      brand: '',
+      source: source
+    };
+    
     try {
-      let normalizedRow: NormalizedSale;
-      
       switch (source) {
-        case "PagSeguro":
-          normalizedRow = normalizePagSeguroRow(row);
+        case 'Rede Cartão':
+          // Status always "Aprovada" for Rede files
+          normalizedRow.status = "Aprovada";
+          
+          // Standardize payment type: Debit Card or Credit Card
+          const modalidadeRede = getValue(row, [
+            'modalidade', 'MODALIDADE', 'Modalidade'
+          ], '').trim();
+          
+          if (normalizeText(modalidadeRede).includes('debito')) {
+            normalizedRow.payment_type = 'Cartão de Débito';
+          } else if (normalizeText(modalidadeRede).includes('credito')) {
+            normalizedRow.payment_type = 'Cartão de Crédito';
+          } else {
+            normalizedRow.payment_type = modalidadeRede;
+          }
+          
+          // Get gross amount correctly - may be in different formats or columns
+          const valorBrutoRede = getValue(row, [
+            'valor da venda original', 'VALOR DA VENDA ORIGINAL', 
+            'Valor da Venda Original', 'valor da venda', 'VALOR DA VENDA'
+          ], 0);
+          
+          // Process value using toNumber function
+          normalizedRow.gross_amount = toNumber(valorBrutoRede);
+          
+          // Get date and time data
+          const dataVendaRede = getValue(row, [
+            'data da venda', 'DATA DA VENDA', 'Data da Venda'
+          ], '');
+          
+          const horaVendaRede = getValue(row, [
+            'hora da venda', 'HORA DA VENDA', 'Hora da Venda'
+          ], '');
+          
+          // Format date using formatDateStandard function
+          normalizedRow.transaction_date = formatDateStandard(dataVendaRede, horaVendaRede);
+          
+          // Installments (default 1 if not present)
+          const parcelasRede = getValue(row, [
+            'número de parcelas', 'NÚMERO DE PARCELAS', 'Número de Parcelas',
+            'numero de parcelas', 'NUMERO DE PARCELAS'
+          ], '1');
+          
+          normalizedRow.installments = parseInt(parcelasRede as string) || 1;
+          
+          // Terminal - may come in different formats
+          normalizedRow.terminal = getValue(row, [
+            'Terminal', 'terminal', 'TERMINAL',
+            'código da maquininha', 'CÓDIGO DA MAQUININHA',
+            'codigo da maquininha', 'CODIGO DA MAQUININHA'
+          ], '');
+          
+          // Brand
+          normalizedRow.brand = getValue(row, [
+            'bandeira', 'BANDEIRA', 'Bandeira'
+          ], '');
           break;
-        case "Rede Cartão":
-          normalizedRow = normalizeRedeCartaoRow(row);
+          
+        case 'Rede Pix':
+          // Status always "Aprovada" for Rede files
+          normalizedRow.status = "Aprovada";
+          
+          // Payment type for Pix
+          normalizedRow.payment_type = 'Pix';
+          
+          // Gross amount correctly
+          const valorPixBruto = getValue(row, [
+            'valor da venda original', 'VALOR DA VENDA ORIGINAL', 
+            'Valor da Venda Original', 'valor da venda', 'VALOR DA VENDA'
+          ], 0);
+          
+          // Process value using toNumber function
+          normalizedRow.gross_amount = toNumber(valorPixBruto);
+          
+          // Get date and time data
+          const dataPixRede = getValue(row, [
+            'data da venda', 'DATA DA VENDA', 'Data da Venda'
+          ], '');
+          
+          const horaPixRede = getValue(row, [
+            'hora da venda', 'HORA DA VENDA', 'Hora da Venda'
+          ], '');
+          
+          // Format date using formatDateStandard function
+          normalizedRow.transaction_date = formatDateStandard(dataPixRede, horaPixRede);
+          
+          // Pix is always paid in full (1 installment)
+          normalizedRow.installments = 1;
+          
+          // Terminal - may come as maquininha or terminal code
+          normalizedRow.terminal = getValue(row, [
+            'código da maquininha', 'CÓDIGO DA MAQUININHA',
+            'codigo da maquininha', 'CODIGO DA MAQUININHA',
+            'Terminal', 'terminal', 'TERMINAL'
+          ], '');
+          
+          // Brand always Pix
+          normalizedRow.brand = 'Pix';
           break;
-        case "Rede Pix":
-          normalizedRow = normalizeRedePixRow(row);
+          
+        case 'PagSeguro':
+          normalizedRow.status = getValue(row, [
+            'Status', 'STATUS', 'status'
+          ], 'Aprovada');
+          
+          // Standardize payment type
+          const formaPagamento = getValue(row, [
+            'Forma de Pagamento', 'FORMA DE PAGAMENTO', 
+            'forma de pagamento', 'Meio de Pagamento'
+          ], '').trim();
+          
+          if (normalizeText(formaPagamento).includes('credito')) {
+            normalizedRow.payment_type = 'Cartão de Crédito';
+          } else if (normalizeText(formaPagamento).includes('debito')) {
+            normalizedRow.payment_type = 'Cartão de Débito';
+          } else if (normalizeText(formaPagamento).includes('pix')) {
+            normalizedRow.payment_type = 'Pix';
+          } else {
+            normalizedRow.payment_type = formaPagamento;
+          }
+          
+          // Gross amount - may be in different formats
+          const valorPagSeguro = getValue(row, [
+            'Valor Bruto', 'VALOR BRUTO', 'valor bruto',
+            'Valor', 'VALOR', 'valor'
+          ], 0);
+          
+          // Use toNumber for conversion
+          normalizedRow.gross_amount = toNumber(valorPagSeguro);
+          
+          // Transaction date
+          const dataPagSeguro = getValue(row, [
+            'Data da Transação', 'DATA DA TRANSAÇÃO', 
+            'data da transacao', 'Data', 'DATA'
+          ], '');
+          
+          // Format date using formatDateStandard function
+          normalizedRow.transaction_date = formatDateStandard(dataPagSeguro);
+          
+          // Installments
+          const parcelasPagSeguro = getValue(row, [
+            'Parcela', 'PARCELA', 'parcela',
+            'Parcelas', 'PARCELAS', 'parcelas'
+          ], '1');
+          
+          normalizedRow.installments = parseInt(parcelasPagSeguro as string) || 1;
+          
+          // Check different possible fields for terminal
+          normalizedRow.terminal = getValue(row, [
+            'Identificação da Maquininha', 'IDENTIFICAÇÃO DA MAQUININHA',
+            'Identificacao da Maquininha', 'IDENTIFICACAO DA MAQUININHA',
+            'Serial_Leitor', 'SERIAL_LEITOR', 'serial_leitor',
+            'Terminal', 'TERMINAL', 'terminal'
+          ], '');
+          
+          normalizedRow.brand = getValue(row, [
+            'Bandeira', 'BANDEIRA', 'bandeira'
+          ], '');
+          
+          // If Pix, adjust brand and installments
+          if (normalizedRow.payment_type === 'Pix') {
+            normalizedRow.brand = 'Pix';
+            normalizedRow.installments = 1;
+          }
           break;
-        case "Sigma":
-          normalizedRow = normalizeSigmaRow(row);
+          
+        case 'Sigma':
+          normalizedRow.status = getValue(row, [
+            'Situacao', 'SITUACAO', 'situacao',
+            'Status', 'STATUS', 'status'
+          ], 'Aprovada');
+          
+          // Standardize payment type
+          const modalidadeSigma = getValue(row, [
+            'Modalidade', 'MODALIDADE', 'modalidade',
+            'Tipo', 'TIPO', 'tipo'
+          ], '').trim();
+          
+          if (normalizeText(modalidadeSigma).includes('debito')) {
+            normalizedRow.payment_type = 'Cartão de Débito';
+          } else if (normalizeText(modalidadeSigma).includes('credito')) {
+            normalizedRow.payment_type = 'Cartão de Crédito';
+          } else if (normalizeText(modalidadeSigma).includes('pix')) {
+            normalizedRow.payment_type = 'Pix';
+          } else {
+            normalizedRow.payment_type = modalidadeSigma;
+          }
+          
+          // Gross amount - may be in different formats
+          const valorSigma = getValue(row, [
+            'Valor Venda', 'VALOR VENDA', 'valor venda',
+            'Valor', 'VALOR', 'valor'
+          ], 0);
+          
+          // Use toNumber for conversion
+          normalizedRow.gross_amount = toNumber(valorSigma);
+          
+          // Transaction date
+          const dataSigma = getValue(row, [
+            'Data Venda'
+          ], '');
+          
+          // Format date using formatDateStandard function
+          normalizedRow.transaction_date = formatDateStandard(dataSigma);
+          
+          // Installments
+          const parcelasSigma = getValue(row, [
+            'Parcelas', 'parcelas', 'PARCELAS',
+            'Parcela', 'parcela', 'PARCELA'
+          ], '1');
+          
+          normalizedRow.installments = parseInt(parcelasSigma as string) || 1;
+          
+          normalizedRow.terminal = getValue(row, [
+            'Terminal', 'terminal', 'TERMINAL',
+            'Maquininha', 'maquininha', 'MAQUININHA'
+          ], '');
+          
+          normalizedRow.brand = getValue(row, [
+            'Bandeira', 'bandeira', 'BANDEIRA'
+          ], '');
+          
+          // If Pix, adjust brand and installments
+          if (normalizedRow.payment_type === 'Pix') {
+            normalizedRow.brand = 'Pix';
+            normalizedRow.installments = 1;
+          }
           break;
+          
         default:
-          throw new Error("Fonte desconhecida");
+          // Try to map generic fields
+          normalizedRow.status = getValue(row, [
+            'Status', 'status', 'STATUS',
+            'Situacao', 'situacao', 'SITUACAO'
+          ], 'Aprovada');
+          
+          // Standardize generic payment type
+          const tipoPagamentoGenerico = getValue(row, [
+            'Tipo de Pagamento', 'tipo pagamento', 'TIPO DE PAGAMENTO',
+            'Forma de Pagamento', 'forma pagamento', 'FORMA DE PAGAMENTO',
+            'Modalidade', 'modalidade', 'MODALIDADE'
+          ], '').trim();
+          
+          if (normalizeText(tipoPagamentoGenerico).includes('debito')) {
+            normalizedRow.payment_type = 'Cartão de Débito';
+          } else if (normalizeText(tipoPagamentoGenerico).includes('credito')) {
+            normalizedRow.payment_type = 'Cartão de Crédito';
+          } else if (normalizeText(tipoPagamentoGenerico).includes('pix')) {
+            normalizedRow.payment_type = 'Pix';
+          } else {
+            normalizedRow.payment_type = tipoPagamentoGenerico;
+          }
+          
+          // Generic gross amount
+          const valorGenerico = getValue(row, [
+            'Valor', 'valor', 'VALOR',
+            'Valor Bruto', 'valor bruto', 'VALOR BRUTO',
+            'Valor Venda', 'valor venda', 'VALOR VENDA'
+          ], 0);
+          
+          // Use toNumber for conversion
+          normalizedRow.gross_amount = toNumber(valorGenerico);
+          
+          // Generic date
+          const dataGenerico = getValue(row, [
+            'Data', 'data', 'DATA',
+            'Data Transacao', 'data transacao', 'DATA TRANSACAO',
+            'Data Venda', 'data venda', 'DATA VENDA'
+          ], '');
+          
+          // Format date using formatDateStandard function
+          normalizedRow.transaction_date = formatDateStandard(dataGenerico);
+          
+          // Generic installments
+          const parcelasGenerico = getValue(row, [
+            'Parcelas', 'parcelas', 'PARCELAS',
+            'Parcela', 'parcela', 'PARCELA'
+          ], '1');
+          
+          normalizedRow.installments = parseInt(parcelasGenerico as string) || 1;
+          
+          normalizedRow.terminal = getValue(row, [
+            'Terminal', 'terminal', 'TERMINAL',
+            'Maquininha', 'maquininha', 'MAQUININHA'
+          ], '');
+          
+          normalizedRow.brand = getValue(row, [
+            'Bandeira', 'bandeira', 'BANDEIRA'
+          ], '');
+          
+          // If Pix, adjust brand and installments
+          if (normalizedRow.payment_type === 'Pix') {
+            normalizedRow.brand = 'Pix';
+            normalizedRow.installments = 1;
+          }
       }
       
-      // Validate required fields
-      if (!normalizedRow.gross_amount) {
+      // Validate if gross amount is a number
+      if (isNaN(normalizedRow.gross_amount)) {
         warnings.push({
-          row: index,
-          message: "Valor bruto não encontrado ou inválido",
-          original: row
+          rowIndex: index,
+          message: `Invalid gross amount detected: ${normalizedRow.gross_amount}`
         });
-        return; // Skip this row
+        normalizedRow.gross_amount = 0;
       }
       
-      if (!normalizedRow.transaction_date) {
-        warnings.push({
-          row: index,
-          message: "Data de transação não encontrada ou inválida",
-          original: row
-        });
-        return; // Skip this row
-      }
-      
-      normalizedData.push(normalizedRow);
+      // Format the value
+      normalizedRow.formatted_amount = formatCurrency(normalizedRow.gross_amount);
       
     } catch (error) {
       warnings.push({
-        row: index,
-        message: `Erro ao processar linha: ${error}`,
-        original: row
+        rowIndex: index,
+        message: `Error processing row: ${error instanceof Error ? error.message : String(error)}`
       });
     }
+    
+    normalizedData.push(normalizedRow);
   });
   
-  return { data: normalizedData, warnings };
-}
-
-// Function to normalize PagSeguro rows
-function normalizePagSeguroRow(row: any): NormalizedSale {
-  // Extract payment type
-  const paymentForm = normalizeText(getValue(row, [
-    "Forma de Pagamento", 
-    "forma de pagamento", 
-    "FormaPagamento"
-  ], ""));
-  
-  let paymentType = "Outro";
-  let brand = getValue(row, ["Bandeira", "bandeira"], "");
-  let installments = parseInt(getValue(row, ["Parcela", "Parcelas", "parcelas"], 1), 10) || 1;
-  
-  if (paymentForm.includes("credito")) {
-    paymentType = "Cartão de Crédito";
-  } else if (paymentForm.includes("debito")) {
-    paymentType = "Cartão de Débito";
-  } else if (paymentForm.includes("pix")) {
-    paymentType = "Pix";
-    brand = "Pix";
-    installments = 1;
-  }
-  
-  // Extract date
-  const dateStr = getValue(row, [
-    "Data da Transação", 
-    "Data Transacao", 
-    "data da transacao"
-  ], "");
-  
-  let transactionDate = parseDate(dateStr);
-  if (!transactionDate) {
-    // Default to current date if parsing fails
-    transactionDate = new Date();
-  }
-  
   return {
-    status: getValue(row, ["Status", "status"], "Aprovada"),
-    payment_type: paymentType,
-    gross_amount: toNumber(getValue(row, ["Valor Bruto", "Valor", "valor"], 0)),
-    transaction_date: transactionDate,
-    installments: installments,
-    terminal: getValue(row, [
-      "Identificação da Maquininha", 
-      "Serial_Leitor", 
-      "Terminal",
-      "terminal"
-    ], "Desconhecido"),
-    brand: brand,
-    source: "PagSeguro"
+    data: normalizedData,
+    warnings
   };
 }
 
-// Function to normalize Rede Cartão rows
-function normalizeRedeCartaoRow(row: any): NormalizedSale {
-  // Extract payment type
-  const modalidade = normalizeText(getValue(row, ["modalidade", "Modalidade"], ""));
-  let paymentType = "Outro";
-  
-  if (modalidade.includes("credito")) {
-    paymentType = "Cartão de Crédito";
-  } else if (modalidade.includes("debito")) {
-    paymentType = "Cartão de Débito";
-  }
-  
-  // Extract date and time
-  const dateStr = getValue(row, ["data da venda", "Data Venda", "data"], "");
-  const timeStr = getValue(row, ["hora da venda", "Hora Venda", "hora"], "");
-  
-  let transactionDate = parseDate(dateStr, timeStr);
-  if (!transactionDate) {
-    // Default to current date if parsing fails
-    transactionDate = new Date();
-  }
-  
-  return {
-    status: "Aprovada", // Always approved for Rede
-    payment_type: paymentType,
-    gross_amount: toNumber(getValue(row, [
-      "valor da venda original", 
-      "valor da venda",
-      "Valor Venda",
-      "valor"
-    ], 0)),
-    transaction_date: transactionDate,
-    installments: parseInt(getValue(row, [
-      "número de parcelas", 
-      "numero de parcelas",
-      "parcelas"
-    ], 1), 10) || 1,
-    terminal: getValue(row, [
-      "código da maquininha", 
-      "codigo da maquininha",
-      "Terminal",
-      "terminal"
-    ], "Desconhecido"),
-    brand: getValue(row, ["bandeira", "Bandeira"], "Desconhecido"),
-    source: "Rede Cartão"
-  };
-}
-
-// Function to normalize Rede Pix rows
-function normalizeRedePixRow(row: any): NormalizedSale {
-  // Extract date and time
-  const dateStr = getValue(row, ["data da venda", "Data Venda", "data"], "");
-  const timeStr = getValue(row, ["hora da venda", "Hora Venda", "hora"], "");
-  
-  let transactionDate = parseDate(dateStr, timeStr);
-  if (!transactionDate) {
-    // Default to current date if parsing fails
-    transactionDate = new Date();
-  }
-  
-  return {
-    status: "Aprovada", // Always approved for Rede Pix
-    payment_type: "Pix",
-    gross_amount: toNumber(getValue(row, [
-      "valor da venda original", 
-      "valor da venda",
-      "valor",
-      "Valor"
-    ], 0)),
-    transaction_date: transactionDate,
-    installments: 1, // Always 1 for Pix
-    terminal: getValue(row, [
-      "código da maquininha", 
-      "codigo da maquininha",
-      "Terminal",
-      "terminal"
-    ], "Desconhecido"),
-    brand: "Pix", // Always Pix
-    source: "Rede Pix"
-  };
-}
-
-// Function to normalize Sigma rows
-function normalizeSigmaRow(row: any): NormalizedSale {
-  // Extract payment type
-  const modalidade = normalizeText(getValue(row, ["Modalidade", "Tipo", "tipo"], ""));
-  let paymentType = "Outro";
-  let brand = getValue(row, ["Bandeira", "bandeira"], "Desconhecido");
-  let installments = parseInt(getValue(row, ["Parcelas", "Parcela", "parcela"], 1), 10) || 1;
-  
-  if (modalidade.includes("credito")) {
-    paymentType = "Cartão de Crédito";
-  } else if (modalidade.includes("debito")) {
-    paymentType = "Cartão de Débito";
-  } else if (modalidade.includes("pix")) {
-    paymentType = "Pix";
-    brand = "Pix";
-    installments = 1;
-  }
-  
-  // Extract date
-  const dateStr = getValue(row, ["Data Venda", "data venda", "data"], "");
-  let transactionDate = parseDate(dateStr);
-  if (!transactionDate) {
-    // Default to current date if parsing fails
-    transactionDate = new Date();
-  }
-  
-  return {
-    status: getValue(row, ["Situacao", "Status", "status"], "Aprovada"),
-    payment_type: paymentType,
-    gross_amount: toNumber(getValue(row, ["Valor Venda", "Valor", "valor"], 0)),
-    transaction_date: transactionDate,
-    installments: installments,
-    terminal: getValue(row, ["Terminal", "Maquininha", "maquininha"], "Desconhecido"),
-    brand: brand,
-    source: "Sigma"
-  };
-}
-
-// Get metadata from sales data for filters
-export function getSalesMetadata(sales: NormalizedSale[]) {
+/**
+ * Get metadata from sales data for filters
+ */
+export function getSalesMetadata(data: NormalizedSale[]): {
+  paymentTypes: string[];
+  statuses: string[];
+  terminals: string[];
+  brands: string[];
+} {
   const paymentTypes = new Set<string>();
   const statuses = new Set<string>();
   const terminals = new Set<string>();
   const brands = new Set<string>();
   
-  sales.forEach(sale => {
-    if (sale.payment_type) paymentTypes.add(sale.payment_type);
-    if (sale.status) statuses.add(sale.status);
-    if (sale.terminal) terminals.add(sale.terminal);
-    if (sale.brand) brands.add(sale.brand);
+  data.forEach(item => {
+    if (item.payment_type) paymentTypes.add(item.payment_type);
+    if (item.status) statuses.add(item.status);
+    if (item.terminal) terminals.add(item.terminal);
+    if (item.brand) brands.add(item.brand);
   });
   
   return {
@@ -450,4 +551,51 @@ export function getSalesMetadata(sales: NormalizedSale[]) {
     terminals: Array.from(terminals),
     brands: Array.from(brands)
   };
+}
+
+/**
+ * Generate mock sales data for testing
+ */
+export function generateMockSalesData(count = 10): NormalizedSale[] {
+  const sources = ['Rede Cartão', 'Rede Pix', 'PagSeguro', 'Sigma'];
+  const paymentTypes = ['Cartão de Crédito', 'Cartão de Débito', 'Pix'];
+  const statuses = ['Aprovada', 'Rejeitada', 'Pendente', 'Cancelada'];
+  const brands = ['Visa', 'Mastercard', 'Elo', 'Amex', 'Pix'];
+  const terminals = ['TERM001', 'TERM002', 'TERM003', 'TERM004', 'TERM005'];
+  
+  const result: NormalizedSale[] = [];
+  
+  for (let i = 0; i < count; i++) {
+    const source = sources[Math.floor(Math.random() * sources.length)];
+    const payment_type = paymentTypes[Math.floor(Math.random() * paymentTypes.length)];
+    
+    // Make sure Pix is always paid in full with Pix brand
+    let brand = payment_type === 'Pix' 
+      ? 'Pix' 
+      : brands[Math.floor(Math.random() * (brands.length - 1))]; // Exclude Pix from cards
+    
+    const installments = payment_type === 'Pix' || payment_type === 'Cartão de Débito'
+      ? 1
+      : Math.floor(Math.random() * 12) + 1; // 1-12 installments for credit card
+    
+    const date = new Date();
+    date.setDate(date.getDate() - Math.floor(Math.random() * 30)); // Random date in the last 30 days
+    
+    const gross_amount = Number((Math.random() * 1000 + 50).toFixed(2));
+    
+    result.push({
+      id: `mock-${i}`,
+      status: statuses[Math.floor(Math.random() * statuses.length)],
+      payment_type,
+      gross_amount,
+      transaction_date: formatDateStandard(date.toISOString().split('T')[0]),
+      installments,
+      terminal: terminals[Math.floor(Math.random() * terminals.length)],
+      brand,
+      source,
+      formatted_amount: formatCurrency(gross_amount)
+    });
+  }
+  
+  return result;
 }
