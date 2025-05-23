@@ -2,6 +2,7 @@
 import { useState, useEffect } from "react";
 
 export const useIsMobile = () => {
+  // Only run useState when window is defined (client-side)
   const [isMobile, setIsMobile] = useState(false);
 
   useEffect(() => {

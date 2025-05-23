@@ -11,7 +11,7 @@ interface NotificationListProps {
   onDelete?: (id: string) => void;
 }
 
-// Export both as named and default export to ensure compatibility
+// Export as named export
 export const NotificationList: React.FC<NotificationListProps> = ({ 
   notifications, 
   onMarkAsRead, 
