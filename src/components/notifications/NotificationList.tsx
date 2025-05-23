@@ -11,12 +11,12 @@ interface NotificationListProps {
   onDelete?: (id: string) => void;
 }
 
-export const NotificationList = ({ 
+export const NotificationList: React.FC<NotificationListProps> = ({ 
   notifications, 
   onMarkAsRead, 
   isLoading = false, 
   onDelete 
-}: NotificationListProps) => {
+}) => {
   if (isLoading) {
     return (
       <div className="flex justify-center items-center p-8">

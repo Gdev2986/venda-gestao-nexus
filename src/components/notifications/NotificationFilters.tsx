@@ -8,7 +8,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { RefreshCcw, Bell, BellOff, Volume2, VolumeX } from "lucide-react";
-import { useNotifications } from "@/contexts/NotificationsContext";
+import { useNotifications } from "@/hooks/use-notifications";
 
 interface NotificationFiltersProps {
   typeFilter: string;
