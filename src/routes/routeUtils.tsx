@@ -9,8 +9,14 @@ import { UserRole } from "@/types";
 export const getDashboardPath = (userRole: UserRole): string => {
   console.log("getDashboardPath - userRole:", userRole);
   
+  // If userRole is null/undefined, default to login
+  if (!userRole) {
+    console.warn("No user role provided to getDashboardPath, defaulting to login");
+    return PATHS.LOGIN;
+  }
+  
   // Normalize role to uppercase string for consistent comparison
-  const normalizedRole = userRole?.toString().toUpperCase();
+  const normalizedRole = userRole.toString().toUpperCase();
   
   switch (normalizedRole) {
     case "ADMIN":
