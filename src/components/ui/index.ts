@@ -28,5 +28,6 @@ export * from "./toaster";
 export * from "./toggle";
 export * from "./toggle-group";
 export * from "./tooltip";
-export * from "./use-toast";
+// Explicitly export from use-toast without re-exporting ToastProps which would cause ambiguity
+export { toast, useToast } from "./use-toast";
 export * from "./spinner";
