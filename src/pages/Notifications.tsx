@@ -1,11 +1,11 @@
 
 import React, { useEffect } from "react";
-import { NotificationList } from "@/components/notifications/NotificationList";
+import NotificationList from "@/components/notifications/NotificationList";
 import NotificationFilters from "@/components/notifications/NotificationFilters";
-import { useNotifications } from "@/contexts/NotificationsContext";
+import { useNotifications } from "@/contexts/notifications/NotificationsContext";
 import { PageHeader } from "@/components/page/PageHeader";
 import { useState } from "react";
-import { NotificationType } from "@/types";
+import { NotificationType } from "@/types/notification.types";
 import { StyledCard } from "@/components/ui/styled-card";
 import { Bell } from "lucide-react";
 
