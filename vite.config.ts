@@ -21,13 +21,15 @@ export default defineConfig(({ mode }) => ({
       "react": path.resolve(__dirname, "./node_modules/react"),
       "react-dom": path.resolve(__dirname, "./node_modules/react-dom"),
     },
+    // Add explicit extensions to help with module resolution
+    extensions: ['.js', '.jsx', '.ts', '.tsx', '.json'],
   },
   build: {
     rollupOptions: {
       output: {
         manualChunks: {
           'react-vendor': ['react', 'react-dom', 'react-router-dom'],
-          'ui-vendor': ['@/components/ui']
+          'ui-vendor': ['@/components/ui/index']
         }
       }
     }
