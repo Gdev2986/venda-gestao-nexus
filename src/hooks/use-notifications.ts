@@ -39,8 +39,8 @@ export function useHook(): NotificationsContextProps {
     // Try to use the real context
     return useNotificationsFromContext();
   } catch (error) {
-    // Fallback for development
-    console.warn("Using mock notifications because useNotifications is not within a provider");
+    // Fallback for development or when outside provider
+    console.warn("Using mock notifications because useNotifications is not within a NotificationsProvider");
     return {
       notifications: mockNotifications,
       unreadCount: 2,
@@ -56,5 +56,7 @@ export function useHook(): NotificationsContextProps {
   }
 }
 
-// Re-export the actual hook
-export { useNotificationsFromContext as useNotifications };
+// Re-export the actual hook with safe fallbacks
+export const useNotifications = (): NotificationsContextProps => {
+  return useHook();
+};

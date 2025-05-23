@@ -22,10 +22,8 @@ root.render(
     <BrowserRouter>
       <ThemeProvider defaultTheme="light">
         <AuthProvider>
-          <NotificationsProvider>
-            <App />
-            <Toaster position="top-right" />
-          </NotificationsProvider>
+          <App />
+          <Toaster position="top-right" />
         </AuthProvider>
       </ThemeProvider>
     </BrowserRouter>

@@ -5,6 +5,7 @@ import { useEffect } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { useUserRole } from "./hooks/use-user-role";
 import { UserRole } from "./types";
+import { NotificationsProvider } from "./contexts/notifications/NotificationsContext";
 
 // Route utils
 import { getDashboardPath } from "./routes/routeUtils";
@@ -55,29 +56,34 @@ function App() {
 
   return (
     <Routes>
+      {/* Auth Routes - Not wrapped with NotificationsProvider */}
+      {AuthRoutes}
+      
       {/* Root path handling */}
       <Route path={PATHS.HOME} element={<RootLayout />} />
       
-      {/* Generic dashboard route */}
-      <Route 
-        path={PATHS.DASHBOARD} 
-        element={<Navigate to={getDashboardRedirectPath()} replace />} 
-      />
+      {/* Protected Routes - Wrapped with NotificationsProvider */}
+      <Route element={<NotificationsProvider>{/* Wrapper for all authenticated routes */}
+        <>
+          {/* Generic dashboard route */}
+          <Route 
+            path={PATHS.DASHBOARD} 
+            element={<Navigate to={getDashboardRedirectPath()} replace />} 
+          />
 
-      {/* Auth Routes */}
-      {AuthRoutes}
+          {/* Protected Routes by Role */}
+          {AdminRoutes}
+          {ClientRoutes}
+          {PartnerRoutes}
+          {FinancialRoutes}
+          {LogisticsRoutes}
 
-      {/* Protected Routes by Role */}
-      {AdminRoutes}
-      {ClientRoutes}
-      {PartnerRoutes}
-      {FinancialRoutes}
-      {LogisticsRoutes}
-
-      {/* Shared Routes (accessible by all roles) */}
-      <Route element={<MainLayout />}>
-        <Route path="/notifications" element={<Notifications />} />
-      </Route>
+          {/* Shared Routes (accessible by all roles) */}
+          <Route element={<MainLayout />}>
+            <Route path="/notifications" element={<Notifications />} />
+          </Route>
+        </>
+      </NotificationsProvider>} />
 
       {/* 404 */}
       <Route path={PATHS.NOT_FOUND} element={<NotFound />} />
