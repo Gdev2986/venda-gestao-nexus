@@ -1,6 +1,7 @@
 
 // Import types
 import { NormalizedSale } from "@/pages/admin/Sales";
+import { Sale } from "@/types";
 
 // Function to generate random sales data for testing
 export const generateMockSalesData = (count: number = 50): NormalizedSale[] => {
@@ -46,6 +47,36 @@ export const generateMockSalesData = (count: number = 50): NormalizedSale[] => {
   return mockData;
 };
 
+// Alias for backward compatibility
+export const generateMockSales = generateMockSalesData;
+
+// Function to generate daily sales data for charts
+export const generateDailySalesData = (days: number = 30) => {
+  const result = [];
+  const now = new Date();
+  
+  for (let i = days - 1; i >= 0; i--) {
+    const date = new Date(now);
+    date.setDate(now.getDate() - i);
+    
+    result.push({
+      date: date.toISOString().split('T')[0],
+      amount: Math.random() * 10000 + 1000
+    });
+  }
+  
+  return result;
+};
+
+// Function to generate payment methods breakdown data
+export const generatePaymentMethodsData = () => {
+  return [
+    { name: "Crédito", value: Math.floor(Math.random() * 5000) + 3000 },
+    { name: "Débito", value: Math.floor(Math.random() * 3000) + 1000 },
+    { name: "Pix", value: Math.floor(Math.random() * 2000) + 500 },
+  ];
+};
+
 // Function to calculate sales totals
 export const calculateSalesTotals = (sales: NormalizedSale[]) => {
   return {
@@ -56,4 +87,33 @@ export const calculateSalesTotals = (sales: NormalizedSale[]) => {
       return sum + (sale.gross_amount - fee);
     }, 0),
   };
+};
+
+// Function to convert NormalizedSale to Sale type
+export const convertNormalizedSaleToSale = (normalizedSale: NormalizedSale): Sale => {
+  return {
+    id: normalizedSale.id || "",
+    code: normalizedSale.id || "",
+    terminal: normalizedSale.terminal,
+    client_name: "Cliente", // Default value
+    gross_amount: normalizedSale.gross_amount,
+    net_amount: normalizedSale.gross_amount * 0.97, // 3% fee
+    date: typeof normalizedSale.transaction_date === 'string' 
+      ? normalizedSale.transaction_date 
+      : normalizedSale.transaction_date.toISOString(),
+    payment_method: normalizedSale.payment_type.toLowerCase().includes('crédito') 
+      ? "credit" 
+      : normalizedSale.payment_type.toLowerCase().includes('débito') 
+        ? "debit" 
+        : "pix",
+    client_id: "",
+    created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString(),
+    status: normalizedSale.status,
+  };
+};
+
+// Function to convert array of NormalizedSale to array of Sale
+export const convertNormalizedSalesToSales = (normalizedSales: NormalizedSale[]): Sale[] => {
+  return normalizedSales.map(convertNormalizedSaleToSale);
 };

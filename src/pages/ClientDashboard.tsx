@@ -1,209 +1,202 @@
-
 import { useState, useEffect } from "react";
-import { useToast } from "@/hooks/use-toast";
-import { subDays } from "date-fns";
-import { generateMockSales, generateDailySalesData, generatePaymentMethodsData } from "@/utils/sales-utils";
-
-// Import the components
-import DateRangeFilter, { DateRange } from "@/components/dashboard/client/DateRangeFilter";
-import StatsCards from "@/components/dashboard/client/StatsCards";
-import MainOverviewTabs from "@/components/dashboard/client/MainOverviewTabs";
-import SidebarContent from "@/components/dashboard/client/SidebarContent";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { WalletIcon } from "lucide-react";
-import { formatCurrency } from "@/lib/utils";
-import { BalanceCards } from "@/components/payments/BalanceCards";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { 
+  generateMockSalesData, 
+  generateDailySalesData, 
+  generatePaymentMethodsData 
+} from "@/utils/sales-utils";
 
 const ClientDashboard = () => {
-  const { toast } = useToast();
-  const [loading, setLoading] = useState(true);
-  const [transactions, setTransactions] = useState<any[]>([]);
-  const [filteredTransactions, setFilteredTransactions] = useState<any[]>([]);
-  const [paginatedTransactions, setPaginatedTransactions] = useState<any[]>([]);
-  const [machines, setMachines] = useState<any[]>([]);
-  const [paginatedMachines, setPaginatedMachines] = useState<any[]>([]);
-  const [stats, setStats] = useState({
-    totalSales: 0,
-    pendingPayments: 0,
-    completedPayments: 0,
-    clientBalance: 15000, // Mock client balance value
-  });
-  const [dateRange, setDateRange] = useState<DateRange>({
-    from: subDays(new Date(), 30),
-    to: new Date(),
-  });
-  const [salesData, setSalesData] = useState<any[]>([]);
-  const [paymentMethodsData, setPaymentMethodsData] = useState<any[]>([]);
+  const [activeTab, setActiveTab] = useState("overview");
+  const [isLoading, setIsLoading] = useState(true);
+  const [salesData, setSalesData] = useState([]);
   
-  // Pagination states
-  const [transactionsPage, setTransactionsPage] = useState(1);
-  const [machinesPage, setMachinesPage] = useState(1);
-  const transactionsPerPage = 5;
-  const machinesPerPage = 3;
-  const [totalTransactionsPages, setTotalTransactionsPages] = useState(1);
-  const [totalMachinesPages, setTotalMachinesPages] = useState(1);
-
-  // Fetch mock data and apply filters based on date range
   useEffect(() => {
-    const fetchDashboardData = async () => {
-      try {
-        setLoading(true);
-        
-        // Generate mock data based on selected date range
-        const mockTransactions = generateMockSales(50, dateRange);
-        
-        // Mock machines data
-        const mockMachines = [
-          { id: "1", model: "POS X200", serial_number: "SN12345678", status: "ACTIVE", created_at: new Date().toISOString() },
-          { id: "2", model: "POS X300", serial_number: "SN87654321", status: "ACTIVE", created_at: new Date().toISOString() },
-          { id: "3", model: "POS X100", serial_number: "SN11223344", status: "MAINTENANCE", created_at: new Date().toISOString() },
-          { id: "4", model: "POS X400", serial_number: "SN22334455", status: "ACTIVE", created_at: new Date().toISOString() },
-          { id: "5", model: "POS X200", serial_number: "SN33445566", status: "INACTIVE", created_at: new Date().toISOString() },
-          { id: "6", model: "POS X500", serial_number: "SN44556677", status: "ACTIVE", created_at: new Date().toISOString() },
-          { id: "7", model: "POS X300", serial_number: "SN55667788", status: "MAINTENANCE", created_at: new Date().toISOString() },
-        ];
-        
-        // Generate chart data based on selected date range
-        const dailySalesData = generateDailySalesData(dateRange);
-        const methodsData = generatePaymentMethodsData(dateRange);
-        
-        setTransactions(mockTransactions);
-        setMachines(mockMachines);
-        setSalesData(dailySalesData);
-        setPaymentMethodsData(methodsData);
+    // Simulate loading data
+    setIsLoading(true);
+    setTimeout(() => {
+      setIsLoading(false);
+    }, 1500);
+  }, []);
 
-        // Filter transactions by date
-        filterTransactionsByDate(mockTransactions, dateRange);
-        
-        // Calculate machines pagination
-        setTotalMachinesPages(Math.ceil(mockMachines.length / machinesPerPage));
-        updateMachinesPagination(mockMachines, machinesPage, machinesPerPage);
-        
-        // Reset to first page when data changes
-        setTransactionsPage(1);
-        setMachinesPage(1);
-        
-        // Simulate loading delay
-        setTimeout(() => {
-          setLoading(false);
-        }, 500);
-      } catch (error: any) {
-        toast({
-          variant: "destructive",
-          title: "Erro ao carregar dados",
-          description: error.message,
-        });
-        setLoading(false);
-      }
-    };
-    
-    fetchDashboardData();
-  }, [dateRange, toast]);
-
-  // Effect for paginating transactions when filtered transactions or page changes
-  useEffect(() => {
-    const startIndex = (transactionsPage - 1) * transactionsPerPage;
-    const endIndex = startIndex + transactionsPerPage;
-    setPaginatedTransactions(filteredTransactions.slice(startIndex, endIndex));
-  }, [filteredTransactions, transactionsPage, transactionsPerPage]);
-
-  const filterTransactionsByDate = (transactions: any[], range: DateRange) => {
-    const filtered = transactions.filter(tx => {
-      const txDate = new Date(tx.date);
-      const fromDate = new Date(range.from);
-      fromDate.setHours(0, 0, 0, 0);
-      const toDate = new Date(range.to);
-      toDate.setHours(23, 59, 59, 999);
-      return txDate >= fromDate && txDate <= toDate;
-    });
-    
-    // Calculate stats based on filtered transactions
-    const totalSales = filtered.reduce((sum, tx) => sum + tx.amount, 0);
-    const pendingPayments = filtered
-      .filter(tx => tx.status === 'pending')
-      .reduce((sum, tx) => sum + tx.amount, 0);
-    const completedPayments = filtered
-      .filter(tx => tx.status === 'completed')
-      .reduce((sum, tx) => sum + tx.amount, 0);
-    
-    setFilteredTransactions(filtered);
-    setTotalTransactionsPages(Math.ceil(filtered.length / transactionsPerPage));
-    
-    // Keep the clientBalance value, but update other stats
-    setStats(prevStats => ({
-      totalSales,
-      pendingPayments,
-      completedPayments,
-      clientBalance: prevStats.clientBalance, // Keep the existing clientBalance
-    }));
-  };
-
-  const updateMachinesPagination = (machines: any[], page: number, perPage: number) => {
-    const startIndex = (page - 1) * perPage;
-    const endIndex = startIndex + perPage;
-    setPaginatedMachines(machines.slice(startIndex, endIndex));
-  };
-
-  // Handle date range selection
-  const handleDateRangeChange = (newRange: DateRange) => {
-    setDateRange(newRange);
-    // The useEffect will trigger data reload with new date range
-  };
-
-  // Handle page changes
-  const handleTransactionsPageChange = (page: number) => {
-    setTransactionsPage(page);
-  };
-
-  const handleMachinesPageChange = (page: number) => {
-    setMachinesPage(page);
-    updateMachinesPagination(machines, page, machinesPerPage);
-  };
+  // Use the new utility functions for data
+  const mockSales = generateMockSalesData(20);
+  const dailySalesData = generateDailySalesData();
+  const paymentMethodsData = generatePaymentMethodsData();
 
   return (
-    <div className="flex flex-col gap-5 w-full">
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center">
+    <div className="space-y-6">
+      <div>
         <h1 className="text-3xl font-bold tracking-tight">Dashboard</h1>
+        <p className="text-muted-foreground">
+          Bem-vindo ao seu painel de controle
+        </p>
       </div>
       
-      {/* Always visible Balance Card */}
-      <BalanceCards clientBalance={stats.clientBalance} />
-      
-      {/* Date range filter after the balance cards */}
-      <Card className="p-4">
-        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center">
-          <h2 className="text-lg font-semibold mb-2 sm:mb-0">Filtrar Dados</h2>
-          <DateRangeFilter 
-            dateRange={dateRange}
-            onDateRangeChange={handleDateRangeChange}
-          />
-        </div>
-      </Card>
-      
-      {/* Filtered Stats Cards - These change based on the date filter */}
-      <StatsCards stats={stats} loading={loading} />
-      
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <div className="lg:col-span-2">
-          <MainOverviewTabs
-            salesData={salesData}
-            paymentMethodsData={paymentMethodsData}
-            filteredTransactions={paginatedTransactions}
-            machines={paginatedMachines}
-            loading={loading}
-            transactionsPage={transactionsPage}
-            totalTransactionsPages={totalTransactionsPages}
-            onTransactionsPageChange={handleTransactionsPageChange}
-            machinesPage={machinesPage}
-            totalMachinesPages={totalMachinesPages}
-            onMachinesPageChange={handleMachinesPageChange}
-          />
-        </div>
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">
+              Vendas Totais
+            </CardTitle>
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth="2"
+              className="h-4 w-4 text-muted-foreground"
+            >
+              <path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6" />
+            </svg>
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">R$ 45.231,89</div>
+            <p className="text-xs text-muted-foreground">
+              +20.1% em relação ao mês passado
+            </p>
+          </CardContent>
+        </Card>
         
-        <div>
-          <SidebarContent loading={loading} />
-        </div>
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">
+              Transações
+            </CardTitle>
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth="2"
+              className="h-4 w-4 text-muted-foreground"
+            >
+              <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
+              <circle cx="9" cy="7" r="4" />
+              <path d="M22 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75" />
+            </svg>
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">+2350</div>
+            <p className="text-xs text-muted-foreground">
+              +180 nas últimas 24 horas
+            </p>
+          </CardContent>
+        </Card>
+        
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">
+              Taxa de Aprovação
+            </CardTitle>
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth="2"
+              className="h-4 w-4 text-muted-foreground"
+            >
+              <rect width="20" height="14" x="2" y="5" rx="2" />
+              <path d="M2 10h20" />
+            </svg>
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">98.3%</div>
+            <p className="text-xs text-muted-foreground">
+              +1.2% em relação à semana passada
+            </p>
+          </CardContent>
+        </Card>
+        
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">
+              Ticket Médio
+            </CardTitle>
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth="2"
+              className="h-4 w-4 text-muted-foreground"
+            >
+              <path d="M22 12h-4l-3 9L9 3l-3 9H2" />
+            </svg>
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">R$ 320,50</div>
+            <p className="text-xs text-muted-foreground">
+              +4.5% em relação ao mês passado
+            </p>
+          </CardContent>
+        </Card>
       </div>
+      
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-7">
+        <Card className="col-span-4">
+          <CardHeader>
+            <CardTitle>Vendas Diárias</CardTitle>
+          </CardHeader>
+          <CardContent className="pl-2">
+            {isLoading ? (
+              <div className="h-[350px] flex items-center justify-center">
+                <p>Carregando gráfico...</p>
+              </div>
+            ) : (
+              <div className="h-[350px]">
+                {/* Sales chart would go here */}
+                <p>Gráfico de vendas diárias com {dailySalesData.length} pontos de dados</p>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+        
+        <Card className="col-span-3">
+          <CardHeader>
+            <CardTitle>Métodos de Pagamento</CardTitle>
+          </CardHeader>
+          <CardContent>
+            {isLoading ? (
+              <div className="h-[350px] flex items-center justify-center">
+                <p>Carregando gráfico...</p>
+              </div>
+            ) : (
+              <div className="h-[350px]">
+                {/* Payment methods chart would go here */}
+                <p>Gráfico de métodos de pagamento com {paymentMethodsData.length} categorias</p>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      </div>
+      
+      <Card>
+        <CardHeader>
+          <CardTitle>Últimas Transações</CardTitle>
+        </CardHeader>
+        <CardContent>
+          {isLoading ? (
+            <div className="h-[200px] flex items-center justify-center">
+              <p>Carregando transações...</p>
+            </div>
+          ) : (
+            <div>
+              {/* Recent transactions table would go here */}
+              <p>Tabela com {mockSales.length} transações recentes</p>
+            </div>
+          )}
+        </CardContent>
+      </Card>
     </div>
   );
 };

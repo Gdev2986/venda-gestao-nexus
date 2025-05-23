@@ -18,10 +18,10 @@ import {
 } from "@/components/ui/pagination";
 import { Badge } from "@/components/ui/badge";
 import { formatCurrency } from "@/lib/formatters";
-import { NormalizedSale } from "@/pages/admin/Sales";
+import { Sale } from "@/types";
 
 interface SalesTableProps {
-  data: NormalizedSale[];
+  data: Sale[];
   isLoading: boolean;
   currentPage: number;
   totalPages: number;
@@ -124,10 +124,8 @@ const SalesTable: React.FC<SalesTableProps> = ({
               <TableHead>Tipo de Pagamento</TableHead>
               <TableHead className="text-right">Valor Bruto</TableHead>
               <TableHead>Data de Transação</TableHead>
-              <TableHead>Parcelas</TableHead>
               <TableHead>Terminal</TableHead>
-              <TableHead>Bandeira</TableHead>
-              <TableHead>Origem</TableHead>
+              <TableHead>Cliente</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -139,32 +137,26 @@ const SalesTable: React.FC<SalesTableProps> = ({
                   <TableCell><Skeleton className="h-6 w-32" /></TableCell>
                   <TableCell><Skeleton className="h-6 w-24" /></TableCell>
                   <TableCell><Skeleton className="h-6 w-40" /></TableCell>
-                  <TableCell><Skeleton className="h-6 w-12" /></TableCell>
                   <TableCell><Skeleton className="h-6 w-24" /></TableCell>
-                  <TableCell><Skeleton className="h-6 w-20" /></TableCell>
-                  <TableCell><Skeleton className="h-6 w-24" /></TableCell>
+                  <TableCell><Skeleton className="h-6 w-32" /></TableCell>
                 </TableRow>
               ))
             ) : data.length > 0 ? (
               data.map((sale, index) => (
                 <TableRow key={sale.id || `sale-${index}`}>
-                  <TableCell>{renderStatusBadge(sale.status)}</TableCell>
-                  <TableCell>{sale.payment_type}</TableCell>
+                  <TableCell>{renderStatusBadge(sale.status || 'Pendente')}</TableCell>
+                  <TableCell>{sale.payment_method}</TableCell>
                   <TableCell className="text-right font-medium">
                     {formatCurrency(sale.gross_amount)}
                   </TableCell>
-                  <TableCell>{formatDate(sale.transaction_date)}</TableCell>
-                  <TableCell>{sale.installments}x</TableCell>
+                  <TableCell>{formatDate(sale.date)}</TableCell>
                   <TableCell>{sale.terminal}</TableCell>
-                  <TableCell>{sale.brand}</TableCell>
-                  <TableCell>
-                    <Badge variant="outline">{sale.source}</Badge>
-                  </TableCell>
+                  <TableCell>{sale.client_name}</TableCell>
                 </TableRow>
               ))
             ) : (
               <TableRow>
-                <TableCell colSpan={8} className="h-24 text-center">
+                <TableCell colSpan={6} className="h-24 text-center">
                   Nenhum dado encontrado
                 </TableCell>
               </TableRow>

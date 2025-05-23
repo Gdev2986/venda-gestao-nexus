@@ -1,10 +1,15 @@
+
 import { useState, useEffect } from "react";
 import { Sale, SalesFilterParams } from "@/types";
 import { useToast } from "@/hooks/use-toast";
 import SalesFilters from "@/components/sales/SalesFilters";
 import SalesTable from "@/components/sales/SalesTable";
 import ImportSalesDialog from "@/components/sales/ImportSalesDialog";
-import { generateMockSalesData, calculateSalesTotals } from "@/utils/sales-utils";
+import { 
+  generateMockSalesData, 
+  calculateSalesTotals, 
+  convertNormalizedSalesToSales 
+} from "@/utils/sales-utils";
 import { Button } from "@/components/ui/button";
 import { RefreshCw, FileText } from "lucide-react";
 import { Card } from "@/components/ui/card";
@@ -36,7 +41,8 @@ const Sales = () => {
     
     // Simulate API call
     setTimeout(() => {
-      const mockSales = generateMockSalesData(50);
+      const mockNormalizedSales = generateMockSalesData(50);
+      const mockSales = convertNormalizedSalesToSales(mockNormalizedSales);
       setSales(mockSales);
       setFilteredSales(mockSales);
       setIsLoading(false);
@@ -103,7 +109,10 @@ const Sales = () => {
   const paginatedSales = filteredSales.slice(startIndex, startIndex + itemsPerPage);
   
   // Calculate totals
-  const totals = calculateSalesTotals(filteredSales);
+  const totals = {
+    grossAmount: filteredSales.reduce((sum, sale) => sum + sale.gross_amount, 0),
+    netAmount: filteredSales.reduce((sum, sale) => sum + sale.net_amount, 0),
+  };
   
   const handleFilterChange = (key: keyof SalesFilterParams, value: any) => {
     setFilters((prev) => ({
@@ -171,12 +180,11 @@ const Sales = () => {
         </Card>
         
         <SalesTable 
-          sales={paginatedSales}
-          page={page}
-          setPage={setPage}
-          totalPages={totalPages}
+          data={paginatedSales}
           isLoading={isLoading}
-          totals={totals}
+          currentPage={page}
+          totalPages={totalPages}
+          onPageChange={setPage}
         />
 
         <ImportSalesDialog 
