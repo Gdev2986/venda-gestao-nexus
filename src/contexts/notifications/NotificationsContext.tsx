@@ -7,8 +7,7 @@ import { useNotificationSound } from "./useNotificationSound";
 import { NotificationsContextProps } from "./types";
 import { requestNotificationPermission } from "@/components/notifications/NotificationToast";
 
-// Create a context with a default fallback value
-const NotificationsContext = createContext<NotificationsContextProps | null>(null);
+const NotificationsContext = createContext<NotificationsContextProps | undefined>(undefined);
 
 export const NotificationsProvider: React.FC<{ children: React.ReactNode }> = ({
   children,
@@ -49,7 +48,7 @@ export const NotificationsProvider: React.FC<{ children: React.ReactNode }> = ({
     markAllAsRead,
     isLoading,
     deleteNotification,
-    refreshNotifications: refreshNotifications || fetchNotifications,
+    refreshNotifications,
     soundEnabled,
     setSoundEnabled
   };
@@ -61,9 +60,9 @@ export const NotificationsProvider: React.FC<{ children: React.ReactNode }> = ({
   );
 };
 
-export const useNotifications = (): NotificationsContextProps => {
+export const useNotifications = () => {
   const context = useContext(NotificationsContext);
-  if (!context) {
+  if (context === undefined) {
     throw new Error(
       "useNotifications must be used within a NotificationsProvider"
     );

@@ -67,27 +67,38 @@ const RequireAuth = ({ allowedRoles = [], redirectTo = PATHS.LOGIN }: RequireAut
     return <Navigate to={PATHS.LOGIN} state={{ from: location.pathname }} replace />;
   }
 
-  // Check if user has permission to access this route
-  const hasPermission = allowedRoles.length === 0 || (userRole && allowedRoles.includes(userRole));
-  
-  // If no permission, redirect to appropriate dashboard
-  if (!hasPermission) {
-    console.log(`User with role ${userRole} not allowed to access ${location.pathname}`);
-    
+  // If we have a userRole, check permissions
+  if (userRole) {
+    // Check if user has permission to access this route
+    const hasPermission = allowedRoles.length === 0 || allowedRoles.includes(userRole);
+
+    // If no permission, redirect to appropriate dashboard
+    if (!hasPermission) {
+      console.log(`User with role ${userRole} not allowed to access ${location.pathname}`);
+      
+      toast({
+        title: "Acesso não autorizado",
+        description: "Você não tem permissão para acessar esta página",
+        variant: "destructive",
+      });
+      
+      try {
+        const dashboardPath = getDashboardPath(userRole);
+        return <Navigate to={dashboardPath} replace />;
+      } catch (error) {
+        console.error("Error getting dashboard path:", error);
+        return <Navigate to={PATHS.LOGIN} replace />;
+      }
+    }
+  } else {
+    // If no role but authenticated, there's something wrong with the user data
+    console.error("User is authenticated but has no role");
     toast({
-      title: "Acesso não autorizado",
-      description: "Você não tem permissão para acessar esta página",
+      title: "Erro de autenticação",
+      description: "Ocorreu um erro ao verificar suas permissões",
       variant: "destructive",
     });
-    
-    try {
-      // If we have a userRole, use it for redirection, otherwise use login
-      const dashboardPath = userRole ? getDashboardPath(userRole) : PATHS.LOGIN;
-      return <Navigate to={dashboardPath} replace />;
-    } catch (error) {
-      console.error("Error getting dashboard path:", error);
-      return <Navigate to={PATHS.LOGIN} replace />;
-    }
+    return <Navigate to={PATHS.LOGIN} replace />;
   }
 
   // If authenticated and has the right role, render the protected content

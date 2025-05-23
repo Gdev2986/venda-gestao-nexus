@@ -6,7 +6,6 @@ import { UserRole } from "@/types";
 import { fetchUserRole } from "@/utils/auth-utils";
 import { AuthService } from "@/services/auth.service";
 import { UserProfile } from "@/contexts/auth-types";
-import { useToast } from "@/hooks/use-toast";
 
 interface AuthContextType {
   user: User | null;
@@ -17,7 +16,6 @@ interface AuthContextType {
   userRole: UserRole | null;
   needsPasswordChange: boolean;
   signIn: (email: string, password: string) => Promise<{ data: any; error: any }>;
-  signInWithGoogle: () => Promise<{ data: any; error: any }>;
   signUp: (email: string, password: string, metadata?: any) => Promise<{ data: any; error: any }>;
   signOut: () => Promise<{ error: any }>;
   refreshSession: () => Promise<void>;
@@ -33,7 +31,6 @@ export const AuthContext = React.createContext<AuthContextType>({
   userRole: null,
   needsPasswordChange: false,
   signIn: async () => ({ data: null, error: null }),
-  signInWithGoogle: async () => ({ data: null, error: null }),
   signUp: async () => ({ data: null, error: null }),
   signOut: async () => ({ error: null }),
   refreshSession: async () => {},
@@ -49,7 +46,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [userRole, setUserRole] = React.useState<UserRole | null>(null);
   const [needsPasswordChange, setNeedsPasswordChange] = React.useState<boolean>(false);
   const [profile, setProfile] = React.useState<UserProfile | null>(null);
-  const { toast } = useToast();
 
   // Check if current user needs password change
   const checkPasswordChangeStatus = React.useCallback(async (userId: string) => {
@@ -73,10 +69,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         .eq('id', userId)
         .single();
       
-      if (error) {
-        console.error("Error fetching profile:", error);
-        return;
-      }
+      if (error) throw error;
       
       if (data) {
         const userProfile: UserProfile = {
@@ -91,8 +84,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         
         setProfile(userProfile);
         setUserRole(data.role as UserRole);
-      } else {
-        console.warn("No profile found for user:", userId);
       }
     } catch (error) {
       console.error("Error loading user profile:", error);
@@ -102,28 +93,20 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   // Refresh session data
   const refreshSession = React.useCallback(async () => {
     try {
-      console.log("Refreshing auth session...");
       const { data, error } = await supabase.auth.getSession();
-      if (error) {
-        console.error("Session refresh error:", error);
-        throw error;
-      }
+      if (error) throw error;
       
       const currentSession = data.session;
       setSession(currentSession);
+      setUser(currentSession?.user || null);
       
       if (currentSession?.user) {
-        console.log("Session found for user:", currentSession.user.email);
-        setUser(currentSession.user);
-        
         // Use setTimeout to defer these calls and prevent deadlocks
         setTimeout(async () => {
           await loadUserProfile(currentSession.user.id);
           await checkPasswordChangeStatus(currentSession.user.id);
         }, 0);
       } else {
-        console.log("No active session found");
-        setUser(null);
         setProfile(null);
         setUserRole(null);
         setNeedsPasswordChange(false);
@@ -134,14 +117,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   }, [loadUserProfile, checkPasswordChangeStatus]);
 
   React.useEffect(() => {
-    console.log("Setting up auth state listener");
-    
     // Set up auth state change listener first
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, newSession) => {
-        console.log("Auth state changed:", event, newSession?.user?.email);
-        
-        // Update session and user state synchronously
+        console.log("Auth state changed:", event);
         setSession(newSession);
         setUser(newSession?.user || null);
         
@@ -152,7 +131,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             await checkPasswordChangeStatus(newSession.user.id);
           }, 0);
         } else {
-          // Clear user data if no session
           setProfile(null);
           setUserRole(null);
           setNeedsPasswordChange(false);
@@ -161,54 +139,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     );
 
     // Then check for existing session
-    const initializeAuth = async () => {
-      try {
-        await refreshSession();
-      } finally {
-        setIsLoading(false);
-      }
-    };
-    
-    initializeAuth();
+    refreshSession().finally(() => {
+      setIsLoading(false);
+    });
 
     return () => {
-      console.log("Cleaning up auth state listener");
       subscription.unsubscribe();
     };
   }, [loadUserProfile, checkPasswordChangeStatus, refreshSession]);
-
-  // Google Sign In
-  const signInWithGoogle = async () => {
-    try {
-      // Clean up existing auth state
-      await AuthService.cleanupAuthState();
-      
-      // Sign in with Google
-      const { data, error } = await supabase.auth.signInWithOAuth({
-        provider: 'google',
-        options: {
-          redirectTo: window.location.origin,
-        }
-      });
-      
-      if (error) {
-        toast({
-          variant: "destructive",
-          title: "Erro no login com Google",
-          description: error.message,
-        });
-      }
-      
-      return { data, error };
-    } catch (error: any) {
-      toast({
-        variant: "destructive",
-        title: "Erro no login com Google",
-        description: error.message || "Ocorreu um erro durante o login com Google.",
-      });
-      return { data: null, error };
-    }
-  };
 
   // Implement changePasswordAndActivate method
   const changePasswordAndActivate = async (newPassword: string): Promise<boolean> => {
@@ -223,14 +161,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   // Sign up function
   const signUp = async (email: string, password: string, metadata?: any) => {
     try {
-      await AuthService.cleanupAuthState();
-      
       const { data, error } = await supabase.auth.signUp({
         email,
         password,
         options: {
-          data: metadata,
-          emailRedirectTo: `${window.location.origin}/dashboard`
+          data: metadata
         }
       });
       return { data, error };
@@ -256,7 +191,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     userRole,
     needsPasswordChange,
     signIn,
-    signInWithGoogle,
     signUp,
     signOut,
     refreshSession,

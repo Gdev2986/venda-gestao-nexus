@@ -9,10 +9,10 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/button";
 import { motion, AnimatePresence } from "framer-motion";
-import { useNotifications } from "@/hooks/use-notifications"; // Use the safe version
+import { useNotifications } from "@/contexts/NotificationsContext";
 import { NotificationHeader } from "@/components/notifications/NotificationHeader";
+import { NotificationList } from "@/components/notifications/NotificationList";
 import { NotificationFooter } from "@/components/notifications/NotificationFooter";
-import NotificationList from "@/components/notifications/NotificationList";
 
 const NotificationDropdown = () => {
   const [isOpen, setIsOpen] = useState(false);
@@ -25,7 +25,7 @@ const NotificationDropdown = () => {
     markAllAsRead,
     soundEnabled,
     setSoundEnabled
-  } = useNotifications(); // This now uses the safe version with fallbacks
+  } = useNotifications();
 
   // Pega apenas as 5 notificações mais recentes para exibir no dropdown
   const recentNotifications = notifications.slice(0, 5);

@@ -2,11 +2,9 @@
 import { useState, useEffect } from "react";
 
 export const useIsMobile = () => {
-  // Initialize with a default value, then update in useEffect
   const [isMobile, setIsMobile] = useState(false);
 
   useEffect(() => {
-    // This code only runs in the browser
     const checkIfMobile = () => {
       setIsMobile(window.innerWidth < 768);
     };

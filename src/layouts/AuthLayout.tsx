@@ -1,15 +1,20 @@
 
-import React from "react";
 import { Outlet } from "react-router-dom";
-import { ThemeProvider } from "@/components/theme-provider";
+import { Toaster } from "sonner";
+import { useMediaQuery } from "@/hooks/use-media-query";
 
-const AuthLayout: React.FC = () => {
+const AuthLayout = () => {
+  const isMobile = useMediaQuery("(max-width: 768px)");
+  
   return (
-    <ThemeProvider defaultTheme="light">
-      <div className="min-h-screen bg-background flex items-center justify-center p-4">
-        <Outlet />
-      </div>
-    </ThemeProvider>
+    <div className={`min-h-screen flex items-center justify-center ${
+      isMobile 
+        ? "bg-background p-4" 
+        : "bg-gradient-to-b from-background/50 to-background p-4 dark:from-background dark:to-background/80"
+    }`}>
+      <Toaster position="top-right" />
+      <Outlet />
+    </div>
   );
 };
 

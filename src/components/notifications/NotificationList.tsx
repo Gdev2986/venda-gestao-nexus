@@ -11,13 +11,12 @@ interface NotificationListProps {
   onDelete?: (id: string) => void;
 }
 
-// Export as named export
-export const NotificationList: React.FC<NotificationListProps> = ({ 
+const NotificationList = ({ 
   notifications, 
   onMarkAsRead, 
   isLoading = false, 
   onDelete 
-}) => {
+}: NotificationListProps) => {
   if (isLoading) {
     return (
       <div className="flex justify-center items-center p-8">
@@ -53,6 +52,9 @@ export const NotificationList: React.FC<NotificationListProps> = ({
     </div>
   );
 };
+
+// Export as named export
+export { NotificationList };
 
 // Also export as default
 export default NotificationList;
