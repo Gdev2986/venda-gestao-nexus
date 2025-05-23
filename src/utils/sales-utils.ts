@@ -1,135 +1,59 @@
-import { faker } from '@faker-js/faker';
-import { PaymentMethod, Sale } from "@/types";
 
-/**
- * Generates a random date within the last year
- */
-export const getRandomDate = (): Date => {
-  const today = new Date();
-  const lastYear = new Date(today);
-  lastYear.setFullYear(today.getFullYear() - 1);
-  return faker.date.between({ from: lastYear, to: today });
-};
+// Import types
+import { NormalizedSale } from "@/pages/admin/Sales";
 
-/**
- * Generates a random amount between min and max
- */
-export const getRandomAmount = (min: number, max: number): number => {
-  const amount = faker.number.float({ min, max, fractionDigits: 2 });
-  return parseFloat(amount.toFixed(2));
-};
-
-/**
- * Generates a random payment method
- */
-export const getRandomPaymentMethod = (): PaymentMethod => {
-  const methods = Object.values(PaymentMethod);
-  return methods[Math.floor(Math.random() * methods.length)];
-};
-
-/**
- * Generates a random sale object
- */
-export const generateRandomSale = (): Sale => {
-  const gross_amount = getRandomAmount(50, 2000);
-  const net_amount = gross_amount * 0.8; // Simulate a 20% reduction
-  return {
-    id: faker.string.uuid(),
-    code: faker.string.alphanumeric(8).toUpperCase(),
-    terminal: `T${faker.number.int({ min: 100, max: 200 })}`,
-    client_name: faker.company.name(),
-    gross_amount: gross_amount,
-    net_amount: net_amount,
-    date: getRandomDate().toISOString(),
-    payment_method: getRandomPaymentMethod(),
-    client_id: faker.string.uuid(),
-    created_at: getRandomDate().toISOString(),
-    updated_at: getRandomDate().toISOString(),
-    amount: gross_amount, // Add required field
-    status: 'COMPLETED' // Add required field
-  };
-};
-
-/**
- * Generates an array of random sale objects
- */
-export const generateMockSalesData = (count: number): Sale[] => {
-  return Array.from({ length: count }, () => generateRandomSale());
-};
-
-// Adding alias for backward compatibility
-export const generateMockSales = (count: number, dateRange?: { from: Date; to: Date }): Sale[] => {
-  if (!dateRange) {
-    return generateMockSalesData(count);
+// Function to generate random sales data for testing
+export const generateMockSalesData = (count: number = 50): NormalizedSale[] => {
+  const paymentTypes = ["Cartão de Crédito", "Cartão de Débito", "Pix"];
+  const statuses = ["Aprovada", "Pendente", "Rejeitada"];
+  const terminals = ["T100", "T101", "T102", "T103", "T104", "T105"];
+  const brands = ["Visa", "Mastercard", "Elo", "Pix", "Amex"];
+  const sources = ["PagSeguro", "Rede Cartão", "Rede Pix", "Sigma"];
+  
+  const mockData: NormalizedSale[] = [];
+  
+  for (let i = 0; i < count; i++) {
+    // Choose random payment type
+    const paymentType = paymentTypes[Math.floor(Math.random() * paymentTypes.length)];
+    
+    // Determine brand and installments based on payment type
+    let brand = brands[Math.floor(Math.random() * (brands.length - 1))]; // Exclude "Pix" by default
+    let installments = Math.floor(Math.random() * 12) + 1;
+    
+    // Override for Pix
+    if (paymentType === "Pix") {
+      brand = "Pix";
+      installments = 1;
+    }
+    
+    // Generate random date between 90 days ago and now
+    const now = new Date();
+    const pastDate = new Date(now.getTime() - Math.random() * 90 * 24 * 60 * 60 * 1000);
+    
+    mockData.push({
+      id: `mock-${i}`,
+      status: statuses[Math.floor(Math.random() * statuses.length)],
+      payment_type: paymentType,
+      gross_amount: Math.floor(Math.random() * 1000000) / 100, // Random amount between 0 and 10,000
+      transaction_date: pastDate,
+      installments: installments,
+      terminal: terminals[Math.floor(Math.random() * terminals.length)],
+      brand: brand,
+      source: sources[Math.floor(Math.random() * sources.length)]
+    });
   }
-
-  // Filter sales to be within the date range
-  const sales = generateMockSalesData(count * 2); // Generate extra to allow for filtering
-  return sales.filter(sale => {
-    const saleDate = new Date(sale.date);
-    return saleDate >= dateRange.from && saleDate <= dateRange.to;
-  }).slice(0, count);
+  
+  return mockData;
 };
 
-/**
- * Calculate sales totals for the Sales page
- */
-export const calculateSalesTotals = (sales: Sale[]) => {
+// Function to calculate sales totals
+export const calculateSalesTotals = (sales: NormalizedSale[]) => {
   return {
     grossAmount: sales.reduce((sum, sale) => sum + sale.gross_amount, 0),
-    netAmount: sales.reduce((sum, sale) => sum + sale.net_amount, 0),
-    count: sales.length
+    netAmount: sales.reduce((sum, sale) => {
+      // Calculate a simulated net amount (gross minus ~3% fee)
+      const fee = sale.gross_amount * 0.03;
+      return sum + (sale.gross_amount - fee);
+    }, 0),
   };
-};
-
-/**
- * Helper function to filter sales data based on search term
- */
-export const filterSalesData = (sales: Sale[], searchTerm: string): Sale[] => {
-  if (!searchTerm) {
-    return sales;
-  }
-
-  const lowerSearchTerm = searchTerm.toLowerCase();
-
-  return sales.filter(sale => {
-    return (
-      sale.code.toLowerCase().includes(lowerSearchTerm) ||
-      sale.terminal.toLowerCase().includes(lowerSearchTerm) ||
-      sale.client_name.toLowerCase().includes(lowerSearchTerm) ||
-      sale.payment_method.toLowerCase().includes(lowerSearchTerm)
-    );
-  });
-};
-
-/**
- * Generate daily sales data for charts
- */
-export const generateDailySalesData = (dateRange: { from: Date; to: Date }) => {
-  const result = [];
-  const currentDate = new Date(dateRange.from);
-  const endDate = new Date(dateRange.to);
-  
-  while (currentDate <= endDate) {
-    result.push({
-      name: currentDate.toISOString().split('T')[0],
-      total: faker.number.int({ min: 200, max: 1500 })
-    });
-    
-    currentDate.setDate(currentDate.getDate() + 1);
-  }
-  
-  return result;
-};
-
-/**
- * Generate payment methods data for charts
- */
-export const generatePaymentMethodsData = (dateRange: { from: Date; to: Date }) => {
-  const methods = Object.values(PaymentMethod);
-  
-  return methods.map(method => ({
-    name: method,
-    value: faker.number.int({ min: 1, max: 20 })
-  }));
 };

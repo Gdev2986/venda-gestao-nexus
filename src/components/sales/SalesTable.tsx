@@ -1,196 +1,217 @@
 
-import { useState } from "react";
-import {
-  Table,
-  TableBody,
+import { 
+  Table, 
+  TableBody, 
   TableCell,
   TableHead,
   TableHeader,
-  TableRow,
+  TableRow 
 } from "@/components/ui/table";
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import { format } from "date-fns";
-import { ptBR } from "date-fns/locale";
-import { Badge } from "@/components/ui/badge";
-import { PaymentMethod, Sale } from "@/types";
-import {
-  Pagination,
-  PaginationContent,
-  PaginationEllipsis,
-  PaginationItem,
-  PaginationLink,
-  PaginationNext,
-  PaginationPrevious,
+import { Skeleton } from "@/components/ui/skeleton";
+import { 
+  Pagination, 
+  PaginationContent, 
+  PaginationItem, 
+  PaginationLink, 
+  PaginationNext, 
+  PaginationPrevious 
 } from "@/components/ui/pagination";
+import { Badge } from "@/components/ui/badge";
+import { formatCurrency } from "@/lib/formatters";
+import { NormalizedSale } from "@/pages/admin/Sales";
 
 interface SalesTableProps {
-  sales: Sale[];
-  page: number;
-  setPage: (page: number) => void;
-  totalPages: number;
+  data: NormalizedSale[];
   isLoading: boolean;
-  totals: {
-    grossAmount: number;
-    netAmount: number;
-  };
+  currentPage: number;
+  totalPages: number;
+  onPageChange: (page: number) => void;
 }
 
-const getPaymentMethodLabel = (method: string | PaymentMethod) => {
-  // Ensure method is handled as a string
-  const paymentMethodStr = String(method);
-
-  switch (paymentMethodStr) {
-    case PaymentMethod.CREDIT:
-      return <Badge variant="outline">Crédito</Badge>;
-    case PaymentMethod.DEBIT:
-      return <Badge variant="outline" className="border-success text-success">Débito</Badge>;
-    case PaymentMethod.PIX:
-      return <Badge variant="outline" className="border-warning text-warning">Pix</Badge>;
-    default:
-      return <Badge variant="outline">{paymentMethodStr}</Badge>;
-  }
-};
-
-const SalesTable = ({ sales, page, setPage, totalPages, isLoading, totals }: SalesTableProps) => {
+const SalesTable: React.FC<SalesTableProps> = ({
+  data,
+  isLoading,
+  currentPage,
+  totalPages,
+  onPageChange,
+}) => {
+  // Function to render status badge with appropriate styling
+  const renderStatusBadge = (status: string) => {
+    let variant: "default" | "outline" | "secondary" | "destructive" = "outline";
+    
+    if (status.toLowerCase() === "aprovada" || status.toLowerCase() === "approved") {
+      variant = "default";
+    } else if (
+      status.toLowerCase() === "rejeitada" || 
+      status.toLowerCase() === "rejected" || 
+      status.toLowerCase() === "denied"
+    ) {
+      variant = "destructive";
+    } else if (
+      status.toLowerCase() === "pendente" || 
+      status.toLowerCase() === "pending"
+    ) {
+      variant = "secondary";
+    }
+    
+    return <Badge variant={variant}>{status}</Badge>;
+  };
+  
+  // Function to format the date
+  const formatDate = (date: string | Date) => {
+    if (!date) return "";
+    
+    const dateObj = typeof date === 'string' ? new Date(date) : date;
+    
+    return new Intl.DateTimeFormat('pt-BR', {
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit',
+    }).format(dateObj);
+  };
+  
+  // Generate an array of page numbers to display
+  const getPageNumbers = () => {
+    const maxPagesToShow = 5;
+    const pages = [];
+    
+    if (totalPages <= maxPagesToShow) {
+      // If there are few pages, show all of them
+      for (let i = 1; i <= totalPages; i++) {
+        pages.push(i);
+      }
+    } else {
+      // Always show the first page
+      pages.push(1);
+      
+      if (currentPage <= 3) {
+        // If we're near the start, show the first few pages
+        for (let i = 2; i <= Math.min(5, totalPages); i++) {
+          pages.push(i);
+        }
+      } else if (currentPage >= totalPages - 2) {
+        // If we're near the end, show the last few pages
+        for (let i = Math.max(totalPages - 4, 2); i <= totalPages; i++) {
+          pages.push(i);
+        }
+      } else {
+        // We're somewhere in the middle, show current page and neighbors
+        pages.push(null); // ellipsis
+        for (let i = currentPage - 1; i <= currentPage + 1; i++) {
+          pages.push(i);
+        }
+        pages.push(null); // ellipsis
+      }
+      
+      // Always show the last page if not already included
+      if (!pages.includes(totalPages)) {
+        pages.push(totalPages);
+      }
+    }
+    
+    return pages;
+  };
+  
   return (
-    <Card>
-      <CardHeader>
-        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-          <CardTitle>Lista de Vendas</CardTitle>
-          <div className="text-sm text-muted-foreground space-x-4">
-            <span>Total Bruto: {new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(totals.grossAmount)}</span>
-            <span>Total Líquido: {new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(totals.netAmount)}</span>
-          </div>
-        </div>
-      </CardHeader>
-      <CardContent>
-        {isLoading ? (
-          <div className="space-y-4">
-            {Array.from({ length: 5 }).map((_, i) => (
-              <div key={i} className="h-12 bg-muted animate-pulse rounded" />
-            ))}
-          </div>
-        ) : (
-          <>
-            <div className="rounded-md border overflow-x-auto">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Código</TableHead>
-                    <TableHead>Data</TableHead>
-                    <TableHead>Terminal</TableHead>
-                    <TableHead className="text-right">Valor Bruto</TableHead>
-                    <TableHead className="text-right">Valor Líquido</TableHead>
-                    <TableHead>Pagamento</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {sales.length > 0 ? (
-                    sales.map((sale) => (
-                      <TableRow key={sale.id}>
-                        <TableCell className="font-medium">{sale.code}</TableCell>
-                        <TableCell>
-                          {format(new Date(sale.date), "dd/MM/yyyy", { locale: ptBR })}
-                        </TableCell>
-                        <TableCell>{sale.terminal}</TableCell>
-                        <TableCell className="text-right">
-                          {new Intl.NumberFormat("pt-BR", {
-                            style: "currency",
-                            currency: "BRL",
-                          }).format(sale.gross_amount)}
-                        </TableCell>
-                        <TableCell className="text-right">
-                          {new Intl.NumberFormat("pt-BR", {
-                            style: "currency",
-                            currency: "BRL",
-                          }).format(sale.net_amount)}
-                        </TableCell>
-                        <TableCell>{getPaymentMethodLabel(sale.payment_method)}</TableCell>
-                      </TableRow>
-                    ))
-                  ) : (
-                    <TableRow>
-                      <TableCell colSpan={6} className="text-center py-8 text-muted-foreground">
-                        Nenhuma venda encontrada. 
-                        {" Tente outros filtros."}
-                      </TableCell>
-                    </TableRow>
-                  )}
-                </TableBody>
-              </Table>
-            </div>
-            
-            {sales.length > 0 && (
-              <div className="mt-4">
-                <Pagination>
-                  <PaginationContent>
-                    <PaginationItem>
-                      <PaginationPrevious
-                        href="#"
-                        onClick={(e) => {
-                          e.preventDefault();
-                          if (page > 1) setPage(page - 1);
-                        }}
-                      />
-                    </PaginationItem>
-                    
-                    {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
-                      let pageNumber;
-                      
-                      if (totalPages <= 5) {
-                        pageNumber = i + 1;
-                      } else if (page <= 3) {
-                        pageNumber = i + 1;
-                      } else if (page >= totalPages - 2) {
-                        pageNumber = totalPages - 4 + i;
-                      } else {
-                        pageNumber = page - 2 + i;
-                      }
-                      
-                      return (
-                        <PaginationItem key={pageNumber}>
-                          <PaginationLink
-                            href="#"
-                            isActive={pageNumber === page}
-                            onClick={(e) => {
-                              e.preventDefault();
-                              setPage(pageNumber);
-                            }}
-                          >
-                            {pageNumber}
-                          </PaginationLink>
-                        </PaginationItem>
-                      );
-                    })}
-                    
-                    {totalPages > 5 && page < totalPages - 2 && (
-                      <PaginationItem>
-                        <PaginationEllipsis />
-                      </PaginationItem>
-                    )}
-                    
-                    <PaginationItem>
-                      <PaginationNext
-                        href="#"
-                        onClick={(e) => {
-                          e.preventDefault();
-                          if (page < totalPages) setPage(page + 1);
-                        }}
-                      />
-                    </PaginationItem>
-                  </PaginationContent>
-                </Pagination>
-              </div>
+    <div className="space-y-4">
+      <div className="rounded-md border">
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead>Status</TableHead>
+              <TableHead>Tipo de Pagamento</TableHead>
+              <TableHead className="text-right">Valor Bruto</TableHead>
+              <TableHead>Data de Transação</TableHead>
+              <TableHead>Parcelas</TableHead>
+              <TableHead>Terminal</TableHead>
+              <TableHead>Bandeira</TableHead>
+              <TableHead>Origem</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {isLoading ? (
+              // Loading state
+              Array.from({ length: 5 }).map((_, index) => (
+                <TableRow key={`loading-${index}`}>
+                  <TableCell><Skeleton className="h-6 w-20" /></TableCell>
+                  <TableCell><Skeleton className="h-6 w-32" /></TableCell>
+                  <TableCell><Skeleton className="h-6 w-24" /></TableCell>
+                  <TableCell><Skeleton className="h-6 w-40" /></TableCell>
+                  <TableCell><Skeleton className="h-6 w-12" /></TableCell>
+                  <TableCell><Skeleton className="h-6 w-24" /></TableCell>
+                  <TableCell><Skeleton className="h-6 w-20" /></TableCell>
+                  <TableCell><Skeleton className="h-6 w-24" /></TableCell>
+                </TableRow>
+              ))
+            ) : data.length > 0 ? (
+              data.map((sale, index) => (
+                <TableRow key={sale.id || `sale-${index}`}>
+                  <TableCell>{renderStatusBadge(sale.status)}</TableCell>
+                  <TableCell>{sale.payment_type}</TableCell>
+                  <TableCell className="text-right font-medium">
+                    {formatCurrency(sale.gross_amount)}
+                  </TableCell>
+                  <TableCell>{formatDate(sale.transaction_date)}</TableCell>
+                  <TableCell>{sale.installments}x</TableCell>
+                  <TableCell>{sale.terminal}</TableCell>
+                  <TableCell>{sale.brand}</TableCell>
+                  <TableCell>
+                    <Badge variant="outline">{sale.source}</Badge>
+                  </TableCell>
+                </TableRow>
+              ))
+            ) : (
+              <TableRow>
+                <TableCell colSpan={8} className="h-24 text-center">
+                  Nenhum dado encontrado
+                </TableCell>
+              </TableRow>
             )}
-          </>
-        )}
-      </CardContent>
-    </Card>
+          </TableBody>
+        </Table>
+      </div>
+      
+      {/* Pagination */}
+      {totalPages > 1 && (
+        <Pagination>
+          <PaginationContent>
+            <PaginationItem>
+              <PaginationPrevious 
+                onClick={() => onPageChange(Math.max(1, currentPage - 1))}
+                className={currentPage === 1 ? "pointer-events-none opacity-50" : "cursor-pointer"}
+              />
+            </PaginationItem>
+            
+            {getPageNumbers().map((page, i) => 
+              page === null ? (
+                <PaginationItem key={`ellipsis-${i}`}>
+                  <span className="px-2">...</span>
+                </PaginationItem>
+              ) : (
+                <PaginationItem key={`page-${page}`}>
+                  <PaginationLink
+                    isActive={page === currentPage}
+                    onClick={() => onPageChange(page as number)}
+                    className="cursor-pointer"
+                  >
+                    {page}
+                  </PaginationLink>
+                </PaginationItem>
+              )
+            )}
+            
+            <PaginationItem>
+              <PaginationNext 
+                onClick={() => onPageChange(Math.min(totalPages, currentPage + 1))}
+                className={currentPage === totalPages ? "pointer-events-none opacity-50" : "cursor-pointer"}
+              />
+            </PaginationItem>
+          </PaginationContent>
+        </Pagination>
+      )}
+    </div>
   );
 };
 

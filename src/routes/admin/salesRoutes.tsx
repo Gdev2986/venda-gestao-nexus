@@ -1,13 +1,13 @@
 
 import { Route } from "react-router-dom";
+import { lazy } from "react";
 import { PATHS } from "../paths";
 
-// Sales pages
-import AdminSales from "../../pages/admin/Sales";
-import SaleDetails from "../../pages/sales/SaleDetails";
-import NewSale from "../../pages/sales/NewSale";
+// Lazy load the sales pages
+const AdminSales = lazy(() => import("../../pages/admin/Sales"));
+const SaleDetails = lazy(() => import("../../pages/sales/SaleDetails"));
+const NewSale = lazy(() => import("../../pages/sales/NewSale"));
 
-// Sales Routes for Admin Module
 export const salesRoutes = [
   <Route 
     key="admin-sales" 
