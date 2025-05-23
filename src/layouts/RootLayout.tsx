@@ -6,11 +6,13 @@ import { PATHS } from "@/routes/paths";
 import { motion } from "framer-motion";
 import { useState, useEffect } from "react";
 import { getDashboardPath } from "@/routes/routeUtils";
+import { useToast } from "@/hooks/use-toast";
 
 const RootLayout = () => {
   const { user, isLoading, isAuthenticated, userRole, needsPasswordChange } = useAuth();
   const location = useLocation();
   const [showLoading, setShowLoading] = useState(true);
+  const { toast } = useToast();
   
   // Debug logging
   useEffect(() => {
@@ -65,6 +67,11 @@ const RootLayout = () => {
       return <Navigate to={dashboardPath} replace />;
     } catch (error) {
       console.error("Error getting dashboard path:", error);
+      toast({
+        title: "Erro na navegação",
+        description: "Não foi possível determinar sua página inicial. Por favor, faça login novamente.",
+        variant: "destructive"
+      });
       return <Navigate to={PATHS.LOGIN} replace />;
     }
   }
