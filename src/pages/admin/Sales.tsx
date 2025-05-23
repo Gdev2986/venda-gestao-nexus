@@ -3,10 +3,11 @@ import { useState, useCallback, useEffect } from "react";
 import { PageHeader } from "@/components/page/PageHeader";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
-import { FileUp, Filter, Download, RefreshCw, Plus } from "lucide-react";
+import { FileUp, Filter, Download, RefreshCw, Plus, Eye } from "lucide-react";
 import SalesDropzone from "@/components/sales/SalesDropzone";
 import SalesFiltersPanel from "@/components/sales/SalesFiltersPanel";
 import SalesTable from "@/components/sales/SalesTable";
+import ProcessedDataPreview from "@/components/sales/ProcessedDataPreview";
 import { StyledCard } from "@/components/ui/styled-card";
 import { generateMockSalesData } from "@/utils/sales-utils";
 import { 
@@ -14,6 +15,7 @@ import {
   normalizeData,
   getSalesMetadata,
 } from "@/utils/sales-processor";
+import { Sale } from "@/types";
 
 // Types for normalized sales data
 export interface NormalizedSale {
@@ -57,6 +59,8 @@ const AdminSales = () => {
   const [isUploading, setIsUploading] = useState(false);
   const [processedData, setProcessedData] = useState<NormalizedSale[]>([]);
   const [filteredData, setFilteredData] = useState<NormalizedSale[]>([]);
+  const [recentlyProcessed, setRecentlyProcessed] = useState<NormalizedSale[]>([]);
+  const [showPreview, setShowPreview] = useState(false);
   const [filters, setFilters] = useState<SalesFilters>(defaultFilters);
   const [filtersMeta, setFiltersMeta] = useState<{
     paymentTypes: string[];
@@ -130,6 +134,32 @@ const AdminSales = () => {
     setCurrentPage(1); // Reset to first page when filters change
   }, [filters, processedData]);
 
+  // Convert NormalizedSale to Sale for the SalesTable component
+  const convertToSaleType = (normalizedSales: NormalizedSale[]): Sale[] => {
+    return normalizedSales.map(sale => {
+      return {
+        id: sale.id || "",
+        code: sale.id || "",
+        terminal: sale.terminal,
+        client_name: "Cliente", // Default value
+        gross_amount: sale.gross_amount,
+        net_amount: sale.gross_amount * 0.97, // 3% fee as an example
+        date: typeof sale.transaction_date === 'string' 
+          ? sale.transaction_date 
+          : sale.transaction_date.toISOString(),
+        payment_method: sale.payment_type.toLowerCase().includes('crédito') 
+          ? "credit" 
+          : sale.payment_type.toLowerCase().includes('débito') 
+            ? "debit" 
+            : "pix",
+        client_id: "",
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+        status: sale.status,
+      };
+    });
+  };
+
   // Process uploaded CSV files
   const handleFilesProcessed = useCallback((normalizedData: NormalizedSale[], warnings: any[]) => {
     setIsUploading(false);
@@ -142,6 +172,12 @@ const AdminSales = () => {
       });
       return;
     }
+    
+    // Set recently processed data for the preview
+    setRecentlyProcessed(normalizedData);
+    
+    // Show the preview automatically
+    setShowPreview(true);
     
     // Combine with existing data or replace
     const allData = [...processedData, ...normalizedData];
@@ -353,6 +389,9 @@ const AdminSales = () => {
 
   // Calculate summary stats
   const totalGrossAmount = filteredData.reduce((sum, sale) => sum + sale.gross_amount, 0);
+  
+  // Convert filtered data to Sale type for the SalesTable component
+  const tableData = convertToSaleType(currentData);
 
   return (
     <div className="space-y-6">
@@ -400,8 +439,29 @@ const AdminSales = () => {
             onFilesAccepted={handleFileUpload} 
             isUploading={isUploading}
           />
+          
+          {/* Preview Button - Only show if recently processed data exists */}
+          {recentlyProcessed.length > 0 && (
+            <div className="mt-4 flex justify-end">
+              <Button 
+                variant="outline" 
+                onClick={() => setShowPreview(true)}
+                className="flex items-center gap-2"
+              >
+                <Eye className="h-4 w-4" />
+                Ver Preview de Dados Processados
+              </Button>
+            </div>
+          )}
         </div>
       </StyledCard>
+      
+      {/* Data Preview Modal/Sheet */}
+      <ProcessedDataPreview 
+        data={recentlyProcessed}
+        isOpen={showPreview}
+        onOpenChange={setShowPreview}
+      />
       
       {/* Filters Panel - Conditionally rendered */}
       {showFilters && (
@@ -443,7 +503,7 @@ const AdminSales = () => {
       <StyledCard borderColor="border-gray-200">
         <div className="p-6">
           <SalesTable 
-            data={currentData}
+            data={tableData}
             isLoading={isLoading}
             currentPage={currentPage}
             totalPages={totalPages}
