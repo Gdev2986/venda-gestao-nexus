@@ -8,18 +8,7 @@ import { NotificationsContextProps } from "./types";
 import { requestNotificationPermission } from "@/components/notifications/NotificationToast";
 
 // Create a context with a default fallback value
-const NotificationsContext = createContext<NotificationsContextProps>({
-  notifications: [],
-  unreadCount: 0,
-  fetchNotifications: async () => [],
-  markAsRead: () => {},
-  markAllAsRead: () => {},
-  isLoading: false,
-  deleteNotification: () => {},
-  refreshNotifications: async () => [],
-  soundEnabled: true,
-  setSoundEnabled: () => {}
-});
+const NotificationsContext = createContext<NotificationsContextProps | null>(null);
 
 export const NotificationsProvider: React.FC<{ children: React.ReactNode }> = ({
   children,
@@ -60,7 +49,7 @@ export const NotificationsProvider: React.FC<{ children: React.ReactNode }> = ({
     markAllAsRead,
     isLoading,
     deleteNotification,
-    refreshNotifications,
+    refreshNotifications: refreshNotifications || fetchNotifications,
     soundEnabled,
     setSoundEnabled
   };
@@ -72,7 +61,7 @@ export const NotificationsProvider: React.FC<{ children: React.ReactNode }> = ({
   );
 };
 
-export const useNotifications = () => {
+export const useNotifications = (): NotificationsContextProps => {
   const context = useContext(NotificationsContext);
   if (!context) {
     throw new Error(

@@ -8,8 +8,8 @@ export interface NotificationsContextProps {
   markAsRead: (id: string) => void;
   markAllAsRead: () => void;
   isLoading: boolean;
-  deleteNotification?: (id: string) => void;
-  refreshNotifications?: () => Promise<Notification[]>;
+  deleteNotification: (id: string) => void;
+  refreshNotifications: () => Promise<Notification[]>;
   soundEnabled: boolean;
   setSoundEnabled: (enabled: boolean) => void;
 }

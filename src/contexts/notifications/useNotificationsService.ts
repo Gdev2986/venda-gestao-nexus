@@ -1,6 +1,6 @@
 
 import { Notification } from '@/types/notification.types';
-import { useHook } from '@/hooks/use-notifications';
+import { useNotifications } from '@/hooks/use-notifications';
 
 // This is a mock service that would be replaced with real API calls
 export const useNotificationsService = () => {
@@ -8,8 +8,8 @@ export const useNotificationsService = () => {
     fetchNotifications, 
     markAsRead,
     markAllAsRead,
-    deleteNotification: deleteNotif 
-  } = useHook();
+    deleteNotification 
+  } = useNotifications();
 
   // Fetch user notifications
   const fetchUserNotifications = async (userId: string): Promise<Notification[]> => {
@@ -42,10 +42,10 @@ export const useNotificationsService = () => {
   };
 
   // Delete notification
-  const deleteNotification = async (id: string): Promise<void> => {
+  const deleteNotificationService = async (id: string): Promise<void> => {
     try {
-      if (deleteNotif) {
-        await deleteNotif(id);
+      if (deleteNotification) {
+        await deleteNotification(id);
       }
     } catch (error) {
       console.error("Error deleting notification:", error);
@@ -57,6 +57,6 @@ export const useNotificationsService = () => {
     fetchUserNotifications,
     markNotificationRead,
     markAllNotificationsRead,
-    deleteNotification
+    deleteNotification: deleteNotificationService
   };
 };

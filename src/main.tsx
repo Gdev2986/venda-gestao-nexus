@@ -14,6 +14,9 @@ const root = ReactDOM.createRoot(
   document.getElementById("root") as HTMLElement
 );
 
+// Explicitly ensure React is available in the global scope for hook usage
+window.React = React;
+
 root.render(
   <React.StrictMode>
     <BrowserRouter>

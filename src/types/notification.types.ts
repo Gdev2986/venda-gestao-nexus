@@ -4,7 +4,12 @@ export enum NotificationType {
   PAYMENT = "payment",
   SALE = "sale",
   MACHINE = "machine",
-  SUPPORT = "support"
+  SUPPORT = "support",
+  GENERAL = "general",
+  COMMISSION = "commission",
+  BALANCE = "balance",
+  ADMIN_NOTIFICATION = "admin_notification",
+  LOGISTICS = "logistics"
 }
 
 export interface Notification {

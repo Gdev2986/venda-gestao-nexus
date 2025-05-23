@@ -1,8 +1,9 @@
 
-import { useNotifications } from "@/contexts/notifications/NotificationsContext";
+import { useNotifications as useNotificationsFromContext } from "@/contexts/notifications/NotificationsContext";
 import { NotificationType } from "@/types/notification.types";
+import { NotificationsContextProps } from "@/contexts/notifications/types";
 
-export function useHook() {
+export function useHook(): NotificationsContextProps {
   // Fallback mock implementation for when used outside provider during development
   const mockNotifications = [
     {
@@ -36,7 +37,7 @@ export function useHook() {
 
   try {
     // Try to use the real context
-    return useNotifications();
+    return useNotificationsFromContext();
   } catch (error) {
     // Fallback for development
     console.warn("Using mock notifications because useNotifications is not within a provider");
@@ -48,10 +49,12 @@ export function useHook() {
       fetchNotifications: async () => mockNotifications,
       markAsRead: () => {},
       markAllAsRead: () => {},
-      isLoading: false
+      isLoading: false,
+      deleteNotification: () => {},
+      refreshNotifications: async () => mockNotifications
     };
   }
 }
 
 // Re-export the actual hook
-export { useNotifications } from "@/contexts/notifications/NotificationsContext";
+export { useNotificationsFromContext as useNotifications };
