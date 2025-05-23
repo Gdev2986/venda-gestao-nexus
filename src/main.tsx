@@ -7,6 +7,7 @@ import "./index.css";
 import { ThemeProvider } from "./components/theme-provider";
 import { AuthProvider } from "./providers/AuthProvider";
 import { Toaster } from "@/components/ui/sonner";
+import { NotificationsProvider } from "./contexts/notifications/NotificationsContext";
 
 // Ensure there's a single React instance
 const root = ReactDOM.createRoot(
@@ -18,8 +19,10 @@ root.render(
     <BrowserRouter>
       <ThemeProvider defaultTheme="light">
         <AuthProvider>
-          <App />
-          <Toaster position="top-right" />
+          <NotificationsProvider>
+            <App />
+            <Toaster position="top-right" />
+          </NotificationsProvider>
         </AuthProvider>
       </ThemeProvider>
     </BrowserRouter>
