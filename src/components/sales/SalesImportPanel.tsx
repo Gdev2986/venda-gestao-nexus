@@ -10,11 +10,8 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { createMachine, getAllMachines } from "@/services/machine.service";
 import { insertSales } from "@/services/sales.service";
 import { MachineStatus } from "@/types/machine.types";
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetFooter } from "@/components/ui/sheet";
 import { supabase } from "@/integrations/supabase/client";
-import { createMachine, getAllMachines } from "@/services/machine.service";
-import { MachineStatus } from "@/types/machine.types";
 
 interface SalesImportPanelProps {
   onSalesProcessed: (sales: NormalizedSale[]) => void;
