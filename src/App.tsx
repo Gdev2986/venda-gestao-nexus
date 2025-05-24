@@ -1,10 +1,10 @@
-
-import { Routes, Route, Navigate } from "react-router-dom";
+import { Routes, Route, Navigate, useLocation } from "react-router-dom";
 import { PATHS } from "./routes/paths";
 import { useEffect } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { useUserRole } from "./hooks/use-user-role";
 import { UserRole } from "./types";
+import { useAuth } from "@/contexts/AuthContext";
 
 // Route utils
 import { getDashboardPath } from "./routes/routeUtils";
@@ -24,14 +24,16 @@ import MainLayout from "./components/layout/MainLayout";
 // Pages
 import NotFound from "./pages/NotFound";
 import Notifications from "./pages/Notifications";
+import Unauthorized from "./pages/Unauthorized";
 
 function App() {
-  const { userRole, isRoleLoading } = useUserRole();
+  const { isAuthenticated, userRole, isLoading } = useAuth();
+  const location = useLocation();
   const { toast } = useToast();
 
   // Log role changes for debugging
   useEffect(() => {
-    if (!isRoleLoading) {
+    if (!isLoading && userRole) {
       console.log("App.tsx - Current user role:", userRole);
       
       try {
@@ -41,33 +43,27 @@ function App() {
         console.error("Error getting dashboard path:", error);
       }
     }
-  }, [userRole, isRoleLoading]);
+  }, [userRole, isLoading]);
 
-  // Get the dashboard path safely
-  const getDashboardRedirectPath = () => {
-    try {
+  // Redirecionamento padrão para login ou dashboard
+  const getDefaultRedirect = () => {
+    if (isAuthenticated && userRole) {
       return getDashboardPath(userRole);
-    } catch (error) {
-      console.error("Error in getDashboardRedirectPath:", error);
-      return PATHS.LOGIN;
     }
+    return PATHS.LOGIN;
   };
+
+  // Se ainda estiver carregando, não renderiza nada
+  if (isLoading) {
+    return null;
+  }
 
   return (
     <Routes>
-      {/* Root path handling */}
-      <Route path={PATHS.HOME} element={<RootLayout />} />
-      
-      {/* Generic dashboard route */}
-      <Route 
-        path={PATHS.DASHBOARD} 
-        element={<Navigate to={getDashboardRedirectPath()} replace />} 
-      />
-
       {/* Auth Routes */}
       {AuthRoutes}
 
-      {/* Protected Routes by Role */}
+      {/* Protected Routes */}
       {AdminRoutes}
       {ClientRoutes}
       {PartnerRoutes}
@@ -79,11 +75,15 @@ function App() {
         <Route path="/notifications" element={<Notifications />} />
       </Route>
 
-      {/* 404 */}
+      {/* Error Routes */}
       <Route path={PATHS.NOT_FOUND} element={<NotFound />} />
-      
-      {/* Catch-all redirect to the appropriate dashboard */}
-      <Route path="*" element={<Navigate to={PATHS.DASHBOARD} replace />} />
+      <Route path={PATHS.UNAUTHORIZED} element={<Unauthorized />} />
+
+      {/* Redirecionamento da raiz */}
+      <Route path="/" element={<Navigate to={getDefaultRedirect()} replace />} />
+
+      {/* Catch-all: qualquer rota desconhecida redireciona para login ou dashboard */}
+      <Route path="*" element={<Navigate to={getDefaultRedirect()} replace />} />
     </Routes>
   );
 }

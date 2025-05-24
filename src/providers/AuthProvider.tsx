@@ -1,4 +1,3 @@
-
 import * as React from "react";
 import { Session, User } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
@@ -16,7 +15,6 @@ interface AuthContextType {
   userRole: UserRole | null;
   needsPasswordChange: boolean;
   signIn: (email: string, password: string) => Promise<{ data: any; error: any }>;
-  signUp: (email: string, password: string, metadata?: any) => Promise<{ data: any; error: any }>;
   signOut: () => Promise<{ error: any }>;
   refreshSession: () => Promise<void>;
   changePasswordAndActivate: (newPassword: string) => Promise<boolean>;
@@ -31,7 +29,6 @@ export const AuthContext = React.createContext<AuthContextType>({
   userRole: null,
   needsPasswordChange: false,
   signIn: async () => ({ data: null, error: null }),
-  signUp: async () => ({ data: null, error: null }),
   signOut: async () => ({ error: null }),
   refreshSession: async () => {},
   changePasswordAndActivate: async () => false,
@@ -87,6 +84,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       }
     } catch (error) {
       console.error("Error loading user profile:", error);
+      // Se houver erro ao carregar o perfil, limpa o estado
+      setProfile(null);
+      setUserRole(null);
     }
   }, []);
 
@@ -101,11 +101,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       setUser(currentSession?.user || null);
       
       if (currentSession?.user) {
-        // Use setTimeout to defer these calls and prevent deadlocks
-        setTimeout(async () => {
-          await loadUserProfile(currentSession.user.id);
-          await checkPasswordChangeStatus(currentSession.user.id);
-        }, 0);
+        await loadUserProfile(currentSession.user.id);
+        await checkPasswordChangeStatus(currentSession.user.id);
       } else {
         setProfile(null);
         setUserRole(null);
@@ -113,23 +110,30 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       }
     } catch (error) {
       console.error("Error refreshing session:", error);
+      // Em caso de erro, limpa o estado
+      setSession(null);
+      setUser(null);
+      setProfile(null);
+      setUserRole(null);
+      setNeedsPasswordChange(false);
     }
   }, [loadUserProfile, checkPasswordChangeStatus]);
 
   React.useEffect(() => {
-    // Set up auth state change listener first
+    let mounted = true;
+
+    // Set up auth state change listener
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, newSession) => {
+        if (!mounted) return;
+        
         console.log("Auth state changed:", event);
         setSession(newSession);
         setUser(newSession?.user || null);
         
         if (newSession?.user) {
-          // Use setTimeout to defer these calls and prevent deadlocks
-          setTimeout(async () => {
-            await loadUserProfile(newSession.user.id);
-            await checkPasswordChangeStatus(newSession.user.id);
-          }, 0);
+          await loadUserProfile(newSession.user.id);
+          await checkPasswordChangeStatus(newSession.user.id);
         } else {
           setProfile(null);
           setUserRole(null);
@@ -138,12 +142,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       }
     );
 
-    // Then check for existing session
+    // Check for existing session
     refreshSession().finally(() => {
-      setIsLoading(false);
+      if (mounted) {
+        setIsLoading(false);
+      }
     });
 
     return () => {
+      mounted = false;
       subscription.unsubscribe();
     };
   }, [loadUserProfile, checkPasswordChangeStatus, refreshSession]);
@@ -153,34 +160,18 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     return AuthService.changePasswordAndActivate(newPassword);
   };
 
-  // Sign in function using the auth service for proper cleanup
+  // Sign in function using the auth service
   const signIn = async (email: string, password: string) => {
     return AuthService.signIn(email, password);
   };
 
-  // Sign up function
-  const signUp = async (email: string, password: string, metadata?: any) => {
-    try {
-      const { data, error } = await supabase.auth.signUp({
-        email,
-        password,
-        options: {
-          data: metadata
-        }
-      });
-      return { data, error };
-    } catch (error: any) {
-      return { data: null, error };
-    }
-  };
-
-  // Sign out function using the auth service for proper cleanup
+  // Sign out function using the auth service
   const signOut = async () => {
     return AuthService.signOut();
   };
 
   // Calculate if user is authenticated
-  const isAuthenticated = !!user && !!session;
+  const isAuthenticated = !!user && !!session && !!userRole;
 
   const value = {
     user,
@@ -191,7 +182,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     userRole,
     needsPasswordChange,
     signIn,
-    signUp,
     signOut,
     refreshSession,
     changePasswordAndActivate,
