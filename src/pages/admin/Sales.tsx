@@ -3,7 +3,7 @@ import { useState, useEffect } from "react";
 import { PageHeader } from "@/components/page/PageHeader";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
-import { FileUp, Download, RefreshCw, TrendingUp, CreditCard, DollarSign, Activity } from "lucide-react";
+import { FileUp, Download, RefreshCw, TrendingUp, CreditCard, DollarSign, Activity, Filter } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { 
   NormalizedSale,
@@ -20,6 +20,7 @@ const AdminSales = () => {
   const [filteredSales, setFilteredSales] = useState<NormalizedSale[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [showImportPanel, setShowImportPanel] = useState<boolean>(false);
+  const [showFilters, setShowFilters] = useState<boolean>(false);
   const { toast } = useToast();
 
   // Load initial data
@@ -164,6 +165,13 @@ const AdminSales = () => {
               <RefreshCw className={`mr-2 h-4 w-4 ${isLoading ? 'animate-spin' : ''}`} />
               Atualizar
             </Button>
+            <Button 
+              variant="outline"
+              onClick={() => setShowFilters(!showFilters)}
+            >
+              <Filter className="mr-2 h-4 w-4" />
+              {showFilters ? "Ocultar Filtros" : "Mostrar Filtros"}
+            </Button>
             <Button onClick={() => setShowImportPanel(!showImportPanel)}>
               <FileUp className="mr-2 h-4 w-4" />
               {showImportPanel ? "Ocultar Importação" : "Importar Vendas"}
@@ -256,8 +264,10 @@ const AdminSales = () => {
         </Card>
       </div>
       
-      {/* Filters */}
-      <SalesAdvancedFilter sales={sales} onFilter={handleFilter} />
+      {/* Filters - Only show when button is clicked */}
+      {showFilters && (
+        <SalesAdvancedFilter sales={sales} onFilter={handleFilter} />
+      )}
       
       {/* Sales Data */}
       <div className="space-y-4">

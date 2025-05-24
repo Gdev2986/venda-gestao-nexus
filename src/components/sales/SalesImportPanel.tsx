@@ -1,4 +1,3 @@
-
 import { useState, useCallback } from "react";
 import { useDropzone } from "react-dropzone";
 import { Button } from "@/components/ui/button";
@@ -21,7 +20,6 @@ const SalesImportPanel = ({ onSalesProcessed }: SalesImportPanelProps) => {
   const [files, setFiles] = useState<File[]>([]);
   const [isProcessing, setIsProcessing] = useState(false);
   const [processedSales, setProcessedSales] = useState<NormalizedSale[]>([]);
-  const [showPreview, setShowPreview] = useState(false);
   const [errors, setErrors] = useState<string[]>([]);
   const { toast } = useToast();
 
@@ -29,6 +27,7 @@ const SalesImportPanel = ({ onSalesProcessed }: SalesImportPanelProps) => {
   const onDrop = useCallback((acceptedFiles: File[]) => {
     setFiles(acceptedFiles);
     setErrors([]);
+    setProcessedSales([]); // Clear previous data when new files are added
   }, []);
 
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
@@ -184,7 +183,6 @@ const SalesImportPanel = ({ onSalesProcessed }: SalesImportPanelProps) => {
       setProcessedSales(allSales);
       
       if (allSales.length > 0) {
-        setShowPreview(true);
         toast({
           title: "Importação concluída",
           description: `${allSales.length} registros foram processados com sucesso${newErrors.length ? `. ${newErrors.length} erros encontrados.` : '.'}`
@@ -263,7 +261,6 @@ const SalesImportPanel = ({ onSalesProcessed }: SalesImportPanelProps) => {
       });
       setFiles([]);
       setProcessedSales([]);
-      setShowPreview(false);
       setErrors([]);
     } catch (error) {
       toast({
@@ -279,13 +276,14 @@ const SalesImportPanel = ({ onSalesProcessed }: SalesImportPanelProps) => {
   // Cancel the import process
   const cancelImport = () => {
     setProcessedSales([]);
-    setShowPreview(false);
+    setFiles([]);
+    setErrors([]);
   };
 
   return (
     <div className="space-y-4">
       {/* File Upload Area */}
-      <Card className="shadow-md rounded-lg border bg-white">
+      <Card className="shadow-md rounded-lg border bg-card">
         <CardHeader>
           <CardTitle className="text-lg">Importar Dados de Vendas</CardTitle>
         </CardHeader>
@@ -294,7 +292,7 @@ const SalesImportPanel = ({ onSalesProcessed }: SalesImportPanelProps) => {
             {/* Dropzone */}
             <div 
               {...getRootProps()} 
-              className={`border-2 border-dashed rounded-md p-6 text-center cursor-pointer transition-colors
+              className={`border-2 border-dashed rounded-md p-6 text-center cursor-pointer transition-colors bg-background
                 ${isDragActive ? 'border-primary bg-primary/10' : 'border-muted-foreground/30 hover:border-primary/50'}`}
             >
               <input {...getInputProps()} />
@@ -347,6 +345,7 @@ const SalesImportPanel = ({ onSalesProcessed }: SalesImportPanelProps) => {
           </div>
         </CardContent>
       </Card>
+
       {/* Errors Alert */}
       {errors.length > 0 && (
         <Alert variant="destructive">
@@ -364,15 +363,16 @@ const SalesImportPanel = ({ onSalesProcessed }: SalesImportPanelProps) => {
           </AlertDescription>
         </Alert>
       )}
-      <Sheet open={showPreview} onOpenChange={setShowPreview}>
-        <SheetContent side="right" className="w-full sm:w-[600px] md:w-[700px] lg:w-[900px] overflow-y-auto">
-          <SheetHeader className="mb-4">
-            <SheetTitle>Pré-visualização dos Dados</SheetTitle>
-          </SheetHeader>
-          <div className="mb-4">
-            <SalesPreviewPanel sales={processedSales} title="Pré-visualização dos dados importados" />
-          </div>
-          <SheetFooter className="flex flex-col gap-2">
+
+      {/* Inline Preview Panel */}
+      {processedSales.length > 0 && (
+        <div className="space-y-4">
+          <SalesPreviewPanel 
+            sales={processedSales} 
+            title="Pré-visualização dos dados importados"
+          />
+          
+          <div className="flex flex-col sm:flex-row gap-2 justify-end">
             <Button
               onClick={confirmImport}
               disabled={isProcessing}
@@ -385,14 +385,14 @@ const SalesImportPanel = ({ onSalesProcessed }: SalesImportPanelProps) => {
               variant="outline"
               onClick={cancelImport}
               disabled={isProcessing}
-              className="border-red-500 text-red-600 hover:bg-red-50"
+              className="border-red-500 text-red-600 hover:bg-red-50 dark:hover:bg-red-950"
             >
               <X className="mr-2 h-4 w-4" />
               Cancelar
             </Button>
-          </SheetFooter>
-        </SheetContent>
-      </Sheet>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
