@@ -54,14 +54,10 @@ const SalesImportPanel = ({ onSalesProcessed }: SalesImportPanelProps) => {
             const values = line.split(';');
             const obj: any = {};
             headers.forEach((h, i) => {
+              // Remove apenas aspas duplas e simples, mantendo o valor como string
+              // para que seja processado corretamente pela função toNumber() do sales-processor
               let raw = values[i]?.replace(/^"(.*)"$/, '$1').replace(/^'(.*)'$/, '$1').trim();
-              const headerNorm = h.toLowerCase().replace(/\s/g, '');
-              if (headerNorm.includes('valor') || headerNorm.includes('total') || headerNorm.includes('parcela') || headerNorm.includes('quantidade') || headerNorm.includes('qtd')) {
-                raw = raw.replace(',', '.').replace(/[^0-9.-]/g, '');
-                obj[h] = raw && !isNaN(Number(raw)) ? Number(raw) : 0;
-              } else {
-                obj[h] = raw;
-              }
+              obj[h] = raw || '';
             });
             return obj;
           });

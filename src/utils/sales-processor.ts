@@ -22,13 +22,18 @@ export function toNumber(v: string | number): number {
   }
   
   if (typeof v === 'string') {
-    // Remove currency symbols, quotes, and spaces, then convert comma to dot
-    const cleaned = v
+    // Remove currency symbols, quotes, and spaces
+    let cleaned = v
       .replace(/["']/g, '') // Remove quotes
       .replace(/R\$/, '') // Remove R$ symbol
       .replace(/\s+/g, '') // Remove spaces
-      .replace(/[^0-9.,-]/g, '') // Keep only numbers, dots, commas, and hyphens
-      .replace(/,/g, '.'); // Convert comma to dot for decimal
+      .trim();
+    
+    // For Brazilian format: remove dots (thousands separator), then convert comma to dot
+    // This handles cases like "1.234,56" -> "1234.56"
+    cleaned = cleaned
+      .replace(/\./g, '') // Remove dots (thousands separator)
+      .replace(',', '.'); // Convert comma to dot for decimal
     
     return parseFloat(cleaned) || 0;
   }
