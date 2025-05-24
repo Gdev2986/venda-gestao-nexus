@@ -53,8 +53,4 @@ const NotificationList = ({
   );
 };
 
-// Export as named export
 export { NotificationList };
-
-// Also export as default
-export default NotificationList;
