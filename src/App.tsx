@@ -11,7 +11,7 @@ import Unauthorized from "./pages/Unauthorized";
 function App() {
   const { isAuthenticated, userRole, isLoading } = useAuth();
 
-  // Redirecionamento padrão para login ou dashboard
+  // Redirecionamento padrão para login ou dashboard específico da role
   const getDefaultRedirect = () => {
     if (isAuthenticated && userRole) {
       return getDashboardPath(userRole);
@@ -37,10 +37,10 @@ function App() {
       <Route path={PATHS.NOT_FOUND} element={<NotFound />} />
       <Route path={PATHS.UNAUTHORIZED} element={<Unauthorized />} />
 
-      {/* Redirecionamento da raiz */}
+      {/* Redirecionamento da raiz para login ou dashboard específico */}
       <Route path="/" element={<Navigate to={getDefaultRedirect()} replace />} />
 
-      {/* Catch-all: qualquer rota desconhecida redireciona para login ou dashboard */}
+      {/* Catch-all: qualquer rota desconhecida redireciona baseado na autenticação */}
       <Route path="*" element={<Navigate to={getDefaultRedirect()} replace />} />
     </Routes>
   );

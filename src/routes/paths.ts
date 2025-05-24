@@ -5,23 +5,56 @@ export const PATHS = {
   RESET_PASSWORD: "/redefinir-senha",
   CHANGE_PASSWORD: "/alterar-senha",
 
-  // Dashboard
-  DASHBOARD: "/dashboard",
-  ADMIN_DASHBOARD: "/admin/dashboard",
-  CLIENT_DASHBOARD: "/cliente/dashboard",
+  // Admin Routes
+  ADMIN: {
+    ROOT: "/admin",
+    DASHBOARD: "/admin/dashboard", // Rota padrão para admin
+    CLIENTS: "/admin/clientes",
+    MACHINES: "/admin/maquinas",
+    PAYMENTS: "/admin/pagamentos",
+    SETTINGS: "/admin/configuracoes",
+    USERS: "/admin/usuarios",
+    REPORTS: "/admin/relatorios",
+  },
 
-  // Admin
-  ADMIN_MACHINES: "/admin/maquinas",
-  ADMIN_CLIENTS: "/admin/clientes",
-  ADMIN_PAYMENTS: "/admin/pagamentos",
-  ADMIN_SETTINGS: "/admin/configuracoes",
+  // Client Routes  
+  CLIENT: {
+    ROOT: "/client",
+    DASHBOARD: "/client/dashboard", // Rota padrão para client
+    MACHINES: "/client/maquinas",
+    PAYMENTS: "/client/pagamentos",
+    PROFILE: "/client/perfil",
+    REPORTS: "/client/relatorios",
+  },
 
-  // Client
-  CLIENT_MACHINES: "/cliente/maquinas",
-  CLIENT_PAYMENTS: "/cliente/pagamentos",
-  CLIENT_PROFILE: "/cliente/perfil",
+  // Partner Routes
+  PARTNER: {
+    ROOT: "/partner", 
+    DASHBOARD: "/partner/dashboard", // Rota padrão para partner
+    CLIENTS: "/partner/clientes",
+    COMMISSIONS: "/partner/comissoes",
+    REPORTS: "/partner/relatorios",
+  },
 
-  // Error
+  // Financial Routes
+  FINANCIAL: {
+    ROOT: "/financial",
+    DASHBOARD: "/financial/dashboard", // Rota padrão para financial
+    PAYMENTS: "/financial/pagamentos",
+    REPORTS: "/financial/relatorios",
+    REQUESTS: "/financial/solicitacoes",
+  },
+
+  // Logistics Routes
+  LOGISTICS: {
+    ROOT: "/logistics",
+    DASHBOARD: "/logistics/dashboard", // Rota padrão para logistics
+    MACHINES: "/logistics/maquinas",
+    OPERATIONS: "/logistics/operacoes",
+    INVENTORY: "/logistics/inventario",
+  },
+
+  // Error Routes
   NOT_FOUND: "/404",
   UNAUTHORIZED: "/unauthorized"
 } as const;
