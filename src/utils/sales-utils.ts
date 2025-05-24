@@ -1,4 +1,3 @@
-
 import { v4 as uuidv4 } from "uuid";
 import { Sale } from "@/types";
 import { NormalizedSale, formatDateStandard } from './sales-processor';
@@ -86,4 +85,29 @@ export const convertNormalizedSalesToSales = (normalizedSales: NormalizedSale[])
       status: sale.status
     };
   });
+};
+
+// Gera dados simulados de vendas diárias para os últimos 30 dias
+export const generateDailySalesData = () => {
+  const days = 30;
+  const today = new Date();
+  const data = [];
+  for (let i = days - 1; i >= 0; i--) {
+    const date = new Date(today);
+    date.setDate(today.getDate() - i);
+    data.push({
+      date: date.toISOString().split('T')[0],
+      sales: Number((Math.random() * 1000 + 100).toFixed(2))
+    });
+  }
+  return data;
+};
+
+// Gera dados simulados de métodos de pagamento
+export const generatePaymentMethodsData = () => {
+  return [
+    { method: 'Cartão de Crédito', value: Math.floor(Math.random() * 1000 + 500) },
+    { method: 'Cartão de Débito', value: Math.floor(Math.random() * 800 + 300) },
+    { method: 'Pix', value: Math.floor(Math.random() * 1200 + 400) },
+  ];
 };

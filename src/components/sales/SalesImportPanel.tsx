@@ -1,16 +1,13 @@
-
 import { useState, useCallback } from "react";
 import { useDropzone } from "react-dropzone";
 import { Button } from "@/components/ui/button";
 import { FileUp, X, AlertCircle, CheckCircle } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
-import { NormalizedSale, detectSourceByHeaders, normalizeData } from "@/utils/sales-processor";
+import { NormalizedSale, detectSourceByHeaders, normalizeData, cleanCsvRow } from "@/utils/sales-processor";
 import SalesPreviewPanel from "./SalesPreviewPanel";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-
-// Ensure Papa Parse is loaded
-declare const Papa: any;
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetFooter } from "@/components/ui/sheet";
 
 interface SalesImportPanelProps {
   onSalesProcessed: (sales: NormalizedSale[]) => void;
@@ -40,25 +37,37 @@ const SalesImportPanel = ({ onSalesProcessed }: SalesImportPanelProps) => {
     multiple: true
   });
   
-  // Read CSV file using Papa Parse
+  // Read CSV file using FileReader
   const readCSVFile = (file: File): Promise<any[]> => {
     return new Promise((resolve, reject) => {
-      Papa.parse(file, {
-        header: true,
-        delimiter: ';', // Semicolon as delimiter
-        skipEmptyLines: true,
-        complete: (results: any) => {
-          console.log(`CSV processed: ${results.data.length} rows, columns: ${results.meta.fields ? results.meta.fields.length : 0}`);
-          if (results.errors && results.errors.length > 0) {
-            console.warn('Errors processing CSV:', results.errors);
-          }
-          resolve(results.data);
-        },
-        error: (error: any) => {
-          console.error('Error processing CSV:', error);
-          reject(error);
+      const reader = new FileReader();
+      reader.onload = () => {
+        try {
+          const text = reader.result as string;
+          const [headerLine, ...lines] = text.split(/\r?\n/).filter(Boolean);
+          const headers = headerLine.split(';').map(h => h.trim());
+          const data = lines.map(line => {
+            const values = line.split(';');
+            const obj: any = {};
+            headers.forEach((h, i) => {
+              let raw = values[i]?.replace(/^"(.*)"$/, '$1').replace(/^'(.*)'$/, '$1').trim();
+              const headerNorm = h.toLowerCase().replace(/\s/g, '');
+              if (headerNorm.includes('valor') || headerNorm.includes('total') || headerNorm.includes('parcela') || headerNorm.includes('quantidade') || headerNorm.includes('qtd')) {
+                raw = raw.replace(',', '.').replace(/[^0-9.-]/g, '');
+                obj[h] = raw && !isNaN(Number(raw)) ? Number(raw) : 0;
+              } else {
+                obj[h] = raw;
+              }
+            });
+            return obj;
+          });
+          resolve(data);
+        } catch (err) {
+          reject(err);
         }
-      });
+      };
+      reader.onerror = reject;
+      reader.readAsText(file);
     });
   };
   
@@ -97,7 +106,8 @@ const SalesImportPanel = ({ onSalesProcessed }: SalesImportPanelProps) => {
           }
           
           // Normalize the data
-          const { data: normalized, warnings } = normalizeData(data, source);
+          const cleanedData = data.map(cleanCsvRow);
+          const { data: normalized, warnings } = normalizeData(cleanedData, source);
           console.log(`Normalized data: ${normalized.length} records`);
           
           if (warnings.length > 0) {
@@ -146,19 +156,37 @@ const SalesImportPanel = ({ onSalesProcessed }: SalesImportPanelProps) => {
     }
   };
   
+  // Função para inserir em lote no Supabase
+  const insertSalesBatch = async (sales: NormalizedSale[]) => {
+    // Aqui você pode ajustar para o formato esperado pelo Supabase
+    // Exemplo: await supabase.from('sales').insert(sales);
+    // Simulação de delay
+    return new Promise((resolve) => setTimeout(resolve, 1200));
+  };
+  
   // Confirm and save the processed sales
-  const confirmImport = () => {
-    onSalesProcessed(processedSales);
-    toast({
-      title: "Dados confirmados",
-      description: `${processedSales.length} registros foram importados com sucesso.`
-    });
-    
-    // Reset the import form
-    setFiles([]);
-    setProcessedSales([]);
-    setShowPreview(false);
-    setErrors([]);
+  const confirmImport = async () => {
+    setIsProcessing(true);
+    try {
+      await insertSalesBatch(processedSales);
+      onSalesProcessed(processedSales);
+      toast({
+        title: "Dados confirmados",
+        description: `${processedSales.length} registros foram importados com sucesso.`
+      });
+      setFiles([]);
+      setProcessedSales([]);
+      setShowPreview(false);
+      setErrors([]);
+    } catch (error) {
+      toast({
+        title: "Erro ao inserir no banco",
+        description: error instanceof Error ? error.message : String(error),
+        variant: "destructive"
+      });
+    } finally {
+      setIsProcessing(false);
+    }
   };
   
   // Cancel the import process
@@ -170,7 +198,7 @@ const SalesImportPanel = ({ onSalesProcessed }: SalesImportPanelProps) => {
   return (
     <div className="space-y-4">
       {/* File Upload Area */}
-      <Card>
+      <Card className="shadow-md rounded-lg border bg-white">
         <CardHeader>
           <CardTitle className="text-lg">Importar Dados de Vendas</CardTitle>
         </CardHeader>
@@ -184,7 +212,6 @@ const SalesImportPanel = ({ onSalesProcessed }: SalesImportPanelProps) => {
             >
               <input {...getInputProps()} />
               <FileUp className="mx-auto h-10 w-10 text-muted-foreground mb-2" />
-              
               {isDragActive ? (
                 <p>Solte os arquivos aqui...</p>
               ) : (
@@ -196,7 +223,6 @@ const SalesImportPanel = ({ onSalesProcessed }: SalesImportPanelProps) => {
                 </div>
               )}
             </div>
-            
             {/* Selected Files */}
             {files.length > 0 && (
               <div>
@@ -222,12 +248,12 @@ const SalesImportPanel = ({ onSalesProcessed }: SalesImportPanelProps) => {
                 </div>
               </div>
             )}
-            
             {/* Action Buttons */}
             <div className="flex justify-end">
               <Button
                 disabled={files.length === 0 || isProcessing}
                 onClick={processFiles}
+                className="bg-indigo-600 hover:bg-indigo-700 text-white"
               >
                 {isProcessing ? 'Processando...' : 'Processar Arquivos'}
               </Button>
@@ -235,7 +261,6 @@ const SalesImportPanel = ({ onSalesProcessed }: SalesImportPanelProps) => {
           </div>
         </CardContent>
       </Card>
-      
       {/* Errors Alert */}
       {errors.length > 0 && (
         <Alert variant="destructive">
@@ -253,23 +278,36 @@ const SalesImportPanel = ({ onSalesProcessed }: SalesImportPanelProps) => {
           </AlertDescription>
         </Alert>
       )}
-      
-      {/* Preview Panel */}
-      {showPreview && processedSales.length > 0 && (
-        <div className="space-y-4">
-          <SalesPreviewPanel sales={processedSales} />
-          
-          <div className="flex justify-end space-x-4">
-            <Button variant="outline" onClick={cancelImport}>
+      {/* Preview Modal */}
+      <Sheet open={showPreview} onOpenChange={setShowPreview}>
+        <SheetContent side="right" className="w-full sm:w-[600px] md:w-[700px] lg:w-[900px] overflow-y-auto">
+          <SheetHeader className="mb-4">
+            <SheetTitle>Pré-visualização dos Dados</SheetTitle>
+          </SheetHeader>
+          <div className="mb-4">
+            <SalesPreviewPanel sales={processedSales} title="Pré-visualização dos dados importados" />
+          </div>
+          <SheetFooter className="flex flex-col gap-2">
+            <Button
+              onClick={confirmImport}
+              disabled={isProcessing}
+              className="bg-green-600 hover:bg-green-700 text-white"
+            >
+              <CheckCircle className="mr-2 h-4 w-4" />
+              Aprovar e Inserir no Banco
+            </Button>
+            <Button
+              variant="outline"
+              onClick={cancelImport}
+              disabled={isProcessing}
+              className="border-red-500 text-red-600 hover:bg-red-50"
+            >
+              <X className="mr-2 h-4 w-4" />
               Cancelar
             </Button>
-            <Button onClick={confirmImport}>
-              <CheckCircle className="mr-2 h-4 w-4" />
-              Confirmar Importação
-            </Button>
-          </div>
-        </div>
-      )}
+          </SheetFooter>
+        </SheetContent>
+      </Sheet>
     </div>
   );
 };

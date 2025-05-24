@@ -1,5 +1,4 @@
-
-import { useState, useEffect } from "react";
+import { useState, useEffect, startTransition } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { ChevronDown, ChevronRight } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -41,7 +40,9 @@ const SidebarNavItem = ({ item, userRole }: SidebarNavItemProps) => {
 
   const handleItemClick = (e: React.MouseEvent, href: string) => {
     e.preventDefault(); // Prevent default browser navigation
-    navigate(href); // Use React Router navigation
+    startTransition(() => {
+      navigate(href); // Use React Router navigation
+    });
   };
 
   // Button animation variants

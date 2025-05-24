@@ -1,4 +1,3 @@
-
 // Utility functions for processing sales data from CSV files
 
 /**
@@ -28,22 +27,23 @@ export function toNumber(v: string | number): number {
  * Gets a value from an object using multiple possible keys
  */
 export function getValue(row: Record<string, any>, possibleKeys: string[], defaultValue: any = ''): any {
-  // First try exact keys
+  // Remove aspas dos possíveis nomes de chave
+  const clean = (s: string) => normalizeText(s).replace(/"/g, '').replace(/'/g, '').trim();
+  // First try exact keys (removendo aspas)
   for (const key of possibleKeys) {
     if (row[key] !== undefined) return row[key];
+    // Tenta também sem aspas
+    if (row[clean(key)] !== undefined) return row[clean(key)];
   }
-  
   // Then try normalized keys
-  const normalizedKeys = possibleKeys.map(k => normalizeText(k));
+  const normalizedKeys = possibleKeys.map(k => clean(k));
   const rowKeys = Object.keys(row);
-  
   for (const key of rowKeys) {
-    const normalizedKey = normalizeText(key);
+    const normalizedKey = clean(key);
     if (normalizedKeys.includes(normalizedKey)) {
       return row[key];
     }
   }
-  
   return defaultValue;
 }
 
@@ -90,15 +90,15 @@ export function parseDate(dateStr: string): Date | null {
     if (dateStr.includes('/')) {
       // Format DD/MM/YYYY or DD/MM/YYYY HH:MM
       const parts = dateStr.split(' ')[0].split('/');
-      const timeParts = dateStr.split(' ')[1]?.split(':') || [0, 0];
+      const timeParts = dateStr.split(' ')[1]?.split(':') || ["0", "0"];
       
       if (parts.length >= 3) {
         return new Date(
           parseInt(parts[2]), // Year
           parseInt(parts[1]) - 1, // Month (0-11)
           parseInt(parts[0]), // Day
-          parseInt(timeParts[0] || 0), // Hour
-          parseInt(timeParts[1] || 0) // Minute
+          parseInt(timeParts[0] || "0"), // Hour
+          parseInt(timeParts[1] || "0") // Minute
         );
       }
     }
@@ -127,21 +127,26 @@ export function formatCurrency(value: number | string): string {
 export function detectSourceByHeaders(data: Array<Record<string, any>>): string {
   if (!data || !data.length) return 'Desconhecido';
   
-  const keys = Object.keys(data[0]).map(k => normalizeText(k));
-  
-  if (keys.includes('forma de pagamento') && keys.includes('identificacao da maquininha'))
+  const keys = Object.keys(data[0]);
+  const normKeys = keys.map(k => normalizeText(k));
+  console.log('detectSourceByHeaders keys:', keys); // debug
+
+  // Sigma: robusto a variações como "ValorVenda", "valorvenda", etc
+  if (
+    normKeys.some(k => k.includes('modalidade') || k.includes('tipo')) &&
+    normKeys.some(k => k.replace(/\s/g, '').includes('valorvenda'))
+  ) return 'Sigma';
+
+  if (normKeys.includes('forma de pagamento') && normKeys.includes('identificacao da maquininha'))
     return 'PagSeguro';
-    
-  if (keys.includes('modalidade') && keys.includes('numero de parcelas'))
+
+  if (normKeys.includes('modalidade') && normKeys.includes('numero de parcelas'))
     return 'Rede Cartão';
-    
-  if (keys.includes('modalidade') && keys.includes('codigo da maquininha') &&
+
+  if (normKeys.includes('modalidade') && normKeys.includes('codigo da maquininha') &&
       data.some(r => normalizeText(getValue(r, ['modalidade', 'Modalidade', 'MODALIDADE'])) === 'pix'))
     return 'Rede Pix';
-    
-  if (keys.some(k => k.includes('modalidade')) && keys.some(k => k.includes('valor venda')))
-    return 'Sigma';
-    
+
   return 'Desconhecido';
 }
 
@@ -368,60 +373,70 @@ export function normalizeData(data: Array<Record<string, any>>, source: string):
         case 'Sigma':
           normalizedRow.status = getValue(row, [
             'Situacao', 'SITUACAO', 'situacao',
-            'Status', 'STATUS', 'status'
+            'Status', 'STATUS', 'status',
+            'Estado', 'ESTADO', 'estado'
           ], 'Aprovada');
-          
-          // Standardize payment type
+
+          // Tipo de pagamento (mais variações)
           const modalidadeSigma = getValue(row, [
             'Modalidade', 'MODALIDADE', 'modalidade',
-            'Tipo', 'TIPO', 'tipo'
+            'Tipo', 'TIPO', 'tipo',
+            'Forma', 'FORMA', 'forma',
+            'Pagamento', 'PAGAMENTO', 'pagamento'
           ], '').trim();
-          
-          if (normalizeText(modalidadeSigma).includes('debito')) {
+
+          const modalidadeNormalizada = normalizeText(modalidadeSigma);
+
+          if (modalidadeNormalizada.includes('debito') || modalidadeNormalizada.includes('débito')) {
             normalizedRow.payment_type = 'Cartão de Débito';
-          } else if (normalizeText(modalidadeSigma).includes('credito')) {
+          } else if (modalidadeNormalizada.includes('credito') || modalidadeNormalizada.includes('crédito')) {
             normalizedRow.payment_type = 'Cartão de Crédito';
-          } else if (normalizeText(modalidadeSigma).includes('pix')) {
+          } else if (modalidadeNormalizada.includes('pix')) {
             normalizedRow.payment_type = 'Pix';
           } else {
             normalizedRow.payment_type = modalidadeSigma;
           }
-          
-          // Gross amount - may be in different formats
-          const valorSigma = getValue(row, [
-            'Valor Venda', 'VALOR VENDA', 'valor venda',
-            'Valor', 'VALOR', 'valor'
-          ], 0);
-          
-          // Use toNumber for conversion
+
+          // Valor bruto: priorize sempre o campo mais específico e todas as variações
+          let valorSigma = getValue(row, ['Valor Venda', 'VALOR VENDA', 'valor venda', 'ValorVenda', 'VALORVENDA', 'valorvenda'], undefined);
+          if (valorSigma === undefined) {
+            valorSigma = getValue(row, ['Valor Total', 'VALOR TOTAL', 'valor total', 'ValorTotal', 'VALORTOTAL', 'valortotal'], undefined);
+          }
+          if (valorSigma === undefined) {
+            valorSigma = getValue(row, ['Valor', 'VALOR', 'valor'], undefined);
+          }
+          if (valorSigma === undefined) {
+            valorSigma = getValue(row, ['Total', 'TOTAL', 'total'], 0);
+          }
           normalizedRow.gross_amount = toNumber(valorSigma);
-          
-          // Transaction date
-          const dataSigma = getValue(row, [
-            'Data Venda'
-          ], '');
-          
-          // Format date using formatDateStandard function
+
+          // Data da transação: priorize sempre o campo mais específico e todas as variações
+          let dataSigma = getValue(row, ['Data Venda', 'DATA VENDA', 'data venda', 'DataVenda', 'DATAVENDA', 'datavenda'], undefined);
+          if (dataSigma === undefined) {
+            dataSigma = getValue(row, ['Data', 'DATA', 'data'], undefined);
+          }
+          if (dataSigma === undefined) {
+            dataSigma = getValue(row, ['Data Transacao', 'DATA TRANSACAO', 'data transacao', 'Data Transação', 'DATA TRANSAÇÃO', 'data transação'], '');
+          }
           normalizedRow.transaction_date = formatDateStandard(dataSigma);
-          
-          // Installments
-          const parcelasSigma = getValue(row, [
-            'Parcelas', 'parcelas', 'PARCELAS',
-            'Parcela', 'parcela', 'PARCELA'
-          ], '1');
-          
+          if (!dataSigma) normalizedRow.transaction_date = '01/01/2000 00:00';
+
+          // Parcelas: priorize sempre o campo mais específico e todas as variações
+          let parcelasSigma = getValue(row, ['Parcelas', 'parcelas', 'PARCELAS', 'QtdeParcelas', 'QtdParcelas'], '1');
+          if (parcelasSigma === undefined) {
+            parcelasSigma = getValue(row, ['Parcela', 'parcela', 'PARCELA'], '1');
+          }
           normalizedRow.installments = parseInt(parcelasSigma as string) || 1;
-          
-          normalizedRow.terminal = getValue(row, [
-            'Terminal', 'terminal', 'TERMINAL',
-            'Maquininha', 'maquininha', 'MAQUININHA'
-          ], '');
-          
-          normalizedRow.brand = getValue(row, [
-            'Bandeira', 'bandeira', 'BANDEIRA'
-          ], '');
-          
-          // If Pix, adjust brand and installments
+
+          // Terminal: priorize sempre o campo mais específico e todas as variações
+          let terminalSigma = getValue(row, ['Terminal', 'terminal', 'TERMINAL', 'Maquininha', 'maquininha', 'Equipamento', 'POS'], '');
+          normalizedRow.terminal = terminalSigma;
+
+          // Bandeira: priorize sempre o campo mais específico e todas as variações
+          let brandSigma = getValue(row, ['Bandeira', 'bandeira', 'BANDEIRA', 'Cartao', 'CARTAO', 'cartao', 'Cartão', 'CARTÃO', 'cartão'], '');
+          normalizedRow.brand = brandSigma;
+
+          // Se for Pix, ajusta
           if (normalizedRow.payment_type === 'Pix') {
             normalizedRow.brand = 'Pix';
             normalizedRow.installments = 1;
@@ -598,4 +613,16 @@ export function generateMockSalesData(count = 10): NormalizedSale[] {
   }
   
   return result;
+}
+
+// Função utilitária para limpar aspas dos headers e valores ao ler CSV
+export function cleanCsvRow(row: Record<string, any>): Record<string, any> {
+  const cleaned: Record<string, any> = {};
+  Object.entries(row).forEach(([k, v]) => {
+    const key = typeof k === 'string' ? k.replace(/"/g, '').replace(/'/g, '').trim() : k;
+    let value = v;
+    if (typeof value === 'string') value = value.replace(/"/g, '').replace(/'/g, '').trim();
+    cleaned[key] = value;
+  });
+  return cleaned;
 }
