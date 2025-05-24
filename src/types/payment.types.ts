@@ -1,34 +1,46 @@
+import { PaymentType as EnumsPaymentType } from './enums';
 
-import { PaymentStatus as EnumsPaymentStatus, PaymentType as EnumsPaymentType, PaymentMethod } from './enums';
+// Core payment status enum
+export enum PaymentStatus {
+  COMPLETED = "COMPLETED",
+  REJECTED = "REJECTED", 
+  PROCESSING = "PROCESSING"
+}
 
-export { EnumsPaymentStatus as PaymentStatus, EnumsPaymentType as PaymentType };
+// Payment method enum for new payment system
+export enum PaymentMethod {
+  PIX = "PIX",
+  TED = "TED",
+  BOLETO = "BOLETO"
+}
 
 export interface PixKey {
   id: string;
   key: string;
   type: string;
   name: string;
-  owner_name: string;  // Required
+  owner_name: string;
   is_default?: boolean;
   bank_name?: string;
-  key_type?: string;   // Added to match usage in the code
-  user_id: string;     // Required to fix the errors
+  key_type?: string;
+  user_id: string;
   created_at?: string;
   updated_at?: string;
 }
 
+// Legacy Payment interface for backward compatibility
 export interface Payment {
   id: string;
   client_id: string;
   amount: number;
-  status: EnumsPaymentStatus;
+  status: PaymentStatus;
   approved_by?: string;
   approved_at?: string;
   created_at: string;
   updated_at: string;
   receipt_url?: string;
   description?: string;
-  rejection_reason: string | null; // Required with null
+  rejection_reason: string | null;
   payment_type?: EnumsPaymentType;
   client?: {
     id: string;
@@ -45,11 +57,52 @@ export interface Payment {
   };
 }
 
-export interface PaymentRequest extends Payment {
-  pix_key_id: string;
+// New PaymentRequest interface for admin side
+export interface PaymentRequest {
+  id: string;
+  client_id: string;
+  amount: number;
+  method: PaymentMethod;
+  status: PaymentStatus;
+  requested_at: string;
+  processed_at?: string;
+  processed_by?: string;
+  notes?: string;
+  receipt_url?: string;
+  client?: {
+    id: string;
+    business_name: string;
+    current_balance: number;
+  };
+  processor?: {
+    id: string;
+    name: string;
+  };
 }
 
-export type PaymentRequestStatus = EnumsPaymentStatus;
+export interface PaymentRequestParams {
+  client_id: string;
+  amount: number;
+  method: PaymentMethod;
+  notes?: string;
+}
+
+export interface PaymentProcessParams {
+  payment_id: string;
+  status: PaymentStatus;
+  notes?: string;
+  receipt_file?: File;
+}
+
+export interface ClientBalance {
+  client_id: string;
+  current_balance: number;
+  pending_payments: number;
+  total_sales: number;
+  commission_rate: number;
+}
+
+export type PaymentRequestStatus = PaymentStatus;
 
 // PixKey types used in forms and components
 export type PixKeyType = 'CPF' | 'CNPJ' | 'EMAIL' | 'PHONE' | 'EVP';

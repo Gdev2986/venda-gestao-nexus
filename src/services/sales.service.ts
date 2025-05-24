@@ -1,4 +1,3 @@
-
 import { supabase } from "@/integrations/supabase/client";
 import { NormalizedSale } from "@/utils/sales-processor";
 
@@ -12,6 +11,46 @@ export interface SaleInsert {
   client_id: string;
   machine_id?: string;
 }
+
+// Helper function to convert Brazilian date format to ISO
+const convertBrazilianDateToISO = (dateStr: string): string => {
+  // Handle different Brazilian date formats
+  const patterns = [
+    /^(\d{2})\/(\d{2})\/(\d{4})\s+(\d{2}):(\d{2})$/,     // dd/MM/yyyy HH:mm
+    /^(\d{2})\/(\d{2})\/(\d{4})\s+(\d{2}):(\d{2}):(\d{2})$/, // dd/MM/yyyy HH:mm:ss
+    /^(\d{2})\/(\d{2})\/(\d{4})$/,                        // dd/MM/yyyy
+  ];
+
+  for (const pattern of patterns) {
+    const match = dateStr.match(pattern);
+    if (match) {
+      const [, day, month, year, hours = '00', minutes = '00', seconds = '00'] = match;
+      // Create ISO string: YYYY-MM-DDTHH:mm:ss.sssZ
+      const isoDate = new Date(
+        parseInt(year),
+        parseInt(month) - 1, // Month is 0-indexed
+        parseInt(day),
+        parseInt(hours),
+        parseInt(minutes),
+        parseInt(seconds)
+      );
+      return isoDate.toISOString();
+    }
+  }
+  
+  // If no pattern matches, try to parse as-is
+  try {
+    const date = new Date(dateStr);
+    if (!isNaN(date.getTime())) {
+      return date.toISOString();
+    }
+  } catch (e) {
+    console.warn('Could not parse date:', dateStr);
+  }
+  
+  // Fallback to current date
+  return new Date().toISOString();
+};
 
 export const insertSales = async (sales: NormalizedSale[]): Promise<void> => {
   try {
@@ -30,12 +69,18 @@ export const insertSales = async (sales: NormalizedSale[]): Promise<void> => {
       // Calculate net amount (simple calculation: 97% of gross)
       const netAmount = sale.gross_amount * 0.97;
 
+      // Convert date to proper ISO format
+      let isoDate: string;
+      if (typeof sale.transaction_date === 'string') {
+        isoDate = convertBrazilianDateToISO(sale.transaction_date);
+      } else {
+        isoDate = sale.transaction_date.toISOString();
+      }
+
       return {
         code: sale.id || `IMPORT-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
         terminal: sale.terminal,
-        date: typeof sale.transaction_date === 'string' 
-          ? sale.transaction_date 
-          : sale.transaction_date.toISOString(),
+        date: isoDate,
         gross_amount: sale.gross_amount,
         net_amount: netAmount,
         payment_method: paymentMethod,

@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { PageHeader } from "@/components/page/PageHeader";
@@ -147,14 +146,14 @@ const LogisticsMachines = () => {
         </div>
         <div>
           <Select
-            value={statusFilter}
-            onValueChange={setStatusFilter}
+            value={statusFilter || "all"}
+            onValueChange={(value) => setStatusFilter(value === "all" ? "" : value)}
           >
             <SelectTrigger className="w-[200px]">
               <SelectValue placeholder="Todos os Status" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="">Todos os Status</SelectItem>
+              <SelectItem value="all">Todos os Status</SelectItem>
               <SelectItem value="STOCK">Em Estoque</SelectItem>
               <SelectItem value="ACTIVE">Operando</SelectItem>
               <SelectItem value="MAINTENANCE">Em Manutenção</SelectItem>

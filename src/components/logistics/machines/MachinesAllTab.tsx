@@ -94,36 +94,7 @@ const MachinesAllTab: React.FC<MachinesAllTabProps> = ({
           />
         </div>
         <div className="flex flex-row gap-2 flex-wrap">
-          <Select
-            value={modelFilter}
-            onValueChange={onModelFilterChange}
-          >
-            <SelectTrigger className="w-[180px]">
-              <SelectValue placeholder="Filtrar por modelo" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="">Todos os modelos</SelectItem>
-              {uniqueModels.map(model => (
-                <SelectItem key={model} value={model}>{model}</SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-          <Select
-            value={statusFilter}
-            onValueChange={onStatusFilterChange}
-          >
-            <SelectTrigger className="w-[180px]">
-              <SelectValue placeholder="Filtrar por status" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="">Todos os status</SelectItem>
-              <SelectItem value="ACTIVE">Operando</SelectItem>
-              <SelectItem value="MAINTENANCE">Em Manutenção</SelectItem>
-              <SelectItem value="INACTIVE">Inativas</SelectItem>
-              <SelectItem value="STOCK">Em Estoque</SelectItem>
-              <SelectItem value="TRANSIT">Em Trânsito</SelectItem>
-            </SelectContent>
-          </Select>
+                    <Select            value={modelFilter || "all"}            onValueChange={(value) => onModelFilterChange(value === "all" ? "" : value)}          >            <SelectTrigger className="w-[180px]">              <SelectValue placeholder="Filtrar por modelo" />            </SelectTrigger>            <SelectContent>              <SelectItem value="all">Todos os modelos</SelectItem>              {uniqueModels.map(model => (                <SelectItem key={model} value={model}>{model}</SelectItem>              ))}            </SelectContent>          </Select>          <Select            value={statusFilter || "all"}            onValueChange={(value) => onStatusFilterChange(value === "all" ? "" : value)}          >            <SelectTrigger className="w-[180px]">              <SelectValue placeholder="Filtrar por status" />            </SelectTrigger>            <SelectContent>              <SelectItem value="all">Todos os status</SelectItem>              <SelectItem value="ACTIVE">Operando</SelectItem>              <SelectItem value="MAINTENANCE">Em Manutenção</SelectItem>              <SelectItem value="INACTIVE">Inativas</SelectItem>              <SelectItem value="STOCK">Em Estoque</SelectItem>              <SelectItem value="TRANSIT">Em Trânsito</SelectItem>            </SelectContent>          </Select>
           <Button onClick={onAddNewClick}>
             <Plus className="mr-2 h-4 w-4" />
             Nova Máquina

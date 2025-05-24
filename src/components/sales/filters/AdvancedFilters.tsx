@@ -1,4 +1,3 @@
-
 import { Label } from "@/components/ui/label";
 import { Slider } from "@/components/ui/slider";
 import { 
@@ -9,7 +8,6 @@ import {
   SelectValue 
 } from "@/components/ui/select";
 import { SalesFilterParams } from "@/types";
-import { useState, useEffect } from "react";
 
 interface AdvancedFiltersProps {
   filters: SalesFilterParams;
@@ -24,21 +22,13 @@ const INSTALLMENTS = [
 ];
 
 const AdvancedFilters = ({ filters, onFilterChange }: AdvancedFiltersProps) => {
-  const [amountRange, setAmountRange] = useState<[number, number]>([
+  // Use the filters directly instead of local state to avoid unnecessary re-renders
+  const amountRange: [number, number] = [
     filters.minAmount || 0, 
     filters.maxAmount || 2000
-  ]);
-  
-  // Update the amount range when filters change externally
-  useEffect(() => {
-    setAmountRange([
-      filters.minAmount || 0,
-      filters.maxAmount || 2000
-    ]);
-  }, [filters.minAmount, filters.maxAmount]);
+  ];
   
   const handleAmountRangeChange = (values: number[]) => {
-    setAmountRange([values[0], values[1]]);
     onFilterChange("minAmount", values[0]);
     onFilterChange("maxAmount", values[1]);
   };
@@ -74,7 +64,7 @@ const AdvancedFilters = ({ filters, onFilterChange }: AdvancedFiltersProps) => {
               <SelectValue placeholder="Qualquer parcela" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="">Qualquer parcela</SelectItem>
+                                <SelectItem value="any">Qualquer parcela</SelectItem>
               {INSTALLMENTS.map((option) => (
                 <SelectItem key={option.value} value={option.value}>
                   {option.label}

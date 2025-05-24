@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
@@ -37,7 +36,7 @@ const NewRequestDialog = ({ open, onOpenChange, onSuccess }: NewRequestDialogPro
   const [priority, setPriority] = useState<TicketPriority>(TicketPriority.MEDIUM);
   const [description, setDescription] = useState("");
   const [scheduledDate, setScheduledDate] = useState<Date | undefined>(undefined);
-  const [isOpen, setIsOpen] = useState(false);
+  const [isDatePickerOpen, setIsDatePickerOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
   
@@ -56,6 +55,7 @@ const NewRequestDialog = ({ open, onOpenChange, onSuccess }: NewRequestDialogPro
     setPriority(TicketPriority.MEDIUM);
     setDescription("");
     setScheduledDate(undefined);
+    setIsDatePickerOpen(false);
     setErrors({});
   };
   
@@ -183,7 +183,7 @@ const NewRequestDialog = ({ open, onOpenChange, onSuccess }: NewRequestDialogPro
                   <SelectValue placeholder="Selecione uma máquina" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">Nenhuma máquina específica</SelectItem>
+                  <SelectItem value="none">Nenhuma máquina específica</SelectItem>
                   {machines.map((machine) => (
                     <SelectItem key={machine.id} value={machine.id}>
                       {machine.serial_number} - {machine.model}
@@ -253,7 +253,7 @@ const NewRequestDialog = ({ open, onOpenChange, onSuccess }: NewRequestDialogPro
           
           <div className="grid grid-cols-1 gap-2">
             <Label htmlFor="scheduled-date">Data Programada (opcional)</Label>
-            <Popover open={isOpen} onOpenChange={setIsOpen}>
+            <Popover open={isDatePickerOpen} onOpenChange={setIsDatePickerOpen}>
               <PopoverTrigger asChild>
                 <Button
                   id="scheduled-date"
@@ -274,7 +274,7 @@ const NewRequestDialog = ({ open, onOpenChange, onSuccess }: NewRequestDialogPro
                   selected={scheduledDate}
                   onSelect={(date) => {
                     setScheduledDate(date);
-                    setIsOpen(false);
+                    setIsDatePickerOpen(false);
                   }}
                   disabled={(date) => date < new Date(new Date().setHours(0, 0, 0, 0))}
                   initialFocus

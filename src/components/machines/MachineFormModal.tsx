@@ -107,7 +107,7 @@ const MachineFormModal = ({
                 <SelectValue placeholder="Selecione um cliente (opcional)" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">Manter em estoque</SelectItem>
+                                  <SelectItem value="stock">Manter em estoque</SelectItem>
                 {clients?.map((client) => (
                   <SelectItem key={client.id} value={client.id}>
                     {client.company_name}

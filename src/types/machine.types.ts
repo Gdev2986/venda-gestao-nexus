@@ -4,7 +4,19 @@ export enum MachineStatus {
   MAINTENANCE = "MAINTENANCE", 
   BLOCKED = "BLOCKED",
   TRANSIT = "TRANSIT",
-  STOCK = "STOCK"
+  STOCK = "STOCK",
+  DEFECTIVE = "DEFECTIVE"
+}
+
+export interface MachineNote {
+  id: string;
+  machine_id: string;
+  note: string;
+  created_at: string;
+  created_by: string;
+  user?: {
+    name: string;
+  };
 }
 
 export interface Machine {
@@ -23,6 +35,7 @@ export interface Machine {
     id: string;
     business_name: string;
   };
+  machine_notes?: MachineNote[];
 }
 
 export interface MachineStats {
@@ -80,4 +93,9 @@ export interface MachineUpdateParams {
   status?: MachineStatus;
   client_id?: string | null;
   notes?: string;
+}
+
+export interface MachineDeleteParams {
+  id: string;
+  reason?: string;
 }
