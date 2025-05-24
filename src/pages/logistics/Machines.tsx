@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Pencil, Plus, Search, MoreVertical, FileText } from "lucide-react";
+import { Pencil, Plus, Search, MoreVertical, FileText, Trash2 } from "lucide-react";
 import { 
   Select,
   SelectContent,
@@ -25,9 +25,10 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { useDialog } from "@/hooks/use-dialog";
 import CreateMachineDialog from "@/components/logistics/modals/CreateMachineDialog";
+import { MachineDetailsDialog } from "@/components/logistics/machines/MachineDetailsDialog";
+import { MachineDeleteDialog } from "@/components/logistics/machines/MachineDeleteDialog";
 import { useMachines } from "@/hooks/logistics/use-machines";
 import { Machine, MachineStatus } from "@/types/machine.types";
-import { PATHS } from "@/routes/paths";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Pagination, PaginationContent, PaginationItem, PaginationLink, PaginationNext, PaginationPrevious } from "@/components/ui/pagination";
 
@@ -38,6 +39,10 @@ const LogisticsMachines = () => {
   const [statusFilter, setStatusFilter] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage] = useState(10);
+  const [selectedMachine, setSelectedMachine] = useState<Machine | null>(null);
+  const [detailsDialogOpen, setDetailsDialogOpen] = useState(false);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [detailsMode, setDetailsMode] = useState<'view' | 'edit'>('view');
   
   const { machines, isLoading, fetchMachines } = useMachines({
     enableRealtime: true,
@@ -71,8 +76,31 @@ const LogisticsMachines = () => {
     setCurrentPage(page);
   };
   
-  const handleViewDetails = (machineId: string) => {
-    navigate(PATHS.LOGISTICS.MACHINE_DETAILS(machineId));
+  const handleViewDetails = (machine: Machine) => {
+    setSelectedMachine(machine);
+    setDetailsMode('view');
+    setDetailsDialogOpen(true);
+  };
+
+  const handleEditMachine = (machine: Machine) => {
+    setSelectedMachine(machine);
+    setDetailsMode('edit');
+    setDetailsDialogOpen(true);
+  };
+
+  const handleDeleteMachine = (machine: Machine) => {
+    setSelectedMachine(machine);
+    setDeleteDialogOpen(true);
+  };
+
+  const handleMachineUpdate = () => {
+    fetchMachines();
+    setDetailsDialogOpen(false);
+  };
+
+  const handleMachineDelete = () => {
+    fetchMachines();
+    setDeleteDialogOpen(false);
   };
   
   const getStatusBadge = (status: MachineStatus) => {
@@ -126,7 +154,7 @@ const LogisticsMachines = () => {
               <SelectValue placeholder="Todos os Status" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="all">Todos os Status</SelectItem>
+              <SelectItem value="">Todos os Status</SelectItem>
               <SelectItem value="STOCK">Em Estoque</SelectItem>
               <SelectItem value="ACTIVE">Operando</SelectItem>
               <SelectItem value="MAINTENANCE">Em Manutenção</SelectItem>
@@ -170,7 +198,7 @@ const LogisticsMachines = () => {
                     <TableCell>
                       {getStatusBadge(machine.status as MachineStatus)}
                     </TableCell>
-                    <TableCell>{machine.client?.business_name || "Em Estoque"}</TableCell>
+                    <TableCell>{machine.client?.business_name || "Não Vinculada"}</TableCell>
                     <TableCell className="max-w-xs truncate">
                       {machine.notes || "-"}
                     </TableCell>
@@ -184,16 +212,21 @@ const LogisticsMachines = () => {
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end">
                           <DropdownMenuLabel>Ações</DropdownMenuLabel>
-                          <DropdownMenuItem onClick={() => handleViewDetails(machine.id)}>
+                          <DropdownMenuItem onClick={() => handleViewDetails(machine)}>
                             <FileText className="mr-2 h-4 w-4" />
-                            Detalhes
+                            Ver Detalhes
                           </DropdownMenuItem>
-                          <DropdownMenuSeparator />
-                          <DropdownMenuItem onClick={() => {
-                            navigate(PATHS.LOGISTICS.MACHINE_DETAILS(machine.id));
-                          }}>
+                          <DropdownMenuItem onClick={() => handleEditMachine(machine)}>
                             <Pencil className="mr-2 h-4 w-4" />
                             Editar
+                          </DropdownMenuItem>
+                          <DropdownMenuSeparator />
+                          <DropdownMenuItem 
+                            onClick={() => handleDeleteMachine(machine)}
+                            className="text-red-600 focus:text-red-700"
+                          >
+                            <Trash2 className="mr-2 h-4 w-4" />
+                            Excluir
                           </DropdownMenuItem>
                         </DropdownMenuContent>
                       </DropdownMenu>
@@ -247,6 +280,21 @@ const LogisticsMachines = () => {
         open={createMachineDialog.isOpen}
         onOpenChange={createMachineDialog.close}
         onSuccess={handleCreateMachineSuccess}
+      />
+
+      <MachineDetailsDialog
+        machine={selectedMachine}
+        open={detailsDialogOpen}
+        onOpenChange={setDetailsDialogOpen}
+        onUpdate={handleMachineUpdate}
+        mode={detailsMode}
+      />
+
+      <MachineDeleteDialog
+        machine={selectedMachine}
+        open={deleteDialogOpen}
+        onOpenChange={setDeleteDialogOpen}
+        onDelete={handleMachineDelete}
       />
     </div>
   );
