@@ -212,6 +212,18 @@ const SalesImportPanel = ({ onSalesProcessed }: SalesImportPanelProps) => {
     }
   };
   
+  // Helper function to convert payment type to enum
+  const convertPaymentMethod = (paymentType: string): "CREDIT" | "DEBIT" | "PIX" => {
+    const normalizedType = paymentType.toLowerCase();
+    if (normalizedType.includes('crédito') || normalizedType.includes('credito')) {
+      return 'CREDIT';
+    } else if (normalizedType.includes('débito') || normalizedType.includes('debito')) {
+      return 'DEBIT';
+    } else {
+      return 'PIX';
+    }
+  };
+  
   // Function to insert sales in batch to Supabase
   const insertSalesBatch = async (sales: NormalizedSale[]) => {
     try {
@@ -222,8 +234,7 @@ const SalesImportPanel = ({ onSalesProcessed }: SalesImportPanelProps) => {
         gross_amount: sale.gross_amount,
         net_amount: sale.gross_amount * 0.97, // Simple calculation
         date: new Date().toISOString(), // Use current date for now
-        payment_method: sale.payment_type.toLowerCase().includes('crédito') || sale.payment_type.toLowerCase().includes('credito') ? 'CREDIT' : 
-                       sale.payment_type.toLowerCase().includes('débito') || sale.payment_type.toLowerCase().includes('debito') ? 'DEBIT' : 'PIX',
+        payment_method: convertPaymentMethod(sale.payment_type),
         client_id: '00000000-0000-0000-0000-000000000000', // Placeholder, will need proper client association
       }));
 
