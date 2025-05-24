@@ -25,11 +25,11 @@ interface DateRange {
 
 const SalesAdvancedFilter = ({ sales, onFilter }: SalesAdvancedFilterProps) => {
   const [dateRange, setDateRange] = useState<DateRange>({ from: undefined, to: undefined });
-  const [paymentType, setPaymentType] = useState<string>("");
-  const [status, setStatus] = useState<string>("");
-  const [brand, setBrand] = useState<string>("");
+  const [paymentType, setPaymentType] = useState<string>("all");
+  const [status, setStatus] = useState<string>("all");
+  const [brand, setBrand] = useState<string>("all");
   const [selectedTerminals, setSelectedTerminals] = useState<string[]>([]);
-  const [source, setSource] = useState<string>("");
+  const [source, setSource] = useState<string>("all");
   
   // Get metadata for filter options
   const metadata = getSalesMetadata(sales);
@@ -60,17 +60,17 @@ const SalesAdvancedFilter = ({ sales, onFilter }: SalesAdvancedFilterProps) => {
     }
     
     // Payment type filter
-    if (paymentType) {
+    if (paymentType && paymentType !== "all") {
       filtered = filtered.filter(sale => sale.payment_type === paymentType);
     }
     
     // Status filter
-    if (status) {
+    if (status && status !== "all") {
       filtered = filtered.filter(sale => sale.status === status);
     }
     
     // Brand filter
-    if (brand) {
+    if (brand && brand !== "all") {
       filtered = filtered.filter(sale => sale.brand === brand);
     }
     
@@ -80,7 +80,7 @@ const SalesAdvancedFilter = ({ sales, onFilter }: SalesAdvancedFilterProps) => {
     }
     
     // Source filter
-    if (source) {
+    if (source && source !== "all") {
       filtered = filtered.filter(sale => sale.source === source);
     }
     
@@ -89,14 +89,14 @@ const SalesAdvancedFilter = ({ sales, onFilter }: SalesAdvancedFilterProps) => {
   
   const clearFilters = () => {
     setDateRange({ from: undefined, to: undefined });
-    setPaymentType("");
-    setStatus("");
-    setBrand("");
+    setPaymentType("all");
+    setStatus("all");
+    setBrand("all");
     setSelectedTerminals(metadata.terminals);
-    setSource("");
+    setSource("all");
   };
   
-  const hasActiveFilters = dateRange.from || paymentType || status || brand || source || 
+  const hasActiveFilters = dateRange.from || paymentType !== "all" || status !== "all" || brand !== "all" || source !== "all" || 
     selectedTerminals.length !== metadata.terminals.length;
 
   return (
@@ -156,7 +156,7 @@ const SalesAdvancedFilter = ({ sales, onFilter }: SalesAdvancedFilterProps) => {
                 <SelectValue placeholder="Todos" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">Todos</SelectItem>
+                <SelectItem value="all">Todos</SelectItem>
                 {metadata.paymentTypes.map(type => (
                   <SelectItem key={type} value={type}>{type}</SelectItem>
                 ))}
@@ -172,7 +172,7 @@ const SalesAdvancedFilter = ({ sales, onFilter }: SalesAdvancedFilterProps) => {
                 <SelectValue placeholder="Todos" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">Todos</SelectItem>
+                <SelectItem value="all">Todos</SelectItem>
                 {metadata.statuses.map(status => (
                   <SelectItem key={status} value={status}>{status}</SelectItem>
                 ))}
@@ -188,7 +188,7 @@ const SalesAdvancedFilter = ({ sales, onFilter }: SalesAdvancedFilterProps) => {
                 <SelectValue placeholder="Todas" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">Todas</SelectItem>
+                <SelectItem value="all">Todas</SelectItem>
                 {metadata.brands.map(brand => (
                   <SelectItem key={brand} value={brand}>{brand}</SelectItem>
                 ))}
@@ -204,7 +204,7 @@ const SalesAdvancedFilter = ({ sales, onFilter }: SalesAdvancedFilterProps) => {
                 <SelectValue placeholder="Todas" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">Todas</SelectItem>
+                <SelectItem value="all">Todas</SelectItem>
                 {[...new Set(sales.map(s => s.source))].map(source => (
                   <SelectItem key={source} value={source}>{source}</SelectItem>
                 ))}
