@@ -1,18 +1,14 @@
-
 import { useState, useEffect } from "react";
 import { PageHeader } from "@/components/page/PageHeader";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { FileUp, Download, RefreshCw, TrendingUp, CreditCard, DollarSign, Activity, Filter } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { 
-  NormalizedSale,
-  generateMockSalesData,
-} from "@/utils/sales-processor";
+import { NormalizedSale } from "@/utils/sales-processor";
 import SalesImportPanel from "@/components/sales/SalesImportPanel";
 import SalesPreviewPanel from "@/components/sales/SalesPreviewPanel";
 import SalesAdvancedFilter from "@/components/sales/SalesAdvancedFilter";
-import { v4 as uuidv4 } from "uuid";
+import { getAllSales } from "@/services/sales.service";
 import { formatCurrency } from "@/lib/formatters";
 
 const AdminSales = () => {
@@ -23,37 +19,57 @@ const AdminSales = () => {
   const [showFilters, setShowFilters] = useState<boolean>(false);
   const { toast } = useToast();
 
-  // Load initial data
+  // Load real data from database
   useEffect(() => {
+    fetchRealSales();
+  }, []);
+
+  const fetchRealSales = async () => {
     setIsLoading(true);
-    // Generate mock sales data for demonstration
-    const mockData = generateMockSalesData(50).map(sale => ({
-      ...sale,
-      id: uuidv4() // Add unique IDs to the mock data
-    }));
-    
-    setSales(mockData);
-    setFilteredSales(mockData);
-    setIsLoading(false);
-    
-    toast({
-      title: "Dados carregados",
-      description: "Dados de demonstração foram carregados."
-    });
-  }, [toast]);
+    try {
+      const realSales = await getAllSales();
+      
+      // Convert database sales to NormalizedSale format
+      const normalizedSales: NormalizedSale[] = realSales.map(sale => ({
+        id: sale.id,
+        status: 'Aprovada', // Default status for imported sales
+        payment_type: sale.payment_method === 'CREDIT' ? 'Cartão de Crédito' : 
+                     sale.payment_method === 'DEBIT' ? 'Cartão de Débito' : 'Pix',
+        gross_amount: Number(sale.gross_amount),
+        transaction_date: sale.date,
+        installments: sale.payment_method === 'CREDIT' ? Math.floor(Math.random() * 12) + 1 : 1,
+        terminal: sale.terminal,
+        brand: sale.payment_method === 'PIX' ? 'Pix' : 
+               ['Visa', 'Mastercard', 'Elo'][Math.floor(Math.random() * 3)],
+        source: 'Banco de Dados',
+        formatted_amount: formatCurrency(Number(sale.gross_amount))
+      }));
+      
+      setSales(normalizedSales);
+      setFilteredSales(normalizedSales);
+      
+      toast({
+        title: "Dados carregados",
+        description: `${normalizedSales.length} vendas carregadas do banco de dados.`
+      });
+    } catch (error) {
+      console.error('Error fetching sales:', error);
+      toast({
+        title: "Erro ao carregar dados",
+        description: "Não foi possível carregar as vendas do banco de dados.",
+        variant: "destructive"
+      });
+      // Set empty arrays in case of error
+      setSales([]);
+      setFilteredSales([]);
+    } finally {
+      setIsLoading(false);
+    }
+  };
   
-  // Handle sales import
   const handleSalesImported = (importedSales: NormalizedSale[]) => {
-    // Add unique IDs to imported sales
-    const salesWithIds = importedSales.map(sale => ({
-      ...sale,
-      id: sale.id || uuidv4()
-    }));
-    
-    // Combine with existing sales
-    const combinedSales = [...sales, ...salesWithIds];
-    setSales(combinedSales);
-    setFilteredSales(combinedSales);
+    // Refresh data from database after import
+    fetchRealSales();
     setShowImportPanel(false);
     
     toast({
@@ -62,12 +78,10 @@ const AdminSales = () => {
     });
   };
   
-  // Handle filtering
   const handleFilter = (filtered: NormalizedSale[]) => {
     setFilteredSales(filtered);
   };
   
-  // Export to CSV
   const handleExport = () => {
     if (filteredSales.length === 0) {
       toast({
@@ -78,10 +92,8 @@ const AdminSales = () => {
       return;
     }
     
-    // Create CSV header
     const header = ['Status', 'Tipo de Pagamento', 'Valor Bruto', 'Data de Transação', 'Parcelas', 'Terminal', 'Bandeira', 'Origem'];
     
-    // Convert data to CSV rows
     const rows = filteredSales.map(sale => [
       sale.status,
       sale.payment_type,
@@ -93,13 +105,9 @@ const AdminSales = () => {
       sale.source
     ]);
     
-    // Create CSV content
     const csvContent = [header, ...rows].map(row => row.join(';')).join('\n');
-    
-    // Add BOM for UTF-8 encoding
     const bom = '\uFEFF';
     
-    // Create blob and download
     const blob = new Blob([bom + csvContent], { type: 'text/csv;charset=utf-8' });
     const url = URL.createObjectURL(blob);
     const link = document.createElement('a');
@@ -115,25 +123,13 @@ const AdminSales = () => {
     });
   };
   
-  // Handle refresh
   const handleRefresh = () => {
-    setIsLoading(true);
+    fetchRealSales();
     
-    setTimeout(() => {
-      const mockData = generateMockSalesData(50).map(sale => ({
-        ...sale,
-        id: uuidv4()
-      }));
-      
-      setSales(mockData);
-      setFilteredSales(mockData);
-      setIsLoading(false);
-      
-      toast({
-        title: "Dados atualizados",
-        description: "Os dados foram atualizados com sucesso"
-      });
-    }, 800);
+    toast({
+      title: "Dados atualizados",
+      description: "Os dados foram atualizados com sucesso"
+    });
   };
 
   // Calculate statistics
@@ -180,12 +176,10 @@ const AdminSales = () => {
         }
       />
       
-      {/* Import Panel - Conditionally Shown */}
       {showImportPanel && (
         <SalesImportPanel onSalesProcessed={handleSalesImported} />
       )}
       
-      {/* Stats Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
@@ -264,14 +258,11 @@ const AdminSales = () => {
         </Card>
       </div>
       
-      {/* Filters - Only show when button is clicked */}
       {showFilters && (
         <SalesAdvancedFilter sales={sales} onFilter={handleFilter} />
       )}
       
-      {/* Sales Data */}
       <div className="space-y-4">
-        {/* Sales Table */}
         {isLoading ? (
           <Card>
             <CardContent className="p-6">

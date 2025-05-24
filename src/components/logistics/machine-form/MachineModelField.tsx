@@ -1,12 +1,17 @@
 
-import { FormField, FormItem, FormLabel, FormControl, FormMessage } from "@/components/ui/form";
-import { Input } from "@/components/ui/input";
+import { FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useFormContext } from "react-hook-form";
-import { MachineFormValues } from "./MachineFormSchema";
+
+const MACHINE_MODELS = [
+  { value: "PagBank", label: "PagBank" },
+  { value: "CeoPag", label: "CeoPag" },
+  { value: "Rede", label: "Rede" }
+];
 
 export const MachineModelField = () => {
-  const form = useFormContext<MachineFormValues>();
-  
+  const form = useFormContext();
+
   return (
     <FormField
       control={form.control}
@@ -14,9 +19,20 @@ export const MachineModelField = () => {
       render={({ field }) => (
         <FormItem>
           <FormLabel>Modelo</FormLabel>
-          <FormControl>
-            <Input placeholder="Ex: Terminal Pro" {...field} />
-          </FormControl>
+          <Select onValueChange={field.onChange} defaultValue={field.value}>
+            <FormControl>
+              <SelectTrigger>
+                <SelectValue placeholder="Selecione o modelo" />
+              </SelectTrigger>
+            </FormControl>
+            <SelectContent>
+              {MACHINE_MODELS.map((model) => (
+                <SelectItem key={model.value} value={model.value}>
+                  {model.label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
           <FormMessage />
         </FormItem>
       )}

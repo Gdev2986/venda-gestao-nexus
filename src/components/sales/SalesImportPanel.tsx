@@ -7,6 +7,10 @@ import { useToast } from "@/hooks/use-toast";
 import { NormalizedSale, detectSourceByHeaders, normalizeData, cleanCsvRow, normalizeText } from "@/utils/sales-processor";
 import SalesPreviewPanel from "./SalesPreviewPanel";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { createMachine, getAllMachines } from "@/services/machine.service";
+import { insertSales } from "@/services/sales.service";
+import { MachineStatus } from "@/types/machine.types";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetFooter } from "@/components/ui/sheet";
 import { supabase } from "@/integrations/supabase/client";
 import { createMachine, getAllMachines } from "@/services/machine.service";
@@ -27,7 +31,7 @@ const SalesImportPanel = ({ onSalesProcessed }: SalesImportPanelProps) => {
   const onDrop = useCallback((acceptedFiles: File[]) => {
     setFiles(acceptedFiles);
     setErrors([]);
-    setProcessedSales([]); // Clear previous data when new files are added
+    setProcessedSales([]);
   }, []);
 
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
@@ -94,7 +98,7 @@ const SalesImportPanel = ({ onSalesProcessed }: SalesImportPanelProps) => {
           try {
             await createMachine({
               serial_number: terminal,
-              model: 'Importado via CSV',
+              model: 'PagBank',
               status: MachineStatus.STOCK,
               notes: `Criado automaticamente durante importação de vendas em ${new Date().toLocaleDateString('pt-BR')}`
             });
@@ -253,7 +257,7 @@ const SalesImportPanel = ({ onSalesProcessed }: SalesImportPanelProps) => {
   const confirmImport = async () => {
     setIsProcessing(true);
     try {
-      await insertSalesBatch(processedSales);
+      await insertSales(processedSales);
       onSalesProcessed(processedSales);
       toast({
         title: "Dados confirmados",
@@ -337,7 +341,7 @@ const SalesImportPanel = ({ onSalesProcessed }: SalesImportPanelProps) => {
               <Button
                 disabled={files.length === 0 || isProcessing}
                 onClick={processFiles}
-                className="bg-indigo-600 hover:bg-indigo-700 text-white"
+                className="bg-indigo-600 hover:bg-indigo-700 text-white dark:bg-indigo-600 dark:hover:bg-indigo-700"
               >
                 {isProcessing ? 'Processando...' : 'Processar Arquivos'}
               </Button>
