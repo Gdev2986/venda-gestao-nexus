@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -132,6 +133,15 @@ const LoginForm = () => {
               "Entrar"
             )}
           </Button>
+          <div className="text-center text-sm">
+            Não tem uma conta?{" "}
+            <Link
+              to={PATHS.REGISTER}
+              className="text-primary hover:underline font-medium"
+            >
+              Cadastre-se
+            </Link>
+          </div>
         </CardFooter>
       </form>
     </Card>

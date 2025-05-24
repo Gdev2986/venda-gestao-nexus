@@ -1,47 +1,89 @@
+
 import { Routes, Route, Navigate } from "react-router-dom";
 import { PATHS } from "./routes/paths";
-import { useAuth } from "@/contexts/AuthContext";
+import { useEffect } from "react";
+import { useToast } from "@/hooks/use-toast";
+import { useUserRole } from "./hooks/use-user-role";
+import { UserRole } from "./types";
+
+// Route utils
 import { getDashboardPath } from "./routes/routeUtils";
+
+// Route groups
 import { AuthRoutes } from "./routes/authRoutes";
 import { AdminRoutes } from "./routes/adminRoutes";
 import { ClientRoutes } from "./routes/clientRoutes";
+import { PartnerRoutes } from "./routes/partnerRoutes";
+import { FinancialRoutes } from "./routes/financialRoutes";
+import { LogisticsRoutes } from "./routes/logisticsRoutes";
+
+// Layouts
+import RootLayout from "./layouts/RootLayout";
+import MainLayout from "./components/layout/MainLayout";
+
+// Pages
 import NotFound from "./pages/NotFound";
-import Unauthorized from "./pages/Unauthorized";
+import Notifications from "./pages/Notifications";
 
 function App() {
-  const { isAuthenticated, userRole, isLoading } = useAuth();
+  const { userRole, isRoleLoading } = useUserRole();
+  const { toast } = useToast();
 
-  // Redirecionamento padrão para login ou dashboard específico da role
-  const getDefaultRedirect = () => {
-    if (isAuthenticated && userRole) {
-      return getDashboardPath(userRole);
+  // Log role changes for debugging
+  useEffect(() => {
+    if (!isRoleLoading) {
+      console.log("App.tsx - Current user role:", userRole);
+      
+      try {
+        const dashPath = getDashboardPath(userRole);
+        console.log("App.tsx - Will redirect to dashboard:", dashPath);
+      } catch (error) {
+        console.error("Error getting dashboard path:", error);
+      }
     }
-    return PATHS.LOGIN;
-  };
+  }, [userRole, isRoleLoading]);
 
-  // Se ainda estiver carregando, não renderiza nada
-  if (isLoading) {
-    return null;
-  }
+  // Get the dashboard path safely
+  const getDashboardRedirectPath = () => {
+    try {
+      return getDashboardPath(userRole);
+    } catch (error) {
+      console.error("Error in getDashboardRedirectPath:", error);
+      return PATHS.LOGIN;
+    }
+  };
 
   return (
     <Routes>
+      {/* Root path handling */}
+      <Route path={PATHS.HOME} element={<RootLayout />} />
+      
+      {/* Generic dashboard route */}
+      <Route 
+        path={PATHS.DASHBOARD} 
+        element={<Navigate to={getDashboardRedirectPath()} replace />} 
+      />
+
       {/* Auth Routes */}
       {AuthRoutes}
 
-      {/* Protected Routes */}
+      {/* Protected Routes by Role */}
       {AdminRoutes}
       {ClientRoutes}
+      {PartnerRoutes}
+      {FinancialRoutes}
+      {LogisticsRoutes}
 
-      {/* Error Routes */}
+      {/* Shared Routes (accessible by all roles) */}
+      <Route element={<MainLayout />}>
+        <Route path="/notifications" element={<Notifications />} />
+      </Route>
+
+      {/* 404 */}
       <Route path={PATHS.NOT_FOUND} element={<NotFound />} />
-      <Route path={PATHS.UNAUTHORIZED} element={<Unauthorized />} />
-
-      {/* Redirecionamento da raiz para login ou dashboard específico */}
-      <Route path="/" element={<Navigate to={getDefaultRedirect()} replace />} />
-
-      {/* Catch-all: qualquer rota desconhecida redireciona baseado na autenticação */}
-      <Route path="*" element={<Navigate to={getDefaultRedirect()} replace />} />
+      
+      {/* Catch-all redirect to the appropriate dashboard */}
+      <Route path="*" element={<Navigate to={PATHS.DASHBOARD} replace />} />
     </Routes>
   );
 }

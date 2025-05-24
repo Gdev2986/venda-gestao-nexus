@@ -2,10 +2,9 @@ import { PaymentType as EnumsPaymentType } from './enums';
 
 // Core payment status enum
 export enum PaymentStatus {
-  AWAITING = 'Aguardando',
-  APPROVED = 'Aprovado', 
-  REJECTED = 'Recusado',
-  PROCESSED = 'Processado'
+  COMPLETED = "COMPLETED",
+  REJECTED = "REJECTED", 
+  PROCESSING = "PROCESSING"
 }
 
 // Payment method enum for new payment system
@@ -33,16 +32,29 @@ export interface PixKey {
 export interface Payment {
   id: string;
   client_id: string;
-  client_name?: string;
-  client_email?: string;
-  type: PaymentType;
-  value: number;
+  amount: number;
   status: PaymentStatus;
-  note?: string;
-  proof_url?: string;
-  boleto_url?: string;
+  approved_by?: string;
+  approved_at?: string;
   created_at: string;
   updated_at: string;
+  receipt_url?: string;
+  description?: string;
+  rejection_reason: string | null;
+  payment_type?: EnumsPaymentType;
+  client?: {
+    id: string;
+    business_name: string;
+    email?: string;
+    phone?: string;
+  };
+  pix_key?: PixKey;
+  bank_info?: {
+    bank_name?: string;
+    account_number?: string;
+    branch_number?: string;
+    account_holder?: string;
+  };
 }
 
 // New PaymentRequest interface for admin side
@@ -117,27 +129,4 @@ export interface TransactionFeeResult {
     blockId: string;
     blockName: string;
   };
-}
-
-export enum PaymentType {
-  BOLETO = 'Boleto',
-  PIX = 'Pix',
-  TED = 'TED'
-}
-
-export interface PaymentHistory {
-  id: string;
-  payment_id: string;
-  status: PaymentStatus;
-  note?: string;
-  created_by: string;
-  created_at: string;
-}
-
-export interface PaymentFilters {
-  status?: PaymentStatus;
-  type?: PaymentType;
-  client_id?: string;
-  date_from?: string;
-  date_to?: string;
 }
