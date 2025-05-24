@@ -22,7 +22,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 import TablePagination from "@/components/ui/table-pagination";
 import { formatCurrency } from "@/lib/formatters";
-import { NormalizedSale } from "@/pages/admin/Sales";
+import { NormalizedSale } from "@/utils/sales-processor";
 
 interface ProcessedDataPreviewProps {
   data: NormalizedSale[];

@@ -222,10 +222,9 @@ const SalesImportPanel = ({ onSalesProcessed }: SalesImportPanelProps) => {
         gross_amount: sale.gross_amount,
         net_amount: sale.gross_amount * 0.97, // Simple calculation
         date: new Date().toISOString(), // Use current date for now
-        payment_method: sale.payment_type.toLowerCase().includes('crédito') ? 'credit' : 
-                       sale.payment_type.toLowerCase().includes('débito') ? 'debit' : 'pix',
+        payment_method: sale.payment_type.toLowerCase().includes('crédito') || sale.payment_type.toLowerCase().includes('credito') ? 'CREDIT' : 
+                       sale.payment_type.toLowerCase().includes('débito') || sale.payment_type.toLowerCase().includes('debito') ? 'DEBIT' : 'PIX',
         client_id: '00000000-0000-0000-0000-000000000000', // Placeholder, will need proper client association
-        status: sale.status
       }));
 
       const { error } = await supabase

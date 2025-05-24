@@ -16,7 +16,14 @@ import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 import { Checkbox } from "@/components/ui/checkbox";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import type { SalesFilters } from "@/pages/admin/Sales";
+
+interface SalesFilters {
+  dateRange: { from: Date | null; to: Date | null };
+  paymentType: string[];
+  status: string[];
+  terminals: string[];
+  brands: string[];
+}
 
 interface SalesFiltersPanelProps {
   filters: SalesFilters;
