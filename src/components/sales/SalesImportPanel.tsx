@@ -1,13 +1,17 @@
+
 import { useState, useCallback } from "react";
 import { useDropzone } from "react-dropzone";
 import { Button } from "@/components/ui/button";
 import { FileUp, X, AlertCircle, CheckCircle } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
-import { NormalizedSale, detectSourceByHeaders, normalizeData, cleanCsvRow } from "@/utils/sales-processor";
+import { NormalizedSale, detectSourceByHeaders, normalizeData, cleanCsvRow, normalizeText } from "@/utils/sales-processor";
 import SalesPreviewPanel from "./SalesPreviewPanel";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetFooter } from "@/components/ui/sheet";
+import { supabase } from "@/integrations/supabase/client";
+import { createMachine, getAllMachines } from "@/services/machine.service";
+import { MachineStatus } from "@/types/machine.types";
 
 interface SalesImportPanelProps {
   onSalesProcessed: (sales: NormalizedSale[]) => void;
@@ -71,6 +75,50 @@ const SalesImportPanel = ({ onSalesProcessed }: SalesImportPanelProps) => {
     });
   };
   
+  // Function to ensure machines exist for terminals
+  const ensureMachinesExist = async (terminals: string[]): Promise<void> => {
+    try {
+      // Get existing machines
+      const existingMachines = await getAllMachines();
+      const existingTerminals = new Set(
+        existingMachines.map(m => normalizeText(m.serial_number))
+      );
+      
+      // Find terminals that need machine creation
+      const newTerminals = terminals.filter(terminal => 
+        terminal && !existingTerminals.has(normalizeText(terminal))
+      );
+      
+      // Create machines for new terminals
+      for (const terminal of newTerminals) {
+        if (terminal.trim()) {
+          try {
+            await createMachine({
+              serial_number: terminal,
+              model: 'Importado via CSV',
+              status: MachineStatus.STOCK,
+              notes: `Criado automaticamente durante importação de vendas em ${new Date().toLocaleDateString('pt-BR')}`
+            });
+            console.log(`Machine created for terminal: ${terminal}`);
+          } catch (error) {
+            console.error(`Failed to create machine for terminal ${terminal}:`, error);
+            // Continue processing other terminals even if one fails
+          }
+        }
+      }
+      
+      if (newTerminals.length > 0) {
+        toast({
+          title: "Máquinas criadas",
+          description: `${newTerminals.length} máquinas foram criadas automaticamente`
+        });
+      }
+    } catch (error) {
+      console.error('Error ensuring machines exist:', error);
+      throw new Error('Falha ao verificar/criar máquinas: ' + (error instanceof Error ? error.message : String(error)));
+    }
+  };
+  
   // Process the uploaded files
   const processFiles = async () => {
     if (files.length === 0) {
@@ -124,6 +172,14 @@ const SalesImportPanel = ({ onSalesProcessed }: SalesImportPanelProps) => {
         }
       }
       
+      // Extract unique terminals from all sales
+      const terminals = [...new Set(allSales.map(sale => sale.terminal).filter(Boolean))];
+      
+      // Ensure machines exist for all terminals
+      if (terminals.length > 0) {
+        await ensureMachinesExist(terminals);
+      }
+      
       // Update state with all processed sales
       setProcessedSales(allSales);
       
@@ -156,12 +212,33 @@ const SalesImportPanel = ({ onSalesProcessed }: SalesImportPanelProps) => {
     }
   };
   
-  // Função para inserir em lote no Supabase
+  // Function to insert sales in batch to Supabase
   const insertSalesBatch = async (sales: NormalizedSale[]) => {
-    // Aqui você pode ajustar para o formato esperado pelo Supabase
-    // Exemplo: await supabase.from('sales').insert(sales);
-    // Simulação de delay
-    return new Promise((resolve) => setTimeout(resolve, 1200));
+    try {
+      // Transform normalized sales to the database format
+      const salesData = sales.map(sale => ({
+        code: sale.id || `IMPORT-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+        terminal: sale.terminal,
+        gross_amount: sale.gross_amount,
+        net_amount: sale.gross_amount * 0.97, // Simple calculation
+        date: new Date().toISOString(), // Use current date for now
+        payment_method: sale.payment_type.toLowerCase().includes('crédito') ? 'credit' : 
+                       sale.payment_type.toLowerCase().includes('débito') ? 'debit' : 'pix',
+        client_id: '00000000-0000-0000-0000-000000000000', // Placeholder, will need proper client association
+        status: sale.status
+      }));
+
+      const { error } = await supabase
+        .from('sales')
+        .insert(salesData);
+
+      if (error) throw error;
+      
+      return salesData;
+    } catch (error) {
+      console.error('Error inserting sales batch:', error);
+      throw error;
+    }
   };
   
   // Confirm and save the processed sales
@@ -248,7 +325,6 @@ const SalesImportPanel = ({ onSalesProcessed }: SalesImportPanelProps) => {
                 </div>
               </div>
             )}
-            {/* Action Buttons */}
             <div className="flex justify-end">
               <Button
                 disabled={files.length === 0 || isProcessing}
@@ -278,7 +354,6 @@ const SalesImportPanel = ({ onSalesProcessed }: SalesImportPanelProps) => {
           </AlertDescription>
         </Alert>
       )}
-      {/* Preview Modal */}
       <Sheet open={showPreview} onOpenChange={setShowPreview}>
         <SheetContent side="right" className="w-full sm:w-[600px] md:w-[700px] lg:w-[900px] overflow-y-auto">
           <SheetHeader className="mb-4">

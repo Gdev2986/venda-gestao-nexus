@@ -3,18 +3,17 @@ import { useState, useEffect } from "react";
 import { PageHeader } from "@/components/page/PageHeader";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
-import { FileUp, Filter, Download, RefreshCw, Plus, Eye, CheckCircle } from "lucide-react";
-import { Card, CardContent } from "@/components/ui/card";
-import { useDialog } from "@/hooks/use-dialog";
+import { FileUp, Download, RefreshCw, TrendingUp, CreditCard, DollarSign, Activity } from "lucide-react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { 
   NormalizedSale,
   generateMockSalesData,
-  getSalesMetadata
 } from "@/utils/sales-processor";
 import SalesImportPanel from "@/components/sales/SalesImportPanel";
 import SalesPreviewPanel from "@/components/sales/SalesPreviewPanel";
 import SalesAdvancedFilter from "@/components/sales/SalesAdvancedFilter";
 import { v4 as uuidv4 } from "uuid";
+import { formatCurrency } from "@/lib/formatters";
 
 const AdminSales = () => {
   const [sales, setSales] = useState<NormalizedSale[]>([]);
@@ -22,7 +21,6 @@ const AdminSales = () => {
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [showImportPanel, setShowImportPanel] = useState<boolean>(false);
   const { toast } = useToast();
-  const importDialog = useDialog();
 
   // Load initial data
   useEffect(() => {
@@ -41,7 +39,7 @@ const AdminSales = () => {
       title: "Dados carregados",
       description: "Dados de demonstração foram carregados."
     });
-  }, []);
+  }, [toast]);
   
   // Handle sales import
   const handleSalesImported = (importedSales: NormalizedSale[]) => {
@@ -137,6 +135,12 @@ const AdminSales = () => {
     }, 800);
   };
 
+  // Calculate statistics
+  const totalAmount = filteredSales.reduce((sum, sale) => sum + sale.gross_amount, 0);
+  const averageAmount = filteredSales.length > 0 ? totalAmount / filteredSales.length : 0;
+  const uniqueTerminals = new Set(filteredSales.map(sale => sale.terminal)).size;
+  const approvedSales = filteredSales.filter(sale => sale.status.toLowerCase() === 'aprovada').length;
+
   return (
     <div className="space-y-6">
       <PageHeader 
@@ -173,69 +177,101 @@ const AdminSales = () => {
         <SalesImportPanel onSalesProcessed={handleSalesImported} />
       )}
       
+      {/* Stats Cards */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Total de Transações</CardTitle>
+            <Activity className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">
+              {isLoading ? (
+                <div className="h-8 w-16 bg-muted animate-pulse rounded" />
+              ) : (
+                filteredSales.length.toLocaleString('pt-BR')
+              )}
+            </div>
+            <p className="text-xs text-muted-foreground">
+              {approvedSales} aprovadas
+            </p>
+          </CardContent>
+        </Card>
+        
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Valor Total</CardTitle>
+            <DollarSign className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">
+              {isLoading ? (
+                <div className="h-8 w-24 bg-muted animate-pulse rounded" />
+              ) : (
+                formatCurrency(totalAmount)
+              )}
+            </div>
+            <p className="text-xs text-muted-foreground">
+              Volume total processado
+            </p>
+          </CardContent>
+        </Card>
+        
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Valor Médio</CardTitle>
+            <TrendingUp className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">
+              {isLoading || filteredSales.length === 0 ? (
+                <div className="h-8 w-20 bg-muted animate-pulse rounded" />
+              ) : (
+                formatCurrency(averageAmount)
+              )}
+            </div>
+            <p className="text-xs text-muted-foreground">
+              Por transação
+            </p>
+          </CardContent>
+        </Card>
+        
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Terminais Únicos</CardTitle>
+            <CreditCard className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">
+              {isLoading ? (
+                <div className="h-8 w-12 bg-muted animate-pulse rounded" />
+              ) : (
+                uniqueTerminals
+              )}
+            </div>
+            <p className="text-xs text-muted-foreground">
+              Máquinas ativas
+            </p>
+          </CardContent>
+        </Card>
+      </div>
+      
       {/* Filters */}
       <SalesAdvancedFilter sales={sales} onFilter={handleFilter} />
       
       {/* Sales Data */}
       <div className="space-y-4">
-        {/* Stats Cards */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
-          <Card className="p-4">
-            <div className="text-sm text-muted-foreground">Total de Transações</div>
-            <div className="text-2xl font-bold mt-1">
-              {isLoading ? <div className="h-8 w-16 bg-muted animate-pulse rounded" /> : filteredSales.length}
-            </div>
-          </Card>
-          
-          <Card className="p-4">
-            <div className="text-sm text-muted-foreground">Valor Total</div>
-            <div className="text-2xl font-bold mt-1">
-              {isLoading ? (
-                <div className="h-8 w-24 bg-muted animate-pulse rounded" />
-              ) : (
-                new Intl.NumberFormat('pt-BR', {
-                  style: 'currency',
-                  currency: 'BRL'
-                }).format(filteredSales.reduce((sum, sale) => sum + sale.gross_amount, 0))
-              )}
-            </div>
-          </Card>
-          
-          <Card className="p-4">
-            <div className="text-sm text-muted-foreground">Valor Médio</div>
-            <div className="text-2xl font-bold mt-1">
-              {isLoading || filteredSales.length === 0 ? (
-                <div className="h-8 w-20 bg-muted animate-pulse rounded" />
-              ) : (
-                new Intl.NumberFormat('pt-BR', {
-                  style: 'currency',
-                  currency: 'BRL'
-                }).format(
-                  filteredSales.reduce((sum, sale) => sum + sale.gross_amount, 0) / filteredSales.length
-                )
-              )}
-            </div>
-          </Card>
-          
-          <Card className="p-4">
-            <div className="text-sm text-muted-foreground">Terminais Únicos</div>
-            <div className="text-2xl font-bold mt-1">
-              {isLoading ? (
-                <div className="h-8 w-12 bg-muted animate-pulse rounded" />
-              ) : (
-                new Set(filteredSales.map(sale => sale.terminal)).size
-              )}
-            </div>
-          </Card>
-        </div>
-        
         {/* Sales Table */}
         {isLoading ? (
-          <div className="space-y-4">
-            {Array.from({ length: 5 }).map((_, i) => (
-              <div key={i} className="bg-muted/40 w-full h-12 animate-pulse rounded"></div>
-            ))}
-          </div>
+          <Card>
+            <CardContent className="p-6">
+              <div className="space-y-4">
+                {Array.from({ length: 5 }).map((_, i) => (
+                  <div key={i} className="bg-muted/40 w-full h-12 animate-pulse rounded"></div>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
         ) : (
           <SalesPreviewPanel 
             sales={filteredSales} 

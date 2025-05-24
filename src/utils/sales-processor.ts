@@ -14,27 +14,42 @@ export function normalizeText(text: string | undefined | null): string {
 }
 
 /**
- * Converts a value to number
+ * Converts a value to number with robust cleaning for currency and formatted values
  */
 export function toNumber(v: string | number): number {
-  if (typeof v === 'string') {
-    return parseFloat(v.replace(/\./g, '').replace(',', '.')) || 0;
+  if (typeof v === 'number') {
+    return Number(v) || 0;
   }
-  return Number(v) || 0;
+  
+  if (typeof v === 'string') {
+    // Remove currency symbols, quotes, and spaces, then convert comma to dot
+    const cleaned = v
+      .replace(/["']/g, '') // Remove quotes
+      .replace(/R\$/, '') // Remove R$ symbol
+      .replace(/\s+/g, '') // Remove spaces
+      .replace(/[^0-9.,-]/g, '') // Keep only numbers, dots, commas, and hyphens
+      .replace(/,/g, '.'); // Convert comma to dot for decimal
+    
+    return parseFloat(cleaned) || 0;
+  }
+  
+  return 0;
 }
 
 /**
  * Gets a value from an object using multiple possible keys
  */
 export function getValue(row: Record<string, any>, possibleKeys: string[], defaultValue: any = ''): any {
-  // Remove aspas dos possíveis nomes de chave
+  // Remove quotes from possible key names
   const clean = (s: string) => normalizeText(s).replace(/"/g, '').replace(/'/g, '').trim();
-  // First try exact keys (removendo aspas)
+  
+  // First try exact keys (removing quotes)
   for (const key of possibleKeys) {
     if (row[key] !== undefined) return row[key];
-    // Tenta também sem aspas
+    // Also try without quotes
     if (row[clean(key)] !== undefined) return row[clean(key)];
   }
+  
   // Then try normalized keys
   const normalizedKeys = possibleKeys.map(k => clean(k));
   const rowKeys = Object.keys(row);
@@ -54,8 +69,8 @@ export function formatDateStandard(dateInput: string, timeInput: string = ''): s
   try {
     if (!dateInput) return '01/01/2000 00:00';
 
-    let dateStr = dateInput;
-    let timeStr = timeInput;
+    let dateStr = String(dateInput);
+    let timeStr = String(timeInput);
 
     // If timeInput is not provided but dateInput has a space
     if (!timeInput && dateInput.includes(' ')) {
@@ -131,7 +146,7 @@ export function detectSourceByHeaders(data: Array<Record<string, any>>): string 
   const normKeys = keys.map(k => normalizeText(k));
   console.log('detectSourceByHeaders keys:', keys); // debug
 
-  // Sigma: robusto a variações como "ValorVenda", "valorvenda", etc
+  // Sigma: robust to variations like "ValorVenda", "valorvenda", etc
   if (
     normKeys.some(k => k.includes('modalidade') || k.includes('tipo')) &&
     normKeys.some(k => k.replace(/\s/g, '').includes('valorvenda'))
@@ -181,8 +196,11 @@ export function normalizeData(data: Array<Record<string, any>>, source: string):
   const warnings: Array<{rowIndex: number; message: string}> = [];
   
   data.forEach((row, index) => {
+    // Clean the row first using cleanCsvRow
+    const cleanedRow = cleanCsvRow(row);
+    
     // Check if row has data
-    if (!row || Object.keys(row).length === 0) {
+    if (!cleanedRow || Object.keys(cleanedRow).length === 0) {
       warnings.push({
         rowIndex: index,
         message: 'Empty row, skipping'
@@ -204,11 +222,9 @@ export function normalizeData(data: Array<Record<string, any>>, source: string):
     try {
       switch (source) {
         case 'Rede Cartão':
-          // Status always "Aprovada" for Rede files
           normalizedRow.status = "Aprovada";
           
-          // Standardize payment type: Debit Card or Credit Card
-          const modalidadeRede = getValue(row, [
+          const modalidadeRede = getValue(cleanedRow, [
             'modalidade', 'MODALIDADE', 'Modalidade'
           ], '').trim();
           
@@ -220,97 +236,78 @@ export function normalizeData(data: Array<Record<string, any>>, source: string):
             normalizedRow.payment_type = modalidadeRede;
           }
           
-          // Get gross amount correctly - may be in different formats or columns
-          const valorBrutoRede = getValue(row, [
+          const valorBrutoRede = getValue(cleanedRow, [
             'valor da venda original', 'VALOR DA VENDA ORIGINAL', 
             'Valor da Venda Original', 'valor da venda', 'VALOR DA VENDA'
           ], 0);
           
-          // Process value using toNumber function
           normalizedRow.gross_amount = toNumber(valorBrutoRede);
           
-          // Get date and time data
-          const dataVendaRede = getValue(row, [
+          const dataVendaRede = getValue(cleanedRow, [
             'data da venda', 'DATA DA VENDA', 'Data da Venda'
           ], '');
           
-          const horaVendaRede = getValue(row, [
+          const horaVendaRede = getValue(cleanedRow, [
             'hora da venda', 'HORA DA VENDA', 'Hora da Venda'
           ], '');
           
-          // Format date using formatDateStandard function
           normalizedRow.transaction_date = formatDateStandard(dataVendaRede, horaVendaRede);
           
-          // Installments (default 1 if not present)
-          const parcelasRede = getValue(row, [
+          const parcelasRede = getValue(cleanedRow, [
             'número de parcelas', 'NÚMERO DE PARCELAS', 'Número de Parcelas',
             'numero de parcelas', 'NUMERO DE PARCELAS'
           ], '1');
           
           normalizedRow.installments = parseInt(parcelasRede as string) || 1;
           
-          // Terminal - may come in different formats
-          normalizedRow.terminal = getValue(row, [
+          normalizedRow.terminal = getValue(cleanedRow, [
             'Terminal', 'terminal', 'TERMINAL',
             'código da maquininha', 'CÓDIGO DA MAQUININHA',
             'codigo da maquininha', 'CODIGO DA MAQUININHA'
           ], '');
           
-          // Brand
-          normalizedRow.brand = getValue(row, [
+          normalizedRow.brand = getValue(cleanedRow, [
             'bandeira', 'BANDEIRA', 'Bandeira'
           ], '');
           break;
           
         case 'Rede Pix':
-          // Status always "Aprovada" for Rede files
           normalizedRow.status = "Aprovada";
-          
-          // Payment type for Pix
           normalizedRow.payment_type = 'Pix';
           
-          // Gross amount correctly
-          const valorPixBruto = getValue(row, [
+          const valorPixBruto = getValue(cleanedRow, [
             'valor da venda original', 'VALOR DA VENDA ORIGINAL', 
             'Valor da Venda Original', 'valor da venda', 'VALOR DA VENDA'
           ], 0);
           
-          // Process value using toNumber function
           normalizedRow.gross_amount = toNumber(valorPixBruto);
           
-          // Get date and time data
-          const dataPixRede = getValue(row, [
+          const dataPixRede = getValue(cleanedRow, [
             'data da venda', 'DATA DA VENDA', 'Data da Venda'
           ], '');
           
-          const horaPixRede = getValue(row, [
+          const horaPixRede = getValue(cleanedRow, [
             'hora da venda', 'HORA DA VENDA', 'Hora da Venda'
           ], '');
           
-          // Format date using formatDateStandard function
           normalizedRow.transaction_date = formatDateStandard(dataPixRede, horaPixRede);
-          
-          // Pix is always paid in full (1 installment)
           normalizedRow.installments = 1;
           
-          // Terminal - may come as maquininha or terminal code
-          normalizedRow.terminal = getValue(row, [
+          normalizedRow.terminal = getValue(cleanedRow, [
             'código da maquininha', 'CÓDIGO DA MAQUININHA',
             'codigo da maquininha', 'CODIGO DA MAQUININHA',
             'Terminal', 'terminal', 'TERMINAL'
           ], '');
           
-          // Brand always Pix
           normalizedRow.brand = 'Pix';
           break;
           
         case 'PagSeguro':
-          normalizedRow.status = getValue(row, [
+          normalizedRow.status = getValue(cleanedRow, [
             'Status', 'STATUS', 'status'
           ], 'Aprovada');
           
-          // Standardize payment type
-          const formaPagamento = getValue(row, [
+          const formaPagamento = getValue(cleanedRow, [
             'Forma de Pagamento', 'FORMA DE PAGAMENTO', 
             'forma de pagamento', 'Meio de Pagamento'
           ], '').trim();
@@ -325,45 +322,38 @@ export function normalizeData(data: Array<Record<string, any>>, source: string):
             normalizedRow.payment_type = formaPagamento;
           }
           
-          // Gross amount - may be in different formats
-          const valorPagSeguro = getValue(row, [
+          const valorPagSeguro = getValue(cleanedRow, [
             'Valor Bruto', 'VALOR BRUTO', 'valor bruto',
             'Valor', 'VALOR', 'valor'
           ], 0);
           
-          // Use toNumber for conversion
           normalizedRow.gross_amount = toNumber(valorPagSeguro);
           
-          // Transaction date
-          const dataPagSeguro = getValue(row, [
+          const dataPagSeguro = getValue(cleanedRow, [
             'Data da Transação', 'DATA DA TRANSAÇÃO', 
             'data da transacao', 'Data', 'DATA'
           ], '');
           
-          // Format date using formatDateStandard function
           normalizedRow.transaction_date = formatDateStandard(dataPagSeguro);
           
-          // Installments
-          const parcelasPagSeguro = getValue(row, [
+          const parcelasPagSeguro = getValue(cleanedRow, [
             'Parcela', 'PARCELA', 'parcela',
             'Parcelas', 'PARCELAS', 'parcelas'
           ], '1');
           
           normalizedRow.installments = parseInt(parcelasPagSeguro as string) || 1;
           
-          // Check different possible fields for terminal
-          normalizedRow.terminal = getValue(row, [
+          normalizedRow.terminal = getValue(cleanedRow, [
             'Identificação da Maquininha', 'IDENTIFICAÇÃO DA MAQUININHA',
             'Identificacao da Maquininha', 'IDENTIFICACAO DA MAQUININHA',
             'Serial_Leitor', 'SERIAL_LEITOR', 'serial_leitor',
             'Terminal', 'TERMINAL', 'terminal'
           ], '');
           
-          normalizedRow.brand = getValue(row, [
+          normalizedRow.brand = getValue(cleanedRow, [
             'Bandeira', 'BANDEIRA', 'bandeira'
           ], '');
           
-          // If Pix, adjust brand and installments
           if (normalizedRow.payment_type === 'Pix') {
             normalizedRow.brand = 'Pix';
             normalizedRow.installments = 1;
@@ -371,14 +361,15 @@ export function normalizeData(data: Array<Record<string, any>>, source: string):
           break;
           
         case 'Sigma':
-          normalizedRow.status = getValue(row, [
+          // Enhanced processing for Sigma with robust numeric field handling
+          normalizedRow.status = getValue(cleanedRow, [
             'Situacao', 'SITUACAO', 'situacao',
             'Status', 'STATUS', 'status',
             'Estado', 'ESTADO', 'estado'
           ], 'Aprovada');
 
-          // Tipo de pagamento (mais variações)
-          const modalidadeSigma = getValue(row, [
+          // Payment type (more variations)
+          const modalidadeSigma = getValue(cleanedRow, [
             'Modalidade', 'MODALIDADE', 'modalidade',
             'Tipo', 'TIPO', 'tipo',
             'Forma', 'FORMA', 'forma',
@@ -397,46 +388,48 @@ export function normalizeData(data: Array<Record<string, any>>, source: string):
             normalizedRow.payment_type = modalidadeSigma;
           }
 
-          // Valor bruto: priorize sempre o campo mais específico e todas as variações
-          let valorSigma = getValue(row, ['Valor Venda', 'VALOR VENDA', 'valor venda', 'ValorVenda', 'VALORVENDA', 'valorvenda'], undefined);
+          // Gross amount: prioritize most specific field and all variations
+          let valorSigma = getValue(cleanedRow, ['Valor Venda', 'VALOR VENDA', 'valor venda', 'ValorVenda', 'VALORVENDA', 'valorvenda'], undefined);
           if (valorSigma === undefined) {
-            valorSigma = getValue(row, ['Valor Total', 'VALOR TOTAL', 'valor total', 'ValorTotal', 'VALORTOTAL', 'valortotal'], undefined);
+            valorSigma = getValue(cleanedRow, ['Valor Total', 'VALOR TOTAL', 'valor total', 'ValorTotal', 'VALORTOTAL', 'valortotal'], undefined);
           }
           if (valorSigma === undefined) {
-            valorSigma = getValue(row, ['Valor', 'VALOR', 'valor'], undefined);
+            valorSigma = getValue(cleanedRow, ['Valor', 'VALOR', 'valor'], undefined);
           }
           if (valorSigma === undefined) {
-            valorSigma = getValue(row, ['Total', 'TOTAL', 'total'], 0);
+            valorSigma = getValue(cleanedRow, ['Total', 'TOTAL', 'total'], 0);
           }
+          
+          // Use enhanced toNumber function for Sigma values
           normalizedRow.gross_amount = toNumber(valorSigma);
 
-          // Data da transação: priorize sempre o campo mais específico e todas as variações
-          let dataSigma = getValue(row, ['Data Venda', 'DATA VENDA', 'data venda', 'DataVenda', 'DATAVENDA', 'datavenda'], undefined);
+          // Transaction date: prioritize most specific field and all variations
+          let dataSigma = getValue(cleanedRow, ['Data Venda', 'DATA VENDA', 'data venda', 'DataVenda', 'DATAVENDA', 'datavenda'], undefined);
           if (dataSigma === undefined) {
-            dataSigma = getValue(row, ['Data', 'DATA', 'data'], undefined);
+            dataSigma = getValue(cleanedRow, ['Data', 'DATA', 'data'], undefined);
           }
           if (dataSigma === undefined) {
-            dataSigma = getValue(row, ['Data Transacao', 'DATA TRANSACAO', 'data transacao', 'Data Transação', 'DATA TRANSAÇÃO', 'data transação'], '');
+            dataSigma = getValue(cleanedRow, ['Data Transacao', 'DATA TRANSACAO', 'data transacao', 'Data Transação', 'DATA TRANSAÇÃO', 'data transação'], '');
           }
           normalizedRow.transaction_date = formatDateStandard(dataSigma);
           if (!dataSigma) normalizedRow.transaction_date = '01/01/2000 00:00';
 
-          // Parcelas: priorize sempre o campo mais específico e todas as variações
-          let parcelasSigma = getValue(row, ['Parcelas', 'parcelas', 'PARCELAS', 'QtdeParcelas', 'QtdParcelas'], '1');
+          // Installments: prioritize most specific field and all variations
+          let parcelasSigma = getValue(cleanedRow, ['Parcelas', 'parcelas', 'PARCELAS', 'QtdeParcelas', 'QtdParcelas'], '1');
           if (parcelasSigma === undefined) {
-            parcelasSigma = getValue(row, ['Parcela', 'parcela', 'PARCELA'], '1');
+            parcelasSigma = getValue(cleanedRow, ['Parcela', 'parcela', 'PARCELA'], '1');
           }
           normalizedRow.installments = parseInt(parcelasSigma as string) || 1;
 
-          // Terminal: priorize sempre o campo mais específico e todas as variações
-          let terminalSigma = getValue(row, ['Terminal', 'terminal', 'TERMINAL', 'Maquininha', 'maquininha', 'Equipamento', 'POS'], '');
+          // Terminal: prioritize most specific field and all variations
+          let terminalSigma = getValue(cleanedRow, ['Terminal', 'terminal', 'TERMINAL', 'Maquininha', 'maquininha', 'Equipamento', 'POS'], '');
           normalizedRow.terminal = terminalSigma;
 
-          // Bandeira: priorize sempre o campo mais específico e todas as variações
-          let brandSigma = getValue(row, ['Bandeira', 'bandeira', 'BANDEIRA', 'Cartao', 'CARTAO', 'cartao', 'Cartão', 'CARTÃO', 'cartão'], '');
+          // Brand: prioritize most specific field and all variations
+          let brandSigma = getValue(cleanedRow, ['Bandeira', 'bandeira', 'BANDEIRA', 'Cartao', 'CARTAO', 'cartao', 'Cartão', 'CARTÃO', 'cartão'], '');
           normalizedRow.brand = brandSigma;
 
-          // Se for Pix, ajusta
+          // If it's Pix, adjust
           if (normalizedRow.payment_type === 'Pix') {
             normalizedRow.brand = 'Pix';
             normalizedRow.installments = 1;
@@ -444,14 +437,12 @@ export function normalizeData(data: Array<Record<string, any>>, source: string):
           break;
           
         default:
-          // Try to map generic fields
-          normalizedRow.status = getValue(row, [
+          normalizedRow.status = getValue(cleanedRow, [
             'Status', 'status', 'STATUS',
             'Situacao', 'situacao', 'SITUACAO'
           ], 'Aprovada');
           
-          // Standardize generic payment type
-          const tipoPagamentoGenerico = getValue(row, [
+          const tipoPagamentoGenerico = getValue(cleanedRow, [
             'Tipo de Pagamento', 'tipo pagamento', 'TIPO DE PAGAMENTO',
             'Forma de Pagamento', 'forma pagamento', 'FORMA DE PAGAMENTO',
             'Modalidade', 'modalidade', 'MODALIDADE'
@@ -467,44 +458,38 @@ export function normalizeData(data: Array<Record<string, any>>, source: string):
             normalizedRow.payment_type = tipoPagamentoGenerico;
           }
           
-          // Generic gross amount
-          const valorGenerico = getValue(row, [
+          const valorGenerico = getValue(cleanedRow, [
             'Valor', 'valor', 'VALOR',
             'Valor Bruto', 'valor bruto', 'VALOR BRUTO',
             'Valor Venda', 'valor venda', 'VALOR VENDA'
           ], 0);
           
-          // Use toNumber for conversion
           normalizedRow.gross_amount = toNumber(valorGenerico);
           
-          // Generic date
-          const dataGenerico = getValue(row, [
+          const dataGenerico = getValue(cleanedRow, [
             'Data', 'data', 'DATA',
             'Data Transacao', 'data transacao', 'DATA TRANSACAO',
             'Data Venda', 'data venda', 'DATA VENDA'
           ], '');
           
-          // Format date using formatDateStandard function
           normalizedRow.transaction_date = formatDateStandard(dataGenerico);
           
-          // Generic installments
-          const parcelasGenerico = getValue(row, [
+          const parcelasGenerico = getValue(cleanedRow, [
             'Parcelas', 'parcelas', 'PARCELAS',
             'Parcela', 'parcela', 'PARCELA'
           ], '1');
           
           normalizedRow.installments = parseInt(parcelasGenerico as string) || 1;
           
-          normalizedRow.terminal = getValue(row, [
+          normalizedRow.terminal = getValue(cleanedRow, [
             'Terminal', 'terminal', 'TERMINAL',
             'Maquininha', 'maquininha', 'MAQUININHA'
           ], '');
           
-          normalizedRow.brand = getValue(row, [
+          normalizedRow.brand = getValue(cleanedRow, [
             'Bandeira', 'bandeira', 'BANDEIRA'
           ], '');
           
-          // If Pix, adjust brand and installments
           if (normalizedRow.payment_type === 'Pix') {
             normalizedRow.brand = 'Pix';
             normalizedRow.installments = 1;
@@ -615,7 +600,7 @@ export function generateMockSalesData(count = 10): NormalizedSale[] {
   return result;
 }
 
-// Função utilitária para limpar aspas dos headers e valores ao ler CSV
+// Utility function to clean quotes from headers and values when reading CSV
 export function cleanCsvRow(row: Record<string, any>): Record<string, any> {
   const cleaned: Record<string, any> = {};
   Object.entries(row).forEach(([k, v]) => {

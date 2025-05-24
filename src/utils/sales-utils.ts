@@ -1,3 +1,4 @@
+
 import { v4 as uuidv4 } from "uuid";
 import { Sale } from "@/types";
 import { NormalizedSale, formatDateStandard } from './sales-processor';
@@ -87,7 +88,7 @@ export const convertNormalizedSalesToSales = (normalizedSales: NormalizedSale[])
   });
 };
 
-// Gera dados simulados de vendas diárias para os últimos 30 dias
+// Generate daily sales data for the last 30 days
 export const generateDailySalesData = () => {
   const days = 30;
   const today = new Date();
@@ -103,7 +104,7 @@ export const generateDailySalesData = () => {
   return data;
 };
 
-// Gera dados simulados de métodos de pagamento
+// Generate payment methods data
 export const generatePaymentMethodsData = () => {
   return [
     { method: 'Cartão de Crédito', value: Math.floor(Math.random() * 1000 + 500) },
