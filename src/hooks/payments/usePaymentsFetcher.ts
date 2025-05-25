@@ -43,7 +43,7 @@ export const usePaymentsFetcher = ({ status = "ALL" }: UsePaymentsFetcherProps =
         rejection_reason: payment.rejection_reason || '',
         client: payment.client,
         pix_key_id: payment.pix_key_id,
-        method: 'PIX', // Default method for now
+        method: 'PIX' as any,
         requested_at: payment.created_at
       })) || [];
 

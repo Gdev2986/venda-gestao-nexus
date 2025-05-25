@@ -13,6 +13,25 @@ export enum PaymentStatus {
   PAID = "PAID"
 }
 
+export enum PixKeyType {
+  CPF = "CPF",
+  CNPJ = "CNPJ",
+  EMAIL = "EMAIL",
+  PHONE = "PHONE",
+  RANDOM = "RANDOM"
+}
+
+export interface PixKey {
+  id: string;
+  user_id: string;
+  type: PixKeyType;
+  key: string;
+  name: string;
+  is_default: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
 export interface Payment {
   id: string;
   client_id: string;
@@ -25,6 +44,10 @@ export interface Payment {
   updated_at: string;
   requested_at: string;
   rejection_reason?: string;
+  approved_by?: string;
+  approved_at?: string;
+  receipt_url?: string;
+  pix_key?: PixKey;
   client?: {
     id: string;
     business_name: string;
@@ -47,4 +70,17 @@ export interface PaymentRequest {
     id: string;
     business_name: string;
   };
+}
+
+export interface TransactionFeeParams {
+  amount: number;
+  paymentMethod: PaymentMethod;
+  installments?: number;
+}
+
+export interface TransactionFeeResult {
+  grossAmount: number;
+  netAmount: number;
+  feeAmount: number;
+  feePercentage: number;
 }

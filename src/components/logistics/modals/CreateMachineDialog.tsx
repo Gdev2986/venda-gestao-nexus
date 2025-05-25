@@ -8,7 +8,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
-import { Machine, MachineStatus } from "@/types/machine.types";
+import { Machine } from "@/types/machine.types";
 
 interface CreateMachineDialogProps {
   open: boolean;
@@ -24,7 +24,7 @@ const CreateMachineDialog = ({ open, onOpenChange, onSuccess, machine }: CreateM
   // Form state
   const [serialNumber, setSerialNumber] = useState("");
   const [model, setModel] = useState("");
-  const [status, setStatus] = useState<string>(MachineStatus.STOCK);
+  const [status, setStatus] = useState<string>("STOCK");
   const [notes, setNotes] = useState("");
   
   // Set initial values when machine prop changes or dialog opens
@@ -32,7 +32,7 @@ const CreateMachineDialog = ({ open, onOpenChange, onSuccess, machine }: CreateM
     if (open && machine) {
       setSerialNumber(machine.serial_number || "");
       setModel(machine.model || "");
-      setStatus(machine.status || MachineStatus.STOCK);
+      setStatus(machine.status || "STOCK");
       setNotes(machine.notes || "");
     }
   }, [open, machine]);
@@ -40,7 +40,7 @@ const CreateMachineDialog = ({ open, onOpenChange, onSuccess, machine }: CreateM
   const resetForm = () => {
     setSerialNumber("");
     setModel("");
-    setStatus(MachineStatus.STOCK);
+    setStatus("STOCK");
     setNotes("");
   };
   
@@ -73,7 +73,7 @@ const CreateMachineDialog = ({ open, onOpenChange, onSuccess, machine }: CreateM
           .update({
             serial_number: serialNumber,
             model: model,
-            status: status as MachineStatus,
+            status: status as any,
             notes: notes
           })
           .eq('id', machine.id)
@@ -94,7 +94,7 @@ const CreateMachineDialog = ({ open, onOpenChange, onSuccess, machine }: CreateM
           .insert({
             serial_number: serialNumber,
             model: model,
-            status: status as MachineStatus,
+            status: status as any,
             notes: notes
           })
           .select();
