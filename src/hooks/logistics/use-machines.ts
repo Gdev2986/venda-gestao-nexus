@@ -17,7 +17,13 @@ export const useMachines = () => {
 
       if (error) throw error;
 
-      setMachines(data || []);
+      // Map the database values to our enum values
+      const mappedData = (data || []).map(machine => ({
+        ...machine,
+        status: machine.status as MachineStatus
+      }));
+
+      setMachines(mappedData);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Erro ao carregar máquinas');
     } finally {

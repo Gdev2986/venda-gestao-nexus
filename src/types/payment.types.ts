@@ -74,3 +74,29 @@ export interface PixKey {
   updated_at: string;
   bank_name?: string;
 }
+
+export interface TransactionFeeParams {
+  amount: number;
+  payment_method: string;
+  installments?: number;
+  client_id?: string;
+}
+
+export interface TransactionFeeResult {
+  amount: number;
+  root_rate: number;
+  forwarding_rate: number;
+  final_rate: number;
+  root_fee: number;
+  forwarding_fee: number;
+  total_fee: number;
+  net_amount: number;
+}
+
+export interface PaymentRequestParams {
+  client_id: string;
+  amount: number;
+  description?: string;
+  method: PaymentMethod;
+  pix_key_id?: string;
+}

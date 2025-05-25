@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Plus } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import ServiceList from "@/components/logistics/ServiceList";
-import NewRequestDialog from "@/components/logistics/modals/NewRequestDialog";
+import { NewRequestDialog } from "@/components/logistics/modals/NewRequestDialog";
 import RequestsCalendarView from "@/components/logistics/RequestsCalendarView";
 import { useMediaQuery } from "@/hooks/use-media-query";
 import {
@@ -65,6 +65,11 @@ const LogisticsRequests = () => {
     console.log("Refreshing requests data");
   };
 
+  const handleNewRequestSubmit = (data: any) => {
+    console.log("New request submitted:", data);
+    handleRefresh();
+  };
+
   return (
     <div className="space-y-4">
       <div className="flex flex-col space-y-2">
@@ -121,9 +126,9 @@ const LogisticsRequests = () => {
       
       {/* Dialog for creating new requests */}
       <NewRequestDialog
-        open={isNewRequestOpen}
-        onOpenChange={setIsNewRequestOpen}
-        onSuccess={handleRefresh}
+        isOpen={isNewRequestOpen}
+        onClose={() => setIsNewRequestOpen(false)}
+        onSubmit={handleNewRequestSubmit}
       />
     </div>
   );

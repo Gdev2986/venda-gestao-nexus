@@ -1,10 +1,11 @@
+
 import React from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { useForm } from "react-hook-form";
+import { useForm, Controller } from "react-hook-form";
 import { useClients } from "@/hooks/use-clients";
 
 interface NewRequestDialogProps {
@@ -18,9 +19,9 @@ export const NewRequestDialog: React.FC<NewRequestDialogProps> = ({
   onClose,
   onSubmit
 }) => {
-  const { register, handleSubmit, formState: { errors } } = useForm();
+  const { register, handleSubmit, control, formState: { errors } } = useForm();
 
-  const { data: clients } = useClients();
+  const { clients } = useClients();
 
   const handleFormSubmit = (data: any) => {
     onSubmit(data);
@@ -36,18 +37,26 @@ export const NewRequestDialog: React.FC<NewRequestDialogProps> = ({
         <form onSubmit={handleSubmit(handleFormSubmit)} className="space-y-4">
           <div>
             <Label htmlFor="client_id">Cliente</Label>
-            <Select>
-              <SelectTrigger className="w-full">
-                <SelectValue placeholder="Selecione um cliente" />
-              </SelectTrigger>
-              <SelectContent>
-                {clients?.map((client) => (
-                  <SelectItem key={client.id} value={client.id}>
-                    {client.business_name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            <Controller
+              name="client_id"
+              control={control}
+              rules={{ required: "Selecione um cliente" }}
+              render={({ field }) => (
+                <Select onValueChange={field.onChange} value={field.value}>
+                  <SelectTrigger className="w-full">
+                    <SelectValue placeholder="Selecione um cliente" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {clients?.map((client) => (
+                      <SelectItem key={client.id} value={client.id}>
+                        {client.business_name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              )}
+            />
+            {errors.client_id && <p className="text-red-500 text-sm">{errors.client_id.message as string}</p>}
           </div>
           <div>
             <Label htmlFor="machine_model">Modelo da Máquina</Label>
@@ -56,7 +65,7 @@ export const NewRequestDialog: React.FC<NewRequestDialogProps> = ({
               placeholder="Digite o modelo da máquina"
               {...register("machine_model", { required: "O modelo da máquina é obrigatório" })}
             />
-            {errors.machine_model && <p className="text-red-500">{errors.machine_model.message}</p>}
+            {errors.machine_model && <p className="text-red-500 text-sm">{errors.machine_model.message as string}</p>}
           </div>
           <div>
             <Label htmlFor="quantity">Quantidade</Label>
@@ -69,7 +78,7 @@ export const NewRequestDialog: React.FC<NewRequestDialogProps> = ({
                 valueAsNumber: true,
               })}
             />
-            {errors.quantity && <p className="text-red-500">{errors.quantity.message}</p>}
+            {errors.quantity && <p className="text-red-500 text-sm">{errors.quantity.message as string}</p>}
           </div>
           <Button type="submit">Enviar Solicitação</Button>
         </form>
