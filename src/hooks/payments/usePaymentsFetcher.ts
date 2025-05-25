@@ -25,7 +25,8 @@ export const usePaymentsFetcher = ({ status = "ALL" }: UsePaymentsFetcherProps =
         `);
 
       if (status !== "ALL") {
-        query = query.eq('status', status);
+        // Convert enum to string for database query
+        query = query.eq('status', status as string);
       }
 
       const { data, error } = await query.order('created_at', { ascending: false });

@@ -62,7 +62,7 @@ export const usePixKeys = () => {
 
       const { data, error } = await supabase
         .from('pix_keys')
-        .insert(newKeyData)
+        .insert([newKeyData])
         .select()
         .single();
 

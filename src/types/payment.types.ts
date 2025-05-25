@@ -1,4 +1,3 @@
-
 export enum PaymentStatus {
   PENDING = "PENDING",
   PROCESSING = "PROCESSING",
@@ -13,13 +12,13 @@ export enum PaymentMethod {
   BOLETO = "BOLETO"
 }
 
+// Update PixKeyType to match database enum exactly
 export enum PixKeyType {
   CPF = "CPF",
   CNPJ = "CNPJ", 
   EMAIL = "EMAIL",
   PHONE = "PHONE",
-  RANDOM = "RANDOM",
-  EVP = "EVP"
+  RANDOM = "RANDOM"
 }
 
 export interface Payment {

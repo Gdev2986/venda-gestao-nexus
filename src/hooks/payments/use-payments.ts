@@ -1,6 +1,6 @@
 
 import { useState, useEffect } from "react";
-import { Payment, PaymentRequest, PaymentStatus, PaymentMethod } from "@/types/payment.types";
+import { Payment, PaymentRequest, PaymentStatus, PaymentMethod, PixKeyType } from "@/types/payment.types";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
@@ -94,7 +94,7 @@ export function usePayments(): UsePaymentsReturn {
           pix_key: payment.pix_key ? {
             id: payment.pix_key.id,
             key: payment.pix_key.key,
-            type: payment.pix_key.type,
+            type: payment.pix_key.type as PixKeyType,
             name: payment.pix_key.name,
             owner_name: payment.pix_key.name,
             user_id: user.id,
