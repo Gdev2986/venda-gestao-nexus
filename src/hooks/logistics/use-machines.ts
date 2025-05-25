@@ -1,172 +1,108 @@
 
-import { useState, useEffect } from "react";
-import { useToast } from "@/hooks/use-toast";
-import { 
-  getAllMachines, 
-  getMachinesByStatus, 
-  createMachine, 
-  updateMachine, 
+import { useState, useEffect } from 'react';
+import { Machine, MachineStatus } from '@/types/machine.types';
+import {
+  getAllMachines,
+  getMachinesByStatus,
+  createMachine,
+  updateMachine,
+  deleteMachine,
   transferMachine,
-  getMachineStats 
-} from "@/services/machine.service";
-import { 
-  Machine,
-  MachineStatus,
-  MachineStats,
-  MachineCreateParams,
-  MachineUpdateParams,
-  MachineTransferParams 
-} from "@/types/machine.types";
-import { supabase } from "@/integrations/supabase/client";
+  getMachineStats
+} from '@/services/machine.service';
 
-interface UseMachinesOptions {
-  status?: MachineStatus;
-  clientId?: string;
-  initialFetch?: boolean;
-  enableRealtime?: boolean;
-}
-
-export function useMachines(options: UseMachinesOptions = {}) {
+export const useMachines = () => {
   const [machines, setMachines] = useState<Machine[]>([]);
-  const [stats, setStats] = useState<MachineStats | null>(null);
   const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<Error | null>(null);
-  const { toast } = useToast();
+  const [error, setError] = useState<string | null>(null);
 
   const fetchMachines = async () => {
-    setIsLoading(true);
-    setError(null);
     try {
-      let data: Machine[];
-      
-      if (options.status) {
-        data = await getMachinesByStatus(options.status);
-      } else {
-        data = await getAllMachines();
-      }
-
-      // Filter by client if needed
-      if (options.clientId) {
-        data = data.filter(machine => machine.client_id === options.clientId);
-      }
-
+      setIsLoading(true);
+      setError(null);
+      const data = await getAllMachines();
       setMachines(data);
-      
-      // Fetch stats if needed
-      if (!options.status && !options.clientId) {
-        const statsData = await getMachineStats();
-        setStats(statsData);
-      }
-      
-      return data;
-    } catch (err: any) {
-      setError(err);
-      console.error("Error fetching machines:", err);
-      toast({
-        title: "Error",
-        description: "Failed to fetch machines data",
-        variant: "destructive",
-      });
-      
-      return [];
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to fetch machines');
     } finally {
       setIsLoading(false);
     }
   };
 
-  const addMachine = async (machineData: MachineCreateParams) => {
+  const fetchMachinesByStatus = async (status: MachineStatus) => {
+    try {
+      setIsLoading(true);
+      setError(null);
+      const data = await getMachinesByStatus(status);
+      setMachines(data);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to fetch machines by status');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const createMachineHandler = async (machineData: Omit<Machine, 'id' | 'created_at' | 'updated_at' | 'client'>) => {
     try {
       const newMachine = await createMachine(machineData);
-      toast({
-        title: "Máquina criada",
-        description: "A máquina foi adicionada com sucesso",
-      });
+      setMachines(prev => [newMachine, ...prev]);
       return newMachine;
-    } catch (err: any) {
-      console.error("Error creating machine:", err);
-      toast({
-        title: "Erro",
-        description: err.message || "Falha ao criar máquina",
-        variant: "destructive",
-      });
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to create machine');
       throw err;
     }
   };
 
-  const modifyMachine = async (id: string, machineData: MachineUpdateParams) => {
+  const updateMachineHandler = async (id: string, updates: Partial<Omit<Machine, 'id' | 'created_at' | 'updated_at' | 'client'>>) => {
     try {
-      const updatedMachine = await updateMachine(id, machineData);
-      toast({
-        title: "Máquina atualizada",
-        description: "A máquina foi atualizada com sucesso",
-      });
+      const updatedMachine = await updateMachine(id, updates);
+      setMachines(prev => prev.map(machine => 
+        machine.id === id ? updatedMachine : machine
+      ));
       return updatedMachine;
-    } catch (err: any) {
-      console.error("Error updating machine:", err);
-      toast({
-        title: "Erro",
-        description: err.message || "Falha ao atualizar máquina",
-        variant: "destructive",
-      });
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to update machine');
       throw err;
     }
   };
 
-  const transferMachineToClient = async (params: MachineTransferParams) => {
+  const deleteMachineHandler = async (id: string) => {
     try {
-      const result = await transferMachine(params);
-      toast({
-        title: "Máquina transferida",
-        description: "A máquina foi transferida com sucesso",
-      });
-      return result;
-    } catch (err: any) {
-      console.error("Error transferring machine:", err);
-      toast({
-        title: "Erro",
-        description: err.message || "Falha ao transferir máquina",
-        variant: "destructive",
-      });
+      await deleteMachine(id);
+      setMachines(prev => prev.filter(machine => machine.id !== id));
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to delete machine');
       throw err;
     }
   };
 
-  // Initial fetch
-  useEffect(() => {
-    if (options.initialFetch !== false) {
-      fetchMachines();
+  const transferMachineHandler = async (machineId: string, newClientId: string | null) => {
+    try {
+      const updatedMachine = await transferMachine(machineId, newClientId);
+      setMachines(prev => prev.map(machine => 
+        machine.id === machineId ? updatedMachine : machine
+      ));
+      return updatedMachine;
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to transfer machine');
+      throw err;
     }
-  }, [options.status, options.clientId]);
+  };
 
-  // Set up real-time subscription
   useEffect(() => {
-    if (!options.enableRealtime) return;
-
-    const channel = supabase
-      .channel("machine-changes")
-      .on(
-        "postgres_changes",
-        { event: "*", schema: "public", table: "machines" },
-        () => {
-          // Refresh data when any change occurs
-          fetchMachines();
-        }
-      )
-      .subscribe();
-
-    return () => {
-      supabase.removeChannel(channel);
-    };
-  }, [options.enableRealtime, options.status, options.clientId]);
+    fetchMachines();
+  }, []);
 
   return {
     machines,
-    stats,
     isLoading,
     error,
-    fetchMachines,
-    addMachine,
-    updateMachine: modifyMachine,
-    transferMachine: transferMachineToClient
+    refetch: fetchMachines,
+    fetchMachinesByStatus,
+    createMachine: createMachineHandler,
+    updateMachine: updateMachineHandler,
+    deleteMachine: deleteMachineHandler,
+    transferMachine: transferMachineHandler,
+    getMachineStats
   };
-}
+};

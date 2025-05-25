@@ -1,104 +1,94 @@
 
-import React, { useState, useEffect } from 'react';
-import { getAllMachines, getClientsWithMachines } from '@/services/machine.service';
-import { Machine, MachineStatus } from '@/types/machine.types';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Badge } from '@/components/ui/badge';
-import { Input } from '@/components/ui/input';
+import { useState, useEffect } from 'react';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { getClientsWithMachines } from '@/services/machine.service';
+import { Spinner } from '@/components/ui/spinner';
 
-interface Client {
+interface ClientWithMachines {
   id: string;
   business_name: string;
-  machineCount: number;
-  machines?: Array<{id: string; status: string}>;
+  email: string;
+  machines: Array<{
+    id: string;
+    serial_number: string;
+    model: string;
+    status: string;
+  }>;
 }
 
-const ClientsWithMachinesTab: React.FC = () => {
-  const [clients, setClients] = useState<Client[]>([]);
+const ClientsWithMachinesTab = () => {
+  const [clients, setClients] = useState<ClientWithMachines[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [searchTerm, setSearchTerm] = useState('');
-  
+  const [error, setError] = useState<string | null>(null);
+
   useEffect(() => {
-    const loadData = async () => {
+    const fetchClientsWithMachines = async () => {
       try {
-        const clientsWithMachines = await getClientsWithMachines();
-        setClients(clientsWithMachines);
-      } catch (error) {
-        console.error("Error loading clients with machines:", error);
+        setIsLoading(true);
+        const data = await getClientsWithMachines();
+        setClients(data);
+      } catch (err) {
+        setError(err instanceof Error ? err.message : 'Failed to fetch clients with machines');
       } finally {
         setIsLoading(false);
       }
     };
-    
-    loadData();
+
+    fetchClientsWithMachines();
   }, []);
-  
-  const filteredClients = clients.filter(client => 
-    client.business_name.toLowerCase().includes(searchTerm.toLowerCase())
-  );
-  
-  const getStatusBadge = (status: string) => {
-    switch (status) {
-      case MachineStatus.ACTIVE:
-        return <Badge className="bg-green-500">Ativo</Badge>;
-      case MachineStatus.INACTIVE:
-        return <Badge className="bg-red-500">Inativo</Badge>;
-      case MachineStatus.MAINTENANCE:
-        return <Badge className="bg-yellow-500">Manutenção</Badge>;
-      case MachineStatus.STOCK:
-        return <Badge className="bg-blue-500">Estoque</Badge>;
-      default:
-        return <Badge>{status}</Badge>;
-    }
-  };
-  
+
   if (isLoading) {
-    return <div className="flex justify-center py-8">Carregando clientes...</div>;
+    return (
+      <div className="flex items-center justify-center h-64">
+        <Spinner size="lg" />
+      </div>
+    );
   }
-  
+
+  if (error) {
+    return (
+      <div className="text-center text-red-500 p-4">
+        Error: {error}
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-4">
-      <Input
-        placeholder="Buscar por nome do cliente..."
-        value={searchTerm}
-        onChange={(e) => setSearchTerm(e.target.value)}
-        className="max-w-xs"
-      />
+      <h3 className="text-lg font-semibold">Clientes com Máquinas</h3>
       
-      {filteredClients.length === 0 ? (
-        <div className="text-center py-8 text-muted-foreground">
-          Nenhum cliente com máquinas encontrado.
-        </div>
-      ) : (
-        <div className="rounded-md border overflow-hidden">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Cliente</TableHead>
-                <TableHead className="text-right">Qtd. Máquinas</TableHead>
-                <TableHead className="text-right">Status</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {filteredClients.map((client) => (
-                <TableRow key={client.id}>
-                  <TableCell className="font-medium">{client.business_name}</TableCell>
-                  <TableCell className="text-right">{client.machineCount}</TableCell>
-                  <TableCell className="text-right">
-                    <div className="flex justify-end space-x-1">
-                      {client.machines && client.machines.map((machine, idx) => (
-                        <div key={idx}>
-                          {getStatusBadge(machine.status)}
-                        </div>
-                      ))}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        {clients.map((client) => (
+          <Card key={client.id}>
+            <CardHeader>
+              <CardTitle className="text-base">{client.business_name}</CardTitle>
+              <p className="text-sm text-muted-foreground">{client.email}</p>
+            </CardHeader>
+            <CardContent>
+              <p className="text-sm font-medium mb-2">
+                Máquinas: {client.machines.length}
+              </p>
+              {client.machines.length > 0 && (
+                <div className="space-y-1">
+                  {client.machines.slice(0, 3).map((machine) => (
+                    <div key={machine.id} className="text-xs bg-muted p-2 rounded">
+                      <span className="font-mono">{machine.serial_number}</span>
+                      <span className="ml-2 text-muted-foreground">
+                        {machine.model} - {machine.status}
+                      </span>
                     </div>
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </div>
-      )}
+                  ))}
+                  {client.machines.length > 3 && (
+                    <p className="text-xs text-muted-foreground">
+                      +{client.machines.length - 3} mais
+                    </p>
+                  )}
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        ))}
+      </div>
     </div>
   );
 };
