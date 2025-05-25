@@ -17,8 +17,8 @@ export const TransactionService = {
       
       // Get the tax rate for this client, payment method and installment
       const taxRate = await TaxBlocksService.getClientTaxRate(
-        params.clientId,
-        params.paymentMethod,
+        params.client_id,
+        params.payment_method,
         params.installments
       );
       
@@ -49,16 +49,18 @@ export const TransactionService = {
       });
       
       return {
-        originalAmount: params.amount,
-        feeAmount: finalFee,
-        netAmount,
+        amount: params.amount,
+        root_rate: taxRate.root_rate,
+        forwarding_rate: taxRate.forwarding_rate,
+        final_rate: taxRate.final_rate,
+        root_fee: rootFee,
+        forwarding_fee: forwardingFee,
+        total_fee: finalFee,
+        net_amount: netAmount,
         feePercentage: taxRate.final_rate,
-        rootFee,
-        forwardingFee,
-        finalFee,
         taxBlockInfo: taxBlock ? {
-          blockId: taxBlock.id,
-          blockName: taxBlock.name
+          name: taxBlock.name,
+          description: taxBlock.description
         } : undefined
       };
     } catch (error) {
@@ -74,13 +76,12 @@ export const TransactionService = {
    */
   formatFeeResult(result: TransactionFeeResult) {
     return {
-      originalAmount: formatCurrency(result.originalAmount),
-      feeAmount: formatCurrency(result.feeAmount),
-      netAmount: formatCurrency(result.netAmount),
-      feePercentage: `${result.feePercentage.toFixed(2)}%`,
-      rootFee: formatCurrency(result.rootFee),
-      forwardingFee: formatCurrency(result.forwardingFee),
-      finalFee: formatCurrency(result.finalFee)
+      amount: formatCurrency(result.amount),
+      net_amount: formatCurrency(result.net_amount),
+      total_fee: formatCurrency(result.total_fee),
+      feePercentage: `${result.feePercentage?.toFixed(2) || '0.00'}%`,
+      root_fee: formatCurrency(result.root_fee),
+      forwarding_fee: formatCurrency(result.forwarding_fee)
     };
   },
   

@@ -1,6 +1,6 @@
 
 import { useState, useEffect } from "react";
-import { Payment, PaymentRequest, PaymentStatus } from "@/types/payment.types";
+import { Payment, PaymentRequest, PaymentStatus, PaymentMethod } from "@/types/payment.types";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
@@ -66,7 +66,7 @@ export function usePayments(): UsePaymentsReturn {
             key,
             type,
             name,
-            user_id
+            owner_name
           )
         `)
         .eq('client_id', clientData.client_id)
@@ -84,6 +84,8 @@ export function usePayments(): UsePaymentsReturn {
           amount: payment.amount,
           description: payment.description || '',
           status: payment.status as PaymentStatus,
+          method: PaymentMethod.PIX,
+          requested_at: payment.created_at,
           created_at: payment.created_at,
           updated_at: payment.updated_at,
           approved_at: payment.approved_at,

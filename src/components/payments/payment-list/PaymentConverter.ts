@@ -16,7 +16,6 @@ export const convertPaymentRequestToPayment = (paymentRequest: any): Payment => 
     receipt_url: paymentRequest.receipt_url,
     description: paymentRequest.description,
     rejection_reason: paymentRequest.rejection_reason,
-    payment_type: paymentRequest.payment_type,
     client: paymentRequest.client,
   };
 };

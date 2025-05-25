@@ -1,6 +1,6 @@
 
 import { supabase } from "@/integrations/supabase/client";
-import { PaymentRequest, PaymentStatus, PaymentMethod, PaymentRequestParams, ClientBalance } from "@/types/payment.types";
+import { PaymentRequest, PaymentStatus, PaymentMethod, PaymentRequestParams } from "@/types/payment.types";
 
 export const getAllPaymentRequests = async (): Promise<PaymentRequest[]> => {
   try {
@@ -27,7 +27,8 @@ export const getAllPaymentRequests = async (): Promise<PaymentRequest[]> => {
     return (data || []).map(payment => ({
       ...payment,
       method: PaymentMethod.PIX,
-      requested_at: payment.created_at
+      requested_at: payment.created_at,
+      status: payment.status as PaymentStatus
     }));
   } catch (error) {
     console.error('Error in getAllPaymentRequests:', error);
@@ -128,7 +129,8 @@ export const createPaymentRequest = async (params: PaymentRequestParams): Promis
     return {
       ...data,
       method: PaymentMethod.PIX,
-      requested_at: data.created_at
+      requested_at: data.created_at,
+      status: data.status as PaymentStatus
     };
   } catch (error) {
     console.error('Error in createPaymentRequest:', error);
@@ -136,7 +138,7 @@ export const createPaymentRequest = async (params: PaymentRequestParams): Promis
   }
 };
 
-export const getClientBalance = async (clientId: string): Promise<ClientBalance> => {
+export const getClientBalance = async (clientId: string): Promise<any> => {
   try {
     // Get client basic info (using balance instead of current_balance)
     const { data: client, error: clientError } = await supabase

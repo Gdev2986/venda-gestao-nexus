@@ -1,7 +1,7 @@
 
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
-import { PaymentRequest, PaymentStatus } from '@/types/payment.types';
+import { PaymentRequest, PaymentStatus, PaymentMethod } from '@/types/payment.types';
 
 interface UsePaymentsFetcherProps {
   status?: PaymentStatus | "ALL";
@@ -25,7 +25,7 @@ export const usePaymentsFetcher = ({ status = "ALL" }: UsePaymentsFetcherProps =
         `);
 
       if (status !== "ALL") {
-        query = query.eq('status', status);
+        query = query.eq('status', status as string);
       }
 
       const { data, error } = await query.order('created_at', { ascending: false });
@@ -43,7 +43,7 @@ export const usePaymentsFetcher = ({ status = "ALL" }: UsePaymentsFetcherProps =
         rejection_reason: payment.rejection_reason || '',
         client: payment.client,
         pix_key_id: payment.pix_key_id,
-        method: 'PIX' as any,
+        method: PaymentMethod.PIX,
         requested_at: payment.created_at
       })) || [];
 
