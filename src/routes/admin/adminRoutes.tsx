@@ -1,5 +1,6 @@
 import { Route } from "react-router-dom";
 import { lazy } from "react";
+import { PATHS } from "../paths";
 
 // Layouts
 import AdminLayout from "../../layouts/AdminLayout";
@@ -39,7 +40,7 @@ const PaymentNew = lazy(() => import("../../pages/payments/Payments"));
 const Logistics = lazy(() => import("../../pages/logistics/Dashboard"));
 
 export const adminRoutes = (
-  <Route path="admin" element={<AdminLayout />}>
+  <Route path={PATHS.ADMIN.ROOT} element={<AdminLayout />}>
     <Route index element={<Dashboard />} />
     <Route path="dashboard" element={<Dashboard />} />
     

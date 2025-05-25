@@ -1,6 +1,5 @@
-
 import { supabase } from "@/integrations/supabase/client";
-import { PaymentRequest, PaymentStatus, PaymentMethod, PaymentRequestParams } from "@/types/payment.types";
+import { PaymentRequest, PaymentStatus, PaymentMethod, PaymentRequestParams, PaymentProcessParams, ClientBalance } from "@/types/payment.types";
 
 export const getAllPaymentRequests = async (): Promise<PaymentRequest[]> => {
   try {
@@ -8,26 +7,24 @@ export const getAllPaymentRequests = async (): Promise<PaymentRequest[]> => {
       .from('payment_requests')
       .select(`
         *,
-        client:clients (
+        client:client_id (
           id,
-          business_name
+          business_name,
+          current_balance
+        ),
+        processor:processed_by (
+          id,
+          name
         )
       `)
-      .order('created_at', { ascending: false });
+      .order('requested_at', { ascending: false });
 
     if (error) {
       console.error('Error fetching payment requests:', error);
       throw new Error(`Erro ao buscar solicitações de pagamento: ${error.message}`);
     }
 
-    return (data || []).map(payment => ({
-      ...payment,
-      method: PaymentMethod.PIX,
-      requested_at: payment.created_at,
-      status: payment.status as PaymentStatus,
-      client: payment.client,
-      processor: undefined // Remove processor since it's causing issues
-    }));
+    return data || [];
   } catch (error) {
     console.error('Error in getAllPaymentRequests:', error);
     throw error;
@@ -38,12 +35,12 @@ export const updatePaymentStatus = async (paymentId: string, status: PaymentStat
   try {
     const updateData: any = {
       status,
-      approved_at: new Date().toISOString(),
+      processed_at: new Date().toISOString(),
       updated_at: new Date().toISOString()
     };
 
-    if (notes) updateData.rejection_reason = notes;
-    if (processedBy) updateData.approved_by = processedBy;
+    if (notes) updateData.notes = notes;
+    if (processedBy) updateData.processed_by = processedBy;
 
     const { error } = await supabase
       .from('payment_requests')
@@ -105,16 +102,17 @@ export const createPaymentRequest = async (params: PaymentRequestParams): Promis
       .insert({
         client_id: params.client_id,
         amount: params.amount,
-        pix_key_id: params.pix_key_id || '',
-        status: PaymentStatus.PENDING,
-        created_at: new Date().toISOString(),
-        description: params.description
+        method: params.method,
+        status: PaymentStatus.PROCESSING,
+        requested_at: new Date().toISOString(),
+        notes: params.notes
       })
       .select(`
         *,
-        client:clients (
+        client:client_id (
           id,
-          business_name
+          business_name,
+          current_balance
         )
       `)
       .single();
@@ -124,25 +122,19 @@ export const createPaymentRequest = async (params: PaymentRequestParams): Promis
       throw new Error(`Erro ao criar solicitação de pagamento: ${error.message}`);
     }
 
-    return {
-      ...data,
-      method: PaymentMethod.PIX,
-      requested_at: data.created_at,
-      status: data.status as PaymentStatus,
-      client: data.client
-    };
+    return data;
   } catch (error) {
     console.error('Error in createPaymentRequest:', error);
     throw error;
   }
 };
 
-export const getClientBalance = async (clientId: string): Promise<any> => {
+export const getClientBalance = async (clientId: string): Promise<ClientBalance> => {
   try {
-    // Get client basic info (using balance instead of current_balance)
+    // Get client basic info
     const { data: client, error: clientError } = await supabase
       .from('clients')
-      .select('id, balance')
+      .select('id, current_balance, commission_rate')
       .eq('id', clientId)
       .single();
 
@@ -156,7 +148,7 @@ export const getClientBalance = async (clientId: string): Promise<any> => {
       .from('payment_requests')
       .select('amount')
       .eq('client_id', clientId)
-      .eq('status', PaymentStatus.PENDING);
+      .eq('status', PaymentStatus.PROCESSING);
 
     if (paymentsError) {
       console.error('Error fetching pending payments:', paymentsError);
@@ -179,10 +171,10 @@ export const getClientBalance = async (clientId: string): Promise<any> => {
 
     return {
       client_id: clientId,
-      current_balance: client.balance || 0,
+      current_balance: client.current_balance || 0,
       pending_payments: totalPendingPayments,
       total_sales: totalSales,
-      commission_rate: 0 // Default value since it's not in clients table
+      commission_rate: client.commission_rate || 0
     };
   } catch (error) {
     console.error('Error in getClientBalance:', error);

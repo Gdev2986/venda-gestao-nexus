@@ -18,7 +18,7 @@ const MachinesTabNavigation = () => {
   
   const newMachineDialog = useDialog();
   const { user } = useAuth();
-  const { machines, stats, refetch, isLoading } = useMachines({
+  const { machines, stats, fetchMachines, isLoading } = useMachines({
     enableRealtime: true,
     initialFetch: true,
   });
@@ -28,7 +28,7 @@ const MachinesTabNavigation = () => {
   };
   
   const handleNewMachineSuccess = () => {
-    refetch();
+    fetchMachines();
   };
 
   // Filter machines based on search term and filters

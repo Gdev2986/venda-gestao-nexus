@@ -17,8 +17,8 @@ export const TransactionService = {
       
       // Get the tax rate for this client, payment method and installment
       const taxRate = await TaxBlocksService.getClientTaxRate(
-        params.client_id,
-        params.payment_method as PaymentMethod,
+        params.clientId,
+        params.paymentMethod,
         params.installments
       );
       
@@ -41,25 +41,24 @@ export const TransactionService = {
       const netAmount = params.amount - finalFee;
       
       console.log("Fee calculation complete:", {
-        amount: params.amount,
-        total_fee: finalFee,
-        net_amount: netAmount,
-        final_rate: taxRate.final_rate,
+        originalAmount: params.amount,
+        feeAmount: finalFee,
+        netAmount,
+        feePercentage: taxRate.final_rate,
         taxRate
       });
       
       return {
-        amount: params.amount,
-        root_rate: taxRate.root_rate,
-        forwarding_rate: taxRate.forwarding_rate,
-        final_rate: taxRate.final_rate,
-        root_fee: rootFee,
-        forwarding_fee: forwardingFee,
-        total_fee: finalFee,
-        net_amount: netAmount,
+        originalAmount: params.amount,
+        feeAmount: finalFee,
+        netAmount,
+        feePercentage: taxRate.final_rate,
+        rootFee,
+        forwardingFee,
+        finalFee,
         taxBlockInfo: taxBlock ? {
-          name: taxBlock.name,
-          description: taxBlock.description
+          blockId: taxBlock.id,
+          blockName: taxBlock.name
         } : undefined
       };
     } catch (error) {
@@ -75,12 +74,13 @@ export const TransactionService = {
    */
   formatFeeResult(result: TransactionFeeResult) {
     return {
-      amount: formatCurrency(result.amount),
-      net_amount: formatCurrency(result.net_amount),
-      total_fee: formatCurrency(result.total_fee),
-      feePercentage: `${result.final_rate?.toFixed(2) || '0.00'}%`,
-      root_fee: formatCurrency(result.root_fee),
-      forwarding_fee: formatCurrency(result.forwarding_fee)
+      originalAmount: formatCurrency(result.originalAmount),
+      feeAmount: formatCurrency(result.feeAmount),
+      netAmount: formatCurrency(result.netAmount),
+      feePercentage: `${result.feePercentage.toFixed(2)}%`,
+      rootFee: formatCurrency(result.rootFee),
+      forwardingFee: formatCurrency(result.forwardingFee),
+      finalFee: formatCurrency(result.finalFee)
     };
   },
   

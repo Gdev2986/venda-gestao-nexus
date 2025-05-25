@@ -1,3 +1,4 @@
+
 import React, { useState } from "react";
 import { usePixKeys } from "@/hooks/usePixKeys";
 import { Button } from "@/components/ui/button";
@@ -11,7 +12,7 @@ import { useToast } from "@/hooks/use-toast";
 import { PixKey } from "@/types";
 
 const PixKeysManager: React.FC = () => {
-  const { pixKeys, loading } = usePixKeys(); // Use 'loading' instead of 'isLoadingPixKeys'
+  const { pixKeys, isLoadingPixKeys } = usePixKeys();
   const [isAddKeyOpen, setIsAddKeyOpen] = useState(false);
   const [isEditKeyOpen, setIsEditKeyOpen] = useState(false);
   const [isDeleteKeyOpen, setIsDeleteKeyOpen] = useState(false);
@@ -114,7 +115,7 @@ const PixKeysManager: React.FC = () => {
     return key;
   };
 
-  if (loading) {
+  if (isLoadingPixKeys) {
     return (
       <Card>
         <CardHeader>

@@ -1,5 +1,6 @@
 
 import { Route } from "react-router-dom";
+import { PATHS } from "../paths";
 
 // Admin Dashboard
 import AdminDashboard from "../../pages/admin/Dashboard";
@@ -12,22 +13,22 @@ export const dashboardRoute = (
   <>
     <Route 
       key="admin-dashboard"
-      path="dashboard"
+      path={PATHS.ADMIN.DASHBOARD}
       element={<AdminDashboard />}
     />
     <Route 
       key="admin-fees"
-      path="fees"
+      path={PATHS.ADMIN.FEES}
       element={<AdminFees />}
     />
     <Route 
       key="admin-reports"
-      path="reports"
+      path={PATHS.ADMIN.REPORTS}
       element={<AdminReports />}
     />
     <Route 
       key="admin-support"
-      path="support"
+      path={PATHS.ADMIN.SUPPORT}
       element={<AdminSupport />}
     />
   </>

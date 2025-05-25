@@ -26,11 +26,9 @@ const LoginForm = () => {
     setIsSubmitting(true);
 
     try {
-      console.log("Attempting login with:", email);
       const { data, error } = await signIn(email, password);
 
       if (error) {
-        console.error("Login error:", error);
         let errorMessage = "Falha na autenticação. Verifique seu email e senha.";
         
         if (error.message.includes("Invalid login credentials")) {
@@ -47,24 +45,18 @@ const LoginForm = () => {
         return;
       }
 
-      if (data?.user) {
-        console.log("Login successful, user:", data.user.email);
-        
-        if (needsPasswordChange) {
-          navigate(PATHS.CHANGE_PASSWORD);
-          return;
-        }
-
-        toast({
-          title: "Login realizado com sucesso",
-          description: "Bem-vindo de volta!",
-        });
-        
-        // Force redirect to dashboard
-        navigate("/dashboard", { replace: true });
+      if (data && needsPasswordChange) {
+        navigate(PATHS.CHANGE_PASSWORD);
+        return;
       }
+
+      toast({
+        title: "Login realizado com sucesso",
+        description: "Bem-vindo de volta!",
+      });
+      
+      window.location.href = PATHS.DASHBOARD;
     } catch (error: any) {
-      console.error("Login exception:", error);
       toast({
         variant: "destructive",
         title: "Erro",

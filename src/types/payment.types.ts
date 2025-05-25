@@ -1,40 +1,56 @@
-export enum PaymentStatus {
-  PENDING = "PENDING",
-  PROCESSING = "PROCESSING",
-  APPROVED = "APPROVED", 
-  PAID = "PAID",
-  REJECTED = "REJECTED"
-}
 
 export enum PaymentMethod {
-  PIX = "PIX",
-  TED = "TED",
-  BOLETO = "BOLETO"
+  CREDIT = "CREDIT",
+  DEBIT = "DEBIT", 
+  PIX = "PIX"
 }
 
-// Update PixKeyType to match database enum exactly
+export enum PaymentStatus {
+  PENDING = "PENDING",
+  PROCESSING = "PROCESSING", 
+  APPROVED = "APPROVED",
+  REJECTED = "REJECTED",
+  PAID = "PAID"
+}
+
 export enum PixKeyType {
   CPF = "CPF",
-  CNPJ = "CNPJ", 
+  CNPJ = "CNPJ",
   EMAIL = "EMAIL",
   PHONE = "PHONE",
-  RANDOM = "RANDOM"
+  RANDOM = "RANDOM",
+  EVP = "EVP"
+}
+
+export interface PixKey {
+  id: string;
+  user_id: string;
+  type: PixKeyType;
+  key: string;
+  name: string;
+  owner_name?: string;
+  bank_name?: string;
+  is_default: boolean;
+  created_at: string;
+  updated_at: string;
 }
 
 export interface Payment {
   id: string;
   client_id: string;
   amount: number;
-  description: string;
+  description?: string;
   status: PaymentStatus;
   method: PaymentMethod;
-  requested_at: string;
+  payment_type?: string;
+  pix_key_id?: string;
   created_at: string;
   updated_at: string;
-  approved_at?: string;
-  approved_by?: string;
-  receipt_url?: string;
+  requested_at: string;
   rejection_reason?: string;
+  approved_by?: string;
+  approved_at?: string;
+  receipt_url?: string;
   pix_key?: PixKey;
   client?: {
     id: string;
@@ -46,76 +62,31 @@ export interface PaymentRequest {
   id: string;
   client_id: string;
   amount: number;
-  description: string;
+  description?: string;
   status: PaymentStatus;
   method: PaymentMethod;
+  pix_key_id: string;
   requested_at: string;
-  created_at: string;
-  updated_at: string;
-  approved_at?: string;
-  approved_by?: string;
-  receipt_url?: string;
+  created_at?: string;
+  updated_at?: string;
   rejection_reason?: string;
-  pix_key_id?: string;
   client?: {
     id: string;
     business_name: string;
   };
-  processor?: {
-    id: string;
-    name: string;
-  };
-}
-
-export interface PixKey {
-  id: string;
-  key: string;
-  type: PixKeyType;
-  name: string;
-  owner_name: string;
-  user_id: string;
-  is_default: boolean;
-  created_at: string;
-  updated_at: string;
-  bank_name?: string;
 }
 
 export interface TransactionFeeParams {
   amount: number;
-  payment_method: string;
+  paymentMethod: PaymentMethod;
   installments?: number;
-  client_id?: string;
+  clientId?: string;
 }
 
 export interface TransactionFeeResult {
-  amount: number;
-  root_rate: number;
-  forwarding_rate: number;
-  final_rate: number;
-  root_fee: number;
-  forwarding_fee: number;
-  total_fee: number;
-  net_amount: number;
-  feePercentage?: number;
-  taxBlockInfo?: {
-    name: string;
-    description: string;
-  };
-}
-
-export interface PaymentRequestParams {
-  client_id: string;
-  amount: number;
-  description?: string;
-  method: PaymentMethod;
-  pix_key_id?: string;
-  notes?: string;
-}
-
-export interface ClientBalance {
-  client_id: string;
-  current_balance: number;
-  pending_payments: number;
-  total_sales: number;
-  commission_rate: number;
+  grossAmount: number;
+  netAmount: number;
+  feeAmount: number;
+  feePercentage: number;
+  taxBlockInfo?: any;
 }

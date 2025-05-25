@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -67,8 +68,8 @@ export function TransactionFeeCalculator({
     if (!amount || amount <= 0) return;
     
     const result = await calculateFees({
-      client_id: clientId,
-      payment_method: paymentMethod,
+      clientId,
+      paymentMethod,
       installments,
       amount
     });
@@ -204,12 +205,12 @@ export function TransactionFeeCalculator({
                 <div className="flex justify-between items-center mb-4 py-2 px-4 bg-muted rounded-md">
                   <div>
                     <p className="font-semibold text-sm">Valor Original</p>
-                    <p className="text-2xl">{formatFeeResult(feeResult).amount}</p>
+                    <p className="text-2xl">{formatFeeResult(feeResult).originalAmount}</p>
                   </div>
                   <ArrowRight className="h-5 w-5 text-muted-foreground" />
                   <div>
                     <p className="font-semibold text-sm">Valor Líquido</p>
-                    <p className="text-2xl">{formatFeeResult(feeResult).net_amount}</p>
+                    <p className="text-2xl">{formatFeeResult(feeResult).netAmount}</p>
                   </div>
                 </div>
                 
@@ -222,21 +223,21 @@ export function TransactionFeeCalculator({
                   </TableHeader>
                   <TableBody>
                     <TableRow>
-                      <TableCell>Taxa Total ({feeResult.final_rate?.toFixed(2) || '0.00'}%)</TableCell>
-                      <TableCell className="text-right">{formatFeeResult(feeResult).total_fee}</TableCell>
+                      <TableCell>Taxa Total ({feeResult.feePercentage.toFixed(2)}%)</TableCell>
+                      <TableCell className="text-right">{formatFeeResult(feeResult).feeAmount}</TableCell>
                     </TableRow>
                     <TableRow>
                       <TableCell className="pl-6 text-sm text-muted-foreground">└ Taxa Root</TableCell>
-                      <TableCell className="text-right text-sm text-muted-foreground">{formatFeeResult(feeResult).root_fee}</TableCell>
+                      <TableCell className="text-right text-sm text-muted-foreground">{formatFeeResult(feeResult).rootFee}</TableCell>
                     </TableRow>
                     <TableRow>
                       <TableCell className="pl-6 text-sm text-muted-foreground">└ Taxa de Repasse</TableCell>
-                      <TableCell className="text-right text-sm text-muted-foreground">{formatFeeResult(feeResult).forwarding_fee}</TableCell>
+                      <TableCell className="text-right text-sm text-muted-foreground">{formatFeeResult(feeResult).forwardingFee}</TableCell>
                     </TableRow>
                     {feeResult.taxBlockInfo && (
                       <TableRow>
                         <TableCell colSpan={2} className="text-xs text-muted-foreground">
-                          Bloco de taxas: {feeResult.taxBlockInfo.name}
+                          Bloco de taxas: {feeResult.taxBlockInfo.blockName}
                         </TableCell>
                       </TableRow>
                     )}

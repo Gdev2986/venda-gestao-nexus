@@ -1,6 +1,6 @@
 
 import { useState, useEffect } from "react";
-import { Payment, PaymentRequest, PaymentStatus, PaymentMethod, PixKeyType } from "@/types/payment.types";
+import { Payment, PaymentRequest, PaymentStatus } from "@/types/payment.types";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
@@ -65,7 +65,8 @@ export function usePayments(): UsePaymentsReturn {
             id, 
             key,
             type,
-            name
+            name,
+            user_id
           )
         `)
         .eq('client_id', clientData.client_id)
@@ -83,8 +84,6 @@ export function usePayments(): UsePaymentsReturn {
           amount: payment.amount,
           description: payment.description || '',
           status: payment.status as PaymentStatus,
-          method: PaymentMethod.PIX,
-          requested_at: payment.created_at,
           created_at: payment.created_at,
           updated_at: payment.updated_at,
           approved_at: payment.approved_at,
@@ -94,14 +93,10 @@ export function usePayments(): UsePaymentsReturn {
           pix_key: payment.pix_key ? {
             id: payment.pix_key.id,
             key: payment.pix_key.key,
-            type: payment.pix_key.type as PixKeyType,
+            type: payment.pix_key.type,
             name: payment.pix_key.name,
             owner_name: payment.pix_key.name,
-            user_id: user.id,
-            is_default: false,
-            created_at: new Date().toISOString(),
-            updated_at: new Date().toISOString(),
-            bank_name: ''
+            user_id: payment.pix_key.user_id // Include the user_id from the database
           } : undefined
         };
       });

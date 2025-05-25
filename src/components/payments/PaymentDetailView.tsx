@@ -16,7 +16,7 @@ export function PaymentDetailView({ payment }: PaymentDetailViewProps) {
           <div>
             <p className="text-xs text-muted-foreground">Cliente</p>
             <p className="font-medium truncate">
-              {(payment as any).client?.business_name || "N/A"}
+              {payment.client?.business_name || "N/A"}
             </p>
           </div>
           <div>
@@ -35,8 +35,8 @@ export function PaymentDetailView({ payment }: PaymentDetailViewProps) {
             <p className="text-xs text-muted-foreground">Método de Pagamento</p>
             <p className="text-sm">
               {payment.pix_key ? "PIX" : 
-               (payment as any).method === 'TED' ? "TED" :
-               (payment as any).method === 'BOLETO' ? "Boleto" : "PIX"}
+               payment.payment_type === 'TED' ? "TED" :
+               payment.payment_type === 'BOLETO' ? "Boleto" : "Não especificado"}
             </p>
           </div>
         </div>

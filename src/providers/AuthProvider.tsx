@@ -3,6 +3,7 @@ import * as React from "react";
 import { Session, User } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
 import { UserRole } from "@/types";
+import { fetchUserRole } from "@/utils/auth-utils";
 import { AuthService } from "@/services/auth.service";
 import { UserProfile } from "@/contexts/auth-types";
 
@@ -46,23 +47,31 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [needsPasswordChange, setNeedsPasswordChange] = React.useState<boolean>(false);
   const [profile, setProfile] = React.useState<UserProfile | null>(null);
 
-  // Load user profile and role
+  // Check if current user needs password change
+  const checkPasswordChangeStatus = React.useCallback(async (userId: string) => {
+    try {
+      const needsChange = await AuthService.needsPasswordChange();
+      setNeedsPasswordChange(needsChange);
+      return needsChange;
+    } catch (error) {
+      console.error("Error checking password change status:", error);
+      return false;
+    }
+  }, []);
+
+  // Fetch user profile and role
   const loadUserProfile = React.useCallback(async (userId: string) => {
     try {
-      console.log("Loading profile for user:", userId);
+      // Fetch profile data
       const { data, error } = await supabase
         .from('profiles')
         .select('*')
         .eq('id', userId)
         .single();
       
-      if (error) {
-        console.error("Error loading user profile:", error);
-        return;
-      }
+      if (error) throw error;
       
       if (data) {
-        console.log("Profile loaded:", data);
         const userProfile: UserProfile = {
           id: data.id,
           email: data.email,
@@ -75,97 +84,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         
         setProfile(userProfile);
         setUserRole(data.role as UserRole);
-        
-        // Check password change status
-        const needsChange = await AuthService.needsPasswordChange();
-        setNeedsPasswordChange(needsChange);
-        
-        console.log("Auth state updated:", { role: data.role, needsChange });
       }
     } catch (error) {
       console.error("Error loading user profile:", error);
     }
   }, []);
-
-  // Initialize auth
-  React.useEffect(() => {
-    let mounted = true;
-    
-    const initializeAuth = async () => {
-      try {
-        console.log("Initializing auth...");
-        
-        // Get current session
-        const { data: { session }, error } = await supabase.auth.getSession();
-        
-        if (error) {
-          console.error("Error getting session:", error);
-          if (mounted) {
-            setSession(null);
-            setUser(null);
-            setUserRole(null);
-            setProfile(null);
-            setIsLoading(false);
-          }
-          return;
-        }
-        
-        if (session?.user && mounted) {
-          console.log("User found in session:", session.user.email);
-          setSession(session);
-          setUser(session.user);
-          await loadUserProfile(session.user.id);
-        } else {
-          console.log("No user session found");
-          if (mounted) {
-            setSession(null);
-            setUser(null);
-            setUserRole(null);
-            setProfile(null);
-          }
-        }
-      } catch (error) {
-        console.error("Error initializing auth:", error);
-        if (mounted) {
-          setSession(null);
-          setUser(null);
-          setUserRole(null);
-          setProfile(null);
-        }
-      } finally {
-        if (mounted) {
-          setIsLoading(false);
-        }
-      }
-    };
-
-    // Set up auth state listener
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (event, newSession) => {
-        console.log("Auth state changed:", event, newSession?.user?.email);
-        
-        if (!mounted) return;
-        
-        setSession(newSession);
-        setUser(newSession?.user || null);
-        
-        if (newSession?.user) {
-          await loadUserProfile(newSession.user.id);
-        } else {
-          setProfile(null);
-          setUserRole(null);
-          setNeedsPasswordChange(false);
-        }
-      }
-    );
-
-    initializeAuth();
-
-    return () => {
-      mounted = false;
-      subscription.unsubscribe();
-    };
-  }, [loadUserProfile]);
 
   // Refresh session data
   const refreshSession = React.useCallback(async () => {
@@ -178,7 +101,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       setUser(currentSession?.user || null);
       
       if (currentSession?.user) {
-        await loadUserProfile(currentSession.user.id);
+        // Use setTimeout to defer these calls and prevent deadlocks
+        setTimeout(async () => {
+          await loadUserProfile(currentSession.user.id);
+          await checkPasswordChangeStatus(currentSession.user.id);
+        }, 0);
       } else {
         setProfile(null);
         setUserRole(null);
@@ -187,7 +114,39 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     } catch (error) {
       console.error("Error refreshing session:", error);
     }
-  }, [loadUserProfile]);
+  }, [loadUserProfile, checkPasswordChangeStatus]);
+
+  React.useEffect(() => {
+    // Set up auth state change listener first
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      async (event, newSession) => {
+        console.log("Auth state changed:", event);
+        setSession(newSession);
+        setUser(newSession?.user || null);
+        
+        if (newSession?.user) {
+          // Use setTimeout to defer these calls and prevent deadlocks
+          setTimeout(async () => {
+            await loadUserProfile(newSession.user.id);
+            await checkPasswordChangeStatus(newSession.user.id);
+          }, 0);
+        } else {
+          setProfile(null);
+          setUserRole(null);
+          setNeedsPasswordChange(false);
+        }
+      }
+    );
+
+    // Then check for existing session
+    refreshSession().finally(() => {
+      setIsLoading(false);
+    });
+
+    return () => {
+      subscription.unsubscribe();
+    };
+  }, [loadUserProfile, checkPasswordChangeStatus, refreshSession]);
 
   // Implement changePasswordAndActivate method
   const changePasswordAndActivate = async (newPassword: string): Promise<boolean> => {

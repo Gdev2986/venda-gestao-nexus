@@ -1,5 +1,8 @@
 
 import { Route } from "react-router-dom";
+import { PATHS } from "./paths";
+
+// Layouts
 import AuthLayout from "../layouts/AuthLayout";
 
 // Auth pages
@@ -10,21 +13,9 @@ import ResetPassword from "../pages/auth/ResetPassword";
 
 export const AuthRoutes = (
   <Route element={<AuthLayout />}>
-    <Route 
-      path="/login" 
-      element={<Login />} 
-    />
-    <Route 
-      path="/register" 
-      element={<Register />} 
-    />
-    <Route 
-      path="/forgot-password" 
-      element={<ForgotPassword />} 
-    />
-    <Route 
-      path="/reset-password" 
-      element={<ResetPassword />} 
-    />
+    <Route path={PATHS.LOGIN} element={<Login />} />
+    <Route path={PATHS.REGISTER} element={<Register />} />
+    <Route path={PATHS.FORGOT_PASSWORD} element={<ForgotPassword />} />
+    <Route path={PATHS.RESET_PASSWORD} element={<ResetPassword />} />
   </Route>
 );

@@ -43,6 +43,5 @@ export interface MachineNote {
   user?: {
     id: string;
     email: string;
-    name?: string;
   };
 }

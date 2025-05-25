@@ -1,11 +1,13 @@
 
 import { Routes, Route, Navigate } from "react-router-dom";
 import { PATHS } from "./routes/paths";
-import { AuthProvider } from "./providers/AuthProvider";
-import { useAuth } from "./contexts/AuthContext";
+import { useEffect } from "react";
+import { useToast } from "@/hooks/use-toast";
+import { useUserRole } from "./hooks/use-user-role";
 import { UserRole } from "./types";
-import { Spinner } from "./components/ui/spinner";
-import { motion } from "framer-motion";
+
+// Route utils
+import { getDashboardPath } from "./routes/routeUtils";
 
 // Route groups
 import { AuthRoutes } from "./routes/authRoutes";
@@ -15,160 +17,75 @@ import { PartnerRoutes } from "./routes/partnerRoutes";
 import { FinancialRoutes } from "./routes/financialRoutes";
 import { LogisticsRoutes } from "./routes/logisticsRoutes";
 
+// Layouts
+import RootLayout from "./layouts/RootLayout";
+import MainLayout from "./components/layout/MainLayout";
+
 // Pages
 import NotFound from "./pages/NotFound";
-
-// Simple protected route wrapper
-const ProtectedRoute = ({ children, allowedRoles }: { children: React.ReactNode; allowedRoles: UserRole[] }) => {
-  const { user, userRole, isLoading } = useAuth();
-
-  if (isLoading) {
-    return (
-      <div className="flex flex-col items-center justify-center h-screen bg-background">
-        <motion.div
-          initial={{ opacity: 0, scale: 0.8 }}
-          animate={{ opacity: 1, scale: 1 }}
-          transition={{ duration: 0.5 }}
-          className="flex flex-col items-center"
-        >
-          <Spinner size="lg" />
-          <p className="mt-4 text-muted-foreground">Carregando...</p>
-        </motion.div>
-      </div>
-    );
-  }
-
-  if (!user) {
-    return <Navigate to="/login" replace />;
-  }
-
-  if (userRole && !allowedRoles.includes(userRole)) {
-    // Redirect to appropriate dashboard based on role
-    const dashboardPath = userRole === UserRole.ADMIN ? "/admin/dashboard" :
-                         userRole === UserRole.CLIENT ? "/user/dashboard" :
-                         userRole === UserRole.PARTNER ? "/partner/dashboard" :
-                         userRole === UserRole.FINANCIAL ? "/financial/dashboard" :
-                         userRole === UserRole.LOGISTICS ? "/logistics/dashboard" : "/login";
-    return <Navigate to={dashboardPath} replace />;
-  }
-
-  return <>{children}</>;
-};
+import Notifications from "./pages/Notifications";
 
 function App() {
-  return (
-    <AuthProvider>
-      <AppContent />
-    </AuthProvider>
-  );
-}
+  const { userRole, isRoleLoading } = useUserRole();
+  const { toast } = useToast();
 
-const AppContent = () => {
-  const { user, userRole, isLoading } = useAuth();
+  // Log role changes for debugging
+  useEffect(() => {
+    if (!isRoleLoading) {
+      console.log("App.tsx - Current user role:", userRole);
+      
+      try {
+        const dashPath = getDashboardPath(userRole);
+        console.log("App.tsx - Will redirect to dashboard:", dashPath);
+      } catch (error) {
+        console.error("Error getting dashboard path:", error);
+      }
+    }
+  }, [userRole, isRoleLoading]);
 
-  console.log("App render state:", { user: !!user, userRole, isLoading });
-
-  if (isLoading) {
-    return (
-      <div className="flex flex-col items-center justify-center h-screen bg-background">
-        <motion.div
-          initial={{ opacity: 0, scale: 0.8 }}
-          animate={{ opacity: 1, scale: 1 }}
-          transition={{ duration: 0.5 }}
-          className="flex flex-col items-center"
-        >
-          <Spinner size="lg" />
-          <p className="mt-4 text-muted-foreground">Verificando credenciais...</p>
-        </motion.div>
-      </div>
-    );
-  }
+  // Get the dashboard path safely
+  const getDashboardRedirectPath = () => {
+    try {
+      return getDashboardPath(userRole);
+    } catch (error) {
+      console.error("Error in getDashboardRedirectPath:", error);
+      return PATHS.LOGIN;
+    }
+  };
 
   return (
     <Routes>
-      {/* Public routes */}
+      {/* Root path handling */}
+      <Route path={PATHS.HOME} element={<RootLayout />} />
+      
+      {/* Generic dashboard route */}
+      <Route 
+        path={PATHS.DASHBOARD} 
+        element={<Navigate to={getDashboardRedirectPath()} replace />} 
+      />
+
+      {/* Auth Routes */}
       {AuthRoutes}
 
-      {/* Dashboard redirect */}
-      <Route 
-        path="/dashboard" 
-        element={
-          user && userRole ? (
-            <Navigate 
-              to={
-                userRole === UserRole.ADMIN ? "/admin/dashboard" :
-                userRole === UserRole.CLIENT ? "/user/dashboard" :
-                userRole === UserRole.PARTNER ? "/partner/dashboard" :
-                userRole === UserRole.FINANCIAL ? "/financial/dashboard" :
-                userRole === UserRole.LOGISTICS ? "/logistics/dashboard" : "/login"
-              } 
-              replace 
-            />
-          ) : (
-            <Navigate to="/login" replace />
-          )
-        } 
-      />
-
       {/* Protected Routes by Role */}
-      <Route path="/admin/*" element={
-        <ProtectedRoute allowedRoles={[UserRole.ADMIN, UserRole.LOGISTICS, UserRole.FINANCIAL]}>
-          {AdminRoutes}
-        </ProtectedRoute>
-      } />
-      
-      <Route path="/user/*" element={
-        <ProtectedRoute allowedRoles={[UserRole.CLIENT]}>
-          {ClientRoutes}
-        </ProtectedRoute>
-      } />
-      
-      <Route path="/partner/*" element={
-        <ProtectedRoute allowedRoles={[UserRole.PARTNER]}>
-          {PartnerRoutes}
-        </ProtectedRoute>
-      } />
-      
-      <Route path="/financial/*" element={
-        <ProtectedRoute allowedRoles={[UserRole.FINANCIAL]}>
-          {FinancialRoutes}
-        </ProtectedRoute>
-      } />
-      
-      <Route path="/logistics/*" element={
-        <ProtectedRoute allowedRoles={[UserRole.LOGISTICS]}>
-          {LogisticsRoutes}
-        </ProtectedRoute>
-      } />
+      {AdminRoutes}
+      {ClientRoutes}
+      {PartnerRoutes}
+      {FinancialRoutes}
+      {LogisticsRoutes}
 
-      {/* Root redirect - simplified logic */}
-      <Route 
-        path="/" 
-        element={
-          user && userRole ? (
-            <Navigate 
-              to={
-                userRole === UserRole.ADMIN ? "/admin/dashboard" :
-                userRole === UserRole.CLIENT ? "/user/dashboard" :
-                userRole === UserRole.PARTNER ? "/partner/dashboard" :
-                userRole === UserRole.FINANCIAL ? "/financial/dashboard" :
-                userRole === UserRole.LOGISTICS ? "/logistics/dashboard" : "/login"
-              } 
-              replace 
-            />
-          ) : (
-            <Navigate to="/login" replace />
-          )
-        } 
-      />
+      {/* Shared Routes (accessible by all roles) */}
+      <Route element={<MainLayout />}>
+        <Route path="/notifications" element={<Notifications />} />
+      </Route>
 
       {/* 404 */}
-      <Route path="/404" element={<NotFound />} />
+      <Route path={PATHS.NOT_FOUND} element={<NotFound />} />
       
-      {/* Catch-all redirect */}
-      <Route path="*" element={<Navigate to="/404" replace />} />
+      {/* Catch-all redirect to the appropriate dashboard */}
+      <Route path="*" element={<Navigate to={PATHS.DASHBOARD} replace />} />
     </Routes>
   );
-};
+}
 
 export default App;

@@ -1,7 +1,7 @@
 
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
-import { PaymentRequest, PaymentStatus, PaymentMethod } from '@/types/payment.types';
+import { PaymentRequest, PaymentStatus } from '@/types/payment.types';
 
 interface UsePaymentsFetcherProps {
   status?: PaymentStatus | "ALL";
@@ -25,14 +25,7 @@ export const usePaymentsFetcher = ({ status = "ALL" }: UsePaymentsFetcherProps =
         `);
 
       if (status !== "ALL") {
-        // Only use database-supported statuses, map PROCESSING to PENDING
-        let dbStatus: "PENDING" | "APPROVED" | "PAID" | "REJECTED";
-        if (status === PaymentStatus.PROCESSING) {
-          dbStatus = "PENDING";
-        } else {
-          dbStatus = status as "PENDING" | "APPROVED" | "PAID" | "REJECTED";
-        }
-        query = query.eq('status', dbStatus);
+        query = query.eq('status', status);
       }
 
       const { data, error } = await query.order('created_at', { ascending: false });
@@ -50,11 +43,8 @@ export const usePaymentsFetcher = ({ status = "ALL" }: UsePaymentsFetcherProps =
         rejection_reason: payment.rejection_reason || '',
         client: payment.client,
         pix_key_id: payment.pix_key_id,
-        method: PaymentMethod.PIX,
-        requested_at: payment.created_at,
-        approved_at: payment.approved_at,
-        approved_by: payment.approved_by,
-        receipt_url: payment.receipt_url
+        method: 'PIX' as any,
+        requested_at: payment.created_at
       })) || [];
 
       setPayments(formattedPayments);
