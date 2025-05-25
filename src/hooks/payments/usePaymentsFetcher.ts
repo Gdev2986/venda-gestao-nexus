@@ -25,12 +25,13 @@ export const usePaymentsFetcher = ({ status = "ALL" }: UsePaymentsFetcherProps =
         `);
 
       if (status !== "ALL") {
-        // Use exact string values that match the database enum
-        const dbStatus = status === PaymentStatus.PENDING ? "PENDING" : 
-                        status === PaymentStatus.PROCESSING ? "PROCESSING" :
-                        status === PaymentStatus.APPROVED ? "APPROVED" :
-                        status === PaymentStatus.PAID ? "PAID" :
-                        status === PaymentStatus.REJECTED ? "REJECTED" : "PENDING";
+        // Only use database-supported statuses, map PROCESSING to PENDING
+        let dbStatus: string;
+        if (status === PaymentStatus.PROCESSING) {
+          dbStatus = "PENDING";
+        } else {
+          dbStatus = status;
+        }
         query = query.eq('status', dbStatus);
       }
 

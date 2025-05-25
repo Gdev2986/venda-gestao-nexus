@@ -61,7 +61,7 @@ export const usePixKeys = () => {
 
       const newKeyData = {
         key: keyData.key,
-        type: dbKeyType,
+        type: dbKeyType as "CPF" | "CNPJ" | "EMAIL" | "PHONE" | "RANDOM",
         name: keyData.name,
         is_default: keyData.is_default,
         user_id: user?.id
@@ -69,7 +69,7 @@ export const usePixKeys = () => {
 
       const { data, error } = await supabase
         .from('pix_keys')
-        .insert(newKeyData)
+        .insert([newKeyData])
         .select()
         .single();
 
