@@ -52,9 +52,16 @@ export const usePixKeys = () => {
 
   const addPixKey = async (keyData: Omit<PixKey, 'id' | 'created_at' | 'updated_at'>) => {
     try {
+      // Convert PixKeyType enum to string for database
+      const dbKeyType = keyData.type === PixKeyType.CPF ? "CPF" :
+                       keyData.type === PixKeyType.CNPJ ? "CNPJ" :
+                       keyData.type === PixKeyType.EMAIL ? "EMAIL" :
+                       keyData.type === PixKeyType.PHONE ? "PHONE" :
+                       keyData.type === PixKeyType.RANDOM ? "RANDOM" : "CPF";
+
       const newKeyData = {
         key: keyData.key,
-        type: keyData.type as string,
+        type: dbKeyType,
         name: keyData.name,
         is_default: keyData.is_default,
         user_id: user?.id
@@ -62,7 +69,7 @@ export const usePixKeys = () => {
 
       const { data, error } = await supabase
         .from('pix_keys')
-        .insert([newKeyData])
+        .insert(newKeyData)
         .select()
         .single();
 
@@ -95,6 +102,7 @@ export const usePixKeys = () => {
   return {
     pixKeys,
     loading,
+    isLoadingPixKeys: loading,
     error,
     refetch: fetchPixKeys,
     addPixKey,
