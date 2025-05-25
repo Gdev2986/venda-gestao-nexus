@@ -1,6 +1,6 @@
 
 import { useState, useEffect } from 'react';
-import { Machine, MachineStatus } from '@/types/machine.types';
+import { Machine, MachineStatus, MachineStats } from '@/types/machine.types';
 import {
   getAllMachines,
   getMachinesByStatus,
@@ -11,10 +11,20 @@ import {
   getMachineStats
 } from '@/services/machine.service';
 
-export const useMachines = () => {
+export const useMachines = (options?: { enableRealtime?: boolean; initialFetch?: boolean }) => {
   const [machines, setMachines] = useState<Machine[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [stats, setStats] = useState<MachineStats>({
+    total: 0,
+    active: 0,
+    inactive: 0,
+    maintenance: 0,
+    blocked: 0,
+    stock: 0,
+    transit: 0,
+    byStatus: {}
+  });
 
   const fetchMachines = async () => {
     try {
@@ -22,6 +32,10 @@ export const useMachines = () => {
       setError(null);
       const data = await getAllMachines();
       setMachines(data);
+      
+      // Update stats
+      const statsData = await getMachineStats();
+      setStats(statsData);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to fetch machines');
     } finally {
@@ -42,10 +56,13 @@ export const useMachines = () => {
     }
   };
 
-  const createMachineHandler = async (machineData: Omit<Machine, 'id' | 'created_at' | 'updated_at' | 'client'>) => {
+  const addMachine = async (machineData: Omit<Machine, 'id' | 'created_at' | 'updated_at' | 'client'>) => {
     try {
       const newMachine = await createMachine(machineData);
       setMachines(prev => [newMachine, ...prev]);
+      // Refresh stats
+      const statsData = await getMachineStats();
+      setStats(statsData);
       return newMachine;
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to create machine');
@@ -59,6 +76,9 @@ export const useMachines = () => {
       setMachines(prev => prev.map(machine => 
         machine.id === id ? updatedMachine : machine
       ));
+      // Refresh stats
+      const statsData = await getMachineStats();
+      setStats(statsData);
       return updatedMachine;
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to update machine');
@@ -70,6 +90,9 @@ export const useMachines = () => {
     try {
       await deleteMachine(id);
       setMachines(prev => prev.filter(machine => machine.id !== id));
+      // Refresh stats
+      const statsData = await getMachineStats();
+      setStats(statsData);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to delete machine');
       throw err;
@@ -90,16 +113,20 @@ export const useMachines = () => {
   };
 
   useEffect(() => {
-    fetchMachines();
+    if (options?.initialFetch !== false) {
+      fetchMachines();
+    }
   }, []);
 
   return {
     machines,
     isLoading,
     error,
+    stats,
     refetch: fetchMachines,
+    fetchMachines,
     fetchMachinesByStatus,
-    createMachine: createMachineHandler,
+    addMachine,
     updateMachine: updateMachineHandler,
     deleteMachine: deleteMachineHandler,
     transferMachine: transferMachineHandler,

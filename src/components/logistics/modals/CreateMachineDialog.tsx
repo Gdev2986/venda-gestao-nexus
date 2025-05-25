@@ -14,7 +14,7 @@ interface CreateMachineDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onSuccess?: () => void;
-  machine?: Machine; // Add this prop to support editing existing machines
+  machine?: Machine;
 }
 
 const CreateMachineDialog = ({ open, onOpenChange, onSuccess, machine }: CreateMachineDialogProps) => {
@@ -24,7 +24,7 @@ const CreateMachineDialog = ({ open, onOpenChange, onSuccess, machine }: CreateM
   // Form state
   const [serialNumber, setSerialNumber] = useState("");
   const [model, setModel] = useState("");
-  const [status, setStatus] = useState<MachineStatus>(MachineStatus.STOCK);
+  const [status, setStatus] = useState<string>(MachineStatus.STOCK);
   const [notes, setNotes] = useState("");
   
   // Set initial values when machine prop changes or dialog opens
@@ -73,7 +73,7 @@ const CreateMachineDialog = ({ open, onOpenChange, onSuccess, machine }: CreateM
           .update({
             serial_number: serialNumber,
             model: model,
-            status: status,
+            status: status as MachineStatus,
             notes: notes
           })
           .eq('id', machine.id)
@@ -94,7 +94,7 @@ const CreateMachineDialog = ({ open, onOpenChange, onSuccess, machine }: CreateM
           .insert({
             serial_number: serialNumber,
             model: model,
-            status: status,
+            status: status as MachineStatus,
             notes: notes
           })
           .select();
@@ -155,6 +155,9 @@ const CreateMachineDialog = ({ open, onOpenChange, onSuccess, machine }: CreateM
                 <SelectValue placeholder="Selecione o modelo" />
               </SelectTrigger>
               <SelectContent>
+                <SelectItem value="PagBank">PagBank</SelectItem>
+                <SelectItem value="CeoPag">CeoPag</SelectItem>
+                <SelectItem value="Rede">Rede</SelectItem>
                 <SelectItem value="Terminal Pro">Terminal Pro</SelectItem>
                 <SelectItem value="Terminal Standard">Terminal Standard</SelectItem>
                 <SelectItem value="Terminal Mini">Terminal Mini</SelectItem>
@@ -167,18 +170,18 @@ const CreateMachineDialog = ({ open, onOpenChange, onSuccess, machine }: CreateM
             <Label htmlFor="status">Status</Label>
             <Select
               value={status}
-              onValueChange={(value) => setStatus(value as MachineStatus)}
+              onValueChange={(value) => setStatus(value)}
             >
               <SelectTrigger>
                 <SelectValue placeholder="Selecione o status" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value={MachineStatus.STOCK}>Em Estoque</SelectItem>
-                <SelectItem value={MachineStatus.ACTIVE}>Operando</SelectItem>
-                <SelectItem value={MachineStatus.MAINTENANCE}>Em Manutenção</SelectItem>
-                <SelectItem value={MachineStatus.INACTIVE}>Inativa</SelectItem>
-                <SelectItem value={MachineStatus.TRANSIT}>Em Trânsito</SelectItem>
-                <SelectItem value={MachineStatus.BLOCKED}>Bloqueada</SelectItem>
+                <SelectItem value="STOCK">Em Estoque</SelectItem>
+                <SelectItem value="ACTIVE">Operando</SelectItem>
+                <SelectItem value="MAINTENANCE">Em Manutenção</SelectItem>
+                <SelectItem value="INACTIVE">Inativa</SelectItem>
+                <SelectItem value="TRANSIT">Em Trânsito</SelectItem>
+                <SelectItem value="BLOCKED">Bloqueada</SelectItem>
               </SelectContent>
             </Select>
           </div>
