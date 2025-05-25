@@ -1,5 +1,5 @@
 
-import { useEffect } from 'react';
+import { useEffect, startTransition } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuthStore } from '@/stores/authStore';
 import { UserRole } from '@/types';
@@ -48,38 +48,41 @@ export const AuthGuard = ({
     // Don't do anything while loading
     if (isLoading || authLoading) return;
 
-    // If auth is required but user is not authenticated
-    if (requireAuth && !isAuthenticated) {
-      navigate('/login', { replace: true });
-      return;
-    }
-
-    // If user is authenticated but accessing login page
-    if (isAuthenticated && location.pathname === '/login') {
-      if (userRole) {
-        navigate(getDashboardPath(userRole), { replace: true });
+    // Use startTransition to avoid React suspense errors during navigation
+    startTransition(() => {
+      // If auth is required but user is not authenticated
+      if (requireAuth && !isAuthenticated) {
+        navigate('/login', { replace: true });
+        return;
       }
-      return;
-    }
 
-    // Check role permissions
-    if (requireAuth && isAuthenticated && allowedRoles.length > 0) {
-      if (!userRole || !allowedRoles.includes(userRole)) {
-        // Redirect to appropriate dashboard or login
+      // If user is authenticated but accessing login page
+      if (isAuthenticated && location.pathname === '/login') {
         if (userRole) {
           navigate(getDashboardPath(userRole), { replace: true });
-        } else {
-          navigate('/login', { replace: true });
         }
         return;
       }
-    }
 
-    // Handle generic dashboard route
-    if (location.pathname === '/dashboard' && userRole) {
-      navigate(getDashboardPath(userRole), { replace: true });
-      return;
-    }
+      // Check role permissions
+      if (requireAuth && isAuthenticated && allowedRoles.length > 0) {
+        if (!userRole || !allowedRoles.includes(userRole)) {
+          // Redirect to appropriate dashboard or login
+          if (userRole) {
+            navigate(getDashboardPath(userRole), { replace: true });
+          } else {
+            navigate('/login', { replace: true });
+          }
+          return;
+        }
+      }
+
+      // Handle generic dashboard route
+      if (location.pathname === '/dashboard' && userRole) {
+        navigate(getDashboardPath(userRole), { replace: true });
+        return;
+      }
+    });
   }, [
     isLoading, 
     authLoading, 

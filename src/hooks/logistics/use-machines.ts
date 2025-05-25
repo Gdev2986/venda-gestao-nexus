@@ -1,178 +1,122 @@
 
 import { useState, useEffect } from 'react';
-import { Machine, MachineStatus, MachineStats } from '@/types/machine.types';
-import {
-  getAllMachines,
-  getMachinesByStatus,
-  createMachine,
-  updateMachine,
-  deleteMachine,
-  transferMachine,
-  getMachineStats
-} from '@/services/machine.service';
+import { Machine, MachineStats, MachineStatus } from '@/types/machine.types';
+import { supabase } from '@/integrations/supabase/client';
 
-export const useMachines = (options?: { enableRealtime?: boolean; initialFetch?: boolean }) => {
+export const useMachines = () => {
   const [machines, setMachines] = useState<Machine[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
+  const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [stats, setStats] = useState<MachineStats>({
-    total: 0,
-    active: 0,
-    inactive: 0,
-    maintenance: 0,
-    blocked: 0,
-    stock: 0,
-    transit: 0,
-    byStatus: {
-      [MachineStatus.ACTIVE]: 0,
-      [MachineStatus.INACTIVE]: 0,
-      [MachineStatus.MAINTENANCE]: 0,
-      [MachineStatus.BLOCKED]: 0,
-      [MachineStatus.STOCK]: 0,
-      [MachineStatus.TRANSIT]: 0
-    }
-  });
 
   const fetchMachines = async () => {
     try {
-      setIsLoading(true);
-      setError(null);
-      const data = await getAllMachines();
-      setMachines(data);
+      setLoading(true);
+      const { data, error } = await supabase
+        .from('machines')
+        .select('*');
+
+      if (error) throw error;
+
+      setMachines(data || []);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Erro ao carregar máquinas');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const calculateStats = (machineList: Machine[]): MachineStats => {
+    const stats = {
+      total: machineList.length,
+      active: 0,
+      inactive: 0,
+      maintenance: 0,
+      blocked: 0,
+      stock: 0,
+      transit: 0,
+      byStatus: {} as Record<MachineStatus, number>
+    };
+
+    // Initialize byStatus with all statuses
+    Object.values(MachineStatus).forEach(status => {
+      stats.byStatus[status] = 0;
+    });
+
+    machineList.forEach(machine => {
+      stats.byStatus[machine.status]++;
       
-      const statsData = await getMachineStats();
-      setStats({
-        ...statsData,
-        byStatus: statsData.byStatus || {
-          [MachineStatus.ACTIVE]: 0,
-          [MachineStatus.INACTIVE]: 0,
-          [MachineStatus.MAINTENANCE]: 0,
-          [MachineStatus.BLOCKED]: 0,
-          [MachineStatus.STOCK]: 0,
-          [MachineStatus.TRANSIT]: 0
-        }
-      });
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to fetch machines');
-    } finally {
-      setIsLoading(false);
-    }
+      switch (machine.status) {
+        case MachineStatus.ACTIVE:
+          stats.active++;
+          break;
+        case MachineStatus.INACTIVE:
+          stats.inactive++;
+          break;
+        case MachineStatus.MAINTENANCE:
+          stats.maintenance++;
+          break;
+        case MachineStatus.BLOCKED:
+          stats.blocked++;
+          break;
+        case MachineStatus.STOCK:
+          stats.stock++;
+          break;
+        case MachineStatus.TRANSIT:
+          stats.transit++;
+          break;
+      }
+    });
+
+    return stats;
   };
 
-  const fetchMachinesByStatus = async (status: MachineStatus) => {
+  const updateMachine = async (id: string, updates: Partial<Machine>) => {
     try {
-      setIsLoading(true);
-      setError(null);
-      const data = await getMachinesByStatus(status);
-      setMachines(data);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to fetch machines by status');
-    } finally {
-      setIsLoading(false);
-    }
-  };
+      const { error } = await supabase
+        .from('machines')
+        .update(updates)
+        .eq('id', id);
 
-  const addMachine = async (machineData: Omit<Machine, 'id' | 'created_at' | 'updated_at' | 'client'>) => {
-    try {
-      const newMachine = await createMachine(machineData);
-      setMachines(prev => [newMachine, ...prev]);
-      const statsData = await getMachineStats();
-      setStats({
-        ...statsData,
-        byStatus: statsData.byStatus || {
-          [MachineStatus.ACTIVE]: 0,
-          [MachineStatus.INACTIVE]: 0,
-          [MachineStatus.MAINTENANCE]: 0,
-          [MachineStatus.BLOCKED]: 0,
-          [MachineStatus.STOCK]: 0,
-          [MachineStatus.TRANSIT]: 0
-        }
-      });
-      return newMachine;
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to create machine');
-      throw err;
-    }
-  };
+      if (error) throw error;
 
-  const updateMachineHandler = async (id: string, updates: Partial<Omit<Machine, 'id' | 'created_at' | 'updated_at' | 'client'>>) => {
-    try {
-      const updatedMachine = await updateMachine(id, updates);
+      // Update local state
       setMachines(prev => prev.map(machine => 
-        machine.id === id ? updatedMachine : machine
+        machine.id === id ? { ...machine, ...updates } : machine
       ));
-      const statsData = await getMachineStats();
-      setStats({
-        ...statsData,
-        byStatus: statsData.byStatus || {
-          [MachineStatus.ACTIVE]: 0,
-          [MachineStatus.INACTIVE]: 0,
-          [MachineStatus.MAINTENANCE]: 0,
-          [MachineStatus.BLOCKED]: 0,
-          [MachineStatus.STOCK]: 0,
-          [MachineStatus.TRANSIT]: 0
-        }
-      });
-      return updatedMachine;
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to update machine');
-      throw err;
+      throw new Error(err instanceof Error ? err.message : 'Erro ao atualizar máquina');
     }
   };
 
-  const deleteMachineHandler = async (id: string) => {
+  const deleteMachine = async (id: string) => {
     try {
-      await deleteMachine(id);
+      const { error } = await supabase
+        .from('machines')
+        .delete()
+        .eq('id', id);
+
+      if (error) throw error;
+
+      // Update local state
       setMachines(prev => prev.filter(machine => machine.id !== id));
-      const statsData = await getMachineStats();
-      setStats({
-        ...statsData,
-        byStatus: statsData.byStatus || {
-          [MachineStatus.ACTIVE]: 0,
-          [MachineStatus.INACTIVE]: 0,
-          [MachineStatus.MAINTENANCE]: 0,
-          [MachineStatus.BLOCKED]: 0,
-          [MachineStatus.STOCK]: 0,
-          [MachineStatus.TRANSIT]: 0
-        }
-      });
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to delete machine');
-      throw err;
-    }
-  };
-
-  const transferMachineHandler = async (machineId: string, newClientId: string | null) => {
-    try {
-      const updatedMachine = await transferMachine(machineId, newClientId);
-      setMachines(prev => prev.map(machine => 
-        machine.id === machineId ? updatedMachine : machine
-      ));
-      return updatedMachine;
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to transfer machine');
-      throw err;
+      throw new Error(err instanceof Error ? err.message : 'Erro ao deletar máquina');
     }
   };
 
   useEffect(() => {
-    if (options?.initialFetch !== false) {
-      fetchMachines();
-    }
+    fetchMachines();
   }, []);
+
+  const stats = calculateStats(machines);
 
   return {
     machines,
-    isLoading,
-    error,
     stats,
+    loading,
+    error,
     refetch: fetchMachines,
-    fetchMachines,
-    fetchMachinesByStatus,
-    addMachine,
-    updateMachine: updateMachineHandler,
-    deleteMachine: deleteMachineHandler,
-    transferMachine: transferMachineHandler,
-    getMachineStats
+    updateMachine,
+    deleteMachine
   };
 };
