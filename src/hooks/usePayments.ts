@@ -1,33 +1,7 @@
 
-import { useState } from "react";
-import usePaymentsFetcher from "./payments/usePaymentsFetcher";
-import { usePaymentActions } from "./payments/usePaymentActions";
+import { usePaymentsFetcher } from "./payments/usePaymentsFetcher";
+import { PaymentStatus } from "@/types/payment.types";
 
-export const usePayments = (options = {}) => {
-  const {
-    paymentRequests,
-    setPaymentRequests,
-    isLoading,
-    error,
-    currentPage,
-    totalPages,
-    setCurrentPage,
-    fetchPaymentRequests,
-  } = usePaymentsFetcher(options);
-
-  const { approvePayment, rejectPayment } = usePaymentActions();
-
-  return {
-    paymentRequests,
-    isLoading,
-    error,
-    currentPage,
-    totalPages,
-    setCurrentPage,
-    fetchPaymentRequests,
-    approvePayment,
-    rejectPayment,
-  };
+export const usePayments = (status?: PaymentStatus | "ALL") => {
+  return usePaymentsFetcher({ status });
 };
-
-export default usePayments;

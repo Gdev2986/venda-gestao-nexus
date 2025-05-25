@@ -1,22 +1,11 @@
+
 export enum MachineStatus {
   ACTIVE = "ACTIVE",
-  INACTIVE = "INACTIVE",
-  MAINTENANCE = "MAINTENANCE", 
+  INACTIVE = "INACTIVE", 
+  MAINTENANCE = "MAINTENANCE",
   BLOCKED = "BLOCKED",
-  TRANSIT = "TRANSIT",
   STOCK = "STOCK",
-  DEFECTIVE = "DEFECTIVE"
-}
-
-export interface MachineNote {
-  id: string;
-  machine_id: string;
-  note: string;
-  created_at: string;
-  created_by: string;
-  user?: {
-    name: string;
-  };
+  TRANSIT = "TRANSIT"
 }
 
 export interface Machine {
@@ -25,17 +14,13 @@ export interface Machine {
   model: string;
   status: MachineStatus;
   client_id?: string;
-  client_name?: string;
-  created_at?: string;
-  updated_at?: string;
-  name?: string;
-  serialNumber?: string;
   notes?: string;
+  created_at: string;
+  updated_at: string;
   client?: {
     id: string;
     business_name: string;
   };
-  machine_notes?: MachineNote[];
 }
 
 export interface MachineStats {
@@ -46,56 +31,17 @@ export interface MachineStats {
   blocked: number;
   stock: number;
   transit: number;
-  byStatus: Record<string, number>;
-  byClient?: Record<string, number>;
-  byModel?: Record<string, number>;
+  byStatus: Record<MachineStatus, number>;
 }
 
-export interface MachineTransfer {
+export interface MachineNote {
   id: string;
   machine_id: string;
-  from_client_id: string;
-  to_client_id: string;
-  transfer_date: string;
-  cutoff_date?: string;
-  created_at: string;
+  note: string;
   created_by: string;
-  machine?: Machine;
-  from_client: {
+  created_at: string;
+  user?: {
     id: string;
-    business_name: string;
+    email: string;
   };
-  to_client: {
-    id: string;
-    business_name: string;
-  };
-}
-
-export interface MachineTransferParams {
-  machine_id: string;
-  from_client_id?: string;
-  to_client_id: string;
-  cutoff_date?: string;
-  created_by?: string;
-}
-
-export interface MachineCreateParams {
-  serial_number: string;
-  model: string;
-  status?: MachineStatus;
-  client_id?: string;
-  notes?: string;
-}
-
-export interface MachineUpdateParams {
-  serial_number?: string;
-  model?: string;
-  status?: MachineStatus;
-  client_id?: string | null;
-  notes?: string;
-}
-
-export interface MachineDeleteParams {
-  id: string;
-  reason?: string;
 }
