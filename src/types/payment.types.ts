@@ -76,6 +76,25 @@ export interface PaymentRequest {
   };
 }
 
+export interface PaymentRequestParams {
+  amount: number;
+  description?: string;
+  pix_key_id: string;
+}
+
+export interface PaymentProcessParams {
+  payment_id: string;
+  action: 'approve' | 'reject';
+  rejection_reason?: string;
+}
+
+export interface ClientBalance {
+  client_id: string;
+  total_balance: number;
+  pending_payments: number;
+  approved_payments: number;
+}
+
 export interface TransactionFeeParams {
   amount: number;
   paymentMethod: PaymentMethod;

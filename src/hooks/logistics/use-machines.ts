@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { Machine, MachineStatus, MachineStats } from '@/types/machine.types';
 import {
@@ -23,12 +24,12 @@ export const useMachines = (options?: { enableRealtime?: boolean; initialFetch?:
     stock: 0,
     transit: 0,
     byStatus: {
-      ACTIVE: 0,
-      INACTIVE: 0,
-      MAINTENANCE: 0,
-      BLOCKED: 0,
-      STOCK: 0,
-      TRANSIT: 0
+      [MachineStatus.ACTIVE]: 0,
+      [MachineStatus.INACTIVE]: 0,
+      [MachineStatus.MAINTENANCE]: 0,
+      [MachineStatus.BLOCKED]: 0,
+      [MachineStatus.STOCK]: 0,
+      [MachineStatus.TRANSIT]: 0
     }
   });
 
@@ -43,12 +44,12 @@ export const useMachines = (options?: { enableRealtime?: boolean; initialFetch?:
       setStats({
         ...statsData,
         byStatus: statsData.byStatus || {
-          ACTIVE: 0,
-          INACTIVE: 0,
-          MAINTENANCE: 0,
-          BLOCKED: 0,
-          STOCK: 0,
-          TRANSIT: 0
+          [MachineStatus.ACTIVE]: 0,
+          [MachineStatus.INACTIVE]: 0,
+          [MachineStatus.MAINTENANCE]: 0,
+          [MachineStatus.BLOCKED]: 0,
+          [MachineStatus.STOCK]: 0,
+          [MachineStatus.TRANSIT]: 0
         }
       });
     } catch (err) {
@@ -79,12 +80,12 @@ export const useMachines = (options?: { enableRealtime?: boolean; initialFetch?:
       setStats({
         ...statsData,
         byStatus: statsData.byStatus || {
-          ACTIVE: 0,
-          INACTIVE: 0,
-          MAINTENANCE: 0,
-          BLOCKED: 0,
-          STOCK: 0,
-          TRANSIT: 0
+          [MachineStatus.ACTIVE]: 0,
+          [MachineStatus.INACTIVE]: 0,
+          [MachineStatus.MAINTENANCE]: 0,
+          [MachineStatus.BLOCKED]: 0,
+          [MachineStatus.STOCK]: 0,
+          [MachineStatus.TRANSIT]: 0
         }
       });
       return newMachine;
@@ -104,12 +105,12 @@ export const useMachines = (options?: { enableRealtime?: boolean; initialFetch?:
       setStats({
         ...statsData,
         byStatus: statsData.byStatus || {
-          ACTIVE: 0,
-          INACTIVE: 0,
-          MAINTENANCE: 0,
-          BLOCKED: 0,
-          STOCK: 0,
-          TRANSIT: 0
+          [MachineStatus.ACTIVE]: 0,
+          [MachineStatus.INACTIVE]: 0,
+          [MachineStatus.MAINTENANCE]: 0,
+          [MachineStatus.BLOCKED]: 0,
+          [MachineStatus.STOCK]: 0,
+          [MachineStatus.TRANSIT]: 0
         }
       });
       return updatedMachine;
@@ -127,12 +128,12 @@ export const useMachines = (options?: { enableRealtime?: boolean; initialFetch?:
       setStats({
         ...statsData,
         byStatus: statsData.byStatus || {
-          ACTIVE: 0,
-          INACTIVE: 0,
-          MAINTENANCE: 0,
-          BLOCKED: 0,
-          STOCK: 0,
-          TRANSIT: 0
+          [MachineStatus.ACTIVE]: 0,
+          [MachineStatus.INACTIVE]: 0,
+          [MachineStatus.MAINTENANCE]: 0,
+          [MachineStatus.BLOCKED]: 0,
+          [MachineStatus.STOCK]: 0,
+          [MachineStatus.TRANSIT]: 0
         }
       });
     } catch (err) {

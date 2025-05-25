@@ -2,7 +2,7 @@
 import { Button } from "@/components/ui/button";
 import { SidebarTrigger } from "@/components/ui/sidebar";
 import { Bell, User } from "lucide-react";
-import { useAuth } from "@/contexts/AuthContext";
+import { useAuthStore } from "@/stores/authStore";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -11,7 +11,11 @@ import {
 } from "@/components/ui/dropdown-menu";
 
 export function TopNav() {
-  const { user, logout } = useAuth();
+  const { user, signOut } = useAuthStore();
+
+  const handleLogout = () => {
+    signOut();
+  };
 
   return (
     <header className="flex h-16 shrink-0 items-center gap-2 border-b px-4">
@@ -31,7 +35,7 @@ export function TopNav() {
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
-              <DropdownMenuItem onClick={logout}>
+              <DropdownMenuItem onClick={handleLogout}>
                 Sair
               </DropdownMenuItem>
             </DropdownMenuContent>

@@ -1,422 +1,325 @@
+
 import { useState, useEffect } from "react";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { Machine, MachineStatus, MachineNote } from "@/types/machine.types";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
-import { useToast } from "@/hooks/use-toast";
-import { Machine, MachineStatus, MachineNote } from "@/types/machine.types";
-import { updateMachine } from "@/services/machine.service";
-import { getAllClients } from "@/services/client.service";
-import { getMachineNotes, addMachineNote } from "@/services/machine-notes.service";
-import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { ScrollArea } from "@/components/ui/scroll-area";
-import { AlertTriangle, Plus, Calendar, User } from "lucide-react";
-import { useAuth } from "@/contexts/AuthContext";
+import { Separator } from "@/components/ui/separator";
+import { CalendarDays, MapPin, Settings, MessageSquare, Trash2 } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
-
-interface Client {
-  id: string;
-  business_name: string;
-}
+import { getMachineNotes, createMachineNote, deleteMachineNote } from "@/services/machine-notes.service";
+import { toast } from "sonner";
 
 interface MachineDetailsDialogProps {
   machine: Machine | null;
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
-  onUpdate: () => void;
-  mode: 'view' | 'edit';
+  isOpen: boolean;
+  onClose: () => void;
+  onUpdate: (id: string, updates: Partial<Machine>) => Promise<void>;
+  onTransfer?: (machineId: string, newClientId: string | null) => Promise<void>;
 }
 
-export const MachineDetailsDialog = ({ 
-  machine, 
-  open, 
-  onOpenChange, 
-  onUpdate, 
-  mode 
+const statusColors = {
+  [MachineStatus.ACTIVE]: "bg-green-500",
+  [MachineStatus.INACTIVE]: "bg-gray-500",
+  [MachineStatus.MAINTENANCE]: "bg-yellow-500",
+  [MachineStatus.BLOCKED]: "bg-red-500",
+  [MachineStatus.STOCK]: "bg-blue-500",
+  [MachineStatus.TRANSIT]: "bg-purple-500",
+};
+
+const statusLabels = {
+  [MachineStatus.ACTIVE]: "Ativa",
+  [MachineStatus.INACTIVE]: "Inativa",
+  [MachineStatus.MAINTENANCE]: "Manutenção",
+  [MachineStatus.BLOCKED]: "Bloqueada",
+  [MachineStatus.STOCK]: "Estoque",
+  [MachineStatus.TRANSIT]: "Trânsito",
+};
+
+export const MachineDetailsDialog = ({
+  machine,
+  isOpen,
+  onClose,
+  onUpdate,
+  onTransfer
 }: MachineDetailsDialogProps) => {
   const [isEditing, setIsEditing] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
-  const [clients, setClients] = useState<Client[]>([]);
+  const [editedMachine, setEditedMachine] = useState<Partial<Machine>>({});
   const [notes, setNotes] = useState<MachineNote[]>([]);
-  const [newNote, setNewNote] = useState('');
+  const [newNote, setNewNote] = useState("");
   const [isAddingNote, setIsAddingNote] = useState(false);
-  const [showSerialAlert, setShowSerialAlert] = useState(false);
-  const [formData, setFormData] = useState({
-    serial_number: '',
-    model: '',
-    status: MachineStatus.STOCK,
-    client_id: '',
-    notes: ''
-  });
-  const { toast } = useToast();
-  const { user } = useAuth();
-
-  const MACHINE_MODELS = [
-    { value: "PagBank", label: "PagBank" },
-    { value: "CeoPag", label: "CeoPag" },
-    { value: "Rede", label: "Rede" }
-  ];
 
   useEffect(() => {
-    if (machine) {
-      setFormData({
-        serial_number: machine.serial_number || '',
-        model: machine.model || '',
-        status: machine.status || MachineStatus.STOCK,
-        client_id: machine.client_id || '',
-        notes: machine.notes || ''
+    if (machine && isOpen) {
+      setEditedMachine({
+        model: machine.model,
+        status: machine.status,
+        notes: machine.notes || "",
       });
+      loadNotes();
     }
-  }, [machine]);
-
-  useEffect(() => {
-    setIsEditing(mode === 'edit');
-  }, [mode]);
-
-  useEffect(() => {
-    if (open) {
-      loadClients();
-      if (machine?.id) {
-        loadNotes();
-      }
-    }
-  }, [open, machine?.id]);
-
-  const loadClients = async () => {
-    try {
-      const clientsData = await getAllClients();
-      setClients(clientsData);
-    } catch (error) {
-      console.error('Error loading clients:', error);
-    }
-  };
+  }, [machine, isOpen]);
 
   const loadNotes = async () => {
-    if (!machine?.id) return;
+    if (!machine) return;
+    
     try {
-      const notesData = await getMachineNotes(machine.id);
-      setNotes(notesData);
+      const machineNotes = await getMachineNotes(machine.id);
+      setNotes(machineNotes);
     } catch (error) {
-      console.error('Error loading notes:', error);
+      console.error("Error loading machine notes:", error);
     }
   };
 
   const handleSave = async () => {
     if (!machine) return;
-    
-    setIsLoading(true);
-    try {
-      await updateMachine(machine.id, formData);
-      toast({
-        title: "Máquina atualizada",
-        description: "As alterações foram salvas com sucesso."
-      });
-      onUpdate();
-      setIsEditing(false);
-    } catch (error) {
-      console.error('Error updating machine:', error);
-      toast({
-        title: "Erro ao atualizar",
-        description: "Não foi possível salvar as alterações.",
-        variant: "destructive"
-      });
-    } finally {
-      setIsLoading(false);
-    }
-  };
 
-  const handleSerialNumberChange = (value: string) => {
-    if (value !== machine?.serial_number && machine?.serial_number) {
-      setShowSerialAlert(true);
+    try {
+      await onUpdate(machine.id, editedMachine);
+      setIsEditing(false);
+      toast.success("Máquina atualizada com sucesso");
+    } catch (error) {
+      toast.error("Erro ao atualizar máquina");
     }
-    setFormData({ ...formData, serial_number: value });
   };
 
   const handleAddNote = async () => {
-    if (!newNote.trim() || !machine?.id || !user?.id) return;
-    
-    setIsAddingNote(true);
+    if (!machine || !newNote.trim()) return;
+
     try {
-      await addMachineNote(machine.id, newNote, user.id);
-      setNewNote('');
-      await loadNotes();
-      toast({
-        title: "Nota adicionada",
-        description: "A nota foi salva com sucesso."
-      });
+      setIsAddingNote(true);
+      const note = await createMachineNote(machine.id, newNote.trim());
+      setNotes(prev => [note, ...prev]);
+      setNewNote("");
+      toast.success("Nota adicionada com sucesso");
     } catch (error) {
-      console.error('Error adding note:', error);
-      toast({
-        title: "Erro",
-        description: "Não foi possível adicionar a nota.",
-        variant: "destructive"
-      });
+      toast.error("Erro ao adicionar nota");
     } finally {
       setIsAddingNote(false);
     }
   };
 
-  const getStatusBadge = (status: MachineStatus) => {
-    switch (status) {
-      case MachineStatus.ACTIVE:
-        return <Badge className="bg-green-100 text-green-800">Ativa</Badge>;
-      case MachineStatus.STOCK:
-        return <Badge className="bg-blue-100 text-blue-800">Em Estoque</Badge>;
-      case MachineStatus.DEFECTIVE:
-        return <Badge className="bg-red-100 text-red-800">Defeito</Badge>;
-      default:
-        return <Badge variant="outline">{status}</Badge>;
+  const handleDeleteNote = async (noteId: string) => {
+    try {
+      await deleteMachineNote(noteId);
+      setNotes(prev => prev.filter(note => note.id !== noteId));
+      toast.success("Nota removida com sucesso");
+    } catch (error) {
+      toast.error("Erro ao remover nota");
     }
   };
 
-  const getClientName = () => {
-    if (formData.client_id) {
-      const client = clients.find(c => c.id === formData.client_id);
-      return client?.business_name || "Cliente não encontrado";
-    }
-    return "Não Vinculada";
-  };
+  if (!machine) return null;
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
-            {isEditing ? "Editar Máquina" : "Detalhes da Máquina"}
-            {showSerialAlert && (
-              <AlertTriangle className="h-5 w-5 text-yellow-500" />
-            )}
+            <Settings className="h-5 w-5" />
+            Detalhes da Máquina
           </DialogTitle>
         </DialogHeader>
-        
+
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          {/* Dados da máquina */}
-          <div className="space-y-4">
-            <div>
-              <Label htmlFor="serial_number">Número de Série</Label>
-              {isEditing ? (
-                <div className="space-y-2">
+          {/* Informações Básicas */}
+          <Card>
+            <CardHeader>
+              <CardTitle>Informações Básicas</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div>
+                <label className="text-sm font-medium">Número de Série</label>
+                <Input value={machine.serial_number} disabled />
+              </div>
+
+              <div>
+                <label className="text-sm font-medium">Modelo</label>
+                {isEditing ? (
                   <Input
-                    id="serial_number"
-                    value={formData.serial_number}
-                    onChange={(e) => handleSerialNumberChange(e.target.value)}
+                    value={editedMachine.model || ""}
+                    onChange={(e) => setEditedMachine(prev => ({ ...prev, model: e.target.value }))}
                   />
-                  {showSerialAlert && (
-                    <div className="flex items-center gap-2 p-2 border border-yellow-300 rounded-md bg-yellow-50">
-                      <AlertTriangle className="h-4 w-4 text-yellow-600" />
-                      <span className="text-sm text-yellow-700">
-                        ⚠️ Alterar o número de série é uma operação crítica!
-                      </span>
-                    </div>
-                  )}
-                </div>
-              ) : (
-                <div className="mt-1 p-2 bg-gray-50 rounded-md">
-                  {machine?.serial_number}
-                </div>
-              )}
-            </div>
-
-            <div>
-              <Label htmlFor="model">Modelo</Label>
-              {isEditing ? (
-                <Select 
-                  value={formData.model} 
-                  onValueChange={(value) => setFormData({ ...formData, model: value })}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Selecione o modelo" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {MACHINE_MODELS.map((model) => (
-                      <SelectItem key={model.value} value={model.value}>
-                        {model.label}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              ) : (
-                <div className="mt-1 p-2 bg-gray-50 rounded-md">
-                  {machine?.model}
-                </div>
-              )}
-            </div>
-
-            <div>
-              <Label htmlFor="status">Status</Label>
-              {isEditing ? (
-                <Select 
-                  value={formData.status} 
-                  onValueChange={(value) => setFormData({ ...formData, status: value as MachineStatus })}
-                >
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value={MachineStatus.ACTIVE}>Ativa</SelectItem>
-                    <SelectItem value={MachineStatus.STOCK}>Em Estoque</SelectItem>
-                    <SelectItem value={MachineStatus.DEFECTIVE}>Defeito</SelectItem>
-                  </SelectContent>
-                </Select>
-              ) : (
-                <div className="mt-1">
-                  {getStatusBadge(machine?.status as MachineStatus)}
-                </div>
-              )}
-            </div>
-
-            <div>
-              <Label htmlFor="client">Cliente</Label>
-              {isEditing ? (
-                <Select 
-                  value={formData.client_id || "none"} 
-                  onValueChange={(value) => setFormData({ ...formData, client_id: value === "none" ? "" : value })}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Não Vinculada" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="none">Não Vinculada</SelectItem>
-                    {clients.map((client) => (
-                      <SelectItem key={client.id} value={client.id}>
-                        {client.business_name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              ) : (
-                <div className="mt-1 p-2 bg-gray-50 rounded-md">
-                  {getClientName()}
-                </div>
-              )}
-            </div>
-          </div>
-
-          {/* Histórico de notas */}
-          <div className="space-y-4">
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center justify-between">
-                  <span>Histórico de Notas</span>
-                  <Button
-                    size="sm"
-                    onClick={() => setIsAddingNote(!isAddingNote)}
-                    variant="outline"
-                  >
-                    <Plus className="h-4 w-4 mr-1" />
-                    Adicionar
-                  </Button>
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                {isAddingNote && (
-                  <div className="space-y-2">
-                    <Textarea
-                      placeholder="Digite sua nota aqui..."
-                      value={newNote}
-                      onChange={(e) => setNewNote(e.target.value)}
-                      rows={3}
-                    />
-                    <div className="flex gap-2">
-                      <Button size="sm" onClick={handleAddNote} disabled={!newNote.trim()}>
-                        Salvar
-                      </Button>
-                      <Button size="sm" variant="outline" onClick={() => {
-                        setIsAddingNote(false);
-                        setNewNote('');
-                      }}>
-                        Cancelar
-                      </Button>
-                    </div>
-                  </div>
+                ) : (
+                  <Input value={machine.model} disabled />
                 )}
-                
-                <ScrollArea className="h-64">
-                  <div className="space-y-3">
-                    {notes.length > 0 ? (
-                      notes.map((note) => (
-                        <div key={note.id} className="p-3 border rounded-md bg-white">
-                          <div className="flex items-center gap-2 text-sm text-gray-500 mb-2">
-                            <User className="h-3 w-3" />
-                            <span>{note.user?.name || 'Usuário'}</span>
-                            <Calendar className="h-3 w-3 ml-2" />
-                            <span>
-                              {format(new Date(note.created_at), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR })}
-                            </span>
-                          </div>
-                          <p className="text-sm">{note.note}</p>
-                        </div>
-                      ))
-                    ) : (
-                      <p className="text-center text-gray-500 py-4">
-                        Nenhuma nota registrada
-                      </p>
-                    )}
-                  </div>
-                </ScrollArea>
-              </CardContent>
-            </Card>
-          </div>
+              </div>
+
+              <div>
+                <label className="text-sm font-medium">Status</label>
+                {isEditing ? (
+                  <Select
+                    value={editedMachine.status}
+                    onValueChange={(value) => setEditedMachine(prev => ({ ...prev, status: value as MachineStatus }))}
+                  >
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {Object.entries(statusLabels).map(([value, label]) => (
+                        <SelectItem key={value} value={value}>
+                          {label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                ) : (
+                  <Badge 
+                    className={`${statusColors[machine.status]} text-white`}
+                  >
+                    {statusLabels[machine.status]}
+                  </Badge>
+                )}
+              </div>
+
+              <div>
+                <label className="text-sm font-medium">Cliente</label>
+                <div className="flex items-center gap-2">
+                  <MapPin className="h-4 w-4 text-muted-foreground" />
+                  <span>{machine.client?.business_name || "Não atribuída"}</span>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Informações de Sistema */}
+          <Card>
+            <CardHeader>
+              <CardTitle>Informações do Sistema</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div>
+                <label className="text-sm font-medium">Data de Criação</label>
+                <div className="flex items-center gap-2">
+                  <CalendarDays className="h-4 w-4 text-muted-foreground" />
+                  <span>{format(new Date(machine.created_at), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR })}</span>
+                </div>
+              </div>
+
+              <div>
+                <label className="text-sm font-medium">Última Atualização</label>
+                <div className="flex items-center gap-2">
+                  <CalendarDays className="h-4 w-4 text-muted-foreground" />
+                  <span>{format(new Date(machine.updated_at), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR })}</span>
+                </div>
+              </div>
+
+              <div>
+                <label className="text-sm font-medium">Observações</label>
+                {isEditing ? (
+                  <Textarea
+                    value={editedMachine.notes || ""}
+                    onChange={(e) => setEditedMachine(prev => ({ ...prev, notes: e.target.value }))}
+                    placeholder="Adicione observações sobre a máquina..."
+                    rows={3}
+                  />
+                ) : (
+                  <Textarea
+                    value={machine.notes || "Nenhuma observação"}
+                    disabled
+                    rows={3}
+                  />
+                )}
+              </div>
+            </CardContent>
+          </Card>
         </div>
 
-        <DialogFooter>
-          {isEditing ? (
-            <>
-              <Button variant="outline" onClick={() => setIsEditing(false)}>
-                Cancelar
+        {/* Notas da Máquina */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <MessageSquare className="h-5 w-5" />
+              Histórico de Notas
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            {/* Adicionar nova nota */}
+            <div className="flex gap-2 mb-4">
+              <Textarea
+                value={newNote}
+                onChange={(e) => setNewNote(e.target.value)}
+                placeholder="Adicionar uma nova nota..."
+                rows={2}
+                className="flex-1"
+              />
+              <Button 
+                onClick={handleAddNote}
+                disabled={!newNote.trim() || isAddingNote}
+                size="sm"
+              >
+                {isAddingNote ? "Adicionando..." : "Adicionar"}
               </Button>
-              {showSerialAlert ? (
-                <AlertDialog>
-                  <AlertDialogTrigger asChild>
-                    <Button disabled={isLoading}>
-                      {isLoading ? "Salvando..." : "Salvar"}
-                    </Button>
-                  </AlertDialogTrigger>
-                  <AlertDialogContent>
-                    <AlertDialogHeader>
-                      <AlertDialogTitle className="flex items-center gap-2">
-                        <AlertTriangle className="h-5 w-5 text-red-500" />
-                        Confirmação de Alteração Crítica
-                      </AlertDialogTitle>
-                      <AlertDialogDescription>
-                        Você está alterando o número de série da máquina de 
-                        <strong> {machine?.serial_number} </strong> para 
-                        <strong> {formData.serial_number}</strong>.
-                        <br /><br />
-                        Esta é uma operação crítica que pode afetar o rastreamento da máquina.
-                        Tem certeza que deseja continuar?
-                      </AlertDialogDescription>
-                    </AlertDialogHeader>
-                    <AlertDialogFooter>
-                      <AlertDialogCancel>Cancelar</AlertDialogCancel>
-                      <AlertDialogAction onClick={handleSave} className="bg-red-600 hover:bg-red-700">
-                        Confirmar Alteração
-                      </AlertDialogAction>
-                    </AlertDialogFooter>
-                  </AlertDialogContent>
-                </AlertDialog>
+            </div>
+
+            <Separator className="mb-4" />
+
+            {/* Lista de notas */}
+            <div className="space-y-3 max-h-60 overflow-y-auto">
+              {notes.length === 0 ? (
+                <p className="text-muted-foreground text-sm">Nenhuma nota encontrada</p>
               ) : (
-                <Button onClick={handleSave} disabled={isLoading}>
-                  {isLoading ? "Salvando..." : "Salvar"}
-                </Button>
+                notes.map((note) => (
+                  <div key={note.id} className="bg-muted/50 p-3 rounded-lg">
+                    <div className="flex items-start justify-between gap-2">
+                      <div className="flex-1">
+                        <p className="text-sm">{note.note}</p>
+                        <p className="text-xs text-muted-foreground mt-1">
+                          Por {note.user?.name || note.user?.email} em{" "}
+                          {format(new Date(note.created_at), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR })}
+                        </p>
+                      </div>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => handleDeleteNote(note.id)}
+                        className="text-destructive hover:text-destructive"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  </div>
+                ))
               )}
-            </>
-          ) : (
-            <>
-              <Button variant="outline" onClick={() => onOpenChange(false)}>
-                Fechar
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Ações */}
+        <div className="flex justify-between">
+          <div className="flex gap-2">
+            {onTransfer && (
+              <Button variant="outline" onClick={() => {/* TODO: Implement transfer dialog */}}>
+                Transferir
               </Button>
+            )}
+          </div>
+          
+          <div className="flex gap-2">
+            <Button variant="outline" onClick={onClose}>
+              Fechar
+            </Button>
+            {isEditing ? (
+              <>
+                <Button variant="outline" onClick={() => setIsEditing(false)}>
+                  Cancelar
+                </Button>
+                <Button onClick={handleSave}>
+                  Salvar
+                </Button>
+              </>
+            ) : (
               <Button onClick={() => setIsEditing(true)}>
                 Editar
               </Button>
-            </>
-          )}
-        </DialogFooter>
+            )}
+          </div>
+        </div>
       </DialogContent>
     </Dialog>
   );

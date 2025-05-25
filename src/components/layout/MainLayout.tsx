@@ -1,87 +1,28 @@
 
-import { useState, useEffect } from "react";
 import { Outlet } from "react-router-dom";
-import { UserRole } from "@/types";
-import Sidebar from "@/components/layout/sidebar/Sidebar";
-import { Button } from "@/components/ui/button";
-import { Menu } from "lucide-react";
-import { useIsMobile } from "@/hooks/use-mobile";
-import NotificationDropdown from "@/components/layout/NotificationDropdown";
-import ThemeToggle from "@/components/theme/theme-toggle";
-import { useUserRole } from "@/hooks/use-user-role";
-import { AnimatePresence } from "framer-motion";
-import { Toaster } from "@/components/ui/sonner";
+import { SidebarProvider } from "@/components/ui/sidebar";
+import { AppSidebar } from "@/components/ui/app-sidebar";
+import { TopNav } from "@/components/ui/top-nav";
 import { RealtimeToastNotifications } from "@/components/notifications/RealtimeToastNotifications";
+import { AuthGuard } from "@/components/auth/AuthGuard";
+import { UserRole } from "@/types";
 
 const MainLayout = () => {
-  const [sidebarOpen, setSidebarOpen] = useState(() => {
-    const saved = localStorage.getItem("sidebar-state");
-    return saved !== null ? JSON.parse(saved) : true;
-  });
-  
-  const isMobile = useIsMobile();
-  const { userRole } = useUserRole();
-
-  useEffect(() => {
-    if (isMobile) {
-      setSidebarOpen(false);
-    }
-  }, [isMobile]);
-
-  useEffect(() => {
-    if (!isMobile) {
-      localStorage.setItem("sidebar-state", JSON.stringify(sidebarOpen));
-    }
-  }, [sidebarOpen, isMobile]);
-
-  const toggleSidebar = () => setSidebarOpen(!sidebarOpen);
-
   return (
-    <div className="flex h-screen overflow-hidden bg-background">
-      <AnimatePresence mode="wait">
-        <Sidebar 
-          isOpen={sidebarOpen} 
-          isMobile={isMobile} 
-          onClose={() => setSidebarOpen(false)} 
-          userRole={userRole}
-        />
-      </AnimatePresence>
-      
-      <div 
-        className={`flex-1 flex flex-col transition-all duration-300 ease-in-out max-w-full ${
-          sidebarOpen && !isMobile ? 'ml-64' : 'ml-0'
-        }`}
-      >
-        <header className="h-14 md:h-16 border-b border-border flex items-center justify-between px-2 sm:px-4 bg-background sticky top-0 z-10">
-          <div className="flex items-center space-x-2 md:space-x-4">
-            <Button 
-              variant="ghost" 
-              size="sm" 
-              onClick={toggleSidebar}
-              aria-label={sidebarOpen ? "Fechar menu" : "Abrir menu"}
-              className="p-1"
-            >
-              <Menu className="h-4 w-4 md:h-5 md:w-5" />
-            </Button>
-            <h1 className="text-base md:text-xl font-semibold truncate">SigmaPay</h1>
+    <AuthGuard requireAuth={true} allowedRoles={[UserRole.ADMIN, UserRole.CLIENT, UserRole.PARTNER, UserRole.FINANCIAL, UserRole.LOGISTICS]}>
+      <SidebarProvider>
+        <div className="min-h-screen flex w-full bg-background">
+          <AppSidebar />
+          <div className="flex-1 flex flex-col">
+            <TopNav />
+            <main className="flex-1 p-6 overflow-auto">
+              <Outlet />
+              <RealtimeToastNotifications />
+            </main>
           </div>
-          
-          <div className="flex items-center space-x-2 md:space-x-4">
-            <ThemeToggle />
-            <NotificationDropdown />
-          </div>
-        </header>
-        
-        <main className="flex-1 w-full overflow-y-auto overflow-x-hidden p-2 sm:p-4 md:p-6">
-          <div className="mx-auto w-full">
-            <Outlet />
-            <RealtimeToastNotifications />
-          </div>
-        </main>
-      </div>
-      
-      <Toaster />
-    </div>
+        </div>
+      </SidebarProvider>
+    </AuthGuard>
   );
 };
 

@@ -1,11 +1,7 @@
 
 import { Route } from "react-router-dom";
 import { UserRole } from "@/types";
-
-// Auth Protection Component
-import RequireAuth from "../components/auth/RequireAuth";
-
-// Layout Selector
+import { AuthGuard } from "@/components/auth/AuthGuard";
 import AdminLayoutSelector from "../layouts/AdminLayoutSelector";
 
 // Import route groups
@@ -18,33 +14,22 @@ import { paymentRoutes } from "./admin/paymentRoutes";
 import { settingsRoutes } from "./admin/settingsRoutes";
 import { companyRoutes } from "./admin/companyRoutes";
 
-// Combine all admin routes
 export const AdminRoutes = (
-  <Route element={<RequireAuth allowedRoles={[UserRole.ADMIN, UserRole.LOGISTICS, UserRole.FINANCIAL]} />}>
-    <Route element={<AdminLayoutSelector />}>
-      {/* Dashboard Route */}
-      {dashboardRoute}
-      
-      {/* Client Routes */}
-      {clientRoutes}
-      
-      {/* Logistics Routes */}
-      {logisticsRoutes}
-      
-      {/* Sales Routes */}
-      {salesRoutes}
-      
-      {/* Payment Routes */}
-      {paymentRoutes}
-      
-      {/* Partner Routes */}
-      {partnerRoutes}
-      
-      {/* Company Routes */}
-      {companyRoutes}
-      
-      {/* Settings and Other Routes */}
-      {settingsRoutes}
-    </Route>
+  <Route 
+    path="/admin/*" 
+    element={
+      <AuthGuard allowedRoles={[UserRole.ADMIN, UserRole.LOGISTICS, UserRole.FINANCIAL]}>
+        <AdminLayoutSelector />
+      </AuthGuard>
+    }
+  >
+    {dashboardRoute}
+    {clientRoutes}
+    {logisticsRoutes}
+    {salesRoutes}
+    {paymentRoutes}
+    {partnerRoutes}
+    {companyRoutes}
+    {settingsRoutes}
   </Route>
 );

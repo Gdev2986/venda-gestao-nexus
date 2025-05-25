@@ -1,72 +1,31 @@
 
-import { Route, Navigate } from "react-router-dom";
-import { PATHS } from "./paths";
+import { Route } from "react-router-dom";
 import { UserRole } from "@/types";
-
-// Layouts
+import { AuthGuard } from "@/components/auth/AuthGuard";
 import PartnerLayout from "../layouts/PartnerLayout";
 
-// Auth Protection Component
-import RequireAuth from "../components/auth/RequireAuth";
-
-// Partner Pages
-import Dashboard from "../pages/partner/Dashboard";
-import Settings from "../pages/partner/Settings";
-import Clients from "../pages/partner/Clients";
-import ClientDetails from "../pages/partner/ClientDetails";
-import Sales from "../pages/partner/Sales";
-import Reports from "../pages/partner/Reports";
-import Support from "../pages/Support";
-import Help from "../pages/Help";
-import Commissions from "../pages/partner/Commissions";
+// Import pages
+import PartnerDashboard from "../pages/partner/Dashboard";
+import PartnerClients from "../pages/partner/Clients";
+import PartnerSales from "../pages/partner/Sales";
+import PartnerCommissions from "../pages/partner/Commissions";
+import PartnerReports from "../pages/partner/Reports";
+import PartnerSettings from "../pages/partner/Settings";
 
 export const PartnerRoutes = (
-  <Route element={<RequireAuth allowedRoles={[UserRole.PARTNER]} />}>
-    <Route element={<PartnerLayout />}>
-      <Route 
-        path={PATHS.PARTNER.DASHBOARD} 
-        element={<Dashboard />} 
-      />
-      
-      <Route 
-        path={PATHS.PARTNER.CLIENTS} 
-        element={<Clients />} 
-      />
-      
-      <Route 
-        path={PATHS.PARTNER.CLIENT_DETAILS()} 
-        element={<ClientDetails />} 
-      />
-      
-      <Route 
-        path={PATHS.PARTNER.SALES} 
-        element={<Sales />} 
-      />
-      
-      <Route 
-        path={PATHS.PARTNER.REPORTS} 
-        element={<Reports />} 
-      />
-      
-      <Route 
-        path={PATHS.PARTNER.SETTINGS} 
-        element={<Settings />} 
-      />
-      
-      <Route 
-        path={PATHS.PARTNER.SUPPORT} 
-        element={<Support />} 
-      />
-      
-      <Route 
-        path={PATHS.PARTNER.COMMISSIONS} 
-        element={<Commissions />} 
-      />
-      
-      <Route 
-        path={PATHS.PARTNER.HELP} 
-        element={<Help />} 
-      />
-    </Route>
+  <Route 
+    path="/partner/*" 
+    element={
+      <AuthGuard allowedRoles={[UserRole.PARTNER]}>
+        <PartnerLayout />
+      </AuthGuard>
+    }
+  >
+    <Route path="dashboard" element={<PartnerDashboard />} />
+    <Route path="clients" element={<PartnerClients />} />
+    <Route path="sales" element={<PartnerSales />} />
+    <Route path="commissions" element={<PartnerCommissions />} />
+    <Route path="reports" element={<PartnerReports />} />
+    <Route path="settings" element={<PartnerSettings />} />
   </Route>
 );

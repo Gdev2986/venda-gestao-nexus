@@ -1,41 +1,29 @@
 
 import { Route } from "react-router-dom";
-import { PATHS } from "./paths";
 import { UserRole } from "@/types";
+import { AuthGuard } from "@/components/auth/AuthGuard";
+import UserLayout from "../layouts/UserLayout";
 
-// Layouts
-import MainLayout from "../layouts/MainLayout";
-
-// Auth Protection Component
-import RequireAuth from "../components/auth/RequireAuth";
-
-// Dashboard
-import ClientDashboard from "../pages/ClientDashboard";
-
-// Pages
-import UserPayments from "../pages/UserPayments";
-import Machines from "../pages/machines/Machines";
-import Support from "../pages/Support";
-import Settings from "../pages/settings/Settings";
-import Help from "../pages/Help";
+// Import pages
+import UserDashboard from "../pages/user/Dashboard";
+import UserPayments from "../pages/user/Payments";
+import UserMachines from "../pages/user/Machines";
+import UserSettings from "../pages/user/Settings";
+import UserSupport from "../pages/user/Support";
 
 export const ClientRoutes = (
-  <Route element={<RequireAuth allowedRoles={[UserRole.CLIENT]} />}>
-    <Route element={<MainLayout />}>
-      <Route 
-        path={PATHS.USER.DASHBOARD} 
-        element={<ClientDashboard />} 
-      />
-      
-      <Route path={PATHS.USER.PAYMENTS} element={<UserPayments />} />
-      
-      <Route path={PATHS.USER.MACHINES} element={<Machines />} />
-      
-      <Route path={PATHS.USER.SUPPORT} element={<Support />} />
-      
-      <Route path={PATHS.USER.SETTINGS} element={<Settings />} />
-      
-      <Route path={PATHS.USER.HELP} element={<Help />} />
-    </Route>
+  <Route 
+    path="/user/*" 
+    element={
+      <AuthGuard allowedRoles={[UserRole.CLIENT]}>
+        <UserLayout />
+      </AuthGuard>
+    }
+  >
+    <Route path="dashboard" element={<UserDashboard />} />
+    <Route path="payments" element={<UserPayments />} />
+    <Route path="machines" element={<UserMachines />} />
+    <Route path="settings" element={<UserSettings />} />
+    <Route path="support" element={<UserSupport />} />
   </Route>
 );
