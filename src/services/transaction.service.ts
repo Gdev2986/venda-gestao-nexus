@@ -18,7 +18,7 @@ export const TransactionService = {
       // Get the tax rate for this client, payment method and installment
       const taxRate = await TaxBlocksService.getClientTaxRate(
         params.client_id,
-        params.payment_method,
+        params.payment_method as PaymentMethod,
         params.installments
       );
       
@@ -41,10 +41,10 @@ export const TransactionService = {
       const netAmount = params.amount - finalFee;
       
       console.log("Fee calculation complete:", {
-        originalAmount: params.amount,
-        feeAmount: finalFee,
-        netAmount,
-        feePercentage: taxRate.final_rate,
+        amount: params.amount,
+        total_fee: finalFee,
+        net_amount: netAmount,
+        final_rate: taxRate.final_rate,
         taxRate
       });
       
@@ -57,7 +57,6 @@ export const TransactionService = {
         forwarding_fee: forwardingFee,
         total_fee: finalFee,
         net_amount: netAmount,
-        feePercentage: taxRate.final_rate,
         taxBlockInfo: taxBlock ? {
           name: taxBlock.name,
           description: taxBlock.description
@@ -79,7 +78,7 @@ export const TransactionService = {
       amount: formatCurrency(result.amount),
       net_amount: formatCurrency(result.net_amount),
       total_fee: formatCurrency(result.total_fee),
-      feePercentage: `${result.feePercentage?.toFixed(2) || '0.00'}%`,
+      feePercentage: `${result.final_rate?.toFixed(2) || '0.00'}%`,
       root_fee: formatCurrency(result.root_fee),
       forwarding_fee: formatCurrency(result.forwarding_fee)
     };

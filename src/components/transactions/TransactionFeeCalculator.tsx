@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -223,7 +222,7 @@ export function TransactionFeeCalculator({
                   </TableHeader>
                   <TableBody>
                     <TableRow>
-                      <TableCell>Taxa Total ({feeResult.feePercentage?.toFixed(2) || '0.00'}%)</TableCell>
+                      <TableCell>Taxa Total ({feeResult.final_rate?.toFixed(2) || '0.00'}%)</TableCell>
                       <TableCell className="text-right">{formatFeeResult(feeResult).total_fee}</TableCell>
                     </TableRow>
                     <TableRow>

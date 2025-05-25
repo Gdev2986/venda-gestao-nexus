@@ -26,11 +26,11 @@ export const convertPixKeyData = (pixKeyData: any): PixKey => {
     key: pixKeyData.key,
     type: pixKeyData.type as PixKeyType,
     name: pixKeyData.name,
-    owner_name: pixKeyData.owner_name,
+    owner_name: pixKeyData.owner_name || pixKeyData.name,
     user_id: pixKeyData.user_id,
     is_default: pixKeyData.is_default || false,
     created_at: pixKeyData.created_at || new Date().toISOString(),
     updated_at: pixKeyData.updated_at || new Date().toISOString(),
-    bank_name: pixKeyData.bank_name,
+    bank_name: pixKeyData.bank_name || '',
   };
 };

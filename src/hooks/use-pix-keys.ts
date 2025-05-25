@@ -38,6 +38,7 @@ export const usePixKeys = () => {
         is_default: key.is_default,
         created_at: key.created_at,
         updated_at: key.updated_at,
+        bank_name: ''
       })) || [];
 
       setPixKeys(formattedKeys);
@@ -51,13 +52,17 @@ export const usePixKeys = () => {
 
   const addPixKey = async (keyData: Omit<PixKey, 'id' | 'created_at' | 'updated_at'>) => {
     try {
+      const newKeyData = {
+        key: keyData.key,
+        type: keyData.type as string,
+        name: keyData.name,
+        is_default: keyData.is_default,
+        user_id: user?.id
+      };
+
       const { data, error } = await supabase
         .from('pix_keys')
-        .insert([{
-          ...keyData,
-          type: keyData.type,
-          user_id: user?.id
-        }])
+        .insert(newKeyData)
         .select()
         .single();
 
@@ -73,6 +78,7 @@ export const usePixKeys = () => {
         is_default: data.is_default,
         created_at: data.created_at,
         updated_at: data.updated_at,
+        bank_name: ''
       };
 
       setPixKeys(prev => [newKey, ...prev]);

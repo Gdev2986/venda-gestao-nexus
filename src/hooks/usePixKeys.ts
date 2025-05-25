@@ -33,12 +33,12 @@ export const usePixKeys = () => {
         key: key.key,
         type: key.type as PixKeyType,
         name: key.name,
-        owner_name: key.name,
+        owner_name: key.name, // Use name as owner_name since database doesn't have owner_name
         user_id: key.user_id,
         is_default: key.is_default,
         created_at: key.created_at,
         updated_at: key.updated_at,
-        bank_name: key.bank_name || ''
+        bank_name: '' // Default empty since not in database
       })) || [];
 
       setPixKeys(formattedKeys);
@@ -54,7 +54,7 @@ export const usePixKeys = () => {
     try {
       const newKeyData = {
         key: keyData.key,
-        type: keyData.type,
+        type: keyData.type as string, // Convert enum to string for database
         name: keyData.name,
         is_default: keyData.is_default,
         user_id: user?.id
@@ -95,6 +95,7 @@ export const usePixKeys = () => {
   return {
     pixKeys,
     loading,
+    isLoadingPixKeys: loading, // Add this alias for backward compatibility
     error,
     refetch: fetchPixKeys,
     addPixKey,

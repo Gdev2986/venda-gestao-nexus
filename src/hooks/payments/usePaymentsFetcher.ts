@@ -25,7 +25,7 @@ export const usePaymentsFetcher = ({ status = "ALL" }: UsePaymentsFetcherProps =
         `);
 
       if (status !== "ALL") {
-        query = query.eq('status', status as string);
+        query = query.eq('status', status);
       }
 
       const { data, error } = await query.order('created_at', { ascending: false });
@@ -44,7 +44,10 @@ export const usePaymentsFetcher = ({ status = "ALL" }: UsePaymentsFetcherProps =
         client: payment.client,
         pix_key_id: payment.pix_key_id,
         method: PaymentMethod.PIX,
-        requested_at: payment.created_at
+        requested_at: payment.created_at,
+        approved_at: payment.approved_at,
+        approved_by: payment.approved_by,
+        receipt_url: payment.receipt_url
       })) || [];
 
       setPayments(formattedPayments);

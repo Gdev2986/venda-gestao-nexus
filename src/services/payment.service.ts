@@ -8,13 +8,9 @@ export const getAllPaymentRequests = async (): Promise<PaymentRequest[]> => {
       .from('payment_requests')
       .select(`
         *,
-        client:client_id (
+        client:clients (
           id,
           business_name
-        ),
-        processor:approved_by (
-          id,
-          name
         )
       `)
       .order('created_at', { ascending: false });
@@ -28,7 +24,9 @@ export const getAllPaymentRequests = async (): Promise<PaymentRequest[]> => {
       ...payment,
       method: PaymentMethod.PIX,
       requested_at: payment.created_at,
-      status: payment.status as PaymentStatus
+      status: payment.status as PaymentStatus,
+      client: payment.client,
+      processor: undefined // Remove processor since it's causing issues
     }));
   } catch (error) {
     console.error('Error in getAllPaymentRequests:', error);
@@ -114,7 +112,7 @@ export const createPaymentRequest = async (params: PaymentRequestParams): Promis
       })
       .select(`
         *,
-        client:client_id (
+        client:clients (
           id,
           business_name
         )
@@ -130,7 +128,8 @@ export const createPaymentRequest = async (params: PaymentRequestParams): Promis
       ...data,
       method: PaymentMethod.PIX,
       requested_at: data.created_at,
-      status: data.status as PaymentStatus
+      status: data.status as PaymentStatus,
+      client: data.client
     };
   } catch (error) {
     console.error('Error in createPaymentRequest:', error);
