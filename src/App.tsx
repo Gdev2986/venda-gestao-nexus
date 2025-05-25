@@ -66,6 +66,8 @@ function App() {
 const AppContent = () => {
   const { user, userRole, isLoading } = useAuth();
 
+  console.log("App render state:", { user: !!user, userRole, isLoading });
+
   if (isLoading) {
     return (
       <div className="flex flex-col items-center justify-center h-screen bg-background">
@@ -139,7 +141,7 @@ const AppContent = () => {
         </ProtectedRoute>
       } />
 
-      {/* Root redirect */}
+      {/* Root redirect - simplified logic */}
       <Route 
         path="/" 
         element={

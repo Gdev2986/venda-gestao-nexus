@@ -49,6 +49,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   // Load user profile and role
   const loadUserProfile = React.useCallback(async (userId: string) => {
     try {
+      console.log("Loading profile for user:", userId);
       const { data, error } = await supabase
         .from('profiles')
         .select('*')
@@ -61,6 +62,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       }
       
       if (data) {
+        console.log("Profile loaded:", data);
         const userProfile: UserProfile = {
           id: data.id,
           email: data.email,
@@ -77,6 +79,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         // Check password change status
         const needsChange = await AuthService.needsPasswordChange();
         setNeedsPasswordChange(needsChange);
+        
+        console.log("Auth state updated:", { role: data.role, needsChange });
       }
     } catch (error) {
       console.error("Error loading user profile:", error);
@@ -138,7 +142,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     // Set up auth state listener
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, newSession) => {
-        console.log("Auth state changed:", event);
+        console.log("Auth state changed:", event, newSession?.user?.email);
         
         if (!mounted) return;
         

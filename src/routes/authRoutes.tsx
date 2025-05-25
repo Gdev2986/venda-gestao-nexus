@@ -1,6 +1,5 @@
 
 import { Route } from "react-router-dom";
-import { AuthGuard } from "@/components/auth/AuthGuard";
 import AuthLayout from "../layouts/AuthLayout";
 
 // Auth pages
@@ -13,35 +12,19 @@ export const AuthRoutes = (
   <Route element={<AuthLayout />}>
     <Route 
       path="/login" 
-      element={
-        <AuthGuard requireAuth={false}>
-          <Login />
-        </AuthGuard>
-      } 
+      element={<Login />} 
     />
     <Route 
       path="/register" 
-      element={
-        <AuthGuard requireAuth={false}>
-          <Register />
-        </AuthGuard>
-      } 
+      element={<Register />} 
     />
     <Route 
       path="/forgot-password" 
-      element={
-        <AuthGuard requireAuth={false}>
-          <ForgotPassword />
-        </AuthGuard>
-      } 
+      element={<ForgotPassword />} 
     />
     <Route 
       path="/reset-password" 
-      element={
-        <AuthGuard requireAuth={false}>
-          <ResetPassword />
-        </AuthGuard>
-      } 
+      element={<ResetPassword />} 
     />
   </Route>
 );
