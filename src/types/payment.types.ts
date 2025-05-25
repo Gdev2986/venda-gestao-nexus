@@ -1,6 +1,7 @@
 
 export enum PaymentStatus {
   PENDING = "PENDING",
+  PROCESSING = "PROCESSING",
   APPROVED = "APPROVED", 
   PAID = "PAID",
   REJECTED = "REJECTED"
@@ -17,7 +18,8 @@ export enum PixKeyType {
   CNPJ = "CNPJ", 
   EMAIL = "EMAIL",
   PHONE = "PHONE",
-  RANDOM = "RANDOM"
+  RANDOM = "RANDOM",
+  EVP = "EVP"
 }
 
 export interface Payment {
@@ -35,6 +37,10 @@ export interface Payment {
   receipt_url?: string;
   rejection_reason?: string;
   pix_key?: PixKey;
+  client?: {
+    id: string;
+    business_name: string;
+  };
 }
 
 export interface PaymentRequest {
@@ -91,6 +97,11 @@ export interface TransactionFeeResult {
   forwarding_fee: number;
   total_fee: number;
   net_amount: number;
+  feePercentage?: number;
+  taxBlockInfo?: {
+    name: string;
+    description: string;
+  };
 }
 
 export interface PaymentRequestParams {
@@ -99,4 +110,13 @@ export interface PaymentRequestParams {
   description?: string;
   method: PaymentMethod;
   pix_key_id?: string;
+  notes?: string;
+}
+
+export interface ClientBalance {
+  client_id: string;
+  current_balance: number;
+  pending_payments: number;
+  total_sales: number;
+  commission_rate: number;
 }

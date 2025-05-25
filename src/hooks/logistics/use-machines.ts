@@ -3,7 +3,7 @@ import { useState, useEffect } from 'react';
 import { Machine, MachineStats, MachineStatus } from '@/types/machine.types';
 import { supabase } from '@/integrations/supabase/client';
 
-export const useMachines = () => {
+export const useMachines = (options?: { enableRealtime?: boolean; initialFetch?: boolean }) => {
   const [machines, setMachines] = useState<Machine[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -13,7 +13,13 @@ export const useMachines = () => {
       setLoading(true);
       const { data, error } = await supabase
         .from('machines')
-        .select('*');
+        .select(`
+          *,
+          client:client_id (
+            id,
+            business_name
+          )
+        `);
 
       if (error) throw error;
 
@@ -28,6 +34,28 @@ export const useMachines = () => {
       setError(err instanceof Error ? err.message : 'Erro ao carregar máquinas');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const addMachine = async (machineData: Omit<Machine, 'id' | 'created_at' | 'updated_at'>) => {
+    try {
+      const { data, error } = await supabase
+        .from('machines')
+        .insert([machineData])
+        .select()
+        .single();
+
+      if (error) throw error;
+
+      const newMachine = {
+        ...data,
+        status: data.status as MachineStatus
+      };
+
+      setMachines(prev => [...prev, newMachine]);
+      return newMachine;
+    } catch (err) {
+      throw new Error(err instanceof Error ? err.message : 'Erro ao adicionar máquina');
     }
   };
 
@@ -111,7 +139,9 @@ export const useMachines = () => {
   };
 
   useEffect(() => {
-    fetchMachines();
+    if (options?.initialFetch !== false) {
+      fetchMachines();
+    }
   }, []);
 
   const stats = calculateStats(machines);
@@ -120,8 +150,11 @@ export const useMachines = () => {
     machines,
     stats,
     loading,
+    isLoading: loading,
     error,
     refetch: fetchMachines,
+    fetchMachines,
+    addMachine,
     updateMachine,
     deleteMachine
   };
