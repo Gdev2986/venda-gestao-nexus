@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { PageHeader } from "@/components/page/PageHeader";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -35,6 +36,7 @@ const AdminPartnersAndClients = () => {
   const [partnerClients, setPartnerClients] = useState<Client[]>([]);
   const [isLoading, setIsLoading] = useState(false);
 
+  // Mock data
   useEffect(() => {
     const mockPartners: Partner[] = [
       {
@@ -110,6 +112,7 @@ const AdminPartnersAndClients = () => {
     setClients(mockClients);
   }, []);
 
+  // Update partner clients when selected partner changes
   useEffect(() => {
     if (selectedPartner) {
       const partnerRelatedClients = clients.filter(client => client.partner_id === selectedPartner.id);
@@ -159,6 +162,7 @@ const AdminPartnersAndClients = () => {
       return;
     }
 
+    // Update clients with partner association
     setClients(prev => prev.map(client => 
       selectedClients.includes(client.id) 
         ? { ...client, partner_id: selectedPartner.id }
@@ -183,6 +187,7 @@ const AdminPartnersAndClients = () => {
       return;
     }
 
+    // Remove partner association from selected clients
     setClients(prev => prev.map(client => 
       selectedClients.includes(client.id) 
         ? { ...client, partner_id: undefined }
@@ -283,7 +288,7 @@ const AdminPartnersAndClients = () => {
                 <Table>
                   <TableHeader>
                     <TableRow>
-                      <TableHead className="w-12"></TableHead>
+                      <TableHead width="50px"></TableHead>
                       <TableHead>Empresa</TableHead>
                       <TableHead>Contato</TableHead>
                       <TableHead>Email</TableHead>
@@ -349,7 +354,7 @@ const AdminPartnersAndClients = () => {
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead className="w-12"></TableHead>
+                  <TableHead width="50px"></TableHead>
                   <TableHead>Empresa</TableHead>
                   <TableHead>Contato</TableHead>
                   <TableHead>Email</TableHead>

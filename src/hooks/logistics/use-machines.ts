@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { Machine, MachineStatus, MachineStats } from '@/types/machine.types';
 import {
@@ -22,14 +23,7 @@ export const useMachines = (options?: { enableRealtime?: boolean; initialFetch?:
     blocked: 0,
     stock: 0,
     transit: 0,
-    byStatus: {
-      ACTIVE: 0,
-      INACTIVE: 0,
-      MAINTENANCE: 0,
-      BLOCKED: 0,
-      STOCK: 0,
-      TRANSIT: 0
-    }
+    byStatus: {}
   });
 
   const fetchMachines = async () => {
@@ -39,17 +33,11 @@ export const useMachines = (options?: { enableRealtime?: boolean; initialFetch?:
       const data = await getAllMachines();
       setMachines(data);
       
+      // Update stats
       const statsData = await getMachineStats();
       setStats({
         ...statsData,
-        byStatus: statsData.byStatus || {
-          ACTIVE: 0,
-          INACTIVE: 0,
-          MAINTENANCE: 0,
-          BLOCKED: 0,
-          STOCK: 0,
-          TRANSIT: 0
-        }
+        byStatus: statsData.byStatus || {}
       });
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to fetch machines');
@@ -75,17 +63,11 @@ export const useMachines = (options?: { enableRealtime?: boolean; initialFetch?:
     try {
       const newMachine = await createMachine(machineData);
       setMachines(prev => [newMachine, ...prev]);
+      // Refresh stats
       const statsData = await getMachineStats();
       setStats({
         ...statsData,
-        byStatus: statsData.byStatus || {
-          ACTIVE: 0,
-          INACTIVE: 0,
-          MAINTENANCE: 0,
-          BLOCKED: 0,
-          STOCK: 0,
-          TRANSIT: 0
-        }
+        byStatus: statsData.byStatus || {}
       });
       return newMachine;
     } catch (err) {
@@ -100,17 +82,11 @@ export const useMachines = (options?: { enableRealtime?: boolean; initialFetch?:
       setMachines(prev => prev.map(machine => 
         machine.id === id ? updatedMachine : machine
       ));
+      // Refresh stats
       const statsData = await getMachineStats();
       setStats({
         ...statsData,
-        byStatus: statsData.byStatus || {
-          ACTIVE: 0,
-          INACTIVE: 0,
-          MAINTENANCE: 0,
-          BLOCKED: 0,
-          STOCK: 0,
-          TRANSIT: 0
-        }
+        byStatus: statsData.byStatus || {}
       });
       return updatedMachine;
     } catch (err) {
@@ -123,17 +99,11 @@ export const useMachines = (options?: { enableRealtime?: boolean; initialFetch?:
     try {
       await deleteMachine(id);
       setMachines(prev => prev.filter(machine => machine.id !== id));
+      // Refresh stats
       const statsData = await getMachineStats();
       setStats({
         ...statsData,
-        byStatus: statsData.byStatus || {
-          ACTIVE: 0,
-          INACTIVE: 0,
-          MAINTENANCE: 0,
-          BLOCKED: 0,
-          STOCK: 0,
-          TRANSIT: 0
-        }
+        byStatus: statsData.byStatus || {}
       });
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to delete machine');
