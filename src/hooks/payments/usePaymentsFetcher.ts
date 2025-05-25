@@ -26,11 +26,11 @@ export const usePaymentsFetcher = ({ status = "ALL" }: UsePaymentsFetcherProps =
 
       if (status !== "ALL") {
         // Only use database-supported statuses, map PROCESSING to PENDING
-        let dbStatus: string;
+        let dbStatus: "PENDING" | "APPROVED" | "PAID" | "REJECTED";
         if (status === PaymentStatus.PROCESSING) {
           dbStatus = "PENDING";
         } else {
-          dbStatus = status;
+          dbStatus = status as "PENDING" | "APPROVED" | "PAID" | "REJECTED";
         }
         query = query.eq('status', dbStatus);
       }
