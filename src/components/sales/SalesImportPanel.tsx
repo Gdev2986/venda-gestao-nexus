@@ -3,7 +3,6 @@ import { useState, useRef } from "react";
 import Papa from "papaparse";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
 import { FileText, Upload, AlertCircle, CheckCircle, X } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
@@ -21,16 +20,8 @@ const SalesImportPanel = ({ onSalesProcessed }: SalesImportPanelProps) => {
   const [isProcessing, setIsProcessing] = useState(false);
   const [processedData, setProcessedData] = useState<NormalizedSale[]>([]);
   const [warnings, setWarnings] = useState<Array<{rowIndex: number; message: string}>>([]);
-  const [selectedClient, setSelectedClient] = useState<string>("");
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
-
-  // Mock data de clientes - em produção, isso viria de um hook
-  const mockClients = [
-    { id: "1", name: "Cliente Exemplo 1" },
-    { id: "2", name: "Cliente Exemplo 2" },
-    { id: "3", name: "Cliente Exemplo 3" },
-  ];
 
   const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
     const selectedFile = event.target.files?.[0];
@@ -132,23 +123,14 @@ const SalesImportPanel = ({ onSalesProcessed }: SalesImportPanelProps) => {
       return;
     }
 
-    if (!selectedClient) {
-      toast({
-        title: "Cliente não selecionado",
-        description: "Por favor, selecione um cliente para associar às vendas.",
-        variant: "destructive",
-      });
-      return;
-    }
-
     setIsProcessing(true);
 
     try {
-      await insertSales(processedData, selectedClient);
+      await insertSales(processedData);
       
       toast({
         title: "Importação concluída",
-        description: `${processedData.length} vendas importadas com sucesso.`,
+        description: `${processedData.length} vendas importadas com sucesso. As vendas foram vinculadas às máquinas através dos terminais.`,
       });
 
       onSalesProcessed(processedData);
@@ -157,7 +139,6 @@ const SalesImportPanel = ({ onSalesProcessed }: SalesImportPanelProps) => {
       setFile(null);
       setProcessedData([]);
       setWarnings([]);
-      setSelectedClient("");
       if (fileInputRef.current) {
         fileInputRef.current.value = '';
       }
@@ -177,7 +158,6 @@ const SalesImportPanel = ({ onSalesProcessed }: SalesImportPanelProps) => {
     setFile(null);
     setProcessedData([]);
     setWarnings([]);
-    setSelectedClient("");
     if (fileInputRef.current) {
       fileInputRef.current.value = '';
     }
@@ -193,22 +173,6 @@ const SalesImportPanel = ({ onSalesProcessed }: SalesImportPanelProps) => {
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
-          <div className="space-y-2">
-            <Label htmlFor="client-select">Cliente</Label>
-            <Select value={selectedClient} onValueChange={setSelectedClient}>
-              <SelectTrigger>
-                <SelectValue placeholder="Selecione um cliente" />
-              </SelectTrigger>
-              <SelectContent>
-                {mockClients.map((client) => (
-                  <SelectItem key={client.id} value={client.id}>
-                    {client.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-
           <div className="space-y-2">
             <Label htmlFor="file-input">Arquivo CSV</Label>
             <div className="flex items-center gap-2">
@@ -268,7 +232,7 @@ const SalesImportPanel = ({ onSalesProcessed }: SalesImportPanelProps) => {
             {processedData.length > 0 && (
               <Button
                 onClick={handleImport}
-                disabled={isProcessing || !selectedClient}
+                disabled={isProcessing}
                 variant="default"
                 className="flex items-center gap-2"
               >
@@ -283,7 +247,7 @@ const SalesImportPanel = ({ onSalesProcessed }: SalesImportPanelProps) => {
               <AlertCircle className="h-4 w-4" />
               <AlertDescription>
                 {warnings.length} avisos encontrados durante o processamento. 
-                Verifique os dados antes de importar.
+                Verifique os dados antes de importar. As vendas serão vinculadas automaticamente às máquinas através dos números de terminal.
               </AlertDescription>
             </Alert>
           )}

@@ -9,7 +9,7 @@ export interface SaleInsert {
   gross_amount: number;
   net_amount: number;
   payment_method: "CREDIT" | "DEBIT" | "PIX";
-  client_id?: string;
+  machine_id?: string;
 }
 
 // Helper function to convert Brazilian date format to ISO
@@ -48,9 +48,32 @@ const convertBrazilianDateToISO = (dateStr: string): string => {
   return new Date().toISOString();
 };
 
-export const insertSales = async (sales: NormalizedSale[], clientId?: string): Promise<void> => {
+// Helper function to find machine by terminal
+const findMachineByTerminal = async (terminal: string): Promise<string | null> => {
   try {
-    const salesData: SaleInsert[] = sales.map(sale => {
+    const { data, error } = await supabase
+      .from('machines')
+      .select('id')
+      .eq('serial_number', terminal)
+      .maybeSingle();
+
+    if (error) {
+      console.warn('Error finding machine by terminal:', error);
+      return null;
+    }
+
+    return data?.id || null;
+  } catch (error) {
+    console.warn('Error in findMachineByTerminal:', error);
+    return null;
+  }
+};
+
+export const insertSales = async (sales: NormalizedSale[]): Promise<void> => {
+  try {
+    const salesData: SaleInsert[] = [];
+
+    for (const sale of sales) {
       let paymentMethod: "CREDIT" | "DEBIT" | "PIX" = "PIX";
       const normalizedType = sale.payment_type.toLowerCase();
       
@@ -69,16 +92,19 @@ export const insertSales = async (sales: NormalizedSale[], clientId?: string): P
         isoDate = sale.transaction_date.toISOString();
       }
 
-      return {
+      // Find machine by terminal
+      const machine_id = await findMachineByTerminal(sale.terminal);
+
+      salesData.push({
         code: sale.id || `IMPORT-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
         terminal: sale.terminal,
         date: isoDate,
         gross_amount: sale.gross_amount,
         net_amount: netAmount,
         payment_method: paymentMethod,
-        client_id: clientId || undefined,
-      };
-    });
+        machine_id: machine_id,
+      });
+    }
 
     const { error } = await supabase
       .from('sales')
@@ -100,8 +126,12 @@ export const getAllSales = async () => {
       .from('sales')
       .select(`
         *,
-        clients (
-          business_name
+        machines (
+          serial_number,
+          model,
+          clients (
+            business_name
+          )
         )
       `)
       .order('date', { ascending: false });
