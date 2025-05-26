@@ -1,64 +1,118 @@
 
-import { useState, useEffect } from 'react';
-import { supabase } from '@/integrations/supabase/client';
-import { PaymentRequest, PaymentStatus } from '@/types/payment.types';
+import { useState, useEffect, useCallback } from "react";
+import { PaymentStatus } from "@/types/enums";
+import { toPaymentStatus } from "@/lib/type-utils";
+import { useToast } from "@/hooks/use-toast";
+import { PaymentRequest } from "@/types/payment.types";
 
-interface UsePaymentsFetcherProps {
-  status?: PaymentStatus | "ALL";
+// Function to filter payments by status
+export const filterPaymentsByStatus = (payments: PaymentRequest[], statusFilter: PaymentStatus | 'ALL' | null) => {
+  if (!statusFilter || statusFilter.toString().toLowerCase() === 'all') {
+    return payments;
+  }
+  
+  return payments.filter((payment) => {
+    return payment.status === statusFilter;
+  });
 }
 
-export const usePaymentsFetcher = ({ status = "ALL" }: UsePaymentsFetcherProps = {}) => {
-  const [payments, setPayments] = useState<PaymentRequest[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+// Interface for the usePaymentsFetcher hook parameters
+interface UsePaymentsFetcherParams {
+  statusFilter?: PaymentStatus | 'ALL' | null;
+  searchTerm?: string;
+  fetchOnMount?: boolean;
+  page?: number;
+  pageSize?: number;
+}
 
-  const fetchPayments = async () => {
+export const usePaymentsFetcher = ({
+  statusFilter = null,
+  searchTerm = '',
+  fetchOnMount = true,
+  page = 1,
+  pageSize = 10
+}: UsePaymentsFetcherParams = {}) => {
+  const [paymentRequests, setPaymentRequests] = useState<PaymentRequest[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<Error | null>(null);
+  const [currentPage, setCurrentPage] = useState(page);
+  const [totalPages, setTotalPages] = useState(1);
+  const { toast } = useToast();
+
+  // Function to fetch payment requests from the API
+  const fetchPaymentRequests = useCallback(async () => {
     try {
-      setLoading(true);
+      setIsLoading(true);
       setError(null);
 
-      let query = supabase
-        .from('payment_requests')
-        .select(`
-          *,
-          client:clients(id, business_name)
-        `);
+      // Mock API call with setTimeout
+      setTimeout(() => {
+        // Generate some mock data
+        const mockPayments: PaymentRequest[] = Array.from({ length: pageSize }, (_, i) => ({
+          id: `payment-${(currentPage - 1) * pageSize + i + 1}`,
+          client_id: `client-${i % 3 + 1}`,
+          amount: Math.floor(Math.random() * 10000) / 100,
+          status: Object.values(PaymentStatus)[i % 4] as any,
+          created_at: new Date(Date.now() - i * 86400000).toISOString(),
+          updated_at: new Date(Date.now() - i * 43200000).toISOString(),
+          description: `Payment for service ${i + 1}`,
+          rejection_reason: i % 4 === 3 ? 'Documentation incomplete' : null,
+          client: {
+            id: `client-${i % 3 + 1}`,
+            business_name: `Client ${i % 3 + 1}`
+          },
+          // Add missing property
+          pix_key_id: `pix-key-${i % 2 + 1}`
+        }));
 
-      if (status !== "ALL") {
-        query = query.eq('status', status);
-      }
+        // Filter by status if needed
+        let filtered = mockPayments;
+        if (statusFilter && statusFilter !== 'ALL') {
+          const status = statusFilter as PaymentStatus;
+          filtered = filterPaymentsByStatus(mockPayments, status);
+        }
 
-      const { data, error } = await query.order('created_at', { ascending: false });
+        // Filter by search term if provided
+        if (searchTerm) {
+          filtered = filtered.filter(
+            (payment) =>
+              payment.client?.business_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+              payment.id.toLowerCase().includes(searchTerm.toLowerCase())
+          );
+        }
 
-      if (error) throw error;
-
-      const formattedPayments: PaymentRequest[] = data?.map(payment => ({
-        id: payment.id,
-        client_id: payment.client_id,
-        amount: payment.amount,
-        status: payment.status as PaymentStatus,
-        created_at: payment.created_at,
-        updated_at: payment.updated_at,
-        description: payment.description || '',
-        rejection_reason: payment.rejection_reason || '',
-        client: payment.client,
-        pix_key_id: payment.pix_key_id,
-        method: 'PIX' as any,
-        requested_at: payment.created_at
-      })) || [];
-
-      setPayments(formattedPayments);
-    } catch (err) {
-      console.error('Error fetching payments:', err);
-      setError(err instanceof Error ? err.message : 'Failed to fetch payments');
-    } finally {
-      setLoading(false);
+        setPaymentRequests(filtered);
+        setTotalPages(3); // Mock pagination
+        setIsLoading(false);
+      }, 1000);
+    } catch (error) {
+      setIsLoading(false);
+      setError(error instanceof Error ? error : new Error('Unknown error'));
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Failed to fetch payment data",
+      });
     }
-  };
+  }, [currentPage, pageSize, statusFilter, searchTerm, toast]);
 
+  // Fetch data on mount if requested
   useEffect(() => {
-    fetchPayments();
-  }, [status]);
+    if (fetchOnMount) {
+      fetchPaymentRequests();
+    }
+  }, [fetchOnMount, fetchPaymentRequests]);
 
-  return { payments, loading, error, refetch: fetchPayments };
+  return {
+    paymentRequests,
+    setPaymentRequests,
+    isLoading,
+    error,
+    currentPage,
+    totalPages,
+    setCurrentPage,
+    fetchPaymentRequests,
+  };
 };
+
+export default usePaymentsFetcher;

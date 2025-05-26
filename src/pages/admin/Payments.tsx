@@ -1,165 +1,106 @@
-
-import { useState, useEffect } from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
+import React, { useState, useEffect, useCallback } from "react";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Eye, Download, Upload, MessageSquare, Edit } from "lucide-react";
-import { PageHeader } from "@/components/page/PageHeader";
-import { usePaymentsFetcher } from "@/hooks/payments/usePaymentsFetcher";
-import { PaymentRequest, PaymentStatus } from "@/types/payment.types";
-import { formatCurrency } from "@/utils/currency";
-
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Pagination, PaginationContent, PaginationItem, PaginationNext, PaginationPrevious } from "@/components/ui/pagination";
+import { AdminPaymentsList } from "@/components/payments/AdminPaymentsList";
+import { useAdminPayments } from "@/hooks/payments/useAdminPayments";
+import { PaymentStatus, PaymentAction } from "@/types/enums";
+import { useToast } from "@/hooks/use-toast";
+import { useNavigate } from "react-router-dom";
 const AdminPayments = () => {
-  const [payments, setPayments] = useState<PaymentRequest[]>([]);
-  const { payments: fetchedPayments, loading, error, refetch } = usePaymentsFetcher();
-
+  const [searchTerm, setSearchTerm] = useState("");
+  const [statusFilter, setStatusFilter] = useState<PaymentStatus | "ALL">("ALL");
+  const [page, setPage] = useState(1);
+  const pageSize = 10;
+  const navigate = useNavigate();
+  const {
+    toast
+  } = useToast();
+  const {
+    payments,
+    isLoading,
+    error,
+    totalPages,
+    refetch,
+    performPaymentAction
+  } = useAdminPayments({
+    searchTerm,
+    statusFilter,
+    page,
+    pageSize
+  });
   useEffect(() => {
-    setPayments(fetchedPayments);
-  }, [fetchedPayments]);
-
-  const getStatusColor = (status: PaymentStatus) => {
-    switch (status) {
-      case PaymentStatus.PENDING:
-        return "bg-yellow-100 text-yellow-800";
-      case PaymentStatus.APPROVED:
-        return "bg-green-100 text-green-800";
-      case PaymentStatus.REJECTED:
-        return "bg-red-100 text-red-800";
-      case PaymentStatus.PAID:
-        return "bg-blue-100 text-blue-800";
-      default:
-        return "bg-gray-100 text-gray-800";
+    if (error) {
+      toast({
+        title: "Erro",
+        description: `Erro ao carregar pagamentos: ${error}`,
+        variant: "destructive"
+      });
     }
+  }, [error, toast]);
+  const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setSearchTerm(e.target.value);
+    setPage(1); // Reset to the first page when searching
   };
-
-  const getStatusText = (status: PaymentStatus) => {
-    switch (status) {
-      case PaymentStatus.PENDING:
-        return "Pendente";
-      case PaymentStatus.APPROVED:
-        return "Aprovado";
-      case PaymentStatus.REJECTED:
-        return "Rejeitado";
-      case PaymentStatus.PAID:
-        return "Pago";
-      default:
-        return status;
+  const handleStatusFilterChange = (status: PaymentStatus | "ALL") => {
+    setStatusFilter(status);
+    setPage(1); // Reset to the first page when filtering
+  };
+  const handlePageChange = (newPage: number) => {
+    setPage(newPage);
+  };
+  const handleActionClick = useCallback((paymentId: string, action: PaymentAction) => {
+    if (action === PaymentAction.VIEW) {
+      navigate(`/admin/payments/${paymentId}`);
+    } else {
+      performPaymentAction(paymentId, action);
     }
-  };
+  }, [navigate, performPaymentAction]);
+  return <div className="container mx-auto py-6">
+      <Card>
+        <CardHeader>
+          <CardTitle>Gerenciar Pagamentos</CardTitle>
+          <CardDescription>
+            Visualize, filtre e gerencie os pagamentos dos clientes.
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <Input type="search" placeholder="Buscar por cliente..." value={searchTerm} onChange={handleSearchChange} />
+            <Select value={statusFilter} onValueChange={value => handleStatusFilterChange(value as PaymentStatus | "ALL")}>
+              <SelectTrigger>
+                <SelectValue placeholder="Filtrar por status" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="ALL">Todos os Status</SelectItem>
+                <SelectItem value={PaymentStatus.PENDING}>Pendente</SelectItem>
+                <SelectItem value={PaymentStatus.APPROVED}>Aprovado</SelectItem>
+                <SelectItem value={PaymentStatus.REJECTED}>Rejeitado</SelectItem>
+                <SelectItem value={PaymentStatus.PAID}>Pago</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
 
-  if (loading) {
-    return (
-      <div className="space-y-6">
-        <PageHeader
-          title="Gerenciar Pagamentos"
-          description="Visualize e gerencie todas as solicitações de pagamento"
-        />
-        <div className="text-center">Carregando...</div>
-      </div>
-    );
-  }
+          <AdminPaymentsList payments={payments || []} isLoading={isLoading} selectedStatus={statusFilter} onActionClick={handleActionClick} />
 
-  if (error) {
-    return (
-      <div className="space-y-6">
-        <PageHeader
-          title="Gerenciar Pagamentos"
-          description="Visualize e gerencie todas as solicitações de pagamento"
-        />
-        <div className="text-center text-red-500">Erro: {error}</div>
-      </div>
-    );
-  }
-
-  return (
-    <div className="space-y-6">
-      <PageHeader
-        title="Gerenciar Pagamentos"
-        description="Visualize e gerencie todas as solicitações de pagamento"
-      />
-
-      <div className="grid gap-4">
-        {payments.length === 0 ? (
-          <Card>
-            <CardContent className="pt-6 text-center">
-              <p className="text-muted-foreground">Nenhuma solicitação de pagamento encontrada.</p>
-            </CardContent>
-          </Card>
-        ) : (
-          payments.map((payment) => (
-            <Card key={payment.id}>
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <div>
-                  <CardTitle className="text-sm font-medium">
-                    {payment.client?.business_name || "Cliente não encontrado"}
-                  </CardTitle>
-                  <p className="text-xs text-muted-foreground">
-                    Solicitação #{payment.id.slice(0, 8)}
-                  </p>
-                </div>
-                <Badge className={getStatusColor(payment.status)}>
-                  {getStatusText(payment.status)}
-                </Badge>
-              </CardHeader>
-              <CardContent>
-                <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-4">
-                  <div>
-                    <p className="text-sm text-muted-foreground">Valor</p>
-                    <p className="font-medium">{formatCurrency(payment.amount)}</p>
-                  </div>
-                  <div>
-                    <p className="text-sm text-muted-foreground">Tipo</p>
-                    <p className="font-medium">PIX</p>
-                  </div>
-                  <div>
-                    <p className="text-sm text-muted-foreground">Data da Solicitação</p>
-                    <p className="font-medium">
-                      {new Date(payment.requested_at).toLocaleDateString('pt-BR')}
-                    </p>
-                  </div>
-                  <div>
-                    <p className="text-sm text-muted-foreground">Descrição</p>
-                    <p className="font-medium">{payment.description || "Sem descrição"}</p>
-                  </div>
-                </div>
-
-                <div className="flex flex-wrap gap-2">
-                  <Button variant="outline" size="sm">
-                    <Eye className="mr-2 h-4 w-4" />
-                    Visualizar
+          {payments && payments.length > 0 && <Pagination>
+              <PaginationContent className="flex gap-4">
+                <PaginationItem>
+                  <Button variant="outline" onClick={() => handlePageChange(page - 1)} disabled={page === 1} className="h-9 w-9 px-[45px]">
+                    <PaginationPrevious className="h-4 w-4" />
                   </Button>
-                  <Button variant="outline" size="sm">
-                    <Download className="mr-2 h-4 w-4" />
-                    Baixar Boleto
+                </PaginationItem>
+                <PaginationItem>
+                  <Button variant="outline" onClick={() => handlePageChange(page + 1)} disabled={page === totalPages} className="h-9 w-9 px-[45px]">
+                    <PaginationNext className="h-4 w-4" />
                   </Button>
-                  <Button variant="outline" size="sm">
-                    <Upload className="mr-2 h-4 w-4" />
-                    Enviar Comprovante
-                  </Button>
-                  <Button variant="outline" size="sm">
-                    <MessageSquare className="mr-2 h-4 w-4" />
-                    Adicionar Nota
-                  </Button>
-                  <Button variant="outline" size="sm">
-                    <Edit className="mr-2 h-4 w-4" />
-                    Alterar Status
-                  </Button>
-                </div>
-
-                {payment.rejection_reason && (
-                  <div className="mt-4 p-3 bg-red-50 rounded-md">
-                    <p className="text-sm text-red-800">
-                      <strong>Motivo da rejeição:</strong> {payment.rejection_reason}
-                    </p>
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-          ))
-        )}
-      </div>
-    </div>
-  );
+                </PaginationItem>
+              </PaginationContent>
+            </Pagination>}
+        </CardContent>
+      </Card>
+    </div>;
 };
-
 export default AdminPayments;

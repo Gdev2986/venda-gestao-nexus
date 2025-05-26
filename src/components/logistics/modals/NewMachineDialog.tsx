@@ -135,20 +135,13 @@ const NewMachineDialog = ({ open, onOpenChange, onSuccess }: NewMachineDialogPro
             <Label htmlFor="model" className={errors.model ? "text-destructive" : ""}>
               Modelo *
             </Label>
-            <Select value={model} onValueChange={setModel}>
-              <SelectTrigger id="model">
-                <SelectValue placeholder="Selecione o modelo" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="PagBank">PagBank</SelectItem>
-                <SelectItem value="CeoPag">CeoPag</SelectItem>
-                <SelectItem value="Rede">Rede</SelectItem>
-                <SelectItem value="Terminal Pro">Terminal Pro</SelectItem>
-                <SelectItem value="Terminal Standard">Terminal Standard</SelectItem>
-                <SelectItem value="Terminal Mini">Terminal Mini</SelectItem>
-                <SelectItem value="Mobile">Mobile</SelectItem>
-              </SelectContent>
-            </Select>
+            <Input
+              id="model"
+              placeholder="Ex: Terminal Pro"
+              value={model}
+              onChange={(e) => setModel(e.target.value)}
+              className={errors.model ? "border-destructive" : ""}
+            />
             {errors.model && (
               <p className="text-xs text-destructive">{errors.model}</p>
             )}

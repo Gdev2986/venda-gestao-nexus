@@ -1,4 +1,3 @@
-
 import { useEffect, useState, ReactNode } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { PageHeader } from "@/components/page/PageHeader";
@@ -14,14 +13,13 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Machine, MachineStatus } from "@/types/machine.types";
 import { useMachines } from "@/hooks/logistics/use-machines";
 import CreateMachineDialog from "@/components/logistics/modals/CreateMachineDialog";
-import { getMachineById } from "@/services/machine.service";
 
 const MachineDetails = () => {
   const { machineId } = useParams();
   const navigate = useNavigate();
   const [machine, setMachine] = useState<Machine | null>(null);
   const [loading, setLoading] = useState(true);
-  const { refetch } = useMachines();
+  const { updateMachine, fetchMachines } = useMachines({});
   const editDialog = useDialog();
   
   useEffect(() => {
@@ -33,7 +31,9 @@ const MachineDetails = () => {
       
       setLoading(true);
       try {
-        const foundMachine = await getMachineById(machineId);
+        // For this implementation, we'll use the existing hook
+        const response = await fetchMachines();
+        const foundMachine = response?.find((m: Machine) => m.id === machineId);
         
         if (foundMachine) {
           setMachine(foundMachine);
@@ -49,17 +49,16 @@ const MachineDetails = () => {
     };
     
     fetchMachineDetails();
-  }, [machineId, navigate]);
+  }, [machineId, navigate, fetchMachines]);
   
-  const handleEditSuccess = async () => {
+  const handleEditSuccess = () => {
     // Refresh the machine data
-    if (machineId) {
-      const updatedMachine = await getMachineById(machineId);
+    fetchMachines().then((machines) => {
+      const updatedMachine = machines?.find((m: Machine) => m.id === machineId);
       if (updatedMachine) {
         setMachine(updatedMachine);
       }
-    }
-    await refetch();
+    });
   };
   
   const getStatusBadge = (status: MachineStatus) => {
@@ -148,7 +147,7 @@ const MachineDetails = () => {
                 
                 <div>
                   <h3 className="text-sm font-medium text-muted-foreground mb-1">Cliente</h3>
-                  <p className="font-medium">{machine.client?.business_name || "Não Vinculada"}</p>
+                  <p className="font-medium">{machine.client?.business_name || "Em Estoque"}</p>
                 </div>
                 
                 <div>

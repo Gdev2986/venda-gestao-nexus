@@ -1,22 +1,25 @@
-
 import { supabase } from "@/integrations/supabase/client";
-
-export interface MachineNote {
-  id: string;
-  machine_id: string;
-  note: string;
-  created_at: string;
-  created_by: string;
-  user?: {
-    name: string;
-  };
-}
+import { MachineNote } from "@/types/machine.types";
 
 export const getMachineNotes = async (machineId: string): Promise<MachineNote[]> => {
   try {
-    // For now, return empty array until machine_notes table is created
-    console.log(`Getting notes for machine ${machineId}`);
-    return [];
+    const { data, error } = await supabase
+      .from('machine_notes')
+      .select(`
+        *,
+        user:created_by (
+          name
+        )
+      `)
+      .eq('machine_id', machineId)
+      .order('created_at', { ascending: false });
+
+    if (error) {
+      console.error('Error fetching machine notes:', error);
+      throw new Error(`Erro ao buscar notas da máquina: ${error.message}`);
+    }
+
+    return data || [];
   } catch (error) {
     console.error('Error in getMachineNotes:', error);
     throw error;
@@ -25,17 +28,28 @@ export const getMachineNotes = async (machineId: string): Promise<MachineNote[]>
 
 export const addMachineNote = async (machineId: string, note: string, userId: string): Promise<MachineNote> => {
   try {
-    // For now, return a mock note until machine_notes table is created
-    const mockNote: MachineNote = {
-      id: `note-${Date.now()}`,
-      machine_id: machineId,
-      note: note,
-      created_at: new Date().toISOString(),
-      created_by: userId,
-      user: { name: 'Current User' }
-    };
-    console.log('Adding machine note:', mockNote);
-    return mockNote;
+    const { data, error } = await supabase
+      .from('machine_notes')
+      .insert({
+        machine_id: machineId,
+        note: note,
+        created_by: userId,
+        created_at: new Date().toISOString()
+      })
+      .select(`
+        *,
+        user:created_by (
+          name
+        )
+      `)
+      .single();
+
+    if (error) {
+      console.error('Error adding machine note:', error);
+      throw new Error(`Erro ao adicionar nota: ${error.message}`);
+    }
+
+    return data;
   } catch (error) {
     console.error('Error in addMachineNote:', error);
     throw error;
@@ -44,10 +58,17 @@ export const addMachineNote = async (machineId: string, note: string, userId: st
 
 export const deleteMachineNote = async (noteId: string): Promise<void> => {
   try {
-    console.log(`Deleting note ${noteId}`);
-    // For now, just log until machine_notes table is created
+    const { error } = await supabase
+      .from('machine_notes')
+      .delete()
+      .eq('id', noteId);
+
+    if (error) {
+      console.error('Error deleting machine note:', error);
+      throw new Error(`Erro ao excluir nota: ${error.message}`);
+    }
   } catch (error) {
     console.error('Error in deleteMachineNote:', error);
     throw error;
   }
-};
+}; 

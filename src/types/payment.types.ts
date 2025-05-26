@@ -1,86 +1,132 @@
+import { PaymentType as EnumsPaymentType } from './enums';
 
-export enum PaymentMethod {
-  CREDIT = "CREDIT",
-  DEBIT = "DEBIT", 
-  PIX = "PIX"
-}
-
+// Core payment status enum
 export enum PaymentStatus {
-  PENDING = "PENDING",
-  PROCESSING = "PROCESSING", 
-  APPROVED = "APPROVED",
-  REJECTED = "REJECTED",
-  PAID = "PAID"
+  COMPLETED = "COMPLETED",
+  REJECTED = "REJECTED", 
+  PROCESSING = "PROCESSING"
 }
 
-export enum PixKeyType {
-  CPF = "CPF",
-  CNPJ = "CNPJ",
-  EMAIL = "EMAIL",
-  PHONE = "PHONE",
-  RANDOM = "RANDOM"
+// Payment method enum for new payment system
+export enum PaymentMethod {
+  PIX = "PIX",
+  TED = "TED",
+  BOLETO = "BOLETO"
 }
 
 export interface PixKey {
   id: string;
-  user_id: string;
-  type: PixKeyType;
   key: string;
+  type: string;
   name: string;
-  is_default: boolean;
-  created_at: string;
-  updated_at: string;
+  owner_name: string;
+  is_default?: boolean;
+  bank_name?: string;
+  key_type?: string;
+  user_id: string;
+  created_at?: string;
+  updated_at?: string;
 }
 
+// Legacy Payment interface for backward compatibility
 export interface Payment {
   id: string;
   client_id: string;
   amount: number;
-  description?: string;
   status: PaymentStatus;
-  method: PaymentMethod;
-  pix_key_id?: string;
-  created_at: string;
-  updated_at: string;
-  requested_at: string;
-  rejection_reason?: string;
   approved_by?: string;
   approved_at?: string;
+  created_at: string;
+  updated_at: string;
   receipt_url?: string;
-  pix_key?: PixKey;
+  description?: string;
+  rejection_reason: string | null;
+  payment_type?: EnumsPaymentType;
   client?: {
     id: string;
     business_name: string;
+    email?: string;
+    phone?: string;
+  };
+  pix_key?: PixKey;
+  bank_info?: {
+    bank_name?: string;
+    account_number?: string;
+    branch_number?: string;
+    account_holder?: string;
   };
 }
 
+// New PaymentRequest interface for admin side
 export interface PaymentRequest {
   id: string;
   client_id: string;
   amount: number;
-  description?: string;
-  status: PaymentStatus;
   method: PaymentMethod;
-  pix_key_id: string;
+  status: PaymentStatus;
   requested_at: string;
-  created_at?: string;
-  updated_at?: string;
-  rejection_reason?: string;
+  processed_at?: string;
+  processed_by?: string;
+  notes?: string;
+  receipt_url?: string;
   client?: {
     id: string;
     business_name: string;
+    current_balance: number;
+  };
+  processor?: {
+    id: string;
+    name: string;
   };
 }
 
-export interface TransactionFeeParams {
+export interface PaymentRequestParams {
+  client_id: string;
   amount: number;
+  method: PaymentMethod;
+  notes?: string;
+}
+
+export interface PaymentProcessParams {
+  payment_id: string;
+  status: PaymentStatus;
+  notes?: string;
+  receipt_file?: File;
+}
+
+export interface ClientBalance {
+  client_id: string;
+  current_balance: number;
+  pending_payments: number;
+  total_sales: number;
+  commission_rate: number;
+}
+
+export type PaymentRequestStatus = PaymentStatus;
+
+// PixKey types used in forms and components
+export type PixKeyType = 'CPF' | 'CNPJ' | 'EMAIL' | 'PHONE' | 'EVP';
+
+// Transaction fee calculation interfaces
+export interface TransactionFeeParams {
+  clientId: string;
   paymentMethod: PaymentMethod;
-  installments?: number;
+  installments: number;
+  amount: number;
 }
 
 export interface TransactionFeeResult {
-  grossAmount: number;
-  netAmount: number;
+  originalAmount: number;
   feeAmount: number;
+  netAmount: number;
   feePercentage: number;
+  // Detailed breakdown of fees
+  rootFee: number;
+  forwardingFee: number;
+  finalFee: number;
+  // Information about the tax block used
+  taxBlockInfo?: {
+    blockId: string;
+    blockName: string;
+  };
 }

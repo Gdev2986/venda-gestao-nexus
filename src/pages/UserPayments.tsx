@@ -1,136 +1,167 @@
 
 import { useState, useEffect } from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { useAuth } from "@/contexts/AuthContext";
+import { getClientPayments } from "@/services/payment.service";
+import { formatCurrency } from "@/lib/utils";
+import { PaymentDetailsDialog } from "@/components/payments/PaymentDetailsDialog";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Eye } from "lucide-react";
+import { format } from "date-fns";
 import { Badge } from "@/components/ui/badge";
-import { Plus } from "lucide-react";
+import { Skeleton } from "@/components/ui/skeleton";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import { PageHeader } from "@/components/page/PageHeader";
-import { usePaymentsFetcher } from "@/hooks/payments/usePaymentsFetcher";
-import { PaymentRequest, PaymentStatus } from "@/types/payment.types";
-import { formatCurrency } from "@/utils/currency";
+import { ptBR } from "date-fns/locale";
+import { Payment, PaymentStatus } from "@/types/payment.types";
 
 const UserPayments = () => {
-  const [payments, setPayments] = useState<PaymentRequest[]>([]);
-  const { payments: fetchedPayments, loading, error, refetch } = usePaymentsFetcher();
+  const { user } = useAuth();
+  const [payments, setPayments] = useState<Payment[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [selectedPayment, setSelectedPayment] = useState<Payment | null>(null);
+  const [isDetailsOpen, setIsDetailsOpen] = useState(false);
 
   useEffect(() => {
-    setPayments(fetchedPayments);
-  }, [fetchedPayments]);
+    const fetchPayments = async () => {
+      if (user) {
+        setIsLoading(true);
+        try {
+          // In a real implementation, you would get the client ID from the user context
+          // For demo purposes, we're using a hard-coded value
+          const clientId = "c87e857c-f385-4f8f-9d5d-a165d6172676"; // TODO: Replace with real client ID from user context
+          const fetchedPayments = await getClientPayments(clientId);
+          setPayments(fetchedPayments);
+        } catch (error) {
+          console.error("Failed to fetch payments:", error);
+        } finally {
+          setIsLoading(false);
+        }
+      }
+    };
 
-  const getStatusColor = (status: PaymentStatus) => {
-    switch (status) {
-      case PaymentStatus.PENDING:
-        return "bg-yellow-100 text-yellow-800";
-      case PaymentStatus.APPROVED:
-        return "bg-green-100 text-green-800";
-      case PaymentStatus.REJECTED:
-        return "bg-red-100 text-red-800";
-      case PaymentStatus.PAID:
-        return "bg-blue-100 text-blue-800";
-      default:
-        return "bg-gray-100 text-gray-800";
+    fetchPayments();
+  }, [user]);
+
+  const getStatusBadge = (status: PaymentStatus | string) => {
+    if (status === PaymentStatus.PENDING) {
+      return <Badge variant="outline">Pendente</Badge>;
+    } else if (status === PaymentStatus.APPROVED) {
+      return <Badge variant="default">Aprovado</Badge>;
+    } else if (status === PaymentStatus.REJECTED) {
+      return <Badge variant="destructive">Rejeitado</Badge>;
+    } else if (status === PaymentStatus.PAID) {
+      return <Badge>Pago</Badge>;
+    } else {
+      return <Badge variant="secondary">{status}</Badge>;
     }
   };
 
-  const getStatusText = (status: PaymentStatus) => {
-    switch (status) {
-      case PaymentStatus.PENDING:
-        return "Pendente";
-      case PaymentStatus.APPROVED:
-        return "Aprovado";
-      case PaymentStatus.REJECTED:
-        return "Rejeitado";
-      case PaymentStatus.PAID:
-        return "Pago";
-      default:
-        return status;
-    }
+  const handleViewDetails = (payment: Payment) => {
+    // Ensure payment object has the expected structure for PaymentDetailsDialog
+    const adaptedPayment: Payment = {
+      ...payment,
+      rejection_reason: payment.rejection_reason || null,
+      pix_key: payment.pix_key ? {
+        ...payment.pix_key,
+        owner_name: payment.pix_key.owner_name || payment.pix_key.name || ''
+      } : undefined
+    };
+    
+    setSelectedPayment(adaptedPayment);
+    setIsDetailsOpen(true);
   };
-
-  if (loading) {
-    return (
-      <div className="space-y-6">
-        <PageHeader
-          title="Meus Pagamentos"
-          description="Gerencie suas solicitações de pagamento"
-        />
-        <div className="text-center">Carregando...</div>
-      </div>
-    );
-  }
-
-  if (error) {
-    return (
-      <div className="space-y-6">
-        <PageHeader
-          title="Meus Pagamentos"
-          description="Gerencie suas solicitações de pagamento"
-        />
-        <div className="text-center text-red-500">Erro: {error}</div>
-      </div>
-    );
-  }
 
   return (
-    <div className="space-y-6">
+    <div className="container py-6">
       <PageHeader
         title="Meus Pagamentos"
-        description="Gerencie suas solicitações de pagamento"
-        action={
-          <Button>
-            <Plus className="mr-2 h-4 w-4" />
-            Nova Solicitação
-          </Button>
-        }
+        description="Visualize e gerencie seus pagamentos"
       />
 
-      <div className="grid gap-4">
-        {payments.length === 0 ? (
-          <Card>
-            <CardContent className="pt-6 text-center">
-              <p className="text-muted-foreground">Nenhuma solicitação de pagamento encontrada.</p>
-            </CardContent>
-          </Card>
-        ) : (
-          payments.map((payment) => (
-            <Card key={payment.id}>
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">
-                  Solicitação #{payment.id.slice(0, 8)}
-                </CardTitle>
-                <Badge className={getStatusColor(payment.status)}>
-                  {getStatusText(payment.status)}
-                </Badge>
-              </CardHeader>
-              <CardContent>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  <div>
-                    <p className="text-sm text-muted-foreground">Valor</p>
-                    <p className="font-medium">{formatCurrency(payment.amount)}</p>
-                  </div>
-                  <div>
-                    <p className="text-sm text-muted-foreground">Data da Solicitação</p>
-                    <p className="font-medium">
-                      {new Date(payment.requested_at).toLocaleDateString('pt-BR')}
-                    </p>
-                  </div>
-                  <div>
-                    <p className="text-sm text-muted-foreground">Descrição</p>
-                    <p className="font-medium">{payment.description || "Sem descrição"}</p>
-                  </div>
-                </div>
-                {payment.rejection_reason && (
-                  <div className="mt-4 p-3 bg-red-50 rounded-md">
-                    <p className="text-sm text-red-800">
-                      <strong>Motivo da rejeição:</strong> {payment.rejection_reason}
-                    </p>
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-          ))
-        )}
-      </div>
+      <Card>
+        <CardHeader>
+          <CardTitle>Histórico de Pagamentos</CardTitle>
+          <CardDescription>
+            Veja todos os pagamentos solicitados e seus status
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <ScrollArea className="h-[500px] pr-4">
+            {isLoading ? (
+              <div className="space-y-4">
+                {[1, 2, 3].map((i) => (
+                  <Card key={i}>
+                    <CardContent className="p-4">
+                      <div className="flex justify-between items-center">
+                        <div>
+                          <Skeleton className="h-4 w-24 mb-2" />
+                          <Skeleton className="h-6 w-32" />
+                        </div>
+                        <div className="text-right">
+                          <Skeleton className="h-4 w-16 mb-2 ml-auto" />
+                          <Skeleton className="h-6 w-20 ml-auto" />
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+            ) : payments.length > 0 ? (
+              <div className="space-y-4">
+                {payments.map((payment) => (
+                  <Card key={payment.id} className="overflow-hidden">
+                    <CardContent className="p-4">
+                      <div className="flex justify-between items-center">
+                        <div>
+                          <p className="text-sm text-muted-foreground">
+                            {format(
+                              new Date(payment.created_at),
+                              "dd 'de' MMMM 'de' yyyy",
+                              { locale: ptBR }
+                            )}
+                          </p>
+                          <p className="font-semibold text-lg">
+                            {formatCurrency(payment.amount)}
+                          </p>
+                          <p className="text-sm">
+                            {payment.description || "Pagamento"}
+                          </p>
+                        </div>
+                        <div className="text-right">
+                          <div className="mb-2">{getStatusBadge(payment.status)}</div>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => handleViewDetails(payment)}
+                          >
+                            <Eye className="h-4 w-4 mr-2" />
+                            Detalhes
+                          </Button>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+            ) : (
+              <div className="text-center py-6">
+                <p className="text-muted-foreground">
+                  Nenhum pagamento encontrado
+                </p>
+              </div>
+            )}
+          </ScrollArea>
+        </CardContent>
+      </Card>
+
+      {selectedPayment && (
+        <PaymentDetailsDialog
+          payment={selectedPayment}
+          open={isDetailsOpen}
+          onOpenChange={setIsDetailsOpen}
+        />
+      )}
     </div>
   );
 };
