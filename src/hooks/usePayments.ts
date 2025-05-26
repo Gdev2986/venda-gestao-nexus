@@ -1,6 +1,6 @@
 
 import { useState } from "react";
-import { usePaymentsFetcher } from "./payments/usePaymentsFetcher";
+import usePaymentsFetcher from "./payments/usePaymentsFetcher";
 import { usePaymentActions } from "./payments/usePaymentActions";
 
 export const usePayments = (options = {}) => {
@@ -27,10 +27,6 @@ export const usePayments = (options = {}) => {
     fetchPaymentRequests,
     approvePayment,
     rejectPayment,
-    // Compatibility aliases
-    payments: paymentRequests,
-    loading: isLoading,
-    refetch: fetchPaymentRequests
   };
 };
 

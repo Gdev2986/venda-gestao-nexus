@@ -1,132 +1,253 @@
 
-import React, { useState, useEffect } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { PaymentMethod } from '@/types/payment.types';
-import { useTransactionFees } from '@/hooks/useTransactionFees';
-import { formatCurrency } from '@/lib/formatters';
+import { useState, useEffect } from "react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { 
+  Select, 
+  SelectContent, 
+  SelectItem, 
+  SelectTrigger, 
+  SelectValue 
+} from "@/components/ui/select";
+import { 
+  Table, 
+  TableBody, 
+  TableCell, 
+  TableHead, 
+  TableHeader, 
+  TableRow 
+} from "@/components/ui/table";
+import { PaymentMethod } from "@/types/enums";
+import { TransactionFeeResult } from "@/types/payment.types";
+import { useTransactionFees } from "@/hooks/useTransactionFees";
+import { Calculator, ArrowRight, AlertCircle, Loader2 } from "lucide-react";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 
-const TransactionFeeCalculator = () => {
+interface TransactionFeeCalculatorProps {
+  clientId: string;
+  clientName?: string;
+  onCalculate?: (result: TransactionFeeResult) => void;
+}
+
+export function TransactionFeeCalculator({ 
+  clientId, 
+  clientName, 
+  onCalculate 
+}: TransactionFeeCalculatorProps) {
   const [amount, setAmount] = useState<number>(0);
-  const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>(PaymentMethod.PIX);
+  const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>(PaymentMethod.CREDIT);
   const [installments, setInstallments] = useState<number>(1);
+  const [hasTaxBlock, setHasTaxBlock] = useState<boolean | null>(null);
+  const [isCheckingTaxBlock, setIsCheckingTaxBlock] = useState(false);
   
-  const { calculateFee, isLoading } = useTransactionFees();
-  const [feeResult, setFeeResult] = useState<any>(null);
+  const { 
+    calculateFees, 
+    formatFeeResult, 
+    checkClientHasTaxBlock,
+    isCalculating, 
+    feeResult, 
+    error 
+  } = useTransactionFees();
 
+  useEffect(() => {
+    const checkTaxBlock = async () => {
+      if (clientId) {
+        setIsCheckingTaxBlock(true);
+        const result = await checkClientHasTaxBlock(clientId);
+        setHasTaxBlock(result);
+        setIsCheckingTaxBlock(false);
+      }
+    };
+    
+    checkTaxBlock();
+  }, [clientId, checkClientHasTaxBlock]);
+  
   const handleCalculate = async () => {
-    if (amount <= 0) return;
-
-    try {
-      const result = await calculateFee({
-        amount,
-        paymentMethod,
-        installments: paymentMethod === PaymentMethod.CREDIT ? installments : 1
-      });
-      setFeeResult(result);
-    } catch (error) {
-      console.error('Error calculating fee:', error);
+    if (!amount || amount <= 0) return;
+    
+    const result = await calculateFees({
+      clientId,
+      paymentMethod,
+      installments,
+      amount
+    });
+    
+    if (result && onCalculate) {
+      onCalculate(result);
+    }
+  };
+  
+  const getInstallmentOptions = () => {
+    if (paymentMethod === PaymentMethod.PIX) return [1];
+    if (paymentMethod === PaymentMethod.DEBIT) return [1];
+    return [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12];
+  };
+  
+  const handleAmountChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value.replace(/[^0-9.]/g, '');
+    setAmount(parseFloat(value) || 0);
+  };
+  
+  const handlePaymentMethodChange = (value: string) => {
+    setPaymentMethod(value as PaymentMethod);
+    // Reset installments to 1 when changing payment method
+    if (value !== PaymentMethod.CREDIT) {
+      setInstallments(1);
     }
   };
 
-  useEffect(() => {
-    if (amount > 0) {
-      handleCalculate();
-    }
-  }, [amount, paymentMethod, installments]);
-
   return (
-    <div className="space-y-6">
-      <Card>
-        <CardHeader>
-          <CardTitle>Calculadora de Taxas</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="amount">Valor da Transação</Label>
-              <Input
-                id="amount"
-                type="number"
-                step="0.01"
-                min="0"
-                value={amount || ''}
-                onChange={(e) => setAmount(parseFloat(e.target.value) || 0)}
-                placeholder="0,00"
-              />
+    <Card className="w-full">
+      <CardHeader>
+        <CardTitle className="flex items-center">
+          <Calculator className="h-5 w-5 mr-2" />
+          Calculadora de Taxas
+          {clientName && <span className="ml-2 text-sm text-muted-foreground">({clientName})</span>}
+        </CardTitle>
+      </CardHeader>
+      <CardContent>
+        {isCheckingTaxBlock ? (
+          <div className="flex justify-center py-6">
+            <Loader2 className="h-6 w-6 animate-spin" />
+            <span className="ml-2">Verificando configuração de taxas...</span>
+          </div>
+        ) : hasTaxBlock === false ? (
+          <Alert variant="destructive">
+            <AlertCircle className="h-4 w-4" />
+            <AlertTitle>Bloco de taxas não configurado</AlertTitle>
+            <AlertDescription>
+              Este cliente não possui um bloco de taxas associado. Associe um bloco de taxas antes de calcular.
+            </AlertDescription>
+          </Alert>
+        ) : (
+          <>
+            <div className="space-y-4 mb-6">
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="amount">Valor da Transação (R$)</Label>
+                  <Input
+                    id="amount"
+                    type="text"
+                    value={amount || ''}
+                    onChange={handleAmountChange}
+                    placeholder="0.00"
+                  />
+                </div>
+                
+                <div className="space-y-2">
+                  <Label htmlFor="payment-method">Método de Pagamento</Label>
+                  <Select
+                    value={paymentMethod}
+                    onValueChange={handlePaymentMethodChange}
+                  >
+                    <SelectTrigger id="payment-method">
+                      <SelectValue placeholder="Selecione o método" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value={PaymentMethod.CREDIT}>Crédito</SelectItem>
+                      <SelectItem value={PaymentMethod.DEBIT}>Débito</SelectItem>
+                      <SelectItem value={PaymentMethod.PIX}>PIX</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                
+                <div className="space-y-2">
+                  <Label htmlFor="installments">Parcelas</Label>
+                  <Select
+                    value={String(installments)}
+                    onValueChange={(value) => setInstallments(parseInt(value))}
+                    disabled={paymentMethod !== PaymentMethod.CREDIT}
+                  >
+                    <SelectTrigger id="installments">
+                      <SelectValue placeholder="Selecione as parcelas" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {getInstallmentOptions().map(option => (
+                        <SelectItem key={option} value={String(option)}>
+                          {option === 1 ? `${option} parcela` : `${option} parcelas`}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+              
+              <Button 
+                onClick={handleCalculate} 
+                disabled={amount <= 0 || isCalculating}
+                className="w-full"
+              >
+                {isCalculating ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Calculando...
+                  </>
+                ) : (
+                  <>Calcular Taxas</>
+                )}
+              </Button>
             </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="paymentMethod">Método de Pagamento</Label>
-              <Select value={paymentMethod} onValueChange={(value) => setPaymentMethod(value as PaymentMethod)}>
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value={PaymentMethod.PIX}>PIX</SelectItem>
-                  <SelectItem value={PaymentMethod.DEBIT}>Cartão de Débito</SelectItem>
-                  <SelectItem value={PaymentMethod.CREDIT}>Cartão de Crédito</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-
-            {paymentMethod === PaymentMethod.CREDIT && (
-              <div className="space-y-2">
-                <Label htmlFor="installments">Parcelas</Label>
-                <Select value={installments.toString()} onValueChange={(value) => setInstallments(parseInt(value))}>
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {Array.from({ length: 12 }, (_, i) => i + 1).map((num) => (
-                      <SelectItem key={num} value={num.toString()}>
-                        {num}x
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+            
+            {error && (
+              <Alert variant="destructive" className="mb-4">
+                <AlertCircle className="h-4 w-4" />
+                <AlertTitle>Erro no cálculo</AlertTitle>
+                <AlertDescription>{error}</AlertDescription>
+              </Alert>
+            )}
+            
+            {feeResult && (
+              <div className="border rounded-md p-4">
+                <h3 className="text-lg font-medium mb-4">Resultado do Cálculo</h3>
+                
+                <div className="flex justify-between items-center mb-4 py-2 px-4 bg-muted rounded-md">
+                  <div>
+                    <p className="font-semibold text-sm">Valor Original</p>
+                    <p className="text-2xl">{formatFeeResult(feeResult).originalAmount}</p>
+                  </div>
+                  <ArrowRight className="h-5 w-5 text-muted-foreground" />
+                  <div>
+                    <p className="font-semibold text-sm">Valor Líquido</p>
+                    <p className="text-2xl">{formatFeeResult(feeResult).netAmount}</p>
+                  </div>
+                </div>
+                
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Descrição</TableHead>
+                      <TableHead className="text-right">Valor</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    <TableRow>
+                      <TableCell>Taxa Total ({feeResult.feePercentage.toFixed(2)}%)</TableCell>
+                      <TableCell className="text-right">{formatFeeResult(feeResult).feeAmount}</TableCell>
+                    </TableRow>
+                    <TableRow>
+                      <TableCell className="pl-6 text-sm text-muted-foreground">└ Taxa Root</TableCell>
+                      <TableCell className="text-right text-sm text-muted-foreground">{formatFeeResult(feeResult).rootFee}</TableCell>
+                    </TableRow>
+                    <TableRow>
+                      <TableCell className="pl-6 text-sm text-muted-foreground">└ Taxa de Repasse</TableCell>
+                      <TableCell className="text-right text-sm text-muted-foreground">{formatFeeResult(feeResult).forwardingFee}</TableCell>
+                    </TableRow>
+                    {feeResult.taxBlockInfo && (
+                      <TableRow>
+                        <TableCell colSpan={2} className="text-xs text-muted-foreground">
+                          Bloco de taxas: {feeResult.taxBlockInfo.blockName}
+                        </TableCell>
+                      </TableRow>
+                    )}
+                  </TableBody>
+                </Table>
               </div>
             )}
-          </div>
-
-          <Button onClick={handleCalculate} disabled={isLoading || amount <= 0} className="w-full">
-            {isLoading ? 'Calculando...' : 'Calcular Taxas'}
-          </Button>
-        </CardContent>
-      </Card>
-
-      {feeResult && (
-        <Card>
-          <CardHeader>
-            <CardTitle>Resultado do Cálculo</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <Label>Valor Bruto</Label>
-                <p className="text-lg font-semibold">{formatCurrency(feeResult.grossAmount)}</p>
-              </div>
-              <div>
-                <Label>Valor Líquido</Label>
-                <p className="text-lg font-semibold text-green-600">{formatCurrency(feeResult.netAmount)}</p>
-              </div>
-              <div>
-                <Label>Taxa Aplicada</Label>
-                <p className="text-lg font-semibold">{formatCurrency(feeResult.feeAmount)}</p>
-              </div>
-              <div>
-                <Label>Percentual</Label>
-                <p className="text-lg font-semibold">{feeResult.feePercentage.toFixed(2)}%</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      )}
-    </div>
+          </>
+        )}
+      </CardContent>
+    </Card>
   );
-};
-
-export default TransactionFeeCalculator;
+}

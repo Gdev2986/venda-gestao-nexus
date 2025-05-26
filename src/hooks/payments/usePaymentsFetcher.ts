@@ -5,20 +5,16 @@ import { PaymentRequest, PaymentStatus } from '@/types/payment.types';
 
 interface UsePaymentsFetcherProps {
   status?: PaymentStatus | "ALL";
-  enableRealtime?: boolean;
-  initialFetch?: boolean;
 }
 
-export const usePaymentsFetcher = ({ status = "ALL", enableRealtime = false, initialFetch = true }: UsePaymentsFetcherProps = {}) => {
-  const [paymentRequests, setPaymentRequests] = useState<PaymentRequest[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
+export const usePaymentsFetcher = ({ status = "ALL" }: UsePaymentsFetcherProps = {}) => {
+  const [payments, setPayments] = useState<PaymentRequest[]>([]);
+  const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [currentPage, setCurrentPage] = useState(1);
-  const [totalPages, setTotalPages] = useState(1);
 
-  const fetchPaymentRequests = async () => {
+  const fetchPayments = async () => {
     try {
-      setIsLoading(true);
+      setLoading(true);
       setError(null);
 
       let query = supabase
@@ -28,7 +24,7 @@ export const usePaymentsFetcher = ({ status = "ALL", enableRealtime = false, ini
           client:clients(id, business_name)
         `);
 
-      if (status !== "ALL" && status in PaymentStatus) {
+      if (status !== "ALL") {
         query = query.eq('status', status);
       }
 
@@ -51,31 +47,18 @@ export const usePaymentsFetcher = ({ status = "ALL", enableRealtime = false, ini
         requested_at: payment.created_at
       })) || [];
 
-      setPaymentRequests(formattedPayments);
+      setPayments(formattedPayments);
     } catch (err) {
       console.error('Error fetching payments:', err);
       setError(err instanceof Error ? err.message : 'Failed to fetch payments');
     } finally {
-      setIsLoading(false);
+      setLoading(false);
     }
   };
 
   useEffect(() => {
-    if (initialFetch) {
-      fetchPaymentRequests();
-    }
-  }, [status, initialFetch]);
+    fetchPayments();
+  }, [status]);
 
-  return { 
-    paymentRequests,
-    setPaymentRequests,
-    isLoading,
-    error,
-    currentPage,
-    totalPages,
-    setCurrentPage,
-    fetchPaymentRequests
-  };
+  return { payments, loading, error, refetch: fetchPayments };
 };
-
-export default usePaymentsFetcher;
