@@ -18,7 +18,8 @@ export enum PixKeyType {
   CNPJ = "CNPJ",
   EMAIL = "EMAIL",
   PHONE = "PHONE",
-  RANDOM = "RANDOM"
+  RANDOM = "RANDOM",
+  EVP = "EVP"
 }
 
 export interface PixKey {
@@ -30,6 +31,8 @@ export interface PixKey {
   is_default: boolean;
   created_at: string;
   updated_at: string;
+  owner_name?: string;
+  bank_name?: string;
 }
 
 export interface Payment {
@@ -47,6 +50,7 @@ export interface Payment {
   approved_by?: string;
   approved_at?: string;
   receipt_url?: string;
+  payment_type?: string;
   pix_key?: PixKey;
   client?: {
     id: string;
@@ -66,6 +70,7 @@ export interface PaymentRequest {
   created_at?: string;
   updated_at?: string;
   rejection_reason?: string;
+  payment_type?: string;
   client?: {
     id: string;
     business_name: string;
@@ -76,6 +81,7 @@ export interface TransactionFeeParams {
   amount: number;
   paymentMethod: PaymentMethod;
   installments?: number;
+  clientId?: string;
 }
 
 export interface TransactionFeeResult {
@@ -83,4 +89,5 @@ export interface TransactionFeeResult {
   netAmount: number;
   feeAmount: number;
   feePercentage: number;
+  taxBlockInfo?: any;
 }

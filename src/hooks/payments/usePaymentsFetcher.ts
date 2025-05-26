@@ -25,7 +25,8 @@ export const usePaymentsFetcher = ({ status = "ALL" }: UsePaymentsFetcherProps =
         `);
 
       if (status !== "ALL") {
-        query = query.eq('status', status);
+        // Convert enum to string for query
+        query = query.eq('status', status as string);
       }
 
       const { data, error } = await query.order('created_at', { ascending: false });
@@ -62,3 +63,6 @@ export const usePaymentsFetcher = ({ status = "ALL" }: UsePaymentsFetcherProps =
 
   return { payments, loading, error, refetch: fetchPayments };
 };
+
+// Add default export for backward compatibility
+export default usePaymentsFetcher;

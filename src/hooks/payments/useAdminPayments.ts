@@ -1,6 +1,5 @@
-
 import { useState, useEffect } from "react";
-import usePaymentsFetcher from "./usePaymentsFetcher";
+import { usePaymentsFetcher } from "./usePaymentsFetcher";
 import { PaymentStatus, PaymentAction } from "@/types/enums";
 import { useToast } from "@/hooks/use-toast";
 
@@ -20,16 +19,12 @@ export const useAdminPayments = ({
 }: UseAdminPaymentsProps) => {
   const { toast } = useToast();
   const {
-    paymentRequests: payments,
-    isLoading,
+    payments: paymentRequests,
+    loading: isLoading,
     error,
-    fetchPaymentRequests: refetch,
-    totalPages
+    refetch: fetchPaymentRequests
   } = usePaymentsFetcher({
-    searchTerm,
-    statusFilter: statusFilter as any, // TypeScript conversion
-    page,
-    pageSize
+    status: statusFilter as any
   });
 
   // Function to handle payment actions (approve, reject, etc.)
@@ -76,15 +71,15 @@ export const useAdminPayments = ({
     }
     
     // Refetch data after action
-    setTimeout(refetch, 1000);
+    setTimeout(fetchPaymentRequests, 1000);
   };
 
   return {
-    payments,
+    payments: paymentRequests,
     isLoading,
     error,
-    totalPages,
-    refetch,
+    totalPages: 1,
+    refetch: fetchPaymentRequests,
     performPaymentAction
   };
 };
