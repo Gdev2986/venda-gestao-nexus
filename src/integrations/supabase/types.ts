@@ -615,7 +615,6 @@ export type Database = {
       }
       sales: {
         Row: {
-          client_id: string
           code: string
           created_at: string | null
           date: string
@@ -623,7 +622,6 @@ export type Database = {
           id: string
           machine_id: string | null
           net_amount: number
-          partner_id: string | null
           payment_method: Database["public"]["Enums"]["payment_method"]
           processing_status:
             | Database["public"]["Enums"]["processing_status"]
@@ -632,7 +630,6 @@ export type Database = {
           updated_at: string | null
         }
         Insert: {
-          client_id: string
           code: string
           created_at?: string | null
           date: string
@@ -640,7 +637,6 @@ export type Database = {
           id?: string
           machine_id?: string | null
           net_amount: number
-          partner_id?: string | null
           payment_method: Database["public"]["Enums"]["payment_method"]
           processing_status?:
             | Database["public"]["Enums"]["processing_status"]
@@ -649,7 +645,6 @@ export type Database = {
           updated_at?: string | null
         }
         Update: {
-          client_id?: string
           code?: string
           created_at?: string | null
           date?: string
@@ -657,7 +652,6 @@ export type Database = {
           id?: string
           machine_id?: string | null
           net_amount?: number
-          partner_id?: string | null
           payment_method?: Database["public"]["Enums"]["payment_method"]
           processing_status?:
             | Database["public"]["Enums"]["processing_status"]
@@ -667,24 +661,10 @@ export type Database = {
         }
         Relationships: [
           {
-            foreignKeyName: "sales_client_id_fkey"
-            columns: ["client_id"]
-            isOneToOne: false
-            referencedRelation: "clients"
-            referencedColumns: ["id"]
-          },
-          {
             foreignKeyName: "sales_machine_id_fkey"
             columns: ["machine_id"]
             isOneToOne: false
             referencedRelation: "machines"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "sales_partner_id_fkey"
-            columns: ["partner_id"]
-            isOneToOne: false
-            referencedRelation: "partners"
             referencedColumns: ["id"]
           },
         ]
@@ -969,24 +949,7 @@ export type Database = {
       }
     }
     Views: {
-      vw_client_balance: {
-        Row: {
-          balance: number | null
-          client_id: string | null
-          total_sales: number | null
-          yesterday_gross: number | null
-          yesterday_net: number | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "sales_client_id_fkey"
-            columns: ["client_id"]
-            isOneToOne: false
-            referencedRelation: "clients"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
+      [_ in never]: never
     }
     Functions: {
       get_user_role: {
