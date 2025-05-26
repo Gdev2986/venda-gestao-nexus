@@ -1,48 +1,5 @@
-
 import { supabase } from "@/integrations/supabase/client";
-
-// Simplified type definitions to avoid circular references
-interface PaymentRequest {
-  id: string;
-  client_id: string;
-  amount: number;
-  description?: string;
-  status: string;
-  method: string;
-  pix_key_id?: string;
-  created_at: string;
-  updated_at: string;
-  requested_at: string;
-  rejection_reason?: string;
-  approved_by?: string;
-  approved_at?: string;
-  receipt_url?: string;
-  pix_key?: {
-    id: string;
-    key: string;
-    type: string;
-    name: string;
-  };
-  client?: {
-    id: string;
-    business_name: string;
-  };
-}
-
-interface PaymentRequestParams {
-  client_id: string;
-  amount: number;
-  method: string;
-  notes?: string;
-}
-
-interface ClientBalance {
-  client_id: string;
-  current_balance: number;
-  pending_payments: number;
-  total_sales: number;
-  commission_rate: number;
-}
+import { PaymentRequest, PaymentStatus, PaymentMethod, PaymentRequestParams, PaymentProcessParams, ClientBalance } from "@/types/payment.types";
 
 export const getAllPaymentRequests = async (): Promise<PaymentRequest[]> => {
   try {
@@ -74,7 +31,7 @@ export const getAllPaymentRequests = async (): Promise<PaymentRequest[]> => {
   }
 };
 
-export const updatePaymentStatus = async (paymentId: string, status: string, notes?: string, processedBy?: string): Promise<void> => {
+export const updatePaymentStatus = async (paymentId: string, status: PaymentStatus, notes?: string, processedBy?: string): Promise<void> => {
   try {
     const updateData: any = {
       status,
@@ -146,7 +103,7 @@ export const createPaymentRequest = async (params: PaymentRequestParams): Promis
         client_id: params.client_id,
         amount: params.amount,
         method: params.method,
-        status: 'PROCESSING',
+        status: PaymentStatus.PROCESSING,
         requested_at: new Date().toISOString(),
         notes: params.notes
       })
@@ -191,7 +148,7 @@ export const getClientBalance = async (clientId: string): Promise<ClientBalance>
       .from('payment_requests')
       .select('amount')
       .eq('client_id', clientId)
-      .eq('status', 'PROCESSING');
+      .eq('status', PaymentStatus.PROCESSING);
 
     if (paymentsError) {
       console.error('Error fetching pending payments:', paymentsError);
@@ -230,7 +187,7 @@ export const getAllPayments = async () => {
   return getAllPaymentRequests();
 };
 
-export const getPaymentsByStatus = async (status: string) => {
+export const getPaymentsByStatus = async (status: PaymentStatus) => {
   const allPayments = await getAllPaymentRequests();
   return allPayments.filter(payment => payment.status === status);
 };

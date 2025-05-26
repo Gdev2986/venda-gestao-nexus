@@ -84,8 +84,6 @@ export function usePayments(): UsePaymentsReturn {
           amount: payment.amount,
           description: payment.description || '',
           status: payment.status as PaymentStatus,
-          method: 'PIX' as any,
-          requested_at: payment.created_at,
           created_at: payment.created_at,
           updated_at: payment.updated_at,
           approved_at: payment.approved_at,
@@ -98,10 +96,7 @@ export function usePayments(): UsePaymentsReturn {
             type: payment.pix_key.type,
             name: payment.pix_key.name,
             owner_name: payment.pix_key.name,
-            user_id: payment.pix_key.user_id,
-            is_default: false,
-            created_at: '',
-            updated_at: ''
+            user_id: payment.pix_key.user_id // Include the user_id from the database
           } : undefined
         };
       });

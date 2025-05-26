@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { Machine, MachineStatus, MachineStats } from '@/types/machine.types';
 import {
@@ -34,7 +35,10 @@ export const useMachines = (options?: { enableRealtime?: boolean; initialFetch?:
       
       // Update stats
       const statsData = await getMachineStats();
-      setStats(statsData);
+      setStats({
+        ...statsData,
+        byStatus: statsData.byStatus || {}
+      });
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to fetch machines');
     } finally {
@@ -61,7 +65,10 @@ export const useMachines = (options?: { enableRealtime?: boolean; initialFetch?:
       setMachines(prev => [newMachine, ...prev]);
       // Refresh stats
       const statsData = await getMachineStats();
-      setStats(statsData);
+      setStats({
+        ...statsData,
+        byStatus: statsData.byStatus || {}
+      });
       return newMachine;
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to create machine');
@@ -77,7 +84,10 @@ export const useMachines = (options?: { enableRealtime?: boolean; initialFetch?:
       ));
       // Refresh stats
       const statsData = await getMachineStats();
-      setStats(statsData);
+      setStats({
+        ...statsData,
+        byStatus: statsData.byStatus || {}
+      });
       return updatedMachine;
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to update machine');
@@ -91,7 +101,10 @@ export const useMachines = (options?: { enableRealtime?: boolean; initialFetch?:
       setMachines(prev => prev.filter(machine => machine.id !== id));
       // Refresh stats
       const statsData = await getMachineStats();
-      setStats(statsData);
+      setStats({
+        ...statsData,
+        byStatus: statsData.byStatus || {}
+      });
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to delete machine');
       throw err;
