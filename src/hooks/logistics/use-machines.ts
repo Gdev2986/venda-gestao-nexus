@@ -1,5 +1,7 @@
 
 import { useState, useEffect } from "react";
+import { getAllMachines, getMachineStats } from "@/services/machine.service";
+import { Machine } from "@/types/machine.types";
 
 interface MachineStats {
   total: number;
@@ -29,24 +31,24 @@ export const useMachineStats = () => {
   useEffect(() => {
     const fetchStats = async () => {
       try {
-        const mockStats = {
-          total: 100,
-          active: 75,
-          inactive: 10,
-          maintenance: 8,
-          blocked: 2,
-          stock: 3,
-          transit: 2,
+        const statsData = await getMachineStats();
+        setStats({
+          total: statsData.total,
+          active: statsData.active,
+          inactive: statsData.inactive,
+          maintenance: statsData.maintenance,
+          blocked: statsData.blocked,
+          stock: statsData.stock,
+          transit: statsData.transit,
           byStatus: {
-            'ACTIVE': 75,
-            'INACTIVE': 10,
-            'MAINTENANCE': 8,
-            'BLOCKED': 2,
-            'STOCK': 3,
-            'TRANSIT': 2,
+            'ACTIVE': statsData.active,
+            'INACTIVE': statsData.inactive,
+            'MAINTENANCE': statsData.maintenance,
+            'BLOCKED': statsData.blocked,
+            'STOCK': statsData.stock,
+            'TRANSIT': statsData.transit,
           }
-        };
-        setStats(mockStats);
+        });
       } catch (error) {
         console.error("Error fetching machine stats:", error);
       } finally {
@@ -58,4 +60,35 @@ export const useMachineStats = () => {
   }, []);
 
   return { stats, isLoading };
+};
+
+export const useMachines = () => {
+  const [machines, setMachines] = useState<Machine[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  const fetchMachines = async () => {
+    try {
+      setIsLoading(true);
+      setError(null);
+      const data = await getAllMachines();
+      setMachines(data);
+    } catch (err) {
+      console.error('Error fetching machines:', err);
+      setError(err instanceof Error ? err.message : 'Failed to fetch machines');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchMachines();
+  }, []);
+
+  return {
+    machines,
+    isLoading,
+    error,
+    refetch: fetchMachines
+  };
 };

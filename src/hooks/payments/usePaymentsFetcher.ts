@@ -4,7 +4,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { PaymentRequest, PaymentStatus } from '@/types/payment.types';
 
 interface UsePaymentsFetcherProps {
-  status?: string;
+  status?: PaymentStatus | "ALL";
   enableRealtime?: boolean;
   initialFetch?: boolean;
 }
@@ -28,7 +28,7 @@ export const usePaymentsFetcher = ({ status = "ALL", enableRealtime = false, ini
           client:clients(id, business_name)
         `);
 
-      if (status !== "ALL") {
+      if (status !== "ALL" && status in PaymentStatus) {
         query = query.eq('status', status);
       }
 

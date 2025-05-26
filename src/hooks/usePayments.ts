@@ -27,6 +27,10 @@ export const usePayments = (options = {}) => {
     fetchPaymentRequests,
     approvePayment,
     rejectPayment,
+    // Compatibility aliases
+    payments: paymentRequests,
+    loading: isLoading,
+    refetch: fetchPaymentRequests
   };
 };
 

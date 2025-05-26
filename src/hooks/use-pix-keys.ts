@@ -1,213 +1,161 @@
 
-import { useState, useEffect } from "react";
-import { supabase } from "@/integrations/supabase/client";
-import { useToast } from "@/hooks/use-toast";
-import { useAuth } from "@/contexts/AuthContext";
-import { PixKey, PixKeyType } from "@/types/payment.types";
+import { useState, useEffect } from 'react';
+import { supabase } from '@/integrations/supabase/client';
+import { PixKey, PixKeyType } from '@/types/payment.types';
+import { useToast } from '@/hooks/use-toast';
 
-interface UsePixKeysReturn {
-  pixKeys: PixKey[];
-  isLoading: boolean;
-  isCreating: boolean;
-  fetchPixKeys: () => Promise<void>;
-  createPixKey: (key: string, type: string, name: string) => Promise<PixKey | null>;
-  deletePixKey: (id: string) => Promise<void>;
-  setDefaultPixKey: (id: string) => Promise<void>;
-}
-
-export function usePixKeys(): UsePixKeysReturn {
+export const usePixKeys = () => {
   const [pixKeys, setPixKeys] = useState<PixKey[]>([]);
-  const [isLoading, setIsLoading] = useState<boolean>(true);
-  const [isCreating, setIsCreating] = useState<boolean>(false);
-  const { user } = useAuth();
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const { toast } = useToast();
 
   const fetchPixKeys = async () => {
-    if (!user) return;
-
     try {
       setIsLoading(true);
-
       const { data, error } = await supabase
-        .from("pix_keys")
-        .select("*")
-        .eq("user_id", user.id)
-        .order("is_default", { ascending: false });
+        .from('pix_keys')
+        .select('*')
+        .order('created_at', { ascending: false });
 
-      if (error) {
-        throw error;
-      }
+      if (error) throw error;
 
-      // Ensure all keys have the required owner_name property
-      const formattedKeys: PixKey[] = (data || []).map(item => ({
-        id: item.id,
-        key: item.key,
-        type: item.type,
-        name: item.name,
-        owner_name: item.name, // Use name as owner_name if not provided
-        user_id: item.user_id,
-        is_default: item.is_default || false,
-        created_at: item.created_at,
-        updated_at: item.updated_at
-      }));
+      const formattedKeys: PixKey[] = data?.map(key => ({
+        id: key.id,
+        key: key.key,
+        type: key.type as PixKeyType,
+        name: key.name,
+        owner_name: key.name,
+        user_id: key.user_id,
+        is_default: key.is_default,
+        created_at: key.created_at,
+        updated_at: key.updated_at,
+      })) || [];
 
       setPixKeys(formattedKeys);
-    } catch (error: any) {
-      console.error("Error fetching PIX keys:", error);
-      toast({
-        title: "Erro",
-        description: "Não foi possível carregar as chaves PIX. " + (error.message || ""),
-        variant: "destructive",
-      });
+    } catch (err) {
+      console.error('Error fetching PIX keys:', err);
+      setError(err instanceof Error ? err.message : 'Failed to fetch PIX keys');
     } finally {
       setIsLoading(false);
     }
   };
 
-  const createPixKey = async (key: string, type: string, name: string): Promise<PixKey | null> => {
-    if (!user) return null;
-    
+  const addPixKey = async (pixKeyData: Omit<PixKey, 'id' | 'created_at' | 'updated_at'>) => {
     try {
-      setIsCreating(true);
-      
-      const pixKeyData = {
-        user_id: user.id,
-        key,
-        type: type as any,
-        name,
-        is_default: pixKeys.length === 0 // Make default if it's the first key
-      };
-      
       const { data, error } = await supabase
-        .from("pix_keys")
-        .insert(pixKeyData)
+        .from('pix_keys')
+        .insert([{
+          ...pixKeyData,
+          type: pixKeyData.type
+        }])
         .select()
         .single();
-        
-      if (error) {
-        throw error;
-      }
-      
-      // Add to local state with owner_name
+
+      if (error) throw error;
+
       const newKey: PixKey = {
         ...data,
-        owner_name: name // Ensure owner_name is set
+        type: data.type as PixKeyType,
+        owner_name: data.name,
+        created_at: data.created_at,
+        updated_at: data.updated_at,
       };
-      
-      setPixKeys([...pixKeys, newKey]);
+
+      setPixKeys(prev => [newKey, ...prev]);
       
       toast({
         title: "Chave PIX adicionada",
-        description: "Sua chave PIX foi adicionada com sucesso.",
+        description: "A chave PIX foi adicionada com sucesso.",
       });
-      
+
       return newKey;
-    } catch (error: any) {
-      console.error("Error creating PIX key:", error);
+    } catch (err) {
+      console.error('Error adding PIX key:', err);
       toast({
-        title: "Erro",
-        description: "Não foi possível adicionar a chave PIX. " + (error.message || ""),
+        title: "Erro ao adicionar chave PIX",
+        description: err instanceof Error ? err.message : 'Erro desconhecido',
         variant: "destructive",
       });
-      return null;
-    } finally {
-      setIsCreating(false);
+      throw err;
+    }
+  };
+
+  const updatePixKey = async (id: string, updates: Partial<PixKey>) => {
+    try {
+      const { data, error } = await supabase
+        .from('pix_keys')
+        .update(updates)
+        .eq('id', id)
+        .select()
+        .single();
+
+      if (error) throw error;
+
+      const updatedKey: PixKey = {
+        ...data,
+        type: data.type as PixKeyType,
+        owner_name: data.name,
+        created_at: data.created_at,
+        updated_at: data.updated_at,
+      };
+
+      setPixKeys(prev => prev.map(key => key.id === id ? updatedKey : key));
+      
+      toast({
+        title: "Chave PIX atualizada",
+        description: "A chave PIX foi atualizada com sucesso.",
+      });
+
+      return updatedKey;
+    } catch (err) {
+      console.error('Error updating PIX key:', err);
+      toast({
+        title: "Erro ao atualizar chave PIX",
+        description: err instanceof Error ? err.message : 'Erro desconhecido',
+        variant: "destructive",
+      });
+      throw err;
     }
   };
 
   const deletePixKey = async (id: string) => {
     try {
-      setIsLoading(true);
-
       const { error } = await supabase
-        .from("pix_keys")
+        .from('pix_keys')
         .delete()
-        .eq("id", id)
-        .eq("user_id", user.id);
+        .eq('id', id);
 
-      if (error) {
-        throw error;
-      }
+      if (error) throw error;
 
-      // Remove from local state
-      setPixKeys(pixKeys.filter((key) => key.id !== id));
-
+      setPixKeys(prev => prev.filter(key => key.id !== id));
+      
       toast({
         title: "Chave PIX removida",
-        description: "Sua chave PIX foi removida com sucesso.",
+        description: "A chave PIX foi removida com sucesso.",
       });
-    } catch (error: any) {
-      console.error("Error deleting PIX key:", error);
+    } catch (err) {
+      console.error('Error deleting PIX key:', err);
       toast({
-        title: "Erro",
-        description: "Não foi possível remover a chave PIX. " + (error.message || ""),
+        title: "Erro ao remover chave PIX",
+        description: err instanceof Error ? err.message : 'Erro desconhecido',
         variant: "destructive",
       });
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const setDefaultPixKey = async (id: string) => {
-    try {
-      setIsLoading(true);
-
-      // First, unset all other default keys
-      const { error: unsetError } = await supabase
-        .from("pix_keys")
-        .update({ is_default: false })
-        .eq("user_id", user.id);
-
-      if (unsetError) {
-        throw unsetError;
-      }
-
-      // Then, set the selected key as default
-      const { error: setError } = await supabase
-        .from("pix_keys")
-        .update({ is_default: true })
-        .eq("id", id)
-        .eq("user_id", user.id);
-
-      if (setError) {
-        throw setError;
-      }
-
-      // Update local state
-      setPixKeys(
-        pixKeys.map((key) => ({
-          ...key,
-          is_default: key.id === id,
-        }))
-      );
-
-      toast({
-        title: "Chave PIX padrão alterada",
-        description: "Sua chave PIX padrão foi alterada com sucesso.",
-      });
-    } catch (error: any) {
-      console.error("Error setting default PIX key:", error);
-      toast({
-        title: "Erro",
-        description: "Não foi possível alterar a chave PIX padrão. " + (error.message || ""),
-        variant: "destructive",
-      });
-    } finally {
-      setIsLoading(false);
+      throw err;
     }
   };
 
   useEffect(() => {
     fetchPixKeys();
-  }, [user]);
+  }, []);
 
   return {
     pixKeys,
     isLoading,
-    isCreating,
-    fetchPixKeys,
-    createPixKey,
+    error,
+    addPixKey,
+    updatePixKey,
     deletePixKey,
-    setDefaultPixKey,
+    refetch: fetchPixKeys
   };
-}
+};
