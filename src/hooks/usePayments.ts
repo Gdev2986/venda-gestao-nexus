@@ -1,6 +1,6 @@
 
 import { useState } from "react";
-import usePaymentsFetcher from "./payments/usePaymentsFetcher";
+import { usePaymentsFetcher } from "./payments/usePaymentsFetcher";
 import { usePaymentActions } from "./payments/usePaymentActions";
 
 export const usePayments = (options = {}) => {

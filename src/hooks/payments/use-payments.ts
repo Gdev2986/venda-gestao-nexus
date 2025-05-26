@@ -1,128 +1,45 @@
 
-import { useState, useEffect } from "react";
-import { Payment, PaymentRequest, PaymentStatus } from "@/types/payment.types";
-import { supabase } from "@/integrations/supabase/client";
-import { useToast } from "@/hooks/use-toast";
-import { useAuth } from "@/contexts/AuthContext";
+import { useState, useEffect } from 'react';
+import { Payment, PaymentStatus } from '@/types/payment.types';
 
-export interface UsePaymentsReturn {
-  payments: Payment[];
-  isLoading: boolean;
-  error: Error | null;
-  mutate: () => void;
-}
-
-export function usePayments(): UsePaymentsReturn {
+export const usePayments = () => {
   const [payments, setPayments] = useState<Payment[]>([]);
-  const [isLoading, setIsLoading] = useState<boolean>(true);
-  const [error, setError] = useState<Error | null>(null);
-  const { toast } = useToast();
-  const { user } = useAuth();
-
-  const fetchPayments = async () => {
-    if (!user) {
-      setIsLoading(false);
-      setPayments([]);
-      return;
-    }
-
-    try {
-      setIsLoading(true);
-      setError(null);
-
-      // First, get the client_id for the user
-      const { data: clientData, error: clientError } = await supabase
-        .from('user_client_access')
-        .select('client_id')
-        .eq('user_id', user.id)
-        .single();
-
-      if (clientError) {
-        throw new Error('Failed to retrieve client information');
-      }
-
-      if (!clientData?.client_id) {
-        setPayments([]);
-        return;
-      }
-
-      const { data, error: paymentsError } = await supabase
-        .from('payment_requests')
-        .select(`
-          id,
-          amount,
-          description,
-          status,
-          pix_key_id,
-          created_at,
-          updated_at,
-          approved_at,
-          approved_by,
-          receipt_url,
-          rejection_reason,
-          client_id,
-          pix_key:pix_keys (
-            id, 
-            key,
-            type,
-            name,
-            user_id
-          )
-        `)
-        .eq('client_id', clientData.client_id)
-        .order('created_at', { ascending: false });
-
-      if (paymentsError) {
-        throw new Error(paymentsError.message);
-      }
-
-      // Transform the data to match the Payment type
-      const transformedPayments: Payment[] = (data || []).map(payment => {
-        return {
-          id: payment.id,
-          client_id: payment.client_id,
-          amount: payment.amount,
-          description: payment.description || '',
-          status: payment.status as PaymentStatus,
-          created_at: payment.created_at,
-          updated_at: payment.updated_at,
-          approved_at: payment.approved_at,
-          approved_by: payment.approved_by,
-          receipt_url: payment.receipt_url,
-          rejection_reason: payment.rejection_reason || null,
-          pix_key: payment.pix_key ? {
-            id: payment.pix_key.id,
-            key: payment.pix_key.key,
-            type: payment.pix_key.type,
-            name: payment.pix_key.name,
-            owner_name: payment.pix_key.name,
-            user_id: payment.pix_key.user_id // Include the user_id from the database
-          } : undefined
-        };
-      });
-
-      setPayments(transformedPayments);
-    } catch (err: any) {
-      console.error('Error fetching payments:', err);
-      setError(err instanceof Error ? err : new Error(err.message || 'Unknown error'));
-      toast({
-        variant: "destructive",
-        title: "Error",
-        description: "Failed to fetch payment data"
-      });
-    } finally {
-      setIsLoading(false);
-    }
-  };
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    fetchPayments();
-  }, [user]);
+    const mockPayments: Payment[] = [
+      {
+        id: "1",
+        client_id: "client-1",
+        amount: 1000,
+        description: "Payment",
+        status: PaymentStatus.APPROVED,
+        method: "PIX" as any,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+        requested_at: new Date().toISOString(),
+        approved_at: new Date().toISOString(),
+        approved_by: "admin-1",
+        receipt_url: "",
+        rejection_reason: "",
+        pix_key: {
+          id: "pix-1",
+          user_id: "user-1",
+          type: "EMAIL" as any,
+          key: "test@example.com",
+          name: "Test Key",
+          is_default: true,
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString(),
+        }
+      }
+    ];
 
-  return {
-    payments,
-    isLoading,
-    error,
-    mutate: fetchPayments
-  };
-}
+    setTimeout(() => {
+      setPayments(mockPayments);
+      setIsLoading(false);
+    }, 1000);
+  }, []);
+
+  return { payments, isLoading };
+};

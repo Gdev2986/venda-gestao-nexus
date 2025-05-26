@@ -4,17 +4,21 @@ import { supabase } from '@/integrations/supabase/client';
 import { PaymentRequest, PaymentStatus } from '@/types/payment.types';
 
 interface UsePaymentsFetcherProps {
-  status?: PaymentStatus | "ALL";
+  status?: string;
+  enableRealtime?: boolean;
+  initialFetch?: boolean;
 }
 
-export const usePaymentsFetcher = ({ status = "ALL" }: UsePaymentsFetcherProps = {}) => {
-  const [payments, setPayments] = useState<PaymentRequest[]>([]);
-  const [loading, setLoading] = useState(true);
+export const usePaymentsFetcher = ({ status = "ALL", enableRealtime = false, initialFetch = true }: UsePaymentsFetcherProps = {}) => {
+  const [paymentRequests, setPaymentRequests] = useState<PaymentRequest[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
 
-  const fetchPayments = async () => {
+  const fetchPaymentRequests = async () => {
     try {
-      setLoading(true);
+      setIsLoading(true);
       setError(null);
 
       let query = supabase
@@ -47,18 +51,31 @@ export const usePaymentsFetcher = ({ status = "ALL" }: UsePaymentsFetcherProps =
         requested_at: payment.created_at
       })) || [];
 
-      setPayments(formattedPayments);
+      setPaymentRequests(formattedPayments);
     } catch (err) {
       console.error('Error fetching payments:', err);
       setError(err instanceof Error ? err.message : 'Failed to fetch payments');
     } finally {
-      setLoading(false);
+      setIsLoading(false);
     }
   };
 
   useEffect(() => {
-    fetchPayments();
-  }, [status]);
+    if (initialFetch) {
+      fetchPaymentRequests();
+    }
+  }, [status, initialFetch]);
 
-  return { payments, loading, error, refetch: fetchPayments };
+  return { 
+    paymentRequests,
+    setPaymentRequests,
+    isLoading,
+    error,
+    currentPage,
+    totalPages,
+    setCurrentPage,
+    fetchPaymentRequests
+  };
 };
+
+export default usePaymentsFetcher;

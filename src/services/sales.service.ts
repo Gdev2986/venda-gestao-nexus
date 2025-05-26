@@ -106,6 +106,8 @@ export const insertSales = async (sales: NormalizedSale[]): Promise<void> => {
       });
     }
 
+    console.log('Inserting sales data:', salesData);
+
     const { error } = await supabase
       .from('sales')
       .insert(salesData);
@@ -114,6 +116,8 @@ export const insertSales = async (sales: NormalizedSale[]): Promise<void> => {
       console.error('Error inserting sales:', error);
       throw new Error(`Erro ao inserir vendas: ${error.message}`);
     }
+
+    console.log('Sales inserted successfully');
   } catch (error) {
     console.error('Error in insertSales:', error);
     throw error;
