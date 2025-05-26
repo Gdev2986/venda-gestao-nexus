@@ -1,5 +1,5 @@
 
-import * as React from 'react';
+import React from 'react';
 import { createRoot } from 'react-dom/client';
 import { BrowserRouter } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
@@ -19,8 +19,6 @@ const queryClient = new QueryClient({
     },
   },
 });
-
-// Service worker temporarily disabled to prevent cache issues// Will be re-enabled after fixing Papa parse cache problems
 
 // Function to safely render the app
 function renderApp() {
@@ -68,7 +66,16 @@ if (document.readyState === 'loading') {
 }
 
 // Add global error handler as a safety net
-window.onerror = function(message, source, lineno, colno, error) {
-  console.error('Global error caught:', { message, source, lineno, colno, error });
-  return false;
-};
+window.addEventListener('error', function(event) {
+  console.error('Global error caught:', {
+    message: event.message,
+    source: event.filename,
+    lineno: event.lineno,
+    colno: event.colno,
+    error: event.error
+  });
+});
+
+window.addEventListener('unhandledrejection', function(event) {
+  console.error('Unhandled promise rejection:', event.reason);
+});
