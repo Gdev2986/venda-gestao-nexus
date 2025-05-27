@@ -23,7 +23,7 @@ export const ClientRoutes = (
   <Route element={<RequireAuth allowedRoles={[UserRole.CLIENT]} />}>
     <Route element={<MainLayout />}>
       <Route 
-        path={PATHS.USER.DASHBOARD} 
+        path={PATHS.CLIENT.DASHBOARD} 
         element={<ClientDashboard />} 
       />
       
