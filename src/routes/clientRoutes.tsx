@@ -27,15 +27,15 @@ export const ClientRoutes = (
         element={<ClientDashboard />} 
       />
       
-      <Route path={PATHS.USER.PAYMENTS} element={<UserPayments />} />
+      <Route path={PATHS.CLIENT.PAYMENTS} element={<UserPayments />} />
       
-      <Route path={PATHS.USER.MACHINES} element={<Machines />} />
+      <Route path={PATHS.CLIENT.MACHINES} element={<Machines />} />
       
-      <Route path={PATHS.USER.SUPPORT} element={<Support />} />
+      <Route path={PATHS.CLIENT.SUPPORT} element={<Support />} />
       
-      <Route path={PATHS.USER.SETTINGS} element={<Settings />} />
+      <Route path={PATHS.CLIENT.SETTINGS} element={<Settings />} />
       
-      <Route path={PATHS.USER.HELP} element={<Help />} />
+      <Route path={PATHS.CLIENT.HELP} element={<Help />} />
     </Route>
   </Route>
 );
