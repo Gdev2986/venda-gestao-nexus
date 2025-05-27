@@ -42,6 +42,42 @@ export type Database = {
         }
         Relationships: []
       }
+      auth_audit_logs: {
+        Row: {
+          created_at: string | null
+          device_fingerprint: string | null
+          event_type: string
+          id: string
+          ip_address: unknown | null
+          metadata: Json | null
+          session_id: string | null
+          user_agent: string | null
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          device_fingerprint?: string | null
+          event_type: string
+          id?: string
+          ip_address?: unknown | null
+          metadata?: Json | null
+          session_id?: string | null
+          user_agent?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          device_fingerprint?: string | null
+          event_type?: string
+          id?: string
+          ip_address?: unknown | null
+          metadata?: Json | null
+          session_id?: string | null
+          user_agent?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       client_logs: {
         Row: {
           action_type: string
@@ -615,7 +651,6 @@ export type Database = {
       }
       sales: {
         Row: {
-          client_id: string
           code: string
           created_at: string | null
           date: string
@@ -623,7 +658,6 @@ export type Database = {
           id: string
           machine_id: string | null
           net_amount: number
-          partner_id: string | null
           payment_method: Database["public"]["Enums"]["payment_method"]
           processing_status:
             | Database["public"]["Enums"]["processing_status"]
@@ -632,7 +666,6 @@ export type Database = {
           updated_at: string | null
         }
         Insert: {
-          client_id: string
           code: string
           created_at?: string | null
           date: string
@@ -640,7 +673,6 @@ export type Database = {
           id?: string
           machine_id?: string | null
           net_amount: number
-          partner_id?: string | null
           payment_method: Database["public"]["Enums"]["payment_method"]
           processing_status?:
             | Database["public"]["Enums"]["processing_status"]
@@ -649,7 +681,6 @@ export type Database = {
           updated_at?: string | null
         }
         Update: {
-          client_id?: string
           code?: string
           created_at?: string | null
           date?: string
@@ -657,7 +688,6 @@ export type Database = {
           id?: string
           machine_id?: string | null
           net_amount?: number
-          partner_id?: string | null
           payment_method?: Database["public"]["Enums"]["payment_method"]
           processing_status?:
             | Database["public"]["Enums"]["processing_status"]
@@ -667,27 +697,55 @@ export type Database = {
         }
         Relationships: [
           {
-            foreignKeyName: "sales_client_id_fkey"
-            columns: ["client_id"]
-            isOneToOne: false
-            referencedRelation: "clients"
-            referencedColumns: ["id"]
-          },
-          {
             foreignKeyName: "sales_machine_id_fkey"
             columns: ["machine_id"]
             isOneToOne: false
             referencedRelation: "machines"
             referencedColumns: ["id"]
           },
-          {
-            foreignKeyName: "sales_partner_id_fkey"
-            columns: ["partner_id"]
-            isOneToOne: false
-            referencedRelation: "partners"
-            referencedColumns: ["id"]
-          },
         ]
+      }
+      security_events: {
+        Row: {
+          created_at: string | null
+          description: string | null
+          event_type: string
+          id: string
+          metadata: Json | null
+          resolved: boolean | null
+          resolved_at: string | null
+          resolved_by: string | null
+          severity: string | null
+          source_ip: unknown | null
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          description?: string | null
+          event_type: string
+          id?: string
+          metadata?: Json | null
+          resolved?: boolean | null
+          resolved_at?: string | null
+          resolved_by?: string | null
+          severity?: string | null
+          source_ip?: unknown | null
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          description?: string | null
+          event_type?: string
+          id?: string
+          metadata?: Json | null
+          resolved?: boolean | null
+          resolved_at?: string | null
+          resolved_by?: string | null
+          severity?: string | null
+          source_ip?: unknown | null
+          user_id?: string | null
+        }
+        Relationships: []
       }
       support_conversations: {
         Row: {
@@ -940,58 +998,97 @@ export type Database = {
         }
         Relationships: []
       }
-      user_sessions: {
+      user_roles: {
         Row: {
-          created_at: string
-          device_id: string
+          assigned_at: string | null
+          assigned_by: string | null
+          expires_at: string | null
           id: string
-          last_active: string
-          metadata: Json | null
+          is_active: boolean | null
+          role: Database["public"]["Enums"]["app_role"]
           user_id: string
         }
         Insert: {
-          created_at?: string
-          device_id: string
+          assigned_at?: string | null
+          assigned_by?: string | null
+          expires_at?: string | null
           id?: string
-          last_active?: string
-          metadata?: Json | null
+          is_active?: boolean | null
+          role: Database["public"]["Enums"]["app_role"]
           user_id: string
         }
         Update: {
+          assigned_at?: string | null
+          assigned_by?: string | null
+          expires_at?: string | null
+          id?: string
+          is_active?: boolean | null
+          role?: Database["public"]["Enums"]["app_role"]
+          user_id?: string
+        }
+        Relationships: []
+      }
+      user_sessions: {
+        Row: {
+          browser_info: string | null
+          created_at: string
+          device_id: string
+          id: string
+          is_mobile: boolean | null
+          is_revoked: boolean | null
+          last_active: string
+          location_country: string | null
+          metadata: Json | null
+          os_info: string | null
+          revoked_at: string | null
+          user_id: string
+        }
+        Insert: {
+          browser_info?: string | null
+          created_at?: string
+          device_id: string
+          id?: string
+          is_mobile?: boolean | null
+          is_revoked?: boolean | null
+          last_active?: string
+          location_country?: string | null
+          metadata?: Json | null
+          os_info?: string | null
+          revoked_at?: string | null
+          user_id: string
+        }
+        Update: {
+          browser_info?: string | null
           created_at?: string
           device_id?: string
           id?: string
+          is_mobile?: boolean | null
+          is_revoked?: boolean | null
           last_active?: string
+          location_country?: string | null
           metadata?: Json | null
+          os_info?: string | null
+          revoked_at?: string | null
           user_id?: string
         }
         Relationships: []
       }
     }
     Views: {
-      vw_client_balance: {
-        Row: {
-          balance: number | null
-          client_id: string | null
-          total_sales: number | null
-          yesterday_gross: number | null
-          yesterday_net: number | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "sales_client_id_fkey"
-            columns: ["client_id"]
-            isOneToOne: false
-            referencedRelation: "clients"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
+      [_ in never]: never
     }
     Functions: {
+      get_current_user_role: {
+        Args: Record<PropertyKey, never>
+        Returns: string
+      }
       get_user_role: {
         Args: { user_id: string }
         Returns: string
+      }
+      has_role: {
+        Args: { _role: Database["public"]["Enums"]["app_role"] }
+        Returns: boolean
       }
       update_user_after_password_change: {
         Args: { user_uuid: string }
@@ -1003,6 +1100,7 @@ export type Database = {
       }
     }
     Enums: {
+      app_role: "admin" | "partner" | "client" | "logistics" | "financial"
       machine_status:
         | "ACTIVE"
         | "INACTIVE"
@@ -1154,6 +1252,7 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
+      app_role: ["admin", "partner", "client", "logistics", "financial"],
       machine_status: [
         "ACTIVE",
         "INACTIVE",

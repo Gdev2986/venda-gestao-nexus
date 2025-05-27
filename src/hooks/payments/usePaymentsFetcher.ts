@@ -52,7 +52,7 @@ export const usePaymentsFetcher = ({
           id: `payment-${(currentPage - 1) * pageSize + i + 1}`,
           client_id: `client-${i % 3 + 1}`,
           amount: Math.floor(Math.random() * 10000) / 100,
-          status: Object.values(PaymentStatus)[i % 4] as any,
+          status: Object.values(PaymentStatus)[i % 4] as PaymentStatus,
           created_at: new Date(Date.now() - i * 86400000).toISOString(),
           updated_at: new Date(Date.now() - i * 43200000).toISOString(),
           description: `Payment for service ${i + 1}`,
