@@ -83,7 +83,7 @@ export const paymentService = {
         amount: request.amount,
         pix_key_id: request.pix_key_id,
         description: request.description,
-        status: request.status
+        status: request.status as string
       })
       .select(`
         *,
@@ -107,9 +107,9 @@ export const paymentService = {
   async updatePaymentRequest(id: string, updates: Partial<PaymentRequest>): Promise<PaymentRequest> {
     const updateData: any = {};
     
-    if (updates.status !== undefined) updateData.status = updates.status;
-    if (updates.processed_by !== undefined) updateData.processed_by = updates.processed_by;
-    if (updates.processed_at !== undefined) updateData.processed_at = updates.processed_at;
+    if (updates.status !== undefined) updateData.status = updates.status as string;
+    if (updates.processed_by !== undefined) updateData.approved_by = updates.processed_by;
+    if (updates.processed_at !== undefined) updateData.approved_at = updates.processed_at;
     if (updates.receipt_url !== undefined) updateData.receipt_url = updates.receipt_url;
     if (updates.rejection_reason !== undefined) updateData.rejection_reason = updates.rejection_reason;
 
@@ -149,7 +149,7 @@ export const paymentService = {
 // Export individual functions for backward compatibility
 export const getPaymentRequests = paymentService.getPaymentRequests;
 export const getPaymentRequestsByClient = paymentService.getPaymentRequestsByClient;
-export const getClientPayments = paymentService.getPaymentRequestsByClient; 
+export const getClientPayments = paymentService.getPaymentRequestsByClient; // Add missing export
 export const getPaymentRequestById = paymentService.getPaymentRequestById;
 export const createPaymentRequest = paymentService.createPaymentRequest;
 export const updatePaymentRequest = paymentService.updatePaymentRequest;
