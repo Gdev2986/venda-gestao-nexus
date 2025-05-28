@@ -14,7 +14,7 @@ interface CreateMachineDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onSuccess?: () => void;
-  machine?: Machine; // Add this prop to support editing existing machines
+  machine?: Machine;
 }
 
 const CreateMachineDialog = ({ open, onOpenChange, onSuccess, machine }: CreateMachineDialogProps) => {
@@ -24,7 +24,7 @@ const CreateMachineDialog = ({ open, onOpenChange, onSuccess, machine }: CreateM
   // Form state
   const [serialNumber, setSerialNumber] = useState("");
   const [model, setModel] = useState("");
-  const [status, setStatus] = useState<MachineStatus>(MachineStatus.STOCK);
+  const [status, setStatus] = useState<string>("STOCK"); // Use string instead of enum
   const [notes, setNotes] = useState("");
   
   // Set initial values when machine prop changes or dialog opens
@@ -32,7 +32,7 @@ const CreateMachineDialog = ({ open, onOpenChange, onSuccess, machine }: CreateM
     if (open && machine) {
       setSerialNumber(machine.serial_number || "");
       setModel(machine.model || "");
-      setStatus(machine.status || MachineStatus.STOCK);
+      setStatus(machine.status || "STOCK");
       setNotes(machine.notes || "");
     }
   }, [open, machine]);
@@ -40,7 +40,7 @@ const CreateMachineDialog = ({ open, onOpenChange, onSuccess, machine }: CreateM
   const resetForm = () => {
     setSerialNumber("");
     setModel("");
-    setStatus(MachineStatus.STOCK);
+    setStatus("STOCK");
     setNotes("");
   };
   
@@ -73,7 +73,7 @@ const CreateMachineDialog = ({ open, onOpenChange, onSuccess, machine }: CreateM
           .update({
             serial_number: serialNumber,
             model: model,
-            status: status,
+            status: status as any, // Cast to satisfy Supabase types
             notes: notes
           })
           .eq('id', machine.id)
@@ -94,7 +94,7 @@ const CreateMachineDialog = ({ open, onOpenChange, onSuccess, machine }: CreateM
           .insert({
             serial_number: serialNumber,
             model: model,
-            status: status,
+            status: status as any, // Cast to satisfy Supabase types
             notes: notes
           })
           .select();
@@ -167,18 +167,18 @@ const CreateMachineDialog = ({ open, onOpenChange, onSuccess, machine }: CreateM
             <Label htmlFor="status">Status</Label>
             <Select
               value={status}
-              onValueChange={(value) => setStatus(value as MachineStatus)}
+              onValueChange={setStatus}
             >
               <SelectTrigger>
                 <SelectValue placeholder="Selecione o status" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value={MachineStatus.STOCK}>Em Estoque</SelectItem>
-                <SelectItem value={MachineStatus.ACTIVE}>Operando</SelectItem>
-                <SelectItem value={MachineStatus.MAINTENANCE}>Em Manutenção</SelectItem>
-                <SelectItem value={MachineStatus.INACTIVE}>Inativa</SelectItem>
-                <SelectItem value={MachineStatus.TRANSIT}>Em Trânsito</SelectItem>
-                <SelectItem value={MachineStatus.BLOCKED}>Bloqueada</SelectItem>
+                <SelectItem value="STOCK">Em Estoque</SelectItem>
+                <SelectItem value="ACTIVE">Operando</SelectItem>
+                <SelectItem value="MAINTENANCE">Em Manutenção</SelectItem>
+                <SelectItem value="INACTIVE">Inativa</SelectItem>
+                <SelectItem value="TRANSIT">Em Trânsito</SelectItem>
+                <SelectItem value="BLOCKED">Bloqueada</SelectItem>
               </SelectContent>
             </Select>
           </div>

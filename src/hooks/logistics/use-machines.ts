@@ -25,7 +25,7 @@ export const useMachines = (options?: { enableRealtime?: boolean; initialFetch?:
   const [error, setError] = useState<string | null>(null);
   const [stats, setStats] = useState<MachineStats>({ total: 0, active: 0, inactive: 0, maintenance: 0, stock: 0 });
 
-  const fetchMachines = async () => {
+  const fetchMachines = async (): Promise<Machine[]> => {
     try {
       setIsLoading(true);
       setError(null);
@@ -35,8 +35,11 @@ export const useMachines = (options?: { enableRealtime?: boolean; initialFetch?:
       // Calculate stats
       const statsData = await getMachineStats();
       setStats(statsData);
+      
+      return data;
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to fetch machines');
+      return [];
     } finally {
       setIsLoading(false);
     }

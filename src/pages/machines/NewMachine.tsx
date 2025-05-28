@@ -10,7 +10,6 @@ import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { PATHS } from "@/routes/paths";
-import { MachineStatus } from "@/types/machine.types";
 
 const NewMachine = () => {
   const navigate = useNavigate();
@@ -20,7 +19,7 @@ const NewMachine = () => {
   // Form state
   const [serialNumber, setSerialNumber] = useState("");
   const [model, setModel] = useState("");
-  const [status, setStatus] = useState<MachineStatus>(MachineStatus.STOCK);
+  const [status, setStatus] = useState<string>("STOCK"); // Use string instead of enum
   const [notes, setNotes] = useState("");
   
   const handleSubmit = async (e: React.FormEvent) => {
@@ -43,7 +42,7 @@ const NewMachine = () => {
         .insert({
           serial_number: serialNumber,
           model: model,
-          status: status,
+          status: status as any, // Cast to satisfy Supabase types
           notes: notes
         })
         .select();
@@ -109,18 +108,18 @@ const NewMachine = () => {
               <Label htmlFor="status">Status</Label>
               <Select 
                 value={status} 
-                onValueChange={(value) => setStatus(value as MachineStatus)}
+                onValueChange={setStatus}
               >
                 <SelectTrigger>
                   <SelectValue placeholder="Selecione o status" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value={MachineStatus.STOCK}>Em Estoque</SelectItem>
-                  <SelectItem value={MachineStatus.ACTIVE}>Operando</SelectItem>
-                  <SelectItem value={MachineStatus.MAINTENANCE}>Em Manutenção</SelectItem>
-                  <SelectItem value={MachineStatus.INACTIVE}>Inativa</SelectItem>
-                  <SelectItem value={MachineStatus.TRANSIT}>Em Trânsito</SelectItem>
-                  <SelectItem value={MachineStatus.BLOCKED}>Bloqueada</SelectItem>
+                  <SelectItem value="STOCK">Em Estoque</SelectItem>
+                  <SelectItem value="ACTIVE">Operando</SelectItem>
+                  <SelectItem value="MAINTENANCE">Em Manutenção</SelectItem>
+                  <SelectItem value="INACTIVE">Inativa</SelectItem>
+                  <SelectItem value="TRANSIT">Em Trânsito</SelectItem>
+                  <SelectItem value="BLOCKED">Bloqueada</SelectItem>
                 </SelectContent>
               </Select>
             </div>

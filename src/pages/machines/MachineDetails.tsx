@@ -32,8 +32,8 @@ const MachineDetails = () => {
       setLoading(true);
       try {
         // For this implementation, we'll use the existing hook
-        const response = await fetchMachines();
-        const foundMachine = response?.find((m: Machine) => m.id === machineId);
+        const machines = await fetchMachines();
+        const foundMachine = machines?.find((m: Machine) => m.id === machineId);
         
         if (foundMachine) {
           setMachine(foundMachine);
@@ -51,14 +51,17 @@ const MachineDetails = () => {
     fetchMachineDetails();
   }, [machineId, navigate, fetchMachines]);
   
-  const handleEditSuccess = () => {
+  const handleEditSuccess = async () => {
     // Refresh the machine data
-    fetchMachines().then((machines) => {
+    try {
+      const machines = await fetchMachines();
       const updatedMachine = machines?.find((m: Machine) => m.id === machineId);
       if (updatedMachine) {
         setMachine(updatedMachine);
       }
-    });
+    } catch (error) {
+      console.error("Error refreshing machine data:", error);
+    }
   };
   
   const getStatusBadge = (status: MachineStatus) => {

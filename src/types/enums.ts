@@ -10,7 +10,8 @@ export enum PaymentStatus {
   PROCESSING = "PROCESSING",
   APPROVED = "APPROVED", 
   REJECTED = "REJECTED",
-  PAID = "PAID"
+  PAID = "PAID",
+  COMPLETED = "COMPLETED"
 }
 
 export enum PaymentType {

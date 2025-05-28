@@ -1,15 +1,8 @@
 
-import { PaymentType as EnumsPaymentType } from './enums';
+import { PaymentType as EnumsPaymentType, PaymentStatus as EnumsPaymentStatus } from './enums';
 
-// Core payment status enum unificado
-export enum PaymentStatus {
-  PENDING = "PENDING",
-  PROCESSING = "PROCESSING", 
-  APPROVED = "APPROVED",
-  REJECTED = "REJECTED",
-  PAID = "PAID",
-  COMPLETED = "COMPLETED"
-}
+// Use the enum from enums.ts for consistency
+export { PaymentStatus } from './enums';
 
 // Payment method enum unificado
 export enum PaymentMethod {
@@ -39,7 +32,7 @@ export interface Payment {
   id: string;
   client_id: string;
   amount: number;
-  status: PaymentStatus;
+  status: EnumsPaymentStatus;
   approved_by?: string;
   approved_at?: string;
   created_at: string;
@@ -69,7 +62,7 @@ export interface PaymentRequest {
   client_id: string;
   amount: number;
   method?: PaymentMethod;
-  status: PaymentStatus;
+  status: EnumsPaymentStatus;
   created_at: string;
   updated_at: string;
   requested_at?: string;
@@ -100,7 +93,7 @@ export interface PaymentRequestParams {
 
 export interface PaymentProcessParams {
   payment_id: string;
-  status: PaymentStatus;
+  status: EnumsPaymentStatus;
   notes?: string;
   receipt_file?: File;
 }
@@ -113,7 +106,7 @@ export interface ClientBalance {
   commission_rate: number;
 }
 
-export type PaymentRequestStatus = PaymentStatus;
+export type PaymentRequestStatus = EnumsPaymentStatus;
 
 // PixKey types used in forms and components
 export type PixKeyType = 'CPF' | 'CNPJ' | 'EMAIL' | 'PHONE' | 'EVP';

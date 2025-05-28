@@ -19,7 +19,7 @@ interface NewMachineDialogProps {
 }
 
 const NewMachineDialog = ({ open, onOpenChange, onSuccess }: NewMachineDialogProps) => {
-  const { addMachine } = useMachines();
+  const { createMachine } = useMachines();
   const { clients, isLoading: isClientsLoading } = useClients();
   const { user } = useAuth();
   const { toast } = useToast();
@@ -27,7 +27,7 @@ const NewMachineDialog = ({ open, onOpenChange, onSuccess }: NewMachineDialogPro
   // Form state
   const [serialNumber, setSerialNumber] = useState("");
   const [model, setModel] = useState("");
-  const [status, setStatus] = useState<MachineStatus>(MachineStatus.STOCK);
+  const [status, setStatus] = useState<string>("STOCK"); // Use string instead of enum
   const [clientId, setClientId] = useState<string | undefined>(undefined);
   const [observations, setObservations] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -36,7 +36,7 @@ const NewMachineDialog = ({ open, onOpenChange, onSuccess }: NewMachineDialogPro
   const resetForm = () => {
     setSerialNumber("");
     setModel("");
-    setStatus(MachineStatus.STOCK);
+    setStatus("STOCK");
     setClientId(undefined);
     setObservations("");
     setErrors({});
@@ -64,7 +64,7 @@ const NewMachineDialog = ({ open, onOpenChange, onSuccess }: NewMachineDialogPro
     
     try {
       // If status is not STOCK, we need a client
-      if (status !== MachineStatus.STOCK && !clientId) {
+      if (status !== "STOCK" && !clientId) {
         setErrors({
           ...errors,
           clientId: "Selecione um cliente para máquinas que não estão em estoque"
@@ -74,12 +74,12 @@ const NewMachineDialog = ({ open, onOpenChange, onSuccess }: NewMachineDialogPro
       }
       
       // If status is STOCK, clear client selection
-      const finalClientId = status === MachineStatus.STOCK ? undefined : clientId;
+      const finalClientId = status === "STOCK" ? undefined : clientId;
       
-      await addMachine({
+      await createMachine({
         serial_number: serialNumber,
         model,
-        status,
+        status: status as any, // Cast to satisfy type requirements
         client_id: finalClientId,
         notes: observations
       });
@@ -151,22 +151,22 @@ const NewMachineDialog = ({ open, onOpenChange, onSuccess }: NewMachineDialogPro
             <Label htmlFor="status">Status Inicial</Label>
             <Select
               value={status}
-              onValueChange={(value) => setStatus(value as MachineStatus)}
+              onValueChange={setStatus}
             >
               <SelectTrigger id="status">
                 <SelectValue placeholder="Selecione o status" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value={MachineStatus.STOCK}>Em Estoque</SelectItem>
-                <SelectItem value={MachineStatus.ACTIVE}>Operando</SelectItem>
-                <SelectItem value={MachineStatus.MAINTENANCE}>Em Manutenção</SelectItem>
-                <SelectItem value={MachineStatus.INACTIVE}>Inativa</SelectItem>
-                <SelectItem value={MachineStatus.TRANSIT}>Em Trânsito</SelectItem>
+                <SelectItem value="STOCK">Em Estoque</SelectItem>
+                <SelectItem value="ACTIVE">Operando</SelectItem>
+                <SelectItem value="MAINTENANCE">Em Manutenção</SelectItem>
+                <SelectItem value="INACTIVE">Inativa</SelectItem>
+                <SelectItem value="TRANSIT">Em Trânsito</SelectItem>
               </SelectContent>
             </Select>
           </div>
           
-          {status !== MachineStatus.STOCK && (
+          {status !== "STOCK" && (
             <div className="grid grid-cols-1 gap-2">
               <Label htmlFor="client" className={errors.clientId ? "text-destructive" : ""}>
                 Cliente
