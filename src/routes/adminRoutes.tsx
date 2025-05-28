@@ -1,50 +1,49 @@
 
-import { Route } from "react-router-dom";
+import React from "react";
+import { Routes, Route } from "react-router-dom";
+import { RequireAuth } from "@/components/auth/RequireAuth";
 import { UserRole } from "@/types";
+import { PATHS } from "@/routes/paths";
 
-// Auth Protection Component
-import RequireAuth from "../components/auth/RequireAuth";
+// Import pages
+import AdminDashboard from "@/pages/admin/Dashboard";
+import AdminClients from "@/pages/admin/Clients";
+import ClientDetails from "@/pages/admin/ClientDetails";
+import NewClient from "@/pages/admin/NewClient";
+import AdminPartners from "@/pages/admin/Partners";
+import PartnerDetails from "@/pages/partners/PartnerDetails";
+import NewPartner from "@/pages/admin/NewPartner";
+import AdminPartnerClients from "@/pages/admin/PartnerClients";
+import AdminPayments from "@/pages/admin/Payments";
+import AdminSales from "@/pages/admin/Sales";
+import NewSale from "@/pages/sales/NewSale";
+import SaleDetails from "@/pages/sales/SaleDetails";
+import AdminMachines from "@/pages/admin/Machines";
+import AdminSettings from "@/pages/admin/Settings";
+import AdminSupport from "@/pages/admin/Support";
 
-// Layout Selector
-import AdminLayoutSelector from "../layouts/AdminLayoutSelector";
+const AdminRoutes = () => {
+  return (
+    <RequireAuth allowedRoles={[UserRole.ADMIN, UserRole.FINANCIAL, UserRole.LOGISTICS]}>
+      <Routes>
+        <Route path={PATHS.ADMIN.DASHBOARD} element={<AdminDashboard />} />
+        <Route path={PATHS.ADMIN.CLIENTS} element={<AdminClients />} />
+        <Route path={PATHS.ADMIN.CLIENT_DETAILS()} element={<ClientDetails />} />
+        <Route path={PATHS.ADMIN.CLIENT_NEW} element={<NewClient />} />
+        <Route path={PATHS.ADMIN.PARTNERS} element={<AdminPartners />} />
+        <Route path={PATHS.ADMIN.PARTNER_DETAILS()} element={<PartnerDetails />} />
+        <Route path={PATHS.ADMIN.PARTNER_NEW} element={<NewPartner />} />
+        <Route path={PATHS.ADMIN.PARTNER_CLIENTS} element={<AdminPartnerClients />} />
+        <Route path={PATHS.ADMIN.PAYMENTS} element={<AdminPayments />} />
+        <Route path={PATHS.ADMIN.SALES} element={<AdminSales />} />
+        <Route path={PATHS.ADMIN.SALES_NEW} element={<NewSale />} />
+        <Route path={PATHS.ADMIN.SALE_DETAILS()} element={<SaleDetails />} />
+        <Route path={PATHS.ADMIN.MACHINES} element={<AdminMachines />} />
+        <Route path={PATHS.ADMIN.SETTINGS} element={<AdminSettings />} />
+        <Route path={PATHS.ADMIN.SUPPORT} element={<AdminSupport />} />
+      </Routes>
+    </RequireAuth>
+  );
+};
 
-// Import route groups
-import { dashboardRoute } from "./admin/dashboardRoute";
-import { clientRoutes } from "./admin/clientRoutes";
-import { logisticsRoutes } from "./admin/logisticsRoutes";
-import { salesRoutes } from "./admin/salesRoutes";
-import { partnerRoutes } from "./admin/partnerRoutes";
-import { paymentRoutes } from "./admin/paymentRoutes";
-import { settingsRoutes } from "./admin/settingsRoutes";
-import { companyRoutes } from "./admin/companyRoutes";
-
-// Combine all admin routes
-export const AdminRoutes = (
-  <Route element={<RequireAuth allowedRoles={[UserRole.ADMIN, UserRole.LOGISTICS, UserRole.FINANCIAL]} />}>
-    <Route element={<AdminLayoutSelector />}>
-      {/* Dashboard Route */}
-      {dashboardRoute}
-      
-      {/* Client Routes */}
-      {clientRoutes}
-      
-      {/* Logistics Routes */}
-      {logisticsRoutes}
-      
-      {/* Sales Routes */}
-      {salesRoutes}
-      
-      {/* Payment Routes */}
-      {paymentRoutes}
-      
-      {/* Partner Routes */}
-      {partnerRoutes}
-      
-      {/* Company Routes */}
-      {companyRoutes}
-      
-      {/* Settings and Other Routes */}
-      {settingsRoutes}
-    </Route>
-  </Route>
-);
+export default AdminRoutes;

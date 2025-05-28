@@ -1,41 +1,35 @@
 
-import { Route } from "react-router-dom";
-import { PATHS } from "./paths";
+import React from "react";
+import { Routes, Route } from "react-router-dom";
+import { RequireAuth } from "@/components/auth/RequireAuth";
 import { UserRole } from "@/types";
+import { PATHS } from "@/routes/paths";
 
-// Layouts
-import MainLayout from "../layouts/MainLayout";
+// Import pages
+import ClientDashboard from "@/pages/client/Dashboard";
+import ClientPayments from "@/pages/client/Payments";
+import ClientMachines from "@/pages/client/Machines";
+import ClientSupport from "@/pages/client/Support";
+import ClientSettings from "@/pages/client/Settings";
+import ClientHelp from "@/pages/client/Help";
+import ClientProfile from "@/pages/client/Profile";
+import ClientReports from "@/pages/client/Reports";
 
-// Auth Protection Component
-import RequireAuth from "../components/auth/RequireAuth";
+const ClientRoutes = () => {
+  return (
+    <RequireAuth allowedRoles={[UserRole.CLIENT]}>
+      <Routes>
+        <Route path={PATHS.CLIENT.DASHBOARD} element={<ClientDashboard />} />
+        <Route path={PATHS.CLIENT.PAYMENTS} element={<ClientPayments />} />
+        <Route path={PATHS.CLIENT.MACHINES} element={<ClientMachines />} />
+        <Route path={PATHS.CLIENT.PROFILE} element={<ClientProfile />} />
+        <Route path={PATHS.CLIENT.REPORTS} element={<ClientReports />} />
+        <Route path={PATHS.CLIENT.SUPPORT} element={<ClientSupport />} />
+        <Route path={PATHS.CLIENT.SETTINGS} element={<ClientSettings />} />
+        <Route path={PATHS.CLIENT.HELP} element={<ClientHelp />} />
+      </Routes>
+    </RequireAuth>
+  );
+};
 
-// Dashboard
-import ClientDashboard from "../pages/ClientDashboard";
-
-// Pages
-import UserPayments from "../pages/UserPayments";
-import Machines from "../pages/machines/Machines";
-import Support from "../pages/Support";
-import Settings from "../pages/settings/Settings";
-import Help from "../pages/Help";
-
-export const ClientRoutes = (
-  <Route element={<RequireAuth allowedRoles={[UserRole.CLIENT]} />}>
-    <Route element={<MainLayout />}>
-      <Route 
-        path={PATHS.CLIENT.DASHBOARD} 
-        element={<ClientDashboard />} 
-      />
-      
-      <Route path={PATHS.CLIENT.PAYMENTS} element={<UserPayments />} />
-      
-      <Route path={PATHS.CLIENT.MACHINES} element={<Machines />} />
-      
-      <Route path={PATHS.CLIENT.SUPPORT} element={<Support />} />
-      
-      <Route path={PATHS.CLIENT.SETTINGS} element={<Settings />} />
-      
-      <Route path={PATHS.CLIENT.HELP} element={<Help />} />
-    </Route>
-  </Route>
-);
+export default ClientRoutes;

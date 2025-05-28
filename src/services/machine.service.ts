@@ -21,7 +21,10 @@ export const machineService = {
       .order('created_at', { ascending: false });
 
     if (error) throw error;
-    return data || [];
+    return (data || []).map(item => ({
+      ...item,
+      status: item.status as MachineStatus
+    }));
   },
 
   // Get machine by ID
@@ -39,7 +42,7 @@ export const machineService = {
       if (error.code === 'PGRST116') return null;
       throw error;
     }
-    return data;
+    return data ? { ...data, status: data.status as MachineStatus } : null;
   },
 
   // Get machines by status
@@ -54,7 +57,10 @@ export const machineService = {
       .order('created_at', { ascending: false });
 
     if (error) throw error;
-    return data || [];
+    return (data || []).map(item => ({
+      ...item,
+      status: item.status as MachineStatus
+    }));
   },
 
   // Create multiple machines
@@ -62,7 +68,7 @@ export const machineService = {
     const machineData = machines.map(machine => ({
       serial_number: machine.serial_number,
       model: machine.model,
-      status: machine.status?.toString() || MachineStatus.STOCK.toString(),
+      status: machine.status || MachineStatus.STOCK,
       client_id: machine.client_id || null,
       notes: machine.notes || null
     }));
@@ -76,7 +82,10 @@ export const machineService = {
       `);
 
     if (error) throw error;
-    return data || [];
+    return (data || []).map(item => ({
+      ...item,
+      status: item.status as MachineStatus
+    }));
   },
 
   // Update machine
@@ -85,7 +94,7 @@ export const machineService = {
     
     if (updates.serial_number !== undefined) updateData.serial_number = updates.serial_number;
     if (updates.model !== undefined) updateData.model = updates.model;
-    if (updates.status !== undefined) updateData.status = updates.status.toString();
+    if (updates.status !== undefined) updateData.status = updates.status;
     if (updates.client_id !== undefined) updateData.client_id = updates.client_id;
     if (updates.notes !== undefined) updateData.notes = updates.notes;
 
@@ -100,7 +109,7 @@ export const machineService = {
       .single();
 
     if (error) throw error;
-    return data;
+    return { ...data, status: data.status as MachineStatus };
   },
 
   // Delete machine
@@ -125,7 +134,10 @@ export const machineService = {
       .order('created_at', { ascending: false });
 
     if (error) throw error;
-    return data || [];
+    return (data || []).map(item => ({
+      ...item,
+      status: item.status as MachineStatus
+    }));
   },
 
   // Get machine statistics
@@ -146,12 +158,12 @@ export const machineService = {
 
     return {
       total,
-      active: statusCounts[MachineStatus.ACTIVE.toString()] || 0,
-      inactive: statusCounts[MachineStatus.INACTIVE.toString()] || 0,
-      maintenance: statusCounts[MachineStatus.MAINTENANCE.toString()] || 0,
-      blocked: statusCounts[MachineStatus.BLOCKED.toString()] || 0,
-      stock: statusCounts[MachineStatus.STOCK.toString()] || 0,
-      transit: statusCounts[MachineStatus.TRANSIT.toString()] || 0,
+      active: statusCounts[MachineStatus.ACTIVE] || 0,
+      inactive: statusCounts[MachineStatus.INACTIVE] || 0,
+      maintenance: statusCounts[MachineStatus.MAINTENANCE] || 0,
+      blocked: statusCounts[MachineStatus.BLOCKED] || 0,
+      stock: statusCounts[MachineStatus.STOCK] || 0,
+      transit: statusCounts[MachineStatus.TRANSIT] || 0,
       byStatus: statusCounts
     };
   },
@@ -171,7 +183,7 @@ export const machineService = {
       `);
 
     if (filters.status) {
-      query = query.eq('status', filters.status.toString());
+      query = query.eq('status', filters.status);
     }
 
     if (filters.clientId) {
@@ -189,7 +201,10 @@ export const machineService = {
     const { data, error } = await query.order('created_at', { ascending: false });
 
     if (error) throw error;
-    return data || [];
+    return (data || []).map(item => ({
+      ...item,
+      status: item.status as MachineStatus
+    }));
   },
 
   // Transfer machine to another client
@@ -201,5 +216,36 @@ export const machineService = {
     });
 
     if (error) throw error;
+  },
+
+  // Get clients with machines
+  async getClientsWithMachines(): Promise<any[]> {
+    const { data, error } = await supabase
+      .from('clients')
+      .select(`
+        *,
+        machines:machines(*)
+      `);
+
+    if (error) throw error;
+    return data || [];
   }
 };
+
+// Export individual functions for backward compatibility
+export const getMachines = machineService.getMachines;
+export const getAllMachines = machineService.getMachines;
+export const getMachineById = machineService.getMachineById;
+export const getMachinesByStatus = machineService.getMachinesByStatus;
+export const createMachine = async (machine: MachineCreateParams): Promise<Machine> => {
+  const [created] = await machineService.createMachines([machine]);
+  return created;
+};
+export const createMachines = machineService.createMachines;
+export const updateMachine = machineService.updateMachine;
+export const deleteMachine = machineService.deleteMachine;
+export const getMachinesByClient = machineService.getMachinesByClient;
+export const getMachineStats = machineService.getMachineStats;
+export const filterMachines = machineService.filterMachines;
+export const transferMachine = machineService.transferMachine;
+export const getClientsWithMachines = machineService.getClientsWithMachines;

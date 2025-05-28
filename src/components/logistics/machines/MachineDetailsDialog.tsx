@@ -1,157 +1,246 @@
 
-import React from 'react';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { Badge } from '@/components/ui/badge';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Separator } from '@/components/ui/separator';
-import { ScrollArea } from '@/components/ui/scroll-area';
-import { Button } from '@/components/ui/button';
-import { Textarea } from '@/components/ui/textarea';
-import { Machine, MachineStatus } from '@/types/machine.types';
-import { formatDate } from '@/lib/utils';
-import { useState } from 'react';
+import React, { useState, useEffect } from "react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { useToast } from "@/hooks/use-toast";
+import { useClients } from "@/hooks/use-clients";
+import { updateMachine } from "@/services/machine.service";
+import { Machine, MachineStatus } from "@/types/machine.types";
+import { Badge } from "@/components/ui/badge";
+import { Separator } from "@/components/ui/separator";
 
-interface MachineDetailsDialogProps {
+export interface MachineDetailsDialogProps {
   machine: Machine | null;
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  onUpdate?: () => void;
+  mode?: 'view' | 'edit';
 }
 
 export const MachineDetailsDialog: React.FC<MachineDetailsDialogProps> = ({
   machine,
   open,
   onOpenChange,
+  onUpdate,
+  mode = 'view'
 }) => {
-  const [newNote, setNewNote] = useState('');
-  const [isAddingNote, setIsAddingNote] = useState(false);
+  const { toast } = useToast();
+  const { clients } = useClients();
+  
+  const [formData, setFormData] = useState({
+    serial_number: "",
+    model: "",
+    status: MachineStatus.STOCK,
+    client_id: "",
+    notes: "",
+  });
+  
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  if (!machine) return null;
+  useEffect(() => {
+    if (machine) {
+      setFormData({
+        serial_number: machine.serial_number || "",
+        model: machine.model || "",
+        status: machine.status || MachineStatus.STOCK,
+        client_id: machine.client_id || "",
+        notes: machine.notes || "",
+      });
+    }
+  }, [machine]);
 
-  const getStatusColor = (status: MachineStatus) => {
-    const colors = {
-      [MachineStatus.ACTIVE]: 'bg-green-100 text-green-800',
-      [MachineStatus.INACTIVE]: 'bg-gray-100 text-gray-800',
-      [MachineStatus.MAINTENANCE]: 'bg-yellow-100 text-yellow-800',
-      [MachineStatus.BLOCKED]: 'bg-red-100 text-red-800',
-      [MachineStatus.STOCK]: 'bg-blue-100 text-blue-800',
-      [MachineStatus.TRANSIT]: 'bg-purple-100 text-purple-800',
-      [MachineStatus.DEFECTIVE]: 'bg-orange-100 text-orange-800',
-    };
-    return colors[status] || 'bg-gray-100 text-gray-800';
-  };
-
-  const handleAddNote = async () => {
-    if (!newNote.trim()) return;
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
     
-    setIsAddingNote(true);
+    if (!machine) return;
+
+    setIsSubmitting(true);
+    
     try {
-      // Here you would normally call the API to add the note
-      // For now, we'll just clear the form
-      setNewNote('');
+      await updateMachine(machine.id, formData);
+      
+      toast({
+        title: "Sucesso",
+        description: "Máquina atualizada com sucesso",
+      });
+      
+      onUpdate?.();
+      onOpenChange(false);
     } catch (error) {
-      console.error('Error adding note:', error);
+      toast({
+        title: "Erro",
+        description: "Erro ao atualizar máquina",
+        variant: "destructive",
+      });
     } finally {
-      setIsAddingNote(false);
+      setIsSubmitting(false);
     }
   };
 
+  const getStatusBadge = (status: MachineStatus) => {
+    switch (status) {
+      case MachineStatus.ACTIVE:
+        return <Badge className="bg-green-100 text-green-800">Operando</Badge>;
+      case MachineStatus.STOCK:
+        return <Badge className="bg-blue-100 text-blue-800">Em Estoque</Badge>;
+      case MachineStatus.MAINTENANCE:
+        return <Badge className="bg-yellow-100 text-yellow-800">Em Manutenção</Badge>;
+      case MachineStatus.INACTIVE:
+        return <Badge className="bg-gray-100 text-gray-800">Inativa</Badge>;
+      case MachineStatus.BLOCKED:
+        return <Badge className="bg-red-100 text-red-800">Bloqueada</Badge>;
+      case MachineStatus.TRANSIT:
+        return <Badge className="bg-purple-100 text-purple-800">Em Trânsito</Badge>;
+      default:
+        return <Badge variant="outline">{status}</Badge>;
+    }
+  };
+
+  if (!machine) return null;
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-4xl max-h-[80vh]">
+      <DialogContent className="sm:max-w-[500px]">
         <DialogHeader>
-          <DialogTitle>Detalhes da Máquina</DialogTitle>
+          <DialogTitle>
+            {mode === 'edit' ? 'Editar Máquina' : 'Detalhes da Máquina'}
+          </DialogTitle>
         </DialogHeader>
         
-        <ScrollArea className="h-full">
-          <div className="space-y-6">
-            {/* Machine Info */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <Card>
-                <CardHeader>
-                  <CardTitle className="text-lg">Informações Básicas</CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-2">
-                  <div>
-                    <span className="font-medium">Número de Série:</span>
-                    <span className="ml-2">{machine.serial_number}</span>
-                  </div>
-                  <div>
-                    <span className="font-medium">Modelo:</span>
-                    <span className="ml-2">{machine.model}</span>
-                  </div>
-                  <div>
-                    <span className="font-medium">Status:</span>
-                    <Badge className={`ml-2 ${getStatusColor(machine.status)}`}>
-                      {machine.status}
-                    </Badge>
-                  </div>
-                  {machine.client && (
-                    <div>
-                      <span className="font-medium">Cliente:</span>
-                      <span className="ml-2">{machine.client.business_name}</span>
-                    </div>
-                  )}
-                </CardContent>
-              </Card>
-
-              <Card>
-                <CardHeader>
-                  <CardTitle className="text-lg">Datas</CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-2">
-                  {machine.created_at && (
-                    <div>
-                      <span className="font-medium">Criado em:</span>
-                      <span className="ml-2">{formatDate(machine.created_at)}</span>
-                    </div>
-                  )}
-                  {machine.updated_at && (
-                    <div>
-                      <span className="font-medium">Atualizado em:</span>
-                      <span className="ml-2">{formatDate(machine.updated_at)}</span>
-                    </div>
-                  )}
-                </CardContent>
-              </Card>
+        {mode === 'view' ? (
+          <div className="space-y-4">
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <Label className="text-sm font-medium text-gray-500">Número de Série</Label>
+                <p className="text-sm">{machine.serial_number}</p>
+              </div>
+              <div>
+                <Label className="text-sm font-medium text-gray-500">Modelo</Label>
+                <p className="text-sm">{machine.model}</p>
+              </div>
+            </div>
+            
+            <div>
+              <Label className="text-sm font-medium text-gray-500">Status</Label>
+              <div className="mt-1">
+                {getStatusBadge(machine.status)}
+              </div>
+            </div>
+            
+            <div>
+              <Label className="text-sm font-medium text-gray-500">Cliente</Label>
+              <p className="text-sm">{machine.client?.business_name || "Não vinculada"}</p>
+            </div>
+            
+            {machine.notes && (
+              <div>
+                <Label className="text-sm font-medium text-gray-500">Notas</Label>
+                <p className="text-sm">{machine.notes}</p>
+              </div>
+            )}
+            
+            <Separator />
+            
+            <div className="grid grid-cols-2 gap-4 text-xs text-gray-500">
+              <div>
+                <Label className="text-xs font-medium">Criado em</Label>
+                <p>{machine.created_at ? new Date(machine.created_at).toLocaleDateString('pt-BR') : '-'}</p>
+              </div>
+              <div>
+                <Label className="text-xs font-medium">Atualizado em</Label>
+                <p>{machine.updated_at ? new Date(machine.updated_at).toLocaleDateString('pt-BR') : '-'}</p>
+              </div>
+            </div>
+          </div>
+        ) : (
+          <form onSubmit={handleSubmit} className="space-y-4">
+            <div>
+              <Label htmlFor="serial_number">Número de Série *</Label>
+              <Input
+                id="serial_number"
+                value={formData.serial_number}
+                onChange={(e) => setFormData({ ...formData, serial_number: e.target.value })}
+                placeholder="Digite o número de série"
+                required
+              />
             </div>
 
-            <Separator />
+            <div>
+              <Label htmlFor="model">Modelo *</Label>
+              <Input
+                id="model"
+                value={formData.model}
+                onChange={(e) => setFormData({ ...formData, model: e.target.value })}
+                placeholder="Digite o modelo da máquina"
+                required
+              />
+            </div>
 
-            {/* Notes Section */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-lg">Observações</CardTitle>
-              </CardHeader>
-              <CardContent>
-                {machine.notes ? (
-                  <div className="space-y-4">
-                    <div className="p-3 bg-gray-50 rounded-lg">
-                      <p className="text-sm">{machine.notes}</p>
-                    </div>
-                  </div>
-                ) : (
-                  <p className="text-muted-foreground">Nenhuma observação registrada.</p>
-                )}
-                
-                {/* Add new note */}
-                <div className="mt-4 space-y-2">
-                  <Textarea
-                    placeholder="Adicionar nova observação..."
-                    value={newNote}
-                    onChange={(e) => setNewNote(e.target.value)}
-                  />
-                  <Button 
-                    onClick={handleAddNote}
-                    disabled={!newNote.trim() || isAddingNote}
-                    size="sm"
-                  >
-                    {isAddingNote ? 'Adicionando...' : 'Adicionar Observação'}
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
-          </div>
-        </ScrollArea>
+            <div>
+              <Label htmlFor="status">Status</Label>
+              <Select
+                value={formData.status}
+                onValueChange={(value) => setFormData({ ...formData, status: value as MachineStatus })}
+              >
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value={MachineStatus.STOCK}>Em Estoque</SelectItem>
+                  <SelectItem value={MachineStatus.ACTIVE}>Operando</SelectItem>
+                  <SelectItem value={MachineStatus.MAINTENANCE}>Em Manutenção</SelectItem>
+                  <SelectItem value={MachineStatus.INACTIVE}>Inativa</SelectItem>
+                  <SelectItem value={MachineStatus.BLOCKED}>Bloqueada</SelectItem>
+                  <SelectItem value={MachineStatus.TRANSIT}>Em Trânsito</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div>
+              <Label htmlFor="client">Cliente</Label>
+              <Select
+                value={formData.client_id}
+                onValueChange={(value) => setFormData({ ...formData, client_id: value === "none" ? "" : value })}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Selecione um cliente" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="none">Sem cliente</SelectItem>
+                  {clients?.map((client) => (
+                    <SelectItem key={client.id} value={client.id}>
+                      {client.business_name || client.contact_name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div>
+              <Label htmlFor="notes">Notas</Label>
+              <Textarea
+                id="notes"
+                value={formData.notes}
+                onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
+                placeholder="Observações sobre a máquina"
+                rows={3}
+              />
+            </div>
+
+            <div className="flex justify-end gap-2">
+              <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
+                Cancelar
+              </Button>
+              <Button type="submit" disabled={isSubmitting}>
+                {isSubmitting ? "Salvando..." : "Salvar"}
+              </Button>
+            </div>
+          </form>
+        )}
       </DialogContent>
     </Dialog>
   );
