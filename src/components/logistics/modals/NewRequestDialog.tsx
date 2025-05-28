@@ -1,317 +1,144 @@
-import { useState, useEffect } from "react";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+
+import { useState } from "react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
-import { Calendar } from "@/components/ui/calendar";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { CalendarIcon } from "lucide-react";
-import { format } from "date-fns";
-import { ptBR } from "date-fns/locale";
-import { useClients } from "@/hooks/use-clients";
-import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
-import { useMachines } from "@/hooks/logistics/use-machines";
-import { cn } from "@/lib/utils";
-import { TicketType, TicketPriority, TicketStatus, SupportTicket } from "@/types/support-ticket.types"; 
+import { Plus } from "lucide-react";
 
 interface NewRequestDialogProps {
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
-  onSuccess?: () => void;
+  onRequestCreated?: () => void;
 }
 
-const NewRequestDialog = ({ open, onOpenChange, onSuccess }: NewRequestDialogProps) => {
-  const { clients, isLoading: isClientsLoading } = useClients();
-  const { user } = useAuth();
-  const { toast } = useToast();
-  
-  // Form state
-  const [clientId, setClientId] = useState("");
-  const [machineId, setMachineId] = useState("");
-  const [title, setTitle] = useState("");
-  const [type, setType] = useState<TicketType>(TicketType.MAINTENANCE);
-  const [priority, setPriority] = useState<TicketPriority>(TicketPriority.MEDIUM);
-  const [description, setDescription] = useState("");
-  const [scheduledDate, setScheduledDate] = useState<Date | undefined>(undefined);
-  const [isDatePickerOpen, setIsDatePickerOpen] = useState(false);
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [errors, setErrors] = useState<Record<string, string>>({});
-  
-  // Get machines for the selected client
-  const { machines, isLoading: isMachinesLoading } = useMachines({
-    clientId: clientId || undefined,
-    initialFetch: !!clientId
+const NewRequestDialog = ({ onRequestCreated }: NewRequestDialogProps) => {
+  const [open, setOpen] = useState(false);
+  const [formData, setFormData] = useState({
+    title: "",
+    description: "",
+    type: "",
+    priority: "",
+    client_id: "",
+    scheduled_date: ""
   });
-  
-  // Reset form fields
-  const resetForm = () => {
-    setClientId("");
-    setMachineId("");
-    setTitle("");
-    setType(TicketType.MAINTENANCE);
-    setPriority(TicketPriority.MEDIUM);
-    setDescription("");
-    setScheduledDate(undefined);
-    setIsDatePickerOpen(false);
-    setErrors({});
-  };
-  
-  // Close handler that resets the form
-  const handleOpenChange = (open: boolean) => {
-    if (!open) {
-      resetForm();
-    }
-    onOpenChange(open);
-  };
-  
-  // Form validation
-  const validateForm = () => {
-    const newErrors: Record<string, string> = {};
-    
-    if (!clientId) {
-      newErrors.clientId = "Selecione um cliente";
-    }
-    
-    if (!title) {
-      newErrors.title = "Digite um título para a solicitação";
-    }
-    
-    if (!type) {
-      newErrors.type = "Selecione o tipo de solicitação";
-    }
-    
-    if (!description.trim()) {
-      newErrors.description = "Digite uma descrição para a solicitação";
-    }
-    
-    if (scheduledDate && scheduledDate < new Date(new Date().setHours(0, 0, 0, 0))) {
-      newErrors.scheduledDate = "A data não pode ser no passado";
-    }
-    
-    setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
-  };
-  
-  // Submit handler
-  const handleSubmit = async () => {
-    if (!validateForm()) return;
-    
-    setIsSubmitting(true);
+  const { toast } = useToast();
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
     
     try {
-      // Create the support request
-      const newRequest: SupportTicket = {
-        client_id: clientId,
-        title: title,
-        type: type,
-        priority: priority,
-        status: TicketStatus.PENDING,
-        description: description,
-        scheduled_date: scheduledDate ? scheduledDate.toISOString() : null,
-      };
-      
-      // Here we would typically save the request to the database
-      console.log('Creating support request:', newRequest);
-      
-      // For now this is a mock - in real implementation it would save to Supabase
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      // Here you would typically call an API to create the request
+      console.log("Creating request:", formData);
       
       toast({
         title: "Solicitação criada",
-        description: "A solicitação técnica foi criada com sucesso."
+        description: "A solicitação foi criada com sucesso.",
       });
       
-      resetForm();
-      handleOpenChange(false);
-      if (onSuccess) onSuccess();
-    } catch (error: any) {
+      setOpen(false);
+      setFormData({
+        title: "",
+        description: "",
+        type: "",
+        priority: "",
+        client_id: "",
+        scheduled_date: ""
+      });
+      
+      onRequestCreated?.();
+    } catch (error) {
+      console.error("Error creating request:", error);
       toast({
-        title: "Erro ao criar solicitação",
-        description: error.message || "Ocorreu um erro ao criar a solicitação técnica",
+        title: "Erro",
+        description: "Erro ao criar solicitação.",
         variant: "destructive",
       });
-    } finally {
-      setIsSubmitting(false);
     }
   };
 
   return (
-    <Dialog open={open} onOpenChange={handleOpenChange}>
-      <DialogContent className="sm:max-w-[500px]">
+    <Dialog open={open} onOpenChange={setOpen}>
+      <DialogTrigger asChild>
+        <Button className="gap-2">
+          <Plus className="h-4 w-4" />
+          Nova Solicitação
+        </Button>
+      </DialogTrigger>
+      <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
-          <DialogTitle>Criar Solicitação Técnica</DialogTitle>
+          <DialogTitle>Nova Solicitação de Serviço</DialogTitle>
         </DialogHeader>
-        
-        <div className="grid gap-4 py-4">
-          <div className="grid grid-cols-1 gap-2">
-            <Label htmlFor="client" className={errors.clientId ? "text-destructive" : ""}>
-              Cliente *
-            </Label>
-            <Select
-              value={clientId}
-              onValueChange={setClientId}
-              disabled={isClientsLoading}
-            >
-              <SelectTrigger id="client" className={errors.clientId ? "border-destructive" : ""}>
-                <SelectValue placeholder="Selecione um cliente" />
-              </SelectTrigger>
-              <SelectContent>
-                {clients?.filter(client => client.status !== "INACTIVE").map((client) => (
-                  <SelectItem key={client.id} value={client.id}>
-                    {client.business_name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            {errors.clientId && (
-              <p className="text-xs text-destructive">{errors.clientId}</p>
-            )}
-          </div>
-          
-          {clientId && (
-            <div className="grid grid-cols-1 gap-2">
-              <Label htmlFor="machine">Máquina (opcional)</Label>
-              <Select
-                value={machineId}
-                onValueChange={setMachineId}
-                disabled={isMachinesLoading || !machines.length}
-              >
-                <SelectTrigger id="machine">
-                  <SelectValue placeholder="Selecione uma máquina" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="none">Nenhuma máquina específica</SelectItem>
-                  {machines.map((machine) => (
-                    <SelectItem key={machine.id} value={machine.id}>
-                      {machine.serial_number} - {machine.model}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-          )}
-          
-          <div className="grid grid-cols-1 gap-2">
-            <Label htmlFor="title" className={errors.title ? "text-destructive" : ""}>
-              Título *
-            </Label>
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div>
+            <Label htmlFor="title">Título</Label>
             <Input
               id="title"
-              value={title}
-              onChange={(e) => setTitle(e.target.value)}
-              className={errors.title ? "border-destructive" : ""}
+              value={formData.title}
+              onChange={(e) => setFormData({ ...formData, title: e.target.value })}
+              required
             />
-            {errors.title && (
-              <p className="text-xs text-destructive">{errors.title}</p>
-            )}
           </div>
           
-          <div className="grid grid-cols-1 gap-2">
-            <Label htmlFor="type" className={errors.type ? "text-destructive" : ""}>
-              Tipo de Solicitação *
-            </Label>
-            <Select
-              value={type}
-              onValueChange={(value) => setType(value as TicketType)}
-            >
-              <SelectTrigger id="type" className={errors.type ? "border-destructive" : ""}>
+          <div>
+            <Label htmlFor="type">Tipo</Label>
+            <Select value={formData.type} onValueChange={(value) => setFormData({ ...formData, type: value })}>
+              <SelectTrigger>
                 <SelectValue placeholder="Selecione o tipo" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value={TicketType.INSTALLATION}>Instalação</SelectItem>
-                <SelectItem value={TicketType.MAINTENANCE}>Manutenção</SelectItem>
-                <SelectItem value={TicketType.REMOVAL}>Retirada</SelectItem>
-                <SelectItem value={TicketType.REPLACEMENT}>Substituição</SelectItem>
-                <SelectItem value={TicketType.SUPPLIES}>Suprimentos</SelectItem>
-                <SelectItem value={TicketType.OTHER}>Outro</SelectItem>
+                <SelectItem value="INSTALLATION">Instalação</SelectItem>
+                <SelectItem value="MAINTENANCE">Manutenção</SelectItem>
+                <SelectItem value="REMOVAL">Remoção</SelectItem>
+                <SelectItem value="REPLACEMENT">Substituição</SelectItem>
+                <SelectItem value="SUPPLIES">Suprimentos</SelectItem>
               </SelectContent>
             </Select>
-            {errors.type && (
-              <p className="text-xs text-destructive">{errors.type}</p>
-            )}
           </div>
           
-          <div className="grid grid-cols-1 gap-2">
+          <div>
             <Label htmlFor="priority">Prioridade</Label>
-            <Select
-              value={priority}
-              onValueChange={(value) => setPriority(value as TicketPriority)}
-            >
-              <SelectTrigger id="priority">
+            <Select value={formData.priority} onValueChange={(value) => setFormData({ ...formData, priority: value })}>
+              <SelectTrigger>
                 <SelectValue placeholder="Selecione a prioridade" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value={TicketPriority.LOW}>Baixa</SelectItem>
-                <SelectItem value={TicketPriority.MEDIUM}>Média</SelectItem>
-                <SelectItem value={TicketPriority.HIGH}>Alta</SelectItem>
+                <SelectItem value="LOW">Baixa</SelectItem>
+                <SelectItem value="MEDIUM">Média</SelectItem>
+                <SelectItem value="HIGH">Alta</SelectItem>
+                <SelectItem value="URGENT">Urgente</SelectItem>
               </SelectContent>
             </Select>
           </div>
-          
-          <div className="grid grid-cols-1 gap-2">
-            <Label htmlFor="scheduled-date">Data Programada (opcional)</Label>
-            <Popover open={isDatePickerOpen} onOpenChange={setIsDatePickerOpen}>
-              <PopoverTrigger asChild>
-                <Button
-                  id="scheduled-date"
-                  variant="outline"
-                  className={cn(
-                    "w-full justify-start text-left font-normal",
-                    !scheduledDate && "text-muted-foreground",
-                    errors.scheduledDate && "border-destructive"
-                  )}
-                >
-                  <CalendarIcon className="mr-2 h-4 w-4" />
-                  {scheduledDate ? format(scheduledDate, "PPP", { locale: ptBR }) : "Selecione uma data"}
-                </Button>
-              </PopoverTrigger>
-              <PopoverContent className="w-auto p-0">
-                <Calendar
-                  mode="single"
-                  selected={scheduledDate}
-                  onSelect={(date) => {
-                    setScheduledDate(date);
-                    setIsDatePickerOpen(false);
-                  }}
-                  disabled={(date) => date < new Date(new Date().setHours(0, 0, 0, 0))}
-                  initialFocus
-                />
-              </PopoverContent>
-            </Popover>
-            {errors.scheduledDate && (
-              <p className="text-xs text-destructive">{errors.scheduledDate}</p>
-            )}
+
+          <div>
+            <Label htmlFor="scheduled_date">Data Agendada</Label>
+            <Input
+              id="scheduled_date"
+              type="datetime-local"
+              value={formData.scheduled_date}
+              onChange={(e) => setFormData({ ...formData, scheduled_date: e.target.value })}
+            />
           </div>
           
-          <div className="grid grid-cols-1 gap-2">
-            <Label htmlFor="description" className={errors.description ? "text-destructive" : ""}>
-              Descrição *
-            </Label>
+          <div>
+            <Label htmlFor="description">Descrição</Label>
             <Textarea
               id="description"
-              placeholder="Descreva a solicitação em detalhes..."
-              value={description}
-              onChange={(e) => setDescription(e.target.value)}
-              className={errors.description ? "border-destructive" : ""}
-              rows={4}
+              value={formData.description}
+              onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+              required
             />
-            {errors.description && (
-              <p className="text-xs text-destructive">{errors.description}</p>
-            )}
           </div>
-        </div>
-        
-        <DialogFooter>
-          <Button variant="outline" onClick={() => handleOpenChange(false)} disabled={isSubmitting}>
-            Cancelar
-          </Button>
-          <Button onClick={handleSubmit} disabled={isSubmitting}>
-            {isSubmitting ? "Criando..." : "Criar Solicitação"}
-          </Button>
-        </DialogFooter>
+          
+          <div className="flex justify-end gap-2">
+            <Button type="button" variant="outline" onClick={() => setOpen(false)}>
+              Cancelar
+            </Button>
+            <Button type="submit">Criar Solicitação</Button>
+          </div>
+        </form>
       </DialogContent>
     </Dialog>
   );

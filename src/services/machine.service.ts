@@ -51,9 +51,17 @@ export const getMachineById = async (id: string): Promise<Machine | null> => {
 
 export const createMachine = async (machineData: Omit<Machine, 'id' | 'created_at' | 'updated_at' | 'client'>): Promise<Machine> => {
   try {
+    const insertData = {
+      serial_number: machineData.serial_number,
+      model: machineData.model,
+      status: machineData.status as string,
+      client_id: machineData.client_id,
+      notes: machineData.notes
+    };
+
     const { data, error } = await supabase
       .from('machines')
-      .insert([machineData])
+      .insert([insertData])
       .select(`
         *,
         client:clients(*)
@@ -75,9 +83,16 @@ export const createMachine = async (machineData: Omit<Machine, 'id' | 'created_a
 
 export const updateMachine = async (id: string, updates: Partial<Omit<Machine, 'id' | 'created_at' | 'updated_at' | 'client'>>): Promise<Machine> => {
   try {
+    const updateData: any = {};
+    if (updates.serial_number) updateData.serial_number = updates.serial_number;
+    if (updates.model) updateData.model = updates.model;
+    if (updates.status) updateData.status = updates.status as string;
+    if (updates.client_id !== undefined) updateData.client_id = updates.client_id;
+    if (updates.notes !== undefined) updateData.notes = updates.notes;
+
     const { data, error } = await supabase
       .from('machines')
-      .update(updates)
+      .update(updateData)
       .eq('id', id)
       .select(`
         *,
@@ -120,7 +135,7 @@ export const getMachinesByStatus = async (status: MachineStatus): Promise<Machin
         *,
         client:clients(*)
       `)
-      .eq('status', status)
+      .eq('status', status as string)
       .order('created_at', { ascending: false });
 
     if (error) throw error;

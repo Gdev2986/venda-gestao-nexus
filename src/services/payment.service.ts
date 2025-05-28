@@ -1,3 +1,4 @@
+
 import { supabase } from "@/integrations/supabase/client";
 import { PaymentRequest, PaymentStatus, PaymentMethod, PaymentRequestParams, PaymentProcessParams, ClientBalance } from "@/types/payment.types";
 
@@ -10,21 +11,33 @@ export const getAllPaymentRequests = async (): Promise<PaymentRequest[]> => {
         client:client_id (
           id,
           business_name,
-          current_balance
+          balance
         ),
-        processor:processed_by (
+        processor:approved_by (
           id,
           name
         )
       `)
-      .order('requested_at', { ascending: false });
+      .order('created_at', { ascending: false });
 
     if (error) {
       console.error('Error fetching payment requests:', error);
       throw new Error(`Erro ao buscar solicitações de pagamento: ${error.message}`);
     }
 
-    return data || [];
+    return data?.map(item => ({
+      ...item,
+      status: item.status as PaymentStatus,
+      client: item.client ? {
+        id: item.client.id,
+        business_name: item.client.business_name,
+        current_balance: item.client.balance || 0
+      } : undefined,
+      processor: item.processor ? {
+        id: item.processor.id,
+        name: item.processor.name
+      } : undefined
+    })) || [];
   } catch (error) {
     console.error('Error in getAllPaymentRequests:', error);
     throw error;
@@ -34,13 +47,16 @@ export const getAllPaymentRequests = async (): Promise<PaymentRequest[]> => {
 export const updatePaymentStatus = async (paymentId: string, status: PaymentStatus, notes?: string, processedBy?: string): Promise<void> => {
   try {
     const updateData: any = {
-      status,
-      processed_at: new Date().toISOString(),
+      status: status as string,
       updated_at: new Date().toISOString()
     };
 
-    if (notes) updateData.notes = notes;
-    if (processedBy) updateData.processed_by = processedBy;
+    if (status === PaymentStatus.APPROVED || status === PaymentStatus.REJECTED) {
+      updateData.approved_at = new Date().toISOString();
+    }
+
+    if (notes) updateData.description = notes;
+    if (processedBy) updateData.approved_by = processedBy;
 
     const { error } = await supabase
       .from('payment_requests')
@@ -102,17 +118,16 @@ export const createPaymentRequest = async (params: PaymentRequestParams): Promis
       .insert({
         client_id: params.client_id,
         amount: params.amount,
-        method: params.method,
-        status: PaymentStatus.PROCESSING,
-        requested_at: new Date().toISOString(),
-        notes: params.notes
+        status: PaymentStatus.PENDING as string,
+        created_at: new Date().toISOString(),
+        description: params.notes
       })
       .select(`
         *,
         client:client_id (
           id,
           business_name,
-          current_balance
+          balance
         )
       `)
       .single();
@@ -122,7 +137,15 @@ export const createPaymentRequest = async (params: PaymentRequestParams): Promis
       throw new Error(`Erro ao criar solicitação de pagamento: ${error.message}`);
     }
 
-    return data;
+    return {
+      ...data,
+      status: data.status as PaymentStatus,
+      client: data.client ? {
+        id: data.client.id,
+        business_name: data.client.business_name,
+        current_balance: data.client.balance || 0
+      } : undefined
+    };
   } catch (error) {
     console.error('Error in createPaymentRequest:', error);
     throw error;
@@ -134,7 +157,7 @@ export const getClientBalance = async (clientId: string): Promise<ClientBalance>
     // Get client basic info
     const { data: client, error: clientError } = await supabase
       .from('clients')
-      .select('id, current_balance, commission_rate')
+      .select('id, balance')
       .eq('id', clientId)
       .single();
 
@@ -148,7 +171,7 @@ export const getClientBalance = async (clientId: string): Promise<ClientBalance>
       .from('payment_requests')
       .select('amount')
       .eq('client_id', clientId)
-      .eq('status', PaymentStatus.PROCESSING);
+      .eq('status', PaymentStatus.PENDING as string);
 
     if (paymentsError) {
       console.error('Error fetching pending payments:', paymentsError);
@@ -171,10 +194,10 @@ export const getClientBalance = async (clientId: string): Promise<ClientBalance>
 
     return {
       client_id: clientId,
-      current_balance: client.current_balance || 0,
+      current_balance: client.balance || 0,
       pending_payments: totalPendingPayments,
       total_sales: totalSales,
-      commission_rate: client.commission_rate || 0
+      commission_rate: 0
     };
   } catch (error) {
     console.error('Error in getClientBalance:', error);
