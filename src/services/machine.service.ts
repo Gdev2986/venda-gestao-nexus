@@ -53,7 +53,7 @@ export const machineService = {
         *,
         client:clients(id, business_name)
       `)
-      .eq('status', status)
+      .eq('status', status.toString())
       .order('created_at', { ascending: false });
 
     if (error) throw error;
@@ -68,7 +68,7 @@ export const machineService = {
     const machineData = machines.map(machine => ({
       serial_number: machine.serial_number,
       model: machine.model,
-      status: (machine.status || MachineStatus.STOCK),
+      status: (machine.status || MachineStatus.STOCK).toString(),
       client_id: machine.client_id || null,
       notes: machine.notes || null
     }));
@@ -94,7 +94,7 @@ export const machineService = {
     
     if (updates.serial_number !== undefined) updateData.serial_number = updates.serial_number;
     if (updates.model !== undefined) updateData.model = updates.model;
-    if (updates.status !== undefined) updateData.status = updates.status;
+    if (updates.status !== undefined) updateData.status = updates.status.toString();
     if (updates.client_id !== undefined) updateData.client_id = updates.client_id;
     if (updates.notes !== undefined) updateData.notes = updates.notes;
 
@@ -183,7 +183,7 @@ export const machineService = {
       `);
 
     if (filters.status) {
-      query = query.eq('status', filters.status);
+      query = query.eq('status', filters.status.toString());
     }
 
     if (filters.clientId) {
@@ -229,6 +229,34 @@ export const machineService = {
 
     if (error) throw error;
     return data || [];
+  },
+
+  // Delete machine
+  async deleteMachine(id: string): Promise<void> {
+    const { error } = await supabase
+      .from('machines')
+      .delete()
+      .eq('id', id);
+
+    if (error) throw error;
+  },
+
+  // Get machines by client
+  async getMachinesByClient(clientId: string): Promise<Machine[]> {
+    const { data, error } = await supabase
+      .from('machines')
+      .select(`
+        *,
+        client:clients(id, business_name)
+      `)
+      .eq('client_id', clientId)
+      .order('created_at', { ascending: false });
+
+    if (error) throw error;
+    return (data || []).map(item => ({
+      ...item,
+      status: item.status as MachineStatus
+    }));
   }
 };
 
