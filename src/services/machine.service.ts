@@ -1,4 +1,3 @@
-
 import { supabase } from "@/integrations/supabase/client";
 import { 
   Machine, 
@@ -53,7 +52,7 @@ export const machineService = {
         *,
         client:clients(id, business_name)
       `)
-      .eq('status', status as string)
+      .eq('status', status)
       .order('created_at', { ascending: false });
 
     if (error) throw error;
@@ -68,7 +67,7 @@ export const machineService = {
     const machineData = machines.map(machine => ({
       serial_number: machine.serial_number,
       model: machine.model,
-      status: (machine.status || MachineStatus.STOCK) as string,
+      status: machine.status || MachineStatus.STOCK,
       client_id: machine.client_id || null,
       notes: machine.notes || null
     }));
@@ -94,7 +93,7 @@ export const machineService = {
     
     if (updates.serial_number !== undefined) updateData.serial_number = updates.serial_number;
     if (updates.model !== undefined) updateData.model = updates.model;
-    if (updates.status !== undefined) updateData.status = updates.status as string;
+    if (updates.status !== undefined) updateData.status = updates.status;
     if (updates.client_id !== undefined) updateData.client_id = updates.client_id;
     if (updates.notes !== undefined) updateData.notes = updates.notes;
 
@@ -183,7 +182,7 @@ export const machineService = {
       `);
 
     if (filters.status) {
-      query = query.eq('status', filters.status as string);
+      query = query.eq('status', filters.status);
     }
 
     if (filters.clientId) {
@@ -209,7 +208,6 @@ export const machineService = {
 
   // Transfer machine to another client
   async transferMachine(params: MachineTransferParams): Promise<void> {
-    // For now, just update the client_id directly since transfer_machine function doesn't exist
     const { error } = await supabase
       .from('machines')
       .update({ client_id: params.to_client_id })
