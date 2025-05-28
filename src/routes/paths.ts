@@ -8,6 +8,7 @@ export const PATHS = {
   NOT_FOUND: "/404",
   CHANGE_PASSWORD: "/change-password",
   FORGOT_PASSWORD: "/forgot-password",
+  RESET_PASSWORD: "/reset-password",
   
   ADMIN: {
     DASHBOARD: "/admin/dashboard",
@@ -20,6 +21,7 @@ export const PATHS = {
     PARTNERS_NEW: "/admin/partners/new",
     PAYMENTS: "/admin/payments",
     PAYMENT_DETAILS: (id?: string) => id ? `/admin/payments/${id}` : "/admin/payments/:id",
+    PAYMENT_NEW: "/admin/payments/new",
     SALES: "/admin/sales",
     SALES_DETAILS: (id?: string) => id ? `/admin/sales/${id}` : "/admin/sales/:id",
     SALES_NEW: "/admin/sales/new",
@@ -39,7 +41,11 @@ export const PATHS = {
     DASHBOARD: "/client/dashboard",
     PAYMENTS: "/client/payments",
     SUPPORT: "/client/support",
-    MACHINES: "/client/machines"
+    MACHINES: "/client/machines",
+    PROFILE: "/client/profile",
+    REPORTS: "/client/reports",
+    SETTINGS: "/client/settings",
+    HELP: "/client/help"
   },
   
   USER: {
@@ -47,7 +53,8 @@ export const PATHS = {
     PAYMENTS: "/user/payments",
     SUPPORT: "/user/support",
     HELP: "/user/help",
-    SETTINGS: "/user/settings"
+    SETTINGS: "/user/settings",
+    MACHINES: "/user/machines"
   },
   
   PARTNER: {
@@ -65,7 +72,9 @@ export const PATHS = {
     DASHBOARD: "/financial/dashboard",
     PAYMENTS: "/financial/payments",
     REPORTS: "/financial/reports",
-    SETTINGS: "/financial/settings"
+    SETTINGS: "/financial/settings",
+    CLIENTS: "/financial/clients",
+    REQUESTS: "/financial/requests"
   },
   
   LOGISTICS: {
@@ -76,6 +85,9 @@ export const PATHS = {
     REPORTS: "/logistics/reports",
     CLIENTS: "/logistics/clients",
     SETTINGS: "/logistics/settings",
-    MACHINE_DETAILS: (id?: string) => id ? `/logistics/machines/${id}` : "/logistics/machines/:id"
+    MACHINE_DETAILS: (id?: string) => id ? `/logistics/machines/${id}` : "/logistics/machines/:id",
+    NEW_MACHINE: "/logistics/machines/new",
+    INVENTORY: "/logistics/inventory",
+    SUPPORT: "/logistics/support"
   }
 } as const;
