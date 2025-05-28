@@ -4,8 +4,7 @@ export enum MachineStatus {
   MAINTENANCE = "MAINTENANCE", 
   BLOCKED = "BLOCKED",
   TRANSIT = "TRANSIT",
-  STOCK = "STOCK",
-  DEFECTIVE = "DEFECTIVE"
+  STOCK = "STOCK"
 }
 
 export interface MachineNote {
