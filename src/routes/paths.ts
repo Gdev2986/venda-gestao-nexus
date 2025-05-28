@@ -43,6 +43,7 @@ export const PATHS = {
     COMPANY: "/admin/company",
     COMPANY_EXPENSES: "/admin/company/expenses",
     COMPANY_REPORTS: "/admin/company/reports",
+    LOGISTICS: "/admin/logistics",
   },
 
   // Client routes

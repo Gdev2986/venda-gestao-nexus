@@ -1,206 +1,160 @@
 
 import { supabase } from "@/integrations/supabase/client";
-import { PaymentRequest, PaymentProcessParams } from "@/types/payment.types";
-import { PaymentStatus } from "@/types";
+import { PaymentRequest, PaymentStatus } from "@/types/payment.types";
 
-// Get all payment requests
-export const getPaymentRequests = async (): Promise<PaymentRequest[]> => {
-  const { data, error } = await supabase
-    .from('payment_requests')
-    .select(`
-      *,
-      client:clients(id, business_name),
-      processor:profiles(id, name)
-    `)
-    .order('created_at', { ascending: false });
+export const paymentService = {
+  // Get all payment requests
+  async getPaymentRequests(): Promise<PaymentRequest[]> {
+    const { data, error } = await supabase
+      .from('payment_requests')
+      .select(`
+        *,
+        client:clients(id, business_name),
+        pix_key:pix_keys(id, key, name)
+      `)
+      .order('created_at', { ascending: false });
 
-  if (error) throw error;
+    if (error) throw error;
+    
+    return (data || []).map(item => ({
+      ...item,
+      status: item.status as PaymentStatus,
+      client: item.client || { id: '', business_name: '' },
+      pix_key: item.pix_key || { id: '', key: '', name: '' },
+      processor: { id: 'system', name: 'Sistema' },
+      rejection_reason: item.rejection_reason || ''
+    }));
+  },
 
-  // Convert database enum strings to PaymentStatus enum
-  return (data || []).map(payment => ({
-    ...payment,
-    status: payment.status as PaymentStatus,
-    created_at: payment.created_at,
-    updated_at: payment.updated_at,
-    rejection_reason: payment.rejection_reason || undefined
-  }));
-};
+  // Get payment requests by client
+  async getPaymentRequestsByClient(clientId: string): Promise<PaymentRequest[]> {
+    const { data, error } = await supabase
+      .from('payment_requests')
+      .select(`
+        *,
+        client:clients(id, business_name),
+        pix_key:pix_keys(id, key, name)
+      `)
+      .eq('client_id', clientId)
+      .order('created_at', { ascending: false });
 
-// Get payment requests for a specific client
-export const getClientPayments = async (clientId: string): Promise<PaymentRequest[]> => {
-  const { data, error } = await supabase
-    .from('payment_requests')
-    .select(`
-      *,
-      client:clients(id, business_name),
-      processor:profiles(id, name)
-    `)
-    .eq('client_id', clientId)
-    .order('created_at', { ascending: false });
+    if (error) throw error;
+    
+    return (data || []).map(item => ({
+      ...item,
+      status: item.status as PaymentStatus,
+      client: item.client || { id: '', business_name: '' },
+      pix_key: item.pix_key || { id: '', key: '', name: '' },
+      processor: { id: 'system', name: 'Sistema' },
+      rejection_reason: item.rejection_reason || ''
+    }));
+  },
 
-  if (error) throw error;
+  // Get payment request by ID
+  async getPaymentRequestById(id: string): Promise<PaymentRequest | null> {
+    const { data, error } = await supabase
+      .from('payment_requests')
+      .select(`
+        *,
+        client:clients(id, business_name),
+        pix_key:pix_keys(id, key, name)
+      `)
+      .eq('id', id)
+      .single();
 
-  // Convert database enum strings to PaymentStatus enum
-  return (data || []).map(payment => ({
-    ...payment,
-    status: payment.status as PaymentStatus,
-    created_at: payment.created_at,
-    updated_at: payment.updated_at,
-    rejection_reason: payment.rejection_reason || undefined
-  }));
-};
-
-// Get payment request by ID
-export const getPaymentRequestById = async (id: string): Promise<PaymentRequest | null> => {
-  const { data, error } = await supabase
-    .from('payment_requests')
-    .select(`
-      *,
-      client:clients(id, business_name),
-      processor:profiles(id, name)
-    `)
-    .eq('id', id)
-    .single();
-
-  if (error) {
-    if (error.code === 'PGRST116') return null;
-    throw error;
-  }
-
-  return {
-    ...data,
-    status: data.status as PaymentStatus,
-    created_at: data.created_at,
-    updated_at: data.updated_at,
-    rejection_reason: data.rejection_reason || undefined
-  };
-};
-
-// Create payment request
-export const createPaymentRequest = async (paymentData: {
-  client_id: string;
-  amount: number;
-  description?: string;
-  pix_key_id: string;
-}): Promise<PaymentRequest> => {
-  const { data, error } = await supabase
-    .from('payment_requests')
-    .insert({
-      ...paymentData,
-      status: PaymentStatus.PENDING
-    })
-    .select(`
-      *,
-      client:clients(id, business_name),
-      processor:profiles(id, name)
-    `)
-    .single();
-
-  if (error) throw error;
-
-  return {
-    ...data,
-    status: data.status as PaymentStatus,
-    created_at: data.created_at,
-    updated_at: data.updated_at,
-    rejection_reason: data.rejection_reason || undefined
-  };
-};
-
-// Process payment (approve/reject)
-export const processPayment = async (params: PaymentProcessParams): Promise<PaymentRequest> => {
-  const updateData: any = {
-    status: params.status,
-    processed_at: new Date().toISOString(),
-    processed_by: (await supabase.auth.getUser()).data.user?.id
-  };
-
-  if (params.notes) {
-    if (params.status === PaymentStatus.REJECTED) {
-      updateData.rejection_reason = params.notes;
+    if (error) {
+      if (error.code === 'PGRST116') return null;
+      throw error;
     }
+    
+    return data ? {
+      ...data,
+      status: data.status as PaymentStatus,
+      client: data.client || { id: '', business_name: '' },
+      pix_key: data.pix_key || { id: '', key: '', name: '' },
+      processor: { id: 'system', name: 'Sistema' },
+      rejection_reason: data.rejection_reason || ''
+    } : null;
+  },
+
+  // Create payment request
+  async createPaymentRequest(request: Omit<PaymentRequest, 'id' | 'created_at' | 'updated_at' | 'client' | 'pix_key' | 'processor'>): Promise<PaymentRequest> {
+    const { data, error } = await supabase
+      .from('payment_requests')
+      .insert({
+        client_id: request.client_id,
+        amount: request.amount,
+        pix_key_id: request.pix_key_id,
+        description: request.description,
+        status: request.status as string
+      })
+      .select(`
+        *,
+        client:clients(id, business_name),
+        pix_key:pix_keys(id, key, name)
+      `)
+      .single();
+
+    if (error) throw error;
+    
+    return {
+      ...data,
+      status: data.status as PaymentStatus,
+      client: data.client || { id: '', business_name: '' },
+      pix_key: data.pix_key || { id: '', key: '', name: '' },
+      processor: { id: 'system', name: 'Sistema' },
+      rejection_reason: data.rejection_reason || ''
+    };
+  },
+
+  // Update payment request
+  async updatePaymentRequest(id: string, updates: Partial<PaymentRequest>): Promise<PaymentRequest> {
+    const updateData: any = {};
+    
+    if (updates.status !== undefined) updateData.status = updates.status as string;
+    if (updates.approved_by !== undefined) updateData.approved_by = updates.approved_by;
+    if (updates.approved_at !== undefined) updateData.approved_at = updates.approved_at;
+    if (updates.receipt_url !== undefined) updateData.receipt_url = updates.receipt_url;
+    if (updates.rejection_reason !== undefined) updateData.rejection_reason = updates.rejection_reason;
+
+    const { data, error } = await supabase
+      .from('payment_requests')
+      .update(updateData)
+      .eq('id', id)
+      .select(`
+        *,
+        client:clients(id, business_name),
+        pix_key:pix_keys(id, key, name)
+      `)
+      .single();
+
+    if (error) throw error;
+    
+    return {
+      ...data,
+      status: data.status as PaymentStatus,
+      client: data.client || { id: '', business_name: '' },
+      pix_key: data.pix_key || { id: '', key: '', name: '' },
+      processor: { id: 'system', name: 'Sistema' },
+      rejection_reason: data.rejection_reason || ''
+    };
+  },
+
+  // Delete payment request
+  async deletePaymentRequest(id: string): Promise<void> {
+    const { error } = await supabase
+      .from('payment_requests')
+      .delete()
+      .eq('id', id);
+
+    if (error) throw error;
   }
-
-  const { data, error } = await supabase
-    .from('payment_requests')
-    .update(updateData)
-    .eq('id', params.payment_id)
-    .select(`
-      *,
-      client:clients(id, business_name),
-      processor:profiles(id, name)
-    `)
-    .single();
-
-  if (error) throw error;
-
-  return {
-    ...data,
-    status: data.status as PaymentStatus,
-    created_at: data.created_at,
-    updated_at: data.updated_at,
-    rejection_reason: data.rejection_reason || undefined
-  };
 };
 
-// Delete payment request
-export const deletePaymentRequest = async (id: string): Promise<void> => {
-  const { error } = await supabase
-    .from('payment_requests')
-    .delete()
-    .eq('id', id);
-
-  if (error) throw error;
-};
-
-// Update payment receipt
-export const updatePaymentReceipt = async (id: string, receiptUrl: string): Promise<PaymentRequest> => {
-  const { data, error } = await supabase
-    .from('payment_requests')
-    .update({ receipt_url: receiptUrl })
-    .eq('id', id)
-    .select(`
-      *,
-      client:clients(id, business_name),
-      processor:profiles(id, name)
-    `)
-    .single();
-
-  if (error) throw error;
-
-  return {
-    ...data,
-    status: data.status as PaymentStatus,
-    created_at: data.created_at,
-    updated_at: data.updated_at,
-    rejection_reason: data.rejection_reason || undefined
-  };
-};
-
-// Get payment statistics
-export const getPaymentStats = async () => {
-  const { data, error } = await supabase
-    .from('payment_requests')
-    .select('status, amount, created_at');
-
-  if (error) throw error;
-
-  const payments = data || [];
-  const total = payments.length;
-  const totalAmount = payments.reduce((sum, payment) => sum + payment.amount, 0);
-  
-  const statusCounts = payments.reduce((acc, payment) => {
-    acc[payment.status] = (acc[payment.status] || 0) + 1;
-    return acc;
-  }, {} as Record<string, number>);
-
-  return {
-    total,
-    totalAmount,
-    pending: statusCounts[PaymentStatus.PENDING] || 0,
-    approved: statusCounts[PaymentStatus.APPROVED] || 0,
-    rejected: statusCounts[PaymentStatus.REJECTED] || 0,
-    paid: statusCounts[PaymentStatus.PAID] || 0,
-    byStatus: statusCounts
-  };
-};
+// Export individual functions for backward compatibility
+export const getPaymentRequests = paymentService.getPaymentRequests;
+export const getPaymentRequestsByClient = paymentService.getPaymentRequestsByClient;
+export const getPaymentRequestById = paymentService.getPaymentRequestById;
+export const createPaymentRequest = paymentService.createPaymentRequest;
+export const updatePaymentRequest = paymentService.updatePaymentRequest;
+export const deletePaymentRequest = paymentService.deletePaymentRequest;

@@ -53,7 +53,7 @@ export const machineService = {
         *,
         client:clients(id, business_name)
       `)
-      .eq('status', status)
+      .eq('status', status as string)
       .order('created_at', { ascending: false });
 
     if (error) throw error;
@@ -68,7 +68,7 @@ export const machineService = {
     const machineData = machines.map(machine => ({
       serial_number: machine.serial_number,
       model: machine.model,
-      status: machine.status || MachineStatus.STOCK,
+      status: machine.status as string || MachineStatus.STOCK as string,
       client_id: machine.client_id || null,
       notes: machine.notes || null
     }));
@@ -94,7 +94,7 @@ export const machineService = {
     
     if (updates.serial_number !== undefined) updateData.serial_number = updates.serial_number;
     if (updates.model !== undefined) updateData.model = updates.model;
-    if (updates.status !== undefined) updateData.status = updates.status;
+    if (updates.status !== undefined) updateData.status = updates.status as string;
     if (updates.client_id !== undefined) updateData.client_id = updates.client_id;
     if (updates.notes !== undefined) updateData.notes = updates.notes;
 
@@ -183,7 +183,7 @@ export const machineService = {
       `);
 
     if (filters.status) {
-      query = query.eq('status', filters.status);
+      query = query.eq('status', filters.status as string);
     }
 
     if (filters.clientId) {
@@ -209,11 +209,11 @@ export const machineService = {
 
   // Transfer machine to another client
   async transferMachine(params: MachineTransferParams): Promise<void> {
-    const { error } = await supabase.rpc('transfer_machine', {
-      machine_id: params.machine_id,
-      new_client_id: params.to_client_id,
-      cutoff_date: params.cutoff_date || new Date().toISOString()
-    });
+    // For now, just update the client_id directly since transfer_machine function doesn't exist
+    const { error } = await supabase
+      .from('machines')
+      .update({ client_id: params.to_client_id })
+      .eq('id', params.machine_id);
 
     if (error) throw error;
   },

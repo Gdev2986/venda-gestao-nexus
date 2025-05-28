@@ -100,6 +100,15 @@ export const MachineDetailsDialog: React.FC<MachineDetailsDialogProps> = ({
     }
   };
 
+  const formatDate = (dateString: string | undefined) => {
+    if (!dateString) return '-';
+    try {
+      return new Date(dateString).toLocaleDateString('pt-BR');
+    } catch {
+      return '-';
+    }
+  };
+
   if (!machine) return null;
 
   return (
@@ -148,11 +157,11 @@ export const MachineDetailsDialog: React.FC<MachineDetailsDialogProps> = ({
             <div className="grid grid-cols-2 gap-4 text-xs text-gray-500">
               <div>
                 <Label className="text-xs font-medium">Criado em</Label>
-                <p>{machine.created_at ? new Date(machine.created_at).toLocaleDateString('pt-BR') : '-'}</p>
+                <p>{formatDate(machine.created_at)}</p>
               </div>
               <div>
                 <Label className="text-xs font-medium">Atualizado em</Label>
-                <p>{machine.updated_at ? new Date(machine.updated_at).toLocaleDateString('pt-BR') : '-'}</p>
+                <p>{formatDate(machine.updated_at)}</p>
               </div>
             </div>
           </div>

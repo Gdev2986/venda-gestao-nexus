@@ -11,11 +11,11 @@ import { getDashboardPath } from "./utils/auth-utils";
 
 // Route groups
 import { AuthRoutes } from "./routes/authRoutes";
-import { AdminRoutes } from "./routes/adminRoutes";
-import { ClientRoutes } from "./routes/clientRoutes";
-import { PartnerRoutes } from "./routes/partnerRoutes";
-import { FinancialRoutes } from "./routes/financialRoutes";
-import { LogisticsRoutes } from "./routes/logisticsRoutes";
+import AdminRoutes from "./routes/adminRoutes";
+import ClientRoutes from "./routes/clientRoutes";
+import PartnerRoutes from "./routes/partnerRoutes";
+import FinancialRoutes from "./routes/financialRoutes";
+import LogisticsRoutes from "./routes/logisticsRoutes";
 
 // Layouts
 import MainLayout from "./components/layout/MainLayout";
