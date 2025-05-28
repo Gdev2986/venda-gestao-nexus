@@ -11,10 +11,19 @@ import {
   getMachineStats
 } from '@/services/machine.service';
 
-export const useMachines = () => {
+export interface MachineStats {
+  total: number;
+  active: number;
+  inactive: number;
+  maintenance: number;
+  stock: number;
+}
+
+export const useMachines = (options?: { enableRealtime?: boolean; initialFetch?: boolean }) => {
   const [machines, setMachines] = useState<Machine[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [stats, setStats] = useState<MachineStats>({ total: 0, active: 0, inactive: 0, maintenance: 0, stock: 0 });
 
   const fetchMachines = async () => {
     try {
@@ -22,6 +31,10 @@ export const useMachines = () => {
       setError(null);
       const data = await getAllMachines();
       setMachines(data);
+      
+      // Calculate stats
+      const statsData = await getMachineStats();
+      setStats(statsData);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to fetch machines');
     } finally {
@@ -46,6 +59,7 @@ export const useMachines = () => {
     try {
       const newMachine = await createMachine(machineData);
       setMachines(prev => [newMachine, ...prev]);
+      await fetchMachines(); // Refresh stats
       return newMachine;
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to create machine');
@@ -90,19 +104,24 @@ export const useMachines = () => {
   };
 
   useEffect(() => {
-    fetchMachines();
+    if (options?.initialFetch !== false) {
+      fetchMachines();
+    }
   }, []);
 
   return {
     machines,
     isLoading,
     error,
+    stats,
     refetch: fetchMachines,
+    fetchMachines,
     fetchMachinesByStatus,
     createMachine: createMachineHandler,
     updateMachine: updateMachineHandler,
     deleteMachine: deleteMachineHandler,
     transferMachine: transferMachineHandler,
+    addMachine: createMachineHandler, // Alias for compatibility
     getMachineStats
   };
 };

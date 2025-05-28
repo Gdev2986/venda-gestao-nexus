@@ -1,17 +1,23 @@
+
 import { PaymentType as EnumsPaymentType } from './enums';
 
-// Core payment status enum
+// Core payment status enum unificado
 export enum PaymentStatus {
-  COMPLETED = "COMPLETED",
-  REJECTED = "REJECTED", 
-  PROCESSING = "PROCESSING"
+  PENDING = "PENDING",
+  PROCESSING = "PROCESSING", 
+  APPROVED = "APPROVED",
+  REJECTED = "REJECTED",
+  PAID = "PAID",
+  COMPLETED = "COMPLETED"
 }
 
-// Payment method enum for new payment system
+// Payment method enum unificado
 export enum PaymentMethod {
   PIX = "PIX",
   TED = "TED",
-  BOLETO = "BOLETO"
+  BOLETO = "BOLETO",
+  CREDIT = "CREDIT",
+  DEBIT = "DEBIT"
 }
 
 export interface PixKey {
@@ -57,22 +63,27 @@ export interface Payment {
   };
 }
 
-// New PaymentRequest interface for admin side
+// PaymentRequest interface compatível
 export interface PaymentRequest {
   id: string;
   client_id: string;
   amount: number;
-  method: PaymentMethod;
+  method?: PaymentMethod;
   status: PaymentStatus;
-  requested_at: string;
+  created_at: string;
+  updated_at: string;
+  requested_at?: string;
   processed_at?: string;
   processed_by?: string;
   notes?: string;
   receipt_url?: string;
+  description?: string;
+  rejection_reason?: string | null;
+  pix_key_id?: string;
   client?: {
     id: string;
     business_name: string;
-    current_balance: number;
+    current_balance?: number;
   };
   processor?: {
     id: string;

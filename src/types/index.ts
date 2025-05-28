@@ -1,3 +1,4 @@
+
 // Export all types from the various type files
 export * from './enums';
 export * from './payment.types';
@@ -17,6 +18,13 @@ export enum UserRole {
   PARTNER = "PARTNER",
   FINANCIAL = "FINANCIAL",
   LOGISTICS = "LOGISTICS"
+}
+
+// Export ClientStatus enum
+export enum ClientStatus {
+  ACTIVE = "active",
+  INACTIVE = "inactive",
+  PENDING = "pending"
 }
 
 // Export common interfaces

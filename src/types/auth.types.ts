@@ -13,7 +13,7 @@ export interface UserRole {
 export interface AuthAuditLog {
   id: string;
   user_id: string;
-  event_type: 'login' | 'logout' | 'role_change' | 'password_change' | 'password_reset' | 'session_revoked';
+  event_type: string; // Mudança: aceitar qualquer string do banco
   ip_address?: string;
   user_agent?: string;
   device_fingerprint?: string;
@@ -25,7 +25,7 @@ export interface AuthAuditLog {
 export interface SecurityEvent {
   id: string;
   user_id?: string;
-  event_type: 'suspicious_login' | 'privilege_escalation' | 'data_access' | 'multiple_failed_logins' | 'unusual_location';
+  event_type: string; // Mudança: aceitar qualquer string do banco
   severity: 'low' | 'medium' | 'high' | 'critical';
   description: string;
   source_ip?: string;

@@ -1,13 +1,12 @@
 
 import { useState, useEffect, useCallback } from "react";
-import { PaymentStatus } from "@/types/enums";
-import { toPaymentStatus } from "@/lib/type-utils";
+import { PaymentStatus } from "@/types/payment.types";
 import { useToast } from "@/hooks/use-toast";
 import { PaymentRequest } from "@/types/payment.types";
 
 // Function to filter payments by status
 export const filterPaymentsByStatus = (payments: PaymentRequest[], statusFilter: PaymentStatus | 'ALL' | null) => {
-  if (!statusFilter || statusFilter.toString().toLowerCase() === 'all') {
+  if (!statusFilter || statusFilter === 'ALL') {
     return payments;
   }
   
@@ -52,24 +51,23 @@ export const usePaymentsFetcher = ({
           id: `payment-${(currentPage - 1) * pageSize + i + 1}`,
           client_id: `client-${i % 3 + 1}`,
           amount: Math.floor(Math.random() * 10000) / 100,
-          status: Object.values(PaymentStatus)[i % 4] as PaymentStatus,
+          status: Object.values(PaymentStatus)[i % Object.values(PaymentStatus).length] as PaymentStatus,
           created_at: new Date(Date.now() - i * 86400000).toISOString(),
           updated_at: new Date(Date.now() - i * 43200000).toISOString(),
           description: `Payment for service ${i + 1}`,
           rejection_reason: i % 4 === 3 ? 'Documentation incomplete' : null,
+          requested_at: new Date(Date.now() - i * 86400000).toISOString(),
           client: {
             id: `client-${i % 3 + 1}`,
             business_name: `Client ${i % 3 + 1}`
           },
-          // Add missing property
           pix_key_id: `pix-key-${i % 2 + 1}`
         }));
 
         // Filter by status if needed
         let filtered = mockPayments;
         if (statusFilter && statusFilter !== 'ALL') {
-          const status = statusFilter as PaymentStatus;
-          filtered = filterPaymentsByStatus(mockPayments, status);
+          filtered = filterPaymentsByStatus(mockPayments, statusFilter);
         }
 
         // Filter by search term if provided

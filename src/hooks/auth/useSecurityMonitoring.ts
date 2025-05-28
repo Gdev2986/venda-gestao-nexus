@@ -20,8 +20,23 @@ export const useSecurityMonitoring = () => {
 
       if (error) throw error;
       
-      setSecurityEvents(data || []);
-      setUnresolvedCount((data || []).filter(event => !event.resolved).length);
+      // Converter dados do Supabase para interface
+      const formattedEvents: SecurityEvent[] = (data || []).map(event => ({
+        id: event.id,
+        user_id: event.user_id || undefined,
+        event_type: event.event_type,
+        severity: event.severity as 'low' | 'medium' | 'high' | 'critical',
+        description: event.description || '',
+        source_ip: event.source_ip?.toString(),
+        metadata: (event.metadata as Record<string, any>) || {},
+        resolved: event.resolved,
+        resolved_at: event.resolved_at || undefined,
+        resolved_by: event.resolved_by || undefined,
+        created_at: event.created_at
+      }));
+      
+      setSecurityEvents(formattedEvents);
+      setUnresolvedCount(formattedEvents.filter(event => !event.resolved).length);
     } catch (error) {
       console.error('Erro ao buscar eventos de segurança:', error);
     }
@@ -37,7 +52,21 @@ export const useSecurityMonitoring = () => {
         .limit(100);
 
       if (error) throw error;
-      setAuditLogs(data || []);
+      
+      // Converter dados do Supabase para interface
+      const formattedLogs: AuthAuditLog[] = (data || []).map(log => ({
+        id: log.id,
+        user_id: log.user_id,
+        event_type: log.event_type,
+        ip_address: log.ip_address?.toString(),
+        user_agent: log.user_agent || undefined,
+        device_fingerprint: log.device_fingerprint || undefined,
+        session_id: log.session_id || undefined,
+        metadata: (log.metadata as Record<string, any>) || {},
+        created_at: log.created_at
+      }));
+      
+      setAuditLogs(formattedLogs);
     } catch (error) {
       console.error('Erro ao buscar logs de auditoria:', error);
     }
@@ -92,7 +121,7 @@ export const useSecurityMonitoring = () => {
       }
 
       // Verificar IPs diferentes
-      const uniqueIPs = new Set(recentLogins?.map(log => log.ip_address).filter(Boolean));
+      const uniqueIPs = new Set(recentLogins?.map(log => log.ip_address?.toString()).filter(Boolean));
       if (uniqueIPs.size > 3) {
         await supabase
           .from('security_events')
