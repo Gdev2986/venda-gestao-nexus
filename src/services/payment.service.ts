@@ -60,7 +60,7 @@ export const paymentService = {
         client_id: params.client_id,
         amount: params.amount,
         pix_key_id: 'default-key', // Required field
-        status: PaymentStatus.PENDING as string,
+        status: PaymentStatus.PENDING,
         notes: params.notes
       })
       .select(`
@@ -84,7 +84,7 @@ export const paymentService = {
   // Process payment request
   async processPaymentRequest(params: PaymentProcessParams): Promise<PaymentRequest> {
     const updateData: any = {
-      status: params.status as string,
+      status: params.status,
       processed_at: new Date().toISOString(),
       notes: params.notes
     };
@@ -146,7 +146,7 @@ export const paymentService = {
   async updatePaymentRequest(id: string, updates: Partial<PaymentRequest>): Promise<PaymentRequest | null> {
     const updateData: any = { ...updates };
     if (updateData.status) {
-      updateData.status = updateData.status as string;
+      updateData.status = updateData.status;
     }
 
     const { data, error } = await supabase
