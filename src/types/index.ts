@@ -2,11 +2,7 @@
 // Export all types from the various type files
 export * from './enums';
 export * from './payment.types';
-export * from './client.types';
 export * from './machine.types';
-export * from './sale.types';
-export * from './partner.types';
-export * from './company.types';
 
 // Adicionar novos exports para tipos de autenticação enterprise
 export * from './auth.types';

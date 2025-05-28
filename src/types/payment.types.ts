@@ -1,17 +1,8 @@
 
-import { PaymentStatus as EnumsPaymentStatus } from './enums';
+import { PaymentStatus as EnumsPaymentStatus, PaymentMethod } from './enums';
 
 // Use the enum from enums.ts for consistency
-export { PaymentStatus } from './enums';
-
-// Payment method enum unificado - remove duplicates to avoid conflicts
-export enum PaymentMethod {
-  PIX = "PIX",
-  TED = "TED",
-  BOLETO = "BOLETO",
-  CREDIT = "CREDIT",
-  DEBIT = "DEBIT"
-}
+export { PaymentStatus, PaymentMethod } from './enums';
 
 export interface PixKey {
   id: string;

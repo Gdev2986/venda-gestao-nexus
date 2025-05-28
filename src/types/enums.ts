@@ -1,8 +1,10 @@
 
 export enum PaymentMethod {
   CREDIT = "CREDIT",
-  DEBIT = "DEBIT",
-  PIX = "PIX"
+  DEBIT = "DEBIT", 
+  PIX = "PIX",
+  TED = "TED",
+  BOLETO = "BOLETO"
 }
 
 export enum PaymentStatus {

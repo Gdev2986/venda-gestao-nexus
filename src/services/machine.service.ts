@@ -53,7 +53,7 @@ export const machineService = {
         *,
         client:clients(id, business_name)
       `)
-      .eq('status', status)
+      .eq('status', status as string)
       .order('created_at', { ascending: false });
 
     if (error) throw error;

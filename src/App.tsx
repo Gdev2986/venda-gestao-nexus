@@ -69,11 +69,11 @@ function App() {
       {AuthRoutes}
 
       {/* Protected Routes by Role */}
-      {AdminRoutes}
-      {ClientRoutes}
-      {PartnerRoutes}
-      {FinancialRoutes}
-      {LogisticsRoutes}
+      {<AdminRoutes />}
+      {<ClientRoutes />}
+      {<PartnerRoutes />}
+      {<FinancialRoutes />}
+      {<LogisticsRoutes />}
 
       {/* Shared Routes (accessible by all roles) */}
       <Route element={<MainLayout />}>
