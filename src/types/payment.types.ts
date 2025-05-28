@@ -1,10 +1,10 @@
 
-import { PaymentType as EnumsPaymentType, PaymentStatus as EnumsPaymentStatus } from './enums';
+import { PaymentStatus as EnumsPaymentStatus } from './enums';
 
 // Use the enum from enums.ts for consistency
 export { PaymentStatus } from './enums';
 
-// Payment method enum unificado
+// Payment method enum unificado - remove duplicates to avoid conflicts
 export enum PaymentMethod {
   PIX = "PIX",
   TED = "TED",
@@ -40,7 +40,7 @@ export interface Payment {
   receipt_url?: string;
   description?: string;
   rejection_reason: string | null;
-  payment_type?: EnumsPaymentType;
+  payment_type?: string;
   client?: {
     id: string;
     business_name: string;

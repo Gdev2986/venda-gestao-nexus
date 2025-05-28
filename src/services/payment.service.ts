@@ -20,9 +20,8 @@ export const paymentService = {
       ...item,
       status: item.status as PaymentStatus,
       client: item.client || { id: '', business_name: '' },
-      pix_key: item.pix_key || { id: '', key: '', name: '' },
       processor: { id: 'system', name: 'Sistema' },
-      rejection_reason: item.rejection_reason || ''
+      rejection_reason: item.rejection_reason || null
     }));
   },
 
@@ -44,9 +43,8 @@ export const paymentService = {
       ...item,
       status: item.status as PaymentStatus,
       client: item.client || { id: '', business_name: '' },
-      pix_key: item.pix_key || { id: '', key: '', name: '' },
       processor: { id: 'system', name: 'Sistema' },
-      rejection_reason: item.rejection_reason || ''
+      rejection_reason: item.rejection_reason || null
     }));
   },
 
@@ -71,14 +69,13 @@ export const paymentService = {
       ...data,
       status: data.status as PaymentStatus,
       client: data.client || { id: '', business_name: '' },
-      pix_key: data.pix_key || { id: '', key: '', name: '' },
       processor: { id: 'system', name: 'Sistema' },
-      rejection_reason: data.rejection_reason || ''
+      rejection_reason: data.rejection_reason || null
     } : null;
   },
 
   // Create payment request
-  async createPaymentRequest(request: Omit<PaymentRequest, 'id' | 'created_at' | 'updated_at' | 'client' | 'pix_key' | 'processor'>): Promise<PaymentRequest> {
+  async createPaymentRequest(request: Omit<PaymentRequest, 'id' | 'created_at' | 'updated_at' | 'client' | 'processor'>): Promise<PaymentRequest> {
     const { data, error } = await supabase
       .from('payment_requests')
       .insert({
@@ -101,9 +98,8 @@ export const paymentService = {
       ...data,
       status: data.status as PaymentStatus,
       client: data.client || { id: '', business_name: '' },
-      pix_key: data.pix_key || { id: '', key: '', name: '' },
       processor: { id: 'system', name: 'Sistema' },
-      rejection_reason: data.rejection_reason || ''
+      rejection_reason: data.rejection_reason || null
     };
   },
 
@@ -112,8 +108,8 @@ export const paymentService = {
     const updateData: any = {};
     
     if (updates.status !== undefined) updateData.status = updates.status as string;
-    if (updates.approved_by !== undefined) updateData.approved_by = updates.approved_by;
-    if (updates.approved_at !== undefined) updateData.approved_at = updates.approved_at;
+    if (updates.processed_by !== undefined) updateData.approved_by = updates.processed_by;
+    if (updates.processed_at !== undefined) updateData.approved_at = updates.processed_at;
     if (updates.receipt_url !== undefined) updateData.receipt_url = updates.receipt_url;
     if (updates.rejection_reason !== undefined) updateData.rejection_reason = updates.rejection_reason;
 
@@ -134,9 +130,8 @@ export const paymentService = {
       ...data,
       status: data.status as PaymentStatus,
       client: data.client || { id: '', business_name: '' },
-      pix_key: data.pix_key || { id: '', key: '', name: '' },
       processor: { id: 'system', name: 'Sistema' },
-      rejection_reason: data.rejection_reason || ''
+      rejection_reason: data.rejection_reason || null
     };
   },
 
@@ -154,6 +149,7 @@ export const paymentService = {
 // Export individual functions for backward compatibility
 export const getPaymentRequests = paymentService.getPaymentRequests;
 export const getPaymentRequestsByClient = paymentService.getPaymentRequestsByClient;
+export const getClientPayments = paymentService.getPaymentRequestsByClient; // Add missing export
 export const getPaymentRequestById = paymentService.getPaymentRequestById;
 export const createPaymentRequest = paymentService.createPaymentRequest;
 export const updatePaymentRequest = paymentService.updatePaymentRequest;

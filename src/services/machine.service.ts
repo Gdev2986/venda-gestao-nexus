@@ -53,7 +53,7 @@ export const machineService = {
         *,
         client:clients(id, business_name)
       `)
-      .eq('status', status as string)
+      .eq('status', status)
       .order('created_at', { ascending: false });
 
     if (error) throw error;
@@ -68,7 +68,7 @@ export const machineService = {
     const machineData = machines.map(machine => ({
       serial_number: machine.serial_number,
       model: machine.model,
-      status: machine.status as string || MachineStatus.STOCK as string,
+      status: (machine.status || MachineStatus.STOCK) as string,
       client_id: machine.client_id || null,
       notes: machine.notes || null
     }));
