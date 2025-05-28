@@ -13,13 +13,14 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { PageHeader } from "@/components/page/PageHeader";
 import { ptBR } from "date-fns/locale";
-import { Payment, PaymentStatus } from "@/types/payment.types";
+import { PaymentRequest } from "@/types/payment.types";
+import { PaymentStatus } from "@/types";
 
 const UserPayments = () => {
   const { user } = useAuth();
-  const [payments, setPayments] = useState<Payment[]>([]);
+  const [payments, setPayments] = useState<PaymentRequest[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [selectedPayment, setSelectedPayment] = useState<Payment | null>(null);
+  const [selectedPayment, setSelectedPayment] = useState<PaymentRequest | null>(null);
   const [isDetailsOpen, setIsDetailsOpen] = useState(false);
 
   useEffect(() => {
@@ -57,18 +58,24 @@ const UserPayments = () => {
     }
   };
 
-  const handleViewDetails = (payment: Payment) => {
-    // Ensure payment object has the expected structure for PaymentDetailsDialog
-    const adaptedPayment: Payment = {
+  const handleViewDetails = (payment: PaymentRequest) => {
+    // Convert PaymentRequest to Payment format for the dialog
+    const adaptedPayment = {
       ...payment,
+      created_at: payment.created_at,
+      updated_at: payment.updated_at,
       rejection_reason: payment.rejection_reason || null,
-      pix_key: payment.pix_key ? {
-        ...payment.pix_key,
-        owner_name: payment.pix_key.owner_name || payment.pix_key.name || ''
+      pix_key: payment.pix_key_id ? {
+        id: payment.pix_key_id,
+        key: '',
+        type: '',
+        name: '',
+        owner_name: '',
+        user_id: ''
       } : undefined
     };
     
-    setSelectedPayment(adaptedPayment);
+    setSelectedPayment(payment);
     setIsDetailsOpen(true);
   };
 
@@ -157,7 +164,7 @@ const UserPayments = () => {
 
       {selectedPayment && (
         <PaymentDetailsDialog
-          payment={selectedPayment}
+          payment={selectedPayment as any}
           open={isDetailsOpen}
           onOpenChange={setIsDetailsOpen}
         />
