@@ -2,18 +2,22 @@
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { UserRole } from "@/types";
+import { User } from "@supabase/supabase-js";
 
 interface UseAuthReturn {
   userRole: UserRole | null;
   isLoading: boolean;
   isAuthenticated: boolean;
+  user: User | null;
   logout: () => Promise<void>;
+  signOut: () => Promise<void>;
 }
 
 export const useAuth = (): UseAuthReturn => {
   const [userRole, setUserRole] = useState<UserRole | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [user, setUser] = useState<User | null>(null);
 
   useEffect(() => {
     let mounted = true;
@@ -29,6 +33,7 @@ export const useAuth = (): UseAuthReturn => {
           if (mounted) {
             setUserRole(null);
             setIsAuthenticated(false);
+            setUser(null);
             setIsLoading(false);
           }
           return;
@@ -39,6 +44,7 @@ export const useAuth = (): UseAuthReturn => {
           if (mounted) {
             setUserRole(null);
             setIsAuthenticated(false);
+            setUser(null);
             setIsLoading(false);
           }
           return;
@@ -46,6 +52,7 @@ export const useAuth = (): UseAuthReturn => {
 
         console.log("useAuth: Session found, getting user role...");
         setIsAuthenticated(true);
+        setUser(session.user);
 
         // Get user role from profiles table
         const { data: profile, error: profileError } = await supabase
@@ -77,6 +84,7 @@ export const useAuth = (): UseAuthReturn => {
         if (mounted) {
           setUserRole(null);
           setIsAuthenticated(false);
+          setUser(null);
           setIsLoading(false);
         }
       }
@@ -91,12 +99,14 @@ export const useAuth = (): UseAuthReturn => {
           if (mounted) {
             setUserRole(null);
             setIsAuthenticated(false);
+            setUser(null);
             setIsLoading(false);
           }
           return;
         }
 
         if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
+          setUser(session.user);
           await getSession();
         }
       }
@@ -115,15 +125,20 @@ export const useAuth = (): UseAuthReturn => {
       await supabase.auth.signOut();
       setUserRole(null);
       setIsAuthenticated(false);
+      setUser(null);
     } catch (error) {
       console.error("Logout error:", error);
     }
   };
 
+  const signOut = logout; // Alias for logout
+
   return {
     userRole,
     isLoading,
     isAuthenticated,
-    logout
+    user,
+    logout,
+    signOut
   };
 };
