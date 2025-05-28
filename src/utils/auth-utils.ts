@@ -1,113 +1,108 @@
 
-/**
- * Utility functions for authentication
- */
-
-import { supabase } from "@/integrations/supabase/client";
 import { UserRole } from "@/types";
+import { PATHS } from "@/routes/paths";
 
 /**
- * Checks if there is an active session and returns the user if available
+ * Retorna o caminho do dashboard baseado no role do usuário
  */
-export const checkSession = async () => {
-  try {
-    const { data, error } = await supabase.auth.getSession();
-    
-    if (error) {
-      console.error("Error checking session:", error);
-      return { user: null, session: null, error };
-    }
-    
-    return {
-      user: data.session?.user || null,
-      session: data.session,
-      error: null
-    };
-  } catch (error) {
-    console.error("Exception checking session:", error);
-    return { user: null, session: null, error };
+export const getDashboardPath = (userRole: UserRole | null): string => {
+  if (!userRole) {
+    console.log("No user role provided, redirecting to login");
+    return PATHS.LOGIN;
+  }
+  
+  console.log("getDashboardPath - userRole:", userRole);
+  
+  const normalizedRole = userRole.toString().toUpperCase();
+  
+  switch (normalizedRole) {
+    case "ADMIN":
+      return PATHS.ADMIN.DASHBOARD;
+    case "CLIENT":
+      return PATHS.CLIENT.DASHBOARD;
+    case "PARTNER":
+      return PATHS.PARTNER.DASHBOARD;
+    case "FINANCIAL":
+      return PATHS.FINANCIAL.DASHBOARD;
+    case "LOGISTICS":
+      return PATHS.LOGISTICS.DASHBOARD;
+    case "MANAGER":
+    case "FINANCE":
+    case "SUPPORT":
+    case "USER":
+      return PATHS.USER.DASHBOARD;
+    default:
+      console.log("Role não reconhecido:", userRole);
+      return PATHS.LOGIN;
   }
 };
 
 /**
- * Helper to safely set auth related data in localStorage
- */
-export const setAuthData = (key: string, value: any) => {
-  try {
-    if (typeof window !== "undefined") {
-      localStorage.setItem(key, JSON.stringify(value));
-    }
-  } catch (error) {
-    console.error(`Error setting ${key} in localStorage:`, error);
-  }
-};
-
-/**
- * Helper to safely get auth related data from localStorage
- */
-export const getAuthData = (key: string) => {
-  try {
-    if (typeof window !== "undefined") {
-      const item = localStorage.getItem(key);
-      return item ? JSON.parse(item) : null;
-    }
-    return null;
-  } catch (error) {
-    console.error(`Error getting ${key} from localStorage:`, error);
-    return null;
-  }
-};
-
-/**
- * Fetch user role directly from database
+ * Obter role do usuário do localStorage/sessionStorage
  */
 export const fetchUserRole = async (userId: string): Promise<UserRole | null> => {
   try {
-    const { data, error } = await supabase
-      .from('profiles')
-      .select('role')
-      .eq('id', userId)
-      .single();
-    
-    if (error) {
-      console.error('Error fetching user role:', error);
-      return null;
+    // Tentar buscar do localStorage primeiro
+    const storedRole = localStorage.getItem('userRole') || sessionStorage.getItem('userRole');
+    if (storedRole) {
+      return storedRole as UserRole;
     }
     
-    return data?.role as UserRole || null;
+    // Se não encontrar, retornar null para buscar do servidor
+    return null;
   } catch (error) {
-    console.error('Exception fetching user role:', error);
+    console.error('Error fetching user role from storage:', error);
     return null;
   }
 };
 
 /**
- * Check if user has specific role
+ * Limpar todos os dados de autenticação
  */
-export const hasRole = (userRole: UserRole, allowedRoles: UserRole[]): boolean => {
-  return allowedRoles.includes(userRole);
-};
-
-/**
- * Clean up auth state to prevent limbo states
- */
-export const cleanupAuthState = () => {
-  // Remove standard auth tokens
-  localStorage.removeItem('supabase.auth.token');
-  
-  // Remove all Supabase auth keys from localStorage
-  Object.keys(localStorage).forEach((key) => {
-    if (key.startsWith('supabase.auth.') || key.includes('sb-')) {
-      localStorage.removeItem(key);
-    }
-  });
-  
-  // Remove from sessionStorage if in use
-  if (typeof window !== "undefined" && window.sessionStorage) {
-    Object.keys(sessionStorage).forEach((key) => {
+export const cleanupAuthState = (): void => {
+  try {
+    sessionStorage.removeItem('userRole');
+    sessionStorage.removeItem('redirectPath');
+    sessionStorage.removeItem('deviceId');
+    localStorage.removeItem('userRole');
+    
+    // Remover todas as chaves relacionadas ao Supabase
+    Object.keys(localStorage).forEach(key => {
+      if (key.startsWith('supabase.auth.') || key.includes('sb-')) {
+        localStorage.removeItem(key);
+      }
+    });
+    
+    Object.keys(sessionStorage).forEach(key => {
       if (key.startsWith('supabase.auth.') || key.includes('sb-')) {
         sessionStorage.removeItem(key);
       }
     });
+    
+    console.log("Auth state cleaned");
+  } catch (error) {
+    console.error("Error cleaning auth state:", error);
   }
+};
+
+/**
+ * Verificar se o usuário tem permissão para acessar uma rota
+ */
+export const hasPermission = (userRole: UserRole | null, allowedRoles: UserRole[]): boolean => {
+  if (!userRole || allowedRoles.length === 0) return false;
+  return allowedRoles.includes(userRole);
+};
+
+/**
+ * Redirecionar com base no role após login
+ */
+export const getRedirectPath = (userRole: UserRole | null): string => {
+  const storedPath = sessionStorage.getItem("redirectPath");
+  
+  if (storedPath && storedPath !== "/" && storedPath !== PATHS.LOGIN) {
+    sessionStorage.removeItem("redirectPath");
+    return storedPath;
+  }
+  
+  return getDashboardPath(userRole);
 };

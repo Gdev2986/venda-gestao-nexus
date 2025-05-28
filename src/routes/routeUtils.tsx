@@ -6,7 +6,12 @@ import { UserRole } from "@/types";
  * Returns the appropriate dashboard path based on user role
  * Handles case sensitivity and string/enum conversions
  */
-export const getDashboardPath = (userRole: UserRole): string => {
+export const getDashboardPath = (userRole: UserRole | null): string => {
+  if (!userRole) {
+    console.log("No user role provided, redirecting to login");
+    return PATHS.LOGIN;
+  }
+  
   console.log("getDashboardPath - userRole:", userRole);
   
   // Normalize role to uppercase string for consistent comparison
@@ -16,7 +21,7 @@ export const getDashboardPath = (userRole: UserRole): string => {
     case "ADMIN":
       return PATHS.ADMIN.DASHBOARD;
     case "CLIENT":
-      return PATHS.USER.DASHBOARD;
+      return PATHS.CLIENT.DASHBOARD;
     case "PARTNER":
       return PATHS.PARTNER.DASHBOARD;
     case "FINANCIAL":
@@ -38,7 +43,7 @@ export const getDashboardPath = (userRole: UserRole): string => {
 /**
  * Returns the appropriate dashboard redirect path based on user role
  */
-export const getDashboardRedirect = (userRole: UserRole): string => {
+export const getDashboardRedirect = (userRole: UserRole | null): string => {
   const path = getDashboardPath(userRole);
   return path;
 };

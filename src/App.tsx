@@ -3,11 +3,11 @@ import { Routes, Route, Navigate } from "react-router-dom";
 import { PATHS } from "./routes/paths";
 import { useEffect } from "react";
 import { useToast } from "@/hooks/use-toast";
-import { useUserRole } from "./hooks/use-user-role";
+import { useAuth } from "./hooks/use-auth";
 import { UserRole } from "./types";
 
 // Route utils
-import { getDashboardPath } from "./routes/routeUtils";
+import { getDashboardPath } from "./utils/auth-utils";
 
 // Route groups
 import { AuthRoutes } from "./routes/authRoutes";
@@ -18,20 +18,21 @@ import { FinancialRoutes } from "./routes/financialRoutes";
 import { LogisticsRoutes } from "./routes/logisticsRoutes";
 
 // Layouts
-import RootLayout from "./layouts/RootLayout";
 import MainLayout from "./components/layout/MainLayout";
 
 // Pages
+import LandingPage from "./pages/LandingPage";
 import NotFound from "./pages/NotFound";
+import Unauthorized from "./pages/Unauthorized";
 import Notifications from "./pages/Notifications";
 
 function App() {
-  const { userRole, isRoleLoading } = useUserRole();
+  const { userRole, isLoading } = useAuth();
   const { toast } = useToast();
 
   // Log role changes for debugging
   useEffect(() => {
-    if (!isRoleLoading) {
+    if (!isLoading) {
       console.log("App.tsx - Current user role:", userRole);
       
       try {
@@ -41,7 +42,7 @@ function App() {
         console.error("Error getting dashboard path:", error);
       }
     }
-  }, [userRole, isRoleLoading]);
+  }, [userRole, isLoading]);
 
   // Get the dashboard path safely
   const getDashboardRedirectPath = () => {
@@ -55,8 +56,8 @@ function App() {
 
   return (
     <Routes>
-      {/* Root path handling */}
-      <Route path={PATHS.HOME} element={<RootLayout />} />
+      {/* Landing Page */}
+      <Route path={PATHS.HOME} element={<LandingPage />} />
       
       {/* Generic dashboard route */}
       <Route 
@@ -79,11 +80,12 @@ function App() {
         <Route path="/notifications" element={<Notifications />} />
       </Route>
 
-      {/* 404 */}
+      {/* Error Pages */}
+      <Route path={PATHS.UNAUTHORIZED} element={<Unauthorized />} />
       <Route path={PATHS.NOT_FOUND} element={<NotFound />} />
       
-      {/* Catch-all redirect to the appropriate dashboard */}
-      <Route path="*" element={<Navigate to={PATHS.DASHBOARD} replace />} />
+      {/* Catch-all redirect to landing page */}
+      <Route path="*" element={<Navigate to={PATHS.NOT_FOUND} replace />} />
     </Routes>
   );
 }
