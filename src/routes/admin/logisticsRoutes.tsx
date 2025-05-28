@@ -1,37 +1,56 @@
 
-import { Route } from "react-router-dom";
-import { lazy } from "react";
+import { Route, Navigate } from "react-router-dom";
 import { PATHS } from "../paths";
 
-// Layouts
-import LogisticsLayout from "../../layouts/LogisticsLayout";
+// Logistics pages accessible to admin
+import LogisticsDashboard from "../../pages/logistics/Dashboard";
+import Operations from "../../pages/logistics/Operations";
+import LogisticsRequests from "../../pages/logistics/Requests";
+import LogisticsInventory from "../../pages/logistics/Inventory";
+import LogisticsMachines from "../../pages/logistics/Machines";
+import NewMachine from "../../pages/machines/NewMachine";
+import MachineDetails from "../../pages/machines/MachineDetails";
 
-// Logistics Pages
-const LogisticsDashboard = lazy(() => import("../../pages/logistics/Dashboard"));
-const LogisticsMachines = lazy(() => import("../../pages/logistics/Machines"));
-const LogisticsRequests = lazy(() => import("../../pages/logistics/Requests"));
-const LogisticsClients = lazy(() => import("../../pages/logistics/Clients"));
-const LogisticsReports = lazy(() => import("../../pages/logistics/Reports"));
-const LogisticsSettings = lazy(() => import("../../pages/logistics/Settings"));
-const LogisticsSupport = lazy(() => import("../../pages/logistics/Support"));
-const LogisticsInventory = lazy(() => import("../../pages/logistics/Inventory"));
-const MachineDetails = lazy(() => import("../../pages/machines/MachineDetails"));
-const NewMachine = lazy(() => import("../../pages/machines/NewMachine"));
-
-export const logisticsRoutes = (
-  <Route path={PATHS.LOGISTICS.DASHBOARD.replace('/logistics', '')} element={<LogisticsLayout />}>
-    <Route index element={<LogisticsDashboard />} />
-    <Route path="machines">
-      <Route index element={<LogisticsMachines />} />
-      <Route path=":id" element={<MachineDetails />} />
-      <Route path="new" element={<NewMachine />} />
-    </Route>
-    <Route path="requests" element={<LogisticsRequests />} />
-    <Route path="operations" element={<LogisticsRequests />} />
-    <Route path="clients" element={<LogisticsClients />} />
-    <Route path="reports" element={<LogisticsReports />} />
-    <Route path="settings" element={<LogisticsSettings />} />
-    <Route path="inventory" element={<LogisticsInventory />} />
-    <Route path="support" element={<LogisticsSupport />} />
-  </Route>
-);
+// Logistics Routes for Admin Module
+export const logisticsRoutes = [
+  <Route
+    key="admin-logistics-redirect"
+    path={PATHS.ADMIN.LOGISTICS}
+    element={<Navigate to={PATHS.LOGISTICS.DASHBOARD} replace />}
+  />,
+  <Route 
+    key="logistics-dashboard" 
+    path={PATHS.LOGISTICS.DASHBOARD} 
+    element={<LogisticsDashboard />} 
+  />,
+  <Route 
+    key="logistics-machines" 
+    path={PATHS.LOGISTICS.MACHINES} 
+    element={<LogisticsMachines />} 
+  />,
+  <Route 
+    key="logistics-machine-new" 
+    path={PATHS.LOGISTICS.MACHINE_NEW} 
+    element={<NewMachine />} 
+  />,
+  <Route 
+    key="logistics-machine-details" 
+    path={PATHS.LOGISTICS.MACHINE_DETAILS()} 
+    element={<MachineDetails />} 
+  />,
+  <Route 
+    key="logistics-operations" 
+    path={PATHS.LOGISTICS.OPERATIONS} 
+    element={<Operations />} 
+  />,
+  <Route 
+    key="logistics-requests" 
+    path={PATHS.LOGISTICS.REQUESTS} 
+    element={<LogisticsRequests />} 
+  />,
+  <Route 
+    key="logistics-inventory" 
+    path={PATHS.LOGISTICS.INVENTORY} 
+    element={<LogisticsInventory />} 
+  />
+];

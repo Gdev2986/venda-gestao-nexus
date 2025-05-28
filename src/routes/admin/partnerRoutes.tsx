@@ -1,20 +1,33 @@
 
 import { Route } from "react-router-dom";
-import { lazy } from "react";
 import { PATHS } from "../paths";
 
-// Layouts
-import AdminLayout from "../../layouts/AdminLayout";
+// Partner pages
+import AdminPartners from "../../pages/admin/Partners";
+import PartnerClients from "../../pages/admin/PartnerClients"; 
+import PartnerDetails from "../../pages/partners/PartnerDetails";
+import NewPartner from "../../pages/partners/NewPartner";
 
-// Partner Pages
-const PartnersList = lazy(() => import("../../pages/admin/Partners"));
-const PartnerDetails = lazy(() => import("../../pages/partners/PartnerDetails"));
-const PartnerNew = lazy(() => import("../../pages/partners/NewPartner"));
-
-export const partnerRoutes = (
-  <Route path={PATHS.ADMIN.PARTNERS} element={<AdminLayout />}>
-    <Route index element={<PartnersList />} />
-    <Route path=":id" element={<PartnerDetails />} />
-    <Route path="new" element={<PartnerNew />} />
-  </Route>
-);
+// Partner Routes for Admin Module
+export const partnerRoutes = [
+  <Route 
+    key="admin-partners" 
+    path={PATHS.ADMIN.PARTNERS} 
+    element={<AdminPartners />} 
+  />,
+  <Route 
+    key="admin-partner-clients"
+    path={PATHS.ADMIN.PARTNERS + "/clients"}
+    element={<PartnerClients />}
+  />,
+  <Route 
+    key="admin-partner-details" 
+    path={PATHS.ADMIN.PARTNER_DETAILS()} 
+    element={<PartnerDetails />} 
+  />,
+  <Route 
+    key="admin-partner-new" 
+    path={PATHS.ADMIN.PARTNER_NEW} 
+    element={<NewPartner />} 
+  />
+];

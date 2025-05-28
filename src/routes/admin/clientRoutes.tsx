@@ -1,20 +1,33 @@
 
 import { Route } from "react-router-dom";
-import { lazy } from "react";
 import { PATHS } from "../paths";
 
-// Layouts
-import AdminLayout from "../../layouts/AdminLayout";
+// Clients Pages
+import AdminClients from "../../pages/admin/Clients";
+import ClientDetails from "../../pages/clients/ClientDetails";
+import NewClient from "../../pages/clients/NewClient";
+import Clients from "../../pages/clients/Clients";
 
-// Client Pages
-const ClientsList = lazy(() => import("../../pages/admin/Clients"));
-const ClientDetails = lazy(() => import("../../pages/clients/ClientDetails"));
-const ClientNew = lazy(() => import("../../pages/clients/NewClient"));
-
-export const clientRoutes = (
-  <Route path={PATHS.ADMIN.CLIENTS} element={<AdminLayout />}>
-    <Route index element={<ClientsList />} />
-    <Route path=":id" element={<ClientDetails />} />
-    <Route path="new" element={<ClientNew />} />
-  </Route>
-);
+// Client Routes for Admin Module
+export const clientRoutes = [
+  <Route 
+    key="admin-clients" 
+    path={PATHS.ADMIN.CLIENTS} 
+    element={<AdminClients />} 
+  />,
+  <Route 
+    key="admin-client-details" 
+    path={PATHS.ADMIN.CLIENT_DETAILS()} 
+    element={<ClientDetails />} 
+  />,
+  <Route 
+    key="admin-client-new" 
+    path={PATHS.ADMIN.CLIENT_NEW} 
+    element={<NewClient />} 
+  />,
+  <Route 
+    key="logistics-clients" 
+    path={PATHS.LOGISTICS.CLIENTS} 
+    element={<Clients />} 
+  />
+];

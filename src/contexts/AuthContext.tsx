@@ -73,69 +73,17 @@ export const useAuth = () => React.useContext(AuthContext);
 // Provider
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [state, dispatch] = React.useReducer(authReducer, initialState);
-  const [roleLoadingTimeout, setRoleLoadingTimeout] = React.useState<NodeJS.Timeout | null>(null);
 
-  // Carregar perfil do usuário com controle de timeout
+  // Carregar perfil do usuário
   const loadUserProfile = React.useCallback(async (userId: string) => {
     try {
-      console.log("Loading user profile for:", userId);
-      
-      // Cancelar timeout anterior se existir
-      if (roleLoadingTimeout) {
-        clearTimeout(roleLoadingTimeout);
-      }
-
-      // Aguardar um pouco antes de buscar o perfil
-      await new Promise(resolve => setTimeout(resolve, 500));
-      
       const { data, error } = await supabase
         .from('profiles')
         .select('*')
         .eq('id', userId)
         .single();
       
-      if (error) {
-        console.error("Error loading user profile:", error);
-        
-        // Se não encontrou o perfil, aguardar mais um pouco e tentar novamente
-        const timeout = setTimeout(async () => {
-          console.log("Retrying profile fetch...");
-          try {
-            const { data: retryData, error: retryError } = await supabase
-              .from('profiles')
-              .select('*')
-              .eq('id', userId)
-              .single();
-              
-            if (!retryError && retryData) {
-              const userProfile: UserProfile = {
-                id: retryData.id,
-                email: retryData.email,
-                name: retryData.name,
-                role: retryData.role as UserRole,
-                phone: retryData.phone,
-                created_at: retryData.created_at,
-                status: retryData.status
-              };
-              
-              dispatch({ type: 'SET_PROFILE', payload: userProfile });
-              
-              // Verificar se precisa trocar senha
-              const needsChange = await AuthManager.needsPasswordChange(userId);
-              dispatch({ type: 'SET_NEEDS_PASSWORD_CHANGE', payload: needsChange });
-            } else {
-              console.error("Retry failed:", retryError);
-              dispatch({ type: 'SET_ERROR', payload: "Erro ao carregar perfil do usuário" });
-            }
-          } catch (retryErr) {
-            console.error("Exception on retry:", retryErr);
-            dispatch({ type: 'SET_ERROR', payload: "Erro ao carregar perfil do usuário" });
-          }
-        }, 1000);
-        
-        setRoleLoadingTimeout(timeout);
-        return;
-      }
+      if (error) throw error;
       
       if (data) {
         const userProfile: UserProfile = {
@@ -148,7 +96,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           status: data.status
         };
         
-        console.log("Successfully loaded profile:", userProfile);
         dispatch({ type: 'SET_PROFILE', payload: userProfile });
         
         // Verificar se precisa trocar senha
@@ -159,7 +106,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       console.error("Error loading user profile:", error);
       dispatch({ type: 'SET_ERROR', payload: "Erro ao carregar perfil do usuário" });
     }
-  }, [roleLoadingTimeout]);
+  }, []);
 
   // Refresh da sessão
   const refreshSession = React.useCallback(async () => {
@@ -173,10 +120,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       dispatch({ type: 'SET_SESSION', payload: { user, session } });
       
       if (user) {
-        // Aguardar antes de carregar o perfil
-        setTimeout(() => {
-          loadUserProfile(user.id);
-        }, 300);
+        // Usar setTimeout para evitar deadlocks
+        setTimeout(async () => {
+          await loadUserProfile(user.id);
+        }, 0);
       } else {
         dispatch({ type: 'SET_PROFILE', payload: null });
         dispatch({ type: 'SET_NEEDS_PASSWORD_CHANGE', payload: false });
@@ -191,13 +138,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   // Setup inicial e listener de auth
   React.useEffect(() => {
-    let isSubscriptionActive = true;
-    
     // Configurar listener de mudanças de auth
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, newSession) => {
-        if (!isSubscriptionActive) return;
-        
         console.log("Auth state changed:", event);
         
         dispatch({ type: 'SET_SESSION', payload: { 
@@ -205,13 +148,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           session: newSession 
         }});
         
-        if (newSession?.user && event === 'SIGNED_IN') {
-          // Aguardar antes de carregar o perfil após login
-          setTimeout(() => {
-            if (isSubscriptionActive) {
-              loadUserProfile(newSession.user.id);
-            }
-          }, 600);
+        if (newSession?.user) {
+          // Usar setTimeout para evitar deadlocks
+          setTimeout(async () => {
+            await loadUserProfile(newSession.user.id);
+          }, 0);
         } else {
           dispatch({ type: 'SET_PROFILE', payload: null });
           dispatch({ type: 'SET_NEEDS_PASSWORD_CHANGE', payload: false });
@@ -219,30 +160,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       }
     );
 
-    // Verificar sessão existente após um pequeno delay
-    setTimeout(() => {
-      if (isSubscriptionActive) {
-        refreshSession();
-      }
-    }, 100);
+    // Verificar sessão existente
+    refreshSession();
 
     return () => {
-      isSubscriptionActive = false;
       subscription.unsubscribe();
-      if (roleLoadingTimeout) {
-        clearTimeout(roleLoadingTimeout);
-      }
     };
-  }, []);
-
-  // Cleanup do timeout quando o componente desmonta
-  React.useEffect(() => {
-    return () => {
-      if (roleLoadingTimeout) {
-        clearTimeout(roleLoadingTimeout);
-      }
-    };
-  }, [roleLoadingTimeout]);
+  }, [loadUserProfile, refreshSession]);
 
   // Implementar métodos de auth
   const signIn = async (email: string, password: string) => {
@@ -291,11 +215,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     dispatch({ type: 'SET_LOADING', payload: true });
     
     try {
-      // Cancelar timeout se existir
-      if (roleLoadingTimeout) {
-        clearTimeout(roleLoadingTimeout);
-      }
-      
       const result = await AuthManager.logout();
       
       if (!result.error) {

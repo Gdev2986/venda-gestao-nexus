@@ -11,11 +11,11 @@ import { getDashboardPath } from "./utils/auth-utils";
 
 // Route groups
 import { AuthRoutes } from "./routes/authRoutes";
-import AdminRoutes from "./routes/adminRoutes";
-import ClientRoutes from "./routes/clientRoutes";
-import PartnerRoutes from "./routes/partnerRoutes";
-import FinancialRoutes from "./routes/financialRoutes";
-import LogisticsRoutes from "./routes/logisticsRoutes";
+import { AdminRoutes } from "./routes/adminRoutes";
+import { ClientRoutes } from "./routes/clientRoutes";
+import { PartnerRoutes } from "./routes/partnerRoutes";
+import { FinancialRoutes } from "./routes/financialRoutes";
+import { LogisticsRoutes } from "./routes/logisticsRoutes";
 
 // Layouts
 import MainLayout from "./components/layout/MainLayout";
@@ -54,15 +54,6 @@ function App() {
     }
   };
 
-  // Show loading state while checking authentication
-  if (isLoading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-primary"></div>
-      </div>
-    );
-  }
-
   return (
     <Routes>
       {/* Landing Page */}
@@ -78,11 +69,11 @@ function App() {
       {AuthRoutes}
 
       {/* Protected Routes by Role */}
-      <Route path="/admin/*" element={<AdminRoutes />} />
-      <Route path="/client/*" element={<ClientRoutes />} />
-      <Route path="/partner/*" element={<PartnerRoutes />} />
-      <Route path="/financial/*" element={<FinancialRoutes />} />
-      <Route path="/logistics/*" element={<LogisticsRoutes />} />
+      {AdminRoutes}
+      {ClientRoutes}
+      {PartnerRoutes}
+      {FinancialRoutes}
+      {LogisticsRoutes}
 
       {/* Shared Routes (accessible by all roles) */}
       <Route element={<MainLayout />}>

@@ -1,8 +1,17 @@
 
-import { PaymentStatus as EnumsPaymentStatus, PaymentMethod } from './enums';
+import { PaymentType as EnumsPaymentType, PaymentStatus as EnumsPaymentStatus } from './enums';
 
 // Use the enum from enums.ts for consistency
-export { PaymentStatus, PaymentMethod } from './enums';
+export { PaymentStatus } from './enums';
+
+// Payment method enum unificado
+export enum PaymentMethod {
+  PIX = "PIX",
+  TED = "TED",
+  BOLETO = "BOLETO",
+  CREDIT = "CREDIT",
+  DEBIT = "DEBIT"
+}
 
 export interface PixKey {
   id: string;
@@ -31,7 +40,7 @@ export interface Payment {
   receipt_url?: string;
   description?: string;
   rejection_reason: string | null;
-  payment_type?: string;
+  payment_type?: EnumsPaymentType;
   client?: {
     id: string;
     business_name: string;

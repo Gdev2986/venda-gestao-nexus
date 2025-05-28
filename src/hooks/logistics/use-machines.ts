@@ -2,7 +2,7 @@
 import { useState, useEffect } from 'react';
 import { Machine, MachineStatus } from '@/types/machine.types';
 import {
-  getMachines,
+  getAllMachines,
   getMachinesByStatus,
   createMachine,
   updateMachine,
@@ -29,7 +29,7 @@ export const useMachines = (options?: { enableRealtime?: boolean; initialFetch?:
     try {
       setIsLoading(true);
       setError(null);
-      const data = await getMachines();
+      const data = await getAllMachines();
       setMachines(data);
       
       // Calculate stats
@@ -95,12 +95,11 @@ export const useMachines = (options?: { enableRealtime?: boolean; initialFetch?:
 
   const transferMachineHandler = async (machineId: string, newClientId: string | null) => {
     try {
-      await transferMachine({
-        machine_id: machineId,
-        to_client_id: newClientId || '',
-        cutoff_date: new Date().toISOString()
-      });
-      await fetchMachines(); // Refresh after transfer
+      const updatedMachine = await transferMachine(machineId, newClientId);
+      setMachines(prev => prev.map(machine => 
+        machine.id === machineId ? updatedMachine : machine
+      ));
+      return updatedMachine;
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to transfer machine');
       throw err;
