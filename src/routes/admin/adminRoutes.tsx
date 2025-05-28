@@ -1,92 +1,49 @@
-import { Route } from "react-router-dom";
-import { lazy } from "react";
-import { PATHS } from "../paths";
 
-// Layouts
-import AdminLayout from "../../layouts/AdminLayout";
+import React from "react";
+import { Routes, Route } from "react-router-dom";
+import { RequireAuth } from "@/components/auth/RequireAuth";
+import { UserRole } from "@/types";
+import { PATHS } from "@/routes/paths";
 
-// Pages
-const Dashboard = lazy(() => import("../../pages/admin/Dashboard"));
-const Reports = lazy(() => import("../../pages/admin/Reports"));
-const Company = lazy(() => import("../../pages/admin/Company"));
-const CompanyReports = lazy(() => import("../../pages/admin/company/CompanyReports"));
-const CompanyExpenses = lazy(() => import("../../pages/admin/company/CompanyExpenses"));
-const Sales = lazy(() => import("../../pages/admin/Sales"));
-const Partners = lazy(() => import("../../pages/admin/Partners"));
-const PartnerClients = lazy(() => import("../../pages/admin/PartnerClients"));
-const Support = lazy(() => import("../../pages/admin/Support"));
-const Payments = lazy(() => import("../../pages/admin/Payments"));
-const Settings = lazy(() => import("../../pages/admin/Settings"));
+// Import pages
+import AdminDashboard from "@/pages/admin/Dashboard";
+import AdminClients from "@/pages/admin/Clients";
+import ClientDetails from "@/pages/admin/ClientDetails";
+import NewClient from "@/pages/admin/NewClient";
+import AdminPartners from "@/pages/admin/Partners";
+import PartnerDetails from "@/pages/partners/PartnerDetails";
+import NewPartner from "@/pages/admin/NewPartner";
+import AdminPartnerClients from "@/pages/admin/PartnerClients";
+import AdminPayments from "@/pages/admin/Payments";
+import AdminSales from "@/pages/admin/Sales";
+import NewSale from "@/pages/sales/NewSale";
+import SaleDetails from "@/pages/sales/SaleDetails";
+import AdminMachines from "@/pages/admin/Machines";
+import AdminSettings from "@/pages/admin/Settings";
+import AdminSupport from "@/pages/admin/Support";
 
-// Client Pages
-const ClientsList = lazy(() => import("../../pages/admin/Clients"));
-const ClientDetails = lazy(() => import("../../pages/clients/ClientDetails"));
-const ClientNew = lazy(() => import("../../pages/clients/NewClient"));
+const AdminRoutes = () => {
+  return (
+    <RequireAuth allowedRoles={[UserRole.ADMIN, UserRole.FINANCIAL, UserRole.LOGISTICS]}>
+      <Routes>
+        <Route path="dashboard" element={<AdminDashboard />} />
+        <Route path="clients" element={<AdminClients />} />
+        <Route path={PATHS.ADMIN.CLIENT_DETAILS().replace('/admin/', '')} element={<ClientDetails />} />
+        <Route path="clients/new" element={<NewClient />} />
+        <Route path="partners" element={<AdminPartners />} />
+        <Route path={PATHS.ADMIN.PARTNER_DETAILS().replace('/admin/', '')} element={<PartnerDetails />} />
+        <Route path="partners/new" element={<NewPartner />} />
+        <Route path="partners/:id/clients" element={<AdminPartnerClients />} />
+        <Route path="payments" element={<AdminPayments />} />
+        <Route path="sales" element={<AdminSales />} />
+        <Route path="sales/new" element={<NewSale />} />
+        <Route path={PATHS.ADMIN.SALES_DETAILS().replace('/admin/', '')} element={<SaleDetails />} />
+        <Route path="machines" element={<AdminMachines />} />
+        <Route path="settings" element={<AdminSettings />} />
+        <Route path="support" element={<AdminSupport />} />
+      </Routes>
+    </RequireAuth>
+  );
+};
 
-// Sales Pages
-const SalesDetails = lazy(() => import("../../pages/sales/SaleDetails"));
-const SalesNew = lazy(() => import("../../pages/sales/NewSale"));
-const SalesImport = lazy(() => import("../../pages/sales/Sales"));
-
-// Partner Pages
-const PartnerDetails = lazy(() => import("../../pages/partners/PartnerDetails"));
-const PartnerNew = lazy(() => import("../../pages/partners/NewPartner"));
-
-// Payment Pages
-const PaymentDetails = lazy(() => import("../../pages/payments/Payments"));
-const PaymentNew = lazy(() => import("../../pages/payments/Payments"));
-
-// Other Pages
-const Logistics = lazy(() => import("../../pages/logistics/Dashboard"));
-
-export const adminRoutes = (
-  <Route path={PATHS.ADMIN.ROOT} element={<AdminLayout />}>
-    <Route index element={<Dashboard />} />
-    <Route path="dashboard" element={<Dashboard />} />
-    
-    {/* Clients */}
-    <Route path="clients">
-      <Route index element={<ClientsList />} />
-      <Route path=":id" element={<ClientDetails />} />
-      <Route path="new" element={<ClientNew />} />
-    </Route>
-    
-    {/* Company (anteriormente Reports) */}
-    <Route path="company">
-      <Route index element={<Company />} />
-      <Route path="reports" element={<CompanyReports />} />
-      <Route path="expenses" element={<CompanyExpenses />} />
-    </Route>
-    
-    {/* Mantém a rota antiga para compatibilidade */}
-    <Route path="reports" element={<Reports />} />
-    
-    {/* Sales */}
-    <Route path="sales">
-      <Route index element={<Sales />} />
-      <Route path=":id" element={<SalesDetails />} />
-      <Route path="new" element={<SalesNew />} />
-      <Route path="import" element={<SalesImport />} />
-    </Route>
-    
-    {/* Partners */}
-    <Route path="partners">
-      <Route index element={<Partners />} />
-      <Route path="clients" element={<PartnerClients />} />
-      <Route path=":id" element={<PartnerDetails />} />
-      <Route path="new" element={<PartnerNew />} />
-    </Route>
-    
-    {/* Payments */}
-    <Route path="payments">
-      <Route index element={<Payments />} />
-      <Route path=":id" element={<PaymentDetails />} />
-      <Route path="new" element={<PaymentNew />} />
-    </Route>
-    
-    {/* Others */}
-    <Route path="support" element={<Support />} />
-    <Route path="settings" element={<Settings />} />
-    <Route path="logistics" element={<Logistics />} />
-  </Route>
-);
+export default AdminRoutes;

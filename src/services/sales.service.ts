@@ -12,7 +12,7 @@ export interface SaleInsert {
   net_amount: number;
   payment_method: "CREDIT" | "DEBIT" | "PIX";
   machine_id: string;
-  processing_status: string;
+  processing_status: "RAW" | "PROCESSED";
   created_at: string;
   updated_at: string;
 }
@@ -148,7 +148,7 @@ export const insertSales = async (sales: NormalizedSale[]): Promise<void> => {
           net_amount: netAmount,
           payment_method: convertPaymentMethod(sale.payment_type),
           machine_id: machineId,
-          processing_status: 'RAW',
+          processing_status: 'RAW' as "RAW" | "PROCESSED",
           created_at: new Date().toISOString(),
           updated_at: new Date().toISOString()
         };
