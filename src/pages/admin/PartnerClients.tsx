@@ -172,7 +172,7 @@ const PartnerClients = () => {
                 <Button 
                   variant="outline" 
                   size="sm"
-                  onClick={() => navigate(PATHS.ADMIN.PARTNER_NEW)}
+                  onClick={() => navigate(PATHS.ADMIN.PARTNERS_NEW)}
                 >
                   Novo Parceiro
                 </Button>

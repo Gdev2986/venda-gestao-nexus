@@ -11,12 +11,12 @@ interface NotificationListProps {
   onDelete?: (id: string) => void;
 }
 
-const NotificationList = ({ 
+export function NotificationList({ 
   notifications, 
   onMarkAsRead, 
   isLoading = false, 
   onDelete 
-}: NotificationListProps) => {
+}: NotificationListProps) {
   if (isLoading) {
     return (
       <div className="flex justify-center items-center p-8">
@@ -51,6 +51,4 @@ const NotificationList = ({
       </AnimatePresence>
     </div>
   );
-};
-
-export { NotificationList };
+}

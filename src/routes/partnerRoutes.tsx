@@ -1,72 +1,35 @@
 
-import { Route, Navigate } from "react-router-dom";
-import { PATHS } from "./paths";
+import React from "react";
+import { Routes, Route } from "react-router-dom";
+import { RequireAuth } from "@/components/auth/RequireAuth";
 import { UserRole } from "@/types";
+import { PATHS } from "@/routes/paths";
 
-// Layouts
-import PartnerLayout from "../layouts/PartnerLayout";
+// Import pages
+import PartnerDashboard from "@/pages/partner/Dashboard";
+import PartnerClients from "@/pages/partner/Clients";
+import PartnerSales from "@/pages/partner/Sales";
+import PartnerCommissions from "@/pages/partner/Commissions";
+import PartnerReports from "@/pages/partner/Reports";
+import PartnerSettings from "@/pages/partner/Settings";
+import PartnerSupport from "@/pages/partner/Support";
+import PartnerHelp from "@/pages/partner/Help";
 
-// Auth Protection Component
-import RequireAuth from "../components/auth/RequireAuth";
+const PartnerRoutes = () => {
+  return (
+    <RequireAuth allowedRoles={[UserRole.PARTNER]}>
+      <Routes>
+        <Route path={PATHS.PARTNER.DASHBOARD} element={<PartnerDashboard />} />
+        <Route path={PATHS.PARTNER.CLIENTS} element={<PartnerClients />} />
+        <Route path={PATHS.PARTNER.SALES} element={<PartnerSales />} />
+        <Route path={PATHS.PARTNER.COMMISSIONS} element={<PartnerCommissions />} />
+        <Route path={PATHS.PARTNER.REPORTS} element={<PartnerReports />} />
+        <Route path={PATHS.PARTNER.SETTINGS} element={<PartnerSettings />} />
+        <Route path={PATHS.PARTNER.SUPPORT} element={<PartnerSupport />} />
+        <Route path={PATHS.PARTNER.HELP} element={<PartnerHelp />} />
+      </Routes>
+    </RequireAuth>
+  );
+};
 
-// Partner Pages
-import Dashboard from "../pages/partner/Dashboard";
-import Settings from "../pages/partner/Settings";
-import Clients from "../pages/partner/Clients";
-import ClientDetails from "../pages/partner/ClientDetails";
-import Sales from "../pages/partner/Sales";
-import Reports from "../pages/partner/Reports";
-import Support from "../pages/Support";
-import Help from "../pages/Help";
-import Commissions from "../pages/partner/Commissions";
-
-export const PartnerRoutes = (
-  <Route element={<RequireAuth allowedRoles={[UserRole.PARTNER]} />}>
-    <Route element={<PartnerLayout />}>
-      <Route 
-        path={PATHS.PARTNER.DASHBOARD} 
-        element={<Dashboard />} 
-      />
-      
-      <Route 
-        path={PATHS.PARTNER.CLIENTS} 
-        element={<Clients />} 
-      />
-      
-      <Route 
-        path={PATHS.PARTNER.CLIENT_DETAILS()} 
-        element={<ClientDetails />} 
-      />
-      
-      <Route 
-        path={PATHS.PARTNER.SALES} 
-        element={<Sales />} 
-      />
-      
-      <Route 
-        path={PATHS.PARTNER.REPORTS} 
-        element={<Reports />} 
-      />
-      
-      <Route 
-        path={PATHS.PARTNER.SETTINGS} 
-        element={<Settings />} 
-      />
-      
-      <Route 
-        path={PATHS.PARTNER.SUPPORT} 
-        element={<Support />} 
-      />
-      
-      <Route 
-        path={PATHS.PARTNER.COMMISSIONS} 
-        element={<Commissions />} 
-      />
-      
-      <Route 
-        path={PATHS.PARTNER.HELP} 
-        element={<Help />} 
-      />
-    </Route>
-  </Route>
-);
+export default PartnerRoutes;

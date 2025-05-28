@@ -1,221 +1,193 @@
 
 import { supabase } from "@/integrations/supabase/client";
-import { PaymentRequest, PaymentStatus, PaymentMethod, PaymentRequestParams, PaymentProcessParams, ClientBalance } from "@/types/payment.types";
+import { PaymentRequest, PaymentRequestParams, PaymentProcessParams } from "@/types/payment.types";
+import { PaymentStatus } from "@/types/enums";
 
-export const getAllPaymentRequests = async (): Promise<PaymentRequest[]> => {
-  try {
+export const paymentService = {
+  // Get all payment requests
+  async getPaymentRequests(): Promise<PaymentRequest[]> {
     const { data, error } = await supabase
       .from('payment_requests')
       .select(`
         *,
-        client:client_id (
-          id,
-          business_name,
-          balance
-        ),
-        processor:approved_by (
-          id,
-          name
-        )
+        client:clients(id, business_name, balance)
       `)
       .order('created_at', { ascending: false });
 
-    if (error) {
-      console.error('Error fetching payment requests:', error);
-      throw new Error(`Erro ao buscar solicitações de pagamento: ${error.message}`);
-    }
-
-    return data?.map(item => ({
+    if (error) throw error;
+    return (data || []).map(item => ({
       ...item,
       status: item.status as PaymentStatus,
       client: item.client ? {
         id: item.client.id,
         business_name: item.client.business_name,
-        current_balance: item.client.balance || 0
-      } : undefined,
-      processor: item.processor ? {
-        id: item.processor.id,
-        name: item.processor.name
+        current_balance: item.client.balance
       } : undefined
-    })) || [];
-  } catch (error) {
-    console.error('Error in getAllPaymentRequests:', error);
-    throw error;
-  }
-};
+    }));
+  },
 
-export const updatePaymentStatus = async (paymentId: string, status: PaymentStatus, notes?: string, processedBy?: string): Promise<void> => {
-  try {
-    const updateData: any = {
-      status: status as string,
-      updated_at: new Date().toISOString()
-    };
-
-    if (status === PaymentStatus.APPROVED || status === PaymentStatus.REJECTED) {
-      updateData.approved_at = new Date().toISOString();
-    }
-
-    if (notes) updateData.description = notes;
-    if (processedBy) updateData.approved_by = processedBy;
-
-    const { error } = await supabase
+  // Get payment request by ID
+  async getPaymentRequestById(id: string): Promise<PaymentRequest | null> {
+    const { data, error } = await supabase
       .from('payment_requests')
-      .update(updateData)
-      .eq('id', paymentId);
+      .select(`
+        *,
+        client:clients(id, business_name, balance)
+      `)
+      .eq('id', id)
+      .single();
 
     if (error) {
-      console.error('Error updating payment status:', error);
-      throw new Error(`Erro ao atualizar status do pagamento: ${error.message}`);
+      if (error.code === 'PGRST116') return null;
+      throw error;
     }
-  } catch (error) {
-    console.error('Error in updatePaymentStatus:', error);
-    throw error;
-  }
-};
+    return data ? {
+      ...data,
+      status: data.status as PaymentStatus,
+      client: data.client ? {
+        id: data.client.id,
+        business_name: data.client.business_name,
+        current_balance: data.client.balance
+      } : undefined
+    } : null;
+  },
 
-export const uploadPaymentReceipt = async (paymentId: string, file: File): Promise<string> => {
-  try {
-    const fileExt = file.name.split('.').pop();
-    const fileName = `payment-${paymentId}-${Date.now()}.${fileExt}`;
-    const filePath = `receipts/${fileName}`;
-
-    const { error: uploadError } = await supabase.storage
-      .from('payment-receipts')
-      .upload(filePath, file);
-
-    if (uploadError) {
-      console.error('Error uploading receipt:', uploadError);
-      throw new Error(`Erro ao fazer upload do comprovante: ${uploadError.message}`);
-    }
-
-    // Get public URL
-    const { data: { publicUrl } } = supabase.storage
-      .from('payment-receipts')
-      .getPublicUrl(filePath);
-
-    // Update payment request with receipt URL
-    const { error: updateError } = await supabase
-      .from('payment_requests')
-      .update({ receipt_url: publicUrl })
-      .eq('id', paymentId);
-
-    if (updateError) {
-      console.error('Error updating receipt URL:', updateError);
-      throw new Error(`Erro ao salvar URL do comprovante: ${updateError.message}`);
-    }
-
-    return publicUrl;
-  } catch (error) {
-    console.error('Error in uploadPaymentReceipt:', error);
-    throw error;
-  }
-};
-
-export const createPaymentRequest = async (params: PaymentRequestParams): Promise<PaymentRequest> => {
-  try {
+  // Create payment request
+  async createPaymentRequest(params: PaymentRequestParams): Promise<PaymentRequest> {
     const { data, error } = await supabase
       .from('payment_requests')
       .insert({
         client_id: params.client_id,
         amount: params.amount,
-        status: PaymentStatus.PENDING as string,
-        created_at: new Date().toISOString(),
-        description: params.notes
+        pix_key_id: 'default-key', // Required field
+        status: PaymentStatus.PENDING,
+        notes: params.notes
       })
       .select(`
         *,
-        client:client_id (
-          id,
-          business_name,
-          balance
-        )
+        client:clients(id, business_name, balance)
       `)
       .single();
 
-    if (error) {
-      console.error('Error creating payment request:', error);
-      throw new Error(`Erro ao criar solicitação de pagamento: ${error.message}`);
-    }
-
+    if (error) throw error;
     return {
       ...data,
       status: data.status as PaymentStatus,
       client: data.client ? {
         id: data.client.id,
         business_name: data.client.business_name,
-        current_balance: data.client.balance || 0
+        current_balance: data.client.balance
       } : undefined
     };
-  } catch (error) {
-    console.error('Error in createPaymentRequest:', error);
-    throw error;
-  }
-};
+  },
 
-export const getClientBalance = async (clientId: string): Promise<ClientBalance> => {
-  try {
-    // Get client basic info
-    const { data: client, error: clientError } = await supabase
-      .from('clients')
-      .select('id, balance')
-      .eq('id', clientId)
+  // Process payment request
+  async processPaymentRequest(params: PaymentProcessParams): Promise<PaymentRequest> {
+    const updateData: any = {
+      status: params.status,
+      processed_at: new Date().toISOString(),
+      notes: params.notes
+    };
+
+    if (params.status === PaymentStatus.APPROVED) {
+      updateData.processed_at = new Date().toISOString();
+    }
+
+    if (params.status === PaymentStatus.REJECTED && params.notes) {
+      updateData.rejection_reason = params.notes;
+    }
+
+    const { data, error } = await supabase
+      .from('payment_requests')
+      .update(updateData)
+      .eq('id', params.payment_id)
+      .select(`
+        *,
+        client:clients(id, business_name, balance)
+      `)
       .single();
 
-    if (clientError) {
-      console.error('Error fetching client:', clientError);
-      throw new Error(`Erro ao buscar dados do cliente: ${clientError.message}`);
-    }
-
-    // Get pending payments
-    const { data: pendingPayments, error: paymentsError } = await supabase
-      .from('payment_requests')
-      .select('amount')
-      .eq('client_id', clientId)
-      .eq('status', PaymentStatus.PENDING as string);
-
-    if (paymentsError) {
-      console.error('Error fetching pending payments:', paymentsError);
-      throw new Error(`Erro ao buscar pagamentos pendentes: ${paymentsError.message}`);
-    }
-
-    // Get total sales
-    const { data: sales, error: salesError } = await supabase
-      .from('sales')
-      .select('net_amount')
-      .eq('client_id', clientId);
-
-    if (salesError) {
-      console.error('Error fetching sales:', salesError);
-      throw new Error(`Erro ao buscar vendas: ${salesError.message}`);
-    }
-
-    const totalPendingPayments = pendingPayments?.reduce((sum, payment) => sum + payment.amount, 0) || 0;
-    const totalSales = sales?.reduce((sum, sale) => sum + sale.net_amount, 0) || 0;
-
+    if (error) throw error;
     return {
-      client_id: clientId,
-      current_balance: client.balance || 0,
-      pending_payments: totalPendingPayments,
-      total_sales: totalSales,
-      commission_rate: 0
+      ...data,
+      status: data.status as PaymentStatus,
+      client: data.client ? {
+        id: data.client.id,
+        business_name: data.client.business_name,
+        current_balance: data.client.balance
+      } : undefined
     };
-  } catch (error) {
-    console.error('Error in getClientBalance:', error);
-    throw error;
-  }
+  },
+
+  // Get payments by client
+  async getPaymentsByClient(clientId: string): Promise<PaymentRequest[]> {
+    const { data, error } = await supabase
+      .from('payment_requests')
+      .select(`
+        *,
+        client:clients(id, business_name, balance)
+      `)
+      .eq('client_id', clientId)
+      .order('created_at', { ascending: false });
+
+    if (error) throw error;
+    return (data || []).map(item => ({
+      ...item,
+      status: item.status as PaymentStatus,
+      client: item.client ? {
+        id: item.client.id,
+        business_name: item.client.business_name,
+        current_balance: item.client.balance
+      } : undefined
+    }));
+  },
+
+  // Update payment request
+  async updatePaymentRequest(id: string, updates: Partial<PaymentRequest>): Promise<PaymentRequest | null> {
+    const updateData: any = { ...updates };
+    if (updateData.status) {
+      updateData.status = updateData.status;
+    }
+
+    const { data, error } = await supabase
+      .from('payment_requests')
+      .update(updateData)
+      .eq('id', id)
+      .select(`
+        *,
+        client:clients(id, business_name, balance)
+      `)
+      .single();
+
+    if (error) throw error;
+    return data ? {
+      ...data,
+      status: data.status as PaymentStatus,
+      client: data.client ? {
+        id: data.client.id,
+        business_name: data.client.business_name,
+        current_balance: data.client.balance
+      } : undefined
+    } : null;
+  },
+
+  // Delete payment request
+  async deletePaymentRequest(id: string): Promise<void> {
+    const { error } = await supabase
+      .from('payment_requests')
+      .delete()
+      .eq('id', id);
+
+    if (error) throw error;
+  },
 };
 
-// Legacy functions for backward compatibility
-export const getAllPayments = async () => {
-  return getAllPaymentRequests();
-};
-
-export const getPaymentsByStatus = async (status: PaymentStatus) => {
-  const allPayments = await getAllPaymentRequests();
-  return allPayments.filter(payment => payment.status === status);
-};
-
-export const getClientPayments = async (clientId: string) => {
-  const allPayments = await getAllPaymentRequests();
-  return allPayments.filter(payment => payment.client_id === clientId);
-};
+// Export individual functions for backward compatibility
+export const getPaymentRequests = paymentService.getPaymentRequests;
+export const getPaymentRequestById = paymentService.getPaymentRequestById;
+export const createPaymentRequest = paymentService.createPaymentRequest;
+export const processPaymentRequest = paymentService.processPaymentRequest;
+export const getPaymentsByClient = paymentService.getPaymentsByClient;
+export const getClientPayments = paymentService.getPaymentsByClient; // Add the missing export
+export const updatePaymentRequest = paymentService.updatePaymentRequest;
+export const deletePaymentRequest = paymentService.deletePaymentRequest;

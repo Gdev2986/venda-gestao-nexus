@@ -48,7 +48,6 @@ const LogisticsMachines = () => {
     initialFetch: true,
   });
   
-  // Filter machines based on search and status
   const filteredMachines = machines.filter(machine => {
     const matchesSearch = !searchTerm || 
       machine.serial_number?.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -60,7 +59,6 @@ const LogisticsMachines = () => {
     return matchesSearch && matchesStatus;
   });
   
-  // Calculate pagination
   const totalPages = Math.max(1, Math.ceil(filteredMachines.length / itemsPerPage));
   const paginatedMachines = filteredMachines.slice(
     (currentPage - 1) * itemsPerPage, 
@@ -178,7 +176,6 @@ const LogisticsMachines = () => {
             </TableHeader>
             <TableBody>
               {isLoading ? (
-                // Loading state
                 Array(itemsPerPage).fill(0).map((_, index) => (
                   <TableRow key={`loading-${index}`}>
                     <TableCell><Skeleton className="h-4 w-24" /></TableCell>
@@ -285,7 +282,6 @@ const LogisticsMachines = () => {
         machine={selectedMachine}
         open={detailsDialogOpen}
         onOpenChange={setDetailsDialogOpen}
-        onUpdate={handleMachineUpdate}
         mode={detailsMode}
       />
 
