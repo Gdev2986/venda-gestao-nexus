@@ -1,15 +1,20 @@
+
 import { supabase } from "@/integrations/supabase/client";
 import { NormalizedSale } from "@/utils/sales-processor";
+import { v4 as uuidv4 } from 'uuid';
 
 export interface SaleInsert {
+  id: string;
   code: string;
   terminal: string;
   date: string;
   gross_amount: number;
   net_amount: number;
   payment_method: "CREDIT" | "DEBIT" | "PIX";
-  client_id: string;
-  machine_id?: string;
+  machine_id: string;
+  processing_status: string;
+  created_at: string;
+  updated_at: string;
 }
 
 // Helper function to convert Brazilian date format to ISO
@@ -52,42 +57,112 @@ const convertBrazilianDateToISO = (dateStr: string): string => {
   return new Date().toISOString();
 };
 
+// Helper function to ensure machine exists and get machine_id
+const ensureMachineExists = async (terminal: string): Promise<string> => {
+  try {
+    // First, check if machine already exists
+    const { data: existingMachine, error: findError } = await supabase
+      .from('machines')
+      .select('id')
+      .eq('serial_number', terminal)
+      .single();
+
+    if (findError && findError.code !== 'PGRST116') {
+      throw findError;
+    }
+
+    // If machine exists, return its ID
+    if (existingMachine) {
+      console.log(`Machine found for terminal: ${terminal}`);
+      return existingMachine.id;
+    }
+
+    // If machine doesn't exist, create it
+    console.log(`Creating new machine for terminal: ${terminal}`);
+    const { data: newMachine, error: createError } = await supabase
+      .from('machines')
+      .insert({
+        serial_number: terminal,
+        model: 'PagBank',
+        status: 'STOCK',
+        notes: `Criado automaticamente durante importação de vendas em ${new Date().toLocaleDateString('pt-BR')}`
+      })
+      .select('id')
+      .single();
+
+    if (createError) {
+      throw createError;
+    }
+
+    console.log(`Machine created for terminal: ${terminal}, ID: ${newMachine.id}`);
+    return newMachine.id;
+
+  } catch (error) {
+    console.error(`Error ensuring machine exists for terminal ${terminal}:`, error);
+    throw new Error(`Falha ao verificar/criar máquina para terminal ${terminal}: ${error instanceof Error ? error.message : String(error)}`);
+  }
+};
+
+// Helper function to convert payment type to enum
+const convertPaymentMethod = (paymentType: string): "CREDIT" | "DEBIT" | "PIX" => {
+  const normalizedType = paymentType.toLowerCase();
+  if (normalizedType.includes('crédito') || normalizedType.includes('credito')) {
+    return 'CREDIT';
+  } else if (normalizedType.includes('débito') || normalizedType.includes('debito')) {
+    return 'DEBIT';
+  } else {
+    return 'PIX';
+  }
+};
+
 export const insertSales = async (sales: NormalizedSale[]): Promise<void> => {
   try {
-    // Convert normalized sales to database format
-    const salesData: SaleInsert[] = sales.map(sale => {
-      // Convert payment type to enum
-      let paymentMethod: "CREDIT" | "DEBIT" | "PIX" = "PIX";
-      const normalizedType = sale.payment_type.toLowerCase();
-      
-      if (normalizedType.includes('crédito') || normalizedType.includes('credito')) {
-        paymentMethod = 'CREDIT';
-      } else if (normalizedType.includes('débito') || normalizedType.includes('debito')) {
-        paymentMethod = 'DEBIT';
+    console.log(`Starting insertion of ${sales.length} sales`);
+    
+    // Process sales in batches to ensure machine creation happens sequentially
+    const salesData: SaleInsert[] = [];
+    
+    for (const sale of sales) {
+      try {
+        // Ensure machine exists and get machine_id
+        const machineId = await ensureMachineExists(sale.terminal);
+        
+        // Convert date to proper ISO format
+        let isoDate: string;
+        if (typeof sale.transaction_date === 'string') {
+          isoDate = convertBrazilianDateToISO(sale.transaction_date);
+        } else {
+          isoDate = sale.transaction_date.toISOString();
+        }
+
+        // Calculate net amount (simple calculation: 97% of gross)
+        const netAmount = sale.gross_amount * 0.97;
+
+        // Create sale payload
+        const salePayload: SaleInsert = {
+          id: uuidv4(),
+          code: `SALE-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+          terminal: sale.terminal,
+          date: isoDate,
+          gross_amount: sale.gross_amount,
+          net_amount: netAmount,
+          payment_method: convertPaymentMethod(sale.payment_type),
+          machine_id: machineId,
+          processing_status: 'RAW',
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString()
+        };
+
+        salesData.push(salePayload);
+        
+      } catch (error) {
+        console.error(`Error processing sale for terminal ${sale.terminal}:`, error);
+        throw error;
       }
+    }
 
-      // Calculate net amount (simple calculation: 97% of gross)
-      const netAmount = sale.gross_amount * 0.97;
-
-      // Convert date to proper ISO format
-      let isoDate: string;
-      if (typeof sale.transaction_date === 'string') {
-        isoDate = convertBrazilianDateToISO(sale.transaction_date);
-      } else {
-        isoDate = sale.transaction_date.toISOString();
-      }
-
-      return {
-        code: sale.id || `IMPORT-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
-        terminal: sale.terminal,
-        date: isoDate,
-        gross_amount: sale.gross_amount,
-        net_amount: netAmount,
-        payment_method: paymentMethod,
-        client_id: '00000000-0000-0000-0000-000000000000', // Will need proper client mapping
-      };
-    });
-
+    // Insert all sales at once
+    console.log(`Inserting ${salesData.length} sales into database`);
     const { error } = await supabase
       .from('sales')
       .insert(salesData);
@@ -96,6 +171,9 @@ export const insertSales = async (sales: NormalizedSale[]): Promise<void> => {
       console.error('Error inserting sales:', error);
       throw new Error(`Erro ao inserir vendas: ${error.message}`);
     }
+
+    console.log(`Successfully inserted ${salesData.length} sales`);
+    
   } catch (error) {
     console.error('Error in insertSales:', error);
     throw error;
@@ -108,8 +186,9 @@ export const getAllSales = async () => {
       .from('sales')
       .select(`
         *,
-        clients (
-          business_name
+        machines (
+          serial_number,
+          model
         )
       `)
       .order('date', { ascending: false });
