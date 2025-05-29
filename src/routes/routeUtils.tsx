@@ -31,8 +31,8 @@ export const getDashboardPath = (userRole: UserRole | null): string => {
     case "MANAGER":
     case "FINANCE":
     case "SUPPORT":
-    case "USER":
-      return PATHS.USER.DASHBOARD;
+    case "CLIENT":
+      return PATHS.CLIENT.DASHBOARD;
     default:
       console.log("Role não reconhecido:", userRole);
       // Default to login as a safe fallback

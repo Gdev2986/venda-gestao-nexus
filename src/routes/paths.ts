@@ -1,4 +1,3 @@
-
 export const PATHS = {
   HOME: "/",
   LOGIN: "/login",
@@ -8,8 +7,8 @@ export const PATHS = {
   CHANGE_PASSWORD: "/change-password",
   FORGOT_PASSWORD: "/forgot-password",
   RESET_PASSWORD: "/reset-password",
-  DASHBOARD: "/dashboard",
-  
+  DASHBOARD: "/login",
+
   ADMIN: {
     DASHBOARD: "/admin/dashboard",
     CLIENTS: "/admin/clients",
@@ -34,9 +33,9 @@ export const PATHS = {
     SECURITY: "/admin/security",
     COMPANY: "/admin/company",
     COMPANY_REPORTS: "/admin/company/reports",
-    COMPANY_EXPENSES: "/admin/company/expenses"
+    COMPANY_EXPENSES: "/admin/company/expenses",
   },
-  
+
   CLIENT: {
     DASHBOARD: "/client/dashboard",
     PAYMENTS: "/client/payments",
@@ -45,18 +44,9 @@ export const PATHS = {
     PROFILE: "/client/profile",
     REPORTS: "/client/reports",
     SETTINGS: "/client/settings",
-    HELP: "/client/help"
+    HELP: "/client/help",
   },
-  
-  USER: {
-    DASHBOARD: "/user/dashboard",
-    PAYMENTS: "/user/payments",
-    SUPPORT: "/user/support",
-    HELP: "/user/help",
-    SETTINGS: "/user/settings",
-    MACHINES: "/user/machines"
-  },
-  
+
   PARTNER: {
     DASHBOARD: "/partner/dashboard",
     CLIENTS: "/partner/clients",
@@ -65,18 +55,18 @@ export const PATHS = {
     REPORTS: "/partner/reports",
     SUPPORT: "/partner/support",
     HELP: "/partner/help",
-    SETTINGS: "/partner/settings"
+    SETTINGS: "/partner/settings",
   },
-  
+
   FINANCIAL: {
     DASHBOARD: "/financial/dashboard",
     PAYMENTS: "/financial/payments",
     REPORTS: "/financial/reports",
     SETTINGS: "/financial/settings",
     CLIENTS: "/financial/clients",
-    REQUESTS: "/financial/requests"
+    REQUESTS: "/financial/requests",
   },
-  
+
   LOGISTICS: {
     DASHBOARD: "/logistics/dashboard",
     MACHINES: "/logistics/machines",
@@ -88,6 +78,6 @@ export const PATHS = {
     MACHINE_DETAILS: (id?: string) => id ? `/logistics/machines/${id}` : "/logistics/machines/:id",
     NEW_MACHINE: "/logistics/machines/new",
     INVENTORY: "/logistics/inventory",
-    SUPPORT: "/logistics/support"
+    SUPPORT: "/logistics/support",
   }
 } as const;

@@ -1,12 +1,9 @@
-
-import { Routes, Route, Navigate } from "react-router-dom";
-import { PATHS } from "./routes/paths";
+// src/App.tsx
+import { Routes, Route, Navigate, useLocation } from "react-router-dom";
 import { useEffect } from "react";
+import { PATHS } from "./routes/paths";
 import { useToast } from "@/hooks/use-toast";
-import { useAuth } from "./hooks/use-auth";
-import { UserRole } from "./types";
-
-// Route utils
+import { useAuth } from "@/providers/AuthProvider";
 import { getDashboardPath } from "./utils/auth-utils";
 
 // Route groups
@@ -17,83 +14,77 @@ import PartnerRoutes from "./routes/partnerRoutes";
 import FinancialRoutes from "./routes/financialRoutes";
 import LogisticsRoutes from "./routes/logisticsRoutes";
 
-// Layouts
+// Layouts & Pages
 import MainLayout from "./components/layout/MainLayout";
-
-// Pages
-import LandingPage from "./pages/LandingPage";
+import Landing from "./pages/landing/Landing";
 import NotFound from "./pages/NotFound";
 import Unauthorized from "./pages/Unauthorized";
 import Notifications from "./pages/Notifications";
 
 function App() {
-  const { userRole, isLoading } = useAuth();
+  const location = useLocation();
+  const { userRole, isLoading, isAuthenticated } = useAuth();
   const { toast } = useToast();
 
-  // Log role changes for debugging
+  const isPublicRoute =
+    location.pathname === PATHS.HOME ||
+    location.pathname === PATHS.UNAUTHORIZED ||
+    location.pathname.startsWith("/login");
+
   useEffect(() => {
-    if (!isLoading) {
-      console.log("App.tsx - Current user role:", userRole);
-      
-      try {
-        const dashPath = getDashboardPath(userRole);
-        console.log("App.tsx - Will redirect to dashboard:", dashPath);
-      } catch (error) {
-        console.error("Error getting dashboard path:", error);
+    console.log("App.tsx - location:", location.pathname);
+    console.log("App.tsx - role:", userRole, "auth:", isAuthenticated, "loading:", isLoading);
+  }, [location.pathname, userRole, isLoading]);
+
+  useEffect(() => {
+    const t = setTimeout(() => {
+      if (isLoading) {
+        toast({
+          title: "Erro de login",
+          description: "Sistema demorou para carregar. Recarregue a página.",
+          variant: "destructive",
+        });
       }
-    }
-  }, [userRole, isLoading]);
+    }, 10000);
+    return () => clearTimeout(t);
+  }, [isLoading]);
 
-  // Get the dashboard path safely
-  const getDashboardRedirectPath = () => {
-    try {
-      return getDashboardPath(userRole);
-    } catch (error) {
-      console.error("Error in getDashboardRedirectPath:", error);
-      return PATHS.LOGIN;
-    }
-  };
+  const getDashboardRedirectPath = () => (userRole ? getDashboardPath(userRole) : PATHS.LOGIN);
 
-  // Show loading state while checking authentication
-  if (isLoading) {
+  const isProtectedRoute = !isPublicRoute && (!isAuthenticated || isLoading || !userRole);
+  if (isProtectedRoute)
     return (
       <div className="min-h-screen flex items-center justify-center">
-        <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-primary"></div>
+        <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-primary" />
       </div>
     );
-  }
 
   return (
     <Routes>
-      {/* Landing Page */}
-      <Route path={PATHS.HOME} element={<LandingPage />} />
-      
-      {/* Generic dashboard route */}
-      <Route 
-        path={PATHS.DASHBOARD} 
-        element={<Navigate to={getDashboardRedirectPath()} replace />} 
+      <Route path={PATHS.HOME} element={<Landing />} />
+      <Route
+        path={PATHS.DASHBOARD}
+        element={
+          isLoading || !userRole ? (
+            <div className="min-h-screen flex items-center justify-center">
+              <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-primary" />
+            </div>
+          ) : (
+            <Navigate to={getDashboardRedirectPath()} replace />
+          )
+        }
       />
-
-      {/* Auth Routes */}
       {AuthRoutes}
-
-      {/* Protected Routes by Role */}
       <Route path="/admin/*" element={<AdminRoutes />} />
       <Route path="/client/*" element={<ClientRoutes />} />
       <Route path="/partner/*" element={<PartnerRoutes />} />
       <Route path="/financial/*" element={<FinancialRoutes />} />
       <Route path="/logistics/*" element={<LogisticsRoutes />} />
-
-      {/* Shared Routes (accessible by all roles) */}
       <Route element={<MainLayout />}>
         <Route path="/notifications" element={<Notifications />} />
       </Route>
-
-      {/* Error Pages */}
       <Route path={PATHS.UNAUTHORIZED} element={<Unauthorized />} />
       <Route path={PATHS.NOT_FOUND} element={<NotFound />} />
-      
-      {/* Catch-all redirect to landing page */}
       <Route path="*" element={<Navigate to={PATHS.NOT_FOUND} replace />} />
     </Routes>
   );
