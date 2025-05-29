@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { useAuth } from "@/contexts/AuthContext";
+import { useAuth } from "@/hooks/use-auth";
 import { useToast } from "@/hooks/use-toast";
 import { PATHS } from "@/routes/paths";
 import { Spinner } from "@/components/ui/spinner";
@@ -26,6 +26,7 @@ const LoginForm = () => {
     setIsSubmitting(true);
 
     try {
+      console.log("Starting login process for:", email);
       const { data, error } = await signIn(email, password);
 
       if (error) {
@@ -46,6 +47,7 @@ const LoginForm = () => {
       }
 
       if (data && needsPasswordChange) {
+        console.log("User needs password change, redirecting");
         navigate(PATHS.CHANGE_PASSWORD);
         return;
       }
@@ -55,8 +57,10 @@ const LoginForm = () => {
         description: "Bem-vindo de volta!",
       });
       
-      window.location.href = PATHS.DASHBOARD;
+      console.log("Login successful, redirecting to dashboard");
+      navigate(PATHS.DASHBOARD);
     } catch (error: any) {
+      console.error("Login error:", error);
       toast({
         variant: "destructive",
         title: "Erro",

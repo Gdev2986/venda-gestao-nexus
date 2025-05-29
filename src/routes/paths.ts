@@ -1,3 +1,4 @@
+
 export const PATHS = {
   HOME: "/",
   LOGIN: "/login",
@@ -7,7 +8,7 @@ export const PATHS = {
   CHANGE_PASSWORD: "/change-password",
   FORGOT_PASSWORD: "/forgot-password",
   RESET_PASSWORD: "/reset-password",
-  DASHBOARD: "/login",
+  DASHBOARD: "/dashboard",
 
   ADMIN: {
     DASHBOARD: "/admin/dashboard",

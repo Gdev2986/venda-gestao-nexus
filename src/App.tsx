@@ -1,9 +1,10 @@
+
 // src/App.tsx
 import { Routes, Route, Navigate, useLocation } from "react-router-dom";
 import { useEffect } from "react";
 import { PATHS } from "./routes/paths";
 import { useToast } from "@/hooks/use-toast";
-import { useAuth } from "@/providers/AuthProvider";
+import { useAuth } from "@/hooks/use-auth";
 import { getDashboardPath } from "./utils/auth-utils";
 
 // Route groups
@@ -29,35 +30,35 @@ function App() {
   const isPublicRoute =
     location.pathname === PATHS.HOME ||
     location.pathname === PATHS.UNAUTHORIZED ||
-    location.pathname.startsWith("/login");
+    location.pathname.startsWith("/login") ||
+    location.pathname.startsWith("/register") ||
+    location.pathname.startsWith("/forgot-password") ||
+    location.pathname.startsWith("/reset-password");
 
   useEffect(() => {
-    console.log("App.tsx - location:", location.pathname);
-    console.log("App.tsx - role:", userRole, "auth:", isAuthenticated, "loading:", isLoading);
-  }, [location.pathname, userRole, isLoading]);
+    console.log("App.tsx - Auth State:", {
+      path: location.pathname,
+      role: userRole,
+      authenticated: isAuthenticated,
+      loading: isLoading
+    });
+  }, [location.pathname, userRole, isLoading, isAuthenticated]);
 
-  useEffect(() => {
-    const t = setTimeout(() => {
-      if (isLoading) {
-        toast({
-          title: "Erro de login",
-          description: "Sistema demorou para carregar. Recarregue a página.",
-          variant: "destructive",
-        });
-      }
-    }, 10000);
-    return () => clearTimeout(t);
-  }, [isLoading]);
+  const getDashboardRedirectPath = () => {
+    if (userRole) {
+      return getDashboardPath(userRole);
+    }
+    return PATHS.LOGIN;
+  };
 
-  const getDashboardRedirectPath = () => (userRole ? getDashboardPath(userRole) : PATHS.LOGIN);
-
-  const isProtectedRoute = !isPublicRoute && (!isAuthenticated || isLoading || !userRole);
-  if (isProtectedRoute)
+  // Show loading only when we're checking auth for protected routes
+  if (!isPublicRoute && isLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-primary" />
       </div>
     );
+  }
 
   return (
     <Routes>
@@ -65,7 +66,7 @@ function App() {
       <Route
         path={PATHS.DASHBOARD}
         element={
-          isLoading || !userRole ? (
+          isLoading ? (
             <div className="min-h-screen flex items-center justify-center">
               <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-primary" />
             </div>

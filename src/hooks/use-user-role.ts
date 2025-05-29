@@ -1,6 +1,6 @@
 
 import { useState, useEffect } from "react";
-import { useAuth } from "@/contexts/AuthContext";
+import { useAuth } from "@/hooks/use-auth";
 import { UserRole } from "@/types";
 
 export const useUserRole = () => {
@@ -9,16 +9,23 @@ export const useUserRole = () => {
   const [userRole, setUserRole] = useState<UserRole | null>(contextUserRole);
 
   useEffect(() => {
+    console.log("useUserRole - Auth data:", {
+      user: user?.id,
+      profile: profile?.role,
+      contextUserRole,
+      authLoading
+    });
+
     if (contextUserRole) {
       setUserRole(contextUserRole);
       setIsRoleLoading(false);
-    } else if (profile) {
+    } else if (profile?.role) {
       setUserRole(profile.role);
       setIsRoleLoading(false);
     } else if (!authLoading && !profile) {
       setIsRoleLoading(false);
     }
-  }, [profile, authLoading, contextUserRole]);
+  }, [profile, authLoading, contextUserRole, user]);
   
   return {
     userRole,

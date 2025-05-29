@@ -24,8 +24,6 @@ export interface SignUpData {
 
 class AuthManagerClass {
   private static instance: AuthManagerClass;
-  private roleCache = new Map<string, { role: UserRole | null; timestamp: number }>();
-  private pendingRoleRequests = new Map<string, Promise<UserRole | null>>();
   
   private constructor() {}
   
@@ -36,12 +34,6 @@ class AuthManagerClass {
     return AuthManagerClass.instance;
   }
 
-  // Aguardar um tempo antes de fazer requests para evitar spam
-  private async waitBeforeRequest(delay: number = 500): Promise<void> {
-    return new Promise(resolve => setTimeout(resolve, delay));
-  }
-
-  // Limpar dados de autenticação do storage
   private clearAuthStorage(): void {
     try {
       // Remove dados do sessionStorage
@@ -71,17 +63,12 @@ class AuthManagerClass {
         }
       });
       
-      // Limpar cache
-      this.roleCache.clear();
-      this.pendingRoleRequests.clear();
-      
       console.log("Auth storage cleared successfully");
     } catch (error) {
       console.error("Error clearing auth storage:", error);
     }
   }
 
-  // Gerar ID único do dispositivo
   private getDeviceId(): string {
     let deviceId = sessionStorage.getItem('deviceId');
     if (!deviceId) {
@@ -91,7 +78,6 @@ class AuthManagerClass {
     return deviceId;
   }
 
-  // Rastrear sessão do usuário
   private async trackUserSession(userId: string): Promise<void> {
     try {
       const deviceId = this.getDeviceId();
@@ -108,90 +94,8 @@ class AuthManagerClass {
     }
   }
 
-  // Buscar role do usuário com cache e debounce
-  async fetchUserRole(userId: string): Promise<UserRole | null> {
-    // Verificar cache primeiro (válido por 1 minuto)
-    const cached = this.roleCache.get(userId);
-    if (cached && Date.now() - cached.timestamp < 60000) {
-      console.log("Using cached role:", cached.role);
-      return cached.role;
-    }
-
-    // Se já existe uma requisição pendente, aguardar ela
-    if (this.pendingRoleRequests.has(userId)) {
-      console.log("Waiting for pending role request...");
-      return this.pendingRoleRequests.get(userId)!;
-    }
-
-    // Criar nova requisição
-    const rolePromise = this.performRoleFetch(userId);
-    this.pendingRoleRequests.set(userId, rolePromise);
-
-    try {
-      const role = await rolePromise;
-      
-      // Cache o resultado
-      this.roleCache.set(userId, {
-        role,
-        timestamp: Date.now()
-      });
-      
-      console.log("Fetched and cached role:", role);
-      return role;
-    } finally {
-      // Remover da lista de pendentes
-      this.pendingRoleRequests.delete(userId);
-    }
-  }
-
-  private async performRoleFetch(userId: string): Promise<UserRole | null> {
-    let attempts = 0;
-    const maxAttempts = 3;
-    
-    while (attempts < maxAttempts) {
-      try {
-        // Aguardar antes de fazer a requisição
-        if (attempts > 0) {
-          await this.waitBeforeRequest(500 + (attempts * 300)); // Aumentar delay a cada tentativa
-        }
-        
-        console.log(`Fetching role for user ${userId}, attempt ${attempts + 1}`);
-        
-        const { data, error } = await supabase
-          .from('profiles')
-          .select('role')
-          .eq('id', userId)
-          .single();
-        
-        if (error) {
-          console.error(`Error fetching user role (attempt ${attempts + 1}):`, error);
-          attempts++;
-          continue;
-        }
-        
-        const role = data?.role as UserRole || null;
-        console.log(`Successfully fetched role: ${role}`);
-        return role;
-        
-      } catch (error) {
-        console.error(`Exception fetching user role (attempt ${attempts + 1}):`, error);
-        attempts++;
-        
-        if (attempts >= maxAttempts) {
-          console.error("Max attempts reached, returning null");
-          return null;
-        }
-      }
-    }
-    
-    return null;
-  }
-
-  // Verificar se precisa trocar senha
   async needsPasswordChange(userId: string): Promise<boolean> {
     try {
-      await this.waitBeforeRequest(200); // Pequeno delay
-      
       const { data, error } = await supabase.rpc('user_needs_password_change', {
         user_uuid: userId
       });
@@ -204,7 +108,6 @@ class AuthManagerClass {
     }
   }
 
-  // Obter sessão atual
   async getCurrentSession(): Promise<{
     session: Session | null;
     user: User | null;
@@ -238,7 +141,6 @@ class AuthManagerClass {
     }
   }
 
-  // Login
   async login(credentials: LoginCredentials): Promise<{
     data: { user: User; session: Session } | null;
     error: Error | null;
@@ -254,8 +156,7 @@ class AuthManagerClass {
         console.log("Could not perform global sign out before login:", err);
       }
       
-      // Aguardar antes do login
-      await this.waitBeforeRequest(300);
+      console.log("Attempting login for:", credentials.email);
       
       // Fazer login
       const { data, error } = await supabase.auth.signInWithPassword({
@@ -276,6 +177,7 @@ class AuthManagerClass {
         return { data: null, error: new Error(errorMessage) };
       }
       
+      console.log("Login successful for user:", data.user?.id);
       return { data, error: null };
     } catch (error) {
       console.error("Error during login:", error);
@@ -286,16 +188,12 @@ class AuthManagerClass {
     }
   }
 
-  // Registro
   async signUp(signUpData: SignUpData): Promise<{
     data: { user: User } | null;
     error: Error | null;
   }> {
     try {
       this.clearAuthStorage();
-      
-      // Aguardar antes do registro
-      await this.waitBeforeRequest(300);
       
       const { data, error } = await supabase.auth.signUp({
         email: signUpData.email,
@@ -326,7 +224,6 @@ class AuthManagerClass {
     }
   }
 
-  // Logout
   async logout(): Promise<{ error: Error | null }> {
     try {
       this.clearAuthStorage();
@@ -350,7 +247,6 @@ class AuthManagerClass {
     }
   }
 
-  // Trocar senha e ativar usuário
   async changePasswordAndActivate(newPassword: string): Promise<boolean> {
     try {
       // Atualizar senha
@@ -378,7 +274,6 @@ class AuthManagerClass {
     }
   }
 
-  // Refresh automático do token
   async refreshToken(): Promise<{
     session: Session | null;
     error: Error | null;
