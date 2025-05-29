@@ -4,7 +4,7 @@ import { useAuth } from "@/hooks/use-auth";
 import { PATHS } from "@/routes/paths";
 import { UserRole } from "@/types/enums";
 import AdminLayout from "./AdminLayout";
-import ClientRoutes from "../routes/clientRoutes";
+import UserLayout from "./UserLayout";
 import PartnerLayout from "./PartnerLayout";
 import LogisticsLayout from "./LogisticsLayout";
 import { Spinner } from "@/components/ui/spinner";
@@ -40,21 +40,13 @@ const MainLayout = () => {
     case UserRole.ADMIN:
       return <AdminLayout />;
     case UserRole.CLIENT:
-      return (
-        <div className="min-h-screen bg-background">
-          <Outlet />
-        </div>
-      );
+      return <UserLayout />;
     case UserRole.PARTNER:
       return <PartnerLayout />;
     case UserRole.LOGISTICS:
       return <LogisticsLayout />;
     case UserRole.FINANCIAL:
-      return (
-        <div className="min-h-screen bg-background">
-          <Outlet />
-        </div>
-      );
+      return <UserLayout />;
     default:
       console.warn("Unknown user role:", userRole);
       return <Navigate to={PATHS.LOGIN} replace />;
