@@ -132,6 +132,7 @@ const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => 
           ...data,
           role: data.role as UserRole,
         };
+        console.log("Setting user profile with role:", userProfile.role);
         dispatch({ type: "SET_PROFILE", payload: userProfile });
         
         const needsChange = await AuthManager.needsPasswordChange(userId);

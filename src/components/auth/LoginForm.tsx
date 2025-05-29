@@ -11,13 +11,12 @@ import { PATHS } from "@/routes/paths";
 import { Spinner } from "@/components/ui/spinner";
 import { Lock, Mail } from "lucide-react";
 import { useMediaQuery } from "@/hooks/use-media-query";
-import { getDashboardPath } from "@/utils/auth-utils";
 
 const LoginForm = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const { signIn, needsPasswordChange, userRole } = useAuth();
+  const { signIn } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
   const isMobile = useMediaQuery("(max-width: 767px)");
@@ -47,19 +46,15 @@ const LoginForm = () => {
         return;
       }
 
-      if (data && needsPasswordChange) {
-        console.log("User needs password change, redirecting");
-        navigate(PATHS.CHANGE_PASSWORD);
-        return;
+      if (data?.user) {
+        toast({
+          title: "Login realizado com sucesso",
+          description: "Bem-vindo de volta!",
+        });
+        
+        console.log("Login successful, user will be redirected by Login component");
+        // The navigation will be handled by the useEffect in Login component
       }
-
-      toast({
-        title: "Login realizado com sucesso",
-        description: "Bem-vindo de volta!",
-      });
-      
-      console.log("Login successful, waiting for role...");
-      // The navigation will be handled by the useEffect in Login component
     } catch (error: any) {
       console.error("Login error:", error);
       toast({

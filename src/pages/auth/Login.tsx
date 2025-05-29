@@ -11,26 +11,47 @@ import { getDashboardPath } from "@/utils/auth-utils";
 
 const Login = () => {
   const navigate = useNavigate();
-  const { user, isLoading, userRole } = useAuth();
+  const { user, isLoading, userRole, isAuthenticated, needsPasswordChange } = useAuth();
   const [redirecting, setRedirecting] = useState(false);
   const isMobile = useMediaQuery("(max-width: 767px)");
 
   useEffect(() => {
-    if (user && !isLoading && userRole) {
-      console.log("Login: User authenticated, redirecting to dashboard");
-      setRedirecting(true);
-      const dashboardPath = getDashboardPath(userRole);
-      navigate(dashboardPath);
+    console.log("Login useEffect - Auth state:", {
+      user: user?.id,
+      isLoading,
+      userRole,
+      isAuthenticated,
+      needsPasswordChange
+    });
+
+    // Only redirect if we have all necessary data
+    if (isAuthenticated && user && !isLoading) {
+      if (needsPasswordChange) {
+        console.log("Login: User needs password change, redirecting");
+        setRedirecting(true);
+        navigate(PATHS.CHANGE_PASSWORD);
+        return;
+      }
+      
+      if (userRole) {
+        console.log("Login: User authenticated with role, redirecting to dashboard");
+        setRedirecting(true);
+        const dashboardPath = getDashboardPath(userRole);
+        navigate(dashboardPath);
+      }
+      // If no userRole yet, wait for it to be loaded by AuthProvider
     }
-  }, [user, isLoading, userRole, navigate]);
+  }, [user, isLoading, userRole, isAuthenticated, needsPasswordChange, navigate]);
 
   if (isLoading || redirecting) {
     return (
       <div className="flex flex-col items-center justify-center h-screen bg-background">
-        <Spinner size="lg" />
-        <p className="mt-4 text-muted-foreground">
-          {redirecting ? "Redirecionando para o painel..." : "Carregando..."}
-        </p>
+        <div className="flex flex-col items-center space-y-4">
+          <Spinner size="lg" />
+          <p className="mt-4 text-muted-foreground">
+            {redirecting ? "Redirecionando para o painel..." : "Verificando autenticação..."}
+          </p>
+        </div>
       </div>
     );
   }

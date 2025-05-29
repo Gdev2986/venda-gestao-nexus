@@ -14,14 +14,18 @@ const RootLayout = () => {
     isAuthenticated,
     userRole,
     needsPasswordChange,
-    path: location.pathname
+    path: location.pathname,
+    user: user?.id
   });
   
-  // If still loading, show a simple spinner
+  // If still loading auth or user data, show spinner
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center h-screen bg-background">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+      <div className="flex flex-col items-center justify-center h-screen bg-background">
+        <div className="flex flex-col items-center space-y-4">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+          <p className="text-muted-foreground">Carregando...</p>
+        </div>
       </div>
     );
   }
@@ -38,12 +42,15 @@ const RootLayout = () => {
     return <Navigate to={PATHS.CHANGE_PASSWORD} replace />;
   }
   
-  // If authenticated but no role yet, wait for profile to load
+  // If authenticated but no role yet, show loading
   if (!userRole) {
-    console.log("User authenticated but no role, waiting for profile to load");
+    console.log("User authenticated but no role yet, waiting...");
     return (
-      <div className="flex items-center justify-center h-screen bg-background">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+      <div className="flex flex-col items-center justify-center h-screen bg-background">
+        <div className="flex flex-col items-center space-y-4">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+          <p className="text-muted-foreground">Configurando seu perfil...</p>
+        </div>
       </div>
     );
   }
