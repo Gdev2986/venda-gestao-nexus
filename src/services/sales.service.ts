@@ -15,6 +15,8 @@ export interface SaleInsert {
   processing_status: "RAW" | "PROCESSED";
   created_at: string;
   updated_at: string;
+  installments?: number;
+  source?: string;
 }
 
 // Helper function to convert Brazilian date format to ISO
@@ -138,7 +140,7 @@ export const insertSales = async (sales: NormalizedSale[]): Promise<void> => {
         // Calculate net amount (simple calculation: 97% of gross)
         const netAmount = sale.gross_amount * 0.97;
 
-        // Create sale payload
+        // Create sale payload with installments and source
         const salePayload: SaleInsert = {
           id: uuidv4(),
           code: `SALE-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
@@ -150,7 +152,9 @@ export const insertSales = async (sales: NormalizedSale[]): Promise<void> => {
           machine_id: machineId,
           processing_status: 'RAW' as "RAW" | "PROCESSED",
           created_at: new Date().toISOString(),
-          updated_at: new Date().toISOString()
+          updated_at: new Date().toISOString(),
+          installments: sale.installments,
+          source: sale.source
         };
 
         salesData.push(salePayload);

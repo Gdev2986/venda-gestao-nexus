@@ -1,3 +1,4 @@
+
 // Utility functions for processing sales data from CSV files
 
 /**
@@ -79,8 +80,9 @@ export function formatDateStandard(dateInput: string, timeInput: string = ''): s
 
     // If timeInput is not provided but dateInput has a space
     if (!timeInput && dateInput.includes(' ')) {
-      timeStr = dateInput.split(' ')[1]?.substring(0, 5) || '';
-      dateStr = dateInput.split(' ')[0];
+      const parts = dateInput.split(' ');
+      timeStr = parts[1]?.substring(0, 5) || '00:00';
+      dateStr = parts[0];
     }
 
     const dateParts = dateStr.split(/[-\/]/);
@@ -92,7 +94,12 @@ export function formatDateStandard(dateInput: string, timeInput: string = ''): s
       [day, month, year] = dateParts;
     }
 
-    return `${day?.padStart(2,'0')}/${month?.padStart(2,'0')}/${year || '2000'} ${timeStr || '00:00'}`;
+    // Ensure we have proper time format
+    if (!timeStr || timeStr === '') {
+      timeStr = '00:00';
+    }
+
+    return `${day?.padStart(2,'0')}/${month?.padStart(2,'0')}/${year || '2000'} ${timeStr}`;
   } catch (e) {
     console.error('Error formatting date:', e);
     return '01/01/2000 00:00';
@@ -341,7 +348,7 @@ export function normalizeData(data: Array<Record<string, any>>, source: string):
           
           normalizedRow.transaction_date = formatDateStandard(dataPagSeguro);
           
-          // Processamento especial da coluna Parcela para PagSeguro
+          // Processamento corrigido da coluna Parcela para PagSeguro
           const parcelasPagSeguro = getValue(cleanedRow, [
             'Parcela', 'PARCELA', 'parcela',
             'Parcelas', 'PARCELAS', 'parcelas'
@@ -351,11 +358,11 @@ export function normalizeData(data: Array<Record<string, any>>, source: string):
           let installments = 1;
           const parcelaStr = String(parcelasPagSeguro).trim();
           
-          if (!parcelaStr || parcelaStr === '' || normalizeText(parcelaStr) === 'a vista') {
-            // Se vazio ou "à Vista", usar 1
+          if (!parcelaStr || parcelaStr === '' || normalizeText(parcelaStr).includes('vista')) {
+            // Se vazio ou contém "vista", usar 1
             installments = 1;
           } else if (parcelaStr.toLowerCase().includes('parcelado')) {
-            // Se contém "Parcelado", extrair o número
+            // Se contém "Parcelado", extrair o número (ex: "Parcelado 2x" -> 2)
             const match = parcelaStr.match(/(\d+)/);
             installments = match ? parseInt(match[1]) : 1;
           } else {

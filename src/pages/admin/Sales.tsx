@@ -30,20 +30,34 @@ const AdminSales = () => {
       const realSales = await getAllSales();
       
       // Convert database sales to NormalizedSale format
-      const normalizedSales: NormalizedSale[] = realSales.map(sale => ({
-        id: sale.id,
-        status: 'Aprovada', // Default status for imported sales
-        payment_type: sale.payment_method === 'CREDIT' ? 'Cartão de Crédito' : 
-                     sale.payment_method === 'DEBIT' ? 'Cartão de Débito' : 'Pix',
-        gross_amount: Number(sale.gross_amount),
-        transaction_date: sale.date,
-        installments: sale.payment_method === 'CREDIT' ? Math.floor(Math.random() * 12) + 1 : 1,
-        terminal: sale.terminal,
-        brand: sale.payment_method === 'PIX' ? 'Pix' : 
-               ['Visa', 'Mastercard', 'Elo'][Math.floor(Math.random() * 3)],
-        source: 'Banco de Dados',
-        formatted_amount: formatCurrency(Number(sale.gross_amount))
-      }));
+      const normalizedSales: NormalizedSale[] = realSales.map(sale => {
+        // Format the date properly for display (DD/MM/YYYY HH:MM)
+        const saleDate = new Date(sale.date);
+        const formattedDate = saleDate.toLocaleDateString('pt-BR', {
+          day: '2-digit',
+          month: '2-digit',
+          year: 'numeric'
+        }) + ' ' + saleDate.toLocaleTimeString('pt-BR', {
+          hour: '2-digit',
+          minute: '2-digit',
+          hour12: false
+        });
+        
+        return {
+          id: sale.id,
+          status: 'Aprovada', // Default status for imported sales
+          payment_type: sale.payment_method === 'CREDIT' ? 'Cartão de Crédito' : 
+                       sale.payment_method === 'DEBIT' ? 'Cartão de Débito' : 'Pix',
+          gross_amount: Number(sale.gross_amount),
+          transaction_date: formattedDate,
+          installments: sale.installments || (sale.payment_method === 'CREDIT' ? Math.floor(Math.random() * 12) + 1 : 1),
+          terminal: sale.terminal,
+          brand: sale.payment_method === 'PIX' ? 'Pix' : 
+                 ['Visa', 'Mastercard', 'Elo'][Math.floor(Math.random() * 3)],
+          source: sale.source || 'PagSeguro',
+          formatted_amount: formatCurrency(Number(sale.gross_amount))
+        };
+      });
       
       setSales(normalizedSales);
       setFilteredSales(normalizedSales);
