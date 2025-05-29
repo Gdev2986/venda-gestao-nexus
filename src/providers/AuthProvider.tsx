@@ -179,9 +179,9 @@ const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => 
       }
       return result;
     } catch (err: any) {
-      const msg = err.message || "Erro durante o login";
-      dispatch({ type: "SET_ERROR", payload: msg });
-      return { data: null, error: { message: msg } };
+      const errorObj = new Error(err.message || "Erro durante o login");
+      dispatch({ type: "SET_ERROR", payload: errorObj.message });
+      return { data: null, error: errorObj };
     } finally {
       dispatch({ type: "SET_LOADING", payload: false });
     }
@@ -197,9 +197,9 @@ const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => 
       }
       return result;
     } catch (err: any) {
-      const msg = err.message || "Erro durante o cadastro";
-      dispatch({ type: "SET_ERROR", payload: msg });
-      return { data: null, error: { message: msg } };
+      const errorObj = new Error(err.message || "Erro durante o cadastro");
+      dispatch({ type: "SET_ERROR", payload: errorObj.message });
+      return { data: null, error: errorObj };
     } finally {
       dispatch({ type: "SET_LOADING", payload: false });
     }
@@ -213,8 +213,9 @@ const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => 
         dispatch({ type: "LOGOUT" });
       }
       return result;
-    } catch {
-      return { error: { message: "Erro durante o logout" } };
+    } catch (err: any) {
+      const errorObj = new Error("Erro durante o logout");
+      return { error: errorObj };
     } finally {
       dispatch({ type: "SET_LOADING", payload: false });
     }
