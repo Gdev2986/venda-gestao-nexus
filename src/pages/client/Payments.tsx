@@ -15,18 +15,24 @@ const ClientPayments = () => {
     {
       id: "1",
       created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
       amount: 1500.00,
       status: "PENDING" as const,
       description: "Solicitação de pagamento",
-      pix_key_id: "1"
+      pix_key_id: "1",
+      client_id: user?.id || "mock-client-id",
+      rejection_reason: null
     },
     {
       id: "2", 
       created_at: new Date(Date.now() - 86400000).toISOString(),
+      updated_at: new Date(Date.now() - 86400000).toISOString(),
       amount: 2300.50,
       status: "APPROVED" as const,
       description: "Pagamento aprovado",
-      pix_key_id: "1"
+      pix_key_id: "1",
+      client_id: user?.id || "mock-client-id",
+      rejection_reason: null
     }
   ];
 
