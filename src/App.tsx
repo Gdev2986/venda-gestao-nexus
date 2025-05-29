@@ -6,7 +6,6 @@ import {
   Route,
   Navigate
 } from "react-router-dom";
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { Toaster } from "@/components/ui/toaster"
 
 import Login from "@/pages/auth/Login";
@@ -54,95 +53,91 @@ import HelpPage from "@/pages/Help";
 import Settings from "@/pages/Settings";
 import Profile from "@/pages/client/Profile";
 
-const queryClient = new QueryClient();
-
 function App() {
   return (
-    <QueryClientProvider client={queryClient}>
-      <BrowserRouter>
-        <Toaster />
-        <Routes>
-          <Route path="/login" element={<Login />} />
-          <Route path="/auth-callback" element={<AuthCallback />} />
-          
-          {/* Client Routes */}
-          <Route path="/client/*" element={
-            <AuthGuard allowedRoles={['CLIENT']}>
-              <AppLayout />
-            </AuthGuard>
-          }>
-            <Route path="dashboard" element={<ClientDashboard />} />
-            <Route path="machines" element={<ClientMachines />} />
-            <Route path="payments" element={<ClientPayments />} />
-            <Route path="support" element={<ClientSupport />} />
-            <Route path="help" element={<HelpPage />} />
-            <Route path="settings" element={<Settings />} />
-            <Route path="profile" element={<Profile />} />
-          </Route>
+    <BrowserRouter>
+      <Toaster />
+      <Routes>
+        <Route path="/login" element={<Login />} />
+        <Route path="/auth-callback" element={<AuthCallback />} />
+        
+        {/* Client Routes */}
+        <Route path="/client/*" element={
+          <AuthGuard allowedRoles={['CLIENT']}>
+            <AppLayout />
+          </AuthGuard>
+        }>
+          <Route path="dashboard" element={<ClientDashboard />} />
+          <Route path="machines" element={<ClientMachines />} />
+          <Route path="payments" element={<ClientPayments />} />
+          <Route path="support" element={<ClientSupport />} />
+          <Route path="help" element={<HelpPage />} />
+          <Route path="settings" element={<Settings />} />
+          <Route path="profile" element={<Profile />} />
+        </Route>
 
-          {/* User Routes */}
-          <Route path="/user/*" element={
-            <AuthGuard allowedRoles={['CLIENT']}>
-              <AppLayout />
-            </AuthGuard>
-          }>
-            <Route path="dashboard" element={<UserDashboard />} />
-            <Route path="machines" element={<UserMachines />} />
-            <Route path="payments" element={<UserPayments />} />
-            <Route path="support" element={<UserSupport />} />
-            <Route path="help" element={<HelpPage />} />
-            <Route path="settings" element={<Settings />} />
-            <Route path="profile" element={<Profile />} />
-          </Route>
+        {/* User Routes */}
+        <Route path="/user/*" element={
+          <AuthGuard allowedRoles={['CLIENT']}>
+            <AppLayout />
+          </AuthGuard>
+        }>
+          <Route path="dashboard" element={<UserDashboard />} />
+          <Route path="machines" element={<UserMachines />} />
+          <Route path="payments" element={<UserPayments />} />
+          <Route path="support" element={<UserSupport />} />
+          <Route path="help" element={<HelpPage />} />
+          <Route path="settings" element={<Settings />} />
+          <Route path="profile" element={<Profile />} />
+        </Route>
 
-          {/* Partner Routes */}
-          <Route path="/partner/*" element={
-            <AuthGuard allowedRoles={['PARTNER']}>
-              <AppLayout />
-            </AuthGuard>
-          }>
-            <Route path="dashboard" element={<PartnerDashboard />} />
-            <Route path="clients" element={<PartnerClients />} />
-            <Route path="commissions" element={<PartnerCommissions />} />
-            <Route path="profile" element={<Profile />} />
-          </Route>
+        {/* Partner Routes */}
+        <Route path="/partner/*" element={
+          <AuthGuard allowedRoles={['PARTNER']}>
+            <AppLayout />
+          </AuthGuard>
+        }>
+          <Route path="dashboard" element={<PartnerDashboard />} />
+          <Route path="clients" element={<PartnerClients />} />
+          <Route path="commissions" element={<PartnerCommissions />} />
+          <Route path="profile" element={<Profile />} />
+        </Route>
 
-          {/* Admin Routes */}
-          <Route path="/admin/*" element={
-            <AuthGuard allowedRoles={['ADMIN']}>
-              <AppLayout />
-            </AuthGuard>
-          }>
-            <Route path="dashboard" element={<AdminDashboard />} />
-            <Route path="clients" element={<AdminClients />} />
-            <Route path="machines" element={<AdminMachines />} />
-            <Route path="partners" element={<AdminPartners />} />
-            <Route path="sales" element={<AdminSales />} />
-            <Route path="payments" element={<AdminPayments />} />
-            <Route path="support" element={<AdminSupport />} />
-            <Route path="reports" element={<AdminReports />} />
-            <Route path="settings" element={<AdminSettings />} />
-          </Route>
+        {/* Admin Routes */}
+        <Route path="/admin/*" element={
+          <AuthGuard allowedRoles={['ADMIN']}>
+            <AppLayout />
+          </AuthGuard>
+        }>
+          <Route path="dashboard" element={<AdminDashboard />} />
+          <Route path="clients" element={<AdminClients />} />
+          <Route path="machines" element={<AdminMachines />} />
+          <Route path="partners" element={<AdminPartners />} />
+          <Route path="sales" element={<AdminSales />} />
+          <Route path="payments" element={<AdminPayments />} />
+          <Route path="support" element={<AdminSupport />} />
+          <Route path="reports" element={<AdminReports />} />
+          <Route path="settings" element={<AdminSettings />} />
+        </Route>
 
-          {/* Logistics Routes */}
-          <Route path="/logistics/*" element={
-            <AuthGuard allowedRoles={['LOGISTICS']}>
-              <AppLayout />
-            </AuthGuard>
-          }>
-            <Route path="dashboard" element={<LogisticsDashboard />} />
-            <Route path="machines" element={<LogisticsMachines />} />
-            <Route path="support" element={<LogisticsSupport />} />
-            <Route path="reports" element={<LogisticsReports />} />
-            <Route path="profile" element={<Profile />} />
-          </Route>
+        {/* Logistics Routes */}
+        <Route path="/logistics/*" element={
+          <AuthGuard allowedRoles={['LOGISTICS']}>
+            <AppLayout />
+          </AuthGuard>
+        }>
+          <Route path="dashboard" element={<LogisticsDashboard />} />
+          <Route path="machines" element={<LogisticsMachines />} />
+          <Route path="support" element={<LogisticsSupport />} />
+          <Route path="reports" element={<LogisticsReports />} />
+          <Route path="profile" element={<Profile />} />
+        </Route>
 
-          <Route path="/support" element={<Support />} />
-          <Route path="/help" element={<HelpPage />} />
-          <Route path="/" element={<Navigate to="/login" replace />} />
-        </Routes>
-      </BrowserRouter>
-    </QueryClientProvider>
+        <Route path="/support" element={<Support />} />
+        <Route path="/help" element={<HelpPage />} />
+        <Route path="/" element={<Navigate to="/login" replace />} />
+      </Routes>
+    </BrowserRouter>
   );
 }
 

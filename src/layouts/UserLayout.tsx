@@ -2,7 +2,7 @@
 import React from "react";
 import { Navigate } from "react-router-dom";
 import { useAuth } from "@/hooks/use-auth";
-import { Sidebar } from "@/components/layout/sidebar/Sidebar";
+import Sidebar from "@/components/layout/sidebar/Sidebar";
 import { UserRole } from "@/types";
 import { castToUserRole } from "@/utils/auth-utils";
 
@@ -47,4 +47,3 @@ const UserLayout: React.FC<UserLayoutProps> = ({ children }) => {
 };
 
 export default UserLayout;
-

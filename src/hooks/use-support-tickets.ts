@@ -66,14 +66,21 @@ export const useSupportTickets = () => {
   const { user } = useAuth();
   const [tickets, setTickets] = useState<SupportTicket[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     if (user) {
       // Simulate API call
       setTimeout(() => {
-        const mockTickets = generateMockTickets(user.id);
-        setTickets(mockTickets);
-        setIsLoading(false);
+        try {
+          const mockTickets = generateMockTickets(user.id);
+          setTickets(mockTickets);
+          setError(null);
+        } catch (err) {
+          setError('Failed to load support tickets');
+        } finally {
+          setIsLoading(false);
+        }
       }, 1000);
     }
   }, [user]);
@@ -104,6 +111,7 @@ export const useSupportTickets = () => {
       return true;
     } catch (error) {
       console.error('Error creating ticket:', error);
+      setError('Failed to create support ticket');
       return false;
     }
   };
@@ -111,7 +119,7 @@ export const useSupportTickets = () => {
   return {
     tickets,
     isLoading,
+    error,
     createTicket
   };
 };
-

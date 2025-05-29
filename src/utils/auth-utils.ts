@@ -2,15 +2,19 @@
 import { UserRole } from '@/types';
 
 export const getDashboardPath = (role: UserRole | string): string => {
-  const roleStr = typeof role === 'string' ? role : role.toString();
+  const roleStr = typeof role === 'string' ? role : role;
   
   switch (roleStr) {
+    case UserRole.ADMIN:
     case 'ADMIN':
       return '/admin/dashboard';
+    case UserRole.LOGISTICS:
     case 'LOGISTICS':
       return '/logistics/dashboard';
+    case UserRole.PARTNER:
     case 'PARTNER':
       return '/partner/dashboard';
+    case UserRole.USER:
     case 'USER':
       return '/user/dashboard';
     default:
@@ -28,4 +32,3 @@ export const castToUserRole = (role: string): UserRole => {
   }
   return UserRole.CLIENT; // default fallback
 };
-

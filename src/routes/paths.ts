@@ -18,7 +18,10 @@ export const PATHS = {
     DASHBOARD: '/admin/dashboard',
     SALES: '/admin/sales',
     SALES_DETAILS: (id?: string) => id ? `/admin/sales/${id}` : '/admin/sales/:id',
+    SALES_NEW: '/admin/sales/new',
     PAYMENTS: '/admin/payments',
+    PAYMENT_DETAILS: (id?: string) => id ? `/admin/payments/${id}` : '/admin/payments/:id',
+    PAYMENT_NEW: '/admin/payments/new',
     CLIENTS: '/admin/clients',
     CLIENT_DETAILS: (id?: string) => id ? `/admin/clients/${id}` : '/admin/clients/:id',
     PARTNERS: '/admin/partners',
@@ -69,6 +72,7 @@ export const PATHS = {
     DASHBOARD: '/financial/dashboard',
     REQUESTS: '/financial/requests',
     CLIENTS: '/financial/clients',
+    PAYMENTS: '/financial/payments',
     REPORTS: '/financial/reports',
     SETTINGS: '/financial/settings'
   },

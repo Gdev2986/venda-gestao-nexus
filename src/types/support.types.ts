@@ -13,6 +13,9 @@ export enum SupportRequestType {
   REPLACEMENT = "REPLACEMENT", 
   SUPPLIES = "SUPPLIES",
   REMOVAL = "REMOVAL",
+  REPAIR = "REPAIR",
+  TRAINING = "TRAINING",
+  SUPPORT = "SUPPORT",
   OTHER = "OTHER"
 }
 
