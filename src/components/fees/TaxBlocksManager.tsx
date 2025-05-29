@@ -175,7 +175,7 @@ const TaxBlocksManager = () => {
           </AlertDescription>
         </Alert>
       ) : (
-        <div className="grid gap-6">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           {blocks.map((block) => (
             <TaxBlockPreview
               key={block.id}

@@ -18,7 +18,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
-import { BlockWithRates } from "@/services/tax-blocks.service";
+import { BlockWithRates, TaxRate } from "@/services/tax-blocks.service";
 import { ScrollArea } from "@/components/ui/scroll-area";
 
 interface TaxBlockEditorProps {
@@ -27,14 +27,6 @@ interface TaxBlockEditorProps {
   onCancel: () => void;
   onDelete?: (id: string) => void;
   isSubmitting: boolean;
-}
-
-interface TaxRate {
-  payment_method: string;
-  installment: number;
-  root_rate: number;
-  forwarding_rate: number;
-  final_rate: number;
 }
 
 const DEFAULT_INSTALLMENTS = Array.from({ length: 21 }, (_, i) => i + 1);
@@ -56,6 +48,8 @@ const TaxBlockEditor: React.FC<TaxBlockEditorProps> = ({
   useEffect(() => {
     if (block?.rates && block.rates.length > 0) {
       setRates(block.rates.map(rate => ({
+        id: rate.id || '',
+        block_id: rate.block_id || block.id || '',
         payment_method: rate.payment_method,
         installment: rate.installment,
         root_rate: rate.root_rate || 0,
@@ -69,6 +63,8 @@ const TaxBlockEditor: React.FC<TaxBlockEditorProps> = ({
       // For CREDIT, add all installment counts from 1 to 21
       for (const installment of DEFAULT_INSTALLMENTS) {
         initialRates.push({
+          id: '',
+          block_id: block?.id || '',
           payment_method: 'CREDIT',
           installment,
           root_rate: 0,
@@ -79,6 +75,8 @@ const TaxBlockEditor: React.FC<TaxBlockEditorProps> = ({
       
       // For DEBIT and PIX, add only installment 1
       initialRates.push({
+        id: '',
+        block_id: block?.id || '',
         payment_method: 'DEBIT',
         installment: 1,
         root_rate: 0,
@@ -87,6 +85,8 @@ const TaxBlockEditor: React.FC<TaxBlockEditorProps> = ({
       });
       
       initialRates.push({
+        id: '',
+        block_id: block?.id || '',
         payment_method: 'PIX',
         installment: 1,
         root_rate: 0,
