@@ -10,7 +10,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
-import { NotificationType } from "@/types";
+import { NotificationType } from "@/types/notification.types";
 
 const notificationFormSchema = z.object({
   title: z.string().min(3, {
@@ -82,37 +82,46 @@ export function SendNotification() {
     
     try {
       if (data.targetType === "all") {
-        // Send to all clients
-        // Since the RPC function isn't available, we'll insert notifications directly
-        const { error } = await supabase
-          .from('notifications')
-          .insert({
+        // Get all user IDs from profiles to send to everyone
+        const { data: profiles, error: profilesError } = await supabase
+          .from('profiles')
+          .select('id');
+          
+        if (profilesError) throw profilesError;
+        
+        // Insert notifications for all users
+        if (profiles && profiles.length > 0) {
+          const notifications = profiles.map(profile => ({
+            user_id: profile.id,
             title: data.title,
             message: data.message,
             type: data.type,
-            user_id: 'ALL', // We'll handle this value in a database trigger or create a separate endpoint
-          });
-        
-        if (error) throw error;
+          }));
+          
+          const { error } = await supabase
+            .from('notifications')
+            .insert(notifications);
+          
+          if (error) throw error;
+        }
       } else if (data.targetType === "specific" && data.targetId) {
-        // Send to specific client
-        // First, get the user_id for this client
-        const { data: clientData, error: clientError } = await supabase
-          .from('clients')
-          .select('id')
-          .eq('id', data.targetId)
+        // Get the user_id for this client through user_client_access
+        const { data: clientAccess, error: clientError } = await supabase
+          .from('user_client_access')
+          .select('user_id')
+          .eq('client_id', data.targetId)
           .single();
           
         if (clientError) throw clientError;
         
-        // Then insert the notification for this specific client
+        // Insert the notification for this specific client
         const { error } = await supabase
           .from('notifications')
           .insert({
+            user_id: clientAccess.user_id,
             title: data.title,
             message: data.message,
             type: data.type,
-            user_id: clientData.id,
           });
         
         if (error) throw error;

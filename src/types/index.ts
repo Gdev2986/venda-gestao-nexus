@@ -3,16 +3,8 @@
 export * from './enums';
 export * from './payment.types';
 export * from './machine.types';
-
-// Adicionar novos exports para tipos de autenticação enterprise
 export * from './auth.types';
-
-// Export ClientStatus enum
-export enum ClientStatus {
-  ACTIVE = "active",
-  INACTIVE = "inactive",
-  PENDING = "pending"
-}
+export * from './notification.types';
 
 // Export common interfaces
 export interface PaginatedResponse<T> {

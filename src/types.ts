@@ -3,16 +3,8 @@
 export * from './types/enums';
 export * from './types/payment.types';
 export * from './types/machine.types';
-
-// Adicionar novos exports para tipos de autenticação enterprise
 export * from './types/auth.types';
-
-// Export ClientStatus enum
-export enum ClientStatus {
-  ACTIVE = "active",
-  INACTIVE = "inactive",
-  PENDING = "pending"
-}
+export * from './types/notification.types';
 
 // Export common interfaces
 export interface PaginatedResponse<T> {
@@ -200,7 +192,7 @@ export interface Notification {
   id: string;
   title: string;
   message: string;
-  type: import('./types/enums').NotificationType;
+  type: import('./types/notification.types').NotificationType;
   read: boolean;
   timestamp: Date;
   data?: any;
