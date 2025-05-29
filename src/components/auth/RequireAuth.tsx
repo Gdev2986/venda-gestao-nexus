@@ -4,7 +4,7 @@ import { Navigate, useLocation } from "react-router-dom";
 import { useAuth } from "@/hooks/use-auth";
 import { Spinner } from "@/components/ui/spinner";
 import { PATHS } from "@/routes/paths";
-import { UserRole } from "@/types";
+import { UserRole } from "@/types/enums";
 import { useToast } from "@/hooks/use-toast";
 import { getDashboardPath } from "@/utils/auth-utils";
 import { motion } from "framer-motion";
@@ -20,7 +20,7 @@ export const RequireAuth: React.FC<RequireAuthProps> = ({
   allowedRoles = [], 
   redirectTo = PATHS.LOGIN 
 }) => {
-  const { user, isLoading, isAuthenticated, userRole, error } = useAuth();
+  const { user, isLoading, isAuthenticated, userRole } = useAuth();
   const location = useLocation();
   const { toast } = useToast();
 
@@ -31,10 +31,9 @@ export const RequireAuth: React.FC<RequireAuthProps> = ({
       isAuthenticated,
       userRole,
       path: location.pathname,
-      allowedRoles,
-      error
+      allowedRoles
     });
-  }, [isLoading, isAuthenticated, userRole, location.pathname, allowedRoles, error]);
+  }, [isLoading, isAuthenticated, userRole, location.pathname, allowedRoles]);
 
   // Se ainda está carregando
   if (isLoading) {
@@ -63,7 +62,7 @@ export const RequireAuth: React.FC<RequireAuthProps> = ({
 
   // Se tem role definido, verificar permissões
   if (userRole) {
-    const hasPermission = allowedRoles.length === 0 || allowedRoles.includes(userRole);
+    const hasPermission = allowedRoles.length === 0 || allowedRoles.includes(userRole as UserRole);
 
     if (!hasPermission) {
       console.log(`User with role ${userRole} not allowed to access ${location.pathname}`);
@@ -75,7 +74,7 @@ export const RequireAuth: React.FC<RequireAuthProps> = ({
       });
       
       try {
-        const dashboardPath = getDashboardPath(userRole);
+        const dashboardPath = getDashboardPath(userRole as any);
         return <Navigate to={dashboardPath} replace />;
       } catch (error) {
         console.error("Error getting dashboard path:", error);

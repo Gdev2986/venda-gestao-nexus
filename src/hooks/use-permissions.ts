@@ -1,7 +1,7 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '@/hooks/use-auth';
-import { UserRole } from '@/types';
+import { UserRole } from '@/types/enums';
 
 interface Permission {
   name: string;
@@ -30,7 +30,7 @@ export function usePermissions() {
     if (!isRoleLoading && userRole) {
       // Calculate user permissions based on their role
       const userPermissions = Object.values(PERMISSIONS)
-        .filter(permission => permission.roles.includes(userRole))
+        .filter(permission => permission.roles.includes(userRole as UserRole))
         .map(permission => permission.name);
       
       setPermissions(userPermissions);
@@ -47,7 +47,7 @@ export function usePermissions() {
     const permission = PERMISSIONS[permissionName];
     if (!permission) return false;
     
-    return permission.roles.includes(userRole);
+    return permission.roles.includes(userRole as UserRole);
   }, [userRole]);
 
   // Check if user has any of the given permissions

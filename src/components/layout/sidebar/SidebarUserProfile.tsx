@@ -12,14 +12,14 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { useAuth } from "@/hooks/use-auth";
-import { UserRole } from "@/types";
+import { UserRole } from "@/types/enums";
 
 interface SidebarUserProfileProps {
   userRole: UserRole | null;
 }
 
 const SidebarUserProfile = memo(({ userRole }: SidebarUserProfileProps) => {
-  const { user, profile, signOut } = useAuth();
+  const { user, userProfile, signOut } = useAuth();
 
   const handleSignOut = async () => {
     console.log("SidebarUserProfile: Sign out clicked");
@@ -33,7 +33,7 @@ const SidebarUserProfile = memo(({ userRole }: SidebarUserProfileProps) => {
     }
   };
 
-  const userName = profile?.name || user?.email?.split('@')[0] || 'Usuário';
+  const userName = userProfile?.name || user?.email?.split('@')[0] || 'Usuário';
   const userEmail = user?.email || '';
   const userInitials = userName.split(' ').map(n => n[0]).join('').toUpperCase();
 
@@ -47,7 +47,7 @@ const SidebarUserProfile = memo(({ userRole }: SidebarUserProfileProps) => {
           >
             <div className="flex items-center space-x-3">
               <Avatar className="h-8 w-8">
-                <AvatarImage src={profile?.avatar} />
+                <AvatarImage src={userProfile?.avatar} />
                 <AvatarFallback className="bg-white/20 text-white text-xs">
                   {userInitials}
                 </AvatarFallback>

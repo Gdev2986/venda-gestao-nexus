@@ -1,8 +1,8 @@
 
-import { UserRole } from "@/types";
+import { UserRole } from "@/types/enums";
 import { PATHS } from "@/routes/paths";
 
-export const getDashboardPath = (userRole: UserRole | null): string => {
+export const getDashboardPath = (userRole: any): string => {
   console.log("getDashboardPath called with role:", userRole);
 
   if (!userRole || !isValidUserRole(userRole)) {
@@ -10,16 +10,24 @@ export const getDashboardPath = (userRole: UserRole | null): string => {
     return PATHS.LOGIN;
   }
 
-  switch (userRole) {
+  // Convert string to enum if needed
+  const role = typeof userRole === 'string' ? userRole.toUpperCase() : userRole;
+
+  switch (role) {
     case UserRole.ADMIN:
+    case 'ADMIN':
       return PATHS.ADMIN.DASHBOARD;
     case UserRole.CLIENT:
+    case 'CLIENT':
       return PATHS.CLIENT.DASHBOARD;
     case UserRole.PARTNER:
+    case 'PARTNER':
       return PATHS.PARTNER.DASHBOARD;
     case UserRole.FINANCIAL:
+    case 'FINANCIAL':
       return PATHS.FINANCIAL.DASHBOARD;
     case UserRole.LOGISTICS:
+    case 'LOGISTICS':
       return PATHS.LOGISTICS.DASHBOARD;
     default:
       console.warn("Unhandled user role:", userRole);

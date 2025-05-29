@@ -18,7 +18,7 @@ export function StyledCard({
   children,
   className,
   icon,
-  borderColor = "border-primary",
+  borderColor = "border-l-primary",
   cardClassName = "",
 }: StyledCardProps) {
   return (
