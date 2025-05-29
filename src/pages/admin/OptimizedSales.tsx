@@ -51,8 +51,14 @@ const OptimizedSalesPage = () => {
         }
       />
       
-      {/* Filtro de período e horário no topo */}
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-end gap-4 p-4 bg-muted/30 rounded-lg">
+      {/* Filtro de período e horário GLOBAL no topo da página */}
+      <div className="bg-muted/30 p-6 rounded-lg border">
+        <div className="flex items-center gap-2 mb-4">
+          <h3 className="text-lg font-semibold">Filtros Globais</h3>
+          <span className="text-sm text-muted-foreground">
+            - Aplicados a toda a base de dados
+          </span>
+        </div>
         <PeriodAndTimeFilter
           filters={filters}
           availableDates={availableDates}

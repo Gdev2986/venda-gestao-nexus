@@ -46,17 +46,27 @@ export const optimizedSalesService = {
     }
   },
 
-  // Obter datas com vendas para calendário
+  // Obter TODAS as datas com vendas para calendário (não limitado à primeira página)
   async getDatesWithSales(): Promise<string[]> {
     try {
-      const { data, error } = await supabase.rpc('get_dates_with_sales');
+      // Buscar todas as datas únicas diretamente da tabela sales
+      const { data, error } = await supabase
+        .from('sales')
+        .select('date')
+        .order('date', { ascending: true });
       
       if (error) {
         console.error('Error getting dates with sales:', error);
         return [];
       }
       
-      return data?.map((item: any) => item.sale_date) || [];
+      // Extrair datas únicas (apenas a parte da data, sem horário)
+      const uniqueDates = [...new Set(data?.map(item => {
+        const date = new Date(item.date);
+        return date.toISOString().split('T')[0]; // Formato YYYY-MM-DD
+      }) || [])];
+      
+      return uniqueDates.sort();
     } catch (error) {
       console.error('Error in getDatesWithSales:', error);
       return [];

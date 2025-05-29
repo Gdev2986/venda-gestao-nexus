@@ -3,13 +3,7 @@ import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Input } from "@/components/ui/input";
-import { CalendarIcon, Filter, X, Clock } from "lucide-react";
-import { Calendar } from "@/components/ui/calendar";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { format } from "date-fns";
-import { ptBR } from "date-fns/locale";
-import { cn } from "@/lib/utils";
+import { Filter, X } from "lucide-react";
 import { SalesFilters } from "@/services/optimized-sales.service";
 import TerminalFilter from "./TerminalFilter";
 
@@ -20,48 +14,13 @@ interface OptimizedSalesFilterProps {
   onResetFilters: () => void;
 }
 
-interface DateRange {
-  from: Date | undefined;
-  to: Date | undefined;
-}
-
 const OptimizedSalesFilter = ({ 
   filters, 
   availableDates, 
   onFiltersChange, 
   onResetFilters 
 }: OptimizedSalesFilterProps) => {
-  const [dateRange, setDateRange] = useState<DateRange>({ from: undefined, to: undefined });
   const [selectedTerminals, setSelectedTerminals] = useState<string[]>([]);
-
-  // Sincronizar dateRange com filters
-  useEffect(() => {
-    if (filters.dateStart) {
-      const fromDate = new Date(filters.dateStart);
-      const toDate = filters.dateEnd ? new Date(filters.dateEnd) : fromDate;
-      setDateRange({ from: fromDate, to: toDate });
-    } else {
-      setDateRange({ from: undefined, to: undefined });
-    }
-  }, [filters.dateStart, filters.dateEnd]);
-
-  // Atualizar filtros quando dateRange muda
-  useEffect(() => {
-    if (dateRange.from) {
-      const dateStart = format(dateRange.from, 'yyyy-MM-dd');
-      const dateEnd = dateRange.to ? format(dateRange.to, 'yyyy-MM-dd') : dateStart;
-      
-      onFiltersChange({
-        dateStart,
-        dateEnd
-      });
-    } else {
-      onFiltersChange({
-        dateStart: undefined,
-        dateEnd: undefined
-      });
-    }
-  }, [dateRange, onFiltersChange]);
 
   // Atualizar filtro de terminais
   useEffect(() => {
@@ -72,22 +31,10 @@ const OptimizedSalesFilter = ({
     }
   }, [selectedTerminals, onFiltersChange]);
 
-  // Função para verificar se uma data tem vendas
-  const isDateWithSales = (date: Date) => {
-    const dateStr = format(date, 'yyyy-MM-dd');
-    return availableDates.includes(dateStr);
-  };
-
-  // Obter range de datas disponíveis
-  const minDate = availableDates.length > 0 ? new Date(availableDates[0]) : undefined;
-  const maxDate = availableDates.length > 0 ? new Date(availableDates[availableDates.length - 1]) : undefined;
-
   const hasActiveFilters = 
-    filters.dateStart || 
     filters.paymentType || 
     filters.source || 
-    filters.hourStart || 
-    filters.hourEnd ||
+    filters.brand ||
     (filters.terminals && filters.terminals.length > 0);
 
   return (
@@ -95,7 +42,7 @@ const OptimizedSalesFilter = ({
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
           <Filter className="h-5 w-5" />
-          Filtros de Vendas
+          Filtros Adicionais de Vendas
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">
