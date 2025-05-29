@@ -16,9 +16,9 @@ const Login = () => {
 
   useEffect(() => {
     if (user && !isLoading) {
-      console.log("Login: User authenticated, redirecting to home");
+      console.log("Login: User authenticated, redirecting to dashboard");
       setRedirecting(true);
-      navigate(PATHS.HOME);
+      navigate(PATHS.DASHBOARD);
     }
   }, [user, isLoading, navigate]);
 

@@ -1,4 +1,3 @@
-
 import type { Config } from "tailwindcss";
 
 export default {
@@ -30,16 +29,16 @@ export default {
         primary: {
           DEFAULT: "hsl(var(--primary))",
           foreground: "hsl(var(--primary-foreground))",
-          50: "#E6F4F7",
-          100: "#CCE8EF",
-          200: "#99D1DF",
-          300: "#66BACF",
-          400: "#33A3BF",
-          500: "#0c3746",
-          600: "#0A2F3A",
-          700: "#08262E",
-          800: "#051D22",
-          900: "#031316",
+          50: "#E6F7FF",
+          100: "#CCF0FF",
+          200: "#99E1FF",
+          300: "#66D2FF",
+          400: "#33C3FF",
+          500: "#00B0F0",
+          600: "#0090C9",
+          700: "#006EA3",
+          800: "#004D7A",
+          900: "#002B52",
         },
         secondary: {
           DEFAULT: "hsl(var(--secondary))",
@@ -193,11 +192,11 @@ export default {
         },
         "glow": {
           "0%, 100%": {
-            boxShadow: "0 0 20px rgba(12, 55, 70, 0.5)",
+            boxShadow: "0 0 20px rgba(15, 68, 87, 0.5)",
           },
           "50%": {
             boxShadow:
-              "0 0 40px rgba(12, 55, 70, 0.8), 0 0 60px rgba(12, 55, 70, 0.6)",
+              "0 0 40px rgba(15, 68, 87, 0.8), 0 0 60px rgba(20, 184, 166, 0.6)",
           },
         },
         "pulse-slow": {

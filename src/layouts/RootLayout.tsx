@@ -17,7 +17,7 @@ const RootLayout = () => {
     path: location.pathname
   });
   
-  // If still loading, show a simple spinner
+  // If still loading, show a simple spinner without delay
   if (isLoading) {
     return (
       <div className="flex items-center justify-center h-screen bg-background">

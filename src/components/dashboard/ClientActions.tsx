@@ -1,89 +1,45 @@
 
-import React from "react";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { useNavigate } from "react-router-dom";
+import { ArrowRight, FileText, MessageSquare, CreditCard } from "lucide-react";
+import { Link } from "react-router-dom";
+import { Card } from "../ui/card";
 import { PATHS } from "@/routes/paths";
-import { 
-  CreditCard, 
-  Users, 
-  BarChart3, 
-  Settings, 
-  HelpCircle, 
-  Bell
-} from "lucide-react";
 
-export const ClientActions = () => {
-  const navigate = useNavigate();
-
-  const actions = [
-    {
-      title: "Realizar Pagamento",
-      description: "Faça um novo pagamento ou transfira valores",
-      icon: CreditCard,
-      onClick: () => navigate(PATHS.CLIENT.PAYMENTS),
-      variant: "default" as const
-    },
-    {
-      title: "Gerenciar Máquinas",
-      description: "Visualize e gerencie suas máquinas",
-      icon: Users,
-      onClick: () => navigate(PATHS.CLIENT.MACHINES),
-      variant: "outline" as const
-    },
-    {
-      title: "Relatórios",
-      description: "Acesse relatórios detalhados",
-      icon: BarChart3,
-      onClick: () => navigate(PATHS.CLIENT.REPORTS),
-      variant: "outline" as const
-    },
-    {
-      title: "Configurações",
-      description: "Atualize suas preferências",
-      icon: Settings,
-      onClick: () => navigate(PATHS.CLIENT.SETTINGS),
-      variant: "outline" as const
-    },
-    {
-      title: "Suporte",
-      description: "Entre em contato conosco",
-      icon: HelpCircle,
-      onClick: () => navigate(PATHS.CLIENT.SUPPORT),
-      variant: "outline" as const
-    }
-  ];
-
+export default function ClientActions() {
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle className="flex items-center gap-2">
-          <Bell className="h-5 w-5" />
-          Ações Rápidas
-        </CardTitle>
-        <CardDescription>
-          Acesse as principais funcionalidades do sistema
-        </CardDescription>
-      </CardHeader>
-      <CardContent>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {actions.map((action, index) => (
-            <Button
-              key={index}
-              variant={action.variant}
-              onClick={action.onClick}
-              className="h-auto p-4 flex flex-col items-start gap-2"
-            >
-              <action.icon className="h-5 w-5" />
-              <div className="text-left">
-                <div className="font-medium">{action.title}</div>
-                <div className="text-xs opacity-70">{action.description}</div>
-              </div>
-            </Button>
-          ))}
-        </div>
-      </CardContent>
+    <Card className="p-5 space-y-4">
+      <h3 className="text-lg font-medium">Ações Rápidas</h3>
+      <div className="grid grid-cols-1 gap-3">
+        <Button variant="outline" className="justify-between" asChild>
+          <Link to={PATHS.USER.PAYMENTS}>
+            <div className="flex items-center">
+              <CreditCard className="h-4 w-4 mr-2" />
+              Ver meus pagamentos
+            </div>
+            <ArrowRight className="h-4 w-4" />
+          </Link>
+        </Button>
+        
+        <Button variant="outline" className="justify-between" asChild>
+          <Link to={PATHS.USER.SUPPORT}>
+            <div className="flex items-center">
+              <MessageSquare className="h-4 w-4 mr-2" />
+              Abrir um chamado
+            </div>
+            <ArrowRight className="h-4 w-4" />
+          </Link>
+        </Button>
+        
+        <Button variant="outline" className="justify-between" asChild>
+          <Link to={PATHS.USER.SUPPORT}>
+            <div className="flex items-center">
+              <FileText className="h-4 w-4 mr-2" />
+              Solicitar comprovantes
+            </div>
+            <ArrowRight className="h-4 w-4" />
+          </Link>
+        </Button>
+      </div>
     </Card>
   );
-};
+}
