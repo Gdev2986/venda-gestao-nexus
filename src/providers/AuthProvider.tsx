@@ -86,7 +86,7 @@ const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => 
               id: userId,
               email: '',
               name: 'Usuário',
-              role: 'CLIENT' as UserRole,
+              role: 'CLIENT',
               status: 'active'
             })
             .select()

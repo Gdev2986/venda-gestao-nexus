@@ -7,10 +7,8 @@ const AuthLayout = () => {
   const isMobile = useMediaQuery("(max-width: 768px)");
   
   return (
-    <div className={`min-h-screen flex items-center justify-center ${
-      isMobile 
-        ? "login-gradient p-4" 
-        : "login-gradient p-4"
+    <div className={`min-h-screen flex items-center justify-center bg-background ${
+      isMobile ? "p-4" : "p-4"
     }`}>
       <Toaster position="top-right" />
       <Outlet />

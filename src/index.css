@@ -186,12 +186,12 @@
     @apply flex flex-col sm:flex-row sm:items-center gap-3 p-3;
   }
 
-  /* System gradient background */
+  /* System gradient background - usado apenas para elementos específicos */
   .system-gradient {
     background: linear-gradient(135deg, #13A197 0%, #105865 100%);
   }
 
-  /* Login page gradient */
+  /* Login page gradient - usado apenas para a página de login */
   .login-gradient {
     background: linear-gradient(135deg, #13A197 0%, #105865 100%);
   }
