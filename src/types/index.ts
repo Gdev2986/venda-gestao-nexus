@@ -8,6 +8,12 @@ export enum UserRole {
   FINANCIAL = 'FINANCIAL'
 }
 
+export enum ClientStatus {
+  ACTIVE = 'ACTIVE',
+  INACTIVE = 'INACTIVE',
+  PENDING = 'PENDING'
+}
+
 export interface UserData {
   id: string;
   email: string;
