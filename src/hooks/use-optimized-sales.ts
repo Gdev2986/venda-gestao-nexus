@@ -47,19 +47,19 @@ export const useOptimizedSales = () => {
     }
   }, [toast]);
 
-  // Carregar vendas com filtros e paginação
+  // Carregar vendas usando paginação real via RPC
   const loadSales = useCallback(async (page: number = 1, newFilters?: SalesFilters) => {
     setIsLoading(true);
     try {
       const activeFilters = newFilters || filters;
-      console.log('Loading sales with filters:', activeFilters, 'page:', page);
+      console.log('Loading sales via RPC with filters:', activeFilters, 'page:', page);
       
       const result = await optimizedSalesService.getSalesPaginated(page, 1000, activeFilters);
       
       setSalesData(result);
       setCurrentPage(page);
 
-      console.log(`Loaded page ${page}: ${result.sales.length} sales, total: ${result.totalCount}`);
+      console.log(`Loaded page ${page} via RPC: ${result.sales.length} sales, total: ${result.totalCount}`);
 
       if (result.totalCount > 0) {
         toast({
@@ -68,7 +68,7 @@ export const useOptimizedSales = () => {
         });
       }
     } catch (error) {
-      console.error('Error loading sales:', error);
+      console.error('Error loading sales via RPC:', error);
       toast({
         title: "Erro ao carregar vendas",
         description: "Não foi possível carregar os dados de vendas.",
@@ -93,7 +93,7 @@ export const useOptimizedSales = () => {
   // Efeito para carregar vendas quando filtros mudam
   useEffect(() => {
     if (filters.dateStart || filters.dateEnd || Object.keys(filters).length > 0) {
-      console.log('Filters changed, loading sales with:', filters);
+      console.log('Filters changed, loading sales via RPC with:', filters);
       loadSales(1, filters);
     }
   }, [filters, loadSales]);
@@ -105,9 +105,9 @@ export const useOptimizedSales = () => {
     setCurrentPage(1); // Reset para primeira página
   }, []);
 
-  // Função para mudar de página
+  // Função para mudar de página usando RPC
   const changePage = useCallback((page: number) => {
-    console.log('Changing to page:', page, 'total pages:', salesData.totalPages);
+    console.log('Changing to page via RPC:', page, 'total pages:', salesData.totalPages);
     if (page >= 1 && page <= salesData.totalPages) {
       loadSales(page);
     }

@@ -1228,6 +1228,31 @@ export type Database = {
           sale_date: string
         }[]
       }
+      get_paginated_sales: {
+        Args: {
+          page_number?: number
+          page_size?: number
+          filter_date_start?: string
+          filter_date_end?: string
+          filter_hour_start?: string
+          filter_hour_end?: string
+          filter_terminals?: string[]
+          filter_payment_type?: string
+          filter_source?: string
+        }
+        Returns: {
+          id: string
+          code: string
+          terminal: string
+          date: string
+          gross_amount: number
+          net_amount: number
+          payment_method: string
+          installments: number
+          source: string
+          total_count: number
+        }[]
+      }
       get_sales_date_range: {
         Args: Record<PropertyKey, never>
         Returns: {

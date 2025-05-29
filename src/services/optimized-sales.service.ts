@@ -2,7 +2,6 @@
 import { supabase } from "@/integrations/supabase/client";
 import { NormalizedSale } from "@/utils/sales-processor";
 import { formatCurrency } from "@/lib/formatters";
-import { fetchAllSalesWithFilters } from "./sales/sales-fetch-all";
 
 export interface SalesDateRange {
   earliest_date: string;
@@ -64,28 +63,48 @@ export const optimizedSalesService = {
     }
   },
 
-  // Buscar vendas paginadas com filtros otimizados
+  // Buscar vendas paginadas usando RPC com função SQL otimizada
   async getSalesPaginated(
     page: number = 1,
     pageSize: number = 1000,
     filters: SalesFilters = {}
   ): Promise<PaginatedSalesResult> {
     try {
-      console.log('Carregando vendas com filtros:', filters, 'página:', page);
+      console.log('Carregando vendas via RPC com filtros:', filters, 'página:', page);
       
-      // Buscar TODOS os dados da tabela usando a nova função com filtros de horário
-      const allSalesData = await fetchAllSalesWithFilters({
-        dateStart: filters.dateStart,
-        dateEnd: filters.dateEnd,
-        hourStart: filters.hourStart,
-        hourEnd: filters.hourEnd,
-        terminals: filters.terminals,
-        paymentType: filters.paymentType,
-        source: filters.source
+      // Chamar função SQL via RPC para paginação real
+      const { data: salesData, error } = await supabase.rpc('get_paginated_sales', {
+        page_number: page,
+        page_size: pageSize,
+        filter_date_start: filters.dateStart || null,
+        filter_date_end: filters.dateEnd || null,
+        filter_hour_start: filters.hourStart || null,
+        filter_hour_end: filters.hourEnd || null,
+        filter_terminals: filters.terminals || null,
+        filter_payment_type: filters.paymentType || null,
+        filter_source: filters.source || null
       });
 
+      if (error) {
+        console.error('Error in getSalesPaginated RPC:', error);
+        throw error;
+      }
+
+      if (!salesData || salesData.length === 0) {
+        return {
+          sales: [],
+          totalCount: 0,
+          totalPages: 0,
+          currentPage: page
+        };
+      }
+
+      // O total vem no primeiro registro da função SQL
+      const totalCount = salesData[0]?.total_count || 0;
+      const totalPages = Math.ceil(totalCount / pageSize);
+
       // Converter dados do banco para formato NormalizedSale
-      let sales: NormalizedSale[] = allSalesData.map((sale: any) => {
+      let sales: NormalizedSale[] = salesData.map((sale: any) => {
         // Formatar data para exibição (DD/MM/YYYY HH:MM)
         const saleDate = new Date(sale.date);
         const formattedDate = saleDate.toLocaleDateString('pt-BR', {
@@ -123,20 +142,11 @@ export const optimizedSalesService = {
         sales = sales.filter(sale => sale.brand === filters.brand);
       }
 
-      // Calcular totais
-      const totalCount = sales.length;
-      const totalPages = Math.ceil(totalCount / pageSize);
-
-      // Aplicar paginação no frontend
-      const startIndex = (page - 1) * pageSize;
-      const endIndex = startIndex + pageSize;
-      const paginatedSales = sales.slice(startIndex, endIndex);
-
-      console.log(`Total de registros encontrados: ${totalCount}, página ${page} de ${totalPages}, mostrando ${paginatedSales.length} registros`);
+      console.log(`Página ${page} carregada via RPC: ${sales.length} registros de ${totalCount} totais`);
 
       return {
-        sales: paginatedSales,
-        totalCount,
+        sales,
+        totalCount: Number(totalCount),
         totalPages,
         currentPage: page
       };
