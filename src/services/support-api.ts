@@ -10,9 +10,6 @@ export const getSupportTickets = async () => {
       *,
       client:clients!client_id (
         id, business_name, contact_name, phone, address, city, state
-      ),
-      machine:machines!machine_id (
-        id, serial_number, model
       )
     `)
     .order("created_at", { ascending: false });
@@ -28,9 +25,6 @@ export const getTicketById = async (id: string) => {
       *,
       client:clients!client_id (
         id, business_name, contact_name, phone, address, city, state
-      ),
-      machine:machines!machine_id (
-        id, serial_number, model
       )
     `)
     .eq("id", id)
@@ -44,10 +38,8 @@ export const createSupportTicket = async (ticket: CreateTicketParams) => {
   const { data, error } = await supabase
     .from("support_requests")
     .insert({
-      title: ticket.title,
       description: ticket.description,
       client_id: ticket.client_id,
-      machine_id: ticket.machine_id,
       type: ticket.type,
       priority: ticket.priority,
       status: ticket.status || "PENDING",
@@ -64,7 +56,6 @@ export const updateSupportTicket = async (id: string, updates: UpdateTicketParam
   const { data, error } = await supabase
     .from("support_requests")
     .update({
-      title: updates.title,
       description: updates.description,
       status: updates.status,
       priority: updates.priority,
@@ -86,10 +77,7 @@ export const getTicketMessages = async (ticketId: string) => {
   const { data, error } = await supabase
     .from("support_messages")
     .select(`
-      *,
-      user:profiles!user_id (
-        id, name, role
-      )
+      *
     `)
     .eq("conversation_id", ticketId)
     .order("created_at", { ascending: true });
@@ -98,7 +86,12 @@ export const getTicketMessages = async (ticketId: string) => {
     // Map conversation_id to ticket_id for compatibility
     const mappedData = data.map(msg => ({
       ...msg,
-      ticket_id: msg.conversation_id
+      ticket_id: msg.conversation_id,
+      user: {
+        id: msg.user_id,
+        name: "User",
+        role: "CLIENT"
+      }
     }));
     return { data: mappedData as SupportMessage[], error };
   }
@@ -128,7 +121,12 @@ export const sendTicketMessage = async (ticketId: string, message: string, attac
     // Map conversation_id to ticket_id for compatibility
     const mappedData = {
       ...data,
-      ticket_id: data.conversation_id
+      ticket_id: data.conversation_id,
+      user: {
+        id: data.user_id,
+        name: "User",
+        role: "CLIENT"
+      }
     };
     return { data: mappedData as SupportMessage, error };
   }

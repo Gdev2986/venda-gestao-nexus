@@ -2,7 +2,6 @@
 import React, { useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -25,11 +24,9 @@ export const SupportTicketDialog = ({
 }: SupportTicketDialogProps) => {
   const { user } = useAuth();
   const [formData, setFormData] = useState({
-    title: "",
     description: "",
     type: TicketType.MAINTENANCE,
     priority: TicketPriority.MEDIUM,
-    machine_id: "",
     attachments: [] as File[]
   });
 
@@ -40,22 +37,18 @@ export const SupportTicketDialog = ({
 
     try {
       await onSubmit({
-        title: formData.title,
         description: formData.description,
         client_id: user.id,
         type: formData.type,
         priority: formData.priority,
-        machine_id: formData.machine_id || undefined,
         attachments: formData.attachments
       });
       
       // Reset form
       setFormData({
-        title: "",
         description: "",
         type: TicketType.MAINTENANCE,
         priority: TicketPriority.MEDIUM,
-        machine_id: "",
         attachments: []
       });
       
@@ -82,17 +75,6 @@ export const SupportTicketDialog = ({
         </DialogHeader>
         
         <form onSubmit={handleSubmit} className="space-y-4">
-          <div>
-            <Label htmlFor="title">Título</Label>
-            <Input
-              id="title"
-              value={formData.title}
-              onChange={(e) => setFormData(prev => ({ ...prev, title: e.target.value }))}
-              placeholder="Descreva brevemente o problema"
-              required
-            />
-          </div>
-
           <div>
             <Label htmlFor="type">Tipo de Chamado</Label>
             <Select value={formData.type} onValueChange={(value) => setFormData(prev => ({ ...prev, type: value as TicketType }))}>
@@ -134,22 +116,6 @@ export const SupportTicketDialog = ({
               rows={4}
               required
             />
-          </div>
-
-          <div>
-            <Label htmlFor="attachments">Anexos (opcional)</Label>
-            <Input
-              id="attachments"
-              type="file"
-              multiple
-              accept="image/*,.pdf,.doc,.docx"
-              onChange={handleFileChange}
-            />
-            {formData.attachments.length > 0 && (
-              <p className="text-sm text-muted-foreground mt-1">
-                {formData.attachments.length} arquivo(s) selecionado(s)
-              </p>
-            )}
           </div>
 
           <div className="flex justify-end gap-3">

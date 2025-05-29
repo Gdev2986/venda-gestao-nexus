@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { PageHeader } from "@/components/page/PageHeader";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -22,8 +21,7 @@ const AdminSupport = () => {
     setSelectedTicket,
     loadMessages,
     sendMessage,
-    updateTicketStatus,
-    assignTicketToUser
+    updateTicketStatus
   } = useSupportSystem();
 
   const [searchTerm, setSearchTerm] = useState("");
@@ -34,7 +32,6 @@ const AdminSupport = () => {
   // Filter tickets
   const filteredTickets = tickets.filter(ticket => {
     const matchesSearch = !searchTerm || 
-      ticket.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
       ticket.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
       ticket.client?.business_name?.toLowerCase().includes(searchTerm.toLowerCase());
     
@@ -294,7 +291,7 @@ const AdminSupport = () => {
         <DialogContent className="sm:max-w-4xl max-h-[90vh]">
           <DialogHeader>
             <DialogTitle className="flex items-center justify-between">
-              <span>{selectedTicket?.title}</span>
+              <span>Chamado de Suporte</span>
               <div className="flex gap-2">
                 {selectedTicket && (
                   <Select 
@@ -385,7 +382,7 @@ const TicketsList = ({
             <div className="flex items-center justify-between">
               <CardTitle className="text-lg flex items-center gap-2">
                 <MessageSquare className="h-5 w-5 text-blue-600" />
-                {ticket.title}
+                Suporte - {ticket.client?.business_name}
               </CardTitle>
               <div className="flex gap-2">
                 {getStatusBadge(ticket.status)}

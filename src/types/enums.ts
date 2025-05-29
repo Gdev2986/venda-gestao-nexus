@@ -18,7 +18,10 @@ export enum TicketType {
   REPAIR = "REPAIR",
   TRAINING = "TRAINING",
   SUPPORT = "SUPPORT",
-  OTHER = "OTHER"
+  OTHER = "OTHER",
+  REPLACEMENT = "REPLACEMENT",
+  SUPPLIES = "SUPPLIES",
+  REMOVAL = "REMOVAL"
 }
 
 export enum UserRole {
@@ -33,4 +36,35 @@ export enum ClientStatus {
   ACTIVE = "ACTIVE",
   INACTIVE = "INACTIVE",
   SUSPENDED = "SUSPENDED"
+}
+
+export enum PaymentStatus {
+  PENDING = "PENDING",
+  APPROVED = "APPROVED",
+  REJECTED = "REJECTED",
+  PAID = "PAID",
+  PROCESSING = "PROCESSING"
+}
+
+export enum PaymentAction {
+  VIEW = "VIEW",
+  APPROVE = "APPROVE",
+  REJECT = "REJECT",
+  EDIT = "EDIT",
+  DELETE = "DELETE"
+}
+
+export enum PaymentMethod {
+  PIX = "PIX",
+  CREDIT_CARD = "CREDIT_CARD",
+  DEBIT_CARD = "DEBIT_CARD",
+  BOLETO = "BOLETO",
+  TED = "TED",
+  DOC = "DOC"
+}
+
+export enum PaymentType {
+  PIX = "PIX",
+  BOLETO = "BOLETO",
+  TED = "TED"
 }

@@ -101,15 +101,6 @@ export const SupportChat = ({
                         {message.user?.name || "Usuário"}
                       </div>
                       <div className="whitespace-pre-wrap">{message.message}</div>
-                      {message.attachments && message.attachments.length > 0 && (
-                        <div className="mt-2 space-y-1">
-                          {message.attachments.map((attachment: any, index: number) => (
-                            <div key={index} className="text-xs opacity-75">
-                              📎 {attachment.name}
-                            </div>
-                          ))}
-                        </div>
-                      )}
                       <div className="text-xs opacity-75 mt-1">
                         {formatDate(message.created_at)}
                       </div>
