@@ -61,9 +61,9 @@ export function useAdminSupport() {
         description: item.description,
         resolution: item.resolution,
         attachments: item.attachments || [],
-        client: item.client,
-        machine: item.machine,
-        assigned_user: item.assigned_user
+        client: Array.isArray(item.client) && item.client.length > 0 ? item.client[0] : item.client,
+        machine: Array.isArray(item.machine) && item.machine.length > 0 ? item.machine[0] : item.machine,
+        assigned_user: Array.isArray(item.assigned_user) && item.assigned_user.length > 0 ? item.assigned_user[0] : item.assigned_user
       }));
 
       setTickets(formattedTickets);
@@ -117,15 +117,6 @@ export function useAdminSupport() {
         .eq("id", ticketId);
 
       if (error) throw error;
-
-      // Create assignment record
-      await supabase
-        .from("support_assignments")
-        .insert({
-          ticket_id: ticketId,
-          assigned_to: assignedTo,
-          assigned_by: user!.id
-        });
 
       toast({
         title: "Chamado atribuído",

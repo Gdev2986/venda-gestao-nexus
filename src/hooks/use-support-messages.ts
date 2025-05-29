@@ -37,13 +37,13 @@ export function useSupportMessages(ticketId?: string) {
 
       const formattedMessages: SupportMessage[] = (data || []).map(item => ({
         id: item.id,
-        ticket_id: item.ticket_id,
+        ticket_id: item.ticket_id || item.conversation_id,
         user_id: item.user_id,
         message: item.message,
         attachments: item.attachments || [],
         is_read: item.is_read,
         created_at: item.created_at,
-        user: item.user
+        user: Array.isArray(item.user) && item.user.length > 0 ? item.user[0] : item.user
       }));
 
       setMessages(formattedMessages);
