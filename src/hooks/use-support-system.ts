@@ -22,6 +22,29 @@ export const useSupportSystem = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [isCreating, setIsCreating] = useState(false);
 
+  // Get the client ID for the current user
+  const getUserClientId = async (): Promise<string | null> => {
+    if (!user) return null;
+    
+    try {
+      const { data, error } = await supabase
+        .from("user_client_access")
+        .select("client_id")
+        .eq("user_id", user.id)
+        .single();
+      
+      if (error) {
+        console.error("Error getting user client ID:", error);
+        return null;
+      }
+      
+      return data?.client_id || null;
+    } catch (error) {
+      console.error("Error getting user client ID:", error);
+      return null;
+    }
+  };
+
   // Load tickets
   const loadTickets = async () => {
     setIsLoading(true);
@@ -32,7 +55,12 @@ export const useSupportSystem = () => {
       // Filter tickets based on user role
       let filteredTickets = data || [];
       if (userRole === "CLIENT") {
-        filteredTickets = filteredTickets.filter(ticket => ticket.client_id === user?.id);
+        const clientId = await getUserClientId();
+        if (clientId) {
+          filteredTickets = filteredTickets.filter(ticket => ticket.client_id === clientId);
+        } else {
+          filteredTickets = [];
+        }
       }
       
       setTickets(filteredTickets);
@@ -63,7 +91,23 @@ export const useSupportSystem = () => {
   const createTicket = async (ticketData: CreateTicketParams): Promise<void> => {
     setIsCreating(true);
     try {
-      const { data, error } = await createSupportTicket(ticketData);
+      if (!user) {
+        throw new Error("Usuário não autenticado");
+      }
+
+      // Get the client ID for the current user
+      const clientId = await getUserClientId();
+      if (!clientId) {
+        throw new Error("Não foi possível encontrar o cliente associado ao usuário");
+      }
+
+      // Create ticket with the correct client_id
+      const ticketWithClientId = {
+        ...ticketData,
+        client_id: clientId
+      };
+
+      const { data, error } = await createSupportTicket(ticketWithClientId);
       if (error) throw error;
       
       await loadTickets();
@@ -75,7 +119,7 @@ export const useSupportSystem = () => {
       console.error("Error creating ticket:", error);
       toast({
         title: "Erro",
-        description: "Não foi possível criar o chamado",
+        description: error instanceof Error ? error.message : "Não foi possível criar o chamado",
         variant: "destructive",
       });
       throw error;
@@ -84,7 +128,7 @@ export const useSupportSystem = () => {
     }
   };
 
-  // Send message - removed attachments parameter
+  // Send message
   const sendMessage = async (ticketId: string, message: string) => {
     try {
       const { data, error } = await sendTicketMessage(ticketId, message);
