@@ -9,7 +9,6 @@ import { useIsMobile } from "@/hooks/use-mobile";
 import NotificationDropdown from "@/components/layout/NotificationDropdown";
 import ThemeToggle from "@/components/theme/theme-toggle";
 import { useAuth } from "@/hooks/use-auth";
-import { AnimatePresence } from "framer-motion";
 import { Toaster } from "@/components/ui/sonner";
 
 const MainLayout = () => {
@@ -22,9 +21,9 @@ const MainLayout = () => {
   const isMobile = useIsMobile();
   
   // Get user role from auth hook
-  const { userRole } = useAuth();
+  const { userRole, isLoading } = useAuth();
 
-  console.log("MainLayout render - userRole:", userRole, "sidebarOpen:", sidebarOpen);
+  console.log("MainLayout render - userRole:", userRole, "sidebarOpen:", sidebarOpen, "isLoading:", isLoading);
 
   // Close sidebar on mobile by default
   useEffect(() => {
@@ -42,9 +41,21 @@ const MainLayout = () => {
 
   const toggleSidebar = () => setSidebarOpen(!sidebarOpen);
 
+  // Show loading if still loading auth
+  if (isLoading) {
+    return (
+      <div className="flex flex-col items-center justify-center h-screen bg-background">
+        <div className="flex flex-col items-center space-y-4">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+          <p className="text-muted-foreground">Carregando...</p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="flex h-screen overflow-hidden bg-background w-full">
-      {/* Sidebar component - mounted always but conditionally shown */}
+      {/* Sidebar component - always render but conditionally position */}
       <Sidebar 
         isOpen={sidebarOpen} 
         isMobile={isMobile} 
@@ -79,7 +90,7 @@ const MainLayout = () => {
           </div>
         </header>
         
-        {/* Main scrollable content with improved padding for mobile */}
+        {/* Main scrollable content */}
         <main className="flex-1 w-full overflow-y-auto overflow-x-hidden p-2 sm:p-4 md:p-6">
           <div className="mx-auto w-full">
             <Outlet />

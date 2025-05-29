@@ -17,7 +17,7 @@ const RootLayout = () => {
     user: user?.id
   });
   
-  // Se ainda está carregando auth ou user data, mostrar spinner
+  // Se ainda está carregando auth ou user data, mostrar spinner com melhor UI
   if (isLoading) {
     console.log("RootLayout: Still loading, showing spinner");
     return (
@@ -50,7 +50,7 @@ const RootLayout = () => {
     return <Navigate to={dashboardPath} replace />;
   }
   
-  // Se autenticado mas não tem role ainda, aguardar
+  // Se autenticado mas não tem role ainda, aguardar com timeout
   console.log("RootLayout: User authenticated but no valid role yet, waiting...");
   return (
     <div className="flex flex-col items-center justify-center h-screen bg-background">

@@ -14,7 +14,7 @@ import FinancialRoutes from "./routes/financialRoutes";
 import LogisticsRoutes from "./routes/logisticsRoutes";
 
 // Layouts & Pages
-import MainLayout from "./components/layout/MainLayout";
+import MainLayout from "./layouts/MainLayout";
 import Landing from "./pages/landing/Landing";
 import NotFound from "./pages/NotFound";
 import Unauthorized from "./pages/Unauthorized";
@@ -45,11 +45,13 @@ function App() {
   // Show loading only when we're checking auth for protected routes
   if (!isPublicRoute && isLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-primary" />
-      </div>
-    );
-  }
+      <div className="min-h-screen flex items-center justify-center bg-background">
+        <div className="flex flex-col items-center space-y-4">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+          <p className="text-muted-foreground">Verificando autenticação...</p>
+        </div>
+      );
+    }
 
   return (
     <Routes>
