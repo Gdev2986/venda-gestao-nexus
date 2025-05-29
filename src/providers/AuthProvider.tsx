@@ -71,32 +71,55 @@ const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => 
       try {
         console.log("Loading user profile for:", userId);
         
-        const { data, error } = await supabase
+        // First try to get profile directly
+        const { data: profileData, error: profileError } = await supabase
           .from("profiles")
           .select("*")
           .eq("id", userId)
           .single();
 
-        if (error) {
-          console.error("Error loading profile:", error);
-          dispatch({
-            type: "SET_ERROR",
-            payload: "Erro ao carregar perfil do usuário",
-          });
-          return;
-        }
+        if (profileError) {
+          console.error("Error loading profile:", profileError);
+          // If profile doesn't exist, create one with CLIENT role as default
+          const { data: newProfile, error: createError } = await supabase
+            .from("profiles")
+            .insert({
+              id: userId,
+              email: state.user?.email || "",
+              name: state.user?.email?.split("@")[0] || "Usuário",
+              role: "CLIENT"
+            })
+            .select()
+            .single();
 
-        if (data) {
-          console.log("Profile loaded successfully:", data);
+          if (createError) {
+            console.error("Error creating profile:", createError);
+            dispatch({
+              type: "SET_ERROR",
+              payload: "Erro ao criar perfil do usuário",
+            });
+            return;
+          }
+
+          if (newProfile) {
+            const userProfile: UserProfile = {
+              ...newProfile,
+              role: newProfile.role as UserRole,
+            };
+            dispatch({ type: "SET_PROFILE", payload: userProfile });
+          }
+        } else if (profileData) {
+          console.log("Profile loaded successfully:", profileData);
           const userProfile: UserProfile = {
-            ...data,
-            role: data.role as UserRole,
+            ...profileData,
+            role: profileData.role as UserRole,
           };
           dispatch({ type: "SET_PROFILE", payload: userProfile });
-          
-          const needsChange = await AuthManager.needsPasswordChange(userId);
-          dispatch({ type: "SET_NEEDS_PASSWORD_CHANGE", payload: needsChange });
         }
+        
+        // Check if user needs password change
+        const needsChange = await AuthManager.needsPasswordChange(userId);
+        dispatch({ type: "SET_NEEDS_PASSWORD_CHANGE", payload: needsChange });
       } catch (error) {
         console.error("Exception loading profile:", error);
         dispatch({
@@ -105,7 +128,7 @@ const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => 
         });
       }
     },
-    []
+    [state.user]
   );
 
   const refreshSession = React.useCallback(async () => {
@@ -152,7 +175,10 @@ const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => 
       
       if (session?.user) {
         console.log("User authenticated, loading profile");
-        await loadUserProfile(session.user.id);
+        // Use setTimeout to avoid potential deadlocks
+        setTimeout(() => {
+          loadUserProfile(session.user.id);
+        }, 0);
       } else {
         console.log("No user, clearing profile");
         dispatch({ type: "SET_PROFILE", payload: null });
