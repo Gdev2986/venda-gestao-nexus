@@ -17,7 +17,6 @@ import {
   CardFooter
 } from "@/components/ui/card";
 import { NotificationType } from "@/types/notification.types";
-import { UserRole } from "@/types";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import { useNotifications } from "@/contexts/notifications/NotificationsContext";
@@ -64,7 +63,7 @@ export const SendNotificationForm = () => {
     setSending(true);
     try {
       const targetRoles = recipientType === "all" 
-        ? ["ADMIN", "CLIENT", "PARTNER", "FINANCIAL", "LOGISTICS", "USER"]
+        ? ["ADMIN", "CLIENT", "PARTNER", "FINANCIAL", "LOGISTICS"]
         : selectedRoles;
       
       await sendNotificationToRoles(title, message, type, targetRoles);
@@ -76,8 +75,18 @@ export const SendNotificationForm = () => {
       setRecipientType("all");
       setSelectedRoles([]);
       
+      toast({
+        title: "Sucesso",
+        description: `Notificação enviada para ${targetRoles.length} função(ões)`,
+      });
+      
     } catch (error) {
       console.error("Error sending notification:", error);
+      toast({
+        title: "Erro",
+        description: "Falha ao enviar notificação. Verifique se as funções do banco de dados estão configuradas corretamente.",
+        variant: "destructive",
+      });
     } finally {
       setSending(false);
     }
@@ -89,7 +98,6 @@ export const SendNotificationForm = () => {
     { value: "PARTNER", label: "Parceiro" },
     { value: "FINANCIAL", label: "Financeiro" },
     { value: "LOGISTICS", label: "Logística" },
-    { value: "USER", label: "Usuário" },
   ];
 
   return (
@@ -135,6 +143,7 @@ export const SendNotificationForm = () => {
                 <SelectItem value={NotificationType.MACHINE}>Máquinas</SelectItem>
                 <SelectItem value={NotificationType.SUPPORT}>Suporte</SelectItem>
                 <SelectItem value={NotificationType.LOGISTICS}>Logística</SelectItem>
+                <SelectItem value={NotificationType.ADMIN_NOTIFICATION}>Admin</SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -170,6 +179,13 @@ export const SendNotificationForm = () => {
                   </div>
                 ))}
               </div>
+              {selectedRoles.length > 0 && (
+                <div className="mt-2 p-2 bg-muted rounded text-sm">
+                  <strong>Selecionadas:</strong> {selectedRoles.map(role => 
+                    availableRoles.find(r => r.value === role)?.label
+                  ).join(", ")}
+                </div>
+              )}
             </div>
           )}
         </CardContent>

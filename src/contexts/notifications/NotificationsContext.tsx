@@ -177,7 +177,8 @@ export const NotificationsProvider: React.FC<{ children: React.ReactNode }> = ({
     data: any = {}
   ) => {
     try {
-      // Use direct SQL through a stored procedure call
+      console.log('Sending notification to roles:', { title, message, type, roles, data });
+      
       const { error } = await supabase
         .rpc('send_notification_to_roles' as any, {
           notification_title: title,
@@ -187,19 +188,34 @@ export const NotificationsProvider: React.FC<{ children: React.ReactNode }> = ({
           notification_data: data
         });
 
-      if (error) throw error;
+      if (error) {
+        console.error('Database function error:', error);
+        throw error;
+      }
 
+      console.log('Notification sent successfully to roles:', roles);
+      
       toast({
         title: "Sucesso",
-        description: "Notificação enviada com sucesso"
+        description: `Notificação enviada para ${roles.length} função(ões): ${roles.join(', ')}`
       });
     } catch (error: any) {
       console.error("Error sending notification to roles:", error);
+      
+      // Provide more detailed error information
+      let errorMessage = "Falha ao enviar notificação";
+      if (error.message?.includes('Could not find the function')) {
+        errorMessage = "Função do banco de dados não encontrada. Verifique se as funções foram criadas corretamente.";
+      } else if (error.code === 'PGRST202') {
+        errorMessage = "Função de envio de notificação não está disponível no banco de dados.";
+      }
+      
       toast({
         title: "Erro",
-        description: "Falha ao enviar notificação",
+        description: errorMessage,
         variant: "destructive"
       });
+      throw error;
     }
   };
 
@@ -211,7 +227,8 @@ export const NotificationsProvider: React.FC<{ children: React.ReactNode }> = ({
     data: any = {}
   ) => {
     try {
-      // Use direct SQL through a stored procedure call
+      console.log('Sending notification to user:', { userId, title, message, type, data });
+      
       const { error } = await supabase
         .rpc('send_notification_to_user' as any, {
           target_user_id: userId,
@@ -221,19 +238,34 @@ export const NotificationsProvider: React.FC<{ children: React.ReactNode }> = ({
           notification_data: data
         });
 
-      if (error) throw error;
+      if (error) {
+        console.error('Database function error:', error);
+        throw error;
+      }
 
+      console.log('Notification sent successfully to user:', userId);
+      
       toast({
         title: "Sucesso",
         description: "Notificação enviada com sucesso"
       });
     } catch (error: any) {
       console.error("Error sending notification to user:", error);
+      
+      // Provide more detailed error information
+      let errorMessage = "Falha ao enviar notificação";
+      if (error.message?.includes('Could not find the function')) {
+        errorMessage = "Função do banco de dados não encontrada. Verifique se as funções foram criadas corretamente.";
+      } else if (error.code === 'PGRST202') {
+        errorMessage = "Função de envio de notificação não está disponível no banco de dados.";
+      }
+      
       toast({
         title: "Erro",
-        description: "Falha ao enviar notificação",
+        description: errorMessage,
         variant: "destructive"
       });
+      throw error;
     }
   };
 
