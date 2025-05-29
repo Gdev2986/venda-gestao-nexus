@@ -207,9 +207,6 @@ const ClientSupport = () => {
                       <span className={getPriorityColor(ticket.priority)}>
                         Prioridade: {getPriorityText(ticket.priority)}
                       </span>
-                      {ticket.machine && (
-                        <span>Máquina: {ticket.machine.serial_number}</span>
-                      )}
                     </div>
                     <span>
                       {format(new Date(ticket.created_at), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR })}

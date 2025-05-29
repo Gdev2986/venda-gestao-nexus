@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { Send, Paperclip, Download, X, FileText, Image } from "lucide-react";
+import { Send, Paperclip } from "lucide-react";
 import { SupportTicket, SupportMessage, CreateMessageParams } from "@/types/support.types";
 import { useSupportMessages } from "@/hooks/use-support-messages";
 import { useAuth } from "@/hooks/use-auth";
@@ -27,7 +27,6 @@ export const SupportChatDialog: React.FC<SupportChatDialogProps> = ({
   const { user } = useAuth();
   const { messages, isLoading, sendMessage } = useSupportMessages(ticket?.id);
   const [newMessage, setNewMessage] = useState("");
-  const [attachments, setAttachments] = useState<File[]>([]);
   const [isSending, setIsSending] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
@@ -35,34 +34,23 @@ export const SupportChatDialog: React.FC<SupportChatDialogProps> = ({
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
 
-  const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const files = Array.from(event.target.files || []);
-    setAttachments(prev => [...prev, ...files]);
-  };
-
-  const removeAttachment = (index: number) => {
-    setAttachments(prev => prev.filter((_, i) => i !== index));
-  };
-
   const handleSendMessage = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!newMessage.trim() && attachments.length === 0) return;
+    if (!newMessage.trim()) return;
     if (!ticket) return;
 
     setIsSending(true);
 
     const params: CreateMessageParams = {
-      ticket_id: ticket.id,
-      message: newMessage.trim(),
-      attachments: attachments.length > 0 ? attachments : undefined
+      conversation_id: ticket.id,
+      message: newMessage.trim()
     };
 
     const success = await sendMessage(params);
     
     if (success) {
       setNewMessage("");
-      setAttachments([]);
     }
     
     setIsSending(false);
@@ -86,21 +74,6 @@ export const SupportChatDialog: React.FC<SupportChatDialogProps> = ({
       case 'CANCELED': return 'Cancelado';
       default: return status;
     }
-  };
-
-  const formatFileSize = (bytes: number) => {
-    if (bytes === 0) return '0 Bytes';
-    const k = 1024;
-    const sizes = ['Bytes', 'KB', 'MB', 'GB'];
-    const i = Math.floor(Math.log(bytes) / Math.log(k));
-    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
-  };
-
-  const getFileIcon = (file: File) => {
-    if (file.type.startsWith('image/')) {
-      return <Image className="h-4 w-4" />;
-    }
-    return <FileText className="h-4 w-4" />;
   };
 
   if (!ticket) return null;
@@ -146,28 +119,6 @@ export const SupportChatDialog: React.FC<SupportChatDialogProps> = ({
                     </div>
                   </div>
                   <p className="text-sm">{ticket.description}</p>
-                  
-                  {ticket.attachments && ticket.attachments.length > 0 && (
-                    <div className="mt-3 space-y-2">
-                      {ticket.attachments.map((attachment, index) => (
-                        <div key={index} className="flex items-center gap-2 p-2 bg-background rounded border">
-                          {attachment.type.startsWith('image/') ? (
-                            <Image className="h-4 w-4" />
-                          ) : (
-                            <FileText className="h-4 w-4" />
-                          )}
-                          <span className="text-sm flex-1">{attachment.name}</span>
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => window.open(attachment.url, '_blank')}
-                          >
-                            <Download className="h-4 w-4" />
-                          </Button>
-                        </div>
-                      ))}
-                    </div>
-                  )}
                 </div>
 
                 {/* Messages */}
@@ -194,28 +145,6 @@ export const SupportChatDialog: React.FC<SupportChatDialogProps> = ({
                         </p>
                       </div>
                       <p className="text-sm">{message.message}</p>
-                      
-                      {message.attachments && message.attachments.length > 0 && (
-                        <div className="mt-2 space-y-1">
-                          {message.attachments.map((attachment, index) => (
-                            <div key={index} className="flex items-center gap-2 p-2 bg-background/20 rounded">
-                              {attachment.type.startsWith('image/') ? (
-                                <Image className="h-4 w-4" />
-                              ) : (
-                                <FileText className="h-4 w-4" />
-                              )}
-                              <span className="text-xs flex-1">{attachment.name}</span>
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                onClick={() => window.open(attachment.url, '_blank')}
-                              >
-                                <Download className="h-4 w-4" />
-                              </Button>
-                            </div>
-                          ))}
-                        </div>
-                      )}
                     </div>
                   </div>
                 ))}
@@ -226,44 +155,7 @@ export const SupportChatDialog: React.FC<SupportChatDialogProps> = ({
 
           {ticket.status !== 'COMPLETED' && ticket.status !== 'CANCELED' && (
             <div className="mt-4 p-4 border rounded-lg">
-              {attachments.length > 0 && (
-                <div className="mb-3 space-y-2">
-                  {attachments.map((file, index) => (
-                    <div key={index} className="flex items-center gap-2 p-2 bg-muted rounded">
-                      {getFileIcon(file)}
-                      <span className="text-sm flex-1">{file.name}</span>
-                      <span className="text-xs text-muted-foreground">
-                        ({formatFileSize(file.size)})
-                      </span>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => removeAttachment(index)}
-                      >
-                        <X className="h-4 w-4" />
-                      </Button>
-                    </div>
-                  ))}
-                </div>
-              )}
-              
               <form onSubmit={handleSendMessage} className="flex gap-2">
-                <input
-                  type="file"
-                  id="message-file-upload"
-                  multiple
-                  accept="image/*,.pdf,.doc,.docx,.txt"
-                  onChange={handleFileSelect}
-                  className="hidden"
-                />
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  onClick={() => document.getElementById('message-file-upload')?.click()}
-                >
-                  <Paperclip className="h-4 w-4" />
-                </Button>
                 <Input
                   value={newMessage}
                   onChange={(e) => setNewMessage(e.target.value)}
@@ -272,7 +164,7 @@ export const SupportChatDialog: React.FC<SupportChatDialogProps> = ({
                 />
                 <Button 
                   type="submit" 
-                  disabled={isSending || (!newMessage.trim() && attachments.length === 0)}
+                  disabled={isSending || !newMessage.trim()}
                 >
                   <Send className="h-4 w-4" />
                 </Button>

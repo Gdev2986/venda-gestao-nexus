@@ -155,23 +155,14 @@ export const AdminSupportTicketCard: React.FC<AdminSupportTicketCardProps> = ({
             <p className="text-sm line-clamp-3">{ticket.description}</p>
           </div>
 
-          {ticket.machine && (
-            <div>
-              <p className="text-sm text-muted-foreground mb-1">Máquina:</p>
-              <p className="text-sm">{ticket.machine.serial_number} - {ticket.machine.model}</p>
-            </div>
-          )}
-
-          {ticket.assigned_user && (
+          {ticket.technician_id && (
             <div>
               <p className="text-sm text-muted-foreground mb-1">Atribuído para:</p>
               <div className="flex items-center gap-2">
                 <Avatar className="h-6 w-6">
-                  <AvatarFallback className="text-xs">
-                    {ticket.assigned_user.name?.[0] || 'U'}
-                  </AvatarFallback>
+                  <AvatarFallback className="text-xs">U</AvatarFallback>
                 </Avatar>
-                <span className="text-sm">{ticket.assigned_user.name}</span>
+                <span className="text-sm">Técnico</span>
               </div>
             </div>
           )}

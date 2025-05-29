@@ -12,7 +12,10 @@ export enum SupportRequestType {
   REPAIR = "REPAIR", 
   TRAINING = "TRAINING",
   SUPPORT = "SUPPORT",
-  OTHER = "OTHER"
+  OTHER = "OTHER",
+  REPLACEMENT = "REPLACEMENT",
+  SUPPLIES = "SUPPLIES",
+  REMOVAL = "REMOVAL"
 }
 
 export enum SupportRequestPriority {

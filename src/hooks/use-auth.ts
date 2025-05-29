@@ -2,6 +2,7 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { User, Session } from '@supabase/supabase-js';
+import { UserRole } from '@/types';
 
 interface UserData {
   id: string;
@@ -28,6 +29,7 @@ export function useAuth() {
 
   const isAuthenticated = !!user && !!session;
   const userRole = user?.role || null;
+  const needsPasswordChange = false; // Add this property
 
   useEffect(() => {
     // Get initial session
@@ -128,6 +130,7 @@ export function useAuth() {
     error,
     isAuthenticated,
     userRole,
+    needsPasswordChange,
     signIn,
     signOut
   };

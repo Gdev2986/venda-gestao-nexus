@@ -11,7 +11,7 @@ import { motion } from "framer-motion";
 
 interface PrivateRouteProps {
   children: React.ReactNode;
-  allowedRoles?: UserRole[];
+  allowedRoles?: string[];
   redirectTo?: string;
 }
 
@@ -23,18 +23,6 @@ export const PrivateRoute: React.FC<PrivateRouteProps> = ({
   const { user, isLoading, isAuthenticated, userRole, error } = useAuth();
   const location = useLocation();
   const { toast } = useToast();
-
-  // Debug log
-  React.useEffect(() => {
-    console.log("PrivateRoute render status:", {
-      isLoading,
-      isAuthenticated,
-      userRole,
-      path: location.pathname,
-      allowedRoles,
-      error
-    });
-  }, [isLoading, isAuthenticated, userRole, location.pathname, allowedRoles, error]);
 
   // Se ainda está carregando
   if (isLoading) {
@@ -75,7 +63,7 @@ export const PrivateRoute: React.FC<PrivateRouteProps> = ({
       });
       
       try {
-        const dashboardPath = getDashboardPath(userRole);
+        const dashboardPath = getDashboardPath(userRole as UserRole);
         return <Navigate to={dashboardPath} replace />;
       } catch (error) {
         console.error("Error getting dashboard path:", error);
