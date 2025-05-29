@@ -13,7 +13,7 @@ import { formatDate } from "@/utils/format";
 interface SupportChatProps {
   ticketId: string;
   messages: SupportMessage[];
-  onSendMessage: (message: string) => Promise<void>;
+  onSendMessage: (message: string, attachments?: any) => Promise<void>;
   isLoading?: boolean;
 }
 

@@ -2,7 +2,7 @@
 import React from "react";
 import { Routes, Route } from "react-router-dom";
 import { RequireAuth } from "@/components/auth/RequireAuth";
-import { UserRole } from "@/types";
+import { UserRole } from "@/types/enums";
 
 // Import pages
 import LogisticsDashboard from "@/pages/logistics/Dashboard";

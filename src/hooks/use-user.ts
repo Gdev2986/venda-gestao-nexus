@@ -15,14 +15,14 @@ interface UserProfile {
 }
 
 export function useUser() {
-  const { user: authUser, userProfile, userRole } = useAuth();
+  const { user: authUser, profile, userRole } = useAuth();
   const [user, setUser] = useState<UserProfile | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
 
   useEffect(() => {
     const fetchUserProfile = async () => {
-      if (!authUser || !userProfile) {
+      if (!authUser || !profile) {
         setUser(null);
         setIsLoading(false);
         return;
@@ -31,16 +31,16 @@ export function useUser() {
       try {
         // Transform the profile data to match the UserProfile type
         const userProfileData: UserProfile = {
-          id: userProfile.id,
-          email: userProfile.email,
-          name: userProfile.name,
-          role: userProfile.role as UserRole,
-          avatar_url: userProfile.avatar,
-          phone: userProfile.phone
+          id: profile.id,
+          email: profile.email,
+          name: profile.name,
+          role: profile.role as UserRole,
+          avatar_url: profile.avatar,
+          phone: profile.phone
         };
 
         // Fetch client_id if needed
-        if (userProfile.role === UserRole.CLIENT) {
+        if (profile.role === UserRole.CLIENT) {
           const { data: clientData } = await supabase
             .from("user_client_access")
             .select("client_id")
@@ -62,7 +62,7 @@ export function useUser() {
     };
 
     fetchUserProfile();
-  }, [authUser, userProfile, userRole]);
+  }, [authUser, profile, userRole]);
 
   return { user, isLoading, error };
 }
