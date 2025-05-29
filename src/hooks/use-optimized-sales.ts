@@ -30,15 +30,13 @@ export const useOptimizedSales = () => {
       setDateRange(dateRangeData);
       setAvailableDates(datesData);
 
-      // Configurar filtro padrão para ontem se ainda não foi definido
-      if (!filters.dateStart && !filters.dateEnd && dateRangeData) {
-        const yesterday = optimizedSalesService.getYesterday();
-        setFilters(prev => ({
-          ...prev,
-          dateStart: yesterday,
-          dateEnd: yesterday
-        }));
-      }
+      // SEMPRE configurar filtro padrão para ontem
+      const yesterday = optimizedSalesService.getYesterday();
+      setFilters(prev => ({
+        ...prev,
+        dateStart: yesterday,
+        dateEnd: yesterday
+      }));
     } catch (error) {
       console.error('Error loading metadata:', error);
       toast({
@@ -47,17 +45,21 @@ export const useOptimizedSales = () => {
         variant: "destructive"
       });
     }
-  }, [filters.dateStart, filters.dateEnd, toast]);
+  }, [toast]);
 
   // Carregar vendas com filtros e paginação
   const loadSales = useCallback(async (page: number = 1, newFilters?: SalesFilters) => {
     setIsLoading(true);
     try {
       const activeFilters = newFilters || filters;
+      console.log('Loading sales with filters:', activeFilters, 'page:', page);
+      
       const result = await optimizedSalesService.getSalesPaginated(page, 1000, activeFilters);
       
       setSalesData(result);
       setCurrentPage(page);
+
+      console.log(`Loaded page ${page}: ${result.sales.length} sales, total: ${result.totalCount}`);
 
       if (result.totalCount > 0) {
         toast({
@@ -86,23 +88,26 @@ export const useOptimizedSales = () => {
   // Efeito inicial para carregar metadados
   useEffect(() => {
     loadMetadata();
-  }, []);
+  }, [loadMetadata]);
 
   // Efeito para carregar vendas quando filtros mudam
   useEffect(() => {
     if (filters.dateStart || filters.dateEnd || Object.keys(filters).length > 0) {
+      console.log('Filters changed, loading sales with:', filters);
       loadSales(1, filters);
     }
-  }, [filters]);
+  }, [filters, loadSales]);
 
   // Função para atualizar filtros
   const updateFilters = useCallback((newFilters: Partial<SalesFilters>) => {
+    console.log('Updating filters:', newFilters);
     setFilters(prev => ({ ...prev, ...newFilters }));
     setCurrentPage(1); // Reset para primeira página
   }, []);
 
   // Função para mudar de página
   const changePage = useCallback((page: number) => {
+    console.log('Changing to page:', page, 'total pages:', salesData.totalPages);
     if (page >= 1 && page <= salesData.totalPages) {
       loadSales(page);
     }

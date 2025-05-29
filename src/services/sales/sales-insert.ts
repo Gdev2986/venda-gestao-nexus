@@ -7,7 +7,7 @@ import { convertBrazilianDateToISO, convertPaymentMethod } from './date-utils';
 import { ensureMachinesExist } from './machine-utils';
 
 // Função para tentar inserir com retry em caso de falha
-const insertWithRetry = async (salesData: SaleInsert[], maxRetries: number = 3): Promise<void> => {
+const insertWithRetry = async (salesData: SaleInsert[], maxRetries: number = 2): Promise<void> => {
   let lastError: Error | null = null;
   
   for (let attempt = 1; attempt <= maxRetries; attempt++) {
@@ -35,8 +35,8 @@ const insertWithRetry = async (salesData: SaleInsert[], maxRetries: number = 3):
         throw lastError;
       }
       
-      // Aguardar antes da próxima tentativa (backoff exponencial)
-      const waitTime = Math.pow(2, attempt) * 1000; // 2s, 4s, 8s...
+      // Aguardar antes da próxima tentativa (backoff reduzido)
+      const waitTime = attempt * 200; // 200ms, 400ms...
       console.log(`Aguardando ${waitTime}ms antes da próxima tentativa...`);
       await new Promise(resolve => setTimeout(resolve, waitTime));
     }
@@ -121,8 +121,8 @@ export const insertSales = async (sales: NormalizedSale[]): Promise<void> => {
     // Garantir IDs únicos
     const uniqueSalesData = ensureUniqueIds(salesData);
 
-    // Insert sales in smaller batches to avoid trigger conflicts
-    const batchSize = 25; // Batches menores para evitar problemas
+    // Insert sales in larger batches para ser mais rápido
+    const batchSize = 100; // Aumentado para ser mais rápido
     let totalInserted = 0;
     
     for (let i = 0; i < uniqueSalesData.length; i += batchSize) {
@@ -134,13 +134,13 @@ export const insertSales = async (sales: NormalizedSale[]): Promise<void> => {
       
       try {
         // Usar função com retry para cada batch
-        await insertWithRetry(batch, 3);
+        await insertWithRetry(batch, 2);
         totalInserted += batch.length;
         console.log(`Batch ${batchNumber} inserted successfully. Total so far: ${totalInserted}/${uniqueSalesData.length}`);
         
-        // Pequena pausa entre batches para dar tempo ao trigger processar
+        // Pausa menor entre batches para ser mais rápido
         if (i + batchSize < uniqueSalesData.length) {
-          await new Promise(resolve => setTimeout(resolve, 500));
+          await new Promise(resolve => setTimeout(resolve, 100));
         }
         
       } catch (error) {

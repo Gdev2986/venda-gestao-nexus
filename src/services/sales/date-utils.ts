@@ -13,6 +13,7 @@ export const convertBrazilianDateToISO = (dateStr: string): string => {
     if (match) {
       const [, day, month, year, hours = '00', minutes = '00', seconds = '00'] = match;
       // Create ISO string: YYYY-MM-DDTHH:mm:ss.sssZ
+      // CORRIGIR: usar timezone local em vez de UTC
       const isoDate = new Date(
         parseInt(year),
         parseInt(month) - 1, // Month is 0-indexed
@@ -21,6 +22,13 @@ export const convertBrazilianDateToISO = (dateStr: string): string => {
         parseInt(minutes),
         parseInt(seconds)
       );
+      
+      // Verificar se a data é válida
+      if (isNaN(isoDate.getTime())) {
+        console.warn('Invalid date created:', dateStr, isoDate);
+        return new Date().toISOString();
+      }
+      
       return isoDate.toISOString();
     }
   }

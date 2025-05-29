@@ -3,7 +3,7 @@ import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { CalendarIcon, Filter, X } from "lucide-react";
+import { CalendarIcon, Filter, X, Clock } from "lucide-react";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { format } from "date-fns";
@@ -99,7 +99,7 @@ const OptimizedSalesFilter = ({
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
           {/* Filtro de Período */}
           <div className="space-y-2">
             <label className="text-sm font-medium">Período</label>
@@ -153,7 +153,11 @@ const OptimizedSalesFilter = ({
           </div>
 
           {/* Filtro de Horário */}
-          <div>
+          <div className="space-y-2">
+            <label className="text-sm font-medium flex items-center gap-2">
+              <Clock className="h-4 w-4" />
+              Horário
+            </label>
             <TimeRangeFilter
               startHour={filters.hourStart}
               endHour={filters.hourEnd}
@@ -203,6 +207,21 @@ const OptimizedSalesFilter = ({
               </SelectContent>
             </Select>
           </div>
+
+          {/* Botão para limpar filtros */}
+          <div className="space-y-2">
+            <label className="text-sm font-medium invisible">Ações</label>
+            {hasActiveFilters && (
+              <Button
+                variant="outline"
+                onClick={onResetFilters}
+                className="w-full flex items-center gap-2"
+              >
+                <X className="h-4 w-4" />
+                Limpar Filtros
+              </Button>
+            )}
+          </div>
         </div>
 
         {/* Filtro de Terminais */}
@@ -215,20 +234,6 @@ const OptimizedSalesFilter = ({
             />
           </div>
         </div>
-
-        {/* Botão para limpar filtros */}
-        {hasActiveFilters && (
-          <div className="flex justify-end">
-            <Button
-              variant="outline"
-              onClick={onResetFilters}
-              className="flex items-center gap-2"
-            >
-              <X className="h-4 w-4" />
-              Limpar Filtros
-            </Button>
-          </div>
-        )}
       </CardContent>
     </Card>
   );

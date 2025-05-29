@@ -1,8 +1,8 @@
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Activity, DollarSign, TrendingUp, CreditCard } from "lucide-react";
 import { formatCurrency } from "@/lib/formatters";
 import { NormalizedSale } from "@/utils/sales-processor";
+import { TrendingUp, DollarSign, CreditCard, Activity } from "lucide-react";
 
 interface SalesStatCardsProps {
   filteredSales: NormalizedSale[];
@@ -10,89 +10,59 @@ interface SalesStatCardsProps {
 }
 
 export const SalesStatCards = ({ filteredSales, isLoading }: SalesStatCardsProps) => {
-  // Calculate statistics
-  const totalAmount = filteredSales.reduce((sum, sale) => sum + sale.gross_amount, 0);
-  const averageAmount = filteredSales.length > 0 ? totalAmount / filteredSales.length : 0;
-  const uniqueTerminals = new Set(filteredSales.map(sale => sale.terminal)).size;
-  const approvedSales = filteredSales.filter(sale => sale.status.toLowerCase() === 'aprovada').length;
+  const totalSales = filteredSales.length;
+  const totalGrossAmount = filteredSales.reduce((sum, sale) => sum + sale.gross_amount, 0);
+  
+  // Calcular valor líquido baseado em 97% do valor bruto
+  const totalNetAmount = totalGrossAmount * 0.97;
+  
+  const avgTicket = totalSales > 0 ? totalGrossAmount / totalSales : 0;
+
+  const stats = [
+    {
+      title: "Total de Vendas",
+      value: isLoading ? "..." : totalSales.toLocaleString('pt-BR'),
+      icon: Activity,
+      color: "text-blue-600"
+    },
+    {
+      title: "Valor Bruto",
+      value: isLoading ? "..." : formatCurrency(totalGrossAmount),
+      icon: DollarSign,
+      color: "text-green-600"
+    },
+    {
+      title: "Valor Líquido",
+      value: isLoading ? "..." : formatCurrency(totalNetAmount),
+      icon: TrendingUp,
+      color: "text-purple-600"
+    },
+    {
+      title: "Ticket Médio",
+      value: isLoading ? "..." : formatCurrency(avgTicket),
+      icon: CreditCard,
+      color: "text-orange-600"
+    }
+  ];
 
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-      <Card className="border-l-4 border-l-blue-500">
-        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-          <CardTitle className="text-sm font-medium">Total de Transações</CardTitle>
-          <Activity className="h-4 w-4 text-muted-foreground" />
-        </CardHeader>
-        <CardContent>
-          <div className="text-2xl font-bold">
-            {isLoading ? (
-              <div className="h-8 w-16 bg-muted animate-pulse rounded" />
-            ) : (
-              filteredSales.length.toLocaleString('pt-BR')
-            )}
-          </div>
-          <p className="text-xs text-muted-foreground">
-            {approvedSales} aprovadas
-          </p>
-        </CardContent>
-      </Card>
-      
-      <Card className="border-l-4 border-l-green-500">
-        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-          <CardTitle className="text-sm font-medium">Valor Total</CardTitle>
-          <DollarSign className="h-4 w-4 text-muted-foreground" />
-        </CardHeader>
-        <CardContent>
-          <div className="text-2xl font-bold">
-            {isLoading ? (
-              <div className="h-8 w-24 bg-muted animate-pulse rounded" />
-            ) : (
-              formatCurrency(totalAmount)
-            )}
-          </div>
-          <p className="text-xs text-muted-foreground">
-            Volume total processado
-          </p>
-        </CardContent>
-      </Card>
-      
-      <Card className="border-l-4 border-l-orange-500">
-        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-          <CardTitle className="text-sm font-medium">Valor Médio</CardTitle>
-          <TrendingUp className="h-4 w-4 text-muted-foreground" />
-        </CardHeader>
-        <CardContent>
-          <div className="text-2xl font-bold">
-            {isLoading || filteredSales.length === 0 ? (
-              <div className="h-8 w-20 bg-muted animate-pulse rounded" />
-            ) : (
-              formatCurrency(averageAmount)
-            )}
-          </div>
-          <p className="text-xs text-muted-foreground">
-            Por transação
-          </p>
-        </CardContent>
-      </Card>
-      
-      <Card className="border-l-4 border-l-purple-500">
-        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-          <CardTitle className="text-sm font-medium">Terminais Únicos</CardTitle>
-          <CreditCard className="h-4 w-4 text-muted-foreground" />
-        </CardHeader>
-        <CardContent>
-          <div className="text-2xl font-bold">
-            {isLoading ? (
-              <div className="h-8 w-12 bg-muted animate-pulse rounded" />
-            ) : (
-              uniqueTerminals
-            )}
-          </div>
-          <p className="text-xs text-muted-foreground">
-            Máquinas ativas
-          </p>
-        </CardContent>
-      </Card>
+    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+      {stats.map((stat, index) => {
+        const Icon = stat.icon;
+        return (
+          <Card key={index}>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">
+                {stat.title}
+              </CardTitle>
+              <Icon className={`h-4 w-4 ${stat.color}`} />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{stat.value}</div>
+            </CardContent>
+          </Card>
+        );
+      })}
     </div>
   );
 };

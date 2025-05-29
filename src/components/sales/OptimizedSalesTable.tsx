@@ -71,6 +71,12 @@ const OptimizedSalesTable = ({
     return pages;
   };
 
+  // Handler for page change with proper logging
+  const handlePageChange = (page: number) => {
+    console.log(`Changing from page ${currentPage} to page ${page}`);
+    onPageChange(page);
+  };
+
   return (
     <Card>
       <CardHeader>
@@ -167,7 +173,7 @@ const OptimizedSalesTable = ({
                   <Button
                     variant="outline"
                     size="sm"
-                    onClick={() => onPageChange(currentPage - 1)}
+                    onClick={() => handlePageChange(currentPage - 1)}
                     disabled={currentPage <= 1}
                   >
                     <ChevronLeft className="h-4 w-4" />
@@ -180,7 +186,7 @@ const OptimizedSalesTable = ({
                         <Button
                           variant="outline"
                           size="sm"
-                          onClick={() => onPageChange(1)}
+                          onClick={() => handlePageChange(1)}
                           className="w-9 h-9"
                         >
                           1
@@ -194,7 +200,7 @@ const OptimizedSalesTable = ({
                         key={pageNumber}
                         variant={pageNumber === currentPage ? "default" : "outline"}
                         size="sm"
-                        onClick={() => onPageChange(pageNumber)}
+                        onClick={() => handlePageChange(pageNumber)}
                         className="w-9 h-9"
                       >
                         {pageNumber}
@@ -207,7 +213,7 @@ const OptimizedSalesTable = ({
                         <Button
                           variant="outline"
                           size="sm"
-                          onClick={() => onPageChange(totalPages)}
+                          onClick={() => handlePageChange(totalPages)}
                           className="w-9 h-9"
                         >
                           {totalPages}
@@ -219,7 +225,7 @@ const OptimizedSalesTable = ({
                   <Button
                     variant="outline"
                     size="sm"
-                    onClick={() => onPageChange(currentPage + 1)}
+                    onClick={() => handlePageChange(currentPage + 1)}
                     disabled={currentPage >= totalPages}
                   >
                     Próxima
