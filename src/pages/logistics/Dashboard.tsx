@@ -1,24 +1,11 @@
 
 import React from 'react';
 import { Badge } from "@/components/ui/badge";
-import { ArrowRight, ArrowUpRight, PackageCheck, ShoppingBag, Cog, HelpCircle } from "lucide-react";
-import { DoughnutChart } from "@/components/charts/DoughnutChart";
+import { ArrowRight, ArrowUpRight, PackageCheck, ShoppingBag, HelpCircle, Cog } from "lucide-react";
 import { StyledCard } from "@/components/ui/styled-card";
 import { PageHeader } from "@/components/page/PageHeader";
 import { motion } from "framer-motion";
 import ShipmentsSection from "@/components/logistics/shipments/ShipmentsSection";
-
-const requestTypesData = [
-  { name: 'Instalação', value: 35, color: '#0088FE' },
-  { name: 'Manutenção', value: 25, color: '#00C49F' },
-  { name: 'Reparo', value: 15, color: '#FFBB28' },
-  { name: 'Outros', value: 25, color: '#FF8042' },
-];
-
-const machineStatusData = [
-  { name: 'Online', value: 70, color: '#00C49F' },
-  { name: 'Offline', value: 30, color: '#FF8042' },
-];
 
 const LogisticsDashboard = () => {
   return (
@@ -82,46 +69,6 @@ const LogisticsDashboard = () => {
             <span className="text-green-500">+5%</span> em relação ao mês passado
           </p>
         </StyledCard>
-
-        {/* Card 5: Tipos de Solicitação */}
-        <motion.div
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.3, delay: 0.2 }}
-          className="col-span-1 md:col-span-2"
-        >
-          <StyledCard
-            title="Tipos de Solicitação"
-            borderColor="border-blue-300"
-          >
-            <div className="h-72">
-              <DoughnutChart
-                data={requestTypesData}
-                dataKey="value"
-              />
-            </div>
-          </StyledCard>
-        </motion.div>
-
-        {/* Card 6: Status das Máquinas */}
-        <motion.div
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.3, delay: 0.3 }}
-          className="col-span-1 md:col-span-2"
-        >
-          <StyledCard
-            title="Status das Máquinas"
-            borderColor="border-green-300"
-          >
-            <div className="h-72">
-              <DoughnutChart
-                data={machineStatusData}
-                dataKey="value"
-              />
-            </div>
-          </StyledCard>
-        </motion.div>
       </div>
 
       {/* Nova seção de controle logístico */}
