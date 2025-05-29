@@ -37,7 +37,9 @@ const AVAILABLE_ROLES = [
   { value: "PARTNER", label: "Parceiro" },
   { value: "FINANCIAL", label: "Financeiro" },
   { value: "LOGISTICS", label: "Logística" },
-];
+] as const;
+
+type ValidRole = typeof AVAILABLE_ROLES[number]["value"];
 
 export const NotificationsProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { user } = useAuth();
@@ -188,10 +190,10 @@ export const NotificationsProvider: React.FC<{ children: React.ReactNode }> = ({
   ): Promise<number> => {
     console.log('Sending notification to roles:', { title, message, type, roles, data });
     
-    // Validate roles
+    // Validate and filter roles
     const validRoles = roles.filter(role => 
       AVAILABLE_ROLES.some(availableRole => availableRole.value === role)
-    );
+    ) as ValidRole[];
     
     if (validRoles.length === 0) {
       throw new Error("Nenhuma função válida fornecida");
@@ -230,7 +232,7 @@ export const NotificationsProvider: React.FC<{ children: React.ReactNode }> = ({
     title: string,
     message: string,
     type: NotificationType,
-    roles: string[],
+    roles: ValidRole[],
     data: any = {}
   ): Promise<number> => {
     console.log('Using fallback method for notification sending');
@@ -250,12 +252,12 @@ export const NotificationsProvider: React.FC<{ children: React.ReactNode }> = ({
         return 0;
       }
 
-      // Create notifications for all users
+      // Create notifications for all users - fix type casting
       const notifications = users.map(user => ({
         user_id: user.id,
         title,
         message,
-        type,
+        type: type as any, // Cast to match Supabase type expectations
         data: data || {}
       }));
 
@@ -327,7 +329,7 @@ export const NotificationsProvider: React.FC<{ children: React.ReactNode }> = ({
         user_id: userId,
         title,
         message,
-        type,
+        type: type as any, // Cast to match Supabase type expectations
         data: data || {}
       });
 
