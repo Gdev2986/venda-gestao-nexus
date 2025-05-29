@@ -18,6 +18,7 @@ export interface SalesFilters {
   paymentType?: string;
   status?: string;
   source?: string;
+  brand?: string;
 }
 
 export interface PaginatedSalesResult {
@@ -80,6 +81,7 @@ export const optimizedSalesService = {
         filter_payment_type: filters.paymentType || null,
         filter_status: filters.status || null,
         filter_source: filters.source || null
+        // Note: brand filtering will be handled on the frontend since it's derived data
       });
 
       if (error) {
@@ -105,7 +107,7 @@ export const optimizedSalesService = {
       const totalCount = Number(data[0]?.total_count || 0);
       const totalPages = Math.ceil(totalCount / pageSize);
 
-      const sales: NormalizedSale[] = data.map((sale: any) => {
+      let sales: NormalizedSale[] = data.map((sale: any) => {
         // Formatar data para exibição (DD/MM/YYYY HH:MM)
         const saleDate = new Date(sale.date);
         const formattedDate = saleDate.toLocaleDateString('pt-BR', {
@@ -133,6 +135,11 @@ export const optimizedSalesService = {
           formatted_amount: formatCurrency(Number(sale.gross_amount))
         };
       });
+
+      // Apply brand filter on frontend since it's derived data
+      if (filters.brand && filters.brand !== 'all') {
+        sales = sales.filter(sale => sale.brand === filters.brand);
+      }
 
       return {
         sales,
