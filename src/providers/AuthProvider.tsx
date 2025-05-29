@@ -1,4 +1,3 @@
-
 import React, { createContext, useEffect, useReducer, ReactNode } from "react";
 import { User, Session } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
@@ -193,13 +192,13 @@ const AuthProvider = ({ children }: AuthProviderProps) => {
       await supabase.auth.signOut({ scope: 'global' });
       dispatch({ type: "SIGN_OUT" });
       
-      // Force page reload to ensure clean state
-      window.location.href = '/';
+      // Force page reload to ensure clean state and redirect to login
+      window.location.href = '/login';
     } catch (error) {
       console.error("AuthProvider: Error signing out:", error);
       // Force cleanup even if signOut fails
       dispatch({ type: "SIGN_OUT" });
-      window.location.href = '/';
+      window.location.href = '/login';
     }
   };
 
