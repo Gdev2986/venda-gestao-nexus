@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { PageHeader } from "@/components/page/PageHeader";
 import { Button } from "@/components/ui/button";
@@ -92,7 +93,7 @@ const AdminSales = () => {
       return;
     }
     
-    const header = ['Status', 'Tipo de Pagamento', 'Valor Bruto', 'Data de Transação', 'Parcelas', 'Terminal', 'Bandeira', 'Origem'];
+    const header = ['Status', 'Tipo de Pagamento', 'Valor Bruto', 'Data de Transação', 'Parcelas', 'Terminal', 'Bandeira'];
     
     const rows = filteredSales.map(sale => [
       sale.status,
@@ -101,8 +102,7 @@ const AdminSales = () => {
       typeof sale.transaction_date === 'string' ? sale.transaction_date : sale.transaction_date.toLocaleString('pt-BR'),
       sale.installments,
       sale.terminal,
-      sale.brand,
-      sale.source
+      sale.brand
     ]);
     
     const csvContent = [header, ...rows].map(row => row.join(';')).join('\n');
@@ -134,7 +134,7 @@ const AdminSales = () => {
 
   // Calculate statistics
   const totalAmount = filteredSales.reduce((sum, sale) => sum + sale.gross_amount, 0);
-  const averageAmount = filteredSales.length > 0 ? totalAmount / filteredSales.length : 0;
+  const netAmount = filteredSales.reduce((sum, sale) => sum + (sale.gross_amount * 0.97), 0); // 97% como líquido temporário
   const uniqueTerminals = new Set(filteredSales.map(sale => sale.terminal)).size;
   const approvedSales = filteredSales.filter(sale => sale.status.toLowerCase() === 'aprovada').length;
 
@@ -221,7 +221,7 @@ const AdminSales = () => {
         
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Valor Médio</CardTitle>
+            <CardTitle className="text-sm font-medium">Valor Líquido</CardTitle>
             <TrendingUp className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
@@ -229,11 +229,11 @@ const AdminSales = () => {
               {isLoading || filteredSales.length === 0 ? (
                 <div className="h-8 w-20 bg-muted animate-pulse rounded" />
               ) : (
-                formatCurrency(averageAmount)
+                formatCurrency(netAmount)
               )}
             </div>
             <p className="text-xs text-muted-foreground">
-              Por transação
+              Após taxas (estimado)
             </p>
           </CardContent>
         </Card>

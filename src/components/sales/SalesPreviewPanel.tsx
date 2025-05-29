@@ -1,140 +1,158 @@
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Button } from "@/components/ui/button";
+import { ChevronLeft, ChevronRight } from "lucide-react";
 import { NormalizedSale } from "@/utils/sales-processor";
 import { formatCurrency } from "@/lib/formatters";
-import { Badge } from "@/components/ui/badge";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow
-} from "@/components/ui/table";
-import TablePagination from "@/components/ui/table-pagination";
-import { Card, CardHeader, CardTitle, CardContent, CardFooter } from "@/components/ui/card";
+import { format } from "date-fns";
+import { ptBR } from "date-fns/locale";
 
 interface SalesPreviewPanelProps {
   sales: NormalizedSale[];
   title?: string;
 }
 
-const SalesPreviewPanel = ({ 
-  sales,
-  title = "Pré-visualização dos dados" 
-}: SalesPreviewPanelProps) => {
+const SalesPreviewPanel = ({ sales, title = "Dados de Vendas" }: SalesPreviewPanelProps) => {
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 10;
-  
-  // Calculate total pages
+
+  // Calculate pagination
   const totalPages = Math.ceil(sales.length / itemsPerPage);
-  
-  // Calculate current page data
   const startIndex = (currentPage - 1) * itemsPerPage;
-  const endIndex = Math.min(startIndex + itemsPerPage, sales.length);
-  const currentPageData = sales.slice(startIndex, endIndex);
-  
-  // Reset to first page when data changes
-  useEffect(() => {
+  const endIndex = startIndex + itemsPerPage;
+  const currentSales = sales.slice(startIndex, endIndex);
+
+  // Handle page change
+  const handlePageChange = (newPage: number) => {
+    if (newPage >= 1 && newPage <= totalPages) {
+      setCurrentPage(newPage);
+    }
+  };
+
+  // Reset to first page when sales data changes
+  useState(() => {
     setCurrentPage(1);
   }, [sales]);
-  
-  // Calculate totals
-  const totalAmount = sales.reduce((sum, sale) => sum + sale.gross_amount, 0);
-  
-  // Render status badge with appropriate styling
-  const renderStatusBadge = (status: string) => {
-    let variant: "default" | "outline" | "secondary" | "destructive" = "outline";
-    
-    if (status.toLowerCase() === "aprovada" || status.toLowerCase() === "approved") {
-      variant = "default";
-    } else if (
-      status.toLowerCase() === "rejeitada" || 
-      status.toLowerCase() === "rejected" || 
-      status.toLowerCase() === "denied"
-    ) {
-      variant = "destructive";
-    } else if (
-      status.toLowerCase() === "pendente" || 
-      status.toLowerCase() === "pending"
-    ) {
-      variant = "secondary";
+
+  const formatDate = (date: string | Date) => {
+    try {
+      const dateObj = typeof date === 'string' ? new Date(date) : date;
+      return format(dateObj, "dd/MM/yyyy HH:mm", { locale: ptBR });
+    } catch (error) {
+      return 'Data inválida';
     }
-    
-    return <Badge variant={variant}>{status}</Badge>;
   };
 
   return (
-    <Card className="mb-4">
-      <CardHeader className="pb-2">
-        <CardTitle className="text-lg font-semibold">{title}</CardTitle>
+    <Card>
+      <CardHeader>
+        <CardTitle className="flex justify-between items-center">
+          {title}
+          <span className="text-sm font-normal text-muted-foreground">
+            {sales.length} registros
+          </span>
+        </CardTitle>
       </CardHeader>
-      
-      <CardContent className="p-0">
-        <div className="p-4 flex flex-col sm:flex-row justify-between gap-4 bg-muted/30">
-          <div className="text-sm">
-            <span className="font-medium">Total de transações:</span>{" "}
-            <span className="font-semibold">{sales.length}</span>
+      <CardContent>
+        {sales.length === 0 ? (
+          <div className="text-center py-8 text-muted-foreground">
+            Nenhum dado encontrado
           </div>
-          <div className="text-sm">
-            <span className="font-medium">Valor total bruto:</span>{" "}
-            <span className="font-semibold">{formatCurrency(totalAmount)}</span>
-          </div>
-        </div>
-        
-        <div className="overflow-x-auto">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Status</TableHead>
-                <TableHead>Tipo de Pagamento</TableHead>
-                <TableHead className="text-right">Valor Bruto</TableHead>
-                <TableHead>Data de Transação</TableHead>
-                <TableHead>Parcelas</TableHead>
-                <TableHead>Terminal</TableHead>
-                <TableHead>Bandeira</TableHead>
-                <TableHead>Origem</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {currentPageData.length > 0 ? (
-                currentPageData.map((sale, index) => (
-                  <TableRow key={sale.id || index}>
-                    <TableCell>{renderStatusBadge(sale.status)}</TableCell>
-                    <TableCell>{sale.payment_type}</TableCell>
-                    <TableCell className="text-right font-medium">
-                      {formatCurrency(sale.gross_amount)}
-                    </TableCell>
-                    <TableCell>{typeof sale.transaction_date === 'string' ? 
-                      sale.transaction_date : 
-                      sale.transaction_date.toLocaleString()}</TableCell>
-                    <TableCell>{sale.installments}</TableCell>
-                    <TableCell>{sale.terminal}</TableCell>
-                    <TableCell>{sale.brand}</TableCell>
-                    <TableCell>{sale.source}</TableCell>
+        ) : (
+          <>
+            <div className="rounded-md border">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Status</TableHead>
+                    <TableHead>Tipo de Pagamento</TableHead>
+                    <TableHead className="text-right">Valor Bruto</TableHead>
+                    <TableHead>Data de Transação</TableHead>
+                    <TableHead>Parcelas</TableHead>
+                    <TableHead>Terminal</TableHead>
+                    <TableHead>Bandeira</TableHead>
                   </TableRow>
-                ))
-              ) : (
-                <TableRow>
-                  <TableCell colSpan={8} className="h-24 text-center">
-                    Nenhum dado disponível para visualização
-                  </TableCell>
-                </TableRow>
-              )}
-            </TableBody>
-          </Table>
-        </div>
+                </TableHeader>
+                <TableBody>
+                  {currentSales.map((sale, index) => (
+                    <TableRow key={sale.id || index}>
+                      <TableCell>{sale.status}</TableCell>
+                      <TableCell>{sale.payment_type}</TableCell>
+                      <TableCell className="text-right font-medium">
+                        {formatCurrency(sale.gross_amount)}
+                      </TableCell>
+                      <TableCell>{formatDate(sale.transaction_date)}</TableCell>
+                      <TableCell>{sale.installments}x</TableCell>
+                      <TableCell>{sale.terminal}</TableCell>
+                      <TableCell>{sale.brand}</TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
+
+            {/* Pagination */}
+            {totalPages > 1 && (
+              <div className="flex items-center justify-between mt-4">
+                <div className="text-sm text-muted-foreground">
+                  Mostrando {startIndex + 1} até {Math.min(endIndex, sales.length)} de {sales.length} registros
+                </div>
+                
+                <div className="flex items-center space-x-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => handlePageChange(currentPage - 1)}
+                    disabled={currentPage === 1}
+                  >
+                    <ChevronLeft className="h-4 w-4" />
+                    Anterior
+                  </Button>
+                  
+                  <div className="flex items-center space-x-1">
+                    {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+                      let pageNumber;
+                      if (totalPages <= 5) {
+                        pageNumber = i + 1;
+                      } else if (currentPage <= 3) {
+                        pageNumber = i + 1;
+                      } else if (currentPage >= totalPages - 2) {
+                        pageNumber = totalPages - 4 + i;
+                      } else {
+                        pageNumber = currentPage - 2 + i;
+                      }
+                      
+                      return (
+                        <Button
+                          key={pageNumber}
+                          variant={currentPage === pageNumber ? "default" : "outline"}
+                          size="sm"
+                          onClick={() => handlePageChange(pageNumber)}
+                          className="w-8 h-8 p-0"
+                        >
+                          {pageNumber}
+                        </Button>
+                      );
+                    })}
+                  </div>
+                  
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => handlePageChange(currentPage + 1)}
+                    disabled={currentPage === totalPages}
+                  >
+                    Próximo
+                    <ChevronRight className="h-4 w-4" />
+                  </Button>
+                </div>
+              </div>
+            )}
+          </>
+        )}
       </CardContent>
-      
-      {totalPages > 1 && (
-        <CardFooter className="flex justify-center py-4">
-          <TablePagination
-            currentPage={currentPage}
-            totalPages={totalPages}
-            onPageChange={setCurrentPage}
-          />
-        </CardFooter>
-      )}
     </Card>
   );
 };
