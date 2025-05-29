@@ -1,5 +1,4 @@
 
-// src/providers/AuthProvider.tsx
 import * as React from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { UserRole } from "@/types";
@@ -35,10 +34,20 @@ function authReducer(state: AuthState, action: AuthAction): AuthState {
         error: null,
       };
     case "SET_PROFILE":
+      const profile = action.payload;
+      const role = profile?.role || null;
+      
+      // Persist role in localStorage
+      if (role) {
+        localStorage.setItem('userRole', role);
+      } else {
+        localStorage.removeItem('userRole');
+      }
+      
       return {
         ...state,
-        profile: action.payload,
-        userRole: action.payload?.role || null,
+        profile,
+        userRole: role,
         isLoading: false,
       };
     case "SET_NEEDS_PASSWORD_CHANGE":
@@ -46,6 +55,7 @@ function authReducer(state: AuthState, action: AuthAction): AuthState {
     case "SET_ERROR":
       return { ...state, error: action.payload, isLoading: false };
     case "LOGOUT":
+      localStorage.removeItem('userRole');
       return { ...initialState, isLoading: false };
     default:
       return state;
@@ -64,7 +74,10 @@ export const AuthContext = React.createContext<AuthContextType>({
 export const useAuth = () => React.useContext(AuthContext);
 
 const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [state, dispatch] = React.useReducer(authReducer, initialState);
+  const [state, dispatch] = React.useReducer(authReducer, {
+    ...initialState,
+    userRole: (localStorage.getItem('userRole') as UserRole) || null,
+  });
 
   const loadUserProfile = React.useCallback(async (userId: string) => {
     try {
@@ -113,7 +126,6 @@ const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => 
       if (data) {
         console.log("Profile loaded successfully:", data);
         
-        // Check if user is pending activation and activate them
         if (data.status === 'pending_activation') {
           console.log("Activating user...");
           const { error: updateError } = await supabase

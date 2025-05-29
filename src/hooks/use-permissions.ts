@@ -1,6 +1,6 @@
 
 import { useState, useEffect, useCallback } from 'react';
-import { useUserRole } from '@/hooks/use-user-role';
+import { useAuth } from '@/hooks/use-auth';
 import { UserRole } from '@/types';
 
 interface Permission {
@@ -22,7 +22,7 @@ const PERMISSIONS: Record<string, Permission> = {
 };
 
 export function usePermissions() {
-  const { userRole, isLoading: isRoleLoading } = useUserRole();
+  const { userRole, isLoading: isRoleLoading } = useAuth();
   const [permissions, setPermissions] = useState<string[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 

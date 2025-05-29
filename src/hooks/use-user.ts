@@ -1,7 +1,7 @@
 
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { useAuth } from "@/contexts/AuthContext";
+import { useAuth } from "@/hooks/use-auth";
 import { UserRole } from "@/types/enums";
 
 interface UserProfile {
@@ -15,42 +15,32 @@ interface UserProfile {
 }
 
 export function useUser() {
-  const { user: authUser } = useAuth();
+  const { user: authUser, profile, userRole } = useAuth();
   const [user, setUser] = useState<UserProfile | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
 
   useEffect(() => {
     const fetchUserProfile = async () => {
-      if (!authUser) {
+      if (!authUser || !profile) {
         setUser(null);
         setIsLoading(false);
         return;
       }
 
       try {
-        const { data, error } = await supabase
-          .from("profiles")
-          .select("*")
-          .eq("id", authUser.id)
-          .single();
-
-        if (error) {
-          throw error;
-        }
-
-        // Transform the data to match the UserProfile type
+        // Transform the profile data to match the UserProfile type
         const userProfile: UserProfile = {
-          id: data.id,
-          email: data.email,
-          name: data.name,
-          role: data.role as UserRole,
-          avatar_url: data.avatar,
-          phone: data.phone
+          id: profile.id,
+          email: profile.email,
+          name: profile.name,
+          role: profile.role as UserRole,
+          avatar_url: profile.avatar,
+          phone: profile.phone
         };
 
         // Fetch client_id if needed
-        if (data.role === UserRole.CLIENT) {
+        if (profile.role === UserRole.CLIENT) {
           const { data: clientData } = await supabase
             .from("user_client_access")
             .select("client_id")
@@ -72,7 +62,7 @@ export function useUser() {
     };
 
     fetchUserProfile();
-  }, [authUser]);
+  }, [authUser, profile, userRole]);
 
   return { user, isLoading, error };
 }

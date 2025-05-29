@@ -8,7 +8,6 @@ const RootLayout = () => {
   const { user, isLoading, isAuthenticated, userRole, needsPasswordChange } = useAuth();
   const location = useLocation();
   
-  // Debug logging
   console.log("RootLayout render status:", {
     isLoading,
     isAuthenticated,
@@ -42,24 +41,24 @@ const RootLayout = () => {
     return <Navigate to={PATHS.CHANGE_PASSWORD} replace />;
   }
   
-  // If authenticated but no role yet, show loading and wait
-  if (!userRole) {
-    console.log("User authenticated but no role yet, waiting...");
-    return (
-      <div className="flex flex-col items-center justify-center h-screen bg-background">
-        <div className="flex flex-col items-center space-y-4">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
-          <p className="text-muted-foreground">Configurando seu perfil...</p>
-        </div>
-      </div>
-    );
+  // If authenticated and we have role, redirect to dashboard
+  if (userRole) {
+    console.log(`Redirecting user with role ${userRole} to dashboard`);
+    const dashboardPath = getDashboardPath(userRole);
+    console.log(`Dashboard path: ${dashboardPath}`);
+    return <Navigate to={dashboardPath} replace />;
   }
   
-  // If we have everything needed, redirect to dashboard
-  console.log(`Redirecting user with role ${userRole} to dashboard`);
-  const dashboardPath = getDashboardPath(userRole);
-  console.log(`Dashboard path: ${dashboardPath}`);
-  return <Navigate to={dashboardPath} replace />;
+  // If authenticated but no role yet, show loading and wait
+  console.log("User authenticated but no role yet, waiting...");
+  return (
+    <div className="flex flex-col items-center justify-center h-screen bg-background">
+      <div className="flex flex-col items-center space-y-4">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+        <p className="text-muted-foreground">Configurando seu perfil...</p>
+      </div>
+    </div>
+  );
 };
 
 export default RootLayout;

@@ -1,11 +1,9 @@
 
-// src/App.tsx
 import { Routes, Route, Navigate, useLocation } from "react-router-dom";
 import { useEffect } from "react";
 import { PATHS } from "./routes/paths";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/use-auth";
-import { getDashboardPath } from "./utils/auth-utils";
 
 // Route groups
 import { AuthRoutes } from "./routes/authRoutes";

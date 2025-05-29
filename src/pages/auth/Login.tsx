@@ -1,6 +1,7 @@
+
 import { useState, useEffect } from "react";
 import { useNavigate, Link } from "react-router-dom";
-import { useAuth } from "@/contexts/AuthContext";
+import { useAuth } from "@/hooks/use-auth";
 import { PATHS } from "@/routes/paths";
 import { Spinner } from "@/components/ui/spinner";
 import { useMediaQuery } from "@/hooks/use-media-query";
@@ -75,7 +76,6 @@ const Login = () => {
   return (
     <div className="flex flex-col items-center justify-center w-full">
       <div className="flex flex-col md:flex-row items-center justify-center w-full max-w-5xl">
-        {/* Logo for mobile */}
         {isMobile && (
           <div className="mb-6 text-center">
             <div className="flex items-center justify-center mb-2">
@@ -87,10 +87,8 @@ const Login = () => {
           </div>
         )}
         
-        {/* Left side content - hidden on mobile */}
         {!isMobile && (
           <div className="w-full md:w-1/2 md:pr-8 text-center md:text-left mb-6 md:mb-0">
-            
             <div className="flex items-center justify-center md:justify-start mb-4">
               <div className="w-12 h-12 bg-primary rounded-lg flex items-center justify-center text-white text-xl font-bold mr-3">
                 SP
@@ -142,7 +140,6 @@ const Login = () => {
           </div>
         )}
         
-        {/* Right side - login form (full width on mobile) */}
         <div className={`w-full ${isMobile ? "" : "md:w-1/2"} max-w-md`}>
           <LoginForm />
         </div>
