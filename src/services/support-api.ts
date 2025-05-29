@@ -38,7 +38,7 @@ export const createSupportTicket = async (ticket: CreateTicketParams) => {
   const { data, error } = await supabase
     .from("support_requests")
     .insert({
-      title: ticket.description, // Use description as title since that's what we have
+      title: ticket.description,
       description: ticket.description,
       client_id: ticket.client_id,
       type: ticket.type.toString() as "MAINTENANCE" | "INSTALLATION" | "OTHER" | "REPLACEMENT" | "SUPPLIES" | "REMOVAL",
@@ -118,7 +118,7 @@ export const getTicketMessages = async (ticketId: string) => {
   return { data: null, error };
 };
 
-// Send message - removed attachments parameter since it's not supported
+// Send message - removed attachments parameter
 export const sendTicketMessage = async (ticketId: string, message: string) => {
   const { data: { user } } = await supabase.auth.getUser();
   

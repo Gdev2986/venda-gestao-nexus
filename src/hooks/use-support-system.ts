@@ -84,10 +84,10 @@ export const useSupportSystem = () => {
     }
   };
 
-  // Send message
-  const sendMessage = async (ticketId: string, message: string, attachments?: File[]) => {
+  // Send message - removed attachments parameter
+  const sendMessage = async (ticketId: string, message: string) => {
     try {
-      const { data, error } = await sendTicketMessage(ticketId, message, attachments);
+      const { data, error } = await sendTicketMessage(ticketId, message);
       if (error) throw error;
       
       await loadMessages(ticketId);
