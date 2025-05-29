@@ -1,60 +1,85 @@
 
 import { useState, useEffect } from "react";
-import { useAuth } from "@/hooks/use-auth";
+import { useToast } from "@/hooks/use-toast";
 
 interface PartnerCommission {
   id: string;
-  partner_id: string;
-  month: string;
-  year: string;
-  total_sales: number;
-  commission_rate: number;
-  commission_amount: number;
-  status: string;
+  sale_id: string;
+  amount: number;
+  is_paid: boolean;
   created_at: string;
 }
 
-export function usePartnerCommissions() {
-  const { user } = useAuth();
-  const [commissions, setCommissions] = useState<PartnerCommission[]>([]);
+interface CommissionSummary {
+  totalCommission: number;
+  paidCommission: number;
+  pendingCommission: number;
+  recentCommissions: PartnerCommission[];
+}
+
+export const usePartnerCommissions = () => {
+  const [summary, setSummary] = useState<CommissionSummary>({
+    totalCommission: 0,
+    paidCommission: 0,
+    pendingCommission: 0,
+    recentCommissions: []
+  });
   const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<Error | null>(null);
+  const { toast } = useToast();
 
   useEffect(() => {
-    const fetchCommissions = async () => {
-      if (!user) {
-        setIsLoading(false);
-        return;
-      }
-
-      setIsLoading(true);
-      try {
-        // Since partner_commissions table doesn't exist, we'll simulate data
-        // In a real implementation, you would create this table
-        const mockCommissions: PartnerCommission[] = [
+    // Simulate loading commission data
+    setTimeout(() => {
+      setSummary({
+        totalCommission: 25000,
+        paidCommission: 15000,
+        pendingCommission: 10000,
+        recentCommissions: [
           {
             id: "1",
-            partner_id: user.id,
-            month: "11",
-            year: "2024",
-            total_sales: 15000,
-            commission_rate: 0.1,
-            commission_amount: 1500,
-            status: "paid",
-            created_at: new Date().toISOString(),
+            sale_id: "sale-123",
+            amount: 150,
+            is_paid: true,
+            created_at: new Date().toISOString()
           },
-        ];
-        
-        setCommissions(mockCommissions);
-      } catch (err: any) {
-        setError(err);
-      } finally {
-        setIsLoading(false);
-      }
-    };
+          {
+            id: "2",
+            sale_id: "sale-124",
+            amount: 200,
+            is_paid: false,
+            created_at: new Date().toISOString()
+          }
+        ]
+      });
+      setIsLoading(false);
+    }, 1000);
+  }, []);
 
-    fetchCommissions();
-  }, [user]);
+  const requestPayment = async (amount: number, pixKeyId: string, description?: string): Promise<boolean> => {
+    try {
+      // Simulate API call
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      
+      toast({
+        title: "Solicitação enviada",
+        description: "Sua solicitação de pagamento foi enviada com sucesso.",
+      });
+      
+      return true;
+    } catch (error) {
+      toast({
+        variant: "destructive",
+        title: "Erro",
+        description: "Erro ao solicitar pagamento. Tente novamente.",
+      });
+      
+      return false;
+    }
+  };
 
-  return { commissions, isLoading, error };
-}
+  return {
+    summary,
+    isLoading,
+    requestPayment
+  };
+};

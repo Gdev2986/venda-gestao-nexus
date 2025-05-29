@@ -19,7 +19,7 @@ const UserPayments = () => {
     paymentRequests,
     isDialogOpen,
     setIsDialogOpen,
-    handleRequestPayment,
+    handleRequestPayment: originalHandleRequestPayment,
     loadPaymentRequests
   } = usePaymentRequests();
 
@@ -33,6 +33,14 @@ const UserPayments = () => {
     notifyUser: true, 
     filterByClientId: clientId 
   });
+  
+  // Adapt the function signature to match what PaymentRequestDialog expects
+  const handleRequestPayment = (amount: string, description: string, pixKeyId: string) => {
+    const numericAmount = parseFloat(amount);
+    if (!isNaN(numericAmount)) {
+      originalHandleRequestPayment(numericAmount, pixKeyId);
+    }
+  };
   
   // Log some debugging info
   useEffect(() => {

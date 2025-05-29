@@ -6,7 +6,7 @@ import { PageHeader } from "@/components/page/PageHeader";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { NewRequestDialog } from "@/components/support/NewRequestDialog";
+import NewRequestDialog from "@/components/support/NewRequestDialog";
 import RequestDetailsDialog from "@/components/support/RequestDetailsDialog";
 
 interface SupportRequest {
