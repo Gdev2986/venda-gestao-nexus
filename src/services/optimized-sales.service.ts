@@ -1,3 +1,4 @@
+
 import { supabase } from "@/integrations/supabase/client";
 import { NormalizedSale } from "@/utils/sales-processor";
 import { formatCurrency } from "@/lib/formatters";
@@ -114,7 +115,12 @@ export const optimizedSalesService = {
       // Aplicar filtros adicionais no frontend
       if (filters.hourStart !== undefined || filters.hourEnd !== undefined) {
         sales = sales.filter(sale => {
-          const saleDate = new Date(sale.transaction_date.split(' ')[0].split('/').reverse().join('-') + 'T' + sale.transaction_date.split(' ')[1]);
+          // Garantir que transaction_date seja string antes de fazer split
+          const dateString = typeof sale.transaction_date === 'string' ? 
+            sale.transaction_date : 
+            sale.transaction_date.toLocaleString();
+          
+          const saleDate = new Date(dateString.split(' ')[0].split('/').reverse().join('-') + 'T' + dateString.split(' ')[1]);
           const hour = saleDate.getHours();
           
           if (filters.hourStart !== undefined && hour < filters.hourStart) return false;

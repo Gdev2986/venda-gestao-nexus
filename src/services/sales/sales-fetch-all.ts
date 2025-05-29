@@ -102,8 +102,8 @@ export const fetchAllSalesWithFilters = async (filters?: {
     if (filters?.terminals && filters.terminals.length > 0) {
       query = query.in('terminal', filters.terminals);
     }
-    if (filters?.paymentType) {
-      query = query.eq('payment_method', filters.paymentType);
+    if (filters?.paymentType && ['CREDIT', 'DEBIT', 'PIX'].includes(filters.paymentType)) {
+      query = query.eq('payment_method', filters.paymentType as 'CREDIT' | 'DEBIT' | 'PIX');
     }
     if (filters?.source) {
       query = query.eq('source', filters.source);
