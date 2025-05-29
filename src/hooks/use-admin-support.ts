@@ -29,16 +29,6 @@ export function useAdminSupport() {
             contact_name,
             phone,
             email
-          ),
-          machine:machines!machine_id (
-            id,
-            serial_number,
-            model
-          ),
-          assigned_user:profiles!assigned_to (
-            id,
-            name,
-            email
           )
         `)
         .order("created_at", { ascending: false });
@@ -49,8 +39,6 @@ export function useAdminSupport() {
         id: item.id,
         client_id: item.client_id,
         technician_id: item.technician_id,
-        machine_id: item.machine_id,
-        assigned_to: item.assigned_to,
         type: item.type,
         status: item.status,
         priority: item.priority,
@@ -60,10 +48,7 @@ export function useAdminSupport() {
         title: item.title,
         description: item.description,
         resolution: item.resolution,
-        attachments: item.attachments || [],
-        client: Array.isArray(item.client) && item.client.length > 0 ? item.client[0] : item.client,
-        machine: Array.isArray(item.machine) && item.machine.length > 0 ? item.machine[0] : item.machine,
-        assigned_user: Array.isArray(item.assigned_user) && item.assigned_user.length > 0 ? item.assigned_user[0] : item.assigned_user
+        client: Array.isArray(item.client) && item.client.length > 0 ? item.client[0] : item.client
       }));
 
       setTickets(formattedTickets);
@@ -110,7 +95,7 @@ export function useAdminSupport() {
       const { error } = await supabase
         .from("support_requests")
         .update({ 
-          assigned_to: assignedTo,
+          technician_id: assignedTo,
           status: SupportRequestStatus.IN_PROGRESS,
           updated_at: new Date().toISOString()
         })

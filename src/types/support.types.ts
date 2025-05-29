@@ -25,8 +25,6 @@ export interface SupportTicket {
   id: string;
   client_id: string;
   technician_id?: string;
-  machine_id?: string;
-  assigned_to?: string;
   type: SupportRequestType;
   status: SupportRequestStatus; 
   priority: SupportRequestPriority;
@@ -36,13 +34,6 @@ export interface SupportTicket {
   title: string;
   description: string;
   resolution?: string;
-  attachments?: Array<{
-    id: string;
-    name: string;
-    url: string;
-    type: string;
-    size: number;
-  }>;
   client?: {
     id: string;
     business_name: string;
@@ -50,30 +41,13 @@ export interface SupportTicket {
     phone?: string;
     email?: string;
   };
-  machine?: {
-    id: string;
-    serial_number: string;
-    model: string;
-  };
-  assigned_user?: {
-    id: string;
-    name: string;
-    email: string;
-  };
 }
 
 export interface SupportMessage {
   id: string;
-  ticket_id: string;
+  conversation_id: string;
   user_id: string;
   message: string;
-  attachments?: Array<{
-    id: string;
-    name: string;
-    url: string;
-    type: string;
-    size: number;
-  }>;
   is_read: boolean;
   created_at: string;
   user?: {
@@ -89,12 +63,10 @@ export interface CreateSupportTicketParams {
   description: string;
   type: SupportRequestType;
   priority: SupportRequestPriority;
-  machine_id?: string;
-  attachments?: File[];
+  client_id: string;
 }
 
 export interface CreateMessageParams {
-  ticket_id: string;
+  conversation_id: string;
   message: string;
-  attachments?: File[];
 }

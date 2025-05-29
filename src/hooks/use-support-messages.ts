@@ -5,7 +5,7 @@ import { useAuth } from "@/hooks/use-auth";
 import { SupportMessage, CreateMessageParams } from "@/types/support.types";
 import { useToast } from "@/hooks/use-toast";
 
-export function useSupportMessages(ticketId?: string) {
+export function useSupportMessages(conversationId?: string) {
   const { user } = useAuth();
   const { toast } = useToast();
   const [messages, setMessages] = useState<SupportMessage[]>([]);
@@ -13,7 +13,7 @@ export function useSupportMessages(ticketId?: string) {
   const [error, setError] = useState<string | null>(null);
 
   const fetchMessages = async () => {
-    if (!ticketId || !user) return;
+    if (!conversationId || !user) return;
 
     setIsLoading(true);
     setError(null);
@@ -30,17 +30,16 @@ export function useSupportMessages(ticketId?: string) {
             email
           )
         `)
-        .eq("ticket_id", ticketId)
+        .eq("conversation_id", conversationId)
         .order("created_at", { ascending: true });
 
       if (error) throw error;
 
       const formattedMessages: SupportMessage[] = (data || []).map(item => ({
         id: item.id,
-        ticket_id: item.ticket_id || item.conversation_id,
+        conversation_id: item.conversation_id,
         user_id: item.user_id,
         message: item.message,
-        attachments: item.attachments || [],
         is_read: item.is_read,
         created_at: item.created_at,
         user: Array.isArray(item.user) && item.user.length > 0 ? item.user[0] : item.user
@@ -62,38 +61,12 @@ export function useSupportMessages(ticketId?: string) {
     if (!user) return false;
 
     try {
-      // Upload attachments if any
-      let attachments = [];
-      if (params.attachments && params.attachments.length > 0) {
-        for (const file of params.attachments) {
-          const fileName = `${Date.now()}-${file.name}`;
-          const { data: uploadData, error: uploadError } = await supabase.storage
-            .from("support-attachments")
-            .upload(fileName, file);
-
-          if (uploadError) throw uploadError;
-
-          const { data: { publicUrl } } = supabase.storage
-            .from("support-attachments")
-            .getPublicUrl(fileName);
-
-          attachments.push({
-            id: fileName,
-            name: file.name,
-            url: publicUrl,
-            type: file.type,
-            size: file.size
-          });
-        }
-      }
-
       const { error } = await supabase
         .from("support_messages")
         .insert({
-          ticket_id: params.ticket_id,
+          conversation_id: params.conversation_id,
           user_id: user.id,
-          message: params.message,
-          attachments: attachments
+          message: params.message
         });
 
       if (error) throw error;
@@ -116,13 +89,13 @@ export function useSupportMessages(ticketId?: string) {
   };
 
   const markMessagesAsRead = async () => {
-    if (!ticketId || !user) return;
+    if (!conversationId || !user) return;
 
     try {
       await supabase
         .from("support_messages")
         .update({ is_read: true })
-        .eq("ticket_id", ticketId)
+        .eq("conversation_id", conversationId)
         .neq("user_id", user.id);
     } catch (err) {
       console.error("Error marking messages as read:", err);
@@ -130,19 +103,19 @@ export function useSupportMessages(ticketId?: string) {
   };
 
   useEffect(() => {
-    if (ticketId) {
+    if (conversationId) {
       fetchMessages();
 
       // Subscribe to real-time updates
       const channel = supabase
-        .channel(`support_messages_${ticketId}`)
+        .channel(`support_messages_${conversationId}`)
         .on(
           'postgres_changes',
           {
             event: '*',
             schema: 'public',
             table: 'support_messages',
-            filter: `ticket_id=eq.${ticketId}`
+            filter: `conversation_id=eq.${conversationId}`
           },
           () => {
             fetchMessages();
@@ -154,7 +127,7 @@ export function useSupportMessages(ticketId?: string) {
         supabase.removeChannel(channel);
       };
     }
-  }, [ticketId, user]);
+  }, [conversationId, user]);
 
   return {
     messages,
