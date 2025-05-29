@@ -1,3 +1,4 @@
+
 import { useState, useMemo } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -43,6 +44,21 @@ const SalesPreviewPanel = ({ sales, title = "Dados de Vendas" }: SalesPreviewPan
     }
   };
 
+  // Helper function to format transaction date for display
+  const formatTransactionDate = (date: string | Date): string => {
+    if (typeof date === 'string') {
+      return date;
+    }
+    // Format Date object to string
+    return date.toLocaleString('pt-BR', {
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit'
+    });
+  };
+
   const handleExportCSV = () => {
     if (sales.length === 0) return;
 
@@ -62,7 +78,7 @@ const SalesPreviewPanel = ({ sales, title = "Dados de Vendas" }: SalesPreviewPan
       headers.join(","),
       ...sales.map(sale => [
         sale.id,
-        sale.transaction_date,
+        formatTransactionDate(sale.transaction_date),
         sale.terminal,
         sale.gross_amount,
         sale.payment_type,
@@ -136,7 +152,7 @@ const SalesPreviewPanel = ({ sales, title = "Dados de Vendas" }: SalesPreviewPan
                         {sale.id.length > 20 ? `${sale.id.substring(0, 20)}...` : sale.id}
                       </TableCell>
                       <TableCell className="whitespace-nowrap">
-                        {sale.transaction_date}
+                        {formatTransactionDate(sale.transaction_date)}
                       </TableCell>
                       <TableCell>{sale.terminal}</TableCell>
                       <TableCell className="text-right font-medium">
