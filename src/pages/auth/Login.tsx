@@ -1,84 +1,175 @@
 
-import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { supabase } from '@/integrations/supabase/client';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { useToast } from '@/hooks/use-toast';
+import { useState, useEffect } from "react";
+import { useNavigate, Link } from "react-router-dom";
+import { useAuth } from "@/hooks/use-auth";
+import { PATHS } from "@/routes/paths";
+import { Spinner } from "@/components/ui/spinner";
+import { useMediaQuery } from "@/hooks/use-media-query";
+import LoginForm from "@/components/auth/LoginForm";
+import { LayoutDashboard, CreditCard, FileText, Monitor } from "lucide-react";
+import { getDashboardPath, isValidUserRole } from "@/utils/auth-utils";
 
 const Login = () => {
   const navigate = useNavigate();
-  const { toast } = useToast();
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [isLoading, setIsLoading] = useState(false);
+  const { user, isLoading, userRole, isAuthenticated, needsPasswordChange } = useAuth();
+  const [redirecting, setRedirecting] = useState(false);
+  const isMobile = useMediaQuery("(max-width: 767px)");
 
-  const handleLogin = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setIsLoading(true);
+  useEffect(() => {
+    console.log("Login useEffect - Auth state:", {
+      user: user?.id,
+      isLoading,
+      userRole,
+      isAuthenticated,
+      needsPasswordChange,
+      redirecting
+    });
 
-    try {
-      const { data, error } = await supabase.auth.signInWithPassword({
-        email,
-        password
-      });
-
-      if (error) throw error;
-
-      if (data.user) {
-        toast({
-          title: 'Sucesso',
-          description: 'Login realizado com sucesso!'
-        });
-        navigate('/auth-callback');
-      }
-    } catch (error: any) {
-      toast({
-        variant: 'destructive',
-        title: 'Erro',
-        description: error.message || 'Erro ao fazer login'
-      });
-    } finally {
-      setIsLoading(false);
+    // Evitar redirecionamento múltiplo
+    if (redirecting) {
+      console.log("Login: Already redirecting, skipping...");
+      return;
     }
-  };
+
+    // Se ainda está carregando, aguardar
+    if (isLoading) {
+      console.log("Login: Still loading, waiting...");
+      return;
+    }
+
+    // Se o usuário está autenticado
+    if (isAuthenticated && user) {
+      console.log("Login: User authenticated, checking conditions...");
+      
+      // Se precisa trocar senha
+      if (needsPasswordChange) {
+        console.log("Login: User needs password change, redirecting");
+        setRedirecting(true);
+        navigate(PATHS.CHANGE_PASSWORD, { replace: true });
+        return;
+      }
+      
+      // Se tem role válida, redirecionar para dashboard
+      if (userRole && isValidUserRole(userRole)) {
+        console.log("Login: User has valid role, redirecting to dashboard");
+        setRedirecting(true);
+        const dashboardPath = getDashboardPath(userRole);
+        console.log("Login: Redirecting to:", dashboardPath);
+        navigate(dashboardPath, { replace: true });
+        return;
+      }
+      
+      // Se não tem role ainda mas está autenticado, aguardar um pouco mais
+      if (!userRole) {
+        console.log("Login: User authenticated but no role yet, waiting...");
+        // Aguardar até 5 segundos pela role
+        const timeout = setTimeout(() => {
+          console.log("Login: Timeout waiting for role, force refresh");
+          window.location.reload();
+        }, 5000);
+        
+        return () => clearTimeout(timeout);
+      }
+    }
+  }, [user, isLoading, userRole, isAuthenticated, needsPasswordChange, navigate, redirecting]);
+
+  // Mostrar loading se estiver carregando OU se estiver redirecionando
+  if (isLoading || redirecting) {
+    return (
+      <div className="flex flex-col items-center justify-center h-screen bg-background">
+        <div className="flex flex-col items-center space-y-4">
+          <Spinner size="lg" />
+          <p className="mt-4 text-muted-foreground">
+            {redirecting ? "Redirecionando para o painel..." : "Verificando autenticação..."}
+          </p>
+        </div>
+      </div>
+    );
+  }
+
+  // Se o usuário já está autenticado mas ainda não redirecionou, mostrar loading
+  if (isAuthenticated && user && !redirecting) {
+    return (
+      <div className="flex flex-col items-center justify-center h-screen bg-background">
+        <div className="flex flex-col items-center space-y-4">
+          <Spinner size="lg" />
+          <p className="mt-4 text-muted-foreground">Configurando acesso...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-background">
-      <Card className="w-full max-w-md">
-        <CardHeader>
-          <CardTitle>Login - SigmaPay</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <form onSubmit={handleLogin} className="space-y-4">
-            <div>
-              <Label htmlFor="email">Email</Label>
-              <Input
-                id="email"
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                required
-              />
+    <div className="flex flex-col items-center justify-center w-full">
+      <div className="flex flex-col md:flex-row items-center justify-center w-full max-w-5xl">
+        {isMobile && (
+          <div className="mb-6 text-center">
+            <div className="flex items-center justify-center mb-2">
+              <div className="w-12 h-12 bg-primary rounded-lg flex items-center justify-center text-white text-xl font-bold mr-2">
+                SP
+              </div>
+              <h1 className="text-2xl font-bold">SigmaPay</h1>
             </div>
-            <div>
-              <Label htmlFor="password">Senha</Label>
-              <Input
-                id="password"
-                type="password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                required
-              />
+          </div>
+        )}
+        
+        {!isMobile && (
+          <div className="w-full md:w-1/2 md:pr-8 text-center md:text-left mb-6 md:mb-0">
+            <div className="flex items-center justify-center md:justify-start mb-4">
+              <div className="w-12 h-12 bg-primary rounded-lg flex items-center justify-center text-white text-xl font-bold mr-3">
+                SP
+              </div>
+              <h1 className="text-3xl font-bold tracking-tight">SigmaPay</h1>
             </div>
-            <Button type="submit" className="w-full" disabled={isLoading}>
-              {isLoading ? 'Entrando...' : 'Entrar'}
-            </Button>
-          </form>
-        </CardContent>
-      </Card>
+            
+            <h2 className="text-4xl font-bold mb-4 text-foreground">
+              Gestão de Vendas <span className="text-primary">Simplificada</span>
+            </h2>
+            
+            <p className="text-muted-foreground text-lg mb-6">
+              Uma plataforma completa para gerenciar suas vendas de maquininhas, clientes, pagamentos e muito mais.
+            </p>
+            
+            <div className="grid grid-cols-2 gap-4 mb-8">
+              <div className="flex flex-col items-center md:items-start">
+                <div className="bg-primary/10 dark:bg-primary/20 p-2 rounded-full mb-2">
+                  <LayoutDashboard className="h-6 w-6 text-primary" />
+                </div>
+                <h3 className="text-lg font-semibold text-foreground">Dashboard Inteligente</h3>
+                <p className="text-muted-foreground text-sm">Visualize todas as suas vendas e métricas em tempo real.</p>
+              </div>
+              
+              <div className="flex flex-col items-center md:items-start">
+                <div className="bg-primary/10 dark:bg-primary/20 p-2 rounded-full mb-2">
+                  <CreditCard className="h-6 w-6 text-primary" />
+                </div>
+                <h3 className="text-lg font-semibold text-foreground">Gestão de Pagamentos</h3>
+                <p className="text-muted-foreground text-sm">Receba seus pagamentos via PIX de forma rápida e segura.</p>
+              </div>
+              
+              <div className="flex flex-col items-center md:items-start">
+                <div className="bg-primary/10 dark:bg-primary/20 p-2 rounded-full mb-2">
+                  <FileText className="h-6 w-6 text-primary" />
+                </div>
+                <h3 className="text-lg font-semibold text-foreground">Relatórios Detalhados</h3>
+                <p className="text-muted-foreground text-sm">Análises completas sobre seu desempenho de vendas.</p>
+              </div>
+              
+              <div className="flex flex-col items-center md:items-start">
+                <div className="bg-primary/10 dark:bg-primary/20 p-2 rounded-full mb-2">
+                  <Monitor className="h-6 w-6 text-primary" />
+                </div>
+                <h3 className="text-lg font-semibold text-foreground">Multiplataforma</h3>
+                <p className="text-muted-foreground text-sm">Acesse de qualquer dispositivo, em qualquer lugar.</p>
+              </div>
+            </div>
+          </div>
+        )}
+        
+        <div className={`w-full ${isMobile ? "" : "md:w-1/2"} max-w-md`}>
+          <LoginForm />
+        </div>
+      </div>
     </div>
   );
 };

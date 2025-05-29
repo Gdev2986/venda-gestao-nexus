@@ -1,143 +1,80 @@
 
-import React from 'react';
-import {
-  BrowserRouter,
-  Routes,
-  Route,
-  Navigate
-} from "react-router-dom";
-import { Toaster } from "@/components/ui/toaster"
+import { Routes, Route, Navigate, useLocation } from "react-router-dom";
+import { useEffect } from "react";
+import { PATHS } from "./routes/paths";
+import { useToast } from "@/hooks/use-toast";
+import { useAuth } from "@/hooks/use-auth";
 
-import Login from "@/pages/auth/Login";
-import AuthCallback from "@/pages/AuthCallback";
-import AppLayout from "@/components/layout/AppLayout";
-import AuthGuard from "@/components/auth/AuthGuard";
+// Route groups
+import { AuthRoutes } from "./routes/authRoutes";
+import AdminRoutes from "./routes/adminRoutes";
+import ClientRoutes from "./routes/clientRoutes";
+import PartnerRoutes from "./routes/partnerRoutes";
+import FinancialRoutes from "./routes/financialRoutes";
+import LogisticsRoutes from "./routes/logisticsRoutes";
 
-// Client Routes
-import ClientDashboard from "@/pages/client/Dashboard";
-import ClientMachines from "@/pages/client/Machines";
-import ClientPayments from "@/pages/client/Payments";
-import ClientSupport from "@/pages/client/Support";
-
-// User Routes
-import UserDashboard from "@/pages/user/Dashboard";
-import UserMachines from "@/pages/user/Machines";
-import UserPayments from "@/pages/user/Payments";
-import UserSupport from "@/pages/user/Support";
-
-// Partner Routes
-import PartnerDashboard from "@/pages/partner/Dashboard";
-import PartnerClients from "@/pages/partner/Clients";
-import PartnerCommissions from "@/pages/partner/Commissions";
-
-// Admin Routes
-import AdminDashboard from "@/pages/admin/Dashboard";
-import AdminClients from "@/pages/admin/Clients";
-import AdminMachines from "@/pages/admin/Machines";
-import AdminPartners from "@/pages/admin/Partners";
-import AdminSales from "@/pages/admin/Sales";
-import AdminPayments from "@/pages/admin/Payments";
-import AdminSupport from "@/pages/admin/Support";
-import AdminReports from "@/pages/admin/Reports";
-import AdminSettings from "@/pages/admin/Settings";
-
-// Logistics Routes
-import LogisticsDashboard from "@/pages/logistics/Dashboard";
-import LogisticsMachines from "@/pages/logistics/Machines";
-import LogisticsSupport from "@/pages/logistics/Support";
-import LogisticsReports from "@/pages/logistics/Reports";
-
-// Common Routes
-import Support from "@/pages/Support";
-import HelpPage from "@/pages/Help";
-import Settings from "@/pages/Settings";
-import Profile from "@/pages/client/Profile";
+// Layouts & Pages
+import MainLayout from "./layouts/MainLayout";
+import Landing from "./pages/landing/Landing";
+import NotFound from "./pages/NotFound";
+import Unauthorized from "./pages/Unauthorized";
+import Notifications from "./pages/Notifications";
 
 function App() {
+  const location = useLocation();
+  const { userRole, isLoading, isAuthenticated } = useAuth();
+  const { toast } = useToast();
+
+  const isPublicRoute =
+    location.pathname === PATHS.HOME ||
+    location.pathname === PATHS.UNAUTHORIZED ||
+    location.pathname.startsWith("/login") ||
+    location.pathname.startsWith("/register") ||
+    location.pathname.startsWith("/forgot-password") ||
+    location.pathname.startsWith("/reset-password");
+
+  useEffect(() => {
+    console.log("App.tsx - Auth State:", {
+      path: location.pathname,
+      role: userRole,
+      authenticated: isAuthenticated,
+      loading: isLoading
+    });
+  }, [location.pathname, userRole, isLoading, isAuthenticated]);
+
+  // Show loading only for auth routes when checking authentication
+  if (!isPublicRoute && isLoading && !isAuthenticated) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background">
+        <div className="flex flex-col items-center space-y-4">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+          <p className="text-muted-foreground">Verificando autenticação...</p>
+        </div>
+      </div>
+    );
+  }
+
   return (
-    <BrowserRouter>
-      <Toaster />
-      <Routes>
-        <Route path="/login" element={<Login />} />
-        <Route path="/auth-callback" element={<AuthCallback />} />
-        
-        {/* Client Routes */}
-        <Route path="/client/*" element={
-          <AuthGuard allowedRoles={['CLIENT']}>
-            <AppLayout />
-          </AuthGuard>
-        }>
-          <Route path="dashboard" element={<ClientDashboard />} />
-          <Route path="machines" element={<ClientMachines />} />
-          <Route path="payments" element={<ClientPayments />} />
-          <Route path="support" element={<ClientSupport />} />
-          <Route path="help" element={<HelpPage />} />
-          <Route path="settings" element={<Settings />} />
-          <Route path="profile" element={<Profile />} />
-        </Route>
-
-        {/* User Routes */}
-        <Route path="/user/*" element={
-          <AuthGuard allowedRoles={['CLIENT']}>
-            <AppLayout />
-          </AuthGuard>
-        }>
-          <Route path="dashboard" element={<UserDashboard />} />
-          <Route path="machines" element={<UserMachines />} />
-          <Route path="payments" element={<UserPayments />} />
-          <Route path="support" element={<UserSupport />} />
-          <Route path="help" element={<HelpPage />} />
-          <Route path="settings" element={<Settings />} />
-          <Route path="profile" element={<Profile />} />
-        </Route>
-
-        {/* Partner Routes */}
-        <Route path="/partner/*" element={
-          <AuthGuard allowedRoles={['PARTNER']}>
-            <AppLayout />
-          </AuthGuard>
-        }>
-          <Route path="dashboard" element={<PartnerDashboard />} />
-          <Route path="clients" element={<PartnerClients />} />
-          <Route path="commissions" element={<PartnerCommissions />} />
-          <Route path="profile" element={<Profile />} />
-        </Route>
-
-        {/* Admin Routes */}
-        <Route path="/admin/*" element={
-          <AuthGuard allowedRoles={['ADMIN']}>
-            <AppLayout />
-          </AuthGuard>
-        }>
-          <Route path="dashboard" element={<AdminDashboard />} />
-          <Route path="clients" element={<AdminClients />} />
-          <Route path="machines" element={<AdminMachines />} />
-          <Route path="partners" element={<AdminPartners />} />
-          <Route path="sales" element={<AdminSales />} />
-          <Route path="payments" element={<AdminPayments />} />
-          <Route path="support" element={<AdminSupport />} />
-          <Route path="reports" element={<AdminReports />} />
-          <Route path="settings" element={<AdminSettings />} />
-        </Route>
-
-        {/* Logistics Routes */}
-        <Route path="/logistics/*" element={
-          <AuthGuard allowedRoles={['LOGISTICS']}>
-            <AppLayout />
-          </AuthGuard>
-        }>
-          <Route path="dashboard" element={<LogisticsDashboard />} />
-          <Route path="machines" element={<LogisticsMachines />} />
-          <Route path="support" element={<LogisticsSupport />} />
-          <Route path="reports" element={<LogisticsReports />} />
-          <Route path="profile" element={<Profile />} />
-        </Route>
-
-        <Route path="/support" element={<Support />} />
-        <Route path="/help" element={<HelpPage />} />
-        <Route path="/" element={<Navigate to="/login" replace />} />
-      </Routes>
-    </BrowserRouter>
+    <Routes>
+      {/* Public routes */}
+      <Route path={PATHS.HOME} element={<Landing />} />
+      {AuthRoutes}
+      <Route path={PATHS.UNAUTHORIZED} element={<Unauthorized />} />
+      <Route path={PATHS.NOT_FOUND} element={<NotFound />} />
+      
+      {/* Protected routes with MainLayout */}
+      <Route element={<MainLayout />}>
+        <Route path="/admin/*" element={<AdminRoutes />} />
+        <Route path="/client/*" element={<ClientRoutes />} />
+        <Route path="/partner/*" element={<PartnerRoutes />} />
+        <Route path="/financial/*" element={<FinancialRoutes />} />
+        <Route path="/logistics/*" element={<LogisticsRoutes />} />
+        <Route path="/notifications" element={<Notifications />} />
+      </Route>
+      
+      {/* Catch all */}
+      <Route path="*" element={<Navigate to={PATHS.NOT_FOUND} replace />} />
+    </Routes>
   );
 }
 

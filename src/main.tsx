@@ -1,6 +1,7 @@
 
 import * as React from "react";
 import { createRoot } from "react-dom/client";
+import { BrowserRouter } from "react-router-dom";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { ThemeProvider } from "@/components/theme-provider";
 import AuthProvider from "@/providers/AuthProvider";
@@ -31,16 +32,18 @@ function renderApp() {
     const root = createRoot(rootElement);
     root.render(
       <React.StrictMode>
-        <QueryClientProvider client={queryClient}>
-          <ThemeProvider defaultTheme="dark" storageKey="sigmapay-theme">
-            <AuthProvider>
-              <NotificationsProvider>
-                <App />
-                <Toaster />
-              </NotificationsProvider>
-            </AuthProvider>
-          </ThemeProvider>
-        </QueryClientProvider>
+        <BrowserRouter>
+          <QueryClientProvider client={queryClient}>
+            <ThemeProvider defaultTheme="dark" storageKey="sigmapay-theme">
+              <AuthProvider>
+                <NotificationsProvider>
+                  <App />
+                  <Toaster />
+                </NotificationsProvider>
+              </AuthProvider>
+            </ThemeProvider>
+          </QueryClientProvider>
+        </BrowserRouter>
       </React.StrictMode>
     );
     console.log("✅ Application rendered successfully");

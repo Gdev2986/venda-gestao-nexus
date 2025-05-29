@@ -2,17 +2,17 @@
 import { useState, useEffect } from "react";
 import { 
   SupportTicket, 
-  SupportRequestStatus, 
-  SupportRequestPriority, 
-  SupportRequestType 
+  TicketStatus, 
+  TicketPriority, 
+  TicketType 
 } from "@/types/support.types";
 import { v4 as uuidv4 } from 'uuid';
 
 // Mock data generator
 const generateMockTickets = (count: number): SupportTicket[] => {
-  const types = Object.values(SupportRequestType);
-  const statuses = Object.values(SupportRequestStatus);
-  const priorities = Object.values(SupportRequestPriority);
+  const types = Object.values(TicketType);
+  const statuses = Object.values(TicketStatus);
+  const priorities = Object.values(TicketPriority);
   
   const mockClients = [
     { id: '1', business_name: 'Supermercado ABC' },
@@ -22,8 +22,17 @@ const generateMockTickets = (count: number): SupportTicket[] => {
     { id: '5', business_name: 'Loja Tudo Barato' },
   ];
   
+  const mockMachines = [
+    { id: '1', serial_number: 'SN-100001', model: 'Terminal Pro' },
+    { id: '2', serial_number: 'SN-100002', model: 'Terminal Standard' },
+    { id: '3', serial_number: 'SN-100003', model: 'Terminal Mini' },
+    { id: '4', serial_number: 'SN-100004', model: 'Terminal Pro' },
+    { id: '5', serial_number: 'SN-100005', model: 'Terminal Mini' },
+  ];
+  
   return Array.from({ length: count }).map((_, index) => {
     const clientIndex = Math.floor(Math.random() * mockClients.length);
+    const machineIndex = Math.floor(Math.random() * mockMachines.length);
     const typeIndex = Math.floor(Math.random() * types.length);
     const statusIndex = Math.floor(Math.random() * statuses.length);
     const priorityIndex = Math.floor(Math.random() * priorities.length);
@@ -41,6 +50,8 @@ const generateMockTickets = (count: number): SupportTicket[] => {
       id: uuidv4(),
       title: `Ticket de ${types[typeIndex].toString().toLowerCase()} para ${mockClients[clientIndex].business_name}`,
       client_id: mockClients[clientIndex].id,
+      machine_id: mockMachines[machineIndex].id,
+      user_id: 'system',
       type: types[typeIndex],
       status: statuses[statusIndex],
       priority: priorities[priorityIndex],
@@ -48,7 +59,8 @@ const generateMockTickets = (count: number): SupportTicket[] => {
       scheduled_date: scheduledDate.toISOString(),
       created_at: createdDate.toISOString(),
       updated_at: createdDate.toISOString(),
-      client: mockClients[clientIndex]
+      client: mockClients[clientIndex],
+      machine: mockMachines[machineIndex]
     };
   });
 };
@@ -85,14 +97,17 @@ export const useSupportTickets = (options: UseSupportTicketsOptions = {}) => {
           id: uuidv4(),
           title: ticketData.title || '',
           client_id: ticketData.client_id!,
-          type: ticketData.type || SupportRequestType.OTHER,
-          status: SupportRequestStatus.PENDING,
-          priority: ticketData.priority || SupportRequestPriority.MEDIUM,
+          machine_id: ticketData.machine_id,
+          user_id: 'current_user',
+          type: ticketData.type || TicketType.OTHER,
+          status: TicketStatus.PENDING,
+          priority: ticketData.priority || TicketPriority.MEDIUM,
           description: ticketData.description || '',
           scheduled_date: ticketData.scheduled_date,
           created_at: new Date().toISOString(),
           updated_at: new Date().toISOString(),
-          client: ticketData.client
+          client: ticketData.client,
+          machine: ticketData.machine
         };
         
         setTickets(prev => [newTicket, ...prev]);
@@ -101,7 +116,7 @@ export const useSupportTickets = (options: UseSupportTicketsOptions = {}) => {
     });
   };
   
-  const updateTicketStatus = (ticketId: string, status: SupportRequestStatus) => {
+  const updateTicketStatus = (ticketId: string, status: TicketStatus) => {
     return new Promise<void>((resolve) => {
       setTimeout(() => {
         setTickets(prev => 
@@ -121,7 +136,7 @@ export const useSupportTickets = (options: UseSupportTicketsOptions = {}) => {
   };
   
   const getPendingTicketsCount = () => {
-    return tickets.filter(ticket => ticket.status === SupportRequestStatus.PENDING).length;
+    return tickets.filter(ticket => ticket.status === TicketStatus.PENDING).length;
   };
   
   const getTicketsGroupedByStatus = () => {
@@ -145,4 +160,3 @@ export const useSupportTickets = (options: UseSupportTicketsOptions = {}) => {
     getTicketsGroupedByStatus
   };
 };
-
