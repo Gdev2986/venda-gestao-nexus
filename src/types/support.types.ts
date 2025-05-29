@@ -1,29 +1,54 @@
 
-import { TicketStatus, TicketPriority, TicketType } from "./enums";
+export enum SupportRequestStatus {
+  PENDING = "PENDING",
+  IN_PROGRESS = "IN_PROGRESS", 
+  COMPLETED = "COMPLETED",
+  CANCELED = "CANCELED"
+}
+
+export enum SupportRequestType {
+  MAINTENANCE = "MAINTENANCE",
+  INSTALLATION = "INSTALLATION",
+  REPAIR = "REPAIR", 
+  TRAINING = "TRAINING",
+  SUPPORT = "SUPPORT",
+  OTHER = "OTHER"
+}
+
+export enum SupportRequestPriority {
+  LOW = "LOW",
+  MEDIUM = "MEDIUM",
+  HIGH = "HIGH"
+}
 
 export interface SupportTicket {
   id: string;
-  title: string;
   client_id: string;
+  technician_id?: string;
   machine_id?: string;
-  user_id?: string;
   assigned_to?: string;
-  type: TicketType;
-  status: TicketStatus;
-  priority: TicketPriority;
-  description: string;
+  type: SupportRequestType;
+  status: SupportRequestStatus; 
+  priority: SupportRequestPriority;
   scheduled_date?: string;
-  resolution?: string;
   created_at: string;
   updated_at?: string;
+  title: string;
+  description: string;
+  resolution?: string;
+  attachments?: Array<{
+    id: string;
+    name: string;
+    url: string;
+    type: string;
+    size: number;
+  }>;
   client?: {
     id: string;
     business_name: string;
     contact_name?: string;
     phone?: string;
-    address?: string;
-    city?: string;
-    state?: string;
+    email?: string;
   };
   machine?: {
     id: string;
@@ -37,36 +62,34 @@ export interface SupportMessage {
   ticket_id: string;
   user_id: string;
   message: string;
+  attachments?: Array<{
+    id: string;
+    name: string;
+    url: string;
+    type: string;
+    size: number;
+  }>;
+  is_read: boolean;
   created_at: string;
   user?: {
     id: string;
     name: string;
     role: string;
+    email?: string;
   };
 }
 
-export interface CreateTicketParams {
+export interface CreateSupportTicketParams {
   title: string;
   description: string;
-  client_id: string;
+  type: SupportRequestType;
+  priority: SupportRequestPriority;
   machine_id?: string;
-  type: TicketType;
-  priority: TicketPriority;
-  status?: TicketStatus;
-  scheduled_date?: string;
-  user_id?: string;
+  attachments?: File[];
 }
 
-export interface UpdateTicketParams {
-  title?: string;
-  description?: string;
-  status?: TicketStatus;
-  priority?: TicketPriority;
-  type?: TicketType;
-  assigned_to?: string;
-  resolution?: string;
-  scheduled_date?: string;
+export interface CreateMessageParams {
+  ticket_id: string;
+  message: string;
+  attachments?: File[];
 }
-
-// Export the enums to fix the "locally declared but not exported" errors
-export { TicketStatus, TicketPriority, TicketType };
