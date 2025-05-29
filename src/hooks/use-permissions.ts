@@ -1,7 +1,7 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '@/hooks/use-auth';
-import { UserRole } from '@/types';
+import { UserRole } from '@/types/enums';
 
 interface Permission {
   name: string;
@@ -47,7 +47,7 @@ export function usePermissions() {
     const permission = PERMISSIONS[permissionName];
     if (!permission) return false;
     
-    return permission.roles.includes(userRole);
+    return permission.roles.includes(userRole as UserRole);
   }, [userRole]);
 
   // Check if user has any of the given permissions

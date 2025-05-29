@@ -7,15 +7,6 @@ export * from './machine.types';
 // Adicionar novos exports para tipos de autenticação enterprise
 export * from './auth.types';
 
-// Manter UserRole como enum para compatibilidade
-export enum UserRole {
-  ADMIN = "ADMIN",
-  CLIENT = "CLIENT", 
-  PARTNER = "PARTNER",
-  FINANCIAL = "FINANCIAL",
-  LOGISTICS = "LOGISTICS"
-}
-
 // Export ClientStatus enum
 export enum ClientStatus {
   ACTIVE = "active",
@@ -38,7 +29,7 @@ export interface UserData {
   id: string;
   name: string;
   email: string;
-  role: UserRole;
+  role: import('./enums').UserRole;
   created_at: string;
   status: string;
 }

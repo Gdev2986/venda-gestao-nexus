@@ -1,10 +1,8 @@
-
 import { useState, useEffect } from "react";
 import { User, Session } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-
-type UserRole = "ADMIN" | "CLIENT" | "LOGISTICS" | "FINANCIAL";
+import { UserRole } from "@/types/enums";
 
 interface UserProfile {
   id: string;
@@ -88,8 +86,14 @@ export const useAuth = () => {
         return;
       }
 
-      setUserProfile(data);
-      setUserRole(data.role);
+      // Convert the role string to UserRole enum
+      const profileWithRole = {
+        ...data,
+        role: data.role as UserRole
+      };
+
+      setUserProfile(profileWithRole);
+      setUserRole(data.role as UserRole);
 
       // Check if password change is needed
       const needsChange = await checkPasswordChangeRequired(userId);
@@ -97,62 +101,6 @@ export const useAuth = () => {
 
     } catch (error) {
       console.error('Error loading user profile:', error);
-    }
-  };
-
-  // Handle sign in
-  const signIn = async (email: string, password: string) => {
-    try {
-      setLoading(true);
-      const { data, error } = await supabase.auth.signInWithPassword({
-        email,
-        password,
-      });
-
-      if (error) throw error;
-
-      if (data.user) {
-        await loadUserProfile(data.user.id);
-      }
-
-      return { success: true, error: null };
-    } catch (error: any) {
-      console.error('Sign in error:', error);
-      return { success: false, error: error.message };
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  // Handle sign out
-  const signOut = async () => {
-    try {
-      setLoading(true);
-      const { error } = await supabase.auth.signOut();
-      if (error) throw error;
-
-      setUser(null);
-      setSession(null);
-      setUserProfile(null);
-      setUserRole(null);
-      setNeedsPasswordChange(false);
-    } catch (error: any) {
-      console.error('Sign out error:', error);
-      toast({
-        variant: "destructive",
-        title: "Erro ao sair",
-        description: error.message,
-      });
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  // Handle password change completion
-  const onPasswordChanged = async () => {
-    setNeedsPasswordChange(false);
-    if (user) {
-      await loadUserProfile(user.id);
     }
   };
 
@@ -206,9 +154,56 @@ export const useAuth = () => {
     isLoading, // Backward compatibility alias
     isAuthenticated, // Backward compatibility property
     needsPasswordChange,
-    signIn,
-    signOut,
-    onPasswordChanged,
+    signIn: async (email: string, password: string) => {
+      try {
+        setLoading(true);
+        const { data, error } = await supabase.auth.signInWithPassword({
+          email,
+          password,
+        });
+
+        if (error) throw error;
+
+        if (data.user) {
+          await loadUserProfile(data.user.id);
+        }
+
+        return { success: true, error: null };
+      } catch (error: any) {
+        console.error('Sign in error:', error);
+        return { success: false, error: error.message };
+      } finally {
+        setLoading(false);
+      }
+    },
+    signOut: async () => {
+      try {
+        setLoading(true);
+        const { error } = await supabase.auth.signOut();
+        if (error) throw error;
+
+        setUser(null);
+        setSession(null);
+        setUserProfile(null);
+        setUserRole(null);
+        setNeedsPasswordChange(false);
+      } catch (error: any) {
+        console.error('Sign out error:', error);
+        toast({
+          variant: "destructive",
+          title: "Erro ao sair",
+          description: error.message,
+        });
+      } finally {
+        setLoading(false);
+      }
+    },
+    onPasswordChanged: async () => {
+      setNeedsPasswordChange(false);
+      if (user) {
+        await loadUserProfile(user.id);
+      }
+    },
     error: null, // Add error property for compatibility
   };
 };

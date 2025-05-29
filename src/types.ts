@@ -1,51 +1,44 @@
-export enum UserRole {
-  ADMIN = "ADMIN",
-  CLIENT = "CLIENT", 
-  FINANCIAL = "FINANCIAL",
-  PARTNER = "PARTNER",
-  LOGISTICS = "LOGISTICS",
-  MANAGER = "MANAGER",
-  FINANCE = "FINANCE",
-  SUPPORT = "SUPPORT",
-  USER = "USER"
-}
 
-export enum PaymentStatus {
-  PENDING = "PENDING",
-  APPROVED = "APPROVED",
-  REJECTED = "REJECTED",
-  PAID = "PAID"
-}
+// Export all types from the various type files
+export * from './types/enums';
+export * from './types/payment.types';
+export * from './types/machine.types';
 
-export enum PaymentType {
-  PIX = "PIX",
-  TED = "TED",
-  BOLETO = "BOLETO"
-}
+// Adicionar novos exports para tipos de autenticação enterprise
+export * from './types/auth.types';
 
-// Added ClientStatus enum for the ClientStatus component
+// Export ClientStatus enum
 export enum ClientStatus {
   ACTIVE = "active",
   INACTIVE = "inactive",
   PENDING = "pending"
 }
 
-export enum PaymentMethod {
-  CREDIT = "credit",
-  DEBIT = "debit",
-  PIX = "pix"
+// Export common interfaces
+export interface PaginatedResponse<T> {
+  data: T[];
+  meta: {
+    total: number;
+    page: number;
+    pageSize: number;
+    totalPages: number;
+  };
 }
 
-// Updated to match database notification_type enum
-export enum NotificationType {
-  PAYMENT = "PAYMENT",
-  BALANCE = "BALANCE", 
-  MACHINE = "MACHINE",
-  COMMISSION = "COMMISSION",
-  SYSTEM = "SYSTEM",
-  GENERAL = "GENERAL",
-  SALE = "SALE",
-  SUPPORT = "SUPPORT"
+export interface UserData {
+  id: string;
+  name: string;
+  email: string;
+  role: import('./types/enums').UserRole;
+  created_at: string;
+  status: string;
+}
+
+export interface ApiResponse<T> {
+  data?: T;
+  error?: string;
+  message?: string;
+  status: number;
 }
 
 export interface Payment {
@@ -53,13 +46,13 @@ export interface Payment {
   created_at: string;
   updated_at: string;
   amount: number;
-  status: PaymentStatus | string;
+  status: import('./types/enums').PaymentStatus | string;
   client_id: string;
   approved_at?: string; 
   receipt_url?: string;
   client_name?: string;
   rejection_reason: string | null;
-  payment_type?: PaymentType | string;
+  payment_type?: import('./types/enums').PaymentType | string;
   bank_info?: {
     bank_name?: string;
     account_number?: string;
@@ -161,7 +154,7 @@ export interface Sale {
   gross_amount: number;
   net_amount: number;
   date: string;
-  payment_method: PaymentMethod | string;
+  payment_method: import('./types/enums').PaymentMethod | string;
   client_id: string;
   created_at: string;
   updated_at: string;
@@ -181,15 +174,6 @@ export interface SalesFilterParams {
   startHour?: number;
   endHour?: number;
   installments?: string;
-}
-
-export interface UserData {
-  id: string;
-  name: string;
-  email: string;
-  role: UserRole | string; // Allow string role from database
-  created_at: string;
-  status: string;
 }
 
 export interface SalesChartData {
@@ -216,7 +200,7 @@ export interface Notification {
   id: string;
   title: string;
   message: string;
-  type: NotificationType;
+  type: import('./types/enums').NotificationType;
   read: boolean;
   timestamp: Date;
   data?: any;
