@@ -16,7 +16,7 @@ interface NotificationsContextType {
   markAllAsRead: () => Promise<void>;
   deleteNotification: (id: string) => Promise<void>;
   fetchNotifications: () => Promise<void>;
-  sendNotificationToRoles: (title: string, message: string, type: NotificationType, roles: string[], data?: any) => Promise<void>;
+  sendNotificationToRoles: (title: string, message: string, type: NotificationType, roles: string[], data?: any) => Promise<number>;
   sendNotificationToUser: (userId: string, title: string, message: string, type: NotificationType, data?: any) => Promise<void>;
 }
 
@@ -29,6 +29,15 @@ export const useNotifications = () => {
   }
   return context;
 };
+
+// Available roles with labels
+const AVAILABLE_ROLES = [
+  { value: "ADMIN", label: "Admin" },
+  { value: "CLIENT", label: "Cliente" },
+  { value: "PARTNER", label: "Parceiro" },
+  { value: "FINANCIAL", label: "Financeiro" },
+  { value: "LOGISTICS", label: "Logística" },
+];
 
 export const NotificationsProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { user } = useAuth();
@@ -169,53 +178,101 @@ export const NotificationsProvider: React.FC<{ children: React.ReactNode }> = ({
     }
   };
 
+  // Enhanced function with fallback and better error handling
   const sendNotificationToRoles = async (
     title: string, 
     message: string, 
     type: NotificationType, 
     roles: string[], 
     data: any = {}
-  ) => {
+  ): Promise<number> => {
+    console.log('Sending notification to roles:', { title, message, type, roles, data });
+    
+    // Validate roles
+    const validRoles = roles.filter(role => 
+      AVAILABLE_ROLES.some(availableRole => availableRole.value === role)
+    );
+    
+    if (validRoles.length === 0) {
+      throw new Error("Nenhuma função válida fornecida");
+    }
+
     try {
-      console.log('Sending notification to roles:', { title, message, type, roles, data });
-      
-      const { error } = await supabase
-        .rpc('send_notification_to_roles' as any, {
+      // Try using the database function first
+      const { data: result, error } = await supabase
+        .rpc('send_notification_to_roles', {
           notification_title: title,
           notification_message: message,
           notification_type: type,
-          target_roles: roles,
+          target_roles: validRoles,
           notification_data: data
         });
 
       if (error) {
         console.error('Database function error:', error);
-        throw error;
+        // Fallback to direct insertion
+        return await sendNotificationToRolesFallback(title, message, type, validRoles, data);
       }
 
-      console.log('Notification sent successfully to roles:', roles);
+      const insertedCount = result || 0;
+      console.log(`Notification sent successfully to ${insertedCount} users in roles:`, validRoles);
       
-      toast({
-        title: "Sucesso",
-        description: `Notificação enviada para ${roles.length} função(ões): ${roles.join(', ')}`
-      });
+      return insertedCount;
     } catch (error: any) {
       console.error("Error sending notification to roles:", error);
-      
-      // Provide more detailed error information
-      let errorMessage = "Falha ao enviar notificação";
-      if (error.message?.includes('Could not find the function')) {
-        errorMessage = "Função do banco de dados não encontrada. Verifique se as funções foram criadas corretamente.";
-      } else if (error.code === 'PGRST202') {
-        errorMessage = "Função de envio de notificação não está disponível no banco de dados.";
+      // Try fallback method
+      return await sendNotificationToRolesFallback(title, message, type, validRoles, data);
+    }
+  };
+
+  // Fallback method using direct database queries
+  const sendNotificationToRolesFallback = async (
+    title: string,
+    message: string,
+    type: NotificationType,
+    roles: string[],
+    data: any = {}
+  ): Promise<number> => {
+    console.log('Using fallback method for notification sending');
+    
+    try {
+      // Get all users with the specified roles
+      const { data: users, error: usersError } = await supabase
+        .from('profiles')
+        .select('id')
+        .in('role', roles)
+        .eq('status', 'active');
+
+      if (usersError) throw usersError;
+
+      if (!users || users.length === 0) {
+        console.warn('No active users found for roles:', roles);
+        return 0;
       }
+
+      // Create notifications for all users
+      const notifications = users.map(user => ({
+        user_id: user.id,
+        title,
+        message,
+        type,
+        data: data || {}
+      }));
+
+      const { data: insertedNotifications, error: insertError } = await supabase
+        .from('notifications')
+        .insert(notifications)
+        .select();
+
+      if (insertError) throw insertError;
+
+      const insertedCount = insertedNotifications?.length || 0;
+      console.log(`Fallback method: sent ${insertedCount} notifications to roles:`, roles);
       
-      toast({
-        title: "Erro",
-        description: errorMessage,
-        variant: "destructive"
-      });
-      throw error;
+      return insertedCount;
+    } catch (error: any) {
+      console.error("Fallback method failed:", error);
+      throw new Error("Falha ao enviar notificação mesmo com método alternativo");
     }
   };
 
@@ -226,11 +283,12 @@ export const NotificationsProvider: React.FC<{ children: React.ReactNode }> = ({
     type: NotificationType, 
     data: any = {}
   ) => {
+    console.log('Sending notification to user:', { userId, title, message, type, data });
+    
     try {
-      console.log('Sending notification to user:', { userId, title, message, type, data });
-      
-      const { error } = await supabase
-        .rpc('send_notification_to_user' as any, {
+      // Try using the database function first
+      const { data: result, error } = await supabase
+        .rpc('send_notification_to_user', {
           target_user_id: userId,
           notification_title: title,
           notification_message: message,
@@ -240,32 +298,42 @@ export const NotificationsProvider: React.FC<{ children: React.ReactNode }> = ({
 
       if (error) {
         console.error('Database function error:', error);
-        throw error;
+        // Fallback to direct insertion
+        await sendNotificationToUserFallback(userId, title, message, type, data);
+        return;
       }
 
       console.log('Notification sent successfully to user:', userId);
-      
-      toast({
-        title: "Sucesso",
-        description: "Notificação enviada com sucesso"
-      });
     } catch (error: any) {
       console.error("Error sending notification to user:", error);
-      
-      // Provide more detailed error information
-      let errorMessage = "Falha ao enviar notificação";
-      if (error.message?.includes('Could not find the function')) {
-        errorMessage = "Função do banco de dados não encontrada. Verifique se as funções foram criadas corretamente.";
-      } else if (error.code === 'PGRST202') {
-        errorMessage = "Função de envio de notificação não está disponível no banco de dados.";
-      }
-      
-      toast({
-        title: "Erro",
-        description: errorMessage,
-        variant: "destructive"
+      // Try fallback method
+      await sendNotificationToUserFallback(userId, title, message, type, data);
+    }
+  };
+
+  // Fallback method for single user notification
+  const sendNotificationToUserFallback = async (
+    userId: string,
+    title: string,
+    message: string,
+    type: NotificationType,
+    data: any = {}
+  ) => {
+    console.log('Using fallback method for user notification');
+    
+    const { error } = await supabase
+      .from('notifications')
+      .insert({
+        user_id: userId,
+        title,
+        message,
+        type,
+        data: data || {}
       });
-      throw error;
+
+    if (error) {
+      console.error("Fallback method failed for user notification:", error);
+      throw new Error("Falha ao enviar notificação para o usuário");
     }
   };
 

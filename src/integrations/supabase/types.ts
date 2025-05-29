@@ -1303,6 +1303,26 @@ export type Database = {
         Args: { _role: Database["public"]["Enums"]["app_role"] }
         Returns: boolean
       }
+      send_notification_to_roles: {
+        Args: {
+          notification_title: string
+          notification_message: string
+          notification_type: string
+          target_roles: string[]
+          notification_data?: Json
+        }
+        Returns: number
+      }
+      send_notification_to_user: {
+        Args: {
+          target_user_id: string
+          notification_title: string
+          notification_message: string
+          notification_type: string
+          notification_data?: Json
+        }
+        Returns: boolean
+      }
       update_user_after_password_change: {
         Args: { user_uuid: string }
         Returns: undefined
