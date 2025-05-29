@@ -27,6 +27,35 @@ export const getMachines = async (): Promise<Machine[]> => {
   }
 };
 
+// Alias for backwards compatibility
+export const getAllMachines = getMachines;
+
+export const getClientsWithMachines = async () => {
+  try {
+    const { data, error } = await supabase
+      .from('clients')
+      .select(`
+        id,
+        business_name,
+        email,
+        machines:machines(
+          id,
+          serial_number,
+          model,
+          status
+        )
+      `)
+      .not('machines', 'is', null);
+
+    if (error) throw error;
+
+    return data || [];
+  } catch (error) {
+    console.error('Error fetching clients with machines:', error);
+    throw error;
+  }
+};
+
 export const getMachinesByStatus = async (status: MachineStatus): Promise<Machine[]> => {
   try {
     const { data, error } = await supabase

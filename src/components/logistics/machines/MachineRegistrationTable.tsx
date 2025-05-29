@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -5,7 +6,7 @@ import { Table, TableHeader, TableRow, TableHead, TableBody, TableCell } from "@
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Edit, Trash2, Link as LinkIcon } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import { getAllMachines, deleteMachine, updateMachine } from "@/services/machine.service";
+import { getMachines, deleteMachine, updateMachine } from "@/services/machine.service";
 import { Machine, MachineStatus } from "@/types/machine.types";
 import { Badge } from "@/components/ui/badge";
 import { Link } from "react-router-dom";
@@ -47,7 +48,7 @@ export default function MachineRegistrationTable() {
   const loadMachines = async () => {
     setIsLoading(true);
     try {
-      const data = await getAllMachines();
+      const data = await getMachines();
       setMachines(data);
     } catch (error) {
       console.error("Error loading machines:", error);
