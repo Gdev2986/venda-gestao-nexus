@@ -26,10 +26,19 @@ interface ProfileData {
 
 interface RoleChangeModalProps {
   open?: boolean;
-  isOpen?: boolean; // Support both naming conventions
+  isOpen?: boolean;
   user: ProfileData;
   onClose: () => void;
 }
+
+// Todas as roles disponíveis no sistema
+const ALL_AVAILABLE_ROLES = [
+  { value: "ADMIN", label: "Admin" },
+  { value: "CLIENT", label: "Cliente" },
+  { value: "PARTNER", label: "Parceiro" },
+  { value: "FINANCIAL", label: "Financeiro" },
+  { value: "LOGISTICS", label: "Logística" },
+];
 
 export const RoleChangeModal = ({ 
   open, 
@@ -37,42 +46,9 @@ export const RoleChangeModal = ({
   user, 
   onClose 
 }: RoleChangeModalProps) => {
-  const [availableRoles, setAvailableRoles] = useState<string[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
   const [newRole, setNewRole] = useState(user.role);
-  const isModalOpen = open || isOpen; // Support both props
-
-  // Fetch available roles from the profiles table
-  useEffect(() => {
-    const fetchRoles = async () => {
-      setLoading(true);
-      try {
-        const { data, error } = await supabase
-          .from('profiles')
-          .select('role')
-          .not('role', 'is', null);
-
-        if (error) throw error;
-
-        // Extract unique roles
-        const uniqueRoles = Array.from(new Set(data.map(item => item.role)));
-        setAvailableRoles(uniqueRoles);
-      } catch (error) {
-        console.error("Error fetching roles:", error);
-        toast({
-          title: "Error",
-          description: "Failed to load available roles",
-          variant: "destructive"
-        });
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    if (isModalOpen) {
-      fetchRoles();
-    }
-  }, [isModalOpen]);
+  const isModalOpen = open || isOpen;
 
   const onSave = async () => {
     setLoading(true);
@@ -85,15 +61,15 @@ export const RoleChangeModal = ({
       if (error) throw error;
       
       toast({
-        title: "Role updated",
-        description: `User ${user.name} role changed to ${newRole}`
+        title: "Função alterada",
+        description: `Função do usuário ${user.name} alterada para ${newRole}`
       });
       onClose();
     } catch (error) {
       console.error("Error updating role:", error);
       toast({
-        title: "Error",
-        description: "Failed to update user role",
+        title: "Erro",
+        description: "Falha ao alterar a função do usuário",
         variant: "destructive"
       });
     } finally {
@@ -104,37 +80,41 @@ export const RoleChangeModal = ({
   if (!isModalOpen) return null;
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex justify-center items-center">
-      <div className="bg-white p-6 rounded-md shadow-lg w-96">
-        <h2 className="text-xl font-semibold mb-4">
+    <div className="fixed inset-0 bg-black/50 z-50 flex justify-center items-center">
+      <div className="bg-white dark:bg-gray-800 p-6 rounded-md shadow-lg w-96 border dark:border-gray-700">
+        <h2 className="text-xl font-semibold mb-4 text-gray-900 dark:text-gray-100">
           Alterar Função de {user.name}
         </h2>
         <div className="mb-6">
-          <Label htmlFor="newRole" className="mb-2 block">Nova Função:</Label>
-          {loading ? (
-            <p className="text-sm text-muted-foreground">Carregando funções disponíveis...</p>
-          ) : (
-            <Select
-              value={newRole}
-              onValueChange={(value: string) => setNewRole(value)}
-            >
-              <SelectTrigger className="w-full">
-                <SelectValue placeholder="Selecione a função" />
-              </SelectTrigger>
-              <SelectContent>
-                {availableRoles.map(role => (
-                  <SelectItem key={role} value={role}>{role}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          )}
+          <Label htmlFor="newRole" className="mb-2 block text-gray-700 dark:text-gray-300">
+            Nova Função:
+          </Label>
+          <Select
+            value={newRole}
+            onValueChange={(value: string) => setNewRole(value)}
+          >
+            <SelectTrigger className="w-full dark:bg-gray-700 dark:border-gray-600 dark:text-gray-100">
+              <SelectValue placeholder="Selecione a função" />
+            </SelectTrigger>
+            <SelectContent className="dark:bg-gray-800 dark:border-gray-700">
+              {ALL_AVAILABLE_ROLES.map(role => (
+                <SelectItem 
+                  key={role.value} 
+                  value={role.value}
+                  className="dark:text-gray-100 dark:hover:bg-gray-700"
+                >
+                  {role.label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         </div>
         <div className="flex justify-end gap-2">
-          <Button variant="ghost" onClick={onClose}>
+          <Button variant="ghost" onClick={onClose} className="dark:text-gray-300 dark:hover:bg-gray-700">
             Cancelar
           </Button>
           <Button onClick={onSave} disabled={loading}>
-            Salvar
+            {loading ? "Salvando..." : "Salvar"}
           </Button>
         </div>
       </div>

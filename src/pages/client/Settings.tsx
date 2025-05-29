@@ -9,6 +9,8 @@ import { Separator } from "@/components/ui/separator";
 import { Switch } from "@/components/ui/switch";
 import { useAuth } from "@/hooks/use-auth";
 import { User, Bell, Lock, CreditCard } from "lucide-react";
+import { PasswordChangeForm } from "@/components/settings/PasswordChangeForm";
+import { PixKeysManager } from "@/components/settings/PixKeysManager";
 
 const ClientSettings = () => {
   const { user, profile } = useAuth();
@@ -93,14 +95,8 @@ const ClientSettings = () => {
               Segurança
             </CardTitle>
           </CardHeader>
-          <CardContent className="space-y-4">
-            <Button variant="outline">
-              Alterar Senha
-            </Button>
-            <Separator />
-            <Button variant="outline">
-              Configurar Autenticação em Duas Etapas
-            </Button>
+          <CardContent>
+            <PasswordChangeForm />
           </CardContent>
         </Card>
 
@@ -112,13 +108,8 @@ const ClientSettings = () => {
               Chaves PIX
             </CardTitle>
           </CardHeader>
-          <CardContent className="space-y-4">
-            <p className="text-sm text-muted-foreground">
-              Gerencie suas chaves PIX para recebimento de pagamentos
-            </p>
-            <Button variant="outline">
-              Gerenciar Chaves PIX
-            </Button>
+          <CardContent>
+            <PixKeysManager userId={user?.id || ""} />
           </CardContent>
         </Card>
       </div>
