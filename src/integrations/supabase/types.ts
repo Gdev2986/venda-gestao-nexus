@@ -756,6 +756,60 @@ export type Database = {
           },
         ]
       }
+      sales_date_range: {
+        Row: {
+          earliest_date: string
+          id: string
+          last_updated: string | null
+          latest_date: string
+          total_records: number | null
+        }
+        Insert: {
+          earliest_date: string
+          id?: string
+          last_updated?: string | null
+          latest_date: string
+          total_records?: number | null
+        }
+        Update: {
+          earliest_date?: string
+          id?: string
+          last_updated?: string | null
+          latest_date?: string
+          total_records?: number | null
+        }
+        Relationships: []
+      }
+      sales_metadata: {
+        Row: {
+          created_at: string | null
+          id: string
+          metric_date: string
+          total_amount: number | null
+          total_sales: number | null
+          unique_terminals: number | null
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          metric_date: string
+          total_amount?: number | null
+          total_sales?: number | null
+          unique_terminals?: number | null
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          metric_date?: string
+          total_amount?: number | null
+          total_sales?: number | null
+          unique_terminals?: number | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       security_events: {
         Row: {
           created_at: string | null
@@ -1167,6 +1221,46 @@ export type Database = {
       get_current_user_role: {
         Args: Record<PropertyKey, never>
         Returns: string
+      }
+      get_dates_with_sales: {
+        Args: Record<PropertyKey, never>
+        Returns: {
+          sale_date: string
+        }[]
+      }
+      get_sales_date_range: {
+        Args: Record<PropertyKey, never>
+        Returns: {
+          earliest_date: string
+          latest_date: string
+          total_records: number
+        }[]
+      }
+      get_sales_paginated: {
+        Args: {
+          page_number?: number
+          page_size?: number
+          filter_date_start?: string
+          filter_date_end?: string
+          filter_hour_start?: number
+          filter_hour_end?: number
+          filter_terminals?: string[]
+          filter_payment_type?: string
+          filter_status?: string
+          filter_source?: string
+        }
+        Returns: {
+          id: string
+          code: string
+          terminal: string
+          date: string
+          gross_amount: number
+          net_amount: number
+          payment_method: string
+          installments: number
+          source: string
+          total_count: number
+        }[]
       }
       get_user_client_balance: {
         Args: { user_uuid: string }
