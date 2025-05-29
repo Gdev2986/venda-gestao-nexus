@@ -55,7 +55,7 @@ const Sidebar = memo(({ isOpen, isMobile, onClose, userRole }: SidebarProps) => 
       <motion.aside
         className={cn(
           "fixed inset-y-0 left-0 z-50 flex flex-col w-[280px] md:w-64 text-sidebar-foreground h-full",
-          "bg-gradient-to-br from-[#13A197] to-[#105865]",
+          "bg-sidebar",
           isMobile ? "shadow-xl" : "border-r border-sidebar-border"
         )}
         initial={{ x: isMobile ? -320 : isOpen ? 0 : -280 }}
