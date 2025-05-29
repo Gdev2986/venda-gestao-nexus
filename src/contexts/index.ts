@@ -1,4 +1,4 @@
 
-// Re-export authentication context
-export { AuthContext, useAuth, AuthProvider } from "./AuthContext";
+// Re-export authentication context from providers
+export { useAuth } from "@/hooks/use-auth";
 export * from "./auth-types";

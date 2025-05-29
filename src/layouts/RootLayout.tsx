@@ -1,8 +1,8 @@
 
 import { Navigate, useLocation } from "react-router-dom";
-import { useAuth } from "@/contexts/AuthContext";
+import { useAuth } from "@/hooks/use-auth";
 import { PATHS } from "@/routes/paths";
-import { getDashboardPath } from "@/routes/routeUtils";
+import { getDashboardPath } from "@/utils/auth-utils";
 
 const RootLayout = () => {
   const { user, isLoading, isAuthenticated, userRole, needsPasswordChange } = useAuth();
