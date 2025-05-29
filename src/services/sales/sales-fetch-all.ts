@@ -18,7 +18,7 @@ export interface SaleWithMachine {
 }
 
 export const fetchAllSales = async (): Promise<SaleWithMachine[]> => {
-  const pageSize = 1000;
+  const pageSize = 100;
   let allData: SaleWithMachine[] = [];
   let page = 0;
   let finished = false;
