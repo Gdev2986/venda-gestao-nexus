@@ -1,5 +1,6 @@
 
 import React from 'react';
+import AuthProvider from './AuthProvider';
 import { NotificationsProvider } from '@/contexts/notifications/NotificationsContext';
 
 interface ProvidersProps {
@@ -8,8 +9,10 @@ interface ProvidersProps {
 
 export const Providers = ({ children }: ProvidersProps) => {
   return (
-    <NotificationsProvider>
-      {children}
-    </NotificationsProvider>
+    <AuthProvider>
+      <NotificationsProvider>
+        {children}
+      </NotificationsProvider>
+    </AuthProvider>
   );
 };

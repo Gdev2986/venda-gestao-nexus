@@ -7,7 +7,7 @@ import { Spinner } from "@/components/ui/spinner";
 import { useMediaQuery } from "@/hooks/use-media-query";
 import LoginForm from "@/components/auth/LoginForm";
 import { LayoutDashboard, CreditCard, FileText, Monitor } from "lucide-react";
-import { getDashboardPath } from "@/utils/auth-utils";
+import { getDashboardPath, isValidUserRole } from "@/utils/auth-utils";
 
 const Login = () => {
   const navigate = useNavigate();
@@ -21,11 +21,27 @@ const Login = () => {
       isLoading,
       userRole,
       isAuthenticated,
-      needsPasswordChange
+      needsPasswordChange,
+      redirecting
     });
 
-    // Se o usuário está autenticado e temos todos os dados necessários
-    if (isAuthenticated && user && !isLoading) {
+    // Evitar redirecionamento múltiplo
+    if (redirecting) {
+      console.log("Login: Already redirecting, skipping...");
+      return;
+    }
+
+    // Se ainda está carregando, aguardar
+    if (isLoading) {
+      console.log("Login: Still loading, waiting...");
+      return;
+    }
+
+    // Se o usuário está autenticado
+    if (isAuthenticated && user) {
+      console.log("Login: User authenticated, checking conditions...");
+      
+      // Se precisa trocar senha
       if (needsPasswordChange) {
         console.log("Login: User needs password change, redirecting");
         setRedirecting(true);
@@ -33,8 +49,9 @@ const Login = () => {
         return;
       }
       
-      if (userRole) {
-        console.log("Login: User authenticated with role, redirecting to dashboard");
+      // Se tem role válida, redirecionar para dashboard
+      if (userRole && isValidUserRole(userRole)) {
+        console.log("Login: User has valid role, redirecting to dashboard");
         setRedirecting(true);
         const dashboardPath = getDashboardPath(userRole);
         console.log("Login: Redirecting to:", dashboardPath);
@@ -42,10 +59,19 @@ const Login = () => {
         return;
       }
       
-      // Se não tem role ainda, espera um pouco mais
-      console.log("Login: User authenticated but waiting for role...");
+      // Se não tem role ainda mas está autenticado, aguardar um pouco mais
+      if (!userRole) {
+        console.log("Login: User authenticated but no role yet, waiting...");
+        // Aguardar até 5 segundos pela role
+        const timeout = setTimeout(() => {
+          console.log("Login: Timeout waiting for role, force refresh");
+          window.location.reload();
+        }, 5000);
+        
+        return () => clearTimeout(timeout);
+      }
     }
-  }, [user, isLoading, userRole, isAuthenticated, needsPasswordChange, navigate]);
+  }, [user, isLoading, userRole, isAuthenticated, needsPasswordChange, navigate, redirecting]);
 
   // Mostrar loading se estiver carregando OU se estiver redirecionando
   if (isLoading || redirecting) {
@@ -62,7 +88,7 @@ const Login = () => {
   }
 
   // Se o usuário já está autenticado mas ainda não redirecionou, mostrar loading
-  if (isAuthenticated && user) {
+  if (isAuthenticated && user && !redirecting) {
     return (
       <div className="flex flex-col items-center justify-center h-screen bg-background">
         <div className="flex flex-col items-center space-y-4">

@@ -1,3 +1,4 @@
+
 import { UserRole } from "@/types";
 import { PATHS } from "@/routes/paths";
 
@@ -27,5 +28,17 @@ export const getDashboardPath = (userRole: UserRole | null): string => {
 };
 
 export const isValidUserRole = (role: any): role is UserRole => {
-  return Object.values(UserRole).includes(role?.toLowerCase?.());
+  console.log("isValidUserRole checking role:", role, "Type:", typeof role);
+  
+  if (!role) return false;
+  
+  // Convert to uppercase for comparison
+  const roleUpper = typeof role === 'string' ? role.toUpperCase() : role;
+  const validRoles = Object.values(UserRole);
+  
+  console.log("Valid roles:", validRoles);
+  console.log("Role upper:", roleUpper);
+  console.log("Is valid:", validRoles.includes(roleUpper));
+  
+  return validRoles.includes(roleUpper);
 };

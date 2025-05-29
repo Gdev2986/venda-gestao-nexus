@@ -2,7 +2,7 @@
 import { Navigate, useLocation } from "react-router-dom";
 import { useAuth } from "@/hooks/use-auth";
 import { PATHS } from "@/routes/paths";
-import { getDashboardPath } from "@/utils/auth-utils";
+import { getDashboardPath, isValidUserRole } from "@/utils/auth-utils";
 
 const RootLayout = () => {
   const { user, isLoading, isAuthenticated, userRole, needsPasswordChange } = useAuth();
@@ -17,8 +17,9 @@ const RootLayout = () => {
     user: user?.id
   });
   
-  // If still loading auth or user data, show spinner
+  // Se ainda está carregando auth ou user data, mostrar spinner
   if (isLoading) {
+    console.log("RootLayout: Still loading, showing spinner");
     return (
       <div className="flex flex-col items-center justify-center h-screen bg-background">
         <div className="flex flex-col items-center space-y-4">
@@ -29,28 +30,28 @@ const RootLayout = () => {
     );
   }
   
-  // If not authenticated, redirect to login
+  // Se não autenticado, redirecionar para login
   if (!isAuthenticated || !user) {
-    console.log("User not authenticated, redirecting to login");
+    console.log("RootLayout: User not authenticated, redirecting to login");
     return <Navigate to={PATHS.LOGIN} replace />;
   }
   
-  // If authenticated and needs password change, redirect to password change page
+  // Se autenticado e precisa trocar senha, redirecionar para troca de senha
   if (needsPasswordChange) {
-    console.log("User needs to change password, redirecting to password change page");
+    console.log("RootLayout: User needs to change password, redirecting");
     return <Navigate to={PATHS.CHANGE_PASSWORD} replace />;
   }
   
-  // If authenticated and we have role, redirect to dashboard
-  if (userRole) {
-    console.log(`Redirecting user with role ${userRole} to dashboard`);
+  // Se autenticado e tem role válida, redirecionar para dashboard
+  if (userRole && isValidUserRole(userRole)) {
+    console.log(`RootLayout: Redirecting user with role ${userRole} to dashboard`);
     const dashboardPath = getDashboardPath(userRole);
-    console.log(`Dashboard path: ${dashboardPath}`);
+    console.log(`RootLayout: Dashboard path: ${dashboardPath}`);
     return <Navigate to={dashboardPath} replace />;
   }
   
-  // If authenticated but no role yet, show loading and wait
-  console.log("User authenticated but no role yet, waiting...");
+  // Se autenticado mas não tem role ainda, aguardar
+  console.log("RootLayout: User authenticated but no valid role yet, waiting...");
   return (
     <div className="flex flex-col items-center justify-center h-screen bg-background">
       <div className="flex flex-col items-center space-y-4">
