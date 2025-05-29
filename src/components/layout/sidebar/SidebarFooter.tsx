@@ -39,7 +39,15 @@ const SidebarFooter = () => {
   }, [user]);
 
   const handleLogout = async () => {
-    await signOut();
+    console.log("SidebarFooter: Logout button clicked");
+    
+    try {
+      await signOut();
+    } catch (error) {
+      console.error("SidebarFooter: Error during logout:", error);
+      // Force redirect even if logout fails
+      window.location.href = '/login';
+    }
   };
 
   return (

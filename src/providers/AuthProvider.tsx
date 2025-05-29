@@ -2,6 +2,7 @@ import React, { createContext, useEffect, useReducer, ReactNode } from "react";
 import { User, Session } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
 import { UserRole } from "@/types";
+import { cleanupSupabaseState } from "@/utils/auth-cleanup";
 
 interface AuthState {
   user: User | null;
@@ -182,22 +183,32 @@ const AuthProvider = ({ children }: AuthProviderProps) => {
     try {
       console.log("AuthProvider: Signing out...");
       
-      // Clean up local storage
-      Object.keys(localStorage).forEach((key) => {
-        if (key.startsWith('supabase.auth.') || key.includes('sb-')) {
-          localStorage.removeItem(key);
-        }
-      });
-      
-      await supabase.auth.signOut({ scope: 'global' });
+      // Primeiro limpa o estado local
       dispatch({ type: "SIGN_OUT" });
       
-      // Force page reload to ensure clean state and redirect to login
-      window.location.href = '/login';
+      // Limpa o storage local
+      cleanupSupabaseState();
+      
+      // Tenta fazer o signOut do Supabase
+      try {
+        await supabase.auth.signOut({ scope: 'global' });
+      } catch (error) {
+        console.error("AuthProvider: Error during Supabase signOut:", error);
+        // Continue mesmo se o signOut falhar
+      }
+      
+      console.log("AuthProvider: Logout completed, redirecting...");
+      
+      // Aguarda um pouco para garantir que o estado foi limpo
+      setTimeout(() => {
+        window.location.href = '/login';
+      }, 100);
+      
     } catch (error) {
       console.error("AuthProvider: Error signing out:", error);
-      // Force cleanup even if signOut fails
+      // Force cleanup mesmo se der erro
       dispatch({ type: "SIGN_OUT" });
+      cleanupSupabaseState();
       window.location.href = '/login';
     }
   };
@@ -214,6 +225,7 @@ const AuthProvider = ({ children }: AuthProviderProps) => {
         });
 
         if (event === "SIGNED_OUT" || !session?.user) {
+          console.log("AuthProvider: User signed out or no session");
           dispatch({ type: "SIGN_OUT" });
           return;
         }

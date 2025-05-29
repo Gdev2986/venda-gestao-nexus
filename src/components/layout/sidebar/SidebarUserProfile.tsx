@@ -22,7 +22,15 @@ const SidebarUserProfile = memo(({ userRole }: SidebarUserProfileProps) => {
   const { user, profile, signOut } = useAuth();
 
   const handleSignOut = async () => {
-    await signOut();
+    console.log("SidebarUserProfile: Sign out clicked");
+    
+    try {
+      await signOut();
+    } catch (error) {
+      console.error("SidebarUserProfile: Error during sign out:", error);
+      // Force redirect even if signOut fails
+      window.location.href = '/login';
+    }
   };
 
   const userName = profile?.name || user?.email?.split('@')[0] || 'Usuário';
