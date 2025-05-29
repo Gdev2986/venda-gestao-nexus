@@ -5,9 +5,12 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { AlertTriangle } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
 import { TicketType, TicketPriority } from "@/types/support.types";
 import { CreateTicketParams } from "@/types/support.types";
+import { useSupportSystem } from "@/hooks/use-support-system";
 
 interface SupportTicketDialogProps {
   open: boolean;
@@ -23,6 +26,7 @@ export const SupportTicketDialog = ({
   isLoading = false 
 }: SupportTicketDialogProps) => {
   const { user } = useAuth();
+  const { userClientId } = useSupportSystem();
   const [formData, setFormData] = useState({
     description: "",
     type: TicketType.MAINTENANCE,
@@ -37,7 +41,7 @@ export const SupportTicketDialog = ({
     try {
       await onSubmit({
         description: formData.description,
-        client_id: user.id,
+        client_id: userClientId || user.id, // Fallback to user.id, but validation will catch this
         type: formData.type,
         priority: formData.priority
       });
@@ -55,12 +59,24 @@ export const SupportTicketDialog = ({
     }
   };
 
+  // Show warning if user has no client association
+  const showClientWarning = !userClientId;
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-lg">
         <DialogHeader>
           <DialogTitle>Novo Chamado de Suporte</DialogTitle>
         </DialogHeader>
+        
+        {showClientWarning && (
+          <Alert variant="destructive">
+            <AlertTriangle className="h-4 w-4" />
+            <AlertDescription>
+              Seu usuário não está associado a nenhum cliente. Entre em contato com o administrador para resolver esta questão antes de criar chamados.
+            </AlertDescription>
+          </Alert>
+        )}
         
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
@@ -115,7 +131,10 @@ export const SupportTicketDialog = ({
             >
               Cancelar
             </Button>
-            <Button type="submit" disabled={isLoading}>
+            <Button 
+              type="submit" 
+              disabled={isLoading || showClientWarning}
+            >
               {isLoading ? "Criando..." : "Criar Chamado"}
             </Button>
           </div>

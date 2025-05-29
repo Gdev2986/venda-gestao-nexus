@@ -21,12 +21,14 @@ export const useSupportSystem = () => {
   const [messages, setMessages] = useState<SupportMessage[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [isCreating, setIsCreating] = useState(false);
+  const [userClientId, setUserClientId] = useState<string | null>(null);
 
   // Get the client ID for the current user
   const getUserClientId = async (): Promise<string | null> => {
     if (!user) return null;
     
     try {
+      console.log("Getting client ID for user:", user.id);
       const { data, error } = await supabase
         .from("user_client_access")
         .select("client_id")
@@ -38,6 +40,7 @@ export const useSupportSystem = () => {
         return null;
       }
       
+      console.log("Found client ID:", data?.client_id);
       return data?.client_id || null;
     } catch (error) {
       console.error("Error getting user client ID:", error);
@@ -45,24 +48,35 @@ export const useSupportSystem = () => {
     }
   };
 
+  // Load user's client ID on mount
+  useEffect(() => {
+    if (user && userRole === "CLIENT") {
+      getUserClientId().then(setUserClientId);
+    }
+  }, [user, userRole]);
+
   // Load tickets
   const loadTickets = async () => {
     setIsLoading(true);
     try {
+      console.log("Loading tickets for user role:", userRole);
       const { data, error } = await getSupportTickets();
       if (error) throw error;
       
       // Filter tickets based on user role
       let filteredTickets = data || [];
       if (userRole === "CLIENT") {
-        const clientId = await getUserClientId();
+        const clientId = userClientId || await getUserClientId();
+        console.log("Filtering tickets for client ID:", clientId);
         if (clientId) {
           filteredTickets = filteredTickets.filter(ticket => ticket.client_id === clientId);
         } else {
           filteredTickets = [];
+          console.warn("No client ID found for user, showing empty ticket list");
         }
       }
       
+      console.log("Loaded tickets:", filteredTickets.length);
       setTickets(filteredTickets);
     } catch (error) {
       console.error("Error loading tickets:", error);
@@ -79,8 +93,10 @@ export const useSupportSystem = () => {
   // Load messages for selected ticket
   const loadMessages = async (ticketId: string) => {
     try {
+      console.log("Loading messages for ticket:", ticketId);
       const { data, error } = await getTicketMessages(ticketId);
       if (error) throw error;
+      console.log("Loaded messages:", data?.length || 0);
       setMessages(data || []);
     } catch (error) {
       console.error("Error loading messages:", error);
@@ -96,11 +112,14 @@ export const useSupportSystem = () => {
       }
 
       // Get the client ID for the current user
-      const clientId = await getUserClientId();
+      const clientId = userClientId || await getUserClientId();
       if (!clientId) {
-        throw new Error("Não foi possível encontrar o cliente associado ao usuário");
+        console.error("No client ID found for user:", user.id);
+        throw new Error("Seu usuário não está associado a nenhum cliente. Entre em contato com o administrador para resolver esta questão.");
       }
 
+      console.log("Creating ticket with client ID:", clientId);
+      
       // Create ticket with the correct client_id
       const ticketWithClientId = {
         ...ticketData,
@@ -108,8 +127,12 @@ export const useSupportSystem = () => {
       };
 
       const { data, error } = await createSupportTicket(ticketWithClientId);
-      if (error) throw error;
+      if (error) {
+        console.error("Error from createSupportTicket:", error);
+        throw error;
+      }
       
+      console.log("Ticket created successfully:", data);
       await loadTickets();
       toast({
         title: "Sucesso",
@@ -131,6 +154,7 @@ export const useSupportSystem = () => {
   // Send message
   const sendMessage = async (ticketId: string, message: string) => {
     try {
+      console.log("Sending message to ticket:", ticketId);
       const { data, error } = await sendTicketMessage(ticketId, message);
       if (error) throw error;
       
@@ -150,6 +174,7 @@ export const useSupportSystem = () => {
   // Update ticket status
   const updateTicketStatus = async (ticketId: string, status: string) => {
     try {
+      console.log("Updating ticket status:", ticketId, status);
       const { data, error } = await updateSupportTicket(ticketId, { status: status as any });
       if (error) throw error;
       
@@ -179,6 +204,8 @@ export const useSupportSystem = () => {
   useEffect(() => {
     if (!user) return;
 
+    console.log("Setting up real-time subscriptions for user:", user.id);
+
     // Subscribe to ticket changes
     const ticketChannel = supabase
       .channel("support_tickets")
@@ -190,6 +217,7 @@ export const useSupportSystem = () => {
           table: "support_requests",
         },
         () => {
+          console.log("Ticket change detected, reloading tickets");
           loadTickets();
         }
       )
@@ -206,6 +234,7 @@ export const useSupportSystem = () => {
           table: "support_messages",
         },
         (payload) => {
+          console.log("Message change detected:", payload);
           if (selectedTicket && payload.new && (payload.new as any).conversation_id === selectedTicket.id) {
             loadMessages(selectedTicket.id);
           }
@@ -214,6 +243,7 @@ export const useSupportSystem = () => {
       .subscribe();
 
     return () => {
+      console.log("Cleaning up real-time subscriptions");
       supabase.removeChannel(ticketChannel);
       supabase.removeChannel(messageChannel);
     };
@@ -222,9 +252,10 @@ export const useSupportSystem = () => {
   // Load tickets on mount
   useEffect(() => {
     if (user) {
+      console.log("User loaded, loading tickets");
       loadTickets();
     }
-  }, [user]);
+  }, [user, userClientId]);
 
   return {
     tickets,
@@ -232,6 +263,7 @@ export const useSupportSystem = () => {
     messages,
     isLoading,
     isCreating,
+    userClientId,
     setSelectedTicket,
     loadTickets,
     loadMessages,
