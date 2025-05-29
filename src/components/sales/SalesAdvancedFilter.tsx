@@ -34,23 +34,36 @@ const SalesAdvancedFilter = ({ sales, onFilter }: SalesAdvancedFilterProps) => {
   // Get metadata for filter options
   const metadata = getSalesMetadata(sales);
   
-  // Get date range from available sales
+  // Get unique dates from sales data and sort them
   const salesDates = sales.map(sale => {
-    const date = typeof sale.transaction_date === 'string' 
-      ? new Date(sale.transaction_date) 
-      : sale.transaction_date;
-    return date;
+    // Parse the formatted date string back to a Date object
+    if (typeof sale.transaction_date === 'string') {
+      // Assuming format is "DD/MM/YYYY HH:MM"
+      const [datePart] = sale.transaction_date.split(' ');
+      const [day, month, year] = datePart.split('/');
+      return new Date(parseInt(year), parseInt(month) - 1, parseInt(day));
+    }
+    return sale.transaction_date;
   }).filter(date => !isNaN(date.getTime())).sort((a, b) => a.getTime() - b.getTime());
   
-  const minDate = salesDates.length > 0 ? salesDates[0] : undefined;
-  const maxDate = salesDates.length > 0 ? salesDates[salesDates.length - 1] : undefined;
+  // Get unique dates only (without time)
+  const uniqueDates = salesDates.reduce((acc, date) => {
+    const dateString = format(date, 'yyyy-MM-dd');
+    if (!acc.some(d => format(d, 'yyyy-MM-dd') === dateString)) {
+      acc.push(date);
+    }
+    return acc;
+  }, [] as Date[]);
   
-  // Auto-select all terminals when terminals list changes
+  const minDate = uniqueDates.length > 0 ? uniqueDates[0] : undefined;
+  const maxDate = uniqueDates.length > 0 ? uniqueDates[uniqueDates.length - 1] : undefined;
+  
+  // Auto-select all terminals when terminals list changes (but only if none selected)
   useEffect(() => {
     if (metadata.terminals.length > 0 && selectedTerminals.length === 0) {
       setSelectedTerminals(metadata.terminals);
     }
-  }, [metadata.terminals, selectedTerminals.length]);
+  }, [metadata.terminals]);
   
   // Apply filters whenever any filter changes
   useEffect(() => {
@@ -59,9 +72,16 @@ const SalesAdvancedFilter = ({ sales, onFilter }: SalesAdvancedFilterProps) => {
     // Date range filter
     if (dateRange.from) {
       filtered = filtered.filter(sale => {
-        const saleDate = typeof sale.transaction_date === 'string' 
-          ? new Date(sale.transaction_date) 
-          : sale.transaction_date;
+        let saleDate: Date;
+        
+        if (typeof sale.transaction_date === 'string') {
+          // Parse the formatted date string back to a Date object
+          const [datePart] = sale.transaction_date.split(' ');
+          const [day, month, year] = datePart.split('/');
+          saleDate = new Date(parseInt(year), parseInt(month) - 1, parseInt(day));
+        } else {
+          saleDate = sale.transaction_date;
+        }
           
         const fromDate = new Date(dateRange.from!);
         fromDate.setHours(0, 0, 0, 0);
@@ -88,7 +108,7 @@ const SalesAdvancedFilter = ({ sales, onFilter }: SalesAdvancedFilterProps) => {
       filtered = filtered.filter(sale => sale.brand === brand);
     }
     
-    // Terminal filter
+    // Terminal filter - only filter if there are selected terminals
     if (selectedTerminals.length > 0) {
       filtered = filtered.filter(sale => selectedTerminals.includes(sale.terminal));
     }
@@ -112,6 +132,13 @@ const SalesAdvancedFilter = ({ sales, onFilter }: SalesAdvancedFilterProps) => {
   
   const hasActiveFilters = dateRange.from || paymentType !== "all" || status !== "all" || brand !== "all" || source !== "all" || 
     selectedTerminals.length !== metadata.terminals.length;
+
+  // Function to check if a date has sales
+  const isDateWithSales = (date: Date) => {
+    return uniqueDates.some(saleDate => 
+      format(saleDate, 'yyyy-MM-dd') === format(date, 'yyyy-MM-dd')
+    );
+  };
 
   return (
     <Card>
@@ -159,10 +186,13 @@ const SalesAdvancedFilter = ({ sales, onFilter }: SalesAdvancedFilterProps) => {
                   locale={ptBR}
                   fromDate={minDate}
                   toDate={maxDate}
-                  disabled={[
-                    { before: minDate || new Date() },
-                    { after: maxDate || new Date() }
-                  ]}
+                  disabled={(date) => {
+                    // Disable dates outside the range AND dates without sales
+                    if (minDate && date < minDate) return true;
+                    if (maxDate && date > maxDate) return true;
+                    return !isDateWithSales(date);
+                  }}
+                  className="pointer-events-auto"
                 />
                 {minDate && maxDate && (
                   <div className="p-3 border-t text-sm text-muted-foreground">
