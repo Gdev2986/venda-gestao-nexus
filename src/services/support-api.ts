@@ -38,11 +38,12 @@ export const createSupportTicket = async (ticket: CreateTicketParams) => {
   const { data, error } = await supabase
     .from("support_requests")
     .insert({
+      title: ticket.description, // Use description as title since that's what we have
       description: ticket.description,
       client_id: ticket.client_id,
-      type: ticket.type as string, // Cast to string to match database
-      priority: ticket.priority as string, // Cast to string to match database
-      status: ticket.status || "PENDING",
+      type: ticket.type.toString() as "MAINTENANCE" | "INSTALLATION" | "OTHER" | "REPLACEMENT" | "SUPPLIES" | "REMOVAL",
+      priority: ticket.priority.toString() as "LOW" | "MEDIUM" | "HIGH",
+      status: (ticket.status || "PENDING").toString() as "PENDING" | "IN_PROGRESS" | "COMPLETED" | "CANCELED",
       scheduled_date: ticket.scheduled_date
     })
     .select()
@@ -53,18 +54,36 @@ export const createSupportTicket = async (ticket: CreateTicketParams) => {
 
 // Update support ticket
 export const updateSupportTicket = async (id: string, updates: UpdateTicketParams) => {
+  const updateData: any = {
+    updated_at: new Date().toISOString()
+  };
+
+  if (updates.description) {
+    updateData.title = updates.description;
+    updateData.description = updates.description;
+  }
+  if (updates.status) {
+    updateData.status = updates.status.toString() as "PENDING" | "IN_PROGRESS" | "COMPLETED" | "CANCELED";
+  }
+  if (updates.priority) {
+    updateData.priority = updates.priority.toString() as "LOW" | "MEDIUM" | "HIGH";
+  }
+  if (updates.type) {
+    updateData.type = updates.type.toString() as "MAINTENANCE" | "INSTALLATION" | "OTHER" | "REPLACEMENT" | "SUPPLIES" | "REMOVAL";
+  }
+  if (updates.technician_id) {
+    updateData.technician_id = updates.technician_id;
+  }
+  if (updates.resolution) {
+    updateData.resolution = updates.resolution;
+  }
+  if (updates.scheduled_date) {
+    updateData.scheduled_date = updates.scheduled_date;
+  }
+
   const { data, error } = await supabase
     .from("support_requests")
-    .update({
-      description: updates.description,
-      status: updates.status as string,
-      priority: updates.priority as string,
-      type: updates.type as string,
-      technician_id: updates.technician_id,
-      resolution: updates.resolution,
-      scheduled_date: updates.scheduled_date,
-      updated_at: new Date().toISOString()
-    })
+    .update(updateData)
     .eq("id", id)
     .select()
     .single();
