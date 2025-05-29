@@ -30,6 +30,7 @@ const SalesAdvancedFilter = ({ sales, onFilter }: SalesAdvancedFilterProps) => {
   const [brand, setBrand] = useState<string>("all");
   const [selectedTerminals, setSelectedTerminals] = useState<string[]>([]);
   const [source, setSource] = useState<string>("all");
+  const [hasInitialized, setHasInitialized] = useState<boolean>(false);
   
   // Get metadata for filter options
   const metadata = getSalesMetadata(sales);
@@ -58,12 +59,13 @@ const SalesAdvancedFilter = ({ sales, onFilter }: SalesAdvancedFilterProps) => {
   const minDate = uniqueDates.length > 0 ? uniqueDates[0] : undefined;
   const maxDate = uniqueDates.length > 0 ? uniqueDates[uniqueDates.length - 1] : undefined;
   
-  // Auto-select all terminals when terminals list changes (but only if none selected)
+  // Initialize terminals selection only once when metadata is available
   useEffect(() => {
-    if (metadata.terminals.length > 0 && selectedTerminals.length === 0) {
+    if (metadata.terminals.length > 0 && !hasInitialized) {
       setSelectedTerminals(metadata.terminals);
+      setHasInitialized(true);
     }
-  }, [metadata.terminals]);
+  }, [metadata.terminals, hasInitialized]);
   
   // Apply filters whenever any filter changes
   useEffect(() => {
@@ -108,8 +110,10 @@ const SalesAdvancedFilter = ({ sales, onFilter }: SalesAdvancedFilterProps) => {
       filtered = filtered.filter(sale => sale.brand === brand);
     }
     
-    // Terminal filter - only filter if there are selected terminals
-    if (selectedTerminals.length > 0) {
+    // Terminal filter - se não há terminais selecionados, retorna array vazio
+    if (selectedTerminals.length === 0) {
+      filtered = [];
+    } else {
       filtered = filtered.filter(sale => selectedTerminals.includes(sale.terminal));
     }
     

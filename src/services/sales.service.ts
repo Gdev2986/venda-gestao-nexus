@@ -59,49 +59,65 @@ const convertBrazilianDateToISO = (dateStr: string): string => {
   return new Date().toISOString();
 };
 
-// Helper function to ensure machine exists and get machine_id
-const ensureMachineExists = async (terminal: string): Promise<string> => {
+// Optimized function to batch check and create machines
+const ensureMachinesExist = async (terminals: string[]): Promise<Map<string, string>> => {
   try {
-    // First, check if machine already exists
-    const { data: existingMachine, error: findError } = await supabase
+    console.log(`Checking/creating machines for ${terminals.length} unique terminals`);
+    
+    // First, get all existing machines for the terminals in one query
+    const { data: existingMachines, error: findError } = await supabase
       .from('machines')
-      .select('id')
-      .eq('serial_number', terminal)
-      .single();
+      .select('id, serial_number')
+      .in('serial_number', terminals);
 
-    if (findError && findError.code !== 'PGRST116') {
+    if (findError) {
       throw findError;
     }
 
-    // If machine exists, return its ID
-    if (existingMachine) {
-      console.log(`Machine found for terminal: ${terminal}`);
-      return existingMachine.id;
-    }
+    // Create a map of existing machines
+    const existingMachinesMap = new Map<string, string>();
+    existingMachines?.forEach(machine => {
+      existingMachinesMap.set(machine.serial_number, machine.id);
+    });
 
-    // If machine doesn't exist, create it
-    console.log(`Creating new machine for terminal: ${terminal}`);
-    const { data: newMachine, error: createError } = await supabase
-      .from('machines')
-      .insert({
+    // Find terminals that don't have machines yet
+    const missingTerminals = terminals.filter(terminal => 
+      !existingMachinesMap.has(terminal)
+    );
+
+    console.log(`Found ${existingMachines?.length || 0} existing machines, need to create ${missingTerminals.length} new ones`);
+
+    // Create missing machines in batch
+    if (missingTerminals.length > 0) {
+      const newMachinesData = missingTerminals.map(terminal => ({
         serial_number: terminal,
         model: 'PagBank',
         status: 'STOCK',
         notes: `Criado automaticamente durante importação de vendas em ${new Date().toLocaleDateString('pt-BR')}`
-      })
-      .select('id')
-      .single();
+      }));
 
-    if (createError) {
-      throw createError;
+      const { data: newMachines, error: createError } = await supabase
+        .from('machines')
+        .insert(newMachinesData)
+        .select('id, serial_number');
+
+      if (createError) {
+        throw createError;
+      }
+
+      // Add new machines to the map
+      newMachines?.forEach(machine => {
+        existingMachinesMap.set(machine.serial_number, machine.id);
+      });
+
+      console.log(`Created ${newMachines?.length || 0} new machines`);
     }
 
-    console.log(`Machine created for terminal: ${terminal}, ID: ${newMachine.id}`);
-    return newMachine.id;
+    return existingMachinesMap;
 
   } catch (error) {
-    console.error(`Error ensuring machine exists for terminal ${terminal}:`, error);
-    throw new Error(`Falha ao verificar/criar máquina para terminal ${terminal}: ${error instanceof Error ? error.message : String(error)}`);
+    console.error(`Error ensuring machines exist:`, error);
+    throw new Error(`Falha ao verificar/criar máquinas: ${error instanceof Error ? error.message : String(error)}`);
   }
 };
 
@@ -121,51 +137,51 @@ export const insertSales = async (sales: NormalizedSale[]): Promise<void> => {
   try {
     console.log(`Starting insertion of ${sales.length} sales`);
     
-    // Process sales in batches to ensure machine creation happens sequentially
-    const salesData: SaleInsert[] = [];
+    // Get unique terminals from all sales
+    const uniqueTerminals = [...new Set(sales.map(sale => sale.terminal))];
+    console.log(`Processing ${uniqueTerminals.length} unique terminals`);
     
-    for (const sale of sales) {
-      try {
-        // Ensure machine exists and get machine_id
-        const machineId = await ensureMachineExists(sale.terminal);
-        
-        // Convert date to proper ISO format
-        let isoDate: string;
-        if (typeof sale.transaction_date === 'string') {
-          isoDate = convertBrazilianDateToISO(sale.transaction_date);
-        } else {
-          isoDate = sale.transaction_date.toISOString();
-        }
-
-        // Calculate net amount (simple calculation: 97% of gross)
-        const netAmount = sale.gross_amount * 0.97;
-
-        // Create sale payload with installments and source
-        const salePayload: SaleInsert = {
-          id: uuidv4(),
-          code: `SALE-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
-          terminal: sale.terminal,
-          date: isoDate,
-          gross_amount: sale.gross_amount,
-          net_amount: netAmount,
-          payment_method: convertPaymentMethod(sale.payment_type),
-          machine_id: machineId,
-          processing_status: 'RAW' as "RAW" | "PROCESSED",
-          created_at: new Date().toISOString(),
-          updated_at: new Date().toISOString(),
-          installments: sale.installments,
-          source: sale.source
-        };
-
-        salesData.push(salePayload);
-        
-      } catch (error) {
-        console.error(`Error processing sale for terminal ${sale.terminal}:`, error);
-        throw error;
+    // Ensure all machines exist in one batch operation
+    const machinesMap = await ensureMachinesExist(uniqueTerminals);
+    
+    // Process all sales now that we have all machine IDs
+    const salesData: SaleInsert[] = sales.map(sale => {
+      // Get machine ID from our map
+      const machineId = machinesMap.get(sale.terminal);
+      if (!machineId) {
+        throw new Error(`Machine ID not found for terminal: ${sale.terminal}`);
       }
-    }
 
-    // Insert all sales at once - diretamente na tabela sales
+      // Convert date to proper ISO format
+      let isoDate: string;
+      if (typeof sale.transaction_date === 'string') {
+        isoDate = convertBrazilianDateToISO(sale.transaction_date);
+      } else {
+        isoDate = sale.transaction_date.toISOString();
+      }
+
+      // Calculate net amount (simple calculation: 97% of gross)
+      const netAmount = sale.gross_amount * 0.97;
+
+      // Create sale payload with installments and source
+      return {
+        id: uuidv4(),
+        code: `SALE-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+        terminal: sale.terminal,
+        date: isoDate,
+        gross_amount: sale.gross_amount,
+        net_amount: netAmount,
+        payment_method: convertPaymentMethod(sale.payment_type),
+        machine_id: machineId,
+        processing_status: 'RAW' as "RAW" | "PROCESSED",
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+        installments: sale.installments,
+        source: sale.source
+      };
+    });
+
+    // Insert all sales at once
     console.log(`Inserting ${salesData.length} sales into database`);
     const { error } = await supabase
       .from('sales')
