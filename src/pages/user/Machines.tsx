@@ -92,7 +92,7 @@ const UserMachines = () => {
               Se você precisar de suporte técnico ou manutenção, nosso time está a disposição para ajudar.
             </p>
             <Button asChild>
-              <a href={PATHS.USER.SUPPORT}>Solicitar Suporte</a>
+              <a href={PATHS.CLIENT.SUPPORT}>Solicitar Suporte</a>
             </Button>
           </CardContent>
         </Card>

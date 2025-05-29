@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from "react";
 import { PageHeader } from "@/components/page/PageHeader";
 import { PageWrapper } from "@/components/page/PageWrapper";
@@ -220,7 +219,7 @@ const UserDashboard = () => {
             
             <div className="mt-6">
               <Button variant="outline" className="w-full" asChild>
-                <Link to={PATHS.USER.MACHINES}>
+                <Link to={PATHS.CLIENT.MACHINES}>
                   Ver todas as máquinas <ArrowRight className="ml-2 h-4 w-4 flex-shrink-0" />
                 </Link>
               </Button>
