@@ -8,11 +8,9 @@ interface ProvidersProps {
 }
 
 export const Providers = ({ children }: ProvidersProps) => {
-  return (
-    <AuthProvider>
-      <NotificationsProvider>
-        {children}
-      </NotificationsProvider>
-    </AuthProvider>
+  return React.createElement(
+    AuthProvider,
+    null,
+    React.createElement(NotificationsProvider, null, children)
   );
 };

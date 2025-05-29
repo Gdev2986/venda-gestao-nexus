@@ -3,7 +3,7 @@ import React from 'react';
 import { useAuth } from "@/hooks/use-auth";
 import { UserRole } from "@/types/enums";
 import { Navigate } from "react-router-dom";
-import { MachineList } from "@/components/logistics/MachineList";
+import MachineList from "@/components/logistics/MachineList";
 
 const AdminMachines = () => {
   const { user } = useAuth();
