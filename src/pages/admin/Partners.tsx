@@ -1,6 +1,5 @@
 
 import { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
 import { 
   Card, 
   CardContent, 
@@ -9,32 +8,28 @@ import {
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Badge } from "@/components/ui/badge";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Partner } from "@/types";
+import { Search, Plus } from "lucide-react";
+import { Partner } from "@/types/partner.types";
 import { usePartners } from "@/hooks/use-partners"; 
-import PartnersTable from "@/components/partners/PartnersTable";
 import { PartnerFormModal } from "@/components/partners/PartnerFormModal";
-import { PartnersFilterCard } from "@/components/partners/PartnersFilterCard";
 import { PageHeader } from "@/components/page/PageHeader";
-import { PATHS } from "@/routes/paths";
+import { PartnerBlock } from "@/components/partners/PartnerBlock";
+import { PartnerDetailsModal } from "@/components/partners/PartnerDetailsModal";
+import { PartnerClientsTable } from "@/components/partners/PartnerClientsTable";
 
 const Partners = () => {
-  const navigate = useNavigate();
   const [searchTerm, setSearchTerm] = useState("");
   const [showCreateModal, setShowCreateModal] = useState(false);
-  const [showEditModal, setShowEditModal] = useState(false);
+  const [showDetailsModal, setShowDetailsModal] = useState(false);
   const [selectedPartner, setSelectedPartner] = useState<Partner | null>(null);
+  const [detailsPartner, setDetailsPartner] = useState<Partner | null>(null);
   const [filteredPartners, setFilteredPartners] = useState<Partner[]>([]);
-  const [activeTab, setActiveTab] = useState<string>("list");
 
   const { 
     partners, 
     isLoading, 
     error, 
-    createPartner, 
-    updatePartner,
-    deletePartner
+    createPartner
   } = usePartners();
 
   useEffect(() => {
@@ -42,7 +37,9 @@ const Partners = () => {
     if (!partners) return;
     
     const filtered = partners.filter(partner => {
-      return partner.company_name.toLowerCase().includes(searchTerm.toLowerCase());
+      return partner.company_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+             (partner.contact_name && partner.contact_name.toLowerCase().includes(searchTerm.toLowerCase())) ||
+             (partner.contact_email && partner.contact_email.toLowerCase().includes(searchTerm.toLowerCase()));
     });
     
     setFilteredPartners(filtered);
@@ -59,101 +56,96 @@ const Partners = () => {
     }
   };
 
-  const handleUpdatePartner = async (data: Partial<Partner>) => {
-    if (!selectedPartner) return false;
-    
-    try {
-      await updatePartner.mutateAsync({
-        ...data,
-        id: selectedPartner.id
-      });
-      
-      setShowEditModal(false);
-      setSelectedPartner(null);
-      return true;
-    } catch (error) {
-      console.error("Error updating partner:", error);
-      return false;
-    }
-  };
-
-  const handleDeletePartner = async (partnerId: string) => {
-    try {
-      await deletePartner.mutateAsync(partnerId);
-      return true;
-    } catch (error) {
-      console.error("Error deleting partner:", error);
-      return false;
-    }
-  };
-
-  const handleEdit = (partner: Partner) => {
+  const handleSelectPartner = (partner: Partner) => {
     setSelectedPartner(partner);
-    setShowEditModal(true);
   };
 
-  const handleViewClients = () => {
-    navigate(PATHS.ADMIN.PARTNERS + "/clients");
+  const handleViewDetails = (partner: Partner) => {
+    setDetailsPartner(partner);
+    setShowDetailsModal(true);
   };
 
   return (
-    <div className="container mx-auto py-10">
+    <div className="container mx-auto py-6">
       <PageHeader
         title="Parceiros"
-        description="Gerenciar parceiros e comissões"
-      />
-
-      <div className="mt-6 mb-4">
-        <Tabs value={activeTab} onValueChange={setActiveTab}>
-          <TabsList>
-            <TabsTrigger value="list">Lista de Parceiros</TabsTrigger>
-            <TabsTrigger value="clients" onClick={handleViewClients}>
-              Parceiros e Clientes
-            </TabsTrigger>
-          </TabsList>
-        </Tabs>
-      </div>
+        description="Gerenciar parceiros e seus clientes"
+      >
+        <Button onClick={() => setShowCreateModal(true)}>
+          <Plus className="mr-2 h-4 w-4" />
+          Novo Parceiro
+        </Button>
+      </PageHeader>
 
       {/* Error display */}
       {error && (
-        <div className="bg-destructive/15 border border-destructive text-destructive p-3 rounded-md mb-4">
+        <div className="bg-destructive/15 border border-destructive text-destructive p-3 rounded-md mb-6">
           Erro ao carregar parceiros: {error.message}
         </div>
       )}
 
-      <div className="flex justify-end mb-4">
-        <Button onClick={() => setShowCreateModal(true)}>Novo Parceiro</Button>
-      </div>
-
-      <div className="grid gap-6 md:grid-cols-6">
-        {/* Left column - filters */}
-        <div className="md:col-span-2">
-          <PartnersFilterCard 
-            onFilter={(values) => setSearchTerm(values.search || "")} 
-            isLoading={isLoading}
-          />
-        </div>
-
-        {/* Right column - partner list */}
-        <div className="md:col-span-4">
+      <div className="grid gap-6 lg:grid-cols-5">
+        {/* Left section - Partner blocks */}
+        <div className="lg:col-span-2">
           <Card>
             <CardHeader>
-              <CardTitle>
+              <CardTitle className="flex items-center justify-between">
                 Lista de Parceiros
-                <Badge variant="secondary" className="ml-2">
-                  {filteredPartners.length}
-                </Badge>
+                <span className="text-sm font-normal text-muted-foreground">
+                  {filteredPartners.length} parceiros
+                </span>
               </CardTitle>
+              
+              {/* Search */}
+              <div className="relative">
+                <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+                <Input
+                  placeholder="Buscar parceiros..."
+                  className="pl-8"
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                />
+              </div>
             </CardHeader>
             <CardContent>
-              <PartnersTable 
-                partners={filteredPartners} 
-                isLoading={isLoading} 
-                onEdit={handleEdit}
-                onDelete={(partner) => handleDeletePartner(partner.id)}
-              />
+              {isLoading ? (
+                <div className="space-y-4">
+                  {[...Array(3)].map((_, i) => (
+                    <Card key={i} className="animate-pulse">
+                      <CardContent className="p-4">
+                        <div className="space-y-2">
+                          <div className="h-4 bg-muted rounded w-3/4"></div>
+                          <div className="h-3 bg-muted rounded w-1/2"></div>
+                          <div className="h-3 bg-muted rounded w-2/3"></div>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  ))}
+                </div>
+              ) : filteredPartners.length === 0 ? (
+                <div className="text-center py-8 text-muted-foreground">
+                  <p>Nenhum parceiro encontrado</p>
+                </div>
+              ) : (
+                <div className="space-y-4 max-h-[600px] overflow-y-auto">
+                  {filteredPartners.map((partner) => (
+                    <PartnerBlock
+                      key={partner.id}
+                      partner={partner}
+                      onSelect={handleSelectPartner}
+                      onViewDetails={handleViewDetails}
+                      isSelected={selectedPartner?.id === partner.id}
+                    />
+                  ))}
+                </div>
+              )}
             </CardContent>
           </Card>
+        </div>
+
+        {/* Right section - Partner clients table */}
+        <div className="lg:col-span-3">
+          <PartnerClientsTable partner={selectedPartner} />
         </div>
       </div>
 
@@ -165,17 +157,12 @@ const Partners = () => {
         isSubmitting={createPartner.isPending}
       />
 
-      {/* Partner edit modal */}
-      {selectedPartner && (
-        <PartnerFormModal
-          open={showEditModal}
-          onOpenChange={setShowEditModal}
-          onSubmit={handleUpdatePartner}
-          isSubmitting={updatePartner.isPending}
-          defaultValues={selectedPartner}
-          mode="edit"
-        />
-      )}
+      {/* Partner details modal */}
+      <PartnerDetailsModal
+        partner={detailsPartner}
+        open={showDetailsModal}
+        onOpenChange={setShowDetailsModal}
+      />
     </div>
   );
 };
