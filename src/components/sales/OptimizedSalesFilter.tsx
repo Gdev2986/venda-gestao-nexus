@@ -99,7 +99,8 @@ const OptimizedSalesFilter = ({
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
+        {/* Primeira linha: Período | Horário | Status */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           {/* Filtro de Período */}
           <div className="space-y-2">
             <label className="text-sm font-medium">Período</label>
@@ -170,6 +171,28 @@ const OptimizedSalesFilter = ({
             />
           </div>
 
+          {/* Filtro de Status */}
+          <div className="space-y-2">
+            <label className="text-sm font-medium">Status</label>
+            <Select 
+              value={filters.status || "all"} 
+              onValueChange={(value) => onFiltersChange({ status: value === "all" ? undefined : value })}
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="Todos" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Todos</SelectItem>
+                <SelectItem value="Aprovada">Aprovada</SelectItem>
+                <SelectItem value="Rejeitada">Rejeitada</SelectItem>
+                <SelectItem value="Pendente">Pendente</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+        </div>
+
+        {/* Segunda linha: Tipo de Pagamento | Bandeira | Origem */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           {/* Filtro de Tipo de Pagamento */}
           <div className="space-y-2">
             <label className="text-sm font-medium">Tipo de Pagamento</label>
@@ -185,6 +208,26 @@ const OptimizedSalesFilter = ({
                 <SelectItem value="CREDIT">Cartão de Crédito</SelectItem>
                 <SelectItem value="DEBIT">Cartão de Débito</SelectItem>
                 <SelectItem value="PIX">Pix</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
+          {/* Filtro de Bandeira */}
+          <div className="space-y-2">
+            <label className="text-sm font-medium">Bandeira</label>
+            <Select 
+              value={filters.brand || "all"} 
+              onValueChange={(value) => onFiltersChange({ brand: value === "all" ? undefined : value })}
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="Todas" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Todas</SelectItem>
+                <SelectItem value="Visa">Visa</SelectItem>
+                <SelectItem value="Mastercard">Mastercard</SelectItem>
+                <SelectItem value="Elo">Elo</SelectItem>
+                <SelectItem value="Pix">Pix</SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -207,8 +250,18 @@ const OptimizedSalesFilter = ({
               </SelectContent>
             </Select>
           </div>
+        </div>
 
-          {/* Botão para limpar filtros */}
+        {/* Terceira linha: Terminais e botão limpar */}
+        <div className="grid grid-cols-1 lg:grid-cols-4 gap-4">
+          <div className="lg:col-span-3">
+            <TerminalFilter
+              terminals={[]} // Será preenchido quando disponível
+              selectedTerminals={selectedTerminals}
+              onTerminalsChange={setSelectedTerminals}
+            />
+          </div>
+          
           <div className="space-y-2">
             <label className="text-sm font-medium invisible">Ações</label>
             {hasActiveFilters && (
@@ -221,17 +274,6 @@ const OptimizedSalesFilter = ({
                 Limpar Filtros
               </Button>
             )}
-          </div>
-        </div>
-
-        {/* Filtro de Terminais */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-          <div className="lg:col-span-1">
-            <TerminalFilter
-              terminals={[]} // Será preenchido quando disponível
-              selectedTerminals={selectedTerminals}
-              onTerminalsChange={setSelectedTerminals}
-            />
           </div>
         </div>
       </CardContent>

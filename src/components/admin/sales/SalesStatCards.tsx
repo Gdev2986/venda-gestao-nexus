@@ -15,33 +15,35 @@ export const SalesStatCards = ({ filteredSales, isLoading }: SalesStatCardsProps
   
   // Calcular valor líquido baseado em 97% do valor bruto
   const totalNetAmount = totalGrossAmount * 0.97;
-  
-  const avgTicket = totalSales > 0 ? totalGrossAmount / totalSales : 0;
 
   const stats = [
     {
       title: "Total de Vendas",
       value: isLoading ? "..." : totalSales.toLocaleString('pt-BR'),
       icon: Activity,
-      color: "text-blue-600"
+      color: "text-blue-600",
+      borderColor: "border-l-blue-500"
     },
     {
       title: "Valor Bruto",
       value: isLoading ? "..." : formatCurrency(totalGrossAmount),
       icon: DollarSign,
-      color: "text-green-600"
+      color: "text-green-600",
+      borderColor: "border-l-green-500"
     },
     {
       title: "Valor Líquido",
       value: isLoading ? "..." : formatCurrency(totalNetAmount),
       icon: TrendingUp,
-      color: "text-purple-600"
+      color: "text-purple-600",
+      borderColor: "border-l-purple-500"
     },
     {
-      title: "Ticket Médio",
-      value: isLoading ? "..." : formatCurrency(avgTicket),
+      title: "Valor Líquido",
+      value: isLoading ? "..." : formatCurrency(totalNetAmount),
       icon: CreditCard,
-      color: "text-orange-600"
+      color: "text-orange-600",
+      borderColor: "border-l-orange-500"
     }
   ];
 
@@ -50,7 +52,7 @@ export const SalesStatCards = ({ filteredSales, isLoading }: SalesStatCardsProps
       {stats.map((stat, index) => {
         const Icon = stat.icon;
         return (
-          <Card key={index}>
+          <Card key={index} className={`border-l-4 ${stat.borderColor}`}>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">
                 {stat.title}

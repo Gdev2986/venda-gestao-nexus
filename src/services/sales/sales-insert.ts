@@ -36,7 +36,7 @@ const insertWithRetry = async (salesData: SaleInsert[], maxRetries: number = 2):
       }
       
       // Aguardar antes da próxima tentativa (backoff reduzido)
-      const waitTime = attempt * 200; // 200ms, 400ms...
+      const waitTime = attempt * 100; // 100ms, 200ms...
       console.log(`Aguardando ${waitTime}ms antes da próxima tentativa...`);
       await new Promise(resolve => setTimeout(resolve, waitTime));
     }
@@ -121,8 +121,8 @@ export const insertSales = async (sales: NormalizedSale[]): Promise<void> => {
     // Garantir IDs únicos
     const uniqueSalesData = ensureUniqueIds(salesData);
 
-    // Insert sales in larger batches para ser mais rápido
-    const batchSize = 100; // Aumentado para ser mais rápido
+    // Insert sales em batches maiores para ser mais rápido
+    const batchSize = 1000; // Aumentado para 1000 registros por batch
     let totalInserted = 0;
     
     for (let i = 0; i < uniqueSalesData.length; i += batchSize) {
@@ -138,9 +138,9 @@ export const insertSales = async (sales: NormalizedSale[]): Promise<void> => {
         totalInserted += batch.length;
         console.log(`Batch ${batchNumber} inserted successfully. Total so far: ${totalInserted}/${uniqueSalesData.length}`);
         
-        // Pausa menor entre batches para ser mais rápido
+        // Pausa mínima entre batches
         if (i + batchSize < uniqueSalesData.length) {
-          await new Promise(resolve => setTimeout(resolve, 100));
+          await new Promise(resolve => setTimeout(resolve, 50));
         }
         
       } catch (error) {
