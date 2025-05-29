@@ -6,6 +6,7 @@ import { DoughnutChart } from "@/components/charts/DoughnutChart";
 import { StyledCard } from "@/components/ui/styled-card";
 import { PageHeader } from "@/components/page/PageHeader";
 import { motion } from "framer-motion";
+import ShipmentsSection from "@/components/logistics/shipments/ShipmentsSection";
 
 const requestTypesData = [
   { name: 'Instalação', value: 35, color: '#0088FE' },
@@ -122,6 +123,9 @@ const LogisticsDashboard = () => {
           </StyledCard>
         </motion.div>
       </div>
+
+      {/* Nova seção de controle logístico */}
+      <ShipmentsSection />
     </div>
   );
 };
