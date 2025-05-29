@@ -48,6 +48,24 @@ const TaxBlockPreview: React.FC<TaxBlockPreviewProps> = ({ block, onEdit }) => {
   
   // Mostrar apenas até 12x inicialmente, depois expandir para 21x
   const displayedCreditRates = showAllCredit ? creditRates : creditRates.slice(0, 12);
+  
+  // Combinar todas as taxas para exibição em uma única tabela
+  const allDisplayedRates = [
+    ...debitRates,
+    ...pixRates,
+    ...displayedCreditRates
+  ].sort((a, b) => {
+    // Ordenar por método de pagamento primeiro, depois por parcelas
+    const methodOrder = { 'DEBIT': 1, 'PIX': 2, 'CREDIT': 3 };
+    const methodA = methodOrder[a.payment_method as keyof typeof methodOrder] || 99;
+    const methodB = methodOrder[b.payment_method as keyof typeof methodOrder] || 99;
+    
+    if (methodA !== methodB) {
+      return methodA - methodB;
+    }
+    
+    return a.installment - b.installment;
+  });
 
   const toggleColumn = (column: keyof ColumnVisibility) => {
     setColumns(prev => ({ ...prev, [column]: !prev[column] }));
@@ -59,6 +77,15 @@ const TaxBlockPreview: React.FC<TaxBlockPreviewProps> = ({ block, onEdit }) => {
       case 'DEBIT': return 'Débito';
       case 'PIX': return 'PIX';
       default: return method;
+    }
+  };
+
+  const getPaymentMethodBadgeColor = (method: string) => {
+    switch (method) {
+      case 'CREDIT': return 'bg-orange-50 text-orange-700 border-orange-200';
+      case 'DEBIT': return 'bg-blue-50 text-blue-700 border-blue-200';
+      case 'PIX': return 'bg-green-50 text-green-700 border-green-200';
+      default: return 'bg-gray-50 text-gray-700 border-gray-200';
     }
   };
 
@@ -135,15 +162,9 @@ const TaxBlockPreview: React.FC<TaxBlockPreviewProps> = ({ block, onEdit }) => {
         </div>
       </CardHeader>
       
-      <CardContent className="space-y-6">
-        {/* Débito */}
-        {debitRates.length > 0 && (
-          <div>
-            <div className="flex items-center gap-2 mb-3">
-              <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200">
-                Débito
-              </Badge>
-            </div>
+      <CardContent>
+        {allDisplayedRates.length > 0 ? (
+          <div className="space-y-4">
             <Table>
               <TableHeader>
                 <TableRow>
@@ -155,78 +176,15 @@ const TaxBlockPreview: React.FC<TaxBlockPreviewProps> = ({ block, onEdit }) => {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {debitRates.map((rate, index) => (
-                  <TableRow key={`debit-${index}`}>
-                    {columns.paymentMethod && <TableCell>Débito</TableCell>}
-                    {columns.installment && <TableCell>{rate.installment}x</TableCell>}
-                    {columns.rootRate && <TableCell>{formatRate(rate.root_rate)}</TableCell>}
-                    {columns.forwardingRate && <TableCell>{formatRate(rate.forwarding_rate)}</TableCell>}
-                    {columns.finalRate && <TableCell className="font-medium">{formatRate(rate.final_rate)}</TableCell>}
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </div>
-        )}
-
-        {/* PIX */}
-        {pixRates.length > 0 && (
-          <div>
-            <div className="flex items-center gap-2 mb-3">
-              <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">
-                PIX
-              </Badge>
-            </div>
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  {columns.paymentMethod && <TableHead>Método</TableHead>}
-                  {columns.installment && <TableHead>Parcelas</TableHead>}
-                  {columns.rootRate && <TableHead>Taxa Raíz</TableHead>}
-                  {columns.forwardingRate && <TableHead>Taxa de Repasse</TableHead>}
-                  {columns.finalRate && <TableHead>Taxa Final</TableHead>}
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {pixRates.map((rate, index) => (
-                  <TableRow key={`pix-${index}`}>
-                    {columns.paymentMethod && <TableCell>PIX</TableCell>}
-                    {columns.installment && <TableCell>{rate.installment}x</TableCell>}
-                    {columns.rootRate && <TableCell>{formatRate(rate.root_rate)}</TableCell>}
-                    {columns.forwardingRate && <TableCell>{formatRate(rate.forwarding_rate)}</TableCell>}
-                    {columns.finalRate && <TableCell className="font-medium">{formatRate(rate.final_rate)}</TableCell>}
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </div>
-        )}
-
-        {/* Crédito */}
-        {creditRates.length > 0 && (
-          <div>
-            <div className="flex items-center gap-2 mb-3">
-              <Badge variant="outline" className="bg-orange-50 text-orange-700 border-orange-200">
-                Crédito
-              </Badge>
-              <span className="text-sm text-muted-foreground">
-                Mostrando {displayedCreditRates.length} de {creditRates.length} parcelas
-              </span>
-            </div>
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  {columns.paymentMethod && <TableHead>Método</TableHead>}
-                  {columns.installment && <TableHead>Parcelas</TableHead>}
-                  {columns.rootRate && <TableHead>Taxa Raíz</TableHead>}
-                  {columns.forwardingRate && <TableHead>Taxa de Repasse</TableHead>}
-                  {columns.finalRate && <TableHead>Taxa Final</TableHead>}
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {displayedCreditRates.map((rate, index) => (
-                  <TableRow key={`credit-${index}`}>
-                    {columns.paymentMethod && <TableCell>Crédito</TableCell>}
+                {allDisplayedRates.map((rate, index) => (
+                  <TableRow key={`${rate.payment_method}-${rate.installment}-${index}`}>
+                    {columns.paymentMethod && (
+                      <TableCell>
+                        <Badge variant="outline" className={getPaymentMethodBadgeColor(rate.payment_method)}>
+                          {getPaymentMethodLabel(rate.payment_method)}
+                        </Badge>
+                      </TableCell>
+                    )}
                     {columns.installment && <TableCell>{rate.installment}x</TableCell>}
                     {columns.rootRate && <TableCell>{formatRate(rate.root_rate)}</TableCell>}
                     {columns.forwardingRate && <TableCell>{formatRate(rate.forwarding_rate)}</TableCell>}
@@ -237,7 +195,7 @@ const TaxBlockPreview: React.FC<TaxBlockPreviewProps> = ({ block, onEdit }) => {
             </Table>
             
             {creditRates.length > 12 && (
-              <div className="flex justify-center mt-4">
+              <div className="flex justify-center">
                 <Button
                   variant="ghost"
                   size="sm"
@@ -252,16 +210,14 @@ const TaxBlockPreview: React.FC<TaxBlockPreviewProps> = ({ block, onEdit }) => {
                   ) : (
                     <>
                       <ChevronDown className="h-4 w-4 mr-1" />
-                      Ver mais ({creditRates.length - 12} restantes)
+                      Ver mais ({creditRates.length - 12} parcelas restantes)
                     </>
                   )}
                 </Button>
               </div>
             )}
           </div>
-        )}
-        
-        {rates.length === 0 && (
+        ) : (
           <div className="text-center py-8 text-muted-foreground">
             <p>Nenhuma taxa configurada</p>
             <Button variant="outline" size="sm" onClick={onEdit} className="mt-2">
