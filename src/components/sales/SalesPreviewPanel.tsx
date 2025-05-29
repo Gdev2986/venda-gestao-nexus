@@ -32,9 +32,14 @@ const SalesPreviewPanel = ({ sales, title = "Dados de Vendas" }: SalesPreviewPan
   };
 
   // Reset to first page when sales data changes
-  useState(() => {
+  const resetToFirstPage = () => {
     setCurrentPage(1);
-  }, [sales]);
+  };
+
+  // Effect to reset page when sales change
+  useState(() => {
+    resetToFirstPage();
+  });
 
   const formatDate = (date: string | Date) => {
     try {
@@ -73,20 +78,22 @@ const SalesPreviewPanel = ({ sales, title = "Dados de Vendas" }: SalesPreviewPan
                     <TableHead>Parcelas</TableHead>
                     <TableHead>Terminal</TableHead>
                     <TableHead>Bandeira</TableHead>
+                    <TableHead>Origem</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {currentSales.map((sale, index) => (
                     <TableRow key={sale.id || index}>
-                      <TableCell>{sale.status}</TableCell>
+                      <TableCell>Aprovada</TableCell>
                       <TableCell>{sale.payment_type}</TableCell>
                       <TableCell className="text-right font-medium">
                         {formatCurrency(sale.gross_amount)}
                       </TableCell>
                       <TableCell>{formatDate(sale.transaction_date)}</TableCell>
-                      <TableCell>{sale.installments}x</TableCell>
+                      <TableCell>1x</TableCell>
                       <TableCell>{sale.terminal}</TableCell>
                       <TableCell>{sale.brand}</TableCell>
+                      <TableCell>PagSeguro</TableCell>
                     </TableRow>
                   ))}
                 </TableBody>

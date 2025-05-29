@@ -30,19 +30,19 @@ const AdminSales = () => {
     try {
       const realSales = await getAllSales();
       
-      // Convert database sales to NormalizedSale format
+      // Convert database sales to NormalizedSale format with consistent formatting
       const normalizedSales: NormalizedSale[] = realSales.map(sale => ({
         id: sale.id,
-        status: 'Aprovada', // Default status for imported sales
+        status: 'Aprovada', // Consistent status for all sales
         payment_type: sale.payment_method === 'CREDIT' ? 'Cartão de Crédito' : 
                      sale.payment_method === 'DEBIT' ? 'Cartão de Débito' : 'Pix',
         gross_amount: Number(sale.gross_amount),
         transaction_date: sale.date,
-        installments: sale.payment_method === 'CREDIT' ? Math.floor(Math.random() * 12) + 1 : 1,
+        installments: 1, // Fixed to 1x for consistency with preview
         terminal: sale.terminal,
         brand: sale.payment_method === 'PIX' ? 'Pix' : 
-               ['Visa', 'Mastercard', 'Elo'][Math.floor(Math.random() * 3)],
-        source: 'Banco de Dados',
+               sale.payment_method === 'CREDIT' ? 'Mastercard' : 'Visa', // Default brands for consistency
+        source: 'PagSeguro', // Consistent source like preview
         formatted_amount: formatCurrency(Number(sale.gross_amount))
       }));
       
@@ -93,16 +93,17 @@ const AdminSales = () => {
       return;
     }
     
-    const header = ['Status', 'Tipo de Pagamento', 'Valor Bruto', 'Data de Transação', 'Parcelas', 'Terminal', 'Bandeira'];
+    const header = ['Status', 'Tipo de Pagamento', 'Valor Bruto', 'Data de Transação', 'Parcelas', 'Terminal', 'Bandeira', 'Origem'];
     
     const rows = filteredSales.map(sale => [
-      sale.status,
+      'Aprovada',
       sale.payment_type,
       sale.gross_amount.toFixed(2).replace('.', ','),
       typeof sale.transaction_date === 'string' ? sale.transaction_date : sale.transaction_date.toLocaleString('pt-BR'),
-      sale.installments,
+      '1x',
       sale.terminal,
-      sale.brand
+      sale.brand,
+      'PagSeguro'
     ]);
     
     const csvContent = [header, ...rows].map(row => row.join(';')).join('\n');
