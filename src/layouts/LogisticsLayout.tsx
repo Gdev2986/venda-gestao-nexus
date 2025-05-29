@@ -1,9 +1,8 @@
-
 import { Outlet, useLocation } from "react-router-dom";
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import MainSidebar from "./MainSidebar";
-import { useUserRole } from "@/hooks/use-user-role";
+import { useAuth } from "@/hooks/use-auth";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { Button } from "@/components/ui/button";
 import { Menu } from "lucide-react";
@@ -20,7 +19,7 @@ const LogisticsLayout = () => {
   });
   
   const isMobile = useIsMobile();
-  const { userRole } = useUserRole();
+  const { userRole } = useAuth();
   const [isLoading, setIsLoading] = useState(true);
   const location = useLocation();
 

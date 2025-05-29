@@ -3,7 +3,7 @@ import { Outlet } from "react-router-dom";
 import { useState, useEffect, memo } from "react";
 import { motion } from "framer-motion";
 import Sidebar from "@/components/layout/sidebar/Sidebar";
-import { useUserRole } from "@/hooks/use-user-role";
+import { useAuth } from "@/hooks/use-auth";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { Button } from "@/components/ui/button";
 import { Menu } from "lucide-react";
@@ -28,7 +28,7 @@ const AdminLayout = ({ children }: AdminLayoutProps) => {
   });
   
   const isMobile = useIsMobile();
-  const { userRole } = useUserRole();
+  const { userRole } = useAuth();
   const [isLoading, setIsLoading] = useState(true);
 
   // Close sidebar on mobile by default

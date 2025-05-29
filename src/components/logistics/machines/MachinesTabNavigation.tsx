@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import MachinesAllTab from "./MachinesAllTab";
@@ -8,7 +7,7 @@ import MachinesStatsTab from "./MachinesStatsTab";
 import { useDialog } from "@/hooks/use-dialog";
 import NewMachineDialog from "@/components/logistics/modals/NewMachineDialog";
 import { useMachines } from "@/hooks/logistics/use-machines";
-import { useAuth } from "@/contexts/AuthContext";
+import { useAuth } from "@/hooks/use-auth";
 
 const MachinesTabNavigation = () => {
   // State for filters

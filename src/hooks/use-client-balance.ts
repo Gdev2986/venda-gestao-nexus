@@ -1,77 +1,50 @@
-
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { useAuth } from "@/contexts/AuthContext";
-import { useToast } from "@/hooks/use-toast";
+import { useAuth } from "@/hooks/use-auth";
 
-interface UseClientBalanceReturn {
-  balance: number | null;
-  isLoading: boolean;
-  error: Error | null;
-  mutate: () => void;
-}
-
-export function useClientBalance(): UseClientBalanceReturn {
+export const useClientBalance = () => {
   const [balance, setBalance] = useState<number | null>(null);
-  const [isLoading, setIsLoading] = useState<boolean>(true);
+  const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
   const { user } = useAuth();
-  const { toast } = useToast();
 
-  const fetchBalance = async () => {
-    if (!user) {
-      setIsLoading(false);
-      setBalance(null);
-      return;
-    }
-
-    try {
-      setIsLoading(true);
-      setError(null);
-
-      // First, get the client_id for the user
-      const { data: clientData, error: clientError } = await supabase
-        .from('user_client_access')
-        .select('client_id')
-        .eq('user_id', user.id)
-        .single();
-
-      if (clientError) {
-        throw new Error('Failed to retrieve client information');
-      }
-
-      if (!clientData?.client_id) {
-        setBalance(null);
+  useEffect(() => {
+    const fetchClientBalance = async () => {
+      if (!user) {
+        console.log("No user, cannot fetch balance");
+        setIsLoading(false);
         return;
       }
 
-      const { data, error: balanceError } = await supabase
-        .from('clients')
-        .select('balance')
-        .eq('id', clientData.client_id)
-        .single();
+      setIsLoading(true);
+      try {
+        // Fetch the client balance from the database
+        const { data, error } = await supabase
+          .from("client_balance")
+          .select("balance")
+          .eq("client_id", user.id)
+          .single();
 
-      if (balanceError) {
-        throw new Error(balanceError.message);
+        if (error) {
+          console.error("Error fetching client balance:", error);
+          setError(error);
+        }
+
+        if (data) {
+          setBalance(data.balance);
+        } else {
+          setBalance(0); // Set default balance to 0 if no data
+        }
+      } catch (err: any) {
+        console.error("Unexpected error fetching client balance:", err);
+        setError(err);
+      } finally {
+        setIsLoading(false);
       }
+    };
 
-      setBalance(data?.balance || 0);
-    } catch (err: any) {
-      console.error('Error fetching client balance:', err);
-      setError(err instanceof Error ? err : new Error(err.message || 'Unknown error'));
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    fetchBalance();
+    fetchClientBalance();
   }, [user]);
 
-  return {
-    balance,
-    isLoading,
-    error,
-    mutate: fetchBalance
-  };
-}
+  return { balance, isLoading, error };
+};

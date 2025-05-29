@@ -8,7 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Textarea } from "@/components/ui/textarea";
 import { useClients } from "@/hooks/use-clients";
 import { useMachines } from "@/hooks/logistics/use-machines";
-import { useAuth } from "@/contexts/AuthContext";
+import { useAuth } from "@/hooks/use-auth";
 import { MachineStatus } from "@/types/machine.types";
 import { useToast } from "@/hooks/use-toast";
 

@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { UserRole } from "@/types";
 import Sidebar from "./sidebar/Sidebar";
@@ -7,7 +6,7 @@ import { Menu } from "lucide-react";
 import { useIsMobile } from "@/hooks/use-mobile";
 import NotificationDropdown from "./NotificationDropdown";
 import ThemeToggle from "../theme/theme-toggle";
-import { useUserRole } from "@/hooks/use-user-role";
+import { useAuth } from "@/hooks/use-auth";
 import { AnimatePresence } from "framer-motion";
 import { Outlet } from "react-router-dom";
 
@@ -24,8 +23,8 @@ const MainLayout = ({ children }: MainLayoutProps) => {
   
   const isMobile = useIsMobile();
   
-  // Get user role from custom hook
-  const { userRole } = useUserRole();
+  // Get user role from auth hook
+  const { userRole } = useAuth();
 
   // Close sidebar on mobile by default
   useEffect(() => {

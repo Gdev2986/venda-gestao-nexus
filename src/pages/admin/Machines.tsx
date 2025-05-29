@@ -2,12 +2,12 @@
 import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { PATHS } from "@/routes/paths";
-import { useUserRole } from "@/hooks/use-user-role";
+import { useAuth } from "@/hooks/use-auth";
 import { UserRole } from "@/types";
 
 const Machines = () => {
   const navigate = useNavigate();
-  const { userRole } = useUserRole();
+  const { userRole } = useAuth();
   
   useEffect(() => {
     console.log("Admin Machines page redirect - userRole:", userRole);

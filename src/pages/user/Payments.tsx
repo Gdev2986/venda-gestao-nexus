@@ -7,7 +7,7 @@ import { BalanceCards } from "@/components/payments/BalanceCards";
 import { PaymentHistoryCard } from "@/components/payments/PaymentHistoryCard";
 import { usePaymentSubscription } from "@/hooks/usePaymentSubscription";
 import { useEffect } from "react";
-import { useAuth } from "@/contexts/AuthContext";
+import { useAuth } from "@/hooks/use-auth";
 import { usePixKeys } from "@/hooks/usePixKeys";
 
 const UserPayments = () => {

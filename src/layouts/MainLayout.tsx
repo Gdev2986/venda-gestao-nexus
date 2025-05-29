@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Outlet } from "react-router-dom";
 import { UserRole } from "@/types";
@@ -8,7 +7,7 @@ import { Menu } from "lucide-react";
 import { useIsMobile } from "@/hooks/use-mobile";
 import NotificationDropdown from "@/components/layout/NotificationDropdown";
 import ThemeToggle from "@/components/theme/theme-toggle";
-import { useUserRole } from "@/hooks/use-user-role";
+import { useAuth } from "@/hooks/use-auth";
 import { AnimatePresence } from "framer-motion";
 import { Toaster } from "@/components/ui/sonner";
 
@@ -21,8 +20,8 @@ const MainLayout = () => {
   
   const isMobile = useIsMobile();
   
-  // Get user role from custom hook
-  const { userRole } = useUserRole();
+  // Get user role from auth hook
+  const { userRole } = useAuth();
 
   // Close sidebar on mobile by default
   useEffect(() => {
@@ -42,7 +41,7 @@ const MainLayout = () => {
 
   return (
     <div className="flex h-screen overflow-hidden bg-background">
-      {/* Sidebar component with AnimatePresence for smooth animation */}
+      {/* Sidebar component - mounted always but conditionally shown */}
       <AnimatePresence mode="wait">
         <Sidebar 
           isOpen={sidebarOpen} 
