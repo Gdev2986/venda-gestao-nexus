@@ -1,4 +1,3 @@
-
 import { supabase } from "@/integrations/supabase/client";
 import { NormalizedSale } from "@/utils/sales-processor";
 import { v4 as uuidv4 } from 'uuid';
@@ -182,6 +181,12 @@ export const insertSales = async (sales: NormalizedSale[]): Promise<void> => {
       };
     });
 
+    // Temporariamente desabilitar triggers para evitar erro
+    console.log(`Disabling triggers temporarily`);
+    await supabase.rpc('sql', { 
+      query: 'ALTER TABLE public.sales DISABLE TRIGGER trigger_update_sales_metadata;' 
+    });
+
     // Insert all sales at once
     console.log(`Inserting ${salesData.length} sales into database`);
     const { error } = await supabase
@@ -192,6 +197,51 @@ export const insertSales = async (sales: NormalizedSale[]): Promise<void> => {
       console.error('Error inserting sales:', error);
       throw new Error(`Erro ao inserir vendas: ${error.message}`);
     }
+
+    // Re-enable triggers
+    console.log(`Re-enabling triggers`);
+    await supabase.rpc('sql', { 
+      query: 'ALTER TABLE public.sales ENABLE TRIGGER trigger_update_sales_metadata;' 
+    });
+
+    // Manually update metadata after successful insertion
+    console.log(`Manually updating metadata`);
+    await supabase.rpc('sql', {
+      query: `
+        INSERT INTO public.sales_metadata (metric_date, total_sales, total_amount, unique_terminals)
+        SELECT 
+          DATE(date) as metric_date,
+          COUNT(*) as total_sales,
+          SUM(gross_amount) as total_amount,
+          COUNT(DISTINCT terminal) as unique_terminals
+        FROM public.sales 
+        GROUP BY DATE(date)
+        ON CONFLICT (metric_date) 
+        DO UPDATE SET 
+          total_sales = EXCLUDED.total_sales,
+          total_amount = EXCLUDED.total_amount,
+          unique_terminals = EXCLUDED.unique_terminals,
+          updated_at = now();
+      `
+    });
+
+    // Update date range
+    await supabase.rpc('sql', {
+      query: `
+        INSERT INTO public.sales_date_range (earliest_date, latest_date, total_records)
+        SELECT 
+          MIN(DATE(date)),
+          MAX(DATE(date)),
+          COUNT(*)
+        FROM public.sales
+        ON CONFLICT (id) 
+        DO UPDATE SET 
+          earliest_date = EXCLUDED.earliest_date,
+          latest_date = EXCLUDED.latest_date,
+          total_records = EXCLUDED.total_records,
+          last_updated = now();
+      `
+    });
 
     console.log(`Successfully inserted ${salesData.length} sales`);
     
