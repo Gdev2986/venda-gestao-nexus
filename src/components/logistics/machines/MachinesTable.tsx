@@ -24,7 +24,7 @@ import { useToast } from "@/hooks/use-toast";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { Machine } from "@/types/machine.types";
-import { MachineTransferDialog } from "../machine-dialogs/MachineTransferDialog";
+import MachineTransferDialog from "../machine-dialogs/MachineTransferDialog";
 
 interface MachinesTableProps {
   machines: Machine[];
