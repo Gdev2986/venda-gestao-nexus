@@ -1,7 +1,7 @@
-
 import { supabase } from "@/integrations/supabase/client";
 import { NormalizedSale } from "@/utils/sales-processor";
 import { formatCurrency } from "@/lib/formatters";
+import { fetchAllSalesWithFilters } from "./sales/sales-fetch-all";
 
 export interface SalesDateRange {
   earliest_date: string;
@@ -63,51 +63,26 @@ export const optimizedSalesService = {
     }
   },
 
-  // Buscar vendas paginadas com filtros otimizados
+  // Buscar vendas paginadas com filtros otimizados - NOVA IMPLEMENTAÇÃO
   async getSalesPaginated(
     page: number = 1,
     pageSize: number = 1000,
     filters: SalesFilters = {}
   ): Promise<PaginatedSalesResult> {
     try {
-      const { data, error } = await supabase.rpc('get_sales_paginated', {
-        page_number: page,
-        page_size: pageSize,
-        filter_date_start: filters.dateStart || null,
-        filter_date_end: filters.dateEnd || null,
-        filter_hour_start: filters.hourStart || null,
-        filter_hour_end: filters.hourEnd || null,
-        filter_terminals: filters.terminals || null,
-        filter_payment_type: filters.paymentType || null,
-        filter_status: filters.status || null,
-        filter_source: filters.source || null
-        // Note: brand filtering will be handled on the frontend since it's derived data
+      console.log('Carregando vendas com filtros:', filters, 'página:', page);
+      
+      // Buscar TODOS os dados da tabela usando a nova função
+      const allSalesData = await fetchAllSalesWithFilters({
+        dateStart: filters.dateStart,
+        dateEnd: filters.dateEnd,
+        terminals: filters.terminals,
+        paymentType: filters.paymentType,
+        source: filters.source
       });
 
-      if (error) {
-        console.error('Error getting paginated sales:', error);
-        return {
-          sales: [],
-          totalCount: 0,
-          totalPages: 0,
-          currentPage: page
-        };
-      }
-
-      if (!data || data.length === 0) {
-        return {
-          sales: [],
-          totalCount: 0,
-          totalPages: 0,
-          currentPage: page
-        };
-      }
-
       // Converter dados do banco para formato NormalizedSale
-      const totalCount = Number(data[0]?.total_count || 0);
-      const totalPages = Math.ceil(totalCount / pageSize);
-
-      let sales: NormalizedSale[] = data.map((sale: any) => {
+      let sales: NormalizedSale[] = allSalesData.map((sale: any) => {
         // Formatar data para exibição (DD/MM/YYYY HH:MM)
         const saleDate = new Date(sale.date);
         const formattedDate = saleDate.toLocaleDateString('pt-BR', {
@@ -136,13 +111,40 @@ export const optimizedSalesService = {
         };
       });
 
-      // Apply brand filter on frontend since it's derived data
+      // Aplicar filtros adicionais no frontend
+      if (filters.hourStart !== undefined || filters.hourEnd !== undefined) {
+        sales = sales.filter(sale => {
+          const saleDate = new Date(sale.transaction_date.split(' ')[0].split('/').reverse().join('-') + 'T' + sale.transaction_date.split(' ')[1]);
+          const hour = saleDate.getHours();
+          
+          if (filters.hourStart !== undefined && hour < filters.hourStart) return false;
+          if (filters.hourEnd !== undefined && hour > filters.hourEnd) return false;
+          
+          return true;
+        });
+      }
+
+      if (filters.status && filters.status !== 'all') {
+        sales = sales.filter(sale => sale.status === filters.status);
+      }
+
       if (filters.brand && filters.brand !== 'all') {
         sales = sales.filter(sale => sale.brand === filters.brand);
       }
 
+      // Calcular totais
+      const totalCount = sales.length;
+      const totalPages = Math.ceil(totalCount / pageSize);
+
+      // Aplicar paginação no frontend
+      const startIndex = (page - 1) * pageSize;
+      const endIndex = startIndex + pageSize;
+      const paginatedSales = sales.slice(startIndex, endIndex);
+
+      console.log(`Total de registros encontrados: ${totalCount}, página ${page} de ${totalPages}, mostrando ${paginatedSales.length} registros`);
+
       return {
-        sales,
+        sales: paginatedSales,
         totalCount,
         totalPages,
         currentPage: page
