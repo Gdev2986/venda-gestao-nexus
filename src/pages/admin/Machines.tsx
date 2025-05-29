@@ -3,7 +3,7 @@ import React from 'react';
 import { useAuth } from "@/hooks/use-auth";
 import { UserRole } from "@/types";
 import { Navigate } from "react-router-dom";
-import { MachineList } from "@/components/logistics/machines/MachineList";
+import { MachinesPageContent } from "@/components/logistics/machines/MachinesPageContent";
 
 const AdminMachines = () => {
   const { userRole, isAuthenticated } = useAuth();
@@ -16,7 +16,11 @@ const AdminMachines = () => {
     return <Navigate to="/unauthorized" replace />;
   }
 
-  return <MachineList data={[]} />;
+  return (
+    <div className="min-h-screen bg-background">
+      <MachinesPageContent />
+    </div>
+  );
 };
 
 export default AdminMachines;
