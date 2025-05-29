@@ -13,14 +13,11 @@ export const getSupportTickets = async () => {
       ),
       machine:machines!machine_id (
         id, serial_number, model
-      ),
-      assigned_user:profiles!assigned_to (
-        id, name, email
       )
     `)
     .order("created_at", { ascending: false });
 
-  return { data: data as SupportTicket[], error };
+  return { data: data as unknown as SupportTicket[], error };
 };
 
 // Get ticket by ID
@@ -34,15 +31,12 @@ export const getTicketById = async (id: string) => {
       ),
       machine:machines!machine_id (
         id, serial_number, model
-      ),
-      assigned_user:profiles!assigned_to (
-        id, name, email
       )
     `)
     .eq("id", id)
     .single();
 
-  return { data: data as SupportTicket, error };
+  return { data: data as unknown as SupportTicket, error };
 };
 
 // Create new support ticket
@@ -57,13 +51,12 @@ export const createSupportTicket = async (ticket: CreateTicketParams) => {
       type: ticket.type,
       priority: ticket.priority,
       status: ticket.status || "PENDING",
-      scheduled_date: ticket.scheduled_date,
-      attachments: ticket.attachments ? JSON.stringify(ticket.attachments) : null
+      scheduled_date: ticket.scheduled_date
     })
     .select()
     .single();
 
-  return { data: data as SupportTicket, error };
+  return { data: data as unknown as SupportTicket, error };
 };
 
 // Update support ticket
@@ -71,14 +64,21 @@ export const updateSupportTicket = async (id: string, updates: UpdateTicketParam
   const { data, error } = await supabase
     .from("support_requests")
     .update({
-      ...updates,
+      title: updates.title,
+      description: updates.description,
+      status: updates.status,
+      priority: updates.priority,
+      type: updates.type,
+      technician_id: updates.technician_id,
+      resolution: updates.resolution,
+      scheduled_date: updates.scheduled_date,
       updated_at: new Date().toISOString()
     })
     .eq("id", id)
     .select()
     .single();
 
-  return { data: data as SupportTicket, error };
+  return { data: data as unknown as SupportTicket, error };
 };
 
 // Get messages for a ticket
@@ -91,10 +91,19 @@ export const getTicketMessages = async (ticketId: string) => {
         id, name, role
       )
     `)
-    .eq("ticket_id", ticketId)
+    .eq("conversation_id", ticketId)
     .order("created_at", { ascending: true });
 
-  return { data: data as SupportMessage[], error };
+  if (data) {
+    // Map conversation_id to ticket_id for compatibility
+    const mappedData = data.map(msg => ({
+      ...msg,
+      ticket_id: msg.conversation_id
+    }));
+    return { data: mappedData as SupportMessage[], error };
+  }
+
+  return { data: null, error };
 };
 
 // Send message
@@ -108,49 +117,23 @@ export const sendTicketMessage = async (ticketId: string, message: string, attac
   const { data, error } = await supabase
     .from("support_messages")
     .insert({
-      ticket_id: ticketId,
+      conversation_id: ticketId,
       user_id: user.id,
-      message,
-      attachments: attachments ? JSON.stringify(attachments) : null
+      message
     })
     .select()
     .single();
 
-  return { data: data as SupportMessage, error };
-};
-
-// Assign ticket to user
-export const assignTicket = async (ticketId: string, assignedTo: string) => {
-  const { data: { user } } = await supabase.auth.getUser();
-  
-  if (!user) {
-    return { data: null, error: new Error("User not authenticated") };
+  if (data) {
+    // Map conversation_id to ticket_id for compatibility
+    const mappedData = {
+      ...data,
+      ticket_id: data.conversation_id
+    };
+    return { data: mappedData as SupportMessage, error };
   }
 
-  // Update the ticket
-  const { data: ticketData, error: ticketError } = await supabase
-    .from("support_requests")
-    .update({ assigned_to: assignedTo })
-    .eq("id", ticketId)
-    .select()
-    .single();
-
-  if (ticketError) {
-    return { data: null, error: ticketError };
-  }
-
-  // Create assignment record
-  const { data, error } = await supabase
-    .from("support_assignments")
-    .insert({
-      ticket_id: ticketId,
-      assigned_to: assignedTo,
-      assigned_by: user.id
-    })
-    .select()
-    .single();
-
-  return { data: ticketData, error };
+  return { data: null, error };
 };
 
 // Upload file

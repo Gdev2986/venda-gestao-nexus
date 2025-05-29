@@ -6,6 +6,7 @@ import StatusBadge from "./StatusBadge";
 import { formatDate } from "@/utils/format";
 import { SupportChat } from "./SupportChat";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { useSupportSystem } from "@/hooks/use-support-system";
 
 interface SupportRequest {
   id: string;
@@ -24,6 +25,8 @@ interface RequestDetailsDialogProps {
 }
 
 const RequestDetailsDialog = ({ request, open, onOpenChange }: RequestDetailsDialogProps) => {
+  const { messages, sendMessage } = useSupportSystem();
+
   if (!request) return null;
 
   return (
@@ -77,7 +80,11 @@ const RequestDetailsDialog = ({ request, open, onOpenChange }: RequestDetailsDia
           </TabsContent>
           
           <TabsContent value="chat" className="py-4">
-            <SupportChat ticketId={request.id} />
+            <SupportChat 
+              ticketId={request.id} 
+              messages={messages}
+              onSendMessage={(message, attachments) => sendMessage(request.id, message, attachments)}
+            />
           </TabsContent>
         </Tabs>
         

@@ -27,7 +27,7 @@ export const SupportTicketDialog = ({
   const [formData, setFormData] = useState({
     title: "",
     description: "",
-    type: TicketType.SUPPORT,
+    type: TicketType.MAINTENANCE,
     priority: TicketPriority.MEDIUM,
     machine_id: "",
     attachments: [] as File[]
@@ -53,7 +53,7 @@ export const SupportTicketDialog = ({
       setFormData({
         title: "",
         description: "",
-        type: TicketType.SUPPORT,
+        type: TicketType.MAINTENANCE,
         priority: TicketPriority.MEDIUM,
         machine_id: "",
         attachments: []
@@ -102,9 +102,9 @@ export const SupportTicketDialog = ({
               <SelectContent>
                 <SelectItem value={TicketType.MAINTENANCE}>Manutenção</SelectItem>
                 <SelectItem value={TicketType.INSTALLATION}>Instalação</SelectItem>
-                <SelectItem value={TicketType.REPLACEMENT}>Substituição</SelectItem>
-                <SelectItem value={TicketType.SUPPLIES}>Materiais</SelectItem>
-                <SelectItem value={TicketType.REMOVAL}>Remoção</SelectItem>
+                <SelectItem value={TicketType.REPAIR}>Reparo</SelectItem>
+                <SelectItem value={TicketType.TRAINING}>Treinamento</SelectItem>
+                <SelectItem value={TicketType.SUPPORT}>Suporte</SelectItem>
                 <SelectItem value={TicketType.OTHER}>Outro</SelectItem>
               </SelectContent>
             </Select>

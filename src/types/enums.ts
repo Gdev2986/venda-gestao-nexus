@@ -1,98 +1,36 @@
 
-export enum PaymentMethod {
-  CREDIT = "CREDIT",
-  DEBIT = "DEBIT", 
-  PIX = "PIX",
-  TED = "TED",
-  BOLETO = "BOLETO"
-}
-
-export enum PaymentStatus {
-  PENDING = "PENDING",
-  PROCESSING = "PROCESSING",
-  APPROVED = "APPROVED", 
-  REJECTED = "REJECTED",
-  PAID = "PAID",
-  COMPLETED = "COMPLETED"
-}
-
-export enum PaymentType {
-  PIX = "PIX",
-  TED = "TED",
-  BOLETO = "BOLETO"
-}
-
-export enum UserRole {
-  ADMIN = "ADMIN",
-  CLIENT = "CLIENT",
-  PARTNER = "PARTNER",
-  FINANCIAL = "FINANCIAL",
-  FINANCE = "FINANCE",
-  SUPPORT = "SUPPORT",
-  LOGISTICS = "LOGISTICS"
-}
-
-export enum NotificationType {
-  PAYMENT = "PAYMENT",
-  BALANCE = "BALANCE",
-  MACHINE = "MACHINE",
-  COMMISSION = "COMMISSION",
-  SYSTEM = "SYSTEM",
-  SUPPORT = "SUPPORT",
-  GENERAL = "GENERAL",
-  SALE = "SALE"
-}
-
-export enum PaymentAction {
-  VIEW = "VIEW",
-  APPROVE = "APPROVE",
-  REJECT = "REJECT",
-  DELETE = "DELETE",
-  SEND_RECEIPT = "SEND_RECEIPT"
-}
-
 export enum TicketStatus {
-  OPEN = "OPEN",
   PENDING = "PENDING",
-  IN_PROGRESS = "IN_PROGRESS",
-  RESOLVED = "RESOLVED",
+  IN_PROGRESS = "IN_PROGRESS", 
   COMPLETED = "COMPLETED",
-  CLOSED = "CLOSED",
-  REJECTED = "REJECTED",
   CANCELED = "CANCELED"
 }
 
 export enum TicketPriority {
   LOW = "LOW",
   MEDIUM = "MEDIUM",
-  HIGH = "HIGH",
-  CRITICAL = "CRITICAL",
-  URGENT = "URGENT"
+  HIGH = "HIGH"
 }
 
 export enum TicketType {
-  TECHNICAL = "TECHNICAL",
-  BILLING = "BILLING",
-  INQUIRY = "INQUIRY",
-  MACHINE = "MACHINE",
-  INSTALLATION = "INSTALLATION",
   MAINTENANCE = "MAINTENANCE",
-  REMOVAL = "REMOVAL",
-  REPLACEMENT = "REPLACEMENT",
-  SUPPLIES = "SUPPLIES",
-  PAPER = "PAPER",
-  GENERAL = "GENERAL",
-  FEATURE = "FEATURE",
-  BUG = "BUG",
+  INSTALLATION = "INSTALLATION",
+  REPAIR = "REPAIR",
+  TRAINING = "TRAINING",
+  SUPPORT = "SUPPORT",
   OTHER = "OTHER"
 }
 
-export enum TicketAction {
-  VIEW = "VIEW",
-  REPLY = "REPLY",
-  ASSIGN = "ASSIGN",
-  RESOLVE = "RESOLVE",
-  REOPEN = "REOPEN",
-  CLOSE = "CLOSE",
-  CANCEL = "CANCEL"
+export enum UserRole {
+  ADMIN = "ADMIN",
+  CLIENT = "CLIENT",
+  FINANCIAL = "FINANCIAL",
+  PARTNER = "PARTNER",
+  LOGISTICS = "LOGISTICS"
+}
+
+export enum ClientStatus {
+  ACTIVE = "ACTIVE",
+  INACTIVE = "INACTIVE",
+  SUSPENDED = "SUSPENDED"
 }

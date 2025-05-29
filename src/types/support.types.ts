@@ -6,8 +6,7 @@ export interface SupportTicket {
   title: string;
   client_id: string;
   machine_id?: string;
-  user_id?: string;
-  assigned_to?: string;
+  technician_id?: string;
   type: TicketType;
   status: TicketStatus;
   priority: TicketPriority;
@@ -16,7 +15,6 @@ export interface SupportTicket {
   resolution?: string;
   created_at: string;
   updated_at?: string;
-  attachments?: any[];
   client?: {
     id: string;
     business_name: string;
@@ -35,12 +33,12 @@ export interface SupportTicket {
 
 export interface SupportMessage {
   id: string;
-  ticket_id: string;
+  conversation_id: string; // This matches the database schema
+  ticket_id?: string;      // Added for compatibility
   user_id: string;
   message: string;
-  attachments?: any[];
-  is_read?: boolean;
   created_at: string;
+  is_read?: boolean;
   user?: {
     id: string;
     name: string;
@@ -57,7 +55,6 @@ export interface CreateTicketParams {
   priority: TicketPriority;
   status?: TicketStatus;
   scheduled_date?: string;
-  user_id?: string;
   attachments?: File[];
 }
 
@@ -67,7 +64,7 @@ export interface UpdateTicketParams {
   status?: TicketStatus;
   priority?: TicketPriority;
   type?: TicketType;
-  assigned_to?: string;
+  technician_id?: string;
   resolution?: string;
   scheduled_date?: string;
 }

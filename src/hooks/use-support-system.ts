@@ -8,8 +8,7 @@ import {
   createSupportTicket, 
   updateSupportTicket,
   getTicketMessages,
-  sendTicketMessage,
-  assignTicket
+  sendTicketMessage
 } from "@/services/support-api";
 import { SupportTicket, SupportMessage, CreateTicketParams } from "@/types/support.types";
 import { useToast } from "@/hooks/use-toast";
@@ -60,8 +59,8 @@ export const useSupportSystem = () => {
     }
   };
 
-  // Create new ticket
-  const createTicket = async (ticketData: CreateTicketParams) => {
+  // Create new ticket - return void to match expected interface
+  const createTicket = async (ticketData: CreateTicketParams): Promise<void> => {
     setIsCreating(true);
     try {
       const { data, error } = await createSupportTicket(ticketData);
@@ -72,8 +71,6 @@ export const useSupportSystem = () => {
         title: "Sucesso",
         description: "Chamado criado com sucesso",
       });
-      
-      return data;
     } catch (error) {
       console.error("Error creating ticket:", error);
       toast({
@@ -134,30 +131,6 @@ export const useSupportSystem = () => {
     }
   };
 
-  // Assign ticket
-  const assignTicketToUser = async (ticketId: string, userId: string) => {
-    try {
-      const { data, error } = await assignTicket(ticketId, userId);
-      if (error) throw error;
-      
-      await loadTickets();
-      toast({
-        title: "Sucesso",
-        description: "Chamado atribuído com sucesso",
-      });
-      
-      return data;
-    } catch (error) {
-      console.error("Error assigning ticket:", error);
-      toast({
-        title: "Erro",
-        description: "Não foi possível atribuir o chamado",
-        variant: "destructive",
-      });
-      throw error;
-    }
-  };
-
   // Set up real-time subscriptions
   useEffect(() => {
     if (!user) return;
@@ -189,7 +162,7 @@ export const useSupportSystem = () => {
           table: "support_messages",
         },
         (payload) => {
-          if (selectedTicket && payload.new && (payload.new as any).ticket_id === selectedTicket.id) {
+          if (selectedTicket && payload.new && (payload.new as any).conversation_id === selectedTicket.id) {
             loadMessages(selectedTicket.id);
           }
         }
@@ -220,7 +193,6 @@ export const useSupportSystem = () => {
     loadMessages,
     createTicket,
     sendMessage,
-    updateTicketStatus,
-    assignTicketToUser
+    updateTicketStatus
   };
 };
