@@ -1,38 +1,36 @@
 
 import { NotificationType } from "@/types/notification.types";
 
-// Função para reproduzir som com base no tipo de notificação
-export const playNotificationSoundIfEnabled = (
-  type: NotificationType,
-  soundEnabled: boolean
-) => {
-  if (!soundEnabled) return;
+const soundFiles = {
+  [NotificationType.GENERAL]: "/sounds/notification-general.mp3",
+  [NotificationType.SUPPORT]: "/sounds/notification-support.mp3",
+  [NotificationType.LOGISTICS]: "/sounds/notification-logistics.mp3",
+  [NotificationType.PAYMENT]: "/sounds/notification-general.mp3",
+  [NotificationType.PAYMENT_APPROVED]: "/sounds/notification-general.mp3",
+  [NotificationType.PAYMENT_REJECTED]: "/sounds/notification-general.mp3",
+  [NotificationType.PAYMENT_REQUEST]: "/sounds/notification-general.mp3",
+  [NotificationType.SYSTEM]: "/sounds/notification-general.mp3",
+  [NotificationType.MACHINE]: "/sounds/notification-general.mp3",
+  [NotificationType.SALE]: "/sounds/notification-general.mp3",
+  [NotificationType.COMMISSION]: "/sounds/notification-general.mp3",
+  [NotificationType.BALANCE]: "/sounds/notification-general.mp3",
+  [NotificationType.ADMIN_NOTIFICATION]: "/sounds/notification-general.mp3",
+};
 
+export const playNotificationSoundIfEnabled = (type: NotificationType, soundEnabled: boolean) => {
+  if (!soundEnabled) return;
+  
   try {
-    const audio = new Audio();
+    const soundFile = soundFiles[type] || soundFiles[NotificationType.GENERAL];
+    const audio = new Audio(soundFile);
     
-    // Definir sons diferentes para diferentes tipos de notificações
-    switch (type) {
-      case NotificationType.PAYMENT:
-        audio.src = "/sounds/payment-notification.mp3";
-        break;
-      case NotificationType.SYSTEM:
-        audio.src = "/sounds/system-notification.mp3";
-        break;
-      case NotificationType.MACHINE:
-        audio.src = "/sounds/machine-notification.mp3";
-        break;
-      default:
-        audio.src = "/sounds/notification.mp3";
-        break;
-    }
+    // Set volume to be less intrusive
+    audio.volume = 0.5;
     
-    // Reproduzir o som
     audio.play().catch(error => {
-      // Erros de autoplay são comuns devido a políticas dos navegadores
-      console.error("Error playing notification sound:", error);
+      console.warn("Could not play notification sound:", error);
     });
   } catch (error) {
-    console.error("Failed to play notification sound:", error);
+    console.warn("Error playing notification sound:", error);
   }
 };

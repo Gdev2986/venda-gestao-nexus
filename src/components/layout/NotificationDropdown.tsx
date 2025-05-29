@@ -9,7 +9,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/button";
 import { motion, AnimatePresence } from "framer-motion";
-import { useNotifications } from "@/contexts/NotificationsContext";
+import { useNotifications } from "@/contexts/notifications/NotificationsContext";
 import { NotificationHeader } from "@/components/notifications/NotificationHeader";
 import { NotificationList } from "@/components/notifications/NotificationList";
 import { NotificationFooter } from "@/components/notifications/NotificationFooter";
@@ -24,13 +24,14 @@ const NotificationDropdown = () => {
     markAsRead,
     markAllAsRead,
     soundEnabled,
-    setSoundEnabled
+    setSoundEnabled,
+    isLoading
   } = useNotifications();
 
-  // Pega apenas as 5 notificações mais recentes para exibir no dropdown
+  // Get recent notifications for dropdown
   const recentNotifications = notifications.slice(0, 5);
 
-  // Fechar dropdown quando clicar fora
+  // Close dropdown when clicking outside
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (
@@ -71,7 +72,7 @@ const NotificationDropdown = () => {
                   }}
                   className="absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-destructive text-[10px] font-medium text-destructive-foreground"
                 >
-                  {unreadCount}
+                  {unreadCount > 99 ? "99+" : unreadCount}
                 </motion.span>
               )}
             </AnimatePresence>
@@ -92,6 +93,7 @@ const NotificationDropdown = () => {
           <NotificationList 
             notifications={recentNotifications}
             onMarkAsRead={markAsRead}
+            isLoading={isLoading}
           />
           <NotificationFooter onClose={() => setIsOpen(false)} />
         </DropdownMenuContent>

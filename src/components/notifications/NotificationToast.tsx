@@ -1,8 +1,14 @@
 
-import { useEffect } from 'react';
-import { toast } from 'sonner';
-import { NotificationType } from '@/types/notification.types';
-import { Bell } from 'lucide-react';
+import { NotificationType } from "@/types/notification.types";
+import { toast } from "@/hooks/use-toast";
+import { 
+  Bell, 
+  Package, 
+  CreditCard, 
+  LifeBuoy, 
+  Truck,
+  AlertCircle
+} from "lucide-react";
 
 interface NotificationToastProps {
   title: string;
@@ -10,53 +16,50 @@ interface NotificationToastProps {
   type: NotificationType;
 }
 
-export function NotificationToast({ title, message, type }: NotificationToastProps) {
-  return (
-    <div className="flex gap-3 items-start">
-      <div className="bg-primary/10 p-2 rounded-full">
-        <Bell className="h-4 w-4 text-primary" />
-      </div>
-      <div>
-        <h3 className="font-medium">{title}</h3>
-        <p className="text-sm text-muted-foreground">{message}</p>
-      </div>
-    </div>
-  );
-}
-
-// Função para mostrar uma notificação através do toast
-export function showNotificationToast(notification: {
-  title: string;
-  message: string;
-  type: NotificationType;
-}) {
-  // Instead of using toast.custom, use the standard toast method with JSX
-  toast(
-    <NotificationToast
-      title={notification.title}
-      message={notification.message}
-      type={notification.type}
-    />,
-    {
-      duration: 5000,
-      position: 'top-right',
-    }
-  );
-
-  // Tenta enviar uma notificação nativa do navegador se permitido
-  if ('Notification' in window && Notification.permission === 'granted') {
-    new Notification(notification.title, {
-      body: notification.message,
-      icon: '/favicon.ico',
-    });
+const getNotificationIcon = (type: NotificationType) => {
+  switch (type) {
+    case NotificationType.PAYMENT:
+    case NotificationType.PAYMENT_APPROVED:
+    case NotificationType.PAYMENT_REJECTED:
+    case NotificationType.PAYMENT_REQUEST:
+      return <CreditCard className="h-4 w-4" />;
+    case NotificationType.SUPPORT:
+      return <LifeBuoy className="h-4 w-4" />;
+    case NotificationType.LOGISTICS:
+      return <Truck className="h-4 w-4" />;
+    case NotificationType.MACHINE:
+      return <Package className="h-4 w-4" />;
+    case NotificationType.SYSTEM:
+      return <AlertCircle className="h-4 w-4" />;
+    default:
+      return <Bell className="h-4 w-4" />;
   }
-}
+};
 
-// Função para solicitar permissão de notificações
-export function requestNotificationPermission() {
-  if ('Notification' in window) {
-    if (Notification.permission !== 'granted' && Notification.permission !== 'denied') {
-      Notification.requestPermission();
+export const showNotificationToast = ({ title, message, type }: NotificationToastProps) => {
+  const icon = getNotificationIcon(type);
+  
+  toast({
+    title: (
+      <div className="flex items-center gap-2">
+        {icon}
+        {title}
+      </div>
+    ) as any,
+    description: message,
+    duration: 5000,
+  });
+
+  // Also show browser notification if permission is granted
+  if ("Notification" in window && Notification.permission === "granted") {
+    try {
+      new Notification(title, {
+        body: message,
+        icon: "/favicon.ico",
+        tag: `notification-${Date.now()}`,
+      });
+    } catch (error) {
+      console.warn("Could not show browser notification:", error);
     }
   }
-}
+};
