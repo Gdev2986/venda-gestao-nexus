@@ -7,7 +7,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { CalendarIcon, Filter, X } from "lucide-react";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { format } from "date-fns";
+import { format, parseISO, isValid } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { cn } from "@/lib/utils";
 import { NormalizedSale, getSalesMetadata } from "@/utils/sales-processor";
@@ -35,20 +35,39 @@ const SalesAdvancedFilter = ({ sales, onFilter }: SalesAdvancedFilterProps) => {
   // Get metadata for filter options
   const metadata = getSalesMetadata(sales);
   
-  // Get unique dates from sales data and sort them
+  // Parse sales dates more robustly
   const salesDates = sales.map(sale => {
-    // Parse the formatted date string back to a Date object
+    let saleDate: Date;
+    
     if (typeof sale.transaction_date === 'string') {
-      // Assuming format is "DD/MM/YYYY HH:MM"
-      const [datePart] = sale.transaction_date.split(' ');
-      const [day, month, year] = datePart.split('/');
-      return new Date(parseInt(year), parseInt(month) - 1, parseInt(day));
+      // Try different parsing methods
+      const dateStr = sale.transaction_date;
+      
+      // First try: DD/MM/YYYY HH:MM format
+      if (dateStr.includes('/')) {
+        const [datePart] = dateStr.split(' ');
+        const [day, month, year] = datePart.split('/');
+        saleDate = new Date(parseInt(year), parseInt(month) - 1, parseInt(day));
+      }
+      // Second try: ISO format
+      else if (dateStr.includes('T') || dateStr.includes('-')) {
+        saleDate = parseISO(dateStr);
+      }
+      // Fallback: try native Date parsing
+      else {
+        saleDate = new Date(dateStr);
+      }
+    } else {
+      saleDate = sale.transaction_date;
     }
-    return sale.transaction_date;
-  }).filter(date => !isNaN(date.getTime())).sort((a, b) => a.getTime() - b.getTime());
+    
+    // Validate the date
+    return isValid(saleDate) ? saleDate : null;
+  }).filter((date): date is Date => date !== null);
   
-  // Get unique dates only (without time)
-  const uniqueDates = salesDates.reduce((acc, date) => {
+  // Sort dates and get unique dates only (without time)
+  const sortedDates = salesDates.sort((a, b) => a.getTime() - b.getTime());
+  const uniqueDates = sortedDates.reduce((acc, date) => {
     const dateString = format(date, 'yyyy-MM-dd');
     if (!acc.some(d => format(d, 'yyyy-MM-dd') === dateString)) {
       acc.push(date);
@@ -59,10 +78,18 @@ const SalesAdvancedFilter = ({ sales, onFilter }: SalesAdvancedFilterProps) => {
   const minDate = uniqueDates.length > 0 ? uniqueDates[0] : undefined;
   const maxDate = uniqueDates.length > 0 ? uniqueDates[uniqueDates.length - 1] : undefined;
   
-  // Initialize terminals selection only once when metadata is available
+  console.log('Sales dates range:', {
+    minDate: minDate ? format(minDate, 'dd/MM/yyyy') : 'N/A',
+    maxDate: maxDate ? format(maxDate, 'dd/MM/yyyy') : 'N/A',
+    totalUniqueDates: uniqueDates.length,
+    totalSales: sales.length
+  });
+  
+  // Initialize terminals selection - don't select all by default
   useEffect(() => {
     if (metadata.terminals.length > 0 && !hasInitialized) {
-      setSelectedTerminals(metadata.terminals);
+      // Start with empty selection to require user choice
+      setSelectedTerminals([]);
       setHasInitialized(true);
     }
   }, [metadata.terminals, hasInitialized]);
@@ -77,13 +104,23 @@ const SalesAdvancedFilter = ({ sales, onFilter }: SalesAdvancedFilterProps) => {
         let saleDate: Date;
         
         if (typeof sale.transaction_date === 'string') {
-          // Parse the formatted date string back to a Date object
-          const [datePart] = sale.transaction_date.split(' ');
-          const [day, month, year] = datePart.split('/');
-          saleDate = new Date(parseInt(year), parseInt(month) - 1, parseInt(day));
+          const dateStr = sale.transaction_date;
+          
+          if (dateStr.includes('/')) {
+            const [datePart] = dateStr.split(' ');
+            const [day, month, year] = datePart.split('/');
+            saleDate = new Date(parseInt(year), parseInt(month) - 1, parseInt(day));
+          } else if (dateStr.includes('T') || dateStr.includes('-')) {
+            saleDate = parseISO(dateStr);
+          } else {
+            saleDate = new Date(dateStr);
+          }
         } else {
           saleDate = sale.transaction_date;
         }
+        
+        // Validate sale date
+        if (!isValid(saleDate)) return false;
           
         const fromDate = new Date(dateRange.from!);
         fromDate.setHours(0, 0, 0, 0);
@@ -130,12 +167,12 @@ const SalesAdvancedFilter = ({ sales, onFilter }: SalesAdvancedFilterProps) => {
     setPaymentType("all");
     setStatus("all");
     setBrand("all");
-    setSelectedTerminals(metadata.terminals);
+    setSelectedTerminals([]);
     setSource("all");
   };
   
   const hasActiveFilters = dateRange.from || paymentType !== "all" || status !== "all" || brand !== "all" || source !== "all" || 
-    selectedTerminals.length !== metadata.terminals.length;
+    selectedTerminals.length > 0;
 
   // Function to check if a date has sales
   const isDateWithSales = (date: Date) => {
@@ -201,6 +238,8 @@ const SalesAdvancedFilter = ({ sales, onFilter }: SalesAdvancedFilterProps) => {
                 {minDate && maxDate && (
                   <div className="p-3 border-t text-sm text-muted-foreground">
                     Período disponível: {format(minDate, "dd/MM/yyyy", { locale: ptBR })} - {format(maxDate, "dd/MM/yyyy", { locale: ptBR })}
+                    <br />
+                    <span className="text-xs">{uniqueDates.length} dias com vendas encontrados</span>
                   </div>
                 )}
               </PopoverContent>
