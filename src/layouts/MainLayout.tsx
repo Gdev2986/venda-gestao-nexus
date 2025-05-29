@@ -12,18 +12,22 @@ import { useAuth } from "@/hooks/use-auth";
 import { Toaster } from "@/components/ui/sonner";
 
 const MainLayout = () => {
-  // Use localStorage to persist sidebar state
   const [sidebarOpen, setSidebarOpen] = useState(() => {
     const saved = localStorage.getItem("sidebar-state");
     return saved !== null ? JSON.parse(saved) : true;
   });
   
   const isMobile = useIsMobile();
-  
-  // Get user role from auth hook
-  const { userRole, isLoading } = useAuth();
+  const { userRole, isLoading, isAuthenticated, user } = useAuth();
 
-  console.log("MainLayout render - userRole:", userRole, "sidebarOpen:", sidebarOpen, "isLoading:", isLoading);
+  console.log("MainLayout render - Auth state:", {
+    userRole,
+    isLoading,
+    isAuthenticated,
+    userId: user?.id,
+    sidebarOpen,
+    isMobile
+  });
 
   // Close sidebar on mobile by default
   useEffect(() => {
@@ -34,33 +38,38 @@ const MainLayout = () => {
 
   // Save sidebar state to localStorage when it changes
   useEffect(() => {
-    if (!isMobile) { // Only save state for desktop
+    if (!isMobile) {
       localStorage.setItem("sidebar-state", JSON.stringify(sidebarOpen));
     }
   }, [sidebarOpen, isMobile]);
 
   const toggleSidebar = () => setSidebarOpen(!sidebarOpen);
 
-  // Show loading if still loading auth
-  if (isLoading) {
+  // Show loading state only if we're still loading auth
+  if (isLoading || !isAuthenticated) {
     return (
       <div className="flex flex-col items-center justify-center h-screen bg-background">
         <div className="flex flex-col items-center space-y-4">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
-          <p className="text-muted-foreground">Carregando...</p>
+          <p className="text-muted-foreground">
+            {isLoading ? "Carregando..." : "Verificando autenticação..."}
+          </p>
         </div>
       </div>
     );
   }
 
+  // Use a default role if userRole is null but user is authenticated
+  const effectiveUserRole = userRole || UserRole.CLIENT;
+
   return (
     <div className="flex h-screen overflow-hidden bg-background w-full">
-      {/* Sidebar component - always render but conditionally position */}
+      {/* Sidebar - Always render when authenticated */}
       <Sidebar 
         isOpen={sidebarOpen} 
         isMobile={isMobile} 
         onClose={() => setSidebarOpen(false)} 
-        userRole={userRole || UserRole.CLIENT}
+        userRole={effectiveUserRole}
       />
       
       {/* Main content */}
@@ -69,7 +78,7 @@ const MainLayout = () => {
           sidebarOpen && !isMobile ? 'ml-64' : 'ml-0'
         }`}
       >
-        {/* Header */}
+        {/* Header - Always render when authenticated */}
         <header className="h-14 md:h-16 border-b border-border flex items-center justify-between px-2 sm:px-4 bg-background sticky top-0 z-10">
           <div className="flex items-center space-x-2 md:space-x-4">
             <Button 

@@ -42,8 +42,8 @@ function App() {
     });
   }, [location.pathname, userRole, isLoading, isAuthenticated]);
 
-  // Show loading only when we're checking auth for protected routes
-  if (!isPublicRoute && isLoading) {
+  // Show loading only for auth routes when checking authentication
+  if (!isPublicRoute && isLoading && !isAuthenticated) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
         <div className="flex flex-col items-center space-y-4">
