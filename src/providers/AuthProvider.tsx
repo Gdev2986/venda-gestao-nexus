@@ -71,6 +71,7 @@ const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => 
       try {
         if (roleLoadingTimeout) clearTimeout(roleLoadingTimeout);
         await new Promise((r) => setTimeout(r, 500));
+
         const { data, error } = await supabase
           .from("profiles")
           .select("*")
@@ -84,6 +85,7 @@ const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => 
               .select("*")
               .eq("id", userId)
               .single();
+
             if (!retryError && retryData) {
               const userProfile: UserProfile = {
                 ...retryData,
@@ -154,9 +156,11 @@ const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => 
         dispatch({ type: "SET_NEEDS_PASSWORD_CHANGE", payload: false });
       }
     });
+
     setTimeout(() => {
       if (active) refreshSession();
     }, 100);
+
     return () => {
       active = false;
       subscription.unsubscribe();
@@ -164,10 +168,11 @@ const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => 
     };
   }, []);
 
-  React.useEffect(
-    () => () => roleLoadingTimeout && clearTimeout(roleLoadingTimeout),
-    [roleLoadingTimeout]
-  );
+  React.useEffect(() => {
+    return () => {
+      if (roleLoadingTimeout) clearTimeout(roleLoadingTimeout);
+    };
+  }, [roleLoadingTimeout]);
 
   const signIn = async (email: string, password: string) => {
     dispatch({ type: "SET_LOADING", payload: true });
