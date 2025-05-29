@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { PaymentRequest } from "@/types/payment.types";
@@ -18,7 +19,7 @@ export const usePayments = ({ clientId }: UsePaymentsProps = {}) => {
       setIsLoading(true);
       try {
         let query = supabase
-          .from<PaymentRequest>("payment_requests")
+          .from("payment_requests")
           .select("*")
           .order("created_at", { ascending: false });
 
@@ -45,7 +46,7 @@ export const usePayments = ({ clientId }: UsePaymentsProps = {}) => {
     };
 
     fetchPayments();
-  }, [clientId, user, toast]);
+  }, [clientId, user]);
 
   return {
     payments,

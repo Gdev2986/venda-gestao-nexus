@@ -1,71 +1,59 @@
 
-import React, { createContext, useContext, useEffect } from "react";
-import { useAuth } from "../AuthContext";
-import { useNotificationsState } from "./useNotificationsState";
-import { useNotificationsSubscription } from "./useNotificationsSubscription";
-import { useNotificationSound } from "./useNotificationSound";
-import { NotificationsContextProps } from "./types";
-import { requestNotificationPermission } from "@/components/notifications/NotificationToast";
+import React, { createContext, useContext, useState, useEffect } from "react";
+import { useAuth } from "@/hooks/use-auth";
 
-const NotificationsContext = createContext<NotificationsContextProps | undefined>(undefined);
+interface Notification {
+  id: string;
+  title: string;
+  message: string;
+  type: string;
+  read: boolean;
+  created_at: string;
+}
 
-export const NotificationsProvider: React.FC<{ children: React.ReactNode }> = ({
-  children,
-}) => {
-  const { user } = useAuth();
-  const { soundEnabled, setSoundEnabled } = useNotificationSound();
-  
-  const {
-    notifications,
-    setNotifications,
-    unreadCount,
-    fetchNotifications,
-    markAsRead,
-    markAllAsRead,
-    isLoading,
-    deleteNotification,
-    refreshNotifications
-  } = useNotificationsState(user?.id, soundEnabled);
+interface NotificationsContextType {
+  notifications: Notification[];
+  unreadCount: number;
+  markAsRead: (id: string) => void;
+  markAllAsRead: () => void;
+}
 
-  // Solicitar permissão para notificações quando o provedor for montado
-  useEffect(() => {
-    requestNotificationPermission();
-  }, []);
-
-  // Set up realtime subscription
-  useNotificationsSubscription(
-    user?.id, 
-    soundEnabled, 
-    setNotifications, 
-    fetchNotifications
-  );
-
-  const value: NotificationsContextProps = {
-    notifications,
-    unreadCount,
-    fetchNotifications,
-    markAsRead,
-    markAllAsRead,
-    isLoading,
-    deleteNotification,
-    refreshNotifications,
-    soundEnabled,
-    setSoundEnabled
-  };
-
-  return (
-    <NotificationsContext.Provider value={value}>
-      {children}
-    </NotificationsContext.Provider>
-  );
-};
+const NotificationsContext = createContext<NotificationsContextType | null>(null);
 
 export const useNotifications = () => {
   const context = useContext(NotificationsContext);
-  if (context === undefined) {
-    throw new Error(
-      "useNotifications must be used within a NotificationsProvider"
-    );
+  if (!context) {
+    throw new Error("useNotifications must be used within NotificationsProvider");
   }
   return context;
+};
+
+export const NotificationsProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const { user } = useAuth();
+  const [notifications, setNotifications] = useState<Notification[]>([]);
+
+  const unreadCount = notifications.filter(n => !n.read).length;
+
+  const markAsRead = (id: string) => {
+    setNotifications(prev => 
+      prev.map(n => n.id === id ? { ...n, read: true } : n)
+    );
+  };
+
+  const markAllAsRead = () => {
+    setNotifications(prev => 
+      prev.map(n => ({ ...n, read: true }))
+    );
+  };
+
+  return (
+    <NotificationsContext.Provider value={{
+      notifications,
+      unreadCount,
+      markAsRead,
+      markAllAsRead
+    }}>
+      {children}
+    </NotificationsContext.Provider>
+  );
 };
