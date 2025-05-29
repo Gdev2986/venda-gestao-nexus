@@ -29,7 +29,11 @@ export enum UserRole {
   CLIENT = "CLIENT",
   FINANCIAL = "FINANCIAL",
   PARTNER = "PARTNER",
-  LOGISTICS = "LOGISTICS"
+  LOGISTICS = "LOGISTICS",
+  MANAGER = "MANAGER",
+  FINANCE = "FINANCE",
+  SUPPORT = "SUPPORT",
+  USER = "USER"
 }
 
 export enum ClientStatus {

@@ -341,7 +341,7 @@ const AdminSupport = () => {
               <SupportChat
                 ticketId={selectedTicket.id}
                 messages={messages}
-                onSendMessage={(message, attachments) => sendMessage(selectedTicket.id, message, attachments)}
+                onSendMessage={(message) => sendMessage(selectedTicket.id, message)}
               />
             </div>
           )}

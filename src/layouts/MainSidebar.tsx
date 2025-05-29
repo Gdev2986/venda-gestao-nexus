@@ -4,7 +4,7 @@ import { motion } from "framer-motion";
 import { X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import { UserRole } from "@/types";
+import { UserRole } from "@/types/enums";
 import SidebarNavigation from "@/components/layout/sidebar/SidebarNavigation";
 import SidebarFooter from "@/components/layout/sidebar/SidebarFooter";
 import SidebarUserProfile from "@/components/layout/sidebar/SidebarUserProfile";

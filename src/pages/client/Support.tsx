@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { PageHeader } from "@/components/page/PageHeader";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -258,7 +257,7 @@ const ClientSupport = () => {
               <SupportChat
                 ticketId={selectedTicket.id}
                 messages={messages}
-                onSendMessage={(message, attachments) => sendMessage(selectedTicket.id, message, attachments)}
+                onSendMessage={(message) => sendMessage(selectedTicket.id, message)}
               />
             </div>
           )}
