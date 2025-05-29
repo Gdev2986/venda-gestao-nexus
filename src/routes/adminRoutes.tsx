@@ -21,6 +21,9 @@ import SaleDetails from "@/pages/sales/SaleDetails";
 import AdminMachines from "@/pages/admin/Machines";
 import AdminSettings from "@/pages/admin/Settings";
 import AdminSupport from "@/pages/admin/Support";
+import Company from "@/pages/admin/Company";
+import AdminFees from "@/pages/admin/Fees";
+import AdminReports from "@/pages/admin/Reports";
 
 const AdminRoutes = () => {
   return (
@@ -39,6 +42,11 @@ const AdminRoutes = () => {
         <Route path="sales/new" element={<NewSale />} />
         <Route path={PATHS.ADMIN.SALES_DETAILS().replace('/admin/', '')} element={<SaleDetails />} />
         <Route path="machines" element={<AdminMachines />} />
+        <Route path="company" element={<Company />} />
+        <Route path="company/reports" element={<Company />} />
+        <Route path="company/expenses" element={<Company />} />
+        <Route path="fees" element={<AdminFees />} />
+        <Route path="reports" element={<AdminReports />} />
         <Route path="settings" element={<AdminSettings />} />
         <Route path="support" element={<AdminSupport />} />
       </Routes>

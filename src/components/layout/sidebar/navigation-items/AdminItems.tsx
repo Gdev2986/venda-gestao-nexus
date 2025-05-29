@@ -38,7 +38,7 @@ export const adminItems: SidebarItem[] = [
   {
     title: "Máquinas",
     icon: Smartphone,
-    href: PATHS.LOGISTICS.MACHINES,
+    href: PATHS.ADMIN.MACHINES,
     roles: [UserRole.ADMIN],
   },
   {
