@@ -1,4 +1,3 @@
-
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
 
 @tailwind base;
@@ -37,7 +36,7 @@
 
     --radius: 0.5rem;
 
-    --sidebar-background: 182 63% 36%;
+    --sidebar-background: linear-gradient(to bottom right, hsl(192, 71%, 23%), hsl(174, 79%, 35%));
     --sidebar-foreground: 210 40% 98%;
     --sidebar-primary: 182 63% 36%;
     --sidebar-primary-foreground: 0 0% 100%;
@@ -76,7 +75,7 @@
     --input: 0 0% 25%;
     --ring: 182 63% 36%;
 
-    --sidebar-background: 182 63% 36%;
+    --sidebar-background: linear-gradient(to bottom right, hsl(192, 71%, 23%), hsl(174, 79%, 35%));
     --sidebar-foreground: 210 40% 98%;
     --sidebar-primary: 182 63% 36%;
     --sidebar-primary-foreground: 210 40% 98%;
