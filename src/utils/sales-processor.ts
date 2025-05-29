@@ -341,12 +341,30 @@ export function normalizeData(data: Array<Record<string, any>>, source: string):
           
           normalizedRow.transaction_date = formatDateStandard(dataPagSeguro);
           
+          // Processamento especial da coluna Parcela para PagSeguro
           const parcelasPagSeguro = getValue(cleanedRow, [
             'Parcela', 'PARCELA', 'parcela',
             'Parcelas', 'PARCELAS', 'parcelas'
-          ], '1');
+          ], '');
           
-          normalizedRow.installments = parseInt(parcelasPagSeguro as string) || 1;
+          // Lógica específica para PagSeguro
+          let installments = 1;
+          const parcelaStr = String(parcelasPagSeguro).trim();
+          
+          if (!parcelaStr || parcelaStr === '' || normalizeText(parcelaStr) === 'a vista') {
+            // Se vazio ou "à Vista", usar 1
+            installments = 1;
+          } else if (parcelaStr.toLowerCase().includes('parcelado')) {
+            // Se contém "Parcelado", extrair o número
+            const match = parcelaStr.match(/(\d+)/);
+            installments = match ? parseInt(match[1]) : 1;
+          } else {
+            // Tentar converter diretamente para número
+            const parsed = parseInt(parcelaStr);
+            installments = isNaN(parsed) ? 1 : parsed;
+          }
+          
+          normalizedRow.installments = installments;
           
           normalizedRow.terminal = getValue(cleanedRow, [
             'Identificação da Maquininha', 'IDENTIFICAÇÃO DA MAQUININHA',
@@ -366,14 +384,12 @@ export function normalizeData(data: Array<Record<string, any>>, source: string):
           break;
           
         case 'Sigma':
-          // Enhanced processing for Sigma with robust numeric field handling
           normalizedRow.status = getValue(cleanedRow, [
             'Situacao', 'SITUACAO', 'situacao',
             'Status', 'STATUS', 'status',
             'Estado', 'ESTADO', 'estado'
           ], 'Aprovada');
 
-          // Payment type (more variations)
           const modalidadeSigma = getValue(cleanedRow, [
             'Modalidade', 'MODALIDADE', 'modalidade',
             'Tipo', 'TIPO', 'tipo',
@@ -393,7 +409,6 @@ export function normalizeData(data: Array<Record<string, any>>, source: string):
             normalizedRow.payment_type = modalidadeSigma;
           }
 
-          // Gross amount: prioritize most specific field and all variations
           let valorSigma = getValue(cleanedRow, ['Valor Venda', 'VALOR VENDA', 'valor venda', 'ValorVenda', 'VALORVENDA', 'valorvenda'], undefined);
           if (valorSigma === undefined) {
             valorSigma = getValue(cleanedRow, ['Valor Total', 'VALOR TOTAL', 'valor total', 'ValorTotal', 'VALORTOTAL', 'valortotal'], undefined);
@@ -405,10 +420,8 @@ export function normalizeData(data: Array<Record<string, any>>, source: string):
             valorSigma = getValue(cleanedRow, ['Total', 'TOTAL', 'total'], 0);
           }
           
-          // Use enhanced toNumber function for Sigma values
           normalizedRow.gross_amount = toNumber(valorSigma);
 
-          // Transaction date: prioritize most specific field and all variations
           let dataSigma = getValue(cleanedRow, ['Data Venda', 'DATA VENDA', 'data venda', 'DataVenda', 'DATAVENDA', 'datavenda'], undefined);
           if (dataSigma === undefined) {
             dataSigma = getValue(cleanedRow, ['Data', 'DATA', 'data'], undefined);
@@ -419,22 +432,18 @@ export function normalizeData(data: Array<Record<string, any>>, source: string):
           normalizedRow.transaction_date = formatDateStandard(dataSigma);
           if (!dataSigma) normalizedRow.transaction_date = '01/01/2000 00:00';
 
-          // Installments: prioritize most specific field and all variations
           let parcelasSigma = getValue(cleanedRow, ['Parcelas', 'parcelas', 'PARCELAS', 'QtdeParcelas', 'QtdParcelas'], '1');
           if (parcelasSigma === undefined) {
             parcelasSigma = getValue(cleanedRow, ['Parcela', 'parcela', 'PARCELA'], '1');
           }
           normalizedRow.installments = parseInt(parcelasSigma as string) || 1;
 
-          // Terminal: prioritize most specific field and all variations
           let terminalSigma = getValue(cleanedRow, ['Terminal', 'terminal', 'TERMINAL', 'Maquininha', 'maquininha', 'Equipamento', 'POS'], '');
           normalizedRow.terminal = terminalSigma;
 
-          // Brand: prioritize most specific field and all variations
           let brandSigma = getValue(cleanedRow, ['Bandeira', 'bandeira', 'BANDEIRA', 'Cartao', 'CARTAO', 'cartao', 'Cartão', 'CARTÃO', 'cartão'], '');
           normalizedRow.brand = brandSigma;
 
-          // If it's Pix, adjust
           if (normalizedRow.payment_type === 'Pix') {
             normalizedRow.brand = 'Pix';
             normalizedRow.installments = 1;
