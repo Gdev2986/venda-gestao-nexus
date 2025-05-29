@@ -6,16 +6,14 @@ export enum SupportRequestStatus {
   CANCELED = "CANCELED"
 }
 
+// Match the database enum exactly
 export enum SupportRequestType {
   MAINTENANCE = "MAINTENANCE",
   INSTALLATION = "INSTALLATION",
-  REPAIR = "REPAIR", 
-  TRAINING = "TRAINING",
-  SUPPORT = "SUPPORT",
-  OTHER = "OTHER",
-  REPLACEMENT = "REPLACEMENT",
+  REPLACEMENT = "REPLACEMENT", 
   SUPPLIES = "SUPPLIES",
-  REMOVAL = "REMOVAL"
+  REMOVAL = "REMOVAL",
+  OTHER = "OTHER"
 }
 
 export enum SupportRequestPriority {
@@ -73,3 +71,4 @@ export interface CreateMessageParams {
   conversation_id: string;
   message: string;
 }
+

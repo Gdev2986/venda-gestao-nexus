@@ -1,143 +1,117 @@
 
 import { useState, useEffect } from "react";
-import { supabase } from "@/integrations/supabase/client";
+import { 
+  SupportTicket, 
+  SupportRequestStatus, 
+  SupportRequestType,
+  SupportRequestPriority,
+  CreateSupportTicketParams 
+} from "@/types/support.types";
 import { useAuth } from "@/hooks/use-auth";
-import { SupportTicket, SupportRequestStatus, CreateSupportTicketParams } from "@/types/support.types";
-import { useToast } from "@/hooks/use-toast";
+import { v4 as uuidv4 } from 'uuid';
 
-export function useSupportTickets() {
+const generateMockTickets = (clientId: string, count: number = 5): SupportTicket[] => {
+  const types = [
+    SupportRequestType.MAINTENANCE,
+    SupportRequestType.INSTALLATION,
+    SupportRequestType.REPLACEMENT,
+    SupportRequestType.SUPPLIES,
+    SupportRequestType.REMOVAL,
+    SupportRequestType.OTHER
+  ];
+  
+  const statuses = [
+    SupportRequestStatus.PENDING,
+    SupportRequestStatus.IN_PROGRESS,
+    SupportRequestStatus.COMPLETED,
+    SupportRequestStatus.CANCELED
+  ];
+  
+  const priorities = [
+    SupportRequestPriority.LOW,
+    SupportRequestPriority.MEDIUM,
+    SupportRequestPriority.HIGH
+  ];
+  
+  return Array.from({ length: count }).map(() => {
+    const type = types[Math.floor(Math.random() * types.length)];
+    const status = statuses[Math.floor(Math.random() * statuses.length)];
+    const priority = priorities[Math.floor(Math.random() * priorities.length)];
+    
+    return {
+      id: uuidv4(),
+      client_id: clientId,
+      technician_id: Math.random() > 0.5 ? uuidv4() : undefined,
+      type,
+      status,
+      priority,
+      title: `Solicitação de ${type}`,
+      description: `Descrição detalhada da solicitação de ${type.toLowerCase()}`,
+      scheduled_date: new Date(Date.now() + Math.random() * 7 * 24 * 60 * 60 * 1000).toISOString(),
+      created_at: new Date(Date.now() - Math.random() * 30 * 24 * 60 * 60 * 1000).toISOString(),
+      updated_at: new Date().toISOString(),
+      resolution: status === SupportRequestStatus.COMPLETED ? 'Problema resolvido com sucesso' : undefined,
+      client: {
+        id: clientId,
+        business_name: 'Meu Negócio',
+        contact_name: 'Cliente Teste',
+        phone: '(11) 99999-9999',
+        email: 'cliente@teste.com'
+      }
+    };
+  });
+};
+
+export const useSupportTickets = () => {
   const { user } = useAuth();
-  const { toast } = useToast();
   const [tickets, setTickets] = useState<SupportTicket[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
 
-  const fetchTickets = async () => {
-    if (!user) return;
-    
-    setIsLoading(true);
-    setError(null);
-
-    try {
-      // Get user's client_id first
-      const { data: userAccess } = await supabase
-        .from("user_client_access")
-        .select("client_id")
-        .eq("user_id", user.id)
-        .single();
-
-      if (!userAccess?.client_id) {
-        setTickets([]);
+  useEffect(() => {
+    if (user) {
+      // Simulate API call
+      setTimeout(() => {
+        const mockTickets = generateMockTickets(user.id);
+        setTickets(mockTickets);
         setIsLoading(false);
-        return;
-      }
-
-      const { data, error } = await supabase
-        .from("support_requests")
-        .select(`
-          *,
-          client:clients!client_id (
-            id,
-            business_name,
-            contact_name,
-            phone,
-            email
-          )
-        `)
-        .eq("client_id", userAccess.client_id)
-        .order("created_at", { ascending: false });
-
-      if (error) throw error;
-
-      const formattedTickets: SupportTicket[] = (data || []).map(item => ({
-        id: item.id,
-        client_id: item.client_id,
-        technician_id: item.technician_id,
-        type: item.type,
-        status: item.status,
-        priority: item.priority,
-        scheduled_date: item.scheduled_date,
-        created_at: item.created_at,
-        updated_at: item.updated_at,
-        title: item.title,
-        description: item.description,
-        resolution: item.resolution,
-        client: Array.isArray(item.client) && item.client.length > 0 ? item.client[0] : item.client
-      }));
-
-      setTickets(formattedTickets);
-    } catch (err: any) {
-      console.error("Error fetching support tickets:", err);
-      setError(err.message || "Erro ao carregar chamados");
-    } finally {
-      setIsLoading(false);
+      }, 1000);
     }
-  };
+  }, [user]);
 
   const createTicket = async (params: CreateSupportTicketParams): Promise<boolean> => {
-    if (!user) return false;
-
     try {
-      const { error } = await supabase
-        .from("support_requests")
-        .insert({
-          title: params.title,
-          description: params.description,
-          type: params.type,
-          priority: params.priority,
-          client_id: params.client_id,
-          status: SupportRequestStatus.PENDING
-        });
+      if (!user) return false;
+      
+      const newTicket: SupportTicket = {
+        id: uuidv4(),
+        client_id: user.id,
+        type: params.type,
+        status: SupportRequestStatus.PENDING,
+        priority: params.priority,
+        title: params.title,
+        description: params.description,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+        client: {
+          id: user.id,
+          business_name: user.name,
+          contact_name: user.name,
+          email: user.email
+        }
+      };
 
-      if (error) throw error;
-
-      toast({
-        title: "Chamado criado",
-        description: "Seu chamado foi criado com sucesso"
-      });
-
-      fetchTickets();
+      setTickets(prev => [newTicket, ...prev]);
       return true;
-    } catch (err: any) {
-      console.error("Error creating ticket:", err);
-      toast({
-        variant: "destructive",
-        title: "Erro",
-        description: err.message || "Erro ao criar chamado"
-      });
+    } catch (error) {
+      console.error('Error creating ticket:', error);
       return false;
     }
   };
 
-  useEffect(() => {
-    fetchTickets();
-
-    // Subscribe to real-time updates
-    const channel = supabase
-      .channel('client_support_requests_changes')
-      .on(
-        'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'support_requests'
-        },
-        () => {
-          fetchTickets();
-        }
-      )
-      .subscribe();
-
-    return () => {
-      supabase.removeChannel(channel);
-    };
-  }, [user]);
-
   return {
     tickets,
     isLoading,
-    error,
-    createTicket,
-    refetch: fetchTickets
+    createTicket
   };
-}
+};
+

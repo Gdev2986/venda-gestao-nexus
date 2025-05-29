@@ -22,17 +22,8 @@ const generateMockTickets = (count: number): SupportTicket[] => {
     { id: '5', business_name: 'Loja Tudo Barato' },
   ];
   
-  const mockMachines = [
-    { id: '1', serial_number: 'SN-100001', model: 'Terminal Pro' },
-    { id: '2', serial_number: 'SN-100002', model: 'Terminal Standard' },
-    { id: '3', serial_number: 'SN-100003', model: 'Terminal Mini' },
-    { id: '4', serial_number: 'SN-100004', model: 'Terminal Pro' },
-    { id: '5', serial_number: 'SN-100005', model: 'Terminal Mini' },
-  ];
-  
   return Array.from({ length: count }).map((_, index) => {
     const clientIndex = Math.floor(Math.random() * mockClients.length);
-    const machineIndex = Math.floor(Math.random() * mockMachines.length);
     const typeIndex = Math.floor(Math.random() * types.length);
     const statusIndex = Math.floor(Math.random() * statuses.length);
     const priorityIndex = Math.floor(Math.random() * priorities.length);
@@ -50,7 +41,6 @@ const generateMockTickets = (count: number): SupportTicket[] => {
       id: uuidv4(),
       title: `Ticket de ${types[typeIndex].toString().toLowerCase()} para ${mockClients[clientIndex].business_name}`,
       client_id: mockClients[clientIndex].id,
-      machine_id: mockMachines[machineIndex].id,
       type: types[typeIndex],
       status: statuses[statusIndex],
       priority: priorities[priorityIndex],
@@ -58,8 +48,7 @@ const generateMockTickets = (count: number): SupportTicket[] => {
       scheduled_date: scheduledDate.toISOString(),
       created_at: createdDate.toISOString(),
       updated_at: createdDate.toISOString(),
-      client: mockClients[clientIndex],
-      machine: mockMachines[machineIndex]
+      client: mockClients[clientIndex]
     };
   });
 };
@@ -96,7 +85,6 @@ export const useSupportTickets = (options: UseSupportTicketsOptions = {}) => {
           id: uuidv4(),
           title: ticketData.title || '',
           client_id: ticketData.client_id!,
-          machine_id: ticketData.machine_id,
           type: ticketData.type || SupportRequestType.OTHER,
           status: SupportRequestStatus.PENDING,
           priority: ticketData.priority || SupportRequestPriority.MEDIUM,
@@ -104,8 +92,7 @@ export const useSupportTickets = (options: UseSupportTicketsOptions = {}) => {
           scheduled_date: ticketData.scheduled_date,
           created_at: new Date().toISOString(),
           updated_at: new Date().toISOString(),
-          client: ticketData.client,
-          machine: ticketData.machine
+          client: ticketData.client
         };
         
         setTickets(prev => [newTicket, ...prev]);
@@ -158,3 +145,4 @@ export const useSupportTickets = (options: UseSupportTicketsOptions = {}) => {
     getTicketsGroupedByStatus
   };
 };
+

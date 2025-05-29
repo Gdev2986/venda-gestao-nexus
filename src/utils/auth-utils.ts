@@ -17,3 +17,15 @@ export const getDashboardPath = (role: UserRole | string): string => {
       return '/client/dashboard';
   }
 };
+
+export const isValidUserRole = (role: string): role is UserRole => {
+  return Object.values(UserRole).includes(role as UserRole);
+};
+
+export const castToUserRole = (role: string): UserRole => {
+  if (isValidUserRole(role)) {
+    return role as UserRole;
+  }
+  return UserRole.CLIENT; // default fallback
+};
+
