@@ -1,5 +1,5 @@
 
-import { UserRole } from "@/types/enums";
+import { UserRole } from "@/types";
 import { PATHS } from "@/routes/paths";
 
 export const getDashboardPath = (userRole: UserRole | null): string => {

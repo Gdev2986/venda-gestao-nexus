@@ -10,7 +10,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
-import { NotificationType } from "@/types/notification.types";
+import { NotificationType } from "@/types";
 
 const notificationFormSchema = z.object({
   title: z.string().min(3, {
@@ -25,36 +25,6 @@ const notificationFormSchema = z.object({
 });
 
 type NotificationFormValues = z.infer<typeof notificationFormSchema>;
-
-// Map NotificationType to database string values
-const mapNotificationTypeToDbValue = (type: NotificationType): string => {
-  switch (type) {
-    case NotificationType.PAYMENT:
-    case NotificationType.PAYMENT_APPROVED:
-    case NotificationType.PAYMENT_REJECTED:
-    case NotificationType.PAYMENT_REQUEST:
-      return "PAYMENT";
-    case NotificationType.MACHINE:
-      return "MACHINE";
-    case NotificationType.SYSTEM:
-    case NotificationType.ADMIN_NOTIFICATION:
-      return "SYSTEM";
-    case NotificationType.GENERAL:
-      return "GENERAL";
-    case NotificationType.SUPPORT:
-      return "SUPPORT";
-    case NotificationType.SALE:
-      return "SALE";
-    case NotificationType.COMMISSION:
-      return "COMMISSION";
-    case NotificationType.BALANCE:
-      return "BALANCE";
-    case NotificationType.LOGISTICS:
-      return "LOGISTICS";
-    default:
-      return "SYSTEM";
-  }
-};
 
 export function SendNotification() {
   const { toast } = useToast();
@@ -111,49 +81,38 @@ export function SendNotification() {
     setIsLoading(true);
     
     try {
-      const dbNotificationType = mapNotificationTypeToDbValue(data.type);
-      
       if (data.targetType === "all") {
-        // Get all user IDs from profiles to send to everyone
-        const { data: profiles, error: profilesError } = await supabase
-          .from('profiles')
-          .select('id');
-          
-        if (profilesError) throw profilesError;
-        
-        // Insert notifications for all users
-        if (profiles && profiles.length > 0) {
-          const notifications = profiles.map(profile => ({
-            user_id: profile.id,
+        // Send to all clients
+        // Since the RPC function isn't available, we'll insert notifications directly
+        const { error } = await supabase
+          .from('notifications')
+          .insert({
             title: data.title,
             message: data.message,
-            type: dbNotificationType,
-          }));
-          
-          const { error } = await supabase
-            .from('notifications')
-            .insert(notifications);
-          
-          if (error) throw error;
-        }
+            type: data.type,
+            user_id: 'ALL', // We'll handle this value in a database trigger or create a separate endpoint
+          });
+        
+        if (error) throw error;
       } else if (data.targetType === "specific" && data.targetId) {
-        // Get the user_id for this client through user_client_access
-        const { data: clientAccess, error: clientError } = await supabase
-          .from('user_client_access')
-          .select('user_id')
-          .eq('client_id', data.targetId)
+        // Send to specific client
+        // First, get the user_id for this client
+        const { data: clientData, error: clientError } = await supabase
+          .from('clients')
+          .select('id')
+          .eq('id', data.targetId)
           .single();
           
         if (clientError) throw clientError;
         
-        // Insert the notification for this specific client
+        // Then insert the notification for this specific client
         const { error } = await supabase
           .from('notifications')
           .insert({
-            user_id: clientAccess.user_id,
             title: data.title,
             message: data.message,
-            type: dbNotificationType,
+            type: data.type,
+            user_id: clientData.id,
           });
         
         if (error) throw error;

@@ -234,6 +234,14 @@ export const SendNotificationForm = ({ onSendNotification }: SendNotificationFor
                     />
                     <Label htmlFor="role-logistics">Logística</Label>
                   </div>
+                  <div className="flex items-center space-x-2">
+                    <Checkbox 
+                      id="role-user" 
+                      checked={selectedRoles.includes(UserRole.USER)}
+                      onCheckedChange={() => handleRoleToggle(UserRole.USER)}
+                    />
+                    <Label htmlFor="role-user">Usuário</Label>
+                  </div>
                 </div>
               </div>
             </div>
