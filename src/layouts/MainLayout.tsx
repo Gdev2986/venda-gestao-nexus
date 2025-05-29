@@ -1,6 +1,6 @@
 
 import { useState, useEffect } from "react";
-import { Outlet } from "react-router-dom";
+import { Outlet, Navigate } from "react-router-dom";
 import { UserRole } from "@/types";
 import Sidebar from "@/components/layout/sidebar/Sidebar";
 import { Button } from "@/components/ui/button";
@@ -46,17 +46,20 @@ const MainLayout = () => {
   const toggleSidebar = () => setSidebarOpen(!sidebarOpen);
 
   // Show loading state only if we're still loading auth
-  if (isLoading || !isAuthenticated) {
+  if (isLoading) {
     return (
       <div className="flex flex-col items-center justify-center h-screen bg-background">
         <div className="flex flex-col items-center space-y-4">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
-          <p className="text-muted-foreground">
-            {isLoading ? "Carregando..." : "Verificando autenticação..."}
-          </p>
+          <p className="text-muted-foreground">Carregando...</p>
         </div>
       </div>
     );
+  }
+
+  // Redirect to login if not authenticated
+  if (!isAuthenticated) {
+    return <Navigate to="/login" replace />;
   }
 
   // Use a default role if userRole is null but user is authenticated
