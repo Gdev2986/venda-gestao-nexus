@@ -56,18 +56,23 @@ function App() {
 
   return (
     <Routes>
+      {/* Public routes */}
       <Route path={PATHS.HOME} element={<Landing />} />
       {AuthRoutes}
-      <Route path="/admin/*" element={<AdminRoutes />} />
-      <Route path="/client/*" element={<ClientRoutes />} />
-      <Route path="/partner/*" element={<PartnerRoutes />} />
-      <Route path="/financial/*" element={<FinancialRoutes />} />
-      <Route path="/logistics/*" element={<LogisticsRoutes />} />
-      <Route element={<MainLayout />}>
-        <Route path="/notifications" element={<Notifications />} />
-      </Route>
       <Route path={PATHS.UNAUTHORIZED} element={<Unauthorized />} />
       <Route path={PATHS.NOT_FOUND} element={<NotFound />} />
+      
+      {/* Protected routes with MainLayout */}
+      <Route element={<MainLayout />}>
+        <Route path="/admin/*" element={<AdminRoutes />} />
+        <Route path="/client/*" element={<ClientRoutes />} />
+        <Route path="/partner/*" element={<PartnerRoutes />} />
+        <Route path="/financial/*" element={<FinancialRoutes />} />
+        <Route path="/logistics/*" element={<LogisticsRoutes />} />
+        <Route path="/notifications" element={<Notifications />} />
+      </Route>
+      
+      {/* Catch all */}
       <Route path="*" element={<Navigate to={PATHS.NOT_FOUND} replace />} />
     </Routes>
   );
