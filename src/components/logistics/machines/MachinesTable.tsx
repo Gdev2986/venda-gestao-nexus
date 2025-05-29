@@ -25,12 +25,16 @@ import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { Machine } from "@/types/machine.types";
 import MachineTransferDialog from "../machine-dialogs/MachineTransferDialog";
+import { MachineDetailsDialog } from "./MachineDetailsDialog";
+import TablePagination from "@/components/ui/table-pagination";
 
 interface MachinesTableProps {
   machines: Machine[];
   isLoading: boolean;
   onRefresh: () => void;
 }
+
+const ITEMS_PER_PAGE = 10;
 
 export const MachinesTable: React.FC<MachinesTableProps> = ({ 
   machines, 
@@ -39,7 +43,15 @@ export const MachinesTable: React.FC<MachinesTableProps> = ({
 }) => {
   const [selectedMachine, setSelectedMachine] = useState<Machine | null>(null);
   const [transferDialogOpen, setTransferDialogOpen] = useState(false);
+  const [editDialogOpen, setEditDialogOpen] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
   const { toast } = useToast();
+
+  // Calculate pagination
+  const totalPages = Math.ceil(machines.length / ITEMS_PER_PAGE);
+  const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
+  const endIndex = startIndex + ITEMS_PER_PAGE;
+  const currentMachines = machines.slice(startIndex, endIndex);
 
   const handleCopyId = (id: string) => {
     navigator.clipboard.writeText(id);
@@ -50,10 +62,8 @@ export const MachinesTable: React.FC<MachinesTableProps> = ({
   };
 
   const handleEdit = (machine: Machine) => {
-    toast({
-      title: "Editar máquina",
-      description: `Editando a máquina ${machine.serial_number}.`,
-    });
+    setSelectedMachine(machine);
+    setEditDialogOpen(true);
   };
 
   const handleDelete = (machine: Machine) => {
@@ -86,6 +96,10 @@ export const MachinesTable: React.FC<MachinesTableProps> = ({
     return <Badge variant={config.variant}>{config.label}</Badge>;
   };
 
+  const handlePageChange = (page: number) => {
+    setCurrentPage(page);
+  };
+
   if (isLoading) {
     return (
       <div className="space-y-3">
@@ -96,6 +110,7 @@ export const MachinesTable: React.FC<MachinesTableProps> = ({
             <Skeleton className="h-4 w-24" />
             <Skeleton className="h-4 w-32" />
             <Skeleton className="h-4 w-24" />
+            <Skeleton className="h-4 w-32" />
             <Skeleton className="h-8 w-8" />
           </div>
         ))}
@@ -121,12 +136,13 @@ export const MachinesTable: React.FC<MachinesTableProps> = ({
               <TableHead>Modelo</TableHead>
               <TableHead>Status</TableHead>
               <TableHead>Cliente</TableHead>
+              <TableHead>Notas</TableHead>
               <TableHead>Criado em</TableHead>
               <TableHead className="text-right">Ações</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
-            {machines.map((machine) => (
+            {currentMachines.map((machine) => (
               <TableRow key={machine.id}>
                 <TableCell className="font-medium">
                   {machine.serial_number}
@@ -135,6 +151,11 @@ export const MachinesTable: React.FC<MachinesTableProps> = ({
                 <TableCell>{getStatusBadge(machine.status)}</TableCell>
                 <TableCell>
                   {machine.client?.business_name || "N/A"}
+                </TableCell>
+                <TableCell>
+                  <div className="max-w-32 truncate" title={machine.notes || ""}>
+                    {machine.notes || "-"}
+                  </div>
                 </TableCell>
                 <TableCell>
                   {machine.created_at 
@@ -178,17 +199,46 @@ export const MachinesTable: React.FC<MachinesTableProps> = ({
         </Table>
       </div>
 
+      {totalPages > 1 && (
+        <div className="mt-4 flex justify-center">
+          <TablePagination
+            currentPage={currentPage}
+            totalPages={totalPages}
+            onPageChange={handlePageChange}
+          />
+        </div>
+      )}
+
+      <div className="text-sm text-muted-foreground mt-2">
+        Mostrando {startIndex + 1} a {Math.min(endIndex, machines.length)} de {machines.length} máquinas
+      </div>
+
       {selectedMachine && (
-        <MachineTransferDialog
-          open={transferDialogOpen}
-          onOpenChange={setTransferDialogOpen}
-          machineId={selectedMachine.id}
-          machineName={selectedMachine.serial_number}
-          onTransferComplete={() => {
-            onRefresh();
-            setTransferDialogOpen(false);
-          }}
-        />
+        <>
+          <MachineTransferDialog
+            open={transferDialogOpen}
+            onOpenChange={setTransferDialogOpen}
+            machineId={selectedMachine.id}
+            machineName={selectedMachine.serial_number}
+            onTransferComplete={() => {
+              onRefresh();
+              setTransferDialogOpen(false);
+              setSelectedMachine(null);
+            }}
+          />
+          
+          <MachineDetailsDialog
+            machine={selectedMachine}
+            open={editDialogOpen}
+            onOpenChange={setEditDialogOpen}
+            mode="edit"
+            onUpdate={() => {
+              onRefresh();
+              setEditDialogOpen(false);
+              setSelectedMachine(null);
+            }}
+          />
+        </>
       )}
     </>
   );
