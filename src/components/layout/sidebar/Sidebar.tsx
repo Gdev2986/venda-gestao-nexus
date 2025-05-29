@@ -54,17 +54,16 @@ const Sidebar = memo(({ isOpen, isMobile, onClose, userRole }: SidebarProps) => 
       {/* Sidebar with fixed position and animation */}
       <motion.aside
         className={cn(
-          "fixed inset-y-0 left-0 z-50 flex flex-col w-[280px] md:w-64 text-sidebar-foreground h-full",
+          "fixed inset-y-0 left-0 z-50 flex flex-col w-[280px] md:w-64 text-sidebar-foreground h-full system-gradient",
           isMobile ? "shadow-xl" : "border-r border-sidebar-border"
         )}
-        style={{ backgroundColor: 'hsl(196, 70%, 20%)' }}
         initial={{ x: isMobile ? -320 : isOpen ? 0 : -280 }}
         animate={{ x: isOpen ? 0 : (isMobile ? -320 : -280) }}
         transition={{ duration: 0.3, ease: "easeOut" }}
       >
         <div className="flex items-center justify-between h-14 md:h-16 px-4 border-b border-sidebar-border">
           <div className="flex items-center space-x-2">
-            <div className="w-6 h-6 md:w-8 md:h-8 rounded-md bg-primary flex items-center justify-center text-white font-bold text-xs md:text-base">
+            <div className="w-6 h-6 md:w-8 md:h-8 rounded-md bg-white/20 flex items-center justify-center text-white font-bold text-xs md:text-base">
               SP
             </div>
             <span className="text-base md:text-lg font-semibold text-white">SigmaPay</span>
@@ -75,7 +74,7 @@ const Sidebar = memo(({ isOpen, isMobile, onClose, userRole }: SidebarProps) => 
               variant="ghost"
               size="sm"
               onClick={handleCloseClick}
-              className="text-sidebar-foreground hover:text-white hover:bg-sidebar-accent p-1"
+              className="text-sidebar-foreground hover:text-white hover:bg-white/20 p-1"
               aria-label="Fechar menu"
             >
               <X className="h-4 w-4 md:h-5 md:w-5" />

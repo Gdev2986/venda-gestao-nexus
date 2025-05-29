@@ -30,16 +30,16 @@ export default {
         primary: {
           DEFAULT: "hsl(var(--primary))",
           foreground: "hsl(var(--primary-foreground))",
-          50: "#f0f9ff",
-          100: "#e0f3ff",
-          200: "#bae6ff",
-          300: "#7dd3fc",
-          400: "#38bdf8",
-          500: "#0c3746", // Main primary color
-          600: "#0a2e3a",
-          700: "#08252e",
-          800: "#061c22",
-          900: "#041316",
+          50: "#e6f7f6",
+          100: "#b3eae6",
+          200: "#80ddd6",
+          300: "#4dd0c6",
+          400: "#26c4b5",
+          500: "#13A197", // Cor principal do gradiente
+          600: "#108a80",
+          700: "#0e736a",
+          800: "#0b5c53",
+          900: "#08453d",
         },
         secondary: {
           DEFAULT: "hsl(var(--secondary))",
@@ -113,6 +113,19 @@ export default {
           700: "#C11010",
           800: "#870B0B",
           900: "#5C0808",
+        },
+        // Sistema com gradiente
+        "system-teal": {
+          50: "#e6f7f6",
+          100: "#b3eae6",
+          200: "#80ddd6",
+          300: "#4dd0c6",
+          400: "#26c4b5",
+          500: "#13A197", // Primeira cor do gradiente
+          600: "#108a80",
+          700: "#0e736a",
+          800: "#0b5c53",
+          900: "#105865", // Segunda cor do gradiente
         },
         // Cores específicas para a Landing Page (mantidas originais)
         "sigma-teal": {
@@ -194,11 +207,11 @@ export default {
         },
         "glow": {
           "0%, 100%": {
-            boxShadow: "0 0 20px rgba(12, 55, 70, 0.5)",
+            boxShadow: "0 0 20px rgba(19, 161, 151, 0.5)",
           },
           "50%": {
             boxShadow:
-              "0 0 40px rgba(12, 55, 70, 0.8), 0 0 60px rgba(12, 55, 70, 0.6)",
+              "0 0 40px rgba(19, 161, 151, 0.8), 0 0 60px rgba(19, 161, 151, 0.6)",
           },
         },
         "pulse-slow": {
@@ -222,6 +235,9 @@ export default {
         glow: "glow 2s ease-in-out infinite",
         "pulse-slow": "pulse-slow 3s infinite",
         "pulse-glow": "pulse-glow 3s ease-in-out infinite",
+      },
+      backgroundImage: {
+        'gradient-system': 'linear-gradient(135deg, #13A197 0%, #105865 100%)',
       },
     },
   },

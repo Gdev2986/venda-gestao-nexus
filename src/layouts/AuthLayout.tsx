@@ -9,8 +9,8 @@ const AuthLayout = () => {
   return (
     <div className={`min-h-screen flex items-center justify-center ${
       isMobile 
-        ? "bg-background p-4" 
-        : "bg-gradient-to-b from-background/50 to-background p-4 dark:from-background dark:to-background/80"
+        ? "login-gradient p-4" 
+        : "login-gradient p-4"
     }`}>
       <Toaster position="top-right" />
       <Outlet />

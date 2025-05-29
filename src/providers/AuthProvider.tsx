@@ -39,7 +39,7 @@ function authReducer(state: AuthState, action: AuthAction): AuthState {
         ...state,
         profile: action.payload,
         userRole: action.payload?.role || null,
-        isLoading: false, // Profile loaded means auth state is complete
+        isLoading: false,
       };
     case "SET_NEEDS_PASSWORD_CHANGE":
       return { ...state, needsPasswordChange: action.payload };
@@ -78,18 +78,17 @@ const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => 
 
       if (error) {
         console.error("Error loading profile:", error);
-        // If profile doesn't exist, create a default one
         if (error.code === 'PGRST116') {
           console.log("Profile not found, creating default profile");
           const { data: newProfile, error: createError } = await supabase
             .from("profiles")
-            .insert([{
+            .insert({
               id: userId,
               email: '',
               name: 'Usuário',
               role: 'CLIENT' as UserRole,
               status: 'active'
-            }])
+            })
             .select()
             .single();
           
@@ -196,7 +195,6 @@ const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => 
       }
     });
 
-    // Initial session check
     refreshSession();
 
     return () => {
