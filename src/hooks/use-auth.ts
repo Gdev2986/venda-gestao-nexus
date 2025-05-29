@@ -69,9 +69,44 @@ export const useAuth = () => {
     }
   };
 
+  // Create profile if it doesn't exist
+  const createMissingProfile = async (user: User) => {
+    try {
+      console.log('Creating missing profile for user:', user.id);
+      
+      const profileData = {
+        id: user.id,
+        email: user.email || '',
+        name: user.user_metadata?.name || user.email?.split('@')[0] || 'Usuário',
+        role: 'CLIENT' as UserRole,
+        status: 'active',
+        password_reset_required: false
+      };
+
+      const { data, error } = await supabase
+        .from('profiles')
+        .insert(profileData)
+        .select()
+        .single();
+
+      if (error) {
+        console.error('Error creating profile:', error);
+        return null;
+      }
+
+      console.log('Profile created successfully:', data);
+      return data;
+    } catch (error) {
+      console.error('Error in createMissingProfile:', error);
+      return null;
+    }
+  };
+
   // Load user profile
   const loadUserProfile = async (userId: string) => {
     try {
+      console.log('Loading user profile for:', userId);
+      
       const { data, error } = await supabase
         .from('profiles')
         .select('*')
@@ -80,6 +115,27 @@ export const useAuth = () => {
 
       if (error) {
         console.error('Error loading user profile:', error);
+        
+        // If profile doesn't exist, try to create it
+        if (error.code === 'PGRST116' && user) {
+          console.log('Profile not found, attempting to create...');
+          const createdProfile = await createMissingProfile(user);
+          
+          if (createdProfile) {
+            setUserProfile(createdProfile);
+            setUserRole(createdProfile.role);
+            setNeedsPasswordChange(false);
+            return;
+          }
+        }
+        
+        // If we can't create profile, show error and sign out
+        toast({
+          variant: "destructive",
+          title: "Erro de perfil",
+          description: "Não foi possível carregar seu perfil. Entre em contato com o suporte.",
+        });
+        await supabase.auth.signOut();
         return;
       }
 
@@ -92,6 +148,11 @@ export const useAuth = () => {
 
     } catch (error) {
       console.error('Error loading user profile:', error);
+      toast({
+        variant: "destructive",
+        title: "Erro",
+        description: "Erro ao carregar perfil do usuário.",
+      });
     }
   };
 
@@ -99,14 +160,20 @@ export const useAuth = () => {
   const signIn = async (email: string, password: string) => {
     try {
       setLoading(true);
+      console.log('Starting sign in for:', email);
+      
       const { data, error } = await supabase.auth.signInWithPassword({
         email,
         password,
       });
 
-      if (error) throw error;
+      if (error) {
+        console.error('Sign in error:', error);
+        throw error;
+      }
 
       if (data.user) {
+        console.log('Sign in successful for user:', data.user.id);
         await loadUserProfile(data.user.id);
       }
 
@@ -201,5 +268,6 @@ export const useAuth = () => {
     signIn,
     signOut,
     onPasswordChanged,
+    isAuthenticated: !!user && !!session,
   };
 };

@@ -27,15 +27,17 @@ const LoginForm = () => {
 
     try {
       console.log("LoginForm: Starting login process for:", email);
-      const { data, error } = await signIn(email, password);
+      const result = await signIn(email, password);
 
-      if (error) {
+      if (!result.success) {
         let errorMessage = "Falha na autenticação. Verifique seu email e senha.";
         
-        if (error.message.includes("Invalid login credentials")) {
+        if (result.error?.includes("Invalid login credentials")) {
           errorMessage = "Credenciais inválidas. Verifique seu email e senha.";
-        } else if (error.message.includes("Email not confirmed")) {
+        } else if (result.error?.includes("Email not confirmed")) {
           errorMessage = "Email não confirmado. Verifique sua caixa de entrada.";
+        } else if (result.error?.includes("Too many requests")) {
+          errorMessage = "Muitas tentativas de login. Tente novamente em alguns minutos.";
         }
         
         toast({
@@ -46,16 +48,14 @@ const LoginForm = () => {
         return;
       }
 
-      if (data?.user) {
-        console.log("LoginForm: Login successful, user:", data.user.id);
-        toast({
-          title: "Login realizado com sucesso",
-          description: "Bem-vindo de volta!",
-        });
-        
-        // O redirecionamento será feito pelo useEffect da página Login
-        console.log("LoginForm: Login completed, waiting for redirect...");
-      }
+      console.log("LoginForm: Login successful");
+      toast({
+        title: "Login realizado com sucesso",
+        description: "Bem-vindo de volta!",
+      });
+      
+      // O redirecionamento será feito pelo useEffect da página Login
+      console.log("LoginForm: Login completed, waiting for redirect...");
     } catch (error: any) {
       console.error("LoginForm: Login error:", error);
       toast({
