@@ -161,7 +161,7 @@ export const insertSales = async (sales: NormalizedSale[]): Promise<void> => {
       }
     }
 
-    // Insert all sales at once
+    // Insert all sales at once - sem trigger complexos
     console.log(`Inserting ${salesData.length} sales into database`);
     const { error } = await supabase
       .from('sales')
