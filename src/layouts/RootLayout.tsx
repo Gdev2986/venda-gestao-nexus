@@ -42,7 +42,7 @@ const RootLayout = () => {
     return <Navigate to={PATHS.CHANGE_PASSWORD} replace />;
   }
   
-  // If authenticated but no role yet, show loading
+  // If authenticated but no role yet, show loading and wait
   if (!userRole) {
     console.log("User authenticated but no role yet, waiting...");
     return (
@@ -55,15 +55,11 @@ const RootLayout = () => {
     );
   }
   
-  // If authenticated and we have a role, redirect to role-specific dashboard
-  try {
-    const dashboardPath = getDashboardPath(userRole);
-    console.log(`User authenticated as ${userRole}, redirecting to ${dashboardPath}`);
-    return <Navigate to={dashboardPath} replace />;
-  } catch (error) {
-    console.error("Error getting dashboard path:", error);
-    return <Navigate to={PATHS.LOGIN} replace />;
-  }
+  // If we have everything needed, redirect to dashboard
+  console.log(`Redirecting user with role ${userRole} to dashboard`);
+  const dashboardPath = getDashboardPath(userRole);
+  console.log(`Dashboard path: ${dashboardPath}`);
+  return <Navigate to={dashboardPath} replace />;
 };
 
 export default RootLayout;

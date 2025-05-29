@@ -26,7 +26,7 @@ const LoginForm = () => {
     setIsSubmitting(true);
 
     try {
-      console.log("Starting login process for:", email);
+      console.log("LoginForm: Starting login process for:", email);
       const { data, error } = await signIn(email, password);
 
       if (error) {
@@ -47,16 +47,17 @@ const LoginForm = () => {
       }
 
       if (data?.user) {
+        console.log("LoginForm: Login successful, user:", data.user.id);
         toast({
           title: "Login realizado com sucesso",
           description: "Bem-vindo de volta!",
         });
         
-        console.log("Login successful, user will be redirected by Login component");
-        // The navigation will be handled by the useEffect in Login component
+        // O redirecionamento será feito pelo useEffect da página Login
+        console.log("LoginForm: Login completed, waiting for redirect...");
       }
     } catch (error: any) {
-      console.error("Login error:", error);
+      console.error("LoginForm: Login error:", error);
       toast({
         variant: "destructive",
         title: "Erro",
