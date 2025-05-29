@@ -19,14 +19,14 @@ const ClientRoutes = () => {
   return (
     <RequireAuth allowedRoles={[UserRole.CLIENT]}>
       <Routes>
-        <Route path={PATHS.CLIENT.DASHBOARD} element={<ClientDashboard />} />
-        <Route path={PATHS.CLIENT.PAYMENTS} element={<ClientPayments />} />
-        <Route path={PATHS.CLIENT.MACHINES} element={<ClientMachines />} />
-        <Route path={PATHS.CLIENT.PROFILE} element={<ClientProfile />} />
-        <Route path={PATHS.CLIENT.REPORTS} element={<ClientReports />} />
-        <Route path={PATHS.CLIENT.SUPPORT} element={<ClientSupport />} />
-        <Route path={PATHS.CLIENT.SETTINGS} element={<ClientSettings />} />
-        <Route path={PATHS.CLIENT.HELP} element={<ClientHelp />} />
+        <Route path="/dashboard" element={<ClientDashboard />} />
+        <Route path="/payments" element={<ClientPayments />} />
+        <Route path="/machines" element={<ClientMachines />} />
+        <Route path="/profile" element={<ClientProfile />} />
+        <Route path="/reports" element={<ClientReports />} />
+        <Route path="/support" element={<ClientSupport />} />
+        <Route path="/settings" element={<ClientSettings />} />
+        <Route path="/help" element={<ClientHelp />} />
       </Routes>
     </RequireAuth>
   );

@@ -47,18 +47,6 @@ export const PATHS = {
     HELP: "/client/help",
   },
 
-  // Alias for CLIENT (for backward compatibility)
-  USER: {
-    DASHBOARD: "/client/dashboard",
-    PAYMENTS: "/client/payments",
-    SUPPORT: "/client/support",
-    MACHINES: "/client/machines",
-    PROFILE: "/client/profile",
-    REPORTS: "/client/reports",
-    SETTINGS: "/client/settings",
-    HELP: "/client/help",
-  },
-
   PARTNER: {
     DASHBOARD: "/partner/dashboard",
     CLIENTS: "/partner/clients",
