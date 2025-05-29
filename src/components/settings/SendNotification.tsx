@@ -26,6 +26,36 @@ const notificationFormSchema = z.object({
 
 type NotificationFormValues = z.infer<typeof notificationFormSchema>;
 
+// Map NotificationType to database string values
+const mapNotificationTypeToDbValue = (type: NotificationType): string => {
+  switch (type) {
+    case NotificationType.PAYMENT:
+    case NotificationType.PAYMENT_APPROVED:
+    case NotificationType.PAYMENT_REJECTED:
+    case NotificationType.PAYMENT_REQUEST:
+      return "PAYMENT";
+    case NotificationType.MACHINE:
+      return "MACHINE";
+    case NotificationType.SYSTEM:
+    case NotificationType.ADMIN_NOTIFICATION:
+      return "SYSTEM";
+    case NotificationType.GENERAL:
+      return "GENERAL";
+    case NotificationType.SUPPORT:
+      return "SUPPORT";
+    case NotificationType.SALE:
+      return "SALE";
+    case NotificationType.COMMISSION:
+      return "COMMISSION";
+    case NotificationType.BALANCE:
+      return "BALANCE";
+    case NotificationType.LOGISTICS:
+      return "LOGISTICS";
+    default:
+      return "SYSTEM";
+  }
+};
+
 export function SendNotification() {
   const { toast } = useToast();
   const [clients, setClients] = useState<{ id: string; business_name: string }[]>([]);
@@ -81,6 +111,8 @@ export function SendNotification() {
     setIsLoading(true);
     
     try {
+      const dbNotificationType = mapNotificationTypeToDbValue(data.type);
+      
       if (data.targetType === "all") {
         // Get all user IDs from profiles to send to everyone
         const { data: profiles, error: profilesError } = await supabase
@@ -95,7 +127,7 @@ export function SendNotification() {
             user_id: profile.id,
             title: data.title,
             message: data.message,
-            type: data.type,
+            type: dbNotificationType,
           }));
           
           const { error } = await supabase
@@ -121,7 +153,7 @@ export function SendNotification() {
             user_id: clientAccess.user_id,
             title: data.title,
             message: data.message,
-            type: data.type,
+            type: dbNotificationType,
           });
         
         if (error) throw error;

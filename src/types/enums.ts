@@ -35,7 +35,8 @@ export enum UserRole {
 export enum ClientStatus {
   ACTIVE = "ACTIVE",
   INACTIVE = "INACTIVE",
-  SUSPENDED = "SUSPENDED"
+  SUSPENDED = "SUSPENDED",
+  PENDING = "PENDING"
 }
 
 export enum PaymentStatus {
