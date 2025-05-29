@@ -40,8 +40,8 @@ export const createSupportTicket = async (ticket: CreateTicketParams) => {
     .insert({
       description: ticket.description,
       client_id: ticket.client_id,
-      type: ticket.type,
-      priority: ticket.priority,
+      type: ticket.type as string, // Cast to string to match database
+      priority: ticket.priority as string, // Cast to string to match database
       status: ticket.status || "PENDING",
       scheduled_date: ticket.scheduled_date
     })
@@ -57,9 +57,9 @@ export const updateSupportTicket = async (id: string, updates: UpdateTicketParam
     .from("support_requests")
     .update({
       description: updates.description,
-      status: updates.status,
-      priority: updates.priority,
-      type: updates.type,
+      status: updates.status as string,
+      priority: updates.priority as string,
+      type: updates.type as string,
       technician_id: updates.technician_id,
       resolution: updates.resolution,
       scheduled_date: updates.scheduled_date,

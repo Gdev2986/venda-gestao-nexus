@@ -51,7 +51,8 @@ export enum PaymentAction {
   APPROVE = "APPROVE",
   REJECT = "REJECT",
   EDIT = "EDIT",
-  DELETE = "DELETE"
+  DELETE = "DELETE",
+  SEND_RECEIPT = "SEND_RECEIPT"
 }
 
 export enum PaymentMethod {
@@ -60,7 +61,9 @@ export enum PaymentMethod {
   DEBIT_CARD = "DEBIT_CARD",
   BOLETO = "BOLETO",
   TED = "TED",
-  DOC = "DOC"
+  DOC = "DOC",
+  CREDIT = "CREDIT_CARD",
+  DEBIT = "DEBIT_CARD"
 }
 
 export enum PaymentType {

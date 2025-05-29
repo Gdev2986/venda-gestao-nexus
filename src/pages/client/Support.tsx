@@ -4,7 +4,7 @@ import { PageHeader } from "@/components/page/PageHeader";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Plus, MessageSquare, Clock, User, AlertTriangle } from "lucide-react";
+import { MessageSquare, Plus, AlertTriangle, CheckCircle, Clock } from "lucide-react";
 import { SupportTicketDialog } from "@/components/support/SupportTicketDialog";
 import { SupportChat } from "@/components/support/SupportChat";
 import { useSupportSystem } from "@/hooks/use-support-system";
@@ -24,8 +24,8 @@ const ClientSupport = () => {
     sendMessage
   } = useSupportSystem();
 
-  const [isNewTicketOpen, setIsNewTicketOpen] = useState(false);
-  const [isChatOpen, setIsChatOpen] = useState(false);
+  const [showCreateDialog, setShowCreateDialog] = useState(false);
+  const [showChatDialog, setShowChatDialog] = useState(false);
 
   const getStatusBadge = (status: string) => {
     switch (status) {
@@ -59,6 +59,9 @@ const ClientSupport = () => {
     switch (type) {
       case "MAINTENANCE": return "Manutenção";
       case "INSTALLATION": return "Instalação";
+      case "REPAIR": return "Reparo";
+      case "TRAINING": return "Treinamento";
+      case "SUPPORT": return "Suporte";
       case "REPLACEMENT": return "Substituição";
       case "SUPPLIES": return "Materiais";
       case "REMOVAL": return "Remoção";
@@ -70,7 +73,15 @@ const ClientSupport = () => {
   const handleTicketClick = async (ticket: any) => {
     setSelectedTicket(ticket);
     await loadMessages(ticket.id);
-    setIsChatOpen(true);
+    setShowChatDialog(true);
+  };
+
+  // Statistics
+  const stats = {
+    total: tickets.length,
+    pending: tickets.filter(t => t.status === "PENDING").length,
+    inProgress: tickets.filter(t => t.status === "IN_PROGRESS").length,
+    completed: tickets.filter(t => t.status === "COMPLETED").length
   };
 
   if (isLoading) {
@@ -89,114 +100,159 @@ const ClientSupport = () => {
 
   return (
     <div className="space-y-6">
-      <div className="flex justify-between items-center">
-        <PageHeader 
-          title="Suporte"
-          description="Gerencie seus chamados de suporte"
-        />
-        <Button onClick={() => setIsNewTicketOpen(true)} className="flex items-center gap-2">
-          <Plus className="h-4 w-4" />
-          Novo Chamado
-        </Button>
+      <PageHeader 
+        title="Suporte"
+        description="Gerencie seus chamados de suporte"
+        action={
+          <Button onClick={() => setShowCreateDialog(true)}>
+            <Plus className="h-4 w-4 mr-2" />
+            Novo Chamado
+          </Button>
+        }
+      />
+
+      {/* Statistics Cards */}
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+        <Card>
+          <CardContent className="p-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-muted-foreground">Total</p>
+                <p className="text-2xl font-bold">{stats.total}</p>
+              </div>
+              <MessageSquare className="h-8 w-8 text-blue-500" />
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardContent className="p-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-muted-foreground">Pendentes</p>
+                <p className="text-2xl font-bold text-yellow-600">{stats.pending}</p>
+              </div>
+              <Clock className="h-8 w-8 text-yellow-500" />
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardContent className="p-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-muted-foreground">Em Andamento</p>
+                <p className="text-2xl font-bold text-blue-600">{stats.inProgress}</p>
+              </div>
+              <AlertTriangle className="h-8 w-8 text-blue-500" />
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardContent className="p-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-muted-foreground">Concluídos</p>
+                <p className="text-2xl font-bold text-green-600">{stats.completed}</p>
+              </div>
+              <CheckCircle className="h-8 w-8 text-green-500" />
+            </div>
+          </CardContent>
+        </Card>
       </div>
 
-      <div className="grid gap-4">
-        {tickets.length === 0 ? (
-          <Card>
-            <CardContent className="flex flex-col items-center justify-center py-12">
-              <MessageSquare className="h-12 w-12 text-muted-foreground mb-4" />
+      {/* Tickets List */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Meus Chamados</CardTitle>
+        </CardHeader>
+        <CardContent>
+          {tickets.length === 0 ? (
+            <div className="text-center py-12">
+              <MessageSquare className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
               <h3 className="text-lg font-semibold mb-2">Nenhum chamado encontrado</h3>
-              <p className="text-muted-foreground text-center mb-4">
+              <p className="text-muted-foreground mb-4">
                 Você ainda não criou nenhum chamado de suporte.
               </p>
-              <Button onClick={() => setIsNewTicketOpen(true)}>
+              <Button onClick={() => setShowCreateDialog(true)}>
+                <Plus className="h-4 w-4 mr-2" />
                 Criar Primeiro Chamado
               </Button>
-            </CardContent>
-          </Card>
-        ) : (
-          tickets.map((ticket) => (
-            <Card 
-              key={ticket.id} 
-              className="border-l-4 border-l-blue-500 hover:shadow-md transition-shadow cursor-pointer"
-              onClick={() => handleTicketClick(ticket)}
-            >
-              <CardHeader className="pb-3">
-                <div className="flex items-center justify-between">
-                  <CardTitle className="text-lg flex items-center gap-2">
-                    <MessageSquare className="h-5 w-5 text-blue-600" />
-                    {ticket.title}
-                  </CardTitle>
-                  <div className="flex gap-2">
-                    {getStatusBadge(ticket.status)}
-                    {getPriorityBadge(ticket.priority)}
-                  </div>
-                </div>
-                <div className="text-sm text-muted-foreground">
-                  {getTypeLabel(ticket.type)}
-                </div>
-              </CardHeader>
-              <CardContent className="space-y-3">
-                <p className="text-sm text-muted-foreground">
-                  {ticket.description}
-                </p>
-                <div className="flex items-center justify-between text-sm text-muted-foreground">
-                  <div className="flex items-center gap-2">
-                    <Clock className="h-4 w-4" />
-                    Criado em {formatDate(ticket.created_at)}
-                  </div>
-                  {ticket.updated_at && (
-                    <div className="flex items-center gap-2">
-                      <User className="h-4 w-4" />
-                      Atualizado em {formatDate(ticket.updated_at)}
+            </div>
+          ) : (
+            <div className="space-y-4">
+              {tickets.map((ticket) => (
+                <Card key={ticket.id} className="cursor-pointer hover:shadow-md transition-shadow" onClick={() => handleTicketClick(ticket)}>
+                  <CardContent className="p-4">
+                    <div className="flex items-start justify-between">
+                      <div className="flex-1">
+                        <div className="flex items-center gap-2 mb-2">
+                          <MessageSquare className="h-4 w-4 text-blue-600" />
+                          <span className="font-medium">Chamado #{ticket.id.substring(0, 8)}</span>
+                          {getStatusBadge(ticket.status)}
+                          {getPriorityBadge(ticket.priority)}
+                        </div>
+                        <p className="text-sm text-muted-foreground mb-2">
+                          {getTypeLabel(ticket.type)}
+                        </p>
+                        <p className="text-sm text-muted-foreground mb-2">
+                          {ticket.description.substring(0, 100)}...
+                        </p>
+                        <p className="text-xs text-muted-foreground">
+                          Criado em {formatDate(ticket.created_at)}
+                        </p>
+                      </div>
                     </div>
-                  )}
-                </div>
-                <div className="flex justify-end">
-                  <Button variant="outline" size="sm">
-                    Ver Detalhes
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
-          ))
-        )}
-      </div>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          )}
+        </CardContent>
+      </Card>
 
-      {/* New Ticket Dialog */}
+      {/* Create Ticket Dialog */}
       <SupportTicketDialog
-        open={isNewTicketOpen}
-        onOpenChange={setIsNewTicketOpen}
+        open={showCreateDialog}
+        onOpenChange={setShowCreateDialog}
         onSubmit={createTicket}
         isLoading={isCreating}
       />
 
       {/* Chat Dialog */}
-      <Dialog open={isChatOpen} onOpenChange={setIsChatOpen}>
-        <DialogContent className="sm:max-w-2xl max-h-[90vh]">
+      <Dialog open={showChatDialog} onOpenChange={setShowChatDialog}>
+        <DialogContent className="sm:max-w-4xl max-h-[90vh]">
           <DialogHeader>
             <DialogTitle className="flex items-center justify-between">
-              <span>{selectedTicket?.title}</span>
+              <span>Chamado de Suporte</span>
               <div className="flex gap-2">
-                {selectedTicket && getStatusBadge(selectedTicket.status)}
                 {selectedTicket && getPriorityBadge(selectedTicket.priority)}
+                {selectedTicket && getStatusBadge(selectedTicket.status)}
               </div>
             </DialogTitle>
           </DialogHeader>
           
           {selectedTicket && (
             <div className="space-y-4">
-              <div className="text-sm text-muted-foreground">
-                <p><strong>Tipo:</strong> {getTypeLabel(selectedTicket.type)}</p>
-                <p><strong>Criado em:</strong> {formatDate(selectedTicket.created_at)}</p>
-                {selectedTicket.description && (
-                  <div className="mt-2">
-                    <strong>Descrição:</strong>
-                    <div className="bg-muted p-3 rounded-md mt-1">
-                      {selectedTicket.description}
-                    </div>
-                  </div>
-                )}
+              <div className="grid grid-cols-2 gap-4 text-sm">
+                <div>
+                  <p><strong>Tipo:</strong> {getTypeLabel(selectedTicket.type)}</p>
+                  <p><strong>Prioridade:</strong> {selectedTicket.priority}</p>
+                </div>
+                <div>
+                  <p><strong>Criado em:</strong> {formatDate(selectedTicket.created_at)}</p>
+                  {selectedTicket.updated_at && (
+                    <p><strong>Atualizado em:</strong> {formatDate(selectedTicket.updated_at)}</p>
+                  )}
+                </div>
+              </div>
+              
+              <div>
+                <strong>Descrição:</strong>
+                <div className="bg-muted p-3 rounded-md mt-1">
+                  {selectedTicket.description}
+                </div>
               </div>
               
               <SupportChat
