@@ -1,25 +1,23 @@
 
-import { useEffect } from "react";
-import { useNavigate } from "react-router-dom";
-import { PATHS } from "@/routes/paths";
-import { useUserRole } from "@/hooks/use-user-role";
-import { UserRole } from "@/types";
+import React from 'react';
+import { useAuth } from "@/hooks/use-auth";
+import { UserRole } from "@/types/enums";
+import { Navigate } from "react-router-dom";
+import { MachineList } from "@/components/logistics/MachineList";
 
 const Machines = () => {
-  const navigate = useNavigate();
-  const { userRole } = useUserRole();
-  
-  useEffect(() => {
-    if (userRole === UserRole.LOGISTICS) {
-      // Redirect to logistics machines page
-      navigate(PATHS.LOGISTICS.MACHINES);
-    } else {
-      // Redirect to client machines page for other roles
-      navigate(PATHS.CLIENT.MACHINES);
-    }
-  }, [navigate, userRole]);
-  
-  return null; // Component will redirect, no need to render anything
+  const { user } = useAuth();
+
+  if (!user) {
+    return <Navigate to="/auth" replace />;
+  }
+
+  // Check if user has permission to view machines
+  if (user.role !== UserRole.ADMIN && user.role !== UserRole.LOGISTICS) {
+    return <Navigate to="/unauthorized" replace />;
+  }
+
+  return <MachineList />;
 };
 
 export default Machines;

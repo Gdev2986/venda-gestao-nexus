@@ -13,7 +13,7 @@ interface Message {
 }
 
 interface SupportChatInterfaceProps {
-  ticketId: string;
+  ticketId?: string;
 }
 
 export const SupportChatInterface = ({ ticketId }: SupportChatInterfaceProps) => {

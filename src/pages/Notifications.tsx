@@ -2,45 +2,28 @@
 import React, { useEffect } from "react";
 import { NotificationList } from "@/components/notifications/NotificationList";
 import NotificationFilters from "@/components/notifications/NotificationFilters";
-import { useNotifications } from "@/contexts/NotificationsContext";
+import { useNotifications } from "@/contexts/notifications/NotificationsContext";
 import { PageHeader } from "@/components/page/PageHeader";
 import { useState } from "react";
-import { NotificationType } from "@/types";
 import { StyledCard } from "@/components/ui/styled-card";
 import { Bell } from "lucide-react";
 
 const Notifications = () => {
   const [typeFilter, setTypeFilter] = useState<string>("all");
   const [statusFilter, setStatusFilter] = useState<string>("all");
-  const [isFirstLoad, setIsFirstLoad] = useState(true);
   
   const {
     notifications,
     markAsRead,
-    markAllAsRead,
-    fetchNotifications,
-    isLoading,
-    deleteNotification,
-    refreshNotifications = fetchNotifications
+    markAllAsRead
   } = useNotifications();
 
-  // Garantir que as notificações são carregadas apenas uma vez ao montar o componente
-  useEffect(() => {
-    if (isFirstLoad) {
-      console.log("Carregando notificações...");
-      refreshNotifications();
-      setIsFirstLoad(false);
-    }
-  }, [refreshNotifications, isFirstLoad]);
-
-  // Filtrar notificações baseado nos filtros atuais
+  // Filter notifications based on filters
   const filteredNotifications = notifications.filter(notification => {
-    // Filtrar por tipo
     if (typeFilter !== 'all' && notification.type.toLowerCase() !== typeFilter.toLowerCase()) {
       return false;
     }
     
-    // Filtrar por status
     if (statusFilter === 'read' && !notification.is_read) {
       return false;
     }
@@ -51,7 +34,6 @@ const Notifications = () => {
     return true;
   });
 
-  // Contar notificações não lidas
   const unreadCount = notifications.filter(n => !n.is_read).length;
 
   return (
@@ -101,14 +83,13 @@ const Notifications = () => {
             onTypeChange={setTypeFilter}
             onStatusChange={setStatusFilter}
             onMarkAllAsRead={markAllAsRead}
-            onRefresh={refreshNotifications}
+            onRefresh={() => {}}
           />
         </div>
         <NotificationList 
           notifications={filteredNotifications}
           onMarkAsRead={markAsRead}
-          isLoading={isLoading}
-          onDelete={deleteNotification}
+          isLoading={false}
         />
       </StyledCard>
     </div>

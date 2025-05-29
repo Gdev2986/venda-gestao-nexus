@@ -1,12 +1,13 @@
 
 import React, { createContext, useContext, useState, useEffect } from "react";
 import { useAuth } from "@/hooks/use-auth";
+import { NotificationType } from "@/types/notification.types";
 
 interface Notification {
   id: string;
   title: string;
   message: string;
-  type: string;
+  type: NotificationType;
   read: boolean;
   created_at: string;
   user_id: string;

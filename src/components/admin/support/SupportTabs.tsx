@@ -15,8 +15,8 @@ interface SupportTabsProps {
   reportData: {
     pendingRequests: number;
     highPriorityRequests: number;
-    resolvedRequests?: number; // Make optional
-    supportAgents?: number; // Make optional
+    resolvedRequests?: number;
+    supportAgents?: number;
     typeCounts: Record<string, number>;
   };
 }
@@ -31,11 +31,9 @@ const SupportTabs = ({
   reportData 
 }: SupportTabsProps) => {
   const [selectedTicketId, setSelectedTicketId] = useState<string | null>(null);
-  const [selectedClientId, setSelectedClientId] = useState<string | null>(null);
   
   const handleSelectTicket = (ticketId: string, clientId: string) => {
     setSelectedTicketId(ticketId);
-    setSelectedClientId(clientId);
   };
   
   return (
@@ -68,8 +66,6 @@ const SupportTabs = ({
       <TabsContent value="chat">
         <SupportChatInterface 
           ticketId={selectedTicketId || undefined}
-          clientId={selectedClientId || undefined}
-          isAdmin={true}
         />
       </TabsContent>
       

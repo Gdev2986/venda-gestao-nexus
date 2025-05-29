@@ -1,654 +1,96 @@
 
-import { useState, useEffect } from "react";
-import { useToast } from "@/hooks/use-toast";
-import { useAuth } from "@/contexts/AuthContext";
+import React, { useState } from "react";
+import { useAuth } from "@/hooks/use-auth";
+import { useSupportTickets } from "@/hooks/use-support-tickets";
 import { PageHeader } from "@/components/page/PageHeader";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
-import { 
-  Dialog, 
-  DialogContent, 
-  DialogHeader, 
-  DialogTitle,
-  DialogFooter,
-} from "@/components/ui/dialog";
-import { 
-  Table, 
-  TableBody, 
-  TableCell, 
-  TableHead, 
-  TableHeader, 
-  TableRow 
-} from "@/components/ui/table";
-import { 
-  Tabs, 
-  TabsContent, 
-  TabsList, 
-  TabsTrigger 
-} from "@/components/ui/tabs";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
-import { format } from "date-fns";
-import { Loader2, MessageCircle, Plus, RefreshCw, SendHorizontal } from "lucide-react";
-import { useSupportTickets } from "@/hooks/use-support-tickets";
-import { supabase } from "@/integrations/supabase/client";
-import { TicketType, TicketPriority, TicketStatus } from "@/types/enums";
+import { NewRequestDialog } from "@/components/support/NewRequestDialog";
+import RequestDetailsDialog from "@/components/support/RequestDetailsDialog";
+
+interface SupportRequest {
+  id: string;
+  subject: string;
+  message: string;
+  type: string;
+  status: string;
+  created_at: string;
+}
 
 const UserSupport = () => {
-  const { toast } = useToast();
   const { user } = useAuth();
-  
-  // States for dialogs
-  const [showTicketDialog, setShowTicketDialog] = useState(false);
-  const [showNewTicketDialog, setShowNewTicketDialog] = useState(false);
-  
-  // States for new ticket form
-  const [subject, setSubject] = useState("");
-  const [description, setDescription] = useState("");
-  const [selectedType, setSelectedType] = useState<TicketType>(TicketType.TECHNICAL);
-  const [selectedPriority, setSelectedPriority] = useState<TicketPriority>(TicketPriority.MEDIUM);
-  const [selectedMachine, setSelectedMachine] = useState("");
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  
-  // States for reply
-  const [reply, setReply] = useState("");
-  
-  // User client info
-  const [clientId, setClientId] = useState<string>("");
-  const [machines, setMachines] = useState<any[]>([]);
-  
-  // Use the hook
-  const {
-    tickets,
-    selectedTicket,
-    ticketMessages,
-    isLoading,
-    isSaving,
-    fetchTickets,
-    getTicket,
-    addTicket,
-    sendMessage,
-    setSelectedTicket
-  } = useSupportTickets({ clientId, initialFetch: false });
-  
-  // Fetch client ID for the current user
-  useEffect(() => {
-    if (user) {
-      const fetchClientId = async () => {
-        try {
-          const { data, error } = await supabase
-            .from("user_client_access")
-            .select("client_id")
-            .eq("user_id", user.id)
-            .single();
-            
-          if (data) {
-            setClientId(data.client_id);
-            fetchMachines(data.client_id);
-          } else if (error) {
-            console.error("Error fetching client ID:", error);
-          }
-        } catch (error) {
-          console.error("Unexpected error:", error);
-        }
-      };
-      
-      fetchClientId();
-    }
-  }, [user]);
-  
-  // Fetch client machines
-  const fetchMachines = async (clientId: string) => {
-    try {
-      const { data, error } = await supabase
-        .from("machines")
-        .select("id, serial_number, model")
-        .eq("client_id", clientId);
-        
-      if (data) {
-        setMachines(data);
-      } else if (error) {
-        console.error("Error fetching machines:", error);
-      }
-    } catch (error) {
-      console.error("Unexpected error:", error);
-    }
+  const { tickets, isLoading, error } = useSupportTickets();
+  const [isNewRequestOpen, setIsNewRequestOpen] = useState(false);
+  const [selectedRequest, setSelectedRequest] = useState<SupportRequest | null>(null);
+  const [isDetailsOpen, setIsDetailsOpen] = useState(false);
+
+  const handleSelectTicket = (ticket: any) => {
+    const supportRequest: SupportRequest = {
+      id: ticket.id,
+      subject: ticket.title,
+      message: ticket.description,
+      type: 'SUPPORT',
+      status: ticket.status,
+      created_at: ticket.created_at
+    };
+    setSelectedRequest(supportRequest);
+    setIsDetailsOpen(true);
   };
-  
-  // Load tickets when client ID is available
-  useEffect(() => {
-    if (clientId) {
-      fetchTickets();
-    }
-  }, [clientId]);
-  
-  // Create new ticket
-  const handleCreateTicket = async () => {
-    if (!subject || !description || !selectedType || !clientId) {
-      toast({
-        title: "Campos obrigatórios",
-        description: "Por favor, preencha todos os campos obrigatórios",
-        variant: "destructive",
-      });
-      return;
-    }
-    
-    setIsSubmitting(true);
-    
-    try {
-      await addTicket({
-        title: subject,
-        description,
-        machine_id: selectedMachine || undefined,
-        type: selectedType,
-        priority: selectedPriority,
-      });
-      
-      setShowNewTicketDialog(false);
-      resetNewTicketForm();
-      
-    } catch (error) {
-      console.error("Error creating ticket:", error);
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
-  
-  // Send reply to ticket
-  const handleSendReply = async () => {
-    if (!reply.trim() || !selectedTicket) {
-      return;
-    }
-    
-    await sendMessage(selectedTicket.id, reply);
-    setReply("");
-  };
-  
-  // Reset new ticket form
-  const resetNewTicketForm = () => {
-    setSubject("");
-    setDescription("");
-    setSelectedType(TicketType.TECHNICAL);
-    setSelectedPriority(TicketPriority.MEDIUM);
-    setSelectedMachine("");
-  };
-  
-  // View ticket details
-  const handleViewTicket = async (ticketId: string) => {
-    await getTicket(ticketId);
-    setShowTicketDialog(true);
-  };
-  
-  // Filter tickets
-  const openTickets = tickets.filter(ticket => 
-    ticket.status !== TicketStatus.CLOSED && 
-    ticket.status !== TicketStatus.COMPLETED &&
-    ticket.status !== TicketStatus.CANCELED
-  );
-  
-  const closedTickets = tickets.filter(ticket => 
-    ticket.status === TicketStatus.CLOSED || 
-    ticket.status === TicketStatus.COMPLETED ||
-    ticket.status === TicketStatus.CANCELED
-  );
-  
-  // Format ticket status display
-  const getStatusBadge = (status: TicketStatus) => {
-    let bgColor = "";
-    let textColor = "";
-    let label = "";
-    
-    switch (status) {
-      case TicketStatus.OPEN:
-      case TicketStatus.PENDING:
-        bgColor = "bg-yellow-100";
-        textColor = "text-yellow-800";
-        label = "Pendente";
-        break;
-      case TicketStatus.IN_PROGRESS:
-        bgColor = "bg-blue-100";
-        textColor = "text-blue-800";
-        label = "Em análise";
-        break;
-      case TicketStatus.RESOLVED:
-      case TicketStatus.COMPLETED:
-        bgColor = "bg-green-100";
-        textColor = "text-green-800";
-        label = "Concluído";
-        break;
-      case TicketStatus.CLOSED:
-        bgColor = "bg-gray-100";
-        textColor = "text-gray-800";
-        label = "Fechado";
-        break;
-      case TicketStatus.CANCELED:
-        bgColor = "bg-gray-100";
-        textColor = "text-gray-800";
-        label = "Cancelado";
-        break;
-      default:
-        bgColor = "bg-gray-100";
-        textColor = "text-gray-800";
-        label = status || "Desconhecido";
-    }
-    
-    return (
-      <Badge variant="outline" className={`${bgColor} ${textColor}`}>
-        {label}
-      </Badge>
-    );
-  };
-  
-  // Format date
-  const formatDate = (dateString: string) => {
-    try {
-      return format(new Date(dateString), 'dd/MM/yyyy HH:mm');
-    } catch {
-      return "Data inválida";
-    }
-  };
-  
+
+  if (isLoading) {
+    return <div>Loading...</div>;
+  }
+
+  if (error) {
+    return <div>Error: {error}</div>;
+  }
+
   return (
     <div className="space-y-6">
-      <PageHeader 
-        title="Central de Suporte" 
-        description="Abra e acompanhe chamados de suporte e assistência"
-      />
-      
-      <div className="flex justify-end">
-        <Button onClick={() => setShowNewTicketDialog(true)}>
-          <Plus className="mr-2 h-4 w-4" />
-          Novo Chamado
+      <div className="flex justify-between items-center">
+        <PageHeader
+          title="Suporte"
+          description="Gerencie suas solicitações de suporte"
+        />
+        <Button onClick={() => setIsNewRequestOpen(true)}>
+          Nova Solicitação
         </Button>
       </div>
-      
-      <Tabs defaultValue="active">
-        <TabsList className="mb-6">
-          <TabsTrigger value="active">Chamados Ativos</TabsTrigger>
-          <TabsTrigger value="closed">Chamados Encerrados</TabsTrigger>
-        </TabsList>
-        
-        <TabsContent value="active">
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between">
-              <CardTitle>Chamados em Andamento</CardTitle>
-              <Button variant="outline" size="sm" onClick={fetchTickets}>
-                <RefreshCw className="h-4 w-4 mr-2" />
-                Atualizar
-              </Button>
+
+      <div className="grid gap-4">
+        {tickets.map((ticket) => (
+          <Card 
+            key={ticket.id} 
+            className="cursor-pointer hover:shadow-md transition-shadow"
+            onClick={() => handleSelectTicket(ticket)}
+          >
+            <CardHeader>
+              <div className="flex justify-between items-center">
+                <CardTitle className="text-lg">{ticket.title}</CardTitle>
+                <Badge variant="outline">{ticket.status}</Badge>
+              </div>
             </CardHeader>
             <CardContent>
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Nº</TableHead>
-                    <TableHead>Assunto</TableHead>
-                    <TableHead>Data</TableHead>
-                    <TableHead>Tipo</TableHead>
-                    <TableHead>Status</TableHead>
-                    <TableHead>Ações</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {isLoading ? (
-                    <TableRow>
-                      <TableCell colSpan={6} className="text-center py-10">
-                        <Loader2 className="animate-spin h-6 w-6 mx-auto" />
-                        <p className="mt-2">Carregando chamados...</p>
-                      </TableCell>
-                    </TableRow>
-                  ) : openTickets.length === 0 ? (
-                    <TableRow>
-                      <TableCell colSpan={6} className="text-center py-10">
-                        <p className="text-muted-foreground">
-                          Nenhum chamado ativo encontrado.
-                        </p>
-                      </TableCell>
-                    </TableRow>
-                  ) : (
-                    openTickets.map((ticket) => (
-                      <TableRow key={ticket.id}>
-                        <TableCell>#{ticket.id.substring(0, 8)}</TableCell>
-                        <TableCell>{ticket.title}</TableCell>
-                        <TableCell>{formatDate(ticket.created_at)}</TableCell>
-                        <TableCell>{ticket.type}</TableCell>
-                        <TableCell>{getStatusBadge(ticket.status)}</TableCell>
-                        <TableCell>
-                          <Button 
-                            variant="ghost" 
-                            size="sm" 
-                            onClick={() => handleViewTicket(ticket.id)}
-                          >
-                            Detalhes
-                          </Button>
-                        </TableCell>
-                      </TableRow>
-                    ))
-                  )}
-                </TableBody>
-              </Table>
+              <p className="text-muted-foreground mb-2">{ticket.description}</p>
+              <p className="text-sm text-muted-foreground">
+                Criado em: {new Date(ticket.created_at).toLocaleDateString()}
+              </p>
             </CardContent>
           </Card>
-        </TabsContent>
-        
-        <TabsContent value="closed">
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between">
-              <CardTitle>Chamados Encerrados</CardTitle>
-              <Button variant="outline" size="sm" onClick={fetchTickets}>
-                <RefreshCw className="h-4 w-4 mr-2" />
-                Atualizar
-              </Button>
-            </CardHeader>
-            <CardContent>
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Nº</TableHead>
-                    <TableHead>Assunto</TableHead>
-                    <TableHead>Data</TableHead>
-                    <TableHead>Tipo</TableHead>
-                    <TableHead>Status</TableHead>
-                    <TableHead>Ações</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {isLoading ? (
-                    <TableRow>
-                      <TableCell colSpan={6} className="text-center py-10">
-                        <Loader2 className="animate-spin h-6 w-6 mx-auto" />
-                        <p className="mt-2">Carregando chamados...</p>
-                      </TableCell>
-                    </TableRow>
-                  ) : closedTickets.length === 0 ? (
-                    <TableRow>
-                      <TableCell colSpan={6} className="text-center py-10">
-                        <p className="text-muted-foreground">
-                          Nenhum chamado encerrado encontrado.
-                        </p>
-                      </TableCell>
-                    </TableRow>
-                  ) : (
-                    closedTickets.map((ticket) => (
-                      <TableRow key={ticket.id}>
-                        <TableCell>#{ticket.id.substring(0, 8)}</TableCell>
-                        <TableCell>{ticket.title}</TableCell>
-                        <TableCell>{formatDate(ticket.created_at)}</TableCell>
-                        <TableCell>{ticket.type}</TableCell>
-                        <TableCell>{getStatusBadge(ticket.status)}</TableCell>
-                        <TableCell>
-                          <Button 
-                            variant="ghost" 
-                            size="sm" 
-                            onClick={() => handleViewTicket(ticket.id)}
-                          >
-                            Detalhes
-                          </Button>
-                        </TableCell>
-                      </TableRow>
-                    ))
-                  )}
-                </TableBody>
-              </Table>
-            </CardContent>
-          </Card>
-        </TabsContent>
-      </Tabs>
-      
-      {/* New Ticket Dialog */}
-      <Dialog open={showNewTicketDialog} onOpenChange={setShowNewTicketDialog}>
-        <DialogContent className="sm:max-w-md">
-          <DialogHeader>
-            <DialogTitle>Criar Novo Chamado</DialogTitle>
-          </DialogHeader>
-          
-          <div className="space-y-4 py-4">
-            <div>
-              <label className="block text-sm font-medium mb-1" htmlFor="subject">
-                Assunto
-              </label>
-              <Input 
-                id="subject" 
-                placeholder="Título do chamado" 
-                value={subject}
-                onChange={(e) => setSubject(e.target.value)}
-                required
-              />
-            </div>
-            
-            <div>
-              <label className="block text-sm font-medium mb-1" htmlFor="type">
-                Tipo de Chamado
-              </label>
-              <Select 
-                value={selectedType} 
-                onValueChange={(value: TicketType) => setSelectedType(value)}
-              >
-                <SelectTrigger id="type">
-                  <SelectValue placeholder="Selecione um tipo" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value={TicketType.TECHNICAL}>Técnico</SelectItem>
-                  <SelectItem value={TicketType.MACHINE}>Máquina</SelectItem>
-                  <SelectItem value={TicketType.MAINTENANCE}>Manutenção</SelectItem>
-                  <SelectItem value={TicketType.INSTALLATION}>Instalação</SelectItem>
-                  <SelectItem value={TicketType.REPLACEMENT}>Substituição</SelectItem>
-                  <SelectItem value={TicketType.SUPPLIES}>Suprimentos</SelectItem>
-                  <SelectItem value={TicketType.BILLING}>Cobrança</SelectItem>
-                  <SelectItem value={TicketType.INQUIRY}>Consulta</SelectItem>
-                  <SelectItem value={TicketType.OTHER}>Outro</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            
-            <div>
-              <label className="block text-sm font-medium mb-1" htmlFor="priority">
-                Prioridade
-              </label>
-              <Select 
-                value={selectedPriority} 
-                onValueChange={(value: TicketPriority) => setSelectedPriority(value)}
-              >
-                <SelectTrigger id="priority">
-                  <SelectValue placeholder="Selecione a prioridade" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value={TicketPriority.LOW}>Baixa</SelectItem>
-                  <SelectItem value={TicketPriority.MEDIUM}>Média</SelectItem>
-                  <SelectItem value={TicketPriority.HIGH}>Alta</SelectItem>
-                  <SelectItem value={TicketPriority.CRITICAL}>Crítica</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            
-            {machines.length > 0 && (
-              <div>
-                <label className="block text-sm font-medium mb-1" htmlFor="machine">
-                  Máquina (se aplicável)
-                </label>
-                <Select value={selectedMachine} onValueChange={setSelectedMachine}>
-                  <SelectTrigger id="machine">
-                    <SelectValue placeholder="Selecione uma máquina" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="">Todas as máquinas</SelectItem>
-                    {machines.map((machine) => (
-                      <SelectItem value={machine.id} key={machine.id}>
-                        {machine.serial_number} ({machine.model})
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-            )}
-            
-            <div>
-              <label className="block text-sm font-medium mb-1" htmlFor="description">
-                Descrição
-              </label>
-              <Textarea 
-                id="description" 
-                placeholder="Descreva seu problema ou solicitação em detalhes..." 
-                className="min-h-[150px]"
-                value={description}
-                onChange={(e) => setDescription(e.target.value)}
-                required
-              />
-            </div>
-          </div>
-          
-          <DialogFooter>
-            <Button 
-              variant="outline" 
-              onClick={() => setShowNewTicketDialog(false)} 
-              disabled={isSubmitting}
-            >
-              Cancelar
-            </Button>
-            <Button 
-              onClick={handleCreateTicket} 
-              disabled={isSubmitting || !subject || !description}
-            >
-              {isSubmitting ? (
-                <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Criando...
-                </>
-              ) : (
-                "Criar Chamado"
-              )}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-      
-      {/* Ticket Details Dialog */}
-      <Dialog open={showTicketDialog} onOpenChange={setShowTicketDialog}>
-        <DialogContent className="sm:max-w-4xl max-h-[90vh] overflow-y-auto">
-          {selectedTicket && (
-            <>
-              <DialogHeader>
-                <DialogTitle className="text-xl font-semibold mb-2">
-                  #{selectedTicket.id.substring(0, 8)} - {selectedTicket.title}
-                </DialogTitle>
-                <div className="flex flex-wrap gap-2 text-sm text-muted-foreground mt-2">
-                  <div>{formatDate(selectedTicket.created_at)}</div>
-                  <div>•</div>
-                  <div>Tipo: {selectedTicket.type}</div>
-                  <div>•</div>
-                  <div>Status: {getStatusBadge(selectedTicket.status)}</div>
-                </div>
-              </DialogHeader>
-              
-              <div className="space-y-6 pt-4">
-                {/* Ticket Description */}
-                <div className="space-y-2">
-                  <h4 className="text-sm font-semibold">Descrição</h4>
-                  <div className="rounded-md border bg-muted/40 p-4">
-                    <p className="whitespace-pre-wrap">{selectedTicket.description}</p>
-                  </div>
-                </div>
-                
-                {/* Machine Info (if any) */}
-                {selectedTicket.machine && (
-                  <div className="space-y-2">
-                    <h4 className="text-sm font-semibold">Máquina</h4>
-                    <div className="rounded-md border bg-muted/40 p-4">
-                      <p>
-                        {selectedTicket.machine.serial_number} - {selectedTicket.machine.model}
-                      </p>
-                    </div>
-                  </div>
-                )}
-                
-                {/* Ticket Resolution (if any) */}
-                {selectedTicket.resolution && (
-                  <div className="space-y-2">
-                    <h4 className="text-sm font-semibold">Resolução</h4>
-                    <div className="rounded-md border bg-muted/40 p-4">
-                      <p className="whitespace-pre-wrap">{selectedTicket.resolution}</p>
-                    </div>
-                  </div>
-                )}
-                
-                {/* Messages Section */}
-                <div className="mt-8">
-                  <h4 className="text-sm font-semibold mb-4">Histórico de Mensagens</h4>
-                  
-                  <div className="space-y-4 max-h-[400px] overflow-y-auto p-2">
-                    {ticketMessages.length === 0 ? (
-                      <p className="text-center text-muted-foreground py-8">
-                        Nenhuma mensagem encontrada para este chamado.
-                      </p>
-                    ) : (
-                      ticketMessages.map((msg) => (
-                        <div 
-                          key={msg.id} 
-                          className={`flex ${msg.user?.id === user?.id ? 'justify-end' : 'justify-start'}`}
-                        >
-                          <div 
-                            className={`rounded-lg p-4 max-w-[80%] ${
-                              msg.user?.id === user?.id 
-                                ? 'bg-primary text-primary-foreground' 
-                                : 'bg-muted'
-                            }`}
-                          >
-                            <div className="flex items-center gap-2 mb-1">
-                              <span className="font-medium text-xs">
-                                {msg.user?.name || "Usuário"}
-                              </span>
-                              <span className="text-xs opacity-70">
-                                {formatDate(msg.created_at)}
-                              </span>
-                            </div>
-                            <p className="whitespace-pre-wrap">{msg.message}</p>
-                          </div>
-                        </div>
-                      ))
-                    )}
-                  </div>
-                  
-                  {/* Reply input */}
-                  {selectedTicket.status !== TicketStatus.CLOSED && 
-                   selectedTicket.status !== TicketStatus.COMPLETED && 
-                   selectedTicket.status !== TicketStatus.CANCELED && (
-                    <div className="mt-6">
-                      <div className="flex gap-2">
-                        <Textarea
-                          value={reply}
-                          onChange={(e) => setReply(e.target.value)}
-                          placeholder="Digite sua mensagem..."
-                          className="flex-1"
-                          rows={3}
-                        />
-                        <Button 
-                          className="self-end"
-                          onClick={handleSendReply}
-                          disabled={!reply.trim() || isSaving}
-                        >
-                          {isSaving ? (
-                            <Loader2 className="h-4 w-4 animate-spin" />
-                          ) : (
-                            <SendHorizontal className="h-4 w-4" />
-                          )}
-                        </Button>
-                      </div>
-                    </div>
-                  )}
-                </div>
-              </div>
-            </>
-          )}
-        </DialogContent>
-      </Dialog>
+        ))}
+      </div>
+
+      <NewRequestDialog
+        open={isNewRequestOpen}
+        onOpenChange={setIsNewRequestOpen}
+      />
+
+      <RequestDetailsDialog
+        request={selectedRequest}
+        open={isDetailsOpen}
+        onOpenChange={setIsDetailsOpen}
+      />
     </div>
   );
 };

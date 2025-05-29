@@ -1,8 +1,24 @@
+
 import { useState, useEffect, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { PaymentRequest } from "@/types/payment.types";
 import { toast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/use-auth";
+import { PaymentStatus } from "@/types/enums";
+
+interface PaymentRequest {
+  id: string;
+  client_id: string;
+  amount: number;
+  status: PaymentStatus;
+  created_at: string;
+  updated_at: string;
+  pix_key_id: string;
+  description: string;
+  receipt_url: string;
+  rejection_reason: string;
+  approved_at: string;
+  approved_by: string;
+}
 
 interface FetchPaymentRequestsOptions {
   notifyUser?: boolean;
@@ -46,7 +62,22 @@ export function usePaymentRequestsFetcher() {
         return;
       }
 
-      setPaymentRequests(data || []);
+      const formattedData: PaymentRequest[] = (data || []).map(item => ({
+        id: item.id,
+        client_id: item.client_id,
+        amount: item.amount,
+        status: item.status as PaymentStatus,
+        created_at: item.created_at,
+        updated_at: item.updated_at,
+        pix_key_id: item.pix_key_id,
+        description: item.description || '',
+        receipt_url: item.receipt_url || '',
+        rejection_reason: item.rejection_reason || '',
+        approved_at: item.approved_at || '',
+        approved_by: item.approved_by || ''
+      }));
+
+      setPaymentRequests(formattedData);
     } catch (err: any) {
       const errorMessage = `An unexpected error occurred: ${err.message}`;
       console.error(errorMessage, err);

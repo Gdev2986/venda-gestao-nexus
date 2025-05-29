@@ -1,22 +1,22 @@
 
-import { useEffect } from "react";
-import { useNavigate } from "react-router-dom";
-import { PATHS } from "@/routes/paths";
+import React from 'react';
 import { useAuth } from "@/hooks/use-auth";
-import { UserRole } from "@/types";
+import { UserRole } from "@/types/enums";
+import { Navigate } from "react-router-dom";
+import { MachineList } from "@/components/logistics/MachineList";
 
-const Machines = () => {
-  const navigate = useNavigate();
-  const { userRole } = useAuth();
-  
-  useEffect(() => {
-    console.log("Admin Machines page redirect - userRole:", userRole);
-    
-    // Always redirect to logistics machines page - admin can access logistics routes
-    navigate(PATHS.LOGISTICS.MACHINES);
-  }, [navigate, userRole]);
-  
-  return null; // Component will redirect, no need to render anything
+const AdminMachines = () => {
+  const { user } = useAuth();
+
+  if (!user) {
+    return <Navigate to="/auth" replace />;
+  }
+
+  if (user.role !== UserRole.ADMIN) {
+    return <Navigate to="/unauthorized" replace />;
+  }
+
+  return <MachineList />;
 };
 
-export default Machines;
+export default AdminMachines;

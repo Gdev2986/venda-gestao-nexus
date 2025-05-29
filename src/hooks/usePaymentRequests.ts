@@ -7,11 +7,9 @@ import { usePaymentRequestManager } from "./usePaymentRequestManager";
 export const usePaymentRequests = (initialBalance: number = 15000) => {
   const {
     isLoading,
-    clientBalance,
     paymentRequests,
-    setPaymentRequests,
     loadPaymentRequests
-  } = usePaymentRequestsFetcher(initialBalance);
+  } = usePaymentRequestsFetcher();
   
   const { pixKeys, isLoadingPixKeys } = usePixKeys();
   
@@ -19,11 +17,11 @@ export const usePaymentRequests = (initialBalance: number = 15000) => {
     isDialogOpen,
     setIsDialogOpen,
     handleRequestPayment
-  } = usePaymentRequestManager(pixKeys, paymentRequests, setPaymentRequests);
+  } = usePaymentRequestManager();
   
   return {
     isLoading,
-    clientBalance,
+    clientBalance: initialBalance,
     paymentRequests,
     isDialogOpen,
     setIsDialogOpen,

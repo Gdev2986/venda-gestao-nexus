@@ -1,174 +1,26 @@
 
-import { useState, useEffect } from "react";
-import { useAuth } from "@/contexts/AuthContext";
-import { getClientPayments } from "@/services/payment.service";
-import { formatCurrency } from "@/lib/utils";
-import { PaymentDetailsDialog } from "@/components/payments/PaymentDetailsDialog";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Eye } from "lucide-react";
-import { format } from "date-fns";
-import { Badge } from "@/components/ui/badge";
-import { Skeleton } from "@/components/ui/skeleton";
-import { ScrollArea } from "@/components/ui/scroll-area";
+import React from 'react';
+import { useAuth } from "@/hooks/use-auth";
 import { PageHeader } from "@/components/page/PageHeader";
-import { ptBR } from "date-fns/locale";
-import { PaymentRequest } from "@/types/payment.types";
-import { PaymentStatus } from "@/types";
+import { PaymentHistoryCard } from "@/components/payments/PaymentHistoryCard";
+import { BalanceCards } from "@/components/payments/BalanceCards";
 
 const UserPayments = () => {
   const { user } = useAuth();
-  const [payments, setPayments] = useState<PaymentRequest[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [selectedPayment, setSelectedPayment] = useState<PaymentRequest | null>(null);
-  const [isDetailsOpen, setIsDetailsOpen] = useState(false);
-
-  useEffect(() => {
-    const fetchPayments = async () => {
-      if (user) {
-        setIsLoading(true);
-        try {
-          // In a real implementation, you would get the client ID from the user context
-          // For demo purposes, we're using a hard-coded value
-          const clientId = "c87e857c-f385-4f8f-9d5d-a165d6172676"; // TODO: Replace with real client ID from user context
-          const fetchedPayments = await getClientPayments(clientId);
-          setPayments(fetchedPayments);
-        } catch (error) {
-          console.error("Failed to fetch payments:", error);
-        } finally {
-          setIsLoading(false);
-        }
-      }
-    };
-
-    fetchPayments();
-  }, [user]);
-
-  const getStatusBadge = (status: PaymentStatus | string) => {
-    if (status === PaymentStatus.PENDING) {
-      return <Badge variant="outline">Pendente</Badge>;
-    } else if (status === PaymentStatus.APPROVED) {
-      return <Badge variant="default">Aprovado</Badge>;
-    } else if (status === PaymentStatus.REJECTED) {
-      return <Badge variant="destructive">Rejeitado</Badge>;
-    } else if (status === PaymentStatus.PAID) {
-      return <Badge>Pago</Badge>;
-    } else {
-      return <Badge variant="secondary">{status}</Badge>;
-    }
-  };
-
-  const handleViewDetails = (payment: PaymentRequest) => {
-    // Convert PaymentRequest to Payment format for the dialog
-    const adaptedPayment = {
-      ...payment,
-      created_at: payment.created_at,
-      updated_at: payment.updated_at,
-      rejection_reason: payment.rejection_reason || null,
-      pix_key: payment.pix_key_id ? {
-        id: payment.pix_key_id,
-        key: '',
-        type: '',
-        name: '',
-        owner_name: '',
-        user_id: ''
-      } : undefined
-    };
-    
-    setSelectedPayment(payment);
-    setIsDetailsOpen(true);
-  };
 
   return (
-    <div className="container py-6">
-      <PageHeader
-        title="Meus Pagamentos"
-        description="Visualize e gerencie seus pagamentos"
+    <div className="space-y-6">
+      <PageHeader 
+        title="Meus Pagamentos" 
+        description="Gerencie suas solicitações de pagamento"
       />
-
-      <Card>
-        <CardHeader>
-          <CardTitle>Histórico de Pagamentos</CardTitle>
-          <CardDescription>
-            Veja todos os pagamentos solicitados e seus status
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <ScrollArea className="h-[500px] pr-4">
-            {isLoading ? (
-              <div className="space-y-4">
-                {[1, 2, 3].map((i) => (
-                  <Card key={i}>
-                    <CardContent className="p-4">
-                      <div className="flex justify-between items-center">
-                        <div>
-                          <Skeleton className="h-4 w-24 mb-2" />
-                          <Skeleton className="h-6 w-32" />
-                        </div>
-                        <div className="text-right">
-                          <Skeleton className="h-4 w-16 mb-2 ml-auto" />
-                          <Skeleton className="h-6 w-20 ml-auto" />
-                        </div>
-                      </div>
-                    </CardContent>
-                  </Card>
-                ))}
-              </div>
-            ) : payments.length > 0 ? (
-              <div className="space-y-4">
-                {payments.map((payment) => (
-                  <Card key={payment.id} className="overflow-hidden">
-                    <CardContent className="p-4">
-                      <div className="flex justify-between items-center">
-                        <div>
-                          <p className="text-sm text-muted-foreground">
-                            {format(
-                              new Date(payment.created_at),
-                              "dd 'de' MMMM 'de' yyyy",
-                              { locale: ptBR }
-                            )}
-                          </p>
-                          <p className="font-semibold text-lg">
-                            {formatCurrency(payment.amount)}
-                          </p>
-                          <p className="text-sm">
-                            {payment.description || "Pagamento"}
-                          </p>
-                        </div>
-                        <div className="text-right">
-                          <div className="mb-2">{getStatusBadge(payment.status)}</div>
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => handleViewDetails(payment)}
-                          >
-                            <Eye className="h-4 w-4 mr-2" />
-                            Detalhes
-                          </Button>
-                        </div>
-                      </div>
-                    </CardContent>
-                  </Card>
-                ))}
-              </div>
-            ) : (
-              <div className="text-center py-6">
-                <p className="text-muted-foreground">
-                  Nenhum pagamento encontrado
-                </p>
-              </div>
-            )}
-          </ScrollArea>
-        </CardContent>
-      </Card>
-
-      {selectedPayment && (
-        <PaymentDetailsDialog
-          payment={selectedPayment as any}
-          open={isDetailsOpen}
-          onOpenChange={setIsDetailsOpen}
-        />
-      )}
+      
+      <BalanceCards clientBalance={15000} />
+      
+      <PaymentHistoryCard 
+        payments={[]}
+        isLoading={false} 
+      />
     </div>
   );
 };

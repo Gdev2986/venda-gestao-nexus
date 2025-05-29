@@ -7,8 +7,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { RefreshCcw, Bell, BellOff, Volume2, VolumeX } from "lucide-react";
-import { useNotifications } from "@/hooks/use-notifications";
+import { RefreshCcw, Bell, Volume2, VolumeX } from "lucide-react";
+import { useNotifications } from "@/contexts/notifications/NotificationsContext";
 
 interface NotificationFiltersProps {
   typeFilter: string;
@@ -63,7 +63,7 @@ const NotificationFilters = ({
           variant="outline"
           size="icon"
           className="h-8 w-8"
-          onClick={() => setSoundEnabled()}
+          onClick={() => setSoundEnabled(!soundEnabled)}
           title={soundEnabled ? "Desativar sons" : "Ativar sons"}
         >
           {soundEnabled ? (
