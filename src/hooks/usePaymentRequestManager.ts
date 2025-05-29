@@ -1,8 +1,24 @@
+
 import { useState, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
-import { PaymentRequest } from "@/types/payment.types";
 import { useAuth } from "@/hooks/use-auth";
+import { PaymentStatus } from "@/types/enums";
+
+interface PaymentRequest {
+  id: string;
+  client_id: string;
+  amount: number;
+  status: PaymentStatus;
+  created_at: string;
+  updated_at: string;
+  pix_key_id: string;
+  description: string;
+  receipt_url: string;
+  rejection_reason: string;
+  approved_at: string;
+  approved_by: string;
+}
 
 interface UsePaymentRequestManagerProps {
   clientId?: string;
@@ -38,7 +54,22 @@ export const usePaymentRequestManager = ({
         throw error;
       }
 
-      setPaymentRequests(data || []);
+      const formattedData: PaymentRequest[] = (data || []).map(item => ({
+        id: item.id,
+        client_id: item.client_id,
+        amount: item.amount,
+        status: item.status as PaymentStatus,
+        created_at: item.created_at,
+        updated_at: item.updated_at,
+        pix_key_id: item.pix_key_id,
+        description: item.description || '',
+        receipt_url: item.receipt_url || '',
+        rejection_reason: item.rejection_reason || '',
+        approved_at: item.approved_at || '',
+        approved_by: item.approved_by || ''
+      }));
+
+      setPaymentRequests(formattedData);
     } catch (error: any) {
       toast({
         variant: "destructive",
@@ -79,7 +110,6 @@ export const usePaymentRequestManager = ({
             amount,
             status: "PENDING",
             pix_key_id: pixKeyId,
-            requestor_id: user.id,
           },
         ])
         .select()
@@ -90,7 +120,22 @@ export const usePaymentRequestManager = ({
       }
 
       if (data) {
-        setPaymentRequests((prev) => [data, ...prev]);
+        const formattedData: PaymentRequest = {
+          id: data.id,
+          client_id: data.client_id,
+          amount: data.amount,
+          status: data.status as PaymentStatus,
+          created_at: data.created_at,
+          updated_at: data.updated_at,
+          pix_key_id: data.pix_key_id,
+          description: data.description || '',
+          receipt_url: data.receipt_url || '',
+          rejection_reason: data.rejection_reason || '',
+          approved_at: data.approved_at || '',
+          approved_by: data.approved_by || ''
+        };
+        
+        setPaymentRequests((prev) => [formattedData, ...prev]);
         toast({
           title: "Solicitação enviada",
           description: "Sua solicitação de pagamento foi enviada com sucesso!",

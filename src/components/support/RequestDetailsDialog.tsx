@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import RequestTypeIcon from "./RequestTypeIcon";
 import StatusBadge from "./StatusBadge";
 import { formatDate } from "@/utils/format";
-import SupportChat from "./SupportChat";
+import { SupportChat } from "./SupportChat";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 interface SupportRequest {

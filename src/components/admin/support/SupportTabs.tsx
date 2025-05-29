@@ -2,7 +2,7 @@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent } from "@/components/ui/card";
 import SupportAgentsList from "./SupportAgentsList";
-import SupportChatInterface from "./SupportChatInterface";
+import { SupportChatInterface } from "./SupportChatInterface";
 import SupportSearch from "./SupportSearch";
 import RequestsReportView from "@/components/logistics/reports/RequestsReportView";
 import React, { useState } from "react";

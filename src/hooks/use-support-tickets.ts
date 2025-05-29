@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
@@ -10,6 +11,7 @@ interface SupportTicket {
   description: string;
   status: string;
   user_id: string;
+  client_id: string;
 }
 
 export function useSupportTickets() {
@@ -32,14 +34,23 @@ export function useSupportTickets() {
         const { data, error } = await supabase
           .from("support_requests")
           .select("*")
-          .eq("user_id", user.id)
+          .eq("client_id", user.id)
           .order("created_at", { ascending: false });
 
         if (error) {
           console.error("Error fetching support tickets:", error);
           setError(error.message);
         } else {
-          setTickets(data || []);
+          const formattedData: SupportTicket[] = (data || []).map(item => ({
+            id: item.id,
+            created_at: item.created_at,
+            title: item.title,
+            description: item.description,
+            status: item.status,
+            user_id: item.client_id, // Map client_id to user_id for compatibility
+            client_id: item.client_id
+          }));
+          setTickets(formattedData);
         }
       } catch (err: any) {
         console.error("Unexpected error fetching support tickets:", err);
@@ -54,4 +65,3 @@ export function useSupportTickets() {
 
   return { tickets, isLoading, error };
 }
-

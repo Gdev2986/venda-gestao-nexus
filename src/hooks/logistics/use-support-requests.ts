@@ -10,6 +10,7 @@ interface SupportRequest {
   description: string;
   status: string;
   user_id: string;
+  client_id: string;
   created_at: string;
   updated_at: string;
 }
@@ -30,7 +31,19 @@ export function useSupportRequests() {
         .order("created_at", { ascending: false });
 
       if (error) throw error;
-      setRequests(data || []);
+      
+      const formattedData: SupportRequest[] = (data || []).map(item => ({
+        id: item.id,
+        title: item.title,
+        description: item.description,
+        status: item.status,
+        user_id: item.client_id, // Map client_id to user_id for compatibility
+        client_id: item.client_id,
+        created_at: item.created_at,
+        updated_at: item.updated_at
+      }));
+      
+      setRequests(formattedData);
     } catch (error: any) {
       toast({
         title: "Erro",

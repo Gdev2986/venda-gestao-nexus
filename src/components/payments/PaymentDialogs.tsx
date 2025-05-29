@@ -68,9 +68,9 @@ export const PaymentDialogs = ({
       />
       
       <PaymentDetailsDialog
-        open={detailsDialogOpen}
-        onOpenChange={setDetailsDialogOpen}
         payment={paymentData}
+        isOpen={detailsDialogOpen}
+        onOpenChange={setDetailsDialogOpen}
       />
     </>
   );
