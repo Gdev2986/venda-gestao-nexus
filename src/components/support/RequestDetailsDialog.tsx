@@ -83,7 +83,7 @@ const RequestDetailsDialog = ({ request, open, onOpenChange }: RequestDetailsDia
             <SupportChat 
               ticketId={request.id} 
               messages={messages}
-              onSendMessage={(message) => sendMessage(request.id, message)}
+              onSendMessage={(message, attachments) => sendMessage(request.id, message, attachments)}
             />
           </TabsContent>
         </Tabs>
