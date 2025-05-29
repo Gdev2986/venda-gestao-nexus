@@ -1,3 +1,4 @@
+
 import React from 'react';
 import {
   BrowserRouter,
@@ -5,10 +6,10 @@ import {
   Route,
   Navigate
 } from "react-router-dom";
-import { QueryClient, QueryClientProvider } from 'react-query';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { Toaster } from "@/components/ui/toaster"
 
-import Login from "@/pages/Login";
+import Login from "@/pages/auth/Login";
 import AuthCallback from "@/pages/AuthCallback";
 import AppLayout from "@/components/layout/AppLayout";
 import AuthGuard from "@/components/auth/AuthGuard";
@@ -16,7 +17,6 @@ import AuthGuard from "@/components/auth/AuthGuard";
 // Client Routes
 import ClientDashboard from "@/pages/client/Dashboard";
 import ClientMachines from "@/pages/client/Machines";
-import ClientSales from "@/pages/client/Sales";
 import ClientPayments from "@/pages/client/Payments";
 import ClientSupport from "@/pages/client/Support";
 
@@ -36,7 +36,6 @@ import AdminDashboard from "@/pages/admin/Dashboard";
 import AdminClients from "@/pages/admin/Clients";
 import AdminMachines from "@/pages/admin/Machines";
 import AdminPartners from "@/pages/admin/Partners";
-import AdminUsers from "@/pages/admin/Users";
 import AdminSales from "@/pages/admin/Sales";
 import AdminPayments from "@/pages/admin/Payments";
 import AdminSupport from "@/pages/admin/Support";
@@ -46,7 +45,6 @@ import AdminSettings from "@/pages/admin/Settings";
 // Logistics Routes
 import LogisticsDashboard from "@/pages/logistics/Dashboard";
 import LogisticsMachines from "@/pages/logistics/Machines";
-import LogisticsInstallations from "@/pages/logistics/Installations";
 import LogisticsSupport from "@/pages/logistics/Support";
 import LogisticsReports from "@/pages/logistics/Reports";
 
@@ -54,8 +52,7 @@ import LogisticsReports from "@/pages/logistics/Reports";
 import Support from "@/pages/Support";
 import HelpPage from "@/pages/Help";
 import Settings from "@/pages/Settings";
-import Profile from "@/pages/Profile";
-import LogisticsSupport from '@/pages/logistics/Support';
+import Profile from "@/pages/client/Profile";
 
 const queryClient = new QueryClient();
 
@@ -76,7 +73,6 @@ function App() {
           }>
             <Route path="dashboard" element={<ClientDashboard />} />
             <Route path="machines" element={<ClientMachines />} />
-            <Route path="sales" element={<ClientSales />} />
             <Route path="payments" element={<ClientPayments />} />
             <Route path="support" element={<ClientSupport />} />
             <Route path="help" element={<HelpPage />} />
@@ -121,7 +117,6 @@ function App() {
             <Route path="clients" element={<AdminClients />} />
             <Route path="machines" element={<AdminMachines />} />
             <Route path="partners" element={<AdminPartners />} />
-            <Route path="users" element={<AdminUsers />} />
             <Route path="sales" element={<AdminSales />} />
             <Route path="payments" element={<AdminPayments />} />
             <Route path="support" element={<AdminSupport />} />
@@ -137,7 +132,6 @@ function App() {
           }>
             <Route path="dashboard" element={<LogisticsDashboard />} />
             <Route path="machines" element={<LogisticsMachines />} />
-            <Route path="installations" element={<LogisticsInstallations />} />
             <Route path="support" element={<LogisticsSupport />} />
             <Route path="reports" element={<LogisticsReports />} />
             <Route path="profile" element={<Profile />} />

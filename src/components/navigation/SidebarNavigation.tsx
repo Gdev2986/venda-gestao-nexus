@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { useAuth } from "@/hooks/use-auth";
 import { 
@@ -15,8 +16,37 @@ import {
   FileText,
   Package
 } from "lucide-react";
-import { Sidebar, SidebarContent, SidebarFooter, SidebarHeader, SidebarItem, SidebarNav } from "@/components/ui/sidebar";
+import { cn } from "@/lib/utils";
 import { useNavigate, useLocation } from 'react-router-dom';
+
+interface SidebarNavItemProps {
+  path: string;
+  label: string;
+  icon: React.ComponentType<any>;
+  isActive: boolean;
+  onClick: () => void;
+}
+
+const SidebarNavItem: React.FC<SidebarNavItemProps> = ({ 
+  path, 
+  label, 
+  icon: Icon, 
+  isActive, 
+  onClick 
+}) => {
+  return (
+    <button
+      onClick={onClick}
+      className={cn(
+        "flex items-center space-x-3 w-full px-3 py-2 text-left rounded-lg transition-colors hover:bg-gray-100 dark:hover:bg-gray-800",
+        isActive && "bg-gray-100 dark:bg-gray-800 text-primary"
+      )}
+    >
+      <Icon className="h-5 w-5" />
+      <span>{label}</span>
+    </button>
+  );
+};
 
 const SidebarNavigation = () => {
   const { user } = useAuth();
@@ -30,27 +60,23 @@ const SidebarNavigation = () => {
   };
 
   return (
-    <Sidebar>
-      <SidebarHeader>
-        <div className="font-bold text-xl">SigmaPay</div>
-      </SidebarHeader>
-      <SidebarContent>
-        <SidebarNav>
+    <div className="w-64 bg-white dark:bg-gray-900 border-r border-gray-200 dark:border-gray-700 h-full">
+      <div className="p-4">
+        <div className="font-bold text-xl mb-6">SigmaPay</div>
+        <nav className="space-y-2">
           {sidebarItems.map((item) => (
-            <SidebarItem 
-              key={item.path} 
-              title={item.label} 
+            <SidebarNavItem
+              key={item.path}
+              path={item.path}
+              label={item.label}
               icon={item.icon}
-              active={isActive(item.path)}
+              isActive={isActive(item.path)}
               onClick={() => navigate(item.path)}
             />
           ))}
-        </SidebarNav>
-      </SidebarContent>
-      <SidebarFooter>
-        {/* You can add a footer here, like a logout button or additional information */}
-      </SidebarFooter>
-    </Sidebar>
+        </nav>
+      </div>
+    </div>
   );
 };
 
@@ -64,7 +90,6 @@ const getSidebarItems = (userRole: string) => {
       return [
         { path: '/client/dashboard', label: 'Dashboard', icon: LayoutDashboard },
         { path: '/client/machines', label: 'Máquinas', icon: Server },
-        { path: '/client/sales', label: 'Vendas', icon: BarChart },
         { path: '/client/payments', label: 'Pagamentos', icon: CreditCard },
         { path: '/client/support', label: 'Suporte', icon: HelpCircle },
         { path: '/client/help', label: 'Ajuda', icon: BookOpen },
@@ -97,7 +122,6 @@ const getSidebarItems = (userRole: string) => {
         { path: '/admin/clients', label: 'Clientes', icon: Users },
         { path: '/admin/machines', label: 'Máquinas', icon: Server },
         { path: '/admin/partners', label: 'Parceiros', icon: UserPlus },
-        { path: '/admin/users', label: 'Usuários', icon: User },
         { path: '/admin/sales', label: 'Vendas', icon: BarChart },
         { path: '/admin/payments', label: 'Pagamentos', icon: CreditCard },
         { path: '/admin/support', label: 'Suporte', icon: HelpCircle },
@@ -109,7 +133,6 @@ const getSidebarItems = (userRole: string) => {
       return [
         { path: '/logistics/dashboard', label: 'Dashboard', icon: LayoutDashboard },
         { path: '/logistics/machines', label: 'Máquinas', icon: Server },
-        { path: '/logistics/installations', label: 'Instalações', icon: Package },
         { path: '/logistics/support', label: 'Suporte', icon: HelpCircle },
         { path: '/logistics/reports', label: 'Relatórios', icon: FileText },
         ...commonItems

@@ -55,6 +55,11 @@ export interface SupportTicket {
     serial_number: string;
     model: string;
   };
+  assigned_user?: {
+    id: string;
+    name: string;
+    email: string;
+  };
 }
 
 export interface SupportMessage {

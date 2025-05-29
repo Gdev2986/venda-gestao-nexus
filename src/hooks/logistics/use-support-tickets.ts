@@ -2,17 +2,17 @@
 import { useState, useEffect } from "react";
 import { 
   SupportTicket, 
-  TicketStatus, 
-  TicketPriority, 
-  TicketType 
+  SupportRequestStatus, 
+  SupportRequestPriority, 
+  SupportRequestType 
 } from "@/types/support.types";
 import { v4 as uuidv4 } from 'uuid';
 
 // Mock data generator
 const generateMockTickets = (count: number): SupportTicket[] => {
-  const types = Object.values(TicketType);
-  const statuses = Object.values(TicketStatus);
-  const priorities = Object.values(TicketPriority);
+  const types = Object.values(SupportRequestType);
+  const statuses = Object.values(SupportRequestStatus);
+  const priorities = Object.values(SupportRequestPriority);
   
   const mockClients = [
     { id: '1', business_name: 'Supermercado ABC' },
@@ -51,7 +51,6 @@ const generateMockTickets = (count: number): SupportTicket[] => {
       title: `Ticket de ${types[typeIndex].toString().toLowerCase()} para ${mockClients[clientIndex].business_name}`,
       client_id: mockClients[clientIndex].id,
       machine_id: mockMachines[machineIndex].id,
-      user_id: 'system',
       type: types[typeIndex],
       status: statuses[statusIndex],
       priority: priorities[priorityIndex],
@@ -98,10 +97,9 @@ export const useSupportTickets = (options: UseSupportTicketsOptions = {}) => {
           title: ticketData.title || '',
           client_id: ticketData.client_id!,
           machine_id: ticketData.machine_id,
-          user_id: 'current_user',
-          type: ticketData.type || TicketType.OTHER,
-          status: TicketStatus.PENDING,
-          priority: ticketData.priority || TicketPriority.MEDIUM,
+          type: ticketData.type || SupportRequestType.OTHER,
+          status: SupportRequestStatus.PENDING,
+          priority: ticketData.priority || SupportRequestPriority.MEDIUM,
           description: ticketData.description || '',
           scheduled_date: ticketData.scheduled_date,
           created_at: new Date().toISOString(),
@@ -116,7 +114,7 @@ export const useSupportTickets = (options: UseSupportTicketsOptions = {}) => {
     });
   };
   
-  const updateTicketStatus = (ticketId: string, status: TicketStatus) => {
+  const updateTicketStatus = (ticketId: string, status: SupportRequestStatus) => {
     return new Promise<void>((resolve) => {
       setTimeout(() => {
         setTickets(prev => 
@@ -136,7 +134,7 @@ export const useSupportTickets = (options: UseSupportTicketsOptions = {}) => {
   };
   
   const getPendingTicketsCount = () => {
-    return tickets.filter(ticket => ticket.status === TicketStatus.PENDING).length;
+    return tickets.filter(ticket => ticket.status === SupportRequestStatus.PENDING).length;
   };
   
   const getTicketsGroupedByStatus = () => {
