@@ -13,8 +13,8 @@ export interface SalesDateRange {
 export interface SalesFilters {
   dateStart?: string;
   dateEnd?: string;
-  hourStart?: number;
-  hourEnd?: number;
+  hourStart?: string;
+  hourEnd?: string;
   terminals?: string[];
   paymentType?: string;
   status?: string;
@@ -64,7 +64,7 @@ export const optimizedSalesService = {
     }
   },
 
-  // Buscar vendas paginadas com filtros otimizados - NOVA IMPLEMENTAÇÃO
+  // Buscar vendas paginadas com filtros otimizados
   async getSalesPaginated(
     page: number = 1,
     pageSize: number = 1000,
@@ -73,10 +73,12 @@ export const optimizedSalesService = {
     try {
       console.log('Carregando vendas com filtros:', filters, 'página:', page);
       
-      // Buscar TODOS os dados da tabela usando a nova função
+      // Buscar TODOS os dados da tabela usando a nova função com filtros de horário
       const allSalesData = await fetchAllSalesWithFilters({
         dateStart: filters.dateStart,
         dateEnd: filters.dateEnd,
+        hourStart: filters.hourStart,
+        hourEnd: filters.hourEnd,
         terminals: filters.terminals,
         paymentType: filters.paymentType,
         source: filters.source
@@ -112,24 +114,7 @@ export const optimizedSalesService = {
         };
       });
 
-      // Aplicar filtros adicionais no frontend
-      if (filters.hourStart !== undefined || filters.hourEnd !== undefined) {
-        sales = sales.filter(sale => {
-          // Garantir que transaction_date seja string antes de fazer split
-          const dateString = typeof sale.transaction_date === 'string' ? 
-            sale.transaction_date : 
-            sale.transaction_date.toLocaleString();
-          
-          const saleDate = new Date(dateString.split(' ')[0].split('/').reverse().join('-') + 'T' + dateString.split(' ')[1]);
-          const hour = saleDate.getHours();
-          
-          if (filters.hourStart !== undefined && hour < filters.hourStart) return false;
-          if (filters.hourEnd !== undefined && hour > filters.hourEnd) return false;
-          
-          return true;
-        });
-      }
-
+      // Aplicar filtros adicionais no frontend que não foram aplicados no backend
       if (filters.status && filters.status !== 'all') {
         sales = sales.filter(sale => sale.status === filters.status);
       }

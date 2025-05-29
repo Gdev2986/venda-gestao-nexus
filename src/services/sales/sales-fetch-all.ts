@@ -34,22 +34,22 @@ export const fetchAllSales = async (): Promise<SaleWithMachine[]> => {
     const { data, error } = await supabase
       .from('sales')
       .select(`
-            *,
-             machines (
-             serial_number,
-             model
-                )
-      `, { count: 'exact' }) // 👈 ajuda se quiser contar depois
-     .limit(null) // 👈 ESSENCIAL para remover limite padrão
-     .range(from, to)
-     .order('date', { ascending: false });
+        *,
+        machines (
+          serial_number,
+          model
+        )
+      `, { count: 'exact' })
+      .limit(null) // 👈 ESSENCIAL para remover limite padrão
+      .range(from, to)
+      .order('date', { ascending: false });
 
     if (error) {
       console.error('Erro ao carregar vendas:', error);
       throw new Error(`Erro ao buscar vendas: ${error.message}`);
     }
 
-    if (data.length === 0) {
+    if (!data || data.length === 0) {
       finished = true;
       console.log('Carregamento concluído - não há mais registros.');
     } else {
@@ -66,6 +66,8 @@ export const fetchAllSales = async (): Promise<SaleWithMachine[]> => {
 export const fetchAllSalesWithFilters = async (filters?: {
   dateStart?: string;
   dateEnd?: string;
+  hourStart?: string;
+  hourEnd?: string;
   terminals?: string[];
   paymentType?: string;
   source?: string;
@@ -90,16 +92,31 @@ export const fetchAllSalesWithFilters = async (filters?: {
           model
         )
       `)
+      .limit(null) // 👈 ESSENCIAL para remover limite padrão
       .range(from, to)
       .order('date', { ascending: false });
 
     // Aplicar filtros se fornecidos
-    if (filters?.dateStart) {
-      query = query.gte('date', `${filters.dateStart}T00:00:00`);
+    if (filters?.dateStart && filters?.dateEnd) {
+      // Combinar data com horário
+      const startTime = filters.hourStart || '00:00';
+      const endTime = filters.hourEnd || '23:59';
+      const startDateTime = `${filters.dateStart}T${startTime}:00`;
+      const endDateTime = `${filters.dateEnd}T${endTime}:59`;
+      
+      query = query
+        .gte('date', startDateTime)
+        .lte('date', endDateTime);
+    } else if (filters?.dateStart) {
+      const startTime = filters.hourStart || '00:00';
+      const startDateTime = `${filters.dateStart}T${startTime}:00`;
+      query = query.gte('date', startDateTime);
+    } else if (filters?.dateEnd) {
+      const endTime = filters.hourEnd || '23:59';
+      const endDateTime = `${filters.dateEnd}T${endTime}:59`;
+      query = query.lte('date', endDateTime);
     }
-    if (filters?.dateEnd) {
-      query = query.lte('date', `${filters.dateEnd}T23:59:59`);
-    }
+    
     if (filters?.terminals && filters.terminals.length > 0) {
       query = query.in('terminal', filters.terminals);
     }
@@ -117,7 +134,7 @@ export const fetchAllSalesWithFilters = async (filters?: {
       throw new Error(`Erro ao buscar vendas: ${error.message}`);
     }
 
-    if (data.length === 0) {
+    if (!data || data.length === 0) {
       finished = true;
     } else {
       allData.push(...data);

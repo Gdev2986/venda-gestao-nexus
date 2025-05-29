@@ -5,6 +5,7 @@ import { SalesStatCards } from "@/components/admin/sales/SalesStatCards";
 import SalesImportPanel from "@/components/sales/SalesImportPanel";
 import OptimizedSalesFilter from "@/components/sales/OptimizedSalesFilter";
 import OptimizedSalesTable from "@/components/sales/OptimizedSalesTable";
+import PeriodAndTimeFilter from "@/components/sales/PeriodAndTimeFilter";
 import { useOptimizedSales } from "@/hooks/use-optimized-sales";
 import { useState } from "react";
 
@@ -49,6 +50,15 @@ const OptimizedSalesPage = () => {
           />
         }
       />
+      
+      {/* Filtro de período e horário no topo */}
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-end gap-4 p-4 bg-muted/30 rounded-lg">
+        <PeriodAndTimeFilter
+          filters={filters}
+          availableDates={availableDates}
+          onFiltersChange={updateFilters}
+        />
+      </div>
       
       {showImportPanel && (
         <SalesImportPanel onSalesProcessed={handleSalesImported} />

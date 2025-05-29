@@ -3,6 +3,7 @@ import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Input } from "@/components/ui/input";
 import { CalendarIcon, Filter, X, Clock } from "lucide-react";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
@@ -11,7 +12,6 @@ import { ptBR } from "date-fns/locale";
 import { cn } from "@/lib/utils";
 import { SalesFilters } from "@/services/optimized-sales.service";
 import TerminalFilter from "./TerminalFilter";
-import TimeRangeFilter from "./TimeRangeFilter";
 
 interface OptimizedSalesFilterProps {
   filters: SalesFilters;
@@ -86,8 +86,8 @@ const OptimizedSalesFilter = ({
     filters.dateStart || 
     filters.paymentType || 
     filters.source || 
-    filters.hourStart !== undefined || 
-    filters.hourEnd !== undefined ||
+    filters.hourStart || 
+    filters.hourEnd ||
     (filters.terminals && filters.terminals.length > 0);
 
   return (
@@ -95,103 +95,11 @@ const OptimizedSalesFilter = ({
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
           <Filter className="h-5 w-5" />
-          Filtros Otimizados
+          Filtros de Vendas
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">
-        {/* Primeira linha: Período | Horário | Status */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          {/* Filtro de Período */}
-          <div className="space-y-2">
-            <label className="text-sm font-medium">Período</label>
-            <Popover>
-              <PopoverTrigger asChild>
-                <Button
-                  variant="outline"
-                  className={cn(
-                    "w-full justify-start text-left font-normal",
-                    !dateRange.from && "text-muted-foreground"
-                  )}
-                >
-                  <CalendarIcon className="mr-2 h-4 w-4" />
-                  {dateRange.from ? (
-                    dateRange.to && dateRange.to.getTime() !== dateRange.from.getTime() ? (
-                      <>
-                        {format(dateRange.from, "dd/MM/yyyy", { locale: ptBR })} -{" "}
-                        {format(dateRange.to, "dd/MM/yyyy", { locale: ptBR })}
-                      </>
-                    ) : (
-                      format(dateRange.from, "dd/MM/yyyy", { locale: ptBR })
-                    )
-                  ) : (
-                    "Selecione o período"
-                  )}
-                </Button>
-              </PopoverTrigger>
-              <PopoverContent className="w-auto p-0" align="start">
-                <Calendar
-                  mode="range"
-                  selected={dateRange}
-                  onSelect={(range) => setDateRange(range ? { from: range.from, to: range.to } : { from: undefined, to: undefined })}
-                  numberOfMonths={2}
-                  locale={ptBR}
-                  fromDate={minDate}
-                  toDate={maxDate}
-                  disabled={(date) => {
-                    if (minDate && date < minDate) return true;
-                    if (maxDate && date > maxDate) return true;
-                    return !isDateWithSales(date);
-                  }}
-                  className="pointer-events-auto"
-                />
-                {minDate && maxDate && (
-                  <div className="p-3 border-t text-sm text-muted-foreground">
-                    Período disponível: {format(minDate, "dd/MM/yyyy", { locale: ptBR })} - {format(maxDate, "dd/MM/yyyy", { locale: ptBR })}
-                  </div>
-                )}
-              </PopoverContent>
-            </Popover>
-          </div>
-
-          {/* Filtro de Horário */}
-          <div className="space-y-2">
-            <label className="text-sm font-medium flex items-center gap-2">
-              <Clock className="h-4 w-4" />
-              Horário
-            </label>
-            <TimeRangeFilter
-              startHour={filters.hourStart}
-              endHour={filters.hourEnd}
-              onTimeRangeChange={(startHour, endHour) => {
-                onFiltersChange({ 
-                  hourStart: startHour, 
-                  hourEnd: endHour 
-                });
-              }}
-            />
-          </div>
-
-          {/* Filtro de Status */}
-          <div className="space-y-2">
-            <label className="text-sm font-medium">Status</label>
-            <Select 
-              value={filters.status || "all"} 
-              onValueChange={(value) => onFiltersChange({ status: value === "all" ? undefined : value })}
-            >
-              <SelectTrigger>
-                <SelectValue placeholder="Todos" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">Todos</SelectItem>
-                <SelectItem value="Aprovada">Aprovada</SelectItem>
-                <SelectItem value="Rejeitada">Rejeitada</SelectItem>
-                <SelectItem value="Pendente">Pendente</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-        </div>
-
-        {/* Segunda linha: Tipo de Pagamento | Bandeira | Origem */}
+        {/* Primeira linha: Tipo de Pagamento | Bandeira | Origem */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           {/* Filtro de Tipo de Pagamento */}
           <div className="space-y-2">
@@ -252,7 +160,7 @@ const OptimizedSalesFilter = ({
           </div>
         </div>
 
-        {/* Terceira linha: Terminais e botão limpar */}
+        {/* Segunda linha: Terminais e botão limpar */}
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-4">
           <div className="lg:col-span-3">
             <TerminalFilter
