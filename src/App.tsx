@@ -44,13 +44,6 @@ function App() {
     });
   }, [location.pathname, userRole, isLoading, isAuthenticated]);
 
-  const getDashboardRedirectPath = () => {
-    if (userRole) {
-      return getDashboardPath(userRole);
-    }
-    return PATHS.LOGIN;
-  };
-
   // Show loading only when we're checking auth for protected routes
   if (!isPublicRoute && isLoading) {
     return (
@@ -63,18 +56,6 @@ function App() {
   return (
     <Routes>
       <Route path={PATHS.HOME} element={<Landing />} />
-      <Route
-        path={PATHS.DASHBOARD}
-        element={
-          isLoading ? (
-            <div className="min-h-screen flex items-center justify-center">
-              <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-primary" />
-            </div>
-          ) : (
-            <Navigate to={getDashboardRedirectPath()} replace />
-          )
-        }
-      />
       {AuthRoutes}
       <Route path="/admin/*" element={<AdminRoutes />} />
       <Route path="/client/*" element={<ClientRoutes />} />

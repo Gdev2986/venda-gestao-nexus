@@ -11,12 +11,13 @@ import { PATHS } from "@/routes/paths";
 import { Spinner } from "@/components/ui/spinner";
 import { Lock, Mail } from "lucide-react";
 import { useMediaQuery } from "@/hooks/use-media-query";
+import { getDashboardPath } from "@/utils/auth-utils";
 
 const LoginForm = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const { signIn, needsPasswordChange } = useAuth();
+  const { signIn, needsPasswordChange, userRole } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
   const isMobile = useMediaQuery("(max-width: 767px)");
@@ -57,8 +58,18 @@ const LoginForm = () => {
         description: "Bem-vindo de volta!",
       });
       
-      console.log("Login successful, redirecting to dashboard");
-      navigate(PATHS.DASHBOARD);
+      // Redirect to role-specific dashboard
+      if (userRole) {
+        const dashboardPath = getDashboardPath(userRole);
+        console.log(`Login successful, redirecting to ${dashboardPath}`);
+        navigate(dashboardPath);
+      } else {
+        console.log("No user role found, staying on login page");
+        // Wait a bit for the auth state to update and try again
+        setTimeout(() => {
+          window.location.href = PATHS.HOME;
+        }, 1000);
+      }
     } catch (error: any) {
       console.error("Login error:", error);
       toast({

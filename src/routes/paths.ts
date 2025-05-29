@@ -8,7 +8,6 @@ export const PATHS = {
   CHANGE_PASSWORD: "/change-password",
   FORGOT_PASSWORD: "/forgot-password",
   RESET_PASSWORD: "/reset-password",
-  DASHBOARD: "/dashboard",
 
   ADMIN: {
     DASHBOARD: "/admin/dashboard",
@@ -38,18 +37,6 @@ export const PATHS = {
   },
 
   CLIENT: {
-    DASHBOARD: "/client/dashboard",
-    PAYMENTS: "/client/payments",
-    SUPPORT: "/client/support",
-    MACHINES: "/client/machines",
-    PROFILE: "/client/profile",
-    REPORTS: "/client/reports",
-    SETTINGS: "/client/settings",
-    HELP: "/client/help",
-  },
-
-  // Alias for CLIENT (for backward compatibility)
-  USER: {
     DASHBOARD: "/client/dashboard",
     PAYMENTS: "/client/payments",
     SUPPORT: "/client/support",

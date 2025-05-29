@@ -1,245 +1,344 @@
 
-import { useEffect, useState } from "react";
-import { PageHeader } from "@/components/page/PageHeader";
-import { PageWrapper } from "@/components/page/PageWrapper";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import React, { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { useAuth } from "@/hooks/use-auth";
 import { useToast } from "@/hooks/use-toast";
-import { CreditCard, ArrowRight } from "lucide-react";
-import { Link } from "react-router-dom";
 import { PATHS } from "@/routes/paths";
-import SidebarContent from "@/components/dashboard/client/SidebarContent";
-import StatsCards from "@/components/dashboard/client/StatsCards";
-import MainOverviewTabs from "@/components/dashboard/client/MainOverviewTabs";
-import { useRealtimeUpdates } from "@/hooks/use-realtime-updates";
-import { useDevice } from "@/hooks/use-device";
-import { AnimatePresence, motion } from "framer-motion";
-
-// Mock data for the user dashboard
-const mockData = {
-  stats: {
-    totalSales: 2500,
-    pendingPayments: 12,
-    completedPayments: 10,
-    clientBalance: 2000,
-  },
-  salesData: [
-    { name: '2023-04-01', total: 580 },
-    { name: '2023-04-02', total: 450 },
-    { name: '2023-04-03', total: 620 },
-    { name: '2023-04-04', total: 700 },
-    { name: '2023-04-05', total: 720 },
-    { name: '2023-04-06', total: 500 },
-    { name: '2023-04-07', total: 650 },
-  ],
-  paymentMethodsData: [
-    { name: 'credit', value: 8 },
-    { name: 'debit', value: 3 },
-    { name: 'pix', value: 1 },
-  ],
-  filteredTransactions: [
-    { id: 't1', date: '2023-04-04', value: 120, type: 'credit' },
-    { id: 't2', date: '2023-04-03', value: 85, type: 'debit' },
-    { id: 't3', date: '2023-04-02', value: 200, type: 'credit' },
-  ],
-  machines: [
-    { 
-      id: 'm1', 
-      name: 'Terminal 1', 
-      serial_number: 'SP2204785', 
-      model: 'SigmaPay S920', 
-      status: 'Ativo',
-      created_at: '2023-01-01'
-    },
-    { 
-      id: 'm2', 
-      name: 'Terminal 2', 
-      serial_number: 'SP2204786', 
-      model: 'SigmaPay Mini', 
-      status: 'Ativo',
-      created_at: '2023-02-15'
-    },
-  ]
-};
+import { 
+  DollarSign, 
+  TrendingUp, 
+  CreditCard, 
+  Activity,
+  Calendar,
+  Users,
+  BarChart3,
+  Settings,
+  HelpCircle,
+  Bell
+} from "lucide-react";
 
 const UserDashboard = () => {
-  const [isLoading, setIsLoading] = useState(false);
-  const [data, setData] = useState(mockData);
-  const [period, setPeriod] = useState("week");
+  const { user, userRole } = useAuth();
+  const navigate = useNavigate();
   const { toast } = useToast();
-  const { isTablet, isMobile } = useDevice();
-
-  // Setup realtime updates for sales and machines
-  useRealtimeUpdates({
-    tableName: 'sales',
-    onDataChange: (payload) => {
-      // In a real implementation, we would fetch updated data
-      console.log("Sales update detected:", payload);
-      toast({
-        title: "Nova venda detectada",
-        description: "Os dados de vendas foram atualizados."
-      });
-      // Simulated data refresh
-      refreshData();
-    }
+  const [stats, setStats] = useState({
+    balance: 0,
+    monthlyRevenue: 0,
+    totalTransactions: 0,
+    activeMachines: 0
   });
 
-  useRealtimeUpdates({
-    tableName: 'machines',
-    onDataChange: (payload) => {
-      console.log("Machine update detected:", payload);
-      toast({
-        title: "Atualização de máquina",
-        description: "Suas informações de máquinas foram atualizadas."
-      });
-      // Simulated data refresh
-      refreshData();
-    }
-  });
-
-  // Function to refresh dashboard data
-  const refreshData = () => {
-    setIsLoading(true);
-    // Simulate API call
-    setTimeout(() => {
-      // In real app, this would fetch fresh data from API
-      setData({
-        ...mockData,
-        stats: {
-          ...mockData.stats,
-          totalSales: mockData.stats.totalSales + Math.round(Math.random() * 100)
-        }
-      });
-      setIsLoading(false);
-    }, 1000);
-  };
-
-  // Initial data load
   useEffect(() => {
-    refreshData();
+    // Simulate loading stats
+    setStats({
+      balance: 12450.00,
+      monthlyRevenue: 8720.00,
+      totalTransactions: 156,
+      activeMachines: 8
+    });
   }, []);
 
+  const quickActions = [
+    {
+      title: "Realizar Pagamento",
+      description: "Faça um novo pagamento ou transfira valores",
+      icon: CreditCard,
+      onClick: () => navigate(PATHS.CLIENT.PAYMENTS),
+      variant: "default" as const
+    },
+    {
+      title: "Gerenciar Máquinas",
+      description: "Visualize e gerencie suas máquinas",
+      icon: Users,
+      onClick: () => navigate(PATHS.CLIENT.MACHINES),
+      variant: "outline" as const
+    },
+    {
+      title: "Relatórios",
+      description: "Acesse relatórios detalhados",
+      icon: BarChart3,
+      onClick: () => navigate(PATHS.CLIENT.REPORTS),
+      variant: "outline" as const
+    },
+    {
+      title: "Configurações",
+      description: "Atualize suas preferências",
+      icon: Settings,
+      onClick: () => navigate(PATHS.CLIENT.SETTINGS),
+      variant: "outline" as const
+    }
+  ];
+
+  const recentActivities = [
+    {
+      id: 1,
+      type: "payment",
+      description: "Pagamento recebido - Terminal 001",
+      amount: "R$ 450,00",
+      time: "2 horas atrás",
+      status: "completed"
+    },
+    {
+      id: 2,
+      type: "machine",
+      description: "Nova máquina associada - Terminal 008",
+      amount: "",
+      time: "1 dia atrás",
+      status: "active"
+    },
+    {
+      id: 3,
+      type: "report",
+      description: "Relatório mensal gerado",
+      amount: "",
+      time: "2 dias atrás",
+      status: "completed"
+    }
+  ];
+
   return (
-    <div className="space-y-4 md:space-y-6">
-      <PageHeader 
-        title="Meu Painel" 
-        description="Acompanhe seus pagamentos e máquinas"
-      />
-      
-      <AnimatePresence>
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.3 }}
-        >
-          <StatsCards stats={data.stats} loading={isLoading} />
-        </motion.div>
-      </AnimatePresence>
-      
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 md:gap-6">
-        <motion.div 
-          className="lg:col-span-2"
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.3, delay: 0.1 }}
-        >
-          <MainOverviewTabs 
-            salesData={data.salesData}
-            paymentMethodsData={data.paymentMethodsData}
-            filteredTransactions={data.filteredTransactions}
-            machines={data.machines}
-            loading={isLoading}
-            period={period}
-            onChangePeriod={setPeriod}
-            onViewAllTransactions={() => {}}
-            onViewAllMachines={() => {}}
-            transactionsPage={1}
-            totalTransactionsPages={1}
-            onTransactionsPageChange={() => {}}
-            machinesPage={1}
-            totalMachinesPages={1}
-            onMachinesPageChange={() => {}}
-          />
-        </motion.div>
-        
-        {(!isMobile || !isTablet) && (
-          <motion.div 
-            className="space-y-6"
-            initial={{ opacity: 0, x: 20 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ duration: 0.3, delay: 0.2 }}
+    <div className="space-y-6">
+      {/* Header */}
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+        <div>
+          <h1 className="text-2xl font-bold tracking-tight">Dashboard</h1>
+          <p className="text-muted-foreground">
+            Bem-vindo de volta, {user?.email || "Usuário"}
+          </p>
+        </div>
+        <div className="flex items-center gap-2">
+          <Badge variant="secondary">{userRole}</Badge>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => navigate(PATHS.CLIENT.SUPPORT)}
           >
-            <SidebarContent loading={isLoading} />
-          </motion.div>
-        )}
+            <HelpCircle className="h-4 w-4 mr-2" />
+            Suporte
+          </Button>
+        </div>
       </div>
-      
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.3, delay: 0.3 }}
-      >
-        <PageWrapper>
-          <CardHeader className="flex flex-row items-center justify-between">
-            <CardTitle className="text-xl">Minhas Máquinas</CardTitle>
-            <Button 
-              variant="outline" 
-              size="sm"
-              onClick={refreshData}
-              disabled={isLoading}
-            >
-              {isLoading ? "Atualizando..." : "Atualizar"}
-            </Button>
+
+      {/* Stats Cards */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Saldo Total</CardTitle>
+            <DollarSign className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="space-y-4">
-              {data.machines.map((machine) => (
-                <motion.div
-                  key={machine.id}
-                  className="p-3 border rounded-md flex flex-col sm:flex-row sm:items-center justify-between hover:bg-accent/50 cursor-pointer transition-colors gap-2"
-                  whileHover={{ scale: 1.01 }}
-                  whileTap={{ scale: 0.99 }}
-                >
-                  <div className="min-w-0 overflow-hidden">
-                    <div className="flex items-center">
-                      <CreditCard className="h-4 w-4 mr-2 text-muted-foreground flex-shrink-0" />
-                      <span className="font-medium truncate">{machine.name}</span>
-                    </div>
-                    <div className="text-xs text-muted-foreground mt-1">
-                      <p className="truncate">S/N: {machine.serial_number}</p>
-                      <p className="truncate">Modelo: {machine.model}</p>
-                    </div>
-                  </div>
-                  <div>
-                    <span className="inline-block px-2 py-1 text-xs font-medium rounded bg-green-100 text-green-800">{machine.status}</span>
-                  </div>
-                </motion.div>
-              ))}
+            <div className="text-2xl font-bold">
+              {new Intl.NumberFormat('pt-BR', {
+                style: 'currency',
+                currency: 'BRL'
+              }).format(stats.balance)}
             </div>
-            
-            <div className="mt-6">
-              <Button variant="outline" className="w-full" asChild>
-                <Link to={PATHS.USER.MACHINES}>
-                  Ver todas as máquinas <ArrowRight className="ml-2 h-4 w-4 flex-shrink-0" />
-                </Link>
-              </Button>
-            </div>
+            <p className="text-xs text-muted-foreground">+5.2% desde o mês passado</p>
           </CardContent>
-        </PageWrapper>
-      </motion.div>
+        </Card>
 
-      {/* Mobile-only sidebar content */}
-      {(isMobile || isTablet) && (
-        <motion.div 
-          className="space-y-6"
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ duration: 0.3, delay: 0.4 }}
-        >
-          <SidebarContent loading={isLoading} />
-        </motion.div>
-      )}
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Receita Mensal</CardTitle>
+            <TrendingUp className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">
+              {new Intl.NumberFormat('pt-BR', {
+                style: 'currency',
+                currency: 'BRL'
+              }).format(stats.monthlyRevenue)}
+            </div>
+            <p className="text-xs text-muted-foreground">+12.1% desde o mês passado</p>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Transações</CardTitle>
+            <Activity className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{stats.totalTransactions}</div>
+            <p className="text-xs text-muted-foreground">+8.3% desde o mês passado</p>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Máquinas Ativas</CardTitle>
+            <Users className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{stats.activeMachines}</div>
+            <p className="text-xs text-muted-foreground">+2 novas este mês</p>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Main Content */}
+      <Tabs defaultValue="overview" className="space-y-4">
+        <TabsList>
+          <TabsTrigger value="overview">Visão Geral</TabsTrigger>
+          <TabsTrigger value="activities">Atividades</TabsTrigger>
+          <TabsTrigger value="actions">Ações Rápidas</TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="overview" className="space-y-4">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            {/* Recent Activities */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Calendar className="h-5 w-5" />
+                  Atividades Recentes
+                </CardTitle>
+                <CardDescription>
+                  Suas últimas transações e atividades
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  {recentActivities.map((activity) => (
+                    <div key={activity.id} className="flex items-center justify-between border-b pb-2 last:border-b-0">
+                      <div className="space-y-1">
+                        <p className="text-sm font-medium">{activity.description}</p>
+                        <p className="text-xs text-muted-foreground">{activity.time}</p>
+                      </div>
+                      <div className="text-right">
+                        {activity.amount && (
+                          <p className="text-sm font-bold text-green-600">{activity.amount}</p>
+                        )}
+                        <Badge variant="secondary" className="text-xs">
+                          {activity.status === 'completed' ? 'Concluído' : 'Ativo'}
+                        </Badge>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Quick Summary */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <BarChart3 className="h-5 w-5" />
+                  Resumo do Período
+                </CardTitle>
+                <CardDescription>
+                  Performance dos últimos 30 dias
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm">Total de Vendas</span>
+                    <span className="font-bold">R$ 28.450,00</span>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm">Número de Transações</span>
+                    <span className="font-bold">156</span>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm">Ticket Médio</span>
+                    <span className="font-bold">R$ 182,37</span>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm">Taxa de Crescimento</span>
+                    <span className="font-bold text-green-600">+8.5%</span>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        </TabsContent>
+
+        <TabsContent value="activities" className="space-y-4">
+          <Card>
+            <CardHeader>
+              <CardTitle>Histórico Completo de Atividades</CardTitle>
+              <CardDescription>
+                Visualize todas as suas transações e atividades recentes
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-3">
+                {recentActivities.concat([
+                  {
+                    id: 4,
+                    type: "payment",
+                    description: "Pagamento recebido - Terminal 003",
+                    amount: "R$ 320,00",
+                    time: "3 dias atrás",
+                    status: "completed"
+                  },
+                  {
+                    id: 5,
+                    type: "support",
+                    description: "Ticket de suporte resolvido",
+                    amount: "",
+                    time: "5 dias atrás",
+                    status: "completed"
+                  }
+                ]).map((activity) => (
+                  <div key={activity.id} className="flex items-center justify-between p-3 border rounded-lg">
+                    <div className="space-y-1">
+                      <p className="text-sm font-medium">{activity.description}</p>
+                      <p className="text-xs text-muted-foreground">{activity.time}</p>
+                    </div>
+                    <div className="text-right">
+                      {activity.amount && (
+                        <p className="text-sm font-bold text-green-600">{activity.amount}</p>
+                      )}
+                      <Badge variant="secondary" className="text-xs">
+                        {activity.status === 'completed' ? 'Concluído' : 'Ativo'}
+                      </Badge>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="actions" className="space-y-4">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Bell className="h-5 w-5" />
+                Ações Rápidas
+              </CardTitle>
+              <CardDescription>
+                Acesse as principais funcionalidades do sistema
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {quickActions.map((action, index) => (
+                  <Button
+                    key={index}
+                    variant={action.variant}
+                    onClick={action.onClick}
+                    className="h-auto p-4 flex flex-col items-start gap-2"
+                  >
+                    <action.icon className="h-5 w-5" />
+                    <div className="text-left">
+                      <div className="font-medium">{action.title}</div>
+                      <div className="text-xs opacity-70">{action.description}</div>
+                    </div>
+                  </Button>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+      </Tabs>
     </div>
   );
 };
