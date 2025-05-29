@@ -29,13 +29,14 @@ interface TaxBlockEditorProps {
   isSubmitting: boolean;
 }
 
-const PAYMENT_METHODS = [
-  { id: 'CREDIT', label: 'Crédito' },
-  { id: 'DEBIT', label: 'Débito' },
-  { id: 'PIX', label: 'PIX' }
-];
+interface TaxRate {
+  payment_method: string;
+  installment: number;
+  root_rate: number;
+  forwarding_rate: number;
+  final_rate: number;
+}
 
-// Modificado para incluir todas as parcelas de 1 a 21
 const DEFAULT_INSTALLMENTS = Array.from({ length: 21 }, (_, i) => i + 1);
 
 const TaxBlockEditor: React.FC<TaxBlockEditorProps> = ({ 
@@ -48,16 +49,22 @@ const TaxBlockEditor: React.FC<TaxBlockEditorProps> = ({
   const [activeTab, setActiveTab] = useState<string>("info");
   const [name, setName] = useState(block?.name || "");
   const [description, setDescription] = useState(block?.description || "");
-  const [rates, setRates] = useState<any[]>(block?.rates || []);
+  const [rates, setRates] = useState<TaxRate[]>([]);
   const [validation, setValidation] = useState({ name: true });
 
-  // Format the initial rates for editing
+  // Initialize rates
   useEffect(() => {
-    if (block?.rates) {
-      setRates(block.rates);
+    if (block?.rates && block.rates.length > 0) {
+      setRates(block.rates.map(rate => ({
+        payment_method: rate.payment_method,
+        installment: rate.installment,
+        root_rate: rate.root_rate || 0,
+        forwarding_rate: rate.forwarding_rate || 0,
+        final_rate: rate.final_rate || 0
+      })));
     } else {
       // Initialize with default empty rates
-      const initialRates = [];
+      const initialRates: TaxRate[] = [];
       
       // For CREDIT, add all installment counts from 1 to 21
       for (const installment of DEFAULT_INSTALLMENTS) {
@@ -97,11 +104,11 @@ const TaxBlockEditor: React.FC<TaxBlockEditorProps> = ({
     return nameValid;
   };
 
-  const handleRateChange = (index: number, field: string, value: number) => {
+  const handleRateChange = (index: number, field: keyof TaxRate, value: number) => {
     const updatedRates = [...rates];
     updatedRates[index] = {
       ...updatedRates[index],
-      [field]: value
+      [field]: isNaN(value) ? 0 : value
     };
     setRates(updatedRates);
   };
@@ -109,11 +116,16 @@ const TaxBlockEditor: React.FC<TaxBlockEditorProps> = ({
   const handleSubmit = () => {
     if (!validateForm()) return;
     
-    const updatedBlock = {
+    // Filter out rates that have no values set
+    const validRates = rates.filter(rate => 
+      rate.final_rate > 0 || rate.root_rate > 0 || rate.forwarding_rate > 0
+    );
+    
+    const updatedBlock: BlockWithRates = {
       id: block?.id || '',
       name,
       description,
-      rates
+      rates: validRates
     };
     
     onSave(updatedBlock);
@@ -169,7 +181,7 @@ const TaxBlockEditor: React.FC<TaxBlockEditorProps> = ({
           <Alert>
             <AlertCircle className="h-4 w-4" />
             <AlertDescription>
-              Configure as taxas para cada método de pagamento e número de parcelas.
+              Configure as taxas para cada método de pagamento e número de parcelas. Campos em branco ou com valor zero serão ignorados.
             </AlertDescription>
           </Alert>
           
@@ -201,27 +213,30 @@ const TaxBlockEditor: React.FC<TaxBlockEditorProps> = ({
                             <Input
                               type="number"
                               step="0.01"
-                              value={rate.root_rate}
-                              onChange={(e) => handleRateChange(rateIndex, 'root_rate', parseFloat(e.target.value))}
+                              value={rate.root_rate || ''}
+                              onChange={(e) => handleRateChange(rateIndex, 'root_rate', parseFloat(e.target.value) || 0)}
                               className="w-24"
+                              placeholder="0.00"
                             />
                           </TableCell>
                           <TableCell>
                             <Input
                               type="number"
                               step="0.01"
-                              value={rate.forwarding_rate}
-                              onChange={(e) => handleRateChange(rateIndex, 'forwarding_rate', parseFloat(e.target.value))}
+                              value={rate.forwarding_rate || ''}
+                              onChange={(e) => handleRateChange(rateIndex, 'forwarding_rate', parseFloat(e.target.value) || 0)}
                               className="w-24"
+                              placeholder="0.00"
                             />
                           </TableCell>
                           <TableCell>
                             <Input
                               type="number"
                               step="0.01"
-                              value={rate.final_rate}
-                              onChange={(e) => handleRateChange(rateIndex, 'final_rate', parseFloat(e.target.value))}
+                              value={rate.final_rate || ''}
+                              onChange={(e) => handleRateChange(rateIndex, 'final_rate', parseFloat(e.target.value) || 0)}
                               className="w-24"
+                              placeholder="0.00"
                             />
                           </TableCell>
                         </TableRow>
@@ -258,27 +273,30 @@ const TaxBlockEditor: React.FC<TaxBlockEditorProps> = ({
                           <Input
                             type="number"
                             step="0.01"
-                            value={rate.root_rate}
-                            onChange={(e) => handleRateChange(rateIndex, 'root_rate', parseFloat(e.target.value))}
+                            value={rate.root_rate || ''}
+                            onChange={(e) => handleRateChange(rateIndex, 'root_rate', parseFloat(e.target.value) || 0)}
                             className="w-24"
+                            placeholder="0.00"
                           />
                         </TableCell>
                         <TableCell>
                           <Input
                             type="number"
                             step="0.01"
-                            value={rate.forwarding_rate}
-                            onChange={(e) => handleRateChange(rateIndex, 'forwarding_rate', parseFloat(e.target.value))}
+                            value={rate.forwarding_rate || ''}
+                            onChange={(e) => handleRateChange(rateIndex, 'forwarding_rate', parseFloat(e.target.value) || 0)}
                             className="w-24"
+                            placeholder="0.00"
                           />
                         </TableCell>
                         <TableCell>
                           <Input
                             type="number"
                             step="0.01"
-                            value={rate.final_rate}
-                            onChange={(e) => handleRateChange(rateIndex, 'final_rate', parseFloat(e.target.value))}
+                            value={rate.final_rate || ''}
+                            onChange={(e) => handleRateChange(rateIndex, 'final_rate', parseFloat(e.target.value) || 0)}
                             className="w-24"
+                            placeholder="0.00"
                           />
                         </TableCell>
                       </TableRow>
@@ -314,27 +332,30 @@ const TaxBlockEditor: React.FC<TaxBlockEditorProps> = ({
                           <Input
                             type="number"
                             step="0.01"
-                            value={rate.root_rate}
-                            onChange={(e) => handleRateChange(rateIndex, 'root_rate', parseFloat(e.target.value))}
+                            value={rate.root_rate || ''}
+                            onChange={(e) => handleRateChange(rateIndex, 'root_rate', parseFloat(e.target.value) || 0)}
                             className="w-24"
+                            placeholder="0.00"
                           />
                         </TableCell>
                         <TableCell>
                           <Input
                             type="number"
                             step="0.01"
-                            value={rate.forwarding_rate}
-                            onChange={(e) => handleRateChange(rateIndex, 'forwarding_rate', parseFloat(e.target.value))}
+                            value={rate.forwarding_rate || ''}
+                            onChange={(e) => handleRateChange(rateIndex, 'forwarding_rate', parseFloat(e.target.value) || 0)}
                             className="w-24"
+                            placeholder="0.00"
                           />
                         </TableCell>
                         <TableCell>
                           <Input
                             type="number"
                             step="0.01"
-                            value={rate.final_rate}
-                            onChange={(e) => handleRateChange(rateIndex, 'final_rate', parseFloat(e.target.value))}
+                            value={rate.final_rate || ''}
+                            onChange={(e) => handleRateChange(rateIndex, 'final_rate', parseFloat(e.target.value) || 0)}
                             className="w-24"
+                            placeholder="0.00"
                           />
                         </TableCell>
                       </TableRow>
