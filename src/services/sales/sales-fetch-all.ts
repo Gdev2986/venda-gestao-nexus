@@ -34,14 +34,15 @@ export const fetchAllSales = async (): Promise<SaleWithMachine[]> => {
     const { data, error } = await supabase
       .from('sales')
       .select(`
-        *,
-        machines (
-          serial_number,
-          model
-        )
-      `)
-      .range(from, to)
-      .order('date', { ascending: false });
+            *,
+             machines (
+             serial_number,
+             model
+                )
+      `, { count: 'exact' }) // 👈 ajuda se quiser contar depois
+     .limit(null) // 👈 ESSENCIAL para remover limite padrão
+     .range(from, to)
+     .order('date', { ascending: false });
 
     if (error) {
       console.error('Erro ao carregar vendas:', error);
