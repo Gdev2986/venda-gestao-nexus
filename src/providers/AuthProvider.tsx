@@ -12,9 +12,14 @@ interface AuthState {
   isLoading: boolean;
   isAuthenticated: boolean;
   needsPasswordChange: boolean;
+  error: string | null;
 }
 
 interface AuthContextType extends AuthState {
+  signIn: (email: string, password: string) => Promise<{
+    data: { user: User; session: Session } | null;
+    error: Error | null;
+  }>;
   signOut: () => Promise<void>;
 }
 
@@ -26,10 +31,12 @@ const initialState: AuthState = {
   isLoading: true,
   isAuthenticated: false,
   needsPasswordChange: false,
+  error: null,
 };
 
 export const AuthContext = createContext<AuthContextType>({
   ...initialState,
+  signIn: async () => ({ data: null, error: null }),
   signOut: async () => {},
 });
 
@@ -37,6 +44,7 @@ type AuthAction =
   | { type: "SET_SESSION"; payload: { user: User | null; session: Session | null } }
   | { type: "SET_PROFILE"; payload: { profile: any; userRole: UserRole } }
   | { type: "SET_LOADING"; payload: boolean }
+  | { type: "SET_ERROR"; payload: string | null }
   | { type: "SIGN_OUT" };
 
 function authReducer(state: AuthState, action: AuthAction): AuthState {
@@ -52,6 +60,7 @@ function authReducer(state: AuthState, action: AuthAction): AuthState {
         session: action.payload.session,
         isAuthenticated: !!action.payload.user && !!action.payload.session,
         isLoading: !!action.payload.user, // Keep loading if we have a user but no profile yet
+        error: null,
       };
     case "SET_PROFILE":
       console.log("AuthReducer: Setting profile", {
@@ -64,11 +73,18 @@ function authReducer(state: AuthState, action: AuthAction): AuthState {
         userRole: action.payload.userRole,
         isLoading: false,
         needsPasswordChange: action.payload.profile?.needs_password_change || false,
+        error: null,
       };
     case "SET_LOADING":
       return {
         ...state,
         isLoading: action.payload,
+      };
+    case "SET_ERROR":
+      return {
+        ...state,
+        error: action.payload,
+        isLoading: false,
       };
     case "SIGN_OUT":
       console.log("AuthReducer: Signing out");
@@ -133,14 +149,33 @@ const AuthProvider = ({ children }: AuthProviderProps) => {
       });
     } catch (error) {
       console.error("AuthProvider: Error in loadUserProfile:", error);
-      // Fallback to CLIENT role if there's an error
       dispatch({
-        type: "SET_PROFILE",
-        payload: {
-          profile: { role: UserRole.CLIENT },
-          userRole: UserRole.CLIENT,
-        },
+        type: "SET_ERROR",
+        payload: "Erro ao carregar perfil do usuário",
       });
+    }
+  };
+
+  const signIn = async (email: string, password: string) => {
+    try {
+      dispatch({ type: "SET_LOADING", payload: true });
+      dispatch({ type: "SET_ERROR", payload: null });
+
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      });
+
+      if (error) {
+        dispatch({ type: "SET_ERROR", payload: error.message });
+        return { data: null, error };
+      }
+
+      return { data, error: null };
+    } catch (error: any) {
+      const errorMessage = error.message || "Erro durante o login";
+      dispatch({ type: "SET_ERROR", payload: errorMessage });
+      return { data: null, error };
     }
   };
 
@@ -247,6 +282,7 @@ const AuthProvider = ({ children }: AuthProviderProps) => {
 
   const contextValue: AuthContextType = {
     ...state,
+    signIn,
     signOut,
   };
 
