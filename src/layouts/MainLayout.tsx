@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { Outlet } from "react-router-dom";
 import { UserRole } from "@/types";
@@ -23,6 +24,8 @@ const MainLayout = () => {
   // Get user role from auth hook
   const { userRole } = useAuth();
 
+  console.log("MainLayout render - userRole:", userRole, "sidebarOpen:", sidebarOpen);
+
   // Close sidebar on mobile by default
   useEffect(() => {
     if (isMobile) {
@@ -40,16 +43,14 @@ const MainLayout = () => {
   const toggleSidebar = () => setSidebarOpen(!sidebarOpen);
 
   return (
-    <div className="flex h-screen overflow-hidden bg-background">
+    <div className="flex h-screen overflow-hidden bg-background w-full">
       {/* Sidebar component - mounted always but conditionally shown */}
-      <AnimatePresence mode="wait">
-        <Sidebar 
-          isOpen={sidebarOpen} 
-          isMobile={isMobile} 
-          onClose={() => setSidebarOpen(false)} 
-          userRole={userRole}
-        />
-      </AnimatePresence>
+      <Sidebar 
+        isOpen={sidebarOpen} 
+        isMobile={isMobile} 
+        onClose={() => setSidebarOpen(false)} 
+        userRole={userRole || UserRole.CLIENT}
+      />
       
       {/* Main content */}
       <div 

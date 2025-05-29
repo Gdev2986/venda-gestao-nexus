@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { UserRole } from "@/types";
 import Sidebar from "./sidebar/Sidebar";
@@ -45,14 +46,12 @@ const MainLayout = ({ children }: MainLayoutProps) => {
   return (
     <div className="flex h-screen overflow-hidden bg-background">
       {/* Sidebar component with AnimatePresence for smooth animation */}
-      <AnimatePresence>
-        <Sidebar 
-          isOpen={sidebarOpen} 
-          isMobile={isMobile} 
-          onClose={() => setSidebarOpen(false)} 
-          userRole={userRole}
-        />
-      </AnimatePresence>
+      <Sidebar 
+        isOpen={sidebarOpen} 
+        isMobile={isMobile} 
+        onClose={() => setSidebarOpen(false)} 
+        userRole={userRole}
+      />
       
       {/* Main content */}
       <div 

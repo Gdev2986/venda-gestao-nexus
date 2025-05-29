@@ -6,7 +6,6 @@ import { PageHeader } from "@/components/page/PageHeader";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import NewRequestDialog from "@/components/support/NewRequestDialog";
 import RequestDetailsDialog from "@/components/support/RequestDetailsDialog";
 
 interface SupportRequest {
@@ -36,6 +35,11 @@ const UserSupport = () => {
     };
     setSelectedRequest(supportRequest);
     setIsDetailsOpen(true);
+  };
+
+  const handleNewRequest = () => {
+    console.log("Nova solicitação de suporte");
+    setIsNewRequestOpen(false);
   };
 
   if (isLoading) {
@@ -81,10 +85,21 @@ const UserSupport = () => {
         ))}
       </div>
 
-      <NewRequestDialog
-        open={isNewRequestOpen}
-        onOpenChange={setIsNewRequestOpen}
-      />
+      {/* Temporary simple dialog until we create the proper component */}
+      {isNewRequestOpen && (
+        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center">
+          <div className="bg-white p-6 rounded-lg max-w-md w-full mx-4">
+            <h2 className="text-xl font-bold mb-4">Nova Solicitação</h2>
+            <p className="mb-4">Funcionalidade em desenvolvimento...</p>
+            <div className="flex gap-2">
+              <Button onClick={handleNewRequest}>Enviar</Button>
+              <Button variant="outline" onClick={() => setIsNewRequestOpen(false)}>
+                Cancelar
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
 
       <RequestDetailsDialog
         request={selectedRequest}
