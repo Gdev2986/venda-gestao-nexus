@@ -16,6 +16,7 @@ export interface SupportTicket {
   resolution?: string;
   created_at: string;
   updated_at?: string;
+  attachments?: any[];
   client?: {
     id: string;
     business_name: string;
@@ -37,6 +38,8 @@ export interface SupportMessage {
   ticket_id: string;
   user_id: string;
   message: string;
+  attachments?: any[];
+  is_read?: boolean;
   created_at: string;
   user?: {
     id: string;
@@ -55,6 +58,7 @@ export interface CreateTicketParams {
   status?: TicketStatus;
   scheduled_date?: string;
   user_id?: string;
+  attachments?: File[];
 }
 
 export interface UpdateTicketParams {
