@@ -50,7 +50,7 @@ const AdminSales = () => {
                        sale.payment_method === 'DEBIT' ? 'Cartão de Débito' : 'Pix',
           gross_amount: Number(sale.gross_amount),
           transaction_date: formattedDate,
-          installments: sale.installments || (sale.payment_method === 'CREDIT' ? Math.floor(Math.random() * 12) + 1 : 1),
+          installments: sale.installments || 1,
           terminal: sale.terminal,
           brand: sale.payment_method === 'PIX' ? 'Pix' : 
                  ['Visa', 'Mastercard', 'Elo'][Math.floor(Math.random() * 3)],

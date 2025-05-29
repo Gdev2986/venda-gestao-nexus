@@ -701,12 +701,14 @@ export type Database = {
           date: string
           gross_amount: number
           id: string
+          installments: number | null
           machine_id: string | null
           net_amount: number
           payment_method: Database["public"]["Enums"]["payment_method"]
           processing_status:
             | Database["public"]["Enums"]["processing_status"]
             | null
+          source: string | null
           terminal: string
           updated_at: string | null
         }
@@ -716,12 +718,14 @@ export type Database = {
           date: string
           gross_amount: number
           id?: string
+          installments?: number | null
           machine_id?: string | null
           net_amount: number
           payment_method: Database["public"]["Enums"]["payment_method"]
           processing_status?:
             | Database["public"]["Enums"]["processing_status"]
             | null
+          source?: string | null
           terminal: string
           updated_at?: string | null
         }
@@ -731,12 +735,14 @@ export type Database = {
           date?: string
           gross_amount?: number
           id?: string
+          installments?: number | null
           machine_id?: string | null
           net_amount?: number
           payment_method?: Database["public"]["Enums"]["payment_method"]
           processing_status?:
             | Database["public"]["Enums"]["processing_status"]
             | null
+          source?: string | null
           terminal?: string
           updated_at?: string | null
         }
