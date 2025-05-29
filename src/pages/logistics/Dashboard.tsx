@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { Badge } from "@/components/ui/badge";
-import { ArrowRight, ArrowUpRight, PackageCheck, ShoppingBag, HelpCircle, Cog } from "lucide-react";
+import { ArrowRight, ArrowUpRight, PackageCheck, ShoppingBag, HelpCircle } from "lucide-react";
 import { StyledCard } from "@/components/ui/styled-card";
 import { PageHeader } from "@/components/page/PageHeader";
 import { motion } from "framer-motion";
@@ -57,16 +57,16 @@ const LogisticsDashboard = () => {
           </p>
         </StyledCard>
 
-        {/* Card 4: Nível de Satisfação do Cliente */}
+        {/* Card 4: Entregues */}
         <StyledCard
-          title="Satisfação do Cliente"
-          icon={<Cog className="h-4 w-4 text-purple-500" />}
-          borderColor="border-purple-500"
+          title="Entregues"
+          icon={<PackageCheck className="h-4 w-4 text-green-500" />}
+          borderColor="border-green-500"
         >
-          <div className="text-2xl font-bold">92%</div>
+          <div className="text-2xl font-bold">136</div>
           <p className="text-sm text-muted-foreground">
             <ArrowUpRight className="h-4 w-4 mr-2 inline-block" />
-            <span className="text-green-500">+5%</span> em relação ao mês passado
+            Entregas concluídas
           </p>
         </StyledCard>
       </div>
