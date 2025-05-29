@@ -17,7 +17,7 @@ const RootLayout = () => {
     path: location.pathname
   });
   
-  // If still loading, show a simple spinner without delay
+  // If still loading, show a simple spinner
   if (isLoading) {
     return (
       <div className="flex items-center justify-center h-screen bg-background">
@@ -26,27 +26,37 @@ const RootLayout = () => {
     );
   }
   
+  // If not authenticated, redirect to login
+  if (!isAuthenticated || !user) {
+    console.log("User not authenticated, redirecting to login");
+    return <Navigate to={PATHS.LOGIN} replace />;
+  }
+  
   // If authenticated and needs password change, redirect to password change page
-  if (isAuthenticated && user && needsPasswordChange) {
+  if (needsPasswordChange) {
     console.log("User needs to change password, redirecting to password change page");
     return <Navigate to={PATHS.CHANGE_PASSWORD} replace />;
   }
   
-  // If authenticated and we have a role, redirect to role-specific dashboard
-  if (isAuthenticated && user && userRole) {
-    try {
-      const dashboardPath = getDashboardPath(userRole);
-      console.log(`User authenticated as ${userRole}, redirecting to ${dashboardPath}`);
-      return <Navigate to={dashboardPath} replace />;
-    } catch (error) {
-      console.error("Error getting dashboard path:", error);
-      return <Navigate to={PATHS.LOGIN} replace />;
-    }
+  // If authenticated but no role yet, wait for profile to load
+  if (!userRole) {
+    console.log("User authenticated but no role, waiting for profile to load");
+    return (
+      <div className="flex items-center justify-center h-screen bg-background">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+      </div>
+    );
   }
   
-  // If not authenticated, redirect to login
-  console.log("User not authenticated, redirecting to login");
-  return <Navigate to={PATHS.LOGIN} replace />;
+  // If authenticated and we have a role, redirect to role-specific dashboard
+  try {
+    const dashboardPath = getDashboardPath(userRole);
+    console.log(`User authenticated as ${userRole}, redirecting to ${dashboardPath}`);
+    return <Navigate to={dashboardPath} replace />;
+  } catch (error) {
+    console.error("Error getting dashboard path:", error);
+    return <Navigate to={PATHS.LOGIN} replace />;
+  }
 };
 
 export default RootLayout;

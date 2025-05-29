@@ -7,20 +7,22 @@ import { Spinner } from "@/components/ui/spinner";
 import { useMediaQuery } from "@/hooks/use-media-query";
 import LoginForm from "@/components/auth/LoginForm";
 import { LayoutDashboard, CreditCard, FileText, Monitor } from "lucide-react";
+import { getDashboardPath } from "@/utils/auth-utils";
 
 const Login = () => {
   const navigate = useNavigate();
-  const { user, isLoading } = useAuth();
+  const { user, isLoading, userRole } = useAuth();
   const [redirecting, setRedirecting] = useState(false);
   const isMobile = useMediaQuery("(max-width: 767px)");
 
   useEffect(() => {
-    if (user && !isLoading) {
+    if (user && !isLoading && userRole) {
       console.log("Login: User authenticated, redirecting to dashboard");
       setRedirecting(true);
-      navigate(PATHS.DASHBOARD);
+      const dashboardPath = getDashboardPath(userRole);
+      navigate(dashboardPath);
     }
-  }, [user, isLoading, navigate]);
+  }, [user, isLoading, userRole, navigate]);
 
   if (isLoading || redirecting) {
     return (

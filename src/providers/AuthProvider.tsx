@@ -32,7 +32,6 @@ function authReducer(state: AuthState, action: AuthAction): AuthState {
         user: action.payload.user,
         session: action.payload.session,
         isAuthenticated: !!action.payload.user && !!action.payload.session,
-        isLoading: false,
         error: null,
       };
     case "SET_PROFILE":
@@ -40,6 +39,7 @@ function authReducer(state: AuthState, action: AuthAction): AuthState {
         ...state,
         profile: action.payload,
         userRole: action.payload?.role || null,
+        isLoading: false, // Profile loaded means auth state is complete
       };
     case "SET_NEEDS_PASSWORD_CHANGE":
       return { ...state, needsPasswordChange: action.payload };
@@ -66,47 +66,83 @@ export const useAuth = () => React.useContext(AuthContext);
 const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [state, dispatch] = React.useReducer(authReducer, initialState);
 
-  const loadUserProfile = React.useCallback(
-    async (userId: string) => {
-      try {
-        console.log("Loading user profile for:", userId);
-        
-        const { data, error } = await supabase
-          .from("profiles")
-          .select("*")
-          .eq("id", userId)
-          .single();
+  const loadUserProfile = React.useCallback(async (userId: string) => {
+    try {
+      console.log("Loading user profile for:", userId);
+      
+      const { data, error } = await supabase
+        .from("profiles")
+        .select("*")
+        .eq("id", userId)
+        .single();
 
-        if (error) {
-          console.error("Error loading profile:", error);
-          dispatch({
-            type: "SET_ERROR",
-            payload: "Erro ao carregar perfil do usuário",
-          });
-          return;
-        }
-
-        if (data) {
-          console.log("Profile loaded successfully:", data);
+      if (error) {
+        console.error("Error loading profile:", error);
+        // If profile doesn't exist, create a default one
+        if (error.code === 'PGRST116') {
+          console.log("Profile not found, creating default profile");
+          const { data: newProfile, error: createError } = await supabase
+            .from("profiles")
+            .insert([{
+              id: userId,
+              email: '',
+              name: 'Usuário',
+              role: 'CLIENT' as UserRole,
+              status: 'active'
+            }])
+            .select()
+            .single();
+          
+          if (createError) {
+            console.error("Error creating profile:", createError);
+            dispatch({ type: "SET_ERROR", payload: "Erro ao criar perfil do usuário" });
+            return;
+          }
+          
           const userProfile: UserProfile = {
-            ...data,
-            role: data.role as UserRole,
+            ...newProfile,
+            role: newProfile.role as UserRole,
           };
           dispatch({ type: "SET_PROFILE", payload: userProfile });
-          
-          const needsChange = await AuthManager.needsPasswordChange(userId);
-          dispatch({ type: "SET_NEEDS_PASSWORD_CHANGE", payload: needsChange });
+          return;
         }
-      } catch (error) {
-        console.error("Exception loading profile:", error);
-        dispatch({
-          type: "SET_ERROR",
-          payload: "Erro ao carregar perfil do usuário",
-        });
+        
+        dispatch({ type: "SET_ERROR", payload: "Erro ao carregar perfil do usuário" });
+        return;
       }
-    },
-    []
-  );
+
+      if (data) {
+        console.log("Profile loaded successfully:", data);
+        
+        // Check if user is pending activation and activate them
+        if (data.status === 'pending_activation') {
+          console.log("Activating user...");
+          const { error: updateError } = await supabase
+            .from("profiles")
+            .update({ status: 'active' })
+            .eq("id", userId);
+            
+          if (updateError) {
+            console.error("Error activating user:", updateError);
+          } else {
+            data.status = 'active';
+          }
+        }
+        
+        const userProfile: UserProfile = {
+          ...data,
+          role: data.role as UserRole,
+        };
+        dispatch({ type: "SET_PROFILE", payload: userProfile });
+        
+        const needsChange = await AuthManager.needsPasswordChange(userId);
+        dispatch({ type: "SET_NEEDS_PASSWORD_CHANGE", payload: needsChange });
+      }
+    } catch (error) {
+      console.error("Exception loading profile:", error);
+      dispatch({ type: "SET_ERROR", payload: "Erro ao carregar perfil do usuário" });
+    }
+  }, []);
 
   const refreshSession = React.useCallback(async () => {
     try {
@@ -115,7 +151,9 @@ const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => 
       
       if (error) {
         console.error("Error refreshing session:", error);
-        throw error;
+        dispatch({ type: "SET_SESSION", payload: { user: null, session: null } });
+        dispatch({ type: "SET_PROFILE", payload: null });
+        return;
       }
       
       dispatch({ type: "SET_SESSION", payload: { user, session } });
@@ -130,8 +168,6 @@ const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => 
     } catch (error) {
       console.error("Error in refreshSession:", error);
       dispatch({ type: "SET_ERROR", payload: "Erro ao atualizar sessão" });
-    } finally {
-      dispatch({ type: "SET_LOADING", payload: false });
     }
   }, [loadUserProfile]);
 
@@ -182,8 +218,6 @@ const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => 
       const errorObj = new Error(err.message || "Erro durante o login");
       dispatch({ type: "SET_ERROR", payload: errorObj.message });
       return { data: null, error: errorObj };
-    } finally {
-      dispatch({ type: "SET_LOADING", payload: false });
     }
   };
 
@@ -200,8 +234,6 @@ const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => 
       const errorObj = new Error(err.message || "Erro durante o cadastro");
       dispatch({ type: "SET_ERROR", payload: errorObj.message });
       return { data: null, error: errorObj };
-    } finally {
-      dispatch({ type: "SET_LOADING", payload: false });
     }
   };
 
@@ -216,8 +248,6 @@ const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => 
     } catch (err: any) {
       const errorObj = new Error("Erro durante o logout");
       return { error: errorObj };
-    } finally {
-      dispatch({ type: "SET_LOADING", payload: false });
     }
   };
 

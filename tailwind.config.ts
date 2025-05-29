@@ -1,3 +1,4 @@
+
 import type { Config } from "tailwindcss";
 
 export default {
@@ -29,16 +30,16 @@ export default {
         primary: {
           DEFAULT: "hsl(var(--primary))",
           foreground: "hsl(var(--primary-foreground))",
-          50: "#E6F7FF",
-          100: "#CCF0FF",
-          200: "#99E1FF",
-          300: "#66D2FF",
-          400: "#33C3FF",
-          500: "#00B0F0",
-          600: "#0090C9",
-          700: "#006EA3",
-          800: "#004D7A",
-          900: "#002B52",
+          50: "#f0f9ff",
+          100: "#e0f3ff",
+          200: "#bae6ff",
+          300: "#7dd3fc",
+          400: "#38bdf8",
+          500: "#0c3746", // Main primary color
+          600: "#0a2e3a",
+          700: "#08252e",
+          800: "#061c22",
+          900: "#041316",
         },
         secondary: {
           DEFAULT: "hsl(var(--secondary))",
@@ -113,6 +114,7 @@ export default {
           800: "#870B0B",
           900: "#5C0808",
         },
+        // Cores específicas para a Landing Page (mantidas originais)
         "sigma-teal": {
           50: "#f0fdfa",
           100: "#ccfbf1",
@@ -192,11 +194,11 @@ export default {
         },
         "glow": {
           "0%, 100%": {
-            boxShadow: "0 0 20px rgba(15, 68, 87, 0.5)",
+            boxShadow: "0 0 20px rgba(12, 55, 70, 0.5)",
           },
           "50%": {
             boxShadow:
-              "0 0 40px rgba(15, 68, 87, 0.8), 0 0 60px rgba(20, 184, 166, 0.6)",
+              "0 0 40px rgba(12, 55, 70, 0.8), 0 0 60px rgba(12, 55, 70, 0.6)",
           },
         },
         "pulse-slow": {
