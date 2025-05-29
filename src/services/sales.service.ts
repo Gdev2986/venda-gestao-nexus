@@ -2,6 +2,7 @@
 import { supabase } from "@/integrations/supabase/client";
 import { NormalizedSale } from "@/utils/sales-processor";
 import { v4 as uuidv4 } from 'uuid';
+import { MachineStatus } from "@/types/machine.types";
 
 export interface SaleInsert {
   id: string;
@@ -92,7 +93,7 @@ const ensureMachinesExist = async (terminals: string[]): Promise<Map<string, str
       const newMachinesData = missingTerminals.map(terminal => ({
         serial_number: terminal,
         model: 'PagBank',
-        status: 'STOCK',
+        status: MachineStatus.STOCK,
         notes: `Criado automaticamente durante importação de vendas em ${new Date().toLocaleDateString('pt-BR')}`
       }));
 
