@@ -27,6 +27,11 @@ export const useAuth = () => {
   const [needsPasswordChange, setNeedsPasswordChange] = useState(false);
   const { toast } = useToast();
 
+  // Add these properties for backward compatibility
+  const isLoading = loading;
+  const isAuthenticated = !!user && !!session;
+  const profile = userProfile; // Alias for backward compatibility
+
   // Check if user needs password change
   const checkPasswordChangeRequired = async (userId: string) => {
     try {
@@ -195,11 +200,15 @@ export const useAuth = () => {
     user,
     session,
     userProfile,
+    profile, // Backward compatibility alias
     userRole,
     loading,
+    isLoading, // Backward compatibility alias
+    isAuthenticated, // Backward compatibility property
     needsPasswordChange,
     signIn,
     signOut,
     onPasswordChanged,
+    error: null, // Add error property for compatibility
   };
 };
