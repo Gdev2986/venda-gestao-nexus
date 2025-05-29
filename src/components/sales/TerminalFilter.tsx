@@ -54,6 +54,11 @@ const TerminalFilter = ({
     onTerminalsChange([]);
   };
 
+  // Handle selecting only one terminal
+  const handleSelectOnly = (terminal: string) => {
+    onTerminalsChange([terminal]);
+  };
+
   return (
     <Card className="w-full">
       <CardHeader className="p-4 pb-2">
@@ -68,7 +73,7 @@ const TerminalFilter = ({
             className="mb-2"
           />
           
-          <div className="flex space-x-2">
+          <div className="flex flex-wrap gap-2">
             <Button 
               variant="outline" 
               size="sm" 
@@ -90,20 +95,30 @@ const TerminalFilter = ({
           <ScrollArea className="h-40 pr-4">
             <div className="space-y-2">
               {filteredTerminals.map((terminal) => (
-                <div key={terminal} className="flex items-center space-x-2">
-                  <Checkbox 
-                    id={`terminal-${terminal}`} 
-                    checked={selectedTerminals.includes(terminal)}
-                    onCheckedChange={(checked) => 
-                      handleTerminalChange(terminal, checked === true)
-                    }
-                  />
-                  <Label 
-                    htmlFor={`terminal-${terminal}`}
-                    className="text-sm cursor-pointer"
+                <div key={terminal} className="flex items-center justify-between space-x-2">
+                  <div className="flex items-center space-x-2 flex-1">
+                    <Checkbox 
+                      id={`terminal-${terminal}`} 
+                      checked={selectedTerminals.includes(terminal)}
+                      onCheckedChange={(checked) => 
+                        handleTerminalChange(terminal, checked === true)
+                      }
+                    />
+                    <Label 
+                      htmlFor={`terminal-${terminal}`}
+                      className="text-sm cursor-pointer flex-1"
+                    >
+                      {terminal}
+                    </Label>
+                  </div>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => handleSelectOnly(terminal)}
+                    className="text-xs h-6 px-2"
                   >
-                    {terminal}
-                  </Label>
+                    Apenas este
+                  </Button>
                 </div>
               ))}
               

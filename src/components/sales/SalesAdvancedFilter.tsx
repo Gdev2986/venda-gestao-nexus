@@ -34,6 +34,17 @@ const SalesAdvancedFilter = ({ sales, onFilter }: SalesAdvancedFilterProps) => {
   // Get metadata for filter options
   const metadata = getSalesMetadata(sales);
   
+  // Get date range from available sales
+  const salesDates = sales.map(sale => {
+    const date = typeof sale.transaction_date === 'string' 
+      ? new Date(sale.transaction_date) 
+      : sale.transaction_date;
+    return date;
+  }).filter(date => !isNaN(date.getTime())).sort((a, b) => a.getTime() - b.getTime());
+  
+  const minDate = salesDates.length > 0 ? salesDates[0] : undefined;
+  const maxDate = salesDates.length > 0 ? salesDates[salesDates.length - 1] : undefined;
+  
   // Auto-select all terminals when terminals list changes
   useEffect(() => {
     if (metadata.terminals.length > 0 && selectedTerminals.length === 0) {
@@ -48,7 +59,10 @@ const SalesAdvancedFilter = ({ sales, onFilter }: SalesAdvancedFilterProps) => {
     // Date range filter
     if (dateRange.from) {
       filtered = filtered.filter(sale => {
-        const saleDate = new Date(sale.transaction_date);
+        const saleDate = typeof sale.transaction_date === 'string' 
+          ? new Date(sale.transaction_date) 
+          : sale.transaction_date;
+          
         const fromDate = new Date(dateRange.from!);
         fromDate.setHours(0, 0, 0, 0);
         
@@ -143,7 +157,18 @@ const SalesAdvancedFilter = ({ sales, onFilter }: SalesAdvancedFilterProps) => {
                   onSelect={(range) => setDateRange(range ? { from: range.from, to: range.to } : { from: undefined, to: undefined })}
                   numberOfMonths={2}
                   locale={ptBR}
+                  fromDate={minDate}
+                  toDate={maxDate}
+                  disabled={[
+                    { before: minDate || new Date() },
+                    { after: maxDate || new Date() }
+                  ]}
                 />
+                {minDate && maxDate && (
+                  <div className="p-3 border-t text-sm text-muted-foreground">
+                    Período disponível: {format(minDate, "dd/MM/yyyy", { locale: ptBR })} - {format(maxDate, "dd/MM/yyyy", { locale: ptBR })}
+                  </div>
+                )}
               </PopoverContent>
             </Popover>
           </div>

@@ -18,7 +18,7 @@ export const SalesStatCards = ({ filteredSales, isLoading }: SalesStatCardsProps
 
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-      <Card>
+      <Card className="border-l-4 border-l-blue-500">
         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
           <CardTitle className="text-sm font-medium">Total de Transações</CardTitle>
           <Activity className="h-4 w-4 text-muted-foreground" />
@@ -37,7 +37,7 @@ export const SalesStatCards = ({ filteredSales, isLoading }: SalesStatCardsProps
         </CardContent>
       </Card>
       
-      <Card>
+      <Card className="border-l-4 border-l-green-500">
         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
           <CardTitle className="text-sm font-medium">Valor Total</CardTitle>
           <DollarSign className="h-4 w-4 text-muted-foreground" />
@@ -56,7 +56,7 @@ export const SalesStatCards = ({ filteredSales, isLoading }: SalesStatCardsProps
         </CardContent>
       </Card>
       
-      <Card>
+      <Card className="border-l-4 border-l-orange-500">
         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
           <CardTitle className="text-sm font-medium">Valor Médio</CardTitle>
           <TrendingUp className="h-4 w-4 text-muted-foreground" />
@@ -75,7 +75,7 @@ export const SalesStatCards = ({ filteredSales, isLoading }: SalesStatCardsProps
         </CardContent>
       </Card>
       
-      <Card>
+      <Card className="border-l-4 border-l-purple-500">
         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
           <CardTitle className="text-sm font-medium">Terminais Únicos</CardTitle>
           <CreditCard className="h-4 w-4 text-muted-foreground" />
