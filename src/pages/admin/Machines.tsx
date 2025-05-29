@@ -1,18 +1,18 @@
 
 import React from 'react';
 import { useAuth } from "@/hooks/use-auth";
-import { UserRole } from "@/types/enums";
+import { UserRole } from "@/types";
 import { Navigate } from "react-router-dom";
 import { MachineList } from "@/components/logistics/machines/MachineList";
 
 const AdminMachines = () => {
-  const { user } = useAuth();
+  const { userRole, isAuthenticated } = useAuth();
 
-  if (!user) {
-    return <Navigate to="/auth" replace />;
+  if (!isAuthenticated) {
+    return <Navigate to="/login" replace />;
   }
 
-  if (user.role !== UserRole.ADMIN) {
+  if (userRole !== UserRole.ADMIN) {
     return <Navigate to="/unauthorized" replace />;
   }
 
