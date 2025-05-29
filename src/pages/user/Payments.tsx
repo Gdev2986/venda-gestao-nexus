@@ -23,7 +23,7 @@ const UserPayments = () => {
     loadPaymentRequests
   } = usePaymentRequests();
 
-  const { pixKeys, isLoadingPixKeys } = usePixKeys();
+  const { pixKeys, isLoading: isLoadingPixKeys } = usePixKeys();
   
   // Set up real-time subscription for client-specific payment updates
   // Get client ID from the authenticated user context

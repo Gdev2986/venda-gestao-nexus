@@ -1,7 +1,7 @@
 
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { PixKey } from "@/types/payment.types";
+import { PixKey } from "@/types/pix.types";
 import { useAuth } from "@/hooks/use-auth";
 
 export function usePixKeys() {
@@ -40,5 +40,10 @@ export function usePixKeys() {
     fetchPixKeys();
   }, [user]);
 
-  return { pixKeys, isLoading, error };
+  return { 
+    pixKeys, 
+    isLoading, 
+    isLoadingPixKeys: isLoading, // Provide both names for backward compatibility
+    error 
+  };
 }

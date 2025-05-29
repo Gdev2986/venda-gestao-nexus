@@ -24,7 +24,7 @@ import {
 
 const Commissions = () => {
   const { summary, isLoading, requestPayment } = usePartnerCommissions();
-  const { pixKeys, isLoadingPixKeys } = usePixKeys();
+  const { pixKeys, isLoading: isLoadingPixKeys } = usePixKeys();
   const [isRequestDialogOpen, setIsRequestDialogOpen] = useState(false);
   const [selectedPixKey, setSelectedPixKey] = useState<string>("");
   const [requestAmount, setRequestAmount] = useState<string>("");

@@ -11,7 +11,7 @@ export const usePaymentRequests = (initialBalance: number = 15000) => {
     loadPaymentRequests
   } = usePaymentRequestsFetcher();
   
-  const { pixKeys, isLoadingPixKeys } = usePixKeys();
+  const { pixKeys, isLoading: isLoadingPixKeys } = usePixKeys();
   
   const {
     isDialogOpen,

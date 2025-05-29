@@ -12,7 +12,7 @@ import { useToast } from "@/hooks/use-toast";
 import { PixKey } from "@/types";
 
 const PixKeysManager: React.FC = () => {
-  const { pixKeys, isLoadingPixKeys } = usePixKeys();
+  const { pixKeys, isLoading: isLoadingPixKeys } = usePixKeys();
   const [isAddKeyOpen, setIsAddKeyOpen] = useState(false);
   const [isEditKeyOpen, setIsEditKeyOpen] = useState(false);
   const [isDeleteKeyOpen, setIsDeleteKeyOpen] = useState(false);
