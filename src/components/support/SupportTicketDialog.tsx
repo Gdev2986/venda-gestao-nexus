@@ -26,8 +26,7 @@ export const SupportTicketDialog = ({
   const [formData, setFormData] = useState({
     description: "",
     type: TicketType.MAINTENANCE,
-    priority: TicketPriority.MEDIUM,
-    attachments: [] as File[]
+    priority: TicketPriority.MEDIUM
   });
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -40,30 +39,19 @@ export const SupportTicketDialog = ({
         description: formData.description,
         client_id: user.id,
         type: formData.type,
-        priority: formData.priority,
-        attachments: formData.attachments
+        priority: formData.priority
       });
       
       // Reset form
       setFormData({
         description: "",
         type: TicketType.MAINTENANCE,
-        priority: TicketPriority.MEDIUM,
-        attachments: []
+        priority: TicketPriority.MEDIUM
       });
       
       onOpenChange(false);
     } catch (error) {
       console.error("Error submitting ticket:", error);
-    }
-  };
-
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files) {
-      setFormData(prev => ({
-        ...prev,
-        attachments: Array.from(e.target.files || [])
-      }));
     }
   };
 
@@ -84,9 +72,9 @@ export const SupportTicketDialog = ({
               <SelectContent>
                 <SelectItem value={TicketType.MAINTENANCE}>Manutenção</SelectItem>
                 <SelectItem value={TicketType.INSTALLATION}>Instalação</SelectItem>
-                <SelectItem value={TicketType.REPAIR}>Reparo</SelectItem>
-                <SelectItem value={TicketType.TRAINING}>Treinamento</SelectItem>
-                <SelectItem value={TicketType.SUPPORT}>Suporte</SelectItem>
+                <SelectItem value={TicketType.REPLACEMENT}>Substituição</SelectItem>
+                <SelectItem value={TicketType.SUPPLIES}>Materiais</SelectItem>
+                <SelectItem value={TicketType.REMOVAL}>Remoção</SelectItem>
                 <SelectItem value={TicketType.OTHER}>Outro</SelectItem>
               </SelectContent>
             </Select>

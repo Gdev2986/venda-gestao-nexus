@@ -46,7 +46,7 @@ export interface CreateTicketParams {
   priority: TicketPriority;
   status?: TicketStatus;
   scheduled_date?: string;
-  attachments?: File[];
+  // Removed attachments since it's not supported by the database
 }
 
 export interface UpdateTicketParams {

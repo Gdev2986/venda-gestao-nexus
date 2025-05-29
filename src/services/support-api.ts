@@ -118,8 +118,8 @@ export const getTicketMessages = async (ticketId: string) => {
   return { data: null, error };
 };
 
-// Send message
-export const sendTicketMessage = async (ticketId: string, message: string, attachments?: File[]) => {
+// Send message - removed attachments parameter since it's not supported
+export const sendTicketMessage = async (ticketId: string, message: string) => {
   const { data: { user } } = await supabase.auth.getUser();
   
   if (!user) {

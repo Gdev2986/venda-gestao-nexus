@@ -5,7 +5,7 @@ import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { Paperclip, Send } from "lucide-react";
+import { Send } from "lucide-react";
 import { SupportMessage } from "@/types/support.types";
 import { useAuth } from "@/hooks/use-auth";
 import { formatDate } from "@/utils/format";
@@ -25,10 +25,8 @@ export const SupportChat = ({
 }: SupportChatProps) => {
   const { user } = useAuth();
   const [newMessage, setNewMessage] = useState("");
-  const [attachments, setAttachments] = useState<File[]>([]);
   const [isSending, setIsSending] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
-  const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Auto-scroll to bottom when new messages arrive
   useEffect(() => {
@@ -36,16 +34,12 @@ export const SupportChat = ({
   }, [messages]);
 
   const handleSendMessage = async () => {
-    if (!newMessage.trim() && attachments.length === 0) return;
+    if (!newMessage.trim()) return;
 
     setIsSending(true);
     try {
-      await onSendMessage(newMessage, attachments);
+      await onSendMessage(newMessage);
       setNewMessage("");
-      setAttachments([]);
-      if (fileInputRef.current) {
-        fileInputRef.current.value = "";
-      }
     } catch (error) {
       console.error("Error sending message:", error);
     } finally {
@@ -57,12 +51,6 @@ export const SupportChat = ({
     if (e.key === "Enter" && !e.shiftKey) {
       e.preventDefault();
       handleSendMessage();
-    }
-  };
-
-  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files) {
-      setAttachments(Array.from(e.target.files));
     }
   };
 
@@ -113,38 +101,8 @@ export const SupportChat = ({
           </div>
         </ScrollArea>
 
-        <div className="border-t p-4 space-y-2">
-          {attachments.length > 0 && (
-            <div className="flex flex-wrap gap-2">
-              {attachments.map((file, index) => (
-                <div key={index} className="bg-muted px-2 py-1 rounded text-sm flex items-center gap-1">
-                  <Paperclip className="h-3 w-3" />
-                  {file.name}
-                </div>
-              ))}
-            </div>
-          )}
-          
+        <div className="border-t p-4">
           <div className="flex gap-2">
-            <Input
-              ref={fileInputRef}
-              type="file"
-              multiple
-              accept="image/*,.pdf,.doc,.docx"
-              onChange={handleFileSelect}
-              className="hidden"
-            />
-            
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              onClick={() => fileInputRef.current?.click()}
-              disabled={isSending}
-            >
-              <Paperclip className="h-4 w-4" />
-            </Button>
-            
             <Input
               value={newMessage}
               onChange={(e) => setNewMessage(e.target.value)}
@@ -156,7 +114,7 @@ export const SupportChat = ({
             
             <Button 
               onClick={handleSendMessage}
-              disabled={isSending || (!newMessage.trim() && attachments.length === 0)}
+              disabled={isSending || !newMessage.trim()}
               size="sm"
             >
               <Send className="h-4 w-4" />
