@@ -82,20 +82,20 @@ const TaxBlockPreview: React.FC<TaxBlockPreviewProps> = ({ block, onEdit }) => {
 
   const getPaymentMethodBadgeColor = (method: string) => {
     switch (method) {
-      case 'CREDIT': return 'bg-orange-50 text-orange-700 border-orange-200';
-      case 'DEBIT': return 'bg-blue-50 text-blue-700 border-blue-200';
-      case 'PIX': return 'bg-green-50 text-green-700 border-green-200';
-      default: return 'bg-gray-50 text-gray-700 border-gray-200';
+      case 'CREDIT': return 'bg-orange-100 text-orange-800 border-orange-300 dark:bg-orange-900/20 dark:text-orange-300 dark:border-orange-700';
+      case 'DEBIT': return 'bg-blue-100 text-blue-800 border-blue-300 dark:bg-blue-900/20 dark:text-blue-300 dark:border-blue-700';
+      case 'PIX': return 'bg-green-100 text-green-800 border-green-300 dark:bg-green-900/20 dark:text-green-300 dark:border-green-700';
+      default: return 'bg-gray-100 text-gray-800 border-gray-300 dark:bg-gray-800 dark:text-gray-300 dark:border-gray-600';
     }
   };
 
   const formatRate = (rate: number) => `${rate.toFixed(2)}%`;
 
   return (
-    <Card className="w-full">
+    <Card className="w-full border-border dark:border-gray-700">
       <CardHeader className="flex flex-row items-center justify-between pb-4">
         <div>
-          <CardTitle className="text-lg font-semibold">{block.name}</CardTitle>
+          <CardTitle className="text-lg font-semibold text-foreground">{block.name}</CardTitle>
           {block.description && (
             <p className="text-sm text-muted-foreground mt-1">{block.description}</p>
           )}
@@ -167,17 +167,17 @@ const TaxBlockPreview: React.FC<TaxBlockPreviewProps> = ({ block, onEdit }) => {
           <div className="space-y-4">
             <Table>
               <TableHeader>
-                <TableRow>
-                  {columns.paymentMethod && <TableHead>Método</TableHead>}
-                  {columns.installment && <TableHead>Parcelas</TableHead>}
-                  {columns.rootRate && <TableHead>Taxa Raíz</TableHead>}
-                  {columns.forwardingRate && <TableHead>Taxa de Repasse</TableHead>}
-                  {columns.finalRate && <TableHead>Taxa Final</TableHead>}
+                <TableRow className="border-border dark:border-gray-700">
+                  {columns.paymentMethod && <TableHead className="text-foreground">Método</TableHead>}
+                  {columns.installment && <TableHead className="text-foreground">Parcelas</TableHead>}
+                  {columns.rootRate && <TableHead className="text-foreground">Taxa Raíz</TableHead>}
+                  {columns.forwardingRate && <TableHead className="text-foreground">Taxa de Repasse</TableHead>}
+                  {columns.finalRate && <TableHead className="text-foreground">Taxa Final</TableHead>}
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {allDisplayedRates.map((rate, index) => (
-                  <TableRow key={`${rate.payment_method}-${rate.installment}-${index}`}>
+                  <TableRow key={`${rate.payment_method}-${rate.installment}-${index}`} className="border-border dark:border-gray-700 hover:bg-muted/50">
                     {columns.paymentMethod && (
                       <TableCell>
                         <Badge variant="outline" className={getPaymentMethodBadgeColor(rate.payment_method)}>
@@ -185,10 +185,10 @@ const TaxBlockPreview: React.FC<TaxBlockPreviewProps> = ({ block, onEdit }) => {
                         </Badge>
                       </TableCell>
                     )}
-                    {columns.installment && <TableCell>{rate.installment}x</TableCell>}
-                    {columns.rootRate && <TableCell>{formatRate(rate.root_rate)}</TableCell>}
-                    {columns.forwardingRate && <TableCell>{formatRate(rate.forwarding_rate)}</TableCell>}
-                    {columns.finalRate && <TableCell className="font-medium">{formatRate(rate.final_rate)}</TableCell>}
+                    {columns.installment && <TableCell className="text-foreground">{rate.installment}x</TableCell>}
+                    {columns.rootRate && <TableCell className="text-foreground">{formatRate(rate.root_rate)}</TableCell>}
+                    {columns.forwardingRate && <TableCell className="text-foreground">{formatRate(rate.forwarding_rate)}</TableCell>}
+                    {columns.finalRate && <TableCell className="font-medium text-foreground">{formatRate(rate.final_rate)}</TableCell>}
                   </TableRow>
                 ))}
               </TableBody>
