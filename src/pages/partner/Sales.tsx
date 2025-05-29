@@ -1,16 +1,23 @@
+
 import { useState } from "react";
 import { PageHeader } from "@/components/page/PageHeader";
 import { Button } from "@/components/ui/button";
-import { FileUp, Plus } from "lucide-react";
+import { FileUp, Plus, Download, RefreshCw, Filter } from "lucide-react";
 import { useDialog } from "@/hooks/use-dialog";
 import { Card, CardContent } from "@/components/ui/card";
 import AdminSalesLayout from "@/components/admin/sales/AdminSalesLayout";
-import AdminSalesFilters from "@/components/admin/sales/AdminSalesFilters";
-import AdminSalesContent, { SalesData } from "@/components/admin/sales/AdminSalesContent";
 import { useToast } from "@/hooks/use-toast";
 import { addDays } from "date-fns";
 
 // Sample data for demonstration
+export interface SalesData {
+  id: string;
+  date: string;
+  amount: number;
+  client: string;
+  status: string;
+}
+
 const mockSalesData: SalesData[] = [
   { id: '1', date: '2025-01-01', amount: 150, client: 'Company A', status: 'completed' },
   { id: '2', date: '2025-01-02', amount: 200, client: 'Company B', status: 'pending' },
@@ -94,19 +101,65 @@ const PartnerSalesPage = () => {
       >
         <Card>
           <CardContent className="p-6">
-            <AdminSalesFilters 
-              filters={filters}
-              onFilter={handleFilter}
-            />
-            
-            <AdminSalesContent 
-              sales={sales}
-              filters={filters}
-              isLoading={isLoading}
-              page={page}
-              setPage={setPage}
-              itemsPerPage={10}
-            />
+            <div className="space-y-4">
+              {/* Simple filters section */}
+              <div className="flex flex-wrap gap-4 items-center">
+                <input
+                  type="text"
+                  placeholder="Buscar vendas..."
+                  value={filters.search}
+                  onChange={(e) => setFilters(prev => ({ ...prev, search: e.target.value }))}
+                  className="px-3 py-2 border rounded-md"
+                />
+                <select
+                  value={filters.status}
+                  onChange={(e) => setFilters(prev => ({ ...prev, status: e.target.value }))}
+                  className="px-3 py-2 border rounded-md"
+                >
+                  <option value="all">Todos os status</option>
+                  <option value="completed">Concluídas</option>
+                  <option value="pending">Pendentes</option>
+                </select>
+                <Button variant="outline" onClick={handleFilter}>
+                  <Filter className="mr-2 h-4 w-4" />
+                  Aplicar Filtros
+                </Button>
+              </div>
+
+              {/* Simple sales table */}
+              <div className="overflow-x-auto">
+                <table className="w-full border-collapse border border-gray-300">
+                  <thead>
+                    <tr className="bg-gray-50">
+                      <th className="border border-gray-300 px-4 py-2 text-left">ID</th>
+                      <th className="border border-gray-300 px-4 py-2 text-left">Data</th>
+                      <th className="border border-gray-300 px-4 py-2 text-left">Cliente</th>
+                      <th className="border border-gray-300 px-4 py-2 text-left">Valor</th>
+                      <th className="border border-gray-300 px-4 py-2 text-left">Status</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {sales.map((sale) => (
+                      <tr key={sale.id}>
+                        <td className="border border-gray-300 px-4 py-2">{sale.id}</td>
+                        <td className="border border-gray-300 px-4 py-2">{sale.date}</td>
+                        <td className="border border-gray-300 px-4 py-2">{sale.client}</td>
+                        <td className="border border-gray-300 px-4 py-2">R$ {sale.amount.toFixed(2)}</td>
+                        <td className="border border-gray-300 px-4 py-2">
+                          <span className={`px-2 py-1 rounded text-sm ${
+                            sale.status === 'completed' 
+                              ? 'bg-green-100 text-green-800' 
+                              : 'bg-yellow-100 text-yellow-800'
+                          }`}>
+                            {sale.status === 'completed' ? 'Concluída' : 'Pendente'}
+                          </span>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
           </CardContent>
         </Card>
       </AdminSalesLayout>
