@@ -76,7 +76,7 @@ export const NotificationsProvider: React.FC<{ children: React.ReactNode }> = ({
         type: item.type as NotificationType,
         is_read: item.is_read,
         created_at: item.created_at,
-        data: item.data || {},
+        data: (item.data && typeof item.data === 'object') ? item.data as Record<string, any> : {},
       }));
 
       setNotifications(typedNotifications);
@@ -177,13 +177,15 @@ export const NotificationsProvider: React.FC<{ children: React.ReactNode }> = ({
     data: any = {}
   ) => {
     try {
-      const { error } = await supabase.rpc('send_notification_to_roles', {
-        notification_title: title,
-        notification_message: message,
-        notification_type: type,
-        target_roles: roles,
-        notification_data: data
-      });
+      // Use direct SQL through a stored procedure call
+      const { error } = await supabase
+        .rpc('send_notification_to_roles' as any, {
+          notification_title: title,
+          notification_message: message,
+          notification_type: type,
+          target_roles: roles,
+          notification_data: data
+        });
 
       if (error) throw error;
 
@@ -209,13 +211,15 @@ export const NotificationsProvider: React.FC<{ children: React.ReactNode }> = ({
     data: any = {}
   ) => {
     try {
-      const { error } = await supabase.rpc('send_notification_to_user', {
-        target_user_id: userId,
-        notification_title: title,
-        notification_message: message,
-        notification_type: type,
-        notification_data: data
-      });
+      // Use direct SQL through a stored procedure call
+      const { error } = await supabase
+        .rpc('send_notification_to_user' as any, {
+          target_user_id: userId,
+          notification_title: title,
+          notification_message: message,
+          notification_type: type,
+          notification_data: data
+        });
 
       if (error) throw error;
 
@@ -257,23 +261,48 @@ export const NotificationsProvider: React.FC<{ children: React.ReactNode }> = ({
           console.log('Notification change received:', payload);
           
           if (payload.eventType === 'INSERT') {
-            const newNotification = payload.new as Notification;
+            const newNotification = payload.new as any;
+            const typedNotification: Notification = {
+              id: newNotification.id,
+              user_id: newNotification.user_id,
+              title: newNotification.title,
+              message: newNotification.message,
+              type: newNotification.type as NotificationType,
+              is_read: newNotification.is_read,
+              created_at: newNotification.created_at,
+              data: (newNotification.data && typeof newNotification.data === 'object') 
+                ? newNotification.data as Record<string, any> 
+                : {},
+            };
             
             // Play sound
-            playNotificationSoundIfEnabled(newNotification.type as NotificationType, soundEnabled);
+            playNotificationSoundIfEnabled(typedNotification.type, soundEnabled);
             
             // Show toast
             toast({
-              title: newNotification.title,
-              description: newNotification.message,
+              title: typedNotification.title,
+              description: typedNotification.message,
             });
             
             // Add to notifications list
-            setNotifications(prev => [newNotification, ...prev]);
+            setNotifications(prev => [typedNotification, ...prev]);
           } else if (payload.eventType === 'UPDATE') {
-            const updatedNotification = payload.new as Notification;
+            const updatedNotification = payload.new as any;
+            const typedNotification: Notification = {
+              id: updatedNotification.id,
+              user_id: updatedNotification.user_id,
+              title: updatedNotification.title,
+              message: updatedNotification.message,
+              type: updatedNotification.type as NotificationType,
+              is_read: updatedNotification.is_read,
+              created_at: updatedNotification.created_at,
+              data: (updatedNotification.data && typeof updatedNotification.data === 'object') 
+                ? updatedNotification.data as Record<string, any> 
+                : {},
+            };
+            
             setNotifications(prev => 
-              prev.map(n => n.id === updatedNotification.id ? updatedNotification : n)
+              prev.map(n => n.id === typedNotification.id ? typedNotification : n)
             );
           } else if (payload.eventType === 'DELETE') {
             const deletedId = payload.old.id;
