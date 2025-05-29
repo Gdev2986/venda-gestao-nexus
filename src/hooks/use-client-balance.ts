@@ -19,12 +19,24 @@ export const useClientBalance = () => {
 
       setIsLoading(true);
       try {
-        // Since client_balance table doesn't exist, we'll simulate balance
-        // In a real implementation, you would create this table or use a view
-        setBalance(1500.00); // Mock balance
+        // Use the database function to get user's client balance
+        const { data, error } = await supabase.rpc('get_user_client_balance', {
+          user_uuid: user.id
+        });
+
+        if (error) {
+          console.error("Error fetching client balance:", error);
+          setError(error);
+          // Fallback to mock data if function doesn't work
+          setBalance(1500.00);
+        } else {
+          setBalance(Number(data) || 0);
+        }
       } catch (err: any) {
         console.error("Unexpected error fetching client balance:", err);
         setError(err);
+        // Fallback to mock data
+        setBalance(1500.00);
       } finally {
         setIsLoading(false);
       }

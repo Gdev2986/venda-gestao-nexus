@@ -8,6 +8,11 @@ import { useClientBalance } from "@/hooks/use-client-balance";
 import { useAuth } from "@/hooks/use-auth";
 import { PaymentMethod } from "@/types";
 import { subDays, startOfDay, endOfDay } from "date-fns";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Wallet, TrendingUp, Activity, DollarSign } from "lucide-react";
+import { Link } from "react-router-dom";
+import { PATHS } from "@/routes/paths";
 
 // Mock data para demonstração - em produção viria da API
 const generateMockSales = (startDate: Date, endDate: Date) => {
@@ -70,6 +75,39 @@ const ClientDashboard = () => {
         title="Dashboard"
         description="Bem-vindo ao seu painel de controle"
       />
+
+      {/* Balance Card - sempre visível, sem filtro de data */}
+      <Card className="bg-gradient-to-br from-primary/5 to-primary/10 border-primary/20">
+        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+          <CardTitle className="text-lg font-medium">Saldo Disponível</CardTitle>
+          <Wallet className="h-6 w-6 text-primary" />
+        </CardHeader>
+        <CardContent>
+          <div className="flex items-center justify-between">
+            <div>
+              <div className="text-3xl font-bold text-primary">
+                {balanceLoading ? (
+                  <div className="h-8 w-32 bg-gray-200 animate-pulse rounded" />
+                ) : (
+                  new Intl.NumberFormat('pt-BR', { 
+                    style: 'currency', 
+                    currency: 'BRL' 
+                  }).format(balance || 0)
+                )}
+              </div>
+              <p className="text-sm text-muted-foreground mt-1">
+                Valor disponível para saque
+              </p>
+            </div>
+            <Button asChild>
+              <Link to={PATHS.CLIENT.PAYMENTS}>
+                <DollarSign className="h-4 w-4 mr-2" />
+                Solicitar Pagamento
+              </Link>
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
 
       {/* Filtro de Período */}
       <ClientPeriodFilter onPeriodChange={handlePeriodChange} />

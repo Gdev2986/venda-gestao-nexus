@@ -1,24 +1,24 @@
+
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { PixKey } from "@/types/pix.types";
+import { PixKey } from "@/types/payment.types";
 import { useAuth } from "@/hooks/use-auth";
 
 export function usePixKeys() {
   const { user } = useAuth();
   const [pixKeys, setPixKeys] = useState<PixKey[]>([]);
-  const [isLoadingPixKeys, setIsLoadingPixKeys] = useState(true);
-  const [errorPixKeys, setErrorPixKeys] = useState<Error | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<Error | null>(null);
 
   useEffect(() => {
     const fetchPixKeys = async () => {
       if (!user) {
-        setIsLoadingPixKeys(false);
+        setPixKeys([]);
+        setIsLoading(false);
         return;
       }
 
-      setIsLoadingPixKeys(true);
-      setErrorPixKeys(null);
-
+      setIsLoading(true);
       try {
         const { data, error } = await supabase
           .from("pix_keys")
@@ -26,19 +26,19 @@ export function usePixKeys() {
           .eq("user_id", user.id);
 
         if (error) {
-          setErrorPixKeys(error);
+          setError(error);
         } else {
           setPixKeys(data || []);
         }
-      } catch (error: any) {
-        setErrorPixKeys(error);
+      } catch (err: any) {
+        setError(err);
       } finally {
-        setIsLoadingPixKeys(false);
+        setIsLoading(false);
       }
     };
 
     fetchPixKeys();
   }, [user]);
 
-  return { pixKeys, isLoadingPixKeys, errorPixKeys };
+  return { pixKeys, isLoading, error };
 }

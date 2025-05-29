@@ -2,70 +2,61 @@
 import { useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
-import { useAuth } from "@/hooks/use-auth";
 
-interface UsePaymentSubscriptionProps {
+interface UsePaymentSubscriptionOptions {
   notifyUser?: boolean;
   filterByClientId?: string;
 }
 
 export function usePaymentSubscription(
-  loadPaymentRequests: () => Promise<void>,
-  { notifyUser = false, filterByClientId }: UsePaymentSubscriptionProps = {}
+  onDataChange: () => void,
+  options: UsePaymentSubscriptionOptions = {}
 ) {
-  const { user } = useAuth();
-
   useEffect(() => {
-    if (!user) {
-      console.log("User not authenticated, skipping payment subscription.");
-      return;
-    }
-
-    console.log("Setting up payment subscription with filters:", { notifyUser, filterByClientId });
-
     const channel = supabase
-      .channel('payment_requests')
+      .channel('payment-requests-changes')
       .on(
         'postgres_changes',
         {
           event: '*',
           schema: 'public',
           table: 'payment_requests',
-          filter: filterByClientId ? `client_id=eq.${filterByClientId}` : undefined,
+          ...(options.filterByClientId && {
+            filter: `client_id=eq.${options.filterByClientId}`
+          })
         },
         (payload) => {
-          console.log('Change received!', payload);
-          loadPaymentRequests();
-
-          if (notifyUser) {
-            let notificationMessage = '';
-            switch (payload.eventType) {
-              case 'INSERT':
-                notificationMessage = 'A new payment request has been created.';
-                break;
-              case 'UPDATE':
-                notificationMessage = 'A payment request has been updated.';
-                break;
-              case 'DELETE':
-                notificationMessage = 'A payment request has been deleted.';
-                break;
-              default:
-                notificationMessage = 'A payment request has been changed.';
-                break;
+          console.log('Payment request change detected:', payload);
+          
+          if (options.notifyUser) {
+            if (payload.eventType === 'INSERT') {
+              toast({
+                title: "Nova solicitação criada",
+                description: "Sua solicitação de pagamento foi enviada com sucesso!"
+              });
+            } else if (payload.eventType === 'UPDATE') {
+              const newRecord = payload.new as any;
+              if (newRecord.status === 'APPROVED') {
+                toast({
+                  title: "Pagamento aprovado",
+                  description: "Sua solicitação de pagamento foi aprovada!"
+                });
+              } else if (newRecord.status === 'REJECTED') {
+                toast({
+                  title: "Pagamento rejeitado",
+                  description: "Sua solicitação de pagamento foi rejeitada."
+                });
+              }
             }
-
-            toast({
-              title: 'Payment Request Update',
-              description: notificationMessage,
-            });
           }
+          
+          onDataChange();
         }
       )
       .subscribe();
 
     return () => {
-      console.log("Unsubscribing from payment requests channel");
       supabase.removeChannel(channel);
     };
-  }, [loadPaymentRequests, notifyUser, user, filterByClientId, toast]);
+  }, [onDataChange, options.notifyUser, options.filterByClientId]);
 }

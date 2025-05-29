@@ -581,6 +581,7 @@ export type Database = {
           is_default: boolean | null
           key: string
           name: string
+          owner_name: string | null
           type: Database["public"]["Enums"]["pix_key_type"]
           updated_at: string | null
           user_id: string
@@ -591,6 +592,7 @@ export type Database = {
           is_default?: boolean | null
           key: string
           name: string
+          owner_name?: string | null
           type: Database["public"]["Enums"]["pix_key_type"]
           updated_at?: string | null
           user_id: string
@@ -601,6 +603,7 @@ export type Database = {
           is_default?: boolean | null
           key?: string
           name?: string
+          owner_name?: string | null
           type?: Database["public"]["Enums"]["pix_key_type"]
           updated_at?: string | null
           user_id?: string
@@ -1084,6 +1087,14 @@ export type Database = {
       }
       get_current_user_role: {
         Args: Record<PropertyKey, never>
+        Returns: string
+      }
+      get_user_client_balance: {
+        Args: { user_uuid: string }
+        Returns: number
+      }
+      get_user_client_id: {
+        Args: { user_uuid: string }
         Returns: string
       }
       get_user_role: {

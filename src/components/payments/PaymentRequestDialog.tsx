@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
@@ -5,8 +6,8 @@ import { Input } from "@/components/ui/input";
 import { Separator } from "@/components/ui/separator";
 import { useToast } from "@/hooks/use-toast";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { PaymentType, PixKey } from "@/types";
-import { AlertCircle, BanknoteIcon, SendIcon, Wallet } from "lucide-react";
+import { PixKey } from "@/types/pix.types";
+import { AlertCircle, Wallet } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -26,7 +27,7 @@ interface PaymentRequestDialogProps {
   onRequestPayment: (
     amount: string,
     description: string,
-    pixKeyId: string | null
+    pixKeyId: string
   ) => void;
 }
 
@@ -41,7 +42,7 @@ export const PaymentRequestDialog = ({
   const { toast } = useToast();
   const [amount, setAmount] = useState("");
   const [description, setDescription] = useState("");
-  const [selectedPixKeyId, setSelectedPixKeyId] = useState<string | null>(null);
+  const [selectedPixKeyId, setSelectedPixKeyId] = useState<string>("");
   
   // Reset form data when dialog is opened/closed
   const handleOpenChange = (open: boolean) => {
@@ -49,7 +50,7 @@ export const PaymentRequestDialog = ({
       // Reset form data
       setAmount("");
       setDescription("");
-      setSelectedPixKeyId(null);
+      setSelectedPixKeyId("");
     } else if (pixKeys.length > 0) {
       // Preselect default key if available
       const defaultKey = pixKeys.find(key => key.is_default);
@@ -98,30 +99,30 @@ export const PaymentRequestDialog = ({
     // Call the parent onRequestPayment function with all the necessary data
     onRequestPayment(
       amount,
-      description,
+      description || "Solicitação de pagamento",
       selectedPixKeyId
     );
-    
-    // Reset fields
-    setAmount("");
-    setDescription("");
-    setSelectedPixKeyId(null);
   };
   
   return (
     <Dialog open={isOpen} onOpenChange={handleOpenChange}>
       <DialogContent className="sm:max-w-[500px]">
         <DialogHeader>
-          <DialogTitle>Solicitar Pagamento</DialogTitle>
+          <DialogTitle className="flex items-center gap-2">
+            <Wallet className="h-5 w-5 text-primary" />
+            Solicitar Pagamento
+          </DialogTitle>
           <DialogDescription>
             Escolha a chave PIX e informe o valor que deseja retirar do seu saldo disponível.
           </DialogDescription>
         </DialogHeader>
         
         <div className="space-y-4 py-4">
-          <div className="flex items-center justify-between">
+          <div className="flex items-center justify-between p-3 bg-primary/5 rounded-lg border border-primary/20">
             <span className="text-sm font-medium">Saldo Disponível:</span>
-            <span className="font-bold">{new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(clientBalance)}</span>
+            <span className="font-bold text-primary text-lg">
+              {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(clientBalance)}
+            </span>
           </div>
           
           <Separator />
@@ -138,7 +139,8 @@ export const PaymentRequestDialog = ({
           
           {isLoadingPixKeys && (
             <div className="flex items-center justify-center p-4">
-              <span className="text-sm text-muted-foreground">Carregando chaves PIX...</span>
+              <div className="h-4 w-4 animate-spin rounded-full border-2 border-primary border-t-transparent" />
+              <span className="text-sm text-muted-foreground ml-2">Carregando chaves PIX...</span>
             </div>
           )}
           
@@ -146,8 +148,8 @@ export const PaymentRequestDialog = ({
             <div className="space-y-2">
               <Label htmlFor="pix-key">Chave PIX para recebimento</Label>
               <Select 
-                value={selectedPixKeyId || ""} 
-                onValueChange={(value) => setSelectedPixKeyId(value)}
+                value={selectedPixKeyId} 
+                onValueChange={setSelectedPixKeyId}
               >
                 <SelectTrigger>
                   <SelectValue placeholder="Selecione uma chave PIX" />
@@ -157,17 +159,14 @@ export const PaymentRequestDialog = ({
                     <SelectItem 
                       key={pixKey.id} 
                       value={pixKey.id}
-                      className="flex items-center"
                     >
                       <div className="flex flex-col">
-                        <span>{pixKey.owner_name || pixKey.name}</span>
+                        <span className="font-medium">{pixKey.owner_name || pixKey.name}</span>
                         <span className="text-xs text-muted-foreground">{pixKey.type}: {pixKey.key}</span>
+                        {pixKey.is_default && (
+                          <span className="text-xs text-primary">Padrão</span>
+                        )}
                       </div>
-                      {pixKey.is_default && (
-                        <span className="ml-2 text-xs bg-primary/10 text-primary px-2 py-0.5 rounded">
-                          Padrão
-                        </span>
-                      )}
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -183,6 +182,9 @@ export const PaymentRequestDialog = ({
                 id="amount"
                 type="number"
                 placeholder="0,00"
+                step="0.01"
+                min="0"
+                max={clientBalance}
                 value={amount}
                 onChange={(e) => setAmount(e.target.value)}
                 className="pl-9"
@@ -201,14 +203,16 @@ export const PaymentRequestDialog = ({
           </div>
         </div>
         
-        <DialogFooter>
-          <Button variant="outline" onClick={() => onOpenChange(false)}>Cancelar</Button>
+        <DialogFooter className="gap-2">
+          <Button variant="outline" onClick={() => onOpenChange(false)}>
+            Cancelar
+          </Button>
           <Button 
             onClick={handleSubmit}
             disabled={!selectedPixKeyId || pixKeys.length === 0 || !amount || parseFloat(amount) <= 0}
           >
             <Wallet className="h-4 w-4 mr-2" />
-            Solicitar
+            Solicitar Pagamento
           </Button>
         </DialogFooter>
       </DialogContent>
