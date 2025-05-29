@@ -38,6 +38,7 @@ export interface SupportTicket {
   title: string;
   description: string;
   resolution?: string;
+  machine_id?: string;
   client?: {
     id: string;
     business_name: string;
@@ -68,10 +69,11 @@ export interface CreateSupportTicketParams {
   type: SupportRequestType;
   priority: SupportRequestPriority;
   client_id: string;
+  machine_id?: string;
+  attachments?: File[];
 }
 
 export interface CreateMessageParams {
   conversation_id: string;
   message: string;
 }
-
