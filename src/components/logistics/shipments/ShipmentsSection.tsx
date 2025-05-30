@@ -3,32 +3,99 @@ import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
-import { Package, Plus, Truck, Users, PackageCheck, ShoppingBag, HelpCircle } from "lucide-react";
+import { Package, Plus, Truck, Users, PackageCheck } from "lucide-react";
 import ShipmentsList from "./ShipmentsList";
 import ClientsList from "./ClientsList";
 import NewShipmentDialog from "./NewShipmentDialog";
-import { StyledCard } from "@/components/ui/styled-card";
-
-interface ShipmentsStats {
-  totalMachines: number;
-  onlineMachines: number;
-  pendingRequests: number;
-  deliveredShipments: number;
-}
+import { useShipments } from "@/hooks/use-shipments";
 
 const ShipmentsSection = () => {
   const [showNewShipment, setShowNewShipment] = useState(false);
+  const { getShipmentStats, isLoading } = useShipments();
   
-  // Mock data for stats
-  const stats: ShipmentsStats = {
-    totalMachines: 245,
-    onlineMachines: 180,
-    pendingRequests: 32,
-    deliveredShipments: 136
-  };
+  const stats = getShipmentStats();
 
   return (
     <div className="space-y-6">
+      {/* Stats Cards */}
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Total de Envios</CardTitle>
+            <Package className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">
+              {isLoading ? (
+                <div className="h-6 w-12 bg-muted animate-pulse rounded" />
+              ) : (
+                stats.totalShipments
+              )}
+            </div>
+            <p className="text-xs text-muted-foreground">
+              Todos os envios registrados
+            </p>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Em Trânsito</CardTitle>
+            <Truck className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">
+              {isLoading ? (
+                <div className="h-6 w-12 bg-muted animate-pulse rounded" />
+              ) : (
+                stats.inTransitShipments
+              )}
+            </div>
+            <p className="text-xs text-muted-foreground">
+              Envios em andamento
+            </p>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Pendentes</CardTitle>
+            <Users className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">
+              {isLoading ? (
+                <div className="h-6 w-12 bg-muted animate-pulse rounded" />
+              ) : (
+                stats.pendingShipments
+              )}
+            </div>
+            <p className="text-xs text-muted-foreground">
+              Aguardando processamento
+            </p>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Entregues</CardTitle>
+            <PackageCheck className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">
+              {isLoading ? (
+                <div className="h-6 w-12 bg-muted animate-pulse rounded" />
+              ) : (
+                stats.deliveredShipments
+              )}
+            </div>
+            <p className="text-xs text-muted-foreground">
+              Envios concluídos
+            </p>
+          </CardContent>
+        </Card>
+      </div>
+
       {/* Main Content */}
       <Card>
         <CardHeader className="flex flex-row items-center justify-between">

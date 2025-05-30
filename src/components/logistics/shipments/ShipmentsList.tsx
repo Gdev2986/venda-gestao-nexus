@@ -6,60 +6,23 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { DataTable } from "@/components/ui/data-table";
 import { ColumnDef } from "@tanstack/react-table";
-import { Calendar, Search, Filter } from "lucide-react";
+import { Calendar, Search, Filter, MoreHorizontal, Eye, Edit, Trash2 } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
-
-interface Shipment {
-  id: string;
-  clientName: string;
-  itemType: 'machine' | 'bobina';
-  itemDescription: string;
-  status: 'pending' | 'in_transit' | 'delivered' | 'cancelled';
-  createdAt: Date;
-  deliveryDate?: Date;
-  responsibleUser: string;
-  trackingCode?: string;
-}
+import { useShipments } from "@/hooks/use-shipments";
+import { Shipment } from "@/types/shipment.types";
+import { 
+  DropdownMenu, 
+  DropdownMenuContent, 
+  DropdownMenuItem, 
+  DropdownMenuTrigger 
+} from "@/components/ui/dropdown-menu";
 
 const ShipmentsList = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
+  const { shipments, isLoading, updateShipment, deleteShipment } = useShipments();
   
-  // Mock data
-  const shipments: Shipment[] = [
-    {
-      id: "1",
-      clientName: "Empresa ABC Ltda",
-      itemType: "machine",
-      itemDescription: "Terminal de Pagamento POS-X1",
-      status: "delivered",
-      createdAt: new Date("2024-05-25"),
-      deliveryDate: new Date("2024-05-27"),
-      responsibleUser: "João Silva",
-      trackingCode: "BR123456789"
-    },
-    {
-      id: "2",
-      clientName: "Comércio XYZ",
-      itemType: "bobina",
-      itemDescription: "Bobina Térmica 80mm x 40m",
-      status: "in_transit",
-      createdAt: new Date("2024-05-26"),
-      responsibleUser: "Maria Santos",
-      trackingCode: "BR987654321"
-    },
-    {
-      id: "3",
-      clientName: "Loja 123",
-      itemType: "machine",
-      itemDescription: "Terminal de Pagamento POS-Y2",
-      status: "pending",
-      createdAt: new Date("2024-05-28"),
-      responsibleUser: "Carlos Lima"
-    }
-  ];
-
   const getStatusBadge = (status: Shipment['status']) => {
     const statusConfig = {
       pending: { label: "Pendente", variant: "secondary" as const },
@@ -83,16 +46,29 @@ const ShipmentsList = () => {
     );
   };
 
-  const getItemTypeBadge = (type: Shipment['itemType']) => {
-    return type === 'machine' ? (
-      <Badge variant="outline" className="bg-purple-50 text-purple-700 border-purple-200">
-        Máquina
-      </Badge>
-    ) : (
-      <Badge variant="outline" className="bg-orange-50 text-orange-700 border-orange-200">
-        Bobina
+  const getItemTypeBadge = (type: Shipment['item_type']) => {
+    const typeConfig = {
+      machine: { label: "Máquina", color: "bg-purple-50 text-purple-700 border-purple-200" },
+      bobina: { label: "Bobina", color: "bg-orange-50 text-orange-700 border-orange-200" },
+      other: { label: "Outro", color: "bg-gray-50 text-gray-700 border-gray-200" }
+    };
+
+    const config = typeConfig[type];
+    return (
+      <Badge variant="outline" className={config.color}>
+        {config.label}
       </Badge>
     );
+  };
+
+  const handleStatusChange = async (shipmentId: string, newStatus: Shipment['status']) => {
+    await updateShipment(shipmentId, { status: newStatus });
+  };
+
+  const handleDelete = async (shipmentId: string) => {
+    if (window.confirm('Tem certeza que deseja excluir este envio?')) {
+      await deleteShipment(shipmentId);
+    }
   };
 
   const columns: ColumnDef<Shipment>[] = [
@@ -100,7 +76,7 @@ const ShipmentsList = () => {
       id: "client",
       header: "Cliente",
       cell: ({ row }) => (
-        <div className="font-medium">{row.original.clientName}</div>
+        <div className="font-medium">{row.original.client?.business_name || 'N/A'}</div>
       ),
     },
     {
@@ -108,9 +84,9 @@ const ShipmentsList = () => {
       header: "Item",
       cell: ({ row }) => (
         <div className="space-y-1">
-          {getItemTypeBadge(row.original.itemType)}
+          {getItemTypeBadge(row.original.item_type)}
           <div className="text-sm text-muted-foreground">
-            {row.original.itemDescription}
+            {row.original.item_description}
           </div>
         </div>
       ),
@@ -125,10 +101,10 @@ const ShipmentsList = () => {
       header: "Datas",
       cell: ({ row }) => (
         <div className="text-sm">
-          <div>Criado: {format(row.original.createdAt, "dd/MM/yyyy", { locale: ptBR })}</div>
-          {row.original.deliveryDate && (
+          <div>Criado: {format(new Date(row.original.created_at), "dd/MM/yyyy", { locale: ptBR })}</div>
+          {row.original.delivered_at && (
             <div className="text-muted-foreground">
-              Entregue: {format(row.original.deliveryDate, "dd/MM/yyyy", { locale: ptBR })}
+              Entregue: {format(new Date(row.original.delivered_at), "dd/MM/yyyy", { locale: ptBR })}
             </div>
           )}
         </div>
@@ -138,7 +114,7 @@ const ShipmentsList = () => {
       id: "responsible",
       header: "Responsável",
       cell: ({ row }) => (
-        <div className="text-sm">{row.original.responsibleUser}</div>
+        <div className="text-sm">{row.original.creator?.name || 'N/A'}</div>
       ),
     },
     {
@@ -146,21 +122,72 @@ const ShipmentsList = () => {
       header: "Rastreamento",
       cell: ({ row }) => (
         <div className="text-sm font-mono">
-          {row.original.trackingCode || "N/A"}
+          {row.original.tracking_code || "N/A"}
         </div>
+      ),
+    },
+    {
+      id: "actions",
+      header: "Ações",
+      cell: ({ row }) => (
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button variant="ghost" size="sm">
+              <MoreHorizontal className="h-4 w-4" />
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end">
+            <DropdownMenuItem>
+              <Eye className="h-4 w-4 mr-2" />
+              Ver Detalhes
+            </DropdownMenuItem>
+            <DropdownMenuItem>
+              <Edit className="h-4 w-4 mr-2" />
+              Editar
+            </DropdownMenuItem>
+            {row.original.status !== 'delivered' && (
+              <DropdownMenuItem 
+                onClick={() => handleStatusChange(row.original.id, 'delivered')}
+              >
+                <Calendar className="h-4 w-4 mr-2" />
+                Marcar como Entregue
+              </DropdownMenuItem>
+            )}
+            <DropdownMenuItem 
+              onClick={() => handleDelete(row.original.id)}
+              className="text-red-600"
+            >
+              <Trash2 className="h-4 w-4 mr-2" />
+              Excluir
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
       ),
     }
   ];
 
   const filteredShipments = shipments.filter(shipment => {
     const matchesSearch = searchTerm === "" || 
-      shipment.clientName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      shipment.itemDescription.toLowerCase().includes(searchTerm.toLowerCase());
+      shipment.client?.business_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      shipment.item_description.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      shipment.tracking_code?.toLowerCase().includes(searchTerm.toLowerCase());
     
     const matchesStatus = statusFilter === "all" || shipment.status === statusFilter;
     
     return matchesSearch && matchesStatus;
   });
+
+  if (isLoading) {
+    return (
+      <div className="space-y-4">
+        <div className="grid grid-cols-2 gap-4">
+          <div className="h-10 bg-muted animate-pulse rounded" />
+          <div className="h-10 bg-muted animate-pulse rounded" />
+        </div>
+        <div className="h-64 bg-muted animate-pulse rounded" />
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-4">
@@ -169,7 +196,7 @@ const ShipmentsList = () => {
         <div className="relative flex-1">
           <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
           <Input
-            placeholder="Buscar por cliente ou item..."
+            placeholder="Buscar por cliente, item ou código de rastreamento..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             className="pl-10"

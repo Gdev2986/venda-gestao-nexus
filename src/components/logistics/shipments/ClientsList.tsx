@@ -6,80 +6,49 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { ColumnDef } from "@tanstack/react-table";
 import { Search, MapPin, Phone, Mail, Package } from "lucide-react";
+import { useClients } from "@/hooks/use-clients";
+import { useShipments } from "@/hooks/use-shipments";
 
-interface ClientInfo {
+interface ClientWithShipmentCount {
   id: string;
-  businessName: string;
-  contactName: string;
-  email: string;
-  phone: string;
-  address: string;
-  city: string;
-  state: string;
-  zipCode: string;
-  totalShipments: number;
-  lastShipmentDate?: Date;
-  status: 'active' | 'inactive';
+  business_name: string;
+  contact_name?: string;
+  email?: string;
+  phone?: string;
+  address?: string;
+  city?: string;
+  state?: string;
+  zip?: string;
+  status: string;
+  shipmentCount: number;
 }
 
 const ClientsList = () => {
   const [searchTerm, setSearchTerm] = useState("");
+  const { clients, loading: clientsLoading } = useClients();
+  const { shipments, isLoading: shipmentsLoading } = useShipments();
 
-  // Mock data
-  const clients: ClientInfo[] = [
-    {
-      id: "1",
-      businessName: "Empresa ABC Ltda",
-      contactName: "João da Silva",
-      email: "joao@empresaabc.com",
-      phone: "(11) 99999-9999",
-      address: "Rua das Flores, 123",
-      city: "São Paulo",
-      state: "SP",
-      zipCode: "01234-567",
-      totalShipments: 15,
-      lastShipmentDate: new Date("2024-05-27"),
-      status: "active"
-    },
-    {
-      id: "2",
-      businessName: "Comércio XYZ",
-      contactName: "Maria Santos",
-      email: "maria@comercioxyz.com",
-      phone: "(11) 88888-8888",
-      address: "Av. Principal, 456",
-      city: "Rio de Janeiro",
-      state: "RJ",
-      zipCode: "20000-000",
-      totalShipments: 8,
-      lastShipmentDate: new Date("2024-05-26"),
-      status: "active"
-    },
-    {
-      id: "3",
-      businessName: "Loja 123",
-      contactName: "Carlos Lima",
-      email: "carlos@loja123.com",
-      phone: "(11) 77777-7777",
-      address: "Rua do Comércio, 789",
-      city: "Belo Horizonte",
-      state: "MG",
-      zipCode: "30000-000",
-      totalShipments: 3,
-      status: "inactive"
-    }
-  ];
+  // Combine clients with shipment counts
+  const clientsWithShipments: ClientWithShipmentCount[] = clients?.map(client => {
+    const shipmentCount = shipments.filter(shipment => shipment.client_id === client.id).length;
+    return {
+      ...client,
+      shipmentCount
+    };
+  }) || [];
 
-  const columns: ColumnDef<ClientInfo>[] = [
+  const columns: ColumnDef<ClientWithShipmentCount>[] = [
     {
       id: "business",
       header: "Empresa",
       cell: ({ row }) => (
         <div>
-          <div className="font-medium">{row.original.businessName}</div>
-          <div className="text-sm text-muted-foreground">
-            Contato: {row.original.contactName}
-          </div>
+          <div className="font-medium">{row.original.business_name}</div>
+          {row.original.contact_name && (
+            <div className="text-sm text-muted-foreground">
+              Contato: {row.original.contact_name}
+            </div>
+          )}
         </div>
       ),
     },
@@ -88,14 +57,18 @@ const ClientsList = () => {
       header: "Contato",
       cell: ({ row }) => (
         <div className="space-y-1 text-sm">
-          <div className="flex items-center gap-2">
-            <Mail className="h-3 w-3 text-muted-foreground" />
-            {row.original.email}
-          </div>
-          <div className="flex items-center gap-2">
-            <Phone className="h-3 w-3 text-muted-foreground" />
-            {row.original.phone}
-          </div>
+          {row.original.email && (
+            <div className="flex items-center gap-2">
+              <Mail className="h-3 w-3 text-muted-foreground" />
+              {row.original.email}
+            </div>
+          )}
+          {row.original.phone && (
+            <div className="flex items-center gap-2">
+              <Phone className="h-3 w-3 text-muted-foreground" />
+              {row.original.phone}
+            </div>
+          )}
         </div>
       ),
     },
@@ -104,15 +77,21 @@ const ClientsList = () => {
       header: "Endereço",
       cell: ({ row }) => (
         <div className="text-sm">
-          <div className="flex items-start gap-2">
-            <MapPin className="h-3 w-3 text-muted-foreground mt-0.5" />
-            <div>
-              <div>{row.original.address}</div>
-              <div className="text-muted-foreground">
-                {row.original.city}, {row.original.state} - {row.original.zipCode}
+          {row.original.address && (
+            <div className="flex items-start gap-2">
+              <MapPin className="h-3 w-3 text-muted-foreground mt-0.5" />
+              <div>
+                <div>{row.original.address}</div>
+                {(row.original.city || row.original.state || row.original.zip) && (
+                  <div className="text-muted-foreground">
+                    {[row.original.city, row.original.state, row.original.zip]
+                      .filter(Boolean)
+                      .join(', ')}
+                  </div>
+                )}
               </div>
             </div>
-          </div>
+          )}
         </div>
       ),
     },
@@ -123,13 +102,11 @@ const ClientsList = () => {
         <div className="text-center">
           <div className="flex items-center gap-2 justify-center">
             <Package className="h-4 w-4 text-muted-foreground" />
-            <span className="font-medium">{row.original.totalShipments}</span>
+            <span className="font-medium">{row.original.shipmentCount}</span>
           </div>
-          {row.original.lastShipmentDate && (
-            <div className="text-xs text-muted-foreground mt-1">
-              Último: {row.original.lastShipmentDate.toLocaleDateString('pt-BR')}
-            </div>
-          )}
+          <div className="text-xs text-muted-foreground mt-1">
+            Total de envios
+          </div>
         </div>
       ),
     },
@@ -138,14 +115,14 @@ const ClientsList = () => {
       header: "Status",
       cell: ({ row }) => (
         <Badge 
-          variant={row.original.status === 'active' ? 'default' : 'secondary'}
+          variant={row.original.status === 'ACTIVE' ? 'default' : 'secondary'}
           className={
-            row.original.status === 'active' 
+            row.original.status === 'ACTIVE' 
               ? "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200"
               : ""
           }
         >
-          {row.original.status === 'active' ? 'Ativo' : 'Inativo'}
+          {row.original.status === 'ACTIVE' ? 'Ativo' : 'Inativo'}
         </Badge>
       ),
     },
@@ -160,13 +137,22 @@ const ClientsList = () => {
     }
   ];
 
-  const filteredClients = clients.filter(client => {
+  const filteredClients = clientsWithShipments.filter(client => {
     return searchTerm === "" || 
-      client.businessName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      client.contactName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      client.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      client.city.toLowerCase().includes(searchTerm.toLowerCase());
+      client.business_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      client.contact_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      client.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      client.city?.toLowerCase().includes(searchTerm.toLowerCase());
   });
+
+  if (clientsLoading || shipmentsLoading) {
+    return (
+      <div className="space-y-4">
+        <div className="h-10 bg-muted animate-pulse rounded" />
+        <div className="h-64 bg-muted animate-pulse rounded" />
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-4">

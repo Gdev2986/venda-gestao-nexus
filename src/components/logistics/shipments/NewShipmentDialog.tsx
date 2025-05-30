@@ -1,191 +1,184 @@
 
 import { useState } from "react";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
-import { Badge } from "@/components/ui/badge";
-import { Search, X } from "lucide-react";
+import { useShipments } from "@/hooks/use-shipments";
+import { useClients } from "@/hooks/use-clients";
+import { CreateShipmentData } from "@/types/shipment.types";
+import { Loader2 } from "lucide-react";
 
 interface NewShipmentDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
 }
 
-interface ClientOption {
-  id: string;
-  businessName: string;
-  contactName: string;
-  address: string;
-}
-
 const NewShipmentDialog = ({ open, onOpenChange }: NewShipmentDialogProps) => {
-  const [clientSearch, setClientSearch] = useState("");
-  const [selectedClient, setSelectedClient] = useState<ClientOption | null>(null);
-  const [itemType, setItemType] = useState<string>("");
-  const [itemDescription, setItemDescription] = useState("");
-  const [notes, setNotes] = useState("");
+  const { createShipment } = useShipments();
+  const { clients, loading: clientsLoading } = useClients();
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  
+  const [formData, setFormData] = useState<CreateShipmentData>({
+    client_id: '',
+    item_type: 'machine',
+    item_description: '',
+    tracking_code: '',
+    notes: ''
+  });
 
-  // Mock clients for autocomplete
-  const clients: ClientOption[] = [
-    {
-      id: "1",
-      businessName: "Empresa ABC Ltda",
-      contactName: "João da Silva",
-      address: "Rua das Flores, 123 - São Paulo, SP"
-    },
-    {
-      id: "2",
-      businessName: "Comércio XYZ",
-      contactName: "Maria Santos",
-      address: "Av. Principal, 456 - Rio de Janeiro, RJ"
-    },
-    {
-      id: "3",
-      businessName: "Loja 123",
-      contactName: "Carlos Lima",
-      address: "Rua do Comércio, 789 - Belo Horizonte, MG"
-    }
-  ];
-
-  const filteredClients = clients.filter(client =>
-    client.businessName.toLowerCase().includes(clientSearch.toLowerCase()) ||
-    client.contactName.toLowerCase().includes(clientSearch.toLowerCase())
-  );
-
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    // Handle form submission here
-    console.log({
-      client: selectedClient,
-      itemType,
-      itemDescription,
-      notes
+    
+    if (!formData.client_id || !formData.item_description) {
+      return;
+    }
+
+    setIsSubmitting(true);
+    
+    const shipment = await createShipment({
+      client_id: formData.client_id,
+      item_type: formData.item_type,
+      item_description: formData.item_description,
+      tracking_code: formData.tracking_code || undefined,
+      notes: formData.notes || undefined
+    });
+
+    if (shipment) {
+      onOpenChange(false);
+      setFormData({
+        client_id: '',
+        item_type: 'machine',
+        item_description: '',
+        tracking_code: '',
+        notes: ''
+      });
+    }
+    
+    setIsSubmitting(false);
+  };
+
+  const handleCancel = () => {
+    setFormData({
+      client_id: '',
+      item_type: 'machine',
+      item_description: '',
+      tracking_code: '',
+      notes: ''
     });
     onOpenChange(false);
-    // Reset form
-    setSelectedClient(null);
-    setClientSearch("");
-    setItemType("");
-    setItemDescription("");
-    setNotes("");
   };
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[500px]">
+      <DialogContent className="sm:max-w-md">
         <DialogHeader>
           <DialogTitle>Novo Envio</DialogTitle>
         </DialogHeader>
-
+        
         <form onSubmit={handleSubmit} className="space-y-4">
-          {/* Client Selection */}
           <div className="space-y-2">
-            <Label htmlFor="client">Cliente</Label>
-            {selectedClient ? (
-              <div className="flex items-center justify-between p-3 border rounded-md bg-muted/30">
-                <div>
-                  <div className="font-medium">{selectedClient.businessName}</div>
-                  <div className="text-sm text-muted-foreground">
-                    {selectedClient.contactName} • {selectedClient.address}
-                  </div>
-                </div>
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => setSelectedClient(null)}
-                >
-                  <X className="h-4 w-4" />
-                </Button>
-              </div>
-            ) : (
-              <div className="space-y-2">
-                <div className="relative">
-                  <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                  <Input
-                    id="client"
-                    placeholder="Buscar cliente..."
-                    value={clientSearch}
-                    onChange={(e) => setClientSearch(e.target.value)}
-                    className="pl-10"
-                  />
-                </div>
-                {clientSearch && filteredClients.length > 0 && (
-                  <div className="border rounded-md max-h-40 overflow-y-auto">
-                    {filteredClients.map((client) => (
-                      <button
-                        key={client.id}
-                        type="button"
-                        className="w-full p-3 text-left hover:bg-muted/50 border-b last:border-b-0"
-                        onClick={() => {
-                          setSelectedClient(client);
-                          setClientSearch("");
-                        }}
-                      >
-                        <div className="font-medium">{client.businessName}</div>
-                        <div className="text-sm text-muted-foreground">
-                          {client.contactName} • {client.address}
-                        </div>
-                      </button>
-                    ))}
-                  </div>
-                )}
-              </div>
-            )}
-          </div>
-
-          {/* Item Type */}
-          <div className="space-y-2">
-            <Label htmlFor="itemType">Tipo de Item</Label>
-            <Select value={itemType} onValueChange={setItemType}>
+            <Label htmlFor="client">Cliente *</Label>
+            <Select
+              value={formData.client_id}
+              onValueChange={(value) => setFormData(prev => ({ ...prev, client_id: value }))}
+              required
+            >
               <SelectTrigger>
-                <SelectValue placeholder="Selecione o tipo de item" />
+                <SelectValue placeholder="Selecione um cliente" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="machine">Máquina</SelectItem>
-                <SelectItem value="bobina">Bobina</SelectItem>
+                {clientsLoading ? (
+                  <SelectItem value="" disabled>Carregando clientes...</SelectItem>
+                ) : (
+                  clients?.map((client) => (
+                    <SelectItem key={client.id} value={client.id}>
+                      {client.business_name}
+                    </SelectItem>
+                  ))
+                )}
               </SelectContent>
             </Select>
           </div>
 
-          {/* Item Description */}
           <div className="space-y-2">
-            <Label htmlFor="itemDescription">Descrição do Item</Label>
+            <Label htmlFor="item_type">Tipo de Item *</Label>
+            <Select
+              value={formData.item_type}
+              onValueChange={(value: 'machine' | 'bobina' | 'other') => 
+                setFormData(prev => ({ ...prev, item_type: value }))
+              }
+              required
+            >
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="machine">Máquina</SelectItem>
+                <SelectItem value="bobina">Bobina</SelectItem>
+                <SelectItem value="other">Outro</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="item_description">Descrição do Item *</Label>
             <Input
-              id="itemDescription"
-              placeholder="Ex: Terminal de Pagamento POS-X1"
-              value={itemDescription}
-              onChange={(e) => setItemDescription(e.target.value)}
+              id="item_description"
+              value={formData.item_description}
+              onChange={(e) => setFormData(prev => ({ ...prev, item_description: e.target.value }))}
+              placeholder="Ex: Terminal POS-X1, Bobina 80mm, etc."
+              required
             />
           </div>
 
-          {/* Notes */}
           <div className="space-y-2">
-            <Label htmlFor="notes">Observações (opcional)</Label>
+            <Label htmlFor="tracking_code">Código de Rastreamento</Label>
+            <Input
+              id="tracking_code"
+              value={formData.tracking_code}
+              onChange={(e) => setFormData(prev => ({ ...prev, tracking_code: e.target.value }))}
+              placeholder="Ex: BR123456789"
+            />
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="notes">Observações</Label>
             <Textarea
               id="notes"
-              placeholder="Informações adicionais sobre o envio..."
-              value={notes}
-              onChange={(e) => setNotes(e.target.value)}
+              value={formData.notes}
+              onChange={(e) => setFormData(prev => ({ ...prev, notes: e.target.value }))}
+              placeholder="Observações adicionais sobre o envio..."
               rows={3}
             />
           </div>
 
-          {/* Submit Button */}
-          <div className="flex justify-end gap-2 pt-4">
-            <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
+          <DialogFooter className="sm:justify-between">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={handleCancel}
+              disabled={isSubmitting}
+            >
               Cancelar
             </Button>
-            <Button 
-              type="submit" 
-              disabled={!selectedClient || !itemType || !itemDescription}
+            
+            <Button
+              type="submit"
+              disabled={isSubmitting || !formData.client_id || !formData.item_description}
             >
-              Criar Envio
+              {isSubmitting ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Criando...
+                </>
+              ) : (
+                "Criar Envio"
+              )}
             </Button>
-          </div>
+          </DialogFooter>
         </form>
       </DialogContent>
     </Dialog>

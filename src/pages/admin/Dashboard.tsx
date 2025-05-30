@@ -1,5 +1,5 @@
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, memo } from "react";
 import { PageHeader } from "@/components/page/PageHeader";
 import { useToast } from "@/hooks/use-toast";
 import { DATE_FILTER_PRESETS, DateRangeFilters } from "@/components/dashboard/admin/DateRangeFilters";
@@ -130,7 +130,7 @@ const AdminDashboard = () => {
         {/* Payment Methods Breakdown */}
         <div className="grid grid-cols-1 gap-4">
           <PaymentMethodsBreakdown 
-            data={chartsData?.paymentMethodsDetail || defaultChartsData.paymentMethodsDetail} 
+            data={chartsData?.paymentMethodsDetail || []} 
             isLoading={isLoading} 
           />
         </div>
