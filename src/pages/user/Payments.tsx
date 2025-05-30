@@ -1,4 +1,3 @@
-
 import { PageHeader } from "@/components/page/PageHeader";
 import { Button } from "@/components/ui/button";
 import { useClientPayments } from "@/hooks/useClientPayments";
@@ -102,8 +101,14 @@ const UserPayments = () => {
     console.log("Available PIX keys:", pixKeys);
   }, [user, payments, pixKeys]);
 
-  // Convert PaymentRequest[] to Payment[] for compatibility
-  const convertedPayments = payments.map(payment => convertRequestToPayment(payment));
+  // Convert PaymentRequest[] to Payment[] for compatibility and ensure rejection_reason is always a string
+  const convertedPayments = payments.map(payment => {
+    const converted = convertRequestToPayment(payment);
+    return {
+      ...converted,
+      rejection_reason: converted.rejection_reason || ""
+    };
+  });
   
   return (
     <div className="space-y-6">

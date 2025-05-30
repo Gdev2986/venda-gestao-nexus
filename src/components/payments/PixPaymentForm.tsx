@@ -152,9 +152,9 @@ export const PixPaymentForm = ({
               </Select>
               {form.formState.errors.pix_key_id && (
                 <p className="text-sm text-destructive mt-1">
-                  {typeof form.formState.errors.pix_key_id === 'string' 
-                    ? form.formState.errors.pix_key_id 
-                    : form.formState.errors.pix_key_id?.message || 'Erro de validação'
+                  {typeof form.formState.errors.pix_key_id === 'object' && form.formState.errors.pix_key_id?.message 
+                    ? form.formState.errors.pix_key_id.message
+                    : 'Selecione uma chave PIX'
                   }
                 </p>
               )}
