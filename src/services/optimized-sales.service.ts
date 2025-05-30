@@ -71,6 +71,42 @@ class OptimizedSalesService {
     return Date.now() - entry.timestamp < this.cacheTimeout;
   }
 
+  // Converte horário local brasileiro para UTC para o banco
+  private convertBrazilianTimeToUTC(time: string): string {
+    if (!time) return time;
+    
+    // Se já tem formato HH:MM, adiciona segundos
+    const formattedTime = time.includes(':') ? (time.length === 5 ? time + ':00' : time) : time;
+    
+    // Cria uma data fictícia para hoje em horário brasileiro
+    const today = new Date();
+    const brazilDate = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+    
+    // Parse do horário
+    const [hours, minutes, seconds = '00'] = formattedTime.split(':');
+    brazilDate.setHours(parseInt(hours), parseInt(minutes), parseInt(seconds));
+    
+    // Converte para UTC (adiciona 3 horas para compensar UTC-3)
+    const utcDate = new Date(brazilDate.getTime() + (3 * 60 * 60 * 1000));
+    
+    return utcDate.toTimeString().slice(0, 8); // Retorna apenas HH:MM:SS
+  }
+
+  // Converte data UTC do banco para horário brasileiro
+  private convertUTCToBrazilianTime(utcDateString: string): string {
+    const utcDate = new Date(utcDateString);
+    // Subtrai 3 horas para converter de UTC para horário brasileiro
+    const brazilDate = new Date(utcDate.getTime() - (3 * 60 * 60 * 1000));
+    return brazilDate.toLocaleString('pt-BR', {
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit',
+      hour12: false
+    });
+  }
+
   async getDateRange(): Promise<SalesDateRange | null> {
     try {
       const { data, error } = await supabase.rpc('get_sales_date_range');
@@ -126,13 +162,27 @@ class OptimizedSalesService {
       let hourStart = filters.hourStart;
       let hourEnd = filters.hourEnd;
       
+      // Constrói o horário completo e converte para UTC
       if (filters.hourStart && filters.minuteStart) {
-        hourStart = `${filters.hourStart}:${filters.minuteStart}`;
+        const brazilianTime = `${filters.hourStart}:${filters.minuteStart}`;
+        hourStart = this.convertBrazilianTimeToUTC(brazilianTime);
+      } else if (filters.hourStart) {
+        const brazilianTime = `${filters.hourStart}:00`;
+        hourStart = this.convertBrazilianTimeToUTC(brazilianTime);
       }
       
       if (filters.hourEnd && filters.minuteEnd) {
-        hourEnd = `${filters.hourEnd}:${filters.minuteEnd}`;
+        const brazilianTime = `${filters.hourEnd}:${filters.minuteEnd}`;
+        hourEnd = this.convertBrazilianTimeToUTC(brazilianTime);
+      } else if (filters.hourEnd) {
+        const brazilianTime = `${filters.hourEnd}:59`;
+        hourEnd = this.convertBrazilianTimeToUTC(brazilianTime);
       }
+
+      console.log('Sending time filters to RPC:', { 
+        original: { hourStart: filters.hourStart, hourEnd: filters.hourEnd },
+        converted: { hourStart, hourEnd }
+      });
 
       const { data, error } = await supabase.rpc('get_sales_aggregated_stats', {
         filter_date_start: filters.dateStart || null,
@@ -216,13 +266,27 @@ class OptimizedSalesService {
       let hourStart = filters.hourStart;
       let hourEnd = filters.hourEnd;
       
+      // Constrói o horário completo e converte para UTC
       if (filters.hourStart && filters.minuteStart) {
-        hourStart = `${filters.hourStart}:${filters.minuteStart}`;
+        const brazilianTime = `${filters.hourStart}:${filters.minuteStart}`;
+        hourStart = this.convertBrazilianTimeToUTC(brazilianTime);
+      } else if (filters.hourStart) {
+        const brazilianTime = `${filters.hourStart}:00`;
+        hourStart = this.convertBrazilianTimeToUTC(brazilianTime);
       }
       
       if (filters.hourEnd && filters.minuteEnd) {
-        hourEnd = `${filters.hourEnd}:${filters.minuteEnd}`;
+        const brazilianTime = `${filters.hourEnd}:${filters.minuteEnd}`;
+        hourEnd = this.convertBrazilianTimeToUTC(brazilianTime);
+      } else if (filters.hourEnd) {
+        const brazilianTime = `${filters.hourEnd}:59`;
+        hourEnd = this.convertBrazilianTimeToUTC(brazilianTime);
       }
+
+      console.log('Sending time filters to RPC:', { 
+        original: { hourStart: filters.hourStart, hourEnd: filters.hourEnd },
+        converted: { hourStart, hourEnd }
+      });
       
       const { data: salesData, error } = await supabase.rpc('get_sales_optimized', {
         page_number: page,
@@ -263,16 +327,8 @@ class OptimizedSalesService {
       const totalPages = Math.ceil(totalCount / pageSize);
 
       let sales: NormalizedSale[] = salesData.map((sale: any) => {
-        const saleDate = new Date(sale.date);
-        const formattedDate = saleDate.toLocaleDateString('pt-BR', {
-          day: '2-digit',
-          month: '2-digit',
-          year: 'numeric'
-        }) + ' ' + saleDate.toLocaleTimeString('pt-BR', {
-          hour: '2-digit',
-          minute: '2-digit',
-          hour12: false
-        });
+        // Converte a data UTC do banco para horário brasileiro para exibição
+        const formattedDate = this.convertUTCToBrazilianTime(sale.date);
 
         return {
           id: sale.id,
