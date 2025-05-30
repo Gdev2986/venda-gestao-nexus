@@ -1,3 +1,4 @@
+
 import { supabase } from "@/integrations/supabase/client";
 import { NormalizedSale } from "@/utils/sales-processor";
 import { v4 as uuidv4 } from 'uuid';
@@ -5,18 +6,22 @@ import { SaleInsert } from './types';
 import { convertBrazilianDateToISO, convertPaymentMethod } from './date-utils';
 import { ensureMachinesExist } from './machine-utils';
 
-// Função para tentar inserir com retry exponencial
+// Função para tentar inserir com retry exponencial aprimorado
 const insertWithRetry = async (salesData: SaleInsert[], maxRetries: number = 3): Promise<void> => {
   let lastError: Error | null = null;
   
   for (let attempt = 1; attempt <= maxRetries; attempt++) {
     try {
       console.log(`Tentativa ${attempt} de ${maxRetries} para inserir ${salesData.length} registros`);
+      const startTime = Date.now();
       
-      // Usar INSERT direto com configuração de timeout otimizada
+      // Usar INSERT direto com timeout otimizado
       const { error } = await supabase
         .from('sales')
         .insert(salesData);
+
+      const endTime = Date.now();
+      console.log(`Inserção levou ${endTime - startTime}ms`);
 
       if (error) {
         throw new Error(`Erro na inserção: ${error.message}`);
@@ -34,8 +39,8 @@ const insertWithRetry = async (salesData: SaleInsert[], maxRetries: number = 3):
         throw lastError;
       }
       
-      // Backoff exponencial: 200ms, 400ms, 800ms...
-      const waitTime = Math.min(200 * Math.pow(2, attempt - 1), 5000);
+      // Backoff exponencial: 500ms, 1000ms, 2000ms...
+      const waitTime = Math.min(500 * Math.pow(2, attempt - 1), 10000);
       console.log(`Aguardando ${waitTime}ms antes da próxima tentativa...`);
       await new Promise(resolve => setTimeout(resolve, waitTime));
     }
@@ -63,43 +68,40 @@ const ensureUniqueIds = (salesData: SaleInsert[]): SaleInsert[] => {
   });
 };
 
-// Função para processar batches em paralelo (limitado)
-const processParallelBatches = async (batches: SaleInsert[][], maxConcurrent: number = 2): Promise<void> => {
+// Função para processar batches sequencialmente (sem paralelismo)
+const processSequentialBatches = async (batches: SaleInsert[][]): Promise<void> => {
   let totalInserted = 0;
   const totalRecords = batches.reduce((sum, batch) => sum + batch.length, 0);
   
-  for (let i = 0; i < batches.length; i += maxConcurrent) {
-    const currentBatches = batches.slice(i, i + maxConcurrent);
+  console.log(`Processing ${batches.length} batches sequentially for better stability`);
+  
+  for (let i = 0; i < batches.length; i++) {
+    const batch = batches[i];
+    const batchNumber = i + 1;
     
-    // Processar batches em paralelo
-    const promises = currentBatches.map(async (batch, batchIndex) => {
-      const globalBatchNumber = i + batchIndex + 1;
-      console.log(`Processing batch ${globalBatchNumber} of ${batches.length} (${batch.length} records) in parallel`);
+    console.log(`Processing batch ${batchNumber} of ${batches.length} (${batch.length} records)`);
+    
+    try {
+      await insertWithRetry(batch, 3);
+      totalInserted += batch.length;
+      console.log(`Batch ${batchNumber} completed successfully. Total so far: ${totalInserted}/${totalRecords} (${((totalInserted/totalRecords)*100).toFixed(1)}%)`);
       
-      try {
-        await insertWithRetry(batch, 3);
-        totalInserted += batch.length;
-        console.log(`Batch ${globalBatchNumber} completed successfully. Total so far: ${totalInserted}/${totalRecords}`);
-        return batch.length;
-      } catch (error) {
-        console.error(`Failed to insert batch ${globalBatchNumber} after all retries:`, error);
-        throw new Error(`Falha ao inserir lote ${globalBatchNumber}: ${error instanceof Error ? error.message : String(error)}`);
+      // Pausa entre batches para dar tempo ao banco de processar
+      if (i < batches.length - 1) {
+        console.log('Waiting 1000ms before next batch...');
+        await new Promise(resolve => setTimeout(resolve, 1000));
       }
-    });
-    
-    // Aguardar todos os batches do grupo atual
-    await Promise.all(promises);
-    
-    // Pausa entre grupos de batches para não sobrecarregar o banco
-    if (i + maxConcurrent < batches.length) {
-      await new Promise(resolve => setTimeout(resolve, 100));
+      
+    } catch (error) {
+      console.error(`Failed to insert batch ${batchNumber} after all retries:`, error);
+      throw new Error(`Falha ao inserir lote ${batchNumber}: ${error instanceof Error ? error.message : String(error)}`);
     }
   }
 };
 
 export const insertSales = async (sales: NormalizedSale[]): Promise<void> => {
   try {
-    console.log(`Starting optimized insertion of ${sales.length} sales`);
+    console.log(`Starting ultra-conservative insertion of ${sales.length} sales`);
     
     // Verificar se há vendas para processar
     if (sales.length === 0) {
@@ -154,8 +156,8 @@ export const insertSales = async (sales: NormalizedSale[]): Promise<void> => {
     // Garantir IDs únicos
     const uniqueSalesData = ensureUniqueIds(salesData);
 
-    // Aumentar batch size para 500 registros por batch
-    const batchSize = 500; // Increased from 150 to 500
+    // Usar batch size muito menor para evitar timeouts
+    const batchSize = 75; // Reduced from 500 to 75
     
     // Criar batches
     const batches: SaleInsert[][] = [];
@@ -163,15 +165,15 @@ export const insertSales = async (sales: NormalizedSale[]): Promise<void> => {
       batches.push(uniqueSalesData.slice(i, i + batchSize));
     }
     
-    console.log(`Created ${batches.length} batches of ~${batchSize} records each`);
+    console.log(`Created ${batches.length} conservative batches of ~${batchSize} records each`);
     
-    // Processar batches com paralelismo limitado
-    await processParallelBatches(batches, 2); // Máximo 2 batches simultâneos
+    // Processar batches sequencialmente para máxima estabilidade
+    await processSequentialBatches(batches);
     
     console.log(`Successfully inserted all ${uniqueSalesData.length} sales!`);
     
   } catch (error) {
-    console.error('Error in insertSales:', error);
+    console.error('Error in conservative insertSales:', error);
     throw error;
   }
 };

@@ -7,21 +7,28 @@ import { convertBrazilianDateToISO, convertPaymentMethod } from './date-utils';
 import { ensureMachinesExist } from './machine-utils';
 import { BatchProcessor } from './batch-processor';
 
-// Função otimizada para inserção de vendas
+// Função otimizada para inserção de vendas com timeout personalizado
 const insertBatch = async (salesData: SaleInsert[]): Promise<void> => {
+  console.log(`Inserting batch of ${salesData.length} records`);
+  const startTime = Date.now();
+  
   const { error } = await supabase
     .from('sales')
     .insert(salesData);
 
+  const endTime = Date.now();
+  console.log(`Batch insertion took ${endTime - startTime}ms`);
+
   if (error) {
+    console.error('Database insertion error:', error);
     throw new Error(`Database insertion error: ${error.message}`);
   }
 };
 
-// Função principal otimizada
+// Função principal otimizada com parâmetros mais conservadores
 export const insertSalesOptimized = async (sales: NormalizedSale[]): Promise<void> => {
   try {
-    console.log(`Starting optimized insertion of ${sales.length} sales`);
+    console.log(`Starting ultra-optimized insertion of ${sales.length} sales`);
     
     if (sales.length === 0) {
       console.log('No sales to process');
@@ -65,25 +72,29 @@ export const insertSalesOptimized = async (sales: NormalizedSale[]): Promise<voi
       };
     });
 
-    // Use batch processor for optimized insertion with 500 records per batch
+    // Use ultra-optimized batch processor with conservative settings
     const processor = new BatchProcessor({
-      batchSize: 500, // Increased from 150 to 500
-      maxConcurrent: 2, // Limit concurrent operations
+      batchSize: 75, // Smaller batches for better reliability
+      maxConcurrent: 1, // Sequential processing to avoid overwhelming DB
       retryAttempts: 3,
-      delayBetweenBatches: 150 // Slight delay between batches
+      delayBetweenBatches: 750 // Longer delay for DB recovery
     });
 
     const batches = processor.createBatches(salesData);
-    console.log(`Created ${batches.length} batches for processing`);
+    console.log(`Created ${batches.length} optimized batches for processing`);
 
+    const totalStartTime = Date.now();
+    
     await processor.processBatchesInParallel(batches, async (batch) => {
       await insertBatch(batch);
     });
 
-    console.log(`Successfully inserted all ${salesData.length} sales!`);
+    const totalEndTime = Date.now();
+    const totalDuration = totalEndTime - totalStartTime;
+    console.log(`Successfully inserted all ${salesData.length} sales in ${totalDuration}ms (${(totalDuration/1000).toFixed(2)}s)!`);
     
   } catch (error) {
-    console.error('Error in optimized insertSales:', error);
+    console.error('Error in ultra-optimized insertSales:', error);
     throw error;
   }
 };
