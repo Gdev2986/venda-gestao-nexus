@@ -6,6 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { optimizedSalesService } from "@/services/optimized-sales.service";
 
 interface TerminalFilterProps {
   terminals: string[];
@@ -19,22 +20,43 @@ const TerminalFilter = ({
   onTerminalsChange
 }: TerminalFilterProps) => {
   const [searchTerm, setSearchTerm] = useState("");
-  const [filteredTerminals, setFilteredTerminals] = useState<string[]>(terminals);
+  const [availableTerminals, setAvailableTerminals] = useState<string[]>([]);
+  const [filteredTerminals, setFilteredTerminals] = useState<string[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
   
-  // Update filtered terminals when search term or terminals list changes
+  // Load available terminals from API
+  useEffect(() => {
+    const loadTerminals = async () => {
+      setIsLoading(true);
+      try {
+        const uniqueTerminals = await optimizedSalesService.getUniqueTerminals();
+        const terminalNames = uniqueTerminals.map(t => t.terminal);
+        setAvailableTerminals(terminalNames);
+      } catch (error) {
+        console.error('Error loading terminals:', error);
+        setAvailableTerminals([]);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    loadTerminals();
+  }, []);
+  
+  // Update filtered terminals when search term or available terminals change
   useEffect(() => {
     if (!searchTerm.trim()) {
-      setFilteredTerminals(terminals);
+      setFilteredTerminals(availableTerminals);
       return;
     }
     
     const normalizedSearch = searchTerm.toLowerCase();
     setFilteredTerminals(
-      terminals.filter(terminal => 
+      availableTerminals.filter(terminal => 
         terminal.toLowerCase().includes(normalizedSearch)
       )
     );
-  }, [searchTerm, terminals]);
+  }, [searchTerm, availableTerminals]);
   
   // Handle individual terminal selection
   const handleTerminalChange = (terminal: string, isChecked: boolean) => {
@@ -47,7 +69,7 @@ const TerminalFilter = ({
   
   // Handle select/clear all terminals
   const handleSelectAll = () => {
-    onTerminalsChange([...terminals]);
+    onTerminalsChange([...filteredTerminals]);
   };
   
   const handleClearAll = () => {
@@ -57,7 +79,9 @@ const TerminalFilter = ({
   return (
     <Card className="w-full">
       <CardHeader className="p-4 pb-2">
-        <CardTitle className="text-sm font-medium">Terminais</CardTitle>
+        <CardTitle className="text-sm font-medium">
+          Terminais {selectedTerminals.length > 0 && `(${selectedTerminals.length} selecionados)`}
+        </CardTitle>
       </CardHeader>
       <CardContent className="p-4 pt-2">
         <div className="space-y-3">
@@ -66,6 +90,7 @@ const TerminalFilter = ({
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             className="mb-2"
+            disabled={isLoading}
           />
           
           <div className="flex flex-wrap gap-2">
@@ -74,6 +99,7 @@ const TerminalFilter = ({
               size="sm" 
               onClick={handleSelectAll}
               className="text-xs h-8"
+              disabled={isLoading || filteredTerminals.length === 0}
             >
               Selecionar todos
             </Button>
@@ -82,6 +108,7 @@ const TerminalFilter = ({
               size="sm" 
               onClick={handleClearAll}
               className="text-xs h-8"
+              disabled={isLoading || selectedTerminals.length === 0}
             >
               Limpar seleção
             </Button>
@@ -89,27 +116,31 @@ const TerminalFilter = ({
           
           <ScrollArea className="h-40 pr-4">
             <div className="space-y-2">
-              {filteredTerminals.map((terminal) => (
-                <div key={terminal} className="flex items-center space-x-2">
-                  <Checkbox 
-                    id={`terminal-${terminal}`} 
-                    checked={selectedTerminals.includes(terminal)}
-                    onCheckedChange={(checked) => 
-                      handleTerminalChange(terminal, checked === true)
-                    }
-                  />
-                  <Label 
-                    htmlFor={`terminal-${terminal}`}
-                    className="text-sm cursor-pointer flex-1"
-                  >
-                    {terminal}
-                  </Label>
-                </div>
-              ))}
-              
-              {filteredTerminals.length === 0 && (
+              {isLoading ? (
+                <div className="text-sm text-muted-foreground">Carregando terminais...</div>
+              ) : filteredTerminals.length > 0 ? (
+                filteredTerminals.map((terminal) => (
+                  <div key={terminal} className="flex items-center space-x-2">
+                    <Checkbox 
+                      id={`terminal-${terminal}`} 
+                      checked={selectedTerminals.includes(terminal)}
+                      onCheckedChange={(checked) => 
+                        handleTerminalChange(terminal, checked === true)
+                      }
+                    />
+                    <Label 
+                      htmlFor={`terminal-${terminal}`}
+                      className="text-sm cursor-pointer flex-1"
+                    >
+                      {terminal}
+                    </Label>
+                  </div>
+                ))
+              ) : (
                 <div className="text-sm text-muted-foreground">
-                  Nenhum terminal encontrado
+                  {availableTerminals.length === 0 
+                    ? "Nenhum terminal disponível" 
+                    : "Nenhum terminal encontrado"}
                 </div>
               )}
             </div>

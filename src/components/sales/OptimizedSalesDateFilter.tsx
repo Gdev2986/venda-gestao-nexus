@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -7,7 +6,7 @@ import { Label } from "@/components/ui/label";
 import { Calendar, X, Clock, Filter, ChevronDown, ChevronUp } from "lucide-react";
 import { SalesFilters } from "@/services/optimized-sales.service";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { TerminalAutocomplete } from "./TerminalAutocomplete";
+import TerminalFilter from "./TerminalFilter";
 import { DatePicker } from "@/components/ui/date-picker";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
@@ -37,7 +36,7 @@ const OptimizedSalesDateFilter = ({
   const [localMinuteStart, setLocalMinuteStart] = useState(filters.minuteStart || '');
   const [localHourEnd, setLocalHourEnd] = useState(filters.hourEnd || '');
   const [localMinuteEnd, setLocalMinuteEnd] = useState(filters.minuteEnd || '');
-  const [localTerminal, setLocalTerminal] = useState(filters.terminal || '');
+  const [localTerminals, setLocalTerminals] = useState<string[]>(filters.terminals || []);
   const [localMinAmount, setLocalMinAmount] = useState(filters.minAmount?.toString() || '');
   const [localMaxAmount, setLocalMaxAmount] = useState(filters.maxAmount?.toString() || '');
   const [showAdditionalFilters, setShowAdditionalFilters] = useState(false);
@@ -50,7 +49,7 @@ const OptimizedSalesDateFilter = ({
       minuteStart: localMinuteStart || undefined,
       hourEnd: localHourEnd || undefined,
       minuteEnd: localMinuteEnd || undefined,
-      terminal: localTerminal || undefined,
+      terminals: localTerminals.length > 0 ? localTerminals : undefined,
       minAmount: localMinAmount ? parseFloat(localMinAmount) : undefined,
       maxAmount: localMaxAmount ? parseFloat(localMaxAmount) : undefined
     });
@@ -58,7 +57,7 @@ const OptimizedSalesDateFilter = ({
 
   const hasDateFilters = filters.dateStart || filters.dateEnd;
   const hasTimeFilters = filters.hourStart || filters.minuteStart || filters.hourEnd || filters.minuteEnd;
-  const hasOtherFilters = filters.terminal || filters.minAmount || filters.maxAmount || filters.paymentType;
+  const hasOtherFilters = filters.terminals?.length || filters.minAmount || filters.maxAmount || filters.paymentType;
   const hasAnyFilters = Object.keys(filters).some(key => filters[key as keyof SalesFilters]);
 
   // Generate hour options (00-23)
@@ -195,14 +194,13 @@ const OptimizedSalesDateFilter = ({
             </div>
             
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {/* Filtro por Terminal - MODIFICADO PARA USAR AUTOCOMPLETE */}
+              {/* Filtro por Terminal */}
               <div className="space-y-2">
-                <Label htmlFor="terminal">Terminal</Label>
-                <TerminalAutocomplete
-                  value={localTerminal}
-                  onChange={setLocalTerminal}
-                  disabled={isLoading}
-                  placeholder="Buscar terminal..."
+                <Label htmlFor="terminals">Terminais</Label>
+                <TerminalFilter
+                  terminals={localTerminals}
+                  selectedTerminals={localTerminals}
+                  onTerminalsChange={setLocalTerminals}
                 />
               </div>
 
@@ -296,8 +294,8 @@ const OptimizedSalesDateFilter = ({
                 {filters.hourEnd || '23'}:{filters.minuteEnd || '59'}
               </div>
             )}
-            {filters.terminal && (
-              <div><strong>Terminal:</strong> {filters.terminal}</div>
+            {filters.terminals && filters.terminals.length > 0 && (
+              <div><strong>Terminais:</strong> {filters.terminals.join(', ')}</div>
             )}
             {filters.paymentType && (
               <div><strong>Pagamento:</strong> {filters.paymentType === 'CREDIT' ? 'Cartão de Crédito' : filters.paymentType === 'DEBIT' ? 'Cartão de Débito' : 'Pix'}</div>

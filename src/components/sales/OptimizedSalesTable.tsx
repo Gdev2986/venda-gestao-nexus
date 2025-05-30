@@ -1,3 +1,4 @@
+
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -13,6 +14,7 @@ import {
 import { NormalizedSale } from "@/utils/sales-processor";
 import { formatCurrency } from "@/lib/formatters";
 import { PaymentTypeBadge } from "@/components/sales/PaymentTypeBadge";
+import { memo } from "react";
 
 interface OptimizedSalesTableProps {
   sales: NormalizedSale[];
@@ -23,7 +25,7 @@ interface OptimizedSalesTableProps {
   onPageChange: (page: number) => void;
 }
 
-const OptimizedSalesTable = ({ 
+const OptimizedSalesTable = memo(({ 
   sales, 
   totalCount, 
   totalPages, 
@@ -71,9 +73,10 @@ const OptimizedSalesTable = ({
     return pages;
   };
 
-  // Handler for page change with proper logging
+  // Handler for page change with optimized loading
   const handlePageChange = (page: number) => {
-    console.log(`Changing from page ${currentPage} to page ${page}`);
+    if (page === currentPage) return;
+    console.log(`Mudando da página ${currentPage} para a página ${page} (sem reload completo)`);
     onPageChange(page);
   };
 
@@ -86,7 +89,7 @@ const OptimizedSalesTable = ({
             <p className="text-sm text-muted-foreground">
               {isLoading 
                 ? "Carregando..." 
-                : `${totalCount} registros encontrados • Página ${currentPage} de ${totalPages}`}
+                : `${totalCount.toLocaleString('pt-BR')} registros encontrados • Página ${currentPage} de ${totalPages}`}
             </p>
           </div>
           
@@ -127,7 +130,7 @@ const OptimizedSalesTable = ({
                     <TableHead>Tipo de Pagamento</TableHead>
                     <TableHead className="text-right">Valor Bruto</TableHead>
                     <TableHead>Data de Transação</TableHead>
-                    <TableHead>Parcelas</TableHead>
+                    <TableHead className="text-center">Parcelas</TableHead>
                     <TableHead>Terminal</TableHead>
                     <TableHead>Bandeira</TableHead>
                     <TableHead>Origem</TableHead>
@@ -147,13 +150,23 @@ const OptimizedSalesTable = ({
                         <TableCell className="text-right font-medium">
                           {formatCurrency(sale.gross_amount)}
                         </TableCell>
-                        <TableCell>{typeof sale.transaction_date === 'string' ? 
-                          sale.transaction_date : 
-                          sale.transaction_date.toLocaleString()}</TableCell>
-                        <TableCell>{sale.installments}</TableCell>
-                        <TableCell>{sale.terminal}</TableCell>
-                        <TableCell>{sale.brand}</TableCell>
-                        <TableCell>{sale.source}</TableCell>
+                        <TableCell className="font-mono text-sm">
+                          {typeof sale.transaction_date === 'string' ? 
+                            sale.transaction_date : 
+                            sale.transaction_date.toLocaleString()}
+                        </TableCell>
+                        <TableCell className="text-center">
+                          <Badge variant="outline" className="font-mono">
+                            {sale.installments}x
+                          </Badge>
+                        </TableCell>
+                        <TableCell className="font-mono text-sm">{sale.terminal}</TableCell>
+                        <TableCell>
+                          <Badge variant="secondary">{sale.brand}</Badge>
+                        </TableCell>
+                        <TableCell>
+                          <Badge variant="outline">{sale.source}</Badge>
+                        </TableCell>
                       </TableRow>
                     ))
                   ) : (
@@ -167,11 +180,11 @@ const OptimizedSalesTable = ({
               </Table>
             </div>
             
-            {/* Paginação */}
+            {/* Paginação Otimizada */}
             {totalPages > 1 && (
               <div className="flex items-center justify-between p-4 border-t">
                 <div className="text-sm text-muted-foreground">
-                  Mostrando {((currentPage - 1) * 10) + 1} a {Math.min(currentPage * 10, totalCount)} de {totalCount} registros
+                  Mostrando {((currentPage - 1) * 10) + 1} a {Math.min(currentPage * 10, totalCount)} de {totalCount.toLocaleString('pt-BR')} registros
                 </div>
                 
                 <div className="flex items-center space-x-2">
@@ -179,7 +192,7 @@ const OptimizedSalesTable = ({
                     variant="outline"
                     size="sm"
                     onClick={() => handlePageChange(currentPage - 1)}
-                    disabled={currentPage <= 1}
+                    disabled={currentPage <= 1 || isLoading}
                   >
                     <ChevronLeft className="h-4 w-4" />
                     Anterior
@@ -193,6 +206,7 @@ const OptimizedSalesTable = ({
                           size="sm"
                           onClick={() => handlePageChange(1)}
                           className="w-9 h-9"
+                          disabled={isLoading}
                         >
                           1
                         </Button>
@@ -207,6 +221,7 @@ const OptimizedSalesTable = ({
                         size="sm"
                         onClick={() => handlePageChange(pageNumber)}
                         className="w-9 h-9"
+                        disabled={isLoading}
                       >
                         {pageNumber}
                       </Button>
@@ -220,6 +235,7 @@ const OptimizedSalesTable = ({
                           size="sm"
                           onClick={() => handlePageChange(totalPages)}
                           className="w-9 h-9"
+                          disabled={isLoading}
                         >
                           {totalPages}
                         </Button>
@@ -231,7 +247,7 @@ const OptimizedSalesTable = ({
                     variant="outline"
                     size="sm"
                     onClick={() => handlePageChange(currentPage + 1)}
-                    disabled={currentPage >= totalPages}
+                    disabled={currentPage >= totalPages || isLoading}
                   >
                     Próxima
                     <ChevronRight className="h-4 w-4" />
@@ -244,6 +260,8 @@ const OptimizedSalesTable = ({
       </CardContent>
     </Card>
   );
-};
+});
+
+OptimizedSalesTable.displayName = "OptimizedSalesTable";
 
 export default OptimizedSalesTable;

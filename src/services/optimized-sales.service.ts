@@ -22,7 +22,6 @@ export interface SalesFilters {
   source?: string;
   brand?: string;
   searchCode?: string;
-  terminal?: string;
   minAmount?: number;
   maxAmount?: number;
 }
@@ -53,8 +52,25 @@ export interface UniqueTerminal {
   usage_count: number;
 }
 
-export const optimizedSalesService = {
-  // Obter range de datas disponíveis
+// Cache para dados paginados
+interface CacheEntry {
+  data: PaginatedSalesResult;
+  timestamp: number;
+  filters: string;
+}
+
+class OptimizedSalesService {
+  private cache = new Map<string, CacheEntry>();
+  private cacheTimeout = 5 * 60 * 1000; // 5 minutos
+
+  private getCacheKey(page: number, pageSize: number, filters: SalesFilters): string {
+    return `${page}-${pageSize}-${JSON.stringify(filters)}`;
+  }
+
+  private isValidCache(entry: CacheEntry): boolean {
+    return Date.now() - entry.timestamp < this.cacheTimeout;
+  }
+
   async getDateRange(): Promise<SalesDateRange | null> {
     try {
       const { data, error } = await supabase.rpc('get_sales_date_range');
@@ -69,9 +85,8 @@ export const optimizedSalesService = {
       console.error('Error in getDateRange:', error);
       return null;
     }
-  },
+  }
 
-  // Obter sumário geral das vendas (totais)
   async getSalesSummary(): Promise<SalesSummary | null> {
     try {
       const { data, error } = await supabase.rpc('get_sales_summary');
@@ -86,9 +101,8 @@ export const optimizedSalesService = {
       console.error('Error in getSalesSummary:', error);
       return null;
     }
-  },
+  }
 
-  // Obter terminais únicos para autocompletar
   async getUniqueTerminals(searchTerm: string = ''): Promise<UniqueTerminal[]> {
     try {
       const { data, error } = await supabase.rpc('get_unique_terminals', {
@@ -105,12 +119,10 @@ export const optimizedSalesService = {
       console.error('Error in getUniqueTerminals:', error);
       return [];
     }
-  },
+  }
 
-  // Obter estatísticas agregadas (mais eficiente)
   async getSalesAggregatedStats(filters: SalesFilters): Promise<SalesAggregatedStats> {
     try {
-      // Format hour and minute filters
       let hourStart = filters.hourStart;
       let hourEnd = filters.hourEnd;
       
@@ -158,9 +170,8 @@ export const optimizedSalesService = {
         office_commission: 0
       };
     }
-  },
+  }
 
-  // Obter TODAS as datas com vendas para calendário
   async getDatesWithSales(): Promise<string[]> {
     try {
       const { data, error } = await supabase
@@ -183,18 +194,25 @@ export const optimizedSalesService = {
       console.error('Error in getDatesWithSales:', error);
       return [];
     }
-  },
+  }
 
-  // Buscar vendas paginadas usando nova RPC otimizada
   async getSalesPaginated(
     page: number = 1,
-    pageSize: number = 10, // Garantir que seja 10
+    pageSize: number = 10,
     filters: SalesFilters = {}
   ): Promise<PaginatedSalesResult> {
     try {
+      const cacheKey = this.getCacheKey(page, pageSize, filters);
+      const cachedEntry = this.cache.get(cacheKey);
+      
+      // Verificar cache válido
+      if (cachedEntry && this.isValidCache(cachedEntry)) {
+        console.log(`Cache hit for page ${page}`);
+        return cachedEntry.data;
+      }
+
       console.log('Carregando vendas via RPC otimizada com filtros:', filters, 'página:', page);
       
-      // Format hour and minute filters
       let hourStart = filters.hourStart;
       let hourEnd = filters.hourEnd;
       
@@ -206,7 +224,6 @@ export const optimizedSalesService = {
         hourEnd = `${filters.hourEnd}:${filters.minuteEnd}`;
       }
       
-      // Chamar nova função SQL otimizada
       const { data: salesData, error } = await supabase.rpc('get_sales_optimized', {
         page_number: page,
         page_size: pageSize,
@@ -225,18 +242,26 @@ export const optimizedSalesService = {
       }
 
       if (!salesData || salesData.length === 0) {
-        return {
+        const result = {
           sales: [],
           totalCount: 0,
           totalPages: 0,
           currentPage: page
         };
+        
+        // Cache resultado vazio
+        this.cache.set(cacheKey, {
+          data: result,
+          timestamp: Date.now(),
+          filters: JSON.stringify(filters)
+        });
+        
+        return result;
       }
 
       const totalCount = salesData[0]?.total_count || 0;
       const totalPages = Math.ceil(totalCount / pageSize);
 
-      // Converter dados do banco para formato NormalizedSale
       let sales: NormalizedSale[] = salesData.map((sale: any) => {
         const saleDate = new Date(sale.date);
         const formattedDate = saleDate.toLocaleDateString('pt-BR', {
@@ -265,7 +290,7 @@ export const optimizedSalesService = {
         };
       });
 
-      // Aplicar filtros adicionais no frontend que não foram aplicados no backend
+      // Aplicar filtros frontend que não foram aplicados no backend
       if (filters.status && filters.status !== 'all') {
         sales = sales.filter(sale => sale.status === filters.status);
       }
@@ -274,21 +299,12 @@ export const optimizedSalesService = {
         sales = sales.filter(sale => sale.brand === filters.brand);
       }
 
-      // Aplicar filtros de pesquisa por código
       if (filters.searchCode) {
         sales = sales.filter(sale => 
           sale.id?.toLowerCase().includes(filters.searchCode!.toLowerCase())
         );
       }
 
-      // Aplicar filtro por terminal específico
-      if (filters.terminal) {
-        sales = sales.filter(sale => 
-          sale.terminal?.toLowerCase().includes(filters.terminal!.toLowerCase())
-        );
-      }
-
-      // Aplicar filtros de valor
       if (filters.minAmount) {
         sales = sales.filter(sale => sale.gross_amount >= filters.minAmount!);
       }
@@ -297,14 +313,22 @@ export const optimizedSalesService = {
         sales = sales.filter(sale => sale.gross_amount <= filters.maxAmount!);
       }
 
-      console.log(`Página ${page} carregada via RPC otimizada: ${sales.length} registros de ${totalCount} totais`);
-
-      return {
+      const result = {
         sales,
         totalCount: Number(totalCount),
         totalPages,
         currentPage: page
       };
+
+      // Cache o resultado
+      this.cache.set(cacheKey, {
+        data: result,
+        timestamp: Date.now(),
+        filters: JSON.stringify(filters)
+      });
+
+      console.log(`Página ${page} carregada via RPC otimizada: ${sales.length} registros de ${totalCount} totais`);
+      return result;
 
     } catch (error) {
       console.error('Error in getSalesPaginated:', error);
@@ -315,18 +339,34 @@ export const optimizedSalesService = {
         currentPage: page
       };
     }
-  },
+  }
 
-  // Get yesterday date for default filter
+  // Limpar cache quando filtros mudam
+  clearCache(): void {
+    this.cache.clear();
+    console.log('Cache limpo');
+  }
+
+  // Limpar cache de páginas específicas quando filtros mudam
+  clearCacheForFilters(filters: SalesFilters): void {
+    const filterString = JSON.stringify(filters);
+    for (const [key, entry] of this.cache.entries()) {
+      if (entry.filters === filterString) {
+        this.cache.delete(key);
+      }
+    }
+  }
+
   getYesterday(): string {
     const yesterday = new Date();
     yesterday.setDate(yesterday.getDate() - 1);
     return yesterday.toISOString().split('T')[0];
-  },
+  }
 
-  // Formatar data para exibição
   formatDateForDisplay(dateStr: string): string {
     const date = new Date(dateStr);
     return date.toLocaleDateString('pt-BR');
   }
-};
+}
+
+export const optimizedSalesService = new OptimizedSalesService();
