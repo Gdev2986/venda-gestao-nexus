@@ -1689,6 +1689,31 @@ export type Database = {
           total_records: number
         }[]
       }
+      get_sales_optimized: {
+        Args: {
+          page_number?: number
+          page_size?: number
+          filter_date_start?: string
+          filter_date_end?: string
+          filter_hour_start?: string
+          filter_hour_end?: string
+          filter_terminals?: string[]
+          filter_payment_type?: string
+          filter_source?: string
+        }
+        Returns: {
+          id: string
+          code: string
+          terminal: string
+          date: string
+          gross_amount: number
+          net_amount: number
+          payment_method: string
+          installments: number
+          source: string
+          total_count: number
+        }[]
+      }
       get_sales_paginated: {
         Args: {
           page_number?: number
@@ -1713,6 +1738,15 @@ export type Database = {
           installments: number
           source: string
           total_count: number
+        }[]
+      }
+      get_sales_summary: {
+        Args: Record<PropertyKey, never>
+        Returns: {
+          total_records: number
+          total_amount: number
+          earliest_date: string
+          latest_date: string
         }[]
       }
       get_user_client_balance: {

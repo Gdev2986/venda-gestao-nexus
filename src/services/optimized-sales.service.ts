@@ -28,6 +28,13 @@ export interface PaginatedSalesResult {
   currentPage: number;
 }
 
+export interface SalesSummary {
+  total_records: number;
+  total_amount: number;
+  earliest_date: string;
+  latest_date: string;
+}
+
 export const optimizedSalesService = {
   // Obter range de datas disponíveis
   async getDateRange(): Promise<SalesDateRange | null> {
@@ -46,10 +53,26 @@ export const optimizedSalesService = {
     }
   },
 
-  // Obter TODAS as datas com vendas para calendário (não limitado à primeira página)
+  // Obter sumário geral das vendas (totais)
+  async getSalesSummary(): Promise<SalesSummary | null> {
+    try {
+      const { data, error } = await supabase.rpc('get_sales_summary');
+      
+      if (error) {
+        console.error('Error getting sales summary:', error);
+        return null;
+      }
+      
+      return data?.[0] || null;
+    } catch (error) {
+      console.error('Error in getSalesSummary:', error);
+      return null;
+    }
+  },
+
+  // Obter TODAS as datas com vendas para calendário
   async getDatesWithSales(): Promise<string[]> {
     try {
-      // Buscar todas as datas únicas diretamente da tabela sales
       const { data, error } = await supabase
         .from('sales')
         .select('date')
@@ -60,10 +83,9 @@ export const optimizedSalesService = {
         return [];
       }
       
-      // Extrair datas únicas (apenas a parte da data, sem horário)
       const uniqueDates = [...new Set(data?.map(item => {
         const date = new Date(item.date);
-        return date.toISOString().split('T')[0]; // Formato YYYY-MM-DD
+        return date.toISOString().split('T')[0];
       }) || [])];
       
       return uniqueDates.sort();
@@ -73,17 +95,17 @@ export const optimizedSalesService = {
     }
   },
 
-  // Buscar vendas paginadas usando RPC com função SQL otimizada
+  // Buscar vendas paginadas usando nova RPC otimizada
   async getSalesPaginated(
     page: number = 1,
     pageSize: number = 1000,
     filters: SalesFilters = {}
   ): Promise<PaginatedSalesResult> {
     try {
-      console.log('Carregando vendas via RPC com filtros:', filters, 'página:', page);
+      console.log('Carregando vendas via RPC otimizada com filtros:', filters, 'página:', page);
       
-      // Chamar função SQL via RPC para paginação real
-      const { data: salesData, error } = await supabase.rpc('get_paginated_sales', {
+      // Chamar nova função SQL otimizada
+      const { data: salesData, error } = await supabase.rpc('get_sales_optimized', {
         page_number: page,
         page_size: pageSize,
         filter_date_start: filters.dateStart || null,
@@ -109,13 +131,11 @@ export const optimizedSalesService = {
         };
       }
 
-      // O total vem no primeiro registro da função SQL
       const totalCount = salesData[0]?.total_count || 0;
       const totalPages = Math.ceil(totalCount / pageSize);
 
       // Converter dados do banco para formato NormalizedSale
       let sales: NormalizedSale[] = salesData.map((sale: any) => {
-        // Formatar data para exibição (DD/MM/YYYY HH:MM)
         const saleDate = new Date(sale.date);
         const formattedDate = saleDate.toLocaleDateString('pt-BR', {
           day: '2-digit',
@@ -152,7 +172,7 @@ export const optimizedSalesService = {
         sales = sales.filter(sale => sale.brand === filters.brand);
       }
 
-      console.log(`Página ${page} carregada via RPC: ${sales.length} registros de ${totalCount} totais`);
+      console.log(`Página ${page} carregada via RPC otimizada: ${sales.length} registros de ${totalCount} totais`);
 
       return {
         sales,
@@ -170,13 +190,6 @@ export const optimizedSalesService = {
         currentPage: page
       };
     }
-  },
-
-  // Obter ontem como data padrão
-  getYesterday(): string {
-    const yesterday = new Date();
-    yesterday.setDate(yesterday.getDate() - 1);
-    return yesterday.toISOString().split('T')[0];
   },
 
   // Formatar data para exibição

@@ -2,7 +2,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { NormalizedSale } from "@/utils/sales-processor";
-import { optimizedSalesService, SalesFilters, PaginatedSalesResult, SalesDateRange } from "@/services/optimized-sales.service";
+import { optimizedSalesService, SalesFilters, PaginatedSalesResult, SalesDateRange, SalesSummary } from "@/services/optimized-sales.service";
 
 export const useOptimizedSales = () => {
   const [isLoading, setIsLoading] = useState<boolean>(true);
@@ -13,6 +13,7 @@ export const useOptimizedSales = () => {
     currentPage: 1
   });
   const [dateRange, setDateRange] = useState<SalesDateRange | null>(null);
+  const [salesSummary, setSalesSummary] = useState<SalesSummary | null>(null);
   const [availableDates, setAvailableDates] = useState<string[]>([]);
   const [filters, setFilters] = useState<SalesFilters>({});
   const [currentPage, setCurrentPage] = useState<number>(1);
@@ -22,21 +23,21 @@ export const useOptimizedSales = () => {
   // Carregar metadados iniciais
   const loadMetadata = useCallback(async () => {
     try {
-      const [dateRangeData, datesData] = await Promise.all([
+      const [dateRangeData, datesData, summaryData] = await Promise.all([
         optimizedSalesService.getDateRange(),
-        optimizedSalesService.getDatesWithSales()
+        optimizedSalesService.getDatesWithSales(),
+        optimizedSalesService.getSalesSummary()
       ]);
 
       setDateRange(dateRangeData);
       setAvailableDates(datesData);
+      setSalesSummary(summaryData);
 
-      // SEMPRE configurar filtro padrão para ontem
-      const yesterday = optimizedSalesService.getYesterday();
-      setFilters(prev => ({
-        ...prev,
-        dateStart: yesterday,
-        dateEnd: yesterday
-      }));
+      console.log('Metadados carregados:', { 
+        dateRange: dateRangeData, 
+        availableDates: datesData.length,
+        summary: summaryData 
+      });
     } catch (error) {
       console.error('Error loading metadata:', error);
       toast({
@@ -47,28 +48,33 @@ export const useOptimizedSales = () => {
     }
   }, [toast]);
 
-  // Carregar vendas usando paginação real via RPC
+  // Carregar vendas usando paginação real via RPC otimizada
   const loadSales = useCallback(async (page: number = 1, newFilters?: SalesFilters) => {
     setIsLoading(true);
     try {
       const activeFilters = newFilters || filters;
-      console.log('Loading sales via RPC with filters:', activeFilters, 'page:', page);
+      console.log('Loading sales via optimized RPC with filters:', activeFilters, 'page:', page);
       
       const result = await optimizedSalesService.getSalesPaginated(page, 1000, activeFilters);
       
       setSalesData(result);
       setCurrentPage(page);
 
-      console.log(`Loaded page ${page} via RPC: ${result.sales.length} sales, total: ${result.totalCount}`);
+      console.log(`Loaded page ${page} via optimized RPC: ${result.sales.length} sales, total: ${result.totalCount}`);
 
       if (result.totalCount > 0) {
         toast({
           title: "Dados carregados",
-          description: `${result.totalCount} registros encontrados (página ${page} de ${result.totalPages}).`
+          description: `${result.totalCount.toLocaleString('pt-BR')} registros encontrados (página ${page} de ${result.totalPages}).`
+        });
+      } else {
+        toast({
+          title: "Nenhum registro encontrado",
+          description: "Tente ajustar os filtros para encontrar registros."
         });
       }
     } catch (error) {
-      console.error('Error loading sales via RPC:', error);
+      console.error('Error loading sales via optimized RPC:', error);
       toast({
         title: "Erro ao carregar vendas",
         description: "Não foi possível carregar os dados de vendas.",
@@ -90,38 +96,38 @@ export const useOptimizedSales = () => {
     loadMetadata();
   }, [loadMetadata]);
 
-  // Efeito para carregar vendas quando filtros mudam
+  // Efeito para carregar vendas quando metadados estão prontos
   useEffect(() => {
-    if (filters.dateStart || filters.dateEnd || Object.keys(filters).length > 0) {
-      console.log('Filters changed, loading sales via RPC with:', filters);
-      loadSales(1, filters);
+    if (salesSummary) {
+      console.log('Metadata loaded, loading all sales without date filter');
+      loadSales(1, {}); // Carregar sem filtros para mostrar todos os dados
     }
-  }, [filters, loadSales]);
+  }, [salesSummary]);
 
   // Função para atualizar filtros
   const updateFilters = useCallback((newFilters: Partial<SalesFilters>) => {
     console.log('Updating filters:', newFilters);
-    setFilters(prev => ({ ...prev, ...newFilters }));
-    setCurrentPage(1); // Reset para primeira página
-  }, []);
+    const updatedFilters = { ...filters, ...newFilters };
+    setFilters(updatedFilters);
+    setCurrentPage(1);
+    loadSales(1, updatedFilters);
+  }, [filters, loadSales]);
 
-  // Função para mudar de página usando RPC
+  // Função para mudar de página usando RPC otimizada
   const changePage = useCallback((page: number) => {
-    console.log('Changing to page via RPC:', page, 'total pages:', salesData.totalPages);
+    console.log('Changing to page via optimized RPC:', page, 'total pages:', salesData.totalPages);
     if (page >= 1 && page <= salesData.totalPages) {
       loadSales(page);
     }
   }, [loadSales, salesData.totalPages]);
 
-  // Função para resetar filtros
+  // Função para resetar filtros (carregar todos os dados)
   const resetFilters = useCallback(() => {
-    const yesterday = optimizedSalesService.getYesterday();
-    setFilters({
-      dateStart: yesterday,
-      dateEnd: yesterday
-    });
+    console.log('Resetting filters to load all data');
+    setFilters({});
     setCurrentPage(1);
-  }, []);
+    loadSales(1, {});
+  }, [loadSales]);
 
   // Função para refresh manual
   const refreshSales = useCallback(() => {
@@ -139,6 +145,7 @@ export const useOptimizedSales = () => {
     availableDates,
     filters,
     isLoading,
+    salesSummary,
 
     // Actions
     updateFilters,

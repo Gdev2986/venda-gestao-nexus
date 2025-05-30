@@ -9,6 +9,8 @@ import { SalesStatCards } from "@/components/admin/sales/SalesStatCards";
 import { SalesActionButtons } from "@/components/admin/sales/SalesActionButtons";
 import { useOptimizedSales } from "@/hooks/use-optimized-sales";
 import { NormalizedSale } from "@/utils/sales-processor";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Info } from "lucide-react";
 
 const AdminSales = () => {
   const [showImportPanel, setShowImportPanel] = useState<boolean>(false);
@@ -22,17 +24,16 @@ const AdminSales = () => {
     isLoading,
     updateFilters,
     changePage,
-    refreshSales
+    refreshSales,
+    salesSummary
   } = useOptimizedSales();
 
   const handleSalesImported = (importedSales: NormalizedSale[]) => {
-    // Refresh data from database after import
     refreshSales();
   };
 
   const handleFilter = (filtered: NormalizedSale[]) => {
-    // Para manter compatibilidade com o componente SalesAdvancedFilter,
-    // não fazemos nada aqui já que os filtros são gerenciados pelo useOptimizedSales
+    // Compatibilidade com SalesAdvancedFilter
   };
 
   return (
@@ -52,6 +53,18 @@ const AdminSales = () => {
           />
         }
       />
+      
+      {/* Mostrar resumo geral quando disponível */}
+      {salesSummary && (
+        <Alert className="border-blue-200 bg-blue-50">
+          <Info className="h-4 w-4 text-blue-600" />
+          <AlertDescription className="text-blue-800">
+            <strong>Resumo Geral:</strong> {salesSummary.total_records.toLocaleString('pt-BR')} transações totais 
+            • Valor Total: R$ {Number(salesSummary.total_amount).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+            • Período: {new Date(salesSummary.earliest_date).toLocaleDateString('pt-BR')} a {new Date(salesSummary.latest_date).toLocaleDateString('pt-BR')}
+          </AlertDescription>
+        </Alert>
+      )}
       
       {showImportPanel && (
         <SalesImportPanel onSalesProcessed={handleSalesImported} />
