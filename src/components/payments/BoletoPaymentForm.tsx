@@ -42,17 +42,10 @@ export const BoletoPaymentForm = ({ clientBalance, onSubmit, isLoading }: Boleto
   const amount = watch('amount');
 
   const formatAmountInput = (value: string) => {
-    // Remove tudo que não é número
     const numbers = value.replace(/\D/g, '');
-    
-    // Se não há números, retorna vazio
     if (!numbers) return '';
-    
-    // Converte para centavos e depois para reais
     const cents = parseInt(numbers);
     const reais = cents / 100;
-    
-    // Formatar como moeda brasileira
     return new Intl.NumberFormat('pt-BR', {
       style: 'currency',
       currency: 'BRL',
@@ -62,16 +55,12 @@ export const BoletoPaymentForm = ({ clientBalance, onSubmit, isLoading }: Boleto
   const handleAmountChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const inputValue = e.target.value;
     const formatted = formatAmountInput(inputValue);
-    
-    // Extrai o valor numérico do campo formatado
     const numericValue = parseFloat(formatted.replace(/[^\d,]/g, '').replace(',', '.')) || 0;
     
-    // Verifica se excede o saldo
     if (numericValue <= clientBalance) {
       setAmountInput(formatted);
       setValue('amount', numericValue);
     } else {
-      // Se exceder, define o valor máximo como o saldo disponível
       const maxFormatted = formatCurrency(clientBalance);
       setAmountInput(maxFormatted);
       setValue('amount', clientBalance);
@@ -93,7 +82,6 @@ export const BoletoPaymentForm = ({ clientBalance, onSubmit, isLoading }: Boleto
     };
     onSubmit(submitData);
     
-    // Reset form after submission
     reset();
     setAmountInput('');
     setSelectedFile(null);
@@ -102,62 +90,59 @@ export const BoletoPaymentForm = ({ clientBalance, onSubmit, isLoading }: Boleto
   const isAmountExceeded = amount > clientBalance;
 
   return (
-    <Card>
+    <Card className="dark:bg-gray-800 dark:border-gray-700">
       <CardHeader>
-        <CardTitle>Pagamento de Boleto</CardTitle>
+        <CardTitle className="dark:text-white">Pagamento de Boleto</CardTitle>
       </CardHeader>
       <CardContent>
         <form onSubmit={handleSubmit(handleFormSubmit)} className="space-y-4">
-          {/* Saldo disponível */}
-          <div className="bg-blue-50 p-3 rounded-lg">
-            <p className="text-sm text-blue-700">
+          <div className="bg-blue-50 dark:bg-blue-900/20 p-3 rounded-lg">
+            <p className="text-sm text-blue-700 dark:text-blue-300">
               <strong>Saldo disponível:</strong> {formatCurrency(clientBalance)}
             </p>
           </div>
 
-          {/* Valor a pagar */}
           <div className="space-y-2">
-            <Label htmlFor="amount">Valor do boleto</Label>
+            <Label htmlFor="amount" className="dark:text-white">Valor do boleto</Label>
             <Input
               id="amount"
               type="text"
               value={amountInput}
               onChange={handleAmountChange}
               placeholder="R$ 0,00"
-              className={isAmountExceeded ? 'border-red-500' : ''}
+              className={`dark:bg-gray-700 dark:border-gray-600 dark:text-white ${isAmountExceeded ? 'border-red-500' : ''}`}
             />
             {errors.amount && (
               <p className="text-sm text-red-600">{errors.amount.message}</p>
             )}
             {isAmountExceeded && (
-              <Alert variant="destructive">
+              <Alert variant="destructive" className="dark:bg-red-900/20 dark:border-red-800">
                 <AlertTriangle className="h-4 w-4" />
-                <AlertDescription>
+                <AlertDescription className="dark:text-red-300">
                   O valor do boleto não pode ser maior que seu saldo disponível.
                 </AlertDescription>
               </Alert>
             )}
           </div>
 
-          {/* Código do boleto */}
           <div className="space-y-2">
-            <Label htmlFor="boleto_code">Código de barras ou linha digitável (opcional)</Label>
+            <Label htmlFor="boleto_code" className="dark:text-white">Código de barras ou linha digitável (opcional)</Label>
             <Input
               id="boleto_code"
               {...register('boleto_code')}
               placeholder="Digite o código do boleto"
+              className="dark:bg-gray-700 dark:border-gray-600 dark:text-white"
             />
           </div>
 
-          {/* Upload do arquivo */}
           <div className="space-y-2">
-            <Label htmlFor="boleto_file">Arquivo do boleto (opcional)</Label>
-            <div className="border-2 border-dashed border-gray-300 rounded-lg p-4">
+            <Label htmlFor="boleto_file" className="dark:text-white">Arquivo do boleto (opcional)</Label>
+            <div className="border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg p-4 dark:bg-gray-700/20">
               <div className="text-center">
-                <Upload className="mx-auto h-8 w-8 text-gray-400" />
+                <Upload className="mx-auto h-8 w-8 text-gray-400 dark:text-gray-500" />
                 <div className="mt-2">
                   <label htmlFor="boleto_file" className="cursor-pointer">
-                    <span className="text-sm text-blue-600 hover:text-blue-500">
+                    <span className="text-sm text-blue-600 dark:text-blue-400 hover:text-blue-500 dark:hover:text-blue-300">
                       Clique para fazer upload
                     </span>
                     <input
@@ -168,31 +153,30 @@ export const BoletoPaymentForm = ({ clientBalance, onSubmit, isLoading }: Boleto
                       onChange={handleFileChange}
                     />
                   </label>
-                  <p className="text-xs text-gray-500 mt-1">
+                  <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
                     PDF, JPG, JPEG ou PNG até 10MB
                   </p>
                 </div>
               </div>
               {selectedFile && (
-                <div className="mt-3 text-sm text-green-600">
+                <div className="mt-3 text-sm text-green-600 dark:text-green-400">
                   ✓ Arquivo selecionado: {selectedFile.name}
                 </div>
               )}
             </div>
           </div>
 
-          {/* Observações */}
           <div className="space-y-2">
-            <Label htmlFor="notes">Observações (opcional)</Label>
+            <Label htmlFor="notes" className="dark:text-white">Observações (opcional)</Label>
             <Textarea
               id="notes"
               {...register('notes')}
               placeholder="Informações adicionais sobre o pagamento"
               rows={3}
+              className="dark:bg-gray-700 dark:border-gray-600 dark:text-white"
             />
           </div>
 
-          {/* Botão de envio */}
           <Button
             type="submit"
             className="w-full"
@@ -201,9 +185,9 @@ export const BoletoPaymentForm = ({ clientBalance, onSubmit, isLoading }: Boleto
             {isLoading ? 'Enviando...' : `Solicitar pagamento de ${formatCurrency(amount)}`}
           </Button>
 
-          <Alert>
+          <Alert className="dark:bg-yellow-900/20 dark:border-yellow-800">
             <AlertTriangle className="h-4 w-4" />
-            <AlertDescription>
+            <AlertDescription className="dark:text-yellow-300">
               O valor será debitado do seu saldo após a confirmação do pagamento.
             </AlertDescription>
           </Alert>

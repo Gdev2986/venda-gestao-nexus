@@ -60,7 +60,6 @@ export function PixKeysManager({ userId }: PixKeysManagerProps) {
   const [isEditing, setIsEditing] = useState<string | null>(null);
   const { toast } = useToast();
 
-  // Initialize form with default values
   const form = useForm<PixKeyFormValues>({
     resolver: zodResolver(pixKeySchema),
     defaultValues: {
@@ -75,7 +74,6 @@ export function PixKeysManager({ userId }: PixKeysManagerProps) {
   const onSubmit = async (values: PixKeyFormValues) => {
     try {
       if (isEditing) {
-        // Ensure all required fields are present for update
         const updateData: CreatePixKeyData = {
           name: values.name,
           key: values.key,
@@ -87,12 +85,18 @@ export function PixKeysManager({ userId }: PixKeysManagerProps) {
         await updatePixKey(isEditing, updateData);
         setIsEditing(null);
       } else {
-        await createPixKey(values);
+        const createData: CreatePixKeyData = {
+          name: values.name,
+          key: values.key,
+          type: values.type,
+          owner_name: values.owner_name,
+          is_default: values.is_default,
+        };
+        await createPixKey(createData);
       }
       
       form.reset();
     } catch (error) {
-      // Error is already handled in the hook with toast
       console.error("Error saving PIX key:", error);
     }
   };
@@ -112,7 +116,6 @@ export function PixKeysManager({ userId }: PixKeysManagerProps) {
     try {
       await deletePixKey(id);
     } catch (error) {
-      // Error is already handled in the hook with toast
       console.error("Error deleting PIX key:", error);
     }
   };
@@ -121,7 +124,6 @@ export function PixKeysManager({ userId }: PixKeysManagerProps) {
     try {
       await setDefaultPixKey(id);
     } catch (error) {
-      // Error is already handled in the hook with toast
       console.error("Error setting default PIX key:", error);
     }
   };

@@ -50,17 +50,10 @@ export const PixPaymentForm = ({ clientBalance, pixKeys, onSubmit, isLoading }: 
   const amount = watch('amount');
 
   const formatAmountInput = (value: string) => {
-    // Remove tudo que não é número
     const numbers = value.replace(/\D/g, '');
-    
-    // Se não há números, retorna vazio
     if (!numbers) return '';
-    
-    // Converte para centavos e depois para reais
     const cents = parseInt(numbers);
     const reais = cents / 100;
-    
-    // Formatar como moeda brasileira
     return new Intl.NumberFormat('pt-BR', {
       style: 'currency',
       currency: 'BRL',
@@ -70,16 +63,12 @@ export const PixPaymentForm = ({ clientBalance, pixKeys, onSubmit, isLoading }: 
   const handleAmountChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const inputValue = e.target.value;
     const formatted = formatAmountInput(inputValue);
-    
-    // Extrai o valor numérico do campo formatado
     const numericValue = parseFloat(formatted.replace(/[^\d,]/g, '').replace(',', '.')) || 0;
     
-    // Verifica se excede o saldo
     if (numericValue <= clientBalance) {
       setAmountInput(formatted);
       setValue('amount', numericValue);
     } else {
-      // Se exceder, define o valor máximo como o saldo disponível
       const maxFormatted = formatCurrency(clientBalance);
       setAmountInput(maxFormatted);
       setValue('amount', clientBalance);
@@ -88,16 +77,13 @@ export const PixPaymentForm = ({ clientBalance, pixKeys, onSubmit, isLoading }: 
 
   const handleFormSubmit = (data: PixPaymentFormData) => {
     if (useNewKey) {
-      // Remove pix_key_id se estamos criando uma nova chave
       const { pix_key_id, ...submitData } = data;
       onSubmit(submitData);
     } else {
-      // Remove new_pix_key se estamos usando uma chave existente
       const { new_pix_key, ...submitData } = data;
       onSubmit(submitData);
     }
     
-    // Reset form after submission
     reset();
     setAmountInput('');
     setUseNewKey(false);
@@ -107,53 +93,51 @@ export const PixPaymentForm = ({ clientBalance, pixKeys, onSubmit, isLoading }: 
   const hasAvailableKeys = pixKeys.length > 0;
 
   return (
-    <Card>
+    <Card className="dark:bg-gray-800 dark:border-gray-700">
       <CardHeader>
-        <CardTitle>Solicitação PIX</CardTitle>
+        <CardTitle className="dark:text-white">Solicitação PIX</CardTitle>
       </CardHeader>
       <CardContent>
         <form onSubmit={handleSubmit(handleFormSubmit)} className="space-y-4">
-          {/* Saldo disponível */}
-          <div className="bg-blue-50 p-3 rounded-lg">
-            <p className="text-sm text-blue-700">
+          <div className="bg-blue-50 dark:bg-blue-900/20 p-3 rounded-lg">
+            <p className="text-sm text-blue-700 dark:text-blue-300">
               <strong>Saldo disponível:</strong> {formatCurrency(clientBalance)}
             </p>
           </div>
 
-          {/* Valor a solicitar */}
           <div className="space-y-2">
-            <Label htmlFor="amount">Valor a solicitar</Label>
+            <Label htmlFor="amount" className="dark:text-white">Valor a solicitar</Label>
             <Input
               id="amount"
               type="text"
               value={amountInput}
               onChange={handleAmountChange}
               placeholder="R$ 0,00"
-              className={isAmountExceeded ? 'border-red-500' : ''}
+              className={`dark:bg-gray-700 dark:border-gray-600 dark:text-white ${isAmountExceeded ? 'border-red-500' : ''}`}
             />
             {errors.amount && (
               <p className="text-sm text-red-600">{errors.amount.message}</p>
             )}
             {isAmountExceeded && (
-              <Alert variant="destructive">
+              <Alert variant="destructive" className="dark:bg-red-900/20 dark:border-red-800">
                 <AlertTriangle className="h-4 w-4" />
-                <AlertDescription>
+                <AlertDescription className="dark:text-red-300">
                   O valor solicitado não pode ser maior que seu saldo disponível.
                 </AlertDescription>
               </Alert>
             )}
           </div>
 
-          {/* Seleção de chave PIX */}
           <div className="space-y-4">
             <div className="flex items-center justify-between">
-              <Label>Chave PIX para recebimento</Label>
+              <Label className="dark:text-white">Chave PIX para recebimento</Label>
               {hasAvailableKeys && (
                 <Button
                   type="button"
                   variant="outline"
                   size="sm"
                   onClick={() => setUseNewKey(!useNewKey)}
+                  className="dark:bg-gray-700 dark:border-gray-600 dark:text-white dark:hover:bg-gray-600"
                 >
                   <Plus className="h-4 w-4 mr-2" />
                   {useNewKey ? 'Usar chave existente' : 'Nova chave'}
@@ -163,15 +147,15 @@ export const PixPaymentForm = ({ clientBalance, pixKeys, onSubmit, isLoading }: 
 
             {!useNewKey && hasAvailableKeys ? (
               <Select onValueChange={(value) => setValue('pix_key_id', value)}>
-                <SelectTrigger>
+                <SelectTrigger className="dark:bg-gray-700 dark:border-gray-600 dark:text-white">
                   <SelectValue placeholder="Selecione uma chave PIX" />
                 </SelectTrigger>
-                <SelectContent>
+                <SelectContent className="dark:bg-gray-800 dark:border-gray-700">
                   {pixKeys.map((key) => (
-                    <SelectItem key={key.id} value={key.id}>
+                    <SelectItem key={key.id} value={key.id} className="dark:text-white dark:focus:bg-gray-700">
                       <div className="flex flex-col">
                         <span className="font-medium">{key.name}</span>
-                        <span className="text-sm text-gray-500">
+                        <span className="text-sm text-gray-500 dark:text-gray-400">
                           {key.type}: {key.key}
                         </span>
                       </div>
@@ -180,16 +164,17 @@ export const PixPaymentForm = ({ clientBalance, pixKeys, onSubmit, isLoading }: 
                 </SelectContent>
               </Select>
             ) : (
-              <div className="space-y-3 border rounded-lg p-4">
-                <h4 className="font-medium">Nova Chave PIX</h4>
+              <div className="space-y-3 border rounded-lg p-4 dark:border-gray-600 dark:bg-gray-700/20">
+                <h4 className="font-medium dark:text-white">Nova Chave PIX</h4>
                 
                 <div className="grid grid-cols-2 gap-3">
                   <div>
-                    <Label htmlFor="new_key_name">Nome da chave</Label>
+                    <Label htmlFor="new_key_name" className="dark:text-white">Nome da chave</Label>
                     <Input
                       id="new_key_name"
                       {...register('new_pix_key.name')}
                       placeholder="Ex: Minha chave"
+                      className="dark:bg-gray-700 dark:border-gray-600 dark:text-white"
                     />
                     {errors.new_pix_key?.name && (
                       <p className="text-sm text-red-600">{errors.new_pix_key.name.message}</p>
@@ -197,17 +182,17 @@ export const PixPaymentForm = ({ clientBalance, pixKeys, onSubmit, isLoading }: 
                   </div>
 
                   <div>
-                    <Label htmlFor="new_key_type">Tipo</Label>
+                    <Label htmlFor="new_key_type" className="dark:text-white">Tipo</Label>
                     <Select onValueChange={(value) => setValue('new_pix_key.type', value as any)}>
-                      <SelectTrigger>
+                      <SelectTrigger className="dark:bg-gray-700 dark:border-gray-600 dark:text-white">
                         <SelectValue placeholder="Tipo da chave" />
                       </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="CPF">CPF</SelectItem>
-                        <SelectItem value="CNPJ">CNPJ</SelectItem>
-                        <SelectItem value="EMAIL">Email</SelectItem>
-                        <SelectItem value="PHONE">Telefone</SelectItem>
-                        <SelectItem value="RANDOM">Aleatória</SelectItem>
+                      <SelectContent className="dark:bg-gray-800 dark:border-gray-700">
+                        <SelectItem value="CPF" className="dark:text-white dark:focus:bg-gray-700">CPF</SelectItem>
+                        <SelectItem value="CNPJ" className="dark:text-white dark:focus:bg-gray-700">CNPJ</SelectItem>
+                        <SelectItem value="EMAIL" className="dark:text-white dark:focus:bg-gray-700">Email</SelectItem>
+                        <SelectItem value="PHONE" className="dark:text-white dark:focus:bg-gray-700">Telefone</SelectItem>
+                        <SelectItem value="RANDOM" className="dark:text-white dark:focus:bg-gray-700">Aleatória</SelectItem>
                       </SelectContent>
                     </Select>
                     {errors.new_pix_key?.type && (
@@ -217,11 +202,12 @@ export const PixPaymentForm = ({ clientBalance, pixKeys, onSubmit, isLoading }: 
                 </div>
 
                 <div>
-                  <Label htmlFor="new_key_value">Chave PIX</Label>
+                  <Label htmlFor="new_key_value" className="dark:text-white">Chave PIX</Label>
                   <Input
                     id="new_key_value"
                     {...register('new_pix_key.key')}
                     placeholder="Digite a chave PIX"
+                    className="dark:bg-gray-700 dark:border-gray-600 dark:text-white"
                   />
                   {errors.new_pix_key?.key && (
                     <p className="text-sm text-red-600">{errors.new_pix_key.key.message}</p>
@@ -229,11 +215,12 @@ export const PixPaymentForm = ({ clientBalance, pixKeys, onSubmit, isLoading }: 
                 </div>
 
                 <div>
-                  <Label htmlFor="new_key_owner">Nome do titular</Label>
+                  <Label htmlFor="new_key_owner" className="dark:text-white">Nome do titular</Label>
                   <Input
                     id="new_key_owner"
                     {...register('new_pix_key.owner_name')}
                     placeholder="Nome completo do titular"
+                    className="dark:bg-gray-700 dark:border-gray-600 dark:text-white"
                   />
                   {errors.new_pix_key?.owner_name && (
                     <p className="text-sm text-red-600">{errors.new_pix_key.owner_name.message}</p>
@@ -243,18 +230,17 @@ export const PixPaymentForm = ({ clientBalance, pixKeys, onSubmit, isLoading }: 
             )}
           </div>
 
-          {/* Observações */}
           <div className="space-y-2">
-            <Label htmlFor="notes">Observações (opcional)</Label>
+            <Label htmlFor="notes" className="dark:text-white">Observações (opcional)</Label>
             <Textarea
               id="notes"
               {...register('notes')}
               placeholder="Informações adicionais sobre a solicitação"
               rows={3}
+              className="dark:bg-gray-700 dark:border-gray-600 dark:text-white"
             />
           </div>
 
-          {/* Botão de envio */}
           <Button
             type="submit"
             className="w-full"
@@ -264,9 +250,9 @@ export const PixPaymentForm = ({ clientBalance, pixKeys, onSubmit, isLoading }: 
           </Button>
 
           {!hasAvailableKeys && !useNewKey && (
-            <Alert>
+            <Alert className="dark:bg-yellow-900/20 dark:border-yellow-800">
               <AlertTriangle className="h-4 w-4" />
-              <AlertDescription>
+              <AlertDescription className="dark:text-yellow-300">
                 Você não possui chaves PIX cadastradas. Clique em "Nova chave" para criar uma.
               </AlertDescription>
             </Alert>
