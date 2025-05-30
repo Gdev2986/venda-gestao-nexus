@@ -38,7 +38,7 @@ const MainSidebar = memo(({ isOpen, isMobile, onClose, userRole }: MainSidebarPr
           isMobile ? "shadow-xl" : "border-r border-sidebar-border",
           isOpen ? "translate-x-0" : "-translate-x-full"
         )}
-        style={{ backgroundColor: 'hsl(196, 70%, 20%)' }}
+        style={{ backgroundColor: '#115464' }}
       >
         <div className="flex items-center justify-between h-14 md:h-16 px-4 border-b border-sidebar-border">
           <div className="flex items-center space-x-2">

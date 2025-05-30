@@ -1,3 +1,4 @@
+
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
 
 @tailwind base;
@@ -36,13 +37,13 @@
 
     --radius: 0.5rem;
 
-    --sidebar-background: 180 56% 32%;
+    --sidebar-background: 192 71% 20%;
     --sidebar-foreground: 210 40% 98%;
     --sidebar-primary: 182 63% 36%;
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 195 70% 25%;
+    --sidebar-accent: 192 71% 15%;
     --sidebar-accent-foreground: 210 40% 98%;
-    --sidebar-border: 195 70% 25%;
+    --sidebar-border: 192 71% 15%;
     --sidebar-ring: 182 63% 36%;
   }
 
@@ -75,13 +76,13 @@
     --input: 0 0% 25%;
     --ring: 182 63% 36%;
 
-    --sidebar-background: 192 71% 23%;
+    --sidebar-background: 192 71% 20%;
     --sidebar-foreground: 210 40% 98%;
     --sidebar-primary: 182 63% 36%;
     --sidebar-primary-foreground: 210 40% 98%;
-    --sidebar-accent: 195 70% 25%;
+    --sidebar-accent: 192 71% 15%;
     --sidebar-accent-foreground: 210 40% 98%;
-    --sidebar-border: 195 60% 25%;
+    --sidebar-border: 192 71% 15%;
     --sidebar-ring: 182 63% 36%;
   }
 }
