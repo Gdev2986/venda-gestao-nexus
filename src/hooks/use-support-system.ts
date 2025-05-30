@@ -1,5 +1,5 @@
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useAuth } from "@/hooks/use-auth";
 import { supabase } from "@/integrations/supabase/client";
 import { 
@@ -88,7 +88,7 @@ export const useSupportSystem = () => {
   };
 
   // Load tickets
-  const loadTickets = async () => {
+  const loadTickets = useCallback(async () => {
     setIsLoading(true);
     try {
       const { data, error } = await getSupportTickets();
@@ -111,18 +111,20 @@ export const useSupportSystem = () => {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [userRole, clientId, toast]);
 
   // Load messages for selected ticket with real-time updates
-  const loadMessages = async (ticketId: string) => {
+  const loadMessages = useCallback(async (ticketId: string) => {
     try {
+      console.log('Loading messages for ticket:', ticketId);
       const { data, error } = await getTicketMessages(ticketId);
       if (error) throw error;
+      console.log('Loaded messages:', data?.length || 0);
       setMessages(data || []);
     } catch (error) {
       console.error("Error loading messages:", error);
     }
-  };
+  }, []);
 
   // Notify admins about new ticket - usando profiles ao invés de auth.users
   const notifyAdminsNewTicket = async (ticketId: string, clientName: string) => {
@@ -332,11 +334,12 @@ export const useSupportSystem = () => {
     }
   };
 
-  // Set up real-time subscriptions
+  // Set up real-time subscriptions for tickets
   useEffect(() => {
     if (!user) return;
 
-    // Subscribe to ticket changes
+    console.log('Setting up tickets real-time subscription');
+    
     const ticketChannel = supabase
       .channel("support_tickets")
       .on(
@@ -346,15 +349,27 @@ export const useSupportSystem = () => {
           schema: "public",
           table: "support_requests",
         },
-        () => {
+        (payload) => {
+          console.log('Tickets real-time update:', payload);
           loadTickets();
         }
       )
       .subscribe();
 
-    // Subscribe to message changes for current ticket
+    return () => {
+      console.log('Cleaning up tickets subscription');
+      supabase.removeChannel(ticketChannel);
+    };
+  }, [user, loadTickets]);
+
+  // Set up real-time subscriptions for messages when a ticket is selected
+  useEffect(() => {
+    if (!user || !selectedTicket) return;
+
+    console.log('Setting up messages real-time subscription for ticket:', selectedTicket.id);
+    
     const messageChannel = supabase
-      .channel("support_messages")
+      .channel(`support_messages_${selectedTicket.id}`)
       .on(
         "postgres_changes",
         {
@@ -363,18 +378,18 @@ export const useSupportSystem = () => {
           table: "support_messages",
         },
         (payload) => {
-          if (selectedTicket) {
-            loadMessages(selectedTicket.id);
-          }
+          console.log('Messages real-time update:', payload);
+          // Reload messages for the current ticket
+          loadMessages(selectedTicket.id);
         }
       )
       .subscribe();
 
     return () => {
-      supabase.removeChannel(ticketChannel);
+      console.log('Cleaning up messages subscription for ticket:', selectedTicket.id);
       supabase.removeChannel(messageChannel);
     };
-  }, [user, selectedTicket]);
+  }, [user, selectedTicket, loadMessages]);
 
   // Load client ID and tickets on mount
   useEffect(() => {
@@ -383,7 +398,7 @@ export const useSupportSystem = () => {
         loadTickets();
       });
     }
-  }, [user, userRole]);
+  }, [user, userRole, loadTickets]);
 
   return {
     tickets,
