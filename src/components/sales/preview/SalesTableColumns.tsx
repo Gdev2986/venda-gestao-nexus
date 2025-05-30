@@ -1,0 +1,110 @@
+
+import { Badge } from "@/components/ui/badge";
+import { ColumnDef } from "@tanstack/react-table";
+import { NormalizedSale } from "@/utils/sales-processor";
+
+// Helper function to format date consistently
+const formatTransactionDate = (dateValue: string | Date | null | undefined): string => {
+  if (!dateValue) return 'N/A';
+  
+  if (typeof dateValue === 'string') {
+    return dateValue;
+  }
+  
+  if (dateValue instanceof Date) {
+    return dateValue.toLocaleString('pt-BR', {
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit'
+    });
+  }
+  
+  return String(dateValue);
+};
+
+// Payment method badge function
+const getPaymentMethodBadge = (method: string, installments?: number) => {
+  switch (method) {
+    case 'CREDIT':
+    case 'Cartão de Crédito':
+      const installmentText = installments && installments > 1 ? ` ${installments}x` : " À Vista";
+      return (
+        <Badge variant="outline" className="border-blue-500 text-blue-700 bg-blue-50">
+          Crédito{installmentText}
+        </Badge>
+      );
+    case 'DEBIT':
+    case 'Cartão de Débito':
+      return (
+        <Badge variant="outline" className="border-green-500 text-green-700 bg-green-50">
+          Débito
+        </Badge>
+      );
+    case 'PIX':
+    case 'Pix':
+      return (
+        <Badge variant="outline" className="border-purple-500 text-purple-700 bg-purple-50">
+          PIX
+        </Badge>
+      );
+    default:
+      return (
+        <Badge variant="outline" className="border-gray-500 text-gray-700 bg-gray-50">
+          {method}
+        </Badge>
+      );
+  }
+};
+
+export const salesTableColumns: ColumnDef<NormalizedSale>[] = [
+  {
+    id: "transaction_date",
+    header: "Data/Hora",
+    cell: ({ row }) => {
+      const formattedDate = formatTransactionDate(row.original.transaction_date);
+      return (
+        <span className="font-medium text-sm">
+          {formattedDate}
+        </span>
+      );
+    }
+  },
+  {
+    id: "id",
+    header: "Código",
+    cell: ({ row }) => (
+      <span className="font-mono text-sm">
+        {row.original.id?.substring(0, 8) || 'N/A'}
+      </span>
+    )
+  },
+  {
+    id: "terminal",
+    header: "Terminal", 
+    cell: ({ row }) => (
+      <span className="text-sm">
+        {row.original.terminal}
+      </span>
+    )
+  },
+  {
+    id: "gross_amount",
+    header: "Valor Bruto",
+    cell: ({ row }) => (
+      <span className="font-medium text-right">
+        {row.original.formatted_amount}
+      </span>
+    )
+  },
+  {
+    id: "payment_type",
+    header: "Pagamento",
+    cell: ({ row }) => (
+      <div className="text-center">
+        {getPaymentMethodBadge(row.original.payment_type, row.original.installments)}
+      </div>
+    )
+  }
+];

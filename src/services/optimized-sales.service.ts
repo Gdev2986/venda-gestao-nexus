@@ -1,4 +1,3 @@
-
 import { supabase } from "@/integrations/supabase/client";
 import { NormalizedSale } from "@/utils/sales-processor";
 import { formatCurrency } from "@/lib/formatters";
@@ -190,6 +189,13 @@ export const optimizedSalesService = {
         currentPage: page
       };
     }
+  },
+
+  // Add missing getYesterday method for compatibility
+  getYesterday(): string {
+    const yesterday = new Date();
+    yesterday.setDate(yesterday.getDate() - 1);
+    return yesterday.toISOString().split('T')[0];
   },
 
   // Formatar data para exibição
