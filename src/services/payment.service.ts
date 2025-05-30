@@ -1,19 +1,29 @@
-
 import { supabase } from "@/integrations/supabase/client";
 import { PaymentRequest, PaymentRequestParams, PaymentProcessParams, PaymentType } from "@/types/payment.types";
 import { PaymentStatus } from "@/types/enums";
 
 export const paymentService = {
-  // Get all payment requests with enhanced data
-  async getPaymentRequests(): Promise<PaymentRequest[]> {
-    const { data, error } = await supabase
+  // Get all payment requests with enhanced data and date filtering
+  async getPaymentRequests(startDate?: Date, endDate?: Date): Promise<PaymentRequest[]> {
+    let query = supabase
       .from('payment_requests')
       .select(`
         *,
         client:clients(id, business_name, balance),
         pix_key:pix_keys(id, key, type, name, owner_name)
-      `)
-      .order('created_at', { ascending: false });
+      `);
+
+    // Add date filtering if provided
+    if (startDate) {
+      query = query.gte('created_at', startDate.toISOString());
+    }
+    if (endDate) {
+      const endOfDay = new Date(endDate);
+      endOfDay.setHours(23, 59, 59, 999);
+      query = query.lte('created_at', endOfDay.toISOString());
+    }
+
+    const { data, error } = await query.order('created_at', { ascending: false });
 
     if (error) throw error;
     return (data || []).map(this.formatPaymentRequest);
@@ -38,13 +48,13 @@ export const paymentService = {
     return data ? this.formatPaymentRequest(data) : null;
   },
 
-  // Create payment request with file upload support
+  // Create payment request with file upload support and new PIX key creation
   async createPaymentRequest(params: PaymentRequestParams): Promise<PaymentRequest> {
     let boleto_file_url: string | undefined;
 
     // Upload boleto file if provided
     if (params.boleto_file) {
-      const fileName = `${params.client_id}/${Date.now()}-${params.boleto_file.name}`;
+      const fileName = `boletos/${params.client_id}/${Date.now()}-${params.boleto_file.name}`;
       const { data: uploadData, error: uploadError } = await supabase.storage
         .from('payment-files')
         .upload(fileName, params.boleto_file);
@@ -55,8 +65,8 @@ export const paymentService = {
 
     // Handle new PIX key creation
     let pix_key_id = params.pix_key_id;
-    if (params.payment_type === 'PIX' && !pix_key_id && (params as any).new_pix_key) {
-      const newKeyData = (params as any).new_pix_key;
+    if (params.payment_type === 'PIX' && !pix_key_id && params.new_pix_key) {
+      const newKeyData = params.new_pix_key;
       const { data: pixKeyData, error: pixKeyError } = await supabase
         .from('pix_keys')
         .insert({
@@ -158,30 +168,6 @@ export const paymentService = {
     return (data || []).map(this.formatPaymentRequest);
   },
 
-  // Get partner commission balance
-  async getPartnerCommissionBalance(partnerId: string): Promise<number> {
-    try {
-      const { data, error } = await supabase
-        .from('commissions')
-        .select('amount, is_paid')
-        .eq('partner_id', partnerId);
-
-      if (error) throw error;
-
-      if (!data) return 0;
-
-      const totalCommission = data.reduce((sum, comm) => sum + (comm.amount || 0), 0);
-      const paidCommission = data
-        .filter(comm => comm.is_paid)
-        .reduce((sum, comm) => sum + (comm.amount || 0), 0);
-
-      return totalCommission - paidCommission;
-    } catch (error) {
-      console.error('Error getting partner commission balance:', error);
-      return 0;
-    }
-  },
-
   // Helper method to format payment request data
   formatPaymentRequest(item: any): PaymentRequest {
     return {
@@ -191,7 +177,7 @@ export const paymentService = {
       payment_type: item.payment_type as PaymentType || 'PIX',
       status: item.status as PaymentStatus,
       created_at: item.created_at,
-      updated_at: item.updated_at,
+      updated_at: item.updated_at || item.created_at,
       processed_at: item.processed_at,
       processed_by: item.processed_by,
       notes: item.notes,
@@ -244,6 +230,30 @@ export const paymentService = {
       .eq('id', id);
 
     if (error) throw error;
+  },
+  
+  // Get partner commission balance
+  async getPartnerCommissionBalance(partnerId: string): Promise<number> {
+    try {
+      const { data, error } = await supabase
+        .from('commissions')
+        .select('amount, is_paid')
+        .eq('partner_id', partnerId);
+
+      if (error) throw error;
+
+      if (!data) return 0;
+
+      const totalCommission = data.reduce((sum, comm) => sum + (comm.amount || 0), 0);
+      const paidCommission = data
+        .filter(comm => comm.is_paid)
+        .reduce((sum, comm) => sum + (comm.amount || 0), 0);
+
+      return totalCommission - paidCommission;
+    } catch (error) {
+      console.error('Error getting partner commission balance:', error);
+      return 0;
+    }
   },
 };
 

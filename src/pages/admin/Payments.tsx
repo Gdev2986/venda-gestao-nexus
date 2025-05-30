@@ -4,6 +4,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { DatePickerWithRange } from "@/components/ui/date-picker-with-range";
 import { AdminPaymentsList } from "@/components/payments/AdminPaymentsList";
 import { PaymentDetailsModal } from "@/components/payments/PaymentDetailsModal";
 import { useAdminPayments } from "@/hooks/payments/useAdminPayments";
@@ -13,6 +14,8 @@ import { paymentService } from "@/services/payment.service";
 import { useToast } from "@/hooks/use-toast";
 import { useNavigate } from "react-router-dom";
 import TablePagination from "@/components/ui/table-pagination";
+import { addDays } from "date-fns";
+import type { DateRange } from "react-day-picker";
 
 const AdminPayments = () => {
   const [searchTerm, setSearchTerm] = useState("");
@@ -25,6 +28,12 @@ const AdminPayments = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
   
+  // Set default date range to today
+  const [dateRange, setDateRange] = useState<DateRange | undefined>({
+    from: new Date(),
+    to: new Date()
+  });
+  
   const {
     payments,
     isLoading,
@@ -34,6 +43,8 @@ const AdminPayments = () => {
   } = useAdminPayments({
     searchTerm,
     statusFilter,
+    startDate: dateRange?.from,
+    endDate: dateRange?.to,
     page,
     pageSize
   });
@@ -60,6 +71,11 @@ const AdminPayments = () => {
 
   const handleTypeFilterChange = (type: PaymentType | "ALL") => {
     setTypeFilter(type);
+    setPage(1);
+  };
+
+  const handleDateRangeChange = (range: DateRange | undefined) => {
+    setDateRange(range);
     setPage(1);
   };
 
@@ -126,7 +142,7 @@ const AdminPayments = () => {
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
             <Input
               type="search"
               placeholder="Buscar por cliente..."
@@ -162,6 +178,11 @@ const AdminPayments = () => {
                 <SelectItem value="TED">TED</SelectItem>
               </SelectContent>
             </Select>
+            <DatePickerWithRange
+              date={dateRange}
+              onDateChange={handleDateRangeChange}
+              className="w-full"
+            />
           </div>
 
           <AdminPaymentsList

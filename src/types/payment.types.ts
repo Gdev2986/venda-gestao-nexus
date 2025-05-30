@@ -11,7 +11,7 @@ export interface PixKey {
   key: string;
   type: string;
   name: string;
-  owner_name?: string; // Make optional to match pix.types
+  owner_name: string; // Make required to match usage
   is_default?: boolean;
   bank_name?: string;
   key_type?: string;
@@ -27,13 +27,13 @@ export interface Payment {
   amount: number;
   status: EnumsPaymentStatus;
   created_at: string;
-  updated_at?: string;
+  updated_at: string; // Make required
   payment_type: PaymentType;
   pix_key_id?: string;
   boleto_file_url?: string;
   boleto_code?: string;
   notes?: string;
-  receipt_file_url?: string;
+  receipt_file_url?: string; // Add this field
   processed_at?: string;
   processed_by?: string;
   description?: string;
@@ -64,6 +64,12 @@ export interface PaymentRequestParams {
   method?: PaymentMethod;
   notes?: string;
   pix_key_id?: string;
+  new_pix_key?: {
+    type: 'CPF' | 'CNPJ' | 'EMAIL' | 'PHONE' | 'EVP';
+    key: string;
+    name: string;
+    owner_name: string;
+  };
   boleto_code?: string;
   boleto_file?: File;
 }

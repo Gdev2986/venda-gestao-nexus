@@ -9,7 +9,6 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { FileUpload } from '@/components/ui/file-upload';
-import { useFileUpload } from '@/hooks/useFileUpload';
 import { formatCurrency } from '@/lib/utils';
 
 const boletoPaymentSchema = z.object({
@@ -32,12 +31,6 @@ export const BoletoPaymentForm = ({
   isLoading = false
 }: BoletoPaymentFormProps) => {
   const [boletoFile, setBoletoFile] = useState<File | null>(null);
-
-  const fileUpload = useFileUpload({
-    bucket: 'payment-files',
-    allowedTypes: ['application/pdf', 'image/jpeg', 'image/png', 'image/jpg'],
-    maxSizeInMB: 10
-  });
 
   const form = useForm<BoletoPaymentFormData>({
     resolver: zodResolver(boletoPaymentSchema),
@@ -91,9 +84,9 @@ export const BoletoPaymentForm = ({
           </div>
 
           <div>
-            <Label>Arquivo do boleto (opcional)</Label>
+            <Label>Arquivo do boleto</Label>
             <p className="text-xs text-muted-foreground mb-2">
-              Envie o boleto em PDF ou imagem para facilitar a confirmação
+              Envie o boleto em PDF ou imagem para facilitar a confirmação do pagamento
             </p>
             <FileUpload
               onFileSelect={handleFileSelect}
@@ -101,8 +94,6 @@ export const BoletoPaymentForm = ({
               acceptedTypes={['application/pdf', 'image/jpeg', 'image/png', 'image/jpg']}
               maxSizeInMB={10}
               currentFile={boletoFile || undefined}
-              isUploading={fileUpload.isUploading}
-              uploadProgress={fileUpload.uploadProgress}
             />
           </div>
 

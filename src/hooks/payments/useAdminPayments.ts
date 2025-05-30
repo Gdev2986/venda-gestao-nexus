@@ -9,6 +9,8 @@ import { useToast } from "@/hooks/use-toast";
 interface UseAdminPaymentsProps {
   searchTerm?: string;
   statusFilter?: PaymentStatus | "ALL";
+  startDate?: Date;
+  endDate?: Date;
   page?: number;
   pageSize?: number;
 }
@@ -16,6 +18,8 @@ interface UseAdminPaymentsProps {
 export const useAdminPayments = ({
   searchTerm = '',
   statusFilter = "ALL",
+  startDate,
+  endDate,
   page = 1,
   pageSize = 10
 }: UseAdminPaymentsProps) => {
@@ -30,7 +34,7 @@ export const useAdminPayments = ({
     setError(null);
     
     try {
-      const allPayments = await paymentService.getPaymentRequests();
+      const allPayments = await paymentService.getPaymentRequests(startDate, endDate);
       
       // Apply filters
       let filteredPayments = allPayments;
@@ -67,7 +71,7 @@ export const useAdminPayments = ({
 
   useEffect(() => {
     fetchPayments();
-  }, [searchTerm, statusFilter, page, pageSize]);
+  }, [searchTerm, statusFilter, startDate, endDate, page, pageSize]);
 
   // Function to handle payment actions (approve, reject, etc.)
   const performPaymentAction = (paymentId: string, action: PaymentAction) => {
@@ -88,18 +92,6 @@ export const useAdminPayments = ({
         toast({
           title: "Visualizando Pagamento",
           description: `Visualizando detalhes do pagamento #${paymentId.substring(0, 8)}.`
-        });
-        break;
-      case PaymentAction.DELETE:
-        toast({
-          title: "Pagamento Excluído",
-          description: `Pagamento #${paymentId.substring(0, 8)} foi excluído.`
-        });
-        break;
-      case PaymentAction.SEND_RECEIPT:
-        toast({
-          title: "Comprovante Enviado",
-          description: `Comprovante para o pagamento #${paymentId.substring(0, 8)} foi enviado.`
         });
         break;
       default:

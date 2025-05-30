@@ -27,6 +27,12 @@ const pixPaymentSchema = z.object({
   new_pix_key: pixKeySchema.optional(),
   save_new_key: z.boolean().default(false),
   notes: z.string().optional()
+}).refine((data) => {
+  // Deve ter ou uma chave existente ou uma nova chave
+  return data.pix_key_id || data.new_pix_key;
+}, {
+  message: "Selecione uma chave PIX existente ou cadastre uma nova",
+  path: ["pix_key_id"]
 });
 
 type PixPaymentFormData = z.infer<typeof pixPaymentSchema>;
@@ -57,6 +63,19 @@ export const PixPaymentForm = ({
 
   const handleSubmit = async (data: PixPaymentFormData) => {
     await onSubmit(data);
+  };
+
+  const watchedKeyType = form.watch('new_pix_key.type');
+
+  const getKeyPlaceholder = (type?: string) => {
+    switch (type) {
+      case 'CPF': return '000.000.000-00';
+      case 'CNPJ': return '00.000.000/0000-00';
+      case 'EMAIL': return 'exemplo@email.com';
+      case 'PHONE': return '(00) 00000-0000';
+      case 'EVP': return 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa';
+      default: return 'Digite a chave PIX';
+    }
   };
 
   return (
@@ -93,7 +112,11 @@ export const PixPaymentForm = ({
                 type="button"
                 variant={!useNewKey ? "default" : "outline"}
                 size="sm"
-                onClick={() => setUseNewKey(false)}
+                onClick={() => {
+                  setUseNewKey(false);
+                  form.resetField('new_pix_key');
+                }}
+                disabled={pixKeys.length === 0}
               >
                 Usar chave existente
               </Button>
@@ -101,15 +124,18 @@ export const PixPaymentForm = ({
                 type="button"
                 variant={useNewKey ? "default" : "outline"}
                 size="sm"
-                onClick={() => setUseNewKey(true)}
+                onClick={() => {
+                  setUseNewKey(true);
+                  form.resetField('pix_key_id');
+                }}
               >
                 <Plus className="h-4 w-4 mr-1" />
-                Nova chave
+                Cadastrar nova chave
               </Button>
             </div>
           </div>
 
-          {!useNewKey ? (
+          {!useNewKey && pixKeys.length > 0 ? (
             <div>
               <Label htmlFor="pix_key_id">Selecionar chave existente</Label>
               <Select onValueChange={(value) => form.setValue('pix_key_id', value)}>
@@ -124,8 +150,19 @@ export const PixPaymentForm = ({
                   ))}
                 </SelectContent>
               </Select>
+              {form.formState.errors.pix_key_id && (
+                <p className="text-sm text-destructive mt-1">
+                  {form.formState.errors.pix_key_id.message}
+                </p>
+              )}
             </div>
-          ) : (
+          ) : pixKeys.length === 0 && !useNewKey ? (
+            <div className="text-sm text-muted-foreground p-3 bg-gray-50 rounded-lg">
+              Você não possui chaves PIX cadastradas. Cadastre uma nova chave para continuar.
+            </div>
+          ) : null}
+
+          {(useNewKey || pixKeys.length === 0) && (
             <Card>
               <CardHeader>
                 <CardTitle className="text-lg">Nova Chave PIX</CardTitle>
@@ -145,15 +182,25 @@ export const PixPaymentForm = ({
                       <SelectItem value="EVP">Chave aleatória</SelectItem>
                     </SelectContent>
                   </Select>
+                  {form.formState.errors.new_pix_key?.type && (
+                    <p className="text-sm text-destructive mt-1">
+                      {form.formState.errors.new_pix_key.type.message}
+                    </p>
+                  )}
                 </div>
 
                 <div>
                   <Label htmlFor="key">Chave PIX</Label>
                   <Input
                     id="key"
-                    placeholder="Digite a chave PIX"
+                    placeholder={getKeyPlaceholder(watchedKeyType)}
                     {...form.register('new_pix_key.key')}
                   />
+                  {form.formState.errors.new_pix_key?.key && (
+                    <p className="text-sm text-destructive mt-1">
+                      {form.formState.errors.new_pix_key.key.message}
+                    </p>
+                  )}
                 </div>
 
                 <div>
@@ -163,6 +210,11 @@ export const PixPaymentForm = ({
                     placeholder="Ex: Conta principal"
                     {...form.register('new_pix_key.name')}
                   />
+                  {form.formState.errors.new_pix_key?.name && (
+                    <p className="text-sm text-destructive mt-1">
+                      {form.formState.errors.new_pix_key.name.message}
+                    </p>
+                  )}
                 </div>
 
                 <div>
@@ -172,6 +224,11 @@ export const PixPaymentForm = ({
                     placeholder="Nome completo do titular"
                     {...form.register('new_pix_key.owner_name')}
                   />
+                  {form.formState.errors.new_pix_key?.owner_name && (
+                    <p className="text-sm text-destructive mt-1">
+                      {form.formState.errors.new_pix_key.owner_name.message}
+                    </p>
+                  )}
                 </div>
 
                 <div className="flex items-center space-x-2">
