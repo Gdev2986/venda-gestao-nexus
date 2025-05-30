@@ -126,6 +126,15 @@ export const useSupportSystem = () => {
 
   // Create new ticket - return void to match expected interface
   const createTicket = async (ticketData: CreateTicketParams): Promise<void> => {
+    if (!user) {
+      toast({
+        title: "Erro",
+        description: "Usuário não autenticado.",
+        variant: "destructive",
+      });
+      throw new Error('Usuário não autenticado');
+    }
+
     console.log('useSupportSystem: Creating ticket with data:', ticketData);
     
     // Validate client_id if provided
@@ -161,9 +170,22 @@ export const useSupportSystem = () => {
 
     setIsCreating(true);
     try {
-      const { data, error } = await createSupportTicket(ticketData);
+      // Use direct Supabase insert with proper authentication context
+      const { data, error } = await supabase
+        .from('support_requests')
+        .insert({
+          title: ticketData.description, // Use description as title since that's what we have
+          description: ticketData.description,
+          client_id: ticketData.client_id,
+          type: ticketData.type.toString() as "MAINTENANCE" | "INSTALLATION" | "OTHER" | "REPLACEMENT" | "SUPPLIES" | "REMOVAL",
+          priority: ticketData.priority.toString() as "LOW" | "MEDIUM" | "HIGH",
+          status: "PENDING" as "PENDING" | "IN_PROGRESS" | "COMPLETED" | "CANCELED"
+        })
+        .select()
+        .single();
+
       if (error) {
-        console.error('useSupportSystem: Error from createSupportTicket:', error);
+        console.error('useSupportSystem: Error from direct insert:', error);
         throw error;
       }
       
@@ -180,8 +202,8 @@ export const useSupportSystem = () => {
       if (error instanceof Error) {
         if (error.message.includes('foreign key constraint')) {
           errorMessage = "Erro de associação com cliente. Entre em contato com o administrador.";
-        } else if (error.message.includes('permission')) {
-          errorMessage = "Você não tem permissão para criar chamados.";
+        } else if (error.message.includes('permission') || error.message.includes('row-level security')) {
+          errorMessage = "Você não tem permissão para criar chamados. Entre em contato com o administrador.";
         } else {
           errorMessage = error.message;
         }
@@ -198,7 +220,7 @@ export const useSupportSystem = () => {
     }
   };
 
-  // Send message - removed attachments parameter
+  // Send message
   const sendMessage = async (ticketId: string, message: string) => {
     try {
       const { data, error } = await sendTicketMessage(ticketId, message);
@@ -304,7 +326,7 @@ export const useSupportSystem = () => {
     messages,
     isLoading,
     isCreating,
-    clientId, // Expose clientId so components can check if user has client association
+    clientId,
     setSelectedTicket,
     loadTickets,
     loadMessages,

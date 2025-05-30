@@ -50,11 +50,10 @@ export const SupportTicketDialog = ({
 
     try {
       const ticketData: CreateTicketParams = {
-        title: formData.title,
         description: formData.description,
         type: formData.type,
         priority: formData.priority,
-        client_id: clientId || '', // Use empty string for admin/logistics users
+        client_id: clientId || '',
       };
 
       console.log("Submitting ticket with data:", ticketData);
@@ -173,7 +172,7 @@ export const SupportTicketDialog = ({
             >
               Cancelar
             </Button>
-            <Button type="submit" disabled={isLoading || !formData.title || !formData.description}>
+            <Button type="submit" disabled={isLoading || !formData.description}>
               {isLoading ? "Criando..." : "Criar Chamado"}
             </Button>
           </div>
