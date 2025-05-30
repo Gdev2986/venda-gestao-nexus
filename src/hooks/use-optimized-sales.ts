@@ -4,6 +4,13 @@ import { useToast } from "@/hooks/use-toast";
 import { NormalizedSale } from "@/utils/sales-processor";
 import { optimizedSalesService, SalesFilters, PaginatedSalesResult, SalesDateRange, SalesSummary } from "@/services/optimized-sales.service";
 
+interface PeriodStats {
+  totalSales: number;
+  totalGrossAmount: number;
+  totalNetAmount: number;
+  officeCommission: number;
+}
+
 export const useOptimizedSales = () => {
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [salesData, setSalesData] = useState<PaginatedSalesResult>({
@@ -11,6 +18,12 @@ export const useOptimizedSales = () => {
     totalCount: 0,
     totalPages: 0,
     currentPage: 1
+  });
+  const [periodStats, setPeriodStats] = useState<PeriodStats>({
+    totalSales: 0,
+    totalGrossAmount: 0,
+    totalNetAmount: 0,
+    officeCommission: 0
   });
   const [dateRange, setDateRange] = useState<SalesDateRange | null>(null);
   const [salesSummary, setSalesSummary] = useState<SalesSummary | null>(null);
@@ -52,6 +65,38 @@ export const useOptimizedSales = () => {
     }
   }, [toast]);
 
+  // Carregar estatísticas do período completo
+  const loadPeriodStats = useCallback(async (activeFilters: SalesFilters) => {
+    try {
+      console.log('Loading period stats with filters:', activeFilters);
+      
+      // Carregar todas as vendas do período (sem paginação) para calcular estatísticas
+      const allSalesResult = await optimizedSalesService.getSalesPaginated(1, 999999, activeFilters);
+      
+      const totalSales = allSalesResult.totalCount;
+      const totalGrossAmount = allSalesResult.sales.reduce((sum, sale) => sum + sale.gross_amount, 0);
+      const totalNetAmount = totalGrossAmount * 0.97; // 97% do valor bruto
+      const officeCommission = totalGrossAmount * 0.015; // 1.5% do valor bruto
+
+      setPeriodStats({
+        totalSales,
+        totalGrossAmount,
+        totalNetAmount,
+        officeCommission
+      });
+
+      console.log('Period stats loaded:', { totalSales, totalGrossAmount, totalNetAmount, officeCommission });
+    } catch (error) {
+      console.error('Error loading period stats:', error);
+      setPeriodStats({
+        totalSales: 0,
+        totalGrossAmount: 0,
+        totalNetAmount: 0,
+        officeCommission: 0
+      });
+    }
+  }, []);
+
   // Carregar vendas usando paginação real via RPC otimizada
   const loadSales = useCallback(async (page: number = 1, newFilters?: SalesFilters) => {
     setIsLoading(true);
@@ -59,10 +104,15 @@ export const useOptimizedSales = () => {
       const activeFilters = newFilters || filters;
       console.log('Loading sales via optimized RPC with filters:', activeFilters, 'page:', page);
       
-      const result = await optimizedSalesService.getSalesPaginated(page, 100, activeFilters); // Changed to 100
+      const result = await optimizedSalesService.getSalesPaginated(page, 100, activeFilters);
       
       setSalesData(result);
       setCurrentPage(page);
+
+      // Carregar estatísticas do período completo quando os filtros mudarem
+      if (newFilters || page === 1) {
+        await loadPeriodStats(activeFilters);
+      }
 
       console.log(`Loaded page ${page} via optimized RPC: ${result.sales.length} sales, total: ${result.totalCount}`);
 
@@ -90,10 +140,16 @@ export const useOptimizedSales = () => {
         totalPages: 0,
         currentPage: page
       });
+      setPeriodStats({
+        totalSales: 0,
+        totalGrossAmount: 0,
+        totalNetAmount: 0,
+        officeCommission: 0
+      });
     } finally {
       setIsLoading(false);
     }
-  }, [filters, toast]);
+  }, [filters, toast, loadPeriodStats]);
 
   // Efeito inicial para carregar metadados
   useEffect(() => {
@@ -153,6 +209,7 @@ export const useOptimizedSales = () => {
     filters,
     isLoading,
     salesSummary,
+    periodStats,
 
     // Actions
     updateFilters,

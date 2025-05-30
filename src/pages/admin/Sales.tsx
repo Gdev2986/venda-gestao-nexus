@@ -26,7 +26,8 @@ const AdminSales = () => {
     refreshSales,
     salesSummary,
     filters,
-    resetFilters
+    resetFilters,
+    periodStats
   } = useOptimizedSales();
 
   const handleSalesImported = (importedSales: NormalizedSale[]) => {
@@ -44,8 +45,6 @@ const AdminSales = () => {
             isLoading={isLoading}
             showImportPanel={showImportPanel}
             setShowImportPanel={setShowImportPanel}
-            showFilters={false}
-            setShowFilters={() => {}}
             onRefresh={refreshSales}
           />
         }
@@ -76,7 +75,7 @@ const AdminSales = () => {
         isLoading={isLoading}
       />
       
-      <SalesStatCards filteredSales={sales} isLoading={isLoading} />
+      <SalesStatCards periodStats={periodStats} isLoading={isLoading} />
       
       <div className="space-y-4">
         {isLoading ? (

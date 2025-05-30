@@ -1,23 +1,22 @@
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { formatCurrency } from "@/lib/formatters";
-import { NormalizedSale } from "@/utils/sales-processor";
 import { TrendingUp, DollarSign, CreditCard, Award } from "lucide-react";
 
+interface PeriodStats {
+  totalSales: number;
+  totalGrossAmount: number;
+  totalNetAmount: number;
+  officeCommission: number;
+}
+
 interface SalesStatCardsProps {
-  filteredSales: NormalizedSale[];
+  periodStats: PeriodStats;
   isLoading: boolean;
 }
 
-export const SalesStatCards = ({ filteredSales, isLoading }: SalesStatCardsProps) => {
-  const totalSales = filteredSales.length;
-  const totalGrossAmount = filteredSales.reduce((sum, sale) => sum + sale.gross_amount, 0);
-  
-  // Calcular valor líquido baseado em 97% do valor bruto
-  const totalNetAmount = totalGrossAmount * 0.97;
-  
-  // Calcular comissão do escritório (1.5% do valor bruto)
-  const officeCommission = totalGrossAmount * 0.015;
+export const SalesStatCards = ({ periodStats, isLoading }: SalesStatCardsProps) => {
+  const { totalSales, totalGrossAmount, totalNetAmount, officeCommission } = periodStats;
 
   const stats = [
     {
