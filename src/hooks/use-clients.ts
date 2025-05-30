@@ -1,5 +1,5 @@
 
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import { Client } from '@/types';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
@@ -28,45 +28,28 @@ export const useClients = () => {
 
   // Fetch all clients from the database with extended information
   const refreshClients = useCallback(async () => {
+    console.log("Fetching clients from database...");
     setLoading(true);
     setIsLoading(true); // Keep backward compatibility
     setError(null);
+    
     try {
-      console.log("Fetching clients from database...");
-      
-      // Fetch clients with their related information
+      // Fetch all clients directly
       const { data: clientsData, error: clientsError } = await supabase
         .from('clients')
-        .select(`
-          *,
-          client_fee_plans!inner(
-            fee_plan:fee_plans(name)
-          )
-        `)
-        .order('business_name', { ascending: true });
-
-      if (clientsError) throw new Error(clientsError.message);
-
-      // Also fetch clients without fee plans
-      const { data: clientsWithoutPlans, error: clientsWithoutPlansError } = await supabase
-        .from('clients')
         .select('*')
-        .is('fee_plan_id', null)
         .order('business_name', { ascending: true });
 
-      if (clientsWithoutPlansError) throw new Error(clientsWithoutPlansError.message);
+      if (clientsError) {
+        console.error("Error fetching clients:", clientsError);
+        throw new Error(clientsError.message);
+      }
 
-      // Combine both results
-      const allClients = [
-        ...(clientsData || []),
-        ...(clientsWithoutPlans || [])
-      ];
-
-      console.log("Fetched clients:", allClients);
+      console.log("Fetched clients:", clientsData);
       
-      if (allClients && allClients.length > 0) {
-        setClients(allClients as Client[]);
-        setFilteredClients(allClients as Client[]);
+      if (clientsData && clientsData.length > 0) {
+        setClients(clientsData as Client[]);
+        setFilteredClients(clientsData as Client[]);
       } else {
         console.log("No clients found in database");
         setClients([]);
@@ -228,6 +211,11 @@ export const useClients = () => {
       return false;
     }
   };
+
+  // Load clients on mount
+  useEffect(() => {
+    refreshClients();
+  }, [refreshClients]);
 
   return {
     clients: filteredClients,

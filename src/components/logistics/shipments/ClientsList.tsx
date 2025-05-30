@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { DataTable } from "@/components/ui/data-table";
 import { Input } from "@/components/ui/input";
@@ -18,23 +19,23 @@ interface ClientWithShipmentCount {
   city?: string;
   state?: string;
   zip?: string;
-  status?: string; // Tornado opcional para compatibilidade
+  status?: string;
   shipmentCount: number;
 }
 
 const ClientsList = () => {
   const [searchTerm, setSearchTerm] = useState("");
-  const { clients, loading: clientsLoading } = useClients();
+  const { clients, loading: clientsLoading, refreshClients } = useClients();
   const { shipments, isLoading: shipmentsLoading } = useShipments();
 
   // Combine clients with shipment counts
-  const clientsWithShipments: ClientWithShipmentCount[] = clients?.map(client => {
+  const clientsWithShipments: ClientWithShipmentCount[] = (clients || []).map(client => {
     const shipmentCount = shipments.filter(shipment => shipment.client_id === client.id).length;
     return {
       ...client,
       shipmentCount
     };
-  }) || [];
+  });
 
   const columns: ColumnDef<ClientWithShipmentCount>[] = [
     {
@@ -144,6 +145,13 @@ const ClientsList = () => {
       client.city?.toLowerCase().includes(searchTerm.toLowerCase());
   });
 
+  // Carregar dados quando o componente monta
+  React.useEffect(() => {
+    if (!clients || clients.length === 0) {
+      refreshClients();
+    }
+  }, []);
+
   if (clientsLoading || shipmentsLoading) {
     return (
       <div className="space-y-4">
@@ -166,11 +174,35 @@ const ClientsList = () => {
         />
       </div>
 
+      {/* Debug info */}
+      {process.env.NODE_ENV === 'development' && (
+        <div className="text-xs text-muted-foreground p-2 bg-muted rounded">
+          Debug: {clients?.length || 0} clientes carregados, {shipments?.length || 0} envios
+        </div>
+      )}
+
       {/* Table */}
-      <DataTable 
-        columns={columns} 
-        data={filteredClients}
-      />
+      {filteredClients.length > 0 ? (
+        <DataTable 
+          columns={columns} 
+          data={filteredClients}
+        />
+      ) : (
+        <div className="text-center py-8">
+          <p className="text-muted-foreground">
+            {clientsLoading ? "Carregando clientes..." : "Nenhum cliente encontrado"}
+          </p>
+          {!clientsLoading && (
+            <Button 
+              variant="outline" 
+              className="mt-2"
+              onClick={refreshClients}
+            >
+              Tentar Novamente
+            </Button>
+          )}
+        </div>
+      )}
     </div>
   );
 };
