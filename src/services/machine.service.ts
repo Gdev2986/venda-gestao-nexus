@@ -1,4 +1,3 @@
-
 import { supabase } from "@/integrations/supabase/client";
 import { Machine, MachineStatus, MachineTransferParams } from "@/types/machine.types";
 
@@ -162,6 +161,15 @@ export const deleteMachine = async (id: string): Promise<void> => {
   }
 };
 
+export interface MachineTransferParams {
+  machine_id: string;
+  from_client_id: string | null;
+  to_client_id: string;
+  cutoff_date: string;
+  created_by: string | null;
+  notes?: string;
+}
+
 export const transferMachine = async (transferData: MachineTransferParams): Promise<void> => {
   try {
     // Start a transaction
@@ -171,8 +179,10 @@ export const transferMachine = async (transferData: MachineTransferParams): Prom
         machine_id: transferData.machine_id,
         from_client_id: transferData.from_client_id || null,
         to_client_id: transferData.to_client_id,
-        cutoff_date: transferData.cutoff_date || new Date().toISOString(),
-        created_by: transferData.created_by || null
+        cutoff_date: transferData.cutoff_date,
+        created_by: transferData.created_by || null,
+        notes: transferData.notes || null,
+        status: 'COMPLETED'
       });
 
     if (transferError) throw transferError;
@@ -181,7 +191,7 @@ export const transferMachine = async (transferData: MachineTransferParams): Prom
     const { error: updateError } = await supabase
       .from('machines')
       .update({ 
-        client_id: transferData.to_client_id || null,
+        client_id: transferData.to_client_id,
         updated_at: new Date().toISOString()
       })
       .eq('id', transferData.machine_id);
@@ -190,6 +200,20 @@ export const transferMachine = async (transferData: MachineTransferParams): Prom
 
   } catch (error) {
     console.error('Error transferring machine:', error);
+    throw error;
+  }
+};
+
+export const getMachineTransferHistory = async (machineId: string) => {
+  try {
+    const { data, error } = await supabase.rpc('get_machine_transfer_history', {
+      p_machine_id: machineId
+    });
+
+    if (error) throw error;
+    return data || [];
+  } catch (error) {
+    console.error('Error fetching machine transfer history:', error);
     throw error;
   }
 };

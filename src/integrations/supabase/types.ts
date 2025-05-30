@@ -446,6 +446,8 @@ export type Database = {
           from_client_id: string | null
           id: string
           machine_id: string
+          notes: string | null
+          status: string | null
           to_client_id: string
           transfer_date: string
         }
@@ -456,6 +458,8 @@ export type Database = {
           from_client_id?: string | null
           id?: string
           machine_id: string
+          notes?: string | null
+          status?: string | null
           to_client_id: string
           transfer_date?: string
         }
@@ -466,6 +470,8 @@ export type Database = {
           from_client_id?: string | null
           id?: string
           machine_id?: string
+          notes?: string | null
+          status?: string | null
           to_client_id?: string
           transfer_date?: string
         }
@@ -1353,6 +1359,24 @@ export type Database = {
         Args: Record<PropertyKey, never>
         Returns: string
       }
+      get_client_sales_with_transfers: {
+        Args: {
+          p_client_id: string
+          p_start_date?: string
+          p_end_date?: string
+        }
+        Returns: {
+          sale_id: string
+          code: string
+          terminal: string
+          date: string
+          gross_amount: number
+          net_amount: number
+          payment_method: string
+          machine_id: string
+          machine_serial: string
+        }[]
+      }
       get_current_user_role: {
         Args: Record<PropertyKey, never>
         Returns: string
@@ -1361,6 +1385,20 @@ export type Database = {
         Args: Record<PropertyKey, never>
         Returns: {
           sale_date: string
+        }[]
+      }
+      get_machine_transfer_history: {
+        Args: { p_machine_id: string }
+        Returns: {
+          transfer_id: string
+          from_client_id: string
+          from_client_name: string
+          to_client_id: string
+          to_client_name: string
+          transfer_date: string
+          cutoff_date: string
+          created_by: string
+          notes: string
         }[]
       }
       get_paginated_sales: {
