@@ -1,4 +1,3 @@
-
 import * as React from "react";
 import {
   Dialog,
@@ -97,7 +96,7 @@ const ServiceFormModal = ({ open, onOpenChange, service, onSave }: ServiceFormMo
   React.useEffect(() => {
     const clientId = form.watch("clientId");
     if (clientId && clientId !== "none") {
-      const filtered = allMachines.filter(machine => machine.clientId === clientId);
+      const filtered = allMachines.filter(machine => machine.client_id === clientId);
       setClientMachines(filtered);
     } else {
       setClientMachines([]);
@@ -214,7 +213,7 @@ const ServiceFormModal = ({ open, onOpenChange, service, onSave }: ServiceFormMo
                     <SelectContent>
                       {clientMachines.map((machine: any) => (
                         <SelectItem key={machine.id} value={machine.id}>
-                          {machine.serialNumber} - {machine.model}
+                          {machine.serial_number} - {machine.model}
                         </SelectItem>
                       ))}
                     </SelectContent>
@@ -223,6 +222,7 @@ const ServiceFormModal = ({ open, onOpenChange, service, onSave }: ServiceFormMo
                 </FormItem>
               )}
             />
+            
             
             <FormField
               control={form.control}
