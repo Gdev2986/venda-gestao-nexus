@@ -78,6 +78,13 @@ export const PixPaymentForm = ({
     }
   };
 
+  // Helper function to safely get error message
+  const getErrorMessage = (error: any): string => {
+    if (typeof error === 'string') return error;
+    if (error && typeof error === 'object' && 'message' in error) return error.message;
+    return 'Erro de validação';
+  };
+
   return (
     <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-6">
       <Card>
@@ -100,7 +107,7 @@ export const PixPaymentForm = ({
             />
             {form.formState.errors.amount && (
               <p className="text-sm text-destructive mt-1">
-                {form.formState.errors.amount.message}
+                {getErrorMessage(form.formState.errors.amount)}
               </p>
             )}
           </div>
@@ -152,10 +159,7 @@ export const PixPaymentForm = ({
               </Select>
               {form.formState.errors.pix_key_id && (
                 <p className="text-sm text-destructive mt-1">
-                  {typeof form.formState.errors.pix_key_id === 'object' && form.formState.errors.pix_key_id?.message 
-                    ? form.formState.errors.pix_key_id.message
-                    : 'Selecione uma chave PIX'
-                  }
+                  {getErrorMessage(form.formState.errors.pix_key_id)}
                 </p>
               )}
             </div>
@@ -187,7 +191,7 @@ export const PixPaymentForm = ({
                   </Select>
                   {form.formState.errors.new_pix_key?.type && (
                     <p className="text-sm text-destructive mt-1">
-                      {form.formState.errors.new_pix_key.type.message}
+                      {getErrorMessage(form.formState.errors.new_pix_key.type)}
                     </p>
                   )}
                 </div>
@@ -201,7 +205,7 @@ export const PixPaymentForm = ({
                   />
                   {form.formState.errors.new_pix_key?.key && (
                     <p className="text-sm text-destructive mt-1">
-                      {form.formState.errors.new_pix_key.key.message}
+                      {getErrorMessage(form.formState.errors.new_pix_key.key)}
                     </p>
                   )}
                 </div>
@@ -215,7 +219,7 @@ export const PixPaymentForm = ({
                   />
                   {form.formState.errors.new_pix_key?.name && (
                     <p className="text-sm text-destructive mt-1">
-                      {form.formState.errors.new_pix_key.name.message}
+                      {getErrorMessage(form.formState.errors.new_pix_key.name)}
                     </p>
                   )}
                 </div>
@@ -229,7 +233,7 @@ export const PixPaymentForm = ({
                   />
                   {form.formState.errors.new_pix_key?.owner_name && (
                     <p className="text-sm text-destructive mt-1">
-                      {form.formState.errors.new_pix_key.owner_name.message}
+                      {getErrorMessage(form.formState.errors.new_pix_key.owner_name)}
                     </p>
                   )}
                 </div>
