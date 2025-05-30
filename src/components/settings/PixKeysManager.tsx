@@ -75,7 +75,7 @@ export function PixKeysManager({ userId }: PixKeysManagerProps) {
   const onSubmit = async (values: PixKeyFormValues) => {
     try {
       if (isEditing) {
-        // For updates, we need to pass all required fields to avoid the TypeScript error
+        // Ensure all required fields are present for update
         const updateData: CreatePixKeyData = {
           name: values.name,
           key: values.key,

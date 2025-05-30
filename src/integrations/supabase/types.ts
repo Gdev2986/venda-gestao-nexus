@@ -695,11 +695,18 @@ export type Database = {
           amount: number
           approved_at: string | null
           approved_by: string | null
+          boleto_code: string | null
+          boleto_file_url: string | null
           client_id: string
           created_at: string | null
           description: string | null
           id: string
-          pix_key_id: string
+          notes: string | null
+          payment_type: string | null
+          pix_key_id: string | null
+          processed_at: string | null
+          processed_by: string | null
+          receipt_file_url: string | null
           receipt_url: string | null
           rejection_reason: string | null
           status: Database["public"]["Enums"]["payment_request_status"] | null
@@ -709,11 +716,18 @@ export type Database = {
           amount: number
           approved_at?: string | null
           approved_by?: string | null
+          boleto_code?: string | null
+          boleto_file_url?: string | null
           client_id: string
           created_at?: string | null
           description?: string | null
           id?: string
-          pix_key_id: string
+          notes?: string | null
+          payment_type?: string | null
+          pix_key_id?: string | null
+          processed_at?: string | null
+          processed_by?: string | null
+          receipt_file_url?: string | null
           receipt_url?: string | null
           rejection_reason?: string | null
           status?: Database["public"]["Enums"]["payment_request_status"] | null
@@ -723,11 +737,18 @@ export type Database = {
           amount?: number
           approved_at?: string | null
           approved_by?: string | null
+          boleto_code?: string | null
+          boleto_file_url?: string | null
           client_id?: string
           created_at?: string | null
           description?: string | null
           id?: string
-          pix_key_id?: string
+          notes?: string | null
+          payment_type?: string | null
+          pix_key_id?: string | null
+          processed_at?: string | null
+          processed_by?: string | null
+          receipt_file_url?: string | null
           receipt_url?: string | null
           rejection_reason?: string | null
           status?: Database["public"]["Enums"]["payment_request_status"] | null
