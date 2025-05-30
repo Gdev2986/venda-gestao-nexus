@@ -1,3 +1,4 @@
+
 import React, { useState } from "react";
 import { PageHeader } from "@/components/page/PageHeader";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -6,6 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { MessageSquare, Plus, AlertTriangle, CheckCircle, Clock } from "lucide-react";
 import { SupportTicketDialog } from "@/components/support/SupportTicketDialog";
 import { SupportChat } from "@/components/support/SupportChat";
+import { TicketStatusManager } from "@/components/support/TicketStatusManager";
 import { useSupportSystem } from "@/hooks/use-support-system";
 import { formatDate } from "@/utils/format";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -18,11 +20,13 @@ const ClientSupport = () => {
     messages,
     isLoading,
     isCreating,
-    clientId, // Get clientId from the hook
+    clientId,
     setSelectedTicket,
     loadMessages,
     createTicket,
-    sendMessage
+    sendMessage,
+    updateTicketStatus,
+    assignTicket
   } = useSupportSystem();
 
   const [showCreateDialog, setShowCreateDialog] = useState(false);
@@ -77,6 +81,11 @@ const ClientSupport = () => {
     setShowChatDialog(true);
   };
 
+  const handleCloseChat = () => {
+    setShowChatDialog(false);
+    setSelectedTicket(null);
+  };
+
   // Statistics
   const stats = {
     total: tickets.length,
@@ -107,7 +116,7 @@ const ClientSupport = () => {
         action={
           <Button 
             onClick={() => setShowCreateDialog(true)}
-            disabled={!clientId} // Disable if no client association
+            disabled={!clientId}
           >
             <Plus className="h-4 w-4 mr-2" />
             Novo Chamado
@@ -193,7 +202,7 @@ const ClientSupport = () => {
               <p className="text-muted-foreground mb-4">
                 Você ainda não criou nenhum chamado de suporte.
               </p>
-              <Button onClick={() => setShowCreateDialog(true)}>
+              <Button onClick={() => setShowCreateDialog(true)} disabled={!clientId}>
                 <Plus className="h-4 w-4 mr-2" />
                 Criar Primeiro Chamado
               </Button>
@@ -201,7 +210,11 @@ const ClientSupport = () => {
           ) : (
             <div className="space-y-4">
               {tickets.map((ticket) => (
-                <Card key={ticket.id} className="cursor-pointer hover:shadow-md transition-shadow" onClick={() => handleTicketClick(ticket)}>
+                <Card 
+                  key={ticket.id} 
+                  className="cursor-pointer hover:shadow-md transition-shadow" 
+                  onClick={() => handleTicketClick(ticket)}
+                >
                   <CardContent className="p-4">
                     <div className="flex items-start justify-between">
                       <div className="flex-1">
@@ -215,7 +228,8 @@ const ClientSupport = () => {
                           {getTypeLabel(ticket.type)}
                         </p>
                         <p className="text-sm text-muted-foreground mb-2">
-                          {ticket.description.substring(0, 100)}...
+                          {ticket.description.substring(0, 100)}
+                          {ticket.description.length > 100 && "..."}
                         </p>
                         <p className="text-xs text-muted-foreground">
                           Criado em {formatDate(ticket.created_at)}
@@ -236,15 +250,15 @@ const ClientSupport = () => {
         onOpenChange={setShowCreateDialog}
         onSubmit={createTicket}
         isLoading={isCreating}
-        clientId={clientId} // Pass clientId to dialog
+        clientId={clientId}
       />
 
       {/* Chat Dialog */}
-      <Dialog open={showChatDialog} onOpenChange={setShowChatDialog}>
-        <DialogContent className="sm:max-w-4xl max-h-[90vh]">
-          <DialogHeader>
+      <Dialog open={showChatDialog} onOpenChange={handleCloseChat}>
+        <DialogContent className="sm:max-w-6xl max-h-[90vh] p-0">
+          <DialogHeader className="p-6 pb-0">
             <DialogTitle className="flex items-center justify-between">
-              <span>Chamado de Suporte</span>
+              <span>Chamado de Suporte #{selectedTicket?.id.substring(0, 8)}</span>
               <div className="flex gap-2">
                 {selectedTicket && getPriorityBadge(selectedTicket.priority)}
                 {selectedTicket && getStatusBadge(selectedTicket.status)}
@@ -253,32 +267,44 @@ const ClientSupport = () => {
           </DialogHeader>
           
           {selectedTicket && (
-            <div className="space-y-4">
-              <div className="grid grid-cols-2 gap-4 text-sm">
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 p-6">
+              {/* Chat Section */}
+              <div className="lg:col-span-2 space-y-4">
+                <div className="grid grid-cols-2 gap-4 text-sm">
+                  <div>
+                    <p><strong>Tipo:</strong> {getTypeLabel(selectedTicket.type)}</p>
+                    <p><strong>Prioridade:</strong> {selectedTicket.priority}</p>
+                  </div>
+                  <div>
+                    <p><strong>Criado em:</strong> {formatDate(selectedTicket.created_at)}</p>
+                    {selectedTicket.updated_at && (
+                      <p><strong>Atualizado em:</strong> {formatDate(selectedTicket.updated_at)}</p>
+                    )}
+                  </div>
+                </div>
+                
                 <div>
-                  <p><strong>Tipo:</strong> {getTypeLabel(selectedTicket.type)}</p>
-                  <p><strong>Prioridade:</strong> {selectedTicket.priority}</p>
+                  <strong>Descrição:</strong>
+                  <div className="bg-muted p-3 rounded-md mt-1">
+                    {selectedTicket.description}
+                  </div>
                 </div>
-                <div>
-                  <p><strong>Criado em:</strong> {formatDate(selectedTicket.created_at)}</p>
-                  {selectedTicket.updated_at && (
-                    <p><strong>Atualizado em:</strong> {formatDate(selectedTicket.updated_at)}</p>
-                  )}
-                </div>
+                
+                <SupportChat
+                  ticketId={selectedTicket.id}
+                  messages={messages}
+                  onSendMessage={(message) => sendMessage(selectedTicket.id, message)}
+                />
               </div>
-              
-              <div>
-                <strong>Descrição:</strong>
-                <div className="bg-muted p-3 rounded-md mt-1">
-                  {selectedTicket.description}
-                </div>
+
+              {/* Status Management Section */}
+              <div className="space-y-4">
+                <TicketStatusManager
+                  ticket={selectedTicket}
+                  onStatusChange={updateTicketStatus}
+                  onAssignTicket={assignTicket}
+                />
               </div>
-              
-              <SupportChat
-                ticketId={selectedTicket.id}
-                messages={messages}
-                onSendMessage={(message) => sendMessage(selectedTicket.id, message)}
-              />
             </div>
           )}
         </DialogContent>

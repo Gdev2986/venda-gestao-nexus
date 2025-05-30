@@ -1099,6 +1099,13 @@ export type Database = {
             referencedRelation: "support_conversations"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "support_messages_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
         ]
       }
       support_requests: {

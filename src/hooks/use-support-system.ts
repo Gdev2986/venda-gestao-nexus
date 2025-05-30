@@ -113,7 +113,7 @@ export const useSupportSystem = () => {
     }
   };
 
-  // Load messages for selected ticket
+  // Load messages for selected ticket with real-time updates
   const loadMessages = async (ticketId: string) => {
     try {
       const { data, error } = await getTicketMessages(ticketId);
@@ -250,13 +250,13 @@ export const useSupportSystem = () => {
     }
   };
 
-  // Send message
+  // Send message with real-time update
   const sendMessage = async (ticketId: string, message: string) => {
     try {
       const { data, error } = await sendTicketMessage(ticketId, message);
       if (error) throw error;
       
-      await loadMessages(ticketId);
+      // Messages will be updated via real-time subscription
       return data;
     } catch (error) {
       console.error("Error sending message:", error);
@@ -352,7 +352,7 @@ export const useSupportSystem = () => {
       )
       .subscribe();
 
-    // Subscribe to message changes
+    // Subscribe to message changes for current ticket
     const messageChannel = supabase
       .channel("support_messages")
       .on(
