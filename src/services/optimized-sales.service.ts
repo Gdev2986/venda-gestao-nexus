@@ -1,3 +1,4 @@
+
 import { supabase } from "@/integrations/supabase/client";
 import { NormalizedSale } from "@/utils/sales-processor";
 import { formatCurrency } from "@/lib/formatters";
@@ -13,6 +14,8 @@ export interface SalesFilters {
   dateEnd?: string;
   hourStart?: string;
   hourEnd?: string;
+  minuteStart?: string;
+  minuteEnd?: string;
   terminals?: string[];
   paymentType?: string;
   status?: string;
@@ -97,11 +100,23 @@ export const optimizedSalesService = {
   // Buscar vendas paginadas usando nova RPC otimizada
   async getSalesPaginated(
     page: number = 1,
-    pageSize: number = 1000,
+    pageSize: number = 100, // Changed from 1000 to 100
     filters: SalesFilters = {}
   ): Promise<PaginatedSalesResult> {
     try {
       console.log('Carregando vendas via RPC otimizada com filtros:', filters, 'página:', page);
+      
+      // Format hour and minute filters
+      let hourStart = filters.hourStart;
+      let hourEnd = filters.hourEnd;
+      
+      if (filters.hourStart && filters.minuteStart) {
+        hourStart = `${filters.hourStart}:${filters.minuteStart}`;
+      }
+      
+      if (filters.hourEnd && filters.minuteEnd) {
+        hourEnd = `${filters.hourEnd}:${filters.minuteEnd}`;
+      }
       
       // Chamar nova função SQL otimizada
       const { data: salesData, error } = await supabase.rpc('get_sales_optimized', {
@@ -109,8 +124,8 @@ export const optimizedSalesService = {
         page_size: pageSize,
         filter_date_start: filters.dateStart || null,
         filter_date_end: filters.dateEnd || null,
-        filter_hour_start: filters.hourStart || null,
-        filter_hour_end: filters.hourEnd || null,
+        filter_hour_start: hourStart || null,
+        filter_hour_end: hourEnd || null,
         filter_terminals: filters.terminals || null,
         filter_payment_type: filters.paymentType || null,
         filter_source: filters.source || null
@@ -191,7 +206,7 @@ export const optimizedSalesService = {
     }
   },
 
-  // Add missing getYesterday method for compatibility
+  // Get yesterday date for default filter
   getYesterday(): string {
     const yesterday = new Date();
     yesterday.setDate(yesterday.getDate() - 1);

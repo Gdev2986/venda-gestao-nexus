@@ -22,6 +22,9 @@ export const SalesTablePagination = ({
       <div className="text-sm text-muted-foreground">
         Página {currentPage} de {totalPages} 
         {totalCount && ` - ${totalCount.toLocaleString('pt-BR')} registros totais`}
+        <span className="ml-2 text-xs">
+          (100 por página)
+        </span>
       </div>
       
       <div className="flex items-center space-x-2">

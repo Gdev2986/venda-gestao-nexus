@@ -15,7 +15,11 @@ export const useOptimizedSales = () => {
   const [dateRange, setDateRange] = useState<SalesDateRange | null>(null);
   const [salesSummary, setSalesSummary] = useState<SalesSummary | null>(null);
   const [availableDates, setAvailableDates] = useState<string[]>([]);
-  const [filters, setFilters] = useState<SalesFilters>({});
+  // Set default filter to yesterday
+  const [filters, setFilters] = useState<SalesFilters>({
+    dateStart: optimizedSalesService.getYesterday(),
+    dateEnd: optimizedSalesService.getYesterday()
+  });
   const [currentPage, setCurrentPage] = useState<number>(1);
   
   const { toast } = useToast();
@@ -55,7 +59,7 @@ export const useOptimizedSales = () => {
       const activeFilters = newFilters || filters;
       console.log('Loading sales via optimized RPC with filters:', activeFilters, 'page:', page);
       
-      const result = await optimizedSalesService.getSalesPaginated(page, 1000, activeFilters);
+      const result = await optimizedSalesService.getSalesPaginated(page, 100, activeFilters); // Changed to 100
       
       setSalesData(result);
       setCurrentPage(page);
@@ -99,8 +103,11 @@ export const useOptimizedSales = () => {
   // Efeito para carregar vendas quando metadados estão prontos
   useEffect(() => {
     if (salesSummary) {
-      console.log('Metadata loaded, loading all sales without date filter');
-      loadSales(1, {}); // Carregar sem filtros para mostrar todos os dados
+      console.log('Metadata loaded, loading sales with yesterday filter');
+      loadSales(1, {
+        dateStart: optimizedSalesService.getYesterday(),
+        dateEnd: optimizedSalesService.getYesterday()
+      });
     }
   }, [salesSummary]);
 

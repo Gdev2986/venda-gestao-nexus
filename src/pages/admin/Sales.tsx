@@ -4,7 +4,7 @@ import { PageHeader } from "@/components/page/PageHeader";
 import { Card, CardContent } from "@/components/ui/card";
 import SalesImportPanel from "@/components/sales/SalesImportPanel";
 import SalesPreviewPanel from "@/components/sales/SalesPreviewPanel";
-import SalesAdvancedFilter from "@/components/sales/SalesAdvancedFilter";
+import OptimizedSalesDateFilter from "@/components/sales/OptimizedSalesDateFilter";
 import { SalesStatCards } from "@/components/admin/sales/SalesStatCards";
 import { SalesActionButtons } from "@/components/admin/sales/SalesActionButtons";
 import { useOptimizedSales } from "@/hooks/use-optimized-sales";
@@ -14,7 +14,6 @@ import { Info } from "lucide-react";
 
 const AdminSales = () => {
   const [showImportPanel, setShowImportPanel] = useState<boolean>(false);
-  const [showFilters, setShowFilters] = useState<boolean>(false);
   
   const {
     sales,
@@ -25,15 +24,13 @@ const AdminSales = () => {
     updateFilters,
     changePage,
     refreshSales,
-    salesSummary
+    salesSummary,
+    filters,
+    resetFilters
   } = useOptimizedSales();
 
   const handleSalesImported = (importedSales: NormalizedSale[]) => {
     refreshSales();
-  };
-
-  const handleFilter = (filtered: NormalizedSale[]) => {
-    // Compatibilidade com SalesAdvancedFilter
   };
 
   return (
@@ -47,8 +44,8 @@ const AdminSales = () => {
             isLoading={isLoading}
             showImportPanel={showImportPanel}
             setShowImportPanel={setShowImportPanel}
-            showFilters={showFilters}
-            setShowFilters={setShowFilters}
+            showFilters={false}
+            setShowFilters={() => {}}
             onRefresh={refreshSales}
           />
         }
@@ -70,11 +67,16 @@ const AdminSales = () => {
         <SalesImportPanel onSalesProcessed={handleSalesImported} />
       )}
       
-      <SalesStatCards filteredSales={sales} isLoading={isLoading} />
+      {/* Filtro de data e horário */}
+      <OptimizedSalesDateFilter
+        filters={filters}
+        onFiltersChange={updateFilters}
+        onResetFilters={resetFilters}
+        totalRecords={totalCount}
+        isLoading={isLoading}
+      />
       
-      {showFilters && (
-        <SalesAdvancedFilter sales={sales} onFilter={handleFilter} />
-      )}
+      <SalesStatCards filteredSales={sales} isLoading={isLoading} />
       
       <div className="space-y-4">
         {isLoading ? (
