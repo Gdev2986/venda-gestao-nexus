@@ -99,7 +99,7 @@ export const useOptimizedSales = () => {
       const activeFilters = newFilters || filters;
       console.log('Loading sales via optimized RPC with filters:', activeFilters, 'page:', page);
       
-      const result = await optimizedSalesService.getSalesPaginated(page, 100, activeFilters);
+      const result = await optimizedSalesService.getSalesPaginated(page, 10, activeFilters); // Garantir pageSize = 10
       
       setSalesData(result);
       setCurrentPage(page);

@@ -188,7 +188,7 @@ export const optimizedSalesService = {
   // Buscar vendas paginadas usando nova RPC otimizada
   async getSalesPaginated(
     page: number = 1,
-    pageSize: number = 10, // Changed from 100 to 10
+    pageSize: number = 10, // Garantir que seja 10
     filters: SalesFilters = {}
   ): Promise<PaginatedSalesResult> {
     try {

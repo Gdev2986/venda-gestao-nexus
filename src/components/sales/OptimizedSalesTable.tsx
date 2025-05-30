@@ -1,4 +1,3 @@
-
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -13,6 +12,7 @@ import {
 } from "@/components/ui/table";
 import { NormalizedSale } from "@/utils/sales-processor";
 import { formatCurrency } from "@/lib/formatters";
+import { PaymentTypeBadge } from "@/components/sales/PaymentTypeBadge";
 
 interface OptimizedSalesTableProps {
   sales: NormalizedSale[];
@@ -55,37 +55,6 @@ const OptimizedSalesTable = ({
     }
     
     return <Badge variant="default" className={badgeClass}>{status}</Badge>;
-  };
-
-  // Render payment type badge with dark theme support
-  const renderPaymentTypeBadge = (paymentType: string, installments?: number) => {
-    switch (paymentType) {
-      case 'Cartão de Crédito':
-        const installmentText = installments && installments > 1 ? ` ${installments}x` : " À Vista";
-        return (
-          <Badge variant="default" className="bg-blue-600 hover:bg-blue-700 text-white border-blue-600">
-            Crédito{installmentText}
-          </Badge>
-        );
-      case 'Cartão de Débito':
-        return (
-          <Badge variant="default" className="bg-green-600 hover:bg-green-700 text-white border-green-600">
-            Débito
-          </Badge>
-        );
-      case 'Pix':
-        return (
-          <Badge variant="default" className="bg-purple-600 hover:bg-purple-700 text-white border-purple-600">
-            PIX
-          </Badge>
-        );
-      default:
-        return (
-          <Badge variant="outline" className="border-gray-500 text-gray-700 dark:text-gray-300">
-            {paymentType}
-          </Badge>
-        );
-    }
   };
 
   // Gerar números de página para exibição
@@ -169,7 +138,12 @@ const OptimizedSalesTable = ({
                     sales.map((sale, index) => (
                       <TableRow key={sale.id || index}>
                         <TableCell>{renderStatusBadge(sale.status)}</TableCell>
-                        <TableCell>{renderPaymentTypeBadge(sale.payment_type, sale.installments)}</TableCell>
+                        <TableCell>
+                          <PaymentTypeBadge 
+                            paymentType={sale.payment_type} 
+                            installments={sale.installments} 
+                          />
+                        </TableCell>
                         <TableCell className="text-right font-medium">
                           {formatCurrency(sale.gross_amount)}
                         </TableCell>

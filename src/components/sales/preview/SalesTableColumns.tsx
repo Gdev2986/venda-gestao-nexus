@@ -2,6 +2,7 @@
 import { Badge } from "@/components/ui/badge";
 import { ColumnDef } from "@tanstack/react-table";
 import { NormalizedSale } from "@/utils/sales-processor";
+import { PaymentTypeBadge } from "@/components/sales/PaymentTypeBadge";
 
 // Helper function to format date consistently
 const formatTransactionDate = (dateValue: string | Date | null | undefined): string => {
@@ -24,47 +25,16 @@ const formatTransactionDate = (dateValue: string | Date | null | undefined): str
   return String(dateValue);
 };
 
-// Payment method badge function with dark theme support
-const getPaymentMethodBadge = (method: string, installments?: number) => {
-  switch (method) {
-    case 'CREDIT':
-    case 'Cartão de Crédito':
-      const installmentText = installments && installments > 1 ? ` ${installments}x` : " À Vista";
-      return (
-        <Badge variant="default" className="bg-blue-600 hover:bg-blue-700 text-white border-blue-600">
-          Crédito{installmentText}
-        </Badge>
-      );
-    case 'DEBIT':
-    case 'Cartão de Débito':
-      return (
-        <Badge variant="default" className="bg-green-600 hover:bg-green-700 text-white border-green-600">
-          Débito
-        </Badge>
-      );
-    case 'PIX':
-    case 'Pix':
-      return (
-        <Badge variant="default" className="bg-purple-600 hover:bg-purple-700 text-white border-purple-600">
-          PIX
-        </Badge>
-      );
-    default:
-      return (
-        <Badge variant="outline" className="border-gray-500 text-gray-700 dark:text-gray-300">
-          {method}
-        </Badge>
-      );
-  }
-};
-
 export const salesTableColumns: ColumnDef<NormalizedSale>[] = [
   {
     id: "payment_type",
     header: "Tipo de Pagamento",
     cell: ({ row }) => (
       <div className="text-center">
-        {getPaymentMethodBadge(row.original.payment_type, row.original.installments)}
+        <PaymentTypeBadge 
+          paymentType={row.original.payment_type} 
+          installments={row.original.installments} 
+        />
       </div>
     )
   },
