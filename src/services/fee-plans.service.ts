@@ -44,7 +44,9 @@ export const FeePlansService = {
     if (error) throw error;
     
     return (data || []).map(plan => ({
-      ...plan,
+      id: plan.id,
+      name: plan.name,
+      description: plan.description,
       rates: plan.fee_plan_rates || []
     }));
   },
