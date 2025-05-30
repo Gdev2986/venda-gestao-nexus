@@ -56,7 +56,7 @@ export const PaymentRequestsTable: React.FC<PaymentRequestsTableProps> = ({
         Exibindo {payments.length} solicitação(ões) de {payments.length} total
       </div>
       
-      <div className="rounded-md border">
+      <div className="rounded-md border border-l-4 border-l-orange-500">
         <Table>
           <TableHeader>
             <TableRow>

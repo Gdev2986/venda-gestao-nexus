@@ -201,21 +201,27 @@ const ClientPayments = () => {
       </div>
 
       {/* Filters */}
-      <ClientPaymentFilters
-        startDate={startDate}
-        endDate={endDate}
-        onStartDateChange={setStartDate}
-        onEndDateChange={setEndDate}
-        statusFilter={statusFilter}
-        onStatusFilterChange={setStatusFilter}
-        onClearFilters={handleClearFilters}
-      />
+      <Card className="border-l-4 border-l-green-500">
+        <CardContent>
+          <ClientPaymentFilters
+            startDate={startDate}
+            endDate={endDate}
+            onStartDateChange={setStartDate}
+            onEndDateChange={setEndDate}
+            statusFilter={statusFilter}
+            onStatusFilterChange={setStatusFilter}
+            onClearFilters={handleClearFilters}
+          />
+        </CardContent>
+      </Card>
       
       {/* Payment History */}
-      <PaymentHistoryCard 
-        payments={filteredPayments}
-        isLoading={paymentsLoading} 
-      />
+      <Card className="border-l-4 border-l-purple-500">
+        <PaymentHistoryCard 
+          payments={filteredPayments}
+          isLoading={paymentsLoading} 
+        />
+      </Card>
       
       {/* Payment Request Dialog */}
       <PaymentRequestDialog 
