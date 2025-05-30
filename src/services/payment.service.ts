@@ -183,9 +183,8 @@ export const paymentService = {
       processed_by: item.processed_by,
       notes: item.notes,
       receipt_file_url: item.receipt_file_url,
-      receipt_url: item.receipt_url || item.receipt_file_url,
       description: item.description,
-      rejection_reason: item.rejection_reason,
+      rejection_reason: item.rejection_reason || "",
       pix_key_id: item.pix_key_id,
       boleto_file_url: item.boleto_file_url,
       boleto_code: item.boleto_code,
@@ -209,11 +208,13 @@ export const paymentService = {
 
   // Update payment request
   async updatePaymentRequest(id: string, updates: Partial<PaymentRequest>): Promise<PaymentRequest | null> {
-    // Convert PaymentStatus enum to string for database
-    const dbUpdates = {
-      ...updates,
-      status: updates.status as string
-    };
+    // Prepare the update data with proper types
+    const dbUpdates: any = { ...updates };
+    
+    // Ensure status is properly typed
+    if (updates.status) {
+      dbUpdates.status = updates.status as PaymentStatus;
+    }
 
     const { data, error } = await supabase
       .from('payment_requests')

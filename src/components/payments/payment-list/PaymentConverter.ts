@@ -16,11 +16,10 @@ export const convertRequestToPayment = (request: any): Payment => {
     approved_by: request.approved_by || undefined,
     approved_at: request.approved_at || undefined,
     created_at: request.created_at,
-    updated_at: request.updated_at || undefined,
+    updated_at: request.updated_at || request.created_at,
     receipt_file_url: request.receipt_file_url || undefined,
-    receipt_url: request.receipt_url || request.receipt_file_url || undefined,
     description: request.description || "",
-    rejection_reason: request.rejection_reason || undefined,
+    rejection_reason: request.rejection_reason || "",
     payment_type: request.payment_type,
     client: request.client || undefined
   };
