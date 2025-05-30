@@ -11,23 +11,13 @@ export const usePixKeysManager = () => {
   const { pixKeys, refetch } = usePixKeys();
   const [isLoading, setIsLoading] = useState(false);
 
-  const getClientId = useCallback(async () => {
-    if (!user) throw new Error('Usuário não autenticado');
-    
-    const { data: clientId } = await supabase.rpc('get_user_client_id', {
-      user_uuid: user.id
-    });
-
-    if (!clientId) throw new Error('Cliente não encontrado');
-    
-    return clientId;
-  }, [user]);
-
   const createPixKey = useCallback(async (data: CreatePixKeyData) => {
     setIsLoading(true);
     try {
-      const clientId = await getClientId();
-      await pixKeysService.createPixKey(clientId, data);
+      if (!user) throw new Error('Usuário não autenticado');
+      
+      // Use the authenticated user's ID directly instead of client ID
+      await pixKeysService.createPixKey(user.id, data);
       
       toast({
         title: "Sucesso",
@@ -45,7 +35,7 @@ export const usePixKeysManager = () => {
     } finally {
       setIsLoading(false);
     }
-  }, [getClientId, refetch]);
+  }, [user, refetch]);
 
   const updatePixKey = useCallback(async (keyId: string, data: Partial<CreatePixKeyData>) => {
     setIsLoading(true);
@@ -96,8 +86,10 @@ export const usePixKeysManager = () => {
   const setDefaultPixKey = useCallback(async (keyId: string) => {
     setIsLoading(true);
     try {
-      const clientId = await getClientId();
-      await pixKeysService.setDefaultPixKey(clientId, keyId);
+      if (!user) throw new Error('Usuário não autenticado');
+      
+      // Use the authenticated user's ID directly
+      await pixKeysService.setDefaultPixKey(user.id, keyId);
       
       toast({
         title: "Sucesso",
@@ -115,7 +107,7 @@ export const usePixKeysManager = () => {
     } finally {
       setIsLoading(false);
     }
-  }, [getClientId, refetch]);
+  }, [user, refetch]);
 
   return {
     pixKeys,

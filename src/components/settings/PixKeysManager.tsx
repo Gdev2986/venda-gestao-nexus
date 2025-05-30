@@ -75,14 +75,14 @@ export function PixKeysManager({ userId }: PixKeysManagerProps) {
   const onSubmit = async (values: PixKeyFormValues) => {
     try {
       if (isEditing) {
-        // Create update data with only the fields that are defined
-        const updateData: Partial<CreatePixKeyData> = {};
-        
-        if (values.name) updateData.name = values.name;
-        if (values.key) updateData.key = values.key;
-        if (values.type) updateData.type = values.type;
-        if (values.owner_name) updateData.owner_name = values.owner_name;
-        if (values.is_default !== undefined) updateData.is_default = values.is_default;
+        // For updates, we need to pass all required fields to avoid the TypeScript error
+        const updateData: CreatePixKeyData = {
+          name: values.name,
+          key: values.key,
+          type: values.type,
+          owner_name: values.owner_name,
+          is_default: values.is_default,
+        };
         
         await updatePixKey(isEditing, updateData);
         setIsEditing(null);

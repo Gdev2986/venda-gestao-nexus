@@ -19,21 +19,11 @@ export function usePixKeys() {
 
     setIsLoading(true);
     try {
-      // Get client ID first
-      const { data: clientId } = await supabase.rpc('get_user_client_id', {
-        user_uuid: user.id
-      });
-
-      if (!clientId) {
-        setPixKeys([]);
-        setIsLoading(false);
-        return;
-      }
-
+      // Use the authenticated user's ID directly
       const { data, error } = await supabase
         .from("pix_keys")
         .select("*")
-        .eq("user_id", clientId);
+        .eq("user_id", user.id);
 
       if (error) {
         setError(error);

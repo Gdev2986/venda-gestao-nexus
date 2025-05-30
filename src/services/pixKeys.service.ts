@@ -11,12 +11,12 @@ export interface CreatePixKeyData {
 }
 
 export const pixKeysService = {
-  // Get PIX keys for a client
-  async getPixKeysByClient(clientId: string): Promise<PixKey[]> {
+  // Get PIX keys for a user (using authenticated user ID)
+  async getPixKeysByUser(userId: string): Promise<PixKey[]> {
     const { data, error } = await supabase
       .from('pix_keys')
       .select('*')
-      .eq('user_id', clientId)
+      .eq('user_id', userId)
       .order('created_at', { ascending: false });
 
     if (error) throw error;
@@ -34,12 +34,12 @@ export const pixKeysService = {
     }));
   },
 
-  // Create a new PIX key
-  async createPixKey(clientId: string, data: CreatePixKeyData): Promise<PixKey> {
+  // Create a new PIX key using authenticated user ID
+  async createPixKey(userId: string, data: CreatePixKeyData): Promise<PixKey> {
     const { data: result, error } = await supabase
       .from('pix_keys')
       .insert({
-        user_id: clientId,
+        user_id: userId, // Use the authenticated user's ID
         type: data.type,
         key: data.key,
         name: data.name,
@@ -104,13 +104,13 @@ export const pixKeysService = {
     if (error) throw error;
   },
 
-  // Set a PIX key as default
-  async setDefaultPixKey(clientId: string, keyId: string): Promise<void> {
-    // First, remove default from all keys
+  // Set a PIX key as default for the user
+  async setDefaultPixKey(userId: string, keyId: string): Promise<void> {
+    // First, remove default from all user's keys
     await supabase
       .from('pix_keys')
       .update({ is_default: false })
-      .eq('user_id', clientId);
+      .eq('user_id', userId);
 
     // Then set the selected key as default
     const { error } = await supabase
