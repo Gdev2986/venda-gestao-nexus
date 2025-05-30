@@ -64,7 +64,7 @@ export const FeePlanManager: React.FC = () => {
     try {
       const { data, error } = await supabase
         .from('clients')
-        .select('id, business_name, status')
+        .select('id, business_name, contact_name, status')
         .eq('status', 'ACTIVE')
         .order('business_name', { ascending: true });
 
@@ -221,8 +221,8 @@ export const FeePlanManager: React.FC = () => {
             <Card key={plan.id}>
               <CardHeader>
                 <CardTitle className="flex items-center justify-between">
-                  {plan.name}
-                  <div className="flex gap-1">
+                  <span className="truncate">{plan.name}</span>
+                  <div className="flex gap-1 ml-2">
                     <Button
                       variant="outline"
                       size="sm"
@@ -350,7 +350,7 @@ export const FeePlanManager: React.FC = () => {
                 <SelectContent>
                   {clients.map((client) => (
                     <SelectItem key={client.id} value={client.id}>
-                      {client.business_name}
+                      {client.business_name || client.contact_name}
                     </SelectItem>
                   ))}
                 </SelectContent>

@@ -66,24 +66,36 @@ export function MachineAssociationDialog({
 
   // Fetch clients when modal opens
   useEffect(() => {
-    if (isOpen && machine) {
+    if (isOpen) {
       fetchClients();
     }
-  }, [isOpen, machine]);
+  }, [isOpen]);
 
   const fetchClients = async () => {
     setIsLoadingClients(true);
     try {
+      console.log("Fetching clients for machine association...");
+      
       const { data, error } = await supabase
         .from('clients')
-        .select('id, business_name, status')
+        .select('id, business_name, contact_name, status')
         .eq('status', 'ACTIVE')
         .order('business_name', { ascending: true });
 
-      if (error) throw error;
+      if (error) {
+        console.error("Error fetching clients:", error);
+        throw error;
+      }
 
       console.log("Fetched clients:", data);
       setClients(data || []);
+      
+      if (!data || data.length === 0) {
+        toast({
+          title: "Aviso",
+          description: "Nenhum cliente ativo encontrado. Verifique se existem clientes cadastrados com status ativo.",
+        });
+      }
     } catch (error) {
       console.error("Error fetching clients:", error);
       toast({
@@ -101,29 +113,38 @@ export function MachineAssociationDialog({
 
     setIsLoading(true);
     try {
-      // 1. Update the machine's client_id
+      console.log("Associating machine to client:", values);
+      
+      // 1. Update the machine's client_id and status
       const { error: updateError } = await supabase
         .from("machines")
         .update({
           client_id: values.clientId,
-          status: "ACTIVE", // Change status to active since it's now associated
+          status: "ACTIVE",
+          notes: values.location || null,
         })
         .eq("id", machine.id);
 
-      if (updateError) throw updateError;
+      if (updateError) {
+        console.error("Error updating machine:", updateError);
+        throw updateError;
+      }
 
-      // 2. Create a transfer record (even for first association)
+      // 2. Create a transfer record
       const { error: transferError } = await supabase
         .from("machine_transfers")
         .insert({
           machine_id: machine.id,
-          from_client_id: null, // null for first association
+          from_client_id: null,
           to_client_id: values.clientId,
           transfer_date: new Date().toISOString(),
-          created_by: 'current-user-id', // This should be replaced with actual user ID
+          created_by: 'system-user-id',
         });
 
-      if (transferError) throw transferError;
+      if (transferError) {
+        console.error("Error creating transfer record:", transferError);
+        // Don't fail the operation for transfer record error, just log it
+      }
       
       toast({
         title: "Máquina associada",
@@ -170,18 +191,22 @@ export function MachineAssociationDialog({
                   >
                     <FormControl>
                       <SelectTrigger>
-                        <SelectValue placeholder={isLoadingClients ? "Carregando..." : "Selecione o cliente"} />
+                        <SelectValue placeholder={isLoadingClients ? "Carregando clientes..." : "Selecione o cliente"} />
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
-                      {clients.length === 0 && !isLoadingClients ? (
+                      {isLoadingClients ? (
+                        <SelectItem value="loading" disabled>
+                          Carregando...
+                        </SelectItem>
+                      ) : clients.length === 0 ? (
                         <SelectItem value="no-clients" disabled>
                           Nenhum cliente ativo encontrado
                         </SelectItem>
                       ) : (
                         clients.map((client) => (
                           <SelectItem key={client.id} value={client.id}>
-                            {client.business_name}
+                            {client.business_name || client.contact_name}
                           </SelectItem>
                         ))
                       )}
@@ -199,7 +224,7 @@ export function MachineAssociationDialog({
                 <FormItem>
                   <FormLabel>Local (opcional)</FormLabel>
                   <FormControl>
-                    <Input placeholder="Ex: Filial Centro" {...field} />
+                    <Input placeholder="Ex: Filial Centro, Loja Principal" {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>

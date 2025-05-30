@@ -78,6 +78,54 @@ export type Database = {
         }
         Relationships: []
       }
+      balance_changes: {
+        Row: {
+          amount_changed: number
+          changed_by: string
+          client_id: string
+          created_at: string
+          id: string
+          new_balance: number
+          previous_balance: number
+          reason: string
+        }
+        Insert: {
+          amount_changed: number
+          changed_by: string
+          client_id: string
+          created_at?: string
+          id?: string
+          new_balance: number
+          previous_balance: number
+          reason: string
+        }
+        Update: {
+          amount_changed?: number
+          changed_by?: string
+          client_id?: string
+          created_at?: string
+          id?: string
+          new_balance?: number
+          previous_balance?: number
+          reason?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "balance_changes_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "balance_changes_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "vw_client_balance"
+            referencedColumns: ["client_id"]
+          },
+        ]
+      }
       client_fee_plans: {
         Row: {
           assigned_at: string | null

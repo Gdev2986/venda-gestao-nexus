@@ -10,13 +10,12 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { Loader2, RefreshCw, EyeIcon, PenIcon, Trash2, DollarSign, Settings } from "lucide-react";
+import { Loader2, RefreshCw, EyeIcon, PenIcon, Trash2, DollarSign } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { formatCurrency } from "@/lib/formatters";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { BalanceUpdateDialog } from "./BalanceUpdateDialog";
 
 interface ClientsTableProps {
   clients: Client[];
@@ -43,9 +42,8 @@ const ClientsTable = ({
 }: ClientsTableProps) => {
   const [refreshing, setRefreshing] = useState(false);
   const [extendedClients, setExtendedClients] = useState<ClientWithExtendedInfo[]>([]);
+  const [selectedClientForBalance, setSelectedClientForBalance] = useState<ClientWithExtendedInfo | null>(null);
   const [isBalanceDialogOpen, setIsBalanceDialogOpen] = useState(false);
-  const [selectedClient, setSelectedClient] = useState<ClientWithExtendedInfo | null>(null);
-  const [newBalance, setNewBalance] = useState("");
   const { toast } = useToast();
 
   useEffect(() => {
@@ -115,54 +113,15 @@ const ClientsTable = ({
     }
   };
 
-  const handleUpdateBalance = async () => {
-    if (!selectedClient) return;
-
-    try {
-      const balance = parseFloat(newBalance);
-      if (isNaN(balance)) {
-        toast({
-          variant: "destructive",
-          title: "Erro",
-          description: "Valor inválido para o saldo."
-        });
-        return;
-      }
-
-      const { error } = await supabase
-        .from('clients')
-        .update({ balance })
-        .eq('id', selectedClient.id);
-
-      if (error) throw error;
-
-      toast({
-        title: "Saldo atualizado",
-        description: "O saldo do cliente foi atualizado com sucesso."
-      });
-
-      setIsBalanceDialogOpen(false);
-      setSelectedClient(null);
-      setNewBalance("");
-      
-      // Atualizar a lista
-      if (onRefresh) {
-        onRefresh();
-      }
-    } catch (error) {
-      console.error('Error updating balance:', error);
-      toast({
-        variant: "destructive",
-        title: "Erro",
-        description: "Não foi possível atualizar o saldo."
-      });
-    }
+  const openBalanceDialog = (client: ClientWithExtendedInfo) => {
+    setSelectedClientForBalance(client);
+    setIsBalanceDialogOpen(true);
   };
 
-  const openBalanceDialog = (client: ClientWithExtendedInfo) => {
-    setSelectedClient(client);
-    setNewBalance(client.current_balance?.toString() || "0");
-    setIsBalanceDialogOpen(true);
+  const handleBalanceUpdateSuccess = () => {
+    if (onRefresh) {
+      onRefresh();
+    }
   };
 
   const getStatusColor = (status: string | undefined) => {
@@ -248,7 +207,9 @@ const ClientsTable = ({
                         variant="secondary"
                         className={getStatusColor(client.status)}
                       >
+                        {client.status === "ACTIVE" && "Ativo"}
                         {client.status === "active" && "Ativo"}
+                        {client.status === "INACTIVE" && "Inativo"}
                         {client.status === "inactive" && "Inativo"}
                         {!client.status && "Desconhecido"}
                       </Badge>
@@ -320,39 +281,14 @@ const ClientsTable = ({
       </div>
 
       {/* Dialog para editar saldo */}
-      <Dialog open={isBalanceDialogOpen} onOpenChange={setIsBalanceDialogOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Editar Saldo - {selectedClient?.business_name}</DialogTitle>
-          </DialogHeader>
-          <div className="space-y-4">
-            <div>
-              <label htmlFor="balance" className="block text-sm font-medium mb-2">
-                Novo Saldo (R$)
-              </label>
-              <Input
-                id="balance"
-                type="number"
-                step="0.01"
-                value={newBalance}
-                onChange={(e) => setNewBalance(e.target.value)}
-                placeholder="0.00"
-              />
-            </div>
-            <div className="flex justify-end gap-2">
-              <Button
-                variant="outline"
-                onClick={() => setIsBalanceDialogOpen(false)}
-              >
-                Cancelar
-              </Button>
-              <Button onClick={handleUpdateBalance}>
-                Atualizar Saldo
-              </Button>
-            </div>
-          </div>
-        </DialogContent>
-      </Dialog>
+      {selectedClientForBalance && (
+        <BalanceUpdateDialog
+          open={isBalanceDialogOpen}
+          onOpenChange={setIsBalanceDialogOpen}
+          client={selectedClientForBalance}
+          onSuccess={handleBalanceUpdateSuccess}
+        />
+      )}
     </>
   );
 };
