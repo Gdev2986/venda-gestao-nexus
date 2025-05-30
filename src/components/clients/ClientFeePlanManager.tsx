@@ -142,16 +142,16 @@ export const ClientFeePlanManager: React.FC<ClientFeePlanManagerProps> = ({ clie
       </CardHeader>
       <CardContent className="space-y-4">
         {clientFeePlan && (
-          <div className="p-4 bg-green-50 border border-green-200 rounded-lg">
+          <div className="p-4 bg-green-50 border border-green-200 rounded-lg dark:bg-green-950/30 dark:border-green-800">
             <div className="flex items-center justify-between mb-2">
-              <h4 className="font-medium text-green-800">Plano Atual</h4>
-              <Badge className="bg-green-100 text-green-800">Ativo</Badge>
+              <h4 className="font-medium text-green-800 dark:text-green-200">Plano Atual</h4>
+              <Badge className="bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200">Ativo</Badge>
             </div>
-            <p className="text-green-700">{clientFeePlan.fee_plan?.name}</p>
+            <p className="text-green-700 dark:text-green-300">{clientFeePlan.fee_plan?.name}</p>
             {clientFeePlan.fee_plan?.description && (
-              <p className="text-sm text-green-600 mt-1">{clientFeePlan.fee_plan.description}</p>
+              <p className="text-sm text-green-600 dark:text-green-400 mt-1">{clientFeePlan.fee_plan.description}</p>
             )}
-            <p className="text-xs text-green-600 mt-2">
+            <p className="text-xs text-green-600 dark:text-green-400 mt-2">
               Vinculado em {new Date(clientFeePlan.assigned_at).toLocaleDateString('pt-BR')}
             </p>
           </div>
@@ -179,7 +179,7 @@ export const ClientFeePlanManager: React.FC<ClientFeePlanManagerProps> = ({ clie
         </div>
 
         {selectedPlan && (
-          <div className="p-3 bg-gray-50 rounded-lg">
+          <div className="p-3 bg-gray-50 rounded-lg dark:bg-gray-800">
             <h5 className="font-medium mb-2 flex items-center gap-2">
               <Percent className="h-4 w-4" />
               Taxas do Plano

@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -36,8 +35,15 @@ export const MachineList: React.FC<MachineListProps> = () => {
         .order('created_at', { ascending: false });
 
       if (error) throw error;
-      setMachines(data || []);
-      setFilteredMachines(data || []);
+      
+      // Convert database data to proper Machine type
+      const convertedMachines: Machine[] = (data || []).map(machine => ({
+        ...machine,
+        status: machine.status as MachineStatus
+      }));
+      
+      setMachines(convertedMachines);
+      setFilteredMachines(convertedMachines);
     } catch (error) {
       console.error('Error fetching machines:', error);
       toast({
