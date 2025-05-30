@@ -25,7 +25,7 @@ const AdminPayments = () => {
   const [page, setPage] = useState(1);
   const [selectedPayment, setSelectedPayment] = useState<PaymentRequest | null>(null);
   const [isDetailsOpen, setIsDetailsOpen] = useState(false);
-  const pageSize = 20; // Changed from 10 to 20
+  const pageSize = 20;
   const navigate = useNavigate();
   const { toast } = useToast();
   
@@ -84,13 +84,21 @@ const AdminPayments = () => {
     setPage(newPage);
   };
 
-  const handleRefresh = () => {
-    refetch();
-    toast({
-      title: "Atualizado",
-      description: "Lista de pagamentos atualizada com sucesso"
-    });
-  };
+  const handleRefresh = useCallback(async () => {
+    try {
+      await refetch();
+      toast({
+        title: "Atualizado",
+        description: "Lista de pagamentos atualizada com sucesso"
+      });
+    } catch (error) {
+      toast({
+        title: "Erro",
+        description: "Erro ao atualizar a lista de pagamentos",
+        variant: "destructive"
+      });
+    }
+  }, [refetch, toast]);
 
   const handleActionClick = useCallback(async (paymentId: string, action: PaymentAction) => {
     if (action === PaymentAction.VIEW) {
@@ -125,7 +133,7 @@ const AdminPayments = () => {
       });
 
       // Refresh data
-      refetch();
+      await refetch();
     } catch (error: any) {
       toast({
         title: "Erro",
