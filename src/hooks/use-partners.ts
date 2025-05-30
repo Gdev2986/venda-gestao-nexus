@@ -40,7 +40,7 @@ export const usePartners = () => {
 
   // Mutation to create a new partner
   const createPartner = useMutation({
-    mutationFn: async ({ company_name, commission_rate = 0, ...rest }: Partial<Partner>) => {
+    mutationFn: async ({ company_name, linked_clients, ...rest }: Partial<Partner> & { linked_clients?: string[] }) => {
       // Generate a UUID for the new partner
       const newPartnerId = await generateUuid();
       
@@ -58,16 +58,29 @@ export const usePartners = () => {
         .insert({
           id: newPartnerId,
           company_name,
-          commission_rate,
+          commission_rate: 0, // Default to 0 since we removed the field
           ...rest
         });
         
       if (error) throw error;
+
+      // Update linked clients
+      if (linked_clients && linked_clients.length > 0) {
+        const { error: clientError } = await supabase
+          .from('clients')
+          .update({ partner_id: newPartnerId })
+          .in('id', linked_clients);
+        
+        if (clientError) {
+          console.error('Error linking clients:', clientError);
+        }
+      }
       
-      return { id: newPartnerId, company_name, commission_rate, ...rest };
+      return { id: newPartnerId, company_name, ...rest };
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['partners'] });
+      queryClient.invalidateQueries({ queryKey: ['clients'] });
       toast({
         title: 'Parceiro criado',
         description: 'O parceiro foi criado com sucesso.',
@@ -86,6 +99,14 @@ export const usePartners = () => {
   // Mutation to delete a partner
   const deletePartner = useMutation({
     mutationFn: async (partnerId: string) => {
+      // First, unlink clients from this partner
+      const { error: clientError } = await supabase
+        .from('clients')
+        .update({ partner_id: null })
+        .eq('partner_id', partnerId);
+      
+      if (clientError) throw clientError;
+
       const { error } = await supabase
         .from('partners')
         .delete()
@@ -96,6 +117,7 @@ export const usePartners = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['partners'] });
+      queryClient.invalidateQueries({ queryKey: ['clients'] });
       toast({
         title: 'Parceiro excluído',
         description: 'O parceiro foi excluído com sucesso.',
@@ -113,17 +135,38 @@ export const usePartners = () => {
 
   // Mutation to update a partner
   const updatePartner = useMutation({
-    mutationFn: async ({ id, ...data }: Partial<Partner> & { id: string }) => {
+    mutationFn: async ({ id, linked_clients, ...data }: Partial<Partner> & { id: string; linked_clients?: string[] }) => {
       const { error } = await supabase
         .from('partners')
         .update(data)
         .eq('id', id);
       
       if (error) throw error;
+
+      // Update linked clients if provided
+      if (linked_clients !== undefined) {
+        // First, unlink all clients from this partner
+        await supabase
+          .from('clients')
+          .update({ partner_id: null })
+          .eq('partner_id', id);
+
+        // Then link the selected clients
+        if (linked_clients.length > 0) {
+          const { error: clientError } = await supabase
+            .from('clients')
+            .update({ partner_id: id })
+            .in('id', linked_clients);
+          
+          if (clientError) throw clientError;
+        }
+      }
+      
       return true;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['partners'] });
+      queryClient.invalidateQueries({ queryKey: ['clients'] });
       toast({
         title: 'Parceiro atualizado',
         description: 'O parceiro foi atualizado com sucesso.',

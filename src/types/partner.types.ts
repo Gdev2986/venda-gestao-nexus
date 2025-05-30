@@ -5,7 +5,6 @@ export interface Partner {
   contact_name?: string;
   contact_email?: string;
   contact_phone?: string;
-  commission_rate: number;
   created_at: string;
   updated_at: string;
   // For backward compatibility
@@ -23,7 +22,7 @@ export interface PartnerCreateParams {
   contact_name?: string;
   contact_email?: string;
   contact_phone?: string;
-  commission_rate: number;
+  linked_clients?: string[];
 }
 
 export interface PartnerUpdateParams {
@@ -31,5 +30,5 @@ export interface PartnerUpdateParams {
   contact_name?: string;
   contact_email?: string;
   contact_phone?: string;
-  commission_rate?: number;
+  linked_clients?: string[];
 }
