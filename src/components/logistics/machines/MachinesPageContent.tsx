@@ -19,9 +19,9 @@ export const MachinesPageContent = () => {
 
   return (
     <div className="responsive-container responsive-padding">
-      <Card className="dark:bg-gray-900 dark:border-gray-700">
+      <Card>
         <CardHeader>
-          <CardTitle className="dark:text-gray-100">Máquinas</CardTitle>
+          <CardTitle>Máquinas</CardTitle>
           <p className="text-sm text-muted-foreground">
             Gerencie as máquinas da sua empresa.
           </p>
@@ -33,14 +33,13 @@ export const MachinesPageContent = () => {
                 placeholder="Buscar máquinas..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="dark:bg-gray-800 dark:border-gray-600 dark:text-gray-200 dark:placeholder-gray-400"
               />
             </div>
             <div className="flex gap-2">
-              <Button onClick={refreshMachines} variant="outline" className="dark:border-gray-600 dark:text-gray-300 dark:hover:bg-gray-700">
+              <Button onClick={refreshMachines} variant="outline">
                 Atualizar
               </Button>
-              <Button className="dark:bg-primary dark:text-white dark:hover:bg-primary/90">
+              <Button>
                 <Plus className="mr-2 h-4 w-4" />
                 Adicionar Máquina
               </Button>

@@ -35,19 +35,19 @@ export const MachinesTable: React.FC<MachinesTableProps> = ({
   const getStatusBadge = (status: MachineStatus) => {
     switch (status) {
       case MachineStatus.ACTIVE:
-        return <Badge className="bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300 border-green-200 dark:border-green-800">Operando</Badge>;
+        return <Badge className="bg-green-100 text-green-800">Operando</Badge>;
       case MachineStatus.STOCK:
-        return <Badge className="bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300 border-blue-200 dark:border-blue-800">Em Estoque</Badge>;
+        return <Badge className="bg-blue-100 text-blue-800">Em Estoque</Badge>;
       case MachineStatus.MAINTENANCE:
-        return <Badge className="bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-300 border-yellow-200 dark:border-yellow-800">Em Manutenção</Badge>;
+        return <Badge className="bg-yellow-100 text-yellow-800">Em Manutenção</Badge>;
       case MachineStatus.INACTIVE:
-        return <Badge className="bg-gray-100 text-gray-800 dark:bg-gray-800/50 dark:text-gray-300 border-gray-200 dark:border-gray-700">Inativa</Badge>;
+        return <Badge className="bg-gray-100 text-gray-800">Inativa</Badge>;
       case MachineStatus.BLOCKED:
-        return <Badge className="bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300 border-red-200 dark:border-red-800">Bloqueada</Badge>;
+        return <Badge className="bg-red-100 text-red-800">Bloqueada</Badge>;
       case MachineStatus.TRANSIT:
-        return <Badge className="bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-300 border-purple-200 dark:border-purple-800">Em Trânsito</Badge>;
+        return <Badge className="bg-purple-100 text-purple-800">Em Trânsito</Badge>;
       default:
-        return <Badge variant="outline" className="dark:border-gray-700 dark:text-gray-300">{status}</Badge>;
+        return <Badge variant="outline">{status}</Badge>;
     }
   };
 
@@ -78,9 +78,9 @@ export const MachinesTable: React.FC<MachinesTableProps> = ({
     return (
       <div className="space-y-4">
         <div className="animate-pulse">
-          <div className="h-8 bg-gray-200 dark:bg-gray-700 rounded mb-4"></div>
+          <div className="h-8 bg-gray-200 rounded mb-4"></div>
           {[...Array(5)].map((_, i) => (
-            <div key={i} className="h-12 bg-gray-100 dark:bg-gray-800 rounded mb-2"></div>
+            <div key={i} className="h-12 bg-gray-100 rounded mb-2"></div>
           ))}
         </div>
       </div>
@@ -97,30 +97,30 @@ export const MachinesTable: React.FC<MachinesTableProps> = ({
 
   return (
     <>
-      <div className="rounded-md border dark:border-gray-700">
+      <div className="rounded-md border">
         <Table>
           <TableHeader>
-            <TableRow className="dark:border-gray-700">
-              <TableHead className="dark:text-gray-300">Número de Série</TableHead>
-              <TableHead className="dark:text-gray-300">Modelo</TableHead>
-              <TableHead className="dark:text-gray-300">Status</TableHead>
-              <TableHead className="dark:text-gray-300">Cliente</TableHead>
-              <TableHead className="dark:text-gray-300">Criado em</TableHead>
-              <TableHead className="text-right dark:text-gray-300">Ações</TableHead>
+            <TableRow>
+              <TableHead>Número de Série</TableHead>
+              <TableHead>Modelo</TableHead>
+              <TableHead>Status</TableHead>
+              <TableHead>Cliente</TableHead>
+              <TableHead>Criado em</TableHead>
+              <TableHead className="text-right">Ações</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {machines.map((machine) => (
-              <TableRow key={machine.id} className="dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800/50">
-                <TableCell className="font-medium dark:text-gray-200">
+              <TableRow key={machine.id}>
+                <TableCell className="font-medium">
                   {machine.serial_number}
                 </TableCell>
-                <TableCell className="dark:text-gray-300">{machine.model}</TableCell>
+                <TableCell>{machine.model}</TableCell>
                 <TableCell>{getStatusBadge(machine.status)}</TableCell>
-                <TableCell className="dark:text-gray-300">
+                <TableCell>
                   {machine.client?.business_name || "Em Estoque"}
                 </TableCell>
-                <TableCell className="dark:text-gray-300">
+                <TableCell>
                   {machine.created_at 
                     ? new Date(machine.created_at).toLocaleDateString('pt-BR')
                     : "N/A"
@@ -132,7 +132,6 @@ export const MachinesTable: React.FC<MachinesTableProps> = ({
                       variant="ghost"
                       size="sm"
                       onClick={() => handleViewDetails(machine)}
-                      className="hover:bg-gray-100 dark:hover:bg-gray-700 dark:text-gray-300"
                     >
                       <Eye className="h-4 w-4" />
                     </Button>
@@ -140,7 +139,6 @@ export const MachinesTable: React.FC<MachinesTableProps> = ({
                       variant="ghost"
                       size="sm"
                       onClick={() => handleEditMachine(machine)}
-                      className="hover:bg-gray-100 dark:hover:bg-gray-700 dark:text-gray-300"
                     >
                       <Edit className="h-4 w-4" />
                     </Button>
@@ -150,7 +148,6 @@ export const MachinesTable: React.FC<MachinesTableProps> = ({
                         size="sm"
                         onClick={() => handleTransferMachine(machine)}
                         title="Transferir máquina"
-                        className="hover:bg-gray-100 dark:hover:bg-gray-700 dark:text-gray-300"
                       >
                         <ArrowRightLeft className="h-4 w-4" />
                       </Button>

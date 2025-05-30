@@ -43,46 +43,46 @@ const MachinesTable: React.FC = () => {
   const getStatusClass = (status: string) => {
     switch (status) {
       case 'Operando':
-        return 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300 border-green-200 dark:border-green-800';
+        return 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400';
       case 'Em Manutenção':
-        return 'bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-300 border-amber-200 dark:border-amber-800';
+        return 'bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-400';
       case 'Em Estoque':
-        return 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300 border-blue-200 dark:border-blue-800';
+        return 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400';
       default:
-        return 'bg-gray-100 text-gray-800 dark:bg-gray-800/30 dark:text-gray-300 border-gray-200 dark:border-gray-700';
+        return 'bg-gray-100 text-gray-800 dark:bg-gray-800/30 dark:text-gray-400';
     }
   };
 
   return (
-    <Card className="overflow-hidden dark:bg-gray-900 dark:border-gray-700">
+    <Card className="overflow-hidden">
       <CardHeader>
         <div className="flex items-center justify-between">
-          <CardTitle className="dark:text-gray-100">Resumo de Máquinas</CardTitle>
+          <CardTitle>Resumo de Máquinas</CardTitle>
           <div className="flex space-x-2">
             <Select value={statusFilter} onValueChange={setStatusFilter}>
-              <SelectTrigger className="h-8 w-[180px] dark:bg-gray-800 dark:border-gray-600 dark:text-gray-200">
+              <SelectTrigger className="h-8 w-[180px]">
                 <SelectValue placeholder="Filtrar por status" />
               </SelectTrigger>
-              <SelectContent className="dark:bg-gray-800 dark:border-gray-600">
-                <SelectItem value="all" className="dark:text-gray-200 dark:hover:bg-gray-700">Todos os Status</SelectItem>
+              <SelectContent>
+                <SelectItem value="all">Todos os Status</SelectItem>
                 {statuses.map(status => (
-                  <SelectItem key={status} value={status} className="dark:text-gray-200 dark:hover:bg-gray-700">{status}</SelectItem>
+                  <SelectItem key={status} value={status}>{status}</SelectItem>
                 ))}
               </SelectContent>
             </Select>
-            <Button variant="outline" size="sm" className="dark:border-gray-600 dark:text-gray-300 dark:hover:bg-gray-700">Ver Todas</Button>
+            <Button variant="outline" size="sm">Ver Todas</Button>
           </div>
         </div>
       </CardHeader>
       <CardContent>
-        <div className="rounded-md border overflow-hidden dark:border-gray-700">
+        <div className="rounded-md border overflow-hidden">
           <Table>
-            <TableHeader className="bg-muted/50 dark:bg-gray-800/50">
-              <TableRow className="dark:border-gray-700">
-                <TableHead className="dark:text-gray-300">Serial</TableHead>
-                <TableHead className="dark:text-gray-300">Modelo</TableHead>
-                <TableHead className="dark:text-gray-300">Status</TableHead>
-                <TableHead className="dark:text-gray-300">Local</TableHead>
+            <TableHeader className="bg-muted/50">
+              <TableRow>
+                <TableHead>Serial</TableHead>
+                <TableHead>Modelo</TableHead>
+                <TableHead>Status</TableHead>
+                <TableHead>Local</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -92,20 +92,20 @@ const MachinesTable: React.FC = () => {
                   initial={{ opacity: 0, y: 10 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ duration: 0.3, delay: idx * 0.05 }}
-                  className="bg-card hover:bg-muted/50 transition-colors dark:border-gray-700 dark:hover:bg-gray-800/50"
+                  className="bg-card hover:bg-muted/50 transition-colors"
                 >
-                  <TableCell className="font-medium dark:text-gray-200">{machine.serial}</TableCell>
-                  <TableCell className="dark:text-gray-300">{machine.model}</TableCell>
+                  <TableCell className="font-medium">{machine.serial}</TableCell>
+                  <TableCell>{machine.model}</TableCell>
                   <TableCell>
-                    <span className={`inline-flex items-center rounded-full px-2.5 py-1 text-xs font-medium border ${getStatusClass(machine.status)}`}>
+                    <span className={`inline-flex items-center rounded-full px-2.5 py-1 text-xs font-medium ${getStatusClass(machine.status)}`}>
                       {machine.status}
                     </span>
                   </TableCell>
-                  <TableCell className="dark:text-gray-300">{machine.location}</TableCell>
+                  <TableCell>{machine.location}</TableCell>
                 </motion.tr>
               ))}
               {filteredMachines.length === 0 && (
-                <TableRow className="dark:border-gray-700">
+                <TableRow>
                   <TableCell colSpan={4} className="text-center py-6 text-muted-foreground">
                     Nenhuma máquina encontrada com o status selecionado
                   </TableCell>
