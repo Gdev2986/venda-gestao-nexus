@@ -4,6 +4,9 @@ import { PageHeader } from "@/components/page/PageHeader";
 import { ClientStatsCards } from "@/components/dashboard/client/ClientStatsCards";
 import { ClientPeriodFilter } from "@/components/dashboard/client/ClientPeriodFilter";
 import { ClientSalesTable } from "@/components/dashboard/client/ClientSalesTable";
+import { ClientDashboardStats } from "@/components/dashboard/client/ClientDashboardStats";
+import { ClientFeePlanDisplay } from "@/components/dashboard/client/ClientFeePlanDisplay";
+import { ClientMachinesTable } from "@/components/dashboard/client/ClientMachinesTable";
 import { useClientBalance } from "@/hooks/use-client-balance";
 import { useAuth } from "@/hooks/use-auth";
 import { PaymentMethod } from "@/types";
@@ -55,6 +58,7 @@ const ClientDashboard = () => {
   const periodGross = sales.reduce((sum, sale) => sum + sale.gross_amount, 0);
   const periodNet = sales.reduce((sum, sale) => sum + sale.net_amount, 0);
   const totalTransactions = sales.length;
+  const avgTicket = totalTransactions > 0 ? periodGross / totalTransactions : 0;
 
   const handlePeriodChange = (startDate: Date, endDate: Date) => {
     setPeriodStart(startDate);
@@ -74,6 +78,15 @@ const ClientDashboard = () => {
       <PageHeader
         title="Dashboard"
         description="Bem-vindo ao seu painel de controle"
+      />
+
+      {/* Estatísticas Resumidas */}
+      <ClientDashboardStats
+        currentBalance={balance || 0}
+        totalSales={periodGross}
+        totalTransactions={totalTransactions}
+        avgTicket={avgTicket}
+        isLoading={isLoading || balanceLoading}
       />
 
       {/* Balance Card - sempre visível, sem filtro de data */}
@@ -108,6 +121,12 @@ const ClientDashboard = () => {
           </div>
         </CardContent>
       </Card>
+
+      {/* Grid com Plano de Taxas e Máquinas */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <ClientFeePlanDisplay />
+        <ClientMachinesTable />
+      </div>
 
       {/* Filtro de Período */}
       <ClientPeriodFilter onPeriodChange={handlePeriodChange} />
