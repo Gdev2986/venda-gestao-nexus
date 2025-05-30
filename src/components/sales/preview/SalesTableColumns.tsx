@@ -24,34 +24,34 @@ const formatTransactionDate = (dateValue: string | Date | null | undefined): str
   return String(dateValue);
 };
 
-// Payment method badge function
+// Payment method badge function with dark theme support
 const getPaymentMethodBadge = (method: string, installments?: number) => {
   switch (method) {
     case 'CREDIT':
     case 'Cartão de Crédito':
       const installmentText = installments && installments > 1 ? ` ${installments}x` : " À Vista";
       return (
-        <Badge variant="outline" className="border-blue-500 text-blue-700 bg-blue-50">
+        <Badge variant="default" className="bg-blue-600 hover:bg-blue-700 text-white border-blue-600">
           Crédito{installmentText}
         </Badge>
       );
     case 'DEBIT':
     case 'Cartão de Débito':
       return (
-        <Badge variant="outline" className="border-green-500 text-green-700 bg-green-50">
+        <Badge variant="default" className="bg-green-600 hover:bg-green-700 text-white border-green-600">
           Débito
         </Badge>
       );
     case 'PIX':
     case 'Pix':
       return (
-        <Badge variant="outline" className="border-purple-500 text-purple-700 bg-purple-50">
+        <Badge variant="default" className="bg-purple-600 hover:bg-purple-700 text-white border-purple-600">
           PIX
         </Badge>
       );
     default:
       return (
-        <Badge variant="outline" className="border-gray-500 text-gray-700 bg-gray-50">
+        <Badge variant="outline" className="border-gray-500 text-gray-700 dark:text-gray-300">
           {method}
         </Badge>
       );
