@@ -74,7 +74,15 @@ export function PixKeysManager({ userId }: PixKeysManagerProps) {
   const onSubmit = async (values: PixKeyFormValues) => {
     try {
       if (isEditing) {
-        await updatePixKey(isEditing, values);
+        // Ensure all required fields are provided for update
+        const updateData = {
+          name: values.name,
+          key: values.key,
+          type: values.type,
+          owner_name: values.owner_name,
+          is_default: values.is_default,
+        };
+        await updatePixKey(isEditing, updateData);
         setIsEditing(null);
       } else {
         await createPixKey(values);
