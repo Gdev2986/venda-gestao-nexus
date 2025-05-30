@@ -1,5 +1,5 @@
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { PageHeader } from "@/components/page/PageHeader";
 import { ClientStatsCards } from "@/components/dashboard/client/ClientStatsCards";
 import { ClientPeriodFilter } from "@/components/dashboard/client/ClientPeriodFilter";
@@ -9,8 +9,6 @@ import { ClientMachinesTable } from "@/components/dashboard/client/ClientMachine
 import { BarChart } from "@/components/charts";
 import { useClientBalance } from "@/hooks/use-client-balance";
 import { useClientSales } from "@/hooks/use-client-sales";
-import { useAuth } from "@/hooks/use-auth";
-import { PaymentMethod } from "@/types";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Wallet, DollarSign, BarChart3 } from "lucide-react";
@@ -22,7 +20,7 @@ const generatePaymentMethodsData = (sales: any[]) => {
   console.log('generatePaymentMethodsData - Input sales:', sales);
   
   const methodCounts = sales.reduce((acc: Record<string, number>, sale: any) => {
-    const method = sale.payment_method;
+    const method = sale.payment_type || sale.payment_method;
     const amount = Number(sale.gross_amount) || 0;
     acc[method] = (acc[method] || 0) + amount;
     return acc;
@@ -34,9 +32,9 @@ const generatePaymentMethodsData = (sales: any[]) => {
     return sum + amount;
   }, 0));
 
-  const pixAmount = Number(methodCounts[PaymentMethod.PIX] || 0);
-  const debitAmount = Number(methodCounts[PaymentMethod.DEBIT] || 0);
-  const creditAmount = Number(methodCounts[PaymentMethod.CREDIT] || 0);
+  const pixAmount = Number(methodCounts['PIX'] || methodCounts['Pix'] || 0);
+  const debitAmount = Number(methodCounts['DEBIT'] || methodCounts['Cartão de Débito'] || 0);
+  const creditAmount = Number(methodCounts['CREDIT'] || methodCounts['Cartão de Crédito'] || 0);
 
   return [
     {
@@ -58,18 +56,26 @@ const generatePaymentMethodsData = (sales: any[]) => {
 };
 
 const ClientDashboard = () => {
-  const { user } = useAuth();
   const { balance, isLoading: balanceLoading } = useClientBalance();
   const [periodStart, setPeriodStart] = useState<Date>();
   const [periodEnd, setPeriodEnd] = useState<Date>();
 
-  // Use the new hook for real sales data
-  const { sales, stats, isLoading: salesLoading, error } = useClientSales(periodStart, periodEnd);
+  // Use the optimized client sales hook
+  const { 
+    sales, 
+    stats, 
+    totalCount,
+    totalPages,
+    currentPage,
+    isLoading: salesLoading, 
+    error,
+    changePage
+  } = useClientSales(periodStart, periodEnd);
 
   console.log('ClientDashboard - Sales data:', sales);
   console.log('ClientDashboard - Stats:', stats);
+  console.log('ClientDashboard - Total count:', totalCount);
   console.log('ClientDashboard - Error:', error);
-  console.log('ClientDashboard - Period:', { periodStart, periodEnd });
 
   // Generate payment methods data from real sales
   const paymentMethodsData = generatePaymentMethodsData(sales);
@@ -175,10 +181,14 @@ const ClientDashboard = () => {
         isLoading={salesLoading || balanceLoading}
       />
 
-      {/* Tabela de Vendas */}
+      {/* Tabela de Vendas - usando a nova interface otimizada */}
       <ClientSalesTable
         sales={sales}
+        totalCount={totalCount}
+        totalPages={totalPages}
+        currentPage={currentPage}
         isLoading={salesLoading}
+        onPageChange={changePage}
       />
     </div>
   );
