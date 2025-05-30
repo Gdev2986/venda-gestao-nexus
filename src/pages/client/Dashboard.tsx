@@ -52,13 +52,13 @@ const generatePaymentMethodsData = (sales: any[]) => {
     const method = sale.payment_method;
     acc[method] = (acc[method] || 0) + sale.gross_amount;
     return acc;
-  }, {});
+  }, {} as Record<string, number>);
 
-  const total = Object.values(methodCounts).reduce((sum: number, amount: any) => sum + amount, 0);
+  const total: number = Object.values(methodCounts).reduce((sum: number, amount: number) => sum + amount, 0);
 
-  const pixAmount = methodCounts[PaymentMethod.PIX] || 0;
-  const debitAmount = methodCounts[PaymentMethod.DEBIT] || 0;
-  const creditAmount = methodCounts[PaymentMethod.CREDIT] || 0;
+  const pixAmount: number = methodCounts[PaymentMethod.PIX] || 0;
+  const debitAmount: number = methodCounts[PaymentMethod.DEBIT] || 0;
+  const creditAmount: number = methodCounts[PaymentMethod.CREDIT] || 0;
 
   return [
     {
