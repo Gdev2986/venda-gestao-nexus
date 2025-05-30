@@ -39,9 +39,8 @@ export const SupportChat = ({
       }
     };
 
-    // Use a timeout to ensure the DOM is updated
-    const timeoutId = setTimeout(scrollToBottom, 100);
-    return () => clearTimeout(timeoutId);
+    // Scroll immediately for new messages
+    scrollToBottom();
   }, [messages]);
 
   // Also scroll on initial load
@@ -53,7 +52,7 @@ export const SupportChat = ({
           block: "end"
         });
       }
-    }, 200);
+    }, 100);
     
     return () => clearTimeout(timeoutId);
   }, [ticketId]);
@@ -100,7 +99,7 @@ export const SupportChat = ({
 
   if (isLoading) {
     return (
-      <div className="h-[600px] flex flex-col">
+      <div className="h-full flex flex-col min-h-[400px] lg:min-h-[600px]">
         <Card className="flex-1 flex flex-col">
           <CardHeader className="pb-3">
             <CardTitle className="text-lg flex items-center gap-2">
@@ -117,28 +116,29 @@ export const SupportChat = ({
   }
 
   return (
-    <div className="h-[600px] flex flex-col">
+    <div className="h-full flex flex-col min-h-[400px] lg:min-h-[600px]">
       <Card className="flex-1 flex flex-col min-h-0">
         <CardHeader className="pb-3 border-b flex-shrink-0">
-          <CardTitle className="text-lg flex items-center gap-2">
-            <MessageSquare className="h-5 w-5" />
-            Chat de Suporte
+          <CardTitle className="text-base lg:text-lg flex items-center gap-2">
+            <MessageSquare className="h-4 w-4 lg:h-5 lg:w-5" />
+            <span className="hidden sm:inline">Chat de Suporte</span>
+            <span className="sm:hidden">Chat</span>
             {messages.length > 0 && (
-              <span className="text-sm font-normal text-muted-foreground">
-                ({messages.length} mensagens)
+              <span className="text-xs lg:text-sm font-normal text-muted-foreground">
+                ({messages.length})
               </span>
             )}
           </CardTitle>
         </CardHeader>
         
         <CardContent className="flex-1 flex flex-col p-0 min-h-0">
-          <div className="flex-1 min-h-0 max-h-[400px] overflow-hidden">
-            <ScrollArea className="h-full">
-              <div className="p-4 space-y-4">
+          <div className="flex-1 min-h-0">
+            <ScrollArea className="h-full max-h-[300px] lg:max-h-[400px]">
+              <div className="p-3 lg:p-4 space-y-3 lg:space-y-4">
                 {messages.length === 0 ? (
-                  <div className="flex flex-col items-center justify-center py-12 text-center">
-                    <MessageSquare className="h-12 w-12 text-muted-foreground mb-4" />
-                    <p className="text-muted-foreground">
+                  <div className="flex flex-col items-center justify-center py-8 lg:py-12 text-center">
+                    <MessageSquare className="h-8 w-8 lg:h-12 lg:w-12 text-muted-foreground mb-2 lg:mb-4" />
+                    <p className="text-sm lg:text-base text-muted-foreground">
                       Nenhuma mensagem ainda. Inicie a conversa!
                     </p>
                   </div>
@@ -148,32 +148,32 @@ export const SupportChat = ({
                       key={message.id}
                       className={`flex ${isMyMessage(message) ? "justify-end" : "justify-start"}`}
                     >
-                      <div className={`flex items-start gap-2 max-w-[80%] ${
+                      <div className={`flex items-start gap-2 max-w-[85%] lg:max-w-[80%] ${
                         isMyMessage(message) ? "flex-row-reverse" : ""
                       }`}>
-                        <Avatar className="h-8 w-8 flex-shrink-0">
-                          <AvatarFallback className={
+                        <Avatar className="h-6 w-6 lg:h-8 lg:w-8 flex-shrink-0">
+                          <AvatarFallback className={`text-xs lg:text-sm ${
                             isMyMessage(message) 
                               ? "bg-primary text-primary-foreground" 
                               : "bg-muted"
-                          }>
+                          }`}>
                             {getUserInitials(message)}
                           </AvatarFallback>
                         </Avatar>
                         
-                        <div className={`rounded-lg p-3 shadow-sm ${
+                        <div className={`rounded-lg p-2 lg:p-3 shadow-sm ${
                           isMyMessage(message) 
                             ? "bg-primary text-primary-foreground" 
                             : "bg-muted"
                         }`}>
-                          <div className="text-sm">
+                          <div className="text-xs lg:text-sm">
                             <div className="font-medium mb-1">
                               {getUserDisplayName(message)}
                             </div>
                             <div className="whitespace-pre-wrap break-words">
                               {message.message}
                             </div>
-                            <div className={`text-xs mt-2 ${
+                            <div className={`text-xs mt-1 lg:mt-2 ${
                               isMyMessage(message) 
                                 ? "text-primary-foreground/70" 
                                 : "text-muted-foreground"
@@ -191,7 +191,7 @@ export const SupportChat = ({
             </ScrollArea>
           </div>
 
-          <div className="border-t p-4 flex-shrink-0">
+          <div className="border-t p-3 lg:p-4 flex-shrink-0">
             <div className="flex gap-2">
               <Input
                 value={newMessage}
@@ -199,7 +199,7 @@ export const SupportChat = ({
                 onKeyPress={handleKeyPress}
                 placeholder="Digite sua mensagem..."
                 disabled={isSending}
-                className="flex-1"
+                className="flex-1 text-sm lg:text-base"
                 maxLength={1000}
               />
               
@@ -207,11 +207,12 @@ export const SupportChat = ({
                 onClick={handleSendMessage}
                 disabled={isSending || !newMessage.trim()}
                 size="sm"
+                className="px-2 lg:px-3"
               >
                 {isSending ? (
-                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-current" />
+                  <div className="animate-spin rounded-full h-3 w-3 lg:h-4 lg:w-4 border-b-2 border-current" />
                 ) : (
-                  <Send className="h-4 w-4" />
+                  <Send className="h-3 w-3 lg:h-4 lg:w-4" />
                 )}
               </Button>
             </div>

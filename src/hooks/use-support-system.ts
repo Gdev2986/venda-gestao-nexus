@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useCallback } from "react";
 import { useAuth } from "@/hooks/use-auth";
 import { supabase } from "@/integrations/supabase/client";
@@ -113,7 +112,7 @@ export const useSupportSystem = () => {
     }
   }, [userRole, clientId, toast]);
 
-  // Load messages for selected ticket with real-time updates
+  // Load messages for selected ticket
   const loadMessages = useCallback(async (ticketId: string) => {
     try {
       console.log('Loading messages for ticket:', ticketId);
@@ -252,13 +251,17 @@ export const useSupportSystem = () => {
     }
   };
 
-  // Send message with real-time update
+  // Send message with forced reload
   const sendMessage = async (ticketId: string, message: string) => {
     try {
+      console.log('Sending message to ticket:', ticketId);
       const { data, error } = await sendTicketMessage(ticketId, message);
       if (error) throw error;
       
-      // Messages will be updated via real-time subscription
+      // Force immediate reload of messages after sending
+      console.log('Message sent successfully, reloading messages...');
+      await loadMessages(ticketId);
+      
       return data;
     } catch (error) {
       console.error("Error sending message:", error);
@@ -334,14 +337,14 @@ export const useSupportSystem = () => {
     }
   };
 
-  // Set up real-time subscriptions for tickets
+  // Real-time subscription for tickets
   useEffect(() => {
     if (!user) return;
 
     console.log('Setting up tickets real-time subscription');
     
     const ticketChannel = supabase
-      .channel("support_tickets")
+      .channel("support_tickets_channel")
       .on(
         "postgres_changes",
         {
@@ -350,11 +353,13 @@ export const useSupportSystem = () => {
           table: "support_requests",
         },
         (payload) => {
-          console.log('Tickets real-time update:', payload);
+          console.log('Tickets real-time update received:', payload.eventType, payload);
           loadTickets();
         }
       )
-      .subscribe();
+      .subscribe((status) => {
+        console.log('Tickets subscription status:', status);
+      });
 
     return () => {
       console.log('Cleaning up tickets subscription');
@@ -362,9 +367,9 @@ export const useSupportSystem = () => {
     };
   }, [user, loadTickets]);
 
-  // Set up real-time subscriptions for messages when a ticket is selected
+  // Real-time subscription for messages when a ticket is selected
   useEffect(() => {
-    if (!user || !selectedTicket) return;
+    if (!user || !selectedTicket?.id) return;
 
     console.log('Setting up messages real-time subscription for ticket:', selectedTicket.id);
     
@@ -378,18 +383,33 @@ export const useSupportSystem = () => {
           table: "support_messages",
         },
         (payload) => {
-          console.log('Messages real-time update:', payload);
-          // Reload messages for the current ticket
+          console.log('Messages real-time update received:', payload.eventType, payload);
+          // Force reload messages immediately
           loadMessages(selectedTicket.id);
         }
       )
-      .subscribe();
+      .on(
+        "postgres_changes",
+        {
+          event: "*",
+          schema: "public", 
+          table: "support_conversations",
+        },
+        (payload) => {
+          console.log('Conversations real-time update received:', payload.eventType, payload);
+          // Also reload on conversation changes
+          loadMessages(selectedTicket.id);
+        }
+      )
+      .subscribe((status) => {
+        console.log('Messages subscription status:', status);
+      });
 
     return () => {
       console.log('Cleaning up messages subscription for ticket:', selectedTicket.id);
       supabase.removeChannel(messageChannel);
     };
-  }, [user, selectedTicket, loadMessages]);
+  }, [user, selectedTicket?.id, loadMessages]);
 
   // Load client ID and tickets on mount
   useEffect(() => {

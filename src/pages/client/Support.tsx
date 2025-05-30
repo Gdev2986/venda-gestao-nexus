@@ -139,7 +139,7 @@ const ClientSupport = () => {
       )}
 
       {/* Statistics Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         <Card>
           <CardContent className="p-4">
             <div className="flex items-center justify-between">
@@ -218,7 +218,7 @@ const ClientSupport = () => {
                   <CardContent className="p-4">
                     <div className="flex items-start justify-between">
                       <div className="flex-1">
-                        <div className="flex items-center gap-2 mb-2">
+                        <div className="flex items-center gap-2 mb-2 flex-wrap">
                           <MessageSquare className="h-4 w-4 text-blue-600" />
                           <span className="font-medium">Chamado #{ticket.id.substring(0, 8)}</span>
                           {getStatusBadge(ticket.status)}
@@ -255,11 +255,11 @@ const ClientSupport = () => {
 
       {/* Chat Dialog */}
       <Dialog open={showChatDialog} onOpenChange={handleCloseChat}>
-        <DialogContent className="sm:max-w-6xl max-h-[90vh] p-0">
-          <DialogHeader className="p-6 pb-0">
-            <DialogTitle className="flex items-center justify-between">
+        <DialogContent className="sm:max-w-4xl lg:max-w-6xl max-h-[90vh] p-0">
+          <DialogHeader className="p-4 lg:p-6 pb-0">
+            <DialogTitle className="flex items-center justify-between text-base lg:text-lg">
               <span>Chamado de Suporte #{selectedTicket?.id.substring(0, 8)}</span>
-              <div className="flex gap-2">
+              <div className="flex gap-2 flex-wrap">
                 {selectedTicket && getPriorityBadge(selectedTicket.priority)}
                 {selectedTicket && getStatusBadge(selectedTicket.status)}
               </div>
@@ -267,10 +267,10 @@ const ClientSupport = () => {
           </DialogHeader>
           
           {selectedTicket && (
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 p-6">
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 lg:gap-6 p-4 lg:p-6">
               {/* Chat Section */}
               <div className="lg:col-span-2 space-y-4">
-                <div className="grid grid-cols-2 gap-4 text-sm">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
                   <div>
                     <p><strong>Tipo:</strong> {getTypeLabel(selectedTicket.type)}</p>
                     <p><strong>Prioridade:</strong> {selectedTicket.priority}</p>
@@ -285,7 +285,7 @@ const ClientSupport = () => {
                 
                 <div>
                   <strong>Descrição:</strong>
-                  <div className="bg-muted p-3 rounded-md mt-1">
+                  <div className="bg-muted p-3 rounded-md mt-1 text-sm">
                     {selectedTicket.description}
                   </div>
                 </div>
