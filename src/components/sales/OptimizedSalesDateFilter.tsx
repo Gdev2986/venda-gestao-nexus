@@ -9,64 +9,45 @@ import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { cn } from '@/lib/utils';
 
-export interface SalesFilters {
-  startDate?: Date;
-  endDate?: Date;
-  terminal?: string;
-  paymentMethod?: string;
-  search?: string;
-  minAmount?: number;
-  maxAmount?: number;
-  startHour?: number;
-  endHour?: number;
-}
-
 interface OptimizedSalesDateFilterProps {
-  filters: SalesFilters;
-  onFiltersChange: (newFilters: Partial<SalesFilters>) => void;
-  onResetFilters: () => void;
-  totalRecords: number;
-  isLoading: boolean;
+  startDate: Date | undefined;
+  endDate: Date | undefined;
+  onStartDateChange: (date: Date | undefined) => void;
+  onEndDateChange: (date: Date | undefined) => void;
+  onClearDates: () => void;
+  availableDates: Date[];
 }
 
 const OptimizedSalesDateFilter = ({
-  filters,
-  onFiltersChange,
-  onResetFilters,
-  totalRecords,
-  isLoading
+  startDate,
+  endDate,
+  onStartDateChange,
+  onEndDateChange,
+  onClearDates,
+  availableDates
 }: OptimizedSalesDateFilterProps) => {
   const formatDateDisplay = (date: Date | undefined) => {
     if (!date) return "Selecionar data";
     return format(date, "dd/MM/yyyy", { locale: ptBR });
   };
 
-  const handleStartDateChange = (date: Date | undefined) => {
-    onFiltersChange({ startDate: date });
+  const isDateAvailable = (date: Date) => {
+    return availableDates.some(availableDate => 
+      date.toDateString() === availableDate.toDateString()
+    );
   };
-
-  const handleEndDateChange = (date: Date | undefined) => {
-    onFiltersChange({ endDate: date });
-  };
-
-  const handleClearDates = () => {
-    onResetFilters();
-  };
-
-  const hasFilters = filters.startDate || filters.endDate;
 
   return (
     <Card>
       <CardHeader>
         <CardTitle className="text-lg flex items-center justify-between">
           Filtro de Período e Horário
-          {hasFilters && (
+          {(startDate || endDate) && (
             <Button
               variant="ghost"
               size="sm"
-              onClick={handleClearDates}
+              onClick={onClearDates}
               className="h-8 px-2 text-muted-foreground hover:text-foreground"
-              disabled={isLoading}
             >
               <X className="h-4 w-4" />
               Limpar
@@ -84,19 +65,19 @@ const OptimizedSalesDateFilter = ({
                   variant="outline"
                   className={cn(
                     "w-full justify-start text-left font-normal",
-                    !filters.startDate && "text-muted-foreground"
+                    !startDate && "text-muted-foreground"
                   )}
-                  disabled={isLoading}
                 >
                   <CalendarIcon className="mr-2 h-4 w-4" />
-                  {formatDateDisplay(filters.startDate)}
+                  {formatDateDisplay(startDate)}
                 </Button>
               </PopoverTrigger>
               <PopoverContent className="w-auto p-0" align="start">
                 <Calendar
                   mode="single"
-                  selected={filters.startDate}
-                  onSelect={handleStartDateChange}
+                  selected={startDate}
+                  onSelect={onStartDateChange}
+                  disabled={(date) => !isDateAvailable(date)}
                   initialFocus
                   locale={ptBR}
                 />
@@ -112,22 +93,22 @@ const OptimizedSalesDateFilter = ({
                   variant="outline"
                   className={cn(
                     "w-full justify-start text-left font-normal",
-                    !filters.endDate && "text-muted-foreground"
+                    !endDate && "text-muted-foreground"
                   )}
-                  disabled={isLoading}
                 >
                   <CalendarIcon className="mr-2 h-4 w-4" />
-                  {formatDateDisplay(filters.endDate)}
+                  {formatDateDisplay(endDate)}
                 </Button>
               </PopoverTrigger>
               <PopoverContent className="w-auto p-0" align="start">
                 <Calendar
                   mode="single"
-                  selected={filters.endDate}
-                  onSelect={handleEndDateChange}
+                  selected={endDate}
+                  onSelect={onEndDateChange}
                   disabled={(date) => {
-                    const isBeforeStart = filters.startDate ? date < filters.startDate : false;
-                    return isBeforeStart;
+                    const isUnavailable = !isDateAvailable(date);
+                    const isBeforeStart = startDate ? date < startDate : false;
+                    return isUnavailable || isBeforeStart;
                   }}
                   initialFocus
                   locale={ptBR}
@@ -137,16 +118,11 @@ const OptimizedSalesDateFilter = ({
           </div>
         </div>
 
-        {filters.startDate && filters.endDate && (
+        {startDate && endDate && (
           <div className="mt-4 p-3 bg-muted/50 rounded-md">
             <p className="text-sm text-muted-foreground">
-              Período selecionado: {formatDateDisplay(filters.startDate)} até {formatDateDisplay(filters.endDate)}
+              Período selecionado: {formatDateDisplay(startDate)} até {formatDateDisplay(endDate)}
             </p>
-            {totalRecords > 0 && (
-              <p className="text-sm text-muted-foreground mt-1">
-                Total de registros: {totalRecords.toLocaleString('pt-BR')}
-              </p>
-            )}
           </div>
         )}
       </CardContent>
