@@ -47,15 +47,15 @@ export const PaymentRequestDialog = ({
 
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto dark:bg-[#1f1f1f] dark:border-[#262626]">
         <DialogHeader>
-          <DialogTitle>Nova Solicitação de Pagamento</DialogTitle>
+          <DialogTitle className="dark:text-white">Nova Solicitação de Pagamento</DialogTitle>
         </DialogHeader>
 
         <Tabs defaultValue="pix" className="w-full">
-          <TabsList className="grid w-full grid-cols-2">
-            <TabsTrigger value="pix">PIX</TabsTrigger>
-            <TabsTrigger value="boleto">Boleto</TabsTrigger>
+          <TabsList className="grid w-full grid-cols-2 dark:bg-[#262626]">
+            <TabsTrigger value="pix" className="dark:data-[state=active]:bg-[#1a1a1a] dark:text-white">PIX</TabsTrigger>
+            <TabsTrigger value="boleto" className="dark:data-[state=active]:bg-[#1a1a1a] dark:text-white">Boleto</TabsTrigger>
           </TabsList>
 
           <TabsContent value="pix" className="mt-4">

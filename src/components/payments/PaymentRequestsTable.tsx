@@ -102,7 +102,7 @@ export const PaymentRequestsTable = ({ payments, isLoading }: PaymentRequestsTab
 
   if (isLoading) {
     return (
-      <Card className="dark:bg-gray-800 dark:border-gray-700">
+      <Card className="dark:bg-[#1f1f1f] dark:border-[#262626]">
         <CardContent className="flex items-center justify-center py-8">
           <div className="text-center">
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-2"></div>
@@ -114,7 +114,7 @@ export const PaymentRequestsTable = ({ payments, isLoading }: PaymentRequestsTab
   }
 
   return (
-    <Card className="dark:bg-gray-800 dark:border-gray-700">
+    <Card className="dark:bg-[#1f1f1f] dark:border-[#262626]">
       <CardHeader>
         <CardTitle className="flex items-center gap-2 dark:text-white">
           <Calendar className="h-5 w-5" />
@@ -123,7 +123,7 @@ export const PaymentRequestsTable = ({ payments, isLoading }: PaymentRequestsTab
       </CardHeader>
       <CardContent>
         {/* Filtros */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6 p-4 bg-gray-50 dark:bg-gray-700 rounded-lg">
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6 p-4 bg-gray-50 dark:bg-[#262626] rounded-lg">
           <div>
             <Label htmlFor="start-date" className="dark:text-white">Data Início</Label>
             <Input
@@ -131,7 +131,7 @@ export const PaymentRequestsTable = ({ payments, isLoading }: PaymentRequestsTab
               type="date"
               value={startDate}
               onChange={(e) => setStartDate(e.target.value)}
-              className="dark:bg-gray-600 dark:border-gray-500 dark:text-white"
+              className="dark:bg-[#1a1a1a] dark:border-[#262626] dark:text-white"
             />
           </div>
           <div>
@@ -141,7 +141,7 @@ export const PaymentRequestsTable = ({ payments, isLoading }: PaymentRequestsTab
               type="date"
               value={endDate}
               onChange={(e) => setEndDate(e.target.value)}
-              className="dark:bg-gray-600 dark:border-gray-500 dark:text-white"
+              className="dark:bg-[#1a1a1a] dark:border-[#262626] dark:text-white"
             />
           </div>
           <div>
@@ -150,7 +150,7 @@ export const PaymentRequestsTable = ({ payments, isLoading }: PaymentRequestsTab
               id="status-filter"
               value={statusFilter}
               onChange={(e) => setStatusFilter(e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-500 rounded-md bg-white dark:bg-gray-600 dark:text-white"
+              className="w-full px-3 py-2 border border-gray-300 dark:border-[#262626] rounded-md bg-white dark:bg-[#1a1a1a] dark:text-white"
             >
               <option value="">Todos</option>
               <option value={PaymentStatus.PENDING}>Pendente</option>
@@ -163,7 +163,7 @@ export const PaymentRequestsTable = ({ payments, isLoading }: PaymentRequestsTab
             <Button
               variant="outline"
               onClick={clearFilters}
-              className="w-full dark:bg-gray-600 dark:border-gray-500 dark:text-white dark:hover:bg-gray-500"
+              className="w-full dark:bg-[#1a1a1a] dark:border-[#262626] dark:text-white dark:hover:bg-[#262626]"
             >
               <Filter className="h-4 w-4 mr-2" />
               Limpar
@@ -177,10 +177,10 @@ export const PaymentRequestsTable = ({ payments, isLoading }: PaymentRequestsTab
         </div>
 
         {/* Tabela */}
-        <div className="rounded-md border dark:border-gray-600 overflow-hidden">
+        <div className="rounded-md border dark:border-[#262626] overflow-hidden">
           <Table>
             <TableHeader>
-              <TableRow className="dark:border-gray-600">
+              <TableRow className="dark:border-[#262626]">
                 <TableHead className="dark:text-gray-300">Data</TableHead>
                 <TableHead className="dark:text-gray-300">Tipo</TableHead>
                 <TableHead className="dark:text-gray-300">Valor</TableHead>
@@ -200,12 +200,12 @@ export const PaymentRequestsTable = ({ payments, isLoading }: PaymentRequestsTab
                 </TableRow>
               ) : (
                 filteredPayments.map((payment) => (
-                  <TableRow key={payment.id} className="dark:border-gray-600">
+                  <TableRow key={payment.id} className="dark:border-[#262626]">
                     <TableCell className="dark:text-gray-300">
                       {format(new Date(payment.created_at), 'dd/MM/yyyy HH:mm', { locale: ptBR })}
                     </TableCell>
                     <TableCell className="dark:text-gray-300">
-                      <Badge variant="outline" className="dark:border-gray-500">
+                      <Badge variant="outline" className="dark:border-[#262626]">
                         {payment.payment_type || 'PIX'}
                       </Badge>
                     </TableCell>

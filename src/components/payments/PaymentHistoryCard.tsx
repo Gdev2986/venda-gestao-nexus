@@ -1,9 +1,9 @@
 
 import { PaymentRequestsTable } from "./PaymentRequestsTable";
-import { Payment } from "@/types";
+import { PaymentRequest } from "@/types/payment.types";
 
 interface PaymentHistoryCardProps {
-  payments: Payment[];
+  payments: PaymentRequest[];
   isLoading: boolean;
 }
 

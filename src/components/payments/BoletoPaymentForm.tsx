@@ -90,13 +90,13 @@ export const BoletoPaymentForm = ({ clientBalance, onSubmit, isLoading }: Boleto
   const isAmountExceeded = amount > clientBalance;
 
   return (
-    <Card className="dark:bg-gray-800 dark:border-gray-700">
+    <Card className="dark:bg-[#1f1f1f] dark:border-[#262626]">
       <CardHeader>
         <CardTitle className="dark:text-white">Pagamento de Boleto</CardTitle>
       </CardHeader>
       <CardContent>
         <form onSubmit={handleSubmit(handleFormSubmit)} className="space-y-4">
-          <div className="bg-blue-50 dark:bg-blue-900/20 p-3 rounded-lg">
+          <div className="bg-blue-50 dark:bg-[#262626] p-3 rounded-lg">
             <p className="text-sm text-blue-700 dark:text-blue-300">
               <strong>Saldo disponível:</strong> {formatCurrency(clientBalance)}
             </p>
@@ -110,7 +110,7 @@ export const BoletoPaymentForm = ({ clientBalance, onSubmit, isLoading }: Boleto
               value={amountInput}
               onChange={handleAmountChange}
               placeholder="R$ 0,00"
-              className={`dark:bg-gray-700 dark:border-gray-600 dark:text-white ${isAmountExceeded ? 'border-red-500' : ''}`}
+              className={`dark:bg-[#1a1a1a] dark:border-[#262626] dark:text-white ${isAmountExceeded ? 'border-red-500' : ''}`}
             />
             {errors.amount && (
               <p className="text-sm text-red-600">{errors.amount.message}</p>
@@ -131,13 +131,13 @@ export const BoletoPaymentForm = ({ clientBalance, onSubmit, isLoading }: Boleto
               id="boleto_code"
               {...register('boleto_code')}
               placeholder="Digite o código do boleto"
-              className="dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+              className="dark:bg-[#1a1a1a] dark:border-[#262626] dark:text-white"
             />
           </div>
 
           <div className="space-y-2">
             <Label htmlFor="boleto_file" className="dark:text-white">Arquivo do boleto (opcional)</Label>
-            <div className="border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg p-4 dark:bg-gray-700/20">
+            <div className="border-2 border-dashed border-gray-300 dark:border-[#262626] rounded-lg p-4 dark:bg-[#262626]/20">
               <div className="text-center">
                 <Upload className="mx-auto h-8 w-8 text-gray-400 dark:text-gray-500" />
                 <div className="mt-2">
@@ -173,7 +173,7 @@ export const BoletoPaymentForm = ({ clientBalance, onSubmit, isLoading }: Boleto
               {...register('notes')}
               placeholder="Informações adicionais sobre o pagamento"
               rows={3}
-              className="dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+              className="dark:bg-[#1a1a1a] dark:border-[#262626] dark:text-white"
             />
           </div>
 
