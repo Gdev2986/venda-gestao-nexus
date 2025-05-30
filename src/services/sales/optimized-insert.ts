@@ -1,4 +1,3 @@
-
 import { supabase } from "@/integrations/supabase/client";
 import { NormalizedSale } from "@/utils/sales-processor";
 import { v4 as uuidv4 } from 'uuid';
@@ -25,8 +24,11 @@ const insertBatch = async (salesData: SaleInsert[]): Promise<void> => {
   }
 };
 
-// Função principal otimizada com parâmetros mais conservadores
-export const insertSalesOptimized = async (sales: NormalizedSale[]): Promise<void> => {
+// Função principal otimizada com parâmetros ajustados e callback de progresso
+export const insertSalesOptimized = async (
+  sales: NormalizedSale[], 
+  onProgress?: (completed: number, total: number, percentage: number) => void
+): Promise<void> => {
   try {
     console.log(`Starting ultra-optimized insertion of ${sales.length} sales`);
     
@@ -72,12 +74,12 @@ export const insertSalesOptimized = async (sales: NormalizedSale[]): Promise<voi
       };
     });
 
-    // Use ultra-optimized batch processor with conservative settings
+    // Use optimized batch processor with increased batch size
     const processor = new BatchProcessor({
-      batchSize: 75, // Smaller batches for better reliability
+      batchSize: 300, // Increased from 75 to 300 as requested
       maxConcurrent: 1, // Sequential processing to avoid overwhelming DB
       retryAttempts: 3,
-      delayBetweenBatches: 750 // Longer delay for DB recovery
+      delayBetweenBatches: 750 // Keep delay for DB recovery
     });
 
     const batches = processor.createBatches(salesData);
@@ -87,7 +89,7 @@ export const insertSalesOptimized = async (sales: NormalizedSale[]): Promise<voi
     
     await processor.processBatchesInParallel(batches, async (batch) => {
       await insertBatch(batch);
-    });
+    }, onProgress); // Pass progress callback
 
     const totalEndTime = Date.now();
     const totalDuration = totalEndTime - totalStartTime;

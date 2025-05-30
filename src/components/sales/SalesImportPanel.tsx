@@ -7,7 +7,7 @@ import { useToast } from "@/hooks/use-toast";
 import { NormalizedSale, detectSourceByHeaders, normalizeData, cleanCsvRow } from "@/utils/sales-processor";
 import SalesPreviewPanel from "./SalesPreviewPanel";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { insertSales } from "@/services/sales.service";
+import { insertSalesOptimized } from "@/services/sales/optimized-insert";
 import { Progress } from "@/components/ui/progress";
 
 interface SalesImportPanelProps {
@@ -21,6 +21,8 @@ const SalesImportPanel = ({ onSalesProcessed }: SalesImportPanelProps) => {
   const [errors, setErrors] = useState<string[]>([]);
   const [insertProgress, setInsertProgress] = useState(0);
   const [isInserting, setIsInserting] = useState(false);
+  const [insertedCount, setInsertedCount] = useState(0);
+  const [totalCount, setTotalCount] = useState(0);
   const { toast } = useToast();
 
   const onDrop = useCallback((acceptedFiles: File[]) => {
@@ -28,6 +30,8 @@ const SalesImportPanel = ({ onSalesProcessed }: SalesImportPanelProps) => {
     setErrors([]);
     setProcessedSales([]);
     setInsertProgress(0);
+    setInsertedCount(0);
+    setTotalCount(0);
   }, []);
 
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
@@ -40,7 +44,6 @@ const SalesImportPanel = ({ onSalesProcessed }: SalesImportPanelProps) => {
     multiple: true
   });
   
-  // Read CSV file using FileReader
   const readCSVFile = (file: File): Promise<any[]> => {
     return new Promise((resolve, reject) => {
       const reader = new FileReader();
@@ -68,7 +71,6 @@ const SalesImportPanel = ({ onSalesProcessed }: SalesImportPanelProps) => {
     });
   };
   
-  // Process the uploaded files
   const processFiles = async () => {
     if (files.length === 0) {
       toast({
@@ -85,7 +87,6 @@ const SalesImportPanel = ({ onSalesProcessed }: SalesImportPanelProps) => {
     const newErrors: string[] = [];
     
     try {
-      // Process each file
       for (const file of files) {
         try {
           console.log(`Processing file: ${file.name}`);
@@ -145,31 +146,27 @@ const SalesImportPanel = ({ onSalesProcessed }: SalesImportPanelProps) => {
     }
   };
   
-  // Confirm and save the processed sales with progress tracking
+  // Confirm and save with real progress tracking
   const confirmImport = async () => {
     setIsInserting(true);
     setInsertProgress(0);
+    setInsertedCount(0);
+    setTotalCount(processedSales.length);
     
     try {
-      console.log('Starting optimized database insertion...');
+      console.log('Starting optimized database insertion with real progress...');
       
-      // Simulate progress updates (in real implementation, this would come from the batch processor)
-      const progressInterval = setInterval(() => {
-        setInsertProgress(prev => {
-          const newProgress = prev + Math.random() * 10;
-          return newProgress >= 95 ? 95 : newProgress;
-        });
-      }, 500);
-      
-      await insertSales(processedSales);
-      
-      clearInterval(progressInterval);
-      setInsertProgress(100);
+      // Use optimized insertion with real progress callback
+      await insertSalesOptimized(processedSales, (completed, total, percentage) => {
+        setInsertedCount(completed);
+        setTotalCount(total);
+        setInsertProgress(percentage);
+      });
       
       onSalesProcessed(processedSales);
       toast({
         title: "Dados confirmados",
-        description: `${processedSales.length} registros foram importados com sucesso usando inserção otimizada.`
+        description: `${processedSales.length} registros foram importados com sucesso usando inserção otimizada (batch size: 300).`
       });
       
       setFiles([]);
@@ -186,15 +183,18 @@ const SalesImportPanel = ({ onSalesProcessed }: SalesImportPanelProps) => {
     } finally {
       setIsInserting(false);
       setInsertProgress(0);
+      setInsertedCount(0);
+      setTotalCount(0);
     }
   };
   
-  // Cancel the import process
   const cancelImport = () => {
     setProcessedSales([]);
     setFiles([]);
     setErrors([]);
     setInsertProgress(0);
+    setInsertedCount(0);
+    setTotalCount(0);
   };
 
   return (
@@ -202,7 +202,7 @@ const SalesImportPanel = ({ onSalesProcessed }: SalesImportPanelProps) => {
       {/* File Upload Area */}
       <Card className="shadow-md rounded-lg border bg-card">
         <CardHeader>
-          <CardTitle className="text-lg">Importar Dados de Vendas (Otimizado)</CardTitle>
+          <CardTitle className="text-lg">Importar Dados de Vendas (Otimizado - Batch 300)</CardTitle>
         </CardHeader>
         <CardContent>
           <div className="space-y-4">
@@ -220,7 +220,7 @@ const SalesImportPanel = ({ onSalesProcessed }: SalesImportPanelProps) => {
                 <div className="space-y-1">
                   <p className="font-medium">Arraste arquivos CSV ou clique para selecionar</p>
                   <p className="text-sm text-muted-foreground">
-                    Suporta arquivos CSV da Rede, PagSeguro e Sigma (inserção otimizada para grandes volumes)
+                    Suporta arquivos CSV da Rede, PagSeguro e Sigma (batch otimizado de 300 registros)
                   </p>
                 </div>
               )}
@@ -288,17 +288,20 @@ const SalesImportPanel = ({ onSalesProcessed }: SalesImportPanelProps) => {
         <div className="space-y-4">
           <SalesPreviewPanel 
             sales={processedSales} 
-            title="Pré-visualização dos dados importados (inserção otimizada)"
+            title="Pré-visualização dos dados importados (batch otimizado 300)"
           />
           
-          {/* Progress bar during insertion */}
+          {/* Real Progress bar during insertion */}
           {isInserting && (
             <div className="space-y-2">
               <div className="flex justify-between text-sm">
-                <span>Inserindo no banco de dados...</span>
-                <span>{Math.round(insertProgress)}%</span>
+                <span>Inserindo no banco de dados... (Batch: 300 registros)</span>
+                <span>{insertProgress}% ({insertedCount.toLocaleString()}/{totalCount.toLocaleString()})</span>
               </div>
               <Progress value={insertProgress} className="w-full" />
+              <div className="text-xs text-muted-foreground text-center">
+                Processados: {insertedCount.toLocaleString()} de {totalCount.toLocaleString()} registros
+              </div>
             </div>
           )}
           
@@ -309,7 +312,7 @@ const SalesImportPanel = ({ onSalesProcessed }: SalesImportPanelProps) => {
               className="bg-green-600 hover:bg-green-700 text-white"
             >
               <CheckCircle className="mr-2 h-4 w-4" />
-              {isInserting ? `Inserindo... ${Math.round(insertProgress)}%` : 'Aprovar e Inserir no Banco (Otimizado)'}
+              {isInserting ? `Inserindo... ${insertProgress}%` : 'Aprovar e Inserir no Banco (Batch 300)'}
             </Button>
             <Button
               variant="outline"

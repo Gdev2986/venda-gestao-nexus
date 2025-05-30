@@ -1,4 +1,3 @@
-
 import { SaleInsert } from './types';
 
 export interface BatchProcessingOptions {
@@ -9,10 +8,10 @@ export interface BatchProcessingOptions {
 }
 
 export const defaultBatchOptions: BatchProcessingOptions = {
-  batchSize: 75, // Reduced from 500 to 75 for better performance
-  maxConcurrent: 1, // Reduced from 2 to 1 to avoid overwhelming DB
+  batchSize: 300, // Increased from 75 to 300 as requested
+  maxConcurrent: 1, // Keep sequential processing
   retryAttempts: 3,
-  delayBetweenBatches: 750 // Increased from 100ms to 750ms
+  delayBetweenBatches: 750 // Keep longer delay for stability
 };
 
 export class BatchProcessor {
@@ -41,7 +40,7 @@ export class BatchProcessor {
         throw error;
       }
       
-      const waitTime = Math.min(500 * Math.pow(2, attempt - 1), 10000); // Increased base from 200ms to 500ms
+      const waitTime = Math.min(500 * Math.pow(2, attempt - 1), 10000);
       console.log(`Attempt ${attempt} failed, retrying in ${waitTime}ms...`);
       
       await new Promise(resolve => setTimeout(resolve, waitTime));
@@ -51,7 +50,8 @@ export class BatchProcessor {
   
   async processBatchesInParallel<T>(
     batches: T[][],
-    processor: (batch: T[], batchIndex: number) => Promise<void>
+    processor: (batch: T[], batchIndex: number) => Promise<void>,
+    onProgress?: (completed: number, total: number, percentage: number) => void
   ): Promise<void> {
     let totalProcessed = 0;
     const totalItems = batches.reduce((sum, batch) => sum + batch.length, 0);
@@ -73,7 +73,14 @@ export class BatchProcessor {
           
           const endTime = Date.now();
           const duration = endTime - startTime;
-          console.log(`Batch ${globalBatchNumber} completed in ${duration}ms. Progress: ${totalProcessed}/${totalItems} (${((totalProcessed/totalItems)*100).toFixed(1)}%)`);
+          const percentage = Math.round((totalProcessed / totalItems) * 100);
+          
+          console.log(`Batch ${globalBatchNumber} completed in ${duration}ms. Progress: ${totalProcessed}/${totalItems} (${percentage}%)`);
+          
+          // Call progress callback with real percentage
+          if (onProgress) {
+            onProgress(totalProcessed, totalItems, percentage);
+          }
         });
       });
       
