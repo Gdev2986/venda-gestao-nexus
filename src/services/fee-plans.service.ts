@@ -78,8 +78,18 @@ export const FeePlansService = {
     }
 
     if (data?.fee_plan) {
-      data.fee_plan.rates = data.fee_plan.fee_plan_rates || [];
-      delete data.fee_plan.fee_plan_rates;
+      // Map fee_plan_rates to rates in the fee_plan object
+      const transformedFeePlan = {
+        id: data.fee_plan.id,
+        name: data.fee_plan.name,
+        description: data.fee_plan.description,
+        rates: data.fee_plan.fee_plan_rates || []
+      };
+      
+      return {
+        ...data,
+        fee_plan: transformedFeePlan
+      };
     }
 
     return data;
@@ -104,7 +114,6 @@ export const FeePlansService = {
     if (error) throw error;
   },
 
-  // Remover vinculação de plano de taxa
   async removeFeePlanFromClient(clientId: string): Promise<void> {
     const { error } = await supabase
       .from('client_fee_plans')
@@ -114,7 +123,6 @@ export const FeePlansService = {
     if (error) throw error;
   },
 
-  // Criar novo plano de taxa
   async createFeePlan(name: string, description?: string): Promise<FeePlan> {
     const { data, error } = await supabase
       .from('fee_plans')
@@ -126,7 +134,6 @@ export const FeePlansService = {
     return { ...data, rates: [] };
   },
 
-  // Adicionar taxa a um plano
   async addRateToFeePlan(
     feePlanId: string,
     paymentMethod: string,
@@ -148,7 +155,6 @@ export const FeePlansService = {
     return data;
   },
 
-  // Atualizar taxa de um plano
   async updateFeePlanRate(
     rateId: string,
     ratePercentage: number
@@ -161,7 +167,6 @@ export const FeePlansService = {
     if (error) throw error;
   },
 
-  // Remover taxa de um plano
   async removeFeePlanRate(rateId: string): Promise<void> {
     const { error } = await supabase
       .from('fee_plan_rates')
