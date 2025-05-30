@@ -7,7 +7,7 @@ import SalesPreviewPanel from "@/components/sales/SalesPreviewPanel";
 import SalesAdvancedFilter from "@/components/sales/SalesAdvancedFilter";
 import { SalesStatCards } from "@/components/admin/sales/SalesStatCards";
 import { SalesActionButtons } from "@/components/admin/sales/SalesActionButtons";
-import { useSalesContext } from "@/contexts/SalesContext";
+import { useSalesData } from "@/hooks/use-sales-data";
 
 const AdminSales = () => {
   const [showImportPanel, setShowImportPanel] = useState<boolean>(false);
@@ -20,7 +20,7 @@ const AdminSales = () => {
     refreshSales,
     handleSalesImported,
     handleFilter
-  } = useSalesContext();
+  } = useSalesData();
 
   return (
     <div className="space-y-6">
