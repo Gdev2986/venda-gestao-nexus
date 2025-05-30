@@ -1,296 +1,230 @@
 
-// Importações necessárias
-import React, { useState } from "react";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import {
-  Table,
-  TableBody,
-  TableCaption,
-  TableCell,
-  TableFooter,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
+import React, { useState, useEffect } from "react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogTrigger,
-} from "@/components/ui/alert-dialog";
+import { Input } from "@/components/ui/input";
+import { Badge } from "@/components/ui/badge";
+import { Plus, Search, Monitor, Building, Calendar } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import { MoreHorizontal, Copy, Edit, Trash } from "lucide-react";
-import { format } from "date-fns";
-import { ptBR } from "date-fns/locale";
-import { Pagination, PaginationContent, PaginationItem, PaginationLink, PaginationNext, PaginationPrevious } from "@/components/ui/pagination";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import {
-  Command,
-  CommandEmpty,
-  CommandGroup,
-  CommandInput,
-  CommandItem,
-  CommandList,
-  CommandSeparator,
-  CommandShortcut,
-} from "@/components/ui/command";
-import { ScrollArea } from "@/components/ui/scroll-area";
-import { Checkbox } from "@/components/ui/checkbox";
-import { MachineHistoryDialog } from "@/components/logistics/machine-dialogs/MachineHistoryDialog";
-import MachineTransferDialog from "@/components/logistics/machine-dialogs/MachineTransferDialog";
-import { Machine } from "@/types";
+import { Machine, MachineStatus } from "@/types/machine.types";
+import { MachineDetailsDialog } from "./MachineDetailsDialog";
+import { CreateMachineDialog } from "./CreateMachineDialog";
 
-interface DataTableProps {
+interface MachineListProps {
   data: Machine[];
 }
 
-const statuses = [
-  "disponível",
-  "em uso",
-  "manutenção",
-  "desativado",
-];
-
-export function MachineList({ data }: DataTableProps) {
-  const [status, setStatus] = React.useState<string | undefined>(undefined);
-  const [search, setSearch] = React.useState("");
-  const [page, setPage] = React.useState(1);
+export const MachineList: React.FC<MachineListProps> = () => {
+  const [machines, setMachines] = useState<Machine[]>([]);
+  const [filteredMachines, setFilteredMachines] = useState<Machine[]>([]);
+  const [searchTerm, setSearchTerm] = useState("");
   const [selectedMachine, setSelectedMachine] = useState<Machine | null>(null);
-  const [showHistoryDialog, setShowHistoryDialog] = useState(false);
-  const [showTransferDialog, setShowTransferDialog] = useState(false);
+  const [isDetailsOpen, setIsDetailsOpen] = useState(false);
+  const [isCreateOpen, setIsCreateOpen] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
   const { toast } = useToast();
 
-  const itemsPerPage = 10;
+  const fetchMachines = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('machines')
+        .select(`
+          *,
+          client:clients(id, business_name)
+        `)
+        .order('created_at', { ascending: false });
 
-  const filteredData = data.filter((machine) => {
-    const searchRegex = new RegExp(search, "i");
-    return searchRegex.test(machine.name);
-  });
-
-  const paginatedData = filteredData.slice(
-    (page - 1) * itemsPerPage,
-    page * itemsPerPage
-  );
-
-  const totalPages = Math.ceil(filteredData.length / itemsPerPage);
-
-  const handleCopyMachineId = (id: string) => {
-    navigator.clipboard.writeText(id);
-    toast({
-      title: "ID da máquina copiado",
-      description: "O ID da máquina foi copiado para a área de transferência.",
-    });
+      if (error) throw error;
+      setMachines(data || []);
+      setFilteredMachines(data || []);
+    } catch (error) {
+      console.error('Error fetching machines:', error);
+      toast({
+        title: "Erro",
+        description: "Erro ao carregar máquinas",
+        variant: "destructive"
+      });
+    } finally {
+      setIsLoading(false);
+    }
   };
 
-  const handleEditMachine = (machine: Machine) => {
-    toast({
-      title: "Editar máquina",
-      description: `Editando a máquina ${machine.name}.`,
-    });
+  useEffect(() => {
+    fetchMachines();
+
+    // Setup realtime subscription
+    const channel = supabase
+      .channel('machines-list')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'machines'
+        },
+        () => {
+          fetchMachines();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, []);
+
+  useEffect(() => {
+    const filtered = machines.filter(machine =>
+      machine.serial_number.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      machine.model.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (machine.client?.business_name || '').toLowerCase().includes(searchTerm.toLowerCase())
+    );
+    setFilteredMachines(filtered);
+  }, [searchTerm, machines]);
+
+  const getStatusBadge = (status: MachineStatus) => {
+    switch (status) {
+      case MachineStatus.ACTIVE:
+        return <Badge className="bg-green-100 text-green-800">Operando</Badge>;
+      case MachineStatus.STOCK:
+        return <Badge className="bg-blue-100 text-blue-800">Em Estoque</Badge>;
+      case MachineStatus.MAINTENANCE:
+        return <Badge className="bg-yellow-100 text-yellow-800">Em Manutenção</Badge>;
+      case MachineStatus.INACTIVE:
+        return <Badge className="bg-gray-100 text-gray-800">Inativa</Badge>;
+      case MachineStatus.BLOCKED:
+        return <Badge className="bg-red-100 text-red-800">Bloqueada</Badge>;
+      case MachineStatus.TRANSIT:
+        return <Badge className="bg-purple-100 text-purple-800">Em Trânsito</Badge>;
+      default:
+        return <Badge variant="outline">{status}</Badge>;
+    }
   };
 
-  const handleDeleteMachine = (machine: Machine) => {
-    toast({
-      title: "Deletar máquina",
-      description: `Deletando a máquina ${machine.name}.`,
-    });
-  };
-
-  const handleViewHistory = (machine: Machine) => {
+  const handleMachineClick = (machine: Machine) => {
     setSelectedMachine(machine);
-    setShowHistoryDialog(true);
+    setIsDetailsOpen(true);
   };
 
-  const handleTransferMachine = (machine: Machine) => {
-    setSelectedMachine(machine);
-    setShowTransferDialog(true);
+  const handleUpdate = () => {
+    fetchMachines();
   };
 
-  const handleRefresh = () => {
-    toast({
-      title: "Máquinas atualizadas",
-      description: "A lista de máquinas foi atualizada com sucesso.",
-    });
-  };
+  if (isLoading) {
+    return (
+      <div className="space-y-6">
+        <div className="flex justify-between items-center">
+          <h2 className="text-3xl font-bold tracking-tight">Máquinas</h2>
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          {[1, 2, 3, 4, 5, 6].map((i) => (
+            <Card key={i} className="animate-pulse">
+              <CardContent className="h-32" />
+            </Card>
+          ))}
+        </div>
+      </div>
+    );
+  }
 
   return (
-    <Card className="w-full">
-      <CardHeader>
-        <CardTitle>Máquinas</CardTitle>
-        <CardDescription>
-          Gerencie as máquinas da sua empresa.
-        </CardDescription>
-      </CardHeader>
-      <CardContent>
-        <div className="flex flex-wrap items-center justify-between gap-2">
-          <div className="relative w-full md:w-auto">
-            <Input
-              placeholder="Buscar máquinas..."
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-            />
-          </div>
-          <div className="flex gap-2">
-            <Button onClick={handleRefresh}>Atualizar</Button>
-            <Button>Adicionar Máquina</Button>
-          </div>
+    <div className="space-y-6">
+      <div className="flex justify-between items-center">
+        <div>
+          <h2 className="text-3xl font-bold tracking-tight">Máquinas</h2>
+          <p className="text-muted-foreground">
+            Gerencie e monitore todas as máquinas de pagamento
+          </p>
         </div>
-        <div className="relative overflow-x-auto mt-4">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead className="w-[100px]">ID</TableHead>
-                <TableHead>Nome</TableHead>
-                <TableHead>Cliente</TableHead>
-                <TableHead>Criado em</TableHead>
-                <TableHead className="text-right">Ações</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {paginatedData.map((machine) => (
-                <TableRow key={machine.id}>
-                  <TableCell className="font-medium">{machine.id}</TableCell>
-                  <TableCell>{machine.name}</TableCell>
-                  <TableCell>{machine.client_name}</TableCell>
-                  <TableCell>
-                    {format(new Date(machine.created_at), "dd/MM/yyyy", {
-                      locale: ptBR,
-                    })}
-                  </TableCell>
-                  <TableCell className="text-right">
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <Button variant="ghost" className="h-8 w-8 p-0">
-                          <span className="sr-only">Abrir menu</span>
-                          <MoreHorizontal className="h-4 w-4" />
-                        </Button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end">
-                        <DropdownMenuLabel>Ações</DropdownMenuLabel>
-                        <DropdownMenuItem
-                          onClick={() => handleCopyMachineId(machine.id)}
-                        >
-                          <Copy className="h-4 w-4 mr-2" />
-                          Copiar ID
-                        </DropdownMenuItem>
-                        <DropdownMenuItem
-                          onClick={() => handleEditMachine(machine)}
-                        >
-                          <Edit className="h-4 w-4 mr-2" />
-                          Editar
-                        </DropdownMenuItem>
-                        <DropdownMenuItem
-                          onClick={() => handleViewHistory(machine)}
-                        >
-                          <Edit className="h-4 w-4 mr-2" />
-                          Ver histórico
-                        </DropdownMenuItem>
-                        <DropdownMenuItem
-                          onClick={() => handleTransferMachine(machine)}
-                        >
-                          <Edit className="h-4 w-4 mr-2" />
-                          Transferir
-                        </DropdownMenuItem>
-                        <DropdownMenuSeparator />
-                        <DropdownMenuItem
-                          onClick={() => handleDeleteMachine(machine)}
-                        >
-                          <Trash className="h-4 w-4 mr-2" />
-                          Deletar
-                        </DropdownMenuItem>
-                      </DropdownMenuContent>
-                    </DropdownMenu>
-                  </TableCell>
-                </TableRow>
+        <Button onClick={() => setIsCreateOpen(true)}>
+          <Plus className="h-4 w-4 mr-2" />
+          Nova Máquina
+        </Button>
+      </div>
+
+      <Card>
+        <CardHeader>
+          <div className="flex items-center gap-4">
+            <div className="relative flex-1">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Input
+                placeholder="Buscar por número de série, modelo ou cliente..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="pl-9"
+              />
+            </div>
+          </div>
+        </CardHeader>
+        <CardContent>
+          {filteredMachines.length === 0 ? (
+            <div className="text-center py-8">
+              <Monitor className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
+              <h3 className="text-lg font-medium mb-2">
+                {searchTerm ? "Nenhuma máquina encontrada" : "Nenhuma máquina cadastrada"}
+              </h3>
+              <p className="text-muted-foreground">
+                {searchTerm 
+                  ? "Tente ajustar os termos de busca."
+                  : "Comece cadastrando sua primeira máquina de pagamento."
+                }
+              </p>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {filteredMachines.map((machine) => (
+                <Card 
+                  key={machine.id} 
+                  className="cursor-pointer hover:shadow-md transition-shadow border-l-4 border-l-blue-500"
+                  onClick={() => handleMachineClick(machine)}
+                >
+                  <CardHeader className="pb-3">
+                    <div className="flex items-center justify-between">
+                      <CardTitle className="text-base flex items-center gap-2">
+                        <Monitor className="h-4 w-4 text-blue-600" />
+                        {machine.model}
+                      </CardTitle>
+                      {getStatusBadge(machine.status)}
+                    </div>
+                  </CardHeader>
+                  <CardContent className="space-y-2">
+                    <div className="text-sm">
+                      <strong>Serial:</strong> {machine.serial_number}
+                    </div>
+                    
+                    {machine.client && (
+                      <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                        <Building className="h-3 w-3" />
+                        {machine.client.business_name}
+                      </div>
+                    )}
+                    
+                    <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                      <Calendar className="h-3 w-3" />
+                      {new Date(machine.created_at || '').toLocaleDateString('pt-BR')}
+                    </div>
+                  </CardContent>
+                </Card>
               ))}
-            </TableBody>
-          </Table>
-        </div>
-        <div className="flex items-center justify-between space-x-2 py-2">
-          <div className="text-sm text-muted-foreground">
-            Total de máquinas: {filteredData.length}
-          </div>
-          <div className="flex items-center justify-center space-x-2">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setPage(Math.max(1, page - 1))}
-              disabled={page === 1}
-            >
-              <PaginationPrevious className="h-4 w-4" />
-            </Button>
-            {Array.from({ length: Math.min(totalPages, 5) }, (_, i) => (
-              <Button
-                key={i + 1}
-                variant={page === i + 1 ? "default" : "outline"}
-                size="sm"
-                onClick={() => setPage(i + 1)}
-              >
-                {i + 1}
-              </Button>
-            ))}
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setPage(Math.min(totalPages, page + 1))}
-              disabled={page === totalPages}
-            >
-              <PaginationNext className="h-4 w-4" />
-            </Button>
-          </div>
-        </div>
-      </CardContent>
+            </div>
+          )}
+        </CardContent>
+      </Card>
 
-      {showHistoryDialog && selectedMachine && (
-        <MachineHistoryDialog
-          machineId={selectedMachine.id}
-          machineName={selectedMachine.name}
-          onOpenChange={() => setShowHistoryDialog(false)}
-        />
-      )}
+      <MachineDetailsDialog
+        machine={selectedMachine}
+        open={isDetailsOpen}
+        onOpenChange={setIsDetailsOpen}
+        onUpdate={handleUpdate}
+        mode="edit"
+      />
 
-      {showTransferDialog && selectedMachine && (
-        <MachineTransferDialog
-          open={showTransferDialog}
-          onOpenChange={() => setShowTransferDialog(false)}
-          machineId={selectedMachine.id}
-          machineName={selectedMachine.name}
-          currentClientId={selectedMachine.client_id}
-          currentClientName={selectedMachine.client_name}
-          onTransferComplete={handleRefresh}
-        />
-      )}
-    </Card>
+      <CreateMachineDialog
+        open={isCreateOpen}
+        onOpenChange={setIsCreateOpen}
+        onSuccess={handleUpdate}
+      />
+    </div>
   );
-}
-
-// Export both as named and default export
-export default MachineList;
+};
