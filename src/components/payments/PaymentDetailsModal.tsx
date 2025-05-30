@@ -52,60 +52,60 @@ export const PaymentDetailsModal = ({
   const getStatusBadge = (status: PaymentStatus) => {
     switch (status) {
       case PaymentStatus.APPROVED:
-        return <Badge className="bg-green-100 text-green-800">Aprovado</Badge>;
+        return <Badge className="bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200">Aprovado</Badge>;
       case PaymentStatus.REJECTED:
-        return <Badge className="bg-red-100 text-red-800">Rejeitado</Badge>;
+        return <Badge className="bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200">Rejeitado</Badge>;
       case PaymentStatus.PAID:
-        return <Badge className="bg-blue-100 text-blue-800">Pago</Badge>;
+        return <Badge className="bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200">Pago</Badge>;
       default:
-        return <Badge className="bg-yellow-100 text-yellow-800">Pendente</Badge>;
+        return <Badge className="bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200">Pendente</Badge>;
     }
   };
 
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto dark:bg-[#1f1f1f] dark:border-[#262626]">
         <DialogHeader>
-          <DialogTitle>Detalhes do Pagamento</DialogTitle>
+          <DialogTitle className="dark:text-white">Detalhes do Pagamento</DialogTitle>
         </DialogHeader>
 
         <div className="space-y-6">
           {/* Payment Info */}
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <Label className="text-sm font-medium text-muted-foreground">ID</Label>
-              <p className="font-mono text-sm">{payment.id.substring(0, 8)}...</p>
+              <Label className="text-sm font-medium text-muted-foreground dark:text-gray-400">ID</Label>
+              <p className="font-mono text-sm dark:text-gray-300">{payment.id.substring(0, 8)}...</p>
             </div>
             <div>
-              <Label className="text-sm font-medium text-muted-foreground">Status</Label>
+              <Label className="text-sm font-medium text-muted-foreground dark:text-gray-400">Status</Label>
               <div className="mt-1">{getStatusBadge(payment.status)}</div>
             </div>
             <div>
-              <Label className="text-sm font-medium text-muted-foreground">Valor</Label>
-              <p className="text-lg font-semibold">{formatCurrency(payment.amount)}</p>
+              <Label className="text-sm font-medium text-muted-foreground dark:text-gray-400">Valor</Label>
+              <p className="text-lg font-semibold dark:text-white">{formatCurrency(payment.amount)}</p>
             </div>
             <div>
-              <Label className="text-sm font-medium text-muted-foreground">Tipo</Label>
-              <p>{payment.payment_type}</p>
+              <Label className="text-sm font-medium text-muted-foreground dark:text-gray-400">Tipo</Label>
+              <p className="dark:text-gray-300">{payment.payment_type}</p>
             </div>
             <div>
-              <Label className="text-sm font-medium text-muted-foreground">Cliente</Label>
-              <p>{payment.client?.business_name || 'N/A'}</p>
+              <Label className="text-sm font-medium text-muted-foreground dark:text-gray-400">Cliente</Label>
+              <p className="dark:text-gray-300">{payment.client?.business_name || 'N/A'}</p>
             </div>
             <div>
-              <Label className="text-sm font-medium text-muted-foreground">Data de Criação</Label>
-              <p>{formatDate(new Date(payment.created_at))}</p>
+              <Label className="text-sm font-medium text-muted-foreground dark:text-gray-400">Data de Criação</Label>
+              <p className="dark:text-gray-300">{formatDate(new Date(payment.created_at))}</p>
             </div>
           </div>
 
           {/* PIX Key Info */}
           {payment.payment_type === 'PIX' && payment.pix_key && (
             <div>
-              <Label className="text-sm font-medium text-muted-foreground">Chave PIX</Label>
-              <div className="mt-2 p-3 bg-gray-50 rounded-lg">
-                <p className="font-medium">{payment.pix_key.name}</p>
-                <p className="text-sm text-muted-foreground">{payment.pix_key.key}</p>
-                <p className="text-sm text-muted-foreground">Tipo: {payment.pix_key.type}</p>
+              <Label className="text-sm font-medium text-muted-foreground dark:text-gray-400">Chave PIX</Label>
+              <div className="mt-2 p-3 bg-gray-50 dark:bg-[#262626] rounded-lg">
+                <p className="font-medium dark:text-white">{payment.pix_key.name}</p>
+                <p className="text-sm text-muted-foreground dark:text-gray-400">{payment.pix_key.key}</p>
+                <p className="text-sm text-muted-foreground dark:text-gray-400">Tipo: {payment.pix_key.type}</p>
               </div>
             </div>
           )}
@@ -113,38 +113,38 @@ export const PaymentDetailsModal = ({
           {/* Notes */}
           {payment.notes && (
             <div>
-              <Label className="text-sm font-medium text-muted-foreground">Observações</Label>
-              <p className="mt-1 p-3 bg-gray-50 rounded-lg">{payment.notes}</p>
+              <Label className="text-sm font-medium text-muted-foreground dark:text-gray-400">Observações</Label>
+              <p className="mt-1 p-3 bg-gray-50 dark:bg-[#262626] rounded-lg dark:text-gray-300">{payment.notes}</p>
             </div>
           )}
 
           {/* Rejection Reason */}
           {payment.status === PaymentStatus.REJECTED && payment.rejection_reason && (
             <div>
-              <Label className="text-sm font-medium text-muted-foreground">Motivo da Rejeição</Label>
-              <p className="mt-1 p-3 bg-red-50 rounded-lg text-red-800">{payment.rejection_reason}</p>
+              <Label className="text-sm font-medium text-muted-foreground dark:text-gray-400">Motivo da Rejeição</Label>
+              <p className="mt-1 p-3 bg-red-50 dark:bg-red-900/20 rounded-lg text-red-800 dark:text-red-300">{payment.rejection_reason}</p>
             </div>
           )}
 
           {/* Management Section for Admins */}
           {canManage && payment.status === PaymentStatus.PENDING && (
-            <div className="border-t pt-6">
-              <h4 className="font-medium mb-4">Gerenciar Pagamento</h4>
+            <div className="border-t dark:border-[#262626] pt-6">
+              <h4 className="font-medium mb-4 dark:text-white">Gerenciar Pagamento</h4>
               
               <div className="space-y-4">
                 <div>
-                  <Label htmlFor="notes">Observações</Label>
+                  <Label htmlFor="notes" className="dark:text-white">Observações</Label>
                   <Textarea
                     id="notes"
                     value={notes}
                     onChange={(e) => setNotes(e.target.value)}
                     placeholder="Adicione observações sobre o processamento..."
-                    className="mt-1"
+                    className="mt-1 dark:bg-[#1a1a1a] dark:border-[#262626] dark:text-white"
                   />
                 </div>
 
                 <div>
-                  <Label>Comprovante (opcional)</Label>
+                  <Label className="dark:text-white">Comprovante (opcional)</Label>
                   <FileUpload
                     onFileSelect={setReceiptFile}
                     onFileRemove={() => setReceiptFile(undefined)}
@@ -180,9 +180,9 @@ export const PaymentDetailsModal = ({
           {/* Receipt Section */}
           {payment.receipt_file_url && (
             <div>
-              <Label className="text-sm font-medium text-muted-foreground">Comprovante</Label>
+              <Label className="text-sm font-medium text-muted-foreground dark:text-gray-400">Comprovante</Label>
               <div className="mt-2">
-                <Button variant="outline" size="sm" asChild>
+                <Button variant="outline" size="sm" asChild className="dark:bg-[#1a1a1a] dark:border-[#262626] dark:text-white dark:hover:bg-[#262626]">
                   <a href={payment.receipt_file_url} target="_blank" rel="noopener noreferrer">
                     <Upload className="h-4 w-4 mr-2" />
                     Ver Comprovante

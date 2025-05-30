@@ -1621,6 +1621,8 @@ export type Database = {
         | "SUPPORT"
         | "LOGISTICS"
         | "PAYMENT_REQUEST"
+        | "PAYMENT_APPROVED"
+        | "PAYMENT_REJECTED"
       payment_method: "CREDIT" | "DEBIT" | "PIX"
       payment_request_status: "PENDING" | "APPROVED" | "PAID" | "REJECTED"
       payment_status: "PENDING" | "APPROVED" | "REJECTED"
@@ -1775,6 +1777,8 @@ export const Constants = {
         "SUPPORT",
         "LOGISTICS",
         "PAYMENT_REQUEST",
+        "PAYMENT_APPROVED",
+        "PAYMENT_REJECTED",
       ],
       payment_method: ["CREDIT", "DEBIT", "PIX"],
       payment_request_status: ["PENDING", "APPROVED", "PAID", "REJECTED"],
