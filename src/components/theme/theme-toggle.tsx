@@ -17,11 +17,12 @@ const ThemeToggle: React.FC = () => {
       size="icon"
       onClick={toggleTheme}
       title={theme === "dark" ? "Mudar para modo claro" : "Mudar para modo escuro"}
+      className="hover:bg-gray-100 dark:hover:bg-gray-800 dark:text-gray-300"
     >
       {theme === "dark" ? (
-        <Sun className="h-[1.2rem] w-[1.2rem] text-yellow-300" />
+        <Sun className="h-[1.2rem] w-[1.2rem] text-yellow-400 dark:text-yellow-300" />
       ) : (
-        <Moon className="h-[1.2rem] w-[1.2rem]" />
+        <Moon className="h-[1.2rem] w-[1.2rem] text-gray-700" />
       )}
       <span className="sr-only">Alternar tema</span>
     </Button>
