@@ -23,6 +23,8 @@ const SalesImportPanel = ({ onSalesProcessed }: SalesImportPanelProps) => {
   const [isInserting, setIsInserting] = useState(false);
   const [insertedCount, setInsertedCount] = useState(0);
   const [totalCount, setTotalCount] = useState(0);
+  const [currentStrategy, setCurrentStrategy] = useState<string>('');
+  const [estimatedTime, setEstimatedTime] = useState<number>(0);
   const { toast } = useToast();
 
   const onDrop = useCallback((acceptedFiles: File[]) => {
@@ -32,6 +34,8 @@ const SalesImportPanel = ({ onSalesProcessed }: SalesImportPanelProps) => {
     setInsertProgress(0);
     setInsertedCount(0);
     setTotalCount(0);
+    setCurrentStrategy('');
+    setEstimatedTime(0);
   }, []);
 
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
@@ -146,27 +150,31 @@ const SalesImportPanel = ({ onSalesProcessed }: SalesImportPanelProps) => {
     }
   };
   
-  // Confirm and save with real progress tracking
+  // Confirm and save with adaptive progress tracking
   const confirmImport = async () => {
     setIsInserting(true);
     setInsertProgress(0);
     setInsertedCount(0);
     setTotalCount(processedSales.length);
+    setCurrentStrategy('');
+    setEstimatedTime(0);
     
     try {
-      console.log('Starting optimized database insertion with real progress...');
+      console.log('Starting adaptive database insertion with real progress...');
       
-      // Use optimized insertion with real progress callback
-      await insertSalesOptimized(processedSales, (completed, total, percentage) => {
+      // Use adaptive insertion with enhanced progress callback
+      await insertSalesOptimized(processedSales, (completed, total, percentage, strategy, estimatedTimeMinutes) => {
         setInsertedCount(completed);
         setTotalCount(total);
         setInsertProgress(percentage);
+        if (strategy) setCurrentStrategy(strategy);
+        if (estimatedTimeMinutes) setEstimatedTime(estimatedTimeMinutes);
       });
       
       onSalesProcessed(processedSales);
       toast({
         title: "Dados confirmados",
-        description: `${processedSales.length} registros foram importados com sucesso usando inserção otimizada (batch size: 300).`
+        description: `${processedSales.length} registros foram importados com sucesso usando processamento adaptativo.`
       });
       
       setFiles([]);
@@ -185,6 +193,8 @@ const SalesImportPanel = ({ onSalesProcessed }: SalesImportPanelProps) => {
       setInsertProgress(0);
       setInsertedCount(0);
       setTotalCount(0);
+      setCurrentStrategy('');
+      setEstimatedTime(0);
     }
   };
   
@@ -195,6 +205,17 @@ const SalesImportPanel = ({ onSalesProcessed }: SalesImportPanelProps) => {
     setInsertProgress(0);
     setInsertedCount(0);
     setTotalCount(0);
+    setCurrentStrategy('');
+    setEstimatedTime(0);
+  };
+
+  const getStrategyDisplayName = (strategy: string) => {
+    switch (strategy) {
+      case 'small': return 'Rápido';
+      case 'medium': return 'Balanceado';
+      case 'large': return 'Estável';
+      default: return 'Adaptativo';
+    }
   };
 
   return (
@@ -202,7 +223,7 @@ const SalesImportPanel = ({ onSalesProcessed }: SalesImportPanelProps) => {
       {/* File Upload Area */}
       <Card className="shadow-md rounded-lg border bg-card">
         <CardHeader>
-          <CardTitle className="text-lg">Importar Dados de Vendas (Otimizado - Batch 300)</CardTitle>
+          <CardTitle className="text-lg">Importar Dados de Vendas (Sistema Adaptativo)</CardTitle>
         </CardHeader>
         <CardContent>
           <div className="space-y-4">
@@ -220,7 +241,7 @@ const SalesImportPanel = ({ onSalesProcessed }: SalesImportPanelProps) => {
                 <div className="space-y-1">
                   <p className="font-medium">Arraste arquivos CSV ou clique para selecionar</p>
                   <p className="text-sm text-muted-foreground">
-                    Suporta arquivos CSV da Rede, PagSeguro e Sigma (batch otimizado de 300 registros)
+                    Sistema adaptativo: otimização automática baseada no volume de dados
                   </p>
                 </div>
               )}
@@ -288,19 +309,27 @@ const SalesImportPanel = ({ onSalesProcessed }: SalesImportPanelProps) => {
         <div className="space-y-4">
           <SalesPreviewPanel 
             sales={processedSales} 
-            title="Pré-visualização dos dados importados (batch otimizado 300)"
+            title="Pré-visualização dos dados importados (sistema adaptativo)"
           />
           
-          {/* Real Progress bar during insertion */}
+          {/* Enhanced Progress bar during insertion */}
           {isInserting && (
-            <div className="space-y-2">
+            <div className="space-y-3">
               <div className="flex justify-between text-sm">
-                <span>Inserindo no banco de dados... (Batch: 300 registros)</span>
+                <span>Inserindo no banco de dados...</span>
                 <span>{insertProgress}% ({insertedCount.toLocaleString()}/{totalCount.toLocaleString()})</span>
               </div>
               <Progress value={insertProgress} className="w-full" />
-              <div className="text-xs text-muted-foreground text-center">
-                Processados: {insertedCount.toLocaleString()} de {totalCount.toLocaleString()} registros
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-2 text-xs text-muted-foreground">
+                <div className="text-center">
+                  <strong>Estratégia:</strong> {getStrategyDisplayName(currentStrategy)}
+                </div>
+                <div className="text-center">
+                  <strong>Processados:</strong> {insertedCount.toLocaleString()} de {totalCount.toLocaleString()}
+                </div>
+                <div className="text-center">
+                  <strong>Tempo estimado:</strong> ~{estimatedTime} min
+                </div>
               </div>
             </div>
           )}
@@ -312,7 +341,7 @@ const SalesImportPanel = ({ onSalesProcessed }: SalesImportPanelProps) => {
               className="bg-green-600 hover:bg-green-700 text-white"
             >
               <CheckCircle className="mr-2 h-4 w-4" />
-              {isInserting ? `Inserindo... ${insertProgress}%` : 'Aprovar e Inserir no Banco (Batch 300)'}
+              {isInserting ? `Inserindo... ${insertProgress}%` : 'Aprovar e Inserir no Banco (Adaptativo)'}
             </Button>
             <Button
               variant="outline"
