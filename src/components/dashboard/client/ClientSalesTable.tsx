@@ -10,20 +10,10 @@ import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { formatCurrency } from "@/lib/utils";
 import { PaymentMethod } from "@/types";
-
-interface Sale {
-  id: string;
-  date: string;
-  code: string;
-  terminal: string;
-  gross_amount: number;
-  net_amount: number;
-  payment_method: PaymentMethod;
-  installments?: number;
-}
+import { ClientSale } from "@/hooks/use-client-sales";
 
 interface ClientSalesTableProps {
-  sales: Sale[];
+  sales: ClientSale[];
   isLoading?: boolean;
 }
 

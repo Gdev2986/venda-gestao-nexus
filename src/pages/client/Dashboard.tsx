@@ -8,47 +8,18 @@ import { ClientFeePlanDisplay } from "@/components/dashboard/client/ClientFeePla
 import { ClientMachinesTable } from "@/components/dashboard/client/ClientMachinesTable";
 import { BarChart } from "@/components/charts";
 import { useClientBalance } from "@/hooks/use-client-balance";
+import { useClientSales } from "@/hooks/use-client-sales";
 import { useAuth } from "@/hooks/use-auth";
 import { PaymentMethod } from "@/types";
-import { subDays, startOfDay, endOfDay } from "date-fns";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Wallet, TrendingUp, Activity, DollarSign, BarChart3 } from "lucide-react";
+import { Wallet, DollarSign, BarChart3 } from "lucide-react";
 import { Link } from "react-router-dom";
 import { PATHS } from "@/routes/paths";
 
-// Mock data para demonstração - em produção viria da API
-const generateMockSales = (startDate: Date, endDate: Date) => {
-  const sales = [];
-  const methods = [PaymentMethod.CREDIT, PaymentMethod.DEBIT, PaymentMethod.PIX];
-  
-  for (let i = 0; i < 45; i++) {
-    const randomDate = new Date(startDate.getTime() + Math.random() * (endDate.getTime() - startDate.getTime()));
-    const grossAmount = Math.random() * 500 + 50;
-    const netAmount = grossAmount * (0.85 + Math.random() * 0.1); // 85-95% do bruto
-    const method = methods[Math.floor(Math.random() * methods.length)];
-    const installments = method === PaymentMethod.CREDIT && Math.random() > 0.3 
-      ? Math.floor(Math.random() * 20) + 2 
-      : undefined;
-
-    sales.push({
-      id: `sale-${i}`,
-      date: randomDate.toISOString(),
-      code: `TXN${(1000 + i).toString()}`,
-      terminal: `T${Math.floor(Math.random() * 5) + 1}`,
-      gross_amount: grossAmount,
-      net_amount: netAmount,
-      payment_method: method,
-      installments
-    });
-  }
-  
-  return sales.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
-};
-
 // Generate payment methods data for vertical bar chart
 const generatePaymentMethodsData = (sales: any[]) => {
-  const methodCounts = sales.reduce((acc, sale) => {
+  const methodCounts = sales.reduce((acc: Record<string, number>, sale: any) => {
     const method = sale.payment_method;
     const amount = Number(sale.gross_amount) || 0;
     acc[method] = (acc[method] || 0) + amount;
@@ -85,31 +56,18 @@ const generatePaymentMethodsData = (sales: any[]) => {
 const ClientDashboard = () => {
   const { user } = useAuth();
   const { balance, isLoading: balanceLoading } = useClientBalance();
-  const [isLoading, setIsLoading] = useState(true);
   const [periodStart, setPeriodStart] = useState<Date>();
   const [periodEnd, setPeriodEnd] = useState<Date>();
-  const [sales, setSales] = useState<any[]>([]);
 
-  // Estatísticas calculadas das vendas
-  const periodGross = sales.reduce((sum, sale) => sum + sale.gross_amount, 0);
-  const periodNet = sales.reduce((sum, sale) => sum + sale.net_amount, 0);
-  const totalTransactions = sales.length;
-  const avgTicket = totalTransactions > 0 ? periodGross / totalTransactions : 0;
+  // Use the new hook for real sales data
+  const { sales, stats, isLoading: salesLoading, error } = useClientSales(periodStart, periodEnd);
 
-  // Generate payment methods data from sales
+  // Generate payment methods data from real sales
   const paymentMethodsData = generatePaymentMethodsData(sales);
 
   const handlePeriodChange = (startDate: Date, endDate: Date) => {
     setPeriodStart(startDate);
     setPeriodEnd(endDate);
-    
-    setIsLoading(true);
-    // Simular carregamento de dados
-    setTimeout(() => {
-      const mockSales = generateMockSales(startDate, endDate);
-      setSales(mockSales);
-      setIsLoading(false);
-    }, 500);
   };
 
   return (
@@ -161,6 +119,14 @@ const ClientDashboard = () => {
       {/* Filtro de Período */}
       <ClientPeriodFilter onPeriodChange={handlePeriodChange} />
 
+      {error && (
+        <Card className="border-l-4 border-l-red-500">
+          <CardContent className="p-4">
+            <p className="text-red-600">Erro ao carregar dados: {error}</p>
+          </CardContent>
+        </Card>
+      )}
+
       {/* Payment Methods Bar Chart */}
       <Card className="border-l-4 border-l-blue-500">
         <CardHeader>
@@ -170,7 +136,7 @@ const ClientDashboard = () => {
           </CardTitle>
         </CardHeader>
         <CardContent>
-          {isLoading ? (
+          {salesLoading ? (
             <div className="h-[300px] bg-muted animate-pulse rounded-lg" />
           ) : (
             <BarChart
@@ -193,16 +159,16 @@ const ClientDashboard = () => {
       {/* Cards de Estatísticas */}
       <ClientStatsCards
         currentBalance={balance || 0}
-        periodGross={periodGross}
-        periodNet={periodNet}
-        totalTransactions={totalTransactions}
-        isLoading={isLoading || balanceLoading}
+        periodGross={stats.totalGross}
+        periodNet={stats.totalNet}
+        totalTransactions={stats.totalTransactions}
+        isLoading={salesLoading || balanceLoading}
       />
 
       {/* Tabela de Vendas */}
       <ClientSalesTable
         sales={sales}
-        isLoading={isLoading}
+        isLoading={salesLoading}
       />
     </div>
   );
