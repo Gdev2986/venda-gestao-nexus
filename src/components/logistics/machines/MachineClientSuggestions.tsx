@@ -55,6 +55,56 @@ export const MachineClientSuggestions: React.FC<MachineClientSuggestionsProps> =
     }
   };
 
+  const notifyClientOfAssignment = async (clientId: string, machineSerial: string) => {
+    try {
+      // Get client user ID
+      const { data: clientAccess, error: accessError } = await supabase
+        .from('user_client_access')
+        .select('user_id')
+        .eq('client_id', clientId)
+        .single();
+
+      if (accessError || !clientAccess) {
+        console.error('Error finding client user:', accessError);
+        return;
+      }
+
+      // Get machine details
+      const { data: machine, error: machineError } = await supabase
+        .from('machines')
+        .select('serial_number, model')
+        .eq('id', machineId)
+        .single();
+
+      if (machineError || !machine) {
+        console.error('Error finding machine:', machineError);
+        return;
+      }
+
+      // Create notification for the client
+      const { error: notificationError } = await supabase
+        .from('notifications')
+        .insert({
+          user_id: clientAccess.user_id,
+          title: 'Nova Máquina Vinculada',
+          message: `A máquina ${machine.serial_number} (${machine.model}) foi vinculada à sua conta.`,
+          type: 'LOGISTICS',
+          data: {
+            machine_id: machineId,
+            machine_serial: machine.serial_number,
+            machine_model: machine.model,
+            assignment_type: 'new_assignment'
+          }
+        });
+
+      if (notificationError) {
+        console.error('Error creating notification:', notificationError);
+      }
+    } catch (error) {
+      console.error('Error notifying client:', error);
+    }
+  };
+
   const handleAssignClient = async (clientId: string, clientName: string) => {
     setIsAssigning(clientId);
     try {
@@ -68,10 +118,13 @@ export const MachineClientSuggestions: React.FC<MachineClientSuggestionsProps> =
         .eq('id', machineId);
 
       if (error) throw error;
+
+      // Notify the client about the new machine assignment
+      await notifyClientOfAssignment(clientId, clientName);
       
       toast({
         title: "Cliente vinculado",
-        description: `Máquina vinculada ao cliente ${clientName} com sucesso`
+        description: `Máquina vinculada ao cliente ${clientName} com sucesso e cliente notificado`
       });
       onClientAssigned();
     } catch (error) {

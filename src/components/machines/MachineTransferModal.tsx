@@ -17,6 +17,7 @@ import { useClients } from '@/hooks/use-clients';
 import { transferMachine } from '@/services/machine.service';
 import { Machine } from '@/types/machine.types';
 import { useAuth } from '@/hooks/use-auth';
+import { supabase } from '@/integrations/supabase/client';
 
 interface MachineTransferModalProps {
   machine: Machine | null;
@@ -43,6 +44,44 @@ export const MachineTransferModal: React.FC<MachineTransferModalProps> = ({
   
   const [isSubmitting, setIsSubmitting] = useState(false);
 
+  const notifyClientOfTransfer = async (clientId: string, machineSerial: string, notes?: string) => {
+    try {
+      // Get client user ID
+      const { data: clientAccess, error: accessError } = await supabase
+        .from('user_client_access')
+        .select('user_id')
+        .eq('client_id', clientId)
+        .single();
+
+      if (accessError || !clientAccess) {
+        console.error('Error finding client user:', accessError);
+        return;
+      }
+
+      // Create notification for the client
+      const { error: notificationError } = await supabase
+        .from('notifications')
+        .insert({
+          user_id: clientAccess.user_id,
+          title: 'Nova Máquina Transferida',
+          message: `A máquina ${machineSerial} foi transferida para sua conta.${notes ? ` Observações: ${notes}` : ''}`,
+          type: 'LOGISTICS',
+          data: {
+            machine_id: machine?.id,
+            machine_serial: machineSerial,
+            transfer_type: 'received',
+            notes: notes
+          }
+        });
+
+      if (notificationError) {
+        console.error('Error creating notification:', notificationError);
+      }
+    } catch (error) {
+      console.error('Error notifying client:', error);
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
@@ -66,10 +105,13 @@ export const MachineTransferModal: React.FC<MachineTransferModalProps> = ({
         created_by: user?.id || null,
         notes: formData.notes
       });
+
+      // Notify the client about the transfer
+      await notifyClientOfTransfer(formData.to_client_id, machine.serial_number, formData.notes);
       
       toast({
         title: "Sucesso",
-        description: "Máquina transferida com sucesso",
+        description: "Máquina transferida com sucesso e cliente notificado",
       });
       
       onTransferComplete?.();
@@ -160,6 +202,9 @@ export const MachineTransferModal: React.FC<MachineTransferModalProps> = ({
               placeholder="Motivo da transferência, observações..."
               rows={3}
             />
+            <p className="text-xs text-muted-foreground">
+              Estas observações serão incluídas na notificação enviada ao cliente.
+            </p>
           </div>
 
           <DialogFooter>
