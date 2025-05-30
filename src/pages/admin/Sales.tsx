@@ -50,14 +50,17 @@ const AdminSales = () => {
         }
       />
       
-      {/* Mostrar resumo geral quando disponível */}
+      {/* Mostrar resumo geral quando disponível - Atualizado para tema dark */}
       {salesSummary && (
-        <Alert className="border-blue-200 bg-blue-50">
-          <Info className="h-4 w-4 text-blue-600" />
-          <AlertDescription className="text-blue-800">
-            <strong>Resumo Geral:</strong> {salesSummary.total_records.toLocaleString('pt-BR')} transações totais 
-            • Valor Total: R$ {Number(salesSummary.total_amount).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
-            • Período: {new Date(salesSummary.earliest_date).toLocaleDateString('pt-BR')} a {new Date(salesSummary.latest_date).toLocaleDateString('pt-BR')}
+        <Alert className="border-primary/20 bg-accent">
+          <Info className="h-4 w-4 text-primary" />
+          <AlertDescription>
+            <strong className="text-primary">Resumo Geral:</strong>{' '}
+            <span className="text-foreground">
+              {salesSummary.total_records.toLocaleString('pt-BR')} transações totais 
+              • Valor Total: R$ {Number(salesSummary.total_amount).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+              • Período: {new Date(salesSummary.earliest_date).toLocaleDateString('pt-BR')} a {new Date(salesSummary.latest_date).toLocaleDateString('pt-BR')}
+            </span>
           </AlertDescription>
         </Alert>
       )}

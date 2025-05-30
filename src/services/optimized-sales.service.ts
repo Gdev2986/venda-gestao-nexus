@@ -41,6 +41,18 @@ export interface SalesSummary {
   latest_date: string;
 }
 
+export interface SalesAggregatedStats {
+  total_sales: number;
+  total_gross_amount: number;
+  total_net_amount: number;
+  office_commission: number;
+}
+
+export interface UniqueTerminal {
+  terminal: string;
+  usage_count: number;
+}
+
 export const optimizedSalesService = {
   // Obter range de datas disponíveis
   async getDateRange(): Promise<SalesDateRange | null> {
@@ -73,6 +85,78 @@ export const optimizedSalesService = {
     } catch (error) {
       console.error('Error in getSalesSummary:', error);
       return null;
+    }
+  },
+
+  // Obter terminais únicos para autocompletar
+  async getUniqueTerminals(searchTerm: string = ''): Promise<UniqueTerminal[]> {
+    try {
+      const { data, error } = await supabase.rpc('get_unique_terminals', {
+        search_term: searchTerm
+      });
+      
+      if (error) {
+        console.error('Error getting unique terminals:', error);
+        return [];
+      }
+      
+      return data || [];
+    } catch (error) {
+      console.error('Error in getUniqueTerminals:', error);
+      return [];
+    }
+  },
+
+  // Obter estatísticas agregadas (mais eficiente)
+  async getSalesAggregatedStats(filters: SalesFilters): Promise<SalesAggregatedStats> {
+    try {
+      // Format hour and minute filters
+      let hourStart = filters.hourStart;
+      let hourEnd = filters.hourEnd;
+      
+      if (filters.hourStart && filters.minuteStart) {
+        hourStart = `${filters.hourStart}:${filters.minuteStart}`;
+      }
+      
+      if (filters.hourEnd && filters.minuteEnd) {
+        hourEnd = `${filters.hourEnd}:${filters.minuteEnd}`;
+      }
+
+      const { data, error } = await supabase.rpc('get_sales_aggregated_stats', {
+        filter_date_start: filters.dateStart || null,
+        filter_date_end: filters.dateEnd || null,
+        filter_hour_start: hourStart || null,
+        filter_hour_end: hourEnd || null,
+        filter_terminals: filters.terminals || null,
+        filter_payment_type: filters.paymentType || null,
+        filter_source: filters.source || null
+      });
+
+      if (error) {
+        console.error('Error getting aggregated stats:', error);
+        return {
+          total_sales: 0,
+          total_gross_amount: 0,
+          total_net_amount: 0,
+          office_commission: 0
+        };
+      }
+
+      const result = data?.[0];
+      return {
+        total_sales: Number(result?.total_sales || 0),
+        total_gross_amount: Number(result?.total_gross_amount || 0),
+        total_net_amount: Number(result?.total_net_amount || 0),
+        office_commission: Number(result?.office_commission || 0)
+      };
+    } catch (error) {
+      console.error('Error in getSalesAggregatedStats:', error);
+      return {
+        total_sales: 0,
+        total_gross_amount: 0,
+        total_net_amount: 0,
+        office_commission: 0
+      };
     }
   },
 

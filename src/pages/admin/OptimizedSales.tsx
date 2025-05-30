@@ -8,6 +8,8 @@ import OptimizedSalesTable from "@/components/sales/OptimizedSalesTable";
 import PeriodAndTimeFilter from "@/components/sales/PeriodAndTimeFilter";
 import { useOptimizedSales } from "@/hooks/use-optimized-sales";
 import { useState } from "react";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Info } from "lucide-react";
 
 const OptimizedSalesPage = () => {
   const [showImportPanel, setShowImportPanel] = useState<boolean>(false);
@@ -91,25 +93,28 @@ const OptimizedSalesPage = () => {
         />
       </div>
 
-      {/* Informações de Performance */}
+      {/* Informações de Performance - Atualizado para tema dark */}
       {dateRange && (
-        <div className="bg-muted/30 p-4 rounded-lg">
-          <h3 className="font-medium mb-2">Informações do Sistema</h3>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
-            <div>
-              <span className="font-medium">Período disponível:</span><br />
-              {dateRange.earliest_date} a {dateRange.latest_date}
+        <Alert className="bg-muted border-muted-foreground/20">
+          <Info className="h-5 w-5 text-primary" />
+          <AlertDescription className="text-foreground">
+            <h3 className="font-medium mb-1 text-primary">Informações do Sistema</h3>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
+              <div>
+                <span className="font-medium">Período disponível:</span><br />
+                {dateRange.earliest_date} a {dateRange.latest_date}
+              </div>
+              <div>
+                <span className="font-medium">Total de registros:</span><br />
+                {dateRange.total_records.toLocaleString('pt-BR')}
+              </div>
+              <div>
+                <span className="font-medium">Filtros ativos:</span><br />
+                {Object.keys(filters).filter(key => filters[key as keyof typeof filters] !== undefined).length} filtros
+              </div>
             </div>
-            <div>
-              <span className="font-medium">Total de registros:</span><br />
-              {dateRange.total_records.toLocaleString('pt-BR')}
-            </div>
-            <div>
-              <span className="font-medium">Filtros ativos:</span><br />
-              {Object.keys(filters).filter(key => filters[key as keyof typeof filters] !== undefined).length} filtros
-            </div>
-          </div>
-        </div>
+          </AlertDescription>
+        </Alert>
       )}
     </div>
   );

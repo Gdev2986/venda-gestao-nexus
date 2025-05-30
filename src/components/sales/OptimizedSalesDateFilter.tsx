@@ -7,6 +7,7 @@ import { Label } from "@/components/ui/label";
 import { Calendar, X, Clock, Filter, ChevronDown, ChevronUp } from "lucide-react";
 import { SalesFilters } from "@/services/optimized-sales.service";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { TerminalAutocomplete } from "./TerminalAutocomplete";
 
 interface OptimizedSalesDateFilterProps {
   filters: SalesFilters;
@@ -189,15 +190,14 @@ const OptimizedSalesDateFilter = ({
             </div>
             
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {/* Filtro por Terminal */}
+              {/* Filtro por Terminal - MODIFICADO PARA USAR AUTOCOMPLETE */}
               <div className="space-y-2">
                 <Label htmlFor="terminal">Terminal</Label>
-                <Input
-                  id="terminal"
-                  placeholder="Digite o terminal..."
+                <TerminalAutocomplete
                   value={localTerminal}
-                  onChange={(e) => setLocalTerminal(e.target.value)}
+                  onChange={setLocalTerminal}
                   disabled={isLoading}
+                  placeholder="Buscar terminal..."
                 />
               </div>
 

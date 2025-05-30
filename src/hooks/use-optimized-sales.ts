@@ -2,7 +2,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { NormalizedSale } from "@/utils/sales-processor";
-import { optimizedSalesService, SalesFilters, PaginatedSalesResult, SalesDateRange, SalesSummary } from "@/services/optimized-sales.service";
+import { optimizedSalesService, SalesFilters, PaginatedSalesResult, SalesDateRange, SalesSummary, SalesAggregatedStats } from "@/services/optimized-sales.service";
 
 interface PeriodStats {
   totalSales: number;
@@ -65,27 +65,22 @@ export const useOptimizedSales = () => {
     }
   }, [toast]);
 
-  // Carregar estatísticas do período completo
+  // Carregar estatísticas do período usando nova função agregada
   const loadPeriodStats = useCallback(async (activeFilters: SalesFilters) => {
     try {
       console.log('Loading period stats with filters:', activeFilters);
       
-      // Carregar todas as vendas do período (sem paginação) para calcular estatísticas
-      const allSalesResult = await optimizedSalesService.getSalesPaginated(1, 999999, activeFilters);
+      // Usar nova função agregada mais eficiente
+      const stats = await optimizedSalesService.getSalesAggregatedStats(activeFilters);
       
-      const totalSales = allSalesResult.totalCount;
-      const totalGrossAmount = allSalesResult.sales.reduce((sum, sale) => sum + sale.gross_amount, 0);
-      const totalNetAmount = totalGrossAmount * 0.97; // 97% do valor bruto
-      const officeCommission = totalGrossAmount * 0.015; // 1.5% do valor bruto
-
       setPeriodStats({
-        totalSales,
-        totalGrossAmount,
-        totalNetAmount,
-        officeCommission
+        totalSales: stats.total_sales,
+        totalGrossAmount: stats.total_gross_amount,
+        totalNetAmount: stats.total_net_amount,
+        officeCommission: stats.office_commission
       });
 
-      console.log('Period stats loaded:', { totalSales, totalGrossAmount, totalNetAmount, officeCommission });
+      console.log('Period stats loaded:', stats);
     } catch (error) {
       console.error('Error loading period stats:', error);
       setPeriodStats({

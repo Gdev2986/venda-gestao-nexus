@@ -1681,6 +1681,23 @@ export type Database = {
           total_count: number
         }[]
       }
+      get_sales_aggregated_stats: {
+        Args: {
+          filter_date_start?: string
+          filter_date_end?: string
+          filter_hour_start?: string
+          filter_hour_end?: string
+          filter_terminals?: string[]
+          filter_payment_type?: string
+          filter_source?: string
+        }
+        Returns: {
+          total_sales: number
+          total_gross_amount: number
+          total_net_amount: number
+          office_commission: number
+        }[]
+      }
       get_sales_date_range: {
         Args: Record<PropertyKey, never>
         Returns: {
@@ -1747,6 +1764,13 @@ export type Database = {
           total_amount: number
           earliest_date: string
           latest_date: string
+        }[]
+      }
+      get_unique_terminals: {
+        Args: { search_term?: string }
+        Returns: {
+          terminal: string
+          usage_count: number
         }[]
       }
       get_user_client_balance: {
