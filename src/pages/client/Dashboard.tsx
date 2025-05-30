@@ -34,9 +34,9 @@ const generatePaymentMethodsData = (sales: any[]) => {
     return sum + amount;
   }, 0);
 
-  const pixAmount = Number(methodCounts[PaymentMethod.PIX]) || 0;
-  const debitAmount = Number(methodCounts[PaymentMethod.DEBIT]) || 0;
-  const creditAmount = Number(methodCounts[PaymentMethod.CREDIT]) || 0;
+  const pixAmount = Number(methodCounts[PaymentMethod.PIX] || 0);
+  const debitAmount = Number(methodCounts[PaymentMethod.DEBIT] || 0);
+  const creditAmount = Number(methodCounts[PaymentMethod.CREDIT] || 0);
 
   return [
     {

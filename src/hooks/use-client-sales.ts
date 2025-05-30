@@ -62,7 +62,7 @@ export const useClientSales = (startDate?: Date, endDate?: Date) => {
 
       console.log('useClientSales: Found client ID:', clientAccess.client_id);
 
-      // First, let's try a direct approach - get machines for this client and then sales
+      // Get machines for this client
       console.log('useClientSales: Fetching machines for client:', clientAccess.client_id);
       const { data: clientMachines, error: machinesError } = await supabase
         .from('machines')
@@ -83,25 +83,34 @@ export const useClientSales = (startDate?: Date, endDate?: Date) => {
       const machineIds = clientMachines.map(m => m.id);
       console.log('useClientSales: Machine IDs:', machineIds);
 
-      // Now get sales for these machines
+      // Build sales query similar to admin side
       let salesQuery = supabase
         .from('sales')
         .select('id, code, terminal, date, gross_amount, net_amount, payment_method, installments, machine_id')
         .in('machine_id', machineIds)
         .order('date', { ascending: false });
 
+      // Apply date filters only if they exist - similar to admin logic
       if (startDate) {
-        salesQuery = salesQuery.gte('date', startDate.toISOString());
+        const startISO = startDate.toISOString();
+        console.log('useClientSales: Adding start date filter:', startISO);
+        salesQuery = salesQuery.gte('date', startISO);
       }
+      
       if (endDate) {
-        salesQuery = salesQuery.lte('date', endDate.toISOString());
+        const endISO = endDate.toISOString();
+        console.log('useClientSales: Adding end date filter:', endISO);
+        salesQuery = salesQuery.lte('date', endISO);
       }
 
-      console.log('useClientSales: Executing sales query with filters:', { startDate, endDate });
+      console.log('useClientSales: Executing sales query...');
       const { data: salesData, error: salesError } = await salesQuery;
 
-      console.log('useClientSales: Sales query result:', { salesData, salesError });
-      console.log('useClientSales: Number of sales found:', salesData?.length || 0);
+      console.log('useClientSales: Sales query result:', { 
+        salesData, 
+        salesError,
+        count: salesData?.length || 0 
+      });
 
       if (salesError) throw salesError;
 
@@ -150,6 +159,7 @@ export const useClientSales = (startDate?: Date, endDate?: Date) => {
 
   useEffect(() => {
     console.log('useClientSales: Effect triggered, user.id:', user?.id);
+    console.log('useClientSales: Effect triggered, dates:', { startDate, endDate });
     fetchClientSales();
   }, [user?.id, startDate, endDate]);
 
