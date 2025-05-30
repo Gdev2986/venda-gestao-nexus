@@ -6,11 +6,15 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
+import { Calendar } from "@/components/ui/calendar";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { useShipments } from "@/hooks/use-shipments";
 import { useClients } from "@/hooks/use-clients";
 import { CreateShipmentData } from "@/types/shipment.types";
-import { Loader2, Plus } from "lucide-react";
+import { Loader2, Plus, Calendar as CalendarIcon } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { format } from "date-fns";
+import { cn } from "@/lib/utils";
 
 interface NewShipmentDialogProps {
   open: boolean;
@@ -21,12 +25,12 @@ const NewShipmentDialog = ({ open, onOpenChange }: NewShipmentDialogProps) => {
   const { createShipment } = useShipments();
   const { clients, loading: clientsLoading } = useClients();
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [deliveryDate, setDeliveryDate] = useState<Date | undefined>(undefined);
   
   const [formData, setFormData] = useState<CreateShipmentData>({
     client_id: '',
     item_type: 'machine',
     item_description: '',
-    tracking_code: '',
     notes: ''
   });
 
@@ -43,7 +47,6 @@ const NewShipmentDialog = ({ open, onOpenChange }: NewShipmentDialogProps) => {
       client_id: formData.client_id,
       item_type: formData.item_type,
       item_description: formData.item_description,
-      tracking_code: formData.tracking_code || undefined,
       notes: formData.notes || undefined
     });
 
@@ -53,9 +56,9 @@ const NewShipmentDialog = ({ open, onOpenChange }: NewShipmentDialogProps) => {
         client_id: '',
         item_type: 'machine',
         item_description: '',
-        tracking_code: '',
         notes: ''
       });
+      setDeliveryDate(undefined);
     }
     
     setIsSubmitting(false);
@@ -66,9 +69,9 @@ const NewShipmentDialog = ({ open, onOpenChange }: NewShipmentDialogProps) => {
       client_id: '',
       item_type: 'machine',
       item_description: '',
-      tracking_code: '',
       notes: ''
     });
+    setDeliveryDate(undefined);
     onOpenChange(false);
   };
 
@@ -134,13 +137,30 @@ const NewShipmentDialog = ({ open, onOpenChange }: NewShipmentDialogProps) => {
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="tracking_code">Código de Rastreamento</Label>
-                  <Input
-                    id="tracking_code"
-                    value={formData.tracking_code}
-                    onChange={(e) => setFormData(prev => ({ ...prev, tracking_code: e.target.value }))}
-                    placeholder="Ex: BR123456789"
-                  />
+                  <Label htmlFor="delivery_date">Data de Entrega</Label>
+                  <Popover>
+                    <PopoverTrigger asChild>
+                      <Button
+                        variant="outline"
+                        className={cn(
+                          "w-full justify-start text-left font-normal",
+                          !deliveryDate && "text-muted-foreground"
+                        )}
+                      >
+                        <CalendarIcon className="mr-2 h-4 w-4" />
+                        {deliveryDate ? format(deliveryDate, "dd/MM/yyyy") : "Selecionar data"}
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-auto p-0" align="start">
+                      <Calendar
+                        mode="single"
+                        selected={deliveryDate}
+                        onSelect={setDeliveryDate}
+                        initialFocus
+                        className="p-3 pointer-events-auto"
+                      />
+                    </PopoverContent>
+                  </Popover>
                 </div>
               </div>
 

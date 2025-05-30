@@ -5,7 +5,6 @@ export interface Shipment {
   item_type: 'machine' | 'bobina' | 'other';
   item_description: string;
   status: 'pending' | 'in_transit' | 'delivered' | 'cancelled';
-  tracking_code?: string;
   notes?: string;
   created_by: string;
   created_at: string;
@@ -26,7 +25,7 @@ export interface ShipmentActivity {
   id: string;
   shipment_id: string;
   user_id: string;
-  action_type: 'created' | 'status_changed' | 'tracking_updated' | 'delivered' | 'cancelled' | 'notes_updated';
+  action_type: 'created' | 'status_changed' | 'delivered' | 'cancelled' | 'notes_updated';
   description: string;
   metadata: Record<string, any>;
   created_at: string;
@@ -42,13 +41,13 @@ export interface CreateShipmentData {
   item_type: 'machine' | 'bobina' | 'other';
   item_description: string;
   status?: 'pending' | 'in_transit' | 'delivered' | 'cancelled';
-  tracking_code?: string;
   notes?: string;
+  delivery_date?: string;
 }
 
 export interface UpdateShipmentData {
   item_description?: string;
   status?: 'pending' | 'in_transit' | 'delivered' | 'cancelled';
-  tracking_code?: string;
   notes?: string;
+  delivery_date?: string;
 }
