@@ -2,11 +2,12 @@
 import { useState, useEffect } from 'react';
 import { Button } from "@/components/ui/button";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Plus, AlertCircle } from "lucide-react";
+import { Plus, AlertCircle, Link2 } from "lucide-react";
 import { TaxBlocksService, BlockWithRates } from "@/services/tax-blocks.service";
 import { useToast } from "@/hooks/use-toast";
 import TaxBlockEditor from "./TaxBlockEditor";
 import TaxBlockPreview from "./TaxBlockPreview";
+import TaxBlockClientAssociation from "./TaxBlockClientAssociation";
 
 const TaxBlocksManager = () => {
   const [blocks, setBlocks] = useState<BlockWithRates[]>([]);
@@ -14,6 +15,7 @@ const TaxBlocksManager = () => {
   const [isCreating, setIsCreating] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [showAssociationModal, setShowAssociationModal] = useState(false);
   const { toast } = useToast();
 
   const loadBlocks = async () => {
@@ -133,6 +135,14 @@ const TaxBlocksManager = () => {
     setEditingBlock(null);
   };
 
+  const handleAssociationSuccess = () => {
+    toast({
+      title: "Sucesso",
+      description: "Bloco vinculado ao cliente com sucesso"
+    });
+    loadBlocks();
+  };
+
   if (isLoading) {
     return (
       <div className="flex justify-center items-center py-8">
@@ -161,10 +171,16 @@ const TaxBlocksManager = () => {
           <h2 className="text-2xl font-bold">Gerenciar Blocos de Taxas</h2>
           <p className="text-muted-foreground">Configure os blocos de taxas para diferentes clientes</p>
         </div>
-        <Button onClick={handleCreateNew}>
-          <Plus className="h-4 w-4 mr-2" />
-          Novo Bloco
-        </Button>
+        <div className="flex gap-2">
+          <Button onClick={() => setShowAssociationModal(true)} variant="outline">
+            <Link2 className="h-4 w-4 mr-2" />
+            Vincular Bloco
+          </Button>
+          <Button onClick={handleCreateNew}>
+            <Plus className="h-4 w-4 mr-2" />
+            Novo Bloco
+          </Button>
+        </div>
       </div>
 
       {blocks.length === 0 ? (
@@ -185,6 +201,12 @@ const TaxBlocksManager = () => {
           ))}
         </div>
       )}
+
+      <TaxBlockClientAssociation
+        isOpen={showAssociationModal}
+        onClose={() => setShowAssociationModal(false)}
+        onSuccess={handleAssociationSuccess}
+      />
     </div>
   );
 };
