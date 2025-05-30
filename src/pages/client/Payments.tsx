@@ -1,8 +1,10 @@
+
 import React, { useState } from "react";
 import { PageHeader } from "@/components/page/PageHeader";
 import { BalanceCards } from "@/components/payments/BalanceCards";
 import { PaymentHistoryCard } from "@/components/payments/PaymentHistoryCard";
 import { PaymentRequestDialog } from "@/components/payments/PaymentRequestDialog";
+import { ClientPaymentFilters } from "@/components/dashboard/client/ClientPaymentFilters";
 import { Button } from "@/components/ui/button";
 import { useClientBalance } from "@/hooks/use-client-balance";
 import { useClientPayments } from "@/hooks/useClientPayments";
@@ -23,6 +25,11 @@ const ClientPayments = () => {
   const { payments, isLoading: paymentsLoading, loadPayments } = useClientPayments();
   const { pixKeys, isLoading: pixKeysLoading, refetch: refetchPixKeys } = usePixKeys();
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+
+  // Filter states
+  const [startDate, setStartDate] = useState<Date | undefined>();
+  const [endDate, setEndDate] = useState<Date | undefined>();
+  const [statusFilter, setStatusFilter] = useState("Todos");
 
   // Setup real-time subscription
   usePaymentSubscription(loadPayments, { 
@@ -92,6 +99,12 @@ const ClientPayments = () => {
     }
   };
 
+  const handleClearFilters = () => {
+    setStartDate(undefined);
+    setEndDate(undefined);
+    setStatusFilter("Todos");
+  };
+
   // Convert PaymentRequest[] to Payment[] for compatibility and ensure rejection_reason is always a string
   const convertedPayments = payments.map(payment => {
     const converted = convertRequestToPayment(payment);
@@ -99,6 +112,28 @@ const ClientPayments = () => {
       ...converted,
       rejection_reason: converted.rejection_reason || ""
     };
+  });
+
+  // Apply filters to payments
+  const filteredPayments = convertedPayments.filter(payment => {
+    const paymentDate = new Date(payment.created_at);
+    
+    // Date filters
+    if (startDate && paymentDate < startDate) return false;
+    if (endDate && paymentDate > endDate) return false;
+    
+    // Status filter
+    if (statusFilter !== "Todos") {
+      const statusMap: { [key: string]: string } = {
+        "Pendente": "PENDING",
+        "Aprovado": "APPROVED", 
+        "Rejeitado": "REJECTED",
+        "Pago": "PAID"
+      };
+      if (payment.status !== statusMap[statusFilter]) return false;
+    }
+    
+    return true;
   });
 
   return (
@@ -159,10 +194,21 @@ const ClientPayments = () => {
           </CardContent>
         </Card>
       </div>
+
+      {/* Filters */}
+      <ClientPaymentFilters
+        startDate={startDate}
+        endDate={endDate}
+        onStartDateChange={setStartDate}
+        onEndDateChange={setEndDate}
+        statusFilter={statusFilter}
+        onStatusFilterChange={setStatusFilter}
+        onClearFilters={handleClearFilters}
+      />
       
       {/* Payment History */}
       <PaymentHistoryCard 
-        payments={convertedPayments}
+        payments={filteredPayments}
         isLoading={paymentsLoading} 
       />
       

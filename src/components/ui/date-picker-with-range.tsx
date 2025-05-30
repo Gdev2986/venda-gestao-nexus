@@ -66,10 +66,12 @@ export function DatePickerWithRange({
           </Button>
         </PopoverTrigger>
         <PopoverContent 
-          className="w-auto p-0 z-50" 
+          className="w-auto p-0 z-[1000]" 
           align="end"
           side="bottom"
           sideOffset={4}
+          avoidCollisions={true}
+          onOpenAutoFocus={(e) => e.preventDefault()}
         >
           <Calendar
             initialFocus

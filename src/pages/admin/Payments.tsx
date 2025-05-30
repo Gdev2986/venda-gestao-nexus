@@ -15,6 +15,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useNavigate } from "react-router-dom";
 import TablePagination from "@/components/ui/table-pagination";
 import { addDays } from "date-fns";
+import { RefreshCcw } from "lucide-react";
 import type { DateRange } from "react-day-picker";
 
 const AdminPayments = () => {
@@ -83,6 +84,14 @@ const AdminPayments = () => {
     setPage(newPage);
   };
 
+  const handleRefresh = () => {
+    refetch();
+    toast({
+      title: "Atualizado",
+      description: "Lista de pagamentos atualizada com sucesso"
+    });
+  };
+
   const handleActionClick = useCallback(async (paymentId: string, action: PaymentAction) => {
     if (action === PaymentAction.VIEW) {
       try {
@@ -136,10 +145,23 @@ const AdminPayments = () => {
     <div className="container mx-auto py-6">
       <Card>
         <CardHeader>
-          <CardTitle>Gerenciar Pagamentos</CardTitle>
-          <CardDescription>
-            Visualize, filtre e gerencie os pagamentos dos clientes.
-          </CardDescription>
+          <div className="flex items-center justify-between">
+            <div>
+              <CardTitle>Gerenciar Pagamentos</CardTitle>
+              <CardDescription>
+                Visualize, filtre e gerencie os pagamentos dos clientes.
+              </CardDescription>
+            </div>
+            <Button 
+              variant="outline" 
+              size="sm" 
+              onClick={handleRefresh}
+              disabled={isLoading}
+            >
+              <RefreshCcw className={`h-4 w-4 mr-2 ${isLoading ? 'animate-spin' : ''}`} />
+              Atualizar
+            </Button>
+          </div>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
