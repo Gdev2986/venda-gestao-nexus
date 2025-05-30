@@ -193,19 +193,25 @@ export const getTicketMessages = async (ticketId: string) => {
     return { data: [], error };
   }
 
-  // Transform the data to match our TypeScript types
-  const transformedData: SupportMessage[] = (data || []).map(item => ({
-    id: item.id,
-    conversation_id: item.conversation_id,
-    user_id: item.user_id,
-    message: item.message,
-    is_read: item.is_read,
-    created_at: item.created_at,
-    user: item.user && typeof item.user === 'object' && 'name' in item.user ? {
-      name: item.user.name,
-      email: item.user.email
-    } : undefined
-  }));
+  // Transform the data to match our TypeScript types with proper null handling
+  const transformedData: SupportMessage[] = (data || []).map(item => {
+    const userInfo = item.user && typeof item.user === 'object' && 'name' in item.user 
+      ? {
+          name: item.user.name || 'Usuário',
+          email: item.user.email || ''
+        }
+      : undefined;
+
+    return {
+      id: item.id,
+      conversation_id: item.conversation_id,
+      user_id: item.user_id,
+      message: item.message,
+      is_read: item.is_read,
+      created_at: item.created_at,
+      user: userInfo
+    };
+  });
 
   return { data: transformedData, error: null };
 };
@@ -264,7 +270,14 @@ export const sendTicketMessage = async (ticketId: string, message: string) => {
     return { data: null, error };
   }
 
-  // Transform the data to match our TypeScript types
+  // Transform the data to match our TypeScript types with proper null handling
+  const userInfo = data.user && typeof data.user === 'object' && 'name' in data.user 
+    ? {
+        name: data.user.name || 'Usuário',
+        email: data.user.email || ''
+      }
+    : undefined;
+
   const transformedData: SupportMessage = {
     id: data.id,
     conversation_id: data.conversation_id,
@@ -272,10 +285,7 @@ export const sendTicketMessage = async (ticketId: string, message: string) => {
     message: data.message,
     is_read: data.is_read,
     created_at: data.created_at,
-    user: data.user && typeof data.user === 'object' && 'name' in data.user ? {
-      name: data.user.name,
-      email: data.user.email
-    } : undefined
+    user: userInfo
   };
 
   return { data: transformedData, error: null };
