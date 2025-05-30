@@ -44,13 +44,6 @@ export const PartnerBlock = ({ partner, onSelect, onViewDetails, isSelected }: P
         </div>
         
         <div className="flex items-center gap-2">
-          <DollarSign className="h-4 w-4 text-muted-foreground" />
-          <span className="text-sm">
-            Comissão: <Badge variant="secondary">{partner.commission_rate}%</Badge>
-          </span>
-        </div>
-        
-        <div className="flex items-center gap-2">
           <Users className="h-4 w-4 text-muted-foreground" />
           <span className="text-sm text-muted-foreground">
             {partner.total_sales || 0} vendas

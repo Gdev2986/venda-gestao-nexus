@@ -84,14 +84,6 @@ export const PartnerDetailsModal = ({ partner, open, onOpenChange }: PartnerDeta
             <CardContent className="space-y-4">
               <div className="grid grid-cols-2 gap-4">
                 <div className="text-center p-3 bg-muted rounded-lg">
-                  <DollarSign className="h-6 w-6 mx-auto text-green-600 mb-1" />
-                  <div className="text-2xl font-bold text-green-600">
-                    {partner.commission_rate}%
-                  </div>
-                  <div className="text-xs text-muted-foreground">Comissão Atual</div>
-                </div>
-                
-                <div className="text-center p-3 bg-muted rounded-lg">
                   <Users className="h-6 w-6 mx-auto text-blue-600 mb-1" />
                   <div className="text-2xl font-bold text-blue-600">
                     {partner.total_sales || 0}
@@ -99,7 +91,7 @@ export const PartnerDetailsModal = ({ partner, open, onOpenChange }: PartnerDeta
                   <div className="text-xs text-muted-foreground">Total de Vendas</div>
                 </div>
                 
-                <div className="text-center p-3 bg-muted rounded-lg col-span-2">
+                <div className="text-center p-3 bg-muted rounded-lg">
                   <TrendingUp className="h-6 w-6 mx-auto text-purple-600 mb-1" />
                   <div className="text-2xl font-bold text-purple-600">
                     R$ {(partner.total_commission || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
