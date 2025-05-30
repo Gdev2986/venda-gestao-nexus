@@ -4,7 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Calendar, X, Clock } from "lucide-react";
+import { Calendar, X, Clock, Search, Filter } from "lucide-react";
 import { SalesFilters } from "@/services/optimized-sales.service";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
@@ -29,6 +29,10 @@ const OptimizedSalesDateFilter = ({
   const [localMinuteStart, setLocalMinuteStart] = useState(filters.minuteStart || '');
   const [localHourEnd, setLocalHourEnd] = useState(filters.hourEnd || '');
   const [localMinuteEnd, setLocalMinuteEnd] = useState(filters.minuteEnd || '');
+  const [localSearchCode, setLocalSearchCode] = useState(filters.searchCode || '');
+  const [localTerminal, setLocalTerminal] = useState(filters.terminal || '');
+  const [localMinAmount, setLocalMinAmount] = useState(filters.minAmount?.toString() || '');
+  const [localMaxAmount, setLocalMaxAmount] = useState(filters.maxAmount?.toString() || '');
 
   const handleApplyDateFilter = () => {
     onFiltersChange({
@@ -37,12 +41,17 @@ const OptimizedSalesDateFilter = ({
       hourStart: localHourStart || undefined,
       minuteStart: localMinuteStart || undefined,
       hourEnd: localHourEnd || undefined,
-      minuteEnd: localMinuteEnd || undefined
+      minuteEnd: localMinuteEnd || undefined,
+      searchCode: localSearchCode || undefined,
+      terminal: localTerminal || undefined,
+      minAmount: localMinAmount ? parseFloat(localMinAmount) : undefined,
+      maxAmount: localMaxAmount ? parseFloat(localMaxAmount) : undefined
     });
   };
 
   const hasDateFilters = filters.dateStart || filters.dateEnd;
   const hasTimeFilters = filters.hourStart || filters.minuteStart || filters.hourEnd || filters.minuteEnd;
+  const hasOtherFilters = filters.searchCode || filters.terminal || filters.minAmount || filters.maxAmount || filters.paymentType;
   const hasAnyFilters = Object.keys(filters).some(key => filters[key as keyof SalesFilters]);
 
   // Generate hour options (00-23)
@@ -68,7 +77,8 @@ const OptimizedSalesDateFilter = ({
           )}
         </CardTitle>
       </CardHeader>
-      <CardContent className="space-y-4">
+      <CardContent className="space-y-6">
+        {/* Filtros de Data */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div className="space-y-2">
             <Label htmlFor="start-date">Data Inicial</Label>
@@ -93,7 +103,7 @@ const OptimizedSalesDateFilter = ({
           </div>
         </div>
 
-        {/* Time filters */}
+        {/* Filtros de Horário */}
         <div className="border-t pt-4">
           <div className="flex items-center gap-2 mb-3">
             <Clock className="h-4 w-4" />
@@ -156,6 +166,92 @@ const OptimizedSalesDateFilter = ({
             </div>
           </div>
         </div>
+
+        {/* Filtros Adicionais */}
+        <div className="border-t pt-4">
+          <div className="flex items-center gap-2 mb-3">
+            <Filter className="h-4 w-4" />
+            <Label className="text-sm font-medium">Filtros Adicionais</Label>
+          </div>
+          
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {/* Pesquisa por Código */}
+            <div className="space-y-2">
+              <Label htmlFor="search-code">Pesquisar por Código</Label>
+              <div className="relative">
+                <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+                <Input
+                  id="search-code"
+                  placeholder="Digite o código..."
+                  className="pl-8"
+                  value={localSearchCode}
+                  onChange={(e) => setLocalSearchCode(e.target.value)}
+                  disabled={isLoading}
+                />
+              </div>
+            </div>
+
+            {/* Filtro por Terminal */}
+            <div className="space-y-2">
+              <Label htmlFor="terminal">Terminal</Label>
+              <Input
+                id="terminal"
+                placeholder="Digite o terminal..."
+                value={localTerminal}
+                onChange={(e) => setLocalTerminal(e.target.value)}
+                disabled={isLoading}
+              />
+            </div>
+
+            {/* Tipo de Pagamento */}
+            <div className="space-y-2">
+              <Label>Tipo de Pagamento</Label>
+              <Select 
+                value={filters.paymentType || "all"} 
+                onValueChange={(value) => onFiltersChange({ paymentType: value === "all" ? undefined : value })}
+                disabled={isLoading}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Todos" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Todos</SelectItem>
+                  <SelectItem value="CREDIT">Cartão de Crédito</SelectItem>
+                  <SelectItem value="DEBIT">Cartão de Débito</SelectItem>
+                  <SelectItem value="PIX">Pix</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            {/* Valor Mínimo */}
+            <div className="space-y-2">
+              <Label htmlFor="min-amount">Valor Mínimo (R$)</Label>
+              <Input
+                id="min-amount"
+                type="number"
+                step="0.01"
+                placeholder="0,00"
+                value={localMinAmount}
+                onChange={(e) => setLocalMinAmount(e.target.value)}
+                disabled={isLoading}
+              />
+            </div>
+
+            {/* Valor Máximo */}
+            <div className="space-y-2">
+              <Label htmlFor="max-amount">Valor Máximo (R$)</Label>
+              <Input
+                id="max-amount"
+                type="number"
+                step="0.01"
+                placeholder="0,00"
+                value={localMaxAmount}
+                onChange={(e) => setLocalMaxAmount(e.target.value)}
+                disabled={isLoading}
+              />
+            </div>
+          </div>
+        </div>
         
         <div className="flex gap-2">
           <Button 
@@ -163,7 +259,7 @@ const OptimizedSalesDateFilter = ({
             disabled={isLoading}
             className="flex-1"
           >
-            Aplicar Filtro
+            Aplicar Filtros
           </Button>
           
           {hasAnyFilters && (
@@ -179,8 +275,9 @@ const OptimizedSalesDateFilter = ({
           )}
         </div>
         
-        {(hasDateFilters || hasTimeFilters) && (
-          <div className="text-sm text-muted-foreground space-y-1">
+        {/* Resumo dos filtros aplicados */}
+        {(hasDateFilters || hasTimeFilters || hasOtherFilters) && (
+          <div className="text-sm text-muted-foreground space-y-1 border-t pt-3">
             {hasDateFilters && (
               <div>
                 <strong>Período:</strong> {filters.dateStart ? new Date(filters.dateStart).toLocaleDateString('pt-BR') : 'Início'} 
@@ -193,6 +290,23 @@ const OptimizedSalesDateFilter = ({
                 <strong>Horário:</strong> {filters.hourStart || '00'}:{filters.minuteStart || '00'} 
                 {' até '}
                 {filters.hourEnd || '23'}:{filters.minuteEnd || '59'}
+              </div>
+            )}
+            {filters.searchCode && (
+              <div><strong>Código:</strong> {filters.searchCode}</div>
+            )}
+            {filters.terminal && (
+              <div><strong>Terminal:</strong> {filters.terminal}</div>
+            )}
+            {filters.paymentType && (
+              <div><strong>Pagamento:</strong> {filters.paymentType === 'CREDIT' ? 'Cartão de Crédito' : filters.paymentType === 'DEBIT' ? 'Cartão de Débito' : 'Pix'}</div>
+            )}
+            {(filters.minAmount || filters.maxAmount) && (
+              <div>
+                <strong>Valor:</strong> 
+                {filters.minAmount && ` R$ ${filters.minAmount.toFixed(2)} ou mais`}
+                {filters.minAmount && filters.maxAmount && ' e '}
+                {filters.maxAmount && ` R$ ${filters.maxAmount.toFixed(2)} ou menos`}
               </div>
             )}
           </div>

@@ -21,6 +21,10 @@ export interface SalesFilters {
   status?: string;
   source?: string;
   brand?: string;
+  searchCode?: string;
+  terminal?: string;
+  minAmount?: number;
+  maxAmount?: number;
 }
 
 export interface PaginatedSalesResult {
@@ -100,7 +104,7 @@ export const optimizedSalesService = {
   // Buscar vendas paginadas usando nova RPC otimizada
   async getSalesPaginated(
     page: number = 1,
-    pageSize: number = 100, // Changed from 1000 to 100
+    pageSize: number = 100,
     filters: SalesFilters = {}
   ): Promise<PaginatedSalesResult> {
     try {
@@ -184,6 +188,29 @@ export const optimizedSalesService = {
 
       if (filters.brand && filters.brand !== 'all') {
         sales = sales.filter(sale => sale.brand === filters.brand);
+      }
+
+      // Aplicar filtros de pesquisa por código
+      if (filters.searchCode) {
+        sales = sales.filter(sale => 
+          sale.id?.toLowerCase().includes(filters.searchCode!.toLowerCase())
+        );
+      }
+
+      // Aplicar filtro por terminal específico
+      if (filters.terminal) {
+        sales = sales.filter(sale => 
+          sale.terminal?.toLowerCase().includes(filters.terminal!.toLowerCase())
+        );
+      }
+
+      // Aplicar filtros de valor
+      if (filters.minAmount) {
+        sales = sales.filter(sale => sale.gross_amount >= filters.minAmount!);
+      }
+
+      if (filters.maxAmount) {
+        sales = sales.filter(sale => sale.gross_amount <= filters.maxAmount!);
       }
 
       console.log(`Página ${page} carregada via RPC otimizada: ${sales.length} registros de ${totalCount} totais`);
