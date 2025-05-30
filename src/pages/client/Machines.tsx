@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import { PageHeader } from "@/components/page/PageHeader";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -68,10 +69,11 @@ const ClientMachines = () => {
 
       if (machinesError) throw machinesError;
 
-      // Buscar customizações das máquinas usando query raw
+      // Buscar customizações das máquinas diretamente da tabela
       const { data: customizations, error: customError } = await supabase
-        .rpc('get_machine_customizations', { p_client_id: clientAccess.client_id })
-        .returns<MachineCustomization[]>();
+        .from('machine_customizations')
+        .select('*')
+        .eq('client_id', clientAccess.client_id);
 
       if (customError && customError.code !== 'PGRST116') {
         console.error('Error fetching customizations:', customError);
@@ -126,13 +128,16 @@ const ClientMachines = () => {
 
       if (!clientAccess) throw new Error('Cliente não encontrado');
 
-      // Salvar ou atualizar customização usando query raw
+      // Salvar ou atualizar customização diretamente na tabela
       const { error } = await supabase
-        .rpc('upsert_machine_customization', {
-          p_machine_id: machineId,
-          p_client_id: clientAccess.client_id,
-          p_custom_name: editForm.custom_name,
-          p_custom_location: editForm.custom_location
+        .from('machine_customizations')
+        .upsert({
+          machine_id: machineId,
+          client_id: clientAccess.client_id,
+          custom_name: editForm.custom_name,
+          custom_location: editForm.custom_location
+        }, {
+          onConflict: 'machine_id,client_id'
         });
 
       if (error) throw error;
