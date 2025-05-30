@@ -200,7 +200,7 @@ const SalesImportPanel = ({ onSalesProcessed }: SalesImportPanelProps) => {
   return (
     <div className="space-y-4">
       {/* File Upload Area */}
-      <Card className="shadow-md rounded-lg border bg-card border-l-4" style={{ borderLeftColor: '#115464' }}>
+      <Card className="shadow-md rounded-lg border bg-card">
         <CardHeader>
           <CardTitle className="text-lg">Importar Dados de Vendas (Otimizado)</CardTitle>
         </CardHeader>
