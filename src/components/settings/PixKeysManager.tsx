@@ -33,6 +33,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Trash2, Check, Plus } from "lucide-react";
 import { Switch } from "@/components/ui/switch";
 import { usePixKeysManager } from "@/hooks/usePixKeysManager";
+import { CreatePixKeyData } from "@/services/pixKeys.service";
 
 const pixKeySchema = z.object({
   name: z.string().min(2, {
@@ -74,13 +75,13 @@ export function PixKeysManager({ userId }: PixKeysManagerProps) {
   const onSubmit = async (values: PixKeyFormValues) => {
     try {
       if (isEditing) {
-        // Ensure all required fields are provided for update - convert to CreatePixKeyData format
-        const updateData = {
-          name: values.name || "",
-          key: values.key || "",
-          type: values.type || "CPF" as const,
-          owner_name: values.owner_name || "",
-          is_default: values.is_default || false,
+        // Create a properly typed update object
+        const updateData: Partial<CreatePixKeyData> = {
+          name: values.name,
+          key: values.key,
+          type: values.type,
+          owner_name: values.owner_name,
+          is_default: values.is_default,
         };
         await updatePixKey(isEditing, updateData);
         setIsEditing(null);
