@@ -5,6 +5,15 @@ import { useFormContext } from "react-hook-form";
 import { MachineFormValues } from "./MachineFormSchema";
 import { MachineStatus } from "@/types/machine.types";
 
+const STATUS_OPTIONS = [
+  { value: "ACTIVE", label: "Operando" },
+  { value: "MAINTENANCE", label: "Em Manutenção" },
+  { value: "INACTIVE", label: "Parada" },
+  { value: "STOCK", label: "Em Estoque" },
+  { value: "TRANSIT", label: "Em Trânsito" },
+  { value: "BLOCKED", label: "Bloqueada" }
+];
+
 export const MachineStatusField = () => {
   const form = useFormContext<MachineFormValues>();
   
@@ -19,7 +28,7 @@ export const MachineStatusField = () => {
             <FormLabel>Status</FormLabel>
             <Select
               onValueChange={field.onChange}
-              defaultValue={field.value}
+              value={field.value || "ACTIVE"}
             >
               <FormControl>
                 <SelectTrigger>
@@ -27,12 +36,18 @@ export const MachineStatusField = () => {
                 </SelectTrigger>
               </FormControl>
               <SelectContent>
-                <SelectItem value="ACTIVE">Operando</SelectItem>
-                <SelectItem value="MAINTENANCE">Em Manutenção</SelectItem>
-                <SelectItem value="INACTIVE">Parada</SelectItem>
-                <SelectItem value="STOCK">Em Estoque</SelectItem>
-                <SelectItem value="TRANSIT">Em Trânsito</SelectItem>
-                <SelectItem value="BLOCKED">Bloqueada</SelectItem>
+                {STATUS_OPTIONS.map((status) => {
+                  // Ensure all status values are valid
+                  if (!status.value || status.value.trim() === '') {
+                    console.error('Status with empty value:', status);
+                    return null;
+                  }
+                  return (
+                    <SelectItem key={status.value} value={status.value}>
+                      {status.label}
+                    </SelectItem>
+                  );
+                })}
               </SelectContent>
             </Select>
             <FormMessage />

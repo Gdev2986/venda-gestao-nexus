@@ -21,7 +21,10 @@ export const MachineModelField = () => {
         return (
           <FormItem>
             <FormLabel>Modelo</FormLabel>
-            <Select onValueChange={field.onChange} defaultValue={field.value}>
+            <Select 
+              onValueChange={field.onChange} 
+              value={field.value || ""}
+            >
               <FormControl>
                 <SelectTrigger>
                   <SelectValue placeholder="Selecione o modelo" />
@@ -30,7 +33,8 @@ export const MachineModelField = () => {
               <SelectContent>
                 {MACHINE_MODELS.map((model) => {
                   console.log('Rendering model:', model.value, model.label);
-                  if (!model.value || model.value === '') {
+                  // Only render if value is not empty and is a valid string
+                  if (!model.value || model.value.trim() === '') {
                     console.error('Model with empty value:', model);
                     return null;
                   }

@@ -24,7 +24,7 @@ export const MachineClientField = ({ clients }: MachineClientFieldProps) => {
             <FormLabel>Cliente</FormLabel>
             <Select
               onValueChange={field.onChange}
-              defaultValue={field.value}
+              value={field.value || ""}
             >
               <FormControl>
                 <SelectTrigger>
@@ -35,8 +35,9 @@ export const MachineClientField = ({ clients }: MachineClientFieldProps) => {
                 <SelectItem value="stock">Nenhum (estoque)</SelectItem>
                 {clients?.map((client: any) => {
                   console.log('Rendering client:', client.id, client.business_name);
-                  if (!client.id || client.id === '') {
-                    console.error('Client with empty or undefined ID:', client);
+                  // Only render if client has valid id and name
+                  if (!client.id || client.id.trim() === '' || !client.business_name) {
+                    console.error('Client with empty or invalid data:', client);
                     return null;
                   }
                   return (
