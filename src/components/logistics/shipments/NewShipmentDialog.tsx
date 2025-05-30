@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -22,7 +22,7 @@ interface NewShipmentDialogProps {
 
 const NewShipmentDialog = ({ open, onOpenChange }: NewShipmentDialogProps) => {
   const { createShipment } = useShipments();
-  const { clients, loading: clientsLoading } = useClients();
+  const { clients, loading: clientsLoading, refreshClients } = useClients();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [deliveryDate, setDeliveryDate] = useState<Date | undefined>(undefined);
   
@@ -32,6 +32,13 @@ const NewShipmentDialog = ({ open, onOpenChange }: NewShipmentDialogProps) => {
     item_description: '',
     notes: ''
   });
+
+  // Carregar clientes quando o diálogo abrir
+  useEffect(() => {
+    if (open && (!clients || clients.length === 0)) {
+      refreshClients();
+    }
+  }, [open, clients, refreshClients]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -105,12 +112,14 @@ const NewShipmentDialog = ({ open, onOpenChange }: NewShipmentDialogProps) => {
                     <SelectContent>
                       {clientsLoading ? (
                         <SelectItem value="loading" disabled>Carregando clientes...</SelectItem>
-                      ) : (
-                        clients?.map((client) => (
+                      ) : clients && clients.length > 0 ? (
+                        clients.map((client) => (
                           <SelectItem key={client.id} value={client.id}>
                             {client.business_name}
                           </SelectItem>
                         ))
+                      ) : (
+                        <SelectItem value="no-clients" disabled>Nenhum cliente encontrado</SelectItem>
                       )}
                     </SelectContent>
                   </Select>

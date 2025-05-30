@@ -5,6 +5,7 @@ export interface Shipment {
   item_type: 'machine' | 'bobina' | 'other';
   item_description: string;
   status: 'pending' | 'in_transit' | 'delivered' | 'cancelled';
+  delivery_date?: string;
   notes?: string;
   created_by: string;
   created_at: string;
