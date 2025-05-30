@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
@@ -7,7 +6,6 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
-import { useClients } from "@/hooks/use-clients";
 import { updateMachine } from "@/services/machine.service";
 import { Machine, MachineStatus } from "@/types/machine.types";
 import { Badge } from "@/components/ui/badge";
@@ -16,6 +14,7 @@ import { MachineTransferModal } from '@/components/machines/MachineTransferModal
 import { MachineTransferHistory } from '@/components/machines/MachineTransferHistory';
 import { MachineClientSuggestions } from './MachineClientSuggestions';
 import { ArrowRightLeft } from 'lucide-react';
+import { supabase } from "@/integrations/supabase/client";
 
 export interface MachineDetailsDialogProps {
   machine: Machine | null;
@@ -33,7 +32,6 @@ export const MachineDetailsDialog: React.FC<MachineDetailsDialogProps> = ({
   mode = 'view'
 }) => {
   const { toast } = useToast();
-  const { clients } = useClients();
   
   const [formData, setFormData] = useState({
     serial_number: "",
@@ -43,9 +41,39 @@ export const MachineDetailsDialog: React.FC<MachineDetailsDialogProps> = ({
     notes: "",
   });
   
+  const [clients, setClients] = useState<any[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isTransferModalOpen, setIsTransferModalOpen] = useState(false);
   const [showSuggestions, setShowSuggestions] = useState(false);
+  const [isLoadingClients, setIsLoadingClients] = useState(false);
+
+  // Buscar clientes ativos
+  const fetchClients = async () => {
+    setIsLoadingClients(true);
+    try {
+      const { data, error } = await supabase
+        .from('clients')
+        .select('id, business_name, contact_name, status')
+        .eq('status', 'ACTIVE')
+        .order('business_name', { ascending: true });
+
+      if (error) {
+        console.error("Error fetching clients:", error);
+        throw error;
+      }
+
+      setClients(data || []);
+    } catch (error) {
+      console.error("Error fetching clients:", error);
+      toast({
+        variant: "destructive",
+        title: "Erro",
+        description: "Não foi possível carregar a lista de clientes.",
+      });
+    } finally {
+      setIsLoadingClients(false);
+    }
+  };
 
   useEffect(() => {
     if (machine) {
@@ -61,6 +89,12 @@ export const MachineDetailsDialog: React.FC<MachineDetailsDialogProps> = ({
       setShowSuggestions(!machine.client_id);
     }
   }, [machine]);
+
+  useEffect(() => {
+    if (open) {
+      fetchClients();
+    }
+  }, [open]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -200,7 +234,6 @@ export const MachineDetailsDialog: React.FC<MachineDetailsDialogProps> = ({
             </div>
           ) : (
             <form onSubmit={handleSubmit} className="space-y-4">
-              {/* Condicional: só permite editar série/modelo se for estoque ou sem cliente */}
               <div>
                 <Label htmlFor="serial_number">Número de Série *</Label>
                 <Input
@@ -255,26 +288,32 @@ export const MachineDetailsDialog: React.FC<MachineDetailsDialogProps> = ({
                 </Select>
               </div>
 
-              {/* Client assignment section */}
+              {/* Client assignment section - FIXED */}
               {isInStock ? (
                 <div>
                   <Label htmlFor="client">Cliente</Label>
                   <Select
                     value={formData.client_id}
                     onValueChange={(value) => setFormData({ ...formData, client_id: value === "none" ? "" : value })}
+                    disabled={isLoadingClients}
                   >
                     <SelectTrigger>
-                      <SelectValue placeholder="Selecione um cliente" />
+                      <SelectValue placeholder={isLoadingClients ? "Carregando clientes..." : "Selecione um cliente"} />
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="none">Manter em estoque</SelectItem>
-                      {clients?.filter(c => c.status === 'ACTIVE').map((client) => (
+                      {clients?.map((client) => (
                         <SelectItem key={client.id} value={client.id}>
                           {client.business_name || client.contact_name}
                         </SelectItem>
                       ))}
                     </SelectContent>
                   </Select>
+                  {isLoadingClients && (
+                    <p className="text-xs text-muted-foreground mt-1">
+                      Carregando lista de clientes...
+                    </p>
+                  )}
                 </div>
               ) : hasClient ? (
                 <div className="space-y-2">

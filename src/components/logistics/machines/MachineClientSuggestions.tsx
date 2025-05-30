@@ -6,6 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { Lightbulb, User } from "lucide-react";
 import { useMachines } from "@/hooks/use-machines";
 import { useToast } from "@/hooks/use-toast";
+import { supabase } from "@/integrations/supabase/client";
 
 interface ClientSuggestion {
   suggested_client_id: string;
@@ -35,10 +36,20 @@ export const MachineClientSuggestions: React.FC<MachineClientSuggestionsProps> =
   const loadSuggestions = async () => {
     setIsLoading(true);
     try {
-      const data = await getClientSuggestions(machineId);
-      setSuggestions(data);
+      // Usar a função RPC do Supabase para buscar sugestões
+      const { data, error } = await supabase.rpc('suggest_client_for_machine', {
+        p_machine_id: machineId
+      });
+
+      if (error) {
+        console.error('Error loading suggestions:', error);
+        setSuggestions([]);
+      } else {
+        setSuggestions(data || []);
+      }
     } catch (error) {
       console.error('Error loading suggestions:', error);
+      setSuggestions([]);
     } finally {
       setIsLoading(false);
     }
@@ -47,17 +58,24 @@ export const MachineClientSuggestions: React.FC<MachineClientSuggestionsProps> =
   const handleAssignClient = async (clientId: string, clientName: string) => {
     setIsAssigning(clientId);
     try {
-      const success = await updateMachineClient(machineId, clientId);
-      if (success) {
-        toast({
-          title: "Cliente vinculado",
-          description: `Máquina vinculada ao cliente ${clientName} com sucesso`
-        });
-        onClientAssigned();
-      } else {
-        throw new Error("Falha ao vincular cliente");
-      }
+      // Atualizar a máquina com o novo cliente usando Supabase diretamente
+      const { error } = await supabase
+        .from('machines')
+        .update({ 
+          client_id: clientId,
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', machineId);
+
+      if (error) throw error;
+      
+      toast({
+        title: "Cliente vinculado",
+        description: `Máquina vinculada ao cliente ${clientName} com sucesso`
+      });
+      onClientAssigned();
     } catch (error) {
+      console.error('Error assigning client:', error);
       toast({
         title: "Erro",
         description: "Não foi possível vincular o cliente à máquina",
