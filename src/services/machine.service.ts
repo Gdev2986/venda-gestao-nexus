@@ -1,3 +1,4 @@
+
 import { supabase } from "@/integrations/supabase/client";
 import { Machine, MachineStatus, MachineTransferParams } from "@/types/machine.types";
 
@@ -160,15 +161,6 @@ export const deleteMachine = async (id: string): Promise<void> => {
     throw error;
   }
 };
-
-export interface MachineTransferParams {
-  machine_id: string;
-  from_client_id: string | null;
-  to_client_id: string;
-  cutoff_date: string;
-  created_by: string | null;
-  notes?: string;
-}
 
 export const transferMachine = async (transferData: MachineTransferParams): Promise<void> => {
   try {

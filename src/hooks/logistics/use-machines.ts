@@ -1,6 +1,6 @@
 
 import { useState, useEffect } from 'react';
-import { Machine, MachineStatus } from '@/types/machine.types';
+import { Machine, MachineStatus, MachineTransferParams } from '@/types/machine.types';
 import {
   getMachines,
   getMachinesByStatus,
@@ -93,13 +93,9 @@ export const useMachines = (options?: { enableRealtime?: boolean; initialFetch?:
     }
   };
 
-  const transferMachineHandler = async (machineId: string, newClientId: string | null) => {
+  const transferMachineHandler = async (transferData: MachineTransferParams) => {
     try {
-      await transferMachine({
-        machine_id: machineId,
-        to_client_id: newClientId || '',
-        cutoff_date: new Date().toISOString()
-      });
+      await transferMachine(transferData);
       await fetchMachines(); // Refresh after transfer
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to transfer machine');
