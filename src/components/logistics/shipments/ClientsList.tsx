@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { DataTable } from "@/components/ui/data-table";
 import { Input } from "@/components/ui/input";
@@ -8,6 +7,7 @@ import { ColumnDef } from "@tanstack/react-table";
 import { Search, MapPin, Phone, Mail, Package } from "lucide-react";
 import { useClients } from "@/hooks/use-clients";
 import { useShipments } from "@/hooks/use-shipments";
+import ClientShipmentHistoryDialog from "./ClientShipmentHistoryDialog";
 
 interface ClientWithShipmentCount {
   id: string;
@@ -25,6 +25,8 @@ interface ClientWithShipmentCount {
 
 const ClientsList = () => {
   const [searchTerm, setSearchTerm] = useState("");
+  const [selectedClient, setSelectedClient] = useState<{ id: string; name: string } | null>(null);
+  const [showHistory, setShowHistory] = useState(false);
   const { clients, loading: clientsLoading, refreshClients } = useClients();
   const { shipments, isLoading: shipmentsLoading } = useShipments();
 
@@ -36,6 +38,11 @@ const ClientsList = () => {
       shipmentCount
     };
   });
+
+  const handleViewHistory = (clientId: string, clientName: string) => {
+    setSelectedClient({ id: clientId, name: clientName });
+    setShowHistory(true);
+  };
 
   const columns: ColumnDef<ClientWithShipmentCount>[] = [
     {
@@ -130,7 +137,11 @@ const ClientsList = () => {
       id: "actions",
       header: "Ações",
       cell: ({ row }) => (
-        <Button variant="outline" size="sm">
+        <Button 
+          variant="outline" 
+          size="sm"
+          onClick={() => handleViewHistory(row.original.id, row.original.business_name)}
+        >
           Ver Histórico
         </Button>
       ),
@@ -202,6 +213,16 @@ const ClientsList = () => {
             </Button>
           )}
         </div>
+      )}
+
+      {/* History Dialog */}
+      {selectedClient && (
+        <ClientShipmentHistoryDialog
+          open={showHistory}
+          onOpenChange={setShowHistory}
+          clientId={selectedClient.id}
+          clientName={selectedClient.name}
+        />
       )}
     </div>
   );
