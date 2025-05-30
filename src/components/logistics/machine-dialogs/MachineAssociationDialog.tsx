@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { z } from "zod";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -53,6 +53,7 @@ export function MachineAssociationDialog({
 }: MachineAssociationDialogProps) {
   const [clients, setClients] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(false);
+  const [isLoadingClients, setIsLoadingClients] = useState(false);
   const { toast } = useToast();
 
   const form = useForm<FormValues>({
@@ -64,21 +65,25 @@ export function MachineAssociationDialog({
   });
 
   // Fetch clients when modal opens
-  useState(() => {
+  useEffect(() => {
     if (isOpen && machine) {
       fetchClients();
     }
-  });
+  }, [isOpen, machine]);
 
   const fetchClients = async () => {
+    setIsLoadingClients(true);
     try {
-      // In a real implementation, you would fetch actual clients from Supabase
-      // For now, we'll use mock data
-      setClients([
-        { id: "1", business_name: "Supermercado ABC" },
-        { id: "2", business_name: "Farmácia Central" },
-        { id: "3", business_name: "Padaria Sabor" },
-      ]);
+      const { data, error } = await supabase
+        .from('clients')
+        .select('id, business_name, status')
+        .eq('status', 'ACTIVE')
+        .order('business_name', { ascending: true });
+
+      if (error) throw error;
+
+      console.log("Fetched clients:", data);
+      setClients(data || []);
     } catch (error) {
       console.error("Error fetching clients:", error);
       toast({
@@ -86,6 +91,8 @@ export function MachineAssociationDialog({
         title: "Erro",
         description: "Não foi possível carregar a lista de clientes.",
       });
+    } finally {
+      setIsLoadingClients(false);
     }
   };
 
@@ -118,19 +125,14 @@ export function MachineAssociationDialog({
 
       if (transferError) throw transferError;
       
-      // Create a separate location record if needed
-      if (values.location) {
-        // In a real app, you would have a proper location table
-        // or store location in machine_transfers directly if supported by the schema
-        console.log("Location information:", values.location);
-      }
-
       toast({
         title: "Máquina associada",
         description: "A máquina foi associada ao cliente com sucesso.",
       });
 
+      form.reset();
       onAssociated();
+      onClose();
     } catch (error) {
       console.error("Error associating machine:", error);
       toast({
@@ -149,7 +151,7 @@ export function MachineAssociationDialog({
         <DialogHeader>
           <DialogTitle>Associar Máquina ao Cliente</DialogTitle>
           <DialogDescription>
-            {machine && `Serial: ${machine.serialNumber} - Modelo: ${machine.model}`}
+            {machine && `Serial: ${machine.serial_number || machine.serialNumber} - Modelo: ${machine.model}`}
           </DialogDescription>
         </DialogHeader>
 
@@ -164,18 +166,25 @@ export function MachineAssociationDialog({
                   <Select
                     onValueChange={field.onChange}
                     defaultValue={field.value}
+                    disabled={isLoadingClients}
                   >
                     <FormControl>
                       <SelectTrigger>
-                        <SelectValue placeholder="Selecione o cliente" />
+                        <SelectValue placeholder={isLoadingClients ? "Carregando..." : "Selecione o cliente"} />
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
-                      {clients.map((client) => (
-                        <SelectItem key={client.id} value={client.id}>
-                          {client.business_name}
+                      {clients.length === 0 && !isLoadingClients ? (
+                        <SelectItem value="no-clients" disabled>
+                          Nenhum cliente ativo encontrado
                         </SelectItem>
-                      ))}
+                      ) : (
+                        clients.map((client) => (
+                          <SelectItem key={client.id} value={client.id}>
+                            {client.business_name}
+                          </SelectItem>
+                        ))
+                      )}
                     </SelectContent>
                   </Select>
                   <FormMessage />
@@ -201,7 +210,7 @@ export function MachineAssociationDialog({
               <Button variant="outline" type="button" onClick={onClose}>
                 Cancelar
               </Button>
-              <Button type="submit" disabled={isLoading}>
+              <Button type="submit" disabled={isLoading || clients.length === 0}>
                 {isLoading ? "Associando..." : "Associar Máquina"}
               </Button>
             </DialogFooter>

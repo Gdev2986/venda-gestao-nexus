@@ -26,74 +26,59 @@ export const useClients = () => {
   const [error, setError] = useState<Error | null>(null);
   const { toast } = useToast();
 
-  // Fetch all clients from the database
+  // Fetch all clients from the database with extended information
   const refreshClients = useCallback(async () => {
     setLoading(true);
     setIsLoading(true); // Keep backward compatibility
     setError(null);
     try {
-      const { data, error } = await supabase
+      console.log("Fetching clients from database...");
+      
+      // Fetch clients with their related information
+      const { data: clientsData, error: clientsError } = await supabase
         .from('clients')
-        .select('*')
+        .select(`
+          *,
+          client_fee_plans!inner(
+            fee_plan:fee_plans(name)
+          )
+        `)
         .order('business_name', { ascending: true });
 
-      if (error) throw new Error(error.message);
-      
-      // For development, let's provide mock data if no data is returned
-      const clientData = data || [
-        {
-          id: "1",
-          business_name: "Super Mercado Silva",
-          contact_name: "João Silva",
-          email: "joao@mercadosilva.com",
-          phone: "(11) 98765-4321",
-          address: "Rua das Flores, 123",
-          city: "São Paulo",
-          state: "SP",
-          zip: "01310-100",
-          partner_id: "1",
-          document: "12.345.678/0001-90",
-          status: "active"
-        },
-        {
-          id: "2",
-          business_name: "Padaria Central",
-          contact_name: "Maria Oliveira",
-          email: "maria@padariacentral.com",
-          phone: "(11) 91234-5678",
-          address: "Av. Brasil, 500",
-          city: "Rio de Janeiro",
-          state: "RJ",
-          zip: "20940-070",
-          partner_id: "2",
-          document: "98.765.432/0001-10",
-          status: "active"
-        },
-        {
-          id: "3",
-          business_name: "Lanchonete Boa Vista",
-          contact_name: "Pedro Santos",
-          email: "pedro@boavista.com",
-          phone: "(31) 99876-5432",
-          address: "Rua dos Pássaros, 45",
-          city: "Belo Horizonte",
-          state: "MG",
-          zip: "30140-072",
-          partner_id: "3",
-          document: "45.678.901/0001-23",
-          status: "inactive"
-        }
+      if (clientsError) throw new Error(clientsError.message);
+
+      // Also fetch clients without fee plans
+      const { data: clientsWithoutPlans, error: clientsWithoutPlansError } = await supabase
+        .from('clients')
+        .select('*')
+        .is('fee_plan_id', null)
+        .order('business_name', { ascending: true });
+
+      if (clientsWithoutPlansError) throw new Error(clientsWithoutPlansError.message);
+
+      // Combine both results
+      const allClients = [
+        ...(clientsData || []),
+        ...(clientsWithoutPlans || [])
       ];
+
+      console.log("Fetched clients:", allClients);
       
-      setClients(clientData as Client[]);
-      setFilteredClients(clientData as Client[]);
+      if (allClients && allClients.length > 0) {
+        setClients(allClients as Client[]);
+        setFilteredClients(allClients as Client[]);
+      } else {
+        console.log("No clients found in database");
+        setClients([]);
+        setFilteredClients([]);
+      }
     } catch (err) {
       console.error("Error fetching clients:", err);
       setError(err instanceof Error ? err : new Error('Unknown error'));
       toast({
         variant: "destructive",
-        title: "Error",
-        description: "Failed to load clients.",
+        title: "Erro",
+        description: "Falha ao carregar clientes.",
       });
     } finally {
       setLoading(false);
@@ -109,8 +94,8 @@ export const useClients = () => {
       const lowerSearchTerm = searchTerm.toLowerCase();
       filtered = filtered.filter(client => 
         client.business_name.toLowerCase().includes(lowerSearchTerm) ||
-        client.contact_name.toLowerCase().includes(lowerSearchTerm) ||
-        client.email.toLowerCase().includes(lowerSearchTerm) ||
+        client.contact_name?.toLowerCase().includes(lowerSearchTerm) ||
+        client.email?.toLowerCase().includes(lowerSearchTerm) ||
         (client.document && client.document.toLowerCase().includes(lowerSearchTerm))
       );
     }
@@ -125,8 +110,7 @@ export const useClients = () => {
   // Add a new client
   const addClient = async (clientData: ClientCreate): Promise<Client | false> => {
     try {
-      // Agora não precisamos gerar explicitamente o ID 
-      // O banco de dados vai gerar automaticamente usando gen_random_uuid()
+      console.log("Adding new client:", clientData);
       
       // Insert into Supabase 
       const { data, error } = await supabase
@@ -142,7 +126,7 @@ export const useClients = () => {
           zip: clientData.zip,
           document: clientData.document,
           partner_id: clientData.partner_id,
-          status: 'active'
+          status: 'ACTIVE'
         })
         .select()
         .single();
@@ -159,7 +143,7 @@ export const useClients = () => {
       
       toast({
         title: "Cliente adicionado",
-        description: "O cliente foi adicionado com sucesso e um usuário foi criado.",
+        description: "O cliente foi adicionado com sucesso.",
       });
       
       return newClient;
@@ -195,13 +179,18 @@ export const useClients = () => {
       setClients(updatedClients);
       setFilteredClients(updatedClients.filter(client => filteredClients.some(fc => fc.id === client.id)));
       
+      toast({
+        title: "Cliente atualizado",
+        description: "Os dados do cliente foram atualizados com sucesso."
+      });
+      
       return true;
     } catch (err) {
       console.error("Error updating client:", err);
       toast({
         variant: "destructive",
-        title: "Error",
-        description: "Failed to update client."
+        title: "Erro",
+        description: "Falha ao atualizar cliente."
       });
       return false;
     }
@@ -223,13 +212,18 @@ export const useClients = () => {
       setClients(updatedClients);
       setFilteredClients(filteredClients.filter(client => client.id !== id));
       
+      toast({
+        title: "Cliente excluído",
+        description: "O cliente foi excluído com sucesso."
+      });
+      
       return true;
     } catch (err) {
       console.error("Error deleting client:", err);
       toast({
         variant: "destructive",
-        title: "Error",
-        description: "Failed to delete client."
+        title: "Erro",
+        description: "Falha ao excluir cliente."
       });
       return false;
     }

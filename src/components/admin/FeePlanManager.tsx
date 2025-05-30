@@ -21,21 +21,28 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
-import { FeePlansService, FeePlan, FeePlanRate } from "@/services/fee-plans.service";
-import { Plus, Percent, Edit, Trash2 } from "lucide-react";
+import { useAuth } from "@/hooks/use-auth";
+import { FeePlansService, FeePlan } from "@/services/fee-plans.service";
+import { supabase } from "@/integrations/supabase/client";
+import { Plus, Percent, Users, Link } from "lucide-react";
 
 export const FeePlanManager: React.FC = () => {
   const [feePlans, setFeePlans] = useState<FeePlan[]>([]);
+  const [clients, setClients] = useState<any[]>([]);
   const [selectedPlan, setSelectedPlan] = useState<FeePlan | null>(null);
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [isRateDialogOpen, setIsRateDialogOpen] = useState(false);
+  const [isClientLinkDialogOpen, setIsClientLinkDialogOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [newPlanName, setNewPlanName] = useState("");
   const [newPlanDescription, setNewPlanDescription] = useState("");
   const [newRatePaymentMethod, setNewRatePaymentMethod] = useState("");
   const [newRateInstallments, setNewRateInstallments] = useState(1);
   const [newRatePercentage, setNewRatePercentage] = useState(0);
+  const [selectedClientId, setSelectedClientId] = useState("");
+  const [linkNotes, setLinkNotes] = useState("");
   const { toast } = useToast();
+  const { user } = useAuth();
 
   const fetchFeePlans = async () => {
     try {
@@ -53,8 +60,29 @@ export const FeePlanManager: React.FC = () => {
     }
   };
 
+  const fetchClients = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('clients')
+        .select('id, business_name, status')
+        .eq('status', 'ACTIVE')
+        .order('business_name', { ascending: true });
+
+      if (error) throw error;
+      setClients(data || []);
+    } catch (error) {
+      console.error('Error fetching clients:', error);
+      toast({
+        title: "Erro",
+        description: "Erro ao carregar clientes",
+        variant: "destructive"
+      });
+    }
+  };
+
   useEffect(() => {
     fetchFeePlans();
+    fetchClients();
   }, []);
 
   const handleCreatePlan = async () => {
@@ -102,6 +130,33 @@ export const FeePlanManager: React.FC = () => {
       toast({
         title: "Erro",
         description: "Erro ao adicionar taxa",
+        variant: "destructive"
+      });
+    }
+  };
+
+  const handleLinkClient = async () => {
+    if (!selectedPlan || !selectedClientId || !user?.id) return;
+
+    try {
+      await FeePlansService.assignFeePlanToClient(
+        selectedClientId,
+        selectedPlan.id,
+        user.id,
+        linkNotes.trim() || undefined
+      );
+      toast({
+        title: "Cliente vinculado",
+        description: "Cliente vinculado ao plano com sucesso"
+      });
+      setIsClientLinkDialogOpen(false);
+      setSelectedClientId("");
+      setLinkNotes("");
+    } catch (error) {
+      console.error('Error linking client:', error);
+      toast({
+        title: "Erro",
+        description: "Erro ao vincular cliente ao plano",
         variant: "destructive"
       });
     }
@@ -167,16 +222,30 @@ export const FeePlanManager: React.FC = () => {
               <CardHeader>
                 <CardTitle className="flex items-center justify-between">
                   {plan.name}
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => {
-                      setSelectedPlan(plan);
-                      setIsRateDialogOpen(true);
-                    }}
-                  >
-                    <Plus className="h-4 w-4" />
-                  </Button>
+                  <div className="flex gap-1">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => {
+                        setSelectedPlan(plan);
+                        setIsClientLinkDialogOpen(true);
+                      }}
+                      title="Vincular Cliente"
+                    >
+                      <Link className="h-4 w-4" />
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => {
+                        setSelectedPlan(plan);
+                        setIsRateDialogOpen(true);
+                      }}
+                      title="Adicionar Taxa"
+                    >
+                      <Plus className="h-4 w-4" />
+                    </Button>
+                  </div>
                 </CardTitle>
                 {plan.description && (
                   <p className="text-sm text-muted-foreground">{plan.description}</p>
@@ -212,6 +281,7 @@ export const FeePlanManager: React.FC = () => {
         </div>
       )}
 
+      {/* Dialog para adicionar taxa */}
       <Dialog open={isRateDialogOpen} onOpenChange={setIsRateDialogOpen}>
         <DialogContent>
           <DialogHeader>
@@ -259,6 +329,47 @@ export const FeePlanManager: React.FC = () => {
               disabled={!newRatePaymentMethod || newRatePercentage <= 0}
             >
               Adicionar Taxa
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Dialog para vincular cliente */}
+      <Dialog open={isClientLinkDialogOpen} onOpenChange={setIsClientLinkDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Vincular Cliente ao Plano: {selectedPlan?.name}</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div>
+              <Label htmlFor="client-select">Cliente</Label>
+              <Select value={selectedClientId} onValueChange={setSelectedClientId}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Selecione o cliente" />
+                </SelectTrigger>
+                <SelectContent>
+                  {clients.map((client) => (
+                    <SelectItem key={client.id} value={client.id}>
+                      {client.business_name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div>
+              <Label htmlFor="link-notes">Observações</Label>
+              <Textarea
+                id="link-notes"
+                value={linkNotes}
+                onChange={(e) => setLinkNotes(e.target.value)}
+                placeholder="Observações sobre a vinculação..."
+              />
+            </div>
+            <Button 
+              onClick={handleLinkClient} 
+              disabled={!selectedClientId}
+            >
+              Vincular Cliente
             </Button>
           </div>
         </DialogContent>
