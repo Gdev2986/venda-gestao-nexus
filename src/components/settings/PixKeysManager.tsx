@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import * as z from "zod";
@@ -32,8 +32,7 @@ import { useToast } from "@/hooks/use-toast";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Trash2, Check, Plus } from "lucide-react";
 import { Switch } from "@/components/ui/switch";
-import { PixKey } from "@/types";
-import { mapPixKeyFromDb, createDefaultPixKeyProperties } from "@/utils/settings-utils";
+import { usePixKeysManager } from "@/hooks/usePixKeysManager";
 
 const pixKeySchema = z.object({
   name: z.string().min(2, {
@@ -42,7 +41,10 @@ const pixKeySchema = z.object({
   key: z.string().min(2, {
     message: "Chave PIX inválida.",
   }),
-  type: z.enum(["CPF", "EMAIL", "PHONE", "RANDOM"]),
+  type: z.enum(["CPF", "CNPJ", "EMAIL", "PHONE", "RANDOM"]),
+  owner_name: z.string().min(2, {
+    message: "Nome do titular é obrigatório.",
+  }),
   is_default: z.boolean().default(false),
 });
 
@@ -53,8 +55,7 @@ interface PixKeysManagerProps {
 }
 
 export function PixKeysManager({ userId }: PixKeysManagerProps) {
-  const [pixKeys, setPixKeys] = useState<PixKey[]>([]);
-  const [isLoading, setIsLoading] = useState<boolean>(true);
+  const { pixKeys, isLoading, createPixKey, updatePixKey, deletePixKey, setDefaultPixKey } = usePixKeysManager();
   const [isEditing, setIsEditing] = useState<string | null>(null);
   const { toast } = useToast();
 
@@ -65,128 +66,33 @@ export function PixKeysManager({ userId }: PixKeysManagerProps) {
       name: "",
       key: "",
       type: "CPF",
+      owner_name: "",
       is_default: false,
     },
   });
 
-  // Mock function to fetch PIX keys from database
-  const fetchPixKeys = async () => {
-    setIsLoading(true);
-    try {
-      // Simulate API call
-      await new Promise((resolve) => setTimeout(resolve, 500));
-      
-      // Mock data
-      const mockData = [
-        mapPixKeyFromDb({
-          id: '1',
-          user_id: userId,
-          type: 'CPF',
-          key: '123.456.789-00',
-          name: 'Meu CPF',
-          is_default: true,
-          created_at: new Date().toISOString(),
-          updated_at: new Date().toISOString()
-        }),
-        mapPixKeyFromDb({
-          id: '2',
-          user_id: userId,
-          type: 'EMAIL',
-          key: 'email@example.com',
-          name: 'Meu Email',
-          is_default: false,
-          created_at: new Date().toISOString(),
-          updated_at: new Date().toISOString()
-        })
-      ];
-
-      setPixKeys(mockData);
-    } catch (error) {
-      console.error("Error fetching PIX keys:", error);
-      toast({
-        title: "Erro",
-        description: "Não foi possível carregar as chaves PIX.",
-        variant: "destructive",
-      });
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    fetchPixKeys();
-  }, [userId]);
-
   const onSubmit = async (values: PixKeyFormValues) => {
     try {
-      setIsLoading(true);
-      
-      // If editing existing key
       if (isEditing) {
-        const updatedKeys = pixKeys.map(key => {
-          if (key.id === isEditing) {
-            return { 
-              ...key, 
-              name: values.name, 
-              key: values.key, 
-              type: values.type as any, 
-              is_default: values.is_default 
-            };
-          }
-          // If this key is set to default, remove default from others
-          if (values.is_default && key.id !== isEditing) {
-            return { ...key, is_default: false };
-          }
-          return key;
-        });
-        
-        setPixKeys(updatedKeys);
+        await updatePixKey(isEditing, values);
         setIsEditing(null);
-        toast({
-          title: "Chave PIX atualizada",
-          description: "A chave PIX foi atualizada com sucesso.",
-        });
       } else {
-        // Create new PIX key
-        const newId = `new-${Date.now()}`;
-        const newKey: PixKey = {
-          ...createDefaultPixKeyProperties(newId, userId),
-          name: values.name,
-          key: values.key,
-          type: values.type as any,
-          is_default: values.is_default
-        };
-        
-        // If new key is default, remove default from others
-        const updatedKeys = pixKeys.map(key => 
-          values.is_default ? { ...key, is_default: false } : key
-        );
-        
-        setPixKeys([...updatedKeys, newKey]);
-        toast({
-          title: "Chave PIX adicionada",
-          description: "A chave PIX foi adicionada com sucesso.",
-        });
+        await createPixKey(values);
       }
       
       form.reset();
     } catch (error) {
+      // Error is already handled in the hook with toast
       console.error("Error saving PIX key:", error);
-      toast({
-        title: "Erro ao salvar chave PIX",
-        description: "Não foi possível salvar a chave PIX.",
-        variant: "destructive"
-      });
-    } finally {
-      setIsLoading(false);
     }
   };
 
-  const handleEdit = (key: PixKey) => {
+  const handleEdit = (key: any) => {
     form.reset({
       name: key.name,
       key: key.key,
       type: key.type as any,
+      owner_name: key.owner_name || key.name,
       is_default: key.is_default,
     });
     setIsEditing(key.id);
@@ -194,57 +100,19 @@ export function PixKeysManager({ userId }: PixKeysManagerProps) {
 
   const handleDelete = async (id: string) => {
     try {
-      setIsLoading(true);
-      
-      const filteredKeys = pixKeys.filter(key => key.id !== id);
-      setPixKeys(filteredKeys);
-      
-      // If editing this key, cancel edit
-      if (isEditing === id) {
-        setIsEditing(null);
-        form.reset();
-      }
-      
-      toast({
-        title: "Chave PIX removida",
-        description: "A chave PIX foi removida com sucesso.",
-      });
+      await deletePixKey(id);
     } catch (error) {
-      console.error("Error removing PIX key:", error);
-      toast({
-        title: "Erro",
-        description: "Não foi possível remover a chave PIX.",
-        variant: "destructive",
-      });
-    } finally {
-      setIsLoading(false);
+      // Error is already handled in the hook with toast
+      console.error("Error deleting PIX key:", error);
     }
   };
 
   const handleSetDefault = async (id: string) => {
     try {
-      setIsLoading(true);
-      
-      const updatedKeys = pixKeys.map(key => ({
-        ...key,
-        is_default: key.id === id
-      }));
-      
-      setPixKeys(updatedKeys);
-      
-      toast({
-        title: "Chave padrão alterada",
-        description: "A chave PIX padrão foi atualizada com sucesso.",
-      });
+      await setDefaultPixKey(id);
     } catch (error) {
-      console.error("Error updating default PIX key:", error);
-      toast({
-        title: "Erro",
-        description: "Não foi possível atualizar a chave PIX padrão.",
-        variant: "destructive",
-      });
-    } finally {
-      setIsLoading(false);
+      // Error is already handled in the hook with toast
+      console.error("Error setting default PIX key:", error);
     }
   };
 
@@ -283,7 +151,7 @@ export function PixKeysManager({ userId }: PixKeysManagerProps) {
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>Tipo</FormLabel>
-                      <Select onValueChange={field.onChange} defaultValue={field.value}>
+                      <Select onValueChange={field.onChange} value={field.value}>
                         <FormControl>
                           <SelectTrigger>
                             <SelectValue placeholder="Selecione o tipo" />
@@ -291,6 +159,7 @@ export function PixKeysManager({ userId }: PixKeysManagerProps) {
                         </FormControl>
                         <SelectContent>
                           <SelectItem value="CPF">CPF</SelectItem>
+                          <SelectItem value="CNPJ">CNPJ</SelectItem>
                           <SelectItem value="EMAIL">Email</SelectItem>
                           <SelectItem value="PHONE">Telefone</SelectItem>
                           <SelectItem value="RANDOM">Aleatória</SelectItem>
@@ -309,6 +178,20 @@ export function PixKeysManager({ userId }: PixKeysManagerProps) {
                       <FormLabel>Chave PIX</FormLabel>
                       <FormControl>
                         <Input placeholder="Digite sua chave PIX" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name="owner_name"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Nome do Titular</FormLabel>
+                      <FormControl>
+                        <Input placeholder="Nome completo do titular" {...field} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -379,6 +262,7 @@ export function PixKeysManager({ userId }: PixKeysManagerProps) {
                             variant="ghost"
                             size="sm"
                             onClick={() => handleSetDefault(key.id)}
+                            disabled={isLoading}
                           >
                             Definir
                           </Button>
@@ -390,6 +274,7 @@ export function PixKeysManager({ userId }: PixKeysManagerProps) {
                             variant="ghost"
                             size="sm"
                             onClick={() => handleEdit(key)}
+                            disabled={isLoading}
                           >
                             Editar
                           </Button>
@@ -398,6 +283,7 @@ export function PixKeysManager({ userId }: PixKeysManagerProps) {
                             size="sm"
                             className="text-red-600"
                             onClick={() => handleDelete(key.id)}
+                            disabled={isLoading}
                           >
                             <Trash2 className="h-4 w-4" />
                           </Button>
