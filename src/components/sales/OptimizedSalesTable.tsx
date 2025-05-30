@@ -166,7 +166,7 @@ const OptimizedSalesTable = ({
             {totalPages > 1 && (
               <div className="flex items-center justify-between p-4 border-t">
                 <div className="text-sm text-muted-foreground">
-                  Mostrando {((currentPage - 1) * 1000) + 1} a {Math.min(currentPage * 1000, totalCount)} de {totalCount} registros
+                  Mostrando {((currentPage - 1) * 10) + 1} a {Math.min(currentPage * 10, totalCount)} de {totalCount} registros
                 </div>
                 
                 <div className="flex items-center space-x-2">

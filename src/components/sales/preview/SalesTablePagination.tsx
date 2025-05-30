@@ -23,7 +23,7 @@ export const SalesTablePagination = ({
         Página {currentPage} de {totalPages} 
         {totalCount && ` - ${totalCount.toLocaleString('pt-BR')} registros totais`}
         <span className="ml-2 text-xs">
-          (100 por página)
+          (10 por página)
         </span>
       </div>
       

@@ -36,7 +36,7 @@ const ProcessedDataPreview = ({
   onOpenChange 
 }: ProcessedDataPreviewProps) => {
   const [currentPage, setCurrentPage] = useState(1);
-  const itemsPerPage = 15;
+  const itemsPerPage = 10; // Changed from 15 to 10
   
   // Pagination
   const totalPages = Math.ceil(data.length / itemsPerPage);
