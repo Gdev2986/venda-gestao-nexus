@@ -1,30 +1,19 @@
 
-import React, { useState } from 'react';
-import { 
-  Table, 
-  TableBody, 
-  TableCell, 
-  TableHead, 
-  TableHeader, 
-  TableRow 
+import React, { useState } from "react";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
 } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { 
-  DropdownMenu, 
-  DropdownMenuContent, 
-  DropdownMenuItem, 
-  DropdownMenuTrigger 
-} from "@/components/ui/dropdown-menu";
-import { 
-  MoreVertical, 
-  Eye, 
-  Edit, 
-  User, 
-  AlertTriangle 
-} from "lucide-react";
+import { Eye, Edit, ArrowRightLeft, Trash2 } from "lucide-react";
 import { Machine, MachineStatus } from "@/types/machine.types";
 import { MachineDetailsDialog } from "./MachineDetailsDialog";
+import { MachineTransferModal } from '@/components/machines/MachineTransferModal';
 
 interface MachinesTableProps {
   machines: Machine[];
@@ -38,8 +27,10 @@ export const MachinesTable: React.FC<MachinesTableProps> = ({
   onRefresh
 }) => {
   const [selectedMachine, setSelectedMachine] = useState<Machine | null>(null);
-  const [dialogMode, setDialogMode] = useState<'view' | 'edit'>('view');
-  const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [detailsOpen, setDetailsOpen] = useState(false);
+  const [editMode, setEditMode] = useState(false);
+  const [transferModalOpen, setTransferModalOpen] = useState(false);
+  const [machineToTransfer, setMachineToTransfer] = useState<Machine | null>(null);
 
   const getStatusBadge = (status: MachineStatus) => {
     switch (status) {
@@ -60,35 +51,38 @@ export const MachinesTable: React.FC<MachinesTableProps> = ({
     }
   };
 
-  const handleViewMachine = (machine: Machine) => {
+  const handleViewDetails = (machine: Machine) => {
     setSelectedMachine(machine);
-    setDialogMode('view');
-    setIsDialogOpen(true);
+    setEditMode(false);
+    setDetailsOpen(true);
   };
 
   const handleEditMachine = (machine: Machine) => {
     setSelectedMachine(machine);
-    setDialogMode('edit');
-    setIsDialogOpen(true);
+    setEditMode(true);
+    setDetailsOpen(true);
   };
 
-  const formatDate = (dateString: string) => {
-    try {
-      return new Date(dateString).toLocaleDateString('pt-BR');
-    } catch {
-      return '-';
-    }
+  const handleTransferMachine = (machine: Machine) => {
+    setMachineToTransfer(machine);
+    setTransferModalOpen(true);
   };
 
-  const getLocation = (machine: Machine) => {
-    return machine.client ? "Cliente" : "Estoque";
+  const handleTransferComplete = () => {
+    onRefresh();
+    setTransferModalOpen(false);
+    setMachineToTransfer(null);
   };
 
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center py-8">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
-        <span className="ml-2">Carregando máquinas...</span>
+      <div className="space-y-4">
+        <div className="animate-pulse">
+          <div className="h-8 bg-gray-200 rounded mb-4"></div>
+          {[...Array(5)].map((_, i) => (
+            <div key={i} className="h-12 bg-gray-100 rounded mb-2"></div>
+          ))}
+        </div>
       </div>
     );
   }
@@ -103,7 +97,7 @@ export const MachinesTable: React.FC<MachinesTableProps> = ({
 
   return (
     <>
-      <div className="border rounded-lg overflow-hidden">
+      <div className="rounded-md border">
         <Table>
           <TableHeader>
             <TableRow>
@@ -111,7 +105,6 @@ export const MachinesTable: React.FC<MachinesTableProps> = ({
               <TableHead>Modelo</TableHead>
               <TableHead>Status</TableHead>
               <TableHead>Cliente</TableHead>
-              <TableHead>Localização</TableHead>
               <TableHead>Criado em</TableHead>
               <TableHead className="text-right">Ações</TableHead>
             </TableRow>
@@ -120,47 +113,46 @@ export const MachinesTable: React.FC<MachinesTableProps> = ({
             {machines.map((machine) => (
               <TableRow key={machine.id}>
                 <TableCell className="font-medium">
-                  <div className="flex items-center gap-2">
-                    {machine.serial_number}
-                    {!machine.client_id && (
-                      <AlertTriangle className="h-4 w-4 text-yellow-500" />
-                    )}
-                  </div>
+                  {machine.serial_number}
                 </TableCell>
                 <TableCell>{machine.model}</TableCell>
                 <TableCell>{getStatusBadge(machine.status)}</TableCell>
                 <TableCell>
-                  <div className="flex items-center gap-2">
-                    {machine.client_id ? (
-                      <>
-                        <User className="h-4 w-4 text-green-600" />
-                        <span>{machine.client?.business_name}</span>
-                      </>
-                    ) : (
-                      <span className="text-muted-foreground">Não vinculada</span>
+                  {machine.client?.business_name || "Em Estoque"}
+                </TableCell>
+                <TableCell>
+                  {machine.created_at 
+                    ? new Date(machine.created_at).toLocaleDateString('pt-BR')
+                    : "N/A"
+                  }
+                </TableCell>
+                <TableCell className="text-right">
+                  <div className="flex justify-end gap-2">
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => handleViewDetails(machine)}
+                    >
+                      <Eye className="h-4 w-4" />
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => handleEditMachine(machine)}
+                    >
+                      <Edit className="h-4 w-4" />
+                    </Button>
+                    {machine.client_id && (
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => handleTransferMachine(machine)}
+                        title="Transferir máquina"
+                      >
+                        <ArrowRightLeft className="h-4 w-4" />
+                      </Button>
                     )}
                   </div>
-                </TableCell>
-                <TableCell>{getLocation(machine)}</TableCell>
-                <TableCell>{formatDate(machine.created_at)}</TableCell>
-                <TableCell className="text-right">
-                  <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                      <Button variant="ghost" className="h-8 w-8 p-0">
-                        <MoreVertical className="h-4 w-4" />
-                      </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end">
-                      <DropdownMenuItem onClick={() => handleViewMachine(machine)}>
-                        <Eye className="mr-2 h-4 w-4" />
-                        Ver detalhes
-                      </DropdownMenuItem>
-                      <DropdownMenuItem onClick={() => handleEditMachine(machine)}>
-                        <Edit className="mr-2 h-4 w-4" />
-                        Editar
-                      </DropdownMenuItem>
-                    </DropdownMenuContent>
-                  </DropdownMenu>
                 </TableCell>
               </TableRow>
             ))}
@@ -168,12 +160,21 @@ export const MachinesTable: React.FC<MachinesTableProps> = ({
         </Table>
       </div>
 
+      {/* Machine Details Dialog */}
       <MachineDetailsDialog
         machine={selectedMachine}
-        open={isDialogOpen}
-        onOpenChange={setIsDialogOpen}
+        open={detailsOpen}
+        onOpenChange={setDetailsOpen}
         onUpdate={onRefresh}
-        mode={dialogMode}
+        mode={editMode ? 'edit' : 'view'}
+      />
+
+      {/* Transfer Modal */}
+      <MachineTransferModal
+        machine={machineToTransfer}
+        open={transferModalOpen}
+        onOpenChange={setTransferModalOpen}
+        onTransferComplete={handleTransferComplete}
       />
     </>
   );

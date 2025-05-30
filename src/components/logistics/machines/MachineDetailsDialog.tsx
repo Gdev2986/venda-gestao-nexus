@@ -193,9 +193,22 @@ export const MachineDetailsDialog: React.FC<MachineDetailsDialogProps> = ({
                 </div>
               </div>
               
-              <div>
+              <div className="space-y-2">
                 <Label className="text-sm font-medium text-gray-500">Cliente</Label>
-                <p className="text-sm">{machine.client?.business_name || "Não vinculada"}</p>
+                <div className="flex items-center justify-between">
+                  <p className="text-sm">{machine.client?.business_name || "Não vinculada"}</p>
+                  {hasClient && (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setIsTransferModalOpen(true)}
+                      className="ml-2"
+                    >
+                      <ArrowRightLeft className="h-4 w-4 mr-2" />
+                      Transferir
+                    </Button>
+                  )}
+                </div>
               </div>
               
               {machine.notes && (
@@ -288,7 +301,7 @@ export const MachineDetailsDialog: React.FC<MachineDetailsDialogProps> = ({
                 </Select>
               </div>
 
-              {/* Client assignment section - FIXED */}
+              {/* Client assignment section with transfer button */}
               {isInStock ? (
                 <div>
                   <Label htmlFor="client">Cliente</Label>
