@@ -455,5 +455,28 @@ export const TaxBlocksService = {
       console.error("Error verifying tax block save:", error);
       return false;
     }
-  }
+  },
+  // Remove association between a tax block and a client
+  async removeBlockFromClient(blockId: string, clientId: string): Promise<boolean> {
+    try {
+      console.log("Removing block association:", blockId, clientId);
+      
+      const { error } = await supabase
+        .from('client_tax_blocks')
+        .delete()
+        .eq('block_id', blockId)
+        .eq('client_id', clientId);
+        
+      if (error) {
+        console.error("Error removing client tax block association:", error);
+        throw error;
+      }
+      
+      console.log("Client-block association removed successfully");
+      return true;
+    } catch (error) {
+      console.error(`Error removing block ${blockId} from client ${clientId}:`, error);
+      return false;
+    }
+  },
 };

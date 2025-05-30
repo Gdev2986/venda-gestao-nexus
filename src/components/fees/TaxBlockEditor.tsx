@@ -20,6 +20,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { BlockWithRates, TaxRate } from "@/services/tax-blocks.service";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import TaxBlockLinkedClients from "./TaxBlockLinkedClients";
 
 interface TaxBlockEditorProps {
   block?: BlockWithRates;
@@ -142,6 +143,9 @@ const TaxBlockEditor: React.FC<TaxBlockEditorProps> = ({
         <TabsList className="mb-4">
           <TabsTrigger value="info">Informações Gerais</TabsTrigger>
           <TabsTrigger value="rates">Taxas</TabsTrigger>
+          {block?.id && (
+            <TabsTrigger value="clients">Clientes Vinculados</TabsTrigger>
+          )}
         </TabsList>
         
         <TabsContent value="info" className="space-y-4">
@@ -366,6 +370,12 @@ const TaxBlockEditor: React.FC<TaxBlockEditorProps> = ({
             </div>
           </div>
         </TabsContent>
+
+        {block?.id && (
+          <TabsContent value="clients" className="space-y-4">
+            <TaxBlockLinkedClients blockId={block.id} />
+          </TabsContent>
+        )}
       </Tabs>
       
       <div className="flex justify-between pt-4 border-t">
