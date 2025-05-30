@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -108,7 +107,7 @@ export const ClientMachinesTable = () => {
             Minhas Máquinas ({machines.length})
           </CardTitle>
           <Button asChild variant="outline" size="sm">
-            <Link to={PATHS.CLIENT.MACHINES}>
+            <Link to="/client/machines">
               <Plus className="h-4 w-4 mr-2" />
               Ver Todas
             </Link>
@@ -152,7 +151,7 @@ export const ClientMachinesTable = () => {
         {machines.length > 5 && (
           <div className="mt-4 text-center">
             <Button asChild variant="link">
-              <Link to={PATHS.CLIENT.MACHINES}>
+              <Link to="/client/machines">
                 Ver todas as {machines.length} máquinas
               </Link>
             </Button>
