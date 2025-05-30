@@ -22,6 +22,9 @@ export const MessageItem = ({ message, isMyMessage, currentUserId }: MessageItem
     return message.user?.name || "Usuário";
   };
 
+  // Check if this is an optimistic (temporary) message
+  const isOptimistic = message.id.startsWith('temp-');
+
   return (
     <div className={`flex ${isMyMessage ? "justify-end" : "justify-start"}`}>
       <div className={`flex items-start gap-2 max-w-[85%] sm:max-w-[75%] ${
@@ -41,10 +44,15 @@ export const MessageItem = ({ message, isMyMessage, currentUserId }: MessageItem
           isMyMessage 
             ? "bg-primary text-primary-foreground" 
             : "bg-muted"
-        }`}>
+        } ${isOptimistic ? 'opacity-70' : ''}`}>
           <div className="text-xs sm:text-sm">
             <div className="font-medium mb-1 text-xs">
               {getUserDisplayName(message)}
+              {isOptimistic && (
+                <span className="ml-1 text-xs opacity-50">
+                  • Enviando...
+                </span>
+              )}
             </div>
             <div className="whitespace-pre-wrap break-words text-xs sm:text-sm">
               {message.message}

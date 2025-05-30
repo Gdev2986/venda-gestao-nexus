@@ -45,7 +45,11 @@ export const SupportChat = ({
         <ChatHeader messageCount={messages.length} />
         
         <CardContent className="flex-1 flex flex-col p-0 min-h-0 overflow-hidden">
-          <MessagesList messages={messages} currentUserId={user?.id} />
+          <MessagesList 
+            key={`messages-${ticketId}-${messages.length}`} 
+            messages={messages} 
+            currentUserId={user?.id} 
+          />
           <ChatInput onSendMessage={handleSendMessage} isLoading={isLoading} />
         </CardContent>
       </Card>

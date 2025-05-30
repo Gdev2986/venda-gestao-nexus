@@ -22,6 +22,7 @@ export const useSupportSystem = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [isCreating, setIsCreating] = useState(false);
   const [clientId, setClientId] = useState<string | null>(null);
+  const [conversationId, setConversationId] = useState<string | null>(null);
 
   // Get client ID for current user
   const fetchClientId = async () => {
@@ -113,17 +114,94 @@ export const useSupportSystem = () => {
     }
   }, [userRole, clientId, toast]);
 
-  // Load messages for selected ticket
-  const loadMessages = useCallback(async (ticketId: string) => {
+  // Fetch conversation ID for a ticket
+  const fetchConversationId = useCallback(async (ticketId: string) => {
     try {
-      console.log('Loading messages for ticket:', ticketId);
+      console.log('🔍 Fetching conversation ID for ticket:', ticketId);
+      const { data, error } = await supabase
+        .from('support_conversations')
+        .select('id')
+        .eq('support_request_id', ticketId)
+        .single();
+
+      if (error) {
+        console.error('❌ Error fetching conversation ID:', error);
+        return null;
+      }
+
+      console.log('✅ Found conversation ID:', data.id);
+      return data.id;
+    } catch (error) {
+      console.error('❌ Error in fetchConversationId:', error);
+      return null;
+    }
+  }, []);
+
+  // Load messages for selected ticket with optimistic updates
+  const loadMessages = useCallback(async (ticketId: string, skipOptimisticUpdate = false) => {
+    try {
+      console.log('📥 Loading messages for ticket:', ticketId, 'skipOptimistic:', skipOptimisticUpdate);
+      
+      // Get conversation ID first
+      const convId = await fetchConversationId(ticketId);
+      if (convId) {
+        setConversationId(convId);
+      }
+      
       const { data, error } = await getTicketMessages(ticketId);
       if (error) throw error;
-      console.log('Loaded messages:', data?.length || 0);
-      setMessages(data || []);
+      
+      console.log('📨 Loaded', data?.length || 0, 'messages');
+      
+      if (!skipOptimisticUpdate) {
+        setMessages(data || []);
+      } else {
+        // Only update if we don't have pending optimistic updates
+        setMessages(prevMessages => {
+          const hasOptimistic = prevMessages.some(msg => msg.id.startsWith('temp-'));
+          return hasOptimistic ? prevMessages : (data || []);
+        });
+      }
     } catch (error) {
-      console.error("Error loading messages:", error);
+      console.error("❌ Error loading messages:", error);
     }
+  }, [fetchConversationId]);
+
+  // Add optimistic message update
+  const addOptimisticMessage = useCallback((message: string) => {
+    if (!user) return null;
+
+    const optimisticMessage: SupportMessage = {
+      id: `temp-${Date.now()}`,
+      conversation_id: conversationId || '',
+      user_id: user.id,
+      message,
+      is_read: false,
+      created_at: new Date().toISOString(),
+      user: {
+        name: user.email?.split('@')[0] || 'Você',
+        email: user.email || ''
+      }
+    };
+
+    console.log('⚡ Adding optimistic message:', optimisticMessage.message.substring(0, 50));
+    setMessages(prevMessages => [...prevMessages, optimisticMessage]);
+    
+    return optimisticMessage.id;
+  }, [user, conversationId]);
+
+  // Remove optimistic message (on error)
+  const removeOptimisticMessage = useCallback((tempId: string) => {
+    console.log('🗑️ Removing optimistic message:', tempId);
+    setMessages(prevMessages => prevMessages.filter(msg => msg.id !== tempId));
+  }, []);
+
+  // Replace optimistic message with real one
+  const replaceOptimisticMessage = useCallback((tempId: string, realMessage: SupportMessage) => {
+    console.log('🔄 Replacing optimistic message:', tempId, 'with real:', realMessage.id);
+    setMessages(prevMessages => 
+      prevMessages.map(msg => msg.id === tempId ? realMessage : msg)
+    );
   }, []);
 
   // Notify admins about new ticket - usando profiles ao invés de auth.users
@@ -252,23 +330,38 @@ export const useSupportSystem = () => {
     }
   };
 
-  // Send message with optimistic update and immediate reload
+  // Send message with optimistic update
   const sendMessage = async (ticketId: string, message: string) => {
+    if (!user) {
+      throw new Error('Usuário não autenticado');
+    }
+
+    console.log('📤 Sending message for ticket:', ticketId);
+    
+    // Add optimistic message
+    const tempId = addOptimisticMessage(message);
+    
     try {
-      console.log('Enviando mensagem para o ticket:', ticketId, 'Mensagem:', message);
-      
       // Send the message
       const { data, error } = await sendTicketMessage(ticketId, message);
       if (error) throw error;
       
-      console.log('Mensagem enviada com sucesso:', data);
+      console.log('✅ Message sent successfully:', data);
       
-      // Force immediate reload of messages after successful send
-      await loadMessages(ticketId);
+      // Replace optimistic message with real one
+      if (tempId && data) {
+        replaceOptimisticMessage(tempId, data);
+      }
       
       return data;
     } catch (error) {
-      console.error("Erro ao enviar mensagem:", error);
+      console.error("❌ Error sending message:", error);
+      
+      // Remove optimistic message on error
+      if (tempId) {
+        removeOptimisticMessage(tempId);
+      }
+      
       toast({
         title: "Erro",
         description: "Não foi possível enviar a mensagem",
@@ -345,7 +438,7 @@ export const useSupportSystem = () => {
   useEffect(() => {
     if (!user) return;
 
-    console.log('🔄 Configurando subscription para tickets');
+    console.log('🔄 Setting up ticket subscription');
     
     const ticketChannel = supabase
       .channel("support_tickets_changes")
@@ -371,42 +464,78 @@ export const useSupportSystem = () => {
     };
   }, [user, loadTickets]);
 
-  // Real-time subscription for messages - more aggressive approach
+  // Real-time subscription for messages - using conversation_id
   useEffect(() => {
-    if (!user || !selectedTicket?.id) {
+    if (!user || !conversationId) {
+      console.log('⏸️ Skipping message subscription - missing user or conversationId:', { user: !!user, conversationId });
       return;
     }
 
-    console.log('🔄 Setting up message subscription for ticket:', selectedTicket.id);
+    console.log('🔄 Setting up message subscription for conversation:', conversationId);
     
     const messageChannel = supabase
-      .channel(`messages_${selectedTicket.id}`)
+      .channel(`messages_conv_${conversationId}`)
       .on(
         "postgres_changes",
         {
           event: "*",
           schema: "public",
           table: "support_messages",
-          filter: `ticket_id=eq.${selectedTicket.id}`
+          filter: `conversation_id=eq.${conversationId}`
         },
         (payload) => {
           console.log('📨 Message change received:', payload.eventType, payload);
-          // Immediate reload when any message change happens
-          loadMessages(selectedTicket.id);
+          
+          // Handle different events
+          if (payload.eventType === 'INSERT') {
+            const newMessage = payload.new as SupportMessage;
+            console.log('➕ New message from subscription:', newMessage);
+            
+            // Only add if it's not from current user (to avoid duplicates from optimistic updates)
+            if (newMessage.user_id !== user.id) {
+              setMessages(prevMessages => {
+                // Check if message already exists
+                const exists = prevMessages.some(msg => msg.id === newMessage.id);
+                if (exists) {
+                  console.log('⏭️ Message already exists, skipping');
+                  return prevMessages;
+                }
+                
+                console.log('✅ Adding new message to state');
+                return [...prevMessages, newMessage];
+              });
+            } else {
+              console.log('⏭️ Skipping own message to avoid duplicate');
+            }
+          } else if (payload.eventType === 'UPDATE') {
+            const updatedMessage = payload.new as SupportMessage;
+            console.log('🔄 Message updated:', updatedMessage);
+            
+            setMessages(prevMessages => 
+              prevMessages.map(msg => 
+                msg.id === updatedMessage.id ? updatedMessage : msg
+              )
+            );
+          } else if (payload.eventType === 'DELETE') {
+            console.log('🗑️ Message deleted:', payload.old);
+            setMessages(prevMessages => 
+              prevMessages.filter(msg => msg.id !== payload.old.id)
+            );
+          }
         }
       )
       .subscribe((status) => {
         console.log('📡 Message subscription status:', status);
         if (status === 'SUBSCRIBED') {
-          console.log('✅ Successfully subscribed to messages for ticket:', selectedTicket.id);
+          console.log('✅ Successfully subscribed to messages for conversation:', conversationId);
         }
       });
 
     return () => {
-      console.log('🧹 Cleaning up message subscription for ticket:', selectedTicket.id);
+      console.log('🧹 Cleaning up message subscription for conversation:', conversationId);
       supabase.removeChannel(messageChannel);
     };
-  }, [user, selectedTicket?.id, loadMessages]);
+  }, [user, conversationId]);
 
   // Load client ID and tickets on mount
   useEffect(() => {

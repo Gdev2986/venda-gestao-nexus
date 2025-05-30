@@ -12,6 +12,7 @@ interface MessagesListProps {
 
 export const MessagesList = ({ messages, currentUserId }: MessagesListProps) => {
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const scrollAreaRef = useRef<HTMLDivElement>(null);
 
   // Auto-scroll to bottom when new messages arrive
   useEffect(() => {
@@ -24,7 +25,8 @@ export const MessagesList = ({ messages, currentUserId }: MessagesListProps) => 
       }
     };
 
-    // Add a small delay to ensure DOM is updated
+    // Scroll immediately and also with a small delay for DOM updates
+    scrollToBottom();
     const timeoutId = setTimeout(scrollToBottom, 100);
     return () => clearTimeout(timeoutId);
   }, [messages]);
@@ -52,11 +54,11 @@ export const MessagesList = ({ messages, currentUserId }: MessagesListProps) => 
 
   return (
     <div className="flex-1 min-h-0 overflow-hidden">
-      <ScrollArea className="h-full w-full">
+      <ScrollArea ref={scrollAreaRef} className="h-full w-full">
         <div className="p-2 sm:p-3 space-y-2 sm:space-y-3 w-full">
-          {messages.map((message) => (
+          {messages.map((message, index) => (
             <MessageItem
-              key={message.id}
+              key={`${message.id}-${index}`}
               message={message}
               isMyMessage={isMyMessage(message)}
               currentUserId={currentUserId}
