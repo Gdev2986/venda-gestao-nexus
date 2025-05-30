@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
@@ -47,7 +46,8 @@ const NewShipmentDialog = ({ open, onOpenChange }: NewShipmentDialogProps) => {
       client_id: formData.client_id,
       item_type: formData.item_type,
       item_description: formData.item_description,
-      notes: formData.notes || undefined
+      notes: formData.notes || undefined,
+      delivery_date: deliveryDate ? deliveryDate.toISOString() : undefined
     });
 
     if (shipment) {

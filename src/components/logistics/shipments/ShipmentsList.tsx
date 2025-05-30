@@ -118,11 +118,14 @@ const ShipmentsList = () => {
       ),
     },
     {
-      id: "tracking",
-      header: "Rastreamento",
+      id: "delivery",
+      header: "Data de Entrega",
       cell: ({ row }) => (
         <div className="text-sm font-mono">
-          {row.original.tracking_code || "N/A"}
+          {row.original.delivery_date 
+            ? format(new Date(row.original.delivery_date), "dd/MM/yyyy", { locale: ptBR })
+            : "Não definida"
+          }
         </div>
       ),
     },
@@ -169,8 +172,7 @@ const ShipmentsList = () => {
   const filteredShipments = shipments.filter(shipment => {
     const matchesSearch = searchTerm === "" || 
       shipment.client?.business_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      shipment.item_description.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      shipment.tracking_code?.toLowerCase().includes(searchTerm.toLowerCase());
+      shipment.item_description.toLowerCase().includes(searchTerm.toLowerCase());
     
     const matchesStatus = statusFilter === "all" || shipment.status === statusFilter;
     
@@ -196,7 +198,7 @@ const ShipmentsList = () => {
         <div className="relative flex-1">
           <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
           <Input
-            placeholder="Buscar por cliente, item ou código de rastreamento..."
+            placeholder="Buscar por cliente ou item..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             className="pl-10"

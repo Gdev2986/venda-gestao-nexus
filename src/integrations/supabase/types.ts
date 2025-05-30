@@ -1117,12 +1117,12 @@ export type Database = {
           created_at: string
           created_by: string
           delivered_at: string | null
+          delivery_date: string | null
           id: string
           item_description: string
           item_type: string
           notes: string | null
           status: string
-          tracking_code: string | null
           updated_at: string
         }
         Insert: {
@@ -1130,12 +1130,12 @@ export type Database = {
           created_at?: string
           created_by: string
           delivered_at?: string | null
+          delivery_date?: string | null
           id?: string
           item_description: string
           item_type: string
           notes?: string | null
           status?: string
-          tracking_code?: string | null
           updated_at?: string
         }
         Update: {
@@ -1143,12 +1143,12 @@ export type Database = {
           created_at?: string
           created_by?: string
           delivered_at?: string | null
+          delivery_date?: string | null
           id?: string
           item_description?: string
           item_type?: string
           notes?: string | null
           status?: string
-          tracking_code?: string | null
           updated_at?: string
         }
         Relationships: [
