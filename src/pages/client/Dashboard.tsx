@@ -30,9 +30,9 @@ const generatePaymentMethodsData = (sales: any[]) => {
 
   console.log('Method counts:', methodCounts);
 
-  const total = Object.values(methodCounts).reduce((sum: number, amount: number) => {
+  const total = Number(Object.values(methodCounts).reduce((sum: number, amount: number) => {
     return sum + amount;
-  }, 0);
+  }, 0));
 
   const pixAmount = Number(methodCounts[PaymentMethod.PIX] || 0);
   const debitAmount = Number(methodCounts[PaymentMethod.DEBIT] || 0);
