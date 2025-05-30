@@ -1,10 +1,11 @@
+
 import { supabase } from "@/integrations/supabase/client";
 import { NormalizedSale } from "@/utils/sales-processor";
 import { v4 as uuidv4 } from 'uuid';
 import { SaleInsert } from './types';
 import { convertBrazilianDateToISO, convertPaymentMethod } from './date-utils';
 import { ensureMachinesExist } from './machine-utils';
-import { BatchProcessor } from './batch-processor';
+import { AdaptiveBatchProcessor } from './adaptive-batch-processor';
 
 // Função otimizada para inserção de vendas com timeout personalizado
 const insertBatch = async (salesData: SaleInsert[]): Promise<void> => {
@@ -24,18 +25,26 @@ const insertBatch = async (salesData: SaleInsert[]): Promise<void> => {
   }
 };
 
-// Função principal otimizada com parâmetros ajustados e callback de progresso
+// Função principal com sistema adaptativo de batch
 export const insertSalesOptimized = async (
   sales: NormalizedSale[], 
-  onProgress?: (completed: number, total: number, percentage: number) => void
+  onProgress?: (completed: number, total: number, percentage: number, strategy?: string, estimatedTime?: number) => void
 ): Promise<void> => {
   try {
-    console.log(`Starting ultra-optimized insertion of ${sales.length} sales`);
+    console.log(`Starting adaptive insertion of ${sales.length} sales`);
     
     if (sales.length === 0) {
       console.log('No sales to process');
       return;
     }
+
+    // Determinar estratégia baseada no volume de dados
+    const config = AdaptiveBatchProcessor.determineStrategy(sales.length);
+    const strategyDescription = AdaptiveBatchProcessor.getStrategyDescription(config.strategy);
+    
+    console.log(`Selected strategy: ${config.strategy.toUpperCase()}`);
+    console.log(`Strategy description: ${strategyDescription}`);
+    console.log(`Estimated processing time: ~${config.estimatedTimeMinutes} minutes`);
     
     // Ensure all machines exist
     const uniqueTerminals = [...new Set(sales.map(sale => sale.terminal))];
@@ -74,29 +83,32 @@ export const insertSalesOptimized = async (
       };
     });
 
-    // Use optimized batch processor with increased batch size
-    const processor = new BatchProcessor({
-      batchSize: 300, // Increased from 75 to 300 as requested
-      maxConcurrent: 1, // Sequential processing to avoid overwhelming DB
-      retryAttempts: 3,
-      delayBetweenBatches: 750 // Keep delay for DB recovery
-    });
-
-    const batches = processor.createBatches(salesData);
-    console.log(`Created ${batches.length} optimized batches for processing`);
+    // Create batches with adaptive size
+    const batches = AdaptiveBatchProcessor.createBatches(salesData, config.batchSize);
+    console.log(`Created ${batches.length} adaptive batches using ${config.strategy} strategy`);
 
     const totalStartTime = Date.now();
     
-    await processor.processBatchesInParallel(batches, async (batch) => {
-      await insertBatch(batch);
-    }, onProgress); // Pass progress callback
+    // Process batches with adaptive configuration
+    await AdaptiveBatchProcessor.processBatchesSequentially(
+      batches, 
+      async (batch) => {
+        await insertBatch(batch);
+      }, 
+      config,
+      (completed, total, percentage, strategy) => {
+        if (onProgress) {
+          onProgress(completed, total, percentage, strategy, config.estimatedTimeMinutes);
+        }
+      }
+    );
 
     const totalEndTime = Date.now();
     const totalDuration = totalEndTime - totalStartTime;
-    console.log(`Successfully inserted all ${salesData.length} sales in ${totalDuration}ms (${(totalDuration/1000).toFixed(2)}s)!`);
+    console.log(`Successfully inserted all ${salesData.length} sales in ${totalDuration}ms (${(totalDuration/1000).toFixed(2)}s) using ${config.strategy} strategy!`);
     
   } catch (error) {
-    console.error('Error in ultra-optimized insertSales:', error);
+    console.error('Error in adaptive insertSales:', error);
     throw error;
   }
 };
