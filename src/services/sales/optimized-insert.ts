@@ -65,9 +65,9 @@ export const insertSalesOptimized = async (sales: NormalizedSale[]): Promise<voi
       };
     });
 
-    // Use batch processor for optimized insertion
+    // Use batch processor for optimized insertion with 500 records per batch
     const processor = new BatchProcessor({
-      batchSize: 150, // Reduced from 1000
+      batchSize: 500, // Increased from 150 to 500
       maxConcurrent: 2, // Limit concurrent operations
       retryAttempts: 3,
       delayBetweenBatches: 150 // Slight delay between batches

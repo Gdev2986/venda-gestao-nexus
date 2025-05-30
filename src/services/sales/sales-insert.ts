@@ -1,4 +1,3 @@
-
 import { supabase } from "@/integrations/supabase/client";
 import { NormalizedSale } from "@/utils/sales-processor";
 import { v4 as uuidv4 } from 'uuid';
@@ -155,8 +154,8 @@ export const insertSales = async (sales: NormalizedSale[]): Promise<void> => {
     // Garantir IDs únicos
     const uniqueSalesData = ensureUniqueIds(salesData);
 
-    // Reduzir batch size significativamente para evitar timeouts
-    const batchSize = 150; // Reduzido de 1000 para 150 registros por batch
+    // Aumentar batch size para 500 registros por batch
+    const batchSize = 500; // Increased from 150 to 500
     
     // Criar batches
     const batches: SaleInsert[][] = [];
