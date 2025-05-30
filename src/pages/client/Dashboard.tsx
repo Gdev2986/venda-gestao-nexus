@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { PageHeader } from "@/components/page/PageHeader";
 import { ClientStatsCards } from "@/components/dashboard/client/ClientStatsCards";
@@ -6,7 +5,7 @@ import { ClientPeriodFilter } from "@/components/dashboard/client/ClientPeriodFi
 import { ClientSalesTable } from "@/components/dashboard/client/ClientSalesTable";
 import { ClientFeePlanDisplay } from "@/components/dashboard/client/ClientFeePlanDisplay";
 import { ClientMachinesTable } from "@/components/dashboard/client/ClientMachinesTable";
-import PaymentMethodsChart from "@/components/dashboard/admin/PaymentMethodsChart";
+import { BarChart } from "@/components/charts/BarChart";
 import { useClientBalance } from "@/hooks/use-client-balance";
 import { useAuth } from "@/hooks/use-auth";
 import { PaymentMethod } from "@/types";
@@ -46,7 +45,7 @@ const generateMockSales = (startDate: Date, endDate: Date) => {
   return sales.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
 };
 
-// Generate payment methods data based on sales
+// Generate payment methods data for bar chart
 const generatePaymentMethodsData = (sales: any[]) => {
   const methodCounts = sales.reduce((acc, sale) => {
     const method = sale.payment_method;
@@ -64,20 +63,17 @@ const generatePaymentMethodsData = (sales: any[]) => {
     {
       name: "PIX",
       value: pixAmount,
-      color: "#F59E0B",
-      percent: total > 0 ? Math.round((pixAmount / total) * 100) : 0
+      percentage: total > 0 ? Math.round((pixAmount / total) * 100) : 0
     },
     {
-      name: "Débito",
+      name: "Débito", 
       value: debitAmount,
-      color: "#10B981",
-      percent: total > 0 ? Math.round((debitAmount / total) * 100) : 0
+      percentage: total > 0 ? Math.round((debitAmount / total) * 100) : 0
     },
     {
       name: "Crédito",
       value: creditAmount,
-      color: "#0066FF",
-      percent: total > 0 ? Math.round((creditAmount / total) * 100) : 0
+      percentage: total > 0 ? Math.round((creditAmount / total) * 100) : 0
     }
   ];
 };
@@ -161,7 +157,7 @@ const ClientDashboard = () => {
       {/* Filtro de Período */}
       <ClientPeriodFilter onPeriodChange={handlePeriodChange} />
 
-      {/* Payment Methods Chart */}
+      {/* Payment Methods Bar Chart */}
       <Card className="border-l-4 border-l-blue-500">
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
@@ -170,10 +166,28 @@ const ClientDashboard = () => {
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <PaymentMethodsChart 
-            data={paymentMethodsData}
-            isLoading={isLoading}
-          />
+          {isLoading ? (
+            <div className="h-[300px] bg-muted animate-pulse rounded-lg" />
+          ) : (
+            <BarChart
+              data={paymentMethodsData}
+              dataKey="value"
+              xAxisKey="name"
+              height={300}
+              colors={[
+                "hsl(var(--chart-1))", // PIX - Orange/Yellow
+                "hsl(var(--chart-2))", // Débito - Green  
+                "hsl(var(--chart-3))"  // Crédito - Blue
+              ]}
+              labels={["PIX", "Débito", "Crédito"]}
+              formatter={(value) => 
+                new Intl.NumberFormat('pt-BR', {
+                  style: 'currency',
+                  currency: 'BRL'
+                }).format(value)
+              }
+            />
+          )}
         </CardContent>
       </Card>
 
