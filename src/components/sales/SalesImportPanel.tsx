@@ -40,7 +40,6 @@ const SalesImportPanel = ({ onSalesProcessed }: SalesImportPanelProps) => {
     multiple: true
   });
   
-  // Read CSV file using FileReader
   const readCSVFile = (file: File): Promise<any[]> => {
     return new Promise((resolve, reject) => {
       const reader = new FileReader();
@@ -67,8 +66,7 @@ const SalesImportPanel = ({ onSalesProcessed }: SalesImportPanelProps) => {
       reader.readAsText(file);
     });
   };
-  
-  // Process the uploaded files
+
   const processFiles = async () => {
     if (files.length === 0) {
       toast({
@@ -85,7 +83,6 @@ const SalesImportPanel = ({ onSalesProcessed }: SalesImportPanelProps) => {
     const newErrors: string[] = [];
     
     try {
-      // Process each file
       for (const file of files) {
         try {
           console.log(`Processing file: ${file.name}`);
@@ -144,8 +141,7 @@ const SalesImportPanel = ({ onSalesProcessed }: SalesImportPanelProps) => {
       setIsProcessing(false);
     }
   };
-  
-  // Confirm and save the processed sales with progress tracking
+
   const confirmImport = async () => {
     setIsInserting(true);
     setInsertProgress(0);
@@ -153,7 +149,6 @@ const SalesImportPanel = ({ onSalesProcessed }: SalesImportPanelProps) => {
     try {
       console.log('Starting optimized database insertion...');
       
-      // Simulate progress updates (in real implementation, this would come from the batch processor)
       const progressInterval = setInterval(() => {
         setInsertProgress(prev => {
           const newProgress = prev + Math.random() * 10;
@@ -189,7 +184,6 @@ const SalesImportPanel = ({ onSalesProcessed }: SalesImportPanelProps) => {
     }
   };
   
-  // Cancel the import process
   const cancelImport = () => {
     setProcessedSales([]);
     setFiles([]);
@@ -200,7 +194,7 @@ const SalesImportPanel = ({ onSalesProcessed }: SalesImportPanelProps) => {
   return (
     <div className="space-y-4">
       {/* File Upload Area */}
-      <Card className="shadow-md rounded-lg border bg-card">
+      <Card className="shadow-md rounded-lg border-l-4" style={{ borderLeftColor: '#115464' }}>
         <CardHeader>
           <CardTitle className="text-lg">Importar Dados de Vendas (Otimizado)</CardTitle>
         </CardHeader>
