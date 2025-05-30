@@ -24,9 +24,9 @@ export const ChatHeader = ({ messageCount, isSubscribed = false }: ChatHeaderPro
         {/* Real-time status indicator */}
         <div className="ml-auto flex items-center gap-1">
           {isSubscribed ? (
-            <Wifi className="h-3 w-3 text-green-500" title="Conectado em tempo real" />
+            <Wifi className="h-3 w-3 text-green-500" />
           ) : (
-            <WifiOff className="h-3 w-3 text-red-500" title="Desconectado" />
+            <WifiOff className="h-3 w-3 text-red-500" />
           )}
           <span className="text-xs text-muted-foreground">
             {isSubscribed ? "Online" : "Offline"}
