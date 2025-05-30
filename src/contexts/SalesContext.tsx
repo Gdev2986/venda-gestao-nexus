@@ -144,10 +144,7 @@ export const SalesProvider = ({ children }: SalesProviderProps) => {
     const currentYear = now.getFullYear();
     
     const monthlyData = sales.filter(sale => {
-      // Ensure transaction_date is always a string and properly formatted
-      const dateStr = typeof sale.transaction_date === 'string' ? sale.transaction_date : sale.transaction_date.toLocaleDateString('pt-BR');
-      const datePart = dateStr.split(' ')[0]; // Get date part (DD/MM/YYYY)
-      const saleDate = new Date(datePart.split('/').reverse().join('-')); // Convert to YYYY-MM-DD
+      const saleDate = new Date(sale.transaction_date.split(' ')[0].split('/').reverse().join('-'));
       return saleDate.getMonth() === currentMonth && saleDate.getFullYear() === currentYear;
     });
     
@@ -183,9 +180,7 @@ export const SalesProvider = ({ children }: SalesProviderProps) => {
     // Daily sales data
     const dailySalesMap = new Map();
     filteredSales.forEach(sale => {
-      // Ensure transaction_date is always a string and properly formatted
-      const dateStr = typeof sale.transaction_date === 'string' ? sale.transaction_date : sale.transaction_date.toLocaleDateString('pt-BR');
-      const date = dateStr.split(' ')[0]; // Get just the date part
+      const date = sale.transaction_date.split(' ')[0]; // Get just the date part
       if (!dailySalesMap.has(date)) {
         dailySalesMap.set(date, { gross: 0, net: 0 });
       }

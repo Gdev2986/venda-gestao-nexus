@@ -9,7 +9,7 @@ import StatCards from "@/components/dashboard/admin/StatCards";
 import { subDays } from "date-fns";
 import PaymentMethodsBreakdown from "@/components/dashboard/admin/PaymentMethodsBreakdown";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { TrendingUp } from "lucide-react";
+import { ArrowUp, TrendingUp } from "lucide-react";
 import { formatCurrency } from "@/lib/utils";
 import { useSalesContext } from "@/contexts/SalesContext";
 import { supabase } from '@/integrations/supabase/client';
@@ -70,10 +70,7 @@ const AdminDashboard = () => {
     const endDate = new Date(dateRange.to);
     
     const filtered = sales.filter(sale => {
-      // Ensure transaction_date is always a string and properly formatted
-      const dateStr = typeof sale.transaction_date === 'string' ? sale.transaction_date : sale.transaction_date.toLocaleDateString('pt-BR');
-      const datePart = dateStr.split(' ')[0]; // Get date part (DD/MM/YYYY)
-      const saleDate = new Date(datePart.split('/').reverse().join('-')); // Convert to YYYY-MM-DD
+      const saleDate = new Date(sale.transaction_date.split(' ')[0].split('/').reverse().join('-'));
       return saleDate >= startDate && saleDate <= endDate;
     });
     
@@ -94,6 +91,15 @@ const AdminDashboard = () => {
     totalCommissions: filteredData.totalCommissions,
     salesGrowth: filteredData.salesGrowth,
     isGrowthPositive: filteredData.isGrowthPositive
+  };
+
+  // Default charts data structure
+  const defaultChartsData = {
+    dailySales: [],
+    paymentMethods: [],
+    paymentMethodsDetail: [],
+    topPartners: [],
+    clientGrowth: []
   };
 
   // Mock data for charts that don't have real data yet
@@ -204,7 +210,7 @@ const AdminDashboard = () => {
           <QuickLinks />
         </div>
         
-        {/* Payment Methods Breakdown - Using the chartsData directly */}
+        {/* Payment Methods Breakdown */}
         <div className="grid grid-cols-1 gap-4">
           <PaymentMethodsBreakdown 
             data={chartsData.paymentMethodsDetail} 
