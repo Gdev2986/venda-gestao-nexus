@@ -21,7 +21,7 @@ export const TicketStatusManager = ({
   onAssignTicket,
   isLoading = false 
 }: TicketStatusManagerProps) => {
-  const { userRole } = useAuth();
+  const { user, userRole } = useAuth();
 
   const getStatusBadge = (status: string) => {
     switch (status) {
@@ -60,10 +60,9 @@ export const TicketStatusManager = ({
   };
 
   const handleAssignToMe = async () => {
-    if (onAssignTicket) {
+    if (onAssignTicket && user?.id) {
       try {
-        // In a real implementation, you'd get the current user's ID
-        await onAssignTicket(ticket.id, "current-user-id");
+        await onAssignTicket(ticket.id, user.id);
       } catch (error) {
         console.error("Error assigning ticket:", error);
       }
@@ -140,7 +139,7 @@ export const TicketStatusManager = ({
 
         {ticket.technician_id && (
           <div className="text-xs text-muted-foreground">
-            Atendido por: {ticket.technician_id}
+            Técnico: {ticket.technician_id === user?.id ? "Você" : ticket.technician_id}
           </div>
         )}
       </CardContent>

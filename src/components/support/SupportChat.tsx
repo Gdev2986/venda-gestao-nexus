@@ -27,7 +27,6 @@ export const SupportChat = ({
   const [newMessage, setNewMessage] = useState("");
   const [isSending, setIsSending] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
-  const scrollAreaRef = useRef<HTMLDivElement>(null);
 
   // Auto-scroll to bottom when new messages arrive
   useEffect(() => {
@@ -93,7 +92,7 @@ export const SupportChat = ({
 
   if (isLoading) {
     return (
-      <Card className="h-96 flex flex-col">
+      <Card className="h-[500px] flex flex-col">
         <CardHeader className="pb-3">
           <CardTitle className="text-lg flex items-center gap-2">
             <MessageSquare className="h-5 w-5" />
@@ -108,8 +107,8 @@ export const SupportChat = ({
   }
 
   return (
-    <Card className="h-96 flex flex-col">
-      <CardHeader className="pb-3">
+    <Card className="h-[500px] flex flex-col">
+      <CardHeader className="pb-3 border-b">
         <CardTitle className="text-lg flex items-center gap-2">
           <MessageSquare className="h-5 w-5" />
           Chat de Suporte
@@ -122,10 +121,10 @@ export const SupportChat = ({
       </CardHeader>
       
       <CardContent className="flex-1 flex flex-col p-0">
-        <ScrollArea className="flex-1 px-4" ref={scrollAreaRef}>
-          <div className="space-y-4 pb-4">
+        <ScrollArea className="flex-1 h-[350px]">
+          <div className="p-4 space-y-4">
             {messages.length === 0 ? (
-              <div className="flex flex-col items-center justify-center py-8 text-center">
+              <div className="flex flex-col items-center justify-center py-8 text-center h-[300px]">
                 <MessageSquare className="h-12 w-12 text-muted-foreground mb-4" />
                 <p className="text-muted-foreground">
                   Nenhuma mensagem ainda. Inicie a conversa!
@@ -150,7 +149,7 @@ export const SupportChat = ({
                       </AvatarFallback>
                     </Avatar>
                     
-                    <div className={`rounded-lg p-3 ${
+                    <div className={`rounded-lg p-3 shadow-sm ${
                       isMyMessage(message) 
                         ? "bg-primary text-primary-foreground" 
                         : "bg-muted"

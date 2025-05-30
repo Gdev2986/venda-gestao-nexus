@@ -124,10 +124,10 @@ export const useSupportSystem = () => {
     }
   };
 
-  // Notify admins about new ticket
+  // Notify admins about new ticket - usando profiles ao invés de auth.users
   const notifyAdminsNewTicket = async (ticketId: string, clientName: string) => {
     try {
-      // Get all admin and logistics users
+      // Get all admin and logistics users from profiles table
       const { data: adminUsers, error } = await supabase
         .from('profiles')
         .select('id')
