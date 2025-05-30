@@ -55,13 +55,13 @@ const generatePaymentMethodsData = (sales: any[]) => {
     return acc;
   }, {} as Record<string, number>);
 
-  const total = Object.values(methodCounts).reduce((sum, amount) => {
-    return sum + (typeof amount === 'number' ? amount : 0);
+  const total = Object.values(methodCounts).reduce((sum: number, amount: number) => {
+    return sum + amount;
   }, 0);
 
-  const pixAmount = typeof methodCounts[PaymentMethod.PIX] === 'number' ? methodCounts[PaymentMethod.PIX] : 0;
-  const debitAmount = typeof methodCounts[PaymentMethod.DEBIT] === 'number' ? methodCounts[PaymentMethod.DEBIT] : 0;
-  const creditAmount = typeof methodCounts[PaymentMethod.CREDIT] === 'number' ? methodCounts[PaymentMethod.CREDIT] : 0;
+  const pixAmount = methodCounts[PaymentMethod.PIX] || 0;
+  const debitAmount = methodCounts[PaymentMethod.DEBIT] || 0;
+  const creditAmount = methodCounts[PaymentMethod.CREDIT] || 0;
 
   return [
     {
