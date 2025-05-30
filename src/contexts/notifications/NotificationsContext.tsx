@@ -1,4 +1,3 @@
-
 import React, { createContext, useContext, useEffect, useState } from "react";
 import { useAuth } from "@/hooks/use-auth";
 import { supabase } from "@/integrations/supabase/client";
@@ -64,6 +63,29 @@ export const NotificationsProvider: React.FC<{ children: React.ReactNode }> = ({
       console.error("Failed to save sound preference:", error);
     }
   }, [soundEnabled]);
+
+  // Executar limpeza automática de notificações expiradas
+  useEffect(() => {
+    const cleanupExpiredNotifications = async () => {
+      try {
+        const { cleanExpiredNotifications } = await import("@/services/notificationCleanupService");
+        const result = await cleanExpiredNotifications();
+        if (result.deleted_count > 0) {
+          console.log(`Limpeza automática: ${result.deleted_count} notificações expiradas removidas`);
+        }
+      } catch (error) {
+        console.warn("Falha na limpeza automática de notificações:", error);
+      }
+    };
+
+    // Executar limpeza imediatamente
+    cleanupExpiredNotifications();
+
+    // Configurar limpeza automática a cada hora
+    const cleanupInterval = setInterval(cleanupExpiredNotifications, 60 * 60 * 1000); // 1 hora
+
+    return () => clearInterval(cleanupInterval);
+  }, []);
 
   const fetchNotifications = async () => {
     if (!user?.id) return;
