@@ -22,7 +22,7 @@ const ClientPayments = () => {
   const { user } = useAuth();
   const { balance, isLoading: balanceLoading } = useClientBalance();
   const { payments, isLoading: paymentsLoading, loadPayments } = useClientPayments();
-  const { pixKeys, isLoading: pixKeysLoading } = usePixKeys();
+  const { pixKeys, isLoading: pixKeysLoading, refetch: refetchPixKeys } = usePixKeys();
   const [isDialogOpen, setIsDialogOpen] = useState(false);
 
   // Setup real-time subscription
@@ -80,6 +80,7 @@ const ClientPayments = () => {
 
       // Refresh data
       loadPayments();
+      refetchPixKeys(); // Refresh PIX keys in case a new one was created
       setIsDialogOpen(false);
 
     } catch (error: any) {
@@ -94,12 +95,6 @@ const ClientPayments = () => {
 
   // Convert PaymentRequest[] to Payment[] for compatibility
   const convertedPayments = payments.map(payment => convertRequestToPayment(payment));
-
-  // Convert PixKeys to match the expected interface
-  const convertedPixKeys = pixKeys.map(key => ({
-    ...key,
-    owner_name: key.owner_name || key.name // Ensure owner_name is always present
-  }));
 
   return (
     <div className="space-y-6">
@@ -152,7 +147,7 @@ const ClientPayments = () => {
               <div>
                 <p className="text-sm font-medium">Chaves PIX</p>
                 <p className="text-xs text-muted-foreground">
-                  {convertedPixKeys.length} chave(s) cadastrada(s)
+                  {pixKeys.length} chave(s) cadastrada(s)
                 </p>
               </div>
             </div>
@@ -171,7 +166,7 @@ const ClientPayments = () => {
         isOpen={isDialogOpen}
         onOpenChange={setIsDialogOpen}
         clientBalance={balance || 0}
-        pixKeys={convertedPixKeys}
+        pixKeys={pixKeys}
         isLoadingPixKeys={pixKeysLoading}
         onRequestPayment={handleRequestPayment}
       />

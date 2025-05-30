@@ -1,7 +1,7 @@
 
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { PixKey } from "@/types/pix.types";
+import { PixKey } from "@/types/payment.types";
 import { useAuth } from "@/hooks/use-auth";
 
 export function usePixKeys() {
@@ -10,40 +10,63 @@ export function usePixKeys() {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
 
-  useEffect(() => {
-    const fetchPixKeys = async () => {
-      if (!user) {
+  const loadPixKeys = async () => {
+    if (!user) {
+      setPixKeys([]);
+      setIsLoading(false);
+      return;
+    }
+
+    setIsLoading(true);
+    try {
+      // Get client ID first
+      const { data: clientId } = await supabase.rpc('get_user_client_id', {
+        user_uuid: user.id
+      });
+
+      if (!clientId) {
         setPixKeys([]);
         setIsLoading(false);
         return;
       }
 
-      setIsLoading(true);
-      try {
-        const { data, error } = await supabase
-          .from("pix_keys")
-          .select("*")
-          .eq("user_id", user.id);
+      const { data, error } = await supabase
+        .from("pix_keys")
+        .select("*")
+        .eq("user_id", clientId);
 
-        if (error) {
-          setError(error);
-        } else {
-          setPixKeys(data || []);
-        }
-      } catch (err: any) {
-        setError(err);
-      } finally {
-        setIsLoading(false);
+      if (error) {
+        setError(error);
+      } else {
+        const mappedKeys: PixKey[] = (data || []).map(key => ({
+          id: key.id,
+          key: key.key,
+          type: key.type,
+          name: key.name,
+          owner_name: key.owner_name || key.name,
+          user_id: key.user_id,
+          is_default: key.is_default,
+          created_at: key.created_at,
+          updated_at: key.updated_at
+        }));
+        setPixKeys(mappedKeys);
       }
-    };
+    } catch (err: any) {
+      setError(err);
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
-    fetchPixKeys();
+  useEffect(() => {
+    loadPixKeys();
   }, [user]);
 
   return { 
     pixKeys, 
     isLoading, 
     isLoadingPixKeys: isLoading, // Provide both names for backward compatibility
-    error 
+    error,
+    refetch: loadPixKeys
   };
 }

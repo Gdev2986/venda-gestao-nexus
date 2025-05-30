@@ -15,7 +15,7 @@ import { PixKey } from '@/types/payment.types';
 import { formatCurrency } from '@/lib/utils';
 
 const pixKeySchema = z.object({
-  type: z.enum(['CPF', 'CNPJ', 'EMAIL', 'PHONE', 'RANDOM']), // Changed EVP to RANDOM
+  type: z.enum(['CPF', 'CNPJ', 'EMAIL', 'PHONE', 'RANDOM']),
   key: z.string().min(1, 'Chave PIX é obrigatória'),
   name: z.string().min(1, 'Nome da chave é obrigatório'),
   owner_name: z.string().min(1, 'Nome do titular é obrigatório')
@@ -150,11 +150,9 @@ export const PixPaymentForm = ({
                   ))}
                 </SelectContent>
               </Select>
-              {form.formState.errors.pix_key_id && (
+              {form.formState.errors.pix_key_id && typeof form.formState.errors.pix_key_id === 'object' && 'message' in form.formState.errors.pix_key_id && (
                 <p className="text-sm text-destructive mt-1">
-                  {typeof form.formState.errors.pix_key_id.message === 'string' 
-                    ? form.formState.errors.pix_key_id.message 
-                    : 'Erro de validação'}
+                  {form.formState.errors.pix_key_id.message}
                 </p>
               )}
             </div>

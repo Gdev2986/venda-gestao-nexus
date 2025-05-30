@@ -13,7 +13,7 @@ import { PixKeyType } from '@/types/payment.types';
 
 // Define the schema for the form
 const pixKeySchema = z.object({
-  type: z.enum(['CPF', 'CNPJ', 'EMAIL', 'PHONE', 'EVP']),
+  type: z.enum(['CPF', 'CNPJ', 'EMAIL', 'PHONE', 'RANDOM']),
   key: z.string().min(1, 'A chave Pix é obrigatória'),
   name: z.string().min(1, 'O nome é obrigatório'),
   is_default: z.boolean().optional(),
@@ -62,7 +62,7 @@ export function PixKeyForm({ onSubmit, initialData, onCancel }: PixKeyFormProps)
       case 'PHONE':
         formattedKey = phoneNumberMask(currentKey);
         break;
-      // EMAIL and EVP don't need formatting
+      // EMAIL and RANDOM don't need formatting
       default:
         break;
     }
@@ -135,7 +135,7 @@ export function PixKeyForm({ onSubmit, initialData, onCancel }: PixKeyFormProps)
                   <SelectItem value="CNPJ">CNPJ</SelectItem>
                   <SelectItem value="EMAIL">Email</SelectItem>
                   <SelectItem value="PHONE">Telefone</SelectItem>
-                  <SelectItem value="EVP">Chave aleatória</SelectItem>
+                  <SelectItem value="RANDOM">Chave aleatória</SelectItem>
                 </SelectContent>
               </Select>
               <FormMessage />
@@ -205,7 +205,7 @@ function getPlaceholder(type: PixKeyType): string {
       return 'exemplo@email.com';
     case 'PHONE':
       return '(00) 00000-0000';
-    case 'EVP':
+    case 'RANDOM':
       return 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa';
     default:
       return '';

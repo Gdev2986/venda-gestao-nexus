@@ -12,12 +12,15 @@ import { usePixKeys } from "@/hooks/usePixKeys";
 import { PaymentType } from "@/types/payment.types";
 import { useClientBalance } from "@/hooks/use-client-balance";
 import { convertRequestToPayment } from "@/components/payments/payment-list/PaymentConverter";
+import { supabase } from "@/integrations/supabase/client";
+import { paymentService } from "@/services/payment.service";
+import { toast } from "@/hooks/use-toast";
 
 const UserPayments = () => {
   const { user } = useAuth();
   const { balance } = useClientBalance();
   const { payments, isLoading, loadPayments } = useClientPayments();
-  const { pixKeys, isLoading: isLoadingPixKeys } = usePixKeys();
+  const { pixKeys, isLoading: isLoadingPixKeys, refetch: refetchPixKeys } = usePixKeys();
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   
   // Set up real-time subscription for client-specific payment updates
@@ -31,9 +34,65 @@ const UserPayments = () => {
   
   // Handle payment request
   const handleRequestPayment = async (type: PaymentType, data: any) => {
-    console.log("Payment request:", type, data);
-    // The actual implementation would be handled by the useClientPayments hook
-    setIsDialogOpen(false);
+    try {
+      if (!user) {
+        toast({
+          title: "Erro",
+          description: "Usuário não autenticado",
+          variant: "destructive"
+        });
+        return;
+      }
+
+      // Get client ID
+      const { data: clientData } = await supabase.rpc('get_user_client_id', {
+        user_uuid: user.id
+      });
+
+      if (!clientData) {
+        toast({
+          title: "Erro",
+          description: "Cliente não encontrado",
+          variant: "destructive"
+        });
+        return;
+      }
+
+      const params = {
+        client_id: clientData,
+        amount: data.amount,
+        payment_type: type,
+        notes: data.notes,
+        ...(type === 'PIX' && {
+          pix_key_id: data.pix_key_id,
+          new_pix_key: data.new_pix_key
+        }),
+        ...(type === 'BOLETO' && {
+          boleto_file: data.boleto_file,
+          boleto_code: data.boleto_code
+        })
+      };
+
+      await paymentService.createPaymentRequest(params);
+
+      toast({
+        title: "Solicitação enviada",
+        description: `Sua solicitação de ${type === 'PIX' ? 'pagamento PIX' : 'pagamento de boleto'} foi enviada com sucesso!`
+      });
+
+      // Refresh data
+      loadPayments();
+      refetchPixKeys(); // Refresh PIX keys in case a new one was created
+      setIsDialogOpen(false);
+
+    } catch (error: any) {
+      console.error('Error requesting payment:', error);
+      toast({
+        title: "Erro",
+        description: error.message || "Erro ao solicitar pagamento",
+        variant: "destructive"
+      });
+    }
   };
   
   // Log some debugging info
@@ -45,12 +104,6 @@ const UserPayments = () => {
 
   // Convert PaymentRequest[] to Payment[] for compatibility
   const convertedPayments = payments.map(payment => convertRequestToPayment(payment));
-
-  // Convert PixKeys to match the expected interface
-  const convertedPixKeys = pixKeys.map(key => ({
-    ...key,
-    owner_name: key.owner_name || key.name // Ensure owner_name is always present
-  }));
   
   return (
     <div className="space-y-6">
@@ -74,7 +127,7 @@ const UserPayments = () => {
         isOpen={isDialogOpen}
         onOpenChange={setIsDialogOpen}
         clientBalance={balance || 0}
-        pixKeys={convertedPixKeys}
+        pixKeys={pixKeys}
         isLoadingPixKeys={isLoadingPixKeys}
         onRequestPayment={handleRequestPayment}
       />

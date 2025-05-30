@@ -72,7 +72,7 @@ export const paymentService = {
         .from('pix_keys')
         .insert({
           user_id: params.client_id,
-          type: newKeyData.type, // This should now match the database enum
+          type: newKeyData.type,
           key: newKeyData.key,
           name: newKeyData.name,
           owner_name: newKeyData.owner_name,
@@ -212,7 +212,7 @@ export const paymentService = {
     // Convert PaymentStatus enum to string for database
     const dbUpdates = {
       ...updates,
-      status: updates.status ? updates.status.toString() : undefined
+      status: updates.status as string
     };
 
     const { data, error } = await supabase
