@@ -37,7 +37,7 @@ const OptimizedSalesDateFilter = ({
   const [localMinuteStart, setLocalMinuteStart] = useState(filters.minuteStart || '');
   const [localHourEnd, setLocalHourEnd] = useState(filters.hourEnd || '');
   const [localMinuteEnd, setLocalMinuteEnd] = useState(filters.minuteEnd || '');
-  const [localTerminal, setLocalTerminal] = useState(filters.terminals?.length ? filters.terminals[0] : '');
+  const [localTerminal, setLocalTerminal] = useState(filters.terminal || '');
   const [localMinAmount, setLocalMinAmount] = useState(filters.minAmount?.toString() || '');
   const [localMaxAmount, setLocalMaxAmount] = useState(filters.maxAmount?.toString() || '');
   const [showAdditionalFilters, setShowAdditionalFilters] = useState(false);
@@ -50,7 +50,7 @@ const OptimizedSalesDateFilter = ({
       minuteStart: localMinuteStart || undefined,
       hourEnd: localHourEnd || undefined,
       minuteEnd: localMinuteEnd || undefined,
-      terminals: localTerminal ? [localTerminal] : undefined,
+      terminal: localTerminal || undefined,
       minAmount: localMinAmount ? parseFloat(localMinAmount) : undefined,
       maxAmount: localMaxAmount ? parseFloat(localMaxAmount) : undefined
     });
@@ -58,7 +58,7 @@ const OptimizedSalesDateFilter = ({
 
   const hasDateFilters = filters.dateStart || filters.dateEnd;
   const hasTimeFilters = filters.hourStart || filters.minuteStart || filters.hourEnd || filters.minuteEnd;
-  const hasOtherFilters = filters.terminals?.length || filters.minAmount || filters.maxAmount || filters.paymentType;
+  const hasOtherFilters = filters.terminal || filters.minAmount || filters.maxAmount || filters.paymentType;
   const hasAnyFilters = Object.keys(filters).some(key => filters[key as keyof SalesFilters]);
 
   // Generate hour options (00-23)
@@ -124,7 +124,7 @@ const OptimizedSalesDateFilter = ({
                     <SelectValue placeholder="HH" />
                   </SelectTrigger>
                   <SelectContent>
-                    {Array.from({ length: 24 }, (_, i) => i.toString().padStart(2, '0')).map(hour => (
+                    {hourOptions.map(hour => (
                       <SelectItem key={hour} value={hour}>{hour}</SelectItem>
                     ))}
                   </SelectContent>
@@ -135,7 +135,7 @@ const OptimizedSalesDateFilter = ({
                     <SelectValue placeholder="MM" />
                   </SelectTrigger>
                   <SelectContent>
-                    {Array.from({ length: 60 }, (_, i) => i.toString().padStart(2, '0')).map(minute => (
+                    {minuteOptions.map(minute => (
                       <SelectItem key={minute} value={minute}>{minute}</SelectItem>
                     ))}
                   </SelectContent>
@@ -151,7 +151,7 @@ const OptimizedSalesDateFilter = ({
                     <SelectValue placeholder="HH" />
                   </SelectTrigger>
                   <SelectContent>
-                    {Array.from({ length: 24 }, (_, i) => i.toString().padStart(2, '0')).map(hour => (
+                    {hourOptions.map(hour => (
                       <SelectItem key={hour} value={hour}>{hour}</SelectItem>
                     ))}
                   </SelectContent>
@@ -162,7 +162,7 @@ const OptimizedSalesDateFilter = ({
                     <SelectValue placeholder="MM" />
                   </SelectTrigger>
                   <SelectContent>
-                    {Array.from({ length: 60 }, (_, i) => i.toString().padStart(2, '0')).map(minute => (
+                    {minuteOptions.map(minute => (
                       <SelectItem key={minute} value={minute}>{minute}</SelectItem>
                     ))}
                   </SelectContent>
@@ -296,8 +296,8 @@ const OptimizedSalesDateFilter = ({
                 {filters.hourEnd || '23'}:{filters.minuteEnd || '59'}
               </div>
             )}
-            {filters.terminals && filters.terminals.length > 0 && (
-              <div><strong>Terminal:</strong> {filters.terminals[0]}</div>
+            {filters.terminal && (
+              <div><strong>Terminal:</strong> {filters.terminal}</div>
             )}
             {filters.paymentType && (
               <div><strong>Pagamento:</strong> {filters.paymentType === 'CREDIT' ? 'Cartão de Crédito' : filters.paymentType === 'DEBIT' ? 'Cartão de Débito' : 'Pix'}</div>

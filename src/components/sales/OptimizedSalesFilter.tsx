@@ -20,21 +20,16 @@ const OptimizedSalesFilter = ({
   onFiltersChange, 
   onResetFilters 
 }: OptimizedSalesFilterProps) => {
-  const [selectedTerminals, setSelectedTerminals] = useState<string[]>(filters.terminals || []);
+  const [selectedTerminals, setSelectedTerminals] = useState<string[]>([]);
 
-  // Atualizar filtro de terminais quando seleção muda
+  // Atualizar filtro de terminais
   useEffect(() => {
-    onFiltersChange({ terminals: selectedTerminals.length > 0 ? selectedTerminals : undefined });
-  }, [selectedTerminals, onFiltersChange]);
-
-  // Sincronizar com filtros externos (quando limpar filtros)
-  useEffect(() => {
-    if (!filters.terminals || filters.terminals.length === 0) {
-      setSelectedTerminals([]);
+    if (selectedTerminals.length > 0) {
+      onFiltersChange({ terminals: selectedTerminals });
     } else {
-      setSelectedTerminals(filters.terminals);
+      onFiltersChange({ terminals: undefined });
     }
-  }, [filters.terminals]);
+  }, [selectedTerminals, onFiltersChange]);
 
   const hasActiveFilters = 
     filters.paymentType || 
@@ -48,11 +43,6 @@ const OptimizedSalesFilter = ({
         <CardTitle className="flex items-center gap-2">
           <Filter className="h-5 w-5" />
           Filtros Adicionais de Vendas
-          {hasActiveFilters && (
-            <span className="text-sm font-normal text-muted-foreground">
-              ({Object.keys(filters).filter(key => filters[key as keyof SalesFilters] !== undefined).length} filtros ativos)
-            </span>
-          )}
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">
@@ -121,6 +111,7 @@ const OptimizedSalesFilter = ({
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-4">
           <div className="lg:col-span-3">
             <TerminalFilter
+              terminals={[]} // Será preenchido quando disponível
               selectedTerminals={selectedTerminals}
               onTerminalsChange={setSelectedTerminals}
             />
@@ -131,10 +122,7 @@ const OptimizedSalesFilter = ({
             {hasActiveFilters && (
               <Button
                 variant="outline"
-                onClick={() => {
-                  setSelectedTerminals([]);
-                  onResetFilters();
-                }}
+                onClick={onResetFilters}
                 className="w-full flex items-center gap-2"
               >
                 <X className="h-4 w-4" />
@@ -143,25 +131,6 @@ const OptimizedSalesFilter = ({
             )}
           </div>
         </div>
-
-        {/* Resumo dos filtros ativos */}
-        {hasActiveFilters && (
-          <div className="text-sm text-muted-foreground space-y-1 border-t pt-3">
-            <div><strong>Filtros ativos:</strong></div>
-            {filters.paymentType && (
-              <div>• Pagamento: {filters.paymentType === 'CREDIT' ? 'Cartão de Crédito' : filters.paymentType === 'DEBIT' ? 'Cartão de Débito' : 'Pix'}</div>
-            )}
-            {filters.brand && (
-              <div>• Bandeira: {filters.brand}</div>
-            )}
-            {filters.source && (
-              <div>• Origem: {filters.source}</div>
-            )}
-            {filters.terminals && filters.terminals.length > 0 && (
-              <div>• Terminais: {filters.terminals.length} selecionados ({filters.terminals.slice(0, 3).join(', ')}{filters.terminals.length > 3 ? '...' : ''})</div>
-            )}
-          </div>
-        )}
       </CardContent>
     </Card>
   );

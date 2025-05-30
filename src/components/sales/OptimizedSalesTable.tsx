@@ -1,4 +1,3 @@
-
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -14,7 +13,6 @@ import {
 import { NormalizedSale } from "@/utils/sales-processor";
 import { formatCurrency } from "@/lib/formatters";
 import { PaymentTypeBadge } from "@/components/sales/PaymentTypeBadge";
-import { memo } from "react";
 
 interface OptimizedSalesTableProps {
   sales: NormalizedSale[];
@@ -25,7 +23,7 @@ interface OptimizedSalesTableProps {
   onPageChange: (page: number) => void;
 }
 
-const OptimizedSalesTable = memo(({ 
+const OptimizedSalesTable = ({ 
   sales, 
   totalCount, 
   totalPages, 
@@ -61,7 +59,7 @@ const OptimizedSalesTable = memo(({
 
   // Gerar números de página para exibição
   const getPageNumbers = () => {
-    const delta = 2;
+    const delta = 2; // Mostrar 2 páginas antes e depois da atual
     const pages = [];
     
     for (let i = Math.max(1, currentPage - delta); 
@@ -73,33 +71,10 @@ const OptimizedSalesTable = memo(({
     return pages;
   };
 
-  // Handler for page change with loading state management
+  // Handler for page change with proper logging
   const handlePageChange = (page: number) => {
-    if (page !== currentPage && page >= 1 && page <= totalPages) {
-      console.log(`Changing from page ${currentPage} to page ${page}`);
-      onPageChange(page);
-    }
-  };
-
-  // Função para formatar data de transação
-  const formatTransactionDate = (dateValue: string | Date | null | undefined): string => {
-    if (!dateValue) return 'N/A';
-    
-    if (typeof dateValue === 'string') {
-      return dateValue;
-    }
-    
-    if (dateValue instanceof Date) {
-      return dateValue.toLocaleString('pt-BR', {
-        day: '2-digit',
-        month: '2-digit',
-        year: 'numeric',
-        hour: '2-digit',
-        minute: '2-digit'
-      });
-    }
-    
-    return String(dateValue);
+    console.log(`Changing from page ${currentPage} to page ${page}`);
+    onPageChange(page);
   };
 
   return (
@@ -107,33 +82,26 @@ const OptimizedSalesTable = memo(({
       <CardHeader>
         <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
           <div>
-            <CardTitle>Dados de Vendas</CardTitle>
+            <CardTitle>Vendas Otimizadas</CardTitle>
             <p className="text-sm text-muted-foreground">
               {isLoading 
                 ? "Carregando..." 
-                : `${totalCount.toLocaleString('pt-BR')} transações encontradas • Página ${currentPage} de ${totalPages}`}
+                : `${totalCount} registros encontrados • Página ${currentPage} de ${totalPages}`}
             </p>
           </div>
           
           <div className="flex flex-col sm:flex-row gap-4 text-sm text-muted-foreground">
             <div className="flex flex-col sm:items-center">
-              <span className="font-medium">Total de Transações:</span>
+              <span className="font-medium">Total desta página:</span>
+              <span className="text-foreground font-bold">
+                {formatCurrency(currentPageTotal)}
+              </span>
+            </div>
+            
+            <div className="flex flex-col sm:items-center">
+              <span className="font-medium">Registros por página:</span>
               <span className="text-foreground font-bold">
                 {sales.length}
-              </span>
-            </div>
-            
-            <div className="flex flex-col sm:items-center">
-              <span className="font-medium">Valor Total Bruto:</span>
-              <span className="text-foreground font-bold">
-                {formatCurrency(currentPageTotal)}
-              </span>
-            </div>
-            
-            <div className="flex flex-col sm:items-center">
-              <span className="font-medium">Valor da Página:</span>
-              <span className="text-foreground font-bold">
-                {formatCurrency(currentPageTotal)}
               </span>
             </div>
           </div>
@@ -155,18 +123,22 @@ const OptimizedSalesTable = memo(({
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead className="text-center">Tipo de Pagamento</TableHead>
+                    <TableHead>Status</TableHead>
+                    <TableHead>Tipo de Pagamento</TableHead>
                     <TableHead className="text-right">Valor Bruto</TableHead>
-                    <TableHead>Data/Hora</TableHead>
+                    <TableHead>Data de Transação</TableHead>
                     <TableHead>Parcelas</TableHead>
                     <TableHead>Terminal</TableHead>
+                    <TableHead>Bandeira</TableHead>
+                    <TableHead>Origem</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {sales.length > 0 ? (
                     sales.map((sale, index) => (
                       <TableRow key={sale.id || index}>
-                        <TableCell className="text-center">
+                        <TableCell>{renderStatusBadge(sale.status)}</TableCell>
+                        <TableCell>
                           <PaymentTypeBadge 
                             paymentType={sale.payment_type} 
                             installments={sale.installments} 
@@ -175,24 +147,18 @@ const OptimizedSalesTable = memo(({
                         <TableCell className="text-right font-medium">
                           {formatCurrency(sale.gross_amount)}
                         </TableCell>
-                        <TableCell>
-                          <span className="font-medium text-sm">
-                            {formatTransactionDate(sale.transaction_date)}
-                          </span>
-                        </TableCell>
-                        <TableCell>
-                          <span className="text-sm">
-                            {sale.installments}x
-                          </span>
-                        </TableCell>
-                        <TableCell>
-                          <span className="font-mono text-sm">{sale.terminal}</span>
-                        </TableCell>
+                        <TableCell>{typeof sale.transaction_date === 'string' ? 
+                          sale.transaction_date : 
+                          sale.transaction_date.toLocaleString()}</TableCell>
+                        <TableCell>{sale.installments}</TableCell>
+                        <TableCell>{sale.terminal}</TableCell>
+                        <TableCell>{sale.brand}</TableCell>
+                        <TableCell>{sale.source}</TableCell>
                       </TableRow>
                     ))
                   ) : (
                     <TableRow>
-                      <TableCell colSpan={5} className="h-24 text-center">
+                      <TableCell colSpan={8} className="h-24 text-center">
                         Nenhum dado encontrado para os filtros aplicados
                       </TableCell>
                     </TableRow>
@@ -201,11 +167,11 @@ const OptimizedSalesTable = memo(({
               </Table>
             </div>
             
-            {/* Paginação otimizada */}
+            {/* Paginação */}
             {totalPages > 1 && (
               <div className="flex items-center justify-between p-4 border-t">
                 <div className="text-sm text-muted-foreground">
-                  Página {currentPage} de {totalPages} - {totalCount.toLocaleString('pt-BR')} registros totais (10 por página)
+                  Mostrando {((currentPage - 1) * 10) + 1} a {Math.min(currentPage * 10, totalCount)} de {totalCount} registros
                 </div>
                 
                 <div className="flex items-center space-x-2">
@@ -213,7 +179,7 @@ const OptimizedSalesTable = memo(({
                     variant="outline"
                     size="sm"
                     onClick={() => handlePageChange(currentPage - 1)}
-                    disabled={currentPage <= 1 || isLoading}
+                    disabled={currentPage <= 1}
                   >
                     <ChevronLeft className="h-4 w-4" />
                     Anterior
@@ -227,7 +193,6 @@ const OptimizedSalesTable = memo(({
                           size="sm"
                           onClick={() => handlePageChange(1)}
                           className="w-9 h-9"
-                          disabled={isLoading}
                         >
                           1
                         </Button>
@@ -242,7 +207,6 @@ const OptimizedSalesTable = memo(({
                         size="sm"
                         onClick={() => handlePageChange(pageNumber)}
                         className="w-9 h-9"
-                        disabled={isLoading}
                       >
                         {pageNumber}
                       </Button>
@@ -256,7 +220,6 @@ const OptimizedSalesTable = memo(({
                           size="sm"
                           onClick={() => handlePageChange(totalPages)}
                           className="w-9 h-9"
-                          disabled={isLoading}
                         >
                           {totalPages}
                         </Button>
@@ -268,7 +231,7 @@ const OptimizedSalesTable = memo(({
                     variant="outline"
                     size="sm"
                     onClick={() => handlePageChange(currentPage + 1)}
-                    disabled={currentPage >= totalPages || isLoading}
+                    disabled={currentPage >= totalPages}
                   >
                     Próxima
                     <ChevronRight className="h-4 w-4" />
@@ -281,8 +244,6 @@ const OptimizedSalesTable = memo(({
       </CardContent>
     </Card>
   );
-});
-
-OptimizedSalesTable.displayName = 'OptimizedSalesTable';
+};
 
 export default OptimizedSalesTable;

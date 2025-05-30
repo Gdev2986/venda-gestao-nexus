@@ -3,7 +3,7 @@ import { useState, useEffect } from "react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
-import { optimizedSalesService } from "@/services/optimized-sales.service";
+import { optimizedSalesService, UniqueTerminal } from "@/services/optimized-sales.service";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem } from "@/components/ui/command";
 import { Check, ChevronsUpDown, X } from "lucide-react";
@@ -24,7 +24,7 @@ export const TerminalAutocomplete = ({
 }: TerminalAutocompleteProps) => {
   const [open, setOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
-  const [terminals, setTerminals] = useState<Array<{terminal: string, usage_count: number}>>([]);
+  const [terminals, setTerminals] = useState<UniqueTerminal[]>([]);
   const [isLoading, setIsLoading] = useState(false);
 
   // Buscar terminais quando o termo de busca muda
