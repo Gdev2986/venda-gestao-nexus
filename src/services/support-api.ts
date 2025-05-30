@@ -1,6 +1,6 @@
 
 import { supabase } from "@/integrations/supabase/client";
-import { SupportTicket, SupportMessage, SupportConversation, CreateTicketParams } from "@/types/support.types";
+import { SupportTicket, SupportMessage, SupportConversation, CreateTicketParams, TicketType, TicketPriority, TicketStatus } from "@/types/support.types";
 
 // Get all support tickets with client information
 export const getSupportTickets = async () => {
@@ -14,7 +14,28 @@ export const getSupportTickets = async () => {
     `)
     .order('created_at', { ascending: false });
 
-  return { data, error };
+  if (error) {
+    return { data: null, error };
+  }
+
+  // Transform the data to match our TypeScript types
+  const transformedData: SupportTicket[] = (data || []).map(item => ({
+    id: item.id,
+    client_id: item.client_id,
+    technician_id: item.technician_id,
+    title: item.title,
+    description: item.description,
+    type: item.type as TicketType,
+    priority: item.priority as TicketPriority,
+    status: item.status as TicketStatus,
+    scheduled_date: item.scheduled_date,
+    created_at: item.created_at,
+    updated_at: item.updated_at,
+    resolution: item.resolution,
+    client: item.client
+  }));
+
+  return { data: transformedData, error: null };
 };
 
 // Get a specific ticket by ID
@@ -30,7 +51,28 @@ export const getTicketById = async (ticketId: string) => {
     .eq('id', ticketId)
     .single();
 
-  return { data, error };
+  if (error) {
+    return { data: null, error };
+  }
+
+  // Transform the data to match our TypeScript types
+  const transformedData: SupportTicket = {
+    id: data.id,
+    client_id: data.client_id,
+    technician_id: data.technician_id,
+    title: data.title,
+    description: data.description,
+    type: data.type as TicketType,
+    priority: data.priority as TicketPriority,
+    status: data.status as TicketStatus,
+    scheduled_date: data.scheduled_date,
+    created_at: data.created_at,
+    updated_at: data.updated_at,
+    resolution: data.resolution,
+    client: data.client
+  };
+
+  return { data: transformedData, error: null };
 };
 
 // Create a new support ticket
@@ -53,7 +95,28 @@ export const createSupportTicket = async (ticketData: CreateTicketParams) => {
     `)
     .single();
 
-  return { data, error };
+  if (error) {
+    return { data: null, error };
+  }
+
+  // Transform the data to match our TypeScript types
+  const transformedData: SupportTicket = {
+    id: data.id,
+    client_id: data.client_id,
+    technician_id: data.technician_id,
+    title: data.title,
+    description: data.description,
+    type: data.type as TicketType,
+    priority: data.priority as TicketPriority,
+    status: data.status as TicketStatus,
+    scheduled_date: data.scheduled_date,
+    created_at: data.created_at,
+    updated_at: data.updated_at,
+    resolution: data.resolution,
+    client: data.client
+  };
+
+  return { data: transformedData, error: null };
 };
 
 // Update support ticket
@@ -70,7 +133,28 @@ export const updateSupportTicket = async (ticketId: string, updates: Partial<Sup
     `)
     .single();
 
-  return { data, error };
+  if (error) {
+    return { data: null, error };
+  }
+
+  // Transform the data to match our TypeScript types
+  const transformedData: SupportTicket = {
+    id: data.id,
+    client_id: data.client_id,
+    technician_id: data.technician_id,
+    title: data.title,
+    description: data.description,
+    type: data.type as TicketType,
+    priority: data.priority as TicketPriority,
+    status: data.status as TicketStatus,
+    scheduled_date: data.scheduled_date,
+    created_at: data.created_at,
+    updated_at: data.updated_at,
+    resolution: data.resolution,
+    client: data.client
+  };
+
+  return { data: transformedData, error: null };
 };
 
 // Get conversation for a ticket
@@ -105,7 +189,25 @@ export const getTicketMessages = async (ticketId: string) => {
     .eq('conversation_id', conversation.id)
     .order('created_at', { ascending: true });
 
-  return { data, error };
+  if (error) {
+    return { data: [], error };
+  }
+
+  // Transform the data to match our TypeScript types
+  const transformedData: SupportMessage[] = (data || []).map(item => ({
+    id: item.id,
+    conversation_id: item.conversation_id,
+    user_id: item.user_id,
+    message: item.message,
+    is_read: item.is_read,
+    created_at: item.created_at,
+    user: item.user && typeof item.user === 'object' && 'name' in item.user ? {
+      name: item.user.name,
+      email: item.user.email
+    } : undefined
+  }));
+
+  return { data: transformedData, error: null };
 };
 
 // Send a message in a ticket conversation
@@ -158,5 +260,23 @@ export const sendTicketMessage = async (ticketId: string, message: string) => {
     `)
     .single();
 
-  return { data, error };
+  if (error) {
+    return { data: null, error };
+  }
+
+  // Transform the data to match our TypeScript types
+  const transformedData: SupportMessage = {
+    id: data.id,
+    conversation_id: data.conversation_id,
+    user_id: data.user_id,
+    message: data.message,
+    is_read: data.is_read,
+    created_at: data.created_at,
+    user: data.user && typeof data.user === 'object' && 'name' in data.user ? {
+      name: data.user.name,
+      email: data.user.email
+    } : undefined
+  };
+
+  return { data: transformedData, error: null };
 };

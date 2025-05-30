@@ -12,7 +12,6 @@ import {
 } from "@/services/support-api";
 import { SupportTicket, SupportMessage, CreateTicketParams, TicketStatus } from "@/types/support.types";
 import { useToast } from "@/hooks/use-toast";
-import { NotificationType } from "@/types/notification.types";
 
 export const useSupportSystem = () => {
   const { user, userRole } = useAuth();
@@ -144,7 +143,7 @@ export const useSupportSystem = () => {
         user_id: admin.id,
         title: 'Novo Chamado de Suporte',
         message: `Cliente ${clientName} criou um novo chamado de suporte`,
-        type: 'SUPPORT' as NotificationType,
+        type: 'SUPPORT' as const,
         data: { ticket_id: ticketId }
       }));
 
