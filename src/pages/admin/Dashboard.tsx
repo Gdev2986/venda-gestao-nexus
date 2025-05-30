@@ -8,7 +8,6 @@ import { ChartsSection } from "@/components/dashboard/admin/ChartsSection";
 import StatCards from "@/components/dashboard/admin/StatCards";
 import { subDays } from "date-fns";
 import PaymentMethodsBreakdown from "@/components/dashboard/admin/PaymentMethodsBreakdown";
-import { PaymentMethod } from "@/types";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { ArrowUp, TrendingUp } from "lucide-react";
 import { formatCurrency } from "@/lib/utils";
@@ -23,59 +22,7 @@ const AdminDashboard = () => {
   const { toast } = useToast();
   
   // Use our real stats hook
-  const { stats, isLoading, refreshStats } = useAdminDashboardStats(dateRange);
-  
-  // Mock data for visualization components
-  const MOCK_DATA = {
-    dailySales: [
-      { name: "01/05", gross: 12500, net: 9375 },
-      { name: "02/05", gross: 9800, net: 7350 },
-      { name: "03/05", gross: 15200, net: 11400 },
-      { name: "04/05", gross: 18500, net: 13875 },
-      { name: "05/05", gross: 22300, net: 16725 },
-      { name: "06/05", gross: 19800, net: 14850 },
-      { name: "07/05", gross: 14500, net: 10875 }
-    ],
-    paymentMethods: [
-      { name: "Crédito", value: 68500, color: "#3b82f6", percent: 55 },
-      { name: "Débito", value: 37500, color: "#22c55e", percent: 30 },
-      { name: "Pix", value: 19750, color: "#f59e0b", percent: 15 }
-    ],
-    paymentMethodsDetail: [
-      { 
-        method: PaymentMethod.CREDIT, 
-        count: 456, 
-        amount: 68500, 
-        percentage: 55,
-        installments: [
-          { installments: "1", count: 120, amount: 18500, percentage: 27 },
-          { installments: "2", count: 95, amount: 15300, percentage: 22 },
-          { installments: "3", count: 85, amount: 12800, percentage: 19 },
-          { installments: "4", count: 65, amount: 9700, percentage: 14 },
-          { installments: "5", count: 40, amount: 6200, percentage: 9 },
-          { installments: "6", count: 35, amount: 4300, percentage: 6 },
-          { installments: "12", count: 16, amount: 1700, percentage: 3 }
-        ]
-      },
-      { method: PaymentMethod.DEBIT, count: 320, amount: 37500, percentage: 30 },
-      { method: PaymentMethod.PIX, count: 215, amount: 19750, percentage: 15 }
-    ],
-    topPartners: [
-      { name: "Parceiro A", value: 15200, commission: 1520 },
-      { name: "Parceiro B", value: 12800, commission: 1280 },
-      { name: "Parceiro C", value: 9750, commission: 975 },
-      { name: "Parceiro D", value: 7200, commission: 720 },
-      { name: "Parceiro E", value: 5100, commission: 510 }
-    ],
-    clientGrowth: [
-      { name: "Jan", clients: 24 },
-      { name: "Fev", clients: 28 },
-      { name: "Mar", clients: 35 },
-      { name: "Abr", clients: 42 },
-      { name: "Mai", clients: 48 },
-      { name: "Jun", clients: 53 }
-    ]
-  };
+  const { stats, chartsData, isLoading, refreshStats } = useAdminDashboardStats(dateRange);
 
   // Default stats with the expected shape
   const defaultStats = {
@@ -86,6 +33,15 @@ const AdminDashboard = () => {
     totalCommissions: 0,
     salesGrowth: 0,
     isGrowthPositive: false
+  };
+
+  // Default charts data
+  const defaultChartsData = {
+    dailySales: [],
+    paymentMethods: [],
+    paymentMethodsDetail: [],
+    topPartners: [],
+    clientGrowth: []
   };
 
   return (
@@ -174,17 +130,17 @@ const AdminDashboard = () => {
         {/* Payment Methods Breakdown */}
         <div className="grid grid-cols-1 gap-4">
           <PaymentMethodsBreakdown 
-            data={MOCK_DATA.paymentMethodsDetail} 
+            data={chartsData?.paymentMethodsDetail || defaultChartsData.paymentMethodsDetail} 
             isLoading={isLoading} 
           />
         </div>
         
         {/* Charts Grid */}
         <ChartsSection 
-          salesData={MOCK_DATA.dailySales}
-          paymentMethodsData={MOCK_DATA.paymentMethods}
-          topPartnersData={MOCK_DATA.topPartners}
-          clientGrowthData={MOCK_DATA.clientGrowth}
+          salesData={chartsData?.dailySales || defaultChartsData.dailySales}
+          paymentMethodsData={chartsData?.paymentMethods || defaultChartsData.paymentMethods}
+          topPartnersData={chartsData?.topPartners || defaultChartsData.topPartners}
+          clientGrowthData={chartsData?.clientGrowth || defaultChartsData.clientGrowth}
           isLoading={isLoading}
         />
       </div>
