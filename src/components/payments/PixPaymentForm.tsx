@@ -176,7 +176,7 @@ export const PixPaymentForm = ({ clientBalance, pixKeys, onSubmit, isLoading }: 
                       placeholder="Ex: Minha chave"
                       className="dark:bg-[#1a1a1a] dark:border-[#262626] dark:text-white"
                     />
-                    {errors.new_pix_key?.name && (
+                    {errors.new_pix_key?.name && typeof errors.new_pix_key.name === 'object' && 'message' in errors.new_pix_key.name && (
                       <p className="text-sm text-red-600">{errors.new_pix_key.name.message}</p>
                     )}
                   </div>
@@ -195,7 +195,7 @@ export const PixPaymentForm = ({ clientBalance, pixKeys, onSubmit, isLoading }: 
                         <SelectItem value="RANDOM" className="dark:text-white dark:focus:bg-[#262626]">Aleatória</SelectItem>
                       </SelectContent>
                     </Select>
-                    {errors.new_pix_key?.type && (
+                    {errors.new_pix_key?.type && typeof errors.new_pix_key.type === 'object' && 'message' in errors.new_pix_key.type && (
                       <p className="text-sm text-red-600">{errors.new_pix_key.type.message}</p>
                     )}
                   </div>
@@ -209,7 +209,7 @@ export const PixPaymentForm = ({ clientBalance, pixKeys, onSubmit, isLoading }: 
                     placeholder="Digite a chave PIX"
                     className="dark:bg-[#1a1a1a] dark:border-[#262626] dark:text-white"
                   />
-                  {errors.new_pix_key?.key && (
+                  {errors.new_pix_key?.key && typeof errors.new_pix_key.key === 'object' && 'message' in errors.new_pix_key.key && (
                     <p className="text-sm text-red-600">{errors.new_pix_key.key.message}</p>
                   )}
                 </div>
@@ -222,7 +222,7 @@ export const PixPaymentForm = ({ clientBalance, pixKeys, onSubmit, isLoading }: 
                     placeholder="Nome completo do titular"
                     className="dark:bg-[#1a1a1a] dark:border-[#262626] dark:text-white"
                   />
-                  {errors.new_pix_key?.owner_name && (
+                  {errors.new_pix_key?.owner_name && typeof errors.new_pix_key.owner_name === 'object' && 'message' in errors.new_pix_key.owner_name && (
                     <p className="text-sm text-red-600">{errors.new_pix_key.owner_name.message}</p>
                   )}
                 </div>
