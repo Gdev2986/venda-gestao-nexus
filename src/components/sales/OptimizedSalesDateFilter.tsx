@@ -8,6 +8,9 @@ import { Calendar, X, Clock, Filter, ChevronDown, ChevronUp } from "lucide-react
 import { SalesFilters } from "@/services/optimized-sales.service";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { TerminalAutocomplete } from "./TerminalAutocomplete";
+import { DatePicker } from "@/components/ui/date-picker";
+import { format } from "date-fns";
+import { ptBR } from "date-fns/locale";
 
 interface OptimizedSalesDateFilterProps {
   filters: SalesFilters;
@@ -24,8 +27,12 @@ const OptimizedSalesDateFilter = ({
   totalRecords,
   isLoading
 }: OptimizedSalesDateFilterProps) => {
-  const [localStartDate, setLocalStartDate] = useState(filters.dateStart || '');
-  const [localEndDate, setLocalEndDate] = useState(filters.dateEnd || '');
+  const [localStartDate, setLocalStartDate] = useState<Date | undefined>(
+    filters.dateStart ? new Date(filters.dateStart) : undefined
+  );
+  const [localEndDate, setLocalEndDate] = useState<Date | undefined>(
+    filters.dateEnd ? new Date(filters.dateEnd) : undefined
+  );
   const [localHourStart, setLocalHourStart] = useState(filters.hourStart || '');
   const [localMinuteStart, setLocalMinuteStart] = useState(filters.minuteStart || '');
   const [localHourEnd, setLocalHourEnd] = useState(filters.hourEnd || '');
@@ -37,8 +44,8 @@ const OptimizedSalesDateFilter = ({
 
   const handleApplyDateFilter = () => {
     onFiltersChange({
-      dateStart: localStartDate || undefined,
-      dateEnd: localEndDate || undefined,
+      dateStart: localStartDate ? format(localStartDate, 'yyyy-MM-dd') : undefined,
+      dateEnd: localEndDate ? format(localEndDate, 'yyyy-MM-dd') : undefined,
       hourStart: localHourStart || undefined,
       minuteStart: localMinuteStart || undefined,
       hourEnd: localHourEnd || undefined,
@@ -82,23 +89,21 @@ const OptimizedSalesDateFilter = ({
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div className="space-y-2">
             <Label htmlFor="start-date">Data Inicial</Label>
-            <Input
-              id="start-date"
-              type="date"
-              value={localStartDate}
-              onChange={(e) => setLocalStartDate(e.target.value)}
-              disabled={isLoading}
+            <DatePicker
+              selected={localStartDate}
+              onSelect={setLocalStartDate}
+              placeholder="Selecionar data inicial"
+              className="w-full"
             />
           </div>
           
           <div className="space-y-2">
             <Label htmlFor="end-date">Data Final</Label>
-            <Input
-              id="end-date"
-              type="date"
-              value={localEndDate}
-              onChange={(e) => setLocalEndDate(e.target.value)}
-              disabled={isLoading}
+            <DatePicker
+              selected={localEndDate}
+              onSelect={setLocalEndDate}
+              placeholder="Selecionar data final"
+              className="w-full"
             />
           </div>
         </div>
