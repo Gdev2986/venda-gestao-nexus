@@ -4,6 +4,8 @@ import { PaymentStatus as EnumsPaymentStatus, PaymentMethod } from './enums';
 // Use the enum from enums.ts for consistency
 export { PaymentStatus, PaymentMethod } from './enums';
 
+export type PaymentType = 'PIX' | 'BOLETO' | 'TED';
+
 export interface PixKey {
   id: string;
   key: string;
@@ -18,41 +20,13 @@ export interface PixKey {
   updated_at?: string;
 }
 
-// Legacy Payment interface for backward compatibility
-export interface Payment {
-  id: string;
-  client_id: string;
-  amount: number;
-  status: EnumsPaymentStatus;
-  approved_by?: string;
-  approved_at?: string;
-  created_at: string;
-  updated_at: string;
-  receipt_url?: string;
-  description?: string;
-  rejection_reason: string | null;
-  payment_type?: string;
-  client?: {
-    id: string;
-    business_name: string;
-    email?: string;
-    phone?: string;
-  };
-  pix_key?: PixKey;
-  bank_info?: {
-    bank_name?: string;
-    account_number?: string;
-    branch_number?: string;
-    account_holder?: string;
-  };
-}
-
-// PaymentRequest interface compatível
+// Updated PaymentRequest interface with new fields
 export interface PaymentRequest {
   id: string;
   client_id: string;
   amount: number;
   method?: PaymentMethod;
+  payment_type: PaymentType;
   status: EnumsPaymentStatus;
   created_at: string;
   updated_at: string;
@@ -61,9 +35,12 @@ export interface PaymentRequest {
   processed_by?: string;
   notes?: string;
   receipt_url?: string;
+  receipt_file_url?: string;
   description?: string;
   rejection_reason?: string | null;
   pix_key_id?: string;
+  boleto_file_url?: string;
+  boleto_code?: string;
   client?: {
     id: string;
     business_name: string;
@@ -73,13 +50,18 @@ export interface PaymentRequest {
     id: string;
     name: string;
   };
+  pix_key?: PixKey;
 }
 
 export interface PaymentRequestParams {
   client_id: string;
   amount: number;
-  method: PaymentMethod;
+  payment_type: PaymentType;
+  method?: PaymentMethod;
   notes?: string;
+  pix_key_id?: string;
+  boleto_code?: string;
+  boleto_file?: File;
 }
 
 export interface PaymentProcessParams {
@@ -95,6 +77,13 @@ export interface ClientBalance {
   pending_payments: number;
   total_sales: number;
   commission_rate: number;
+}
+
+export interface PartnerCommissionBalance {
+  partner_id: string;
+  total_commission: number;
+  paid_commission: number;
+  available_balance: number;
 }
 
 export type PaymentRequestStatus = EnumsPaymentStatus;

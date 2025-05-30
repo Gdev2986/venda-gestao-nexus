@@ -4,17 +4,23 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Pagination, PaginationContent, PaginationItem, PaginationNext, PaginationPrevious } from "@/components/ui/pagination";
 import { AdminPaymentsList } from "@/components/payments/AdminPaymentsList";
+import { PaymentDetailsModal } from "@/components/payments/PaymentDetailsModal";
 import { useAdminPayments } from "@/hooks/payments/useAdminPayments";
 import { PaymentStatus, PaymentAction } from "@/types/enums";
+import { PaymentRequest, PaymentType } from "@/types/payment.types";
+import { paymentService } from "@/services/payment.service";
 import { useToast } from "@/hooks/use-toast";
 import { useNavigate } from "react-router-dom";
+import TablePagination from "@/components/ui/table-pagination";
 
 const AdminPayments = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState<PaymentStatus | "ALL">("ALL");
+  const [typeFilter, setTypeFilter] = useState<PaymentType | "ALL">("ALL");
   const [page, setPage] = useState(1);
+  const [selectedPayment, setSelectedPayment] = useState<PaymentRequest | null>(null);
+  const [isDetailsOpen, setIsDetailsOpen] = useState(false);
   const pageSize = 10;
   const navigate = useNavigate();
   const { toast } = useToast();
@@ -24,8 +30,7 @@ const AdminPayments = () => {
     isLoading,
     error,
     totalPages,
-    refetch,
-    performPaymentAction
+    refetch
   } = useAdminPayments({
     searchTerm,
     statusFilter,
@@ -45,25 +50,71 @@ const AdminPayments = () => {
 
   const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setSearchTerm(e.target.value);
-    setPage(1); // Reset to the first page when searching
+    setPage(1);
   };
 
   const handleStatusFilterChange = (status: PaymentStatus | "ALL") => {
     setStatusFilter(status);
-    setPage(1); // Reset to the first page when filtering
+    setPage(1);
+  };
+
+  const handleTypeFilterChange = (type: PaymentType | "ALL") => {
+    setTypeFilter(type);
+    setPage(1);
   };
 
   const handlePageChange = (newPage: number) => {
     setPage(newPage);
   };
 
-  const handleActionClick = useCallback((paymentId: string, action: PaymentAction) => {
+  const handleActionClick = useCallback(async (paymentId: string, action: PaymentAction) => {
     if (action === PaymentAction.VIEW) {
-      navigate(`/admin/payments/${paymentId}`);
-    } else {
-      performPaymentAction(paymentId, action);
+      try {
+        const payment = await paymentService.getPaymentRequestById(paymentId);
+        if (payment) {
+          setSelectedPayment(payment);
+          setIsDetailsOpen(true);
+        }
+      } catch (error: any) {
+        toast({
+          title: "Erro",
+          description: "Erro ao carregar detalhes do pagamento",
+          variant: "destructive"
+        });
+      }
     }
-  }, [navigate, performPaymentAction]);
+  }, [toast]);
+
+  const handleStatusChange = async (paymentId: string, status: PaymentStatus, notes?: string, receiptFile?: File) => {
+    try {
+      await paymentService.processPaymentRequest({
+        payment_id: paymentId,
+        status,
+        notes,
+        receipt_file: receiptFile
+      });
+
+      toast({
+        title: "Status atualizado",
+        description: `Pagamento ${status === PaymentStatus.APPROVED ? 'aprovado' : 'rejeitado'} com sucesso`
+      });
+
+      // Refresh data
+      refetch();
+    } catch (error: any) {
+      toast({
+        title: "Erro",
+        description: error.message || "Erro ao atualizar status do pagamento",
+        variant: "destructive"
+      });
+      throw error;
+    }
+  };
+
+  // Filter payments by type on the frontend since the hook doesn't support it yet
+  const filteredPayments = payments?.filter(payment => 
+    typeFilter === "ALL" || payment.payment_type === typeFilter
+  ) || [];
 
   return (
     <div className="container mx-auto py-6">
@@ -75,7 +126,7 @@ const AdminPayments = () => {
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <Input
               type="search"
               placeholder="Buscar por cliente..."
@@ -97,43 +148,48 @@ const AdminPayments = () => {
                 <SelectItem value={PaymentStatus.PAID}>Pago</SelectItem>
               </SelectContent>
             </Select>
+            <Select
+              value={typeFilter}
+              onValueChange={value => handleTypeFilterChange(value as PaymentType | "ALL")}
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="Filtrar por tipo" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="ALL">Todos os Tipos</SelectItem>
+                <SelectItem value="PIX">PIX</SelectItem>
+                <SelectItem value="BOLETO">Boleto</SelectItem>
+                <SelectItem value="TED">TED</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
 
           <AdminPaymentsList
-            payments={payments || []}
+            payments={filteredPayments}
             isLoading={isLoading}
             selectedStatus={statusFilter}
             onActionClick={handleActionClick}
           />
 
-          {payments && payments.length > 0 && (
-            <Pagination>
-              <PaginationContent className="flex gap-4">
-                <PaginationItem>
-                  <Button
-                    variant="outline"
-                    onClick={() => handlePageChange(page - 1)}
-                    disabled={page === 1}
-                    className="h-9 w-9 px-[45px]"
-                  >
-                    <PaginationPrevious className="h-4 w-4" />
-                  </Button>
-                </PaginationItem>
-                <PaginationItem>
-                  <Button
-                    variant="outline"
-                    onClick={() => handlePageChange(page + 1)}
-                    disabled={page === totalPages}
-                    className="h-9 w-9 px-[45px]"
-                  >
-                    <PaginationNext className="h-4 w-4" />
-                  </Button>
-                </PaginationItem>
-              </PaginationContent>
-            </Pagination>
-          )}
+          <TablePagination 
+            currentPage={page}
+            totalPages={totalPages}
+            onPageChange={handlePageChange}
+          />
+
+          <div className="text-sm text-muted-foreground">
+            Total de pagamentos: {filteredPayments.length}
+          </div>
         </CardContent>
       </Card>
+
+      <PaymentDetailsModal
+        payment={selectedPayment}
+        isOpen={isDetailsOpen}
+        onOpenChange={setIsDetailsOpen}
+        canManage={true}
+        onStatusChange={handleStatusChange}
+      />
     </div>
   );
 };

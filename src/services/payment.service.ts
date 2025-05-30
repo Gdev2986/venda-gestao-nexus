@@ -1,29 +1,22 @@
 
 import { supabase } from "@/integrations/supabase/client";
-import { PaymentRequest, PaymentRequestParams, PaymentProcessParams } from "@/types/payment.types";
+import { PaymentRequest, PaymentRequestParams, PaymentProcessParams, PaymentType } from "@/types/payment.types";
 import { PaymentStatus } from "@/types/enums";
 
 export const paymentService = {
-  // Get all payment requests
+  // Get all payment requests with enhanced data
   async getPaymentRequests(): Promise<PaymentRequest[]> {
     const { data, error } = await supabase
       .from('payment_requests')
       .select(`
         *,
-        client:clients(id, business_name, balance)
+        client:clients(id, business_name, balance),
+        pix_key:pix_keys(id, key, type, name, owner_name)
       `)
       .order('created_at', { ascending: false });
 
     if (error) throw error;
-    return (data || []).map(item => ({
-      ...item,
-      status: item.status as PaymentStatus,
-      client: item.client ? {
-        id: item.client.id,
-        business_name: item.client.business_name,
-        current_balance: item.client.balance
-      } : undefined
-    }));
+    return (data || []).map(this.formatPaymentRequest);
   },
 
   // Get payment request by ID
@@ -32,7 +25,8 @@ export const paymentService = {
       .from('payment_requests')
       .select(`
         *,
-        client:clients(id, business_name, balance)
+        client:clients(id, business_name, balance),
+        pix_key:pix_keys(id, key, type, name, owner_name)
       `)
       .eq('id', id)
       .single();
@@ -41,56 +35,92 @@ export const paymentService = {
       if (error.code === 'PGRST116') return null;
       throw error;
     }
-    return data ? {
-      ...data,
-      status: data.status as PaymentStatus,
-      client: data.client ? {
-        id: data.client.id,
-        business_name: data.client.business_name,
-        current_balance: data.client.balance
-      } : undefined
-    } : null;
+    return data ? this.formatPaymentRequest(data) : null;
   },
 
-  // Create payment request
+  // Create payment request with file upload support
   async createPaymentRequest(params: PaymentRequestParams): Promise<PaymentRequest> {
+    let boleto_file_url: string | undefined;
+
+    // Upload boleto file if provided
+    if (params.boleto_file) {
+      const fileName = `${params.client_id}/${Date.now()}-${params.boleto_file.name}`;
+      const { data: uploadData, error: uploadError } = await supabase.storage
+        .from('payment-files')
+        .upload(fileName, params.boleto_file);
+
+      if (uploadError) throw uploadError;
+      boleto_file_url = uploadData.path;
+    }
+
+    // Handle new PIX key creation
+    let pix_key_id = params.pix_key_id;
+    if (params.payment_type === 'PIX' && !pix_key_id && (params as any).new_pix_key) {
+      const newKeyData = (params as any).new_pix_key;
+      const { data: pixKeyData, error: pixKeyError } = await supabase
+        .from('pix_keys')
+        .insert({
+          user_id: params.client_id,
+          type: newKeyData.type,
+          key: newKeyData.key,
+          name: newKeyData.name,
+          owner_name: newKeyData.owner_name,
+          is_default: false
+        })
+        .select()
+        .single();
+
+      if (pixKeyError) throw pixKeyError;
+      pix_key_id = pixKeyData.id;
+    }
+
     const { data, error } = await supabase
       .from('payment_requests')
       .insert({
         client_id: params.client_id,
         amount: params.amount,
-        pix_key_id: 'default-key', // Required field
+        payment_type: params.payment_type,
+        pix_key_id: pix_key_id || null,
+        boleto_file_url,
+        boleto_code: params.boleto_code || null,
         status: PaymentStatus.PENDING,
-        notes: params.notes
+        notes: params.notes || null
       })
       .select(`
         *,
-        client:clients(id, business_name, balance)
+        client:clients(id, business_name, balance),
+        pix_key:pix_keys(id, key, type, name, owner_name)
       `)
       .single();
 
     if (error) throw error;
-    return {
-      ...data,
-      status: data.status as PaymentStatus,
-      client: data.client ? {
-        id: data.client.id,
-        business_name: data.client.business_name,
-        current_balance: data.client.balance
-      } : undefined
-    };
+    return this.formatPaymentRequest(data);
   },
 
-  // Process payment request
+  // Process payment request with receipt upload
   async processPaymentRequest(params: PaymentProcessParams): Promise<PaymentRequest> {
+    let receipt_file_url: string | undefined;
+
+    // Upload receipt file if provided
+    if (params.receipt_file) {
+      const fileName = `receipts/${params.payment_id}/${Date.now()}-${params.receipt_file.name}`;
+      const { data: uploadData, error: uploadError } = await supabase.storage
+        .from('payment-files')
+        .upload(fileName, params.receipt_file);
+
+      if (uploadError) throw uploadError;
+      receipt_file_url = uploadData.path;
+    }
+
     const updateData: any = {
       status: params.status,
       processed_at: new Date().toISOString(),
+      processed_by: (await supabase.auth.getUser()).data.user?.id,
       notes: params.notes
     };
 
-    if (params.status === PaymentStatus.APPROVED) {
-      updateData.processed_at = new Date().toISOString();
+    if (receipt_file_url) {
+      updateData.receipt_file_url = receipt_file_url;
     }
 
     if (params.status === PaymentStatus.REJECTED && params.notes) {
@@ -103,20 +133,13 @@ export const paymentService = {
       .eq('id', params.payment_id)
       .select(`
         *,
-        client:clients(id, business_name, balance)
+        client:clients(id, business_name, balance),
+        pix_key:pix_keys(id, key, type, name, owner_name)
       `)
       .single();
 
     if (error) throw error;
-    return {
-      ...data,
-      status: data.status as PaymentStatus,
-      client: data.client ? {
-        id: data.client.id,
-        business_name: data.client.business_name,
-        current_balance: data.client.balance
-      } : undefined
-    };
+    return this.formatPaymentRequest(data);
   },
 
   // Get payments by client
@@ -125,50 +148,78 @@ export const paymentService = {
       .from('payment_requests')
       .select(`
         *,
-        client:clients(id, business_name, balance)
+        client:clients(id, business_name, balance),
+        pix_key:pix_keys(id, key, type, name, owner_name)
       `)
       .eq('client_id', clientId)
       .order('created_at', { ascending: false });
 
     if (error) throw error;
-    return (data || []).map(item => ({
-      ...item,
+    return (data || []).map(this.formatPaymentRequest);
+  },
+
+  // Get partner commission balance
+  async getPartnerCommissionBalance(partnerId: string): Promise<number> {
+    const { data, error } = await supabase.rpc('get_partner_commission_balance', {
+      partner_uuid: partnerId
+    });
+
+    if (error) throw error;
+    return data || 0;
+  },
+
+  // Helper method to format payment request data
+  formatPaymentRequest(item: any): PaymentRequest {
+    return {
+      id: item.id,
+      client_id: item.client_id,
+      amount: item.amount,
+      payment_type: item.payment_type as PaymentType,
       status: item.status as PaymentStatus,
+      created_at: item.created_at,
+      updated_at: item.updated_at,
+      processed_at: item.processed_at,
+      processed_by: item.processed_by,
+      notes: item.notes,
+      receipt_file_url: item.receipt_file_url,
+      description: item.description,
+      rejection_reason: item.rejection_reason,
+      pix_key_id: item.pix_key_id,
+      boleto_file_url: item.boleto_file_url,
+      boleto_code: item.boleto_code,
       client: item.client ? {
         id: item.client.id,
         business_name: item.client.business_name,
         current_balance: item.client.balance
+      } : undefined,
+      pix_key: item.pix_key ? {
+        id: item.pix_key.id,
+        key: item.pix_key.key,
+        type: item.pix_key.type,
+        name: item.pix_key.name,
+        owner_name: item.pix_key.owner_name,
+        user_id: item.client_id,
+        created_at: item.pix_key.created_at,
+        updated_at: item.pix_key.updated_at
       } : undefined
-    }));
+    };
   },
 
   // Update payment request
   async updatePaymentRequest(id: string, updates: Partial<PaymentRequest>): Promise<PaymentRequest | null> {
-    const updateData: any = { ...updates };
-    if (updateData.status) {
-      updateData.status = updateData.status;
-    }
-
     const { data, error } = await supabase
       .from('payment_requests')
-      .update(updateData)
+      .update(updates)
       .eq('id', id)
       .select(`
         *,
-        client:clients(id, business_name, balance)
+        client:clients(id, business_name, balance),
+        pix_key:pix_keys(id, key, type, name, owner_name)
       `)
       .single();
 
     if (error) throw error;
-    return data ? {
-      ...data,
-      status: data.status as PaymentStatus,
-      client: data.client ? {
-        id: data.client.id,
-        business_name: data.client.business_name,
-        current_balance: data.client.balance
-      } : undefined
-    } : null;
+    return data ? this.formatPaymentRequest(data) : null;
   },
 
   // Delete payment request
@@ -188,6 +239,7 @@ export const getPaymentRequestById = paymentService.getPaymentRequestById;
 export const createPaymentRequest = paymentService.createPaymentRequest;
 export const processPaymentRequest = paymentService.processPaymentRequest;
 export const getPaymentsByClient = paymentService.getPaymentsByClient;
-export const getClientPayments = paymentService.getPaymentsByClient; // Add the missing export
+export const getClientPayments = paymentService.getPaymentsByClient;
 export const updatePaymentRequest = paymentService.updatePaymentRequest;
 export const deletePaymentRequest = paymentService.deletePaymentRequest;
+export const getPartnerCommissionBalance = paymentService.getPartnerCommissionBalance;

@@ -10,15 +10,24 @@ import { useClientPayments } from "@/hooks/useClientPayments";
 import { usePixKeys } from "@/hooks/usePixKeys";
 import { usePaymentSubscription } from "@/hooks/usePaymentSubscription";
 import { useAuth } from "@/hooks/use-auth";
+import { useFileUpload } from "@/hooks/useFileUpload";
+import { paymentService } from "@/services/payment.service";
 import { Plus, Wallet } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { toast } from "@/hooks/use-toast";
 
 const ClientPayments = () => {
   const { user } = useAuth();
   const { balance, isLoading: balanceLoading } = useClientBalance();
-  const { payments, isLoading: paymentsLoading, loadPayments, requestPayment } = useClientPayments();
-  const { pixKeys, isLoading: pixKeysLoading } = usePixKeys();
+  const { payments, isLoading: paymentsLoading, loadPayments } = useClientPayments();
+  const { pixKeys, isLoading: pixKeysLoading, loadPixKeys } = usePixKeys();
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+
+  const fileUpload = useFileUpload({
+    bucket: 'payment-files',
+    allowedTypes: ['application/pdf', 'image/jpeg', 'image/png', 'image/jpg'],
+    maxSizeInMB: 10
+  });
 
   // Setup real-time subscription
   usePaymentSubscription(loadPayments, { 
@@ -26,13 +35,66 @@ const ClientPayments = () => {
     filterByClientId: user?.id 
   });
 
-  const handleRequestPayment = async (amount: string, description: string, pixKeyId: string) => {
-    const numericAmount = parseFloat(amount);
-    if (!isNaN(numericAmount) && pixKeyId) {
-      const success = await requestPayment(numericAmount, pixKeyId, description);
-      if (success) {
-        setIsDialogOpen(false);
+  const handleRequestPayment = async (type: 'PIX' | 'BOLETO', data: any) => {
+    try {
+      if (!user) {
+        toast({
+          title: "Erro",
+          description: "Usuário não autenticado",
+          variant: "destructive"
+        });
+        return;
       }
+
+      // Get client ID
+      const { data: clientData } = await supabase.rpc('get_user_client_id', {
+        user_uuid: user.id
+      });
+
+      if (!clientData) {
+        toast({
+          title: "Erro",
+          description: "Cliente não encontrado",
+          variant: "destructive"
+        });
+        return;
+      }
+
+      const params = {
+        client_id: clientData,
+        amount: data.amount,
+        payment_type: type,
+        notes: data.notes,
+        ...(type === 'PIX' && {
+          pix_key_id: data.pix_key_id,
+          new_pix_key: data.new_pix_key
+        }),
+        ...(type === 'BOLETO' && {
+          boleto_file: data.boleto_file,
+          boleto_code: data.boleto_code
+        })
+      };
+
+      await paymentService.createPaymentRequest(params);
+
+      toast({
+        title: "Solicitação enviada",
+        description: `Sua solicitação de ${type === 'PIX' ? 'pagamento PIX' : 'pagamento de boleto'} foi enviada com sucesso!`
+      });
+
+      // Refresh data
+      loadPayments();
+      if (data.new_pix_key && data.save_new_key) {
+        loadPixKeys();
+      }
+
+    } catch (error: any) {
+      console.error('Error requesting payment:', error);
+      toast({
+        title: "Erro",
+        description: error.message || "Erro ao solicitar pagamento",
+        variant: "destructive"
+      });
     }
   };
 
@@ -57,7 +119,7 @@ const ClientPayments = () => {
           </CardHeader>
           <CardContent>
             <p className="text-sm text-muted-foreground mb-4">
-              Solicite o saque do seu saldo disponível via PIX de forma rápida e segura.
+              Solicite o saque do seu saldo via PIX ou envie boletos para pagamento.
             </p>
             <Button 
               onClick={() => setIsDialogOpen(true)}
@@ -77,12 +139,12 @@ const ClientPayments = () => {
           <CardContent>
             <div className="space-y-3">
               <div>
-                <p className="text-sm font-medium">Processamento</p>
-                <p className="text-xs text-muted-foreground">Até 2 dias úteis após aprovação</p>
+                <p className="text-sm font-medium">Processamento PIX</p>
+                <p className="text-xs text-muted-foreground">Até 1 dia útil após aprovação</p>
               </div>
               <div>
-                <p className="text-sm font-medium">Horário de funcionamento</p>
-                <p className="text-xs text-muted-foreground">Segunda à sexta, 9h às 18h</p>
+                <p className="text-sm font-medium">Pagamento de Boletos</p>
+                <p className="text-xs text-muted-foreground">Processamento em até 2 dias úteis</p>
               </div>
               <div>
                 <p className="text-sm font-medium">Chaves PIX</p>

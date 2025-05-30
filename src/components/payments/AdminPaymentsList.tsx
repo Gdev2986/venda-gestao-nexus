@@ -4,20 +4,12 @@ import { Button } from "@/components/ui/button";
 import { formatCurrency } from "@/lib/utils";
 import { formatDate } from "@/lib/formatters";
 import { PaymentStatus, PaymentAction } from "@/types/enums";
-import { Eye, CheckCircle, XCircle } from "lucide-react";
+import { PaymentRequest, PaymentType } from "@/types/payment.types";
+import { Eye, CheckCircle, XCircle, FileText, CreditCard } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 
-interface Payment {
-  id: string;
-  client_name?: string;
-  amount: number;
-  status: PaymentStatus;
-  created_at: string;
-  client_id?: string;
-}
-
 interface AdminPaymentsListProps {
-  payments: Payment[];
+  payments: PaymentRequest[];
   isLoading: boolean;
   selectedStatus: PaymentStatus | "ALL";
   onActionClick: (paymentId: string, action: PaymentAction) => void;
@@ -54,6 +46,28 @@ const getStatusBadge = (status: PaymentStatus) => {
   }
 };
 
+const getPaymentTypeIcon = (type: PaymentType) => {
+  switch (type) {
+    case 'PIX':
+      return <CreditCard className="h-4 w-4 text-green-600" />;
+    case 'BOLETO':
+      return <FileText className="h-4 w-4 text-blue-600" />;
+    case 'TED':
+      return <CreditCard className="h-4 w-4 text-purple-600" />;
+    default:
+      return <CreditCard className="h-4 w-4 text-gray-600" />;
+  }
+};
+
+const getPaymentTypeLabel = (type: PaymentType) => {
+  const labels = {
+    'PIX': 'PIX',
+    'BOLETO': 'Boleto',
+    'TED': 'TED'
+  };
+  return labels[type] || type;
+};
+
 export function AdminPaymentsList({
   payments,
   isLoading,
@@ -79,7 +93,9 @@ export function AdminPaymentsList({
           <TableRow>
             <TableHead className="w-[100px]">ID</TableHead>
             <TableHead>Cliente</TableHead>
+            <TableHead>Tipo</TableHead>
             <TableHead className="text-right">Valor</TableHead>
+            <TableHead>Saldo Cliente</TableHead>
             <TableHead className="text-center">Status</TableHead>
             <TableHead className="hidden md:table-cell">Data</TableHead>
             <TableHead className="text-right">Ações</TableHead>
@@ -91,15 +107,47 @@ export function AdminPaymentsList({
               <TableCell className="font-mono text-xs">
                 {payment.id.substring(0, 8)}...
               </TableCell>
-              <TableCell>{payment.client_name || `Cliente ${payment.client_id?.substring(0, 3)}`}</TableCell>
+              <TableCell>
+                <div>
+                  <div className="font-medium">
+                    {payment.client?.business_name || `Cliente ${payment.client_id?.substring(0, 8)}`}
+                  </div>
+                  {payment.payment_type === 'PIX' && payment.pix_key && (
+                    <div className="text-xs text-muted-foreground">
+                      {payment.pix_key.name}
+                    </div>
+                  )}
+                </div>
+              </TableCell>
+              <TableCell>
+                <div className="flex items-center gap-2">
+                  {getPaymentTypeIcon(payment.payment_type)}
+                  <span className="text-sm">{getPaymentTypeLabel(payment.payment_type)}</span>
+                </div>
+              </TableCell>
               <TableCell className="text-right font-medium">
                 {formatCurrency(payment.amount)}
+              </TableCell>
+              <TableCell>
+                <div className="text-sm">
+                  {payment.client?.current_balance !== undefined 
+                    ? formatCurrency(payment.client.current_balance)
+                    : '-'
+                  }
+                </div>
               </TableCell>
               <TableCell className="text-center">
                 {getStatusBadge(payment.status)}
               </TableCell>
               <TableCell className="hidden md:table-cell">
-                {formatDate(new Date(payment.created_at))}
+                <div className="text-sm">
+                  {formatDate(new Date(payment.created_at))}
+                </div>
+                {payment.payment_type === 'PIX' && payment.pix_key && (
+                  <div className="text-xs text-muted-foreground">
+                    {payment.pix_key.key}
+                  </div>
+                )}
               </TableCell>
               <TableCell className="text-right">
                 <div className="flex justify-end gap-1">
@@ -111,29 +159,6 @@ export function AdminPaymentsList({
                   >
                     <Eye className="h-4 w-4" />
                   </Button>
-                  
-                  {payment.status === PaymentStatus.PENDING && (
-                    <>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="text-green-600 hidden sm:inline-flex"
-                        onClick={() => onActionClick(payment.id, PaymentAction.APPROVE)}
-                        title="Aprovar"
-                      >
-                        <CheckCircle className="h-4 w-4" />
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="text-red-600 hidden sm:inline-flex"
-                        onClick={() => onActionClick(payment.id, PaymentAction.REJECT)}
-                        title="Rejeitar"
-                      >
-                        <XCircle className="h-4 w-4" />
-                      </Button>
-                    </>
-                  )}
                 </div>
               </TableCell>
             </TableRow>
