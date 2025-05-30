@@ -4,16 +4,16 @@ import { PageHeader } from "@/components/page/PageHeader";
 import { ClientStatsCards } from "@/components/dashboard/client/ClientStatsCards";
 import { ClientPeriodFilter } from "@/components/dashboard/client/ClientPeriodFilter";
 import { ClientSalesTable } from "@/components/dashboard/client/ClientSalesTable";
-import { ClientDashboardStats } from "@/components/dashboard/client/ClientDashboardStats";
 import { ClientFeePlanDisplay } from "@/components/dashboard/client/ClientFeePlanDisplay";
 import { ClientMachinesTable } from "@/components/dashboard/client/ClientMachinesTable";
+import { PaymentMethodsChart } from "@/components/dashboard/admin/PaymentMethodsChart";
 import { useClientBalance } from "@/hooks/use-client-balance";
 import { useAuth } from "@/hooks/use-auth";
 import { PaymentMethod } from "@/types";
 import { subDays, startOfDay, endOfDay } from "date-fns";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Wallet, TrendingUp, Activity, DollarSign } from "lucide-react";
+import { Wallet, TrendingUp, Activity, DollarSign, BarChart3 } from "lucide-react";
 import { Link } from "react-router-dom";
 import { PATHS } from "@/routes/paths";
 
@@ -46,6 +46,36 @@ const generateMockSales = (startDate: Date, endDate: Date) => {
   return sales.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
 };
 
+// Generate payment methods data based on sales
+const generatePaymentMethodsData = (sales: any[]) => {
+  const methodCounts = sales.reduce((acc, sale) => {
+    const method = sale.payment_method;
+    acc[method] = (acc[method] || 0) + sale.gross_amount;
+    return acc;
+  }, {});
+
+  return [
+    {
+      method: "PIX",
+      amount: methodCounts[PaymentMethod.PIX] || 0,
+      transactions: sales.filter(s => s.payment_method === PaymentMethod.PIX).length,
+      fill: "hsl(var(--chart-1))"
+    },
+    {
+      method: "Débito",
+      amount: methodCounts[PaymentMethod.DEBIT] || 0,
+      transactions: sales.filter(s => s.payment_method === PaymentMethod.DEBIT).length,
+      fill: "hsl(var(--chart-2))"
+    },
+    {
+      method: "Crédito",
+      amount: methodCounts[PaymentMethod.CREDIT] || 0,
+      transactions: sales.filter(s => s.payment_method === PaymentMethod.CREDIT).length,
+      fill: "hsl(var(--chart-3))"
+    }
+  ];
+};
+
 const ClientDashboard = () => {
   const { user } = useAuth();
   const { balance, isLoading: balanceLoading } = useClientBalance();
@@ -59,6 +89,9 @@ const ClientDashboard = () => {
   const periodNet = sales.reduce((sum, sale) => sum + sale.net_amount, 0);
   const totalTransactions = sales.length;
   const avgTicket = totalTransactions > 0 ? periodGross / totalTransactions : 0;
+
+  // Generate payment methods data from sales
+  const paymentMethodsData = generatePaymentMethodsData(sales);
 
   const handlePeriodChange = (startDate: Date, endDate: Date) => {
     setPeriodStart(startDate);
@@ -80,17 +113,8 @@ const ClientDashboard = () => {
         description="Bem-vindo ao seu painel de controle"
       />
 
-      {/* Estatísticas Resumidas */}
-      <ClientDashboardStats
-        currentBalance={balance || 0}
-        totalSales={periodGross}
-        totalTransactions={totalTransactions}
-        avgTicket={avgTicket}
-        isLoading={isLoading || balanceLoading}
-      />
-
-      {/* Balance Card - sempre visível, sem filtro de data */}
-      <Card className="bg-gradient-to-br from-primary/5 to-primary/10 border-primary/20">
+      {/* Balance Card - always visible, no date filter */}
+      <Card className="bg-gradient-to-br from-primary/5 to-primary/10 border-primary/20 border-l-4 border-l-primary">
         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
           <CardTitle className="text-lg font-medium">Saldo Disponível</CardTitle>
           <Wallet className="h-6 w-6 text-primary" />
@@ -130,6 +154,22 @@ const ClientDashboard = () => {
 
       {/* Filtro de Período */}
       <ClientPeriodFilter onPeriodChange={handlePeriodChange} />
+
+      {/* Payment Methods Chart */}
+      <Card className="border-l-4 border-l-blue-500">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <BarChart3 className="h-5 w-5" />
+            Vendas por Método de Pagamento
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <PaymentMethodsChart 
+            data={paymentMethodsData}
+            isLoading={isLoading}
+          />
+        </CardContent>
+      </Card>
 
       {/* Cards de Estatísticas */}
       <ClientStatsCards
