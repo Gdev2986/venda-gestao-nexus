@@ -1,7 +1,7 @@
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Package, PackageCheck, Truck, Users, Monitor, HelpCircle, ArrowUpRight, ArrowRight } from "lucide-react";
+import { Package, Truck, Monitor, HelpCircle, ArrowUpRight, ArrowRight } from "lucide-react";
 import { LogisticsStats } from "@/hooks/use-logistics-stats";
 
 interface LogisticsStatsCardsProps {
@@ -83,7 +83,7 @@ const LogisticsStatsCards = ({ stats, isLoading }: LogisticsStatsCardsProps) => 
         title="Máquinas Online"
         value={stats?.onlineMachines || 0}
         subtitle={`${machineAvailabilityRate}% do total ativo`}
-        icon={PackageCheck}
+        icon={Package}
         borderColor="border-green-500"
         iconColor="text-green-500"
         trend={{ value: `${machineAvailabilityRate}%`, isPositive: machineAvailabilityRate >= 80 }}
@@ -100,15 +100,15 @@ const LogisticsStatsCards = ({ stats, isLoading }: LogisticsStatsCardsProps) => 
         trend={{ value: "Prioritário", isPositive: false }}
       />
 
-      {/* Card 4: Entregas Concluídas */}
+      {/* Card 4: Total de Envios */}
       <StatCard
-        title="Entregas Concluídas"
-        value={stats?.completedDeliveries || 0}
-        subtitle="Envios finalizados"
+        title="Total de Envios"
+        value={stats?.totalShipments || 0}
+        subtitle="Envios registrados"
         icon={Truck}
         borderColor="border-green-500"
         iconColor="text-green-500"
-        trend={{ value: "Sucesso", isPositive: true }}
+        trend={{ value: "Ativo", isPositive: true }}
       />
     </div>
   );

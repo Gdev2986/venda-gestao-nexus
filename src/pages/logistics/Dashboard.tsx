@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { PageHeader } from "@/components/page/PageHeader";
 import { motion } from "framer-motion";
@@ -15,7 +16,7 @@ const LogisticsDashboard = () => {
         description="Visão geral das operações logísticas"
       />
 
-      {/* Stats Cards - integrados com banco de dados */}
+      {/* Stats Cards - dados reais do banco */}
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
@@ -24,7 +25,7 @@ const LogisticsDashboard = () => {
         <LogisticsStatsCards stats={stats} isLoading={isLoading} />
       </motion.div>
 
-      {/* Shipments Section - mantém a funcionalidade existente */}
+      {/* Shipments Section - sistema completo de envios */}
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
