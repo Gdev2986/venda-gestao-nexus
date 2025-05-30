@@ -24,7 +24,7 @@ const AdminPayments = () => {
   const [page, setPage] = useState(1);
   const [selectedPayment, setSelectedPayment] = useState<PaymentRequest | null>(null);
   const [isDetailsOpen, setIsDetailsOpen] = useState(false);
-  const pageSize = 10;
+  const pageSize = 20; // Changed from 10 to 20
   const navigate = useNavigate();
   const { toast } = useToast();
   
@@ -178,11 +178,13 @@ const AdminPayments = () => {
                 <SelectItem value="TED">TED</SelectItem>
               </SelectContent>
             </Select>
-            <DatePickerWithRange
-              value={dateRange}
-              onChange={handleDateRangeChange}
-              className="w-full"
-            />
+            <div className="relative">
+              <DatePickerWithRange
+                value={dateRange}
+                onChange={handleDateRangeChange}
+                className="w-full"
+              />
+            </div>
           </div>
 
           <AdminPaymentsList
@@ -192,11 +194,15 @@ const AdminPayments = () => {
             onActionClick={handleActionClick}
           />
 
-          <TablePagination 
-            currentPage={page}
-            totalPages={totalPages}
-            onPageChange={handlePageChange}
-          />
+          {totalPages > 1 && (
+            <div className="flex justify-center">
+              <TablePagination 
+                currentPage={page}
+                totalPages={totalPages}
+                onPageChange={handlePageChange}
+              />
+            </div>
+          )}
 
           <div className="text-sm text-muted-foreground">
             Total de pagamentos: {filteredPayments.length}

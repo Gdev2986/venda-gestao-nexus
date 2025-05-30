@@ -21,7 +21,7 @@ export const useAdminPayments = ({
   startDate,
   endDate,
   page = 1,
-  pageSize = 10
+  pageSize = 20 // Changed default from 10 to 20
 }: UseAdminPaymentsProps) => {
   const { toast } = useToast();
   const [payments, setPayments] = useState<PaymentRequest[]>([]);
