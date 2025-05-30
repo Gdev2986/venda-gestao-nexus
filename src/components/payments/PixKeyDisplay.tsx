@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { PixKey } from "@/types/payment.types";
@@ -120,22 +121,22 @@ export function PixKeyDisplay({ pixKey, onUpdate }: PixKeyDisplayProps) {
 
   return (
     <>
-      <div className="border rounded-md p-3 flex flex-col">
+      <div className="border rounded-md p-3 flex flex-col dark:border-[#262626] dark:bg-[#1f1f1f]">
         <div className="flex items-start justify-between">
           <div>
             <div className="flex items-center gap-1">
-              <h4 className="text-sm font-medium">{pixKey.name || "Chave PIX"}</h4>
+              <h4 className="text-sm font-medium dark:text-white">{pixKey.name || "Chave PIX"}</h4>
               {pixKey.is_default && (
-                <span className="text-xs bg-primary/10 text-primary px-1.5 py-0.5 rounded-full">
+                <span className="text-xs bg-primary/10 text-primary px-1.5 py-0.5 rounded-full dark:bg-blue-900/20 dark:text-blue-300">
                   Padrão
                 </span>
               )}
             </div>
             <div className="mt-1 flex items-center gap-1">
-              <span className="text-xs bg-muted px-1.5 py-0.5 rounded">
+              <span className="text-xs bg-muted px-1.5 py-0.5 rounded dark:bg-[#262626] dark:text-gray-300">
                 {getPixTypeLabel(pixKey.type)}
               </span>
-              <Info className="h-3 w-3 text-muted-foreground" />
+              <Info className="h-3 w-3 text-muted-foreground dark:text-gray-400" />
             </div>
           </div>
           
@@ -144,7 +145,7 @@ export function PixKeyDisplay({ pixKey, onUpdate }: PixKeyDisplayProps) {
               <Button
                 variant="ghost"
                 size="icon"
-                className="h-8 w-8"
+                className="h-8 w-8 dark:text-gray-300 dark:hover:bg-[#262626]"
                 title="Definir como padrão"
                 onClick={handleSetDefault}
                 disabled={isUpdating}
@@ -156,7 +157,7 @@ export function PixKeyDisplay({ pixKey, onUpdate }: PixKeyDisplayProps) {
               <Button
                 variant="ghost"
                 size="icon"
-                className="h-8 w-8 text-primary"
+                className="h-8 w-8 text-primary dark:text-blue-400"
                 title="Padrão"
                 disabled
               >
@@ -166,28 +167,28 @@ export function PixKeyDisplay({ pixKey, onUpdate }: PixKeyDisplayProps) {
             <Button
               variant="ghost"
               size="icon"
-              className="h-8 w-8"
+              className="h-8 w-8 dark:text-gray-300 dark:hover:bg-[#262626]"
               title="Excluir chave"
               onClick={() => setIsDeleteDialogOpen(true)}
               disabled={isUpdating}
             >
-              <Trash2 className="h-4 w-4 text-destructive" />
+              <Trash2 className="h-4 w-4 text-destructive dark:text-red-400" />
             </Button>
           </div>
         </div>
 
         <div className="flex mt-2 items-center gap-1">
-          <div className="text-sm font-mono text-muted-foreground flex-1 truncate">
+          <div className="text-sm font-mono text-muted-foreground flex-1 truncate dark:text-gray-400">
             {pixKey.key}
           </div>
           <Button
             variant="ghost"
             size="sm"
-            className="h-7 px-2"
+            className="h-7 px-2 dark:text-gray-300 dark:hover:bg-[#262626]"
             onClick={handleCopy}
           >
             {copied ? (
-              <Check className="h-3 w-3 mr-1 text-green-600" />
+              <Check className="h-3 w-3 mr-1 text-green-600 dark:text-green-400" />
             ) : (
               <Copy className="h-3 w-3 mr-1" />
             )}
@@ -195,7 +196,7 @@ export function PixKeyDisplay({ pixKey, onUpdate }: PixKeyDisplayProps) {
           </Button>
         </div>
         
-        <div className="mt-1 text-xs text-muted-foreground">
+        <div className="mt-1 text-xs text-muted-foreground dark:text-gray-400">
           {pixKey.owner_name && (
             <span>Titular: {pixKey.owner_name}</span>
           )}
@@ -212,20 +213,20 @@ export function PixKeyDisplay({ pixKey, onUpdate }: PixKeyDisplayProps) {
         open={isDeleteDialogOpen}
         onOpenChange={setIsDeleteDialogOpen}
       >
-        <AlertDialogContent>
+        <AlertDialogContent className="dark:bg-[#1f1f1f] dark:border-[#262626]">
           <AlertDialogHeader>
-            <AlertDialogTitle>Excluir chave PIX</AlertDialogTitle>
-            <AlertDialogDescription>
+            <AlertDialogTitle className="dark:text-white">Excluir chave PIX</AlertDialogTitle>
+            <AlertDialogDescription className="dark:text-gray-300">
               Tem certeza que deseja excluir esta chave PIX? Esta ação não pode
               ser desfeita.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel disabled={isUpdating}>Cancelar</AlertDialogCancel>
+            <AlertDialogCancel disabled={isUpdating} className="dark:bg-[#262626] dark:text-white dark:border-[#262626]">Cancelar</AlertDialogCancel>
             <AlertDialogAction
               onClick={handleDelete}
               disabled={isUpdating}
-              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90 dark:bg-red-600 dark:hover:bg-red-700"
             >
               Excluir
             </AlertDialogAction>

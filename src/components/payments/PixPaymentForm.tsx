@@ -154,7 +154,7 @@ export const PixPaymentForm = ({ clientBalance, pixKeys, onSubmit, isLoading }: 
                   {pixKeys.map((key) => (
                     <SelectItem key={key.id} value={key.id} className="dark:text-white dark:focus:bg-[#262626]">
                       <div className="flex flex-col">
-                        <span className="font-medium">{key.name}</span>
+                        <span className="font-medium dark:text-white">{key.name}</span>
                         <span className="text-sm text-gray-500 dark:text-gray-400">
                           {key.type}: {key.key}
                         </span>
