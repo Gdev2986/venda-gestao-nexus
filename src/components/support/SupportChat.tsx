@@ -12,13 +12,15 @@ interface SupportChatProps {
   messages: SupportMessage[];
   onSendMessage: (message: string, attachments?: any) => Promise<void>;
   isLoading?: boolean;
+  isSubscribed?: boolean;
 }
 
 export const SupportChat = ({ 
   ticketId, 
   messages, 
   onSendMessage, 
-  isLoading = false 
+  isLoading = false,
+  isSubscribed = false
 }: SupportChatProps) => {
   const { user } = useAuth();
 
@@ -30,7 +32,7 @@ export const SupportChat = ({
     return (
       <div className="flex flex-col h-full max-h-[400px] min-h-[300px] w-full">
         <Card className="flex-1 flex flex-col h-full">
-          <ChatHeader messageCount={0} />
+          <ChatHeader messageCount={0} isSubscribed={isSubscribed} />
           <CardContent className="flex-1 flex items-center justify-center">
             <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary"></div>
           </CardContent>
@@ -42,7 +44,7 @@ export const SupportChat = ({
   return (
     <div className="flex flex-col h-full max-h-[400px] min-h-[300px] w-full overflow-hidden">
       <Card className="flex-1 flex flex-col h-full overflow-hidden">
-        <ChatHeader messageCount={messages.length} />
+        <ChatHeader messageCount={messages.length} isSubscribed={isSubscribed} />
         
         <CardContent className="flex-1 flex flex-col p-0 min-h-0 overflow-hidden">
           <MessagesList 

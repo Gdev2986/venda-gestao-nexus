@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useCallback } from "react";
 import { useAuth } from "@/hooks/use-auth";
 import { supabase } from "@/integrations/supabase/client";
@@ -23,6 +22,7 @@ export const useSupportSystem = () => {
   const [isCreating, setIsCreating] = useState(false);
   const [clientId, setClientId] = useState<string | null>(null);
   const [conversationId, setConversationId] = useState<string | null>(null);
+  const [isSubscribed, setIsSubscribed] = useState(false);
 
   // Get client ID for current user
   const fetchClientId = async () => {
@@ -137,10 +137,10 @@ export const useSupportSystem = () => {
     }
   }, []);
 
-  // Load messages for selected ticket with optimistic updates
-  const loadMessages = useCallback(async (ticketId: string, skipOptimisticUpdate = false) => {
+  // Load messages for selected ticket
+  const loadMessages = useCallback(async (ticketId: string, forceReload = false) => {
     try {
-      console.log('📥 Loading messages for ticket:', ticketId, 'skipOptimistic:', skipOptimisticUpdate);
+      console.log('📥 Loading messages for ticket:', ticketId, 'forceReload:', forceReload);
       
       // Get conversation ID first
       const convId = await fetchConversationId(ticketId);
@@ -153,15 +153,8 @@ export const useSupportSystem = () => {
       
       console.log('📨 Loaded', data?.length || 0, 'messages');
       
-      if (!skipOptimisticUpdate) {
-        setMessages(data || []);
-      } else {
-        // Only update if we don't have pending optimistic updates
-        setMessages(prevMessages => {
-          const hasOptimistic = prevMessages.some(msg => msg.id.startsWith('temp-'));
-          return hasOptimistic ? prevMessages : (data || []);
-        });
-      }
+      // Always update messages when loading, don't check for optimistic updates here
+      setMessages(data || []);
     } catch (error) {
       console.error("❌ Error loading messages:", error);
     }
@@ -464,10 +457,11 @@ export const useSupportSystem = () => {
     };
   }, [user, loadTickets]);
 
-  // Real-time subscription for messages - using conversation_id
+  // Real-time subscription for messages - completely rewritten
   useEffect(() => {
     if (!user || !conversationId) {
       console.log('⏸️ Skipping message subscription - missing user or conversationId:', { user: !!user, conversationId });
+      setIsSubscribed(false);
       return;
     }
 
@@ -478,61 +472,70 @@ export const useSupportSystem = () => {
       .on(
         "postgres_changes",
         {
-          event: "*",
+          event: "INSERT",
           schema: "public",
           table: "support_messages",
           filter: `conversation_id=eq.${conversationId}`
         },
         (payload) => {
-          console.log('📨 Message change received:', payload.eventType, payload);
+          console.log('📨 New message received via subscription:', payload);
           
-          // Handle different events
-          if (payload.eventType === 'INSERT') {
-            const newMessage = payload.new as SupportMessage;
-            console.log('➕ New message from subscription:', newMessage);
+          const newMessage = payload.new as SupportMessage;
+          
+          // Only add if it's not from current user to avoid duplicates from optimistic updates
+          if (newMessage.user_id !== user.id) {
+            console.log('✅ Adding message from another user:', newMessage.message.substring(0, 50));
             
-            // Only add if it's not from current user (to avoid duplicates from optimistic updates)
-            if (newMessage.user_id !== user.id) {
-              setMessages(prevMessages => {
-                // Check if message already exists
-                const exists = prevMessages.some(msg => msg.id === newMessage.id);
-                if (exists) {
-                  console.log('⏭️ Message already exists, skipping');
-                  return prevMessages;
-                }
-                
-                console.log('✅ Adding new message to state');
-                return [...prevMessages, newMessage];
-              });
-            } else {
-              console.log('⏭️ Skipping own message to avoid duplicate');
-            }
-          } else if (payload.eventType === 'UPDATE') {
-            const updatedMessage = payload.new as SupportMessage;
-            console.log('🔄 Message updated:', updatedMessage);
-            
-            setMessages(prevMessages => 
-              prevMessages.map(msg => 
-                msg.id === updatedMessage.id ? updatedMessage : msg
-              )
-            );
-          } else if (payload.eventType === 'DELETE') {
-            console.log('🗑️ Message deleted:', payload.old);
-            setMessages(prevMessages => 
-              prevMessages.filter(msg => msg.id !== payload.old.id)
-            );
+            setMessages(prevMessages => {
+              // Check if message already exists
+              const exists = prevMessages.some(msg => msg.id === newMessage.id);
+              if (exists) {
+                console.log('⏭️ Message already exists, skipping');
+                return prevMessages;
+              }
+              
+              console.log('📝 Adding new message to state');
+              return [...prevMessages, newMessage];
+            });
+          } else {
+            console.log('⏭️ Skipping own message to avoid duplicate');
           }
+        }
+      )
+      .on(
+        "postgres_changes",
+        {
+          event: "UPDATE",
+          schema: "public", 
+          table: "support_messages",
+          filter: `conversation_id=eq.${conversationId}`
+        },
+        (payload) => {
+          console.log('🔄 Message updated via subscription:', payload);
+          
+          const updatedMessage = payload.new as SupportMessage;
+          setMessages(prevMessages => 
+            prevMessages.map(msg => 
+              msg.id === updatedMessage.id ? updatedMessage : msg
+            )
+          );
         }
       )
       .subscribe((status) => {
         console.log('📡 Message subscription status:', status);
+        setIsSubscribed(status === 'SUBSCRIBED');
+        
         if (status === 'SUBSCRIBED') {
           console.log('✅ Successfully subscribed to messages for conversation:', conversationId);
+        } else if (status === 'CHANNEL_ERROR') {
+          console.error('❌ Error subscribing to messages');
+          setIsSubscribed(false);
         }
       });
 
     return () => {
       console.log('🧹 Cleaning up message subscription for conversation:', conversationId);
+      setIsSubscribed(false);
       supabase.removeChannel(messageChannel);
     };
   }, [user, conversationId]);
@@ -553,6 +556,7 @@ export const useSupportSystem = () => {
     isLoading,
     isCreating,
     clientId,
+    isSubscribed,
     setSelectedTicket,
     loadTickets,
     loadMessages,

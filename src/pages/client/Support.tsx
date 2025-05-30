@@ -20,6 +20,7 @@ const ClientSupport = () => {
     isLoading,
     isCreating,
     clientId,
+    isSubscribed,
     setSelectedTicket,
     loadMessages,
     createTicket,
@@ -75,12 +76,14 @@ const ClientSupport = () => {
   };
 
   const handleTicketClick = async (ticket: any) => {
+    console.log('🎫 Opening ticket:', ticket.id);
     setSelectedTicket(ticket);
-    await loadMessages(ticket.id);
+    await loadMessages(ticket.id, true); // Force reload when opening ticket
     setShowChatDialog(true);
   };
 
   const handleCloseChat = () => {
+    console.log('❌ Closing chat dialog');
     setShowChatDialog(false);
     setSelectedTicket(null);
   };
@@ -296,6 +299,7 @@ const ClientSupport = () => {
                     ticketId={selectedTicket.id}
                     messages={messages}
                     onSendMessage={(message) => sendMessage(selectedTicket.id, message)}
+                    isSubscribed={isSubscribed}
                   />
                 </div>
               </div>
@@ -330,6 +334,7 @@ const ClientSupport = () => {
                         ticketId={selectedTicket.id}
                         messages={messages}
                         onSendMessage={(message) => sendMessage(selectedTicket.id, message)}
+                        isSubscribed={isSubscribed}
                       />
                     </div>
                   </div>
