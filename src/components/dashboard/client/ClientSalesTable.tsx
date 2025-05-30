@@ -63,16 +63,37 @@ export const ClientSalesTable = ({
     }
   };
 
+  // Helper function to format date consistently
+  const formatTransactionDate = (dateValue: string | Date | null | undefined): string => {
+    if (!dateValue) return 'N/A';
+    
+    if (typeof dateValue === 'string') {
+      return dateValue;
+    }
+    
+    if (dateValue instanceof Date) {
+      return dateValue.toLocaleString('pt-BR', {
+        day: '2-digit',
+        month: '2-digit',
+        year: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit'
+      });
+    }
+    
+    return String(dateValue);
+  };
+
   // Table columns identical to admin side
   const columns: ColumnDef<NormalizedSale>[] = [
     {
       id: "transaction_date",
       header: "Data/Hora",
       cell: ({ row }) => {
-        const dateStr = row.original.transaction_date;
+        const formattedDate = formatTransactionDate(row.original.transaction_date);
         return (
           <span className="font-medium text-sm">
-            {dateStr}
+            {formattedDate}
           </span>
         );
       }
