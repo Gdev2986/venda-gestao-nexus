@@ -1,4 +1,3 @@
-
 import { supabase } from "@/integrations/supabase/client";
 import { PaymentMethod } from "@/types/enums";
 
@@ -273,12 +272,12 @@ export const TaxBlocksService = {
     }
   },
 
-  // Associate a tax block with a client
+  // Associate a tax block with a client - CORRIGIDO
   async associateBlockWithClient(blockId: string, clientId: string): Promise<boolean> {
     try {
       console.log("Associating block with client:", blockId, clientId);
       
-      // First check if there's an existing association
+      // Verificar se já existe uma associação para este cliente
       const { data: existing } = await supabase
         .from('client_tax_blocks')
         .select('*')
@@ -286,7 +285,7 @@ export const TaxBlocksService = {
         .maybeSingle();
       
       if (existing) {
-        // Update existing association
+        // Atualizar associação existente
         const { error } = await supabase
           .from('client_tax_blocks')
           .update({ block_id: blockId })
@@ -297,10 +296,13 @@ export const TaxBlocksService = {
           throw error;
         }
       } else {
-        // Create new association
+        // Criar nova associação
         const { error } = await supabase
           .from('client_tax_blocks')
-          .insert({ client_id: clientId, block_id: blockId });
+          .insert({ 
+            client_id: clientId, 
+            block_id: blockId 
+          });
           
         if (error) {
           console.error("Error creating client tax block association:", error);
@@ -319,7 +321,7 @@ export const TaxBlocksService = {
   // Get the tax block associated with a client
   async getClientTaxBlock(clientId: string): Promise<BlockWithRates | null> {
     try {
-      // First get the association
+      // Primeiro buscar a associação
       const { data: association, error } = await supabase
         .from('client_tax_blocks')
         .select('block_id')
@@ -333,7 +335,7 @@ export const TaxBlocksService = {
       
       if (!association) return null;
       
-      // Then get the block details with rates
+      // Então buscar os detalhes do bloco com taxas
       return await this.getTaxBlock(association.block_id);
     } catch (error) {
       console.error(`Error getting tax block for client ${clientId}:`, error);

@@ -28,7 +28,7 @@ interface ClientsTableProps {
 
 interface ClientWithExtendedInfo extends Client {
   machines_count?: number;
-  fee_plan_name?: string;
+  tax_block_name?: string;
   current_balance?: number;
 }
 
@@ -64,16 +64,16 @@ const ClientsTable = ({
 
       if (machinesError) throw machinesError;
 
-      // Buscar informações de planos de taxa por cliente
-      const { data: feePlansData, error: feePlansError } = await supabase
-        .from('client_fee_plans')
+      // Buscar informações de blocos de taxa por cliente
+      const { data: taxBlocksData, error: taxBlocksError } = await supabase
+        .from('client_tax_blocks')
         .select(`
           client_id,
-          fee_plan:fee_plans(name)
+          tax_blocks!inner(name)
         `)
         .in('client_id', clientIds);
 
-      if (feePlansError) throw feePlansError;
+      if (taxBlocksError) throw taxBlocksError;
 
       // Contar máquinas por cliente
       const machinesCount = machinesData?.reduce((acc: Record<string, number>, machine) => {
@@ -83,10 +83,10 @@ const ClientsTable = ({
         return acc;
       }, {}) || {};
 
-      // Mapear planos de taxa por cliente
-      const feePlansMap = feePlansData?.reduce((acc: Record<string, string>, plan) => {
-        if (plan.client_id && plan.fee_plan) {
-          acc[plan.client_id] = (plan.fee_plan as any).name;
+      // Mapear blocos de taxa por cliente
+      const taxBlocksMap = taxBlocksData?.reduce((acc: Record<string, string>, block) => {
+        if (block.client_id && block.tax_blocks) {
+          acc[block.client_id] = (block.tax_blocks as any).name;
         }
         return acc;
       }, {}) || {};
@@ -95,7 +95,7 @@ const ClientsTable = ({
       const extended = clients.map(client => ({
         ...client,
         machines_count: machinesCount[client.id] || 0,
-        fee_plan_name: feePlansMap[client.id] || null,
+        tax_block_name: taxBlocksMap[client.id] || null,
         current_balance: client.balance || 0
       }));
 
@@ -170,7 +170,7 @@ const ClientsTable = ({
                 <TableHead className="hidden lg:table-cell">Status</TableHead>
                 <TableHead className="text-right">Saldo</TableHead>
                 <TableHead className="text-center">Máquinas</TableHead>
-                <TableHead className="hidden lg:table-cell">Plano Taxa</TableHead>
+                <TableHead className="hidden lg:table-cell">Bloco Taxa</TableHead>
                 <TableHead className="text-right">Ações</TableHead>
               </TableRow>
             </TableHeader>
@@ -235,12 +235,12 @@ const ClientsTable = ({
                       </Badge>
                     </TableCell>
                     <TableCell className="hidden lg:table-cell">
-                      {client.fee_plan_name ? (
+                      {client.tax_block_name ? (
                         <Badge variant="secondary">
-                          {client.fee_plan_name}
+                          {client.tax_block_name}
                         </Badge>
                       ) : (
-                        <span className="text-muted-foreground text-sm">Sem plano</span>
+                        <span className="text-muted-foreground text-sm">Sem bloco</span>
                       )}
                     </TableCell>
                     <TableCell className="text-right">
