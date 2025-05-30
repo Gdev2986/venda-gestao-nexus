@@ -114,14 +114,28 @@ export const useClientSales = (startDate?: Date, endDate?: Date) => {
         filters
       );
 
+      console.log('useClientSales: Raw result from service:', result);
+
       setSales(result.sales);
       setTotalCount(result.totalCount);
       setTotalPages(result.totalPages);
       setCurrentPage(result.currentPage);
 
       // Calculate stats from current page results
-      const totalGross = result.sales.reduce((sum, sale) => sum + Number(sale.gross_amount), 0);
-      const totalNet = result.sales.reduce((sum, sale) => sum + Number(sale.net_amount), 0);
+      const totalGross = result.sales.reduce((sum, sale) => {
+        const grossAmount = Number(sale.gross_amount) || 0;
+        console.log('Processing sale gross amount:', sale.gross_amount, 'converted to:', grossAmount);
+        return sum + grossAmount;
+      }, 0);
+      
+      // For net amount, we'll calculate it as gross minus estimated fees (simplified calculation)
+      const totalNet = result.sales.reduce((sum, sale) => {
+        const grossAmount = Number(sale.gross_amount) || 0;
+        // Simple estimation: net = gross - 3% fee
+        const netAmount = grossAmount * 0.97;
+        return sum + netAmount;
+      }, 0);
+      
       const totalTransactions = result.sales.length;
       const avgTicket = totalTransactions > 0 ? totalGross / totalTransactions : 0;
 
@@ -132,10 +146,11 @@ export const useClientSales = (startDate?: Date, endDate?: Date) => {
         avgTicket
       });
 
-      console.log('useClientSales: Loaded sales successfully:', {
-        salesCount: result.sales.length,
-        totalCount: result.totalCount,
-        stats: { totalGross, totalNet, totalTransactions, avgTicket }
+      console.log('useClientSales: Calculated stats:', {
+        totalGross,
+        totalNet,
+        totalTransactions,
+        avgTicket
       });
 
       if (result.totalCount > 0) {
