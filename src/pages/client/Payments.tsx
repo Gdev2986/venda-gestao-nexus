@@ -157,7 +157,7 @@ const ClientPayments = () => {
       
       {/* Quick Actions */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <Card className="bg-gradient-to-br from-primary/5 to-primary/10 border-primary/20">
+        <Card className="bg-gradient-to-br from-primary/5 to-primary/10 border-primary/20 border-l-4 border-l-primary">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <Wallet className="h-5 w-5 text-primary" />
@@ -179,23 +179,15 @@ const ClientPayments = () => {
           </CardContent>
         </Card>
 
-        <Card>
+        <Card className="border-l-4 border-l-blue-500">
           <CardHeader>
-            <CardTitle>Processamento de Pagamentos</CardTitle>
+            <CardTitle>Informações</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="space-y-3">
               <div>
-                <p className="text-sm font-medium">PIX</p>
+                <p className="text-sm font-medium">Processamento de Pagamentos</p>
                 <p className="text-xs text-muted-foreground">Recebimento no mesmo dia se a solicitação for feita até 15h45, após esse horário será realizado no próximo dia útil</p>
-              </div>
-              <div>
-                <p className="text-sm font-medium">TED</p>
-                <p className="text-xs text-muted-foreground">Recebimento no mesmo dia se a solicitação for feita até 15h45, após esse horário será realizado no próximo dia útil</p>
-              </div>
-              <div>
-                <p className="text-sm font-medium">Pagamento de Boletos</p>
-                <p className="text-xs text-muted-foreground">Processamento em até 2 dias úteis</p>
               </div>
               <div>
                 <p className="text-sm font-medium">Chaves PIX</p>
