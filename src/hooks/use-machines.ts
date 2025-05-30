@@ -18,7 +18,7 @@ interface ClientSuggestion {
 export const useMachines = (params: UseMachinesParams = {}) => {
   const { searchTerm = "", statusFilter = "all", page = 1 } = params;
   
-  const [machines, setMachines] = useState<any[]>([]);
+  const [machines, setMachines] = useState<Machine[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [currentPage, setCurrentPage] = useState(page);
   const [totalPages, setTotalPages] = useState(1);
@@ -51,7 +51,7 @@ export const useMachines = (params: UseMachinesParams = {}) => {
 
       // Apply status filter
       if (statusFilter !== "all") {
-        query = query.eq('status', statusFilter);
+        query = query.eq('status', statusFilter as MachineStatus);
       }
 
       // Apply search filter
@@ -63,17 +63,19 @@ export const useMachines = (params: UseMachinesParams = {}) => {
 
       if (error) throw error;
 
-      const formattedMachines = (data || []).map(machine => ({
+      const formattedMachines: Machine[] = (data || []).map(machine => ({
         id: machine.id,
-        serialNumber: machine.serial_number,
+        serial_number: machine.serial_number,
         model: machine.model,
-        status: machine.status,
-        clientId: machine.client_id,
-        clientName: machine.client?.business_name || null,
-        location: machine.client ? "Cliente" : "Estoque",
-        createdAt: machine.created_at,
-        updatedAt: machine.updated_at,
-        notes: machine.notes
+        status: machine.status as MachineStatus,
+        client_id: machine.client_id,
+        notes: machine.notes,
+        created_at: machine.created_at,
+        updated_at: machine.updated_at,
+        client: machine.client ? {
+          id: machine.client.id,
+          business_name: machine.client.business_name
+        } : null
       }));
 
       setMachines(formattedMachines);

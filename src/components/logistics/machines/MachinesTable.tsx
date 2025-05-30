@@ -23,21 +23,8 @@ import {
   User, 
   AlertTriangle 
 } from "lucide-react";
-import { MachineStatus } from "@/types/machine.types";
+import { Machine, MachineStatus } from "@/types/machine.types";
 import { MachineDetailsDialog } from "./MachineDetailsDialog";
-
-interface Machine {
-  id: string;
-  serialNumber: string;
-  model: string;
-  status: MachineStatus;
-  clientId?: string;
-  clientName?: string;
-  location: string;
-  createdAt: string;
-  updatedAt: string;
-  notes?: string;
-}
 
 interface MachinesTableProps {
   machines: Machine[];
@@ -93,6 +80,10 @@ export const MachinesTable: React.FC<MachinesTableProps> = ({
     }
   };
 
+  const getLocation = (machine: Machine) => {
+    return machine.client ? "Cliente" : "Estoque";
+  };
+
   if (isLoading) {
     return (
       <div className="flex items-center justify-center py-8">
@@ -130,9 +121,9 @@ export const MachinesTable: React.FC<MachinesTableProps> = ({
               <TableRow key={machine.id}>
                 <TableCell className="font-medium">
                   <div className="flex items-center gap-2">
-                    {machine.serialNumber}
-                    {!machine.clientId && (
-                      <AlertTriangle className="h-4 w-4 text-yellow-500" title="Sem cliente vinculado" />
+                    {machine.serial_number}
+                    {!machine.client_id && (
+                      <AlertTriangle className="h-4 w-4 text-yellow-500" />
                     )}
                   </div>
                 </TableCell>
@@ -140,18 +131,18 @@ export const MachinesTable: React.FC<MachinesTableProps> = ({
                 <TableCell>{getStatusBadge(machine.status)}</TableCell>
                 <TableCell>
                   <div className="flex items-center gap-2">
-                    {machine.clientId ? (
+                    {machine.client_id ? (
                       <>
                         <User className="h-4 w-4 text-green-600" />
-                        <span>{machine.clientName}</span>
+                        <span>{machine.client?.business_name}</span>
                       </>
                     ) : (
                       <span className="text-muted-foreground">Não vinculada</span>
                     )}
                   </div>
                 </TableCell>
-                <TableCell>{machine.location}</TableCell>
-                <TableCell>{formatDate(machine.createdAt)}</TableCell>
+                <TableCell>{getLocation(machine)}</TableCell>
+                <TableCell>{formatDate(machine.created_at)}</TableCell>
                 <TableCell className="text-right">
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>

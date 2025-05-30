@@ -5,11 +5,11 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Plus } from "lucide-react";
 import { MachinesTable } from "./MachinesTable";
-import { useMachines } from "@/hooks/logistics/use-machines";
+import { useMachines } from "@/hooks/use-machines";
 
 export const MachinesPageContent = () => {
   const [searchTerm, setSearchTerm] = useState("");
-  const { machines, isLoading, refetch } = useMachines();
+  const { machines, isLoading, refreshMachines } = useMachines();
 
   const filteredMachines = machines.filter(machine => 
     machine.serial_number?.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -36,7 +36,7 @@ export const MachinesPageContent = () => {
               />
             </div>
             <div className="flex gap-2">
-              <Button onClick={refetch} variant="outline">
+              <Button onClick={refreshMachines} variant="outline">
                 Atualizar
               </Button>
               <Button>
@@ -49,7 +49,7 @@ export const MachinesPageContent = () => {
           <MachinesTable 
             machines={filteredMachines}
             isLoading={isLoading}
-            onRefresh={refetch}
+            onRefresh={refreshMachines}
           />
 
           <div className="text-sm text-muted-foreground">
