@@ -12,9 +12,10 @@ export const convertBrazilianDateToISO = (dateStr: string): string => {
     const match = dateStr.match(pattern);
     if (match) {
       const [, day, month, year, hours = '00', minutes = '00', seconds = '00'] = match;
-      // Create ISO string: YYYY-MM-DDTHH:mm:ss.sssZ
-      // CORRIGIR: usar timezone local em vez de UTC
-      const isoDate = new Date(
+      
+      // Create date in Brazilian timezone (UTC-3)
+      // We need to create the date as if it's in Brazil, then convert to UTC properly
+      const brazilDate = new Date(
         parseInt(year),
         parseInt(month) - 1, // Month is 0-indexed
         parseInt(day),
@@ -24,12 +25,17 @@ export const convertBrazilianDateToISO = (dateStr: string): string => {
       );
       
       // Verificar se a data é válida
-      if (isNaN(isoDate.getTime())) {
-        console.warn('Invalid date created:', dateStr, isoDate);
+      if (isNaN(brazilDate.getTime())) {
+        console.warn('Invalid date created:', dateStr, brazilDate);
         return new Date().toISOString();
       }
       
-      return isoDate.toISOString();
+      // Adjust for Brazilian timezone (UTC-3)
+      // The date was created as local time, but we need to treat it as Brazilian time
+      // So we need to add 3 hours to convert from Brazil time to UTC
+      const utcDate = new Date(brazilDate.getTime() + (3 * 60 * 60 * 1000));
+      
+      return utcDate.toISOString();
     }
   }
   
@@ -37,7 +43,9 @@ export const convertBrazilianDateToISO = (dateStr: string): string => {
   try {
     const date = new Date(dateStr);
     if (!isNaN(date.getTime())) {
-      return date.toISOString();
+      // Apply the same Brazilian timezone adjustment
+      const utcDate = new Date(date.getTime() + (3 * 60 * 60 * 1000));
+      return utcDate.toISOString();
     }
   } catch (e) {
     console.warn('Could not parse date:', dateStr);
