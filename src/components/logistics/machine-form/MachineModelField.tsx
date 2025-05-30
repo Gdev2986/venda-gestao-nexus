@@ -16,26 +16,36 @@ export const MachineModelField = () => {
     <FormField
       control={form.control}
       name="model"
-      render={({ field }) => (
-        <FormItem>
-          <FormLabel>Modelo</FormLabel>
-          <Select onValueChange={field.onChange} defaultValue={field.value}>
-            <FormControl>
-              <SelectTrigger>
-                <SelectValue placeholder="Selecione o modelo" />
-              </SelectTrigger>
-            </FormControl>
-            <SelectContent>
-              {MACHINE_MODELS.map((model) => (
-                <SelectItem key={model.value} value={model.value}>
-                  {model.label}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-          <FormMessage />
-        </FormItem>
-      )}
+      render={({ field }) => {
+        console.log('MachineModelField - field value:', field.value);
+        return (
+          <FormItem>
+            <FormLabel>Modelo</FormLabel>
+            <Select onValueChange={field.onChange} defaultValue={field.value}>
+              <FormControl>
+                <SelectTrigger>
+                  <SelectValue placeholder="Selecione o modelo" />
+                </SelectTrigger>
+              </FormControl>
+              <SelectContent>
+                {MACHINE_MODELS.map((model) => {
+                  console.log('Rendering model:', model.value, model.label);
+                  if (!model.value || model.value === '') {
+                    console.error('Model with empty value:', model);
+                    return null;
+                  }
+                  return (
+                    <SelectItem key={model.value} value={model.value}>
+                      {model.label}
+                    </SelectItem>
+                  );
+                })}
+              </SelectContent>
+            </Select>
+            <FormMessage />
+          </FormItem>
+        );
+      }}
     />
   );
 };
