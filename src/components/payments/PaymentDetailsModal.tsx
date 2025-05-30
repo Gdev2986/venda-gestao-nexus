@@ -1,18 +1,16 @@
 
 import React, { useState } from 'react';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
-import { FileUpload } from '@/components/ui/file-upload';
-import { useFileUpload } from '@/hooks/useFileUpload';
 import { PaymentRequest } from '@/types/payment.types';
 import { PaymentStatus } from '@/types/enums';
 import { formatCurrency } from '@/lib/utils';
 import { formatDate } from '@/lib/formatters';
-import { CheckCircle, XCircle, Download, Eye } from 'lucide-react';
-import { toast } from '@/hooks/use-toast';
+import { CheckCircle, XCircle, Upload } from 'lucide-react';
+import { FileUpload } from '@/components/ui/file-upload';
 
 interface PaymentDetailsModalProps {
   payment: PaymentRequest | null;
@@ -29,151 +27,85 @@ export const PaymentDetailsModal = ({
   canManage = false,
   onStatusChange
 }: PaymentDetailsModalProps) => {
-  const [actionNotes, setActionNotes] = useState('');
-  const [receiptFile, setReceiptFile] = useState<File | null>(null);
-  const [isProcessing, setIsProcessing] = useState(false);
-
-  const fileUpload = useFileUpload({
-    bucket: 'payment-files',
-    allowedTypes: ['application/pdf', 'image/jpeg', 'image/png', 'image/jpg'],
-    maxSizeInMB: 10
-  });
+  const [notes, setNotes] = useState('');
+  const [receiptFile, setReceiptFile] = useState<File | undefined>();
+  const [isUpdating, setIsUpdating] = useState(false);
 
   if (!payment) return null;
 
-  const getStatusBadge = (status: PaymentStatus) => {
-    const variants = {
-      [PaymentStatus.PENDING]: 'bg-yellow-100 text-yellow-800 border-yellow-200',
-      [PaymentStatus.APPROVED]: 'bg-green-100 text-green-800 border-green-200',
-      [PaymentStatus.REJECTED]: 'bg-red-100 text-red-800 border-red-200',
-      [PaymentStatus.PAID]: 'bg-blue-100 text-blue-800 border-blue-200'
-    };
-
-    const labels = {
-      [PaymentStatus.PENDING]: 'Pendente',
-      [PaymentStatus.APPROVED]: 'Aprovado',
-      [PaymentStatus.REJECTED]: 'Rejeitado',
-      [PaymentStatus.PAID]: 'Pago'
-    };
-
-    return (
-      <Badge className={variants[status]}>
-        {labels[status]}
-      </Badge>
-    );
-  };
-
   const handleStatusChange = async (status: PaymentStatus) => {
     if (!onStatusChange) return;
-
-    setIsProcessing(true);
+    
+    setIsUpdating(true);
     try {
-      await onStatusChange(payment.id, status, actionNotes, receiptFile || undefined);
-      setActionNotes('');
-      setReceiptFile(null);
+      await onStatusChange(payment.id, status, notes, receiptFile);
       onOpenChange(false);
-      toast({
-        title: "Status atualizado",
-        description: `Pagamento ${status === PaymentStatus.APPROVED ? 'aprovado' : 'rejeitado'} com sucesso`
-      });
-    } catch (error: any) {
-      toast({
-        title: "Erro",
-        description: error.message || "Erro ao atualizar status",
-        variant: "destructive"
-      });
+      setNotes('');
+      setReceiptFile(undefined);
+    } catch (error) {
+      console.error('Error updating payment status:', error);
     } finally {
-      setIsProcessing(false);
+      setIsUpdating(false);
     }
   };
 
-  const downloadFile = (url: string, filename: string) => {
-    const link = document.createElement('a');
-    link.href = url;
-    link.download = filename;
-    link.click();
+  const getStatusBadge = (status: PaymentStatus) => {
+    switch (status) {
+      case PaymentStatus.APPROVED:
+        return <Badge className="bg-green-100 text-green-800">Aprovado</Badge>;
+      case PaymentStatus.REJECTED:
+        return <Badge className="bg-red-100 text-red-800">Rejeitado</Badge>;
+      case PaymentStatus.PAID:
+        return <Badge className="bg-blue-100 text-blue-800">Pago</Badge>;
+      default:
+        return <Badge className="bg-yellow-100 text-yellow-800">Pendente</Badge>;
+    }
   };
 
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle className="flex items-center justify-between">
-            Detalhes do Pagamento
-            {getStatusBadge(payment.status)}
-          </DialogTitle>
+          <DialogTitle>Detalhes do Pagamento</DialogTitle>
         </DialogHeader>
 
         <div className="space-y-6">
-          {/* Basic Information */}
+          {/* Payment Info */}
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <Label className="text-sm font-medium text-muted-foreground">Cliente</Label>
-              <p className="font-medium">{payment.client?.business_name}</p>
+              <Label className="text-sm font-medium text-muted-foreground">ID</Label>
+              <p className="font-mono text-sm">{payment.id.substring(0, 8)}...</p>
+            </div>
+            <div>
+              <Label className="text-sm font-medium text-muted-foreground">Status</Label>
+              <div className="mt-1">{getStatusBadge(payment.status)}</div>
             </div>
             <div>
               <Label className="text-sm font-medium text-muted-foreground">Valor</Label>
-              <p className="font-medium text-lg">{formatCurrency(payment.amount)}</p>
+              <p className="text-lg font-semibold">{formatCurrency(payment.amount)}</p>
             </div>
             <div>
               <Label className="text-sm font-medium text-muted-foreground">Tipo</Label>
-              <p className="font-medium">{payment.payment_type}</p>
+              <p>{payment.payment_type}</p>
             </div>
             <div>
-              <Label className="text-sm font-medium text-muted-foreground">Data da Solicitação</Label>
-              <p className="font-medium">{formatDate(new Date(payment.created_at))}</p>
+              <Label className="text-sm font-medium text-muted-foreground">Cliente</Label>
+              <p>{payment.client?.business_name || 'N/A'}</p>
+            </div>
+            <div>
+              <Label className="text-sm font-medium text-muted-foreground">Data de Criação</Label>
+              <p>{formatDate(new Date(payment.created_at))}</p>
             </div>
           </div>
 
-          {/* PIX Information */}
+          {/* PIX Key Info */}
           {payment.payment_type === 'PIX' && payment.pix_key && (
-            <div className="border rounded-lg p-4">
-              <Label className="text-sm font-medium text-muted-foreground">Informações PIX</Label>
-              <div className="mt-2 space-y-2">
-                <div className="flex justify-between">
-                  <span className="text-sm">Nome:</span>
-                  <span className="text-sm font-medium">{payment.pix_key.name}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-sm">Titular:</span>
-                  <span className="text-sm font-medium">{payment.pix_key.owner_name}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-sm">Chave:</span>
-                  <span className="text-sm font-medium font-mono">{payment.pix_key.key}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-sm">Tipo:</span>
-                  <span className="text-sm font-medium">{payment.pix_key.type}</span>
-                </div>
-              </div>
-            </div>
-          )}
-
-          {/* Boleto Information */}
-          {payment.payment_type === 'BOLETO' && (
-            <div className="border rounded-lg p-4">
-              <Label className="text-sm font-medium text-muted-foreground">Informações do Boleto</Label>
-              <div className="mt-2 space-y-2">
-                {payment.boleto_code && (
-                  <div>
-                    <span className="text-sm">Código:</span>
-                    <p className="text-sm font-mono bg-muted p-2 rounded mt-1">{payment.boleto_code}</p>
-                  </div>
-                )}
-                {payment.boleto_file_url && (
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm">Arquivo do boleto:</span>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => downloadFile(payment.boleto_file_url!, 'boleto.pdf')}
-                    >
-                      <Download className="h-4 w-4 mr-1" />
-                      Download
-                    </Button>
-                  </div>
-                )}
+            <div>
+              <Label className="text-sm font-medium text-muted-foreground">Chave PIX</Label>
+              <div className="mt-2 p-3 bg-gray-50 rounded-lg">
+                <p className="font-medium">{payment.pix_key.name}</p>
+                <p className="text-sm text-muted-foreground">{payment.pix_key.key}</p>
+                <p className="text-sm text-muted-foreground">Tipo: {payment.pix_key.type}</p>
               </div>
             </div>
           )}
@@ -182,86 +114,84 @@ export const PaymentDetailsModal = ({
           {payment.notes && (
             <div>
               <Label className="text-sm font-medium text-muted-foreground">Observações</Label>
-              <p className="text-sm mt-1 p-3 bg-muted rounded">{payment.notes}</p>
-            </div>
-          )}
-
-          {/* Receipt */}
-          {payment.receipt_file_url && (
-            <div className="border rounded-lg p-4">
-              <Label className="text-sm font-medium text-muted-foreground">Comprovante</Label>
-              <div className="mt-2 flex items-center justify-between">
-                <span className="text-sm">Comprovante de pagamento</span>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => downloadFile(payment.receipt_file_url!, 'comprovante.pdf')}
-                >
-                  <Download className="h-4 w-4 mr-1" />
-                  Download
-                </Button>
-              </div>
+              <p className="mt-1 p-3 bg-gray-50 rounded-lg">{payment.notes}</p>
             </div>
           )}
 
           {/* Rejection Reason */}
           {payment.status === PaymentStatus.REJECTED && payment.rejection_reason && (
-            <div className="border border-red-200 rounded-lg p-4 bg-red-50">
-              <Label className="text-sm font-medium text-red-800">Motivo da Rejeição</Label>
-              <p className="text-sm mt-1 text-red-700">{payment.rejection_reason}</p>
+            <div>
+              <Label className="text-sm font-medium text-muted-foreground">Motivo da Rejeição</Label>
+              <p className="mt-1 p-3 bg-red-50 rounded-lg text-red-800">{payment.rejection_reason}</p>
             </div>
           )}
 
-          {/* Admin Actions */}
+          {/* Management Section for Admins */}
           {canManage && payment.status === PaymentStatus.PENDING && (
-            <div className="border rounded-lg p-4 space-y-4">
-              <Label className="text-sm font-medium">Ações do Administrador</Label>
+            <div className="border-t pt-6">
+              <h4 className="font-medium mb-4">Gerenciar Pagamento</h4>
               
-              <div>
-                <Label htmlFor="action-notes">Observações</Label>
-                <Textarea
-                  id="action-notes"
-                  placeholder="Adicione observações sobre esta ação"
-                  value={actionNotes}
-                  onChange={(e) => setActionNotes(e.target.value)}
-                />
-              </div>
+              <div className="space-y-4">
+                <div>
+                  <Label htmlFor="notes">Observações</Label>
+                  <Textarea
+                    id="notes"
+                    value={notes}
+                    onChange={(e) => setNotes(e.target.value)}
+                    placeholder="Adicione observações sobre o processamento..."
+                    className="mt-1"
+                  />
+                </div>
 
-              <div>
-                <Label>Comprovante (para aprovação)</Label>
-                <FileUpload
-                  onFileSelect={setReceiptFile}
-                  onFileRemove={() => setReceiptFile(null)}
-                  acceptedTypes={['application/pdf', 'image/jpeg', 'image/png', 'image/jpg']}
-                  maxSizeInMB={10}
-                  currentFile={receiptFile || undefined}
-                  isUploading={fileUpload.isUploading}
-                  uploadProgress={fileUpload.uploadProgress}
-                />
+                <div>
+                  <Label>Comprovante (opcional)</Label>
+                  <FileUpload
+                    onFileSelect={setReceiptFile}
+                    onFileRemove={() => setReceiptFile(undefined)}
+                    acceptedTypes={['image/*', 'application/pdf']}
+                    maxSizeInMB={5}
+                    currentFile={receiptFile}
+                    className="mt-1"
+                  />
+                </div>
+
+                <div className="flex gap-2">
+                  <Button
+                    onClick={() => handleStatusChange(PaymentStatus.APPROVED)}
+                    disabled={isUpdating}
+                    className="bg-green-600 hover:bg-green-700"
+                  >
+                    <CheckCircle className="h-4 w-4 mr-2" />
+                    Aprovar
+                  </Button>
+                  <Button
+                    onClick={() => handleStatusChange(PaymentStatus.REJECTED)}
+                    disabled={isUpdating}
+                    variant="destructive"
+                  >
+                    <XCircle className="h-4 w-4 mr-2" />
+                    Rejeitar
+                  </Button>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Receipt Section */}
+          {payment.receipt_file_url && (
+            <div>
+              <Label className="text-sm font-medium text-muted-foreground">Comprovante</Label>
+              <div className="mt-2">
+                <Button variant="outline" size="sm" asChild>
+                  <a href={payment.receipt_file_url} target="_blank" rel="noopener noreferrer">
+                    <Upload className="h-4 w-4 mr-2" />
+                    Ver Comprovante
+                  </a>
+                </Button>
               </div>
             </div>
           )}
         </div>
-
-        {canManage && payment.status === PaymentStatus.PENDING && (
-          <DialogFooter className="flex gap-2">
-            <Button
-              variant="destructive"
-              onClick={() => handleStatusChange(PaymentStatus.REJECTED)}
-              disabled={isProcessing}
-            >
-              <XCircle className="h-4 w-4 mr-1" />
-              Rejeitar
-            </Button>
-            <Button
-              onClick={() => handleStatusChange(PaymentStatus.APPROVED)}
-              disabled={isProcessing}
-            >
-              <CheckCircle className="h-4 w-4 mr-1" />
-              Aprovar
-            </Button>
-          </DialogFooter>
-        )}
       </DialogContent>
     </Dialog>
   );

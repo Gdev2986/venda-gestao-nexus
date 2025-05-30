@@ -15,6 +15,7 @@ import { paymentService } from "@/services/payment.service";
 import { Plus, Wallet } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { toast } from "@/hooks/use-toast";
+import { PaymentType } from "@/types/payment.types";
 
 const ClientPayments = () => {
   const { user } = useAuth();
@@ -29,7 +30,7 @@ const ClientPayments = () => {
     filterByClientId: user?.id 
   });
 
-  const handleRequestPayment = async (type: 'PIX' | 'BOLETO', data: any) => {
+  const handleRequestPayment = async (type: PaymentType, data: any) => {
     try {
       if (!user) {
         toast({
@@ -78,6 +79,7 @@ const ClientPayments = () => {
 
       // Refresh data
       loadPayments();
+      setIsDialogOpen(false);
 
     } catch (error: any) {
       console.error('Error requesting payment:', error);

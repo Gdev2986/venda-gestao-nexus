@@ -1,7 +1,8 @@
 
 import { useState, useEffect } from "react";
-import usePaymentsFetcher from "./usePaymentsFetcher";
 import { PaymentStatus, PaymentAction } from "@/types/enums";
+import { PaymentRequest } from "@/types/payment.types";
+import { paymentService } from "@/services/payment.service";
 import { useToast } from "@/hooks/use-toast";
 
 // Define the hook props
@@ -19,23 +20,57 @@ export const useAdminPayments = ({
   pageSize = 10
 }: UseAdminPaymentsProps) => {
   const { toast } = useToast();
-  const {
-    paymentRequests: payments,
-    isLoading,
-    error,
-    fetchPaymentRequests: refetch,
-    totalPages
-  } = usePaymentsFetcher({
-    searchTerm,
-    statusFilter: statusFilter as any, // TypeScript conversion
-    page,
-    pageSize
-  });
+  const [payments, setPayments] = useState<PaymentRequest[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [totalPages, setTotalPages] = useState(1);
+
+  const fetchPayments = async () => {
+    setIsLoading(true);
+    setError(null);
+    
+    try {
+      const allPayments = await paymentService.getPaymentRequests();
+      
+      // Apply filters
+      let filteredPayments = allPayments;
+      
+      if (statusFilter && statusFilter !== "ALL") {
+        filteredPayments = filteredPayments.filter(p => p.status === statusFilter);
+      }
+      
+      if (searchTerm) {
+        filteredPayments = filteredPayments.filter(p => 
+          p.client?.business_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          p.id.toLowerCase().includes(searchTerm.toLowerCase())
+        );
+      }
+      
+      // Calculate pagination
+      const startIndex = (page - 1) * pageSize;
+      const endIndex = startIndex + pageSize;
+      const paginatedPayments = filteredPayments.slice(startIndex, endIndex);
+      
+      setPayments(paginatedPayments);
+      setTotalPages(Math.ceil(filteredPayments.length / pageSize));
+    } catch (err: any) {
+      setError(err.message);
+      toast({
+        title: "Erro",
+        description: "Erro ao carregar pagamentos",
+        variant: "destructive"
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchPayments();
+  }, [searchTerm, statusFilter, page, pageSize]);
 
   // Function to handle payment actions (approve, reject, etc.)
   const performPaymentAction = (paymentId: string, action: PaymentAction) => {
-    // In a real app, this would make an API call to perform the action
-    
     switch (action) {
       case PaymentAction.APPROVE:
         toast({
@@ -76,7 +111,7 @@ export const useAdminPayments = ({
     }
     
     // Refetch data after action
-    setTimeout(refetch, 1000);
+    setTimeout(fetchPayments, 1000);
   };
 
   return {
@@ -84,7 +119,7 @@ export const useAdminPayments = ({
     isLoading,
     error,
     totalPages,
-    refetch,
+    refetch: fetchPayments,
     performPaymentAction
   };
 };

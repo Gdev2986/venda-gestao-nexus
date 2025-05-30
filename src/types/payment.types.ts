@@ -11,7 +11,7 @@ export interface PixKey {
   key: string;
   type: string;
   name: string;
-  owner_name: string;
+  owner_name?: string; // Make optional to match pix.types
   is_default?: boolean;
   bank_name?: string;
   key_type?: string;

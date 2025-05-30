@@ -158,10 +158,9 @@ export const paymentService = {
     return (data || []).map(this.formatPaymentRequest);
   },
 
-  // Get partner commission balance - usando query SQL direta
+  // Get partner commission balance
   async getPartnerCommissionBalance(partnerId: string): Promise<number> {
     try {
-      // Usar uma query SQL customizada já que a função ainda não está nos tipos
       const { data, error } = await supabase
         .from('commissions')
         .select('amount, is_paid')
@@ -221,7 +220,7 @@ export const paymentService = {
   },
 
   // Update payment request
-  async updatePaymentRequest(id: string, updates: Partial<PaymentRequest>): Promise<PaymentRequest | null> {
+  async updatePaymentRequest(id: string, updates: Partial<Omit<PaymentRequest, 'status'> & { status: string }>): Promise<PaymentRequest | null> {
     const { data, error } = await supabase
       .from('payment_requests')
       .update(updates)

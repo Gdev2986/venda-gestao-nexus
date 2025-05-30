@@ -4,21 +4,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/use-auth";
 import { PaymentStatus } from "@/types/enums";
-
-interface PaymentRequest {
-  id: string;
-  client_id: string;
-  amount: number;
-  status: PaymentStatus;
-  created_at: string;
-  updated_at: string;
-  pix_key_id: string;
-  description: string;
-  receipt_url: string;
-  rejection_reason: string;
-  approved_at: string;
-  approved_by: string;
-}
+import { PaymentRequest } from "@/types/payment.types";
+import { paymentService } from "@/services/payment.service";
 
 export const useClientPayments = () => {
   const { user } = useAuth();
@@ -49,43 +36,13 @@ export const useClientPayments = () => {
 
     setIsLoading(true);
     try {
-      const { data, error } = await supabase
-        .from('payment_requests')
-        .select('*')
-        .eq('client_id', clientId)
-        .order('created_at', { ascending: false });
-
-      if (error) {
-        console.error("Error fetching payments:", error);
-        toast({
-          title: "Erro ao carregar pagamentos",
-          description: error.message,
-          variant: "destructive",
-        });
-        return;
-      }
-
-      const formattedData: PaymentRequest[] = (data || []).map(item => ({
-        id: item.id,
-        client_id: item.client_id,
-        amount: item.amount,
-        status: item.status as PaymentStatus,
-        created_at: item.created_at,
-        updated_at: item.updated_at,
-        pix_key_id: item.pix_key_id,
-        description: item.description || '',
-        receipt_url: item.receipt_url || '',
-        rejection_reason: item.rejection_reason || '',
-        approved_at: item.approved_at || '',
-        approved_by: item.approved_by || ''
-      }));
-
-      setPayments(formattedData);
+      const payments = await paymentService.getPaymentsByClient(clientId);
+      setPayments(payments);
     } catch (err: any) {
-      console.error("Unexpected error:", err);
+      console.error("Error loading payments:", err);
       toast({
         title: "Erro",
-        description: "Erro inesperado ao carregar pagamentos",
+        description: "Erro ao carregar pagamentos",
         variant: "destructive",
       });
     } finally {
@@ -104,27 +61,13 @@ export const useClientPayments = () => {
     }
 
     try {
-      const { error } = await supabase
-        .from('payment_requests')
-        .insert([
-          {
-            client_id: clientId,
-            amount,
-            pix_key_id: pixKeyId,
-            status: 'PENDING',
-            description: description || 'Solicitação de pagamento'
-          }
-        ]);
-
-      if (error) {
-        console.error("Error creating payment request:", error);
-        toast({
-          title: "Erro",
-          description: error.message,
-          variant: "destructive",
-        });
-        return false;
-      }
+      await paymentService.createPaymentRequest({
+        client_id: clientId,
+        amount,
+        payment_type: 'PIX',
+        pix_key_id: pixKeyId,
+        notes: description || 'Solicitação de pagamento'
+      });
 
       toast({
         title: "Solicitação enviada",
@@ -135,10 +78,10 @@ export const useClientPayments = () => {
       loadPayments();
       return true;
     } catch (err: any) {
-      console.error("Unexpected error:", err);
+      console.error("Error requesting payment:", err);
       toast({
         title: "Erro",
-        description: "Erro inesperado ao solicitar pagamento",
+        description: "Erro ao solicitar pagamento",
         variant: "destructive",
       });
       return false;
