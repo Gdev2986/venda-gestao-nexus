@@ -204,7 +204,7 @@ const AdminDashboard = () => {
           <QuickLinks />
         </div>
         
-        {/* Payment Methods Breakdown */}
+        {/* Payment Methods Breakdown - Using the chartsData directly */}
         <div className="grid grid-cols-1 gap-4">
           <PaymentMethodsBreakdown 
             data={chartsData.paymentMethodsDetail} 
