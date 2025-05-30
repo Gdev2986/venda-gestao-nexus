@@ -62,9 +62,6 @@ export const SalesPreviewPanel = ({
         <DataTable
           columns={salesTableColumns}
           data={paginatedSales}
-          currentPage={currentPage}
-          totalPages={totalPages}
-          onPageChange={handlePageChange}
           isLoading={isLoading}
         />
         
