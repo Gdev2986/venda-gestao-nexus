@@ -1,8 +1,7 @@
 
 import { CardTitle } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Filter, Search, Download } from "lucide-react";
+import { Filter, Download } from "lucide-react";
 
 interface SalesTableHeaderProps {
   title: string;
@@ -15,9 +14,7 @@ interface SalesTableHeaderProps {
 export const SalesTableHeader = ({ 
   title, 
   totalCount, 
-  filteredCount, 
-  searchTerm, 
-  onSearchChange 
+  filteredCount
 }: SalesTableHeaderProps) => {
   return (
     <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
@@ -32,15 +29,6 @@ export const SalesTableHeader = ({
       </div>
       
       <div className="flex gap-2">
-        <div className="relative">
-          <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-          <Input
-            placeholder="Buscar por código ou terminal..."
-            className="pl-8 w-full sm:w-[250px]"
-            value={searchTerm}
-            onChange={(e) => onSearchChange(e.target.value)}
-          />
-        </div>
         <Button variant="outline" size="icon">
           <Download className="h-4 w-4" />
         </Button>

@@ -4,7 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Calendar, X, Clock, Search, Filter } from "lucide-react";
+import { Calendar, X, Clock, Filter, ChevronDown, ChevronUp } from "lucide-react";
 import { SalesFilters } from "@/services/optimized-sales.service";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
@@ -29,10 +29,10 @@ const OptimizedSalesDateFilter = ({
   const [localMinuteStart, setLocalMinuteStart] = useState(filters.minuteStart || '');
   const [localHourEnd, setLocalHourEnd] = useState(filters.hourEnd || '');
   const [localMinuteEnd, setLocalMinuteEnd] = useState(filters.minuteEnd || '');
-  const [localSearchCode, setLocalSearchCode] = useState(filters.searchCode || '');
   const [localTerminal, setLocalTerminal] = useState(filters.terminal || '');
   const [localMinAmount, setLocalMinAmount] = useState(filters.minAmount?.toString() || '');
   const [localMaxAmount, setLocalMaxAmount] = useState(filters.maxAmount?.toString() || '');
+  const [showAdditionalFilters, setShowAdditionalFilters] = useState(false);
 
   const handleApplyDateFilter = () => {
     onFiltersChange({
@@ -42,7 +42,6 @@ const OptimizedSalesDateFilter = ({
       minuteStart: localMinuteStart || undefined,
       hourEnd: localHourEnd || undefined,
       minuteEnd: localMinuteEnd || undefined,
-      searchCode: localSearchCode || undefined,
       terminal: localTerminal || undefined,
       minAmount: localMinAmount ? parseFloat(localMinAmount) : undefined,
       maxAmount: localMaxAmount ? parseFloat(localMaxAmount) : undefined
@@ -51,7 +50,7 @@ const OptimizedSalesDateFilter = ({
 
   const hasDateFilters = filters.dateStart || filters.dateEnd;
   const hasTimeFilters = filters.hourStart || filters.minuteStart || filters.hourEnd || filters.minuteEnd;
-  const hasOtherFilters = filters.searchCode || filters.terminal || filters.minAmount || filters.maxAmount || filters.paymentType;
+  const hasOtherFilters = filters.terminal || filters.minAmount || filters.maxAmount || filters.paymentType;
   const hasAnyFilters = Object.keys(filters).some(key => filters[key as keyof SalesFilters]);
 
   // Generate hour options (00-23)
@@ -167,91 +166,91 @@ const OptimizedSalesDateFilter = ({
           </div>
         </div>
 
-        {/* Filtros Adicionais */}
+        {/* Botão para mostrar filtros adicionais */}
         <div className="border-t pt-4">
-          <div className="flex items-center gap-2 mb-3">
+          <Button
+            variant="outline"
+            onClick={() => setShowAdditionalFilters(!showAdditionalFilters)}
+            className="flex items-center gap-2"
+            disabled={isLoading}
+          >
             <Filter className="h-4 w-4" />
-            <Label className="text-sm font-medium">Filtros Adicionais</Label>
-          </div>
-          
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {/* Pesquisa por Código */}
-            <div className="space-y-2">
-              <Label htmlFor="search-code">Pesquisar por Código</Label>
-              <div className="relative">
-                <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+            {showAdditionalFilters ? 'Ocultar Filtros' : 'Mostrar Filtros'}
+            {showAdditionalFilters ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+          </Button>
+        </div>
+
+        {/* Filtros Adicionais - mostrados apenas quando solicitado */}
+        {showAdditionalFilters && (
+          <div className="border-t pt-4">
+            <div className="flex items-center gap-2 mb-3">
+              <Filter className="h-4 w-4" />
+              <Label className="text-sm font-medium">Filtros Adicionais</Label>
+            </div>
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {/* Filtro por Terminal */}
+              <div className="space-y-2">
+                <Label htmlFor="terminal">Terminal</Label>
                 <Input
-                  id="search-code"
-                  placeholder="Digite o código..."
-                  className="pl-8"
-                  value={localSearchCode}
-                  onChange={(e) => setLocalSearchCode(e.target.value)}
+                  id="terminal"
+                  placeholder="Digite o terminal..."
+                  value={localTerminal}
+                  onChange={(e) => setLocalTerminal(e.target.value)}
+                  disabled={isLoading}
+                />
+              </div>
+
+              {/* Tipo de Pagamento */}
+              <div className="space-y-2">
+                <Label>Tipo de Pagamento</Label>
+                <Select 
+                  value={filters.paymentType || "all"} 
+                  onValueChange={(value) => onFiltersChange({ paymentType: value === "all" ? undefined : value })}
+                  disabled={isLoading}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Todos" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">Todos</SelectItem>
+                    <SelectItem value="CREDIT">Cartão de Crédito</SelectItem>
+                    <SelectItem value="DEBIT">Cartão de Débito</SelectItem>
+                    <SelectItem value="PIX">Pix</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              {/* Valor Mínimo */}
+              <div className="space-y-2">
+                <Label htmlFor="min-amount">Valor Mínimo (R$)</Label>
+                <Input
+                  id="min-amount"
+                  type="number"
+                  step="0.01"
+                  placeholder="0,00"
+                  value={localMinAmount}
+                  onChange={(e) => setLocalMinAmount(e.target.value)}
+                  disabled={isLoading}
+                />
+              </div>
+
+              {/* Valor Máximo */}
+              <div className="space-y-2">
+                <Label htmlFor="max-amount">Valor Máximo (R$)</Label>
+                <Input
+                  id="max-amount"
+                  type="number"
+                  step="0.01"
+                  placeholder="0,00"
+                  value={localMaxAmount}
+                  onChange={(e) => setLocalMaxAmount(e.target.value)}
                   disabled={isLoading}
                 />
               </div>
             </div>
-
-            {/* Filtro por Terminal */}
-            <div className="space-y-2">
-              <Label htmlFor="terminal">Terminal</Label>
-              <Input
-                id="terminal"
-                placeholder="Digite o terminal..."
-                value={localTerminal}
-                onChange={(e) => setLocalTerminal(e.target.value)}
-                disabled={isLoading}
-              />
-            </div>
-
-            {/* Tipo de Pagamento */}
-            <div className="space-y-2">
-              <Label>Tipo de Pagamento</Label>
-              <Select 
-                value={filters.paymentType || "all"} 
-                onValueChange={(value) => onFiltersChange({ paymentType: value === "all" ? undefined : value })}
-                disabled={isLoading}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Todos" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">Todos</SelectItem>
-                  <SelectItem value="CREDIT">Cartão de Crédito</SelectItem>
-                  <SelectItem value="DEBIT">Cartão de Débito</SelectItem>
-                  <SelectItem value="PIX">Pix</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-
-            {/* Valor Mínimo */}
-            <div className="space-y-2">
-              <Label htmlFor="min-amount">Valor Mínimo (R$)</Label>
-              <Input
-                id="min-amount"
-                type="number"
-                step="0.01"
-                placeholder="0,00"
-                value={localMinAmount}
-                onChange={(e) => setLocalMinAmount(e.target.value)}
-                disabled={isLoading}
-              />
-            </div>
-
-            {/* Valor Máximo */}
-            <div className="space-y-2">
-              <Label htmlFor="max-amount">Valor Máximo (R$)</Label>
-              <Input
-                id="max-amount"
-                type="number"
-                step="0.01"
-                placeholder="0,00"
-                value={localMaxAmount}
-                onChange={(e) => setLocalMaxAmount(e.target.value)}
-                disabled={isLoading}
-              />
-            </div>
           </div>
-        </div>
+        )}
         
         <div className="flex gap-2">
           <Button 
@@ -291,9 +290,6 @@ const OptimizedSalesDateFilter = ({
                 {' até '}
                 {filters.hourEnd || '23'}:{filters.minuteEnd || '59'}
               </div>
-            )}
-            {filters.searchCode && (
-              <div><strong>Código:</strong> {filters.searchCode}</div>
             )}
             {filters.terminal && (
               <div><strong>Terminal:</strong> {filters.terminal}</div>

@@ -60,33 +60,12 @@ const getPaymentMethodBadge = (method: string, installments?: number) => {
 
 export const salesTableColumns: ColumnDef<NormalizedSale>[] = [
   {
-    id: "transaction_date",
-    header: "Data/Hora",
-    cell: ({ row }) => {
-      const formattedDate = formatTransactionDate(row.original.transaction_date);
-      return (
-        <span className="font-medium text-sm">
-          {formattedDate}
-        </span>
-      );
-    }
-  },
-  {
-    id: "id",
-    header: "Código",
+    id: "payment_type",
+    header: "Tipo de Pagamento",
     cell: ({ row }) => (
-      <span className="font-mono text-sm">
-        {row.original.id?.substring(0, 8) || 'N/A'}
-      </span>
-    )
-  },
-  {
-    id: "terminal",
-    header: "Terminal", 
-    cell: ({ row }) => (
-      <span className="text-sm">
-        {row.original.terminal}
-      </span>
+      <div className="text-center">
+        {getPaymentMethodBadge(row.original.payment_type, row.original.installments)}
+      </div>
     )
   },
   {
@@ -99,12 +78,24 @@ export const salesTableColumns: ColumnDef<NormalizedSale>[] = [
     )
   },
   {
-    id: "payment_type",
-    header: "Pagamento",
+    id: "transaction_date",
+    header: "Data/Hora",
+    cell: ({ row }) => {
+      const formattedDate = formatTransactionDate(row.original.transaction_date);
+      return (
+        <span className="font-medium text-sm">
+          {formattedDate}
+        </span>
+      );
+    }
+  },
+  {
+    id: "terminal",
+    header: "Terminal", 
     cell: ({ row }) => (
-      <div className="text-center">
-        {getPaymentMethodBadge(row.original.payment_type, row.original.installments)}
-      </div>
+      <span className="text-sm">
+        {row.original.terminal}
+      </span>
     )
   }
 ];

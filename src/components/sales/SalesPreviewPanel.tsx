@@ -1,5 +1,4 @@
 
-import { useState } from "react";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { NormalizedSale } from "@/utils/sales-processor";
 import { DataTable } from "@/components/ui/data-table";
@@ -26,30 +25,22 @@ export const SalesPreviewPanel = ({
   totalCount,
   isLoading = false
 }: SalesPreviewPanelProps) => {
-  const [searchTerm, setSearchTerm] = useState("");
-
-  // Filter sales by search term
-  const filteredSales = sales.filter(sale =>
-    sale.id?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    sale.terminal?.toLowerCase().includes(searchTerm.toLowerCase())
-  );
-
   return (
     <Card className="border-l-4 border-l-emerald-500">
       <CardHeader>
         <SalesTableHeader
           title={title}
           totalCount={totalCount}
-          filteredCount={filteredSales.length}
-          searchTerm={searchTerm}
-          onSearchChange={setSearchTerm}
+          filteredCount={sales.length}
+          searchTerm=""
+          onSearchChange={() => {}}
         />
       </CardHeader>
       
       <CardContent className="p-0">
         <DataTable
           columns={salesTableColumns}
-          data={filteredSales}
+          data={sales}
           currentPage={currentPage}
           totalPages={totalPages}
           onPageChange={onPageChange}
