@@ -22,6 +22,7 @@ export const ClientSalesTable = ({ sales, isLoading = false }: ClientSalesTableP
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 15;
 
+  // Função idêntica ao admin side para badges de pagamento
   const getPaymentMethodBadge = (method: PaymentMethod, installments?: number) => {
     switch (method) {
       case PaymentMethod.CREDIT:

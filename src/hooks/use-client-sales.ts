@@ -62,7 +62,7 @@ export const useClientSales = (startDate?: Date, endDate?: Date) => {
 
       console.log('useClientSales: Found client ID:', clientAccess.client_id);
 
-      // Get machines for this client
+      // Get machines for this client - agora pegando apenas o serial_number
       console.log('useClientSales: Fetching machines for client:', clientAccess.client_id);
       const { data: clientMachines, error: machinesError } = await supabase
         .from('machines')
@@ -80,17 +80,18 @@ export const useClientSales = (startDate?: Date, endDate?: Date) => {
         return;
       }
 
-      const machineIds = clientMachines.map(m => m.id);
-      console.log('useClientSales: Machine IDs:', machineIds);
+      // Agora buscar vendas pelo terminal (que deve corresponder ao serial_number)
+      const machineSerials = clientMachines.map(m => m.serial_number);
+      console.log('useClientSales: Machine serials:', machineSerials);
 
-      // Build sales query similar to admin side
+      // Build sales query buscando diretamente pelo terminal - igual ao admin side
       let salesQuery = supabase
         .from('sales')
         .select('id, code, terminal, date, gross_amount, net_amount, payment_method, installments, machine_id')
-        .in('machine_id', machineIds)
+        .in('terminal', machineSerials)
         .order('date', { ascending: false });
 
-      // Apply date filters only if they exist - similar to admin logic
+      // Apply date filters only if they exist - exatamente como no admin
       if (startDate) {
         const startISO = startDate.toISOString();
         console.log('useClientSales: Adding start date filter:', startISO);
@@ -103,7 +104,7 @@ export const useClientSales = (startDate?: Date, endDate?: Date) => {
         salesQuery = salesQuery.lte('date', endISO);
       }
 
-      console.log('useClientSales: Executing sales query...');
+      console.log('useClientSales: Executing sales query with terminals:', machineSerials);
       const { data: salesData, error: salesError } = await salesQuery;
 
       console.log('useClientSales: Sales query result:', { 
