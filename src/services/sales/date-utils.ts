@@ -32,8 +32,8 @@ export const convertBrazilianDateToISO = (dateStr: string): string => {
       
       // Adjust for Brazilian timezone (UTC-3)
       // The date was created as local time, but we need to treat it as Brazilian time
-      // So we need to add 3 hours to convert from Brazil time to UTC
-      const utcDate = new Date(brazilDate.getTime() + (3 * 60 * 60 * 1000));
+      // So we need to subtract 3 hours to convert from Brazil time to UTC
+      const utcDate = new Date(brazilDate.getTime() - (3 * 60 * 60 * 1000));
       
       return utcDate.toISOString();
     }
@@ -44,7 +44,7 @@ export const convertBrazilianDateToISO = (dateStr: string): string => {
     const date = new Date(dateStr);
     if (!isNaN(date.getTime())) {
       // Apply the same Brazilian timezone adjustment
-      const utcDate = new Date(date.getTime() + (3 * 60 * 60 * 1000));
+      const utcDate = new Date(date.getTime() - (3 * 60 * 60 * 1000));
       return utcDate.toISOString();
     }
   } catch (e) {
