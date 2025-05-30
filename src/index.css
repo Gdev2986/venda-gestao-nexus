@@ -1,4 +1,3 @@
-
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
 
 @tailwind base;
@@ -45,6 +44,11 @@
     --sidebar-accent-foreground: 210 40% 98%;
     --sidebar-border: 192 71% 15%;
     --sidebar-ring: 182 63% 36%;
+
+    /* Chart colors for light theme */
+    --chart-1: 43 74% 66%;
+    --chart-2: 142 71% 45%;
+    --chart-3: 221 83% 53%;
   }
 
   .dark {
@@ -84,6 +88,11 @@
     --sidebar-accent-foreground: 210 40% 98%;
     --sidebar-border: 192 71% 15%;
     --sidebar-ring: 182 63% 36%;
+
+    /* Chart colors for dark theme */
+    --chart-1: 43 74% 55%;
+    --chart-2: 142 71% 35%;
+    --chart-3: 221 83% 43%;
   }
 }
 
