@@ -1,6 +1,5 @@
 
 import { PaymentStatus } from "@/types/enums";
-import { Client, PixKey } from "@/types";
 import { PaymentRequest as BasePaymentRequest, Payment as BasePayment } from "@/types/payment.types";
 
 // Update to use PaymentStatus enum

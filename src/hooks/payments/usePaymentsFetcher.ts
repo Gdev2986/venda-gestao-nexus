@@ -1,8 +1,8 @@
 
 import { useState, useEffect, useCallback } from "react";
-import { PaymentStatus } from "@/types/payment.types";
+import { PaymentStatus } from "@/types/enums";
 import { useToast } from "@/hooks/use-toast";
-import { PaymentRequest } from "@/types/payment.types";
+import { PaymentRequest, PaymentType } from "@/types/payment.types";
 
 // Function to filter payments by status
 export const filterPaymentsByStatus = (payments: PaymentRequest[], statusFilter: PaymentStatus | 'ALL' | null) => {
@@ -54,6 +54,7 @@ export const usePaymentsFetcher = ({
           status: Object.values(PaymentStatus)[i % Object.values(PaymentStatus).length] as PaymentStatus,
           created_at: new Date(Date.now() - i * 86400000).toISOString(),
           updated_at: new Date(Date.now() - i * 43200000).toISOString(),
+          payment_type: (['PIX', 'BOLETO', 'TED'] as PaymentType[])[i % 3],
           description: `Payment for service ${i + 1}`,
           rejection_reason: i % 4 === 3 ? 'Documentation incomplete' : null,
           requested_at: new Date(Date.now() - i * 86400000).toISOString(),

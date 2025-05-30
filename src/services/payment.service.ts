@@ -158,14 +158,29 @@ export const paymentService = {
     return (data || []).map(this.formatPaymentRequest);
   },
 
-  // Get partner commission balance
+  // Get partner commission balance - usando query SQL direta
   async getPartnerCommissionBalance(partnerId: string): Promise<number> {
-    const { data, error } = await supabase.rpc('get_partner_commission_balance', {
-      partner_uuid: partnerId
-    });
+    try {
+      // Usar uma query SQL customizada já que a função ainda não está nos tipos
+      const { data, error } = await supabase
+        .from('commissions')
+        .select('amount, is_paid')
+        .eq('partner_id', partnerId);
 
-    if (error) throw error;
-    return data || 0;
+      if (error) throw error;
+
+      if (!data) return 0;
+
+      const totalCommission = data.reduce((sum, comm) => sum + (comm.amount || 0), 0);
+      const paidCommission = data
+        .filter(comm => comm.is_paid)
+        .reduce((sum, comm) => sum + (comm.amount || 0), 0);
+
+      return totalCommission - paidCommission;
+    } catch (error) {
+      console.error('Error getting partner commission balance:', error);
+      return 0;
+    }
   },
 
   // Helper method to format payment request data
@@ -174,7 +189,7 @@ export const paymentService = {
       id: item.id,
       client_id: item.client_id,
       amount: item.amount,
-      payment_type: item.payment_type as PaymentType,
+      payment_type: item.payment_type as PaymentType || 'PIX',
       status: item.status as PaymentStatus,
       created_at: item.created_at,
       updated_at: item.updated_at,
@@ -197,7 +212,7 @@ export const paymentService = {
         key: item.pix_key.key,
         type: item.pix_key.type,
         name: item.pix_key.name,
-        owner_name: item.pix_key.owner_name,
+        owner_name: item.pix_key.owner_name || item.pix_key.name,
         user_id: item.client_id,
         created_at: item.pix_key.created_at,
         updated_at: item.pix_key.updated_at

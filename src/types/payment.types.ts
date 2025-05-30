@@ -20,27 +20,26 @@ export interface PixKey {
   updated_at?: string;
 }
 
-// Updated PaymentRequest interface with new fields
-export interface PaymentRequest {
+// Main Payment interface that consolidates all payment data
+export interface Payment {
   id: string;
   client_id: string;
   amount: number;
-  method?: PaymentMethod;
-  payment_type: PaymentType;
   status: EnumsPaymentStatus;
   created_at: string;
-  updated_at: string;
-  requested_at?: string;
-  processed_at?: string;
-  processed_by?: string;
-  notes?: string;
-  receipt_url?: string;
-  receipt_file_url?: string;
-  description?: string;
-  rejection_reason?: string | null;
+  updated_at?: string;
+  payment_type: PaymentType;
   pix_key_id?: string;
   boleto_file_url?: string;
   boleto_code?: string;
+  notes?: string;
+  receipt_file_url?: string;
+  processed_at?: string;
+  processed_by?: string;
+  description?: string;
+  rejection_reason?: string | null;
+  approved_at?: string;
+  approved_by?: string;
   client?: {
     id: string;
     business_name: string;
@@ -51,6 +50,11 @@ export interface PaymentRequest {
     name: string;
   };
   pix_key?: PixKey;
+}
+
+// PaymentRequest interface extends Payment for backward compatibility
+export interface PaymentRequest extends Payment {
+  requested_at?: string;
 }
 
 export interface PaymentRequestParams {

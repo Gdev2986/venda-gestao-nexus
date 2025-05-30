@@ -10,7 +10,7 @@ import { useClientPayments } from "@/hooks/useClientPayments";
 import { usePixKeys } from "@/hooks/usePixKeys";
 import { usePaymentSubscription } from "@/hooks/usePaymentSubscription";
 import { useAuth } from "@/hooks/use-auth";
-import { useFileUpload } from "@/hooks/useFileUpload";
+import { supabase } from "@/integrations/supabase/client";
 import { paymentService } from "@/services/payment.service";
 import { Plus, Wallet } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -20,14 +20,8 @@ const ClientPayments = () => {
   const { user } = useAuth();
   const { balance, isLoading: balanceLoading } = useClientBalance();
   const { payments, isLoading: paymentsLoading, loadPayments } = useClientPayments();
-  const { pixKeys, isLoading: pixKeysLoading, loadPixKeys } = usePixKeys();
+  const { pixKeys, isLoading: pixKeysLoading } = usePixKeys();
   const [isDialogOpen, setIsDialogOpen] = useState(false);
-
-  const fileUpload = useFileUpload({
-    bucket: 'payment-files',
-    allowedTypes: ['application/pdf', 'image/jpeg', 'image/png', 'image/jpg'],
-    maxSizeInMB: 10
-  });
 
   // Setup real-time subscription
   usePaymentSubscription(loadPayments, { 
@@ -84,9 +78,6 @@ const ClientPayments = () => {
 
       // Refresh data
       loadPayments();
-      if (data.new_pix_key && data.save_new_key) {
-        loadPixKeys();
-      }
 
     } catch (error: any) {
       console.error('Error requesting payment:', error);

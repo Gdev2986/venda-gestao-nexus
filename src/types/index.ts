@@ -1,8 +1,24 @@
 
 // Export all types from the various type files
 export * from './enums';
-export * from './payment.types';
 export * from './machine.types';
+
+// Re-export specific types from payment.types to avoid conflicts
+export type { 
+  PaymentRequest, 
+  Payment, 
+  PaymentRequestParams, 
+  PaymentProcessParams, 
+  ClientBalance, 
+  PartnerCommissionBalance,
+  PixKey,
+  PixKeyType,
+  TransactionFeeParams,
+  TransactionFeeResult
+} from './payment.types';
+
+// Export PaymentType explicitly from payment.types
+export type { PaymentType } from './payment.types';
 
 // Adicionar novos exports para tipos de autenticação enterprise
 export * from './auth.types';

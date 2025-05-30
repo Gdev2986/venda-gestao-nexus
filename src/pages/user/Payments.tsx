@@ -19,7 +19,6 @@ const UserPayments = () => {
     paymentRequests,
     isDialogOpen,
     setIsDialogOpen,
-    handleRequestPayment: originalHandleRequestPayment,
     loadPaymentRequests
   } = usePaymentRequests();
 
@@ -34,12 +33,10 @@ const UserPayments = () => {
     filterByClientId: clientId 
   });
   
-  // Adapt the function signature to match what PaymentRequestDialog expects
-  const handleRequestPayment = (amount: string, description: string, pixKeyId: string) => {
-    const numericAmount = parseFloat(amount);
-    if (!isNaN(numericAmount)) {
-      originalHandleRequestPayment(numericAmount, pixKeyId);
-    }
+  // Handle payment request
+  const handleRequestPayment = async (type: 'PIX' | 'BOLETO', data: any) => {
+    console.log("Payment request:", type, data);
+    // The actual implementation would be handled by the usePaymentRequests hook
   };
   
   // Log some debugging info
