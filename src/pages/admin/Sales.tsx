@@ -7,7 +7,8 @@ import SalesPreviewPanel from "@/components/sales/SalesPreviewPanel";
 import SalesAdvancedFilter from "@/components/sales/SalesAdvancedFilter";
 import { SalesStatCards } from "@/components/admin/sales/SalesStatCards";
 import { SalesActionButtons } from "@/components/admin/sales/SalesActionButtons";
-import { useSalesData } from "@/hooks/use-sales-data";
+import { useOptimizedSales } from "@/hooks/use-optimized-sales";
+import { NormalizedSale } from "@/utils/sales-processor";
 
 const AdminSales = () => {
   const [showImportPanel, setShowImportPanel] = useState<boolean>(false);
@@ -15,12 +16,24 @@ const AdminSales = () => {
   
   const {
     sales,
-    filteredSales,
+    totalCount,
+    totalPages,
+    currentPage,
     isLoading,
-    refreshSales,
-    handleSalesImported,
-    handleFilter
-  } = useSalesData();
+    updateFilters,
+    changePage,
+    refreshSales
+  } = useOptimizedSales();
+
+  const handleSalesImported = (importedSales: NormalizedSale[]) => {
+    // Refresh data from database after import
+    refreshSales();
+  };
+
+  const handleFilter = (filtered: NormalizedSale[]) => {
+    // Para manter compatibilidade com o componente SalesAdvancedFilter,
+    // não fazemos nada aqui já que os filtros são gerenciados pelo useOptimizedSales
+  };
 
   return (
     <div className="space-y-6">
@@ -29,7 +42,7 @@ const AdminSales = () => {
         description="Importação e gestão de vendas"
         action={
           <SalesActionButtons
-            filteredSales={filteredSales}
+            filteredSales={sales}
             isLoading={isLoading}
             showImportPanel={showImportPanel}
             setShowImportPanel={setShowImportPanel}
@@ -44,7 +57,7 @@ const AdminSales = () => {
         <SalesImportPanel onSalesProcessed={handleSalesImported} />
       )}
       
-      <SalesStatCards filteredSales={filteredSales} isLoading={isLoading} />
+      <SalesStatCards filteredSales={sales} isLoading={isLoading} />
       
       {showFilters && (
         <SalesAdvancedFilter sales={sales} onFilter={handleFilter} />
@@ -63,8 +76,12 @@ const AdminSales = () => {
           </Card>
         ) : (
           <SalesPreviewPanel 
-            sales={filteredSales} 
+            sales={sales} 
             title="Dados de Vendas"
+            currentPage={currentPage}
+            totalPages={totalPages}
+            onPageChange={changePage}
+            totalCount={totalCount}
           />
         )}
       </div>
