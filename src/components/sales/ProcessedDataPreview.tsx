@@ -20,9 +20,9 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import TablePagination from "@/components/ui/table-pagination";
 import { formatCurrency } from "@/lib/formatters";
 import { NormalizedSale } from "@/utils/sales-processor";
+import { SalesTablePagination } from "@/components/sales/preview/SalesTablePagination";
 
 interface ProcessedDataPreviewProps {
   data: NormalizedSale[];
@@ -36,7 +36,7 @@ const ProcessedDataPreview = ({
   onOpenChange 
 }: ProcessedDataPreviewProps) => {
   const [currentPage, setCurrentPage] = useState(1);
-  const itemsPerPage = 10; // Changed from 15 to 10
+  const itemsPerPage = 10;
   
   // Pagination
   const totalPages = Math.ceil(data.length / itemsPerPage);
@@ -45,6 +45,7 @@ const ProcessedDataPreview = ({
   
   // Calculate totals
   const totalAmount = data.reduce((sum, item) => sum + item.gross_amount, 0);
+  const currentPageAmount = currentData.reduce((sum, item) => sum + item.gross_amount, 0);
   
   // Format date
   const formatDate = (date: string | Date) => {
@@ -93,18 +94,33 @@ const ProcessedDataPreview = ({
           </SheetDescription>
         </SheetHeader>
         
-        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4 bg-muted/30 p-3 rounded-md">
-          <div className="text-sm mb-2 sm:mb-0">
-            <span className="font-medium">Total de Transações:</span>{" "}
-            <span className="font-semibold">{data.length}</span>
+        <div className="flex flex-col gap-4 mb-4">
+          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center bg-muted/30 p-3 rounded-md">
+            <div className="text-sm mb-2 sm:mb-0">
+              <span className="font-medium">Total de Transações:</span>{" "}
+              <span className="font-semibold">{data.length}</span>
+            </div>
+            <div className="text-sm">
+              <span className="font-medium">Valor Total Bruto:</span>{" "}
+              <span className="font-semibold">{formatCurrency(totalAmount)}</span>
+            </div>
           </div>
-          <div className="text-sm">
-            <span className="font-medium">Valor Total Bruto:</span>{" "}
-            <span className="font-semibold">{formatCurrency(totalAmount)}</span>
-          </div>
+          
+          {totalPages > 1 && (
+            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center bg-accent/20 p-3 rounded-md">
+              <div className="text-sm mb-2 sm:mb-0">
+                <span className="font-medium">Página {currentPage}:</span>{" "}
+                <span className="font-semibold">{currentData.length} registros</span>
+              </div>
+              <div className="text-sm">
+                <span className="font-medium">Valor da Página:</span>{" "}
+                <span className="font-semibold">{formatCurrency(currentPageAmount)}</span>
+              </div>
+            </div>
+          )}
         </div>
         
-        <div className="max-h-[calc(100vh-250px)] overflow-auto border rounded-md">
+        <div className="max-h-[calc(100vh-350px)] overflow-auto border rounded-md">
           <Table>
             <TableHeader className="sticky top-0 bg-background z-10">
               <TableRow>
@@ -147,9 +163,10 @@ const ProcessedDataPreview = ({
         
         {totalPages > 1 && (
           <div className="mt-4">
-            <TablePagination
+            <SalesTablePagination
               currentPage={currentPage}
               totalPages={totalPages}
+              totalCount={data.length}
               onPageChange={setCurrentPage}
             />
           </div>
