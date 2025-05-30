@@ -28,7 +28,24 @@ export const useShipments = () => {
 
       if (error) throw error;
 
-      setShipments(data || []);
+      // Converter os dados do Supabase para nossos tipos tipados
+      const typedShipments: Shipment[] = (data || []).map(item => ({
+        id: item.id,
+        client_id: item.client_id,
+        item_type: item.item_type as 'machine' | 'bobina' | 'other',
+        item_description: item.item_description,
+        status: item.status as 'pending' | 'in_transit' | 'delivered' | 'cancelled',
+        tracking_code: item.tracking_code,
+        notes: item.notes,
+        created_by: item.created_by,
+        created_at: item.created_at,
+        updated_at: item.updated_at,
+        delivered_at: item.delivered_at,
+        client: item.client,
+        creator: item.creator
+      }));
+
+      setShipments(typedShipments);
     } catch (err: any) {
       const errorMessage = err.message || 'Erro ao carregar envios';
       setError(errorMessage);
@@ -63,14 +80,31 @@ export const useShipments = () => {
 
       if (error) throw error;
 
-      setShipments(prev => [shipment, ...prev]);
+      // Converter para tipo tipado
+      const typedShipment: Shipment = {
+        id: shipment.id,
+        client_id: shipment.client_id,
+        item_type: shipment.item_type as 'machine' | 'bobina' | 'other',
+        item_description: shipment.item_description,
+        status: shipment.status as 'pending' | 'in_transit' | 'delivered' | 'cancelled',
+        tracking_code: shipment.tracking_code,
+        notes: shipment.notes,
+        created_by: shipment.created_by,
+        created_at: shipment.created_at,
+        updated_at: shipment.updated_at,
+        delivered_at: shipment.delivered_at,
+        client: shipment.client,
+        creator: shipment.creator
+      };
+
+      setShipments(prev => [typedShipment, ...prev]);
       
       toast({
         title: 'Sucesso',
         description: 'Envio criado com sucesso!'
       });
 
-      return shipment;
+      return typedShipment;
     } catch (err: any) {
       const errorMessage = err.message || 'Erro ao criar envio';
       toast({

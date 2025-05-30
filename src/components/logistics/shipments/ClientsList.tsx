@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { DataTable } from "@/components/ui/data-table";
 import { Input } from "@/components/ui/input";
@@ -19,7 +18,7 @@ interface ClientWithShipmentCount {
   city?: string;
   state?: string;
   zip?: string;
-  status: string;
+  status?: string; // Tornado opcional para compatibilidade
   shipmentCount: number;
 }
 
