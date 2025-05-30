@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
@@ -13,6 +14,7 @@ import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { MachineTransferModal } from '@/components/machines/MachineTransferModal';
 import { MachineTransferHistory } from '@/components/machines/MachineTransferHistory';
+import { MachineClientSuggestions } from './MachineClientSuggestions';
 import { ArrowRightLeft } from 'lucide-react';
 
 export interface MachineDetailsDialogProps {
@@ -43,6 +45,7 @@ export const MachineDetailsDialog: React.FC<MachineDetailsDialogProps> = ({
   
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isTransferModalOpen, setIsTransferModalOpen] = useState(false);
+  const [showSuggestions, setShowSuggestions] = useState(false);
 
   useEffect(() => {
     if (machine) {
@@ -53,6 +56,9 @@ export const MachineDetailsDialog: React.FC<MachineDetailsDialogProps> = ({
         client_id: machine.client_id || "",
         notes: machine.notes || "",
       });
+      
+      // Show suggestions if machine has no client assigned
+      setShowSuggestions(!machine.client_id);
     }
   }, [machine]);
 
@@ -112,6 +118,11 @@ export const MachineDetailsDialog: React.FC<MachineDetailsDialogProps> = ({
     }
   };
 
+  const handleClientAssigned = () => {
+    setShowSuggestions(false);
+    onUpdate?.();
+  };
+
   if (!machine) return null;
 
   const isInStock = machine.status === MachineStatus.STOCK;
@@ -159,6 +170,17 @@ export const MachineDetailsDialog: React.FC<MachineDetailsDialogProps> = ({
                   <p className="text-sm">{machine.notes}</p>
                 </div>
               )}
+
+              {/* Show client suggestions for machines without client */}
+              {showSuggestions && (
+                <div>
+                  <Separator className="my-4" />
+                  <MachineClientSuggestions
+                    machineId={machine.id}
+                    onClientAssigned={handleClientAssigned}
+                  />
+                </div>
+              )}
               
               <Separator />
               
@@ -173,7 +195,7 @@ export const MachineDetailsDialog: React.FC<MachineDetailsDialogProps> = ({
                 </div>
               </div>
 
-              {/* Histórico de Transferências */}
+              {/* Transfer History */}
               <MachineTransferHistory machineId={machine.id} />
             </div>
           ) : (
@@ -233,7 +255,7 @@ export const MachineDetailsDialog: React.FC<MachineDetailsDialogProps> = ({
                 </Select>
               </div>
 
-              {/* Condicional: se for estoque, permite selecionar cliente. Se já tem cliente, só permite transferir */}
+              {/* Client assignment section */}
               {isInStock ? (
                 <div>
                   <Label htmlFor="client">Cliente</Label>
@@ -269,7 +291,14 @@ export const MachineDetailsDialog: React.FC<MachineDetailsDialogProps> = ({
                     Transferir para outro cliente
                   </Button>
                 </div>
-              ) : null}
+              ) : (
+                showSuggestions && (
+                  <MachineClientSuggestions
+                    machineId={machine.id}
+                    onClientAssigned={handleClientAssigned}
+                  />
+                )
+              )}
 
               <div>
                 <Label htmlFor="notes">Notas</Label>
@@ -295,7 +324,7 @@ export const MachineDetailsDialog: React.FC<MachineDetailsDialogProps> = ({
         </DialogContent>
       </Dialog>
 
-      {/* Modal de Transferência */}
+      {/* Transfer Modal */}
       <MachineTransferModal
         machine={machine}
         open={isTransferModalOpen}

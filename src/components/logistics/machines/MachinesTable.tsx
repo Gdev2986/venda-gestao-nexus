@@ -1,32 +1,43 @@
 
-import React, { useState } from "react";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
+import React, { useState } from 'react';
+import { 
+  Table, 
+  TableBody, 
+  TableCell, 
+  TableHead, 
+  TableHeader, 
+  TableRow 
 } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
 import { Badge } from "@/components/ui/badge";
-import { Skeleton } from "@/components/ui/skeleton";
-import { MoreHorizontal, Edit, Copy, Trash, ArrowRight } from "lucide-react";
-import { useToast } from "@/hooks/use-toast";
-import { format } from "date-fns";
-import { ptBR } from "date-fns/locale";
-import { Machine } from "@/types/machine.types";
-import MachineTransferDialog from "../machine-dialogs/MachineTransferDialog";
+import { 
+  DropdownMenu, 
+  DropdownMenuContent, 
+  DropdownMenuItem, 
+  DropdownMenuTrigger 
+} from "@/components/ui/dropdown-menu";
+import { 
+  MoreVertical, 
+  Eye, 
+  Edit, 
+  User, 
+  AlertTriangle 
+} from "lucide-react";
+import { MachineStatus } from "@/types/machine.types";
 import { MachineDetailsDialog } from "./MachineDetailsDialog";
-import TablePagination from "@/components/ui/table-pagination";
+
+interface Machine {
+  id: string;
+  serialNumber: string;
+  model: string;
+  status: MachineStatus;
+  clientId?: string;
+  clientName?: string;
+  location: string;
+  createdAt: string;
+  updatedAt: string;
+  notes?: string;
+}
 
 interface MachinesTableProps {
   machines: Machine[];
@@ -34,86 +45,59 @@ interface MachinesTableProps {
   onRefresh: () => void;
 }
 
-const ITEMS_PER_PAGE = 10;
-
-export const MachinesTable: React.FC<MachinesTableProps> = ({ 
-  machines, 
-  isLoading, 
-  onRefresh 
+export const MachinesTable: React.FC<MachinesTableProps> = ({
+  machines,
+  isLoading,
+  onRefresh
 }) => {
   const [selectedMachine, setSelectedMachine] = useState<Machine | null>(null);
-  const [transferDialogOpen, setTransferDialogOpen] = useState(false);
-  const [editDialogOpen, setEditDialogOpen] = useState(false);
-  const [currentPage, setCurrentPage] = useState(1);
-  const { toast } = useToast();
+  const [dialogMode, setDialogMode] = useState<'view' | 'edit'>('view');
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
 
-  // Calculate pagination
-  const totalPages = Math.ceil(machines.length / ITEMS_PER_PAGE);
-  const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
-  const endIndex = startIndex + ITEMS_PER_PAGE;
-  const currentMachines = machines.slice(startIndex, endIndex);
-
-  const handleCopyId = (id: string) => {
-    navigator.clipboard.writeText(id);
-    toast({
-      title: "ID copiado",
-      description: "O ID da máquina foi copiado para a área de transferência.",
-    });
+  const getStatusBadge = (status: MachineStatus) => {
+    switch (status) {
+      case MachineStatus.ACTIVE:
+        return <Badge className="bg-green-100 text-green-800">Operando</Badge>;
+      case MachineStatus.STOCK:
+        return <Badge className="bg-blue-100 text-blue-800">Em Estoque</Badge>;
+      case MachineStatus.MAINTENANCE:
+        return <Badge className="bg-yellow-100 text-yellow-800">Em Manutenção</Badge>;
+      case MachineStatus.INACTIVE:
+        return <Badge className="bg-gray-100 text-gray-800">Inativa</Badge>;
+      case MachineStatus.BLOCKED:
+        return <Badge className="bg-red-100 text-red-800">Bloqueada</Badge>;
+      case MachineStatus.TRANSIT:
+        return <Badge className="bg-purple-100 text-purple-800">Em Trânsito</Badge>;
+      default:
+        return <Badge variant="outline">{status}</Badge>;
+    }
   };
 
-  const handleEdit = (machine: Machine) => {
+  const handleViewMachine = (machine: Machine) => {
     setSelectedMachine(machine);
-    setEditDialogOpen(true);
+    setDialogMode('view');
+    setIsDialogOpen(true);
   };
 
-  const handleDelete = (machine: Machine) => {
-    toast({
-      title: "Deletar máquina",
-      description: `Deletando a máquina ${machine.serial_number}.`,
-    });
-  };
-
-  const handleTransfer = (machine: Machine) => {
+  const handleEditMachine = (machine: Machine) => {
     setSelectedMachine(machine);
-    setTransferDialogOpen(true);
+    setDialogMode('edit');
+    setIsDialogOpen(true);
   };
 
-  const getStatusBadge = (status: string) => {
-    const statusMap = {
-      ACTIVE: { label: "Ativa", variant: "default" as const },
-      INACTIVE: { label: "Inativa", variant: "secondary" as const },
-      MAINTENANCE: { label: "Manutenção", variant: "destructive" as const },
-      STOCK: { label: "Estoque", variant: "outline" as const },
-      BLOCKED: { label: "Bloqueada", variant: "destructive" as const },
-      TRANSIT: { label: "Trânsito", variant: "secondary" as const },
-    };
-
-    const config = statusMap[status as keyof typeof statusMap] || { 
-      label: status, 
-      variant: "outline" as const 
-    };
-
-    return <Badge variant={config.variant}>{config.label}</Badge>;
-  };
-
-  const handlePageChange = (page: number) => {
-    setCurrentPage(page);
+  const formatDate = (dateString: string) => {
+    try {
+      return new Date(dateString).toLocaleDateString('pt-BR');
+    } catch {
+      return '-';
+    }
   };
 
   if (isLoading) {
     return (
-      <div className="space-y-3">
-        {[...Array(5)].map((_, i) => (
-          <div key={i} className="flex items-center space-x-4">
-            <Skeleton className="h-4 w-20" />
-            <Skeleton className="h-4 w-32" />
-            <Skeleton className="h-4 w-24" />
-            <Skeleton className="h-4 w-32" />
-            <Skeleton className="h-4 w-24" />
-            <Skeleton className="h-4 w-32" />
-            <Skeleton className="h-8 w-8" />
-          </div>
-        ))}
+      <div className="flex items-center justify-center py-8">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+        <span className="ml-2">Carregando máquinas...</span>
       </div>
     );
   }
@@ -128,7 +112,7 @@ export const MachinesTable: React.FC<MachinesTableProps> = ({
 
   return (
     <>
-      <div className="rounded-md border">
+      <div className="border rounded-lg overflow-hidden">
         <Table>
           <TableHeader>
             <TableRow>
@@ -136,59 +120,53 @@ export const MachinesTable: React.FC<MachinesTableProps> = ({
               <TableHead>Modelo</TableHead>
               <TableHead>Status</TableHead>
               <TableHead>Cliente</TableHead>
-              <TableHead>Notas</TableHead>
+              <TableHead>Localização</TableHead>
               <TableHead>Criado em</TableHead>
               <TableHead className="text-right">Ações</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
-            {currentMachines.map((machine) => (
+            {machines.map((machine) => (
               <TableRow key={machine.id}>
                 <TableCell className="font-medium">
-                  {machine.serial_number}
+                  <div className="flex items-center gap-2">
+                    {machine.serialNumber}
+                    {!machine.clientId && (
+                      <AlertTriangle className="h-4 w-4 text-yellow-500" title="Sem cliente vinculado" />
+                    )}
+                  </div>
                 </TableCell>
                 <TableCell>{machine.model}</TableCell>
                 <TableCell>{getStatusBadge(machine.status)}</TableCell>
                 <TableCell>
-                  {machine.client?.business_name || "N/A"}
-                </TableCell>
-                <TableCell>
-                  <div className="max-w-32 truncate" title={machine.notes || ""}>
-                    {machine.notes || "-"}
+                  <div className="flex items-center gap-2">
+                    {machine.clientId ? (
+                      <>
+                        <User className="h-4 w-4 text-green-600" />
+                        <span>{machine.clientName}</span>
+                      </>
+                    ) : (
+                      <span className="text-muted-foreground">Não vinculada</span>
+                    )}
                   </div>
                 </TableCell>
-                <TableCell>
-                  {machine.created_at 
-                    ? format(new Date(machine.created_at), "dd/MM/yyyy", { locale: ptBR })
-                    : "N/A"
-                  }
-                </TableCell>
+                <TableCell>{machine.location}</TableCell>
+                <TableCell>{formatDate(machine.createdAt)}</TableCell>
                 <TableCell className="text-right">
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>
                       <Button variant="ghost" className="h-8 w-8 p-0">
-                        <span className="sr-only">Abrir menu</span>
-                        <MoreHorizontal className="h-4 w-4" />
+                        <MoreVertical className="h-4 w-4" />
                       </Button>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end">
-                      <DropdownMenuLabel>Ações</DropdownMenuLabel>
-                      <DropdownMenuItem onClick={() => handleCopyId(machine.id)}>
-                        <Copy className="mr-2 h-4 w-4" />
-                        Copiar ID
+                      <DropdownMenuItem onClick={() => handleViewMachine(machine)}>
+                        <Eye className="mr-2 h-4 w-4" />
+                        Ver detalhes
                       </DropdownMenuItem>
-                      <DropdownMenuItem onClick={() => handleEdit(machine)}>
+                      <DropdownMenuItem onClick={() => handleEditMachine(machine)}>
                         <Edit className="mr-2 h-4 w-4" />
                         Editar
-                      </DropdownMenuItem>
-                      <DropdownMenuItem onClick={() => handleTransfer(machine)}>
-                        <ArrowRight className="mr-2 h-4 w-4" />
-                        Transferir
-                      </DropdownMenuItem>
-                      <DropdownMenuSeparator />
-                      <DropdownMenuItem onClick={() => handleDelete(machine)}>
-                        <Trash className="mr-2 h-4 w-4" />
-                        Deletar
                       </DropdownMenuItem>
                     </DropdownMenuContent>
                   </DropdownMenu>
@@ -199,47 +177,13 @@ export const MachinesTable: React.FC<MachinesTableProps> = ({
         </Table>
       </div>
 
-      {totalPages > 1 && (
-        <div className="mt-4 flex justify-center">
-          <TablePagination
-            currentPage={currentPage}
-            totalPages={totalPages}
-            onPageChange={handlePageChange}
-          />
-        </div>
-      )}
-
-      <div className="text-sm text-muted-foreground mt-2">
-        Mostrando {startIndex + 1} a {Math.min(endIndex, machines.length)} de {machines.length} máquinas
-      </div>
-
-      {selectedMachine && (
-        <>
-          <MachineTransferDialog
-            open={transferDialogOpen}
-            onOpenChange={setTransferDialogOpen}
-            machineId={selectedMachine.id}
-            machineName={selectedMachine.serial_number}
-            onTransferComplete={() => {
-              onRefresh();
-              setTransferDialogOpen(false);
-              setSelectedMachine(null);
-            }}
-          />
-          
-          <MachineDetailsDialog
-            machine={selectedMachine}
-            open={editDialogOpen}
-            onOpenChange={setEditDialogOpen}
-            mode="edit"
-            onUpdate={() => {
-              onRefresh();
-              setEditDialogOpen(false);
-              setSelectedMachine(null);
-            }}
-          />
-        </>
-      )}
+      <MachineDetailsDialog
+        machine={selectedMachine}
+        open={isDialogOpen}
+        onOpenChange={setIsDialogOpen}
+        onUpdate={onRefresh}
+        mode={dialogMode}
+      />
     </>
   );
 };

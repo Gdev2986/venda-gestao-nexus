@@ -1552,6 +1552,14 @@ export type Database = {
         }
         Returns: boolean
       }
+      suggest_client_for_machine: {
+        Args: { p_machine_id: string }
+        Returns: {
+          suggested_client_id: string
+          suggested_client_name: string
+          confidence_score: number
+        }[]
+      }
       transfer_client_tax_block: {
         Args: {
           p_client_id: string
