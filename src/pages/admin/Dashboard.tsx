@@ -12,7 +12,7 @@ import { PaymentMethod } from "@/types";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { ArrowUp, TrendingUp } from "lucide-react";
 import { formatCurrency } from "@/lib/utils";
-import { useDashboardStats } from "@/hooks/use-dashboard-stats";
+import { useAdminDashboardStats } from "@/hooks/use-admin-dashboard-stats";
 
 const AdminDashboard = () => {
   const [activeFilter, setActiveFilter] = useState(DATE_FILTER_PRESETS.LAST_30_DAYS);
@@ -22,8 +22,8 @@ const AdminDashboard = () => {
   });
   const { toast } = useToast();
   
-  // Use our stats hook
-  const { stats, isLoading, refreshStats } = useDashboardStats(dateRange);
+  // Use our real stats hook
+  const { stats, isLoading, refreshStats } = useAdminDashboardStats(dateRange);
   
   // Mock data for visualization components
   const MOCK_DATA = {
@@ -106,7 +106,7 @@ const AdminDashboard = () => {
                 <div className="h-9 w-40 bg-muted animate-pulse rounded" />
               ) : (
                 <>
-                  {formatCurrency(stats?.totalSales || 0)}
+                  {formatCurrency(stats?.grossSales || 0)}
                   {stats?.isGrowthPositive && (
                     <span className="text-sm text-green-500 ml-2 flex items-center">
                       <ArrowUp className="h-4 w-4 inline mr-1" />
