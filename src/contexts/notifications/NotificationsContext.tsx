@@ -4,6 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
 import { NotificationType, Notification } from "@/types/notification.types";
 import { playNotificationSoundIfEnabled } from "@/services/notificationSoundService";
+import { cleanExpiredNotifications } from "@/services/notificationCleanupService";
 
 interface NotificationsContextType {
   notifications: Notification[];
@@ -68,7 +69,6 @@ export const NotificationsProvider: React.FC<{ children: React.ReactNode }> = ({
   useEffect(() => {
     const cleanupExpiredNotifications = async () => {
       try {
-        const { cleanExpiredNotifications } = await import("@/services/notificationCleanupService");
         const result = await cleanExpiredNotifications();
         if (result.deleted_count > 0) {
           console.log(`Limpeza automática: ${result.deleted_count} notificações expiradas removidas`);

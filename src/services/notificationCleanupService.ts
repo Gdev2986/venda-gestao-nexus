@@ -14,18 +14,28 @@ export interface CleanupResult {
   execution_time: string;
 }
 
-// Função para executar limpeza de notificações expiradas
+// Função para executar limpeza de notificações expiradas (fallback direto)
 export const cleanExpiredNotifications = async (): Promise<CleanupResult> => {
   try {
-    const { data, error } = await supabase.rpc('clean_expired_notifications');
+    const cutoffTime = new Date(Date.now() - 120 * 60 * 60 * 1000); // 120 horas atrás
+    
+    const { error, count } = await supabase
+      .from('notifications')
+      .delete({ count: 'exact' })
+      .lt('created_at', cutoffTime.toISOString());
     
     if (error) {
       console.error('Erro ao limpar notificações expiradas:', error);
       throw error;
     }
     
-    console.log('Limpeza de notificações executada com sucesso:', data);
-    return data[0] || { deleted_count: 0, execution_time: new Date().toISOString() };
+    const result = {
+      deleted_count: count || 0,
+      execution_time: new Date().toISOString()
+    };
+    
+    console.log('Limpeza de notificações executada com sucesso:', result);
+    return result;
   } catch (error) {
     console.error('Falha na limpeza de notificações:', error);
     throw error;
@@ -35,17 +45,21 @@ export const cleanExpiredNotifications = async (): Promise<CleanupResult> => {
 // Função para limpar notificações expiradas de um usuário específico
 export const cleanUserExpiredNotifications = async (userId: string): Promise<number> => {
   try {
-    const { data, error } = await supabase.rpc('clean_user_expired_notifications', {
-      target_user_id: userId
-    });
+    const cutoffTime = new Date(Date.now() - 120 * 60 * 60 * 1000); // 120 horas atrás
+    
+    const { error, count } = await supabase
+      .from('notifications')
+      .delete({ count: 'exact' })
+      .eq('user_id', userId)
+      .lt('created_at', cutoffTime.toISOString());
     
     if (error) {
       console.error('Erro ao limpar notificações do usuário:', error);
       throw error;
     }
     
-    console.log(`Limpeza de notificações do usuário ${userId} executada:`, data);
-    return data || 0;
+    console.log(`Limpeza de notificações do usuário ${userId} executada:`, count);
+    return count || 0;
   } catch (error) {
     console.error('Falha na limpeza de notificações do usuário:', error);
     throw error;
@@ -55,37 +69,44 @@ export const cleanUserExpiredNotifications = async (userId: string): Promise<num
 // Função para obter estatísticas de notificações
 export const getNotificationStats = async (): Promise<NotificationStats> => {
   try {
-    const { data, error } = await supabase.rpc('get_notifications_stats');
-    
-    if (error) {
-      console.error('Erro ao buscar estatísticas de notificações:', error);
-      throw error;
+    const now = new Date();
+    const last24h = new Date(now.getTime() - 24 * 60 * 60 * 1000);
+    const lastWeek = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+
+    // Buscar todas as notificações para calcular estatísticas
+    const { data: allNotifications, error: allError } = await supabase
+      .from('notifications')
+      .select('created_at');
+
+    if (allError) {
+      console.error('Erro ao buscar notificações:', allError);
+      throw allError;
     }
+
+    const notifications = allNotifications || [];
+    const total = notifications.length;
     
-    return data[0] || {
-      total_notifications: 0,
-      notifications_last_24h: 0,
-      notifications_last_week: 0,
-      oldest_notification: new Date().toISOString(),
-      newest_notification: new Date().toISOString()
+    const last24hCount = notifications.filter(n => 
+      new Date(n.created_at) >= last24h
+    ).length;
+    
+    const lastWeekCount = notifications.filter(n => 
+      new Date(n.created_at) >= lastWeek
+    ).length;
+
+    const dates = notifications.map(n => new Date(n.created_at));
+    const oldest = dates.length > 0 ? new Date(Math.min(...dates.map(d => d.getTime()))) : new Date();
+    const newest = dates.length > 0 ? new Date(Math.max(...dates.map(d => d.getTime()))) : new Date();
+
+    return {
+      total_notifications: total,
+      notifications_last_24h: last24hCount,
+      notifications_last_week: lastWeekCount,
+      oldest_notification: oldest.toISOString(),
+      newest_notification: newest.toISOString()
     };
   } catch (error) {
     console.error('Falha ao buscar estatísticas de notificações:', error);
     throw error;
   }
-};
-
-// Hook para executar limpeza automática periodicamente
-export const useNotificationCleanup = (intervalMinutes: number = 60) => {
-  React.useEffect(() => {
-    // Executar limpeza imediatamente
-    cleanExpiredNotifications().catch(console.error);
-    
-    // Configurar interval para executar periodicamente
-    const interval = setInterval(() => {
-      cleanExpiredNotifications().catch(console.error);
-    }, intervalMinutes * 60 * 1000); // Converter minutos para milissegundos
-    
-    return () => clearInterval(interval);
-  }, [intervalMinutes]);
 };
