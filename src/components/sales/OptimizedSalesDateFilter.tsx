@@ -2,171 +2,314 @@
 import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Calendar } from "@/components/ui/calendar";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { CalendarIcon, FilterX, Search } from "lucide-react";
+import { Calendar, X, Clock, Filter, ChevronDown, ChevronUp } from "lucide-react";
+import { SalesFilters } from "@/services/optimized-sales.service";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { TerminalAutocomplete } from "./TerminalAutocomplete";
+import { DatePicker } from "@/components/ui/date-picker";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import { cn } from "@/lib/utils";
-import { SalesFilters } from "@/types/sales";
 
 interface OptimizedSalesDateFilterProps {
   filters: SalesFilters;
   onFiltersChange: (filters: Partial<SalesFilters>) => void;
   onResetFilters: () => void;
-  totalRecords: number;
+  totalRecords?: number;
   isLoading?: boolean;
 }
 
-const OptimizedSalesDateFilter = ({
-  filters,
-  onFiltersChange,
+const OptimizedSalesDateFilter = ({ 
+  filters, 
+  onFiltersChange, 
   onResetFilters,
   totalRecords,
-  isLoading = false
+  isLoading
 }: OptimizedSalesDateFilterProps) => {
-  const [localSearch, setLocalSearch] = useState(filters.search || "");
-  
-  const handleDateChange = (key: 'startDate' | 'endDate', date: Date | undefined) => {
-    onFiltersChange({ [key]: date });
+  const [localStartDate, setLocalStartDate] = useState<Date | undefined>(
+    filters.dateStart ? new Date(filters.dateStart) : undefined
+  );
+  const [localEndDate, setLocalEndDate] = useState<Date | undefined>(
+    filters.dateEnd ? new Date(filters.dateEnd) : undefined
+  );
+  const [localHourStart, setLocalHourStart] = useState(filters.hourStart || '');
+  const [localMinuteStart, setLocalMinuteStart] = useState(filters.minuteStart || '');
+  const [localHourEnd, setLocalHourEnd] = useState(filters.hourEnd || '');
+  const [localMinuteEnd, setLocalMinuteEnd] = useState(filters.minuteEnd || '');
+  const [localTerminal, setLocalTerminal] = useState(filters.terminal || '');
+  const [localMinAmount, setLocalMinAmount] = useState(filters.minAmount?.toString() || '');
+  const [localMaxAmount, setLocalMaxAmount] = useState(filters.maxAmount?.toString() || '');
+  const [showAdditionalFilters, setShowAdditionalFilters] = useState(false);
+
+  const handleApplyDateFilter = () => {
+    onFiltersChange({
+      dateStart: localStartDate ? format(localStartDate, 'yyyy-MM-dd') : undefined,
+      dateEnd: localEndDate ? format(localEndDate, 'yyyy-MM-dd') : undefined,
+      hourStart: localHourStart || undefined,
+      minuteStart: localMinuteStart || undefined,
+      hourEnd: localHourEnd || undefined,
+      minuteEnd: localMinuteEnd || undefined,
+      terminal: localTerminal || undefined,
+      minAmount: localMinAmount ? parseFloat(localMinAmount) : undefined,
+      maxAmount: localMaxAmount ? parseFloat(localMaxAmount) : undefined
+    });
   };
 
-  const handleSearchSubmit = () => {
-    onFiltersChange({ search: localSearch });
-  };
+  const hasDateFilters = filters.dateStart || filters.dateEnd;
+  const hasTimeFilters = filters.hourStart || filters.minuteStart || filters.hourEnd || filters.minuteEnd;
+  const hasOtherFilters = filters.terminal || filters.minAmount || filters.maxAmount || filters.paymentType;
+  const hasAnyFilters = Object.keys(filters).some(key => filters[key as keyof SalesFilters]);
 
-  const handleSearchKeyPress = (e: React.KeyboardEvent) => {
-    if (e.key === 'Enter') {
-      handleSearchSubmit();
-    }
-  };
+  // Generate hour options (00-23)
+  const hourOptions = Array.from({ length: 24 }, (_, i) => 
+    i.toString().padStart(2, '0')
+  );
 
-  const hasActiveFilters = filters.startDate || filters.endDate || filters.search;
+  // Generate minute options (00-59)
+  const minuteOptions = Array.from({ length: 60 }, (_, i) => 
+    i.toString().padStart(2, '0')
+  );
 
   return (
-    <Card className="border-l-4" style={{ borderLeftColor: '#115464' }}>
+    <Card>
       <CardHeader>
-        <CardTitle className="text-lg flex items-center justify-between">
-          Filtros de Data e Busca
-          <span className="text-sm font-normal text-muted-foreground">
-            {totalRecords.toLocaleString('pt-BR')} registros
-          </span>
+        <CardTitle className="flex items-center gap-2">
+          <Calendar className="h-5 w-5" />
+          Filtro de Período e Horário
+          {totalRecords && (
+            <span className="text-sm font-normal text-muted-foreground ml-auto">
+              {totalRecords.toLocaleString('pt-BR')} registros
+            </span>
+          )}
         </CardTitle>
       </CardHeader>
-      <CardContent className="space-y-4">
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          {/* Data de Início */}
+      <CardContent className="space-y-6">
+        {/* Filtros de Data */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div className="space-y-2">
-            <Label>Data de Início</Label>
-            <Popover>
-              <PopoverTrigger asChild>
-                <Button
-                  variant="outline"
-                  className={cn(
-                    "w-full justify-start text-left font-normal",
-                    !filters.startDate && "text-muted-foreground"
-                  )}
-                  disabled={isLoading}
-                >
-                  <CalendarIcon className="mr-2 h-4 w-4" />
-                  {filters.startDate ? (
-                    format(filters.startDate, "dd/MM/yyyy", { locale: ptBR })
-                  ) : (
-                    "Selecione uma data"
-                  )}
-                </Button>
-              </PopoverTrigger>
-              <PopoverContent className="w-auto p-0" align="start">
-                <Calendar
-                  mode="single"
-                  selected={filters.startDate}
-                  onSelect={(date) => handleDateChange('startDate', date)}
-                  disabled={(date) => date > new Date()}
-                  initialFocus
-                  locale={ptBR}
-                />
-              </PopoverContent>
-            </Popover>
+            <Label htmlFor="start-date">Data Inicial</Label>
+            <DatePicker
+              selected={localStartDate}
+              onSelect={setLocalStartDate}
+              placeholder="Selecionar data inicial"
+              className="w-full"
+            />
           </div>
-
-          {/* Data de Fim */}
+          
           <div className="space-y-2">
-            <Label>Data de Fim</Label>
-            <Popover>
-              <PopoverTrigger asChild>
-                <Button
-                  variant="outline"
-                  className={cn(
-                    "w-full justify-start text-left font-normal",
-                    !filters.endDate && "text-muted-foreground"
-                  )}
-                  disabled={isLoading}
-                >
-                  <CalendarIcon className="mr-2 h-4 w-4" />
-                  {filters.endDate ? (
-                    format(filters.endDate, "dd/MM/yyyy", { locale: ptBR })
-                  ) : (
-                    "Selecione uma data"
-                  )}
-                </Button>
-              </PopoverTrigger>
-              <PopoverContent className="w-auto p-0" align="start">
-                <Calendar
-                  mode="single"
-                  selected={filters.endDate}
-                  onSelect={(date) => handleDateChange('endDate', date)}
-                  disabled={(date) => 
-                    date > new Date() || 
-                    (filters.startDate && date < filters.startDate)
-                  }
-                  initialFocus
-                  locale={ptBR}
-                />
-              </PopoverContent>
-            </Popover>
+            <Label htmlFor="end-date">Data Final</Label>
+            <DatePicker
+              selected={localEndDate}
+              onSelect={setLocalEndDate}
+              placeholder="Selecionar data final"
+              className="w-full"
+            />
           </div>
+        </div>
 
-          {/* Busca */}
-          <div className="space-y-2">
-            <Label>Buscar</Label>
-            <div className="flex gap-2">
-              <div className="relative flex-1">
-                <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-                <Input
-                  placeholder="Código, terminal..."
-                  value={localSearch}
-                  onChange={(e) => setLocalSearch(e.target.value)}
-                  onKeyPress={handleSearchKeyPress}
-                  className="pl-8"
-                  disabled={isLoading}
-                />
+        {/* Filtros de Horário */}
+        <div className="border-t pt-4">
+          <div className="flex items-center gap-2 mb-3">
+            <Clock className="h-4 w-4" />
+            <Label className="text-sm font-medium">Filtro de Horário</Label>
+          </div>
+          
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label className="text-sm">Horário Inicial</Label>
+              <div className="flex gap-2">
+                <Select value={localHourStart} onValueChange={setLocalHourStart} disabled={isLoading}>
+                  <SelectTrigger className="w-20">
+                    <SelectValue placeholder="HH" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {hourOptions.map(hour => (
+                      <SelectItem key={hour} value={hour}>{hour}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <span className="self-center">:</span>
+                <Select value={localMinuteStart} onValueChange={setLocalMinuteStart} disabled={isLoading}>
+                  <SelectTrigger className="w-20">
+                    <SelectValue placeholder="MM" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {minuteOptions.map(minute => (
+                      <SelectItem key={minute} value={minute}>{minute}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
-              <Button
-                variant="outline"
-                size="icon"
-                onClick={handleSearchSubmit}
-                disabled={isLoading}
-              >
-                <Search className="h-4 w-4" />
-              </Button>
+            </div>
+            
+            <div className="space-y-2">
+              <Label className="text-sm">Horário Final</Label>
+              <div className="flex gap-2">
+                <Select value={localHourEnd} onValueChange={setLocalHourEnd} disabled={isLoading}>
+                  <SelectTrigger className="w-20">
+                    <SelectValue placeholder="HH" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {hourOptions.map(hour => (
+                      <SelectItem key={hour} value={hour}>{hour}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <span className="self-center">:</span>
+                <Select value={localMinuteEnd} onValueChange={setLocalMinuteEnd} disabled={isLoading}>
+                  <SelectTrigger className="w-20">
+                    <SelectValue placeholder="MM" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {minuteOptions.map(minute => (
+                      <SelectItem key={minute} value={minute}>{minute}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
             </div>
           </div>
         </div>
 
-        {/* Botão de Reset */}
-        {hasActiveFilters && (
-          <div className="flex justify-end">
+        {/* Botão para mostrar filtros adicionais */}
+        <div className="border-t pt-4">
+          <Button
+            variant="outline"
+            onClick={() => setShowAdditionalFilters(!showAdditionalFilters)}
+            className="flex items-center gap-2"
+            disabled={isLoading}
+          >
+            <Filter className="h-4 w-4" />
+            {showAdditionalFilters ? 'Ocultar Filtros' : 'Mostrar Filtros'}
+            {showAdditionalFilters ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+          </Button>
+        </div>
+
+        {/* Filtros Adicionais - mostrados apenas quando solicitado */}
+        {showAdditionalFilters && (
+          <div className="border-t pt-4">
+            <div className="flex items-center gap-2 mb-3">
+              <Filter className="h-4 w-4" />
+              <Label className="text-sm font-medium">Filtros Adicionais</Label>
+            </div>
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {/* Filtro por Terminal - MODIFICADO PARA USAR AUTOCOMPLETE */}
+              <div className="space-y-2">
+                <Label htmlFor="terminal">Terminal</Label>
+                <TerminalAutocomplete
+                  value={localTerminal}
+                  onChange={setLocalTerminal}
+                  disabled={isLoading}
+                  placeholder="Buscar terminal..."
+                />
+              </div>
+
+              {/* Tipo de Pagamento */}
+              <div className="space-y-2">
+                <Label>Tipo de Pagamento</Label>
+                <Select 
+                  value={filters.paymentType || "all"} 
+                  onValueChange={(value) => onFiltersChange({ paymentType: value === "all" ? undefined : value })}
+                  disabled={isLoading}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Todos" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">Todos</SelectItem>
+                    <SelectItem value="CREDIT">Cartão de Crédito</SelectItem>
+                    <SelectItem value="DEBIT">Cartão de Débito</SelectItem>
+                    <SelectItem value="PIX">Pix</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              {/* Valor Mínimo */}
+              <div className="space-y-2">
+                <Label htmlFor="min-amount">Valor Mínimo (R$)</Label>
+                <Input
+                  id="min-amount"
+                  type="number"
+                  step="0.01"
+                  placeholder="0,00"
+                  value={localMinAmount}
+                  onChange={(e) => setLocalMinAmount(e.target.value)}
+                  disabled={isLoading}
+                />
+              </div>
+
+              {/* Valor Máximo */}
+              <div className="space-y-2">
+                <Label htmlFor="max-amount">Valor Máximo (R$)</Label>
+                <Input
+                  id="max-amount"
+                  type="number"
+                  step="0.01"
+                  placeholder="0,00"
+                  value={localMaxAmount}
+                  onChange={(e) => setLocalMaxAmount(e.target.value)}
+                  disabled={isLoading}
+                />
+              </div>
+            </div>
+          </div>
+        )}
+        
+        <div className="flex gap-2">
+          <Button 
+            onClick={handleApplyDateFilter}
+            disabled={isLoading}
+            className="flex-1"
+          >
+            Aplicar Filtros
+          </Button>
+          
+          {hasAnyFilters && (
             <Button
               variant="outline"
-              size="sm"
               onClick={onResetFilters}
               disabled={isLoading}
+              className="flex items-center gap-2"
             >
-              <FilterX className="mr-2 h-4 w-4" />
-              Limpar Filtros
+              <X className="h-4 w-4" />
+              Limpar
             </Button>
+          )}
+        </div>
+        
+        {/* Resumo dos filtros aplicados */}
+        {(hasDateFilters || hasTimeFilters || hasOtherFilters) && (
+          <div className="text-sm text-muted-foreground space-y-1 border-t pt-3">
+            {hasDateFilters && (
+              <div>
+                <strong>Período:</strong> {filters.dateStart ? new Date(filters.dateStart).toLocaleDateString('pt-BR') : 'Início'} 
+                {' até '}
+                {filters.dateEnd ? new Date(filters.dateEnd).toLocaleDateString('pt-BR') : 'Fim'}
+              </div>
+            )}
+            {hasTimeFilters && (
+              <div>
+                <strong>Horário:</strong> {filters.hourStart || '00'}:{filters.minuteStart || '00'} 
+                {' até '}
+                {filters.hourEnd || '23'}:{filters.minuteEnd || '59'}
+              </div>
+            )}
+            {filters.terminal && (
+              <div><strong>Terminal:</strong> {filters.terminal}</div>
+            )}
+            {filters.paymentType && (
+              <div><strong>Pagamento:</strong> {filters.paymentType === 'CREDIT' ? 'Cartão de Crédito' : filters.paymentType === 'DEBIT' ? 'Cartão de Débito' : 'Pix'}</div>
+            )}
+            {(filters.minAmount || filters.maxAmount) && (
+              <div>
+                <strong>Valor:</strong> 
+                {filters.minAmount && ` R$ ${filters.minAmount.toFixed(2)} ou mais`}
+                {filters.minAmount && filters.maxAmount && ' e '}
+                {filters.maxAmount && ` R$ ${filters.maxAmount.toFixed(2)} ou menos`}
+              </div>
+            )}
           </div>
         )}
       </CardContent>
