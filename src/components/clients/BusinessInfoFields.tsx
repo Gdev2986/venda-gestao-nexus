@@ -15,9 +15,10 @@ import { Loader2 } from "lucide-react";
 
 interface BusinessInfoFieldsProps {
   form: UseFormReturn<any>;
+  isEditing?: boolean;
 }
 
-const BusinessInfoFields = ({ form }: BusinessInfoFieldsProps) => {
+const BusinessInfoFields = ({ form, isEditing = false }: BusinessInfoFieldsProps) => {
   const { partners, isLoading: isLoadingPartners } = usePartnersSelect();
 
   return (
@@ -96,8 +97,15 @@ const BusinessInfoFields = ({ form }: BusinessInfoFieldsProps) => {
                   field.onChange(value);
                 }}
                 value={field.value || ""}
+                disabled={isEditing}
+                className={isEditing ? "bg-muted cursor-not-allowed" : ""}
               />
             </FormControl>
+            {isEditing && (
+              <p className="text-xs text-muted-foreground">
+                O saldo inicial não pode ser alterado para clientes existentes. Use a opção "Editar Saldo" na tabela.
+              </p>
+            )}
             <FormMessage />
           </FormItem>
         )}

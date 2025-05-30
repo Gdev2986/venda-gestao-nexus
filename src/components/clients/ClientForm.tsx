@@ -46,6 +46,8 @@ const ClientForm = ({
   const [selectedMachines, setSelectedMachines] = useState<string[]>([]);
   const { partners, isLoading: isLoadingPartners } = usePartners();
 
+  const isEditing = !!initialData;
+
   const form = useForm<ClientFormValues>({
     resolver: zodResolver(clientFormSchema),
     defaultValues: initialData || {
@@ -114,7 +116,7 @@ const ClientForm = ({
           </TabsList>
 
           <TabsContent value="business" className="space-y-4">
-            <BusinessInfoFields form={form} />
+            <BusinessInfoFields form={form} isEditing={isEditing} />
             
             <FormField
               control={form.control}
@@ -156,9 +158,16 @@ const ClientForm = ({
                       onChange={(e) =>
                         field.onChange(parseFloat(e.target.value) || 0)
                       }
+                      disabled={isEditing}
+                      className={isEditing ? "bg-muted cursor-not-allowed" : ""}
                     />
                   </FormControl>
-                  <FormDescription>Saldo inicial em reais</FormDescription>
+                  <FormDescription>
+                    {isEditing 
+                      ? "O saldo inicial não pode ser alterado para clientes existentes."
+                      : "Saldo inicial em reais"
+                    }
+                  </FormDescription>
                   <FormMessage />
                 </FormItem>
               )}

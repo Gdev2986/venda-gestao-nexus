@@ -41,6 +41,8 @@ const ClientFormModal = ({
   const [tempPassword, setTempPassword] = useState<string | null>(null);
   const { toast } = useToast();
   
+  const isEditing = !!initialData;
+  
   const form = useForm<ClientFormValues>({
     resolver: zodResolver(ClientFormSchema),
     defaultValues: {
@@ -187,7 +189,7 @@ const ClientFormModal = ({
         ) : (
           <Form {...form}>
             <form onSubmit={form.handleSubmit(handleSubmitForm)} className="space-y-6">
-              <ClientFormCompanyInfo form={form} />
+              <ClientFormCompanyInfo form={form} isEditing={isEditing} />
               <ClientFormContactInfo form={form} />
               <ClientFormAddressInfo form={form} />
               <ClientFormActions onCancel={onClose} isLoading={isLoading} />
