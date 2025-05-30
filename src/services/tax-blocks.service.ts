@@ -32,6 +32,22 @@ export interface ClientTaxBlockAssociation {
   created_at?: string;
 }
 
+export interface TaxBlockTransfer {
+  id: string;
+  client_id: string;
+  from_block_id: string | null;
+  to_block_id: string;
+  transfer_date: string;
+  cutoff_date: string;
+  transferred_by: string | null;
+  notes: string | null;
+}
+
+export interface BlockClientsCheck {
+  client_count: number;
+  client_names: string[];
+}
+
 export const TaxBlocksService = {
   // Fetch all tax blocks
   async getTaxBlocks(): Promise<BlockWithRates[]> {
@@ -171,12 +187,31 @@ export const TaxBlocksService = {
     }
   },
 
-  // Delete a tax block (this will cascade delete all associated rates due to FK constraints)
-  async deleteTaxBlock(id: string): Promise<boolean> {
+  // Delete a tax block with validation - ATUALIZADO
+  async deleteTaxBlock(id: string): Promise<{ success: boolean; message?: string }> {
     try {
-      console.log("Deleting tax block:", id);
+      console.log("Checking if block has clients before deletion:", id);
       
-      // First delete all tax rates associated with this block
+      // Verificar se o bloco possui clientes vinculados
+      const { data: clientsCheck, error: checkError } = await supabase
+        .rpc('check_block_has_clients', { p_block_id: id });
+        
+      if (checkError) {
+        console.error("Error checking block clients:", checkError);
+        throw checkError;
+      }
+      
+      const clientCount = clientsCheck?.[0]?.client_count || 0;
+      const clientNames = clientsCheck?.[0]?.client_names || [];
+      
+      if (clientCount > 0) {
+        return {
+          success: false,
+          message: `Este bloco não pode ser excluído pois possui ${clientCount} cliente(s) vinculado(s): ${clientNames.join(', ')}. Transfira os clientes para outro bloco antes de excluir.`
+        };
+      }
+      
+      // Se não há clientes vinculados, proceder com a exclusão
       const { error: ratesError } = await supabase
         .from('tax_rates')
         .delete()
@@ -187,7 +222,6 @@ export const TaxBlocksService = {
         throw ratesError;
       }
       
-      // Then delete the block itself
       const { error: blockError } = await supabase
         .from('tax_blocks')
         .delete()
@@ -199,10 +233,13 @@ export const TaxBlocksService = {
       }
       
       console.log("Tax block deleted successfully");
-      return true;
+      return { success: true };
     } catch (error) {
       console.error(`Error deleting tax block ${id}:`, error);
-      return false;
+      return { 
+        success: false, 
+        message: "Erro interno ao excluir o bloco de taxas" 
+      };
     }
   },
 
@@ -272,49 +309,127 @@ export const TaxBlocksService = {
     }
   },
 
-  // Associate a tax block with a client - CORRIGIDO
-  async associateBlockWithClient(blockId: string, clientId: string): Promise<boolean> {
+  // Associate a tax block with a client with transfer validation - ATUALIZADO
+  async associateBlockWithClient(blockId: string, clientId: string, userId?: string): Promise<{ success: boolean; message?: string; requiresTransfer?: boolean; currentBlock?: { id: string; name: string } }> {
     try {
       console.log("Associating block with client:", blockId, clientId);
       
-      // Verificar se já existe uma associação para este cliente
-      const { data: existing } = await supabase
+      // Verificar se cliente já possui um bloco vinculado
+      const { data: existing, error: checkError } = await supabase
         .from('client_tax_blocks')
-        .select('*')
+        .select(`
+          block_id,
+          tax_blocks:block_id(name)
+        `)
         .eq('client_id', clientId)
         .maybeSingle();
-      
-      if (existing) {
-        // Atualizar associação existente
-        const { error } = await supabase
-          .from('client_tax_blocks')
-          .update({ block_id: blockId })
-          .eq('client_id', clientId);
-          
-        if (error) {
-          console.error("Error updating client tax block association:", error);
-          throw error;
-        }
-      } else {
-        // Criar nova associação
-        const { error } = await supabase
-          .from('client_tax_blocks')
-          .insert({ 
-            client_id: clientId, 
-            block_id: blockId 
-          });
-          
-        if (error) {
-          console.error("Error creating client tax block association:", error);
-          throw error;
-        }
+        
+      if (checkError) {
+        console.error("Error checking existing association:", checkError);
+        throw checkError;
       }
       
-      console.log("Client-block association created/updated successfully");
-      return true;
+      if (existing && existing.block_id !== blockId) {
+        // Cliente já possui outro bloco vinculado
+        const currentBlockName = existing.tax_blocks?.name || 'Desconhecido';
+        return {
+          success: false,
+          requiresTransfer: true,
+          currentBlock: {
+            id: existing.block_id,
+            name: currentBlockName
+          },
+          message: `Cliente já está vinculado ao bloco "${currentBlockName}"`
+        };
+      }
+      
+      if (existing && existing.block_id === blockId) {
+        return {
+          success: false,
+          message: "Cliente já está vinculado a este bloco"
+        };
+      }
+      
+      // Criar nova associação
+      const { error } = await supabase
+        .from('client_tax_blocks')
+        .insert({ 
+          client_id: clientId, 
+          block_id: blockId 
+        });
+        
+      if (error) {
+        console.error("Error creating client tax block association:", error);
+        throw error;
+      }
+      
+      console.log("Client-block association created successfully");
+      return { success: true };
     } catch (error) {
       console.error(`Error associating block ${blockId} with client ${clientId}:`, error);
+      return {
+        success: false,
+        message: "Erro interno ao vincular cliente ao bloco"
+      };
+    }
+  },
+
+  // Transfer client between tax blocks - NOVO
+  async transferClientTaxBlock(
+    clientId: string,
+    fromBlockId: string,
+    toBlockId: string,
+    cutoffDate: string,
+    transferredBy?: string,
+    notes?: string
+  ): Promise<boolean> {
+    try {
+      console.log("Transferring client tax block:", { clientId, fromBlockId, toBlockId, cutoffDate });
+      
+      const { data, error } = await supabase.rpc('transfer_client_tax_block', {
+        p_client_id: clientId,
+        p_from_block_id: fromBlockId,
+        p_to_block_id: toBlockId,
+        p_cutoff_date: cutoffDate,
+        p_transferred_by: transferredBy || null,
+        p_notes: notes || null
+      });
+      
+      if (error) {
+        console.error("Error transferring client tax block:", error);
+        throw error;
+      }
+      
+      console.log("Client tax block transferred successfully");
+      return data;
+    } catch (error) {
+      console.error("Error in transferClientTaxBlock:", error);
       return false;
+    }
+  },
+
+  // Get transfer history for a client - NOVO
+  async getClientTaxBlockTransferHistory(clientId: string): Promise<TaxBlockTransfer[]> {
+    try {
+      const { data, error } = await supabase
+        .from('tax_block_transfers')
+        .select(`
+          *,
+          from_block:from_block_id(name),
+          to_block:to_block_id(name)
+        `)
+        .eq('client_id', clientId)
+        .order('transfer_date', { ascending: false });
+        
+      if (error) {
+        console.error("Error fetching tax block transfer history:", error);
+        throw error;
+      }
+      
+      return data || [];
+    } catch (error) {
+      console.error("Error in getClientTaxBlockTransferHistory:", error);
+      return [];
     }
   },
 

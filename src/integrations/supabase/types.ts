@@ -1137,6 +1137,42 @@ export type Database = {
           },
         ]
       }
+      tax_block_transfers: {
+        Row: {
+          client_id: string
+          created_at: string | null
+          cutoff_date: string
+          from_block_id: string | null
+          id: string
+          notes: string | null
+          to_block_id: string
+          transfer_date: string
+          transferred_by: string | null
+        }
+        Insert: {
+          client_id: string
+          created_at?: string | null
+          cutoff_date?: string
+          from_block_id?: string | null
+          id?: string
+          notes?: string | null
+          to_block_id: string
+          transfer_date?: string
+          transferred_by?: string | null
+        }
+        Update: {
+          client_id?: string
+          created_at?: string | null
+          cutoff_date?: string
+          from_block_id?: string | null
+          id?: string
+          notes?: string | null
+          to_block_id?: string
+          transfer_date?: string
+          transferred_by?: string | null
+        }
+        Relationships: []
+      }
       tax_blocks: {
         Row: {
           created_at: string | null
@@ -1355,6 +1391,13 @@ export type Database = {
       }
     }
     Functions: {
+      check_block_has_clients: {
+        Args: { p_block_id: string }
+        Returns: {
+          client_count: number
+          client_names: string[]
+        }[]
+      }
       generate_uuid: {
         Args: Record<PropertyKey, never>
         Returns: string
@@ -1375,6 +1418,19 @@ export type Database = {
           payment_method: string
           machine_id: string
           machine_serial: string
+        }[]
+      }
+      get_client_tax_rate_for_sale: {
+        Args: {
+          p_client_id: string
+          p_sale_date: string
+          p_payment_method: string
+          p_installments: number
+        }
+        Returns: {
+          block_id: string
+          rate_id: string
+          final_rate: number
         }[]
       }
       get_current_user_role: {
@@ -1493,6 +1549,17 @@ export type Database = {
           notification_message: string
           notification_type: string
           notification_data?: Json
+        }
+        Returns: boolean
+      }
+      transfer_client_tax_block: {
+        Args: {
+          p_client_id: string
+          p_from_block_id: string
+          p_to_block_id: string
+          p_cutoff_date: string
+          p_transferred_by: string
+          p_notes?: string
         }
         Returns: boolean
       }

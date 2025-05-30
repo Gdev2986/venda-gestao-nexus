@@ -108,8 +108,9 @@ const TaxBlocksManager = () => {
 
   const handleDelete = async (id: string) => {
     try {
-      const success = await TaxBlocksService.deleteTaxBlock(id);
-      if (success) {
+      const result = await TaxBlocksService.deleteTaxBlock(id);
+      
+      if (result.success) {
         toast({
           title: "Sucesso",
           description: "Bloco de taxas excluído com sucesso"
@@ -118,7 +119,11 @@ const TaxBlocksManager = () => {
         setIsCreating(false);
         setEditingBlock(null);
       } else {
-        throw new Error("Erro ao excluir o bloco");
+        toast({
+          title: "Não é possível excluir",
+          description: result.message,
+          variant: "destructive"
+        });
       }
     } catch (error) {
       console.error('Error deleting tax block:', error);

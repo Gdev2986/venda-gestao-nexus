@@ -1,11 +1,12 @@
 
 import { useState, useEffect } from 'react';
 import { Button } from "@/components/ui/button";
-import { 
-  Dialog, 
-  DialogContent, 
-  DialogHeader, 
-  DialogTitle 
+import { Label } from "@/components/ui/label";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
 } from "@/components/ui/dialog";
 import {
   Select,
@@ -14,11 +15,10 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Link2, AlertCircle, Check } from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
 import { TaxBlocksService, BlockWithRates } from "@/services/tax-blocks.service";
 import { supabase } from "@/integrations/supabase/client";
-import { useToast } from "@/hooks/use-toast";
+import TaxBlockTransferDialog from "./TaxBlockTransferDialog";
 
 interface Client {
   id: string;
@@ -31,40 +31,50 @@ interface TaxBlockClientAssociationProps {
   onSuccess: () => void;
 }
 
-const TaxBlockClientAssociation = ({ isOpen, onClose, onSuccess }: TaxBlockClientAssociationProps) => {
-  const [blocks, setBlocks] = useState<BlockWithRates[]>([]);
+const TaxBlockClientAssociation = ({
+  isOpen,
+  onClose,
+  onSuccess
+}: TaxBlockClientAssociationProps) => {
   const [clients, setClients] = useState<Client[]>([]);
-  const [selectedBlockId, setSelectedBlockId] = useState<string>("");
-  const [selectedClientId, setSelectedClientId] = useState<string>("");
+  const [blocks, setBlocks] = useState<BlockWithRates[]>([]);
+  const [selectedClientId, setSelectedClientId] = useState('');
+  const [selectedBlockId, setSelectedBlockId] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [showTransferDialog, setShowTransferDialog] = useState(false);
+  const [transferData, setTransferData] = useState<{
+    clientId: string;
+    clientName: string;
+    currentBlock: { id: string; name: string };
+    targetBlock: { id: string; name: string };
+  } | null>(null);
   const { toast } = useToast();
 
   useEffect(() => {
     if (isOpen) {
-      loadData();
+      fetchData();
     }
   }, [isOpen]);
 
-  const loadData = async () => {
+  const fetchData = async () => {
     setIsLoading(true);
     try {
-      // Carregar blocos
-      const blocksData = await TaxBlocksService.getTaxBlocks();
-      setBlocks(blocksData);
-
-      // Carregar clientes ativos
-      const { data: clientsData, error } = await supabase
+      // Buscar todos os clientes
+      const { data: clientsData, error: clientsError } = await supabase
         .from('clients')
         .select('id, business_name')
         .eq('status', 'ACTIVE')
         .order('business_name');
 
-      if (error) throw error;
-      setClients(clientsData || []);
+      if (clientsError) throw clientsError;
 
+      // Buscar todos os blocos
+      const blocksData = await TaxBlocksService.getTaxBlocks();
+
+      setClients(clientsData || []);
+      setBlocks(blocksData);
     } catch (error) {
-      console.error('Error loading data:', error);
+      console.error('Error fetching data:', error);
       toast({
         title: "Erro",
         description: "Não foi possível carregar os dados",
@@ -75,154 +85,145 @@ const TaxBlockClientAssociation = ({ isOpen, onClose, onSuccess }: TaxBlockClien
     }
   };
 
-  const handleSubmit = async () => {
-    if (!selectedBlockId || !selectedClientId) {
+  const handleAssociate = async () => {
+    if (!selectedClientId || !selectedBlockId) {
       toast({
-        title: "Campos obrigatórios",
-        description: "Selecione um bloco e um cliente",
+        title: "Seleção obrigatória",
+        description: "Por favor, selecione um cliente e um bloco",
         variant: "destructive"
       });
       return;
     }
 
-    setIsSubmitting(true);
+    setIsLoading(true);
     try {
-      const success = await TaxBlocksService.associateBlockWithClient(selectedBlockId, selectedClientId);
-      
-      if (success) {
+      const result = await TaxBlocksService.associateBlockWithClient(
+        selectedBlockId,
+        selectedClientId
+      );
+
+      if (result.success) {
         toast({
           title: "Sucesso",
-          description: "Bloco de taxas vinculado ao cliente com sucesso"
+          description: "Cliente vinculado ao bloco com sucesso"
         });
         onSuccess();
-        handleClose();
+        onClose();
+        resetForm();
+      } else if (result.requiresTransfer && result.currentBlock) {
+        // Preparar dados para transferência
+        const selectedClient = clients.find(c => c.id === selectedClientId);
+        const selectedBlock = blocks.find(b => b.id === selectedBlockId);
+        
+        if (selectedClient && selectedBlock) {
+          setTransferData({
+            clientId: selectedClientId,
+            clientName: selectedClient.business_name,
+            currentBlock: result.currentBlock,
+            targetBlock: { id: selectedBlockId, name: selectedBlock.name }
+          });
+          setShowTransferDialog(true);
+        }
       } else {
-        throw new Error("Erro ao vincular bloco");
+        toast({
+          title: "Atenção",
+          description: result.message || "Não foi possível vincular o cliente",
+          variant: "destructive"
+        });
       }
     } catch (error) {
-      console.error('Error associating block with client:', error);
+      console.error('Error associating client with block:', error);
       toast({
         title: "Erro",
-        description: "Não foi possível vincular o bloco ao cliente",
+        description: "Não foi possível vincular o cliente ao bloco",
         variant: "destructive"
       });
     } finally {
-      setIsSubmitting(false);
+      setIsLoading(false);
     }
   };
 
-  const handleClose = () => {
-    setSelectedBlockId("");
-    setSelectedClientId("");
-    onClose();
+  const resetForm = () => {
+    setSelectedClientId('');
+    setSelectedBlockId('');
   };
 
-  const selectedBlock = blocks.find(block => block.id === selectedBlockId);
-  const selectedClient = clients.find(client => client.id === selectedClientId);
+  const handleTransferSuccess = () => {
+    setShowTransferDialog(false);
+    setTransferData(null);
+    onSuccess();
+    onClose();
+    resetForm();
+  };
 
   return (
-    <Dialog open={isOpen} onOpenChange={handleClose}>
-      <DialogContent className="max-w-md">
-        <DialogHeader>
-          <DialogTitle className="flex items-center gap-2">
-            <Link2 className="h-5 w-5" />
-            Vincular Bloco de Taxas
-          </DialogTitle>
-        </DialogHeader>
-
-        <div className="space-y-4">
-          {isLoading ? (
-            <div className="flex justify-center py-4">
-              <div className="w-6 h-6 border-2 border-primary border-t-transparent rounded-full animate-spin"></div>
+    <>
+      <Dialog open={isOpen} onOpenChange={onClose}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Vincular Cliente ao Bloco de Taxas</DialogTitle>
+          </DialogHeader>
+          
+          <div className="space-y-4">
+            <div>
+              <Label htmlFor="client-select">Cliente</Label>
+              <Select value={selectedClientId} onValueChange={setSelectedClientId}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Selecione um cliente" />
+                </SelectTrigger>
+                <SelectContent>
+                  {clients.map((client) => (
+                    <SelectItem key={client.id} value={client.id}>
+                      {client.business_name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
-          ) : (
-            <>
-              <div className="space-y-2">
-                <label className="text-sm font-medium">Bloco de Taxas</label>
-                <Select value={selectedBlockId} onValueChange={setSelectedBlockId}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Selecione um bloco" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {blocks.map((block) => (
-                      <SelectItem key={block.id} value={block.id}>
-                        {block.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
 
-              <div className="space-y-2">
-                <label className="text-sm font-medium">Cliente</label>
-                <Select value={selectedClientId} onValueChange={setSelectedClientId}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Selecione um cliente" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {clients.map((client) => (
-                      <SelectItem key={client.id} value={client.id}>
-                        {client.business_name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
+            <div>
+              <Label htmlFor="block-select">Bloco de Taxas</Label>
+              <Select value={selectedBlockId} onValueChange={setSelectedBlockId}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Selecione um bloco" />
+                </SelectTrigger>
+                <SelectContent>
+                  {blocks.map((block) => (
+                    <SelectItem key={block.id} value={block.id}>
+                      {block.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
 
-              {selectedBlock && selectedClient && (
-                <Alert>
-                  <Check className="h-4 w-4" />
-                  <AlertDescription>
-                    O bloco "{selectedBlock.name}" será vinculado ao cliente "{selectedClient.business_name}".
-                  </AlertDescription>
-                </Alert>
-              )}
+            <div className="flex gap-2 justify-end">
+              <Button variant="outline" onClick={onClose} disabled={isLoading}>
+                Cancelar
+              </Button>
+              <Button onClick={handleAssociate} disabled={isLoading}>
+                {isLoading ? "Vinculando..." : "Vincular"}
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
 
-              {blocks.length === 0 && (
-                <Alert>
-                  <AlertCircle className="h-4 w-4" />
-                  <AlertDescription>
-                    Nenhum bloco de taxas disponível. Crie um bloco primeiro.
-                  </AlertDescription>
-                </Alert>
-              )}
-
-              {clients.length === 0 && (
-                <Alert>
-                  <AlertCircle className="h-4 w-4" />
-                  <AlertDescription>
-                    Nenhum cliente ativo encontrado.
-                  </AlertDescription>
-                </Alert>
-              )}
-            </>
-          )}
-        </div>
-
-        <div className="flex gap-2 pt-4">
-          <Button variant="outline" onClick={handleClose} className="flex-1">
-            Cancelar
-          </Button>
-          <Button 
-            onClick={handleSubmit} 
-            disabled={!selectedBlockId || !selectedClientId || isSubmitting}
-            className="flex-1"
-          >
-            {isSubmitting ? (
-              <>
-                <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2" />
-                Vinculando...
-              </>
-            ) : (
-              <>
-                <Link2 className="h-4 w-4 mr-2" />
-                Vincular
-              </>
-            )}
-          </Button>
-        </div>
-      </DialogContent>
-    </Dialog>
+      {transferData && (
+        <TaxBlockTransferDialog
+          isOpen={showTransferDialog}
+          onClose={() => {
+            setShowTransferDialog(false);
+            setTransferData(null);
+          }}
+          onSuccess={handleTransferSuccess}
+          clientId={transferData.clientId}
+          clientName={transferData.clientName}
+          currentBlock={transferData.currentBlock}
+          targetBlock={transferData.targetBlock}
+        />
+      )}
+    </>
   );
 };
 
