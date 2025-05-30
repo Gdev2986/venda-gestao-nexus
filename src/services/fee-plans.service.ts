@@ -30,45 +30,57 @@ export const FeePlansService = {
   async getFeePlans(): Promise<FeePlan[]> {
     const { data, error } = await supabase
       .from('fee_plans')
-      .select('*')
+      .select(`
+        *,
+        fee_plan_rates (
+          id,
+          payment_method,
+          installments,
+          rate_percentage
+        )
+      `)
       .order('name');
 
     if (error) throw error;
     
-    // Mock rates for now until the table is available in types
-    const plansWithRates = (data || []).map(plan => ({
+    return (data || []).map(plan => ({
       ...plan,
-      rates: [
-        { id: '1', payment_method: 'PIX', installments: 1, rate_percentage: 0.0149 },
-        { id: '2', payment_method: 'CREDIT', installments: 1, rate_percentage: 0.0329 },
-        { id: '3', payment_method: 'DEBIT', installments: 1, rate_percentage: 0.0249 }
-      ]
+      rates: plan.fee_plan_rates || []
     }));
-
-    return plansWithRates;
   },
 
   // Buscar plano de taxa vinculado a um cliente
   async getClientFeePlan(clientId: string): Promise<ClientFeePlan | null> {
-    // Mock implementation until the tables are available
-    return {
-      id: '1',
-      client_id: clientId,
-      fee_plan_id: 'f47ac10b-58cc-4372-a567-0e02b2c3d479',
-      assigned_at: new Date().toISOString(),
-      fee_plan: {
-        id: 'f47ac10b-58cc-4372-a567-0e02b2c3d479',
-        name: 'Plano Básico',
-        description: 'Plano de taxas padrão para novos clientes',
-        rates: [
-          { id: '1', payment_method: 'PIX', installments: 1, rate_percentage: 0.0149 },
-          { id: '2', payment_method: 'CREDIT', installments: 1, rate_percentage: 0.0329 },
-          { id: '3', payment_method: 'CREDIT', installments: 2, rate_percentage: 0.0349 },
-          { id: '4', payment_method: 'CREDIT', installments: 3, rate_percentage: 0.0369 },
-          { id: '5', payment_method: 'DEBIT', installments: 1, rate_percentage: 0.0249 }
-        ]
-      }
-    };
+    const { data, error } = await supabase
+      .from('client_fee_plans')
+      .select(`
+        *,
+        fee_plan:fee_plans (
+          id,
+          name,
+          description,
+          fee_plan_rates (
+            id,
+            payment_method,
+            installments,
+            rate_percentage
+          )
+        )
+      `)
+      .eq('client_id', clientId)
+      .single();
+
+    if (error) {
+      if (error.code === 'PGRST116') return null; // No rows found
+      throw error;
+    }
+
+    if (data?.fee_plan) {
+      data.fee_plan.rates = data.fee_plan.fee_plan_rates || [];
+      delete data.fee_plan.fee_plan_rates;
+    }
+
+    return data;
   },
 
   // Vincular plano de taxa a cliente
@@ -78,13 +90,82 @@ export const FeePlansService = {
     assignedBy: string, 
     notes?: string
   ): Promise<void> {
-    // Mock implementation - will work when tables are available
-    console.log('Assigning fee plan:', { clientId, feePlanId, assignedBy, notes });
+    const { error } = await supabase
+      .from('client_fee_plans')
+      .upsert({
+        client_id: clientId,
+        fee_plan_id: feePlanId,
+        assigned_by: assignedBy,
+        notes
+      });
+
+    if (error) throw error;
   },
 
   // Remover vinculação de plano de taxa
   async removeFeePlanFromClient(clientId: string): Promise<void> {
-    // Mock implementation - will work when tables are available
-    console.log('Removing fee plan from client:', clientId);
+    const { error } = await supabase
+      .from('client_fee_plans')
+      .delete()
+      .eq('client_id', clientId);
+
+    if (error) throw error;
+  },
+
+  // Criar novo plano de taxa
+  async createFeePlan(name: string, description?: string): Promise<FeePlan> {
+    const { data, error } = await supabase
+      .from('fee_plans')
+      .insert({ name, description })
+      .select()
+      .single();
+
+    if (error) throw error;
+    return { ...data, rates: [] };
+  },
+
+  // Adicionar taxa a um plano
+  async addRateToFeePlan(
+    feePlanId: string,
+    paymentMethod: string,
+    installments: number,
+    ratePercentage: number
+  ): Promise<FeePlanRate> {
+    const { data, error } = await supabase
+      .from('fee_plan_rates')
+      .insert({
+        fee_plan_id: feePlanId,
+        payment_method: paymentMethod,
+        installments,
+        rate_percentage: ratePercentage
+      })
+      .select()
+      .single();
+
+    if (error) throw error;
+    return data;
+  },
+
+  // Atualizar taxa de um plano
+  async updateFeePlanRate(
+    rateId: string,
+    ratePercentage: number
+  ): Promise<void> {
+    const { error } = await supabase
+      .from('fee_plan_rates')
+      .update({ rate_percentage: ratePercentage })
+      .eq('id', rateId);
+
+    if (error) throw error;
+  },
+
+  // Remover taxa de um plano
+  async removeFeePlanRate(rateId: string): Promise<void> {
+    const { error } = await supabase
+      .from('fee_plan_rates')
+      .delete()
+      .eq('id', rateId);
+
+    if (error) throw error;
   }
 };

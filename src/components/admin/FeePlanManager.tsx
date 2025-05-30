@@ -1,0 +1,268 @@
+
+import React, { useState, useEffect } from "react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import { Badge } from "@/components/ui/badge";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { useToast } from "@/hooks/use-toast";
+import { FeePlansService, FeePlan, FeePlanRate } from "@/services/fee-plans.service";
+import { Plus, Percent, Edit, Trash2 } from "lucide-react";
+
+export const FeePlanManager: React.FC = () => {
+  const [feePlans, setFeePlans] = useState<FeePlan[]>([]);
+  const [selectedPlan, setSelectedPlan] = useState<FeePlan | null>(null);
+  const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
+  const [isRateDialogOpen, setIsRateDialogOpen] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+  const [newPlanName, setNewPlanName] = useState("");
+  const [newPlanDescription, setNewPlanDescription] = useState("");
+  const [newRatePaymentMethod, setNewRatePaymentMethod] = useState("");
+  const [newRateInstallments, setNewRateInstallments] = useState(1);
+  const [newRatePercentage, setNewRatePercentage] = useState(0);
+  const { toast } = useToast();
+
+  const fetchFeePlans = async () => {
+    try {
+      const plans = await FeePlansService.getFeePlans();
+      setFeePlans(plans);
+    } catch (error) {
+      console.error('Error fetching fee plans:', error);
+      toast({
+        title: "Erro",
+        description: "Erro ao carregar planos de taxa",
+        variant: "destructive"
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchFeePlans();
+  }, []);
+
+  const handleCreatePlan = async () => {
+    try {
+      await FeePlansService.createFeePlan(newPlanName, newPlanDescription);
+      toast({
+        title: "Plano criado",
+        description: "Plano de taxa criado com sucesso"
+      });
+      setIsCreateDialogOpen(false);
+      setNewPlanName("");
+      setNewPlanDescription("");
+      fetchFeePlans();
+    } catch (error) {
+      console.error('Error creating fee plan:', error);
+      toast({
+        title: "Erro",
+        description: "Erro ao criar plano de taxa",
+        variant: "destructive"
+      });
+    }
+  };
+
+  const handleAddRate = async () => {
+    if (!selectedPlan) return;
+    
+    try {
+      await FeePlansService.addRateToFeePlan(
+        selectedPlan.id,
+        newRatePaymentMethod,
+        newRateInstallments,
+        newRatePercentage / 100
+      );
+      toast({
+        title: "Taxa adicionada",
+        description: "Taxa adicionada ao plano com sucesso"
+      });
+      setIsRateDialogOpen(false);
+      setNewRatePaymentMethod("");
+      setNewRateInstallments(1);
+      setNewRatePercentage(0);
+      fetchFeePlans();
+    } catch (error) {
+      console.error('Error adding rate:', error);
+      toast({
+        title: "Erro",
+        description: "Erro ao adicionar taxa",
+        variant: "destructive"
+      });
+    }
+  };
+
+  const getPaymentMethodName = (method: string) => {
+    switch (method) {
+      case 'PIX': return 'PIX';
+      case 'CREDIT': return 'Cartão de Crédito';
+      case 'DEBIT': return 'Cartão de Débito';
+      default: return method;
+    }
+  };
+
+  return (
+    <div className="space-y-6">
+      <div className="flex justify-between items-center">
+        <h2 className="text-2xl font-bold">Gerenciar Planos de Taxa</h2>
+        <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
+          <DialogTrigger asChild>
+            <Button>
+              <Plus className="h-4 w-4 mr-2" />
+              Novo Plano
+            </Button>
+          </DialogTrigger>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Criar Novo Plano de Taxa</DialogTitle>
+            </DialogHeader>
+            <div className="space-y-4">
+              <div>
+                <Label htmlFor="plan-name">Nome do Plano</Label>
+                <Input
+                  id="plan-name"
+                  value={newPlanName}
+                  onChange={(e) => setNewPlanName(e.target.value)}
+                  placeholder="Ex: Plano Básico"
+                />
+              </div>
+              <div>
+                <Label htmlFor="plan-description">Descrição</Label>
+                <Textarea
+                  id="plan-description"
+                  value={newPlanDescription}
+                  onChange={(e) => setNewPlanDescription(e.target.value)}
+                  placeholder="Descrição do plano..."
+                />
+              </div>
+              <Button onClick={handleCreatePlan} disabled={!newPlanName.trim()}>
+                Criar Plano
+              </Button>
+            </div>
+          </DialogContent>
+        </Dialog>
+      </div>
+
+      {isLoading ? (
+        <div className="text-center py-8">Carregando planos...</div>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {feePlans.map((plan) => (
+            <Card key={plan.id}>
+              <CardHeader>
+                <CardTitle className="flex items-center justify-between">
+                  {plan.name}
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => {
+                      setSelectedPlan(plan);
+                      setIsRateDialogOpen(true);
+                    }}
+                  >
+                    <Plus className="h-4 w-4" />
+                  </Button>
+                </CardTitle>
+                {plan.description && (
+                  <p className="text-sm text-muted-foreground">{plan.description}</p>
+                )}
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-2">
+                  <h4 className="font-medium flex items-center gap-2">
+                    <Percent className="h-4 w-4" />
+                    Taxas ({plan.rates?.length || 0})
+                  </h4>
+                  {plan.rates?.length ? (
+                    <div className="space-y-1">
+                      {plan.rates.map((rate) => (
+                        <div key={rate.id} className="flex justify-between items-center text-sm">
+                          <span>
+                            {getPaymentMethodName(rate.payment_method)}
+                            {rate.installments > 1 ? ` (${rate.installments}x)` : ''}
+                          </span>
+                          <Badge variant="outline">
+                            {(rate.rate_percentage * 100).toFixed(2)}%
+                          </Badge>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <p className="text-sm text-muted-foreground">Nenhuma taxa definida</p>
+                  )}
+                </div>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      )}
+
+      <Dialog open={isRateDialogOpen} onOpenChange={setIsRateDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Adicionar Taxa ao Plano: {selectedPlan?.name}</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div>
+              <Label htmlFor="payment-method">Modalidade de Pagamento</Label>
+              <Select value={newRatePaymentMethod} onValueChange={setNewRatePaymentMethod}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Selecione a modalidade" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="PIX">PIX</SelectItem>
+                  <SelectItem value="CREDIT">Cartão de Crédito</SelectItem>
+                  <SelectItem value="DEBIT">Cartão de Débito</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div>
+              <Label htmlFor="installments">Parcelas</Label>
+              <Input
+                id="installments"
+                type="number"
+                min="1"
+                max="12"
+                value={newRateInstallments}
+                onChange={(e) => setNewRateInstallments(parseInt(e.target.value) || 1)}
+              />
+            </div>
+            <div>
+              <Label htmlFor="rate-percentage">Taxa (%)</Label>
+              <Input
+                id="rate-percentage"
+                type="number"
+                step="0.01"
+                min="0"
+                max="100"
+                value={newRatePercentage}
+                onChange={(e) => setNewRatePercentage(parseFloat(e.target.value) || 0)}
+              />
+            </div>
+            <Button 
+              onClick={handleAddRate} 
+              disabled={!newRatePaymentMethod || newRatePercentage <= 0}
+            >
+              Adicionar Taxa
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+    </div>
+  );
+};

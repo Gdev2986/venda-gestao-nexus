@@ -78,6 +78,55 @@ export type Database = {
         }
         Relationships: []
       }
+      client_fee_plans: {
+        Row: {
+          assigned_at: string | null
+          assigned_by: string | null
+          client_id: string
+          fee_plan_id: string
+          id: string
+          notes: string | null
+        }
+        Insert: {
+          assigned_at?: string | null
+          assigned_by?: string | null
+          client_id: string
+          fee_plan_id: string
+          id?: string
+          notes?: string | null
+        }
+        Update: {
+          assigned_at?: string | null
+          assigned_by?: string | null
+          client_id?: string
+          fee_plan_id?: string
+          id?: string
+          notes?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "client_fee_plans_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: true
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "client_fee_plans_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: true
+            referencedRelation: "vw_client_balance"
+            referencedColumns: ["client_id"]
+          },
+          {
+            foreignKeyName: "client_fee_plans_fee_plan_id_fkey"
+            columns: ["fee_plan_id"]
+            isOneToOne: false
+            referencedRelation: "fee_plans"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       client_logs: {
         Row: {
           action_type: string
@@ -275,6 +324,44 @@ export type Database = {
             columns: ["sale_id"]
             isOneToOne: false
             referencedRelation: "sales"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      fee_plan_rates: {
+        Row: {
+          created_at: string | null
+          fee_plan_id: string
+          id: string
+          installments: number
+          payment_method: string
+          rate_percentage: number
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          fee_plan_id: string
+          id?: string
+          installments?: number
+          payment_method: string
+          rate_percentage: number
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          fee_plan_id?: string
+          id?: string
+          installments?: number
+          payment_method?: string
+          rate_percentage?: number
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "fee_plan_rates_fee_plan_id_fkey"
+            columns: ["fee_plan_id"]
+            isOneToOne: false
+            referencedRelation: "fee_plans"
             referencedColumns: ["id"]
           },
         ]

@@ -7,29 +7,7 @@ import { CreditCard, Percent, Info } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-
-interface FeePlan {
-  id: string;
-  name: string;
-  description?: string;
-}
-
-interface FeePlanRate {
-  id: string;
-  payment_method: string;
-  installments: number;
-  rate_percentage: number;
-}
-
-interface ClientFeePlan {
-  id: string;
-  client_id: string;
-  fee_plan_id: string;
-  assigned_by?: string;
-  assigned_at: string;
-  notes?: string;
-  fee_plan?: FeePlan & { rates?: FeePlanRate[] };
-}
+import { FeePlansService, ClientFeePlan } from "@/services/fee-plans.service";
 
 const ClientFeePlans = () => {
   const [clientFeePlan, setClientFeePlan] = useState<ClientFeePlan | null>(null);
@@ -53,27 +31,9 @@ const ClientFeePlans = () => {
         return;
       }
 
-      // Simular dados do plano de taxa por enquanto até que a tabela esteja disponível
-      const mockClientFeePlan: ClientFeePlan = {
-        id: '1',
-        client_id: clientAccess.client_id,
-        fee_plan_id: 'f47ac10b-58cc-4372-a567-0e02b2c3d479',
-        assigned_at: new Date().toISOString(),
-        fee_plan: {
-          id: 'f47ac10b-58cc-4372-a567-0e02b2c3d479',
-          name: 'Plano Básico',
-          description: 'Plano de taxas padrão para novos clientes',
-          rates: [
-            { id: '1', payment_method: 'PIX', installments: 1, rate_percentage: 0.0149 },
-            { id: '2', payment_method: 'CREDIT', installments: 1, rate_percentage: 0.0329 },
-            { id: '3', payment_method: 'CREDIT', installments: 2, rate_percentage: 0.0349 },
-            { id: '4', payment_method: 'CREDIT', installments: 3, rate_percentage: 0.0369 },
-            { id: '5', payment_method: 'DEBIT', installments: 1, rate_percentage: 0.0249 }
-          ]
-        }
-      };
-
-      setClientFeePlan(mockClientFeePlan);
+      // Buscar plano de taxa do cliente
+      const feePlanData = await FeePlansService.getClientFeePlan(clientAccess.client_id);
+      setClientFeePlan(feePlanData);
     } catch (error) {
       console.error('Error fetching client fee plan:', error);
       toast({
@@ -202,6 +162,13 @@ const ClientFeePlans = () => {
                 ))}
               </div>
             </div>
+
+            {clientFeePlan.notes && (
+              <div className="pt-4 border-t border-gray-200">
+                <h5 className="font-medium mb-2">Observações</h5>
+                <p className="text-sm text-muted-foreground">{clientFeePlan.notes}</p>
+              </div>
+            )}
 
             <div className="pt-4 border-t border-gray-200 text-xs text-muted-foreground">
               Plano vinculado em {new Date(clientFeePlan.assigned_at).toLocaleDateString('pt-BR')}

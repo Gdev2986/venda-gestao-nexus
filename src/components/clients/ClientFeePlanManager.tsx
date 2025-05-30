@@ -116,6 +116,15 @@ export const ClientFeePlanManager: React.FC<ClientFeePlanManagerProps> = ({ clie
     }
   };
 
+  const getPaymentMethodName = (method: string) => {
+    switch (method) {
+      case 'PIX': return 'PIX';
+      case 'CREDIT': return 'Cartão de Crédito';
+      case 'DEBIT': return 'Cartão de Débito';
+      default: return method;
+    }
+  };
+
   if (isLoading) {
     return (
       <Card>
@@ -187,7 +196,10 @@ export const ClientFeePlanManager: React.FC<ClientFeePlanManagerProps> = ({ clie
             <div className="space-y-1 text-sm">
               {selectedPlan.rates?.map((rate) => (
                 <div key={rate.id} className="flex justify-between">
-                  <span>{rate.payment_method} {rate.installments > 1 ? `(${rate.installments}x)` : ''}</span>
+                  <span>
+                    {getPaymentMethodName(rate.payment_method)} 
+                    {rate.installments > 1 ? ` (${rate.installments}x)` : ''}
+                  </span>
                   <span className="font-medium">{(rate.rate_percentage * 100).toFixed(2)}%</span>
                 </div>
               ))}
