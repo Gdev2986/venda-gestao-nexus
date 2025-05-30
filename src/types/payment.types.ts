@@ -34,10 +34,11 @@ export interface Payment {
   boleto_code?: string;
   notes?: string;
   receipt_file_url?: string; // Add this field
+  receipt_url?: string; // Add for compatibility
   processed_at?: string;
   processed_by?: string;
   description?: string;
-  rejection_reason?: string | null;
+  rejection_reason?: string; // Make optional for compatibility
   approved_at?: string;
   approved_by?: string;
   client?: {
@@ -65,7 +66,7 @@ export interface PaymentRequestParams {
   notes?: string;
   pix_key_id?: string;
   new_pix_key?: {
-    type: 'CPF' | 'CNPJ' | 'EMAIL' | 'PHONE' | 'EVP';
+    type: 'CPF' | 'CNPJ' | 'EMAIL' | 'PHONE' | 'RANDOM'; // Changed EVP to RANDOM to match database
     key: string;
     name: string;
     owner_name: string;
@@ -99,7 +100,7 @@ export interface PartnerCommissionBalance {
 export type PaymentRequestStatus = EnumsPaymentStatus;
 
 // PixKey types used in forms and components
-export type PixKeyType = 'CPF' | 'CNPJ' | 'EMAIL' | 'PHONE' | 'EVP';
+export type PixKeyType = 'CPF' | 'CNPJ' | 'EMAIL' | 'PHONE' | 'RANDOM'; // Changed EVP to RANDOM
 
 // Transaction fee calculation interfaces
 export interface TransactionFeeParams {

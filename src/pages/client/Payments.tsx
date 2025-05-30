@@ -16,6 +16,7 @@ import { Plus, Wallet } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { toast } from "@/hooks/use-toast";
 import { PaymentType } from "@/types/payment.types";
+import { convertRequestToPayment } from "@/components/payments/payment-list/PaymentConverter";
 
 const ClientPayments = () => {
   const { user } = useAuth();
@@ -91,6 +92,15 @@ const ClientPayments = () => {
     }
   };
 
+  // Convert PaymentRequest[] to Payment[] for compatibility
+  const convertedPayments = payments.map(payment => convertRequestToPayment(payment));
+
+  // Convert PixKeys to match the expected interface
+  const convertedPixKeys = pixKeys.map(key => ({
+    ...key,
+    owner_name: key.owner_name || key.name // Ensure owner_name is always present
+  }));
+
   return (
     <div className="space-y-6">
       <PageHeader 
@@ -142,7 +152,7 @@ const ClientPayments = () => {
               <div>
                 <p className="text-sm font-medium">Chaves PIX</p>
                 <p className="text-xs text-muted-foreground">
-                  {pixKeys.length} chave(s) cadastrada(s)
+                  {convertedPixKeys.length} chave(s) cadastrada(s)
                 </p>
               </div>
             </div>
@@ -152,7 +162,7 @@ const ClientPayments = () => {
       
       {/* Payment History */}
       <PaymentHistoryCard 
-        payments={payments}
+        payments={convertedPayments}
         isLoading={paymentsLoading} 
       />
       
@@ -161,7 +171,7 @@ const ClientPayments = () => {
         isOpen={isDialogOpen}
         onOpenChange={setIsDialogOpen}
         clientBalance={balance || 0}
-        pixKeys={pixKeys}
+        pixKeys={convertedPixKeys}
         isLoadingPixKeys={pixKeysLoading}
         onRequestPayment={handleRequestPayment}
       />

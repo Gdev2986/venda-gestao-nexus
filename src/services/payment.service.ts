@@ -1,3 +1,4 @@
+
 import { supabase } from "@/integrations/supabase/client";
 import { PaymentRequest, PaymentRequestParams, PaymentProcessParams, PaymentType } from "@/types/payment.types";
 import { PaymentStatus } from "@/types/enums";
@@ -71,7 +72,7 @@ export const paymentService = {
         .from('pix_keys')
         .insert({
           user_id: params.client_id,
-          type: newKeyData.type,
+          type: newKeyData.type, // This should now match the database enum
           key: newKeyData.key,
           name: newKeyData.name,
           owner_name: newKeyData.owner_name,
@@ -182,6 +183,7 @@ export const paymentService = {
       processed_by: item.processed_by,
       notes: item.notes,
       receipt_file_url: item.receipt_file_url,
+      receipt_url: item.receipt_url || item.receipt_file_url,
       description: item.description,
       rejection_reason: item.rejection_reason,
       pix_key_id: item.pix_key_id,
@@ -206,10 +208,16 @@ export const paymentService = {
   },
 
   // Update payment request
-  async updatePaymentRequest(id: string, updates: Partial<Omit<PaymentRequest, 'status'> & { status: string }>): Promise<PaymentRequest | null> {
+  async updatePaymentRequest(id: string, updates: Partial<PaymentRequest>): Promise<PaymentRequest | null> {
+    // Convert PaymentStatus enum to string for database
+    const dbUpdates = {
+      ...updates,
+      status: updates.status ? updates.status.toString() : undefined
+    };
+
     const { data, error } = await supabase
       .from('payment_requests')
-      .update(updates)
+      .update(dbUpdates)
       .eq('id', id)
       .select(`
         *,
@@ -232,7 +240,7 @@ export const paymentService = {
     if (error) throw error;
   },
   
-  // Get partner commission balance
+  // Get partner commission balance - This function is commented out since it doesn't exist in database
   async getPartnerCommissionBalance(partnerId: string): Promise<number> {
     try {
       const { data, error } = await supabase

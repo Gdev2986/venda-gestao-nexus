@@ -179,8 +179,8 @@ const AdminPayments = () => {
               </SelectContent>
             </Select>
             <DatePickerWithRange
-              date={dateRange}
-              onDateChange={handleDateRangeChange}
+              dateRange={dateRange}
+              onDateRangeChange={handleDateRangeChange}
               className="w-full"
             />
           </div>

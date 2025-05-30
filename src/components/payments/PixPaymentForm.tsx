@@ -15,7 +15,7 @@ import { PixKey } from '@/types/payment.types';
 import { formatCurrency } from '@/lib/utils';
 
 const pixKeySchema = z.object({
-  type: z.enum(['CPF', 'CNPJ', 'EMAIL', 'PHONE', 'EVP']),
+  type: z.enum(['CPF', 'CNPJ', 'EMAIL', 'PHONE', 'RANDOM']), // Changed EVP to RANDOM
   key: z.string().min(1, 'Chave PIX é obrigatória'),
   name: z.string().min(1, 'Nome da chave é obrigatório'),
   owner_name: z.string().min(1, 'Nome do titular é obrigatório')
@@ -73,7 +73,7 @@ export const PixPaymentForm = ({
       case 'CNPJ': return '00.000.000/0000-00';
       case 'EMAIL': return 'exemplo@email.com';
       case 'PHONE': return '(00) 00000-0000';
-      case 'EVP': return 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa';
+      case 'RANDOM': return 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa';
       default: return 'Digite a chave PIX';
     }
   };
@@ -152,7 +152,9 @@ export const PixPaymentForm = ({
               </Select>
               {form.formState.errors.pix_key_id && (
                 <p className="text-sm text-destructive mt-1">
-                  {form.formState.errors.pix_key_id.message}
+                  {typeof form.formState.errors.pix_key_id.message === 'string' 
+                    ? form.formState.errors.pix_key_id.message 
+                    : 'Erro de validação'}
                 </p>
               )}
             </div>
@@ -179,7 +181,7 @@ export const PixPaymentForm = ({
                       <SelectItem value="CNPJ">CNPJ</SelectItem>
                       <SelectItem value="EMAIL">E-mail</SelectItem>
                       <SelectItem value="PHONE">Telefone</SelectItem>
-                      <SelectItem value="EVP">Chave aleatória</SelectItem>
+                      <SelectItem value="RANDOM">Chave aleatória</SelectItem>
                     </SelectContent>
                   </Select>
                   {form.formState.errors.new_pix_key?.type && (

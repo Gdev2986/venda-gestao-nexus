@@ -11,6 +11,7 @@ import { useAuth } from "@/hooks/use-auth";
 import { usePixKeys } from "@/hooks/usePixKeys";
 import { PaymentType } from "@/types/payment.types";
 import { useClientBalance } from "@/hooks/use-client-balance";
+import { convertRequestToPayment } from "@/components/payments/payment-list/PaymentConverter";
 
 const UserPayments = () => {
   const { user } = useAuth();
@@ -41,6 +42,15 @@ const UserPayments = () => {
     console.log("Payment requests:", payments);
     console.log("Available PIX keys:", pixKeys);
   }, [user, payments, pixKeys]);
+
+  // Convert PaymentRequest[] to Payment[] for compatibility
+  const convertedPayments = payments.map(payment => convertRequestToPayment(payment));
+
+  // Convert PixKeys to match the expected interface
+  const convertedPixKeys = pixKeys.map(key => ({
+    ...key,
+    owner_name: key.owner_name || key.name // Ensure owner_name is always present
+  }));
   
   return (
     <div className="space-y-6">
@@ -56,7 +66,7 @@ const UserPayments = () => {
       </div>
       
       <PaymentHistoryCard 
-        payments={payments}
+        payments={convertedPayments}
         isLoading={isLoading} 
       />
       
@@ -64,7 +74,7 @@ const UserPayments = () => {
         isOpen={isDialogOpen}
         onOpenChange={setIsDialogOpen}
         clientBalance={balance || 0}
-        pixKeys={pixKeys}
+        pixKeys={convertedPixKeys}
         isLoadingPixKeys={isLoadingPixKeys}
         onRequestPayment={handleRequestPayment}
       />
