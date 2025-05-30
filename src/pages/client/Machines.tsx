@@ -9,7 +9,6 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { useToast } from "@/hooks/use-toast";
 import { Input } from "@/components/ui/input";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 
 interface Machine {
   id: string;
@@ -19,14 +18,6 @@ interface Machine {
   created_at: string;
   custom_name?: string;
   custom_location?: string;
-}
-
-interface MachineCustomization {
-  id: string;
-  machine_id: string;
-  client_id: string;
-  custom_name: string;
-  custom_location: string;
 }
 
 const ClientMachines = () => {

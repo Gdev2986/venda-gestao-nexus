@@ -438,6 +438,58 @@ export type Database = {
         }
         Relationships: []
       }
+      machine_customizations: {
+        Row: {
+          client_id: string
+          created_at: string
+          custom_location: string | null
+          custom_name: string
+          id: string
+          machine_id: string
+          updated_at: string
+        }
+        Insert: {
+          client_id: string
+          created_at?: string
+          custom_location?: string | null
+          custom_name: string
+          id?: string
+          machine_id: string
+          updated_at?: string
+        }
+        Update: {
+          client_id?: string
+          created_at?: string
+          custom_location?: string | null
+          custom_name?: string
+          id?: string
+          machine_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "machine_customizations_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "machine_customizations_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "vw_client_balance"
+            referencedColumns: ["client_id"]
+          },
+          {
+            foreignKeyName: "machine_customizations_machine_id_fkey"
+            columns: ["machine_id"]
+            isOneToOne: false
+            referencedRelation: "machines"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       machine_transfers: {
         Row: {
           created_at: string | null
