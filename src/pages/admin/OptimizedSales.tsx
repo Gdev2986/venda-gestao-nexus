@@ -25,7 +25,8 @@ const OptimizedSalesPage = () => {
     updateFilters,
     changePage,
     resetFilters,
-    refreshSales
+    refreshSales,
+    periodStats
   } = useOptimizedSales();
 
   const handleSalesImported = () => {
@@ -44,8 +45,6 @@ const OptimizedSalesPage = () => {
             isLoading={isLoading}
             showImportPanel={showImportPanel}
             setShowImportPanel={setShowImportPanel}
-            showFilters={showFilters}
-            setShowFilters={setShowFilters}
             onRefresh={refreshSales}
           />
         }
@@ -70,7 +69,7 @@ const OptimizedSalesPage = () => {
         <SalesImportPanel onSalesProcessed={handleSalesImported} />
       )}
       
-      <SalesStatCards filteredSales={sales} isLoading={isLoading} />
+      <SalesStatCards periodStats={periodStats} isLoading={isLoading} />
       
       {showFilters && (
         <OptimizedSalesFilter
