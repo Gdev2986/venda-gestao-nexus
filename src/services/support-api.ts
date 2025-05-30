@@ -193,14 +193,20 @@ export const getTicketMessages = async (ticketId: string) => {
     return { data: [], error };
   }
 
-  // Transform the data to match our TypeScript types with proper null handling
+  // Transform the data with safe null handling
   const transformedData: SupportMessage[] = (data || []).map(item => {
-    const userInfo = item.user && typeof item.user === 'object' && 'name' in item.user 
-      ? {
-          name: item.user.name || 'Usuário',
-          email: item.user.email || ''
-        }
-      : undefined;
+    // Safely extract user info with proper null checks
+    let userInfo: { name: string; email: string } | undefined = undefined;
+    
+    if (item.user && typeof item.user === 'object') {
+      const user = item.user as any;
+      if (user && typeof user === 'object' && 'name' in user) {
+        userInfo = {
+          name: user.name || 'Usuário',
+          email: user.email || ''
+        };
+      }
+    }
 
     return {
       id: item.id,
@@ -270,13 +276,18 @@ export const sendTicketMessage = async (ticketId: string, message: string) => {
     return { data: null, error };
   }
 
-  // Transform the data to match our TypeScript types with proper null handling
-  const userInfo = data.user && typeof data.user === 'object' && 'name' in data.user 
-    ? {
-        name: data.user.name || 'Usuário',
-        email: data.user.email || ''
-      }
-    : undefined;
+  // Transform with safe null handling
+  let userInfo: { name: string; email: string } | undefined = undefined;
+  
+  if (data.user && typeof data.user === 'object') {
+    const user = data.user as any;
+    if (user && typeof user === 'object' && 'name' in user) {
+      userInfo = {
+        name: user.name || 'Usuário',
+        email: user.email || ''
+      };
+    }
+  }
 
   const transformedData: SupportMessage = {
     id: data.id,
