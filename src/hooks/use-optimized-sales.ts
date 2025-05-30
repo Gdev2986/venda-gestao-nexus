@@ -1,5 +1,5 @@
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { NormalizedSale } from "@/utils/sales-processor";
 import { optimizedSalesService, SalesFilters, PaginatedSalesResult, SalesDateRange, SalesSummary, SalesAggregatedStats } from "@/services/optimized-sales.service";
@@ -28,6 +28,7 @@ export const useOptimizedSales = () => {
   const [dateRange, setDateRange] = useState<SalesDateRange | null>(null);
   const [salesSummary, setSalesSummary] = useState<SalesSummary | null>(null);
   const [availableDates, setAvailableDates] = useState<string[]>([]);
+  
   // Set default filter to yesterday
   const [filters, setFilters] = useState<SalesFilters>({
     dateStart: optimizedSalesService.getYesterday(),
@@ -35,7 +36,24 @@ export const useOptimizedSales = () => {
   });
   const [currentPage, setCurrentPage] = useState<number>(1);
   
+  // Cache para evitar recarregamentos desnecessários
+  const dataCache = useRef<Map<string, PaginatedSalesResult>>(new Map());
+  const lastFiltersRef = useRef<string>('');
+  
   const { toast } = useToast();
+
+  // Gerar chave de cache baseada nos filtros e página
+  const getCacheKey = useCallback((page: number, activeFilters: SalesFilters) => {
+    return `${JSON.stringify(activeFilters)}_page_${page}`;
+  }, []);
+
+  // Verificar se os filtros mudaram
+  const filtersChanged = useCallback((newFilters: SalesFilters) => {
+    const newFiltersStr = JSON.stringify(newFilters);
+    const changed = lastFiltersRef.current !== newFiltersStr;
+    lastFiltersRef.current = newFiltersStr;
+    return changed;
+  }, []);
 
   // Carregar metadados iniciais
   const loadMetadata = useCallback(async () => {
@@ -70,7 +88,6 @@ export const useOptimizedSales = () => {
     try {
       console.log('Loading period stats with filters:', activeFilters);
       
-      // Usar nova função agregada mais eficiente
       const stats = await optimizedSalesService.getSalesAggregatedStats(activeFilters);
       
       setPeriodStats({
@@ -92,19 +109,33 @@ export const useOptimizedSales = () => {
     }
   }, []);
 
-  // Carregar vendas usando paginação real via RPC otimizada
+  // Carregar vendas com cache otimizado
   const loadSales = useCallback(async (page: number = 1, newFilters?: SalesFilters) => {
+    const activeFilters = newFilters || filters;
+    const cacheKey = getCacheKey(page, activeFilters);
+    
+    // Verificar cache se os filtros não mudaram
+    if (!filtersChanged(activeFilters) && dataCache.current.has(cacheKey)) {
+      const cachedData = dataCache.current.get(cacheKey)!;
+      setSalesData(cachedData);
+      setCurrentPage(page);
+      console.log(`Loaded from cache - page ${page}: ${cachedData.sales.length} sales`);
+      return;
+    }
+
     setIsLoading(true);
     try {
-      const activeFilters = newFilters || filters;
       console.log('Loading sales via optimized RPC with filters:', activeFilters, 'page:', page);
       
-      const result = await optimizedSalesService.getSalesPaginated(page, 10, activeFilters); // Garantir pageSize = 10
+      const result = await optimizedSalesService.getSalesPaginated(page, 10, activeFilters);
+      
+      // Armazenar no cache
+      dataCache.current.set(cacheKey, result);
       
       setSalesData(result);
       setCurrentPage(page);
 
-      // Carregar estatísticas do período completo quando os filtros mudarem
+      // Carregar estatísticas do período quando os filtros mudarem
       if (newFilters || page === 1) {
         await loadPeriodStats(activeFilters);
       }
@@ -144,7 +175,7 @@ export const useOptimizedSales = () => {
     } finally {
       setIsLoading(false);
     }
-  }, [filters, toast, loadPeriodStats]);
+  }, [filters, toast, loadPeriodStats, getCacheKey, filtersChanged]);
 
   // Efeito inicial para carregar metadados
   useEffect(() => {
@@ -162,33 +193,39 @@ export const useOptimizedSales = () => {
     }
   }, [salesSummary]);
 
-  // Função para atualizar filtros
+  // Função para atualizar filtros - limpa cache quando filtros mudam
   const updateFilters = useCallback((newFilters: Partial<SalesFilters>) => {
     console.log('Updating filters:', newFilters);
     const updatedFilters = { ...filters, ...newFilters };
+    
+    // Limpar cache quando filtros mudam
+    dataCache.current.clear();
+    
     setFilters(updatedFilters);
     setCurrentPage(1);
     loadSales(1, updatedFilters);
   }, [filters, loadSales]);
 
-  // Função para mudar de página usando RPC otimizada
+  // Função para mudar de página - usar cache quando possível
   const changePage = useCallback((page: number) => {
-    console.log('Changing to page via optimized RPC:', page, 'total pages:', salesData.totalPages);
+    console.log('Changing to page:', page, 'total pages:', salesData.totalPages);
     if (page >= 1 && page <= salesData.totalPages) {
       loadSales(page);
     }
   }, [loadSales, salesData.totalPages]);
 
-  // Função para resetar filtros (carregar todos os dados)
+  // Função para resetar filtros - limpa cache
   const resetFilters = useCallback(() => {
     console.log('Resetting filters to load all data');
+    dataCache.current.clear();
     setFilters({});
     setCurrentPage(1);
     loadSales(1, {});
   }, [loadSales]);
 
-  // Função para refresh manual
+  // Função para refresh manual - limpa cache
   const refreshSales = useCallback(() => {
+    dataCache.current.clear();
     loadMetadata();
     loadSales(currentPage);
   }, [loadMetadata, loadSales, currentPage]);
