@@ -181,16 +181,16 @@ const ClientPayments = () => {
 
         <Card>
           <CardHeader>
-            <CardTitle>Informações</CardTitle>
+            <CardTitle>Processamento de Pagamentos</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="space-y-3">
               <div>
-                <p className="text-sm font-medium">Processamento PIX</p>
-                <p className="text-xs text-muted-foreground">Até 1 dia útil após aprovação</p>
+                <p className="text-sm font-medium">PIX</p>
+                <p className="text-xs text-muted-foreground">Recebimento no mesmo dia se a solicitação for feita até 15h45, após esse horário será realizado no próximo dia útil</p>
               </div>
               <div>
-                <p className="text-sm font-medium">Processamento TED</p>
+                <p className="text-sm font-medium">TED</p>
                 <p className="text-xs text-muted-foreground">Recebimento no mesmo dia se a solicitação for feita até 15h45, após esse horário será realizado no próximo dia útil</p>
               </div>
               <div>
