@@ -1,63 +1,71 @@
 
-import { TicketStatus, TicketPriority, TicketType } from "./enums";
+// Support system types
+export enum TicketType {
+  MAINTENANCE = "MAINTENANCE",
+  INSTALLATION = "INSTALLATION", 
+  REPLACEMENT = "REPLACEMENT",
+  SUPPLIES = "SUPPLIES",
+  REMOVAL = "REMOVAL",
+  OTHER = "OTHER"
+}
+
+export enum TicketPriority {
+  LOW = "LOW",
+  MEDIUM = "MEDIUM",
+  HIGH = "HIGH"
+}
+
+export enum TicketStatus {
+  PENDING = "PENDING",
+  IN_PROGRESS = "IN_PROGRESS", 
+  COMPLETED = "COMPLETED",
+  CANCELED = "CANCELED"
+}
 
 export interface SupportTicket {
   id: string;
-  description: string;
   client_id: string;
   technician_id?: string;
+  title: string;
+  description: string;
   type: TicketType;
-  status: TicketStatus;
   priority: TicketPriority;
+  status: TicketStatus;
   scheduled_date?: string;
-  resolution?: string;
   created_at: string;
-  updated_at?: string;
+  updated_at: string;
+  resolution?: string;
   client?: {
-    id: string;
     business_name: string;
-    contact_name?: string;
-    phone?: string;
-    address?: string;
-    city?: string;
-    state?: string;
   };
+}
+
+export interface SupportConversation {
+  id: string;
+  support_request_id: string;
+  client_id: string;
+  subject: string;
+  status: string;
+  created_at: string;
+  updated_at: string;
 }
 
 export interface SupportMessage {
   id: string;
   conversation_id: string;
-  ticket_id?: string;
   user_id: string;
   message: string;
+  is_read: boolean;
   created_at: string;
-  is_read?: boolean;
   user?: {
-    id: string;
     name: string;
-    role: string;
+    email: string;
   };
 }
 
 export interface CreateTicketParams {
   description: string;
-  client_id: string;
   type: TicketType;
   priority: TicketPriority;
-  status?: TicketStatus;
-  scheduled_date?: string;
-  // Removed attachments since it's not supported by the database
+  client_id: string;
 }
-
-export interface UpdateTicketParams {
-  description?: string;
-  status?: TicketStatus;
-  priority?: TicketPriority;
-  type?: TicketType;
-  technician_id?: string;
-  resolution?: string;
-  scheduled_date?: string;
-}
-
-// Export the enums to fix the "locally declared but not exported" errors
-export { TicketStatus, TicketPriority, TicketType };

@@ -10,8 +10,9 @@ import {
   getTicketMessages,
   sendTicketMessage
 } from "@/services/support-api";
-import { SupportTicket, SupportMessage, CreateTicketParams } from "@/types/support.types";
+import { SupportTicket, SupportMessage, CreateTicketParams, TicketStatus } from "@/types/support.types";
 import { useToast } from "@/hooks/use-toast";
+import { NotificationType } from "@/types/notification.types";
 
 export const useSupportSystem = () => {
   const { user, userRole } = useAuth();
@@ -143,7 +144,7 @@ export const useSupportSystem = () => {
         user_id: admin.id,
         title: 'Novo Chamado de Suporte',
         message: `Cliente ${clientName} criou um novo chamado de suporte`,
-        type: 'SUPPORT',
+        type: 'SUPPORT' as NotificationType,
         data: { ticket_id: ticketId }
       }));
 
@@ -207,27 +208,10 @@ export const useSupportSystem = () => {
 
     setIsCreating(true);
     try {
-      // Use direct Supabase insert with proper authentication context
-      const { data, error } = await supabase
-        .from('support_requests')
-        .insert({
-          title: ticketData.description, // Use description as title since that's what we have
-          description: ticketData.description,
-          client_id: ticketData.client_id,
-          type: ticketData.type.toString() as "MAINTENANCE" | "INSTALLATION" | "OTHER" | "REPLACEMENT" | "SUPPLIES" | "REMOVAL",
-          priority: ticketData.priority.toString() as "LOW" | "MEDIUM" | "HIGH",
-          status: "PENDING" as "PENDING" | "IN_PROGRESS" | "COMPLETED" | "CANCELED"
-        })
-        .select(`
-          *,
-          client:client_id (
-            business_name
-          )
-        `)
-        .single();
+      const { data, error } = await createSupportTicket(ticketData);
 
       if (error) {
-        console.error('useSupportSystem: Error from direct insert:', error);
+        console.error('useSupportSystem: Error creating ticket:', error);
         throw error;
       }
       
@@ -289,12 +273,12 @@ export const useSupportSystem = () => {
   // Update ticket status
   const updateTicketStatus = async (ticketId: string, status: string) => {
     try {
-      const { data, error } = await updateSupportTicket(ticketId, { status: status as any });
+      const { data, error } = await updateSupportTicket(ticketId, { status: status as TicketStatus });
       if (error) throw error;
       
       await loadTickets();
       if (selectedTicket?.id === ticketId) {
-        setSelectedTicket({ ...selectedTicket, status: status as any });
+        setSelectedTicket({ ...selectedTicket, status: status as TicketStatus });
       }
       
       toast({
@@ -319,7 +303,7 @@ export const useSupportSystem = () => {
     try {
       const { data, error } = await updateSupportTicket(ticketId, { 
         technician_id: technicianId,
-        status: 'IN_PROGRESS'
+        status: TicketStatus.IN_PROGRESS
       });
       if (error) throw error;
       
@@ -328,7 +312,7 @@ export const useSupportSystem = () => {
         setSelectedTicket({ 
           ...selectedTicket, 
           technician_id: technicianId,
-          status: 'IN_PROGRESS' as any
+          status: TicketStatus.IN_PROGRESS
         });
       }
       
@@ -380,7 +364,7 @@ export const useSupportSystem = () => {
           table: "support_messages",
         },
         (payload) => {
-          if (selectedTicket && payload.new && (payload.new as any).conversation_id === selectedTicket.id) {
+          if (selectedTicket) {
             loadMessages(selectedTicket.id);
           }
         }

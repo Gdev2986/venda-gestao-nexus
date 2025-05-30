@@ -1,173 +1,162 @@
 
 import { supabase } from "@/integrations/supabase/client";
-import { SupportTicket, SupportMessage, CreateTicketParams, UpdateTicketParams } from "@/types/support.types";
+import { SupportTicket, SupportMessage, SupportConversation, CreateTicketParams } from "@/types/support.types";
 
-// Get all support tickets
+// Get all support tickets with client information
 export const getSupportTickets = async () => {
   const { data, error } = await supabase
-    .from("support_requests")
+    .from('support_requests')
     .select(`
       *,
-      client:clients!client_id (
-        id, business_name, contact_name, phone, address, city, state
+      client:client_id (
+        business_name
       )
     `)
-    .order("created_at", { ascending: false });
+    .order('created_at', { ascending: false });
 
-  return { data: data as unknown as SupportTicket[], error };
+  return { data, error };
 };
 
-// Get ticket by ID
-export const getTicketById = async (id: string) => {
+// Get a specific ticket by ID
+export const getTicketById = async (ticketId: string) => {
   const { data, error } = await supabase
-    .from("support_requests")
+    .from('support_requests')
     .select(`
       *,
-      client:clients!client_id (
-        id, business_name, contact_name, phone, address, city, state
+      client:client_id (
+        business_name
       )
     `)
-    .eq("id", id)
+    .eq('id', ticketId)
     .single();
 
-  return { data: data as unknown as SupportTicket, error };
+  return { data, error };
 };
 
-// Create new support ticket
-export const createSupportTicket = async (ticket: CreateTicketParams) => {
+// Create a new support ticket
+export const createSupportTicket = async (ticketData: CreateTicketParams) => {
   const { data, error } = await supabase
-    .from("support_requests")
+    .from('support_requests')
     .insert({
-      title: ticket.description,
-      description: ticket.description,
-      client_id: ticket.client_id,
-      type: ticket.type.toString() as "MAINTENANCE" | "INSTALLATION" | "OTHER" | "REPLACEMENT" | "SUPPLIES" | "REMOVAL",
-      priority: ticket.priority.toString() as "LOW" | "MEDIUM" | "HIGH",
-      status: (ticket.status || "PENDING").toString() as "PENDING" | "IN_PROGRESS" | "COMPLETED" | "CANCELED",
-      scheduled_date: ticket.scheduled_date
+      title: ticketData.description,
+      description: ticketData.description,
+      client_id: ticketData.client_id,
+      type: ticketData.type,
+      priority: ticketData.priority,
+      status: 'PENDING'
     })
-    .select()
+    .select(`
+      *,
+      client:client_id (
+        business_name
+      )
+    `)
     .single();
 
-  return { data: data as unknown as SupportTicket, error };
+  return { data, error };
 };
 
 // Update support ticket
-export const updateSupportTicket = async (id: string, updates: UpdateTicketParams) => {
-  const updateData: any = {
-    updated_at: new Date().toISOString()
-  };
-
-  if (updates.description) {
-    updateData.title = updates.description;
-    updateData.description = updates.description;
-  }
-  if (updates.status) {
-    updateData.status = updates.status.toString() as "PENDING" | "IN_PROGRESS" | "COMPLETED" | "CANCELED";
-  }
-  if (updates.priority) {
-    updateData.priority = updates.priority.toString() as "LOW" | "MEDIUM" | "HIGH";
-  }
-  if (updates.type) {
-    updateData.type = updates.type.toString() as "MAINTENANCE" | "INSTALLATION" | "OTHER" | "REPLACEMENT" | "SUPPLIES" | "REMOVAL";
-  }
-  if (updates.technician_id) {
-    updateData.technician_id = updates.technician_id;
-  }
-  if (updates.resolution) {
-    updateData.resolution = updates.resolution;
-  }
-  if (updates.scheduled_date) {
-    updateData.scheduled_date = updates.scheduled_date;
-  }
-
+export const updateSupportTicket = async (ticketId: string, updates: Partial<SupportTicket>) => {
   const { data, error } = await supabase
-    .from("support_requests")
-    .update(updateData)
-    .eq("id", id)
-    .select()
-    .single();
-
-  return { data: data as unknown as SupportTicket, error };
-};
-
-// Get messages for a ticket
-export const getTicketMessages = async (ticketId: string) => {
-  const { data, error } = await supabase
-    .from("support_messages")
+    .from('support_requests')
+    .update(updates)
+    .eq('id', ticketId)
     .select(`
-      *
+      *,
+      client:client_id (
+        business_name
+      )
     `)
-    .eq("conversation_id", ticketId)
-    .order("created_at", { ascending: true });
+    .single();
 
-  if (data) {
-    // Map conversation_id to ticket_id for compatibility
-    const mappedData = data.map(msg => ({
-      ...msg,
-      ticket_id: msg.conversation_id,
-      user: {
-        id: msg.user_id,
-        name: "User",
-        role: "CLIENT"
-      }
-    }));
-    return { data: mappedData as SupportMessage[], error };
-  }
-
-  return { data: null, error };
+  return { data, error };
 };
 
-// Send message - removed attachments parameter
-export const sendTicketMessage = async (ticketId: string, message: string) => {
-  const { data: { user } } = await supabase.auth.getUser();
+// Get conversation for a ticket
+export const getTicketConversation = async (ticketId: string) => {
+  const { data, error } = await supabase
+    .from('support_conversations')
+    .select('*')
+    .eq('support_request_id', ticketId)
+    .single();
+
+  return { data, error };
+};
+
+// Get messages for a conversation
+export const getTicketMessages = async (ticketId: string) => {
+  // First get the conversation for this ticket
+  const { data: conversation, error: convError } = await getTicketConversation(ticketId);
   
-  if (!user) {
-    return { data: null, error: new Error("User not authenticated") };
+  if (convError || !conversation) {
+    return { data: [], error: convError };
   }
 
   const { data, error } = await supabase
-    .from("support_messages")
-    .insert({
-      conversation_id: ticketId,
-      user_id: user.id,
-      message
-    })
-    .select()
-    .single();
+    .from('support_messages')
+    .select(`
+      *,
+      user:user_id (
+        name,
+        email
+      )
+    `)
+    .eq('conversation_id', conversation.id)
+    .order('created_at', { ascending: true });
 
-  if (data) {
-    // Map conversation_id to ticket_id for compatibility
-    const mappedData = {
-      ...data,
-      ticket_id: data.conversation_id,
-      user: {
-        id: data.user_id,
-        name: "User",
-        role: "CLIENT"
-      }
-    };
-    return { data: mappedData as SupportMessage, error };
-  }
-
-  return { data: null, error };
+  return { data, error };
 };
 
-// Upload file
-export const uploadSupportFile = async (file: File, ticketId: string) => {
-  const fileName = `${ticketId}/${Date.now()}_${file.name}`;
+// Send a message in a ticket conversation
+export const sendTicketMessage = async (ticketId: string, message: string) => {
+  // First get or create conversation for this ticket
+  let { data: conversation, error: convError } = await getTicketConversation(ticketId);
   
-  const { data, error } = await supabase.storage
-    .from("support-attachments")
-    .upload(fileName, file);
+  if (convError && convError.code === 'PGRST116') {
+    // Conversation doesn't exist, it should have been created by trigger
+    // Try to get ticket info and create conversation manually
+    const { data: ticket, error: ticketError } = await getTicketById(ticketId);
+    if (ticketError || !ticket) {
+      return { data: null, error: ticketError || new Error('Ticket not found') };
+    }
 
-  if (error) {
-    return { data: null, error };
+    const { data: newConv, error: createError } = await supabase
+      .from('support_conversations')
+      .insert({
+        support_request_id: ticketId,
+        client_id: ticket.client_id,
+        subject: ticket.title,
+        status: ticket.status
+      })
+      .select()
+      .single();
+
+    if (createError) {
+      return { data: null, error: createError };
+    }
+    
+    conversation = newConv;
+  } else if (convError) {
+    return { data: null, error: convError };
   }
 
-  const { data: urlData } = supabase.storage
-    .from("support-attachments")
-    .getPublicUrl(fileName);
+  // Now send the message
+  const { data, error } = await supabase
+    .from('support_messages')
+    .insert({
+      conversation_id: conversation.id,
+      user_id: (await supabase.auth.getUser()).data.user?.id,
+      message: message
+    })
+    .select(`
+      *,
+      user:user_id (
+        name,
+        email
+      )
+    `)
+    .single();
 
-  return { data: { path: fileName, url: urlData.publicUrl }, error: null };
+  return { data, error };
 };
