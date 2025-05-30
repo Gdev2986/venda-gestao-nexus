@@ -1021,6 +1021,7 @@ export type Database = {
           id: string
           status: string
           subject: string
+          support_request_id: string | null
           updated_at: string | null
         }
         Insert: {
@@ -1029,6 +1030,7 @@ export type Database = {
           id?: string
           status?: string
           subject: string
+          support_request_id?: string | null
           updated_at?: string | null
         }
         Update: {
@@ -1037,6 +1039,7 @@ export type Database = {
           id?: string
           status?: string
           subject?: string
+          support_request_id?: string | null
           updated_at?: string | null
         }
         Relationships: [
@@ -1053,6 +1056,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "vw_client_balance"
             referencedColumns: ["client_id"]
+          },
+          {
+            foreignKeyName: "support_conversations_support_request_id_fkey"
+            columns: ["support_request_id"]
+            isOneToOne: false
+            referencedRelation: "support_requests"
+            referencedColumns: ["id"]
           },
         ]
       }
