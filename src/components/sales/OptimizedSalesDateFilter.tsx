@@ -109,7 +109,6 @@ const OptimizedSalesDateFilter = ({
                     <SelectValue placeholder="HH" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="">--</SelectItem>
                     {hourOptions.map(hour => (
                       <SelectItem key={hour} value={hour}>{hour}</SelectItem>
                     ))}
@@ -121,7 +120,6 @@ const OptimizedSalesDateFilter = ({
                     <SelectValue placeholder="MM" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="">--</SelectItem>
                     {minuteOptions.map(minute => (
                       <SelectItem key={minute} value={minute}>{minute}</SelectItem>
                     ))}
@@ -138,7 +136,6 @@ const OptimizedSalesDateFilter = ({
                     <SelectValue placeholder="HH" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="">--</SelectItem>
                     {hourOptions.map(hour => (
                       <SelectItem key={hour} value={hour}>{hour}</SelectItem>
                     ))}
@@ -150,7 +147,6 @@ const OptimizedSalesDateFilter = ({
                     <SelectValue placeholder="MM" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="">--</SelectItem>
                     {minuteOptions.map(minute => (
                       <SelectItem key={minute} value={minute}>{minute}</SelectItem>
                     ))}
