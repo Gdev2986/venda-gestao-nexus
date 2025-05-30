@@ -6,7 +6,7 @@ import { ClientPeriodFilter } from "@/components/dashboard/client/ClientPeriodFi
 import { ClientSalesTable } from "@/components/dashboard/client/ClientSalesTable";
 import { ClientFeePlanDisplay } from "@/components/dashboard/client/ClientFeePlanDisplay";
 import { ClientMachinesTable } from "@/components/dashboard/client/ClientMachinesTable";
-import { PaymentMethodsChart } from "@/components/dashboard/admin/PaymentMethodsChart";
+import PaymentMethodsChart from "@/components/dashboard/admin/PaymentMethodsChart";
 import { useClientBalance } from "@/hooks/use-client-balance";
 import { useAuth } from "@/hooks/use-auth";
 import { PaymentMethod } from "@/types";
