@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { X } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -36,12 +37,13 @@ const ProcessedDataPreview = ({
   onOpenChange 
 }: ProcessedDataPreviewProps) => {
   const [currentPage, setCurrentPage] = useState(1);
-  const itemsPerPage = 10;
+  const itemsPerPage = 10; // Garantir que seja sempre 10
   
-  // Pagination
+  // Pagination - força o limite de 10 itens por página
   const totalPages = Math.ceil(data.length / itemsPerPage);
   const startIndex = (currentPage - 1) * itemsPerPage;
-  const currentData = data.slice(startIndex, startIndex + itemsPerPage);
+  const endIndex = startIndex + itemsPerPage;
+  const currentData = data.slice(startIndex, endIndex); // Usar slice para garantir o limite
   
   // Calculate totals
   const totalAmount = data.reduce((sum, item) => sum + item.gross_amount, 0);
@@ -84,6 +86,18 @@ const ProcessedDataPreview = ({
     return <Badge variant="default" className={badgeClass}>{status}</Badge>;
   };
 
+  // Handler para mudança de página que reseta se necessário
+  const handlePageChange = (page: number) => {
+    if (page >= 1 && page <= totalPages) {
+      setCurrentPage(page);
+    }
+  };
+
+  // Reset page when data changes
+  if (currentPage > totalPages && totalPages > 0) {
+    setCurrentPage(1);
+  }
+
   return (
     <Sheet open={isOpen} onOpenChange={onOpenChange}>
       <SheetContent side="right" className="w-full sm:w-[600px] md:w-[700px] lg:w-[900px] overflow-y-auto">
@@ -98,18 +112,18 @@ const ProcessedDataPreview = ({
           <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center bg-muted/30 p-3 rounded-md">
             <div className="text-sm mb-2 sm:mb-0">
               <span className="font-medium">Total de Transações:</span>{" "}
-              <span className="font-semibold">{data.length}</span>
+              <span className="font-semibold text-primary">{data.length.toLocaleString('pt-BR')}</span>
             </div>
             <div className="text-sm">
               <span className="font-medium">Valor Total Bruto:</span>{" "}
-              <span className="font-semibold">{formatCurrency(totalAmount)}</span>
+              <span className="font-semibold text-primary">{formatCurrency(totalAmount)}</span>
             </div>
           </div>
           
           {totalPages > 1 && (
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center bg-accent/20 p-3 rounded-md">
               <div className="text-sm mb-2 sm:mb-0">
-                <span className="font-medium">Página {currentPage}:</span>{" "}
+                <span className="font-medium">Página {currentPage} de {totalPages}:</span>{" "}
                 <span className="font-semibold">{currentData.length} registros</span>
               </div>
               <div className="text-sm">
@@ -120,7 +134,7 @@ const ProcessedDataPreview = ({
           )}
         </div>
         
-        <div className="max-h-[calc(100vh-350px)] overflow-auto border rounded-md">
+        <div className="max-h-[calc(100vh-400px)] overflow-auto border rounded-md">
           <Table>
             <TableHeader className="sticky top-0 bg-background z-10">
               <TableRow>
@@ -172,7 +186,7 @@ const ProcessedDataPreview = ({
               currentPage={currentPage}
               totalPages={totalPages}
               totalCount={data.length}
-              onPageChange={setCurrentPage}
+              onPageChange={handlePageChange}
             />
           </div>
         )}
