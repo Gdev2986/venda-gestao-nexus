@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Plus } from "lucide-react";
 import { MachinesTable } from "./MachinesTable";
 import { useMachines } from "@/hooks/use-machines";
-import { Pagination, PaginationContent, PaginationItem, PaginationLink, PaginationNext, PaginationPrevious } from "@/components/ui/pagination";
+import TablePagination from "@/components/ui/table-pagination";
 
 export const MachinesPageContent = () => {
   const [searchTerm, setSearchTerm] = useState("");
@@ -66,37 +66,11 @@ export const MachinesPageContent = () => {
             onRefresh={refreshMachines}
           />
 
-          {!isLoading && filteredMachines.length > itemsPerPage && (
-            <Pagination>
-              <PaginationContent>
-                <PaginationItem>
-                  <PaginationPrevious 
-                    onClick={() => handlePageChange(Math.max(1, currentPage - 1))}
-                    className={currentPage === 1 ? "pointer-events-none opacity-50" : "cursor-pointer"}
-                  />
-                </PaginationItem>
-                
-                {Array.from({ length: totalPages }, (_, i) => i + 1).map(page => (
-                  <PaginationItem key={page}>
-                    <PaginationLink 
-                      isActive={currentPage === page}
-                      onClick={() => handlePageChange(page)}
-                      className="cursor-pointer"
-                    >
-                      {page}
-                    </PaginationLink>
-                  </PaginationItem>
-                ))}
-                
-                <PaginationItem>
-                  <PaginationNext 
-                    onClick={() => handlePageChange(Math.min(totalPages, currentPage + 1))}
-                    className={currentPage === totalPages ? "pointer-events-none opacity-50" : "cursor-pointer"}
-                  />
-                </PaginationItem>
-              </PaginationContent>
-            </Pagination>
-          )}
+          <TablePagination 
+            currentPage={currentPage}
+            totalPages={totalPages}
+            onPageChange={handlePageChange}
+          />
 
           <div className="text-sm text-muted-foreground">
             Total de máquinas: {filteredMachines.length}
