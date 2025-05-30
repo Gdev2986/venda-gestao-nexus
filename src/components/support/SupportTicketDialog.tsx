@@ -8,22 +8,27 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { useAuth } from "@/hooks/use-auth";
 import { TicketType, TicketPriority } from "@/types/support.types";
 import { CreateTicketParams } from "@/types/support.types";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { AlertCircle } from "lucide-react";
 
 interface SupportTicketDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onSubmit: (ticket: CreateTicketParams) => Promise<void>;
   isLoading?: boolean;
+  clientId?: string | null;
 }
 
 export const SupportTicketDialog = ({ 
   open, 
   onOpenChange, 
   onSubmit, 
-  isLoading = false 
+  isLoading = false,
+  clientId 
 }: SupportTicketDialogProps) => {
-  const { user } = useAuth();
+  const { user, userRole } = useAuth();
   const [formData, setFormData] = useState({
+    title: "",
     description: "",
     type: TicketType.MAINTENANCE,
     priority: TicketPriority.MEDIUM
@@ -32,18 +37,33 @@ export const SupportTicketDialog = ({
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!user) return;
+    if (!user) {
+      console.error("No user found");
+      return;
+    }
+
+    // For CLIENT users, we need a valid clientId
+    if (userRole === 'CLIENT' && !clientId) {
+      console.error("Client user without clientId association");
+      return;
+    }
 
     try {
-      await onSubmit({
+      const ticketData: CreateTicketParams = {
+        title: formData.title,
         description: formData.description,
-        client_id: user.id,
         type: formData.type,
-        priority: formData.priority
-      });
+        priority: formData.priority,
+        client_id: clientId || '', // Use empty string for admin/logistics users
+      };
+
+      console.log("Submitting ticket with data:", ticketData);
       
-      // Reset form
+      await onSubmit(ticketData);
+      
+      // Reset form on success
       setFormData({
+        title: "",
         description: "",
         type: TicketType.MAINTENANCE,
         priority: TicketPriority.MEDIUM
@@ -55,6 +75,32 @@ export const SupportTicketDialog = ({
     }
   };
 
+  // Show warning if client user has no client association
+  if (userRole === 'CLIENT' && !clientId) {
+    return (
+      <Dialog open={open} onOpenChange={onOpenChange}>
+        <DialogContent className="sm:max-w-lg">
+          <DialogHeader>
+            <DialogTitle>Novo Chamado de Suporte</DialogTitle>
+          </DialogHeader>
+          
+          <Alert>
+            <AlertCircle className="h-4 w-4" />
+            <AlertDescription>
+              Você não está associado a um cliente. Entre em contato com o administrador para criar chamados de suporte.
+            </AlertDescription>
+          </Alert>
+
+          <div className="flex justify-end">
+            <Button variant="outline" onClick={() => onOpenChange(false)}>
+              Fechar
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+    );
+  }
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-lg">
@@ -63,6 +109,18 @@ export const SupportTicketDialog = ({
         </DialogHeader>
         
         <form onSubmit={handleSubmit} className="space-y-4">
+          <div>
+            <Label htmlFor="title">Título</Label>
+            <Textarea
+              id="title"
+              value={formData.title}
+              onChange={(e) => setFormData(prev => ({ ...prev, title: e.target.value }))}
+              placeholder="Título do chamado"
+              rows={2}
+              required
+            />
+          </div>
+
           <div>
             <Label htmlFor="type">Tipo de Chamado</Label>
             <Select value={formData.type} onValueChange={(value) => setFormData(prev => ({ ...prev, type: value as TicketType }))}>
@@ -115,7 +173,7 @@ export const SupportTicketDialog = ({
             >
               Cancelar
             </Button>
-            <Button type="submit" disabled={isLoading}>
+            <Button type="submit" disabled={isLoading || !formData.title || !formData.description}>
               {isLoading ? "Criando..." : "Criar Chamado"}
             </Button>
           </div>

@@ -21,6 +21,71 @@ export const useSupportSystem = () => {
   const [messages, setMessages] = useState<SupportMessage[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [isCreating, setIsCreating] = useState(false);
+  const [clientId, setClientId] = useState<string | null>(null);
+
+  // Get client ID for current user
+  const fetchClientId = async () => {
+    if (!user?.id) {
+      console.log('useSupportSystem: No user ID available');
+      return;
+    }
+
+    try {
+      console.log('useSupportSystem: Fetching client access for user:', user.id);
+      
+      // First check if user has direct client access
+      const { data: clientAccess, error: accessError } = await supabase
+        .from('user_client_access')
+        .select('client_id')
+        .eq('user_id', user.id)
+        .single();
+
+      if (accessError && accessError.code !== 'PGRST116') { // PGRST116 = no rows returned
+        console.error('useSupportSystem: Error fetching client access:', accessError);
+        throw accessError;
+      }
+
+      if (clientAccess?.client_id) {
+        // Verify the client actually exists
+        const { data: clientExists, error: clientError } = await supabase
+          .from('clients')
+          .select('id')
+          .eq('id', clientAccess.client_id)
+          .single();
+
+        if (clientError && clientError.code !== 'PGRST116') {
+          console.error('useSupportSystem: Error verifying client:', clientError);
+          throw clientError;
+        }
+
+        if (clientExists) {
+          console.log('useSupportSystem: Found valid client ID:', clientAccess.client_id);
+          setClientId(clientAccess.client_id);
+          return;
+        }
+      }
+
+      // If no client access found, check if user role allows creating tickets without client association
+      if (userRole === 'ADMIN' || userRole === 'LOGISTICS') {
+        console.log('useSupportSystem: Admin/Logistics user - no client association required');
+        setClientId(null);
+        return;
+      }
+
+      // For regular users without client association, we can't create tickets
+      console.log('useSupportSystem: No client association found for user');
+      setClientId(null);
+      
+    } catch (err) {
+      console.error('useSupportSystem: Error in fetchClientId:', err);
+      setClientId(null);
+      toast({
+        title: "Erro",
+        description: "Não foi possível verificar suas permissões. Entre em contato com o suporte.",
+        variant: "destructive",
+      });
+    }
+  };
 
   // Load tickets
   const loadTickets = async () => {
@@ -31,8 +96,8 @@ export const useSupportSystem = () => {
       
       // Filter tickets based on user role
       let filteredTickets = data || [];
-      if (userRole === "CLIENT") {
-        filteredTickets = filteredTickets.filter(ticket => ticket.client_id === user?.id);
+      if (userRole === "CLIENT" && clientId) {
+        filteredTickets = filteredTickets.filter(ticket => ticket.client_id === clientId);
       }
       
       setTickets(filteredTickets);
@@ -61,10 +126,46 @@ export const useSupportSystem = () => {
 
   // Create new ticket - return void to match expected interface
   const createTicket = async (ticketData: CreateTicketParams): Promise<void> => {
+    console.log('useSupportSystem: Creating ticket with data:', ticketData);
+    
+    // Validate client_id if provided
+    if (ticketData.client_id) {
+      try {
+        const { data: clientExists, error: clientError } = await supabase
+          .from('clients')
+          .select('id')
+          .eq('id', ticketData.client_id)
+          .single();
+
+        if (clientError || !clientExists) {
+          throw new Error('Cliente não encontrado. Verifique suas permissões.');
+        }
+      } catch (err) {
+        console.error('useSupportSystem: Client validation failed:', err);
+        toast({
+          title: "Erro",
+          description: "Cliente não encontrado. Entre em contato com o administrador.",
+          variant: "destructive",
+        });
+        throw err;
+      }
+    } else if (userRole === 'CLIENT') {
+      // Client users must have a valid client_id
+      toast({
+        title: "Erro",
+        description: "Você não está associado a um cliente. Entre em contato com o administrador.",
+        variant: "destructive",
+      });
+      throw new Error('Cliente não associado');
+    }
+
     setIsCreating(true);
     try {
       const { data, error } = await createSupportTicket(ticketData);
-      if (error) throw error;
+      if (error) {
+        console.error('useSupportSystem: Error from createSupportTicket:', error);
+        throw error;
+      }
       
       await loadTickets();
       toast({
@@ -73,9 +174,22 @@ export const useSupportSystem = () => {
       });
     } catch (error) {
       console.error("Error creating ticket:", error);
+      
+      // Provide user-friendly error messages
+      let errorMessage = "Não foi possível criar o chamado";
+      if (error instanceof Error) {
+        if (error.message.includes('foreign key constraint')) {
+          errorMessage = "Erro de associação com cliente. Entre em contato com o administrador.";
+        } else if (error.message.includes('permission')) {
+          errorMessage = "Você não tem permissão para criar chamados.";
+        } else {
+          errorMessage = error.message;
+        }
+      }
+      
       toast({
         title: "Erro",
-        description: "Não foi possível criar o chamado",
+        description: errorMessage,
         variant: "destructive",
       });
       throw error;
@@ -175,12 +289,14 @@ export const useSupportSystem = () => {
     };
   }, [user, selectedTicket]);
 
-  // Load tickets on mount
+  // Load client ID and tickets on mount
   useEffect(() => {
     if (user) {
-      loadTickets();
+      fetchClientId().then(() => {
+        loadTickets();
+      });
     }
-  }, [user]);
+  }, [user, userRole]);
 
   return {
     tickets,
@@ -188,6 +304,7 @@ export const useSupportSystem = () => {
     messages,
     isLoading,
     isCreating,
+    clientId, // Expose clientId so components can check if user has client association
     setSelectedTicket,
     loadTickets,
     loadMessages,

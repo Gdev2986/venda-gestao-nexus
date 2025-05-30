@@ -9,6 +9,7 @@ import { SupportChat } from "@/components/support/SupportChat";
 import { useSupportSystem } from "@/hooks/use-support-system";
 import { formatDate } from "@/utils/format";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 
 const ClientSupport = () => {
   const {
@@ -17,6 +18,7 @@ const ClientSupport = () => {
     messages,
     isLoading,
     isCreating,
+    clientId, // Get clientId from the hook
     setSelectedTicket,
     loadMessages,
     createTicket,
@@ -103,12 +105,29 @@ const ClientSupport = () => {
         title="Suporte"
         description="Gerencie seus chamados de suporte"
         action={
-          <Button onClick={() => setShowCreateDialog(true)}>
+          <Button 
+            onClick={() => setShowCreateDialog(true)}
+            disabled={!clientId} // Disable if no client association
+          >
             <Plus className="h-4 w-4 mr-2" />
             Novo Chamado
           </Button>
         }
       />
+
+      {/* Show warning if no client association */}
+      {!clientId && (
+        <Card>
+          <CardContent className="p-4">
+            <Alert>
+              <AlertTriangle className="h-4 w-4" />
+              <AlertDescription>
+                Você não está associado a um cliente. Entre em contato com o administrador para criar chamados de suporte.
+              </AlertDescription>
+            </Alert>
+          </CardContent>
+        </Card>
+      )}
 
       {/* Statistics Cards */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
@@ -217,6 +236,7 @@ const ClientSupport = () => {
         onOpenChange={setShowCreateDialog}
         onSubmit={createTicket}
         isLoading={isCreating}
+        clientId={clientId} // Pass clientId to dialog
       />
 
       {/* Chat Dialog */}
