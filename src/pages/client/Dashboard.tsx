@@ -54,24 +54,30 @@ const generatePaymentMethodsData = (sales: any[]) => {
     return acc;
   }, {});
 
+  const total = Object.values(methodCounts).reduce((sum: number, amount: any) => sum + amount, 0);
+
+  const pixAmount = methodCounts[PaymentMethod.PIX] || 0;
+  const debitAmount = methodCounts[PaymentMethod.DEBIT] || 0;
+  const creditAmount = methodCounts[PaymentMethod.CREDIT] || 0;
+
   return [
     {
-      method: "PIX",
-      amount: methodCounts[PaymentMethod.PIX] || 0,
-      transactions: sales.filter(s => s.payment_method === PaymentMethod.PIX).length,
-      fill: "hsl(var(--chart-1))"
+      name: "PIX",
+      value: pixAmount,
+      color: "#F59E0B",
+      percent: total > 0 ? Math.round((pixAmount / total) * 100) : 0
     },
     {
-      method: "Débito",
-      amount: methodCounts[PaymentMethod.DEBIT] || 0,
-      transactions: sales.filter(s => s.payment_method === PaymentMethod.DEBIT).length,
-      fill: "hsl(var(--chart-2))"
+      name: "Débito",
+      value: debitAmount,
+      color: "#10B981",
+      percent: total > 0 ? Math.round((debitAmount / total) * 100) : 0
     },
     {
-      method: "Crédito",
-      amount: methodCounts[PaymentMethod.CREDIT] || 0,
-      transactions: sales.filter(s => s.payment_method === PaymentMethod.CREDIT).length,
-      fill: "hsl(var(--chart-3))"
+      name: "Crédito",
+      value: creditAmount,
+      color: "#0066FF",
+      percent: total > 0 ? Math.round((creditAmount / total) * 100) : 0
     }
   ];
 };
