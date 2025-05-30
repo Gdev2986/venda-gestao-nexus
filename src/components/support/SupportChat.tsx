@@ -28,8 +28,8 @@ export const SupportChat = ({
 
   if (isLoading) {
     return (
-      <div className="flex flex-col h-full max-h-[500px]">
-        <Card className="flex-1 flex flex-col">
+      <div className="flex flex-col h-full max-h-[400px] min-h-[300px] w-full">
+        <Card className="flex-1 flex flex-col h-full">
           <ChatHeader messageCount={0} />
           <CardContent className="flex-1 flex items-center justify-center">
             <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary"></div>
@@ -40,8 +40,8 @@ export const SupportChat = ({
   }
 
   return (
-    <div className="flex flex-col h-full max-h-[500px] w-full">
-      <Card className="flex-1 flex flex-col min-h-0 overflow-hidden">
+    <div className="flex flex-col h-full max-h-[400px] min-h-[300px] w-full overflow-hidden">
+      <Card className="flex-1 flex flex-col h-full overflow-hidden">
         <ChatHeader messageCount={messages.length} />
         
         <CardContent className="flex-1 flex flex-col p-0 min-h-0 overflow-hidden">

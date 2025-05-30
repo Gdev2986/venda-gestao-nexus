@@ -254,11 +254,11 @@ const ClientSupport = () => {
 
       {/* Chat Dialog */}
       <Dialog open={showChatDialog} onOpenChange={handleCloseChat}>
-        <DialogContent className="sm:max-w-4xl lg:max-w-6xl h-[90vh] max-h-[800px] p-0 flex flex-col">
-          <DialogHeader className="p-3 sm:p-4 lg:p-6 pb-0 flex-shrink-0">
+        <DialogContent className="w-[95vw] max-w-6xl h-[90vh] max-h-[800px] p-0 flex flex-col overflow-hidden">
+          <DialogHeader className="p-3 sm:p-4 lg:p-6 pb-2 flex-shrink-0">
             <DialogTitle className="flex items-center justify-between text-sm sm:text-base lg:text-lg">
-              <span>Chamado de Suporte #{selectedTicket?.id.substring(0, 8)}</span>
-              <div className="flex gap-2 flex-wrap">
+              <span className="truncate mr-2">Chamado #{selectedTicket?.id.substring(0, 8)}</span>
+              <div className="flex gap-1 sm:gap-2 flex-wrap">
                 {selectedTicket && getPriorityBadge(selectedTicket.priority)}
                 {selectedTicket && getStatusBadge(selectedTicket.status)}
               </div>
@@ -266,31 +266,32 @@ const ClientSupport = () => {
           </DialogHeader>
           
           {selectedTicket && (
-            <div className="flex-1 overflow-hidden grid grid-cols-1 lg:grid-cols-3 gap-3 sm:gap-4 lg:gap-6 p-3 sm:p-4 lg:p-6">
-              {/* Chat Section */}
-              <div className="lg:col-span-2 flex flex-col min-h-0 space-y-3 sm:space-y-4">
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 text-sm flex-shrink-0">
-                  <div>
-                    <p><strong>Tipo:</strong> {getTypeLabel(selectedTicket.type)}</p>
-                    <p><strong>Prioridade:</strong> {selectedTicket.priority}</p>
+            <div className="flex-1 overflow-hidden">
+              {/* Mobile Layout */}
+              <div className="block lg:hidden h-full flex flex-col p-3 sm:p-4 space-y-3">
+                <div className="flex-shrink-0 space-y-2">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs sm:text-sm">
+                    <div>
+                      <p><strong>Tipo:</strong> {getTypeLabel(selectedTicket.type)}</p>
+                      <p><strong>Prioridade:</strong> {selectedTicket.priority}</p>
+                    </div>
+                    <div>
+                      <p><strong>Criado:</strong> {formatDate(selectedTicket.created_at)}</p>
+                      {selectedTicket.updated_at && (
+                        <p><strong>Atualizado:</strong> {formatDate(selectedTicket.updated_at)}</p>
+                      )}
+                    </div>
                   </div>
+                  
                   <div>
-                    <p><strong>Criado em:</strong> {formatDate(selectedTicket.created_at)}</p>
-                    {selectedTicket.updated_at && (
-                      <p><strong>Atualizado em:</strong> {formatDate(selectedTicket.updated_at)}</p>
-                    )}
+                    <strong className="text-xs sm:text-sm">Descrição:</strong>
+                    <div className="bg-muted p-2 rounded-md mt-1 text-xs sm:text-sm max-h-16 overflow-y-auto">
+                      {selectedTicket.description}
+                    </div>
                   </div>
                 </div>
                 
-                <div className="flex-shrink-0">
-                  <strong>Descrição:</strong>
-                  <div className="bg-muted p-3 rounded-md mt-1 text-sm max-h-20 overflow-y-auto">
-                    {selectedTicket.description}
-                  </div>
-                </div>
-                
-                {/* Chat Container - takes remaining space */}
-                <div className="flex-1 min-h-0">
+                <div className="flex-1 min-h-0 w-full">
                   <SupportChat
                     ticketId={selectedTicket.id}
                     messages={messages}
@@ -299,13 +300,49 @@ const ClientSupport = () => {
                 </div>
               </div>
 
-              {/* Status Management Section */}
-              <div className="space-y-4 lg:overflow-y-auto">
-                <TicketStatusManager
-                  ticket={selectedTicket}
-                  onStatusChange={updateTicketStatus}
-                  onAssignTicket={assignTicket}
-                />
+              {/* Desktop Layout */}
+              <div className="hidden lg:block h-full">
+                <div className="grid grid-cols-3 gap-6 p-6 h-full">
+                  {/* Chat Section */}
+                  <div className="col-span-2 flex flex-col min-h-0 space-y-4">
+                    <div className="grid grid-cols-2 gap-4 text-sm flex-shrink-0">
+                      <div>
+                        <p><strong>Tipo:</strong> {getTypeLabel(selectedTicket.type)}</p>
+                        <p><strong>Prioridade:</strong> {selectedTicket.priority}</p>
+                      </div>
+                      <div>
+                        <p><strong>Criado em:</strong> {formatDate(selectedTicket.created_at)}</p>
+                        {selectedTicket.updated_at && (
+                          <p><strong>Atualizado em:</strong> {formatDate(selectedTicket.updated_at)}</p>
+                        )}
+                      </div>
+                    </div>
+                    
+                    <div className="flex-shrink-0">
+                      <strong>Descrição:</strong>
+                      <div className="bg-muted p-3 rounded-md mt-1 text-sm max-h-20 overflow-y-auto">
+                        {selectedTicket.description}
+                      </div>
+                    </div>
+                    
+                    <div className="flex-1 min-h-0">
+                      <SupportChat
+                        ticketId={selectedTicket.id}
+                        messages={messages}
+                        onSendMessage={(message) => sendMessage(selectedTicket.id, message)}
+                      />
+                    </div>
+                  </div>
+
+                  {/* Status Management Section */}
+                  <div className="space-y-4 overflow-y-auto">
+                    <TicketStatusManager
+                      ticket={selectedTicket}
+                      onStatusChange={updateTicketStatus}
+                      onAssignTicket={assignTicket}
+                    />
+                  </div>
+                </div>
               </div>
             </div>
           )}

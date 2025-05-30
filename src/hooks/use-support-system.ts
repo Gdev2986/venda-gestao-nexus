@@ -1,3 +1,4 @@
+
 import { useState, useEffect, useCallback } from "react";
 import { useAuth } from "@/hooks/use-auth";
 import { supabase } from "@/integrations/supabase/client";
@@ -251,15 +252,18 @@ export const useSupportSystem = () => {
     }
   };
 
-  // Send message with immediate reload
+  // Send message with optimistic update and immediate reload
   const sendMessage = async (ticketId: string, message: string) => {
     try {
       console.log('Enviando mensagem para o ticket:', ticketId, 'Mensagem:', message);
+      
+      // Send the message
       const { data, error } = await sendTicketMessage(ticketId, message);
       if (error) throw error;
       
-      console.log('Mensagem enviada com sucesso, recarregando mensagens...');
-      // Force immediate reload of messages after sending
+      console.log('Mensagem enviada com sucesso:', data);
+      
+      // Force immediate reload of messages after successful send
       await loadMessages(ticketId);
       
       return data;
@@ -341,10 +345,10 @@ export const useSupportSystem = () => {
   useEffect(() => {
     if (!user) return;
 
-    console.log('Configurando subscription para tickets em tempo real');
+    console.log('🔄 Configurando subscription para tickets');
     
     const ticketChannel = supabase
-      .channel("support_tickets_realtime")
+      .channel("support_tickets_changes")
       .on(
         "postgres_changes",
         {
@@ -353,69 +357,54 @@ export const useSupportSystem = () => {
           table: "support_requests",
         },
         (payload) => {
-          console.log('Atualização de tickets recebida:', payload.eventType, payload);
+          console.log('📥 Ticket change received:', payload.eventType, payload);
           loadTickets();
         }
       )
       .subscribe((status) => {
-        console.log('Status da subscription de tickets:', status);
+        console.log('📡 Ticket subscription status:', status);
       });
 
     return () => {
-      console.log('Limpando subscription de tickets');
+      console.log('🧹 Cleaning up ticket subscription');
       supabase.removeChannel(ticketChannel);
     };
   }, [user, loadTickets]);
 
-  // Real-time subscription for messages when a ticket is selected
+  // Real-time subscription for messages - more aggressive approach
   useEffect(() => {
     if (!user || !selectedTicket?.id) {
-      console.log('Não configurando subscription de mensagens - usuário ou ticket não disponível');
       return;
     }
 
-    console.log('Configurando subscription de mensagens para o ticket:', selectedTicket.id);
+    console.log('🔄 Setting up message subscription for ticket:', selectedTicket.id);
     
-    const messagesChannel = supabase
-      .channel(`ticket_messages_${selectedTicket.id}`)
+    const messageChannel = supabase
+      .channel(`messages_${selectedTicket.id}`)
       .on(
         "postgres_changes",
         {
           event: "*",
           schema: "public",
           table: "support_messages",
+          filter: `ticket_id=eq.${selectedTicket.id}`
         },
         (payload) => {
-          console.log('Atualização de mensagens recebida:', payload.eventType, payload);
-          // Reload messages immediately
-          loadMessages(selectedTicket.id);
-        }
-      )
-      .on(
-        "postgres_changes",
-        {
-          event: "*",
-          schema: "public", 
-          table: "support_conversations",
-        },
-        (payload) => {
-          console.log('Atualização de conversas recebida:', payload.eventType, payload);
-          // Also reload on conversation changes
+          console.log('📨 Message change received:', payload.eventType, payload);
+          // Immediate reload when any message change happens
           loadMessages(selectedTicket.id);
         }
       )
       .subscribe((status) => {
-        console.log('Status da subscription de mensagens:', status);
+        console.log('📡 Message subscription status:', status);
         if (status === 'SUBSCRIBED') {
-          console.log('✅ Subscription de mensagens ativa para o ticket:', selectedTicket.id);
-        } else if (status === 'CHANNEL_ERROR') {
-          console.error('❌ Erro na subscription de mensagens para o ticket:', selectedTicket.id);
+          console.log('✅ Successfully subscribed to messages for ticket:', selectedTicket.id);
         }
       });
 
     return () => {
-      console.log('Limpando subscription de mensagens para o ticket:', selectedTicket.id);
-      supabase.removeChannel(messagesChannel);
+      console.log('🧹 Cleaning up message subscription for ticket:', selectedTicket.id);
+      supabase.removeChannel(messageChannel);
     };
   }, [user, selectedTicket?.id, loadMessages]);
 

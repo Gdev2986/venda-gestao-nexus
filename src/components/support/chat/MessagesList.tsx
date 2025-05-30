@@ -38,9 +38,9 @@ export const MessagesList = ({ messages, currentUserId }: MessagesListProps) => 
       <div className="flex-1 min-h-0 overflow-hidden">
         <ScrollArea className="h-full">
           <div className="p-2 sm:p-3">
-            <div className="flex flex-col items-center justify-center py-8 text-center">
-              <MessageSquare className="h-8 w-8 text-muted-foreground mb-2" />
-              <p className="text-sm text-muted-foreground">
+            <div className="flex flex-col items-center justify-center py-6 text-center">
+              <MessageSquare className="h-6 w-6 sm:h-8 sm:w-8 text-muted-foreground mb-2" />
+              <p className="text-xs sm:text-sm text-muted-foreground">
                 Nenhuma mensagem ainda. Inicie a conversa!
               </p>
             </div>
@@ -52,8 +52,8 @@ export const MessagesList = ({ messages, currentUserId }: MessagesListProps) => 
 
   return (
     <div className="flex-1 min-h-0 overflow-hidden">
-      <ScrollArea className="h-full">
-        <div className="p-2 sm:p-3 space-y-3">
+      <ScrollArea className="h-full w-full">
+        <div className="p-2 sm:p-3 space-y-2 sm:space-y-3 w-full">
           {messages.map((message) => (
             <MessageItem
               key={message.id}
