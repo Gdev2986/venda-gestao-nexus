@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { PageHeader } from "@/components/page/PageHeader";
 import { ClientStatsCards } from "@/components/dashboard/client/ClientStatsCards";
@@ -30,9 +29,9 @@ const generatePaymentMethodsData = (sales: any[]) => {
     return sum + amount;
   }, 0);
 
-  const pixAmount = methodCounts[PaymentMethod.PIX] || 0;
-  const debitAmount = methodCounts[PaymentMethod.DEBIT] || 0;
-  const creditAmount = methodCounts[PaymentMethod.CREDIT] || 0;
+  const pixAmount = Number(methodCounts[PaymentMethod.PIX]) || 0;
+  const debitAmount = Number(methodCounts[PaymentMethod.DEBIT]) || 0;
+  const creditAmount = Number(methodCounts[PaymentMethod.CREDIT]) || 0;
 
   return [
     {
