@@ -1,4 +1,3 @@
-
 import { supabase } from "@/integrations/supabase/client";
 import { PaymentRequest, PaymentRequestParams, PaymentProcessParams, PaymentType } from "@/types/payment.types";
 import { PaymentStatus } from "@/types/enums";
@@ -108,7 +107,7 @@ export const paymentService = {
     return this.formatPaymentRequest(data);
   },
 
-  // Process payment request with receipt upload
+  // Process payment request with receipt upload and balance deduction
   async processPaymentRequest(params: PaymentProcessParams): Promise<PaymentRequest> {
     let receipt_file_url: string | undefined;
 
@@ -122,6 +121,15 @@ export const paymentService = {
       if (uploadError) throw uploadError;
       receipt_file_url = uploadData.path;
     }
+
+    // Start a transaction to update payment and client balance atomically
+    const { data: payment, error: paymentError } = await supabase
+      .from('payment_requests')
+      .select('*, client:clients(id, balance)')
+      .eq('id', params.payment_id)
+      .single();
+
+    if (paymentError) throw paymentError;
 
     const updateData: any = {
       status: params.status,
@@ -138,22 +146,57 @@ export const paymentService = {
       updateData.rejection_reason = params.notes;
     }
 
-    const { data, error } = await supabase
+    // Update payment status
+    const { error: updateError } = await supabase
       .from('payment_requests')
       .update(updateData)
-      .eq('id', params.payment_id)
+      .eq('id', params.payment_id);
+
+    if (updateError) throw updateError;
+
+    // If payment is approved, deduct from client balance and log the change
+    if (params.status === PaymentStatus.APPROVED && payment.client) {
+      const currentBalance = payment.client.balance || 0;
+      const newBalance = currentBalance - payment.amount;
+
+      // Update client balance
+      const { error: balanceError } = await supabase
+        .from('clients')
+        .update({ balance: newBalance })
+        .eq('id', payment.client_id);
+
+      if (balanceError) throw balanceError;
+
+      // Log balance change
+      const { error: logError } = await supabase
+        .from('balance_changes')
+        .insert({
+          client_id: payment.client_id,
+          previous_balance: currentBalance,
+          new_balance: newBalance,
+          amount_changed: -payment.amount,
+          changed_by: (await supabase.auth.getUser()).data.user?.id || '',
+          reason: `Pagamento aprovado - ${payment.payment_type} - ${payment.amount}`
+        });
+
+      if (logError) throw logError;
+    }
+
+    // Return updated payment data
+    const { data, error } = await supabase
+      .from('payment_requests')
       .select(`
         *,
         client:clients(id, business_name, balance),
         pix_key:pix_keys(id, key, type, name, owner_name)
       `)
+      .eq('id', params.payment_id)
       .single();
 
     if (error) throw error;
     return this.formatPaymentRequest(data);
   },
 
-  // Get payments by client
   async getPaymentsByClient(clientId: string): Promise<PaymentRequest[]> {
     const { data, error } = await supabase
       .from('payment_requests')

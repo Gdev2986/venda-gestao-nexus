@@ -3,10 +3,12 @@ import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/use-auth";
+import { paymentService } from "@/services/payment.service";
+import { PaymentStatus } from "@/types/enums";
 
 export interface PaymentActionHook {
-  approvePayment: (id: string) => Promise<void>;
-  rejectPayment: (id: string) => Promise<void>;
+  approvePayment: (id: string, notes?: string, receiptFile?: File) => Promise<void>;
+  rejectPayment: (id: string, reason?: string) => Promise<void>;
   isLoading: boolean;
   deletePayment: (id: string) => Promise<void>;
   sendReceipt: (id: string, file: File) => Promise<void>;
@@ -16,24 +18,25 @@ export const usePaymentActions = (): PaymentActionHook => {
   const [isLoading, setIsLoading] = useState(false);
   const { user } = useAuth();
 
-  const approvePayment = async (id: string) => {
+  const approvePayment = async (id: string, notes?: string, receiptFile?: File) => {
     setIsLoading(true);
     try {
-      const { error } = await supabase
-        .from("payment_requests")
-        .update({ status: "APPROVED" })
-        .eq("id", id);
-
-      if (error) throw error;
+      await paymentService.processPaymentRequest({
+        payment_id: id,
+        status: PaymentStatus.APPROVED,
+        notes,
+        receipt_file: receiptFile
+      });
 
       toast({
         title: "Sucesso",
-        description: "Pagamento aprovado com sucesso",
+        description: "Pagamento aprovado com sucesso e valor descontado do saldo do cliente",
       });
     } catch (error: any) {
+      console.error('Error approving payment:', error);
       toast({
         title: "Erro",
-        description: error.message,
+        description: error.message || "Erro ao aprovar pagamento",
         variant: "destructive",
       });
     } finally {
@@ -41,24 +44,24 @@ export const usePaymentActions = (): PaymentActionHook => {
     }
   };
 
-  const rejectPayment = async (id: string) => {
+  const rejectPayment = async (id: string, reason?: string) => {
     setIsLoading(true);
     try {
-      const { error } = await supabase
-        .from("payment_requests")
-        .update({ status: "REJECTED" })
-        .eq("id", id);
-
-      if (error) throw error;
+      await paymentService.processPaymentRequest({
+        payment_id: id,
+        status: PaymentStatus.REJECTED,
+        notes: reason
+      });
 
       toast({
         title: "Sucesso",
         description: "Pagamento rejeitado",
       });
     } catch (error: any) {
+      console.error('Error rejecting payment:', error);
       toast({
         title: "Erro",
-        description: error.message,
+        description: error.message || "Erro ao rejeitar pagamento",
         variant: "destructive",
       });
     } finally {
