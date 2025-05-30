@@ -8,10 +8,10 @@ export interface BatchProcessingOptions {
 }
 
 export const defaultBatchOptions: BatchProcessingOptions = {
-  batchSize: 1000, // Increased from 75 to 300 as requested
+  batchSize: 300, // Increased from 75 to 300 as requested
   maxConcurrent: 1, // Keep sequential processing
   retryAttempts: 3,
-  delayBetweenBatches: 500 // Keep longer delay for stability
+  delayBetweenBatches: 750 // Keep longer delay for stability
 };
 
 export class BatchProcessor {
