@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { PageHeader } from "@/components/page/PageHeader";
 import { ClientStatsCards } from "@/components/dashboard/client/ClientStatsCards";
@@ -18,12 +19,16 @@ import { PATHS } from "@/routes/paths";
 
 // Generate payment methods data for vertical bar chart
 const generatePaymentMethodsData = (sales: any[]) => {
+  console.log('generatePaymentMethodsData - Input sales:', sales);
+  
   const methodCounts = sales.reduce((acc: Record<string, number>, sale: any) => {
     const method = sale.payment_method;
     const amount = Number(sale.gross_amount) || 0;
     acc[method] = (acc[method] || 0) + amount;
     return acc;
   }, {} as Record<string, number>);
+
+  console.log('Method counts:', methodCounts);
 
   const total = Object.values(methodCounts).reduce((sum: number, amount: number) => {
     return sum + amount;
@@ -61,10 +66,16 @@ const ClientDashboard = () => {
   // Use the new hook for real sales data
   const { sales, stats, isLoading: salesLoading, error } = useClientSales(periodStart, periodEnd);
 
+  console.log('ClientDashboard - Sales data:', sales);
+  console.log('ClientDashboard - Stats:', stats);
+  console.log('ClientDashboard - Error:', error);
+  console.log('ClientDashboard - Period:', { periodStart, periodEnd });
+
   // Generate payment methods data from real sales
   const paymentMethodsData = generatePaymentMethodsData(sales);
 
   const handlePeriodChange = (startDate: Date, endDate: Date) => {
+    console.log('Period changed:', { startDate, endDate });
     setPeriodStart(startDate);
     setPeriodEnd(endDate);
   };

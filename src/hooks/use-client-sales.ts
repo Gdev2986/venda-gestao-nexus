@@ -36,35 +36,77 @@ export const useClientSales = (startDate?: Date, endDate?: Date) => {
   const [error, setError] = useState<string | null>(null);
 
   const fetchClientSales = async () => {
-    if (!user?.id) return;
+    if (!user?.id) {
+      console.log('useClientSales: No user ID available');
+      return;
+    }
 
     setIsLoading(true);
     setError(null);
+    console.log('useClientSales: Starting fetch for user:', user.id);
+    console.log('useClientSales: Date range:', { startDate, endDate });
 
     try {
       // Get client ID for the user
+      console.log('useClientSales: Fetching client access for user:', user.id);
       const { data: clientAccess, error: accessError } = await supabase
         .from('user_client_access')
         .select('client_id')
         .eq('user_id', user.id)
         .single();
 
+      console.log('useClientSales: Client access result:', { clientAccess, accessError });
+
       if (accessError) throw accessError;
       if (!clientAccess) throw new Error('Cliente não encontrado');
 
-      // Use the existing function to get client sales with transfers
-      let query = supabase.rpc('get_client_sales_with_transfers', {
-        p_client_id: clientAccess.client_id,
-        p_start_date: startDate?.toISOString(),
-        p_end_date: endDate?.toISOString()
-      });
+      console.log('useClientSales: Found client ID:', clientAccess.client_id);
 
-      const { data, error: salesError } = await query;
+      // First, let's try a direct approach - get machines for this client and then sales
+      console.log('useClientSales: Fetching machines for client:', clientAccess.client_id);
+      const { data: clientMachines, error: machinesError } = await supabase
+        .from('machines')
+        .select('id, serial_number')
+        .eq('client_id', clientAccess.client_id);
+
+      console.log('useClientSales: Client machines result:', { clientMachines, machinesError });
+
+      if (machinesError) throw machinesError;
+
+      if (!clientMachines || clientMachines.length === 0) {
+        console.log('useClientSales: No machines found for client');
+        setSales([]);
+        setStats({ totalGross: 0, totalNet: 0, totalTransactions: 0, avgTicket: 0 });
+        return;
+      }
+
+      const machineIds = clientMachines.map(m => m.id);
+      console.log('useClientSales: Machine IDs:', machineIds);
+
+      // Now get sales for these machines
+      let salesQuery = supabase
+        .from('sales')
+        .select('id, code, terminal, date, gross_amount, net_amount, payment_method, installments, machine_id')
+        .in('machine_id', machineIds)
+        .order('date', { ascending: false });
+
+      if (startDate) {
+        salesQuery = salesQuery.gte('date', startDate.toISOString());
+      }
+      if (endDate) {
+        salesQuery = salesQuery.lte('date', endDate.toISOString());
+      }
+
+      console.log('useClientSales: Executing sales query with filters:', { startDate, endDate });
+      const { data: salesData, error: salesError } = await salesQuery;
+
+      console.log('useClientSales: Sales query result:', { salesData, salesError });
+      console.log('useClientSales: Number of sales found:', salesData?.length || 0);
 
       if (salesError) throw salesError;
 
-      const formattedSales: ClientSale[] = (data || []).map((sale: any) => ({
-        id: sale.sale_id,
+      const formattedSales: ClientSale[] = (salesData || []).map((sale: any) => ({
+        id: sale.id,
         code: sale.code,
         terminal: sale.terminal,
         date: sale.date,
@@ -75,6 +117,8 @@ export const useClientSales = (startDate?: Date, endDate?: Date) => {
         machine_id: sale.machine_id
       }));
 
+      console.log('useClientSales: Formatted sales:', formattedSales);
+
       setSales(formattedSales);
 
       // Calculate stats
@@ -83,15 +127,19 @@ export const useClientSales = (startDate?: Date, endDate?: Date) => {
       const totalTransactions = formattedSales.length;
       const avgTicket = totalTransactions > 0 ? totalGross / totalTransactions : 0;
 
-      setStats({
+      const calculatedStats = {
         totalGross,
         totalNet,
         totalTransactions,
         avgTicket
-      });
+      };
+
+      console.log('useClientSales: Calculated stats:', calculatedStats);
+
+      setStats(calculatedStats);
 
     } catch (err) {
-      console.error('Error fetching client sales:', err);
+      console.error('useClientSales: Error fetching client sales:', err);
       setError(err instanceof Error ? err.message : 'Erro ao carregar vendas');
       setSales([]);
       setStats({ totalGross: 0, totalNet: 0, totalTransactions: 0, avgTicket: 0 });
@@ -101,6 +149,7 @@ export const useClientSales = (startDate?: Date, endDate?: Date) => {
   };
 
   useEffect(() => {
+    console.log('useClientSales: Effect triggered, user.id:', user?.id);
     fetchClientSales();
   }, [user?.id, startDate, endDate]);
 
