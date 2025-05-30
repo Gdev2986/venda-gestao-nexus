@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { PageHeader } from "@/components/page/PageHeader";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -18,6 +17,16 @@ interface Machine {
   created_at: string;
   custom_name?: string;
   custom_location?: string;
+}
+
+interface MachineCustomization {
+  id: string;
+  machine_id: string;
+  client_id: string;
+  custom_name: string;
+  custom_location?: string;
+  created_at: string;
+  updated_at: string;
 }
 
 const ClientMachines = () => {
@@ -59,11 +68,10 @@ const ClientMachines = () => {
 
       if (machinesError) throw machinesError;
 
-      // Buscar customizações das máquinas
+      // Buscar customizações das máquinas usando query raw
       const { data: customizations, error: customError } = await supabase
-        .from('machine_customizations')
-        .select('*')
-        .eq('client_id', clientAccess.client_id);
+        .rpc('get_machine_customizations', { p_client_id: clientAccess.client_id })
+        .returns<MachineCustomization[]>();
 
       if (customError && customError.code !== 'PGRST116') {
         console.error('Error fetching customizations:', customError);
@@ -118,16 +126,13 @@ const ClientMachines = () => {
 
       if (!clientAccess) throw new Error('Cliente não encontrado');
 
-      // Salvar ou atualizar customização
+      // Salvar ou atualizar customização usando query raw
       const { error } = await supabase
-        .from('machine_customizations')
-        .upsert({
-          machine_id: machineId,
-          client_id: clientAccess.client_id,
-          custom_name: editForm.custom_name,
-          custom_location: editForm.custom_location
-        }, {
-          onConflict: 'machine_id,client_id'
+        .rpc('upsert_machine_customization', {
+          p_machine_id: machineId,
+          p_client_id: clientAccess.client_id,
+          p_custom_name: editForm.custom_name,
+          p_custom_location: editForm.custom_location
         });
 
       if (error) throw error;
