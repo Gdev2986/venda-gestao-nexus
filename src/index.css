@@ -1,62 +1,89 @@
 
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
 @layer base {
   :root {
-    --background: 0 0% 100%;
+    --background: 210 40% 98%;
     --foreground: 222.2 84% 4.9%;
+
     --card: 0 0% 100%;
     --card-foreground: 222.2 84% 4.9%;
+
     --popover: 0 0% 100%;
     --popover-foreground: 222.2 84% 4.9%;
-    --primary: 221.2 83.2% 53.3%;
+
+    --primary: 182 63% 36%;
     --primary-foreground: 210 40% 98%;
-    --secondary: 210 40% 96%;
-    --secondary-foreground: 222.2 84% 4.9%;
-    --muted: 210 40% 96%;
+
+    --secondary: 200 60% 92%;
+    --secondary-foreground: 196 80% 30%;
+
+    --muted: 210 40% 96.1%;
     --muted-foreground: 215.4 16.3% 46.9%;
-    --accent: 210 40% 96%;
-    --accent-foreground: 222.2 84% 4.9%;
+
+    --accent: 200 60% 92%;
+    --accent-foreground: 196 80% 30%;
+
     --destructive: 0 84.2% 60.2%;
     --destructive-foreground: 210 40% 98%;
+
     --border: 214.3 31.8% 91.4%;
     --input: 214.3 31.8% 91.4%;
-    --ring: 221.2 83.2% 53.3%;
-    --chart-1: 45 93% 47%;
-    --chart-2: 142 71% 45%;
-    --chart-3: 221 83% 53%;
-    --chart-4: 270 95% 75%;
-    --chart-5: 339 82% 62%;
+    --ring: 182 63% 36%;
+
     --radius: 0.5rem;
+
+    --sidebar-background: 192 71% 20%;
+    --sidebar-foreground: 210 40% 98%;
+    --sidebar-primary: 182 63% 36%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 192 71% 15%;
+    --sidebar-accent-foreground: 210 40% 98%;
+    --sidebar-border: 192 71% 15%;
+    --sidebar-ring: 182 63% 36%;
   }
 
   .dark {
-    --background: 222.2 84% 4.9%;
-    --foreground: 210 40% 98%;
-    --card: 222.2 84% 4.9%;
-    --card-foreground: 210 40% 98%;
-    --popover: 222.2 84% 4.9%;
-    --popover-foreground: 210 40% 98%;
-    --primary: 217.2 91.2% 59.8%;
-    --primary-foreground: 222.2 84% 4.9%;
-    --secondary: 217.2 32.6% 17.5%;
-    --secondary-foreground: 210 40% 98%;
-    --muted: 217.2 32.6% 17.5%;
-    --muted-foreground: 215 20.2% 65.1%;
-    --accent: 217.2 32.6% 17.5%;
-    --accent-foreground: 210 40% 98%;
-    --destructive: 0 62.8% 30.6%;
-    --destructive-foreground: 210 40% 98%;
-    --border: 217.2 32.6% 17.5%;
-    --input: 217.2 32.6% 17.5%;
-    --ring: 224.3 76.3% 94.1%;
-    --chart-1: 45 93% 58%;
-    --chart-2: 142 71% 55%;
-    --chart-3: 221 83% 63%;
-    --chart-4: 270 95% 85%;
-    --chart-5: 339 82% 72%;
+    --background: 0 0% 10%;
+    --foreground: 0 0% 90%;
+
+    --card: 0 0% 12%;
+    --card-foreground: 0 0% 90%;
+
+    --popover: 0 0% 12%;
+    --popover-foreground: 0 0% 90%;
+
+    --primary: 182 63% 36%;
+    --primary-foreground: 0 0% 98%;
+
+    --secondary: 0 0% 20%;
+    --secondary-foreground: 0 0% 90%;
+
+    --muted: 0 0% 15%;
+    --muted-foreground: 0 0% 70%;
+
+    --accent: 195 70% 25%;
+    --accent-foreground: 0 0% 98%;
+
+    --destructive: 0 70% 30%;
+    --destructive-foreground: 0 0% 98%;
+
+    --border: 0 0% 25%;
+    --input: 0 0% 25%;
+    --ring: 182 63% 36%;
+
+    --sidebar-background: 192 71% 20%;
+    --sidebar-foreground: 210 40% 98%;
+    --sidebar-primary: 182 63% 36%;
+    --sidebar-primary-foreground: 210 40% 98%;
+    --sidebar-accent: 192 71% 15%;
+    --sidebar-accent-foreground: 210 40% 98%;
+    --sidebar-border: 192 71% 15%;
+    --sidebar-ring: 182 63% 36%;
   }
 }
 
@@ -64,7 +91,203 @@
   * {
     @apply border-border;
   }
+
   body {
-    @apply bg-background text-foreground;
+    @apply bg-background text-foreground font-sans;
+  }
+
+  /* Custom scrollbar */
+  ::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+
+  ::-webkit-scrollbar-track {
+    @apply bg-transparent;
+  }
+
+  ::-webkit-scrollbar-thumb {
+    @apply bg-gray-300 dark:bg-gray-700 rounded-full;
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+    @apply bg-gray-400 dark:bg-gray-600;
+  }
+}
+
+@layer utilities {
+  .text-balance {
+    text-wrap: balance;
+  }
+
+  /* Responsiveness utilities */
+  .responsive-container {
+    @apply w-full px-4 md:px-6 lg:px-8 mx-auto;
+    max-width: 1400px;
+  }
+
+  /* Mobile spacing - updated */
+  .mobile-container {
+    @apply px-4;
+  }
+
+  /* Responsive tables */
+  .responsive-table {
+    @apply overflow-x-auto rounded-md border w-full;
+  }
+
+  /* Card grids */
+  .card-grid {
+    @apply grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4;
+  }
+
+  /* Form layouts */
+  .form-grid {
+    @apply grid gap-4 sm:grid-cols-2;
+  }
+
+  /* Responsive spacing */
+  .responsive-padding {
+    @apply px-4 md:px-6 lg:px-8 py-4 md:py-6;
+  }
+
+  /* Responsive typography */
+  .responsive-heading {
+    @apply text-xl md:text-2xl lg:text-3xl font-bold;
+  }
+
+  /* Responsive stack */
+  .responsive-stack {
+    @apply flex flex-col sm:flex-row gap-4;
+  }
+
+  /* Responsive alignment */
+  .responsive-center {
+    @apply flex flex-col sm:flex-row items-center justify-center;
+  }
+  
+  /* Responsive truncate */
+  .responsive-truncate {
+    @apply truncate max-w-full;
+  }
+  
+  /* Responsive flex */
+  .responsive-flex {
+    @apply flex flex-col sm:flex-row gap-2;
+  }
+  
+  /* Responsive icons */
+  .responsive-icon-container {
+    @apply flex flex-wrap gap-1;
+  }
+  
+  /* Responsive card */
+  .responsive-card {
+    @apply flex flex-col sm:flex-row sm:items-center gap-3 p-3;
+  }
+
+  /* System gradient background - usado apenas para elementos específicos */
+  .system-gradient {
+    background: linear-gradient(135deg, #13A197 0%, #105865 100%);
+  }
+
+  /* Login page gradient - usado apenas para a página de login */
+  .login-gradient {
+    background: linear-gradient(135deg, #13A197 0%, #105865 100%);
+  }
+}
+
+.truncate-2 {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;  
+  overflow: hidden;
+}
+
+/* Responsive skeleton loading */
+.skeleton {
+  @apply bg-gray-200 dark:bg-gray-700 animate-pulse rounded;
+}
+
+.skeleton-text {
+  @apply skeleton h-4 w-full mb-2;
+}
+
+.skeleton-circle {
+  @apply skeleton rounded-full;
+}
+
+/* Responsive tables */
+.table-container {
+  @apply overflow-x-auto rounded-md border w-full;
+}
+
+/* Fix for mobile modals */
+@media (max-width: 640px) {
+  .fixed.inset-0 {
+    width: 100% !important;
+  }
+}
+
+/* Focus styles */
+:focus-visible {
+  @apply outline-none ring-2 ring-ring ring-offset-2 ring-offset-background;
+}
+
+/* Image optimizations */
+img {
+  @apply max-w-full h-auto;
+}
+
+/* Print styles */
+@media print {
+  .no-print {
+    display: none !important;
+  }
+}
+
+/* Spinner animation */
+.spinner {
+  @apply h-8 w-8 rounded-full border-4 border-muted border-t-primary animate-spin;
+}
+
+/* Mobile-first adjustments */
+@media (max-width: 640px) {
+  .card-header-stack {
+    @apply flex-col items-start space-y-2;
+  }
+  
+  .btn-stack {
+    @apply flex-col w-full space-y-2;
+  }
+  
+  .btn-stack > button {
+    @apply w-full;
+  }
+}
+
+/* Responsive grid fixes */
+.auto-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 1rem;
+}
+
+/* Dark mode improvements */
+.dark .card-hover:hover {
+  @apply bg-gray-800/50;
+}
+
+/* Better responsiveness for calendar popups */
+.rdp {
+  --rdp-cell-size: 40px;
+  --rdp-accent-color: hsl(var(--primary));
+  --rdp-background-color: hsl(var(--primary) / 0.1);
+  margin: 0;
+}
+
+@media (max-width: 640px) {
+  .rdp {
+    --rdp-cell-size: 35px;
   }
 }
