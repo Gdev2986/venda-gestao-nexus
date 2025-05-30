@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -139,6 +138,26 @@ const SalesAdvancedFilter = ({ sales, onFilter }: SalesAdvancedFilterProps) => {
 
   // Function to check if a date has sales
   const isDateWithSales = (date: Date) => {
+    const salesDates = sales.map(sale => {
+      // Parse the formatted date string back to a Date object
+      if (typeof sale.transaction_date === 'string') {
+        // Assuming format is "DD/MM/YYYY HH:MM"
+        const [datePart] = sale.transaction_date.split(' ');
+        const [day, month, year] = datePart.split('/');
+        return new Date(parseInt(year), parseInt(month) - 1, parseInt(day));
+      }
+      return sale.transaction_date;
+    }).filter(date => !isNaN(date.getTime())).sort((a, b) => a.getTime() - b.getTime());
+    
+    // Get unique dates only (without time)
+    const uniqueDates = salesDates.reduce((acc, date) => {
+      const dateString = format(date, 'yyyy-MM-dd');
+      if (!acc.some(d => format(d, 'yyyy-MM-dd') === dateString)) {
+        acc.push(date);
+      }
+      return acc;
+    }, [] as Date[]);
+    
     return uniqueDates.some(saleDate => 
       format(saleDate, 'yyyy-MM-dd') === format(date, 'yyyy-MM-dd')
     );
@@ -276,7 +295,6 @@ const SalesAdvancedFilter = ({ sales, onFilter }: SalesAdvancedFilterProps) => {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
           <div className="lg:col-span-1">
             <TerminalFilter
-              terminals={metadata.terminals}
               selectedTerminals={selectedTerminals}
               onTerminalsChange={setSelectedTerminals}
             />
