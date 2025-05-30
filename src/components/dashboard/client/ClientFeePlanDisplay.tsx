@@ -3,6 +3,7 @@ import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { 
   Dialog, 
   DialogContent, 
@@ -59,6 +60,15 @@ export const ClientFeePlanDisplay = () => {
     }
   };
 
+  const getPaymentMethodColor = (method: string) => {
+    switch (method) {
+      case 'CREDIT': return 'bg-blue-100 text-blue-800';
+      case 'DEBIT': return 'bg-green-100 text-green-800';
+      case 'PIX': return 'bg-purple-100 text-purple-800';
+      default: return 'bg-gray-100 text-gray-800';
+    }
+  };
+
   if (isLoading) {
     return (
       <Card>
@@ -80,6 +90,20 @@ export const ClientFeePlanDisplay = () => {
     );
   }
 
+  // Organizar taxas por método de pagamento
+  const groupedRates = taxBlock.rates?.reduce((acc, rate) => {
+    if (!acc[rate.payment_method]) {
+      acc[rate.payment_method] = [];
+    }
+    acc[rate.payment_method].push(rate);
+    return acc;
+  }, {} as Record<string, typeof taxBlock.rates>) || {};
+
+  // Ordenar taxas dentro de cada método por número de parcelas
+  Object.keys(groupedRates).forEach(method => {
+    groupedRates[method].sort((a, b) => a.installment - b.installment);
+  });
+
   return (
     <Card>
       <CardHeader>
@@ -95,7 +119,7 @@ export const ClientFeePlanDisplay = () => {
                 Ver Detalhes
               </Button>
             </DialogTrigger>
-            <DialogContent className="max-w-2xl">
+            <DialogContent className="max-w-4xl">
               <DialogHeader>
                 <DialogTitle>{taxBlock.name}</DialogTitle>
                 {taxBlock.description && (
@@ -103,42 +127,71 @@ export const ClientFeePlanDisplay = () => {
                 )}
               </DialogHeader>
               <div className="space-y-4">
-                <div className="grid gap-4">
-                  {['CREDIT', 'DEBIT', 'PIX'].map((method) => {
-                    const methodRates = taxBlock.rates?.filter(r => r.payment_method === method) || [];
-                    
-                    if (methodRates.length === 0) return null;
-
-                    return (
-                      <div key={method} className="border rounded-lg p-4">
-                        <h4 className="font-medium mb-3 flex items-center gap-2">
-                          {getPaymentMethodLabel(method)}
-                          <Badge variant="outline">{methodRates.length} parcelas</Badge>
-                        </h4>
-                        <div className="grid grid-cols-2 md:grid-cols-3 gap-2 text-sm">
-                          {methodRates.map((rate) => (
-                            <div key={`${rate.payment_method}-${rate.installment}`} 
-                                 className="flex justify-between p-2 bg-muted/50 rounded">
-                              <span>{rate.installment}x</span>
-                              <span className="font-medium">{rate.final_rate}%</span>
-                            </div>
-                          ))}
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Método</TableHead>
+                      <TableHead>Parcelas</TableHead>
+                      <TableHead>Taxa Final</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {Object.entries(groupedRates).map(([method, rates]) =>
+                      rates.map((rate, index) => (
+                        <TableRow key={`${method}-${rate.installment}`}>
+                          <TableCell>
+                            <Badge 
+                              variant="secondary" 
+                              className={getPaymentMethodColor(method)}
+                            >
+                              {getPaymentMethodLabel(method)}
+                            </Badge>
+                          </TableCell>
+                          <TableCell>{rate.installment}x</TableCell>
+                          <TableCell className="font-medium">{rate.final_rate}%</TableCell>
+                        </TableRow>
+                      ))
+                    )}
+                  </TableBody>
+                </Table>
               </div>
             </DialogContent>
           </Dialog>
         </div>
       </CardHeader>
       <CardContent>
-        <div className="space-y-2">
+        <div className="space-y-4">
           <div className="flex justify-between text-sm">
             <span className="text-muted-foreground">Taxas configuradas:</span>
             <span className="font-medium">{taxBlock.rates?.length || 0} modalidades</span>
           </div>
+          
+          {/* Resumo das taxas - mostrar apenas algumas principais */}
+          <div className="space-y-2">
+            <h4 className="text-sm font-medium">Principais taxas:</h4>
+            <div className="space-y-1">
+              {Object.entries(groupedRates).slice(0, 3).map(([method, rates]) => {
+                const firstRate = rates[0];
+                if (!firstRate) return null;
+                
+                return (
+                  <div key={method} className="flex justify-between items-center text-sm">
+                    <div className="flex items-center gap-2">
+                      <Badge 
+                        variant="secondary" 
+                        className={`${getPaymentMethodColor(method)} text-xs`}
+                      >
+                        {getPaymentMethodLabel(method)}
+                      </Badge>
+                      <span>{firstRate.installment}x</span>
+                    </div>
+                    <span className="font-medium">{firstRate.final_rate}%</span>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+          
           {taxBlock.description && (
             <p className="text-xs text-muted-foreground">{taxBlock.description}</p>
           )}
