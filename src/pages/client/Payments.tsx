@@ -74,6 +74,15 @@ const ClientPayments = () => {
         ...(type === 'BOLETO' && {
           boleto_file: data.boleto_file,
           boleto_code: data.boleto_code
+        }),
+        ...(type === 'TED' && {
+          beneficiary_name: data.beneficiary_name,
+          beneficiary_document: data.beneficiary_document,
+          document_type: data.document_type,
+          bank_code: data.bank_code,
+          agency_number: data.agency_number,
+          account_number: data.account_number,
+          account_type: data.account_type
         })
       };
 
@@ -81,7 +90,7 @@ const ClientPayments = () => {
 
       toast({
         title: "Solicitação enviada",
-        description: `Sua solicitação de ${type === 'PIX' ? 'pagamento PIX' : 'pagamento de boleto'} foi enviada com sucesso!`
+        description: `Sua solicitação de ${type === 'PIX' ? 'pagamento PIX' : type === 'TED' ? 'TED' : 'pagamento de boleto'} foi enviada com sucesso!`
       });
 
       // Refresh data
@@ -157,7 +166,7 @@ const ClientPayments = () => {
           </CardHeader>
           <CardContent>
             <p className="text-sm text-muted-foreground mb-4">
-              Solicite o saque do seu saldo via PIX ou envie boletos para pagamento.
+              Solicite o saque do seu saldo via PIX, TED ou envie boletos para pagamento.
             </p>
             <Button 
               onClick={() => setIsDialogOpen(true)}
@@ -179,6 +188,10 @@ const ClientPayments = () => {
               <div>
                 <p className="text-sm font-medium">Processamento PIX</p>
                 <p className="text-xs text-muted-foreground">Até 1 dia útil após aprovação</p>
+              </div>
+              <div>
+                <p className="text-sm font-medium">Processamento TED</p>
+                <p className="text-xs text-muted-foreground">Recebimento no mesmo dia se a solicitação for feita até 15h45, após esse horário será realizado no próximo dia útil</p>
               </div>
               <div>
                 <p className="text-sm font-medium">Pagamento de Boletos</p>

@@ -1,4 +1,3 @@
-
 import { PaymentStatus as EnumsPaymentStatus, PaymentMethod } from './enums';
 
 // Use the enum from enums.ts for consistency
@@ -73,6 +72,14 @@ export interface PaymentRequestParams {
   };
   boleto_code?: string;
   boleto_file?: File;
+  // TED-specific fields
+  beneficiary_name?: string;
+  beneficiary_document?: string;
+  document_type?: 'CPF' | 'CNPJ';
+  bank_code?: string;
+  agency_number?: string;
+  account_number?: string;
+  account_type?: 'corrente' | 'poupanca';
 }
 
 export interface PaymentProcessParams {

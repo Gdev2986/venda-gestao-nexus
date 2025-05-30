@@ -4,6 +4,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { PixPaymentForm } from './PixPaymentForm';
 import { BoletoPaymentForm } from './BoletoPaymentForm';
+import { TedPaymentForm } from './TedPaymentForm';
 import { PixKey } from '@/types/payment.types';
 
 interface PaymentRequestDialogProps {
@@ -12,7 +13,7 @@ interface PaymentRequestDialogProps {
   clientBalance: number;
   pixKeys: PixKey[];
   isLoadingPixKeys: boolean;
-  onRequestPayment: (type: 'PIX' | 'BOLETO', data: any) => Promise<void>;
+  onRequestPayment: (type: 'PIX' | 'BOLETO' | 'TED', data: any) => Promise<void>;
 }
 
 export const PaymentRequestDialog = ({
@@ -45,6 +46,16 @@ export const PaymentRequestDialog = ({
     }
   };
 
+  const handleTedPayment = async (data: any) => {
+    setIsLoading(true);
+    try {
+      await onRequestPayment('TED', data);
+      onOpenChange(false);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto dark:bg-[#1f1f1f] dark:border-[#262626]">
@@ -53,8 +64,9 @@ export const PaymentRequestDialog = ({
         </DialogHeader>
 
         <Tabs defaultValue="pix" className="w-full">
-          <TabsList className="grid w-full grid-cols-2 dark:bg-[#262626]">
+          <TabsList className="grid w-full grid-cols-3 dark:bg-[#262626]">
             <TabsTrigger value="pix" className="dark:data-[state=active]:bg-[#1a1a1a] dark:text-white">PIX</TabsTrigger>
+            <TabsTrigger value="ted" className="dark:data-[state=active]:bg-[#1a1a1a] dark:text-white">TED</TabsTrigger>
             <TabsTrigger value="boleto" className="dark:data-[state=active]:bg-[#1a1a1a] dark:text-white">Boleto</TabsTrigger>
           </TabsList>
 
@@ -63,6 +75,14 @@ export const PaymentRequestDialog = ({
               clientBalance={clientBalance}
               pixKeys={pixKeys}
               onSubmit={handlePixPayment}
+              isLoading={isLoading}
+            />
+          </TabsContent>
+
+          <TabsContent value="ted" className="mt-4">
+            <TedPaymentForm
+              clientBalance={clientBalance}
+              onSubmit={handleTedPayment}
               isLoading={isLoading}
             />
           </TabsContent>

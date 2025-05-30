@@ -84,6 +84,20 @@ export const paymentService = {
       pix_key_id = pixKeyData.id;
     }
 
+    // Prepare TED bank info if provided
+    let bank_info = null;
+    if (params.payment_type === 'TED' && params.beneficiary_name) {
+      bank_info = {
+        beneficiary_name: params.beneficiary_name,
+        beneficiary_document: params.beneficiary_document,
+        document_type: params.document_type,
+        bank_code: params.bank_code,
+        agency_number: params.agency_number,
+        account_number: params.account_number,
+        account_type: params.account_type
+      };
+    }
+
     const { data, error } = await supabase
       .from('payment_requests')
       .insert({
@@ -94,7 +108,8 @@ export const paymentService = {
         boleto_file_url,
         boleto_code: params.boleto_code || null,
         status: PaymentStatus.PENDING,
-        notes: params.notes || null
+        notes: params.notes || null,
+        bank_info: bank_info
       })
       .select(`
         *,
