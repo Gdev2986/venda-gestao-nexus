@@ -1,4 +1,5 @@
-import React, { useState } from "react";
+
+import React, { useState, useEffect } from "react";
 import { PageHeader } from "@/components/page/PageHeader";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -6,11 +7,13 @@ import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { MessageSquare, AlertTriangle, CheckCircle, Clock, Search, Filter } from "lucide-react";
+import { MessageSquare, AlertTriangle, CheckCircle, Clock, Search, User, UserCheck } from "lucide-react";
 import { SupportChat } from "@/components/support/SupportChat";
 import { useSupportSystem } from "@/hooks/use-support-system";
 import { formatDate } from "@/utils/format";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { useAuth } from "@/hooks/use-auth";
+import { supabase } from "@/integrations/supabase/client";
 
 const AdminSupport = () => {
   const {
@@ -21,13 +24,35 @@ const AdminSupport = () => {
     setSelectedTicket,
     loadMessages,
     sendMessage,
-    updateTicketStatus
+    updateTicketStatus,
+    assignTicket
   } = useSupportSystem();
 
+  const { user } = useAuth();
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
   const [priorityFilter, setPriorityFilter] = useState("all");
   const [isChatOpen, setIsChatOpen] = useState(false);
+  const [technicians, setTechnicians] = useState<any[]>([]);
+
+  // Load technicians
+  useEffect(() => {
+    const loadTechnicians = async () => {
+      try {
+        const { data, error } = await supabase
+          .from('profiles')
+          .select('id, name, email')
+          .in('role', ['ADMIN', 'LOGISTICS']);
+
+        if (error) throw error;
+        setTechnicians(data || []);
+      } catch (error) {
+        console.error('Error loading technicians:', error);
+      }
+    };
+
+    loadTechnicians();
+  }, []);
 
   // Filter tickets
   const filteredTickets = tickets.filter(ticket => {
@@ -91,13 +116,20 @@ const AdminSupport = () => {
     await updateTicketStatus(ticketId, newStatus);
   };
 
+  const handleAssignTicket = async (ticketId: string) => {
+    if (user?.id) {
+      await assignTicket(ticketId, user.id);
+    }
+  };
+
   // Statistics
   const stats = {
     total: tickets.length,
     pending: tickets.filter(t => t.status === "PENDING").length,
     inProgress: tickets.filter(t => t.status === "IN_PROGRESS").length,
     completed: tickets.filter(t => t.status === "COMPLETED").length,
-    highPriority: tickets.filter(t => t.priority === "HIGH").length
+    highPriority: tickets.filter(t => t.priority === "HIGH").length,
+    assigned: tickets.filter(t => t.technician_id).length
   };
 
   const getTicketsByStatus = (status: string) => {
@@ -126,7 +158,7 @@ const AdminSupport = () => {
       />
 
       {/* Statistics Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-6 gap-4">
         <Card>
           <CardContent className="p-4">
             <div className="flex items-center justify-between">
@@ -158,7 +190,19 @@ const AdminSupport = () => {
                 <p className="text-sm font-medium text-muted-foreground">Em Andamento</p>
                 <p className="text-2xl font-bold text-blue-600">{stats.inProgress}</p>
               </div>
-              <AlertTriangle className="h-8 w-8 text-blue-500" />
+              <User className="h-8 w-8 text-blue-500" />
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardContent className="p-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-muted-foreground">Atribuídos</p>
+                <p className="text-2xl font-bold text-purple-600">{stats.assigned}</p>
+              </div>
+              <UserCheck className="h-8 w-8 text-purple-500" />
             </div>
           </CardContent>
         </Card>
@@ -246,9 +290,11 @@ const AdminSupport = () => {
             tickets={getTicketsByStatus("PENDING")} 
             onTicketClick={handleTicketClick}
             onStatusChange={handleStatusChange}
+            onAssignTicket={handleAssignTicket}
             getStatusBadge={getStatusBadge}
             getPriorityBadge={getPriorityBadge}
             getTypeLabel={getTypeLabel}
+            currentUserId={user?.id}
           />
         </TabsContent>
 
@@ -257,9 +303,11 @@ const AdminSupport = () => {
             tickets={getTicketsByStatus("IN_PROGRESS")} 
             onTicketClick={handleTicketClick}
             onStatusChange={handleStatusChange}
+            onAssignTicket={handleAssignTicket}
             getStatusBadge={getStatusBadge}
             getPriorityBadge={getPriorityBadge}
             getTypeLabel={getTypeLabel}
+            currentUserId={user?.id}
           />
         </TabsContent>
 
@@ -268,9 +316,11 @@ const AdminSupport = () => {
             tickets={getTicketsByStatus("COMPLETED")} 
             onTicketClick={handleTicketClick}
             onStatusChange={handleStatusChange}
+            onAssignTicket={handleAssignTicket}
             getStatusBadge={getStatusBadge}
             getPriorityBadge={getPriorityBadge}
             getTypeLabel={getTypeLabel}
+            currentUserId={user?.id}
           />
         </TabsContent>
 
@@ -279,9 +329,11 @@ const AdminSupport = () => {
             tickets={filteredTickets} 
             onTicketClick={handleTicketClick}
             onStatusChange={handleStatusChange}
+            onAssignTicket={handleAssignTicket}
             getStatusBadge={getStatusBadge}
             getPriorityBadge={getPriorityBadge}
             getTypeLabel={getTypeLabel}
+            currentUserId={user?.id}
           />
         </TabsContent>
       </Tabs>
@@ -320,6 +372,9 @@ const AdminSupport = () => {
                 <div>
                   <p><strong>Cliente:</strong> {selectedTicket.client?.business_name}</p>
                   <p><strong>Tipo:</strong> {getTypeLabel(selectedTicket.type)}</p>
+                  {selectedTicket.technician_id && (
+                    <p><strong>Técnico:</strong> {technicians.find(t => t.id === selectedTicket.technician_id)?.name || 'Atribuído'}</p>
+                  )}
                 </div>
                 <div>
                   <p><strong>Criado em:</strong> {formatDate(selectedTicket.created_at)}</p>
@@ -356,9 +411,11 @@ const TicketsList = ({
   tickets, 
   onTicketClick, 
   onStatusChange, 
+  onAssignTicket,
   getStatusBadge, 
   getPriorityBadge, 
-  getTypeLabel 
+  getTypeLabel,
+  currentUserId
 }: any) => {
   if (tickets.length === 0) {
     return (
@@ -391,6 +448,9 @@ const TicketsList = ({
             </div>
             <div className="text-sm text-muted-foreground">
               <span className="font-medium">{ticket.client?.business_name}</span> • {getTypeLabel(ticket.type)}
+              {ticket.technician_id && (
+                <span> • Atribuído</span>
+              )}
             </div>
           </CardHeader>
           <CardContent className="space-y-3">
@@ -407,15 +467,23 @@ const TicketsList = ({
                 >
                   Ver Detalhes
                 </Button>
-                {ticket.status === "PENDING" && (
+                {ticket.status === "PENDING" && !ticket.technician_id && (
                   <Button 
                     size="sm"
-                    onClick={() => onStatusChange(ticket.id, "IN_PROGRESS")}
+                    onClick={() => onAssignTicket(ticket.id)}
                   >
                     Atender
                   </Button>
                 )}
-                {ticket.status === "IN_PROGRESS" && (
+                {ticket.status === "PENDING" && ticket.technician_id === currentUserId && (
+                  <Button 
+                    size="sm"
+                    onClick={() => onStatusChange(ticket.id, "IN_PROGRESS")}
+                  >
+                    Iniciar
+                  </Button>
+                )}
+                {ticket.status === "IN_PROGRESS" && ticket.technician_id === currentUserId && (
                   <Button 
                     size="sm"
                     onClick={() => onStatusChange(ticket.id, "COMPLETED")}

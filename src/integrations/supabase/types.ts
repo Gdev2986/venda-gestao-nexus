@@ -1596,6 +1596,14 @@ export type Database = {
         Args: { user_uuid: string }
         Returns: undefined
       }
+      user_has_client_access: {
+        Args: { p_client_id: string }
+        Returns: boolean
+      }
+      user_is_admin_or_logistics: {
+        Args: Record<PropertyKey, never>
+        Returns: boolean
+      }
       user_needs_password_change: {
         Args: { user_uuid: string }
         Returns: boolean

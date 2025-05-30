@@ -124,6 +124,43 @@ export const useSupportSystem = () => {
     }
   };
 
+  // Notify admins about new ticket
+  const notifyAdminsNewTicket = async (ticketId: string, clientName: string) => {
+    try {
+      // Get all admin and logistics users
+      const { data: adminUsers, error } = await supabase
+        .from('profiles')
+        .select('id')
+        .in('role', ['ADMIN', 'LOGISTICS']);
+
+      if (error) {
+        console.error('Error fetching admin users:', error);
+        return;
+      }
+
+      // Create notifications for each admin
+      const notifications = adminUsers.map(admin => ({
+        user_id: admin.id,
+        title: 'Novo Chamado de Suporte',
+        message: `Cliente ${clientName} criou um novo chamado de suporte`,
+        type: 'SUPPORT',
+        data: { ticket_id: ticketId }
+      }));
+
+      if (notifications.length > 0) {
+        const { error: notifyError } = await supabase
+          .from('notifications')
+          .insert(notifications);
+
+        if (notifyError) {
+          console.error('Error creating notifications:', notifyError);
+        }
+      }
+    } catch (error) {
+      console.error('Error notifying admins:', error);
+    }
+  };
+
   // Create new ticket - return void to match expected interface
   const createTicket = async (ticketData: CreateTicketParams): Promise<void> => {
     if (!user) {
@@ -142,7 +179,7 @@ export const useSupportSystem = () => {
       try {
         const { data: clientExists, error: clientError } = await supabase
           .from('clients')
-          .select('id')
+          .select('id, business_name')
           .eq('id', ticketData.client_id)
           .single();
 
@@ -181,12 +218,22 @@ export const useSupportSystem = () => {
           priority: ticketData.priority.toString() as "LOW" | "MEDIUM" | "HIGH",
           status: "PENDING" as "PENDING" | "IN_PROGRESS" | "COMPLETED" | "CANCELED"
         })
-        .select()
+        .select(`
+          *,
+          client:client_id (
+            business_name
+          )
+        `)
         .single();
 
       if (error) {
         console.error('useSupportSystem: Error from direct insert:', error);
         throw error;
+      }
+      
+      // Notify admins about the new ticket
+      if (data && data.client) {
+        await notifyAdminsNewTicket(data.id, data.client.business_name);
       }
       
       await loadTickets();
@@ -267,6 +314,41 @@ export const useSupportSystem = () => {
     }
   };
 
+  // Assign ticket to technician
+  const assignTicket = async (ticketId: string, technicianId: string) => {
+    try {
+      const { data, error } = await updateSupportTicket(ticketId, { 
+        technician_id: technicianId,
+        status: 'IN_PROGRESS'
+      });
+      if (error) throw error;
+      
+      await loadTickets();
+      if (selectedTicket?.id === ticketId) {
+        setSelectedTicket({ 
+          ...selectedTicket, 
+          technician_id: technicianId,
+          status: 'IN_PROGRESS' as any
+        });
+      }
+      
+      toast({
+        title: "Sucesso",
+        description: "Chamado atribuído com sucesso",
+      });
+      
+      return data;
+    } catch (error) {
+      console.error("Error assigning ticket:", error);
+      toast({
+        title: "Erro",
+        description: "Não foi possível atribuir o chamado",
+        variant: "destructive",
+      });
+      throw error;
+    }
+  };
+
   // Set up real-time subscriptions
   useEffect(() => {
     if (!user) return;
@@ -332,6 +414,7 @@ export const useSupportSystem = () => {
     loadMessages,
     createTicket,
     sendMessage,
-    updateTicketStatus
+    updateTicketStatus,
+    assignTicket
   };
 };
