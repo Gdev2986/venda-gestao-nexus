@@ -1,4 +1,3 @@
-
 import { supabase } from "@/integrations/supabase/client";
 
 export interface ClientSalesResult {
@@ -35,60 +34,62 @@ export const clientSalesOptimizedService = {
   async getClientTerminals(clientId: string): Promise<string[]> {
     try {
       console.log('[DEBUG] getClientTerminals - Starting for client:', clientId);
+      console.log('[DEBUG] getClientTerminals - Supabase client status:', !!supabase);
       
-      // Primeiro, buscar terminais únicos das vendas das máquinas do cliente
-      const { data: salesTerminals, error: salesError } = await supabase
-        .from('sales')
-        .select('terminal')
-        .in('machine_id', supabase
-          .from('machines')
-          .select('id')
-          .eq('client_id', clientId)
-        );
-
-      console.log('[DEBUG] getClientTerminals - Direct sales query result:', { 
-        salesTerminals, 
-        salesError,
-        count: salesTerminals?.length || 0
-      });
-
-      if (salesError) {
-        console.error('[DEBUG] getClientTerminals - Error in direct sales query:', salesError);
-      }
-
-      if (salesTerminals && salesTerminals.length > 0) {
-        const uniqueTerminals = [...new Set(salesTerminals.map(s => s.terminal))];
-        console.log('[DEBUG] getClientTerminals - Unique terminals found via direct query:', uniqueTerminals);
-        return uniqueTerminals;
-      }
-
-      // Fallback: buscar máquinas e seus seriais como terminais alternativos
-      console.log('[DEBUG] getClientTerminals - No sales found, trying machines fallback');
-      
+      // Primeiro, buscar as máquinas do cliente
       const { data: machines, error: machinesError } = await supabase
         .from('machines')
-        .select('serial_number')
+        .select('id, serial_number')
         .eq('client_id', clientId);
 
-      console.log('[DEBUG] getClientTerminals - Machines fallback result:', {
-        machines,
-        machinesError,
-        count: machines?.length || 0
+      console.log('[DEBUG] getClientTerminals - Machines query result:', { 
+        machines, 
+        error: machinesError,
+        machineCount: machines?.length || 0
       });
 
       if (machinesError) {
-        console.error('[DEBUG] getClientTerminals - Error in machines fallback:', machinesError);
+        console.error('[DEBUG] getClientTerminals - Error fetching machines:', machinesError);
         return [];
       }
 
-      if (machines && machines.length > 0) {
-        const serials = machines.map(m => m.serial_number);
-        console.log('[DEBUG] getClientTerminals - Using machine serials as terminals:', serials);
-        return serials;
+      if (!machines || machines.length === 0) {
+        console.log('[DEBUG] getClientTerminals - No machines found for client');
+        return [];
       }
 
-      console.log('[DEBUG] getClientTerminals - No terminals or machines found');
-      return [];
+      // Extrair IDs das máquinas
+      const machineIds = machines.map(m => m.id);
+      console.log('[DEBUG] getClientTerminals - Machine IDs:', machineIds);
+
+      // Buscar terminais únicos das vendas dessas máquinas
+      const { data: sales, error: salesError } = await supabase
+        .from('sales')
+        .select('terminal')
+        .in('machine_id', machineIds);
+
+      console.log('[DEBUG] getClientTerminals - Sales query result:', { 
+        sales, 
+        salesError,
+        salesCount: sales?.length || 0
+      });
+
+      if (salesError) {
+        console.error('[DEBUG] getClientTerminals - Error in sales query:', salesError);
+      }
+
+      if (sales && sales.length > 0) {
+        const uniqueTerminals = [...new Set(sales.map(s => s.terminal))];
+        console.log('[DEBUG] getClientTerminals - Unique terminals found:', uniqueTerminals);
+        return uniqueTerminals;
+      }
+
+      // Fallback: usar seriais das máquinas como terminais alternativos
+      console.log('[DEBUG] getClientTerminals - No sales found, using machine serials as fallback');
+      const serials = machines.map(m => m.serial_number);
+      console.log('[DEBUG] getClientTerminals - Using machine serials as terminals:', serials);
+      return serials;
+
     } catch (error) {
       console.error('[DEBUG] getClientTerminals - Unexpected error:', error);
       return [];
@@ -193,10 +194,65 @@ export const clientSalesOptimizedService = {
       
       // 1. Buscar terminais do cliente
       const terminals = await this.getClientTerminals(clientId);
-      console.log('[DEBUG] getClientSalesWithTaxes - Terminals found:', terminals);
+      console.log('[DEBUG] getClientSalesWithTaxes - Terminals received:', terminals);
       
       if (terminals.length === 0) {
-        console.log('[DEBUG] getClientSalesWithTaxes - No terminals found, returning empty result');
+        console.log('[DEBUG] getClientSalesWithTaxes - No terminals found, implementing fallback strategy');
+        
+        // Fallback: buscar máquinas diretamente
+        const { data: machines, error: machinesError } = await supabase
+          .from('machines')
+          .select('id, serial_number')
+          .eq('client_id', clientId);
+
+        console.log('[DEBUG] getClientSalesWithTaxes - Fallback machines found:', machines?.length || 0);
+
+        if (!machinesError && machines && machines.length > 0) {
+          // Buscar vendas por machine_id diretamente
+          const machineIds = machines.map(m => m.id);
+          const { data: directSales, error: directSalesError } = await supabase
+            .from('sales')
+            .select('*')
+            .in('machine_id', machineIds);
+
+          console.log('[DEBUG] getClientSalesWithTaxes - Fallback sales found:', directSales?.length || 0);
+
+          if (!directSalesError && directSales) {
+            // Processar vendas encontradas diretamente
+            const taxConfig = await this.getClientTaxConfig(clientId);
+            
+            const sales = directSales.map((sale: any) => {
+              const { netAmount, taxAmount, taxRate } = this.calculateNetAmount(
+                Number(sale.gross_amount),
+                sale.payment_method,
+                sale.installments || 1,
+                taxConfig
+              );
+
+              return {
+                id: sale.id,
+                code: sale.code,
+                terminal: sale.terminal,
+                transaction_date: sale.date,
+                gross_amount: Number(sale.gross_amount),
+                net_amount: netAmount,
+                tax_amount: taxAmount,
+                tax_rate: taxRate,
+                payment_type: sale.payment_method,
+                installments: sale.installments || 1,
+                total_count: directSales.length
+              };
+            });
+
+            return {
+              sales,
+              totalCount: directSales.length,
+              totalPages: Math.ceil(directSales.length / pageSize),
+              currentPage: page
+            };
+          }
+        }
+
         return {
           sales: [],
           totalCount: 0,
