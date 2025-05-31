@@ -2,6 +2,7 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/use-auth";
+import { useNotifications } from "@/contexts/notifications/NotificationsContext";
 import { supabase } from "@/integrations/supabase/client";
 import { SupportMessage } from "@/types/support.types";
 import { getMessages, sendMessage, markMessagesAsRead } from "@/services/support/message-api";
@@ -19,7 +20,9 @@ export const useSupportChatRealtime = ({ ticketId, isOpen }: UseSupportChatRealt
   
   const { user } = useAuth();
   const { toast } = useToast();
+  const { notifications } = useNotifications();
   const channelRef = useRef<any>(null);
+  const lastRefreshRef = useRef<number>(0);
 
   // Load initial messages with force reload option
   const loadMessages = useCallback(async (forceReload = false) => {
@@ -54,6 +57,8 @@ export const useSupportChatRealtime = ({ ticketId, isOpen }: UseSupportChatRealt
       if (user?.id && isOpen) {
         await markMessagesAsRead(ticketId, user.id);
       }
+      
+      lastRefreshRef.current = Date.now();
     } catch (error) {
       console.error('Erro ao carregar mensagens:', error);
       toast({
@@ -66,13 +71,38 @@ export const useSupportChatRealtime = ({ ticketId, isOpen }: UseSupportChatRealt
     }
   }, [ticketId, user?.id, isOpen, toast]);
 
-  // Force refresh messages function
+  // Force refresh messages function with debounce
   const refreshMessages = useCallback(async () => {
+    const now = Date.now();
+    // Debounce: only refresh if last refresh was more than 1 second ago
+    if (now - lastRefreshRef.current < 1000) {
+      console.log('🔄 Debouncing refresh for ticket:', ticketId);
+      return;
+    }
+    
     console.log('🔄 Force refreshing messages for ticket:', ticketId);
     await loadMessages(true);
   }, [loadMessages, ticketId]);
 
-  // Setup realtime subscription with improved handling
+  // Listen for support notifications to trigger message refresh
+  useEffect(() => {
+    if (!ticketId || !isOpen) return;
+
+    // Filter support notifications related to this ticket
+    const relevantNotifications = notifications.filter(notification => 
+      notification.type === 'SUPPORT' && 
+      notification.data?.ticket_id === ticketId &&
+      !notification.is_read
+    );
+
+    // If there are new support notifications, refresh messages
+    if (relevantNotifications.length > 0) {
+      console.log('🔔 New support notification detected, refreshing messages for ticket:', ticketId);
+      refreshMessages();
+    }
+  }, [notifications, ticketId, isOpen, refreshMessages]);
+
+  // Setup realtime subscription as backup
   useEffect(() => {
     if (!ticketId || !isOpen) return;
 
@@ -93,7 +123,9 @@ export const useSupportChatRealtime = ({ ticketId, isOpen }: UseSupportChatRealt
           console.log('📩 New message received via realtime:', payload.new);
           
           // Force refresh messages to get complete data including user info
-          await refreshMessages();
+          setTimeout(async () => {
+            await refreshMessages();
+          }, 500); // Small delay to ensure message is fully processed
 
           // Show notification if message is from someone else
           const newMessage = payload.new as any;
